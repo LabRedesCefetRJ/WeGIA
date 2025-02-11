@@ -83,8 +83,13 @@ foreach ($docfuncional as $key => $value) {
 }
 $docfuncional = json_encode($docfuncional);
 
-$enfermidades = $pdo->query("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica= " . $_GET['id_fichamedica']);
-$enfermidades = $enfermidades->fetchAll(PDO::FETCH_ASSOC);
+$stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
+
+$stmtEnfermidades->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+
+$stmtEnfermidades->execute();
+
+$enfermidades = $stmtEnfermidades->fetchAll(PDO::FETCH_ASSOC);
 
 //Formata data das enfermidades para o formato brasileiro
 require_once '../../classes/Util.php';
@@ -92,6 +97,7 @@ $util = new Util();
 
 foreach ($enfermidades as $index => $enfermidade) {
   $enfermidades[$index]['data_diagnostico'] = $util->formatoDataDMY($enfermidade['data_diagnostico']);
+  $enfermidades[$index]['descricao'] = htmlspecialchars($enfermidade['descricao']);
 }
 
 $enfermidades = json_encode($enfermidades);
@@ -269,7 +275,7 @@ try {
     font-weight: bold;
   }
 
-  .panel-informacoes-gerais{
+  .panel-informacoes-gerais {
     border-width: 1px;
     border-style: solid;
     border-color: #428bca;
@@ -590,7 +596,7 @@ try {
             <div class="tabs">
               <ul class="nav nav-tabs tabs-primary">
                 <li class="active">
-                  <a href="#overview" data-toggle="tab" >Informações Gerais</a>
+                  <a href="#overview" data-toggle="tab">Informações Gerais</a>
                 </li>
                 <li>
                   <a href="#cadastro_alergias" data-toggle="tab">Alergias</a>
@@ -707,42 +713,42 @@ try {
                       </header>
 
                       <div class="panel-body panel-informacoes-gerais" style="display: none;">
-                        <?php 
-                           $alergiasArray = json_decode($alergias, true);
-                           if(count($alergiasArray) == 0):
+                        <?php
+                        $alergiasArray = json_decode($alergias, true);
+                        if (count($alergiasArray) == 0):
                         ?>
                           <p>O paciente não possuí alergias cadastradas.</p>
                         <?php
-                          else:
-                        ?>      
-                        <table class="table table-hover">
-                          <thead>
-                            <th>#</th>
-                            <th class="text-center">Descrição</th>
-                          </thead>
+                        else:
+                        ?>
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
 
-                          <tbody>
-                            <!--Lista de alergias -->
-                            <?php 
-                              foreach($alergiasArray as $index => $alergia):
-                            ?>
-                            <tr>
-                              <td><?=$index+1?></td>
-                              <td class="text-center"><?=$alergia['descricao']?></td>
-                            </tr>
-                            <?php
-                              endforeach; 
-                            ?>
-                          </tbody>
-                        </table>
+                            <tbody>
+                              <!--Lista de alergias -->
+                              <?php
+                              foreach ($alergiasArray as $index => $alergia):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= $alergia['descricao'] ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
 
                         <?php
-                          endif;
+                        endif;
                         ?>
                       </div>
-                </div>
+                  </div>
 
-                <div id="lista-comorbidades" class="tab-pane">
+                  <div id="lista-comorbidades" class="tab-pane">
                     <section class="panel panel-primary">
                       <header class="panel-heading">
                         <div class="panel-actions">
@@ -752,10 +758,42 @@ try {
                       </header>
 
                       <div class="panel-body panel-informacoes-gerais" style="display: none;">
-                      </div>
-                </div>
+                        <?php
+                        $enfermidadesArray = json_decode($enfermidades, true);
+                        if (count($enfermidadesArray) == 0):
+                        ?>
+                          <p>O paciente não possuí comorbidades cadastradas.</p>
+                        <?php
+                        else:
+                        ?>
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
 
-                <div id="lista-medicacoes-uso" class="tab-pane">
+                            <tbody>
+                              <!--Lista de Comorbidades-->
+                              <?php
+                              foreach ($enfermidadesArray as $index => $enfermidade):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= $enfermidade['descricao'] ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        <?php
+                        endif;
+                        ?>
+                      </div>
+                  </div>
+
+                  <div id="lista-medicacoes-uso" class="tab-pane">
                     <section class="panel panel-primary">
                       <header class="panel-heading">
                         <div class="panel-actions">
@@ -766,8 +804,8 @@ try {
 
                       <div class="panel-body panel-informacoes-gerais" style="display: none;">
                       </div>
-                </div>
-                  
+                  </div>
+
                   <form action="../../controle/control.php" method="POST" id="editarProntuario">
                     <input type="hidden" name="nomeClasse" value="SaudeControle">
                     <input type="hidden" name="metodo" value="alterarProntuario">
