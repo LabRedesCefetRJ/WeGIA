@@ -3,6 +3,7 @@
 session_start();
 if (!isset($_SESSION["usuario"])){
     header("Location: ../../index.php");
+    exit();
 }
 
 // Verifica Permissão do Usuário
@@ -12,8 +13,15 @@ permissao($_SESSION['id_pessoa'], 9);
 require_once "../../config.php";
 
 
+$filename = basename($_POST['file']);
+$fullname = BKP_DIR . $filename;
 
-$fullname = BKP_DIR . $_POST['file'];
+$realPath = realpath($fullname);
+
+if ($realPath === false || strpos($realPath, realpath(BKP_DIR)) !== 0) {
+    die("Acesso negado!");
+}
+
 
 function _Download($f_location, $f_name){
     ob_clean();
@@ -24,5 +32,4 @@ function _Download($f_location, $f_name){
     readfile($f_location);
 }
 
-
-_Download($fullname, $_POST['file']);
+_Download($fullname, $filename);
