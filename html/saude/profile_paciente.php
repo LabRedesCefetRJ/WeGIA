@@ -135,8 +135,13 @@ foreach ($descricao_medica as $key => $value) {
 
 $descricao_medica = json_encode($descricao_medica);
 
-$exibimed = $pdo->query("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica= " . $_GET['id_fichamedica']);
-$exibimed = $exibimed->fetchAll(PDO::FETCH_ASSOC);
+$stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica");
+
+$stmtMedicacoes->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+
+$stmtMedicacoes->execute();
+
+$exibimed = $stmtMedicacoes->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($exibimed as $key => $value) {
   //formata data
@@ -803,6 +808,45 @@ try {
                       </header>
 
                       <div class="panel-body panel-informacoes-gerais" style="display: none;">
+                        <?php
+                        $medicamentosEmUso = [];
+                        $medicamentosPaciente = json_decode($exibimed, true);
+                        foreach($medicamentosPaciente as $medicamento){
+                          if($medicamento['id_status'] == 1){
+                            $medicamentosEmUso []= $medicamento;
+                          }
+                        }
+
+                        if (count($medicamentosEmUso) == 0):
+                        ?>
+                          <p>O paciente não possuí medicações em uso cadastradas.</p>
+                        <?php
+                        else:
+                        ?>
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de Medicamentos-->
+                              <?php
+                              foreach ($medicamentosEmUso as $index => $medicamento):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento']. '|' .$medicamento['dosagem']. '|' .$medicamento['horario']. '|' .$medicamento['duracao']) ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        <?php
+                        endif;
+                        ?>
                       </div>
                   </div>
 
