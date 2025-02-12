@@ -36,7 +36,7 @@ function backupBD(){
 }
 
 function rmBackupBD($file){
-    $rmDump = "cd ".BKP_DIR." && rm $file";
+    $rmDump = escapeshellarg("cd ".(BKP_DIR)." && rm {escapeshellarg($file)}");
     if (DEBUG){
         var_dump($rmDump);
         die();
@@ -91,5 +91,5 @@ function loadBackupDB($file){
         var_dump($extract, $import, $rmDump, $extract . " && " . $import . " && " . $rmDump);
         die();
     }
-    return shell_exec($importStruct . " && " . $extract . " && " . $import . " && " . $rmDump);
+    return shell_exec(escapeshellarg($importStruct) . " && " . escapeshellarg($extract) . " && " . escapeshellarg($import) . " && " . escapeshellarg($rmDump));
 }
