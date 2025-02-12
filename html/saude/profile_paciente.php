@@ -285,6 +285,10 @@ try {
     border-style: solid;
     border-color: #428bca;
   }
+
+  .text-bold{
+    font-weight: bold;
+  }
 </style>
 
 
@@ -630,8 +634,14 @@ try {
               <div class="tab-content">
 
                 <div id="overview" class="tab-pane active">
-                  <form class="form-horizontal" method="post" action="../../controle/control.php">
-                    <input type="hidden" name="nomeClasse" value="SaudeControle">
+
+                  <?php 
+                    $pacienteOverview = json_decode($_SESSION['id_fichamedica'], true)[0];
+                    //var_dump($pacienteOverview);exit;
+                  ?>
+                  <!-- Substituir o form abaixo por outra forma de visualização -->
+                  <!--<form class="form-horizontal" method="post" action="../../controle/control.php">
+                    <input type="hidden" name="nomeClasse" value="SaudeControle">-->
                     <section class="panel panel-primary">
                       <header class="panel-heading">
                         <div class="panel-actions">
@@ -641,10 +651,38 @@ try {
                       </header>
 
                       <div class="panel-body panel-informacoes-gerais">
-                        <hr class="dotted short">
-                        <fieldset>
 
-                          <div class="form-group">
+                        <div class="container">
+                          <div class="row">
+                              <p><span class="text-bold">Nome:</span> <?=$pacienteOverview['nome'].' '.$pacienteOverview['sobrenome']?></p>
+                            </div>
+                            <div class="row">
+                              <p><span class="text-bold">Sexo:</span> 
+                                <?=$pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"> </i>'.' Feminino' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"> </i>'.' Masculino';
+                                ?>
+                              </p>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-3" style="padding-left: 0px;">
+                                <p><span class="text-bold">Data de nascimento: </span><?=$util->formatoDataDMY($pacienteOverview['data_nascimento'])?></p>
+                              </div>
+                              <div class="col-md-3">
+                                <p><span class="text-bold">Idade:</span> 
+                                <?php 
+                                  $dataNascimento = new DateTime($pacienteOverview['data_nascimento']);
+                                  $hoje = new DateTime(); // Data atual
+                                  $idade = $dataNascimento->diff($hoje)->y; // Calcula a diferença em anos
+                                  echo $idade;
+                                ?>
+                                 anos </p>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <p><span class="text-bold">Tipo sanguíneo:</span> <?=($pacienteOverview['tipo_sanguineo'])!==null ? $pacienteOverview['tipo_sanguineo'] : 'Indefinido'?></p>
+                            </div>
+                        </div>
+
+                          <!--<div class="form-group">
                             <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
                             <div class="col-md-8">
                               <input type="text" class="form-control" disabled name="nome" id="nome">
@@ -664,18 +702,18 @@ try {
                             <div class="col-md-8">
                               <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" disabled id="nascimento" max=<?php echo date('Y-m-d'); ?>>
                             </div>
-                          </div>
+                          </div>-->
 
                           <!-- caso o paciente já tenha o tipo sanguíneo definido -->
-                          <div class="form-group" id="exibirtipo" style="display:none;">
+                          <!--<div class="form-group" id="exibirtipo" style="display:none;">
                             <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
                             <div class="col-md-6">
                               <input class="form-control input-lg mb-md" name="tipoSanguineo" disabled id="sangue">
                             </div>
-                          </div>
+                          </div>-->
 
                           <!-- caso o paciente não tenha o tipo sanguineo definido -->
-                          <div id="adicionartipo" style="display:none;" class="form-group">
+                          <!--<div id="adicionartipo" style="display:none;" class="form-group">
                             <input type="hidden" name="metodo" value="alterarInfPessoal">
 
                             <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
@@ -692,21 +730,15 @@ try {
                                 <option value="AB-">AB-</option>
                               </select>
                             </div>
-                            <input type="hidden" name="id_fichamedica" value=<?php echo $_GET['id_fichamedica'] ?>>
+                            <input type="hidden" name="id_fichamedica" value=<?php //echo $_GET['id_fichamedica'] ?>>
 
                             <input type="submit" class="btn btn-primary" value="Salvar" id="botaoSalvarTipoSanguineo">
 
-                            <br>
-                            <br>
-
-                          </div>
-
-                          <br>
-                          <br>
+                          </div>-->
 
                       </div>
                     </section>
-                  </form>
+                  <!--</form>-->
 
                   <div id="lista-alergias" class="tab-pane">
                     <section class="panel panel-primary">
