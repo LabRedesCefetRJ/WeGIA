@@ -1,4 +1,3 @@
-<pre>
 <?php
 
 session_start();
@@ -54,4 +53,3 @@ if (PHP_OS != 'Linux') {
     }
 }
 ?>
-</pre>

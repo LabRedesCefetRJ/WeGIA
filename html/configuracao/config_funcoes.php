@@ -36,7 +36,7 @@ function backupBD(){
 }
 
 function rmBackupBD($file){
-    $rmDump = escapeshellarg("cd ".(BKP_DIR)." && rm {escapeshellarg($file)}");
+    $rmDump = ("cd ".(BKP_DIR)." && rm ". escapeshellarg($file));
     if (DEBUG){
         var_dump($rmDump);
         die();
