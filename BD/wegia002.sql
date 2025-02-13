@@ -214,7 +214,8 @@ INSERT INTO `atendido_docs_atendidos` (`idatendido_docs_atendidos`, `descricao`)
 (1, 'Carteira de Identidade'),
 (2, 'CPF'),
 (3, 'Carteira do SUS'),
-(4, 'Certidão de Nascimento');
+(4, 'Certidão de Nascimento'),
+(5, 'Plano de saúde');
 
 INSERT INTO `atendido_parentesco` (`idatendido_parentesco`, `parentesco`) VALUES 
 (1, 'Pais'),

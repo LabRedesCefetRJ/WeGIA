@@ -286,8 +286,21 @@ try {
     border-color: #428bca;
   }
 
-  .text-bold{
+  .text-bold {
     font-weight: bold;
+  }
+
+  .btn-document {
+    margin-right: 10px;
+  }
+
+  .disabled-fix {
+    pointer-events: none;
+    /* Impede o clique */
+    opacity: 0.6;
+    /* Deixa o botão mais escuro */
+    cursor: not-allowed;
+    /* Muda o cursor para indicar que está desativado */
   }
 </style>
 
@@ -635,54 +648,134 @@ try {
 
                 <div id="overview" class="tab-pane active">
 
-                  <?php 
-                    $pacienteOverview = json_decode($_SESSION['id_fichamedica'], true)[0];
-                    //var_dump($pacienteOverview);exit;
+                  <?php
+                  $pacienteOverview = json_decode($_SESSION['id_fichamedica'], true)[0];
+                  //var_dump($pacienteOverview);exit;
                   ?>
                   <!-- Substituir o form abaixo por outra forma de visualização -->
                   <!--<form class="form-horizontal" method="post" action="../../controle/control.php">
                     <input type="hidden" name="nomeClasse" value="SaudeControle">-->
-                    <section class="panel panel-primary">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a class="fa fa-caret-down" title="Mostrar/Ocultar"></a>
+                  <section class="panel panel-primary">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a class="fa fa-caret-down" title="Mostrar/Ocultar"></a>
+                      </div>
+                      <h2 class="panel-title">Informações pessoais</h2>
+                    </header>
+
+                    <div class="panel-body panel-informacoes-gerais">
+
+                      <div class="container">
+                        <div class="row">
+                          <p><span class="text-bold">Nome:</span> <?= $pacienteOverview['nome'] . ' ' . $pacienteOverview['sobrenome'] ?></p>
                         </div>
-                        <h2 class="panel-title">Informações pessoais</h2>
-                      </header>
-
-                      <div class="panel-body panel-informacoes-gerais">
-
-                        <div class="container">
-                          <div class="row">
-                              <p><span class="text-bold">Nome:</span> <?=$pacienteOverview['nome'].' '.$pacienteOverview['sobrenome']?></p>
-                            </div>
-                            <div class="row">
-                              <p><span class="text-bold">Sexo:</span> 
-                                <?=$pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"> </i>'.' Feminino' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"> </i>'.' Masculino';
-                                ?>
-                              </p>
-                            </div>
-                            <div class="row">
-                              <div class="col-md-3" style="padding-left: 0px;">
-                                <p><span class="text-bold">Data de nascimento: </span><?=$util->formatoDataDMY($pacienteOverview['data_nascimento'])?></p>
-                              </div>
-                              <div class="col-md-3">
-                                <p><span class="text-bold">Idade:</span> 
-                                <?php 
-                                  $dataNascimento = new DateTime($pacienteOverview['data_nascimento']);
-                                  $hoje = new DateTime(); // Data atual
-                                  $idade = $dataNascimento->diff($hoje)->y; // Calcula a diferença em anos
-                                  echo $idade;
-                                ?>
-                                 anos </p>
-                              </div>
-                            </div>
-                            <div class="row">
-                              <p><span class="text-bold">Tipo sanguíneo:</span> <?=($pacienteOverview['tipo_sanguineo'])!==null ? $pacienteOverview['tipo_sanguineo'] : 'Indefinido'?></p>
-                            </div>
+                        <div class="row">
+                          <p><span class="text-bold">Sexo:</span>
+                            <?= $pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"> </i>' . ' Feminino' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"> </i>' . ' Masculino';
+                            ?>
+                          </p>
+                        </div>
+                        <div class="row">
+                          <div class="col-md-3" style="padding-left: 0px;">
+                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?></p>
+                          </div>
+                          <div class="col-md-3">
+                            <p><span class="text-bold">Idade:</span>
+                              <?php
+                              $dataNascimento = new DateTime($pacienteOverview['data_nascimento']);
+                              $hoje = new DateTime(); // Data atual
+                              $idade = $dataNascimento->diff($hoje)->y; // Calcula a diferença em anos
+                              echo $idade;
+                              ?>
+                              anos </p>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <p><span class="text-bold">Tipo sanguíneo:</span> <?= ($pacienteOverview['tipo_sanguineo']) !== null ? $pacienteOverview['tipo_sanguineo'] : 'Indefinido' ?></p>
                         </div>
 
-                          <!--<div class="form-group">
+                        <div class="row">
+                          <?php
+                          $sqlDocumentosDownload = "SELECT ad.idatendido_documentacao as id, ad.atendido_docs_atendidos_idatendido_docs_atendidos as tipo_doc FROM atendido_documentacao ad JOIN atendido_docs_atendidos ada ON (ad.atendido_docs_atendidos_idatendido_docs_atendidos=ada.idatendido_docs_atendidos) JOIN atendido a ON (ad.atendido_idatendido=a.idatendido) JOIN pessoa p ON (a.pessoa_id_pessoa=p.id_pessoa) JOIN saude_fichamedica sf ON(p.id_pessoa=sf.id_pessoa) WHERE sf.id_fichamedica=:idFichaMedica AND ad.atendido_docs_atendidos_idatendido_docs_atendidos IN (1,2,3,5) ORDER BY tipo_doc ASC";
+
+                          try {
+                            $stmt = $pdo->prepare($sqlDocumentosDownload);
+                            $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+                            $stmt->execute();
+
+                            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                            $documentosDownload = [];
+
+                            foreach ($resultados as $documento) {
+                              $documentosDownload[$documento['tipo_doc']] =  $documento['id'];
+                            }
+
+                            //var_dump($documentosDownload);exit;
+
+                          } catch (PDOException $e) {
+                            http_response_code(500);
+                            echo json_encode(['erro' => 'Erro no servidor ao buscar documentações para download ' . $e->getMessage()]);
+                            exit();
+                          }
+                          ?>
+
+                          <!--Botão para baixar CPF -->
+                          <?php
+                          if (isset($documentosDownload[2])):
+                          ?>
+                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[2] ?>" class="btn btn-primary btn-document" title="Clique para baixar">CPF <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">CPF <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
+                          <!-- Botão para baixar RG -->
+                          <?php
+                          if (isset($documentosDownload[1])):
+                          ?>
+                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[1] ?>" class="btn btn-primary btn-document" title="Clique para baixar">RG <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">RG <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
+                          <!--Botão para baixar SUS-->
+                          <?php
+                          if (isset($documentosDownload[3])):
+                          ?>
+                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[3] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Cartão do SUS <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">Cartão do SUS <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
+                          <!--Botão para baixar plano de saúde-->
+                          <?php
+                          if (isset($documentosDownload[5])):
+                          ?>
+                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[5] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Plano de saúde <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">Plano de saúde <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
+                        </div>
+                      </div>
+
+                      <!--<div class="form-group">
                             <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
                             <div class="col-md-8">
                               <input type="text" class="form-control" disabled name="nome" id="nome">
@@ -704,16 +797,16 @@ try {
                             </div>
                           </div>-->
 
-                          <!-- caso o paciente já tenha o tipo sanguíneo definido -->
-                          <!--<div class="form-group" id="exibirtipo" style="display:none;">
+                      <!-- caso o paciente já tenha o tipo sanguíneo definido -->
+                      <!--<div class="form-group" id="exibirtipo" style="display:none;">
                             <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
                             <div class="col-md-6">
                               <input class="form-control input-lg mb-md" name="tipoSanguineo" disabled id="sangue">
                             </div>
                           </div>-->
 
-                          <!-- caso o paciente não tenha o tipo sanguineo definido -->
-                          <!--<div id="adicionartipo" style="display:none;" class="form-group">
+                      <!-- caso o paciente não tenha o tipo sanguineo definido -->
+                      <!--<div id="adicionartipo" style="display:none;" class="form-group">
                             <input type="hidden" name="metodo" value="alterarInfPessoal">
 
                             <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
@@ -730,14 +823,15 @@ try {
                                 <option value="AB-">AB-</option>
                               </select>
                             </div>
-                            <input type="hidden" name="id_fichamedica" value=<?php //echo $_GET['id_fichamedica'] ?>>
+                            <input type="hidden" name="id_fichamedica" value=<?php //echo $_GET['id_fichamedica'] 
+                                                                              ?>>
 
                             <input type="submit" class="btn btn-primary" value="Salvar" id="botaoSalvarTipoSanguineo">
 
                           </div>-->
 
-                      </div>
-                    </section>
+                    </div>
+                  </section>
                   <!--</form>-->
 
                   <div id="lista-alergias" class="tab-pane">
@@ -843,9 +937,9 @@ try {
                         <?php
                         $medicamentosEmUso = [];
                         $medicamentosPaciente = json_decode($exibimed, true);
-                        foreach($medicamentosPaciente as $medicamento){
-                          if($medicamento['id_status'] == 1){
-                            $medicamentosEmUso []= $medicamento;
+                        foreach ($medicamentosPaciente as $medicamento) {
+                          if ($medicamento['id_status'] == 1) {
+                            $medicamentosEmUso[] = $medicamento;
                           }
                         }
 
@@ -868,7 +962,7 @@ try {
                               ?>
                                 <tr>
                                   <td><?= $index + 1 ?></td>
-                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento']. '|' .$medicamento['dosagem']. '|' .$medicamento['horario']. '|' .$medicamento['duracao']) ?></td>
+                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . $medicamento['horario'] . '|' . $medicamento['duracao']) ?></td>
                                 </tr>
                               <?php
                               endforeach;
