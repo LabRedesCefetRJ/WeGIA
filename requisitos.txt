@@ -15,12 +15,18 @@ nano /etc/apache2/sites-available/wegia.conf
         ServerName              wegia.instituicao.org 
         DocumentRoot            /var/www/WeGIA
         ErrorDocument 404       http://wegia.instituicao.org/
+        ErrorDocument 403       http://wegia.instituicao.org/
+        <Directory /var/www/WeGIA>
+            Options -Indexes
+            AllowOverride All
+            Require all granted
+        </Directory>
 </VirtualHost>
 
 a2ensite wegia.conf
 systemctl reload apache2
 
-sudo -u www-data git -C /tmp clone https://github.com/nilsonmori/WeGIA.git
+sudo -u www-data git -C /tmp clone https://github.com/LabRedesCefetRJ/WeGIA.git
 
 mv /tmp/WeGIA /var/www/
 
