@@ -18,7 +18,7 @@ class Util
     {
         $data_arr = explode("-", $data);
 
-        $datad = $data_arr[2] . '/' . $data_arr[1] . '/' . $data_arr[0];
+        $datad = explode(' ', $data_arr[2])[0] . '/' . $data_arr[1] . '/' . $data_arr[0];
 
         return $datad;
     }

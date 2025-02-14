@@ -302,6 +302,10 @@ try {
     cursor: not-allowed;
     /* Muda o cursor para indicar que está desativado */
   }
+
+  .small-text {
+    font-size: small;
+  }
 </style>
 
 
@@ -966,6 +970,100 @@ try {
                                 </tr>
                               <?php
                               endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        <?php
+                        endif;
+                        ?>
+                      </div>
+                  </div>
+
+                  <div id="lista-sinais-vitais" class="tab-pane">
+                    <section class="panel panel-primary">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                        </div>
+                        <h2 class="panel-title">Informações vitais</h2>
+                      </header>
+
+                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
+                        <?php
+
+                        function pegarSinalVital($sql, $pdo)
+                        {
+                          $stmt = $pdo->prepare($sql);
+                          $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+                          $stmt->execute();
+
+                          if ($stmt->rowCount() != 0) {
+                            return  $stmt->fetchAll(PDO::FETCH_ASSOC);
+                          }
+
+                          return false;
+                        }
+
+                        $sinaisVitaisArray = [];
+
+                        $sqlSaturacao = "SELECT saturacao, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.saturacao !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlPressaoArterial = "SELECT pressao_arterial, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.pressao_arterial !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlFrequenciaCardiaca = "SELECT frequencia_cardiaca, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_cardiaca !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlFrequenciaRespiratoria = "SELECT frequencia_respiratoria, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_respiratoria !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlTemperatura = "SELECT temperatura, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.temperatura !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlHgt = "SELECT hgt, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.hgt !='' ORDER BY data DESC LIMIT 5";
+
+                        try {
+                          $sinaisVitaisArray['saturacao'] = pegarSinalVital($sqlSaturacao, $pdo);
+                          $sinaisVitaisArray['pressaoArterial'] = pegarSinalVital($sqlPressaoArterial, $pdo);
+                          $sinaisVitaisArray['frequenciaCardiaca'] = pegarSinalVital($sqlFrequenciaCardiaca, $pdo);
+                          $sinaisVitaisArray['frequenciaRespiratoria'] = pegarSinalVital($sqlFrequenciaRespiratoria, $pdo);
+                          $sinaisVitaisArray['temperatura'] = pegarSinalVital($sqlTemperatura, $pdo);
+                          $sinaisVitaisArray['hgt'] = pegarSinalVital($sqlHgt, $pdo);
+                        } catch (PDOException $e) {
+                          http_response_code(500);
+                          echo json_encode(['erro' => 'Erro ao buscar o histórico dos sinais vitais']);
+                          exit();
+                        }
+                        if (!$sinaisVitaisArray['saturacao'] && !$sinaisVitaisArray['pressaoArterial'] && !$sinaisVitaisArray['frequenciaCardiaca'] && !$sinaisVitaisArray['frequenciaRespiratoria'] && !$sinaisVitaisArray['temperatura'] && !$sinaisVitaisArray['hgt']):
+                        ?>
+                          <p>O paciente não possuí aferições de sinais vitais.</p>
+                        <?php
+                        else:
+                        ?>
+                          <table class="table table-hover small-text">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Saturação</th>
+                              <th class="text-center">Pressão arterial</th>
+                              <th class="text-center">Frequência cardíaca</th>
+                              <th class="text-center">Frequência respiratória</th>
+                              <th class="text-center">Temperatura</th>
+                              <th class="text-center">HGT</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de Sinais Vitais-->
+                              <?php
+                              for ($i = 0; $i < 5; $i++):
+                              ?>
+                                <tr>
+                                  <td><?= $i + 1 ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['saturacao'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['saturacao'][$i]['data']) . ' : ' . $sinaisVitaisArray['saturacao'][$i]['saturacao']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['pressaoArterial'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['pressaoArterial'][$i]['data']) . ' : ' . $sinaisVitaisArray['pressaoArterial'][$i]['pressao_arterial']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) . ' : ' . $sinaisVitaisArray['frequenciaCardiaca'][$i]['frequencia_cardiaca']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) . ' : ' . $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['temperatura'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['temperatura'][$i]['data']) . ' : ' . $sinaisVitaisArray['temperatura'][$i]['temperatura']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['hgt'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['hgt'][$i]['data']) . ' : ' . $sinaisVitaisArray['hgt'][$i]['hgt']  : 'Sem registro' ?></td>
+                                </tr>
+                              <?php
+                              endfor;
                               ?>
                             </tbody>
                           </table>
