@@ -83,8 +83,13 @@ foreach ($docfuncional as $key => $value) {
 }
 $docfuncional = json_encode($docfuncional);
 
-$enfermidades = $pdo->query("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica= " . $_GET['id_fichamedica']);
-$enfermidades = $enfermidades->fetchAll(PDO::FETCH_ASSOC);
+$stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
+
+$stmtEnfermidades->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+
+$stmtEnfermidades->execute();
+
+$enfermidades = $stmtEnfermidades->fetchAll(PDO::FETCH_ASSOC);
 
 //Formata data das enfermidades para o formato brasileiro
 require_once '../../classes/Util.php';
@@ -92,6 +97,7 @@ $util = new Util();
 
 foreach ($enfermidades as $index => $enfermidade) {
   $enfermidades[$index]['data_diagnostico'] = $util->formatoDataDMY($enfermidade['data_diagnostico']);
+  $enfermidades[$index]['descricao'] = htmlspecialchars($enfermidade['descricao']);
 }
 
 $enfermidades = json_encode($enfermidades);
@@ -129,8 +135,13 @@ foreach ($descricao_medica as $key => $value) {
 
 $descricao_medica = json_encode($descricao_medica);
 
-$exibimed = $pdo->query("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica= " . $_GET['id_fichamedica']);
-$exibimed = $exibimed->fetchAll(PDO::FETCH_ASSOC);
+$stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica");
+
+$stmtMedicacoes->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+
+$stmtMedicacoes->execute();
+
+$exibimed = $stmtMedicacoes->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($exibimed as $key => $value) {
   //formata data
@@ -267,6 +278,33 @@ try {
 
   .titulo-prontuario {
     font-weight: bold;
+  }
+
+  .panel-informacoes-gerais {
+    border-width: 1px;
+    border-style: solid;
+    border-color: #428bca;
+  }
+
+  .text-bold {
+    font-weight: bold;
+  }
+
+  .btn-document {
+    margin-right: 10px;
+  }
+
+  .disabled-fix {
+    pointer-events: none;
+    /* Impede o clique */
+    opacity: 0.6;
+    /* Deixa o botão mais escuro */
+    cursor: not-allowed;
+    /* Muda o cursor para indicar que está desativado */
+  }
+
+  .small-text {
+    font-size: small;
   }
 </style>
 
@@ -584,7 +622,7 @@ try {
             <div class="tabs">
               <ul class="nav nav-tabs tabs-primary">
                 <li class="active">
-                  <a href="#overview" data-toggle="tab">Informações Pessoais</a>
+                  <a href="#overview" data-toggle="tab">Informações Gerais</a>
                 </li>
                 <li>
                   <a href="#cadastro_alergias" data-toggle="tab">Alergias</a>
@@ -613,21 +651,135 @@ try {
               <div class="tab-content">
 
                 <div id="overview" class="tab-pane active">
-                  <form class="form-horizontal" method="post" action="../../controle/control.php">
-                    <input type="hidden" name="nomeClasse" value="SaudeControle">
-                    <section class="panel">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a href="#" class="fa fa-caret-down"></a>
+
+                  <?php
+                  $pacienteOverview = json_decode($_SESSION['id_fichamedica'], true)[0];
+                  //var_dump($pacienteOverview);exit;
+                  ?>
+                  <!-- Substituir o form abaixo por outra forma de visualização -->
+                  <!--<form class="form-horizontal" method="post" action="../../controle/control.php">
+                    <input type="hidden" name="nomeClasse" value="SaudeControle">-->
+                  <section class="panel panel-primary">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a class="fa fa-caret-down" title="Mostrar/Ocultar"></a>
+                      </div>
+                      <h2 class="panel-title">Informações pessoais</h2>
+                    </header>
+
+                    <div class="panel-body panel-informacoes-gerais">
+
+                      <div class="container">
+                        <div class="row">
+                          <p><span class="text-bold">Nome:</span> <?= $pacienteOverview['nome'] . ' ' . $pacienteOverview['sobrenome'] ?></p>
                         </div>
-                        <h2 class="panel-title">Informações pessoais</h2>
-                      </header>
+                        <div class="row">
+                          <p><span class="text-bold">Sexo:</span>
+                            <?= $pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"> </i>' . ' Feminino' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"> </i>' . ' Masculino';
+                            ?>
+                          </p>
+                        </div>
+                        <div class="row">
+                          <div class="col-md-3" style="padding-left: 0px;">
+                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?></p>
+                          </div>
+                          <div class="col-md-3">
+                            <p><span class="text-bold">Idade:</span>
+                              <?php
+                              $dataNascimento = new DateTime($pacienteOverview['data_nascimento']);
+                              $hoje = new DateTime(); // Data atual
+                              $idade = $dataNascimento->diff($hoje)->y; // Calcula a diferença em anos
+                              echo $idade;
+                              ?>
+                              anos </p>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <p><span class="text-bold">Tipo sanguíneo:</span> <?= ($pacienteOverview['tipo_sanguineo']) !== null ? $pacienteOverview['tipo_sanguineo'] : 'Indefinido' ?></p>
+                        </div>
 
-                      <div class="panel-body">
-                        <hr class="dotted short">
-                        <fieldset>
+                        <div class="row">
+                          <?php
+                          $sqlDocumentosDownload = "SELECT ad.idatendido_documentacao as id, ad.atendido_docs_atendidos_idatendido_docs_atendidos as tipo_doc FROM atendido_documentacao ad JOIN atendido_docs_atendidos ada ON (ad.atendido_docs_atendidos_idatendido_docs_atendidos=ada.idatendido_docs_atendidos) JOIN atendido a ON (ad.atendido_idatendido=a.idatendido) JOIN pessoa p ON (a.pessoa_id_pessoa=p.id_pessoa) JOIN saude_fichamedica sf ON(p.id_pessoa=sf.id_pessoa) WHERE sf.id_fichamedica=:idFichaMedica AND ad.atendido_docs_atendidos_idatendido_docs_atendidos IN (1,2,3,5) ORDER BY tipo_doc ASC";
 
-                          <div class="form-group">
+                          try {
+                            $stmt = $pdo->prepare($sqlDocumentosDownload);
+                            $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+                            $stmt->execute();
+
+                            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                            $documentosDownload = [];
+
+                            foreach ($resultados as $documento) {
+                              $documentosDownload[$documento['tipo_doc']] =  $documento['id'];
+                            }
+
+                            //var_dump($documentosDownload);exit;
+
+                          } catch (PDOException $e) {
+                            http_response_code(500);
+                            echo json_encode(['erro' => 'Erro no servidor ao buscar documentações para download ' . $e->getMessage()]);
+                            exit();
+                          }
+                          ?>
+
+                          <!--Botão para baixar CPF -->
+                          <?php
+                          if (isset($documentosDownload[2])):
+                          ?>
+                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[2] ?>" class="btn btn-primary btn-document" title="Clique para baixar">CPF <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">CPF <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
+                          <!-- Botão para baixar RG -->
+                          <?php
+                          if (isset($documentosDownload[1])):
+                          ?>
+                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[1] ?>" class="btn btn-primary btn-document" title="Clique para baixar">RG <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">RG <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
+                          <!--Botão para baixar SUS-->
+                          <?php
+                          if (isset($documentosDownload[3])):
+                          ?>
+                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[3] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Cartão do SUS <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">Cartão do SUS <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
+                          <!--Botão para baixar plano de saúde-->
+                          <?php
+                          if (isset($documentosDownload[5])):
+                          ?>
+                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[5] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Plano de saúde <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">Plano de saúde <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
+                        </div>
+                      </div>
+
+                      <!--<div class="form-group">
                             <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
                             <div class="col-md-8">
                               <input type="text" class="form-control" disabled name="nome" id="nome">
@@ -647,18 +799,18 @@ try {
                             <div class="col-md-8">
                               <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" disabled id="nascimento" max=<?php echo date('Y-m-d'); ?>>
                             </div>
-                          </div>
+                          </div>-->
 
-                          <!-- caso o paciente já tenha o tipo sanguíneo definido -->
-                          <div class="form-group" id="exibirtipo" style="display:none;">
+                      <!-- caso o paciente já tenha o tipo sanguíneo definido -->
+                      <!--<div class="form-group" id="exibirtipo" style="display:none;">
                             <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
                             <div class="col-md-6">
                               <input class="form-control input-lg mb-md" name="tipoSanguineo" disabled id="sangue">
                             </div>
-                          </div>
+                          </div>-->
 
-                          <!-- caso o paciente não tenha o tipo sanguineo definido -->
-                          <div id="adicionartipo" style="display:none;" class="form-group">
+                      <!-- caso o paciente não tenha o tipo sanguineo definido -->
+                      <!--<div id="adicionartipo" style="display:none;" class="form-group">
                             <input type="hidden" name="metodo" value="alterarInfPessoal">
 
                             <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
@@ -675,21 +827,253 @@ try {
                                 <option value="AB-">AB-</option>
                               </select>
                             </div>
-                            <input type="hidden" name="id_fichamedica" value=<?php echo $_GET['id_fichamedica'] ?>>
+                            <input type="hidden" name="id_fichamedica" value=<?php //echo $_GET['id_fichamedica'] 
+                                                                              ?>>
 
                             <input type="submit" class="btn btn-primary" value="Salvar" id="botaoSalvarTipoSanguineo">
 
-                            <br>
-                            <br>
+                          </div>-->
 
-                          </div>
+                    </div>
+                  </section>
+                  <!--</form>-->
 
-                          <br>
-                          <br>
+                  <div id="lista-alergias" class="tab-pane">
+                    <section class="panel panel-primary">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                        </div>
+                        <h2 class="panel-title">Lista de Alergias</h2>
+                      </header>
 
+                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
+                        <?php
+                        $alergiasArray = json_decode($alergias, true);
+                        if (count($alergiasArray) == 0):
+                        ?>
+                          <p>O paciente não possuí alergias cadastradas.</p>
+                        <?php
+                        else:
+                        ?>
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de alergias -->
+                              <?php
+                              foreach ($alergiasArray as $index => $alergia):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= $alergia['descricao'] ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        <?php
+                        endif;
+                        ?>
                       </div>
-                    </section>
-                  </form>
+                  </div>
+
+                  <div id="lista-comorbidades" class="tab-pane">
+                    <section class="panel panel-primary">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                        </div>
+                        <h2 class="panel-title">Lista de Comorbidades</h2>
+                      </header>
+
+                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
+                        <?php
+                        $enfermidadesArray = json_decode($enfermidades, true);
+                        if (count($enfermidadesArray) == 0):
+                        ?>
+                          <p>O paciente não possuí comorbidades cadastradas.</p>
+                        <?php
+                        else:
+                        ?>
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de Comorbidades-->
+                              <?php
+                              foreach ($enfermidadesArray as $index => $enfermidade):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= $enfermidade['descricao'] ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        <?php
+                        endif;
+                        ?>
+                      </div>
+                  </div>
+
+                  <div id="lista-medicacoes-uso" class="tab-pane">
+                    <section class="panel panel-primary">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                        </div>
+                        <h2 class="panel-title">Lista de Medicações em uso</h2>
+                      </header>
+
+                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
+                        <?php
+                        $medicamentosEmUso = [];
+                        $medicamentosPaciente = json_decode($exibimed, true);
+                        foreach ($medicamentosPaciente as $medicamento) {
+                          if ($medicamento['id_status'] == 1) {
+                            $medicamentosEmUso[] = $medicamento;
+                          }
+                        }
+
+                        if (count($medicamentosEmUso) == 0):
+                        ?>
+                          <p>O paciente não possuí medicações em uso cadastradas.</p>
+                        <?php
+                        else:
+                        ?>
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de Medicamentos-->
+                              <?php
+                              foreach ($medicamentosEmUso as $index => $medicamento):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . $medicamento['horario'] . '|' . $medicamento['duracao']) ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        <?php
+                        endif;
+                        ?>
+                      </div>
+                  </div>
+
+                  <div id="lista-sinais-vitais" class="tab-pane">
+                    <section class="panel panel-primary">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                        </div>
+                        <h2 class="panel-title">Informações vitais</h2>
+                      </header>
+
+                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
+                        <?php
+
+                        function pegarSinalVital($sql, $pdo)
+                        {
+                          $stmt = $pdo->prepare($sql);
+                          $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+                          $stmt->execute();
+
+                          if ($stmt->rowCount() != 0) {
+                            return  $stmt->fetchAll(PDO::FETCH_ASSOC);
+                          }
+
+                          return false;
+                        }
+
+                        $sinaisVitaisArray = [];
+
+                        $sqlSaturacao = "SELECT saturacao, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.saturacao !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlPressaoArterial = "SELECT pressao_arterial, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.pressao_arterial !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlFrequenciaCardiaca = "SELECT frequencia_cardiaca, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_cardiaca !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlFrequenciaRespiratoria = "SELECT frequencia_respiratoria, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_respiratoria !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlTemperatura = "SELECT temperatura, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.temperatura !='' ORDER BY data DESC LIMIT 5";
+
+                        $sqlHgt = "SELECT hgt, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.hgt !='' ORDER BY data DESC LIMIT 5";
+
+                        try {
+                          $sinaisVitaisArray['saturacao'] = pegarSinalVital($sqlSaturacao, $pdo);
+                          $sinaisVitaisArray['pressaoArterial'] = pegarSinalVital($sqlPressaoArterial, $pdo);
+                          $sinaisVitaisArray['frequenciaCardiaca'] = pegarSinalVital($sqlFrequenciaCardiaca, $pdo);
+                          $sinaisVitaisArray['frequenciaRespiratoria'] = pegarSinalVital($sqlFrequenciaRespiratoria, $pdo);
+                          $sinaisVitaisArray['temperatura'] = pegarSinalVital($sqlTemperatura, $pdo);
+                          $sinaisVitaisArray['hgt'] = pegarSinalVital($sqlHgt, $pdo);
+                        } catch (PDOException $e) {
+                          http_response_code(500);
+                          echo json_encode(['erro' => 'Erro ao buscar o histórico dos sinais vitais']);
+                          exit();
+                        }
+                        if (!$sinaisVitaisArray['saturacao'] && !$sinaisVitaisArray['pressaoArterial'] && !$sinaisVitaisArray['frequenciaCardiaca'] && !$sinaisVitaisArray['frequenciaRespiratoria'] && !$sinaisVitaisArray['temperatura'] && !$sinaisVitaisArray['hgt']):
+                        ?>
+                          <p>O paciente não possuí aferições de sinais vitais.</p>
+                        <?php
+                        else:
+                        ?>
+                          <table class="table table-hover small-text">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Saturação</th>
+                              <th class="text-center">Pressão arterial</th>
+                              <th class="text-center">Frequência cardíaca</th>
+                              <th class="text-center">Frequência respiratória</th>
+                              <th class="text-center">Temperatura</th>
+                              <th class="text-center">HGT</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de Sinais Vitais-->
+                              <?php
+                              for ($i = 0; $i < 5; $i++):
+                              ?>
+                                <tr>
+                                  <td><?= $i + 1 ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['saturacao'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['saturacao'][$i]['data']) . ' : ' . $sinaisVitaisArray['saturacao'][$i]['saturacao']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['pressaoArterial'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['pressaoArterial'][$i]['data']) . ' : ' . $sinaisVitaisArray['pressaoArterial'][$i]['pressao_arterial']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) . ' : ' . $sinaisVitaisArray['frequenciaCardiaca'][$i]['frequencia_cardiaca']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) . ' : ' . $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['temperatura'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['temperatura'][$i]['data']) . ' : ' . $sinaisVitaisArray['temperatura'][$i]['temperatura']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['hgt'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['hgt'][$i]['data']) . ' : ' . $sinaisVitaisArray['hgt'][$i]['hgt']  : 'Sem registro' ?></td>
+                                </tr>
+                              <?php
+                              endfor;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        <?php
+                        endif;
+                        ?>
+                      </div>
+                  </div>
+
                   <form action="../../controle/control.php" method="POST" id="editarProntuario">
                     <input type="hidden" name="nomeClasse" value="SaudeControle">
                     <input type="hidden" name="metodo" value="alterarProntuario">

@@ -21,14 +21,6 @@
 
 
     if ( isset( $_FILES[ 'img_file' ][ 'name' ] ) && $_FILES[ 'img_file' ][ 'error' ] == 0 ) {
-
-        /*
-        echo 'Você enviou o arquivo: <strong>' . $_FILES[ 'img_file' ][ 'name' ] . '</strong><br />';
-        echo 'Este arquivo é do tipo: <strong > ' . $_FILES[ 'img_file' ][ 'type' ] . ' </strong ><br />';
-        echo 'Temporáriamente foi salvo em: <strong>' . $_FILES[ 'img_file' ][ 'tmp_name' ] . '</strong><br />';
-        echo 'Seu tamanho é: <strong>' . $_FILES[ 'img_file' ][ 'size' ] . '</strong> Bytes<br /><br />';
-        */
-
         $arquivo_tmp = $_FILES[ 'img_file' ][ 'tmp_name' ];
         $nome = $_FILES[ 'img_file' ][ 'name' ];
         
@@ -59,21 +51,36 @@
                 $cmd->execute();
             }
 
-            if (isset($_POST["id_campo"])){
-                $id_campo = $_POST["id_campo"];
-                $cmd = $pdo->prepare("select id_imagem from imagem where nome=:n");
+            if (isset($_POST["id_campo"]) && is_numeric($_POST["id_campo"]) && $_POST["id_campo"] >= 1){
+                $id_campo = trim(filter_input(INPUT_POST, 'id_campo', FILTER_SANITIZE_NUMBER_INT));
+                $cmd = $pdo->prepare("SELECT id_imagem FROM imagem WHERE nome=:n");
                 $cmd->bindValue(":n",$nome);
                 $cmd->execute();
                 $id_imagem = $cmd->fetchAll(PDO::FETCH_ASSOC);
                 $id_imagem = $id_imagem[0]["id_imagem"];
 
 
-                $res = $pdo->query("select id_relacao from tabela_imagem_campo where id_campo='$id_campo'");
-                $relacao = $res->fetchAll(PDO::FETCH_ASSOC);
-                if (!!$relacao){
-                    $pdo->query("update tabela_imagem_campo set id_imagem='$id_imagem' where id_campo='$id_campo';");
+                $stmt1 = $pdo->prepare("SELECT id_relacao FROM tabela_imagem_campo WHERE id_campo=:idCampo");
+
+                $stmt1->bindParam(':idCampo', $id_campo);
+                $stmt1->execute();
+
+                $relacao = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+
+                if ($relacao){
+                    $stmt2 = $pdo->prepare("UPDATE tabela_imagem_campo SET id_imagem=:idImagem WHERE id_campo=:idCampo");
+
+                    $stmt2->bindParam(':idImagem', $id_imagem);
+                    $stmt2->bindParam(':idCampo', $id_campo);
+
+                    $stmt2->execute();
                 }else{
-                    $pdo->query("insert into tabela_imagem_campo values (default, '$id_campo', '$id_imagem');");
+                    $stmt3 = $pdo->prepare("INSERT INTO tabela_imagem_campo VALUES (DEFAULT, :idCampo, :idImagem)");
+
+                    $stmt3->bindParam(':idCampo', $id_campo);
+                    $stmt3->bindParam(':idImagem', $id_imagem);
+
+                    $stmt3->execute();
                 }
             }
 
@@ -212,16 +219,26 @@
 
 
     }elseif (isset($_POST["selecao"])){
-        $selecao = $_POST["selecao"];
-        $campo = $_POST["campo"];
+        $selecao = trim(filter_input(INPUT_POST, 'selecao', FILTER_SANITIZE_NUMBER_INT));
+        $campo = trim(filter_input(INPUT_POST, 'campo', FILTER_SANITIZE_NUMBER_INT));
 
         $res = $pdo->query("select id_relacao from tabela_imagem_campo");
         $relacao = $res->fetchAll(PDO::FETCH_ASSOC);
 
-        if (!!$relacao){
-            $pdo->query("update tabela_imagem_campo set id_imagem='$selecao' where id_campo='$campo';");
+        if ($relacao){
+            $stmt4 = $pdo->prepare("UPDATE tabela_imagem_campo SET id_imagem=:selecao WHERE id_campo=:campo");
+
+            $stmt4->bindParam(':selecao', $selecao);
+            $stmt4->bindParam(':campo', $campo);
+
+            $stmt4->execute();
         }else{
-            $pdo->query("insert into tabela_imagem_campo values (default, '$campo', '$selecao');");
+            $stmt5 = $pdo->prepare("INSERT INTO tabela_imagem_campo VALUES (DEFAULT, :campo, :selecao);");//proteger aqui
+
+            $stmt5->bindParam(':campo', $campo);
+            $stmt5->bindParam(':selecao', $selecao);
+
+            $stmt5->execute();
         }
         header ("Location: personalizacao.php?msg=success");
     }

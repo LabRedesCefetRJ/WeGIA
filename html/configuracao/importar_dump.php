@@ -1,9 +1,9 @@
-<pre>
 <?php
 
 session_start();
 if (!isset($_SESSION["usuario"])){
     header("Location: ../../index.php");
+    exit();
 }
 
 // Verifica Permissão do Usuário
@@ -16,7 +16,7 @@ define("REDIRECT", $_REQUEST["redirect"] ?? "./configuracao_geral.php");
 
 $newFileName = $_FILES["import"]["name"];
 
-$log = shell_exec("mv ". $_FILES["import"]["tmp_name"] . " " . BKP_DIR . $_FILES["import"]["name"]);
+$log = shell_exec(("mv ". escapeshellarg($_FILES["import"]["tmp_name"]) . " " . BKP_DIR . escapeshellarg($_FILES["import"]["name"])));
 if ($log){
     header("Location: ./configuracao_geral.php?msg=error&err=Houve um erro na importação!&log=".base64_encode($log));
 }

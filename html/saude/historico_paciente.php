@@ -44,23 +44,31 @@ if (!is_null($resultado)) {
     if ($permissao['id_acao'] < 5) {
       $msg = "Você não tem as permissões necessárias para essa página.";
       header("Location: ../home.php?msg_c=$msg");
+      exit();
     }
     $permissao = $permissao['id_acao'];
   } else {
     $permissao = 1;
     $msg = "Você não tem as permissões necessárias para essa página.";
     header("Location: ../home.php?msg_c=$msg");
+    exit();
   }
 } else {
   $permissao = 1;
   $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: ../../home.php?msg_c=$msg");
+  header("Location: ../home.php?msg_c=$msg");
+  exit();
 }
 
 include_once '../../classes/Cache.php';
 require_once "../personalizacao_display.php";
 
 require_once ROOT . "/controle/SaudeControle.php";
+
+if(!is_numeric($_GET['id_fichamedica']) || $_GET['id_fichamedica'] < 1){
+  header("Location: ../home.php?msg_c=O parâmetro informado é incorreto, informe um inteiro positivo maior ou igual a 1.");
+  exit();
+}
 
 $id = $_GET['id_fichamedica'];
 $cache = new Cache();
@@ -86,14 +94,19 @@ $exibimedparaenfermeiro = json_encode($exibimedparaenfermeiro);
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $medicamentoenfermeiro = $mysqli->query("SELECT * FROM saude_medicacao");
-//$descparaenfermeiro = $mysqli->query("SELECT descricao FROM saude_fichamedica"); Não existe mais o campo descricao na tabela saude_fichamedica
 $medstatus = $mysqli->query("SELECT * FROM saude_medicacao_status");
 
 $teste = $pdo->query("SELECT nome, f.id_funcionario FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa = " . $_SESSION['id_pessoa'])->fetchAll(PDO::FETCH_ASSOC);
 $id_funcionario = $teste[0]['nome'];
 $funcionario_id = $teste[0]['id_funcionario'];
 
-$sinaisvitais = $pdo->query("SELECT id_sinais_vitais, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica = " . $_SESSION['id_upload_med'])->fetchAll(PDO::FETCH_ASSOC);
+$stmtSinaisVitais = $pdo->prepare("SELECT id_sinais_vitais, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
+
+$stmtSinaisVitais->bindParam(':idFichaMedica', $id);
+$stmtSinaisVitais->execute();
+
+$sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
+
 //formatar data
 foreach ($sinaisvitais as $key => $value) {
   $data = new DateTime($value['data']);
@@ -315,11 +328,6 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
     $(function() {
       var sinaisvitais = <?= $sinaisvitais ?>;
       $("#sin-vit-tab").empty();
-      /*$.each(sinaisvitais, function(i, item) { // Transforma o formato de data recebido para o formato utilizado no Brasil
-        item.data = item.data.split(" ")[0];
-        partesData = item.data.split("-");
-        item.data = partesData[2] + "-" + partesData[1] + "-" + partesData[0];
-      })*/
       $.each(sinaisvitais, function(i, item) {
         $("#sin-vit-tab")
           .append($("<tr id=l_" + i + ">")
