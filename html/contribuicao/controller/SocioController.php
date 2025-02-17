@@ -181,10 +181,6 @@ class SocioController
                 throw new InvalidArgumentException('O email informado não está em um formato válido');
             }
 
-            //validação do valor
-            if (!$valor || $valor < 30) { //Pegar o valor de maneira dinâmica posteriormente
-                throw new InvalidArgumentException('O valor informado deve ser de no mínimo 30 reais.');
-            }
         } catch (InvalidArgumentException $e) {
             http_response_code(400);
             echo json_encode(['erro' => $e->getMessage()]);
