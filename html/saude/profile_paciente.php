@@ -1005,6 +1005,12 @@ try {
                           return false;
                         }
 
+                        function diaMes($dataCompleta){
+                          $dataArray = explode('/', $dataCompleta);
+
+                          return $dataArray[0].'/'.$dataArray[1];
+                        }
+
                         $sinaisVitaisArray = [];
 
                         $sqlSaturacao = "SELECT saturacao, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.saturacao !='' ORDER BY data DESC LIMIT 5";
@@ -1055,12 +1061,12 @@ try {
                               ?>
                                 <tr>
                                   <td><?= $i + 1 ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['saturacao'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['saturacao'][$i]['data']) . ' : ' . $sinaisVitaisArray['saturacao'][$i]['saturacao']  : 'Sem registro' ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['pressaoArterial'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['pressaoArterial'][$i]['data']) . ' : ' . $sinaisVitaisArray['pressaoArterial'][$i]['pressao_arterial']  : 'Sem registro' ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) . ' : ' . $sinaisVitaisArray['frequenciaCardiaca'][$i]['frequencia_cardiaca']  : 'Sem registro' ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) . ' : ' . $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria']  : 'Sem registro' ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['temperatura'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['temperatura'][$i]['data']) . ' : ' . $sinaisVitaisArray['temperatura'][$i]['temperatura']  : 'Sem registro' ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['hgt'][$i]['data']) ? $util->formatoDataDMY($sinaisVitaisArray['hgt'][$i]['data']) . ' : ' . $sinaisVitaisArray['hgt'][$i]['hgt']  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['saturacao'][$i]['data']) ? $sinaisVitaisArray['saturacao'][$i]['saturacao']. ' | ' .diaMes($util->formatoDataDMY($sinaisVitaisArray['saturacao'][$i]['data'])): 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['pressaoArterial'][$i]['data']) ? $sinaisVitaisArray['pressaoArterial'][$i]['pressao_arterial'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['pressaoArterial'][$i]['data']))  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) ? $sinaisVitaisArray['frequenciaCardiaca'][$i]['frequencia_cardiaca'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']))  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data'])): 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['temperatura'][$i]['data']) ? $sinaisVitaisArray['temperatura'][$i]['temperatura'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['temperatura'][$i]['data'])) : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['hgt'][$i]['data']) ? $sinaisVitaisArray['hgt'][$i]['hgt'] . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['hgt'][$i]['data'])) : 'Sem registro' ?></td>
                                 </tr>
                               <?php
                               endfor;
