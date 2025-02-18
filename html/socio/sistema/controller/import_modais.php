@@ -119,8 +119,8 @@ try {
                   <a onclick="adicionar_tag()">
                     <i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
                   </a>
-                  <select class="form-control" name="tags" id="tags">
-                    <option value="none" disabled selected>Selecionar Grupo</option>
+                  <select class="form-control" name="tags" id="tags" required>
+                    <option value="" disabled selected>Selecionar Grupo</option>
                     <?php
                     $stmt = $conexao->prepare("SELECT * FROM socio_tag");
                     $stmt->execute();
