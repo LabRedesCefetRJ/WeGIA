@@ -838,24 +838,21 @@ try {
                   </section>
                   <!--</form>-->
 
-                  <div id="lista-alergias" class="tab-pane">
-                    <section class="panel panel-primary">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
-                        </div>
-                        <h2 class="panel-title">Lista de Alergias</h2>
-                      </header>
+                  <?php
+                  $alergiasArray = json_decode($alergias, true);
+                  if (count($alergiasArray) > 0):
+                  ?>
+                    <div id="lista-alergias" class="tab-pane">
+                      <section class="panel panel-primary">
+                        <header class="panel-heading">
+                          <div class="panel-actions">
+                            <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                          </div>
+                          <h2 class="panel-title">Lista de Alergias</h2>
+                        </header>
 
-                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
-                        <?php
-                        $alergiasArray = json_decode($alergias, true);
-                        if (count($alergiasArray) == 0):
-                        ?>
-                          <p>O paciente não possuí alergias cadastradas.</p>
-                        <?php
-                        else:
-                        ?>
+                        <div class="panel-body panel-informacoes-gerais" style="display: none;">
+
                           <table class="table table-hover">
                             <thead>
                               <th>#</th>
@@ -877,30 +874,28 @@ try {
                             </tbody>
                           </table>
 
-                        <?php
-                        endif;
-                        ?>
-                      </div>
-                  </div>
 
-                  <div id="lista-comorbidades" class="tab-pane">
-                    <section class="panel panel-primary">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
                         </div>
-                        <h2 class="panel-title">Lista de Comorbidades</h2>
-                      </header>
+                    </div>
+                  <?php
+                  endif;
+                  ?>
 
-                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
-                        <?php
-                        $enfermidadesArray = json_decode($enfermidades, true);
-                        if (count($enfermidadesArray) == 0):
-                        ?>
-                          <p>O paciente não possuí comorbidades cadastradas.</p>
-                        <?php
-                        else:
-                        ?>
+                  <?php
+                  $enfermidadesArray = json_decode($enfermidades, true);
+                  if (count($enfermidadesArray) > 0):
+                  ?>
+                    <div id="lista-comorbidades" class="tab-pane">
+                      <section class="panel panel-primary">
+                        <header class="panel-heading">
+                          <div class="panel-actions">
+                            <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                          </div>
+                          <h2 class="panel-title">Lista de Comorbidades</h2>
+                        </header>
+
+                        <div class="panel-body panel-informacoes-gerais" style="display: none;">
+
                           <table class="table table-hover">
                             <thead>
                               <th>#</th>
@@ -921,38 +916,34 @@ try {
                               ?>
                             </tbody>
                           </table>
-
-                        <?php
-                        endif;
-                        ?>
-                      </div>
-                  </div>
-
-                  <div id="lista-medicacoes-uso" class="tab-pane">
-                    <section class="panel panel-primary">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
                         </div>
-                        <h2 class="panel-title">Lista de Medicações em uso</h2>
-                      </header>
+                    </div>
+                  <?php
+                  endif;
+                  ?>
 
-                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
-                        <?php
-                        $medicamentosEmUso = [];
-                        $medicamentosPaciente = json_decode($exibimed, true);
-                        foreach ($medicamentosPaciente as $medicamento) {
-                          if ($medicamento['id_status'] == 1) {
-                            $medicamentosEmUso[] = $medicamento;
-                          }
-                        }
+                  <?php
+                  $medicamentosEmUso = [];
+                  $medicamentosPaciente = json_decode($exibimed, true);
+                  foreach ($medicamentosPaciente as $medicamento) {
+                    if ($medicamento['id_status'] == 1) {
+                      $medicamentosEmUso[] = $medicamento;
+                    }
+                  }
 
-                        if (count($medicamentosEmUso) == 0):
-                        ?>
-                          <p>O paciente não possuí medicações em uso cadastradas.</p>
-                        <?php
-                        else:
-                        ?>
+                  if (count($medicamentosEmUso) > 0):
+                  ?>
+                    <div id="lista-medicacoes-uso" class="tab-pane">
+                      <section class="panel panel-primary">
+                        <header class="panel-heading">
+                          <div class="panel-actions">
+                            <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                          </div>
+                          <h2 class="panel-title">Lista de Medicações em uso</h2>
+                        </header>
+
+                        <div class="panel-body panel-informacoes-gerais" style="display: none;">
+
                           <table class="table table-hover">
                             <thead>
                               <th>#</th>
@@ -974,75 +965,73 @@ try {
                             </tbody>
                           </table>
 
-                        <?php
-                        endif;
-                        ?>
-                      </div>
-                  </div>
-
-                  <div id="lista-sinais-vitais" class="tab-pane">
-                    <section class="panel panel-primary">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
                         </div>
-                        <h2 class="panel-title">Informações vitais</h2>
-                      </header>
+                    </div>
+                  <?php
+                  endif;
+                  ?>
 
-                      <div class="panel-body panel-informacoes-gerais" style="display: none;">
-                        <?php
+                  <?php
+                  function pegarSinalVital($sql, $pdo)
+                  {
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+                    $stmt->execute();
 
-                        function pegarSinalVital($sql, $pdo)
-                        {
-                          $stmt = $pdo->prepare($sql);
-                          $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
-                          $stmt->execute();
+                    if ($stmt->rowCount() != 0) {
+                      return  $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    }
 
-                          if ($stmt->rowCount() != 0) {
-                            return  $stmt->fetchAll(PDO::FETCH_ASSOC);
-                          }
+                    return false;
+                  }
 
-                          return false;
-                        }
+                  function diaMes($dataCompleta)
+                  {
+                    $dataArray = explode('/', $dataCompleta);
 
-                        function diaMes($dataCompleta){
-                          $dataArray = explode('/', $dataCompleta);
+                    return $dataArray[0] . '/' . $dataArray[1];
+                  }
 
-                          return $dataArray[0].'/'.$dataArray[1];
-                        }
+                  $sinaisVitaisArray = [];
 
-                        $sinaisVitaisArray = [];
+                  $sqlSaturacao = "SELECT saturacao, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.saturacao !='' ORDER BY data DESC LIMIT 5";
 
-                        $sqlSaturacao = "SELECT saturacao, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.saturacao !='' ORDER BY data DESC LIMIT 5";
+                  $sqlPressaoArterial = "SELECT pressao_arterial, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.pressao_arterial !='' ORDER BY data DESC LIMIT 5";
 
-                        $sqlPressaoArterial = "SELECT pressao_arterial, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.pressao_arterial !='' ORDER BY data DESC LIMIT 5";
+                  $sqlFrequenciaCardiaca = "SELECT frequencia_cardiaca, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_cardiaca !='' ORDER BY data DESC LIMIT 5";
 
-                        $sqlFrequenciaCardiaca = "SELECT frequencia_cardiaca, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_cardiaca !='' ORDER BY data DESC LIMIT 5";
+                  $sqlFrequenciaRespiratoria = "SELECT frequencia_respiratoria, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_respiratoria !='' ORDER BY data DESC LIMIT 5";
 
-                        $sqlFrequenciaRespiratoria = "SELECT frequencia_respiratoria, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_respiratoria !='' ORDER BY data DESC LIMIT 5";
+                  $sqlTemperatura = "SELECT temperatura, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.temperatura !='' ORDER BY data DESC LIMIT 5";
 
-                        $sqlTemperatura = "SELECT temperatura, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.temperatura !='' ORDER BY data DESC LIMIT 5";
+                  $sqlHgt = "SELECT hgt, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.hgt !='' ORDER BY data DESC LIMIT 5";
 
-                        $sqlHgt = "SELECT hgt, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.hgt !='' ORDER BY data DESC LIMIT 5";
+                  try {
+                    $sinaisVitaisArray['saturacao'] = pegarSinalVital($sqlSaturacao, $pdo);
+                    $sinaisVitaisArray['pressaoArterial'] = pegarSinalVital($sqlPressaoArterial, $pdo);
+                    $sinaisVitaisArray['frequenciaCardiaca'] = pegarSinalVital($sqlFrequenciaCardiaca, $pdo);
+                    $sinaisVitaisArray['frequenciaRespiratoria'] = pegarSinalVital($sqlFrequenciaRespiratoria, $pdo);
+                    $sinaisVitaisArray['temperatura'] = pegarSinalVital($sqlTemperatura, $pdo);
+                    $sinaisVitaisArray['hgt'] = pegarSinalVital($sqlHgt, $pdo);
+                  } catch (PDOException $e) {
+                    http_response_code(500);
+                    echo json_encode(['erro' => 'Erro ao buscar o histórico dos sinais vitais']);
+                    exit();
+                  }
 
-                        try {
-                          $sinaisVitaisArray['saturacao'] = pegarSinalVital($sqlSaturacao, $pdo);
-                          $sinaisVitaisArray['pressaoArterial'] = pegarSinalVital($sqlPressaoArterial, $pdo);
-                          $sinaisVitaisArray['frequenciaCardiaca'] = pegarSinalVital($sqlFrequenciaCardiaca, $pdo);
-                          $sinaisVitaisArray['frequenciaRespiratoria'] = pegarSinalVital($sqlFrequenciaRespiratoria, $pdo);
-                          $sinaisVitaisArray['temperatura'] = pegarSinalVital($sqlTemperatura, $pdo);
-                          $sinaisVitaisArray['hgt'] = pegarSinalVital($sqlHgt, $pdo);
-                        } catch (PDOException $e) {
-                          http_response_code(500);
-                          echo json_encode(['erro' => 'Erro ao buscar o histórico dos sinais vitais']);
-                          exit();
-                        }
-                        if (!$sinaisVitaisArray['saturacao'] && !$sinaisVitaisArray['pressaoArterial'] && !$sinaisVitaisArray['frequenciaCardiaca'] && !$sinaisVitaisArray['frequenciaRespiratoria'] && !$sinaisVitaisArray['temperatura'] && !$sinaisVitaisArray['hgt']):
-                        ?>
-                          <p>O paciente não possuí aferições de sinais vitais.</p>
-                        <?php
-                        else:
-                        ?>
+                  if ($sinaisVitaisArray['saturacao'] || $sinaisVitaisArray['pressaoArterial'] || $sinaisVitaisArray['frequenciaCardiaca'] || $sinaisVitaisArray['frequenciaRespiratoria'] || $sinaisVitaisArray['temperatura'] || $sinaisVitaisArray['hgt']):
+                  ?>
+                    <div id="lista-sinais-vitais" class="tab-pane">
+                      <section class="panel panel-primary">
+                        <header class="panel-heading">
+                          <div class="panel-actions">
+                            <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                          </div>
+                          <h2 class="panel-title">Informações vitais</h2>
+                        </header>
+
+                        <div class="panel-body panel-informacoes-gerais" style="display: none;">
+
                           <table class="table table-hover small-text">
                             <thead>
                               <th>#</th>
@@ -1061,10 +1050,10 @@ try {
                               ?>
                                 <tr>
                                   <td><?= $i + 1 ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['saturacao'][$i]['data']) ? $sinaisVitaisArray['saturacao'][$i]['saturacao']. ' | ' .diaMes($util->formatoDataDMY($sinaisVitaisArray['saturacao'][$i]['data'])): 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['saturacao'][$i]['data']) ? $sinaisVitaisArray['saturacao'][$i]['saturacao'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['saturacao'][$i]['data'])) : 'Sem registro' ?></td>
                                   <td class="text-center"><?= isset($sinaisVitaisArray['pressaoArterial'][$i]['data']) ? $sinaisVitaisArray['pressaoArterial'][$i]['pressao_arterial'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['pressaoArterial'][$i]['data']))  : 'Sem registro' ?></td>
                                   <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) ? $sinaisVitaisArray['frequenciaCardiaca'][$i]['frequencia_cardiaca'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']))  : 'Sem registro' ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data'])): 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data'])) : 'Sem registro' ?></td>
                                   <td class="text-center"><?= isset($sinaisVitaisArray['temperatura'][$i]['data']) ? $sinaisVitaisArray['temperatura'][$i]['temperatura'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['temperatura'][$i]['data'])) : 'Sem registro' ?></td>
                                   <td class="text-center"><?= isset($sinaisVitaisArray['hgt'][$i]['data']) ? $sinaisVitaisArray['hgt'][$i]['hgt'] . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['hgt'][$i]['data'])) : 'Sem registro' ?></td>
                                 </tr>
@@ -1074,11 +1063,11 @@ try {
                             </tbody>
                           </table>
 
-                        <?php
-                        endif;
-                        ?>
-                      </div>
-                  </div>
+                        </div>
+                    </div>
+                  <?php
+                  endif;
+                  ?>
 
                   <form action="../../controle/control.php" method="POST" id="editarProntuario">
                     <input type="hidden" name="nomeClasse" value="SaudeControle">

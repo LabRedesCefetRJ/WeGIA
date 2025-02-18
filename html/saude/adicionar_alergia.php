@@ -1,8 +1,10 @@
 <?php
+session_start();
 require_once '../../dao/Conexao.php';
 
-if (!isset($_SESSION["usuario"])){
+if (!isset($_SESSION['id_pessoa'])){
     header("Location: ../index.php");
+	exit();
 }
 
 // Verifica Permissão do Usuário
@@ -34,5 +36,7 @@ try {
 	$stmt->bindParam(':alergiaNome', $alergiaNome);
 	$stmt->execute();
 } catch (PDOException $e) {
-	echo 'Erro ao adicionar nova alergia: ' . $e->getMessage();
+	http_response_code(500);
+	echo json_encode(['erro' => 'Problema no servidor ao adicionar nova alergia: ' . $e->getMessage()]);
+	exit();
 }
