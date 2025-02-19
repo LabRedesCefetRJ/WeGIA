@@ -1191,7 +1191,7 @@ try {
                       </table>
 
                       <br>
-                      <form action='enfermidade_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                      <form id='form-enfermidade'>
                         <div class="form-group">
                           <div class="col-md-6">
                             <h5 class="obrig">Campos Obrigatórios(*)</h5>
@@ -1235,7 +1235,7 @@ try {
                           <div class="col-md-6">
                             <input type="number" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
                             <input type="hidden" name="id_fichamedica" value=<?php echo $_GET['id_fichamedica'] ?>>
-                            <input type="submit" class="btn btn-primary" value="Cadastrar" id="botaoSalvarIP">
+                            <input type="submit" class="btn btn-primary" value="Cadastrar" id="btn-cadastrar-enfermidade">
                           </div>
                         </div>
                       </form>
@@ -2079,6 +2079,116 @@ try {
         const idPaciente = <?= $idPaciente ?>;
         window.location.href = `./historico_prontuarios.php?id_paciente=${idPaciente}`
       }
+
+      //Formatar data para brasileiro
+      function formatarDataBr(data) {
+        const parts = data.split('-'); // Supondo que a data esteja no formato 'YYYY-MM-DD'
+
+        // Converte para uma nova data no fuso horário local
+        const dataFormatada = new Date(parts[0], parts[1] - 1, parts[2]);
+
+        const options = {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        };
+        return dataFormatada.toLocaleDateString('pt-BR', options);
+      }
+
+
+      //Buscar enfermidades
+      async function buscarEnfermidades() {
+        const nomeClasse = 'EnfermidadeControle';
+        const metodo = 'getEnfermidadesAtivasPorFichaMedica';
+        const id_fichamedica = <?= json_encode($_GET['id_fichamedica']) ?>
+
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
+
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+          }
+
+          const data = await response.json();
+
+          return data ?? []; //Retorna um array vazio se `null`
+        } catch (error) {
+          console.error('Erro ao buscar enfermidades:', error);
+          return [];
+        }
+      }
+
+      //Gerar tabela de enfermidades
+      function exibirEnfermidades(enfermidades) {
+
+        if (!Array.isArray(enfermidades) || enfermidades.length === 0) {
+          console.warn('Nenhuma enfermidade encontrada!');
+          return;
+        }
+
+        $("#doc-tab").empty(); //Limpa a tabela antes de adicionar novas linhas
+
+        $.each(enfermidades, function(i, item) {
+
+          // Certifique-se de que `descricao` e `data_diagnostico` existem no objeto
+          if (!item.descricao || !item.data_diagnostico) {
+            console.warn('Dados inválidos:', item);
+            return;
+          }
+
+          $("#doc-tab").append(
+            $("<tr>")
+            .append($("<td>").text(item.descricao))
+            .append($("<td>").text(formatarDataBr(item.data_diagnostico)))
+            .append($("<td style='display: flex; justify-content: space-evenly;'>")
+              .append($("<a>")
+                .attr("href", "#")
+                .attr("title", "Inativar")
+                .attr("onclick", `removerEnfermidade(${item.id_CID})`)
+                .append($("<button class='btn btn-dark'>")
+                  .append($("<i class='glyphicon glyphicon-remove'>"))
+                )
+              )
+            )
+          );
+        });
+
+        $("#doc-tab").hide().show(); //Força atualização visual da tabela
+      }
+
+
+      async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
+        ev.preventDefault();
+
+        const formEnfermidade = document.getElementById('form-enfermidade');
+        const formData = new FormData(formEnfermidade);
+
+        try {
+          const response = await fetch('./enfermidade_upload.php', {
+            method: 'POST',
+            body: new URLSearchParams([...formData]), // Converte FormData para URL-encoded
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            }
+          });
+
+          const data = await response.json();
+
+          // Chamar função para buscar e exibir nova tabela
+          const enfermidades = await buscarEnfermidades();
+
+          exibirEnfermidades(enfermidades);
+
+        } catch (error) {
+          console.error('Erro:', error);
+        }
+      }
+
+      const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
+
+      btnCadastrarEnfermidade.addEventListener('click', cadastrarEnfermidade);
     </script>
 
     <!-- Vendor -->

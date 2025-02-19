@@ -30,6 +30,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 			'DestinoControle' => [21, 2],
 			'DocumentoControle' => [5],
 			'EnderecoControle' => [9, 12],
+			'EnfermidadeControle' => [5, 54],
 			'EntradaControle' => [23],
 			'EstoqueControle' => [22],
 			'FuncionarioControle' => [11, 91],

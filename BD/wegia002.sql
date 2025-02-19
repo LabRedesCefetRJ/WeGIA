@@ -111,6 +111,7 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('51', 'Criar ficha médica'),
 ('52', 'Ficha do paciente'),
 ('53', 'Alergia'),
+('54', 'Enfermidade'),
 ('6', 'Módulo Pet'),
 ('7', 'Módulo Contribuição'),
 ('61', 'Cadastrar Pet'),
