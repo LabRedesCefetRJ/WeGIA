@@ -60,7 +60,6 @@ foreach ($docfuncional as $key => $value) {
   //formatar data
   $data = new DateTime($value['data']);
   $docfuncional[$key]['data'] = $data->format('d/m/Y h:i:s');
-
 }
 $docfuncional = json_encode($docfuncional);
 $dependente = $pdo->query("SELECT fdep.id_dependente AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.descricao AS parentesco FROM funcionario_dependentes fdep LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco WHERE fdep.id_funcionario = " . $_GET['id_funcionario']);
@@ -625,9 +624,9 @@ $dependente = json_encode($dependente);
         return
       }
       data = {
-        nomeClasse : 'CargoControle',
+        nomeClasse: 'CargoControle',
         metodo: 'incluir',
-        cargo : cargo
+        cargo: cargo
       };
       console.log(data);
       $.ajax({
@@ -636,10 +635,10 @@ $dependente = json_encode($dependente);
         data: JSON.stringify(data),
         contentType: "application/json",
         success: function(response) {
-            gerarCargo();
+          gerarCargo();
         },
         dataType: 'text'
-    });
+      });
     }
   </script>
 </head>
@@ -965,9 +964,9 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label for="pis" class="col-md-3 control-label">PIS (Número de Identificação do Trabalhador)</label>
                           <div class="col-md-6">
-                            <input type="text" id="pis" name="pis" class="form-control" maxlength="14" 
-                                  placeholder="123.45678.91-0" 
-                                  oninput="formatPIS(this)" required>
+                            <input type="text" id="pis" name="pis" class="form-control" maxlength="14"
+                              placeholder="123.45678.91-0"
+                              oninput="formatPIS(this)" required>
                             <small>Formato: 123.45678.91-0</small>
                           </div>
                         </div>
@@ -975,9 +974,9 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label for="ctps" class="col-md-3 control-label">CTPS (Carteira de Trabalho e Previdência Social)</label>
                           <div class="col-md-6">
-                            <input type="text" id="ctps" name="ctps" class="form-control" maxlength="12" 
-                                  placeholder="1234567/8910" 
-                                  oninput="formatCTPS(this)" required>
+                            <input type="text" id="ctps" name="ctps" class="form-control" maxlength="12"
+                              placeholder="1234567/8910"
+                              oninput="formatCTPS(this)" required>
                             <small>Formato: 1234567/8910</small>
                           </div>
                         </div>
@@ -994,10 +993,10 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label for="titulo_eleitor" class="col-md-3 control-label">Título de Eleitor</label>
                           <div class="col-md-6">
-                            <input type="text" name="titulo_eleitor" id="titulo_eleitor" class="form-control" 
-                                  pattern="\d{12}" maxlength="12" placeholder="123456789012" 
-                                  oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
-                                  required>
+                            <input type="text" name="titulo_eleitor" id="titulo_eleitor" class="form-control"
+                              pattern="\d{12}" maxlength="12" placeholder="123456789012"
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              required>
                             <small>Formato: 123456789012</small>
                           </div>
                         </div>
@@ -1006,10 +1005,10 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label for="zona_eleitoral" class="col-md-3 control-label">Zona Eleitoral</label>
                           <div class="col-md-6">
-                            <input type="text" name="zona_eleitoral" id="zona_eleitoral" class="form-control" 
-                                  pattern="\d{3}" maxlength="3" placeholder="123" 
-                                  oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
-                                  required>
+                            <input type="text" name="zona_eleitoral" id="zona_eleitoral" class="form-control"
+                              pattern="\d{3}" maxlength="3" placeholder="123"
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              required>
                             <small>Formato: 123</small>
                           </div>
                         </div>
@@ -1018,10 +1017,10 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label for="secao_titulo_eleitor" class="col-md-3 control-label">Seção do Título de Eleitor</label>
                           <div class="col-md-6">
-                            <input type="text" name="secao_titulo_eleitor" id="secao_titulo_eleitor" class="form-control" 
-                                  pattern="\d{4}" maxlength="4" placeholder="1234" 
-                                  oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
-                                  required>
+                            <input type="text" name="secao_titulo_eleitor" id="secao_titulo_eleitor" class="form-control"
+                              pattern="\d{4}" maxlength="4" placeholder="1234"
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              required>
                             <small>Formato: 1234</small>
                           </div>
                         </div>
@@ -1029,10 +1028,10 @@ $dependente = json_encode($dependente);
                         <div class="form-group" id="reservista1" style="display: none">
                           <label class="col-md-3 control-label">Número do certificado reservista</label>
                           <div class="col-md-6">
-                            <input type="text" id="certificado_reservista_numero" name="certificado_reservista_numero" 
-                                  class="form-control num_reservista" maxlength="9" 
-                                  pattern="\d*" inputmode="numeric" placeholder="123456789" 
-                                  oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                            <input type="text" id="certificado_reservista_numero" name="certificado_reservista_numero"
+                              class="form-control num_reservista" maxlength="9"
+                              pattern="\d*" inputmode="numeric" placeholder="123456789"
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                             <small>Formato: 123456789</small>
                           </div>
                         </div>
@@ -1040,14 +1039,14 @@ $dependente = json_encode($dependente);
                         <div class="form-group" id="reservista2" style="display: none">
                           <label class="col-md-3 control-label">Série do certificado reservista</label>
                           <div class="col-md-6">
-                            <input type="text" id="certificado_reservista_serie" name="certificado_reservista_serie" 
-                                  class="form-control serie_reservista" maxlength="3" 
-                                  pattern="\d*" inputmode="numeric" placeholder="001" 
-                                  oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                            <input type="text" id="certificado_reservista_serie" name="certificado_reservista_serie"
+                              class="form-control serie_reservista" maxlength="3"
+                              pattern="\d*" inputmode="numeric" placeholder="001"
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                             <small>Formato: 001</small>
                           </div>
                         </div>
-                        
+
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Data de Admissão</label>
                           <div class="col-md-6">
@@ -1169,7 +1168,7 @@ $dependente = json_encode($dependente);
                                       [0, "asc"]
                                     ]
                                   });
-                                  post("informacao_adicional.php", "action='listar'&id_funcionario=<?= $_GET['id_funcionario'] ?>", listarInfoAdicional)
+                                  post("informacao_adicional.php", "action='listar'&id_funcionario=<?= $_GET['id_funcionario'] ?>")
                                 });
 
                                 function adicionar_addInfoDescricao() {
@@ -1211,40 +1210,49 @@ $dependente = json_encode($dependente);
                                   $("#" + id_descricao + "").remove();
                                 }
 
+                                //Refazer lógica abaixo
                                 function listarInfoAdicional(lista) {
-                                  var argsAdicional = "action=idInfoAdicional";
-                                  var argsdesc = "action=selectDescricao";
-                                  var vetor = new Array;
+
                                   $.ajax({
-                                    type: "POST",
-                                    url: "informacao_adicional.php",
-                                    data: argsdesc,
+                                    type: "GET",
+                                    url: `../../controle/control.php?nomeClasse=${encodeURIComponent('InformacaoAdicionalControle')}&metodo=${encodeURIComponent('getTodasInformacoesAdicionaisPorIdFuncionario')}&id_funcionario=<?= $_GET['id_funcionario'] ?>`,
                                     dataType: 'json',
                                     success: function(resp) {
-                                      console.log(resp);
-                                      $.each(resp, function(idx, obj) {
-                                        vetor.push(obj.descricao);
-                                      })
-                                      console.log(vetor);
-                                      $.ajax({
-                                        type: "POST",
-                                        url: "informacao_adicional.php",
-                                        data: argsAdicional,
-                                        dataType: 'json',
-                                        success: function(res) {
-                                          $("#datatable-addInfo").find(".dataTables_empty").hide();
-                                          var id = res['max(idfunncionario_outrasinfo)'];
-                                          $("#addInfo-tab")
-                                            .append($("<tr id=" + id + ">")
-                                              .append($("<td>").text(vetor[lista[0] - 1]))
-                                              .append($("<td>").text(lista[1]))
-                                              .append($("<td style='display: flex; justify-content: space-evenly;'>")
-                                                .append($("<button onclick='removerDescricao(" + id + ")' title='Excluir' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>"))
-                                              )
-                                            )
-                                        },
-                                      });
+                                      console.log('Informações adicionais', resp);
+
+                                      let tabela = $("#addInfo-tab");
+
+                                      // Limpa a tabela antes de adicionar os novos dados (se necessário)
+                                      tabela.empty();
+
+                                      // Verifica se há dados antes de tentar adicioná-los
+                                      if (resp.length > 0) {
+                                        resp.forEach(info => {
+                                          let idInfoAdicional = info.id;
+                                          let nome_desc = info.descricao;
+                                          let dado = info.dados;
+
+                                          let linha = `
+                                              <tr id="${idInfoAdicional}">
+                                                <td>${nome_desc}</td>
+                                                <td>${dado}</td>
+                                                <td style='display: flex; justify-content: space-evenly;'>
+                                                  <button onclick='removerDescricao(${idInfoAdicional})' title='Excluir' class='btn btn-danger'>
+                                                    <i class='fas fa-trash-alt'></i>
+                                                  </button>
+                                                </td>
+                                              </tr>
+                                            `;
+
+                                          tabela.append(linha);
+                                        });
+                                      } else {
+                                        tabela.append("<tr><td colspan='3' class='text-center'>Nenhuma informação adicional encontrada.</td></tr>");
+                                      }
                                     },
+                                    error: function(xhr, status, error) {
+                                      console.error("Erro ao buscar informações adicionais:", error);
+                                    }
                                   });
                                 }
                               </script>
@@ -1793,7 +1801,6 @@ $dependente = json_encode($dependente);
         case "formInfoAdicional":
           url = "informacao_adicional.php";
           data_nova = "id_descricao=" + data[0] + "&dados=" + data[1] + "&action=adicionar&id_funcionario=" + data[3];
-          listarInfoAdicional(data);
           break;
         default:
           console.warn("Não existe nenhuma URL registrada para o formulário com o seguinte id: " + idForm);

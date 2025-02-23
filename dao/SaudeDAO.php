@@ -107,7 +107,7 @@ class SaudeDAO
         try{
             $pacientes=array();
             $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT s.id_fichamedica,p.imagem,p.nome,p.sobrenome FROM pessoa p INNER JOIN saude_fichamedica s ON s.id_pessoa = p.id_pessoa");
+            $consulta = $pdo->query("SELECT s.id_fichamedica,p.imagem,p.nome,p.sobrenome FROM pessoa p INNER JOIN saude_fichamedica s ON s.id_pessoa = p.id_pessoa JOIN atendido a ON (a.pessoa_id_pessoa=p.id_pessoa) WHERE a.atendido_status_idatendido_status !=2");
             // $produtos = Array();
             $x=0;
             while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
