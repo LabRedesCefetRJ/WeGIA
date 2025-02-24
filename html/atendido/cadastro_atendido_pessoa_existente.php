@@ -22,6 +22,7 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 $id_pessoa = $_SESSION['id_pessoa'];
+$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $stmt = mysqli_prepare($conexao, "SELECT * FROM funcionario WHERE id_pessoa=?");
 mysqli_stmt_bind_param($stmt, 'i', $id_pessoa);
 mysqli_stmt_execute($stmt);
@@ -63,10 +64,18 @@ $listaCPF2->listarCpf();
 
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
-$cpf = $_GET['cpf'];
-if (!preg_match('/^\d{11}$/', $cpf)) {
-    die('CPF inválido.');
+
+require_once "../../classes/Util.php";
+$util = new Util();
+
+$cpf = trim($_GET['cpf']);
+
+if(!$util->validarCPF($cpf)){
+	http_response_code(400);
+	header("Location: " . WWW . "html/home.php?msg_c=CPF Inválido");
+	exit();
 }
+
 $atendido = new AtendidoDAO;
 $informacoesFunc = $atendido->listarPessoaExistente($cpf);
 $id_pessoaForm = $atendido->listarIdPessoa($cpf);
