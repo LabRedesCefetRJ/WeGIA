@@ -1,7 +1,12 @@
 <?php
+	session_start();
 	require_once 'Conexao.php';
+
+	//verificar permissão
+	require_once '../html/permissao/permissao.php';
+	permissao($_SESSION['id_pessoa'], 12, 3);
 	
-	$status = trim($_POST["status"]);
+	$status = trim(filter_input(INPUT_POST, 'status', FILTER_SANITIZE_STRING));
 
 	if(!$status || empty($status)){
 		http_response_code(400);
