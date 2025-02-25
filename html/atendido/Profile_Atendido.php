@@ -1101,7 +1101,7 @@ $dependente = json_encode($dependente);
                                         <?php
                                         foreach ($pdo->query("SELECT * FROM atendido_parentesco ORDER BY parentesco ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
                                           echo ("
-                                            <option value='" . $item["idatendido_parentesco"] . "' >" . $item["parentesco"] . "</option>
+                                            <option value='" . $item["idatendido_parentesco"] . "' >" . htmlspecialchars($item["parentesco"]) . "</option>
                                             ");
                                         }
                                         ?>

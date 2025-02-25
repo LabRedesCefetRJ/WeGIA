@@ -32,17 +32,20 @@ function permissao($id_pessoa, $id_recurso, $id_acao = 1){
 			if($permissao['id_acao'] < $id_acao){
 				$msg = "Você não tem as permissões necessárias para essa página.".(DEBUG ? " Sem acesso!" : "" );
 				header("Location: ".$wegia_path."/html/home.php?msg_c=$msg");
+				exit();
 			}
 			$permissao = $permissao['id_acao'];
 		}else{
 			$permissao = $id_acao;
 			$msg = "Você não tem as permissões necessárias para essa página.".(DEBUG ? " Não há permissão!" : "" );
 			header("Location: ".$wegia_path."/html/home.php?msg_c=$msg");
+			exit();
 		}	
 	}else{
 		$permissao = $id_acao;
 		$msg = "Você não tem as permissões necessárias para essa página.".(DEBUG ? " ID do funcionário não cadastrado!" : "" );
 		header("Location: ".$wegia_path."/html/home.php?msg_c=$msg");
+		exit();
 	}
 }
 ?>
