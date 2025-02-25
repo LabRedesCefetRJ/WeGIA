@@ -1,11 +1,17 @@
 <?php
+session_start();
 require_once 'Conexao.php';
 
-$descricao = trim($_POST["tipo"]);
+//verificar permissão
+require_once '../html/permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 12, 3);
+
+$descricao = trim(filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_STRING));
 
 if(!$descricao || empty($descricao)){
 	http_response_code(400);
-	exit('Erro, a descrição de um novo tipo não poder ser vazia.');
+	echo json_encode(['erro' => 'Erro, a descrição de um novo tipo não poder ser vazia.']);
+	exit();
 }
 
 try{
@@ -15,5 +21,5 @@ try{
 	$stmt->bindParam(':descricao', $descricao);
 	$stmt->execute();
 }catch(PDOException $e){
-	echo 'Erro ao inserir a descrição do novo tipo no banco de dados: '.$e->getMessage();
+	echo json_encode(['erro' => 'Erro ao inserir a descrição do novo tipo no banco de dados: '.$e->getMessage()]);
 }
