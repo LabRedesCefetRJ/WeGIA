@@ -40,7 +40,10 @@ function gerarBoleto() {
                 console.log(resposta.link);
                 // Redirecionar o usuário para o link do boleto em uma nova aba
                 window.open(resposta.link, '_blank');
-            } else {
+            } else if (resposta.erro){
+                alert('Erro: '+ resposta.erro);
+            }
+            else {
                 alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
             }
 
