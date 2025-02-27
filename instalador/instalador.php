@@ -2,6 +2,12 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+$hasConfig = file_exists("../config.php");
+	if ($hasConfig){
+		header("Location: ../html/home.php");
+		exit();
+	}
 ?>
 
 <html>
