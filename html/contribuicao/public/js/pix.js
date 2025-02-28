@@ -87,7 +87,9 @@ function gerarQRCode() {
                     alert("Código QR copiado para a área de transferência!");
                 });
 
-            } else {
+            } else if (resposta.erro){
+                alert('Erro: '+ resposta.erro);
+            }else {
                 alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
             }
 

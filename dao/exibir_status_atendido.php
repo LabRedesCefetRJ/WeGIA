@@ -6,7 +6,7 @@
 	$stmt = $pdo->query($sql);
 	$resultado = array();
 	while ($row = $stmt->fetch()) {
-    	$resultado[] = array('idatendido_status'=>$row['idatendido_status'],'status'=>$row['status']);
+    	$resultado[] = array('idatendido_status'=>$row['idatendido_status'],'status'=>htmlspecialchars($row['status']));
 	}
 	echo json_encode($resultado);
 ?>

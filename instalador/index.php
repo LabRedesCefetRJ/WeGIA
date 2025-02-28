@@ -3,6 +3,7 @@
 	$hasConfig = file_exists("../config.php");
 	if ($hasConfig){
 		header("Location: ../html/home.php");
+		exit();
 	}
 ?>
 <html>

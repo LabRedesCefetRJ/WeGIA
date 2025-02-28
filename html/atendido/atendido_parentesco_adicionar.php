@@ -1,8 +1,8 @@
 <?php
-
 session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit();
 }
 
 // Verifica Permissão do Usuário
@@ -10,12 +10,12 @@ require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 11, 7);
 require_once '../../dao/Conexao.php';
 
-$descricao = $_POST["descricao"];
-$descricao = trim($descricao);
+$descricao = trim(filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_STRING));
 
 if (!$descricao || empty($descricao)) {
     http_response_code(400);
-    echo 'A descrição de um novo tipo de parentesco não pode ser vazia!';
+    echo json_encode(['erro' => 'A descrição de um novo tipo de parentesco não pode ser vazia']);
+    exit();
 }
 
 try {
@@ -25,5 +25,7 @@ try {
     $stmt->bindParam(':descricao', $descricao);
     $stmt->execute();
 } catch (PDOException $e) {
-    echo 'Ocorreu um erro ao tentar adicionar o parentesco: ' . $e->getMessage();
+    http_response_code(500);
+    echo json_encode(['erro' => 'Ocorreu um erro ao tentar adicionar o parentesco: ' . $e->getMessage()]);
+    exit();
 }
