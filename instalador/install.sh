@@ -19,9 +19,8 @@ add_backports_repo() {
     local BACKPORTS="deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware"
 
     if ! grep -q "bookworm-backports" /etc/apt/sources.list; then
-        echo "$BACKPORTS" | sudo tee -a /etc/apt/sources.list
-        echo "Adding Backport Repository [ok] "
-        sudo apt update
+        echo "$BACKPORTS" | tee -a /etc/apt/sources.list
+        echo "Adding Backport Repository [ok]"
     else
         echo "Debian 12 Backports Repository [ok]"
     fi
@@ -174,6 +173,7 @@ CHOICE=$(< /tmp/menu_choice)
 case $CHOICE in
     1)
         dialog --msgbox "Você escolheu Instalação Local. Continuando..." 6 60
+        clear
         check_debian_12
         add_backports_repo
         install_deps
