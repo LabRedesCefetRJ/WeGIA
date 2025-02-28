@@ -50,12 +50,14 @@ download_wegia() {
     curl -L -o "$FILENAME" "$TARBALL_URL"
 
     echo "Download concluído: $FILENAME"
+    mv $FILENAME /tmp/
+    chmod +x /tmp/$FILENAME
 
 }
 
 install_wegia(){
     sudo -u www-data mkdir -p /tmp/WeGIA
-    sudo -u www-data tar --strip-components=1 -zxvf WeGIA-latest.tar.gz -C /tmp/WeGIA
+    sudo -u www-data tar --strip-components=1 -zxvf /tmp/WeGIA-latest.tar.gz -C /tmp/WeGIA
     mv /tmp/WeGIA /var/www/
     mkdir -p /var/www/bkpWeGIA
     chown www-data:www-data /var/www/bkpWeGIA -R
@@ -134,6 +136,9 @@ EOF
 
 conf_wegia_local(){
     ln -s /var/www/WeGIA /var/www/html/WeGIA
+    a2enmod ssl
+    a2ensite default-ssl.conf 
+    systemctl restart apache2
 }
 
 create_database(){
