@@ -35,30 +35,10 @@ install_deps(){
     apt install -t bookworm-backports libapache2-mod-qos libpcre3 libpcre3-dev libapache2-mod-evasive -y
 }
 
-download_wegia() {
-    local API_URL="https://api.github.com/repos/LabRedesCefetRJ/WeGIA/releases/latest"
-    local TARBALL_URL=$(curl -s "$API_URL" | grep -oP '"tarball_url": "\K[^"]+')
-
-    if [[ -z "$TARBALL_URL" ]]; then
-        echo "Erro: Não foi possível obter o link do .tar.gz"
-        exit 1
-    fi
-
-    local FILENAME="WeGIA-latest.tar.gz"
-
-    echo "Baixando $TARBALL_URL..."
-    curl -L -o "$FILENAME" "$TARBALL_URL"
-
-    echo "Download concluído: $FILENAME"
-    mv $FILENAME /tmp/
-    chmod +x /tmp/$FILENAME
-
-}
-
-install_wegia(){
-    sudo -u www-data mkdir -p /tmp/WeGIA
-    sudo -u www-data tar --strip-components=1 -zxvf /tmp/WeGIA-latest.tar.gz -C /tmp/WeGIA
+download_wegia(){
+    sudo -u www-data git -C /tmp clone https://github.com/LabRedesCefetRJ/WeGIA.git
     mv /tmp/WeGIA /var/www/
+
     mkdir -p /var/www/bkpWeGIA
     chown www-data:www-data /var/www/bkpWeGIA -R
 }
@@ -183,7 +163,6 @@ case $CHOICE in
         add_backports_repo
         install_deps
         download_wegia
-        install_wegia
         conf_wegia_local
         create_database
         ;;
@@ -194,7 +173,6 @@ case $CHOICE in
         add_backports_repo
         install_deps
         download_wegia
-        install_wegia
         conf_wegia_internet
         create_database
         ;;
