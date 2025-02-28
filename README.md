@@ -16,6 +16,15 @@ Contato: [Prof. Nilson  Lazarin](https://bsi.cefet-rj.br/~lazarin/)
 
 ## Teste online: http://demo.wegia.org
 
+## Como instalar?
+Em um terminal execute os comandos abaixo:
+```
+apt update
+apt install wget dialog -y
+wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/instalador/install.sh
+chmod +x install.sh
+./install.sh
+```
 
 ## Copyright
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />WeGIA is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>. The licensor cannot revoke these freedoms as long as you follow the license terms:

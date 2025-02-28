@@ -20,6 +20,18 @@ Você pode utilizar uma máquina virtual com o WeGIA pré instalado para executa
         - senha do usuário: wegia
     - [Assista o tutorial do uso da VM do WeGIA no Youtube](https://youtu.be/mGayZb2snqk)
 
+- Instalação Local
+
+Execute em um terminal os seguintes comandos:  
+
+```
+apt update
+apt install wget dialog -y
+wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/instalador/install.sh
+chmod +x install.sh
+./install.sh
+```
+
 ### Em tempo de execução (servidor de teste)
 Você pode utilizar um servidor público com o WeGIA pré instalado para executar seus testes de segurança.
 
