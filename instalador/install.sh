@@ -55,8 +55,8 @@ download_wegia() {
 
 install_wegia(){
     sudo -u www-data mkdir -p /tmp/WeGIA
-    sudo -u www-data tar --strip-components=1 -zxvf WeGIA-latest.tar.gz -C /var/www/WeGIA
-    #mv /tmp/WeGIA /var/www/
+    sudo -u www-data tar --strip-components=1 -zxvf WeGIA-latest.tar.gz -C /tmp/WeGIA
+    mv /tmp/WeGIA /var/www/
     mkdir -p /var/www/bkpWeGIA
     chown www-data:www-data /var/www/bkpWeGIA -R
 }
