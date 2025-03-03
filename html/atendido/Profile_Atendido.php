@@ -1190,7 +1190,7 @@ $dependente = json_encode($dependente);
                                         <?php
                                         foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
                                           echo ("
-                                          <option value='" . $item["idatendido_docs_atendidos"] . "' >" . $item["descricao"] . "</option>
+                                          <option value='" . $item["idatendido_docs_atendidos"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>
                                           ");
                                         }
                                         ?>
