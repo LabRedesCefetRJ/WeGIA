@@ -108,6 +108,53 @@ class SocioDAO
         }
     }
 
+    public function criarSocioPessoaPreExistente(socio $socio, int $idPessoa){
+        $this->pdo->beginTransaction();
+
+        //criar socio
+        $idSocioStatus = 3; //Define o status do sócio como Inativo temporariamente
+
+        $tagSolicitante = $this->pdo->query("SELECT * FROM socio_tag WHERE tag='Solicitante'")->fetch(PDO::FETCH_ASSOC);
+
+        $idSocioTag = $tagSolicitante['id_sociotag']; //Define o grupo do sócio como Solicitante
+
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, id_sociotag, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :idSocioTag, :email, :valor, :dataReferencia)';
+
+        $stmtSocio = $this->pdo->prepare($sqlSocio);
+
+        $periodicidade = 0;
+        $dataReferencia = new DateTime();
+        $dataReferencia = $dataReferencia->format('Y-m-d');
+
+        $stmtSocio->bindParam(':idPessoa', $idPessoa);
+        $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
+        $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
+        $stmtSocio->bindParam(':idSocioTag', $idSocioTag);
+        $stmtSocio->bindParam(':email', $socio->getEmail());
+        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+
+        $stmtSocio->execute();
+
+        //registrar no socio_log
+        $idSocio = $this->pdo->lastInsertId();
+
+        $sqlRegistrarSocioLog = "INSERT INTO socio_log (id_socio, descricao)
+            VALUES (:idSocio,'Inscrição recente')";
+
+        $stmtSocioLog = $this->pdo->prepare($sqlRegistrarSocioLog);
+        $stmtSocioLog->bindParam(':idSocio', $idSocio);
+
+        if ($stmtSocioLog->execute()) {
+            $this->pdo->commit();
+        } else {
+            $this->pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao cadastrar sócio no sistema']);
+            exit();
+        }
+    }
+
     public function atualizarSocio(Socio $socio){
         //atualizar os dados de pessoa
         $sqlAtualizarPessoa =
