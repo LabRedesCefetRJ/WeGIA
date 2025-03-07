@@ -189,4 +189,43 @@ class ProdutoControle
             echo 'ERROR: ' . $e->getMessage();
         }
     }
+
+    /**
+     * Retorna uma lista dos produtos disponíveis no sistema e suas respectivas quantidades no almoxarifado especificado
+     */
+    public function getProdutosParaCadastrarEntradaPorAlmoxarifado()
+    {
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ProdutoDTOCadastro.php';
+
+        try {
+            $almoxarifadoId = filter_input(INPUT_GET, 'almoxarifado', FILTER_SANITIZE_NUMBER_INT);
+
+            if ($almoxarifadoId < 1) {
+                throw new InvalidArgumentException('O id do almoxarifado informado é inválido', 400);
+            }
+
+            $produtoDAO = new ProdutoDAO();
+
+            $produtosPorAlmoxarifado = $produtoDAO->getProdutosPorAlmoxarifado($almoxarifadoId);
+
+            $produtos = json_decode($produtoDAO->listarTodos());
+
+            $aux = [];
+            $produtosDTO = [];
+
+            foreach ($produtosPorAlmoxarifado as $produto) {
+                $aux[$produto['id_produto']] = $produto;
+            }
+
+            foreach ($produtos as $produto) {
+                $produto['qtd'] = isset($aux[$produto['id_produto']]) ? $aux[$produto['id_produto']]['qtd'] : 0;
+                $produtosDTO[] = new ProdutoDTOCadastro($produto['id_produto'], $produto['descricao'], $produto['qtd'], $produto['codigo']);
+            }
+
+            return json_encode($produtosDTO);
+        } catch (Exception $e) {
+            http_response_code($e->getCode());
+            echo json_encode(['erro' => $e->getMessage()]);
+        }
+    }
 }

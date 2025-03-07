@@ -213,4 +213,18 @@ class ProdutoDAO
 			echo 'Error: <b>  na tabela produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
 		}
 	}
+
+	public function getProdutosPorAlmoxarifado(int $almoxarifadoId){
+		$sql = "SELECT produto.id_produto, produto.codigo, produto.descricao, estoque.qtd, produto.preco FROM produto, estoque WHERE produto.id_produto=estoque.id_produto AND estoque.qtd>0 AND estoque.id_almoxarifado=:almoxarifadoId";
+
+		$pdo = Conexao::connect();
+
+		$stmt = $pdo->prepare($sql);
+		$stmt->bindParam(':almoxarifadoId', $almoxarifadoId);
+		$stmt->execute();
+
+		$produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+		return $produtos;
+	}
 }
