@@ -5,6 +5,8 @@ require_once '../dao/SocioDAO.php';
 require_once '../dao/ContribuicaoLogDAO.php';
 require_once '../helper/Util.php';
 require_once '../dao/ConexaoDAO.php';
+require_once '../../../dao/PessoaDAO.php';
+
 class SocioController
 {
     private PDO $pdo;
@@ -17,26 +19,56 @@ class SocioController
     public function criarSocio()
     {
         $dados = $this->extrairPost();
-        $socio = new Socio();
-        $socio
-            ->setNome($dados['nome'])
-            ->setDataNascimento($dados['dataNascimento'])
-            ->setTelefone($dados['telefone'])
-            ->setEmail($dados['email'])
-            ->setEstado($dados['uf'])
-            ->setCidade($dados['cidade'])
-            ->setBairro($dados['bairro'])
-            ->setComplemento($dados['complemento'])
-            ->setCep($dados['cep'])
-            ->setNumeroEndereco($dados['numero'])
-            ->setLogradouro($dados['rua'])
-            ->setDocumento($dados['cpf'])
-            ->setIbge($dados['ibge'])
-            ->setValor($dados['valor']);
 
         try {
+
+            $pessoaDao = new PessoaDAO($this->pdo);
+
+            $verificacaoExistenciaPessoa = $pessoaDao->verificarExistencia($dados['cpf']);
+
+            $socio = new Socio();
+
+            if (!is_null($verificacaoExistenciaPessoa)) {
+
+                $socio
+                    ->setNome($verificacaoExistenciaPessoa->getNome())
+                    ->setDataNascimento($verificacaoExistenciaPessoa->getDataNascimento())
+                    ->setTelefone($verificacaoExistenciaPessoa->getTelefone())
+                    ->setCidade($verificacaoExistenciaPessoa->getCidade())
+                    ->setBairro($verificacaoExistenciaPessoa->getBairro())
+                    ->setComplemento($verificacaoExistenciaPessoa->getComplemento())
+                    ->setCep($verificacaoExistenciaPessoa->getCep())
+                    ->setNumeroEndereco($verificacaoExistenciaPessoa->getNumeroEndereco())
+                    ->setLogradouro($verificacaoExistenciaPessoa->getLogradouro())
+                    ->setDocumento($verificacaoExistenciaPessoa->getCpf())
+                    ->setIbge($verificacaoExistenciaPessoa->getIbge());
+            } else {
+                $socio
+                    ->setNome($dados['nome'])
+                    ->setDataNascimento($dados['dataNascimento'])
+                    ->setTelefone($dados['telefone'])
+                    ->setEstado($dados['uf'])
+                    ->setCidade($dados['cidade'])
+                    ->setBairro($dados['bairro'])
+                    ->setComplemento($dados['complemento'])
+                    ->setCep($dados['cep'])
+                    ->setNumeroEndereco($dados['numero'])
+                    ->setLogradouro($dados['rua'])
+                    ->setDocumento($dados['cpf'])
+                    ->setIbge($dados['ibge']);
+            }
+
+            $socio
+                ->setEmail($dados['email'])
+                ->setValor($dados['valor']);
+
             $socioDao = new SocioDAO();
-            $socioDao->criarSocio($socio);
+
+            if (!is_null($verificacaoExistenciaPessoa)) {
+                $socioDao->criarSocioPessoaPreExistente($socio, $verificacaoExistenciaPessoa->getIdpessoa());
+            } else {
+                $socioDao->criarSocio($socio);
+            }
 
             http_response_code(200);
             echo json_encode(['mensagem' => 'Sócio criado com sucesso!']);
@@ -180,7 +212,6 @@ class SocioController
             if (!$email || empty($email)) {
                 throw new InvalidArgumentException('O email informado não está em um formato válido');
             }
-
         } catch (InvalidArgumentException $e) {
             http_response_code(400);
             echo json_encode(['erro' => $e->getMessage()]);

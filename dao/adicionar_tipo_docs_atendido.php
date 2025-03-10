@@ -1,19 +1,21 @@
 <?php
 require_once 'Conexao.php';
 
-$descricao = trim($_POST["tipo"]);
+$descricao = trim(filter_input(INPUT_POST, 'tipo', FILTER_SANITIZE_STRING));
 
-if(!$descricao || empty($descricao)){
+if (!$descricao || empty($descricao)) {
 	http_response_code(400);
-	exit('Erro, a descrição de um novo tipo de documentação não pode ser vazia.');
+	echo json_encode(['erro' => 'A descrição de um novo tipo de documentação não pode ser vazia.']);
+	exit();
 }
 
 try {
-	$sql = "INSERT into atendido_docs_atendidos(descricao) values(:descricao)";
+	$sql = "INSERT INTO atendido_docs_atendidos(descricao) VALUES (:descricao)";
 	$pdo = Conexao::connect();
 	$stmt = $pdo->prepare($sql);
 	$stmt->bindParam(':descricao', $descricao);
 	$stmt->execute();
 } catch (PDOException $e) {
-	echo 'Erro ao inserir um novo tipo de documentação no banco de dados: '.$e->getMessage();
+	http_response_code(500);
+	echo json_encode(['erro' => 'Erro ao inserir um novo tipo de documentação no banco de dados: ' . $e->getMessage()]);
 }
