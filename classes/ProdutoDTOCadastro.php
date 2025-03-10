@@ -3,14 +3,16 @@ class ProdutoDTOCadastro implements JsonSerializable{
     private int $id;
     private string $descricao;
     private int $quantidade;
+    private float $valor;
     private string $codigo;
 
-    public function __construct(int $id, string $descricao, int $quantidade, string $codigo)
+    public function __construct(int $id, string $descricao, int $quantidade, string $codigo, float $valor)
     {
         $this->setId($id);
         $this->setDescricao($descricao);
         $this->setQuantidade($quantidade);
         $this->setCodigo($codigo);
+        $this->setValor($valor);
     }
 
     public function jsonSerialize(): mixed
@@ -19,7 +21,8 @@ class ProdutoDTOCadastro implements JsonSerializable{
             'id_produto' => $this->id,
             'descricao' => $this->descricao,
             'qtd' => $this->quantidade,
-            'codigo' => $this->codigo
+            'codigo' => $this->codigo,
+            'preco' => $this->valor
         ];
     }
 
@@ -107,6 +110,30 @@ class ProdutoDTOCadastro implements JsonSerializable{
     public function setCodigo($codigo)
     {
         $this->codigo = $codigo;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of valor
+     */ 
+    public function getValor()
+    {
+        return $this->valor;
+    }
+
+    /**
+     * Set the value of valor
+     *
+     * @return  self
+     */ 
+    public function setValor(float $valor)
+    {
+        if($valor < 0){
+            throw new InvalidArgumentException('O valor de um produto não pode ser negativo', 400);
+        }
+
+        $this->valor = $valor;
 
         return $this;
     }
