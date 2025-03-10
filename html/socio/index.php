@@ -2,7 +2,12 @@
 	require("./conexao.php");
 	if(!$conexao) header("Location: ./erros/bd_erro/");
 	session_start();
-	if(isset($_SESSION['usuario'])) header("Location: ./sistema/");
+	if(isset($_SESSION['usuario'])){
+		header("Location: ./sistema/");exit();
+	}
+
+	//Desativação temporária da tela SaGA, considerar a remoção ou a continuidade do desenvolvimento
+	header("Location: /WeGIA/index.php");exit();
 
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
 	require_once ROOT."/html/personalizacao_display.php";
