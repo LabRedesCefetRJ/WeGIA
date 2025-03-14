@@ -303,6 +303,8 @@ class ContribuicaoLogController
                     // Se o dia informado já passou, começar a partir do próximo mês
                     $dataGeracao = $dataAtual->format('Y-m-d');
                     $dataAtual->modify('first day of next month');
+                }else{
+                    $dataGeracao = $dataAtual->format('Y-m-d');
                 }
 
                 for ($i = 0; $i < $qtdParcelas; $i++) {

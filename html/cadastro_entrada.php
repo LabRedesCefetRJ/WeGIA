@@ -292,9 +292,9 @@ require_once "../Functions/permissao/permissao.php";
 								echo $tipo_entrada;
 								?>;
 
-			var produtos_autocomplete = <?php
-										echo $autocomplete;
-										?>;
+			//var produtos_autocomplete = <?php
+											//echo $autocomplete;
+											?>;
 
 			var origem = <?php
 							echo $origem;
@@ -307,21 +307,39 @@ require_once "../Functions/permissao/permissao.php";
 			$.each(tipo_entrada, function(i, item) {
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
 			})
-			var prods = [];
-			$.each(produtos_autocomplete, function(i, item) {
-				// $('#produtos_autocomplete').append('<option value="' + item.id_produto + '-' + item.descricao + '-' + item.codigo + '">');
-				prods[i] = item.id_produto + '|' + item.descricao + '|' + item.codigo;
-			})
 
-			$("#input_produtos").autocomplete({
-				source: prods,
-				response: function(event, ui) {
-					if (ui.content.length == 1) {
-						ui.item = ui.content[0];
-						$(this).val(ui.item.value)
-						$(this).data('ui-autocomplete')._trigger('select', 'autocompleteselect', ui);
+			let produtos_autocomplete = [];
+			let prods = [];
+
+			$('#almoxarifado').on('change', function() {
+
+				let almoxarifadoId = $(this).val();
+
+				$.getJSON('../controle/control.php', {
+					nomeClasse: 'ProdutoControle',
+					metodo: 'getProdutosParaCadastrarEntradaPorAlmoxarifado',
+					almoxarifado: almoxarifadoId
+				}, function(produtos) {
+					produtos_autocomplete = produtos;
+					$.each(produtos_autocomplete, function(i, item) {
+						prods[i] = item.id_produto + '|' + item.descricao + '|' + item.qtd + '|' + item.codigo;
+					});
+
+					console.log(prods); // Apenas para verificar se os dados foram carregados corretamente
+				}).fail(function(jqXHR, textStatus, errorThrown) {
+					console.error("Erro na requisição: " + textStatus, errorThrown);
+				});
+
+				$("#input_produtos").autocomplete({
+					source: prods,
+					response: function(event, ui) {
+						if (ui.content.length == 1) {
+							ui.item = ui.content[0];
+							$(this).val(ui.item.value)
+							$(this).data('ui-autocomplete')._trigger('select', 'autocompleteselect', ui);
+						}
 					}
-				}
+				});
 			});
 
 			$.each(origem, function(i, item) {

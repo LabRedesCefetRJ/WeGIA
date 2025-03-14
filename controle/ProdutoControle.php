@@ -208,7 +208,7 @@ class ProdutoControle
 
             $produtosPorAlmoxarifado = $produtoDAO->getProdutosPorAlmoxarifado($almoxarifadoId);
 
-            $produtos = json_decode($produtoDAO->listarTodos());
+            $produtos = json_decode($produtoDAO->listarTodos(), true);
 
             $aux = [];
             $produtosDTO = [];
@@ -219,10 +219,10 @@ class ProdutoControle
 
             foreach ($produtos as $produto) {
                 $produto['qtd'] = isset($aux[$produto['id_produto']]) ? $aux[$produto['id_produto']]['qtd'] : 0;
-                $produtosDTO[] = new ProdutoDTOCadastro($produto['id_produto'], $produto['descricao'], $produto['qtd'], $produto['codigo']);
+                $produtosDTO[] = new ProdutoDTOCadastro($produto['id_produto'], $produto['descricao'], $produto['qtd'], $produto['codigo'], $produto['preco']);
             }
 
-            return json_encode($produtosDTO);
+            echo json_encode($produtosDTO);
         } catch (Exception $e) {
             http_response_code($e->getCode());
             echo json_encode(['erro' => $e->getMessage()]);
