@@ -505,12 +505,6 @@
 							</li>
 						</ul>
 					</li>
-					<li id="5" class="visivel">
-						<a href="<?= WWW ?>manual/index.php">
-							<i class="fas fa-book" aria-hidden="true"></i>
-							<span>Manual</span>
-						</a>
-					</li>
 				</ul>
 			</nav>
 			<p style="text-align: center;"><?= "Release instalada:<br> ".$_SESSION['local_release']?></p>
