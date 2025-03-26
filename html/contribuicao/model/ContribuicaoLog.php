@@ -10,6 +10,7 @@ class ContribuicaoLog
     private $codigo;
     private $dataGeracao;
     private $dataVencimento;
+    private $dataPagamento;
     private Socio $socio;
     private GatewayPagamento $gatewayPagamento;
     private MeioPagamento $meioPagamento;
@@ -226,6 +227,26 @@ class ContribuicaoLog
     public function setAgradecimento(string $agradecimento)
     {
         $this->agradecimento = $agradecimento;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of dataPagamento
+     */ 
+    public function getDataPagamento()
+    {
+        return $this->dataPagamento;
+    }
+
+    /**
+     * Set the value of dataPagamento
+     *
+     * @return  self
+     */ 
+    public function setDataPagamento($dataPagamento)
+    {
+        $this->dataPagamento = $dataPagamento;
 
         return $this;
     }
