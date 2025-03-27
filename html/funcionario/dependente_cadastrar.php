@@ -12,7 +12,7 @@ require_once '../../dao/Conexao.php';
 $pdo = Conexao::connect();
 
 // Pessoa
-require(ROOT . '/Functions/ValidarDependente.php');
+require_once '../../Functions/ValidarDependente.php';
 
 $cpf = $_POST['cpf'];
 
@@ -41,12 +41,9 @@ try {
     die();
 }
 
-$resultado2 = ValidarCPFDependente($cpfDependentes, $cpf);
-
-if(true) {
+if($resultado == $cpf) {
     //echo "Você está adicionando um cpf já cadastrado nos dependentes desse funcionário.";
-    var_dump($resultado2);
-    die();
+    var_dump($cpfDependentes);
 } else {
     $nome = $_POST['nome'];
     $sobrenome = $_POST['sobrenome'];
