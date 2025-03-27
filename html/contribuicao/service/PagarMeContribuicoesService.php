@@ -1,5 +1,5 @@
 <?php
-require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiContribuicoesServiceInterface';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiContribuicoesServiceInterface.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 
 class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
@@ -21,16 +21,21 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $dataAnalise = new DateTime("{$anoAnalise}-12-01");
         $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
 
-        $url .= "&created_until=$dataAnaliseFormatada";
+        $url .= "&created_since=$dataAnaliseFormatada";
 
         // Realizar requisições
         $pedidosArray = $this->requisicaoPedidos($url);
 
         // Transformar os pedidos na estrutura de uma ContribuicaoLog
+        $contribuicaoLogCollection = new ContribuicaoLogCollection();
+        foreach($pedidosArray as $pedido){
+            $contribuicaoLog = new ContribuicaoLog();
+            $contribuicaoLog->setCodigo($pedido['id']);
+            $contribuicaoLog->setDataPagamento($pedido['updated_at']);
+            $contribuicaoLogCollection->add($contribuicaoLog);
+        }
 
         // Retornar contribuições
-        $contribuicaoLogCollection = new ContribuicaoLogCollection();
-        
         return $contribuicaoLogCollection;
     }
 
