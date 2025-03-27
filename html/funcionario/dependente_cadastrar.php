@@ -12,12 +12,14 @@ require_once '../../dao/Conexao.php';
 $pdo = Conexao::connect();
 
 // Pessoa
+require(ROOT . '/Functions/ValidarDependente.php');
 
 $cpf = $_POST['cpf'];
 
 $id_parentesco = $_POST['id_parentesco'];
 $id_funcionario = $_POST['id_funcionario'];
 
+//Verfica CPF da pessoa e compara com o digitado.
 try {
     $xablau = $pdo->prepare("SELECT cpf FROM pessoa WHERE id_pessoa = :id");
     $xablau->bindParam(":id", $id_funcionario);
@@ -28,8 +30,22 @@ try {
     die();
 }
 
-if($cpf == $resultado) {
-    echo "Você está adicionando um cpf já cadastrado nos dependentes desse funcionário.";
+//Verifica os outros CPF's dos dependentes do Funcionário.
+try {
+    $verficacao = $pdo->prepare("SELECT p.cpf FROM pessoa p JOIN funcionario_dependentes d on d.id_pessoa = p.id_pessoa WHERE id_funcionario = :id");
+    $verficacao->bindParam(":id", $id_funcionario);
+    $verficacao->execute();
+    $cpfDependentes = $verficacao->fetch(PDO::FETCH_ASSOC);
+}  catch (PDOException $th) {
+    echo "Erro ocorreu na validação do CPF";
+    die();
+}
+
+$resultado2 = ValidarCPFDependente($cpfDependentes, $cpf);
+
+if(true) {
+    //echo "Você está adicionando um cpf já cadastrado nos dependentes desse funcionário.";
+    var_dump($resultado2);
     die();
 } else {
     $nome = $_POST['nome'];
