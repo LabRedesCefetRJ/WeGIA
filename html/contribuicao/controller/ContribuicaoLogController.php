@@ -9,6 +9,7 @@ require_once '../dao/GatewayPagamentoDAO.php';
 require_once '../dao/RegraPagamentoDAO.php';
 require_once '../model/GatewayPagamento.php';
 require_once '../model/ContribuicaoLogCollection.php';
+require_once '../model/StatusPagamento.php';
 require_once '../../../config.php';
 
 class ContribuicaoLogController
