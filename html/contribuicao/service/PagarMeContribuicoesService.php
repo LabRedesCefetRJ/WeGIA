@@ -6,60 +6,70 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 {
     public function getContribuicoes(?string $status): ContribuicaoLogCollection
     {
-        $url = 'https://api.pagar.me/core/v5/orders?page=1&size=30';
+        try {
+            $gatewayPagamentoDao = new GatewayPagamentoDAO();
+            $gatewayPagamento = $gatewayPagamentoDao->buscarPorPlataforma('PagarMe');
 
-        // Verificar o parâmetro de status
-        if (!is_null($status)) {
-            $url .= "&status=$status";
+            if (!$gatewayPagamento) {
+                http_response_code(400);
+                echo json_encode(['erro' => 'Gateway de pagamento não encontrado no sistema']);
+                exit();
+            }
+
+            $url = $gatewayPagamento->getEndpoint() . '?page=1&size=30';
+
+            // Verificar o parâmetro de status
+            if (!is_null($status)) {
+                $url .= "&status=$status";
+            }
+
+            // Definir o período de tempo de análise
+            $dataAtual = new DateTime();
+            $anoAtual = intval($dataAtual->format('Y'));
+
+            $anoAnalise = $anoAtual - 1;
+            $dataAnalise = new DateTime("{$anoAnalise}-12-01");
+            $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
+
+            $url .= "&created_since=$dataAnaliseFormatada";
+
+            $gatewayPagamento->setEndpoint($url);
+
+            // Realizar requisições
+            $pedidosArray = $this->requisicaoPedidos($gatewayPagamento);
+
+            // Transformar os pedidos na estrutura de uma ContribuicaoLog
+            $contribuicaoLogCollection = new ContribuicaoLogCollection();
+            foreach ($pedidosArray as $pedido) {
+                $contribuicaoLog = new ContribuicaoLog();
+                $contribuicaoLog->setCodigo($pedido['id']);
+                $contribuicaoLog->setDataPagamento($pedido['updated_at']);
+                $contribuicaoLogCollection->add($contribuicaoLog);
+            }
+
+            // Retornar contribuições
+            return $contribuicaoLogCollection;
+        } catch (PDOException $e) {
+            http_response_code(500);
+            //adicionar sistema de armazenamento de logs de erro posteriomente
+            echo json_encode(['erro' => 'Problema no servidor']);
+            exit();
         }
-
-        // Definir o período de tempo de análise
-        $dataAtual = new DateTime();
-        $anoAtual = intval($dataAtual->format('Y'));
-
-        $anoAnalise = $anoAtual - 1;
-        $dataAnalise = new DateTime("{$anoAnalise}-12-01");
-        $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
-
-        $url .= "&created_since=$dataAnaliseFormatada";
-
-        // Realizar requisições
-        $pedidosArray = $this->requisicaoPedidos($url);
-
-        // Transformar os pedidos na estrutura de uma ContribuicaoLog
-        $contribuicaoLogCollection = new ContribuicaoLogCollection();
-        foreach($pedidosArray as $pedido){
-            $contribuicaoLog = new ContribuicaoLog();
-            $contribuicaoLog->setCodigo($pedido['id']);
-            $contribuicaoLog->setDataPagamento($pedido['updated_at']);
-            $contribuicaoLogCollection->add($contribuicaoLog);
-        }
-
-        // Retornar contribuições
-        return $contribuicaoLogCollection;
     }
 
-    private function requisicaoPedidos(string $url): mixed
+    private function requisicaoPedidos(GatewayPagamento $gatewayPagamento): mixed
     {
         $pedidosTotais = [];
 
-        try {
-            $gatewayPagamentoDao = new GatewayPagamentoDAO();
-            $gatewayPagamento = $gatewayPagamentoDao->buscarPorId(1);
-        } catch (PDOException $e) {
-            echo 'Erro: ' . $e->getMessage();
-            exit();
-        }
-
         $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+            'Authorization: Basic ' . base64_encode($gatewayPagamento->getToken() . ':'),
             'Content-Type: application/json;charset=utf-8',
         ];
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_URL, $gatewayPagamento->getEndpoint());
 
         $response = curl_exec($ch);
 
@@ -79,7 +89,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $this->atribuirPedidos($pedidosTotais, $data['data']);
 
         // Paginação
-        $parsedUrl = parse_url($url);
+        $parsedUrl = parse_url($gatewayPagamento->getEndpoint());
         parse_str($parsedUrl['query'], $queryParams);
 
         $size = intval($queryParams['size']);
