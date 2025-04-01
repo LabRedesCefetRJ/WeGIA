@@ -503,7 +503,7 @@ class ContribuicaoLogController
     }
 
     /**
-     * Realiza o sincronizamento entre os status das contribuições no BD da aplicação e os status nos gateways de pagamentos
+     * Realiza a sincronização entre os status das contribuições no BD da aplicação e os status nos gateways de pagamentos
      */
     public function sincronizarStatus(): void
     {
