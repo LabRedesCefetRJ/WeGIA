@@ -43,7 +43,11 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
             foreach ($pedidosArray as $pedido) {
                 $contribuicaoLog = new ContribuicaoLog();
                 $contribuicaoLog->setCodigo($pedido['id']);
-                $contribuicaoLog->setDataPagamento($pedido['updated_at']);
+
+                //transformar a data de pagamento para a estrtutura aceita pelo MySQL
+                $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['updated_at'])->format('Y-m-d H:i:s');
+
+                $contribuicaoLog->setDataPagamento($dataPagamento);
                 $contribuicaoLogCollection->add($contribuicaoLog);
             }
 

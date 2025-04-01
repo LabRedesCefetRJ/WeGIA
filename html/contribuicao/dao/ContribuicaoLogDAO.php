@@ -80,6 +80,19 @@ class ContribuicaoLogDAO{
         $stmt->execute();
     }
 
+    /**
+     * Realiza a alteração do status de pagamento no BD para 1 referente a contribuição que possui o código passado como parâmetro
+     */
+    public function pagarPorCodigo(string $codigo, string $dataPagamento):void{
+        $sqlPagarPorId = "UPDATE contribuicao_log SET status_pagamento = 1, data_pagamento=:dataPagamento WHERE codigo=:codigo";
+        
+        $stmt = $this->pdo->prepare($sqlPagarPorId);
+        $stmt->bindParam(':dataPagamento', $dataPagamento);
+        $stmt->bindParam(':codigo', $codigo);
+
+        $stmt->execute();
+    }
+
     public function listarPorDocumento(string $documento){
         $sql = "SELECT cl.id, cl.codigo, cl.valor, cl.data_geracao, cl.data_vencimento, cl.status_pagamento FROM contribuicao_log cl JOIN socio s ON (cl.id_socio=s.id_socio) JOIN pessoa p ON(s.id_pessoa=p.id_pessoa) WHERE cpf=:documento";
 
