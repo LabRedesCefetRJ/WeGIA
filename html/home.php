@@ -507,7 +507,7 @@
 
 				<div class="row category-row-third">
 					<div  id="entrada" class="removeIn collapse">
-						<a href="../html/cadastro_entrada.php">	
+						<a href="./matPat/cadastro_entrada.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Registrar Entrada</h4>
@@ -575,7 +575,7 @@
 
 				<div class="row category-row-fourth">
 					<div  id="almoxarifados" class="removeIn-2 collapse">
-						<a href="../html/adicionar_almoxarifado.php">
+						<a href="../html/matPat/adicionar_almoxarifado.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Adicionar Almoxarifado</h4>

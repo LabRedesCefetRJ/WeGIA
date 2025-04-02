@@ -38,8 +38,8 @@ class AlmoxarifadoControle
             session_start();
             $_SESSION['msg'] = "Almoxarifado cadastrado com sucesso";
             $_SESSION['proxima'] = "Cadastrar outro almoxarifado";
-            $_SESSION['link'] = "../html/adicionar_almoxarifado.php";
-            header("Location: ../html/adicionar_almoxarifado.php");
+            $_SESSION['link'] = "../html/matPat/adicionar_almoxarifado.php";
+            header("Location: ../html/matPat/adicionar_almoxarifado.php");
         } catch (PDOException $e) {
             echo "Não foi possível registrar o almoxarifado";
         }
@@ -56,7 +56,7 @@ class AlmoxarifadoControle
         try {
             $almoxarifadoDAO = new AlmoxarifadoDAO();
             $almoxarifadoDAO->excluir($id_almoxarifado);
-            header('Location:../html/listar_almox.php');
+            header('Location: '. ROOT .'/html/matPat/listar_almox.php');
         } catch (PDOException $e) {
             echo "Não foi possível excluir o almoxarifado";
         }
