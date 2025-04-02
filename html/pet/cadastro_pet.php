@@ -73,14 +73,37 @@ $raca = $mysqli->query("select * from pet_raca");
 
 /* fim */
 //Pedro
-if ($_GET['msg']) {
-  echo <<<HTML
-      <script>
-        alert('$_GET[msg]');
+
+
+
+if (isset($_GET['msg'])) {
+    $msg = $_GET['msg'];
+
+    // Remove espaços extras e tags HTML
+    $msg = trim(strip_tags($msg));
+
+    // Verifica se a mensagem é válida (somente letras, números e espaços permitidos)
+    if (!preg_match('/^[\p{L}\p{N} ]+$/u', $msg)) {
+        exit(); // Sai do script se a mensagem tiver caracteres suspeitos
+    }
+
+    // Escapa caracteres especiais para evitar XSS
+    $msg = htmlspecialchars($msg, ENT_QUOTES, 'UTF-8');
+
+    // Transforma a mensagem em um formato seguro para JavaScript
+    $msg = json_encode($msg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    echo <<<HTML
+    <script>
+        alert($msg);
         window.location.href = "../../html/pet/cadastro_pet.php";
-      </script>
+    </script>
     HTML;
 }
+
+
+
+
 //============================
 ?>
 <!DOCTYPE html>

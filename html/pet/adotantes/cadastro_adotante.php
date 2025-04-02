@@ -53,7 +53,7 @@ if (!is_null($resultado)) {
     }	
 
 // Pega o CPF passado via GET
-$cpf = $_GET["cpf"];
+$cpf = htmlspecialchars($_GET['cpf'], ENT_QUOTES, 'UTF-8');
 
 // Lógica para listar pets
 $sqlConsultaPet = "SELECT id_pet, nome FROM pet;";
