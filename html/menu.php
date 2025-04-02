@@ -218,7 +218,7 @@
 							
 								<ul class="nav nav-children">
 									<li>
-										<a href="../html/matPat/cadastro_entrada.php">
+										<a href="<?= WWW ?>html/matPat/cadastro_entrada.php">
 											<span>Registrar Entrada</span>
 										</a>
 									</li>

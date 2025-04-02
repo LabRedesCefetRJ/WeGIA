@@ -26,21 +26,21 @@ if (!is_null($resultado)) {
 		$permissao = mysqli_fetch_array($resultado);
 		if ($permissao['id_acao'] < 3) {
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ./home.php?msg_c=$msg");
+			header("Location: ". WWW ."home.php?msg_c=$msg");
 		}
 		$permissao = $permissao['id_acao'];
 	} else {
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ./home.php?msg_c=$msg");
+		header("Location: ". WWW ."home.php?msg_c=$msg");
 	}
 } else {
 	$permissao = 1;
 	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: ./home.php?msg_c=$msg");
+	header("Location: ". WWW ."home.php?msg_c=$msg");
 }
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once "personalizacao_display.php";
+require_once ROOT . "/html/personalizacao_display.php";
 ?>
 
 <!doctype html>
@@ -55,38 +55,38 @@ require_once "personalizacao_display.php";
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.css" />
-	<link rel="stylesheet" href="../assets/vendor/font-awesome/css/font-awesome.css" />
-	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
-	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 
 	<!-- Theme CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
 
 	<!-- Skin CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/skins/default.css" />
 
 	<!-- Theme Custom CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
 
 	<!-- Head Libs -->
-	<script src="../assets/vendor/modernizr/modernizr.js"></script>
+	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 
 	<!-- Javascript functions -->
 
-	<script src="../assets/vendor/jquery/jquery.min.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
 	<!-- Functions -->
-	<script src="../Functions/mascara.js"></script>
-	<script src="../Functions/onlyNumbers.js"></script>
-	<script src="../Functions/onlyChars.js"></script>
-	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<script src="<?= WWW ?>Functions/mascara.js"></script>
+	<script src="<?= WWW ?>Functions/onlyNumbers.js"></script>
+	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
+	<script src="<?= WWW ?>Functions/testaCPF.js"></script>
 	<script>
 		function validarCPF(strCPF) {
 			if (!testaCPF(strCPF)) {
@@ -185,8 +185,8 @@ require_once "personalizacao_display.php";
 			}
 		}
 		$(function() {
-			$("#header").load("header.php");
-			$(".menuu").load("menu.php");
+			$("#header").load("../header.php");
+			$(".menuu").load("../menu.php");
 		});
 	</script>
 </head>
@@ -208,7 +208,7 @@ require_once "personalizacao_display.php";
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li>
-								<a href="home.php">
+								<a href="<?= WWW ?>html/home.php">
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
@@ -232,7 +232,7 @@ require_once "personalizacao_display.php";
 							</ul>
 							<div class="tab-content">
 								<div id="overview" class="tab-pane active">
-									<form class="doador" method="post" action="../controle/control.php" onsubmit="return validar()" autocomplete="off">
+									<form class="doador" method="post" action="<?= WWW ?>controle/control.php" onsubmit="return validar()" autocomplete="off">
 										<input type="hidden" name="nomeClasse" value="OrigemControle">
 										<input type="hidden" name="metodo" value="incluir">
 										<fieldset>
@@ -304,12 +304,12 @@ require_once "personalizacao_display.php";
 
 	<!-- Vendor -->
 
-	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
-	<script src="../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
-	<script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 
 	<script type="text/javascript">
 	</script>
