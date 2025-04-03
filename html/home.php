@@ -6,10 +6,10 @@
 	}
 
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once "personalizacao_display.php";
+	require_once ROOT . "/html/personalizacao_display.php";
 
 	// Funções de display de mensagens
-	require_once "./geral/msg.php";
+	require_once ROOT . "/html/geral/msg.php";
 ?>
 
 <!doctype html>
@@ -507,7 +507,7 @@
 
 				<div class="row category-row-third">
 					<div  id="entrada" class="removeIn collapse">
-						<a href="./matPat/cadastro_entrada.php">	
+						<a href="<?= WWW ?>html/matPat/cadastro_entrada.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Registrar Entrada</h4>

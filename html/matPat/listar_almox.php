@@ -26,18 +26,18 @@ if (!is_null($resultado)) {
 		$permissao = mysqli_fetch_array($resultado);
 		if ($permissao['id_acao'] < 5) {
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ". WWW ."home.php?msg_c=$msg");
+			header("Location: ". WWW ."html/home.php?msg_c=$msg");
 		}
 		$permissao = $permissao['id_acao'];
 	} else {
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ". WWW ."home.php?msg_c=$msg");
+		header("Location: ". WWW ."html/home.php?msg_c=$msg");
 	}
 } else {
 	$permissao = 1;
 	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: ". WWW ."home.php?msg_c=$msg");
+	header("Location: ". WWW ."html/home.php?msg_c=$msg");
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
@@ -54,7 +54,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . '/html/matPat/listar_almox.php');
+		header('Location: '. WWW .'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/listar_almox.php');
 	}
 	if (isset($_SESSION['almoxarifado'])) {
 		$almoxarifado = $_SESSION['almoxarifado'];
@@ -168,7 +168,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li>
-								<a href="home.php">
+								<a href="<?= WWW ?>html/home.php">
 									<i class="fa fa-home"></i>
 								</a>
 							</li>

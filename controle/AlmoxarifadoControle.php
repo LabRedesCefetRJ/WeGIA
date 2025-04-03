@@ -1,6 +1,6 @@
 <?php
-include_once '../classes/Almoxarifado.php';
-include_once '../dao/AlmoxarifadoDAO.php';
+include_once ROOT . '/classes/Almoxarifado.php';
+include_once ROOT . '/dao/AlmoxarifadoDAO.php';
 class AlmoxarifadoControle
 {
     public function verificar()

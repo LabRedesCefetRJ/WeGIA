@@ -53,7 +53,7 @@
           	include_once ROOT . '/dao/OrigemDAO.php';
           
           	if(!isset($_SESSION['origem'])){
-            	header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=OrigemControle&nextPage='. WWW . '/html/matPat/listar_origem.php');
+            	header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=OrigemControle&nextPage='. WWW . 'html/matPat/listar_origem.php');
           	}
           	if(isset($_SESSION['origem'])){
             	$origem = $_SESSION['origem'];
@@ -127,8 +127,8 @@
          });
 
          $(function () {
-            $("#header").load("<<?= ROOT ?>html/header.php");
-            $(".menuu").load("<?= ROOT ?>html/menu.php");
+            $("#header").load("../header.php");
+            $(".menuu").load("../menu.php");
          });
       </script>
    </head>
@@ -147,7 +147,7 @@
                <div class="right-wrapper pull-right">
                   <ol class="breadcrumbs">
                      <li>
-                        <a href="home.php">
+                        <a href="<?= WWW ?>html/home.php">
                         <i class="fa fa-home"></i>
                         </a>
                      </li>
