@@ -78,6 +78,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $response = curl_exec($ch);
 
         if (curl_errno($ch)) {
+            http_response_code(500);
             echo "Erro: " . curl_error($ch);
             curl_close($ch);
             exit();
@@ -85,6 +86,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 
         $data = json_decode($response, true);
         if (!is_array($data) || !isset($data['data'])) {
+            http_response_code(500);
             echo "Erro: Resposta inválida da API.";
             curl_close($ch);
             exit();
@@ -108,6 +110,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                 $response = curl_exec($ch);
 
                 if (curl_errno($ch)) {
+                    echo http_response_code(500);
                     echo "Erro: " . curl_error($ch);
                     curl_close($ch);
                     exit();
@@ -115,6 +118,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 
                 $data = json_decode($response, true);
                 if (!is_array($data) || !isset($data['data'])) {
+                    echo http_response_code(500);
                     echo "Erro: Resposta inválida da API.";
                     curl_close($ch);
                     exit();
