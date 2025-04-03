@@ -559,6 +559,8 @@ class ContribuicaoLogController
             } else {
                 $this->pdo->rollBack();
             }
+
+            echo json_encode(['sucesso' => 'Sincronização realizada com sucesso']);
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();

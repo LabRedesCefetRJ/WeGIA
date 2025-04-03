@@ -145,6 +145,7 @@ require_once ROOT . "/html/personalizacao_display.php";
   <script src="<?php echo WWW; ?>Functions/mascara.js"></script>
   <script src="<?php echo WWW; ?>html/contribuicao/js/geraboleto.js"></script>
   <script src="<?php echo WWW; ?>html/socio/sistema/controller/script/relatorios_socios.js"></script>
+  <script src="<?php echo WWW; ?>html/socio/sistema/controller/script/sincronizacao_contribuicoes.js" defer></script>
 
   <script type="text/javascript">
     $(function() {
@@ -201,6 +202,12 @@ require_once ROOT . "/html/personalizacao_display.php";
                 </button>
               </div>
               <!-- /.box-tools -->
+
+              <div class="sync-control">
+                <button class="btn btn-primary" id="sync-btn" title="Sincroniza contribuições de acordo com os múltiplos gateways de pagamentos cadastrados">Sincronizar pagamentos</button>
+
+                <!--Adicionar posteriormente as informações de data e hora da última sincronização -->
+              </div>
             </div>
             <!-- /.box-header -->
             <div class="box-body box_tabela_cobranca">
@@ -222,7 +229,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                 </tbody>
               </table>
-            
+
             </div>
             <!-- /.box-body -->
           </div>
