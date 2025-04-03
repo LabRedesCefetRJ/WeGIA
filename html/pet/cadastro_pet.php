@@ -20,8 +20,19 @@ $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
 $cargo = $mysqli->query("SELECT * FROM cargo");
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+
+//$id_pessoa = $_SESSION['id_pessoa'];
+//$id_pessoa = mysqli_real_escape_string($conexao, $_SESSION['id_pessoa']);
+//$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
+
 $id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
+
+$stmt = $conexao->prepare("SELECT * FROM funcionario WHERE id_pessoa = ?");
+$stmt->bind_param("i", $id_pessoa);
+$stmt->execute();
+$resultado = $stmt->get_result();
+
+
 if (!is_null($resultado)) {
   $id_cargo = mysqli_fetch_array($resultado);
   if (!is_null($id_cargo)) {
@@ -36,7 +47,7 @@ if (!is_null($resultado)) {
       header("Location: ../home.php?msg_c=$msg");
     }
     $permissao = $permissao['id_acao'];
-  } elseif($permissao = 1) {
+  } elseif($permissao == 1) {
     $msg = "Você não tem as permissões necessárias para essa página.";
     header("Location: ../home.php?msg_c=$msg");
   } else {
@@ -57,7 +68,7 @@ $listaCPF->listarCpf();
 require_once ROOT . "/controle/AtendidoControle.php";
 $listaCPF2 = new AtendidoControle;
 $listaCPF2->listarCpf();
-$cpf = $_GET['cpf'];
+$cpf = $cpf = isset($_GET['cpf']) ? preg_replace('/\D/', '', $_GET['cpf']) : '';
 $funcionario = new FuncionarioDAO;
 $informacoesFunc = $funcionario->listarPessoaExistente($cpf);
 
@@ -77,25 +88,25 @@ $raca = $mysqli->query("select * from pet_raca");
 
 
 if (isset($_GET['msg'])) {
-    $msg = $_GET['msg'];
+    $mensagem = htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8');
 
     // Remove espaços extras e tags HTML
-    $msg = trim(strip_tags($msg));
+    $mensagem = trim(strip_tags($mensagem));
 
     // Verifica se a mensagem é válida (somente letras, números e espaços permitidos)
-    if (!preg_match('/^[\p{L}\p{N} ]+$/u', $msg)) {
+    if (!preg_match('/^[\p{L}\p{N} ]+$/u', $mensagem)) {
         exit(); // Sai do script se a mensagem tiver caracteres suspeitos
     }
 
     // Escapa caracteres especiais para evitar XSS
-    $msg = htmlspecialchars($msg, ENT_QUOTES, 'UTF-8');
+    $mensagem = htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8');
 
     // Transforma a mensagem em um formato seguro para JavaScript
-    $msg = json_encode($msg, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    $mensagem = json_encode($mensagem, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
     echo <<<HTML
     <script>
-        alert($msg);
+        alert($mensagem);
         window.location.href = "../../html/pet/cadastro_pet.php";
     </script>
     HTML;
