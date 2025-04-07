@@ -1,4 +1,12 @@
 <?php
+//verificar se o meio de pagamento está ativo
+require_once '../controller/MeioPagamentoController.php';
+$meioPagamentoController = new MeioPagamentoController();
+if(!$meioPagamentoController->verificarStatus('Boleto', true)){
+    header("Location: ./forma_contribuicao.php");
+    exit();
+}
+
 $title = 'Emitir boleto';
 require_once './templates/header.php';
 
