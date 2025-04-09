@@ -76,6 +76,7 @@ if($id_pessoa == $id_funcionario) {
         $_SESSION['cpf_digitado'] = $cpf;
         $_SESSION['parentesco_previo'] = $id_parentesco;
         header("Location: cadastro_dependente_pessoa_nova.php?id_funcionario=$id_funcionario");
+        die();
     }
 }
 header("Location: profile_funcionario.php?id_funcionario=$id_funcionario");
