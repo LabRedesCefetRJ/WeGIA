@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['usuario'])) {
-	header("Location:" . WWW ."html/index.php");
+	header("Location: ../index.php");
 }
 $config_path = "config.php";
 if (file_exists($config_path)) {
@@ -111,7 +111,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 	<!-- Javascript functions -->
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
-	<link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<link type="text/css" rel="stylesheet" charset="UTF-8" href="https://translate.googleapis.com/translate_static/css/translateelement.css">
