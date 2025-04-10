@@ -401,6 +401,9 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                 dataType: 'text'
             })
         }
+        function alertaBemSucedido(){
+            alert("Cadastro de ocorrência bem sucedido")
+        }
     </script> 
     
     
@@ -491,7 +494,7 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                     <div class="panel-body">
 
                         
-							<form class="form-horizontal" method="post" action="../../controle/control.php" enctype="multipart/form-data">	
+							<form class="form-horizontal" method="post" onsubmit="alertaBemSucedido()" action="../../controle/control.php" enctype="multipart/form-data">	
                             <h5 class="obrig">Campos Obrigatórios(*)</h5>
                             <br>
                             <div class="form-group">

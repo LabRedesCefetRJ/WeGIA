@@ -642,6 +642,12 @@ $dependente = json_encode($dependente);
     });
   </script>
 
+  <script>
+		function clicar(id) {
+			window.location.href = "listar_ocorrencias.php?id="+id;
+		}
+	</script>
+
 </head>
 
 <body>
@@ -742,6 +748,9 @@ $dependente = json_encode($dependente);
                 </li>
                 <li>
                   <a href="#familiares" data-toggle="tab">Familiares</a>
+                </li>
+                <li>
+                  <a href="#ocorrencias" data-toggle="tab">Ocorrências</a>
                 </li>
               </ul>
               <div class="tab-content">
@@ -1217,12 +1226,45 @@ $dependente = json_encode($dependente);
                     </section>
                   </div>
 
-
-
-
-
-
-
+                  <div id="ocorrencias" class="tab-pane">
+                    <section class="panel">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a href="#" class="fa fa-caret-down"></a>
+                        </div>
+                        <h2 class="panel-title">Ocorrências</h2>
+                      </header>
+                      <div class="panel-body">
+                        <table class="table table-bordered table-striped mb-none">
+                          <thead>
+                            <tr>
+                              <th>Data</th>
+                              <th>Informações</th>
+                            </tr>
+                          </thead>
+                          <tbody id="doc-tabl">
+                            <?php  
+                             $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
+                             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+                             $stmt->execute();
+                             
+                             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                             
+                             foreach ($resultados as $item) {
+                                echo "<tr style='cursor: pointer;' onclick='clicar($item[idatendido_ocorrencias])'>";
+                                echo "<td>".$item["data"]."</td>";
+                                echo"<td>".$item["descricao"]."</td>";
+                                echo "<tr>";
+                             }
+                              
+                            ?>
+                          </tbody>
+                        </table>
+                        <br>
+                        
+                    </section>
+                  </div>
+                  
                   <!-- end: page -->
       </section>
       <aside id="sidebar-right" class="sidebar-right">
