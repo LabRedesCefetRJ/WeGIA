@@ -846,6 +846,27 @@ REFERENCES wegia.contribuicao_meioPagamento (id)
 )
 ENGINE = InnoDB;
 
+CREATE TABLE IF NOT EXISTS wegia.sistema_log (
+id INT NOT NULL AUTO_INCREMENT,
+id_pessoa INT(11) NOT NULL,
+id_recurso INT(11) NOT NULL,
+id_acao INT(11) NOT NULL,
+descricao VARCHAR(256) NOT NULL,
+data TIMESTAMP NOT NULL,
+PRIMARY KEY (id),
+CONSTRAINT FK_id_pessoa
+FOREIGN KEY (id_pessoa)
+REFERENCES wegia.pessoa (id_pessoa),
+CONSTRAINT FK_id_recurso
+FOREIGN KEY (id_recurso)
+REFERENCES wegia.recurso (id_recurso),
+CONSTRAINT FK_id_acao
+FOREIGN KEY (id_acao)
+REFERENCES wegia.acao (id_acao)
+)
+ENGINE = InnoDB;
+
+
 
 -- -----------------------------------------------------
 -- Table `wegia`.`socio_status`
