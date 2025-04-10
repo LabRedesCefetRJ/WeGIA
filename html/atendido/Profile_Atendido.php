@@ -1046,43 +1046,8 @@ $dependente = json_encode($dependente);
                             <form action='familiar_cadastrar.php' method='post' id='funcionarioDepForm'>
                               <div class="modal-body" style="padding: 15px 40px">
                                 <div class="form-group" style="display: grid;">
-                                  <h4 class="mb-xlg">Informações Pessoais</h4>
-                                  <h5 class="obrig">Campos Obrigatórios(*)</h5>
                                   <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
-                                    <div class="col-md-8">
-                                      <input type="text" class="form-control" name="nome" id="profileFirstName" id="nome" onkeypress="return Onlychars(event)" required>
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
-                                    <div class="col-md-8">
-                                      <input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required>
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
-                                    <div class="col-md-8">
-                                      <label><input type="radio" name="sexo" id="radio" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                      <label><input type="radio" name="sexo" id="radio" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label class="col-md-3 control-label" for="telefone">Telefone</label>
-                                    <div class="col-md-8">
-                                      <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
-                                    <div class="col-md-8">
-                                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max="<?php echo date('Y-m-d'); ?>" required>
-                                    </div>
-                                  </div>
-                                  <hr class="dotted short">
-                                  <h4 class="mb-xlg doch4">Documentação</h4>
-                                  <div class="form-group">
-                                    <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
                                     <div class="col-md-6">
                                       <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                                     </div>
@@ -1107,24 +1072,6 @@ $dependente = json_encode($dependente);
                                         ?>
                                       </select>
                                       <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
-                                    <div class="col-md-6">
-                                      <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)">
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
-                                    <div class="col-md-6">
-                                      <input type="text" class="form-control" name="orgao_emissor" id="profileCompany" id="orgao_emissor" onkeypress="return Onlychars(event)">
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
-                                    <div class="col-md-6">
-                                      <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" id="profileCompany" name="data_expedicao" id="data_expedicaoD" max="<?php echo date('Y-m-d'); ?>">
                                     </div>
                                   </div>
                                   <input type="hidden" name="idatendido" value="<?= $_GET['idatendido']; ?>" readonly>
@@ -1188,10 +1135,9 @@ $dependente = json_encode($dependente);
                                       <select name="id_docfuncional" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
                                         <option selected disabled>Selecionar...</option>
                                         <?php
-                                        foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                        foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
                                           echo ("
-                                          <option value='" . $item["idatendido_docs_atendidos"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>
-                                          ");
+                                          <option value='" . $item["idatendido_docs_atendidos"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
                                         }
                                         ?>
 

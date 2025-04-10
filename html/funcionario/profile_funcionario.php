@@ -1624,8 +1624,7 @@ $dependente = json_encode($dependente);
                       </div>
                     </div>
 
-                    <!-- Modal Form New Dependentes -->
-                    <div class="modal fade" id="newDepFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
+                    <!-- <div class="modal fade" id="newDepFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <div class="modal-header" style="display: flex;justify-content: space-between;">
@@ -1726,7 +1725,7 @@ $dependente = json_encode($dependente);
                           </form>
                         </div>
                       </div>
-                    </div>
+                    </div> -->
                   </section>
                 </div>
                 <!-- Aba endereço -->

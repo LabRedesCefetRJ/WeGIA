@@ -176,10 +176,10 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                             <?php
                                 foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
                                     if($item == $parentescoPrevio) {
-                                        echo ("<option value='" . $item["id_parentesco"] . "' selected>" . htmlspecialchars($item["descricao"]) . "</option>");
+                                        echo("<option value='" . $item["id_parentesco"] . "' selected>" . htmlspecialchars($item["descricao"]) . "</option>");
                                     }
                                     else {
-                                        echo ("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
+                                        echo("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
                                     }
                                 }
                             ?>
@@ -227,6 +227,8 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                 </div>
 
               </form>
+            </div>
+          </div>
               <!-- end: page -->
     </section>
   </div>
