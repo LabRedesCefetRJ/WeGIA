@@ -1165,10 +1165,6 @@ $dependente = json_encode($dependente);
 
 
 
-
-
-
-
                   <!-- end: page -->
       </section>
       <aside id="sidebar-right" class="sidebar-right">
@@ -1233,7 +1229,13 @@ $dependente = json_encode($dependente);
           </div>
         </div>
       </aside>
+      <div align="right">
+        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+      </div>
   </section>
+
+  
+
   <!-- Vendor -->
   <script src="../../assets/vendor/select2/select2.js"></script>
   <script src="../geral/post.js"></script>
@@ -1507,6 +1509,8 @@ $dependente = json_encode($dependente);
 
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
+
+  
 </body>
 
 </html>
