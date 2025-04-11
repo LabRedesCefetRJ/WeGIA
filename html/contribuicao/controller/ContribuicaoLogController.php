@@ -9,6 +9,7 @@ require_once '../dao/GatewayPagamentoDAO.php';
 require_once '../dao/RegraPagamentoDAO.php';
 require_once '../model/GatewayPagamento.php';
 require_once '../model/ContribuicaoLogCollection.php';
+require_once '../model/StatusPagamento.php';
 require_once '../../../config.php';
 
 class ContribuicaoLogController
@@ -303,7 +304,7 @@ class ContribuicaoLogController
                     // Se o dia informado já passou, começar a partir do próximo mês
                     $dataGeracao = $dataAtual->format('Y-m-d');
                     $dataAtual->modify('first day of next month');
-                }else{
+                } else {
                     $dataGeracao = $dataAtual->format('Y-m-d');
                 }
 
@@ -498,6 +499,91 @@ class ContribuicaoLogController
             $contribuicaoLogDao->pagarPorId($idContribuicaoLog);
         } catch (PDOException $e) {
             echo 'Erro: ' . $e->getMessage(); //substituir posteriormente por redirecionamento com mensagem de feedback
+        }
+    }
+
+    /**
+     * Realiza a sincronização entre os status das contribuições no BD da aplicação e os status nos gateways de pagamentos
+     */
+    public function sincronizarStatus(): void
+    {
+        try {
+            // Pegar gateways de pagamentos
+            $gatewayPagamentoDao = new GatewayPagamentoDAO($this->pdo);
+            $gatewaysArray = $gatewayPagamentoDao->buscaTodos();
+
+            // Buscar contribuições internas pendentes
+            $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+            $contribuicoesPendentesArray = $contribuicaoLogDao->getContribuicoes(StatusPagamento::Pending);
+
+            // Buscar contribuições de APIs externas pagas
+            $contribuicoesExternas = new ContribuicaoLogCollection();
+            foreach ($gatewaysArray as $gateway) {
+                $api = $gateway['plataforma'] . 'ContribuicoesService';
+                $caminhoArquivo = dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . $api . '.php';
+
+                if (file_exists($caminhoArquivo)) {
+                    require_once $caminhoArquivo;
+                }
+
+                if (class_exists($api)) {
+                    $apiContribuicoesService = new $api;
+
+                    if ($apiContribuicoesService instanceof $api && method_exists($apiContribuicoesService, 'getContribuicoes')) {
+                        foreach ($apiContribuicoesService->getContribuicoes('paid') as $contribuicao) {
+                            $contribuicoesExternas->add($contribuicao);
+                        }
+                    }
+                }
+            }
+
+            // Identificar contribuições pagas
+            $atualizou = false;
+            $this->pdo->beginTransaction();
+
+            foreach ($contribuicoesPendentesArray as $contribuicaoPendente) {
+                $contribuicaoLog = $contribuicoesExternas->findByCodigo($contribuicaoPendente['codigo']);
+
+                if (!is_null($contribuicaoLog)) {
+                    // Atualizar status
+                    $contribuicaoLogDao->pagarPorCodigo(
+                        $contribuicaoLog->getCodigo(),
+                        $contribuicaoLog->getDataPagamento()
+                    );
+                    $atualizou = true;
+                }
+            }
+
+            if ($atualizou) {
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+
+                require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
+
+                $sistemaLogDao = new SistemaLogDAO($this->pdo);
+                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Sincronização da tabela de contribuições com os gateways de pagamento');
+
+                if ($sistemaLogDao->registrar($sistemaLog)) {
+                    $this->pdo->commit();
+                }else{
+                    $this->pdo->rollBack();
+                    throw new Exception('Falha ao registrar log do sistema');
+                }
+
+            } else {
+                $this->pdo->rollBack();
+            }
+
+            echo json_encode(['sucesso' => 'Sincronização realizada com sucesso']);
+        } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro interno ao sincronizar as contribuições']);
         }
     }
 

@@ -5,6 +5,7 @@ require_once '../dao/ConexaoDAO.php';
 //requisitar model
 require_once '../model/ContribuicaoLog.php';
 require_once '../model/ContribuicaoLogCollection.php';
+require_once dirname(__FILE__, 2).DIRECTORY_SEPARATOR.'model'.DIRECTORY_SEPARATOR.'StatusPagamento.php';
 
 class ContribuicaoLogDAO{
     private $pdo;
@@ -79,6 +80,19 @@ class ContribuicaoLogDAO{
         $stmt->execute();
     }
 
+    /**
+     * Realiza a alteração do status de pagamento no BD para 1 referente a contribuição que possui o código passado como parâmetro
+     */
+    public function pagarPorCodigo(string $codigo, string $dataPagamento):void{
+        $sqlPagarPorId = "UPDATE contribuicao_log SET status_pagamento = 1, data_pagamento=:dataPagamento WHERE codigo=:codigo";
+        
+        $stmt = $this->pdo->prepare($sqlPagarPorId);
+        $stmt->bindParam(':dataPagamento', $dataPagamento);
+        $stmt->bindParam(':codigo', $codigo);
+
+        $stmt->execute();
+    }
+
     public function listarPorDocumento(string $documento){
         $sql = "SELECT cl.id, cl.codigo, cl.valor, cl.data_geracao, cl.data_vencimento, cl.status_pagamento FROM contribuicao_log cl JOIN socio s ON (cl.id_socio=s.id_socio) JOIN pessoa p ON(s.id_pessoa=p.id_pessoa) WHERE cpf=:documento";
 
@@ -110,9 +124,18 @@ class ContribuicaoLogDAO{
         return $contribuicaoLogCollection;
     }
 
-    public function getContribuicoes(){
+    /**
+     * Retorna um array das contribuições armazenadas no BD da aplicação.
+     * 
+     * Null retorna todas as contribuições, independente do status.
+     * 
+     * Paid retorna contribuições pagas.
+     * 
+     * Pending retorna contribuições pendentes.
+     */
+    public function getContribuicoes(?StatusPagamento $statusPagamento=null){
         $sql = 
-        "SELECT 
+        'SELECT 
             cl.codigo, 
             p.nome as nomeSocio, 
             cl.data_geracao as dataGeracao, 
@@ -122,8 +145,16 @@ class ContribuicaoLogDAO{
             cl.status_pagamento as status 
         FROM contribuicao_log cl 
         JOIN socio s ON (s.id_socio=cl.id_socio) 
-        JOIN pessoa p ON (p.id_pessoa=s.id_pessoa) 
-        ORDER BY cl.data_geracao DESC";
+        JOIN pessoa p ON (p.id_pessoa=s.id_pessoa)';
+
+        if(!is_null($statusPagamento)){
+            match($statusPagamento){
+                StatusPagamento::Paid => $sql .= ' WHERE cl.status_pagamento=1',
+                StatusPagamento::Pending => $sql.= ' WHERE cl.status_pagamento=0'
+            };
+        }
+
+        $sql .= ' ORDER BY cl.data_geracao DESC';
 
         $contribuicoesArray = $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         return $contribuicoesArray;

@@ -636,9 +636,9 @@
 							</div>
 						</a>
 						<a href="#">
-							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#cobrancas">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#contribuicoes">
 								<i class="fa fa-money-bill"></i>
-								<h4>Cobranças</h4>
+								<h4>Contribuições</h4>
 							</div>
 						</a>
 						<a href="#">
@@ -651,17 +651,11 @@
 				</div>
 				
 				<div class="row category-row-third">
-					<div  id="cobrancas" class="removeIn collapse">
-						<a href="../html/socio/sistema/cobrancas.php">
-							<div class="col-lg-2 col-md-8 i">
-								<i  class="far fa-chart-bar"></i>
-								<h4>Controle Cobranças (Antigo)</h4>
-							</div>
-						</a>
+					<div  id="contribuicoes" class="removeIn collapse">
 						<a href="../html/socio/sistema/contribuicoes.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-chart-bar"></i>
-								<h4>Controle Contribuições</h4>
+								<h4>Controle de Contribuições</h4>
 							</div>
 						</a>
 						<a href="../html/socio/sistema/psocio_geracao.php">	

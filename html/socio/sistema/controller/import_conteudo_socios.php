@@ -72,7 +72,6 @@
                           FROM socio AS s
                           LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa
                           LEFT JOIN socio_tipo AS st ON s.id_sociotipo = st.id_sociotipo
-                          LEFT JOIN (SELECT id_socio, MAX(data) AS ultima_data_doacao FROM log_contribuicao GROUP BY id_socio) AS lc ON lc.id_socio = s.id_socio
                           LEFT JOIN (
                               SELECT sl.id_socio, sl.descricao, sl.data
                               FROM socio_log AS sl
