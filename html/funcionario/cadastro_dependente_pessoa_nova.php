@@ -62,22 +62,16 @@ require_once "../personalizacao_display.php";
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
-$cpf = $_GET['cpf'];
 
-$funcionario = new FuncionarioDAO;
-$informacoesFunc = $funcionario->listarPessoaExistente($cpf);
-$id_pessoaForm = $funcionario->listarIdPessoa($cpf);
-$sobrenome = $funcionario->listarSobrenome($cpf);
-
-
-// echo $id_pessoaForm;
-
+$cpfDigitado = $_SESSION['cpf_digitado'];
+$parentescoPrevio = $_SESSION['parentesco_previo'];
 
 ?>
 <!DOCTYPE html>
 <html class="fixed">
 
 <head>
+  
   <!-- Basic -->
   <meta charset="UTF-8">
   <title>Cadastro de Funcionário</title>
@@ -105,65 +99,6 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
 
-  <script>
-    console.log("oi");
-    $(function() {
-
-
-
-      var funcionario = <?php echo $informacoesFunc ?>;
-      console.log(funcionario);
-      console.log("oi");
-      $.each(funcionario, function(i, item) {
-
-        $("#nome").val(item.nome).prop('disabled', true);
-        $("#sobrenome").val(item.sobrenome).prop('disabled', true);
-        // if (item.sobrenome==null) {
-        //         $("#sobrenome").prop('disabled',false);
-        //       }
-        // else {
-        //   $("#sobrenome").val(item.sobrenome).prop('disabled',true);
-        // }
-        // $("#sobrenome").val(item.sobrenome).prop('disabled', true);
-        $("#telefone").val(item.telefone).prop('disabled', true);
-        $("#orgao_emissor").val(item.orgao_emissor);
-        $("#nascimento").val(alterardate(item.data_nascimento)).prop('disabled', true);
-        $("#data_expedicao").val(alterardate(item.data_expedicao));
-        $("#cpf").val(item.cpf).prop('disabled', true);
-        $("#rg").val(item.registro_geral);
-        if (item.sexo == "m") {
-          $("#sexo").html("Sexo: <i class='fa fa-male'></i>  Masculino");
-          $("#radioM").prop('checked', true);
-          $("#radioF").prop('disabled', true);
-
-        } else if (item.sexo == "f") {
-          $("#sexo").html("Sexo: <i class='fa fa-female'>  Feminino");
-          $("#radioF").prop('checked', true);
-          $("#radioM").prop('disabled', true);
-
-        } else if (item.sexo = null) {
-          $("#radio").prop('disabled', false);
-        }
-
-        // if (item.sexo == "m") {
-        //   $("#radioM").prop('checked', true).prop('disabled', true);
-        //   $("#radioF").prop('checked', false).prop('disabled', true);
-        //   $("#reservista1").show();
-        //   $("#reservista2").show();
-        // } else if (item.sexo == "f") {
-        //   $("#radioM").prop('checked', false).prop('disabled', true)
-        //   $("#radioF").prop('checked', true).prop('disabled', true);
-        // }
-      })
-
-      function alterardate(data) {
-        var date = data.split("/")
-        return date[2] + "-" + date[1] + "-" + date[0];
-      }
-
-    });
-  </script>
-
 </head>
 
 <body>
@@ -185,7 +120,7 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
               </a>
             </li>
             <li><span>Cadastros</span></li>
-            <li><span>Funcionário</span></li>
+            <li><span>Dependentes</span></li>
           </ol>
           <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
         </div>
@@ -195,12 +130,12 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
         <div class="tabs">
           <ul class="nav nav-tabs tabs-primary">
             <li class="active">
-              <a href="#overview" data-toggle="tab">Cadastro de Funcionário</a>
+              <a href="#overview" data-toggle="tab">Cadastro de Dependente</a>
             </li>
           </ul>
           <div class="tab-content">
             <div id="overview" class="tab-pane active">
-              <form class="form-horizontal" method="GET" action="../../controle/control.php">
+              <form class="form-horizontal" method="POST" action="./dependente_cadastrar_pessoa_nova.php">
                 <h4 class="mb-xlg">Informações Pessoais</h4>
                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                 <div class="form-group">
@@ -216,11 +151,11 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
-                  <div class="col-md-6">
-                    <label><input type="radio" name="gender" id="radio" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                    <label><input type="radio" name="gender" id="radio" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
-                  </div>
+                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                    <div class="col-md-8">
+                        <label><input type="radio" name="sexo" id="radio" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                        <label><input type="radio" name="sexo" id="radio" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                    </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="telefone">Telefone<sup class="obrig">*</sup></label>
@@ -234,12 +169,30 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
                     <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?>>
                   </div>
                 </div>
+                <div class="form-group">
+                    <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
+                    <div class="col-md-6">
+                        <select name="id_parentesco" id="parentesco">
+                            <?php
+                                foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                    if($item == $parentescoPrevio) {
+                                        echo("<option value='" . $item["id_parentesco"] . "' selected>" . htmlspecialchars($item["descricao"]) . "</option>");
+                                    }
+                                    else {
+                                        echo("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
+                                    }
+                                }
+                            ?>
+                        </select>
+                        <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                    </div>
+                </div>
                 <hr class="dotted short">
                 <h4 class="mb-xlg doch4">Documentação</h4>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?php echo $cpfDigitado; ?>" readonly>
                   </div>
                 </div>
                 <div class="form-group">
@@ -266,98 +219,16 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
                     <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
-                  <div class="col-md-6">
-                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_admissao" id="data_admissao" id="profileCompany" max=<?php echo date('Y-m-d'); ?> required>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="inputSuccess">Situação<sup class="obrig">*</sup></label>
-                  <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                  <div class="col-md-6">
-                    <select class="form-control input-lg mb-md" name="situacao" id="situacao" required>
-                      <option selected disabled>Selecionar</option>
-                      <?php
-                      while ($row = $situacao->fetch_array(MYSQLI_NUM)) {
-                        echo "<option value=" . $row[0] . ">" . $row[1] . "</option>";
-                      }                            ?>
-                    </select>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
-                  <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                  <div class="col-md-6">
-                    <select class="form-control input-lg mb-md" name="cargo" id="cargo" required>
-                      <option selected disabled>Selecionar</option>
-                      <?php
-                      while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
-                        echo "<option value=" . $row[0] . ">" . $row[1] . "</option>";
-                      }
-                      ?>
-                    </select>
-                  </div>
+                <input type="hidden" name="id_funcionario" value=<?= $_GET['id_funcionario']; ?> readonly>
+                
+                <div class="modal-footer">
+                    <input type="reset" class="btn btn-default">
+                    <input type="submit" value="Enviar" class="btn btn-primary">
                 </div>
 
-                <div class="form-group">
-                  <label class="col-md-3 control-label">Escala<sup class="obrig">*</sup></label>
-                  <div class="col-md-6">
-                    <select class="form-control input-lg mb-md" name="escala" id="escala_input" required>
-                      <option selected disabled value="">Selecionar</option>
-                      <?php
-                      $pdo = Conexao::connect();
-                      $escala = $pdo->query("SELECT * FROM escala_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
-                      foreach ($escala as $key => $value) {
-                        echo ("<option value=" . $value["id_escala"] . ">" . $value["descricao"] . "</option>");
-                      }
-                      ?>
-                    </select>
-                  </div>
-                  <a href="../quadro_horario/adicionar_escala.php"><i class="fas fa-plus w3-xlarge"></i></a>
-                </div>
-                <div class="form-group">
-                  <label class="col-md-3 control-label">Tipo<sup class="obrig">*</sup></label>
-                  <div class="col-md-6">
-                    <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input" required>
-                      <option selected disabled value="">Selecionar</option>
-                      <?php
-                      $pdo = Conexao::connect();
-                      $tipo = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
-                      foreach ($tipo as $key => $value) {
-                        echo ("<option value=" . $value["id_tipo"] . ">" . $value["descricao"] . "</option>");
-                      }
-                      ?>
-                    </select>
-                  </div>
-                  <a href="../quadro_horario/adicionar_tipo_quadro_horario.php"><i class="fas fa-plus w3-xlarge"></i></a>
-                </div>
-                <div class="form-group" id="reservista1" style="display: none">
-                  <label class="col-md-3 control-label">Número do certificado reservista</label>
-                  <div class="col-md-6">
-                    <input type="text" name="certificado_reservista_numero" class="form-control num_reservista">
-                  </div>
-                </div>
-                <div class="form-group" id="reservista2" style="display: none">
-                  <label class="col-md-3 control-label">Série do certificado reservista</label>
-                  <div class="col-md-6">
-                    <input type="text" name="certificado_reservista_serie" class="form-control serie_reservista">
-                  </div>
-                </div>
-
-                <div class="panel-footer">
-                  <div class="row">
-                    <div class="col-md-9 col-md-offset-3">
-                      <input type="hidden" name="nomeClasse" value="FuncionarioControle">
-                      <input type="hidden" name="id_pessoa" value="<?php echo $id_pessoaForm ?>">
-                      <input type="hidden" name="sobrenome" value="<?php echo $sobrenome ?>">
-                      <input type="hidden" name="metodo" value="incluirExistente">
-                      <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="validarFuncionario()">
-                      <input type="reset" class="btn btn-default">
-                    </div>
-                  </div>
-                </div>
               </form>
+            </div>
+          </div>
               <!-- end: page -->
     </section>
   </div>
@@ -545,28 +416,6 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
 
     };
 
-    /*function testaCPF(strCPF) { //strCPF é o cpf que será validado. Ele deve vir em formato string e sem nenhum tipo de pontuação.
-      var strCPF = strCPF.replace(/[^\d]+/g, ''); // Limpa a string do CPF removendo espaços em branco e caracteres especiais.
-      var Soma;
-      var Resto;
-      Soma = 0;
-      if (strCPF == "00000000000") return false;
-
-      for (i = 1; i <= 9; i++) Soma = Soma + parseInt(strCPF.substring(i - 1, i)) * (11 - i);
-      Resto = (Soma * 10) % 11;
-
-      if ((Resto == 10) || (Resto == 11)) Resto = 0;
-      if (Resto != parseInt(strCPF.substring(9, 10))) return false;
-
-      Soma = 0;
-      for (i = 1; i <= 10; i++) Soma = Soma + parseInt(strCPF.substring(i - 1, i)) * (12 - i);
-      Resto = (Soma * 10) % 11;
-
-      if ((Resto == 10) || (Resto == 11)) Resto = 0;
-      if (Resto != parseInt(strCPF.substring(10, 11))) return false;
-      return true;
-    }*/
-
     function validarCPF(strCPF) {
 
       if (!testaCPF(strCPF)) {
@@ -580,87 +429,23 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
       }
     }
 
-    function gerarSituacao() {
-      url = '../../dao/exibir_situacao.php';
-      $.ajax({
-        data: '',
-        type: "POST",
-        url: url,
-        async: true,
-        success: function(response) {
-          var situacoes = response;
-          $('#situacao').empty();
-          $('#situacao').append('<option selected disabled>Selecionar</option>');
-          $.each(situacoes, function(i, item) {
-            $('#situacao').append('<option value="' + item.id_situacao + '">' + item.situacoes + '</option>');
-          });
-        },
-        dataType: 'json'
-      });
-    }
-
-    function adicionar_situacao() {
-      url = '../../dao/adicionar_situacao.php';
-      var situacao = window.prompt("Cadastre uma Nova Situação:");
-      if (!situacao) {
+    function adicionarParentesco() {
+      url = 'dependente_parentesco_adicionar.php';
+      var descricao = window.prompt("Cadastre um novo tipo de Parentesco:");
+      if (!descricao) {
         return
       }
-      situacao = situacao.trim();
-      if (situacao == '') {
+      descricao = descricao.trim();
+      if (descricao == '') {
         return
       }
-
-      data = 'situacao=' + situacao;
-
-      console.log(data);
+      data = 'descricao=' + descricao;
       $.ajax({
         type: "POST",
         url: url,
         data: data,
         success: function(response) {
-          gerarSituacao();
-        },
-        dataType: 'text'
-      })
-    }
-
-    function gerarCargo() {
-      url = '../../dao/exibir_cargo.php';
-      $.ajax({
-        data: '',
-        type: "POST",
-        url: url,
-        success: function(response) {
-          var cargo = response;
-          $('#cargo').empty();
-          $('#cargo').append('<option selected disabled>Selecionar</option>');
-          $.each(cargo, function(i, item) {
-            $('#cargo').append('<option value="' + item.id_cargo + '">' + item.cargo + '</option>');
-          });
-        },
-        dataType: 'json'
-      });
-    }
-
-    function adicionar_cargo() {
-      url = '../../dao/adicionar_cargo.php';
-      var cargo = window.prompt("Cadastre um Novo Cargo:");
-      if (!cargo) {
-        return
-      }
-      situacao = cargo.trim();
-      if (cargo == '') {
-        return
-      }
-
-      data = 'cargo=' + cargo;
-      console.log(data);
-      $.ajax({
-        type: "POST",
-        url: url,
-        data: data,
-        success: function(response) {
-          gerarCargo();
+          gerarParentesco();
         },
         dataType: 'text'
       })

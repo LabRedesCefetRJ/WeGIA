@@ -1577,8 +1577,54 @@ $dependente = json_encode($dependente);
                         Adicionar Dependente
                       </button>
                     </div>
-                    <!-- Modal Form Dependentes -->
+                    
+                    <!-- Modal Form Dependentes to Cpf -->
                     <div class="modal fade" id="depFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header" style="display: flex;justify-content: space-between;">
+                            <h5 class="modal-title" id="exampleModalLabel">Adicionar Dependente</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <!-- Ask for CPF -->
+                          <form action='dependente_cadastrar.php' method='post' id='funcionarioDepForm'>
+                            <div class="modal-body" style="padding: 15px 40px">
+                              <div class="form-group" style="display: grid;">
+                                <div class="form-group">
+                                  <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
+                                  <div class="col-md-6">
+                                    <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                  </div>
+                                </div>
+                                <div class="form-group">
+                                  <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
+                                  <div class="col-md-6" style="display: flex;">
+                                    <select name="id_parentesco" id="parentesco">
+                                      <option selected disabled>Selecionar...</option>
+                                      <?php
+                                      foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                        echo ("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
+                                      }
+                                      ?>
+                                    </select>
+                                    <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                  </div>
+                                </div>
+                                <input type="hidden" name="id_funcionario" value=<?= $_GET['id_funcionario']; ?> readonly>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                  <input type="submit" value="Enviar" class="btn btn-primary">
+                                </div>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- <div class="modal fade" id="newDepFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <div class="modal-header" style="display: flex;justify-content: space-between;">
@@ -1679,7 +1725,7 @@ $dependente = json_encode($dependente);
                           </form>
                         </div>
                       </div>
-                    </div>
+                    </div> -->
                   </section>
                 </div>
                 <!-- Aba endereço -->
@@ -2048,7 +2094,7 @@ $dependente = json_encode($dependente);
     switchForm("editar_cargaHoraria", false)
   </script>
   <div align="right">
-    <iframe src="https://www.wegia.org/software/footer/funcionario.html" width="200" height="60" style="border:none;"></iframe>
+    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
   </div>
 </body>
 

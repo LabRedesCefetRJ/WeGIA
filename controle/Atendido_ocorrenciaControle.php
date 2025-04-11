@@ -101,7 +101,7 @@ class Atendido_ocorrenciaControle
 			}
 			$msg = "success";
 			$sccd = "Ocorrencia enviada com sucesso";
-			header("Location: " . WWW . "html/atendido/listar_ocorrencias_ativas.php?msg=" . $msg . "&sccd=" . $sccd);
+			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?msg=" . $msg . "&sccd=" . $sccd);
 		} catch (PDOException $e) {
 			$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
 			echo $msg;
