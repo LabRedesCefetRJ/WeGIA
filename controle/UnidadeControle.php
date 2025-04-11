@@ -1,6 +1,6 @@
 <?php
-include_once '../classes/Unidade.php';
-include_once '../dao/UnidadeDAO.php';
+include_once ROOT . '/classes/Unidade.php';
+include_once ROOT .'/dao/UnidadeDAO.php';
 class UnidadeControle
 {
     public function verificar(){
@@ -31,8 +31,8 @@ class UnidadeControle
             session_start();
             $_SESSION['msg']="Unidade cadastrado com sucesso";
             $_SESSION['proxima']="Cadastrar outra unidade";
-            $_SESSION['link']="../html/cadastrar_unidade.php";
-            header("Location: ../html/cadastro_produto.php");
+            $_SESSION['link']= WWW ."html/matPat/adicionar_unidade.php";
+            header("Location: ". WWW ."html/matPat/cadastro_produto.php");
         } catch (PDOException $e){
             $msg= "Não foi possível registrar o funcionário"."<br>".$e->getMessage();
             echo $msg;
@@ -43,7 +43,7 @@ class UnidadeControle
         try{
             $unidadeDAO = new UnidadeDAO();
             $unidadeDAO->excluir($id_unidade);
-            header('Location:../html/listar_unidade.php');
+            header('Location: '. WWW .'html/matPat/listar_unidade.php');
         }catch (PDOException $e) {
             echo "ERROR: ".$e->getMessage();
         }

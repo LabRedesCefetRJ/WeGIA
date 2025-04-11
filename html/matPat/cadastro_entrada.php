@@ -26,18 +26,18 @@ if (!is_null($resultado)) {
 		$permissao = mysqli_fetch_array($resultado);
 		if ($permissao['id_acao'] < 3) {
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location:" . WWW ."html/home.php?msg_c=$msg");
+			header("Location: ". WWW ."html/home.php?msg_c=$msg");
 		}
 		$permissao = $permissao['id_acao'];
 	} else {
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location:" . WWW . "html/home.php?msg_c=$msg");
+		header("Location: ". WWW ."html/home.php?msg_c=$msg");
 	}
 } else {
 	$permissao = 1;
 	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location:". WWW ."html/home.php?msg_c=$msg");
+	header("Location: ". WWW ."html/home.php?msg_c=$msg");
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
@@ -47,7 +47,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 ?>
 
 <!doctype html>
-<html class="fixed">
+<html lass="fixed">
 
 <head>
 	<?php
@@ -57,16 +57,16 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	include_once ROOT . '/dao/ProdutoDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
 	}
 	if (!isset($_SESSION['tipo_entrada'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoEntradaControle&nextPage='. WWW .'html/matPat/cadastro_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoEntradaControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
 	}
 	if (!isset($_SESSION['autocomplete'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage='. WWW .'html/matPat/cadastro_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
 	}
 	if (!isset($_SESSION['origem'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarId_Nome&nomeClasse=OrigemControle&nextPage='. WWW .'html/matPat/cadastro_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarId_Nome&nomeClasse=OrigemControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
 	}
 	if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  isset($_SESSION['autocomplete']) && isset($_SESSION['origem'])) {
 
@@ -315,7 +315,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 				let almoxarifadoId = $(this).val();
 
-				$.getJSON( <?= WWW ?> . '/controle/control.php', {
+				$.getJSON('<?= WWW ?>controle/control.php', {
 					nomeClasse: 'ProdutoControle',
 					metodo: 'getProdutosParaCadastrarEntradaPorAlmoxarifado',
 					almoxarifado: almoxarifadoId

@@ -5,7 +5,7 @@ class OrigemControle
 {
     public function verificar(){
         extract($_REQUEST);
-        if((!isset($nome)) || (empty($nome))){
+        if((!isset($nome)) || (empty($nome)) || $nome == " "){
             $msg = "Nome do origem não informado. Por favor, informe um nome!";
             header('Location: ../html/origem.html?msg='.$msg);
         }
