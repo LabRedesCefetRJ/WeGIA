@@ -15,7 +15,7 @@ $config_path = "config.php";
 if(file_exists($config_path)){
     require_once($config_path);
 } else {
-    $max_depth = 10; // Limite máximo de profundidade para evitar loop infinito
+    $max_depth = 10; 
     $current_depth = 0;
     while($current_depth < $max_depth){
         $config_path = "../" . $config_path;

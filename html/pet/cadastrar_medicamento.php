@@ -19,22 +19,17 @@ $config_path = "config.php";
 if(file_exists($config_path)){
     require_once($config_path);
 } else {
-    $possible_paths = [
-        "../config.php",
-        "../../config.php",
-        "../../../config.php"
-    ];
-    
-    $found = false;
-    foreach ($possible_paths as $path) {
-        if (file_exists($path)) {
-            require_once($path);
-            $found = true;
+    $max_depth = 10; 
+    $current_depth = 0;
+    while($current_depth < $max_depth){
+        $config_path = "../" . $config_path;
+        if(file_exists($config_path)) {
+            require_once($config_path);
             break;
         }
+        $current_depth++;
     }
-    
-    if (!$found) {
+    if($current_depth >= $max_depth) {
         die("Arquivo de configuração não encontrado.");
     }
 }
