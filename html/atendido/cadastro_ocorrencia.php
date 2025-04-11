@@ -358,7 +358,52 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
         });
         });
         
+        function gerarOcorrencia() {
+            url = '../../dao/exibir_ocorrencia.php';
+            $.ajax({
+                data: '',
+                type: "POST",
+                url: url,
+                async: true,
+                success: function(response) {
+                var ocorrencias = response;
+                $('#id_tipos_ocorrencia').empty();
+                $('#id_tipos_ocorrencia').append('<option selected disabled>Selecionar</option>');
+                $.each(ocorrencias, function(i, item) {
+                    $('#id_tipos_ocorrencia').append('<option value="' + item.idatendido_ocorrencia_tipos + '">' + item.descricao + '</option>');
+                });
+                },
+                dataType: 'json'
+            });
+        }
 
+        function adicionar_ocorrencia() {
+            url = '../../dao/adicionar_ocorrencia.php';
+            var ocorrencia = window.prompt("Cadastre uma Nova Ocorrência:");
+            if (!ocorrencia) {
+                return
+            }
+            ocorrencia = ocorrencia.trim();
+            if (ocorrencia == '') {
+                return
+            }
+
+            data = 'atendido_ocorrencia_tipos=' + ocorrencia;
+
+            console.log(data);
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: data,
+                success: function(response) {
+                gerarOcorrencia();
+                },
+                dataType: 'text'
+            })
+        }
+        function alertaBemSucedido(){
+            alert("Cadastro de ocorrência bem sucedido")
+        }
     </script> 
     
     
@@ -449,37 +494,38 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                     <div class="panel-body">
 
                         
-							<form class="form-horizontal" method="post" action="../../controle/control.php" enctype="multipart/form-data">	
+							<form class="form-horizontal" method="post" onsubmit="alertaBemSucedido()" action="../../controle/control.php" enctype="multipart/form-data">	
                             <h5 class="obrig">Campos Obrigatórios(*)</h5>
                             <br>
                             <div class="form-group">
                                 <label class="col-md-3 control-label" for="profileLastName">Atendido:<sup class="obrig">*</sup></label> 
                                 <div class="col-md-6">
-                                <select class="form-control input-lg mb-md" name="atendido_idatendido" id="atendido_idatendido" required>
-                                <option selected disabled>Selecionar</option>
-                                    <?php
-                                    foreach($nome as $key => $value)
-                                    {
-                                        echo "<option value=" . $nome[$key]['idatendido'] . ">" . $nome[$key]['nome'] . " " . $nome[$key]['sobrenome'] . "</option>";
-                                    }
-                                    ?>
-                                </select>
+                                    <select class="form-control input-lg mb-md" name="atendido_idatendido" id="atendido_idatendido" required>
+                                    <option selected disabled>Selecionar</option>
+                                        <?php
+                                        foreach($nome as $key => $value)
+                                        {
+                                            echo "<option value=" . $nome[$key]['idatendido'] . ">" . $nome[$key]['nome'] . " " . $nome[$key]['sobrenome'] . "</option>";
+                                        }
+                                        ?>
+                                    </select>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label class="col-md-3 control-label" for="profileLastName">Tipo de ocorrência:<sup class="obrig">*</sup></label> 
-                                <div class="col-md-6">
-                                <select class="form-control input-lg mb-md" name="id_tipos_ocorrencia" id="id_tipos_ocorrencia" required>
-                                <option selected disabled>Selecionar</option>
-                                    <?php
-                                    foreach($tipo as $key => $value)
-                                    {
-                                        echo "<option value=" . $tipo[$key]['idatendido_ocorrencia_tipos'] . ">" . $tipo[$key]['descricao'] .  "</option>";
-                                    }
-                                    ?>
-                                </select>
-                                </div>
+                                <label class="col-md-3 control-label" for="profileLastName">Tipo de ocorrência:<sup class="obrig">*</sup></label>      
+                                    <div class="col-md-6">
+                                        <select class="form-control input-lg mb-md" name="id_tipos_ocorrencia" id="id_tipos_ocorrencia" required>
+                                            <option selected disabled>Selecionar</option>
+                                            <?php
+                                                foreach($tipo as $key => $value)
+                                                {
+                                                    echo "<option value=" . $tipo[$key]['idatendido_ocorrencia_tipos'] . ">" . $tipo[$key]['descricao'] .  "</option>";
+                                                }
+                                            ?>
+                                        </select>
+                                    </div>
+                                    <a onclick="adicionar_ocorrencia()"><i class="fas fa-plus w3-xlarge adicionar" style="margin-top: 0.75vw"></i></a>
                             </div>
                             <div class="form-group">
 											 <label class="col-md-3 control-label" for="profileCompany">Data da ocorrência:<sup class="obrig">*</sup></label>

@@ -325,11 +325,7 @@
 							</div>
 						</a>
 						<a href="#">
-							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#ocorrencias">
-								<i class="fas fa-address-book"></i>
-								<h4>Ocorrências</h4>
-							</div>
-						</div>
+					</div>
 				</div>
 
 				<div class="row category-row-third">
@@ -366,28 +362,22 @@
 								</form>
 							</div>
 						</a>
+
+						<a href="../controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/cadastro_ocorrencia.php">
+							<div class="col-lg-2 col-md-8 i">
+								<form id="listarAtendido" method="POST" action="../controle/control.php">
+									<i  class="fa fa-edit" id="listarAtendido"></i>
+									<h4>Cadastrar Ocorrência</h4>
+								</form>
+							</div>
+						</a>
 						
 					</div>
 				</div>
 
 				<div class="row category-row-third">
 					<div  id="ocorrencias" class="removeIn collapse">
-					<a href="../controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/cadastro_ocorrencia.php">
-							<div class="col-lg-2 col-md-8 i">
-								<form id="listarAtendido" method="POST" action="../controle/control.php">
-									<i  class="fa fa-address-book" id="listarAtendido"></i>
-									<h4>Cadastrar Ocorrência</h4>
-								</form>
-							</div>
-						</a>
-						<a href="../controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/listar_ocorrencias_ativas.php">
-							<div class="col-lg-2 col-md-8 i">
-								<form id="listarAtendido" method="POST" action="../controle/control.php">
-									<i  class="far fa-address-card" id="listarAtendido"></i>
-									<h4>Ocorrências Ativas</h4>
-								</form>
-							</div>
-						</a>
+						
 					</div>
 				</div>
 				<!--fim da parte interna de #pessoas-->
