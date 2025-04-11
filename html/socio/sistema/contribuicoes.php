@@ -53,6 +53,12 @@ if (!is_null($resultado)) {
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
+//Buscar data e hora da última atualização das contribuições
+require_once '../../../dao/SistemaLogDAO.php';
+
+$sistemaLogDao = new SistemaLogDAO();
+$sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
+
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -154,6 +160,20 @@ require_once ROOT . "/html/personalizacao_display.php";
     });
   </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.css">
+
+  <style>
+    .sync-control {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      /* Espaço entre o botão e o texto */
+    }
+
+    .sync-control p {
+      margin: 0;
+      /* Remove margem padrão do parágrafo */
+    }
+  </style>
 </head>
 
 <body>
@@ -206,7 +226,14 @@ require_once ROOT . "/html/personalizacao_display.php";
               <div class="sync-control">
                 <button class="btn btn-primary" id="sync-btn" title="Sincroniza contribuições de acordo com os múltiplos gateways de pagamentos cadastrados">Sincronizar pagamentos</button>
 
-                <!--Adicionar posteriormente as informações de data e hora da última sincronização -->
+                <!--Informações de data e hora da última sincronização -->
+                <?php if (is_null($sistemaLogContribuicao)): ?>
+                  <p>Sem registros da última atualização realizada.</p>
+                <?php elseif (is_array($sistemaLogContribuicao) && $sistemaLogContribuicao[0] instanceof SistemaLog): ?>
+                  <p>Última atualização realizada em: <?= $sistemaLogContribuicao[0]->getData()->format('d/m/Y à\s H:i:s') ?></p>
+                <?php else: ?>
+                  <p>Erro ao tentar buscar data da última atualização.</p>
+                <?php endif; ?>
               </div>
             </div>
             <!-- /.box-header -->

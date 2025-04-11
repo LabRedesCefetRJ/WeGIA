@@ -62,7 +62,7 @@ class SistemaLogDAO
         $logsArray = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($logsArray as $log) {
-            $sistemaLog []= new SistemaLog($log['id_pessoa'], $log['id_recurso'], $log['id_acao'], $log['data'], $log['descricao']);
+            $sistemaLogs []= new SistemaLog($log['id_pessoa'], $log['id_recurso'], $log['id_acao'], new DateTime($log['data']), $log['descricao']);
         }
 
         return $sistemaLogs;
