@@ -249,7 +249,7 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
                     <th>D. pagamento</th>
                     <th>Valor</th>
                     <th>Status</th>
-                    <th>Opções</th>
+                    <!--Ativar novamente quando as opções forem implementadas <th>Opções</th>-->
                   </tr>
                 </thead>
                 <tbody>
