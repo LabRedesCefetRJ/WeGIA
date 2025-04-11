@@ -555,7 +555,22 @@ class ContribuicaoLogController
             }
 
             if ($atualizou) {
-                $this->pdo->commit();
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+
+                require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
+
+                $sistemaLogDao = new SistemaLogDAO($this->pdo);
+                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Sincronização da tabela de contribuições com os gateways de pagamento');
+
+                if ($sistemaLogDao->registrar($sistemaLog)) {
+                    $this->pdo->commit();
+                }else{
+                    $this->pdo->rollBack();
+                    throw new Exception('Falha ao registrar log do sistema');
+                }
+
             } else {
                 $this->pdo->rollBack();
             }

@@ -29,7 +29,7 @@ class SistemaLogDAO
         $stmt->bindValue(':idRecurso', $sistemaLog->getIdRecurso());
         $stmt->bindValue(':idAcao', $sistemaLog->getIdAcao());
         $stmt->bindValue(':descricao', $sistemaLog->getDescricao());
-        $stmt->bindValue(':data', $sistemaLog->getData());
+        $stmt->bindValue(':data', $sistemaLog->getData()->format('Y-m-d H:i:s'));
 
         return $stmt->execute();
     }
