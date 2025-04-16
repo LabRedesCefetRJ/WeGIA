@@ -5,55 +5,86 @@
 	error_reporting(E_ALL);
 
 	session_start();
-	if(!isset($_SESSION['usuario'])){
-		header ("Location: ../index.php");
+	if (!isset($_SESSION['usuario'])) {
+		header("Location: ../index.php");
+		exit;
 	}
-	
-	//if(!isset($_SESSION['pet'])){
-		//header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=PetControle&/////modulo=pet&nextPage=../html/pet/informacao_pet.php');
-	//}
+
+	// Caminho seguro para config.php
+	$max_niveis = 10;
 	$config_path = "config.php";
-	if(file_exists($config_path)){
-		require_once($config_path);
-	}else{
-		while(true){
-			$config_path = "../" . $config_path;
-			if(file_exists($config_path)) break;
-		}
-		require_once($config_path);
+	$tentativas = 0;
+
+	while (!file_exists($config_path) && $tentativas < $max_niveis) {
+		$config_path = "../" . $config_path;
+		$tentativas++;
 	}
+
+	$config_realpath = realpath($config_path);
+
+	if ($config_realpath && file_exists($config_realpath)) {
+		require_once($config_realpath);
+	} else {
+		die("Arquivo de configuração não encontrado ou acesso inválido.");
+	}
+
 	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+
+	if (!$conexao) {
+		die("Erro na conexão com o banco de dados.");
+	}
+
 	$id_pessoa = $_SESSION['id_pessoa'];
-	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-	if(!is_null($resultado)){
-		$id_cargo = mysqli_fetch_array($resultado);
-		if(!is_null($id_cargo)){
-			$id_cargo = $id_cargo['id_cargo'];
-		}
-		$resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN acao a ON(p.id_acao=a.id_acao) JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND a.descricao = 'LER, GRAVAR E EXECUTAR' AND r.descricao='Informações Pet'");
-		if(!is_bool($resultado) and mysqli_num_rows($resultado)){
-			$permissao = mysqli_fetch_array($resultado);
-			if($permissao['id_acao'] < 5){
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: ../home.php?msg_c=$msg");
+
+	// Consulta segura usando prepared statements
+	$stmt = mysqli_prepare($conexao, "SELECT * FROM funcionario WHERE id_pessoa = ?");
+	mysqli_stmt_bind_param($stmt, "i", $id_pessoa);
+	mysqli_stmt_execute($stmt);
+	$resultado = mysqli_stmt_get_result($stmt);
+
+	if ($resultado && mysqli_num_rows($resultado) > 0) {
+		$id_cargo_row = mysqli_fetch_assoc($resultado);
+		$id_cargo = $id_cargo_row['id_cargo'];
+
+		$query = "SELECT * FROM permissao p 
+		          JOIN acao a ON(p.id_acao=a.id_acao) 
+		          JOIN recurso r ON(p.id_recurso=r.id_recurso) 
+		          WHERE id_cargo = ? AND a.descricao = ? AND r.descricao = ?";
+		
+		$stmt = mysqli_prepare($conexao, $query);
+		$acao_desc = 'LER, GRAVAR E EXECUTAR';
+		$recurso_desc = 'Informações Pet';
+		mysqli_stmt_bind_param($stmt, "iss", $id_cargo, $acao_desc, $recurso_desc);
+		mysqli_stmt_execute($stmt);
+		$resultado = mysqli_stmt_get_result($stmt);
+
+		if ($resultado && mysqli_num_rows($resultado) > 0) {
+			$permissao = mysqli_fetch_assoc($resultado);
+			if ($permissao['id_acao'] < 5) {
+				$msg = "Você não tem as permissões necessárias para essa página.";
+				header("Location: ../home.php?msg_c=" . urlencode($msg));
+				exit;
 			}
 			$permissao = $permissao['id_acao'];
-		}else{
-        	$permissao = 1;
-          $msg = "Você não tem as permissões necessárias para essa página.";
-          header("Location: ../home.php?msg_c=$msg");
-		}	
-	}else{
+		} else {
+			$permissao = 1;
+			$msg = "Você não tem as permissões necessárias para essa página.";
+			header("Location: ../home.php?msg_c=" . urlencode($msg));
+			exit;
+		}
+	} else {
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ../../home.php?msg_c=$msg");
-	}	
+		header("Location: ../../home.php?msg_c=" . urlencode($msg));
+		exit;
+	}
 
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
 	require_once "../personalizacao_display.php";
-	require_once ROOT."/controle/pet/PetControle.php";
+	require_once ROOT . "/controle/pet/PetControle.php";
 
 ?>
+
 
 
 <!doctype html>
