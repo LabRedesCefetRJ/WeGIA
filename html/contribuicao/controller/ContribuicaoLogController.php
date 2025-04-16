@@ -538,7 +538,6 @@ class ContribuicaoLogController
             }
 
             // Identificar contribuições pagas
-            $atualizou = false;
             $this->pdo->beginTransaction();
 
             foreach ($contribuicoesPendentesArray as $contribuicaoPendente) {
@@ -550,30 +549,23 @@ class ContribuicaoLogController
                         $contribuicaoLog->getCodigo(),
                         $contribuicaoLog->getDataPagamento()
                     );
-                    $atualizou = true;
                 }
             }
 
-            if ($atualizou) {
-                if (session_status() === PHP_SESSION_NONE) {
-                    session_start();
-                }
-
-                require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
-
-                $sistemaLogDao = new SistemaLogDAO($this->pdo);
-                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Sincronização da tabela de contribuições com os gateways de pagamento');
-
-                if ($sistemaLogDao->registrar($sistemaLog)) {
-                    $this->pdo->commit();
-                }else{
-                    $this->pdo->rollBack();
-                    throw new Exception('Falha ao registrar log do sistema');
-                }
-
-            } else {
-                $this->pdo->rollBack();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
             }
+
+            require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Sincronização da tabela de contribuições com os gateways de pagamento');
+
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                throw new Exception('Falha ao registrar log do sistema');
+            }
+
+            $this->pdo->commit();
 
             echo json_encode(['sucesso' => 'Sincronização realizada com sucesso']);
         } catch (Exception $e) {
