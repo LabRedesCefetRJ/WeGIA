@@ -31,7 +31,7 @@ try {
     $stmt = $pdo->prepare("SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = :id_atendido");
     $stmt->bindParam(":id_atendido", $idatendido);
     $stmt->execute();
-    $id_pessoa_atendido = $stmt->fetch(PDO::FETCH_ASSOC)["id_pessoa"];
+    $id_pessoa_atendido = $stmt->fetch(PDO::FETCH_ASSOC)["pessoa_id_pessoa"];
 } catch (PDOException $th) {
     echo "Um erro ocorreu na validação do CPF " . $th;
     die();
