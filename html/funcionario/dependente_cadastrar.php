@@ -24,12 +24,17 @@ try {
     $xablau->bindParam(":cpf", $cpf);
     $xablau->execute();
     $id_pessoa = $xablau->fetch(PDO::FETCH_ASSOC)["id_pessoa"];
+
+    $stmt = $pdo->prepare("SELECT id_pessoa FROM funcionario WHERE id_funcionario = :id_funcionario");
+    $stmt->bindParam(":id_funcionario", $id_funcionario);
+    $stmt->execute();
+    $id_pessoa_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)["id_pessoa"];
 } catch (PDOException $th) {
     echo "Um erro ocorreu na validação do CPF";
     die();
 }
 
-if($id_pessoa == $id_funcionario) {
+if($id_pessoa == $id_pessoa_funcionario) {
     echo "Você está adicionando um cpf do próprio funcionário.";
     die();
 } else {
