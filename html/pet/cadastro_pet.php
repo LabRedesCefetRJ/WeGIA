@@ -534,7 +534,6 @@ if (isset($_GET['msg'])) {
 
       if (c.length != 0) {
         alert("Caracteres inválidos encontrados. Tente novamente.");
-        alert(c);
         adicionar_cor();
         return;
       }
