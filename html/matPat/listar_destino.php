@@ -44,21 +44,22 @@
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
 	require_once "personalizacao_display.php";
 ?>
+
 <!doctype html>
 <html class="fixed">
    <head>
       <?php
          	include_once '../dao/Conexao.php';
-          	include_once '../dao/TipoSaidaDAO.php';
+          	include_once '../dao/DestinoDAO.php';
           
-          	if(!isset($_SESSION['tipo_saida'])){
-            	header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=../html/listar_tipoSaida.php');
+          	if(!isset($_SESSION['destino'])){
+            	header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=../html/listar_destino.php');
           	}
-          	if(isset($_SESSION['tipo_saida'])){
-            	$tipo = $_SESSION['tipo_saida'];
-            	unset($_SESSION['tipo_saida']);
+          	if(isset($_SESSION['destino'])){
+            	$destino = $_SESSION['destino'];
+            	unset($_SESSION['destino']);
             }
-      ?>
+         ?>
       <!-- Basic -->
       <meta charset="UTF-8">
       <title>Informaçoes</title>
@@ -69,11 +70,10 @@
       <link rel="stylesheet" href="../assets/vendor/font-awesome/css/font-awesome.css" />
       <link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
       <link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+      <link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
       <!-- Specific Page Vendor CSS -->
       <link rel="stylesheet" href="../assets/vendor/select2/select2.css" />
       <link rel="stylesheet" href="../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
-      <link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
-
       <!-- Theme CSS -->
       <link rel="stylesheet" href="../assets/stylesheets/theme.css" />
       <!-- Skin CSS -->
@@ -91,6 +91,7 @@
       <script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
       <script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
       <script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+
       <!-- javascript functions -->
       <script src="../Functions/onlyNumbers.js"></script>
       <script src="../Functions/onlyChars.js"></script>
@@ -99,23 +100,29 @@
       <!-- jquery functions -->
       <script>
          function excluir(id){
-         	window.location.replace('../controle/Control.php?metodo=excluir&nomeClasse=TipoSaidaControle&id_tipo='+id);
+         	window.location.replace('../controle/control.php?metodo=excluir&nomeClasse=DestinoControle&id_destino='+id);
          }
       </script>
       <script>
          $(function(){
-         	var tipo = <?php 
-            echo $tipo; 
+         	var destino= <?php 
+            echo $destino; 
             ?>;
          
-         	$.each(tipo, function(i,item){
+         	$.each(destino, function(i,item){
          
          		$('#tabela')
          			.append($('<tr />')
          				.append($('<td />')
-         					.text(item.descricao))
+         					.text(item.nome_destino))
+                     .append($('<td />')
+                        .text(item.cnpj))
+                     .append($('<td />')
+                        .text(item.cpf))
+                     .append($('<td />')
+                        .text(item.telefone))
          				.append($('<td />')
-         					.attr('onclick','excluir("'+item.id_tipo+'")')
+         					.attr('onclick','excluir("'+item.id_destino+'")')
          					.html('<i class="fas fa-trash-alt"></i>')));
          	});
          });
@@ -127,49 +134,53 @@
    </head>
    <body>
       <section class="body">
-         <div id="header"></div>
-            <!-- end: header -->
-            <div class="inner-wrapper">
-               <!-- start: sidebar -->
-               <aside id="sidebar-left" class="sidebar-left menuu"></aside>
-         <!-- end: sidebar -->
-         <section role="main" class="content-body">
-         <header class="page-header">
-            <h2>Informaçoes</h2>
-            <div class="right-wrapper pull-right">
-               <ol class="breadcrumbs">
-                  <li>
-                     <a href="home.php">
-                     <i class="fa fa-home"></i>
-                     </a>
-                  </li>
-                  <li><span>Informações Funcionario</span></li>
-               </ol>
-               <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+      <!-- start: header -->
+      <div id="header"></div>
+        <!-- end: header -->
+        <div class="inner-wrapper">
+          <!-- start: sidebar -->
+          <aside id="sidebar-left" class="sidebar-left menuu"></aside>
+      <!-- end: sidebar -->
+      <section role="main" class="content-body">
+      <header class="page-header">
+         <h2>Informaçoes</h2>
+         <div class="right-wrapper pull-right">
+            <ol class="breadcrumbs">
+               <li>
+                  <a href="home.php">
+                  <i class="fa fa-home"></i>
+                  </a>
+               </li>
+               <li><span>Informações Funcionario</span></li>
+            </ol>
+            <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+         </div>
+      </header>
+      <!-- start: page -->
+      <section class="panel">
+         <header class="panel-heading">
+            <div class="panel-actions">
+               <a href="#" class="fa fa-caret-down"></a>
             </div>
+            <h2 class="panel-title">Destino</h2>
          </header>
-         <!-- start: page -->
-         <section class="panel">
-            <header class="panel-heading">
-               <div class="panel-actions">
-                  <a href="#" class="fa fa-caret-down"></a>
-               </div>
-               <h2 class="panel-title">Tipo</h2>
-            </header>
-            <div class="panel-body">
-               <table class="table table-bordered table-striped mb-none" id="datatable-default">
-                  <thead>
-                     <tr>
-                        <th>Nome</th>
-                        <th>Ação</th>
-                     </tr>
-                  </thead>
-                  <tbody id="tabela">	
-                  </tbody>
-               </table>
-            </div>
-            <br>
-         </section>
+         <div class="panel-body">
+            <table class="table table-bordered table-striped mb-none" id="datatable-default">
+               <thead>
+                  <tr>
+                     <th>Pessoa/Empresa</th>
+                     <th>CNPJ</th>
+                     <th>CPF</th>
+                     <th>Telefone</th>
+                     <th>Acão</th>
+                  </tr>
+               </thead>
+               <tbody id="tabela">	
+               </tbody>
+            </table>
+         </div>
+         <br>
+      </section>
       <!-- end: page -->
       <!-- Vendor -->
       <!-- Specific Page Vendor -->
@@ -187,5 +198,8 @@
       <script src="../assets/javascripts/tables/examples.datatables.default.js"></script>
       <script src="../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
       <script src="../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+      <div align="right">
+	<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
+      </div>
    </body>
 </html>

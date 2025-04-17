@@ -283,7 +283,7 @@ require_once ROOT."/html/personalizacao_display.php";
 
 								<div id="almoxarife" class="tab-pane" role="tabpanel">
 									<fieldset>
-										<form action="../adicionar_almoxarife.php" method="post">
+										<form action="../matPat/adicionar_almoxarife.php" method="post">
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="inputSuccess">Funcionário</label>
 												<a href="../funcionario/cadastro_funcionario.php">
@@ -298,7 +298,7 @@ require_once ROOT."/html/personalizacao_display.php";
 											
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="inputSuccess">Almoxarifado</label>
-												<a href="../adicionar_almoxarifado.php">
+												<a href="../matPat/adicionar_almoxarifado.php">
 													<i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
 												</a>
 												<div class="col-md-6">

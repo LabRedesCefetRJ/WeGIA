@@ -218,12 +218,12 @@
 							
 								<ul class="nav nav-children">
 									<li>
-										<a href="<?= WWW ?>html/cadastro_entrada.php">
+										<a href="<?= WWW ?>html/matPat/cadastro_entrada.php">
 											<span>Registrar Entrada</span>
 										</a>
 									</li>
 									<li>
-										<a href="<?= WWW ?>html/listar_entrada.php">
+										<a href="<?= WWW ?>html/matPat/listar_entrada.php">
 											<span>Informações de Entradas</span>
 										</a>
 									</li>
@@ -238,12 +238,12 @@
 							
 								<ul class="nav nav-children">
 									<li>
-										<a href="<?= WWW ?>html/cadastro_saida.php">
+										<a href="<?= WWW ?>html/matPat/cadastro_saida.php">
 											<span>Registrar Saída</span>
 										</a>
 									</li>
 									<li>
-										<a href="<?= WWW ?>html/listar_saida.php">
+										<a href="<?= WWW ?>html/matPat/listar_saida.php">
 											<span>Informações de Saídas</span>
 										</a>
 									</li>
@@ -258,7 +258,7 @@
 							
 								<ul class="nav nav-children">
 									<li>
-										<a href="<?= WWW ?>html/relatorio.php">
+										<a href="<?= WWW ?>html/matPat/relatorio.php">
 											<i class="fa fa-clipboard"></i>
 											<span>Gerar Relatório</span>
 										</a>
@@ -270,7 +270,7 @@
 										</a>
 										<ul class="nav nav-children">
 											<li>
-												<a href="<?= WWW ?>html/cadastro_produto.php">
+												<a href="<?= WWW ?>html/matPat/cadastro_produto.php">
 													<span>Cadastrar Produto</span>
 												</a>
 											</li>
@@ -283,12 +283,12 @@
 										</a>
 										<ul class="nav nav-children">
 											<li>
-												<a href="<?= WWW ?>html/adicionar_almoxarifado.php">
+												<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php">
 													<span>Adicionar Almoxarifado</span>
 												</a>
 											</li>
 											<li>
-												<a href="<?= WWW ?>html/listar_almox.php">
+												<a href="<?= WWW ?>html/matPat/listar_almox.php">
 													<span>Listar Almoxarifados</span>
 												</a>
 											</li>
@@ -501,12 +501,6 @@
 								</a>
 							</li>
 						</ul>
-					</li>
-					<li id="5" class="visivel">
-						<a href="<?= WWW ?>manual/index.php">
-							<i class="fas fa-book" aria-hidden="true"></i>
-							<span>Manual</span>
-						</a>
 					</li>
 				</ul>
 			</nav>

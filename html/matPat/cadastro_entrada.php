@@ -26,24 +26,24 @@ if (!is_null($resultado)) {
 		$permissao = mysqli_fetch_array($resultado);
 		if ($permissao['id_acao'] < 3) {
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ./home.php?msg_c=$msg");
+			header("Location: ". WWW ."html/home.php?msg_c=$msg");
 		}
 		$permissao = $permissao['id_acao'];
 	} else {
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ./home.php?msg_c=$msg");
+		header("Location: ". WWW ."html/home.php?msg_c=$msg");
 	}
 } else {
 	$permissao = 1;
 	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: ./home.php?msg_c=$msg");
+	header("Location: ". WWW ."html/home.php?msg_c=$msg");
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once "personalizacao_display.php";
+require_once ROOT . "/html/personalizacao_display.php";
 
-require_once "../Functions/permissao/permissao.php";
+require_once ROOT . "/Functions/permissao/permissao.php";
 ?>
 
 <!doctype html>
@@ -51,22 +51,22 @@ require_once "../Functions/permissao/permissao.php";
 
 <head>
 	<?php
-	include_once '../dao/Conexao.php';
-	include_once '../dao/AlmoxarifadoDAO.php';
-	include_once '../dao/TipoEntradaDAO.php';
-	include_once '../dao/ProdutoDAO.php';
+	include_once ROOT . '/dao/Conexao.php';
+	include_once ROOT . '/dao/AlmoxarifadoDAO.php';
+	include_once ROOT . '/dao/TipoEntradaDAO.php';
+	include_once ROOT . '/dao/ProdutoDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . '/html/cadastro_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
 	}
 	if (!isset($_SESSION['tipo_entrada'])) {
-		header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=TipoEntradaControle&nextPage=../html/cadastro_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoEntradaControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
 	}
 	if (!isset($_SESSION['autocomplete'])) {
-		header('Location: ../controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=../html/cadastro_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
 	}
 	if (!isset($_SESSION['origem'])) {
-		header('Location: ../controle/control.php?metodo=listarId_Nome&nomeClasse=OrigemControle&nextPage=../html/cadastro_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarId_Nome&nomeClasse=OrigemControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
 	}
 	if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  isset($_SESSION['autocomplete']) && isset($_SESSION['origem'])) {
 
@@ -90,27 +90,27 @@ require_once "../Functions/permissao/permissao.php";
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.css" />
-	<link rel="stylesheet" href="../assets/vendor/font-awesome/css/font-awesome.css" />
-	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
-	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 
 	<!-- Theme CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
 
 	<!-- Skin CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/skins/default.css" />
 
 	<!-- Theme Custom CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
 
 	<!-- Head Libs -->
-	<script src="../assets/vendor/modernizr/modernizr.js"></script>
+	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 
 	<!-- Javascript functions -->
-	<script src="../assets/vendor/jquery/jquery.min.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -148,7 +148,7 @@ require_once "../Functions/permissao/permissao.php";
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li>
-								<a href="home.php">
+								<a href="<?= WWW ?>html/home.php">
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
@@ -170,13 +170,13 @@ require_once "../Functions/permissao/permissao.php";
 							</ul>
 							<div class="tab-content">
 								<div id="overview" class="tab-pane active">
-									<form class="form-horizontal" method="post" id="formulario" onsubmit="return validar()" action="../controle/control.php" autocomplete="off">
+									<form class="form-horizontal" method="post" id="formulario" onsubmit="return validar()" action="<?= WWW ?>controle/control.php" autocomplete="off">
 										<fieldset>
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="origem">Origem</label>
-													<a href="cadastro_doador.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/cadastro_doador.php"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
 														<input type="search" list="origens" id="origem" name="origem" class="form-control" autocomplete="off" required>
 														<datalist id="origens">
@@ -186,7 +186,7 @@ require_once "../Functions/permissao/permissao.php";
 
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
-													<a href="adicionar_almoxarifado.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="almoxarifado" id="almoxarifado">
 															<option selected disabled value="blank">Selecionar</option>
@@ -195,7 +195,7 @@ require_once "../Functions/permissao/permissao.php";
 												</div>
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="tipo_entrada">Tipo</label>
-													<a href="adicionar_tipoEntrada.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/adicionar_tipoEntrada.php"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="tipo_entrada" id="tipo_entrada">
 															<option selected disabled value="blank">Selecionar</option>
@@ -210,7 +210,7 @@ require_once "../Functions/permissao/permissao.php";
 														<thead>
 															<tr style="width: 768px;">
 																<th>Produto
-																	<a href="cadastro_produto.php" class="fas fa-plus w3-xlarge" style="float:right;" id="produto" class="produto">
+																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge" style="float:right;" id="produto" class="produto">
 																	</a>
 																</th>
 																<th>quantidade</th>
@@ -315,7 +315,7 @@ require_once "../Functions/permissao/permissao.php";
 
 				let almoxarifadoId = $(this).val();
 
-				$.getJSON('../controle/control.php', {
+				$.getJSON('<?= WWW ?>controle/control.php', {
 					nomeClasse: 'ProdutoControle',
 					metodo: 'getProdutosParaCadastrarEntradaPorAlmoxarifado',
 					almoxarifado: almoxarifadoId
@@ -465,19 +465,19 @@ require_once "../Functions/permissao/permissao.php";
 			}
 		}
 		$(function() {
-			$("#header").load("header.php");
-			$(".menuu").load("menu.php");
+			$("#header").load("../header.php");
+			$(".menuu").load("../menu.php");
 		});
 	</script>
 
 	<!-- Vendor -->
-	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
-	<script src="../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
-	<script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-	<script src="../assets/script/logistica.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?= WWW ?>assets/script/logistica.js"></script>
 	<div align="right">
 		<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 	</div>
