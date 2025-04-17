@@ -1,7 +1,8 @@
 <?php
 //requisitar arquivo de conexão
 
-require_once '../dao/ConexaoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'GatewayPagamento.php';
 
 class GatewayPagamentoDAO
 {
@@ -127,6 +128,30 @@ class GatewayPagamentoDAO
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
             //retornar resultado
             return $resultado;
+        }
+
+        return false;
+    }
+
+    /**
+     * Retorna o resultado encontrado no BD da aplicação, ou então false caso não haja um gateway com a descrição informada no parâmetro
+     */
+    public function buscarPorPlataforma(string $descricao): False|GatewayPagamento
+    {
+        //definir consulta sql
+        $sql = "SELECT * FROM contribuicao_gatewayPagamento WHERE plataforma=:descricao AND status=1";
+        //utilizar prepared statements
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':descricao', $descricao);
+        //executar
+        $stmt->execute();
+
+        if ($stmt->rowCount() === 1) {
+            //resultado
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            //retornar gateway
+            return new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['token'], $resultado['status']);
         }
 
         return false;
