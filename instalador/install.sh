@@ -33,6 +33,10 @@ install_deps(){
     apt install mariadb-server -y
     apt install apache2  php8.2 php8.2-cli php8.2-common php8.2-curl php8.2-gd php8.2-intl php8.2-mbstring php8.2-mysql php8.2-opcache php8.2-readline php8.2-soap php8.2-xml php8.2-xmlrpc php8.2-zip -y
     apt install -t bookworm-backports libapache2-mod-qos libpcre3 libpcre3-dev libapache2-mod-evasive -y
+    
+    mkdir /var/log/apache2/evasive
+    chown www-data:www-data /var/log/apache2/evasive
+    chmod 750 /var/log/apache2/evasive
 }
 
 download_wegia(){
@@ -72,7 +76,7 @@ cat <<EOF > /etc/apache2/sites-available/wegia.conf
         DOSPageInterval     3
         DOSSiteInterval     3
         DOSBlockingPeriod   10
-        DOSLogDir           "/var/log/apache2"
+        DOSLogDir           "/var/log/apache2/evasive"
     </IfModule>
 
     <IfModule mod_qos.c>
