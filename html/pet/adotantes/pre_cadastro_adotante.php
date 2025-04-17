@@ -246,17 +246,25 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                         <section class="panel" >
                         <?php
-									if(isset($_GET['msg_c'])){
-										$msg = $_GET['msg_c'];
-										echo('<div class="alert alert-success" role="alert">
-										'. $msg .'
-									  </div>');
-									}else if(isset($_GET['msg_e'])){
-										$msg = $_GET['msg_e'];
-										echo('<div class="alert alert-danger" role="alert">
-										'. $msg .'
-									  </div>');
-									}
+									
+                                    if (isset($_GET['msg_c'])) {
+                                        $msg_raw = $_GET['msg_c'];
+                                    
+                                        if (strpos($msg_raw, '<') === false && strpos($msg_raw, '>') === false) {
+                                            $msg = htmlspecialchars($msg_raw, ENT_QUOTES, 'UTF-8');
+                                            echo('<div class="alert alert-success" role="alert">' . $msg . '</div>');
+                                        }
+                                    
+                                    } else if (isset($_GET['msg_e'])) {
+                                        $msg_raw = $_GET['msg_e'];
+                                    
+                                        if (strpos($msg_raw, '<') === false && strpos($msg_raw, '>') === false) {
+                                            $msg = htmlspecialchars($msg_raw, ENT_QUOTES, 'UTF-8');
+                                            echo('<div class="alert alert-danger" role="alert">' . $msg . '</div>');
+                                        }
+                                    }
+                                    
+                                    
 							?>
                             <header class="panel-heading">
                                 <h2 class="panel-title">Digite seu CPF</h2>
