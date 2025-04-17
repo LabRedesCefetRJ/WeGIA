@@ -45,7 +45,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                 $contribuicaoLog->setCodigo($pedido['id']);
 
                 //transformar a data de pagamento para a estrtutura aceita pelo MySQL
-                $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['updated_at'])->format('Y-m-d H:i:s');
+                $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charges'][0]['paid_at'])->format('Y-m-d H:i:s');
 
                 $contribuicaoLog->setDataPagamento($dataPagamento);
                 $contribuicaoLogCollection->add($contribuicaoLog);
@@ -54,8 +54,8 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
             // Retornar contribuições
             return $contribuicaoLogCollection;
         } catch (PDOException $e) {
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
             http_response_code(500);
-            //adicionar sistema de armazenamento de logs de erro posteriomente
             echo json_encode(['erro' => 'Problema no servidor']);
             exit();
         }
