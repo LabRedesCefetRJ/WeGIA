@@ -113,11 +113,12 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('53', 'Alergia'),
 ('54', 'Enfermidade'),
 ('6', 'Módulo Pet'),
-('7', 'Módulo Contribuição'),
 ('61', 'Cadastrar Pet'),
 ('62', 'Saúde Pet'),
 ('63', 'Informações Pet'),
 ('64', 'Adotantes Pet'),
+('7', 'Módulo Contribuição'),
+('71', 'Sincronizar contribuições'),
 ('9', 'Configurações'),
 ('91', 'Permissões');
 

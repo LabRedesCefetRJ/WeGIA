@@ -107,49 +107,11 @@ function deletar_socio_modal(del_obj){
 function detalhar_socio(dados){
   var dados_socio = null;
    $.post("get_detalhes_socio.php",{"id_socio": dados}).done(function(resultadoBusca){
-    dados_socio_multi_contrib = JSON.parse(resultadoBusca);
-    console.log(dados_socio_multi_contrib);
-    var dados_socio = dados_socio_multi_contrib.log_contribuicao[0];
-    if(dados_socio.cpf == 14){
-      pessoa = "Física";
-    }else pessoa = "Jurídica";
-    let status;
-    if(dados_socio.id_sociostatus == 0){
-      status = "Ativo";
-    }else if(dados_socio.id_sociostatus == 1){
-      status = "Inativo";
-    }else if(dados_socio.id_sociostatus == 2){
-      status = "Inadimplente";
-    }else if(dados_socio.id_sociostatus == 3){
-      status = "Inativo temporariamente";
-    }else if(dados_socio.id_sociostatus == 4){
-      status = "Sem informações";
-    }
-    console.log(status);
+    dados_socio = JSON.parse(resultadoBusca);
 
-    let tb_contrib = "";
-    let total_contrib = 0;
-    if(dados_socio_multi_contrib['log_contribuicao'][0]['id_log'] == null && !Array.isArray(dados_socio_multi_contrib['log_cobranca'])){
-      tb_contrib = "<tr><td colspan='4'>Não foi possível encontrar informações de contribuição do sócio no sistema.</td></tr>"
-    }else{
-      if(dados_socio_multi_contrib['log_contribuicao'][0]['id_log'] != null){
-        for(contrib of dados_socio_multi_contrib['log_contribuicao']){
-          var valor = Number(contrib.valor_boleto);
-          total_contrib += valor;
-          tb_contrib += "<tr style='text-center'><td>"+ contrib.sistema_pagamento +"</td><td>"+contrib.data_geracao+"</td><td>"+valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })+"</td><td>"+contrib.data_vencimento+"</td><td>"+contrib.status+"</td></tr>";
-        }
-      }
-      if(Array.isArray(dados_socio_multi_contrib['log_cobranca'])){
-        for(contrib of dados_socio_multi_contrib['log_cobranca']){
-          var valor = Number(contrib.valor);
-          total_contrib += valor;
-          tb_contrib += "<tr style='text-center'><td> - </td><td>"+contrib.data_emissao+"</td><td>"+valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })+"</td><td>"+contrib.data_vencimento+"</td><td>"+contrib.status+"</td></tr>";
-        }
-      }
-    }
-
-
-    var modal_detalhes_html = `
+    console.log(dados_socio);
+    
+    let modal_detalhes_html = `
   <div class="modal fade" id="detalharSocioModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -199,7 +161,7 @@ function detalhar_socio(dados){
         </div>
         <div class="form-group col-xs-5">
           <label for="pessoa">Status</label>
-          <input type="text" class="form-control" name="pessoa" value="`+ status +`" id="pessoa" disabled>
+          <input type="text" class="form-control" name="pessoa" value="`+ dados_socio.status +`" id="pessoa" disabled>
         </div>
         </div>
         <div class="row">
@@ -264,33 +226,6 @@ function detalhar_socio(dados){
             </div>
             <!-- /.box-body -->
           </div>
-          <div class="box box-danger contrib">
-            <div class="box-header with-border">
-              <h3 class="box-title">Contribuição</h3>
-            </div>
-            <div class="box-body">
-            <div class="row" style='max-height: 350px; overflow: auto;'>
-            <div class="alert alert-secondary" role="alert">
-            <span class="badge badge-secondary">Total de contribuição <b>cadastrada no sistema</b>: `+ total_contrib.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) +`</span>
-          </div>
-            <table class="table table-hover" style="text-center">
-            <thead>
-              <tr>
-                <th scope="col">Sistema</th>
-                <th scope="col">Data geração boleto</th>
-                <th scope="col">Valor</th>
-                <th scope="col">Data de vencimento</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-             `+ tb_contrib +`
-            </tbody>
-          </table>
-            </div>
-            <!-- /.box-body -->
-          </div>
-      </div>
       <div class="modal-footer">
 
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
