@@ -968,33 +968,33 @@ CREATE TABLE IF NOT EXISTS `wegia`.`endereco_instituicao` (
   PRIMARY KEY (`id_inst`))
 ENGINE = InnoDB;
 
-
+-- Em desuso devido ao novo módulo contribuicao
 -- -----------------------------------------------------
 -- Table `wegia`.`cobrancas`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`cobrancas` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `codigo` INT NULL DEFAULT NULL,
-  `descricao` VARCHAR(255) NULL DEFAULT NULL,
-  `data_emissao` DATE NULL DEFAULT NULL,
-  `data_vencimento` DATE NULL DEFAULT NULL,
-  `data_pagamento` DATE NULL DEFAULT NULL,
-  `valor` DECIMAL(10,2) NULL DEFAULT NULL,
-  `valor_pago` DECIMAL(10,2) NULL DEFAULT NULL,
-  `status` VARCHAR(255) NULL DEFAULT NULL,
-  `link_cobranca` VARCHAR(255) NULL DEFAULT NULL,
-  `link_boleto` VARCHAR(255) NULL DEFAULT NULL,
-  `linha_digitavel` VARCHAR(255) NULL DEFAULT NULL,
-  `id_socio` INT NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX (`codigo` ASC),
-  INDEX `fk_cobranca_socio` (`id_socio` ASC),
-  CONSTRAINT `fk_cobranca_socio`
-    FOREIGN KEY (`id_socio`)
-    REFERENCES `wegia`.`socio` (`id_socio`)
-    ON DELETE RESTRICT
-    ON UPDATE RESTRICT)
-ENGINE = InnoDB;
+-- CREATE TABLE IF NOT EXISTS `wegia`.`cobrancas` (
+--   `id` INT NOT NULL AUTO_INCREMENT,
+--   `codigo` INT NULL DEFAULT NULL,
+--   `descricao` VARCHAR(255) NULL DEFAULT NULL,
+--   `data_emissao` DATE NULL DEFAULT NULL,
+--   `data_vencimento` DATE NULL DEFAULT NULL,
+--   `data_pagamento` DATE NULL DEFAULT NULL,
+--   `valor` DECIMAL(10,2) NULL DEFAULT NULL,
+--   `valor_pago` DECIMAL(10,2) NULL DEFAULT NULL,
+--   `status` VARCHAR(255) NULL DEFAULT NULL,
+--   `link_cobranca` VARCHAR(255) NULL DEFAULT NULL,
+--   `link_boleto` VARCHAR(255) NULL DEFAULT NULL,
+--   `linha_digitavel` VARCHAR(255) NULL DEFAULT NULL,
+--   `id_socio` INT NULL DEFAULT NULL,
+--   PRIMARY KEY (`id`),
+--   UNIQUE INDEX (`codigo` ASC),
+--   INDEX `fk_cobranca_socio` (`id_socio` ASC),
+--   CONSTRAINT `fk_cobranca_socio`
+--     FOREIGN KEY (`id_socio`)
+--     REFERENCES `wegia`.`socio` (`id_socio`)
+--     ON DELETE RESTRICT
+--     ON UPDATE RESTRICT)
+-- ENGINE = InnoDB;
 
 -- -------------------------------------------------------
 -- Table `wegia`.`remessa`
@@ -2256,50 +2256,51 @@ END$$
 
 DELIMITER ;
 
+-- Em desuso por conta do novo módulo contribuição
 -- -----------------------------------------------------
 -- procedure registradoacao
 -- -----------------------------------------------------
 
-DELIMITER $$
-USE `wegia`$$
-CREATE PROCEDURE `registradoacao`(
-	IN `nome` VARCHAR(100), 
-    IN `sobrenome` VARCHAR(100), 
-    IN `cpf` VARCHAR(40), 
-    IN `telefone` VARCHAR(25), 
-    IN `data_nascimento` DATE, 
-    IN `cep` VARCHAR(20), 
-    IN `estado` VARCHAR(5), 
-    IN `cidade` VARCHAR(40), 
-    IN `bairro` VARCHAR(40), 
-    IN `logradouro` VARCHAR(40), 
-    IN `numero_endereco` VARCHAR(11), 
-    IN `complemento` VARCHAR(50),
-    IN `id_sociostatus` INT(11),
-    IN `id_sociotipo` INT(11),
-    IN `email` VARCHAR(256),
-    IN `ip` VARCHAR(256),
-    IN `data` DATE,
-    IN `hora` TIME,
-    IN `id_sistema` INT(11),
-    IN `valor_boleto` DECIMAL(10,2),
-    IN `data_venc_boleto` DATE
-)
-begin
+-- DELIMITER $$
+-- USE `wegia`$$
+-- CREATE PROCEDURE `registradoacao`(
+-- 	IN `nome` VARCHAR(100), 
+--     IN `sobrenome` VARCHAR(100), 
+--     IN `cpf` VARCHAR(40), 
+--     IN `telefone` VARCHAR(25), 
+--     IN `data_nascimento` DATE, 
+--     IN `cep` VARCHAR(20), 
+--     IN `estado` VARCHAR(5), 
+--     IN `cidade` VARCHAR(40), 
+--     IN `bairro` VARCHAR(40), 
+--     IN `logradouro` VARCHAR(40), 
+--     IN `numero_endereco` VARCHAR(11), 
+--     IN `complemento` VARCHAR(50),
+--     IN `id_sociostatus` INT(11),
+--     IN `id_sociotipo` INT(11),
+--     IN `email` VARCHAR(256),
+--     IN `ip` VARCHAR(256),
+--     IN `data` DATE,
+--     IN `hora` TIME,
+--     IN `id_sistema` INT(11),
+--     IN `valor_boleto` DECIMAL(10,2),
+--     IN `data_venc_boleto` DATE
+-- )
+-- begin
 
-insert ignore into pessoa(nome,sobrenome,cpf,telefone,data_nascimento,cep,estado,cidade, bairro, logradouro, numero_endereco,
-complemento)
-values(nome, sobrenome, cpf, telefone,data_nascimento,cep,estado,cidade,bairro,logradouro,numero_endereco,complemento);
+-- insert ignore into pessoa(nome,sobrenome,cpf,telefone,data_nascimento,cep,estado,cidade, bairro, logradouro, numero_endereco,
+-- complemento)
+-- values(nome, sobrenome, cpf, telefone,data_nascimento,cep,estado,cidade,bairro,logradouro,numero_endereco,complemento);
 
-insert ignore into socio(id_pessoa, id_sociostatus, id_sociotipo, email)
-values ((SELECT id_pessoa FROM pessoa WHERE pessoa.cpf=cpf limit 1), id_sociostatus, id_sociotipo, email);
+-- insert ignore into socio(id_pessoa, id_sociostatus, id_sociotipo, email)
+-- values ((SELECT id_pessoa FROM pessoa WHERE pessoa.cpf=cpf limit 1), id_sociostatus, id_sociotipo, email);
 
-insert into log_contribuicao(id_socio, ip, data, hora, id_sistema, valor_boleto, data_venc_boleto)
-values((SELECT id_socio FROM socio, pessoa WHERE pessoa.id_pessoa=socio.id_pessoa AND pessoa.cpf=cpf limit 1), ip, data, hora, id_sistema, valor_boleto, data_venc_boleto);
+-- insert into log_contribuicao(id_socio, ip, data, hora, id_sistema, valor_boleto, data_venc_boleto)
+-- values((SELECT id_socio FROM socio, pessoa WHERE pessoa.id_pessoa=socio.id_pessoa AND pessoa.cpf=cpf limit 1), ip, data, hora, id_sistema, valor_boleto, data_venc_boleto);
 
-END$$
+-- END$$
 
-DELIMITER ;
+-- DELIMITER ;
 
 -- -----------------------------------------------------
 -- procedure insregras
