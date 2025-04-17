@@ -1,4 +1,12 @@
 <?php
+//verificar se o meio de pagamento está ativo
+require_once '../controller/MeioPagamentoController.php';
+$meioPagamentoController = new MeioPagamentoController();
+if(!$meioPagamentoController->verificarStatus('Carne', true)){
+    header("Location: ./forma_contribuicao.php");
+    exit();
+}
+
 $title = 'Emitir mensalidade';
 require_once './templates/header.php';
 

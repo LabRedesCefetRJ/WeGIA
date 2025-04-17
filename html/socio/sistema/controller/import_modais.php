@@ -227,7 +227,7 @@ try {
                     <?php
                     require_once './model/Socio.php';
                     $socios = array();
-                    $resultado = mysqli_query($conexao, "SELECT *, s.id_socio as socioid FROM socio AS s LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa LEFT JOIN socio_tipo AS st ON s.id_sociotipo = st.id_sociotipo LEFT JOIN (SELECT id_socio, MAX(data) AS ultima_data_doacao FROM log_contribuicao GROUP BY id_socio) AS lc ON lc.id_socio = s.id_socio ORDER BY p.nome");
+                    $resultado = mysqli_query($conexao, "SELECT *, s.id_socio as socioid FROM socio AS s LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa LEFT JOIN socio_tipo AS st ON s.id_sociotipo = st.id_sociotipo");
                     while ($registro = mysqli_fetch_assoc($resultado)) {
                       $socios[] = new Socio($registro['socioid'], $registro['nome'], $registro['cpf']);
                     }

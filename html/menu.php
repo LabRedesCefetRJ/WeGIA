@@ -346,7 +346,7 @@
 							<li class="nav-parent nav-active" id="32">
 								<a>
 									<i class="fa fa-money-bill" aria-hidden="true"></i>
-									<span>Cobranças</span>
+									<span>Contribuições</span>
 								</a>
 							
 								<ul class="nav nav-children">
@@ -356,9 +356,6 @@
 										</a>
 									</li>
 									<li>
-										<a href="<?= WWW ?>html/socio/sistema/cobrancas.php">
-											<span>Controle de Cobranças (Antigo)</span>
-										</a>
 										<a href="<?= WWW ?>html/socio/sistema/contribuicoes.php">
 											<span>Controle de Contribuições</span>
 										</a>

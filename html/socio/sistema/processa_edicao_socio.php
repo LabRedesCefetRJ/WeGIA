@@ -212,7 +212,7 @@ if ($stmt) {
         $status = filter_var($status, FILTER_SANITIZE_STRING);         // String (id_sociostatus)
         $email = filter_var($email, FILTER_SANITIZE_EMAIL);          // String (email)
         $data_referencia = filter_var($data_referencia, FILTER_SANITIZE_STRING); // String (data_referencia)
-        $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT); // Double (valor_periodo)
+        $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION); // Double (valor_periodo)
         $tag = filter_var($tag, FILTER_SANITIZE_NUMBER_INT);            // Inteiro (id_sociotag)
         $id_socio = filter_var($id_socio, FILTER_SANITIZE_NUMBER_INT);       // Inteiro (id_socio)
 

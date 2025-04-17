@@ -31,6 +31,25 @@ class MeioPagamentoController{
     }
 
     /**
+     * Verifica o estado de atividade do meio de pagamento no banco de dados
+     */
+    public function verificarStatus(string $meioPagamento, bool $status):bool{
+
+        $meioPagamentoDao = new MeioPagamentoDAO();
+        $meioPagamento = $meioPagamentoDao->buscarPorNome($meioPagamento);
+
+        if(is_null($meioPagamento)){
+            return false;
+        }
+
+        if($meioPagamento->getStatus() === 0){
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Realiza os procedimentos necessários para remover um meio de pagamento do sistema.
      */
     public function excluirPorId(){
