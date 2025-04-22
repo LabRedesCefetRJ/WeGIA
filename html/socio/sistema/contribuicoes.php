@@ -173,6 +173,10 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
       margin: 0;
       /* Remove margem padrão do parágrafo */
     }
+
+    .me-5{
+      margin-right: 5px;
+    }
   </style>
 </head>
 
@@ -213,9 +217,54 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
 
         <!-- start: page -->
         <div class="row">
+
+          <div class="box box-warning collapsed-box">
+            <div class="box-header with-border">
+              <h3 class="box-title">Relatórios personalizados</h3>
+
+              <div class="box-tools pull-right">
+                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
+                </button>
+              </div>
+
+            </div>
+
+            <div class="box-body">
+              <p>Filtros de pesquisa</p>
+
+              <form action="" class="form-inline">
+                <div class="form-group me-5">
+                  <label for="periodo" class="control-label">Período:&nbsp;</label>
+                  <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
+                    <option value="1">Todos</option>
+                    <option value="2">Mês atual</option>
+                    <option value="3">Mês passado</option>
+                    <option value="4">Bimestre</option>
+                    <option value="5">Trimestre</option>
+                    <option value="6">Semestre</option>
+                    <option value="7">Ano atual</option>
+                    <option value="8">Ano passado</option>
+                    <option value="9">Específico</option>
+                  </select>
+                </div>
+
+                <div class="form-group me-5">
+                  <label for="periodo" class="control-label">Sócio:&nbsp;</label>
+                  <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
+                    <option value="0">Todos</option>
+                  </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Gerar relatório</button>
+              </form>
+
+
+            </div>
+          </div>
+
           <div class="box box-warning">
             <div class="box-header with-border">
-              <h3 class="box-title">Controle de Contribuições</h3>
+              <h3 class="box-title">Visão Geral e Controle</h3>
 
               <div class="box-tools pull-right">
                 <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
