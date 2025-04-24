@@ -53,11 +53,26 @@ if (!is_null($resultado)) {
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
-//Buscar data e hora da última atualização das contribuições
-require_once '../../../dao/SistemaLogDAO.php';
 
-$sistemaLogDao = new SistemaLogDAO();
-$sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
+try {
+
+  //Buscar data e hora da última atualização das contribuições
+  require_once '../../../dao/SistemaLogDAO.php';
+  
+  $sistemaLogDao = new SistemaLogDAO();
+  $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
+
+  //Buscar sócios para os relatórios personalizados
+  require_once '../../contribuicao/dao/SocioDAO.php';
+
+  $socioDao = new SocioDAO();
+  $socios = $socioDao->getSocios();
+
+} catch (PDOException $e) {
+  error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+  http_response_code(500);
+  echo json_encode(['erro' => 'Erro ao carregar dados']);
+}
 
 ?>
 <!DOCTYPE html>
@@ -174,7 +189,7 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
       /* Remove margem padrão do parágrafo */
     }
 
-    .me-5{
+    .me-5 {
       margin-right: 5px;
     }
   </style>
@@ -252,13 +267,26 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
                   <label for="periodo" class="control-label">Sócio:&nbsp;</label>
                   <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
                     <option value="0">Todos</option>
+                    <?php if(!is_null($socios)): ?>
+                      <?php foreach($socios as $socio):?>
+                        <option value="<?=$socio->getId()?>"><?=$socio->getNome()?></option>
+                      <?php endforeach; ?>
+                    <?php endif;?>
+                  </select>
+                </div>
+
+                <div class="form-group me-5">
+                  <label for="periodo" class="control-label">Status:&nbsp;</label>
+                  <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
+                    <option value="0">Todos</option>
+                    <option value="1">Emitida</option>
+                    <option value="2">Vencida</option>
+                    <option value="3">Paga</option>
                   </select>
                 </div>
 
                 <button type="submit" class="btn btn-primary">Gerar relatório</button>
               </form>
-
-
             </div>
           </div>
 
