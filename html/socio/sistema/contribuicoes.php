@@ -264,8 +264,8 @@ try {
                 </div>
 
                 <div class="form-group me-5">
-                  <label for="periodo" class="control-label">Sócio:&nbsp;</label>
-                  <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
+                  <label for="socio" class="control-label">Sócio:&nbsp;</label>
+                  <select class="form-control" name="socio" id="socio" style="width: 200px;">
                     <option value="0">Todos</option>
                     <?php if(!is_null($socios)): ?>
                       <?php foreach($socios as $socio):?>
@@ -276,12 +276,12 @@ try {
                 </div>
 
                 <div class="form-group me-5">
-                  <label for="periodo" class="control-label">Status:&nbsp;</label>
-                  <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
-                    <option value="0">Todos</option>
-                    <option value="1">Emitida</option>
-                    <option value="2">Vencida</option>
-                    <option value="3">Paga</option>
+                  <label for="status" class="control-label">Status:&nbsp;</label>
+                  <select class="form-control" name="status" id="status" style="width: 200px;">
+                    <option value="1">Todos</option>
+                    <option value="2">Emitida</option>
+                    <option value="3">Vencida</option>
+                    <option value="4">Paga</option>
                   </select>
                 </div>
 

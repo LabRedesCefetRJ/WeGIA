@@ -6,6 +6,7 @@ require_once '../dao/ConexaoDAO.php';
 require_once '../model/ContribuicaoLog.php';
 require_once '../model/ContribuicaoLogCollection.php';
 require_once dirname(__FILE__, 2).DIRECTORY_SEPARATOR.'model'.DIRECTORY_SEPARATOR.'StatusPagamento.php';
+require_once dirname(__FILE__, 2).DIRECTORY_SEPARATOR.'model'.DIRECTORY_SEPARATOR.'ConfiguracaoRelatorioContribuicoes.php';
 
 class ContribuicaoLogDAO{
     private $pdo;
@@ -174,6 +175,13 @@ class ContribuicaoLogDAO{
         }else{
             return 'Obrigado pela contribuição!';
         }
+    }
+
+    /**
+     * Retorna os dados da base de dados para a montagem do relatório
+     */
+    public function getRelatorio(ConfiguracaoRelatorioContribuicoes $configuracao){
+
     }
 
 }

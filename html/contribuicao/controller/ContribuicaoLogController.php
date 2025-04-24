@@ -613,4 +613,13 @@ class ContribuicaoLogController
             }
         }
     }
+
+    /**
+     * Retorna o JSON do relatório de contribuições solicitado
+     */
+    public function getRelatorio(){
+        $periodo = trim(filter_input(INPUT_GET, 'periodo', FILTER_SANITIZE_NUMBER_INT));
+        $socioId = trim(filter_input(INPUT_GET, 'socio', FILTER_SANITIZE_NUMBER_INT));
+        $status = trim(filter_input(INPUT_GET, 'status', FILTER_SANITIZE_NUMBER_INT));
+    }
 }
