@@ -188,7 +188,7 @@ require_once ROOT . "/html/geral/msg.php";
 								</a>
 							</li>
 							<li><span>Páginas</span></li>
-							<li><span>Perfil</span></li>
+							<li><span>Adicionar produtos</span></li>
 						</ol>
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 					</div>
@@ -218,7 +218,7 @@ require_once ROOT . "/html/geral/msg.php";
 
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="inputSuccess">Categoria</label>
-												<a href="adicionar_categoria.php">
+												<a href="<?= WWW ?>html/matPat/adicionar_categoria.php">
 													<i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
 												</a>
 												<div class="col-md-6">
@@ -268,7 +268,7 @@ require_once ROOT . "/html/geral/msg.php";
 													<div class="col-md-9 col-md-offset-3">
 														<button type="submit" class="btn btn-primary">Enviar</button>
 														<input type="reset" class="btn btn-default">
-														<a href="cadastro_entrada.php" style="color: white; text-decoration: none;">
+														<a href="<?= WWW ?>html/matPat/cadastro_entrada.php" style="color: white; text-decoration: none;">
 															<button class="btn btn-info" type="button">Voltar</button>
 														</a>
 														<a href="<?= WWW ?>html/matPat/listar_produto.php" style="color: white; text-decoration:none;"> <button class="btn btn-success" type="button">Listar Produto</button></a>

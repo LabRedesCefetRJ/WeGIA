@@ -26,21 +26,21 @@
 			$permissao = mysqli_fetch_array($resultado);
 			if($permissao['id_acao'] < 3){
 				$msg = "Você não tem as permissões necessárias para essa página.";
-				header("Location: ./home.php?msg_c=$msg");
+				header("Location: ". WWW ."html/home.php?msg_c=$msg");
 			}
 			$permissao = $permissao['id_acao'];
 		}else{
         	$permissao = 1;
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ./home.php?msg_c=$msg");
+			header("Location: ". WWW ."html/home.php?msg_c=$msg");
 		}	
 	}else{
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ./home.php?msg_c=$msg");
+		header("Location: ". WWW ."html/home.php?msg_c=$msg");
 	}	
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once "personalizacao_display.php";
+	require_once ROOT . "/html/personalizacao_display.php";
 ?>
 
 <!doctype html>
@@ -59,50 +59,50 @@
 	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
 
 	<!-- Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.css" />
-	<link rel="stylesheet" href="../assets/vendor/font-awesome/css/font-awesome.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
-	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
-	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
 
 	<!-- Theme CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
 
 	<!-- Skin CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/skins/default.css" />
 
 	<!-- Theme Custom CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
 
 	<!-- Head Libs -->
-	<script src="../assets/vendor/modernizr/modernizr.js"></script>
+	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 
 	<!-- Vendor -->
-	<script src="../assets/vendor/jquery/jquery.min.js"></script>
-	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
-	<script src="../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
-	<script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 		
 	<!-- Specific Page Vendor -->
-	<script src="../assets/vendor/jquery-autosize/jquery.autosize.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
 		
 	<!-- Theme Base, Components and Settings -->
-	<script src="../assets/javascripts/theme.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
 		
 	<!-- Theme Custom -->
-	<script src="../assets/javascripts/theme.custom.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
 		
 	<!-- Theme Initialization Files -->
-	<script src="../assets/javascripts/theme.init.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 	<!-- javascript functions --> <script
-	src="../Functions/onlyNumbers.js"></script> <script
-	src="../Functions/onlyChars.js"></script> <script
-	src="../Functions/mascara.js"></script>
+	src="<?= WWW ?>Functions/onlyNumbers.js"></script> <script
+	src="<?= WWW ?>Functions/onlyChars.js"></script> <script
+	src="<?= WWW ?>Functions/mascara.js"></script>
 
 	<!-- jquery functions -->
 	<script>
@@ -111,8 +111,8 @@
 
 <script type="text/javascript">
 		$(function () {
-	      $(".header").load("header.php");
-	      $(".menuu").load("menu.php");
+	      $(".header").load("<?= WWW ?>html/header.php");
+	      $(".menuu").load("<?= WWW ?>html/menu.php");
 	    });	
 	</script>
 </head>
@@ -137,7 +137,7 @@
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li>
-								<a href="home.php">
+								<a href="<?= WWW ?>html/home.php">
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
@@ -161,7 +161,7 @@
 							<div class="tab-content">
 								<div id="overview" class="tab-pane active">
 									<fieldset>
-										<form method="post" id="formulario" action="../controle/control.php">
+										<form method="post" id="formulario" action="<?= WWW ?>controle/control.php">
 											<div class="form-group"><br>
 												<label class="col-md-3 control-label">Insira a nova unidade:</label>
 												
@@ -180,11 +180,11 @@
 													
 													<input type="reset" class="btn btn-default">
 													
-													<a href="cadastro_produto.php" style="color: white; text-decoration: none;">
+													<a href="<?= WWW ?>html/matPat/cadastro_produto.php" style="color: white; text-decoration: none;">
 														<button class="btn btn-info" type="button">Voltar</button>
 													</a>
 													
-													<a href="listar_unidade.php" style="color: white; text-decoration:none;">
+													<a href="<?= WWW ?>html/matPat/listar_unidade.php" style="color: white; text-decoration:none;">
 														<button class="btn btn-success" type="button">Listar Unidade</button>
 													</a>
 												</div>

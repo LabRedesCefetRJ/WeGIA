@@ -12,7 +12,7 @@ if (!isset($_SESSION['id_pessoa'])) {
     header("Location: ../index.php");
 }
 
-require_once '../dao/Conexao.php';
+require_once ROOT . '/dao/Conexao.php';
 $pdo = Conexao::connect();
 
 $stmt = $pdo->prepare("SELECT * FROM almoxarife WHERE id_funcionario=:idFuncionario AND id_almoxarifado=:idAlmoxarifado");
@@ -23,7 +23,7 @@ $stmt->bindParam(':idAlmoxarifado', $id_almoxarifado);
 $stmt->execute();
 
 if ($stmt->rowCount() > 0) {
-    header("Location: ./geral/editar_permissoes.php?msg=Funcionário já cadastrado para o Almoxarifado escolhido!&flag=warn");
+    header("Location: " . WWW . "html/geral/editar_permissoes.php?msg=Funcionário já cadastrado para o Almoxarifado escolhido!&flag=warn");
 } else {
     try {
         $stmt2 = $pdo->prepare("INSERT INTO almoxarife (id_funcionario, id_almoxarifado) VALUES (:idFuncionario , :idAlmoxarifado)");
@@ -33,8 +33,8 @@ if ($stmt->rowCount() > 0) {
 
         $stmt2->execute();
 
-        header("Location: ./geral/editar_permissoes.php?msg=Funcionário cadastrado como almoxarife!&flag=success");
+        header("Location: " . WWW . "html/geral/editar_permissoes.php?msg=Funcionário cadastrado como almoxarife!&flag=success");
     } catch (PDOException $e) {
-        header("Location: ./geral/editar_permissoes.php?msg=Erro: &flag=erro&log={$e->getMessage()}");
+        header("Location: " . WWW . "html/geral/editar_permissoes.php?msg=Erro: &flag=erro&log={$e->getMessage()}");
     }
 }

@@ -26,38 +26,38 @@
 			$permissao = mysqli_fetch_array($resultado);
 			if($permissao['id_acao'] < 3){
 				$msg = "Você não tem as permissões necessárias para essa página.";
-				header("Location: ./home.php?msg_c=$msg");
+				header("Location: ". WWW ."html/home.php?msg_c=$msg");
 			}
 			$permissao = $permissao['id_acao'];
 		}else{
         	$permissao = 1;
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ./home.php?msg_c=$msg");
+			header("Location: ". WWW ."html/home.php?msg_c=$msg");
 		}	
 	}else{
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ./home.php?msg_c=$msg");
+		header("Location: ". WWW ."html/home.php?msg_c=$msg");
 	}	
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once "personalizacao_display.php";
+	require_once ROOT . "/html/personalizacao_display.php";
 
-include_once '../dao/Conexao.php';
-include_once '../dao/CategoriaDAO.php';
-include_once '../dao/UnidadeDAO.php';
-include_once '../dao/ProdutoDAO.php';
+include_once ROOT . '/dao/Conexao.php';
+include_once ROOT . '/dao/CategoriaDAO.php';
+include_once ROOT . '/dao/UnidadeDAO.php';
+include_once ROOT . '/dao/ProdutoDAO.php';
 	
 	if(!isset($_SESSION['unidade'])) {
 		extract($_REQUEST);
-		header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/alterar_produto.php?id_produto='.$id_produto);
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto='.$id_produto);
 	}
 	if(!isset($_SESSION['categoria'])){
 		extract($_REQUEST);
-		header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage='.WWW.'/html/alterar_produto.php?id_produto='.$id_produto);	
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage='.WWW.'html/matPat/alterar_produto.php?id_produto='.$id_produto);
 	}
 	if(!isset($_SESSION['produto'])) {
 		extract($_REQUEST);
-		header('Location: ../controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=../html/alterar_produto.php?id_produto='.$id_produto.'&id_produto='.$id_produto);
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto='.$id_produto.'&id_produto='.$id_produto);
 	}
 
 	if(isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESSION['unidade'])){
@@ -86,32 +86,32 @@ include_once '../dao/ProdutoDAO.php';
 	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
 
 	<!-- Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.css" />
-	<link rel="stylesheet" href="../assets/vendor/font-awesome/css/font-awesome.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
-	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
-	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
 	
 	<!-- Theme CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
 
 	<!-- Skin CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/skins/default.css" />
 
 	<!-- Theme Custom CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
 
 	<!-- Head Libs -->
-	<script src="../assets/vendor/modernizr/modernizr.js"></script>
+	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 	
-	<script src="../assets/vendor/jquery/jquery.min.js"></script>
-	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
-	<script src="../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
-	<script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 	<script type="text/javascript">
 	function editar_produto(){
 
@@ -143,8 +143,8 @@ $("#botaoEditarIP").attr('onclick', "return editar_produto()");
 
 }
 		$(function () {
-	      $("#header").load("header.php");
-	      $(".menuu").load("menu.php");
+	      $("#header").load("<?= WWW ?>html/header.php");
+	      $(".menuu").load("<?= WWW ?>html/menu.php");
 
 		  var produtos = <?php echo $produto; ?>;
 var categoria = <?php echo $categoria; ?>;
@@ -160,7 +160,7 @@ $("#botaoSalvarIP").prop('disabled', true);
 
    $.each(produtos, function(i,item){
 	   $("#nextPage")
-		   .val('../html/alterar_produto.php?id_produto='+item.id_produto);
+		   .val('<?= WWW ?>html/matPat/alterar_produto.php?id_produto='+item.id_produto);
 	   $('#id_produto')
 		   .val(item.id_produto)
 	$('#nome')
@@ -215,7 +215,7 @@ $.each(unidade, function(i,item){
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li>
-								<a href="home.php">
+								<a href="<?= WWW ?>html/home.php">
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
@@ -279,7 +279,7 @@ $.each(unidade, function(i,item){
 								</div>
 									
 								<div id="edit" class="tab-pane">
-									<form id="formulario" action="../controle/control.php">
+									<form id="formulario" action="<?= WWW ?>controle/control.php">
 										<input type="hidden" name="nomeClasse" value="ProdutoControle">
 										<input type="hidden" name="metodo" value="alterarProduto">
 										<input type="hidden" name="id_produto" id="id_produto">
@@ -294,7 +294,7 @@ $.each(unidade, function(i,item){
 										
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="inputSuccess">Categoria</label>
-												<a href="adicionar_categoria.php">
+												<a href="<?= WWW ?>html/matPat/adicionar_categoria.php">
 													<i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
 												</a>
 												<div class="col-md-6">
@@ -305,7 +305,7 @@ $.each(unidade, function(i,item){
 												
 											<div class="form-group">
 												<label class="col-md-3 control-label" >Unidade</label>
-												<a href="adicionar_unidade.php"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+												<a href="<?= WWW ?>html/matPat/adicionar_unidade.php"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
 												<div class="col-md-6">
 													<select name="id_unidade" id="id_unidade" class="form-control input-lg mb-md">
 													</select>

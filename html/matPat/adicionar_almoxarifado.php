@@ -114,8 +114,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	<script type="text/javascript">
 		$(function() {
-			$("#header").load("../header.php");
-			$(".menuu").load("../menu.php");
+			$("#header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
 		});
 	</script>
 

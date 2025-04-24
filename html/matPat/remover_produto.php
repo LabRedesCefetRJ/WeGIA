@@ -5,7 +5,7 @@
 		exit();
 	}
 
-	require_once './permissao/permissao.php';
+	require_once ROOT . '/html/permissao/permissao.php';
 	permissao($_SESSION['id_pessoa'], 22, 7);
 
 	$config_path = "config.php";
@@ -19,34 +19,34 @@
 		require_once($config_path);
 	}	
 	if (!isset($_GET['id_produto'])){
-        header("Location: listar_produto.php");
+        header("Location: ". WWW ."html/matPat/listar_produto.php");
     }
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once "personalizacao_display.php";
+	require_once ROOT . "/html/personalizacao_display.php";
 
-	include_once "./geral/msg.php";
+	include_once ROOT . "/geral/msg.php";
 ?>
 <!doctype html>
 <html class="fixed">
 <head>
 <?php 
-  include_once '../dao/Conexao.php';
-  include_once '../dao/ProdutoDAO.php';
+  include_once ROOT . '/dao/Conexao.php';
+  include_once ROOT . '/dao/ProdutoDAO.php';
 
   if (!isset($_GET['id_produto'])){
-	  header("Location: ./listar_produto.php");
+	  header("Location: ". WWW ."html/matPat/listar_produto.php");
   }
   if(!isset($_SESSION['produtos'])){
-    header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=../html/remover_produto.php?id_produto='.$_GET['id_produto']);
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto='.$_GET['id_produto']);
   }
   if(!isset($_SESSION['tipo_saida'])){
-    header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=../html/remover_produto.php?id_produto='.$_GET['id_produto']);
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto='.$_GET['id_produto']);
   }
   if(!isset($_SESSION['destino'])){
-    header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=../html/remover_produto.php?id_produto='.$_GET['id_produto']);
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto='.$_GET['id_produto']);
   }
   if(!isset($_SESSION['almoxarifado'])){
-    header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage='.WWW.'/html/remover_produto.php?id_produto='.$_GET['id_produto']);
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage='.WWW.'html/matPat/remover_produto.php?id_produto='.$_GET['id_produto']);
   }
   extract($_SESSION);
 ?>
@@ -59,57 +59,57 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.css" />
-	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
-	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 
 	<!-- Specific Page Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/select2/select2.css" />
-	<link rel="stylesheet" href="../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/select2/select2.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
 	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
 
 	<!-- Theme CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
 
 	<!-- Skin CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/skins/default.css" />
 
 	<!-- Theme Custom CSS -->
-    <link rel="stylesheet" href="../assets/stylesheets/theme-custom.css">
+    <link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
     
 	<!-- Atualizacao CSS -->
-	<link rel="stylesheet" href="../css/atualizacao.css" />
+	<link rel="stylesheet" href="<?= WWW ?>css/atualizacao.css" />
 
 	<!-- Head Libs -->
-	<script src="../assets/vendor/modernizr/modernizr.js"></script>
+	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 		
 	<!-- Vendor -->
-	<script src="../assets/vendor/jquery/jquery.min.js"></script>
-	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
-	<script src="../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
-    <script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+    <script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 		
 	<!-- Specific Page Vendor -->
-	<script src="../assets/vendor/jquery-autosize/jquery.autosize.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
 		
 	<!-- Theme Base, Components and Settings -->
-	<script src="../assets/javascripts/theme.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
 		
 	<!-- Theme Custom -->
-	<script src="../assets/javascripts/theme.custom.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
 		
 	<!-- Theme Initialization Files -->
-	<script src="../assets/javascripts/theme.init.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 	<!-- javascript functions -->
-	<script src="../Functions/onlyNumbers.js"></script>
-	<script src="../Functions/onlyChars.js"></script>
-	<script src="../Functions/enviar_dados.js"></script>
-	<script src="../Functions/mascara.js"></script>
+	<script src="<?= WWW ?>Functions/onlyNumbers.js"></script>
+	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
+	<script src="<?= WWW ?>Functions/enviar_dados.js"></script>
+	<script src="<?= WWW ?>Functions/mascara.js"></script>
 		
 	<!-- jquery functions -->
 	<script>
@@ -220,7 +220,7 @@
         }
 
         function cancelar(){
-            window.location.replace('../html/listar_produto.php');
+            window.location.replace('<?= WWW ?>html/matPat/listar_produto.php');
         }
 		
 		function submitForm(){
@@ -272,8 +272,8 @@
 	</script>
 	<script>
         $(function () {
-            $("#header").load("header.php");
-            $(".menuu").load("menu.php");
+            $("#header").load("<?= WWW ?>html/header.php");
+            $(".menuu").load("<?= WWW ?>html/menu.php");
 	    });
 	</script>
 
@@ -293,7 +293,7 @@
 				<div class="right-wrapper pull-right">
 					<ol class="breadcrumbs">
 						<li>
-							<a href="home.php">
+							<a href="<?= WWW ?>html/home.php">
 								<i class="fa fa-home"></i>
 							</a>
 						</li>
@@ -340,7 +340,7 @@
                                 </ul>
                             </div>
                         <br>
-						<form action="./remover_produto_ocultar.php" method="post" id="form">
+						<form action="<?= WWW ?>html/matPat/remover_produto_ocultar.php" method="post" id="form">
 							<!-- <h4>Escolha a forma de lidar com a remoção:</h4>
 							<select name="action" id="action" oninput="selecao(this.value)">
 								<option value="none"Selecionar>Selecionar</option>
@@ -363,24 +363,24 @@
 			<!-- end: page -->
 	
 		<!-- Specific Page Vendor -->
-		<script src="../assets/vendor/select2/select2.js"></script>
-		<script src="../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-		<script src="../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-		<script src="../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+		<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
+		<script src="<?= WWW ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+		<script src="<?= WWW ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+		<script src="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 		
 		<!-- Theme Base, Components and Settings -->
-		<script src="../assets/javascripts/theme.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
 		
 		<!-- Theme Custom -->
-		<script src="../assets/javascripts/theme.custom.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
 		
 		<!-- Theme Initialization Files -->
-		<script src="../assets/javascripts/theme.init.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 		<!-- Examples -->
-		<script src="../assets/javascripts/tables/examples.datatables.default.js"></script>
-		<script src="../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-		<script src="../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 	</body>
 </html>
 <!--<a href="#" title="" class="btn btn-primary">

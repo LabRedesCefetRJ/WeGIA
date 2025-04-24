@@ -28,18 +28,18 @@
 			$permissao = mysqli_fetch_array($resultado);
 			if($permissao['id_acao'] < 5){
         $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: ". WWW ."home.php?msg_c=$msg");
+        header("Location: ". WWW ."html/home.php?msg_c=$msg");
 			}
 			$permissao = $permissao['id_acao'];
 		}else{
         	$permissao = 1;
           $msg = "Você não tem as permissões necessárias para essa página.";
-          header("Location: ". WWW ."home.php?msg_c=$msg");
+          header("Location: ". WWW ."html/home.php?msg_c=$msg");
 		}	
 	}else{
 		$permissao = 1;
     $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ". WWW ."home.php?msg_c=$msg");
+    header("Location: ". WWW ."html/home.php?msg_c=$msg");
 	}	
 	
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
@@ -127,8 +127,8 @@
          });
 
          $(function () {
-            $("#header").load("../header.php");
-            $(".menuu").load("../menu.php");
+            $("#header").load("<?= WWW ?>html/header.php");
+            $(".menuu").load("<?= WWW ?>html/menu.php");
          });
       </script>
    </head>
@@ -143,7 +143,7 @@
             <!-- end: sidebar -->
             <section role="main" class="content-body">
             <header class="page-header">
-               <h2>Informaçoes</h2>
+               <h2>Informações</h2>
                <div class="right-wrapper pull-right">
                   <ol class="breadcrumbs">
                      <li>
@@ -151,7 +151,7 @@
                         <i class="fa fa-home"></i>
                         </a>
                      </li>
-                     <li><span>Informações Funcionario</span></li>
+                     <li><span>Informações Origem</span></li>
                   </ol>
                   <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
                </div>
@@ -162,7 +162,7 @@
                <div class="panel-actions">
                   <a href="#" class="fa fa-caret-down"></a>
                </div>
-               <h2 class="panel-title">origem</h2>
+               <h2 class="panel-title">Origem</h2>
             </header>
             <div class="panel-body">
                <table class="table table-bordered table-striped mb-none" id="datatable-default">
@@ -193,7 +193,7 @@
       <!-- Theme Custom -->
       <script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
       <!-- Theme Initialization Files -->
-      <script src="../assets/javascripts/theme.init.js"></script>
+      <script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
       <!-- Examples -->
       <script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
       <script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>

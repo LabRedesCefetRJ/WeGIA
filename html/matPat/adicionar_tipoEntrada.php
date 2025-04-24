@@ -134,7 +134,7 @@
 													<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
 													<input type="reset" class="btn btn-default">
 														<a href="<?= WWW ?>html/matPat/cadastro_entrada.php" style="color: white; text-decoration: none;"><button class="btn btn-info" type="button">Voltar</button></a>
-														<a href="<?= WWW ?>html/matPat/listar_tipoEntrada.php" style="color: white; text-decoration:none;"><button class="btn btn-success" type="button">Listar entrada</button></a>
+														<a href="<?= WWW ?>html/matPat/listar_tipoEntrada.php" style="color: white; text-decoration:none;"><button class="btn btn-success" type="button">Listar tipo entrada</button></a>
 												
 													</div>
 											</form>
@@ -160,8 +160,8 @@
 	</section>
 	<script>
 		$(function () {
-        $("#header").load("../header.php");
-        $(".menuu").load("../menu.php");
+        $("#header").load("<?= WWW ?>html/header.php");
+        $(".menuu").load("<?= WWW ?>html/menu.php");
       });
 	</script>
 	<!-- Vendor -->

@@ -52,7 +52,7 @@
           	include_once ROOT . '/dao/TipoSaidaDAO.php';
           
           	if(!isset($_SESSION['tipo_saida'])){
-            	header('Location: '. WWW .'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage='. WWW .'html/listar_tipoSaida.php');
+            	header('Location: '. WWW .'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage='. WWW .'html/matPat/listar_tipoSaida.php');
           	}
           	if(isset($_SESSION['tipo_saida'])){
             	$tipo = $_SESSION['tipo_saida'];
@@ -120,8 +120,8 @@
          	});
          });
          $(function () {
-            $("#header").load("../header.php");
-            $(".menuu").load("../menu.php");
+            $("#header").load("<?= WWW ?>html/header.php");
+            $(".menuu").load("<?= WWW ?>html/menu.php");
           });
       </script>
    </head>
@@ -135,7 +135,7 @@
          <!-- end: sidebar -->
          <section role="main" class="content-body">
          <header class="page-header">
-            <h2>Informaçoes</h2>
+            <h2>Informações</h2>
             <div class="right-wrapper pull-right">
                <ol class="breadcrumbs">
                   <li>
@@ -143,7 +143,7 @@
                      <i class="fa fa-home"></i>
                      </a>
                   </li>
-                  <li><span>Informações Funcionario</span></li>
+                  <li><span>Informações Tipo Saída</span></li>
                </ol>
                <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
             </div>
@@ -154,7 +154,7 @@
                <div class="panel-actions">
                   <a href="#" class="fa fa-caret-down"></a>
                </div>
-               <h2 class="panel-title">Tipo</h2>
+               <h2 class="panel-title">Tipo Saída</h2>
             </header>
             <div class="panel-body">
                <table class="table table-bordered table-striped mb-none" id="datatable-default">

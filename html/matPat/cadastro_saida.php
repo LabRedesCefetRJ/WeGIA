@@ -72,7 +72,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	include_once ROOT .'/dao/ProdutoDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . '/html/matPat/cadastro_saida.php');
+		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (!isset($_SESSION['tipo_saida'])) {
 		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage='. WWW . 'html/matPat/cadastro_saida.php');
@@ -286,8 +286,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		}
 
 		$(function() {
-			$("#header").load("../header.php");
-			$(".menuu").load("../menu.php");
+			$("#header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
 		});
 	</script>
 
