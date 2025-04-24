@@ -516,13 +516,13 @@ $dependente = json_encode($dependente);
       }
     };
 
-    function validarCPF(strCPF) {
+    function validarCPF(strCPF, botão) {
       if (!testaCPF(strCPF)) {
-        $('#cpfInvalido').show();
-        document.getElementById("enviarEditar").disabled = true;
+        $('.cpfInvalido').show();
+        document.getElementById(botão).disabled = true;
       } else {
-        $('#cpfInvalido').hide();
-        document.getElementById("enviarEditar").disabled = false;
+        $('.cpfInvalido').hide();
+        document.getElementById(botão).disabled = false;
       }
     }
   </script>
@@ -1468,13 +1468,13 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany"></label>
                           <div class="col-md-6">
-                            <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+                            <p class="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                           </div>
                         </div>
                         <input type="hidden" id="id_funcionario" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
@@ -1595,7 +1595,13 @@ $dependente = json_encode($dependente);
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
                                   <div class="col-md-6">
-                                    <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                    <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarDependente')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                  </div>
+                                </div>
+                                <div class="form-group">
+                                  <label class="col-md-3 control-label" for="profileCompany"></label>
+                                  <div class="col-md-6">
+                                    <p class="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                                   </div>
                                 </div>
                                 <div class="form-group">
@@ -1615,7 +1621,7 @@ $dependente = json_encode($dependente);
                                 <input type="hidden" name="id_funcionario" value=<?= $_GET['id_funcionario']; ?> readonly>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                  <input type="submit" value="Enviar" class="btn btn-primary">
+                                  <input id="enviarDependente" type="submit" value="Enviar" class="btn btn-primary">
                                 </div>
                               </div>
                             </div>

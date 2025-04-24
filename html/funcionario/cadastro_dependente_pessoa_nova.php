@@ -175,7 +175,7 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                         <select name="id_parentesco" id="parentesco">
                             <?php
                                 foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                    if($item == $parentescoPrevio) {
+                                    if($item["id_parentesco"] == $parentescoPrevio) {
                                         echo("<option value='" . $item["id_parentesco"] . "' selected>" . htmlspecialchars($item["descricao"]) . "</option>");
                                     }
                                     else {
