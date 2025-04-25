@@ -129,7 +129,7 @@ function quickQuery($query, $column)
 	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 
 	<!-- Atualizacao CSS -->
-	<link rel="stylesheet" href="../css/atualizacao.css" />
+	<link rel="stylesheet" href="<?= WWW ?>css/atualizacao.css" />
 
 	<!-- Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -167,8 +167,8 @@ function quickQuery($query, $column)
 
 	<script type="text/javascript">
 		$(function() {
-			$("#header").load("../header.php");
-			$(".menuu").load("../menu.php");
+			$("#header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
 		});
 	</script>
 

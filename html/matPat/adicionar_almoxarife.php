@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once './permissao/permissao.php';
+require_once ROOT .'/html/permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 91);
 if (!isset($id_funcionario) && !isset($id_almoxarifado)) {
-    header("Location: ./geral/editar_permissoes.php?msg=Preencha todos os campos antes de prosseguir!&flag=warn");
+    header("Location: ". WWW ."html/geral/editar_permissoes.php?msg=Preencha todos os campos antes de prosseguir!&flag=warn");
 }
 extract($_REQUEST);
 

@@ -113,7 +113,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		function listarId(id) {
-			window.location.replace('<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=<?= WWW ?>html/listar_Ientrada.php&id_entrada=' + id);
+			window.location.replace('<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=<?= WWW ?>html/matPat/listar_Ientrada.php&id_entrada=' + id);
 		}
 	</script>
 	<script>
@@ -150,8 +150,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 			})
 		});
 		$(function() {
-			$("#header").load("../header.php");
-			$(".menuu").load("../menu.php");
+			$("#header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
 		});
 	</script>
 

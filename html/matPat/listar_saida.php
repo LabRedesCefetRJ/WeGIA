@@ -1,9 +1,5 @@
 <?php
 session_start();
-if (!isset($_SESSION['usuario'])) {
-	header("Location: ../index.php");
-	exit();
-}
 
 // Carregando configuração com segurança
 $config_path = "config.php";
@@ -11,6 +7,11 @@ while (!file_exists($config_path)) {
 	$config_path = "../" . $config_path;
 }
 require_once($config_path);
+
+if (!isset($_SESSION['usuario'])) {
+	header("Location: ". WWW ."html/index.php");
+	exit();
+}
 
 // Estabelecendo conexão segura
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -71,7 +72,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	// Validando sessão de saída
 	if (!isset($_SESSION['saida'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=SaidaControle&nextPage='. WWW . 'html/listar_saida.php');
+		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=SaidaControle&nextPage='. WWW . 'html/matPat/listar_saida.php');
 		exit();
 	}
 	if (isset($_SESSION['saida'])) {
@@ -129,7 +130,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		function listarId(id) {
-			window.location.replace('<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=<?= WWW ?>html/listar_Isaida.php&id_saida=' + id);
+			window.location.replace('<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=<?= WWW ?>html/matPat/listar_Isaida.php&id_saida=' + id);
 		}
 	</script>
 	<script>
