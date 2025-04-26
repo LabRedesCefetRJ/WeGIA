@@ -244,6 +244,8 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
                   <tr>
                     <th>Cod.</th>
                     <th>N. Sócio</th>
+                    <th>Plataforma</th>
+                    <th>M. pagamento</th>
                     <th>D. emissão</th>
                     <th>D. vencimento</th>
                     <th>D. pagamento</th>

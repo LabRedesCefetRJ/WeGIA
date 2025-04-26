@@ -142,10 +142,14 @@ class ContribuicaoLogDAO{
             cl.data_vencimento as dataVencimento, 
             cl.data_pagamento as dataPagamento, 
             cl.valor, 
-            cl.status_pagamento as status 
+            cl.status_pagamento as status,
+            cg.plataforma as plataforma,
+            cm.meio as meio  
         FROM contribuicao_log cl 
         JOIN socio s ON (s.id_socio=cl.id_socio) 
-        JOIN pessoa p ON (p.id_pessoa=s.id_pessoa)';
+        JOIN pessoa p ON (p.id_pessoa=s.id_pessoa) 
+        JOIN contribuicao_gatewayPagamento as cg ON (cg.id=cl.id_gateway) 
+        JOIN contribuicao_meioPagamento as cm ON (cm.id=cl.id_meio_pagamento)';
 
         if(!is_null($statusPagamento)){
             match($statusPagamento){
