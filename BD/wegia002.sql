@@ -298,3 +298,6 @@ INSERT INTO `contribuicao_meioPagamento` (meio,id_plataforma,status) VALUES ("Bo
 
 INSERT INTO `contribuicao_conjuntoRegras` (id_meioPagamento,id_regra,valor,status) 
 VALUES (1,1,1,0), (1,2,1000,0), (2,1,1,0), (2,2,1000,0), (3,1,1,0), (3,2,1000,0);
+
+INSERT INTO `almoxarifado` (`id_almoxarifado`, `descricao_almoxarifado`) VALUES (1, 'Almoxarifado Central');
+INSERT INTO `almoxarife` (`id_almoxarife`, `id_funcionario`, `id_almoxarifado`, `data_registro`) VALUES (1,1,1, current_timestamp());

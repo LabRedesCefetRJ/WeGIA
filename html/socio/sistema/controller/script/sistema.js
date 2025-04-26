@@ -829,6 +829,8 @@ $(document).ready(function(){
             "columns": [
                 { "data": "codigo" },
                 { "data": "nomeSocio" },
+                { "data": "plataforma" },
+                { "data": "meio" },
                 { "data": "dataGeracao", "render": (data, type) => {return formataDataBr(data, type)}},
                 { "data": "dataVencimento", "render": (data, type) => {return formataDataBr(data, type)}},
                 { "data": "dataPagamento", "render": (data, type) => {return formataDataBr(data, type)}},
@@ -837,7 +839,7 @@ $(document).ready(function(){
                     return data == 1 ? "Pago" : "Não Pago";
                 } },
             ],
-            "order": [[2, 'desc']],  // Ordena pela primeira coluna (dataGeracao) de forma decrescente
+            "order": [[4, 'desc']],  // Ordena pela primeira coluna (dataGeracao) de forma decrescente
             "language": {
                 "sEmptyTable": "Nenhuma contribuição encontrada no sistema.",
                 "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",

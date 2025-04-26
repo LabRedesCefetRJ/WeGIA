@@ -1,4 +1,5 @@
 <?php
+/*Analisar futura remoção
     require("../conexao.php");
     $query = $_POST['query'];
     $resultado = mysqli_query($conexao, $query);
@@ -7,4 +8,5 @@
         $tabela["socios"][$i] = mysqli_fetch_array($resultado);
     }
     echo json_encode($tabela);
+    */
 ?>
