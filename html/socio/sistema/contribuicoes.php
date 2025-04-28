@@ -247,7 +247,7 @@ try {
             <div class="box-body">
               <p>Filtros de pesquisa</p>
 
-              <form action="" class="form-inline">
+              <form id="form-relatorio-contribuicao" action="" class="form-inline">
                 <div class="form-group me-5">
                   <label for="periodo" class="control-label">Período:&nbsp;</label>
                   <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
@@ -285,7 +285,7 @@ try {
                   </select>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Gerar relatório</button>
+                <button id="relatorio-btn" type="submit" class="btn btn-primary">Gerar relatório</button>
               </form>
             </div>
           </div>
@@ -352,5 +352,5 @@ try {
       </div>
 
 </body>
-
+<script src="./controller/script/relatorios_contribuicao.js"></script>
 </html>

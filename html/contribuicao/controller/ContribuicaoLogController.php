@@ -619,11 +619,24 @@ class ContribuicaoLogController
      */
     public function getRelatorio():void
     {
-        $periodo = trim(filter_input(INPUT_GET, 'periodo', FILTER_SANITIZE_NUMBER_INT));
-        $socioId = trim(filter_input(INPUT_GET, 'socio', FILTER_SANITIZE_NUMBER_INT));
-        $status = trim(filter_input(INPUT_GET, 'status', FILTER_SANITIZE_NUMBER_INT));
+        $periodo = (filter_input(INPUT_GET, 'periodo', FILTER_SANITIZE_NUMBER_INT));
+        $socioId = (filter_input(INPUT_GET, 'socio', FILTER_SANITIZE_NUMBER_INT));
+        $status = (filter_input(INPUT_GET, 'status', FILTER_SANITIZE_NUMBER_INT));
 
         try {
+
+            if(is_null($periodo)){
+                throw new InvalidArgumentException('O período não pode ser nulo.', 400);
+            }
+
+            if(is_null($socioId)){
+                throw new InvalidArgumentException('O id de um sócio não pode ser nulo.', 400);
+            }
+
+            if(is_null($status)){
+                throw new InvalidArgumentException('O status não pode ser nulo.', 400);
+            }
+
             $configuracaoRelatorio = new ConfiguracaoRelatorioContribuicoes();
             $configuracaoRelatorio
                 ->setPeriodo($periodo)
