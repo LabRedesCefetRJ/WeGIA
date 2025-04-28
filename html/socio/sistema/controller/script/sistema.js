@@ -836,7 +836,7 @@ $(document).ready(function(){
                 { "data": "dataPagamento", "render": (data, type) => {return formataDataBr(data, type)}},
                 { "data": "valor" },
                 { "data": "status",  "render": function(data, type, row) {
-                    return data == 1 ? "Pago" : "Não Pago";
+                    return data == 1 ? "Pago" : "Pendente";
                 } },
             ],
             "order": [[4, 'desc']],  // Ordena pela primeira coluna (dataGeracao) de forma decrescente
