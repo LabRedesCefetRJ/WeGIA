@@ -196,6 +196,7 @@ class ContribuicaoLogDAO
 
         $sql =
             'SELECT 
+            cl.id,
             cl.codigo, 
             p.nome as nomeSocio, 
             cl.data_geracao as dataGeracao, 

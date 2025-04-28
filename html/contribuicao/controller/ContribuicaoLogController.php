@@ -617,9 +617,27 @@ class ContribuicaoLogController
     /**
      * Retorna o JSON do relatório de contribuições solicitado
      */
-    public function getRelatorio(){
+    public function getRelatorio():void
+    {
         $periodo = trim(filter_input(INPUT_GET, 'periodo', FILTER_SANITIZE_NUMBER_INT));
         $socioId = trim(filter_input(INPUT_GET, 'socio', FILTER_SANITIZE_NUMBER_INT));
         $status = trim(filter_input(INPUT_GET, 'status', FILTER_SANITIZE_NUMBER_INT));
+
+        try {
+            $configuracaoRelatorio = new ConfiguracaoRelatorioContribuicoes();
+            $configuracaoRelatorio
+                ->setPeriodo($periodo)
+                ->setSocioId($socioId)
+                ->setStatus($status);
+
+            $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+            $relatorio = $contribuicaoLogDao->getRelatorio($configuracaoRelatorio);
+
+            echo json_encode($relatorio);
+        } catch (Exception $e) {
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+            http_response_code($e->getCode());
+            echo json_encode(['erro' => 'Erro ao buscar o relatório de contribuições']);
+        }
     }
 }
