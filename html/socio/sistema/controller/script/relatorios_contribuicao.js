@@ -1,6 +1,13 @@
 const formRelatorio = document.getElementById('form-relatorio-contribuicao');
 
-function gerarTabela(data){
+function formatarData(data) {
+    if (!data) return ''; // Trata datas nulas ou vazias
+    const dataObj = new Date(data);
+    if (isNaN(dataObj)) return data; // Caso a data não seja válida, retorna como está
+    return dataObj.toLocaleDateString('pt-BR');
+};
+
+function gerarTabela(data) {
     //Limpar tabela
     const tBody = document.querySelector('#tabela-relatorio-contribuicao tbody');
     tBody.innerHTML = '';
@@ -8,7 +15,7 @@ function gerarTabela(data){
     let valor = 0;
 
     data.forEach(element => {
-        if(parseInt(element.status) === 1){
+        if (parseInt(element.status) === 1) {
             valor += parseFloat(element.valor);
         }
 
@@ -17,27 +24,30 @@ function gerarTabela(data){
         const tdCodigo = document.createElement('td');
         tdCodigo.innerText = element.codigo;
 
-        const tdNome = document.createElement('td'); 
+        const tdNome = document.createElement('td');
         tdNome.innerText = element.nomeSocio;
 
-        const tdDataGeracao = document.createElement('td'); 
-        tdDataGeracao.innerText = element.dataGeracao;
-        
-        const tdDataVencimento = document.createElement('td'); 
-        tdDataVencimento.innerText = element.dataVencimento;
-        
-        const tdDataPagamento = document.createElement('td'); 
-        tdDataPagamento.innerText = element.dataPagamento;
-        
+        const tdDataGeracao = document.createElement('td');
+        tdDataGeracao.innerText = formatarData(element.dataGeracao);
+
+        const tdDataVencimento = document.createElement('td');
+        tdDataVencimento.innerText = formatarData(element.dataVencimento);
+
+        const tdDataPagamento = document.createElement('td');
+        tdDataPagamento.innerText = formatarData(element.dataPagamento);
+
         const tdValor = document.createElement('td');
-        tdValor.innerText = element.valor;
-        
+        tdValor.innerText = parseFloat(element.valor).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        });
+
         const tdStatus = document.createElement('td');
-        tdStatus.innerText = element.status;
-        
+        tdStatus.innerText = element.status == 1 ? 'Pago' : 'Pendente';
+
         const tdPlataforma = document.createElement('td');
         tdPlataforma.innerText = element.plataforma;
-        
+
         const tdMeioPagamento = document.createElement('td');
         tdMeioPagamento.innerText = element.meio;
 
@@ -60,7 +70,7 @@ formRelatorio.addEventListener('submit', async function (ev) {
 
     // Pega os campos do formulário
     const formData = new FormData(formRelatorio);
-    
+
     // Converte o FormData em URLSearchParams
     const params = new URLSearchParams(formData);
     params.append('metodo', 'getRelatorio');
@@ -80,11 +90,33 @@ formRelatorio.addEventListener('submit', async function (ev) {
         console.log('Resposta do servidor:', result);
         //location.reload();
 
-        if(result.length < 1){
-            mensagemRelatorio.innerHTML = "Nenhuma contribuição foi encontrada com os filtros selecionados"
-        }else{
-            const valorPago = gerarTabela(result);
-            mensagemRelatorio.innerHTML = `O total adquirido ao longo do período foi R$ ${valorPago},00`;
+        if (result.length < 1) {
+            mensagemRelatorio.innerHTML = "Nenhuma contribuição foi encontrada com os filtros selecionados";
+            document.querySelector('#tabela-relatorio-contribuicao tbody').innerHTML = '';
+        } else {
+            //Informações para o resumo do relatório
+            const valorPago = gerarTabela(result).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+            const periodoSelecionado = document.querySelector('#periodo option:checked').textContent;
+            const socioSelecionado = document.querySelector('#socio option:checked').textContent;
+            const statusSelecionado = document.querySelector('#status option:checked').textContent;
+
+            const agora = new Date();
+            const dataFormatada = agora.toLocaleDateString('pt-BR');
+            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const dataHoraFormatada = `${dataFormatada} às ${horaFormatada}`;
+
+            mensagemRelatorio.innerHTML = `
+            <h3>Relatório gerado</h3>
+            <p><strong>Data e hora</strong>: ${dataHoraFormatada}</p>
+            <p><strong>Período selecionado</strong>: ${periodoSelecionado}</p>
+            <p><strong>Sócio selecionado</strong>: ${socioSelecionado}</p>
+            <p><strong>Status de contribuição selecionado</strong>: ${statusSelecionado}</p>
+            <p><strong>Valor adquirido</strong>: ${valorPago}</p>
+            `;
         }
     } catch (error) {
         alert(`${error.message}`);
