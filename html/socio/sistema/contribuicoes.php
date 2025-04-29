@@ -58,7 +58,7 @@ try {
 
   //Buscar data e hora da última atualização das contribuições
   require_once '../../../dao/SistemaLogDAO.php';
-  
+
   $sistemaLogDao = new SistemaLogDAO();
   $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
 
@@ -67,7 +67,6 @@ try {
 
   $socioDao = new SocioDAO();
   $socios = $socioDao->getSocios();
-
 } catch (PDOException $e) {
   error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
   http_response_code(500);
@@ -267,11 +266,11 @@ try {
                   <label for="socio" class="control-label">Sócio:&nbsp;</label>
                   <select class="form-control" name="socio" id="socio" style="width: 200px;">
                     <option value="0">Todos</option>
-                    <?php if(!is_null($socios)): ?>
-                      <?php foreach($socios as $socio):?>
-                        <option value="<?=$socio->getId()?>"><?=$socio->getNome()?></option>
+                    <?php if (!is_null($socios)): ?>
+                      <?php foreach ($socios as $socio): ?>
+                        <option value="<?= $socio->getId() ?>"><?= $socio->getNome() ?></option>
                       <?php endforeach; ?>
-                    <?php endif;?>
+                    <?php endif; ?>
                   </select>
                 </div>
 
@@ -287,6 +286,33 @@ try {
 
                 <button id="relatorio-btn" type="submit" class="btn btn-primary">Gerar relatório</button>
               </form>
+
+              <div id="relatorio-gerado">
+
+                <div id="mensagem-relatorio">
+
+                </div>
+
+                <table id="tabela-relatorio-contribuicao" class="table table-hover" style="width: 100%">
+                  <thead>
+                    <tr>
+                      <th>Cod.</th>
+                      <th>N. Sócio</th>
+                      <th>Plataforma</th>
+                      <th>M. pagamento</th>
+                      <th>D. emissão</th>
+                      <th>D. vencimento</th>
+                      <th>D. pagamento</th>
+                      <th>Valor</th>
+                      <th>Status</th>
+                      <!--Ativar novamente quando as opções forem implementadas <th>Opções</th>-->
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -353,4 +379,5 @@ try {
 
 </body>
 <script src="./controller/script/relatorios_contribuicao.js"></script>
+
 </html>
