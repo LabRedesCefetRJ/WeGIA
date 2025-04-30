@@ -1199,7 +1199,8 @@ $dependente = json_encode($dependente);
                              
                              foreach ($resultados as $item) {
                                 echo "<tr style='cursor: pointer;' onclick='clicar($item[idatendido_ocorrencias])'>";
-                                echo "<td>".$item["data"]."</td>";
+                                $data = explode('-', $item["data"]);
+                                echo "<td>".$data[2]."/".$data[1]."/".$data[0]."</td>";
                                 echo"<td>".$item["descricao"]."</td>";
                                 echo "<tr>";
                              }
