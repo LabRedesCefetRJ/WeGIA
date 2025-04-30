@@ -67,10 +67,10 @@ class Atendido_ocorrenciaControle
 		$_SESSION['despachoComAnexo'] = $despachosComAnexo;
 	}
 
-	public function listarAnexo($id_anexo)
+	public function listarAnexo($id_ocorrencia)
 	{
 		$Atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
-		$anexos = $Atendido_ocorrenciaDAO->listarAnexo($id_anexo);
+		$anexos = $Atendido_ocorrenciaDAO->listarAnexo($id_ocorrencia);
 		if (session_status() !== PHP_SESSION_ACTIVE) {
 			session_start();
 		}

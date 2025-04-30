@@ -99,19 +99,17 @@ class Atendido_ocorrenciaDAO
         }
     }
 
-    public function listarAnexo($id_anexo)
+    public function listarAnexo($id_ocorrencia)
     {
         try {
             $Anexo = array();
             $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT arquivo FROM arquivo_atendido_doc WHERE idatendido_ocorrencia_doc=$id_anexo");
-            $x = 0;
+            $consulta = $pdo->query("SELECT arquivo, arquivo_nome, idatendido_ocorrencia_doc FROM atendido_ocorrencia_doc WHERE atentido_ocorrencia_idatentido_ocorrencias=$id_ocorrencia");
+            $linha = $consulta->fetchAll(PDO::FETCH_ASSOC);
 
-            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $AnexoDAO = new Atendido_ocorrenciaDAO;
-                $decode = gzuncompress($linha['arquivo']);
-                $Anexo[$x] = array('arquivo' => $decode);
-                $x++;
+            foreach($linha as $arquivo){
+                $decode = base64_decode(gzuncompress($arquivo['arquivo']));
+                $Anexo[$arquivo['idatendido_ocorrencia_doc']] = $decode;
             }
         } catch (PDOException $e) {
             echo 'Error:' . $e->getMessage();
@@ -131,7 +129,7 @@ class Atendido_ocorrenciaDAO
             $stmt1->execute();
 
             if ($stmt1->fetch(PDO::FETCH_ASSOC)) {
-                $sql = "SELECT p.nome as nome_atendido, p.sobrenome as sobrenome_atendido,ao.data,ao.descricao as descricao_tipo,aod.arquivo_nome, aod.arquivo_extensao, ao.idatendido_ocorrencias, aod.arquivo,pp.nome as func,aot.descricao as descricao_ocorrencia from pessoa p join atendido a on (a.pessoa_id_pessoa = p.id_pessoa)
+                $sql = "SELECT p.nome as nome_atendido, p.sobrenome as sobrenome_atendido,ao.data,ao.descricao as descricao_tipo, aod.arquivo_nome, aod.arquivo_extensao, aod.idatendido_ocorrencia_doc, ao.idatendido_ocorrencias, aod.arquivo,pp.nome as func,aot.descricao as descricao_ocorrencia from pessoa p join atendido a on (a.pessoa_id_pessoa = p.id_pessoa)
                 join atendido_ocorrencia ao on (ao.atendido_idatendido = a.idatendido)
                 join atendido_ocorrencia_tipos aot on (ao.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = aot.idatendido_ocorrencia_tipos) 
                 join funcionario f on (ao.funcionario_id_funcionario = f.id_funcionario)
@@ -154,8 +152,7 @@ class Atendido_ocorrenciaDAO
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $paciente[] = array(
                     'nome_atendido' => $linha['nome_atendido'], 'arquivo_nome' => $linha['arquivo_nome'], 'arquivo_extensao' => $linha['arquivo_extensao'], 'idatendido_ocorrencias' => $linha['idatendido_ocorrencias'], 'sobrenome_atendido' => $linha['sobrenome_atendido'], 'atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos' => $linha['descricao_tipo'], 'funcionario_id_funcionario' => $linha['func'],
-                    'data' => $linha['data'], 'descricao' => $linha['descricao_ocorrencia']
-                );
+                    'data' => $linha['data'], 'descricao' => $linha['descricao_ocorrencia'], 'idatendido_ocorrencia_doc' => $linha['idatendido_ocorrencia_doc']                );
             }
         } catch (PDOException $e) {
             echo 'Error: ' .  $e->getMessage();

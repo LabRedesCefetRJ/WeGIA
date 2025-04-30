@@ -18,11 +18,13 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 
-$id_anexo = $_GET['idatendido_ocorrencias'];
+$id_ocorrencia = $_GET['idatendido_ocorrencias'];
 $extensao = trim($_GET['extensao']);
 $nome = trim($_GET['nome']);
+$id_anexo = $_GET['idatendido_ocorrencia_doc'];
 
-if (!$id_anexo || !is_numeric($id_anexo)) {
+
+if (!$id_ocorrencia || !is_numeric($id_ocorrencia)) {
     http_response_code(400);
     exit("Erro ao exibir anexo, o id fornecido não é um número válido para essa operação");
 }
@@ -33,9 +35,9 @@ if (!$extensao || empty($extensao) || !$nome || empty($nome)) {
 }
 
 $AnexoControle = new Atendido_ocorrenciaControle;
-$AnexoControle->listarAnexo($id_anexo);
+$AnexoControle->listarAnexo($id_ocorrencia);
 
 header('Content-Type: application/octet-stream');
 header('Content-Disposition: attachment; filename="' . $nome . '.' . $extensao . '"');
 
-echo $_SESSION['arq'][0]['anexo'];
+echo $_SESSION['arq'][$id_anexo];
