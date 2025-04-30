@@ -99,6 +99,45 @@ class Atendido_ocorrenciaDAO
         }
     }
 
+    public function incluirArquivos($arquivos){
+
+        for($i = 1; $i < count($arquivos["name"]); $i = $i + 1){
+
+            $anexo2 = $arquivos["tmp_name"][$i];
+
+            if (isset($anexo2) && !empty($anexo2)) {
+                if ($arquivos['error'][$i] !== UPLOAD_ERR_OK) {
+                    die("Houve um erro no upload do arquivo. Código de erro: " . $arquivos['error']);
+                }
+
+                $extensao_nome = strtolower(pathinfo($arquivos["name"][$i], PATHINFO_EXTENSION));
+                $arquivo_nome = str_replace("." . $extensao_nome, "", $arquivos["name"][$i]);
+                $arquivo_b64 = base64_encode(file_get_contents($arquivos['tmp_name'][$i]));	
+            
+                $tipos_permitidos = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'];
+        
+                if (in_array($extensao_nome, $tipos_permitidos)) {
+                    $pdo = Conexao::connect();
+                    $consulta = $pdo->query("SELECT max(idatendido_ocorrencias) from atendido_ocorrencia;")->fetch(PDO::FETCH_ASSOC);
+                    $id = $consulta['max(idatendido_ocorrencias)'];
+                    $prep = $pdo->prepare("INSERT INTO atendido_ocorrencia_doc (atentido_ocorrencia_idatentido_ocorrencias, data, arquivo_nome, arquivo_extensao, arquivo) VALUES ( :atentido_ocorrencia_idatentido_ocorrencias, :data, :arquivo_nome , :arquivo_extensao, :arquivo )");
+
+                    //$prep->bindValue(":ida", $idatendido);
+                    //$prep->bindValue(":idd", $atentido_ocorrencia_idatentido_ocorrencias);
+                    $prep->bindValue(":atentido_ocorrencia_idatentido_ocorrencias", $id);
+                    $prep->bindValue(":arquivo_nome", $arquivo_nome);
+                    $prep->bindValue(":arquivo_extensao", $extensao_nome);
+                    $prep->bindParam(":arquivo", gzcompress($arquivo_b64), PDO::PARAM_LOB);
+        
+                    $dataDocumento = date('Y/m/d');
+                    $prep->bindValue(":data", $dataDocumento);
+        
+                    $prep->execute();
+                }
+            }
+        }
+    }
+
     public function listarAnexo($id_ocorrencia)
     {
         try {

@@ -541,7 +541,7 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                                 </div> -->
                                 
                                 <div class="file-chooser">
-                                    <input type="file" multiple name='anexo[]' class="file-chooser__input">
+                                    <input type="file" multiple name='arquivos[]' class="file-chooser__input">
                                 </div><br>
                                 <div class="file-uploader__message-area">
                                     <!-- <p>Select a file to upload</p> -->
