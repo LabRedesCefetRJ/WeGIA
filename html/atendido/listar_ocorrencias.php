@@ -130,6 +130,9 @@ if (!isset($teste)) {
 <!-- Theme Base, Components and Settings -->
 <!-- <script src="<?php echo WWW; ?>assets/javascripts/theme.js"></script> -->
 
+<!-- Theme CSS -->
+<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon">
+
 <!-- Theme Custom -->
 <script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
 
@@ -344,7 +347,7 @@ if (!isset($teste)) {
                     <div class="right-wrapper pull-right">
                         <ol class="breadcrumbs">
                             <li>
-                                <a href="home.php">
+                                <a href="../home.php">
                                     <i class="fa fa-home"></i>
                                 </a>
                             </li>
