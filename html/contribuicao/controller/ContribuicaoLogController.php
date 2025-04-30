@@ -617,9 +617,40 @@ class ContribuicaoLogController
     /**
      * Retorna o JSON do relatório de contribuições solicitado
      */
-    public function getRelatorio(){
-        $periodo = trim(filter_input(INPUT_GET, 'periodo', FILTER_SANITIZE_NUMBER_INT));
-        $socioId = trim(filter_input(INPUT_GET, 'socio', FILTER_SANITIZE_NUMBER_INT));
-        $status = trim(filter_input(INPUT_GET, 'status', FILTER_SANITIZE_NUMBER_INT));
+    public function getRelatorio():void
+    {
+        $periodo = (filter_input(INPUT_GET, 'periodo', FILTER_SANITIZE_NUMBER_INT));
+        $socioId = (filter_input(INPUT_GET, 'socio', FILTER_SANITIZE_NUMBER_INT));
+        $status = (filter_input(INPUT_GET, 'status', FILTER_SANITIZE_NUMBER_INT));
+
+        try {
+
+            if(is_null($periodo)){
+                throw new InvalidArgumentException('O período não pode ser nulo.', 400);
+            }
+
+            if(is_null($socioId)){
+                throw new InvalidArgumentException('O id de um sócio não pode ser nulo.', 400);
+            }
+
+            if(is_null($status)){
+                throw new InvalidArgumentException('O status não pode ser nulo.', 400);
+            }
+
+            $configuracaoRelatorio = new ConfiguracaoRelatorioContribuicoes();
+            $configuracaoRelatorio
+                ->setPeriodo($periodo)
+                ->setSocioId($socioId)
+                ->setStatus($status);
+
+            $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+            $relatorio = $contribuicaoLogDao->getRelatorio($configuracaoRelatorio);
+
+            echo json_encode($relatorio);
+        } catch (Exception $e) {
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+            http_response_code($e->getCode());
+            echo json_encode(['erro' => 'Erro ao buscar o relatório de contribuições']);
+        }
     }
 }
