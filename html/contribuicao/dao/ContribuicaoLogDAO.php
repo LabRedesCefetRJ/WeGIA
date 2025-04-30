@@ -293,7 +293,7 @@ class ContribuicaoLogDAO
                     $conditions[] = 'cl.data_vencimento BETWEEN :data_inicio AND :data_fim AND cl.status_pagamento=0';
                     break;
                 case 4: // Paga
-                    $conditions[] = 'cl.data_pagamento BETWEEN :data_inicio AND :data_fim';
+                    $conditions[] = 'cl.data_pagamento BETWEEN :data_inicio AND :data_fim AND cl.status_pagamento=1';
                     break;
             }
 
