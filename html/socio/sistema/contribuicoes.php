@@ -191,6 +191,51 @@ try {
     .me-5 {
       margin-right: 5px;
     }
+
+    .mt-10 {
+      margin-top: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media print {
+      #header {
+        display: none;
+      }
+
+      .menuu {
+        display: none;
+      }
+
+      .panel-heading {
+        display: none;
+      }
+
+      .content-body {
+        padding: 0;
+        font-size: smaller;
+      }
+
+      #tabela-relatorio-contribuicao th:last-child {
+        text-overflow: ellipsis;
+      }
+
+      #tabela-relatorio-contribuicao td:last-child {
+        white-space: normal;
+        word-break: break-word;
+        hyphens: auto;
+      }
+
+      #mensagem-relatorio {
+        margin-left: 5px;
+      }
+
+      .print-hide {
+        display: none;
+      }
+    }
   </style>
 </head>
 
@@ -199,7 +244,7 @@ try {
   <section class="body">
 
     <!-- start: header -->
-    <header id="header" class="header">
+    <header id="header" class="header print-hide">
 
       <!-- end: search & user box -->
     </header>
@@ -211,7 +256,7 @@ try {
       <!-- end: sidebar -->
 
       <section role="main" class="content-body">
-        <header class="page-header">
+        <header class="page-header print-hide">
           <h2>Contribuições</h2>
 
           <div class="right-wrapper pull-right">
@@ -233,7 +278,7 @@ try {
         <div class="row">
 
           <div class="box box-warning collapsed-box">
-            <div class="box-header with-border">
+            <div class="box-header with- print-hide">
               <h3 class="box-title">Relatórios personalizados</h3>
 
               <div class="box-tools pull-right">
@@ -244,9 +289,9 @@ try {
             </div>
 
             <div class="box-body">
-              <p>Filtros de pesquisa</p>
+              <p class="print-hide">Filtros de pesquisa</p>
 
-              <form id="form-relatorio-contribuicao" action="" class="form-inline">
+              <form id="form-relatorio-contribuicao" action="" class="form-inline print-hide">
                 <div class="form-group me-5">
                   <label for="periodo" class="control-label">Período:&nbsp;</label>
                   <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
@@ -258,7 +303,7 @@ try {
                     <option value="6">Semestre</option>
                     <option value="7">Ano atual</option>
                     <option value="8">Ano passado</option>
-                    <option value="9">Específico</option>
+                    <!--<option value="9">Específico</option> Adicionar futuramente-->
                   </select>
                 </div>
 
@@ -287,16 +332,18 @@ try {
                 <button id="relatorio-btn" type="submit" class="btn btn-primary">Gerar relatório</button>
               </form>
 
+              <button id="relatorio-imprimir-btn" class="btn btn-primary mt-10 hidden print-hide" onclick="window.print()">Imprimir</button>
+
               <div id="relatorio-gerado">
 
                 <div id="mensagem-relatorio">
 
                 </div>
 
-                <table id="tabela-relatorio-contribuicao" class="table table-hover" style="width: 100%">
+                <table id="tabela-relatorio-contribuicao" class="table table-hover hidden" style="width: 100%">
                   <thead>
                     <tr>
-                      <th>Cod.</th>
+                      <th>Código</th>
                       <th>N. Sócio</th>
                       <th>Plataforma</th>
                       <th>M. pagamento</th>
@@ -316,7 +363,7 @@ try {
             </div>
           </div>
 
-          <div class="box box-warning">
+          <div class="box box-warning print-hide">
             <div class="box-header with-border">
               <h3 class="box-title">Visão Geral e Controle</h3>
 
@@ -345,7 +392,7 @@ try {
               <table id="tabela-contribuicoes" class="table table-hover" style="width: 100%">
                 <thead>
                   <tr>
-                    <th>Cod.</th>
+                    <th>Código</th>
                     <th>N. Sócio</th>
                     <th>Plataforma</th>
                     <th>M. pagamento</th>
@@ -379,5 +426,20 @@ try {
 
 </body>
 <script src="./controller/script/relatorios_contribuicao.js"></script>
+
+<script>
+  /*function printBy(selector) {
+    var $print = $(selector)
+      .clone()
+      .addClass('printable')
+      .prependTo('body');
+
+    // Stop JS execution
+    window.print();
+
+    // Remove div once printed
+    $print.remove();
+  }*/
+</script>
 
 </html>

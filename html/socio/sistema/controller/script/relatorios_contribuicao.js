@@ -49,7 +49,7 @@ function gerarTabela(data) {
         tdPlataforma.innerText = element.plataforma;
 
         const tdMeioPagamento = document.createElement('td');
-        tdMeioPagamento.innerText = element.meio;
+        tdMeioPagamento.innerText = element.meio == 'Carne' ? 'Carnê' : element.meio;
 
         tr.append(tdCodigo, tdNome, tdPlataforma, tdMeioPagamento, tdDataGeracao, tdDataVencimento, tdDataPagamento, tdValor, tdStatus);
         tBody.appendChild(tr);
@@ -90,9 +90,16 @@ formRelatorio.addEventListener('submit', async function (ev) {
         console.log('Resposta do servidor:', result);
         //location.reload();
 
+        const tabela = document.getElementById('tabela-relatorio-contribuicao');
+        const botaoImprimir = document.getElementById('relatorio-imprimir-btn');
+
         if (result.length < 1) {
             mensagemRelatorio.innerHTML = "Nenhuma contribuição foi encontrada com os filtros selecionados";
             document.querySelector('#tabela-relatorio-contribuicao tbody').innerHTML = '';
+
+            // Oculta a tabela e o botão
+            tabela.classList.add('hidden');
+            botaoImprimir.classList.add('hidden');
         } else {
             //Informações para o resumo do relatório
             const valorPago = gerarTabela(result).toLocaleString('pt-BR', {
@@ -115,8 +122,12 @@ formRelatorio.addEventListener('submit', async function (ev) {
             <p><strong>Período selecionado</strong>: ${periodoSelecionado}</p>
             <p><strong>Sócio selecionado</strong>: ${socioSelecionado}</p>
             <p><strong>Status de contribuição selecionado</strong>: ${statusSelecionado}</p>
-            <p><strong>Valor adquirido</strong>: ${valorPago}</p>
+            <p><strong>Valor total adquirido</strong>: ${valorPago}</p>
             `;
+
+            // Exibe a tabela e o botão
+            tabela.classList.remove('hidden');
+            botaoImprimir.classList.remove('hidden');
         }
     } catch (error) {
         alert(`${error.message}`);
