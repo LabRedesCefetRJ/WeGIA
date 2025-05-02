@@ -158,13 +158,13 @@
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Administrar medicamento</h2>
+					<h2>Medicamentos</h2>
 
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li><a href="../index.php"> <i class="fa fa-home"></i>
 							</a></li>
-							<li><span>Administrar medicamento</span></li>
+							<li><span>Medicamentos</span></li>
 						</ol>
 
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>

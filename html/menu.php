@@ -394,12 +394,12 @@
 							<li class="nav-parent nav-active" >
 								<a>
 									<i class="fa fa-user-md" aria-hidden="true"></i>
-									<span>Enfermaria</span>
+									<span>Registro Diário</span>
 								</a>
 								<ul class="nav nav-children">
 									<li>
 										<a href="<?= WWW ?>html/saude/administrar_medicamento.php">
-											<span>Administrar Medicamentos</span>
+											<span>Medicamentos</span>
 										</a>
 									</li>
 									<li>
