@@ -433,7 +433,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
               </div>
             </section>
           </div>
-          <div class="col-md-8 col-lg-8">
+          <div class="col-md-9 col-lg-9">
             <div class="tabs">
               <ul class="nav nav-tabs tabs-primary">
                 <li class="active" id="tab1">
@@ -521,6 +521,84 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                       <h2 class="panel-title">Sinais vitais</h2>
                     </header>
 
+                    <form action="../../controle/control.php" method="post" enctype='multipart/form-data'>
+                      <div class="form-group">
+                        <div class="col-md-6">
+                          <h5 class="obrig">Campos Obrigatórios(*)</h5>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="inputSuccess">Enfermeiro:</label>
+                        <div class="col-md-8">
+                          <input class="form-control" style="width:230px;" name="enfermeiro" id="enfermeiro" value="<?php echo $id_funcionario; ?>" disabled="true">
+                        </div>
+                      </div>
+
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Data da aferição<sup class="obrig">*</sup></label>
+                        <div class="col-md-6">
+                          <input type="datetime-local" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_afericao" id="data_afericao" max=<?php echo date('Y-m-d\TH:i'); ?> required>
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Saturação (em %):</label>
+                        <div class="col-md-6">
+                          <input type="text" class="form-control" name="saturacao" id="saturacao" maxlength="4" pattern="[0-9]+([,\.][0-9]+)?" oninput="padrao = /^\d+([,\.]\d+)?/; if(!
+                        (padrao.test(this.value))) this.value = this.value.slice(0, -1); if(this.value > 100) this.value = 100;">
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Pressão arterial:</label>
+                        <div class="col-md-6">
+                          <input type="text" class="form-control" name="pres_art" id="pres_art" onkeyup="mascara('##/##',this,event)">
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Frequência cardíaca (em bpm):</label>
+                        <div class="col-md-6">
+                          <input type="number" maxlength="3" class="form-control" name="freq_card" id="freq_card" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); if(this.value<0) this.value = this.value*-1;" onkeypress="return Onlynumbers(event)">
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Frequência respiratória (em rpm):</label>
+                        <div class="col-md-6">
+                          <input type="number" maxlength="3" class="form-control" name="freq_resp" id="freq_resp" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); if(this.value<0) this.value = this.value*-1;" onkeypress="return Onlynumbers(event)">
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Temperatura (em °C):</label>
+                        <div class="col-md-6">
+                          <input type="text" maxlength="5" class="form-control" name="temperatura" id="temperatura" onkeyup="mascara('##,##',this,event)">
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">HGT (mg/dL):</label>
+                        <div class="col-md-6">
+                          <input type="text" maxlength="5" class="form-control" name="hgt" id="hgt" pattern="[0-9]+([,\.][0-9]+)?" oninput="padrao = /^\d+([,\.]\d+)?/; if(!
+                          (padrao.test(this.value))) this.value = this.value.slice(0, -1)">
+                        </div>
+                      </div>
+
+                      <input type="hidden" name="id_funcionario" id="id_funcionario" value="<?php echo $funcionario_id; ?>">
+
+                      <input type="hidden" name="id_fichamedica" id="id_fichamedica" value="<?php echo $_SESSION['id_upload_med']; ?>">
+
+                      <input type="hidden" name="nomeClasse" value="SinaisVitaisControle">
+
+                      <input type="hidden" name="metodo" value="incluir">
+
+                      <div class="form-group">
+                        <input type="submit" value="Enviar" class="btn btn-primary">
+                      </div>
+                    </form>
+
                     <div class="panel-body">
                       <hr class="dotted short">
 
@@ -542,85 +620,6 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
 
                         </tbody>
                       </table>
-
-
-                      <form action="../../controle/control.php" method="post" enctype='multipart/form-data'>
-                        <div class="form-group">
-                          <div class="col-md-6">
-                            <h5 class="obrig">Campos Obrigatórios(*)</h5>
-                          </div>
-                        </div>
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="inputSuccess">Enfermeiro:</label>
-                          <div class="col-md-8">
-                            <input class="form-control" style="width:230px;" name="enfermeiro" id="enfermeiro" value="<?php echo $id_funcionario; ?>" disabled="true">
-                          </div>
-                        </div>
-
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Data da aferição<sup class="obrig">*</sup></label>
-                          <div class="col-md-6">
-                            <input type="datetime-local" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_afericao" id="data_afericao" max=<?php echo date('Y-m-d\TH:i'); ?> required>
-                          </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Saturação (em %):</label>
-                          <div class="col-md-6">
-                            <input type="text" class="form-control" name="saturacao" id="saturacao" maxlength="4" pattern="[0-9]+([,\.][0-9]+)?" oninput="padrao = /^\d+([,\.]\d+)?/; if(!
-                        (padrao.test(this.value))) this.value = this.value.slice(0, -1); if(this.value > 100) this.value = 100;">
-                          </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Pressão arterial:</label>
-                          <div class="col-md-6">
-                            <input type="text" class="form-control" name="pres_art" id="pres_art" onkeyup="mascara('##/##',this,event)">
-                          </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Frequência cardíaca (em bpm):</label>
-                          <div class="col-md-6">
-                            <input type="number" maxlength="3" class="form-control" name="freq_card" id="freq_card" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); if(this.value<0) this.value = this.value*-1;" onkeypress="return Onlynumbers(event)">
-                          </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Frequência respiratória (em rpm):</label>
-                          <div class="col-md-6">
-                            <input type="number" maxlength="3" class="form-control" name="freq_resp" id="freq_resp" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); if(this.value<0) this.value = this.value*-1;" onkeypress="return Onlynumbers(event)">
-                          </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Temperatura (em °C):</label>
-                          <div class="col-md-6">
-                            <input type="text" maxlength="5" class="form-control" name="temperatura" id="temperatura" onkeyup="mascara('##,##',this,event)">
-                          </div>
-                        </div>
-
-                        <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">HGT (mg/dL):</label>
-                          <div class="col-md-6">
-                            <input type="text" maxlength="5" class="form-control" name="hgt" id="hgt" pattern="[0-9]+([,\.][0-9]+)?" oninput="padrao = /^\d+([,\.]\d+)?/; if(!
-                        (padrao.test(this.value))) this.value = this.value.slice(0, -1)">
-                          </div>
-                        </div>
-
-                        <input type="hidden" name="id_funcionario" id="id_funcionario" value="<?php echo $funcionario_id; ?>">
-
-                        <input type="hidden" name="id_fichamedica" id="id_fichamedica" value="<?php echo $_SESSION['id_upload_med']; ?>">
-
-                        <input type="hidden" name="nomeClasse" value="SinaisVitaisControle">
-
-                        <input type="hidden" name="metodo" value="incluir">
-
-                        <div class="form-group">
-                          <input type="submit" value="Enviar" class="btn btn-primary">
-                        </div>
-                      </form>
 
                   </section>
                 </div>
