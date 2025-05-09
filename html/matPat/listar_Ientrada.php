@@ -1,11 +1,12 @@
 <?php
 	session_start();
-	if(!isset($_SESSION['usuario'])){
-		header ("Location: ../index.php");
-	}
 	
 	$config_path = '../../config.php';
 	require_once $config_path;
+	
+	if(!isset($_SESSION['usuario'])){
+		header ("Location:  ". WWW ."html/index.php");
+	}
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
 	require_once ROOT . "/html/personalizacao_display.php";
 ?>
@@ -122,7 +123,7 @@
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Informaçoes Produtos Entrada</h2>
+					<h2>Informações Produtos Entrada</h2>
 				
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">

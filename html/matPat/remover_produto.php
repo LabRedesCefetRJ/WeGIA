@@ -1,13 +1,6 @@
 <?php
 	session_start();
-	if(!isset($_SESSION['usuario'])){
-		header ("Location: ../index.php");
-		exit();
-	}
-
-	require_once ROOT . '/html/permissao/permissao.php';
-	permissao($_SESSION['id_pessoa'], 22, 7);
-
+	
 	$config_path = "config.php";
 	if(file_exists($config_path)){
 		require_once($config_path);
@@ -17,14 +10,23 @@
 			if(file_exists($config_path)) break;
 		}
 		require_once($config_path);
-	}	
+	}
+
+	if(!isset($_SESSION['usuario'])){
+		header ("Location: ". WWW ."html/index.php");
+		exit();
+	}
+	
+	require_once ROOT . '/html/permissao/permissao.php';
+	permissao($_SESSION['id_pessoa'], 22, 7);
+
 	if (!isset($_GET['id_produto'])){
         header("Location: ". WWW ."html/matPat/listar_produto.php");
     }
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
 	require_once ROOT . "/html/personalizacao_display.php";
 
-	include_once ROOT . "/geral/msg.php";
+	include_once ROOT . "/html/geral/msg.php";
 ?>
 <!doctype html>
 <html class="fixed">

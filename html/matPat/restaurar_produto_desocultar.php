@@ -1,11 +1,13 @@
 <?php
+$config_path = '../../config.php';
+require_once $config_path;
 
-require_once  "../dao/Conexao.php";
-require_once "./permissao/permissao.php";
+require_once ROOT . "/dao/Conexao.php";
+require_once ROOT . "/permissao/permissao.php";
 
 session_start();
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ../index.php");
+    header("Location: ". WWW ."html/index.php");
 }
 
 if (!isset($_SESSION['id_pessoa'])) {
@@ -18,7 +20,7 @@ permissao($_SESSION['id_pessoa'], 22, 3);
 extract($_REQUEST);
 $id_produto = intval($id_produto);
 if ($id_produto < 1) {
-    header("Location: ./restaurar_produto.php?id_produto=$id_produto&flag=error&msg=Id inválido: Deve ser maior do que 0");
+    header("Location: ". WWW ."html/matPat/restaurar_produto.php?id_produto=$id_produto&flag=error&msg=Id inválido: Deve ser maior do que 0");
 }
 
 extract($_REQUEST);
@@ -49,11 +51,11 @@ try {
         $stmt4->bindParam(':idProduto', $id_produto);
         $stmt4->execute();
     } else {
-        header("Location: ./restaurar_produto.php?id_produto=$id_produto&flag=error&msg=Não foi possível localizar o produto com id = '$id_produto'!");
+        header("Location: ". WWW ."html/matPat/restaurar_produto.php?id_produto=$id_produto&flag=error&msg=Não foi possível localizar o produto com id = '$id_produto'!");
         exit();
     }
 
-    header("Location: ./cadastro_produto.php");
+    header("Location: ". WWW ."html/matPat/cadastro_produto.php");
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['erro' => 'Erro no servidor ao desocultar um produto.']);

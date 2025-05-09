@@ -14,9 +14,9 @@ class ProdutoDAO
 				// Caso já exista
 				if ($oculto) {
 					// Caso já exista e esteja oculto
-					header("Location: ../html/restaurar_produto.php?id_produto=" . $existente['id_produto']);
+					header("Location: ". WWW ."html/matPat/restaurar_produto.php?id_produto=" . $existente['id_produto']);
 				} else {
-					echo ("Location: ../html/cadastro_produto.php?flag=warn&msg=A descrição inserida já existe!");
+					echo ("Location: ". WWW ."html/matPat/cadastro_produto.php?flag=warn&msg=A descrição inserida já existe!");
 				}
 			} else {
 				$sql = 'INSERT produto(id_categoria_produto,id_unidade,descricao,codigo,preco) VALUES( :id_categoria_produto,:id_unidade,:descricao,:codigo,:preco)';

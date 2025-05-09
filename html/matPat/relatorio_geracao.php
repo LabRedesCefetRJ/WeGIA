@@ -1,8 +1,5 @@
 <?php
 session_start();
-if (!isset($_SESSION['usuario'])) {
-	header("Location: ../index.php");
-}
 
 define("DEBUG", false);
 
@@ -16,6 +13,11 @@ if (file_exists($config_path)) {
 	}
 	require_once($config_path);
 }
+
+if(!isset($_SESSION['usuario'])){
+	header ("Location:  ". WWW ."html/index.php");
+}
+
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
 $stmt = mysqli_prepare($conexao, "SELECT id_cargo FROM funcionario WHERE id_pessoa = ?");

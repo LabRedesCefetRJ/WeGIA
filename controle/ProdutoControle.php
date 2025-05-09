@@ -131,7 +131,7 @@ class ProdutoControle
                 try {
                     $produtoDAO = new ProdutoDAO();
                     $produtoDAO->excluir($id_produto);
-                    header('Location:../html/listar_produto.php');
+                    header('Location:'. WWW .'html/matPat/listar_produto.php');
                 } catch (PDOException $e) {
                     echo "ERROR";
                 }

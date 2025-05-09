@@ -1,9 +1,12 @@
 <?php
-require_once  "../dao/Conexao.php";
+$config_path = '../../config.php';
+require_once $config_path;
+
+require_once  ROOT . "/dao/Conexao.php";
 
 session_start();
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ../index.php");
+    header("Location: ". WWW ."html/index.php");
 }
 
 if (!isset($_SESSION['id_pessoa'])) {
@@ -11,7 +14,7 @@ if (!isset($_SESSION['id_pessoa'])) {
     die();
 }
 
-require_once './permissao/permissao.php';
+require_once ROOT . '/html/permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 22, 3);
 
 extract($_REQUEST);
@@ -30,7 +33,7 @@ function saida()
     $estoque = $pdo->query("SELECT * FROM estoque WHERE id_produto=$id_produto AND id_almoxarifado=$almoxarifado;");
     $estoque = $estoque->fetch(PDO::FETCH_ASSOC);
     if (!$estoque) {
-        header("Location: ./remover_produto.php?id_produto=$id_produto&flag=danger&msg=Não há nenhum produto do tipo no almoxarifado selecionado");
+        header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=danger&msg=Não há nenhum produto do tipo no almoxarifado selecionado");
     }
     $saida = getSaida();
     if (!$saida) {
@@ -55,7 +58,7 @@ function addSaida()
     extract($_REQUEST);
     $id_pessoa = $_SESSION['id_pessoa'];
     $pdo = Conexao::connect();
-    $saida = $pdo->prepare("INSERT INTO saida (id_saida, id_destino, id_almoxarifado, id_tipo, id_responsavel, `data`, hora) VALUES (default, :d, :a, :t, :i, CURDATE(), CURRENT_TIME());") or header("Location: ./remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao registrar a saída do item");
+    $saida = $pdo->prepare("INSERT INTO saida (id_saida, id_destino, id_almoxarifado, id_tipo, id_responsavel, `data`, hora) VALUES (default, :d, :a, :t, :i, CURDATE(), CURRENT_TIME());") or header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao registrar a saída do item");
     $saida->bindValue(':d', $destino);
     $saida->bindValue(':a', $almoxarifado);
     $saida->bindValue(':t', $tipo_saida);
@@ -70,14 +73,14 @@ function addISaida($saida)
     $id_pessoa = $_SESSION['id_pessoa'];
     $id_saida = $saida['id_saida'];
     $pdo = Conexao::connect();
-    $pdo->exec("INSERT INTO isaida (id_isaida, id_saida, id_produto, qtd) VALUES ( default , $id_saida , $id_produto , $total_total );") or header("Location: ./remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao registrar a saída do item");
+    $pdo->exec("INSERT INTO isaida (id_isaida, id_saida, id_produto, qtd) VALUES ( default , $id_saida , $id_produto , $total_total );") or header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao registrar a saída do item");
 }
 
 function deleteEstoque()
 {
     extract($_REQUEST);
     $pdo = Conexao::connect();
-    $pdo->exec("DELETE FROM estoque WHERE id_produto=$id_produto;") or header("Location: ./remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao apagar registros de estoque do produto");
+    $pdo->exec("DELETE FROM estoque WHERE id_produto=$id_produto;") or header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao apagar registros de estoque do produto");
 }
 
 function ocultarProduto()
@@ -86,7 +89,7 @@ function ocultarProduto()
 
     if(!$id_produto || $id_produto < 1){
         http_response_code(400);
-        header("Location: ./listar_produto.php?flag=error&msg=Erro ao ocultar produto, o id informado não é válido");
+        header("Location: ". WWW ."html/matPat/listar_produto.php?flag=error&msg=Erro ao ocultar produto, o id informado não é válido");
         exit();
     }
 
@@ -102,10 +105,10 @@ function ocultarProduto()
         $stmt = $pdo->prepare("UPDATE isaida SET oculto=true WHERE id_produto = :id_produto");
         $stmt->execute(['id_produto' => $id_produto]);
 
-        header("Location: ./remover_produto.php?id_produto=$id_produto&flag=success&msg=Produto ocultado com sucesso");
+        header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=success&msg=Produto ocultado com sucesso");
         exit();
     } catch (PDOException $e) {
-        header("Location: ./remover_produto.php?id_produto=$id_produto&flag=error&msg=Erro ao ocultar produto: " . $e->getMessage());
+        header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=error&msg=Erro ao ocultar produto: " . $e->getMessage());
         exit();
     }
 }
@@ -117,4 +120,4 @@ if ($qtd) {
 
 ocultarProduto();
 
-header("Location: ./listar_produto.php");
+header("Location: ". WWW ."html/matPat/listar_produto.php");
