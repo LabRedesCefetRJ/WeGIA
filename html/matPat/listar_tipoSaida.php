@@ -61,7 +61,7 @@
       ?>
       <!-- Basic -->
       <meta charset="UTF-8">
-      <title>Informaçoes</title>
+      <title>Informações</title>
       <!-- Mobile Metas -->
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       <!-- Vendor CSS -->
@@ -81,7 +81,7 @@
       <!-- Theme Custom CSS -->
       <link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
       <!-- Head Libs -->
-      <script src=".<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
+      <script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
       <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
       <!-- Vendor -->
       <script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -99,7 +99,7 @@
       <!-- jquery functions -->
       <script>
          function excluir(id){
-         	window.location.replace('<?= WWW ?>controle/Control.php?metodo=excluir&nomeClasse=TipoSaidaControle&id_tipo='+id);
+         	window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=TipoSaidaControle&id_tipo='+id);
          }
       </script>
       <script>

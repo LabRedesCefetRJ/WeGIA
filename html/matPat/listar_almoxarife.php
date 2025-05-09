@@ -1,6 +1,8 @@
 <?php
     session_start();
-    require_once './permissao/permissao.php';
+	$config_path = '../../config.php';
+	require_once $config_path;
+    require_once ROOT . '/html/permissao/permissao.php';
     permissao($_SESSION['id_pessoa'], 91);
 
 	// if(!isset($_SESSION['usuario'])){
@@ -45,15 +47,15 @@
 	
     // Adiciona a Função display_campo($nome_campo, $tipo_campo)
     
-	require_once "personalizacao_display.php";
+	require_once ROOT . "/html/personalizacao_display.php";
 ?>
 
 <!doctype html>
 <html class="fixed">
 <head>
 <?php
-  include_once '../dao/Conexao.php';
-  include_once '../dao/AlmoxarifadoDAO.php';
+  include_once ROOT . '/dao/Conexao.php';
+  include_once ROOT . '/dao/AlmoxarifadoDAO.php';
   
 
 //   if(!isset($_SESSION['almoxarifado'])){
@@ -64,7 +66,7 @@
 //   }
 
   if (!isset($_SESSION['almoxarife'])){
-	header('Location: ../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifeControle&nextPage='.WWW.'/html/listar_almoxarife.php');
+	header('Location: '. WWW .'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifeControle&nextPage='.WWW.'html/matPat/listar_almoxarife.php');
   }else{
     $almoxarife = $_SESSION['almoxarife'];
     unset($_SESSION['almoxarife']);
@@ -79,60 +81,60 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.css" />
-	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
-	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
 
 	<!-- Specific Page Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/select2/select2.css" />
-	<link rel="stylesheet" href="../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/select2/select2.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
 
 	<!-- Theme CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
 
 	<!-- Skin CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/skins/default.css" />
 
 	<!-- Theme Custom CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
 
 	<!-- Head Libs -->
-	<script src="../assets/vendor/modernizr/modernizr.js"></script>
+	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 		
 	<!-- Vendor -->
-	<script src="../assets/vendor/jquery/jquery.min.js"></script>
-	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
-	<script src="../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
-	<script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 		
 	<!-- Specific Page Vendor -->
-	<script src="../assets/vendor/jquery-autosize/jquery.autosize.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
 		
 	<!-- Theme Base, Components and Settings -->
-	<script src="../assets/javascripts/theme.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
 		
 	<!-- Theme Custom -->
-	<script src="../assets/javascripts/theme.custom.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
 		
 	<!-- Theme Initialization Files -->
-	<script src="../assets/javascripts/theme.init.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 	<!-- javascript functions -->
-	<script src="../Functions/onlyNumbers.js"></script>
-	<script src="../Functions/onlyChars.js"></script>
-	<script src="../Functions/enviar_dados.js"></script>
-	<script src="../Functions/mascara.js"></script>
+	<script src="<?= WWW ?>Functions/onlyNumbers.js"></script>
+	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
+	<script src="<?= WWW ?>Functions/enviar_dados.js"></script>
+	<script src="<?= WWW ?>Functions/mascara.js"></script>
 		
 	<!-- jquery functions -->
 	<script>
 		function excluir(id){
 			const WWW = "<?=WWW?>";
-			window.location.replace('../controle/control.php?metodo=excluir&nomeClasse=AlmoxarifeControle&id_almoxarife='+id+'&nextPage='+WWW+'/html/listar_almoxarife.php');
+			window.location.replace(WWW + 'controle/control.php?metodo=excluir&nomeClasse=AlmoxarifeControle&id_almoxarife='+id+'&nextPage='+WWW+'html/listar_almoxarife.php');
 		}
 	</script>
 	<script>
@@ -155,8 +157,8 @@
 			});
 		});
 		$(function () {
-	      $("#header").load("header.php");
-	      $(".menuu").load("menu.php");
+	      $("#header").load("<?= WWW ?>html/header.php");
+	      $(".menuu").load("<?= WWW ?>html/menu.php");
 	    });
 	</script>
 
@@ -217,27 +219,24 @@
 
 		
 		<!-- Specific Page Vendor -->
-		<script src="../assets/vendor/select2/select2.js"></script>
-		<script src="../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-		<script src="../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-		<script src="../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+		<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
+		<script src="<?= WWW ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+		<script src="<?= WWW ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+		<script src="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 		
 		<!-- Theme Base, Components and Settings -->
-		<script src="../assets/javascripts/theme.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
 		
 		<!-- Theme Custom -->
-		<script src="../assets/javascripts/theme.custom.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
 		
 		<!-- Theme Initialization Files -->
-		<script src="../assets/javascripts/theme.init.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 
 		<!-- Examples -->
-		<script src="../assets/javascripts/tables/examples.datatables.default.js"></script>
-		<script src="../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-		<script src="../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 	</body>
 </html>
-
-
-										

@@ -1,5 +1,8 @@
 <?php
 session_start();
+$config_path = '../../config.php';
+require_once $config_path;
+
 require_once ROOT .'/html/permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 91);
 if (!isset($id_funcionario) && !isset($id_almoxarifado)) {
@@ -7,9 +10,8 @@ if (!isset($id_funcionario) && !isset($id_almoxarifado)) {
 }
 extract($_REQUEST);
 
-
-if (!isset($_SESSION['id_pessoa'])) {
-    header("Location: ../index.php");
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ". WWW ."html/index.php");
 }
 
 require_once ROOT . '/dao/Conexao.php';

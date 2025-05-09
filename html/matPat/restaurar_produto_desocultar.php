@@ -1,14 +1,16 @@
 <?php
+session_start();
+
 $config_path = '../../config.php';
 require_once $config_path;
+
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ". WWW ."html/index.php");
+}
 
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/permissao/permissao.php";
 
-session_start();
-if (!isset($_SESSION['usuario'])) {
-    header("Location: ". WWW ."html/index.php");
-}
 
 if (!isset($_SESSION['id_pessoa'])) {
     echo ("Não foi possível obter o id do usuário logado!<br/><a onclick='window.history.back()'>Voltar</a>");

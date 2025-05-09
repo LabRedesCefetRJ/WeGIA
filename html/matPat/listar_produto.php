@@ -1,8 +1,5 @@
 <?php
 	session_start();
-	if(!isset($_SESSION['usuario'])){
-		header ("Location: ../index.php");
-	}
 
 	$config_path = "config.php";
 	if(file_exists($config_path)){
@@ -14,6 +11,11 @@
 		}
 		require_once($config_path);
 	}
+
+	if (!isset($_SESSION['usuario'])) {
+		header("Location: ". WWW ."html/index.php");
+	}
+
 	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 	$id_pessoa = $_SESSION['id_pessoa'];
 	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
@@ -62,7 +64,7 @@
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
-	<title>Informaçoes</title>
+	<title>Informações</title>
 		
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -177,7 +179,7 @@
 		<!-- end: sidebar -->
 		<section role="main" class="content-body">
 			<header class="page-header">
-				<h2>Informaçoes</h2>
+				<h2>Informações</h2>
 			
 				<div class="right-wrapper pull-right">
 					<ol class="breadcrumbs">

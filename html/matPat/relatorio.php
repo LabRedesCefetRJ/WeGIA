@@ -2,10 +2,6 @@
 session_start();
 
 // Verificação de sessão segura
-if (!isset($_SESSION['usuario'])) {
-	header("Location: ../index.php");
-	exit(); // Sempre utilize exit() após redirecionar para evitar execução continuada
-}
 
 // Carregando configuração com segurança
 $config_path = "config.php";
@@ -13,6 +9,11 @@ while (!file_exists($config_path)) {
 	$config_path = "../" . $config_path;
 }
 require_once($config_path);
+
+if (!isset($_SESSION['usuario'])) {
+	header("Location: ../index.php");
+	exit(); // Sempre utilize exit() após redirecionar para evitar execução continuada
+}
 
 // Carregando o arquivo Conexao.php após o carregamento das configuração
 require_once ROOT . "/dao/Conexao.php";

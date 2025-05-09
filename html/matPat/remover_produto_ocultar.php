@@ -1,10 +1,10 @@
 <?php
+session_start();
 $config_path = '../../config.php';
 require_once $config_path;
 
 require_once  ROOT . "/dao/Conexao.php";
 
-session_start();
 if (!isset($_SESSION['usuario'])) {
     header("Location: ". WWW ."html/index.php");
 }

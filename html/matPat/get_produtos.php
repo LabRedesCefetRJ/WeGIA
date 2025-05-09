@@ -2,7 +2,10 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once("../dao/Conexao.php");
+$config_path = '../../config.php';
+require_once $config_path;
+
+require_once ROOT . "/dao/Conexao.php";
 
 if (isset($_GET['id_almoxarifado'])) {
     $id_almoxarifado = $_GET['id_almoxarifado'];

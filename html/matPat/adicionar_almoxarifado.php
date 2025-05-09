@@ -1,8 +1,5 @@
 <?php
 session_start();
-if (!isset($_SESSION['usuario'])) {
-	header("Location: ../index.php");
-}
 
 $config_path = "config.php";
 if (file_exists($config_path)) {
@@ -14,6 +11,11 @@ if (file_exists($config_path)) {
 	}
 	require_once($config_path);
 }
+
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ". WWW ."html/index.php");
+}
+
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
 $resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
@@ -189,7 +191,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 													<a href="cadastro_entrada.php" style="color: white; text-decoration: none;">
 														<button class="btn btn-info" type="button">Voltar</button>
 													</a>
-													<a href="listar_almox.php" style="color: white; text-decoration:none;">
+													<a href="<?= WWW ?>html/matPat/listar_almox.php" style="color: white; text-decoration:none;">
 														<button class="btn btn-success" type="button">Listar almoxarifado</button></a>
                           </div>
 												</div>
