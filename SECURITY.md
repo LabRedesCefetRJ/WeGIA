@@ -35,6 +35,6 @@ chmod +x install.sh
 ### Em tempo de execução (servidor de teste)
 Você pode utilizar um servidor público com o WeGIA pré instalado para executar seus testes de segurança.
 
-- [Servidor para testes de segurança](https://comfirewall.wegia.org:8000/) 
+- [Servidor para testes de segurança](https://sec.wegia.org/) 
 
 
