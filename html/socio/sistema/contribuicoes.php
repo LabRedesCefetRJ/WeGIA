@@ -53,11 +53,25 @@ if (!is_null($resultado)) {
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
-//Buscar data e hora da última atualização das contribuições
-require_once '../../../dao/SistemaLogDAO.php';
 
-$sistemaLogDao = new SistemaLogDAO();
-$sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
+try {
+
+  //Buscar data e hora da última atualização das contribuições
+  require_once '../../../dao/SistemaLogDAO.php';
+
+  $sistemaLogDao = new SistemaLogDAO();
+  $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
+
+  //Buscar sócios para os relatórios personalizados
+  require_once '../../contribuicao/dao/SocioDAO.php';
+
+  $socioDao = new SocioDAO();
+  $socios = $socioDao->getSocios();
+} catch (PDOException $e) {
+  error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+  http_response_code(500);
+  echo json_encode(['erro' => 'Erro ao carregar dados']);
+}
 
 ?>
 <!DOCTYPE html>
@@ -173,6 +187,55 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
       margin: 0;
       /* Remove margem padrão do parágrafo */
     }
+
+    .me-5 {
+      margin-right: 5px;
+    }
+
+    .mt-10 {
+      margin-top: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media print {
+      #header {
+        display: none;
+      }
+
+      .menuu {
+        display: none;
+      }
+
+      .panel-heading {
+        display: none;
+      }
+
+      .content-body {
+        padding: 0;
+        font-size: smaller;
+      }
+
+      #tabela-relatorio-contribuicao th:last-child {
+        text-overflow: ellipsis;
+      }
+
+      #tabela-relatorio-contribuicao td:last-child {
+        white-space: normal;
+        word-break: break-word;
+        hyphens: auto;
+      }
+
+      #mensagem-relatorio {
+        margin-left: 5px;
+      }
+
+      .print-hide {
+        display: none;
+      }
+    }
   </style>
 </head>
 
@@ -181,7 +244,7 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
   <section class="body">
 
     <!-- start: header -->
-    <header id="header" class="header">
+    <header id="header" class="header print-hide">
 
       <!-- end: search & user box -->
     </header>
@@ -193,7 +256,7 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
       <!-- end: sidebar -->
 
       <section role="main" class="content-body">
-        <header class="page-header">
+        <header class="page-header print-hide">
           <h2>Contribuições</h2>
 
           <div class="right-wrapper pull-right">
@@ -213,9 +276,96 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
 
         <!-- start: page -->
         <div class="row">
-          <div class="box box-warning">
+
+          <div class="box box-warning collapsed-box">
+            <div class="box-header with- print-hide">
+              <h3 class="box-title">Relatórios personalizados</h3>
+
+              <div class="box-tools pull-right">
+                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-plus"></i>
+                </button>
+              </div>
+
+            </div>
+
+            <div class="box-body">
+              <p class="print-hide">Filtros de pesquisa</p>
+
+              <form id="form-relatorio-contribuicao" action="" class="form-inline print-hide">
+                <div class="form-group me-5">
+                  <label for="periodo" class="control-label">Período:&nbsp;</label>
+                  <select class="form-control" name="periodo" id="periodo" style="width: 200px;">
+                    <option value="1">Todos</option>
+                    <option value="2">Mês atual</option>
+                    <option value="3">Mês passado</option>
+                    <option value="4">Bimestre</option>
+                    <option value="5">Trimestre</option>
+                    <option value="6">Semestre</option>
+                    <option value="7">Ano atual</option>
+                    <option value="8">Ano passado</option>
+                    <!--<option value="9">Específico</option> Adicionar futuramente-->
+                  </select>
+                </div>
+
+                <div class="form-group me-5">
+                  <label for="socio" class="control-label">Sócio:&nbsp;</label>
+                  <select class="form-control" name="socio" id="socio" style="width: 200px;">
+                    <option value="0">Todos</option>
+                    <?php if (!is_null($socios)): ?>
+                      <?php foreach ($socios as $socio): ?>
+                        <option value="<?= $socio->getId() ?>"><?= $socio->getNome() ?></option>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
+                  </select>
+                </div>
+
+                <div class="form-group me-5">
+                  <label for="status" class="control-label">Status:&nbsp;</label>
+                  <select class="form-control" name="status" id="status" style="width: 200px;">
+                    <option value="1">Todos</option>
+                    <option value="2">Emitida</option>
+                    <option value="3">Vencida</option>
+                    <option value="4">Paga</option>
+                  </select>
+                </div>
+
+                <button id="relatorio-btn" type="submit" class="btn btn-primary">Gerar relatório</button>
+              </form>
+
+              <button id="relatorio-imprimir-btn" class="btn btn-primary mt-10 hidden print-hide" onclick="window.print()">Imprimir</button>
+
+              <div id="relatorio-gerado">
+
+                <div id="mensagem-relatorio">
+
+                </div>
+
+                <table id="tabela-relatorio-contribuicao" class="table table-hover hidden" style="width: 100%">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>N. Sócio</th>
+                      <th>Plataforma</th>
+                      <th>M. pagamento</th>
+                      <th>D. emissão</th>
+                      <th>D. vencimento</th>
+                      <th>D. pagamento</th>
+                      <th>Valor</th>
+                      <th>Status</th>
+                      <!--Ativar novamente quando as opções forem implementadas <th>Opções</th>-->
+                    </tr>
+                  </thead>
+                  <tbody>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="box box-warning print-hide">
             <div class="box-header with-border">
-              <h3 class="box-title">Controle de Contribuições</h3>
+              <h3 class="box-title">Visão Geral e Controle</h3>
 
               <div class="box-tools pull-right">
                 <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i>
@@ -242,7 +392,7 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
               <table id="tabela-contribuicoes" class="table table-hover" style="width: 100%">
                 <thead>
                   <tr>
-                    <th>Cod.</th>
+                    <th>Código</th>
                     <th>N. Sócio</th>
                     <th>Plataforma</th>
                     <th>M. pagamento</th>
@@ -275,5 +425,21 @@ $sistemaLogContribuicao = $sistemaLogDao->getLogsPorRecurso(71, TRUE);
       </div>
 
 </body>
+<script src="./controller/script/relatorios_contribuicao.js"></script>
+
+<script>
+  /*function printBy(selector) {
+    var $print = $(selector)
+      .clone()
+      .addClass('printable')
+      .prependTo('body');
+
+    // Stop JS execution
+    window.print();
+
+    // Remove div once printed
+    $print.remove();
+  }*/
+</script>
 
 </html>

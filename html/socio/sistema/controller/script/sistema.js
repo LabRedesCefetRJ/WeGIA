@@ -830,13 +830,15 @@ $(document).ready(function(){
                 { "data": "codigo" },
                 { "data": "nomeSocio" },
                 { "data": "plataforma" },
-                { "data": "meio" },
+                { "data": "meio",  "render": function(data, type, row) {
+                    return data == 'Carne' ? "Carnê" : data;
+                } },
                 { "data": "dataGeracao", "render": (data, type) => {return formataDataBr(data, type)}},
                 { "data": "dataVencimento", "render": (data, type) => {return formataDataBr(data, type)}},
                 { "data": "dataPagamento", "render": (data, type) => {return formataDataBr(data, type)}},
                 { "data": "valor" },
                 { "data": "status",  "render": function(data, type, row) {
-                    return data == 1 ? "Pago" : "Não Pago";
+                    return data == 1 ? "Pago" : "Pendente";
                 } },
             ],
             "order": [[4, 'desc']],  // Ordena pela primeira coluna (dataGeracao) de forma decrescente
