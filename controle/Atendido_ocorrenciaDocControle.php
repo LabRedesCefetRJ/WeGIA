@@ -101,7 +101,7 @@ class Atendido_ocorrenciaDocControle
 		return $arquivo_zip;
 	}
 
-	public function incluir($anexo, $lastId)
+	public function incluir($anexo)
 	{
 		extract($_REQUEST);
 		$total = count($anexo['name']);

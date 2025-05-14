@@ -1,9 +1,9 @@
 <?php
 //requisitar arquivo de conexão
-require_once '../dao/ConexaoDAO.php';
+require_once dirname(__FILE__).DIRECTORY_SEPARATOR.'ConexaoDAO.php';
 
 //requisitar model
-require_once '../model/Socio.php';
+require_once dirname(__FILE__, 2).DIRECTORY_SEPARATOR.'model/Socio.php';
 class SocioDAO
 {
     private $pdo;
@@ -343,5 +343,28 @@ class SocioDAO
         $stmtSocioLog->bindParam(':cpf', $documento);
         $stmtSocioLog->bindParam(':mensagem', $mensagem);
         $stmtSocioLog->execute();
+    }
+
+    /**Retorna todos os sócios do sistema*/
+    public function getSocios(){
+        $socios = [];
+
+        $sql = "
+            SELECT p.nome, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.email, s.valor_periodo 
+            FROM socio s JOIN pessoa p ON(s.id_pessoa=p.id_pessoa)
+            ORDER BY nome ASC
+        ";
+
+        $sociosArray = $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+        if(count($sociosArray) < 1){
+            return null;
+        }
+
+        foreach($sociosArray as $socioArray){
+            $socios []= $this->montarSocio($socioArray);
+        }
+
+        return $socios;
     }
 }

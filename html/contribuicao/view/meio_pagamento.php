@@ -282,7 +282,7 @@ $meiosPagamento = $meioPagamentoController->buscaTodos();
     <script src="../public/js/meioPagamento.js"></script>
 
     <div align="right">
-        <iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>
+        <iframe src="https://www.wegia.org/software/footer/contribuicao.html" width="200" height="60" style="border:none;"></iframe>
     </div>
 </body>
 
