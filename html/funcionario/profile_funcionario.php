@@ -516,13 +516,13 @@ $dependente = json_encode($dependente);
       }
     };
 
-    function validarCPF(strCPF) {
+    function validarCPF(strCPF, botão) {
       if (!testaCPF(strCPF)) {
-        $('#cpfInvalido').show();
-        document.getElementById("enviarEditar").disabled = true;
+        $('.cpfInvalido').show();
+        document.getElementById(botão).disabled = true;
       } else {
-        $('#cpfInvalido').hide();
-        document.getElementById("enviarEditar").disabled = false;
+        $('.cpfInvalido').hide();
+        document.getElementById(botão).disabled = false;
       }
     }
   </script>
@@ -1468,13 +1468,13 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany"></label>
                           <div class="col-md-6">
-                            <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+                            <p class="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                           </div>
                         </div>
                         <input type="hidden" id="id_funcionario" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
@@ -1577,8 +1577,60 @@ $dependente = json_encode($dependente);
                         Adicionar Dependente
                       </button>
                     </div>
-                    <!-- Modal Form Dependentes -->
+                    
+                    <!-- Modal Form Dependentes to Cpf -->
                     <div class="modal fade" id="depFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
+                      <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                          <div class="modal-header" style="display: flex;justify-content: space-between;">
+                            <h5 class="modal-title" id="exampleModalLabel">Adicionar Dependente</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <!-- Ask for CPF -->
+                          <form action='dependente_cadastrar.php' method='post' id='funcionarioDepForm'>
+                            <div class="modal-body" style="padding: 15px 40px">
+                              <div class="form-group" style="display: grid;">
+                                <div class="form-group">
+                                  <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
+                                  <div class="col-md-6">
+                                    <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarDependente')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                  </div>
+                                </div>
+                                <div class="form-group">
+                                  <label class="col-md-3 control-label" for="profileCompany"></label>
+                                  <div class="col-md-6">
+                                    <p class="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+                                  </div>
+                                </div>
+                                <div class="form-group">
+                                  <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
+                                  <div class="col-md-6" style="display: flex;">
+                                    <select name="id_parentesco" id="parentesco">
+                                      <option selected disabled>Selecionar...</option>
+                                      <?php
+                                      foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                        echo ("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
+                                      }
+                                      ?>
+                                    </select>
+                                    <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                  </div>
+                                </div>
+                                <input type="hidden" name="id_funcionario" value=<?= $_GET['id_funcionario']; ?> readonly>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                  <input id="enviarDependente" type="submit" value="Enviar" class="btn btn-primary">
+                                </div>
+                              </div>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- <div class="modal fade" id="newDepFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <div class="modal-header" style="display: flex;justify-content: space-between;">
@@ -1679,7 +1731,7 @@ $dependente = json_encode($dependente);
                           </form>
                         </div>
                       </div>
-                    </div>
+                    </div> -->
                   </section>
                 </div>
                 <!-- Aba endereço -->

@@ -246,5 +246,9 @@
     <div class="alert alert-danger">Houve um erro na comunicação com o servidor.</div>
     <p><a href="./personalizacao.php">Retornar</a></p>
     </div>
+
+    <div align="right">
+		<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60" style="border:none;"></iframe>
+	</div>
 </body>
 </html>

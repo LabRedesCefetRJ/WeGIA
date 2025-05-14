@@ -229,6 +229,11 @@ require_once ROOT."/html/personalizacao_display.php";
 			</div>
 		</aside>
 	</section>
+
+	<div align="right">
+		<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60" style="border:none;"></iframe>
+	</div>
+
 </body>
 <script>
 	$(document).ready(function(){

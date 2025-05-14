@@ -130,6 +130,9 @@ if (!isset($teste)) {
 <!-- Theme Base, Components and Settings -->
 <!-- <script src="<?php echo WWW; ?>assets/javascripts/theme.js"></script> -->
 
+<!-- Theme CSS -->
+<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon">
+
 <!-- Theme Custom -->
 <script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
 
@@ -271,44 +274,32 @@ if (!isset($teste)) {
             console.log(interno);
             // console.log(arquivo);
             $.each(interno, function(i, item) {
-                if (i = 1) {
-                    $("#formulario").append($("<input type='hidden' name='id_fichamedica' value='" + item.id + "'>"));
-                    //var cpf=item.cpf;
-                    // $("#nome").text("Nome: "+item.nome_atendido+' '+item.sobrenome_atendido);
-                    $("#nome").val(item.nome_atendido + " " + item.sobrenome_atendido);
-                    // $("#sobrenome").val(item.sobrenome_atendido);
-                    //$("#arquivo").val(item.arquivo_nome + "." + item.arquivo_extensao);
+                // Adiciona os campos do formulário
+                $("#formulario").append($("<input type='hidden' name='id_fichamedica' value='" + item.id + "'>"));
+                $("#nome").val(item.nome_atendido + " " + item.sobrenome_atendido);
+                $("#tipo").val(item.descricao);
+                $("#data").val(item.data);
+                $("#descricao").val(item.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos);
+                $("#autor").val(item.funcionario_id_funcionario);
 
-                    // $("#tipo").text(item.ocorrencia_tipos_idatendido_ocorrencia_tipos);
-                    $("#tipo").val(item.descricao);
-
-                    // $("#data").text("Data: "+item.data);
-                    $("#data").val(item.data);
-
-                    // $("#descricao").text("Descricao: "+item.descricao);
-                    $("#descricao").val(item.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos);
-
-                    // $("#autor").text("Data: "+item.funcionario_id_funcionario);
-                    $("#autor").val(item.funcionario_id_funcionario);
-
-                    if (item.arquivo_nome != null && item.arquivo_extensao != null) {
-                        $("#arquivos")
-                            .append($("<tr>")
-                                // .append($("<th>")
-                                .append($("<td>")
-                                    .html("<a href='<?php echo WWW; ?>html/atendido/exibe_anexo.php?idatendido_ocorrencias=" + item.idatendido_ocorrencias + "&extensao=" + item.arquivo_extensao + "&nome=" + item.arquivo_nome + "'>" + item.arquivo_nome + "." + item.arquivo_extensao + "</a>")));
-                        //     .append($("<td colspan=4>")
-                        //         .html("<a href='<?php echo WWW; ?>html/atendido/exibe_anexo.php?idatendido_ocorrencias="+item.idatendido_ocorrencias+"&extensao="+item.arquivo_extensao+"&nome="+item.arquivo_nome+"'>"+item.arquivo_nome+"."+item.arquivo_extensao+"</a>")));
-                    } else {
-                        $("#arquivos")
-
-                            .html("<p>Não foi possível resgatar nenhum tipo de arquivo relacionado a essa ocorrência.</p>")
-                    }
-
-                    if (item.imgdoc == null) {
-                        $('#docs').append($("<strong >").append($("<p >").text("Não foi possível encontrar nenhuma imagem referente a esse Paciente!")));
-                    }
+                // Verifique se existe mais de um arquivo para o item
+                if (Array.isArray(item.arquivos)) {
+                    $.each(item.arquivos, function(j, arquivo) {
+                        if (arquivo.nome != null && arquivo.extensao != null) {
+                            $("#arquivos")
+                                .append($("<tr>")
+                                    .append($("<td>")
+                                        .html("<a href='<?php echo WWW; ?>html/atendido/exibe_anexo.php?idatendido_ocorrencias=" + item.idatendido_ocorrencias + "&extensao=" + arquivo.extensao + "&idatendido_ocorrencia_doc=" + arquivo.idatendido_ocorrencia_doc + "&nome=" + arquivo.nome + "'>" + arquivo.nome + "." + arquivo.extensao + "</a>")));
+                        }
+                    });
+                } else if (item.arquivo_nome != null && item.arquivo_extensao != null) {
+                    // Para o caso de apenas um arquivo
+                    $("#arquivos")
+                        .append($("<tr>")
+                            .append($("<td>")
+                                .html("<a href='<?php echo WWW; ?>html/atendido/exibe_anexo.php?idatendido_ocorrencias=" + item.idatendido_ocorrencias + "&extensao=" + item.arquivo_extensao + "&idatendido_ocorrencia_doc=" + item.idatendido_ocorrencia_doc + "&nome=" + item.arquivo_nome + "'>" + item.arquivo_nome + "." + item.arquivo_extensao + "</a>")));
                 }
+
             });
             //      $.each(despachoAnexo,function(i, item){
             // 	$("#"+item.arquivo)
@@ -344,7 +335,7 @@ if (!isset($teste)) {
                     <div class="right-wrapper pull-right">
                         <ol class="breadcrumbs">
                             <li>
-                                <a href="home.php">
+                                <a href="../home.php">
                                     <i class="fa fa-home"></i>
                                 </a>
                             </li>

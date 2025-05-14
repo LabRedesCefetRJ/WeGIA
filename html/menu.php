@@ -97,22 +97,9 @@
 											<span>Informações Atendidos</span>
 										</a>
 									</li>
-								</ul>
-							</li>
-							<li class="nav-parent nav-active">
-								<a>
-									<i class="fa fa-address-book" aria-hidden="true"></i>
-									<span>Ocorrências</span>
-								</a>
-								<ul class="nav nav-children">
 									<li>
 										<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=<?= WWW ?>html/atendido/cadastro_ocorrencia.php">
 											<span>Cadastrar Ocorrências</span>
-										</a>
-									</li>
-									<li>
-										<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=Atendido_ocorrenciaControle&nextPage=<?= WWW ?>html/atendido/listar_ocorrencias_ativas.php">
-											<span>Ocorrências Ativas</span>
 										</a>
 									</li>
 								</ul>
