@@ -204,8 +204,13 @@ require_once ROOT."/html/personalizacao_display.php";
 			<!-- end: page -->
 			</section>
 		</div>
-	</section>
 
+		<div align="right">
+			<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60" style="border:none;"></iframe>
+		</div>
+
+	</section>
+	
       <!-- Vendor -->
 	  <script>
 	  	$(document).ready(function(){
@@ -234,5 +239,6 @@ require_once ROOT."/html/personalizacao_display.php";
 		<script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
 		<script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 		<script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
 	</body>
 </html>
