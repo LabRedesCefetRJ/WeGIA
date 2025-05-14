@@ -373,6 +373,64 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         ]
       });
     });
+
+    function validarPressao(campo) {
+      var value = document.getElementById(campo).value;
+
+      if (value < 0) {
+        document.getElementById(campo).value = 0;
+      }
+      if (value > 300) {
+        document.getElementById(campo).value = 300;
+      }
+      if (value.length > 3) {
+        document.getElementById(campo).value = value.slice(0, 3);
+      }
+
+      var sistolica = document.getElementById('sistolica').value;
+      var diastolica = document.getElementById('diastolica').value;
+
+      if (sistolica && diastolica) {
+        document.getElementById('pressao').value = sistolica + '/' + diastolica;
+      } else {
+        document.getElementById('pressao').value = '';
+      }
+    }
+
+    function definirDataHoraAtualSeVazio(campo) {
+      if (!campo.value) {
+        const agora = new Date();
+        const adicionarZero = numero => numero.toString().padStart(2, '0');
+
+        const ano = agora.getFullYear();
+        const mes = adicionarZero(agora.getMonth() + 1); // Janeiro = 0
+        const dia = adicionarZero(agora.getDate());
+        const horas = adicionarZero(agora.getHours());
+        const minutos = adicionarZero(agora.getMinutes());
+
+        campo.value = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
+      }
+    }
+
+    function limitarValorPositivoComTamanho(campo) {
+      if (campo.value.length > campo.maxLength) {
+        campo.value = campo.value.slice(0, campo.maxLength);
+      }
+
+      if (campo.value < 0) {
+        campo.value = campo.value * -1;
+      }
+    }
+    function limitarTemperatura(campo){
+      let numeroDividido = campo.value.toString().split('.');
+      let numeroInteiro = numeroDividido[0];
+      let numeroDecimal = numeroDividido[1] || '';
+      if(parseInt(numeroInteiro) > 45){
+        campo.value = 45;
+      }else if( numeroDecimal && numeroDecimal.length > 1){
+        campo.value = numeroInteiro + '.' + numeroDecimal[0];
+      }
+    }
   </script>
   <style type="text/css">
     .obrig {
@@ -394,6 +452,27 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         word-wrap: break-word;
       }
     }
+
+    .custom-input {
+      color: #555555;
+      background-color: #fff;
+      background-image: none;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      -webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+      -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+      -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+      transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+      transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+      transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+  }
+
+  .custom-input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
   </style>
 
 </head>
@@ -538,51 +617,53 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Data da aferição<sup class="obrig">*</sup></label>
                         <div class="col-md-6">
-                          <input type="datetime-local" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_afericao" id="data_afericao" max=<?php echo date('Y-m-d\TH:i'); ?> required>
+                        <input type="datetime-local" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_afericao" id="data_afericao" max=<?php echo date('Y-m-d\TH:i'); ?> 
+                        onfocus="definirDataHoraAtualSeVazio(this)" required>
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Saturação (em %):</label>
                         <div class="col-md-6">
-                          <input type="text" class="form-control" name="saturacao" id="saturacao" maxlength="4" pattern="[0-9]+([,\.][0-9]+)?" oninput="padrao = /^\d+([,\.]\d+)?/; if(!
-                        (padrao.test(this.value))) this.value = this.value.slice(0, -1); if(this.value > 100) this.value = 100;">
+                          <input type="number" class="form-control" name="saturacao" id="saturacao" min="0" max="99" maxlength="2" oninput="limitarValorPositivoComTamanho(this)" onkeypress="return Onlynumbers(event)">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Pressão arterial:</label>
                         <div class="col-md-6">
-                          <input type="text" class="form-control" name="pres_art" id="pres_art" onkeyup="mascara('##/##',this,event)">
+                          <input type="number" id="sistolica" maxlength="3" class="custom-input" style="width:60px;" oninput="validarPressao('sistolica');" onkeypress="return Onlynumbers(event)">
+                          <span>/</span>
+                          <input type="number" id="diastolica" maxlength="3" class="custom-input" style="width:60px;" oninput="validarPressao('diastolica');" onkeypress="return Onlynumbers(event);">
+                          <input type="hidden" id="pressao" name="pres_art">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Frequência cardíaca (em bpm):</label>
                         <div class="col-md-6">
-                          <input type="number" maxlength="3" class="form-control" name="freq_card" id="freq_card" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); if(this.value<0) this.value = this.value*-1;" onkeypress="return Onlynumbers(event)">
+                          <input type="number" maxlength="3" class="form-control" name="freq_card" id="freq_card" oninput="limitarValorPositivoComTamanho(this)" onkeypress="return Onlynumbers(event)">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Frequência respiratória (em rpm):</label>
                         <div class="col-md-6">
-                          <input type="number" maxlength="3" class="form-control" name="freq_resp" id="freq_resp" oninput="javascript: if (this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength); if(this.value<0) this.value = this.value*-1;" onkeypress="return Onlynumbers(event)">
+                          <input type="number" maxlength="2" class="form-control" name="freq_resp" id="freq_resp" oninput="limitarValorPositivoComTamanho(this)" onkeypress="return Onlynumbers(event)">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Temperatura (em °C):</label>
                         <div class="col-md-6">
-                          <input type="text" maxlength="5" class="form-control" name="temperatura" id="temperatura" onkeyup="mascara('##,##',this,event)">
+                          <input class="form-control" type="number" step="0.1" min="30" max="45" name="temperatura" inputmode="decimal" oninput="limitarTemperatura(this)">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">HGT (mg/dL):</label>
                         <div class="col-md-6">
-                          <input type="text" maxlength="5" class="form-control" name="hgt" id="hgt" pattern="[0-9]+([,\.][0-9]+)?" oninput="padrao = /^\d+([,\.]\d+)?/; if(!
-                          (padrao.test(this.value))) this.value = this.value.slice(0, -1)">
+                          <input type="number" maxlength="3" class="form-control" name="hgt" id="hgt" oninput="limitarValorPositivoComTamanho(this)" onkeypress="return Onlynumbers(event)">
                         </div>
                       </div>
 
