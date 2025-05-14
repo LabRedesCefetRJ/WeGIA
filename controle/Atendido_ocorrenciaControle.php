@@ -67,10 +67,10 @@ class Atendido_ocorrenciaControle
 		$_SESSION['despachoComAnexo'] = $despachosComAnexo;
 	}
 
-	public function listarAnexo($id_anexo)
+	public function listarAnexo($id_ocorrencia)
 	{
 		$Atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
-		$anexos = $Atendido_ocorrenciaDAO->listarAnexo($id_anexo);
+		$anexos = $Atendido_ocorrenciaDAO->listarAnexo($id_ocorrencia);
 		if (session_status() !== PHP_SESSION_ACTIVE) {
 			session_start();
 		}
@@ -91,17 +91,15 @@ class Atendido_ocorrenciaControle
 		$ocorrencia = $this->verificarDespacho();
 		$ocorrenciaDAO = new Atendido_ocorrenciaDAO();
 		try {
-			$lastId = $ocorrenciaDAO->incluir($ocorrencia);
-			$anexoss = $_FILES["anexo"];
-			$anexo2 = $_FILES["anexo"]["tmp_name"][0];
-			if (isset($anexo2) && !empty($anexo2)) {
-				require_once ROOT . "/controle/Atendido_ocorrenciaDocControle.php";
-				$arquivo = new Atendido_ocorrenciaDocControle();
-				$arquivo->incluir($anexoss, $lastId);
-			}
+			$ocorrenciaDAO->incluir($ocorrencia);
+
+			$arquivos = $_FILES["arquivos"];
+
+			$ocorrenciaDAO->incluirArquivos($arquivos);
+
 			$msg = "success";
 			$sccd = "Ocorrencia enviada com sucesso";
-			header("Location: " . WWW . "html/atendido/listar_ocorrencias_ativas.php?msg=" . $msg . "&sccd=" . $sccd);
+			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?msg=" . $msg . "&sccd=" . $sccd);
 		} catch (PDOException $e) {
 			$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
 			echo $msg;
