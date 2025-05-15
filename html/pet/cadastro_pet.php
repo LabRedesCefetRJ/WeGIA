@@ -195,7 +195,8 @@ if (isset($_GET['msg'])) {
                   <div id="display_image" class="thumb-info mb-md"></div>
                   <div id="botima">
                     <h5 id="okText"></h5>
-                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(this)" id="okButton" id="botima" value="Ok">
+                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(event, this)" id="okButton" value="Ok">
+
                   </div>
                 </div>
               </div>
@@ -580,20 +581,27 @@ if (isset($_GET['msg'])) {
       $("#necEsp").prop('disabled', true);
     }
 
-    function submitButtonStyle(_this) {
-      _this.style.backgroundColor = "#5cb85c"; //verde
-      document.getElementById("okText").textContent = "Arquivo confirmado";
-      $("#nome").prop('disabled', false);
-      $("#cor").prop('disabled', false);
-      $("#especie").prop('disabled', false);
-      $("#raca").prop('disabled', false);
-      $("#radioM").prop('disabled', false);
-      $("#radioF").prop('disabled', false);
-      $("#nascimento").prop('disabled', false);
-      $("#caracEsp").prop('disabled', false);
-      $("#vacinacao").prop('disabled', false);
-      $("#necEsp").prop('disabled', false);
-    }
+    function submitButtonStyle(event, _this) {
+  // Impede o envio do formulário e o redirecionamento
+  event.preventDefault();
+
+  // Mudança de estilo no botão
+  _this.style.backgroundColor = "#5cb85c"; // verde
+  document.getElementById("okText").textContent = "Arquivo confirmado";
+
+  // Habilitar campos
+  $("#nome").prop('disabled', false);
+  $("#cor").prop('disabled', false);
+  $("#especie").prop('disabled', false);
+  $("#raca").prop('disabled', false);
+  $("#radioM").prop('disabled', false);
+  $("#radioF").prop('disabled', false);
+  $("#nascimento").prop('disabled', false);
+  $("#caracEsp").prop('disabled', false);
+  $("#vacinacao").prop('disabled', false);
+  $("#necEsp").prop('disabled', false);
+}
+
 
     function funcao1() {
       var send = $("#enviar");
