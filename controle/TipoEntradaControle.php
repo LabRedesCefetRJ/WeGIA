@@ -1,6 +1,6 @@
 <?php
-include_once '../classes/TipoEntrada.php';
-include_once '../dao/TipoEntradaDAO.php';
+include_once ROOT . '/classes/TipoEntrada.php';
+include_once ROOT . '/dao/TipoEntradaDAO.php';
 class TipoEntradaControle
 {
     public function verificar(){
@@ -8,7 +8,7 @@ class TipoEntradaControle
         
         if((!isset($descricao)) || (empty($descricao))){
             $msg .= "Descricao do tipo de entrada não informada. Por favor, informe uma descrição!";
-            header('Location: ../html/tipoentrada.html?msg='.$msg);
+            header('Location: '. WWW .'html/tipoentrada.html?msg='.$msg);
         }else{
         	$tipoentrada = new TipoEntrada($descricao);
         }
@@ -32,8 +32,8 @@ class TipoEntradaControle
             session_start();
             $_SESSION['msg']="Tipo de Entrada cadastrado com sucesso";
             $_SESSION['proxima']="Cadastrar outro TipoEntrada";
-            $_SESSION['link']="../html/adicionar_tipoEntrada.php";
-            header("Location: ../html/adicionar_tipoEntrada.php");
+            $_SESSION['link']= WWW . "html/matPat/adicionar_tipoEntrada.php";
+            header("Location: ". WWW ."html/matPat/adicionar_tipoEntrada.php");
         } catch (PDOException $e){
             $msg= "Não foi possível registrar o tipo"."<br>".$e->getMessage();
             echo $msg;
@@ -45,7 +45,7 @@ class TipoEntradaControle
         try {
             $tipoentradaDAO=new TipoEntradaDAO();
             $tipoentradaDAO->excluir($id_tipo);
-            header('Location:../html/listar_tipoEntrada.php');
+            header('Location: '. WWW . 'html/matPat/listar_tipoEntrada.php');
         } catch (PDOException $e) {
             echo "ERROR: ".$e->getMessage();
         }

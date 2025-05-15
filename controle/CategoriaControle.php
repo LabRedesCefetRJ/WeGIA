@@ -1,6 +1,6 @@
 <?php
-include_once '../classes/Categoria.php';
-include_once '../dao/CategoriaDAO.php';
+include_once ROOT . '/classes/Categoria.php';
+include_once ROOT . '/dao/CategoriaDAO.php';
 class CategoriaControle
 {
     public function verificar(){
@@ -10,7 +10,7 @@ class CategoriaControle
             $categoria = new Categoria($descricao_categoria);
             return $categoria;
         }catch(InvalidArgumentException $e){
-            header('Location: ../html/home.php?msg_c='.$e->getMessage());//Envio de temporariamente para a home, posteriormente criar um sistema de exibição de mensagens em html/adicionar_categoria.php
+            header('Location: '. WWW .'html/home.php?msg_c='.$e->getMessage());//Envio de temporariamente para a home, posteriormente criar um sistema de exibição de mensagens em html/adicionar_categoria.php
         }
     }
     public function listarTodos(){
@@ -34,7 +34,7 @@ class CategoriaControle
         $categoriaDAO = new CategoriaDAO();
         try{
             $categoriaDAO->incluir($categoria);
-            header("Location: ../html/adicionar_categoria.php");
+            header("Location: ". WWW ."html/matPat/adicionar_categoria.php");
         } catch (PDOException $e){
             echo "Não foi possível registrar a categoria";
         }
@@ -56,7 +56,7 @@ class CategoriaControle
         $categoriaDAO = new CategoriaDAO();
         try{
             $categoriaDAO->editar($id_categoria_produto, $descricao_categoria);
-            header("Location: ../html/listar_categoria.php");
+            header("Location: ". WWW ."html/matPat/listar_categoria.php");
         } catch (PDOException $e){
             echo "Não foi possível editar a categoria";
         }
@@ -72,7 +72,7 @@ class CategoriaControle
         try {
             $categoriaDAO=new CategoriaDAO();
             $categoriaDAO->excluir($id_categoria_produto);
-            header('Location:../html/listar_categoria.php');
+            header('Location: '. WWW .'html/matPat/listar_categoria.php');
         } catch (PDOException $e) {
             echo "Não foi possível excluir essa categoria, pois já deve existir um produto cadastrado com essa categoria";
         }

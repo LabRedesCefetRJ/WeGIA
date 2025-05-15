@@ -164,7 +164,7 @@
 									</a>
 									<ul class="nav nav-children">
 										<li>
-											<a href="../html/cadastro_entrada.php">
+											<a href="../html/matPat/cadastro_entrada.php">
 												 Cadastrar Produtos
 											</a>
 										</li>

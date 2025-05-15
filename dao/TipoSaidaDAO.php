@@ -1,7 +1,7 @@
 <?php
-require_once'../classes/TipoSaida.php';
-require_once'Conexao.php';
-require_once'../Functions/funcoes.php';
+require_once ROOT . '/classes/TipoSaida.php';
+require_once ROOT . '/dao/Conexao.php';
+require_once ROOT . '/Functions/funcoes.php';
 
 class TipoSaidaDAO
 {

@@ -1,16 +1,16 @@
 <?php
-include_once '../classes/Saida.php';
-include_once '../dao/SaidaDAO.php';
-include_once '../classes/Destino.php';
-include_once '../dao/DestinoDAO.php';
-include_once '../classes/Almoxarifado.php';
-include_once '../dao/AlmoxarifadoDAO.php';
-include_once '../classes/TipoSaida.php';
-include_once '../dao/TipoSaidaDAO.php';
-include_once '../classes/Isaida.php';
-include_once '../dao/IsaidaDAO.php';
-include_once '../classes/Produto.php';
-include_once '../dao/ProdutoDAO.php';
+include_once ROOT .'/classes/Saida.php';
+include_once ROOT .'/dao/SaidaDAO.php';
+include_once ROOT .'/classes/Destino.php';
+include_once ROOT .'/dao/DestinoDAO.php';
+include_once ROOT .'/classes/Almoxarifado.php';
+include_once ROOT .'/dao/AlmoxarifadoDAO.php';
+include_once ROOT .'/classes/TipoSaida.php';
+include_once ROOT .'/dao/TipoSaidaDAO.php';
+include_once ROOT .'/classes/Isaida.php';
+include_once ROOT .'/dao/IsaidaDAO.php';
+include_once ROOT .'/classes/Produto.php';
+include_once ROOT .'/dao/ProdutoDAO.php';
 class SaidaControle
 {
     public function verificar(){
@@ -35,7 +35,7 @@ class SaidaControle
         $origens = $saidaDAO->listarTodos();
         session_start();
         $_SESSION['saida']=$origens;
-        header('Location: ../html/listar_saida.php');
+        header('Location: ' . WWW . 'html/matPat/listar_saida.php');
     }
     
     public function incluir(){
@@ -82,7 +82,7 @@ class SaidaControle
 
                 }
             $x++;
-            header('Location: ../html/cadastro_saida.php');
+            header('Location: ' . WWW . 'html/matPat/cadastro_saida.php');
             }
         } catch (PDOException $e){
             $msg= "Não foi possível adicionar a saida"."<br>".$e->getMessage();

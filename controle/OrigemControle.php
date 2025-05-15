@@ -1,11 +1,11 @@
 <?php
-include_once '../classes/Origem.php';
-include_once '../dao/OrigemDAO.php';
+include_once ROOT . '/classes/Origem.php';
+include_once ROOT . '/dao/OrigemDAO.php';
 class OrigemControle
 {
     public function verificar(){
         extract($_REQUEST);
-        if((!isset($nome)) || (empty($nome))){
+        if((!isset($nome)) || (empty($nome)) || $nome == " "){
             $msg = "Nome do origem não informado. Por favor, informe um nome!";
             header('Location: ../html/origem.html?msg='.$msg);
         }
@@ -56,8 +56,8 @@ class OrigemControle
             session_start();
             $_SESSION['msg']="origem cadastrado com sucesso";
             $_SESSION['proxima']="Cadastrar outra Origem";
-            $_SESSION['link']="../html/cadastro_doador.php";
-            header("Location: ../html/cadastro_doador.php");
+            $_SESSION['link']= WWW ."html/matPat/cadastro_doador.php";
+            header("Location: ". WWW ."html/matPat/cadastro_doador.php");
         } catch (PDOException $e){
             $msg= "Não foi possível registrar o tipo"."<br>".$e->getMessage();
             echo $msg;
@@ -68,7 +68,7 @@ class OrigemControle
         try {
             $origemDAO=new OrigemDAO();
             $origemDAO->excluir($id_origem);
-            header('Location:../html/listar_origem.php');
+            header('Location:' . WWW . 'html/matPat/listar_origem.php');
         } catch (PDOException $e) {
             echo "ERROR: ".$e->getMessage();
         }

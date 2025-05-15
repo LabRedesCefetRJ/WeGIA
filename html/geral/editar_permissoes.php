@@ -12,7 +12,7 @@
 	
 	session_start();
 	if(!isset($_SESSION['usuario'])){
-		header ("Location: ".WWW."index.php");
+		header ("Location: ../index.php");
 	}
 	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 	$id_pessoa = $_SESSION['id_pessoa'];
@@ -27,27 +27,27 @@
 			$permissao = mysqli_fetch_array($resultado);
 			if($permissao['id_acao'] < 7){
 				$msg = "Você não tem as permissões necessárias para essa página.";
-				header("Location: ".WWW."/html/home.php?msg_c=$msg");
+				header("Location: ".WWW."html/home.php?msg_c=$msg");
 			}
 			$permissao = $permissao['id_acao'];
 		}else{
         	$permissao = 1;
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ".WWW."/html/home.php?msg_c=$msg");
+			header("Location: ".WWW."html/home.php?msg_c=$msg");
 		}	
 	}else{
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ".WWW."/html/home.php?msg_c=$msg");
+		header("Location: ".WWW."html/home.php?msg_c=$msg");
 	}	
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once ROOT."/html/personalizacao_display.php";
+	require_once ROOT."/html/personalizacao_display.php";
       $cargo = mysqli_query($conexao, "SELECT * FROM cargo");
       $acao = mysqli_query($conexao, "SELECT * FROM acao");
       $recurso = mysqli_query($conexao, "SELECT * FROM recurso");
 	  
-	  require_once '../geral/msg.php';
+	require_once '../geral/msg.php';
 	  
   if(!isset($_SESSION['almoxarifado'])){
     header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage='.WWW.'/html/geral/editar_permissoes.php');
@@ -283,7 +283,7 @@ require_once ROOT."/html/personalizacao_display.php";
 
 								<div id="almoxarife" class="tab-pane" role="tabpanel">
 									<fieldset>
-										<form action="../adicionar_almoxarife.php" method="post">
+										<form action="../matPat/adicionar_almoxarife.php" method="post">
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="inputSuccess">Funcionário</label>
 												<a href="../funcionario/cadastro_funcionario.php">
@@ -298,7 +298,7 @@ require_once ROOT."/html/personalizacao_display.php";
 											
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="inputSuccess">Almoxarifado</label>
-												<a href="../adicionar_almoxarifado.php">
+												<a href="../matPat/adicionar_almoxarifado.php">
 													<i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
 												</a>
 												<div class="col-md-6">
