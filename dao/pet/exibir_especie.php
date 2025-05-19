@@ -2,24 +2,32 @@
 require_once '../Conexao.php';
 
 try {
+    // Conectar ao banco de dados
     $pdo = Conexao::connect();
-    $sql = 'SELECT * FROM pet_especie';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
+
+    // Consulta SQL
+    $sql = 'SELECT id_pet_especie, descricao FROM pet_especie';
+    
+    // Preparar e executar a consulta
+    $stmt = $pdo->query($sql);
+
+    // Array para armazenar os resultados
     $resultado = array();
 
+    // Fetch os resultados e sanitizar os dados
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $resultado[] = array(
-            'id_especie' => htmlspecialchars($row['id_pet_especie'], ENT_QUOTES, 'UTF-8'),
-            'especie' => htmlspecialchars($row['descricao'], ENT_QUOTES, 'UTF-8')
-        );
+        $id_especie = htmlspecialchars($row['id_pet_especie'], ENT_QUOTES, 'UTF-8');
+        $especie = htmlspecialchars($row['descricao'], ENT_QUOTES, 'UTF-8');
+
+        $resultado[] = array('id_especie' => $id_especie, 'especie' => $especie);
     }
 
+    // Retornar os resultados em formato JSON
     header('Content-Type: application/json');
-    echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
-   
+    echo json_encode($resultado);
+
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(['erro' => 'Erro ao recuperar espécies']);
+    // Tratamento de erros de conexão
+    echo json_encode(array('error' => 'Erro ao conectar ao banco de dados: ' . $e->getMessage()));
 }
 ?>

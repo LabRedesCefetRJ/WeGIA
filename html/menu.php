@@ -125,7 +125,6 @@
 									<span>Informações Pets</span>
 								</a>
 							</li>
-							<!--
 							<li class="nav-parent nav-active" >
 								<a>
 									<i class="fa fa-ambulance" aria-hidden="true"></i>
@@ -166,7 +165,7 @@
 									</li>
 								</ul>
 							</li>
-							-->
+							
 							<li class="nav-parent nav-active">
 								<a>
 									<i class="fa fa-user"></i></i><i class="fas fa-paw"></i>

@@ -14,11 +14,6 @@
     }
 
     class AdocaoControle{
-        public function excluirAdocaoPet($id_pet) {
-            $c = new AdocaoPet();
-            return $c->excluirAdocao($id_pet);
-        }
-        
         
         public function obterAdotante($id){
             $c = new AdocaoPet();
