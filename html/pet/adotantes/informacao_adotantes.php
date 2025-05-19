@@ -20,65 +20,47 @@
 		require_once($config_path);
 	}
 	
-	// Conexão única com PDO
-$dsn = 'mysql:host=localhost;dbname=wegia;charset=utf8';  
-$username = 'dev'; 
-$password = 'senha';
-
-try {
-	$conexao = new PDO($dsn, $username, $password);
-	$conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
+	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 	$id_pessoa = $_SESSION['id_pessoa'];
-
-	$stmt = $conexao->prepare("SELECT * FROM funcionario WHERE id_pessoa = :id_pessoa");
-	$stmt->bindParam(':id_pessoa', $id_pessoa, PDO::PARAM_INT);
-	$stmt->execute();
-	$funcionario = $stmt->fetch(PDO::FETCH_ASSOC);
-
-	if ($funcionario) {
-		$id_cargo = $funcionario['id_cargo'];
-
-		$stmt = $conexao->prepare("
-			SELECT * FROM permissao p 
-			JOIN acao a ON p.id_acao = a.id_acao 
-			JOIN recurso r ON p.id_recurso = r.id_recurso 
-			WHERE p.id_cargo = :id_cargo 
-			  AND a.descricao = :desc_acao 
-			  AND r.descricao = :desc_recurso
-		");
-
-		$descricao_acao = 'LER, GRAVAR E EXECUTAR';
-		$descricao_recurso = 'Cadastrar Pet';
-
-		$stmt->bindParam(':id_cargo', $id_cargo, PDO::PARAM_INT);
-		$stmt->bindParam(':desc_acao', $descricao_acao, PDO::PARAM_STR);
-		$stmt->bindParam(':desc_recurso', $descricao_recurso, PDO::PARAM_STR);
-
-		$stmt->execute();
-		$permissao = $stmt->fetch(PDO::FETCH_ASSOC);
-
-		if (!$permissao || $permissao['id_acao'] < 5) {
-			header("Location: ../../home.php?msg_c=" . urlencode("Você não tem as permissões necessárias para essa página."));
-			exit;
+	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
+	if(!is_null($resultado))
+	{
+		$id_cargo = mysqli_fetch_array($resultado);
+		if(!is_null($id_cargo))
+		{
+			$id_cargo = $id_cargo['id_cargo'];
 		}
-	} else {
-		header("Location: ../../home.php?msg_c=" . urlencode("Você não tem as permissões necessárias para essa página."));
-		exit;
+        $resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN acao a ON(p.id_acao=a.id_acao) JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND a.descricao = 'LER, GRAVAR E EXECUTAR' AND r.descricao='Cadastrar Pet'");
+		if(!is_bool($resultado) and mysqli_num_rows($resultado))
+		{
+			$permissao = mysqli_fetch_array($resultado);
+			if($permissao['id_acao'] < 5)
+			{
+        		$msg = "Você não tem as permissões necessárias para essa página.";
+        		header("Location: ../../home.php?msg_c=$msg");
+			}
+			$permissao = $permissao['id_acao'];
+		}
+		else
+		{
+        	$permissao = 1;
+          	$msg = "Você não tem as permissões necessárias para essa página.";
+          	header("Location: ../../home.php?msg_c=$msg");
+		}	
 	}
-} catch (PDOException $e) {
-	// Opcional: salvar log do erro
-	error_log("Erro ao listar adotantes: " . $e->getMessage());
-
-	// Redireciona ou exibe mensagem genérica
-	header("Location: ../../home.php?msg_c=" . urlencode("Erro ao carregar os dados. Tente novamente mais tarde."));
-	exit;
-}
-
-
+	else
+	{
+		$permissao = 1;
+    	$msg = "Você não tem as permissões necessárias para essa página.";
+    	header("Location: ../../home.php?msg_c=$msg");
+	}	
 
 	// Lógica para listar os adotantes
-	try {		
+	$dsn = 'mysql:host=localhost;dbname=wegia;charset=utf8';  
+	$username = 'wegiauser'; 
+	$password = 'senha';
+	try {
+		$conexao = new PDO($dsn, $username, $password);
 		$conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 	
 		$sqlListarAdotantes = "SELECT cpf, nome, sobrenome, sexo, telefone, data_nascimento, imagem, cep, 
@@ -139,7 +121,7 @@ try {
       });
     </script>
 	</head>
-
+</head>
 <body>
 	<section class="body">
 		<div id="header"></div>
@@ -248,5 +230,5 @@ try {
 	<script src="../../../assets/javascripts/tables/examples.datatables.default.js"></script>
 	<script src="../../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 	<script src="../../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
-
+</body>
 </html>

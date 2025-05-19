@@ -20,19 +20,8 @@ $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
 $cargo = $mysqli->query("SELECT * FROM cargo");
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-
-//$id_pessoa = $_SESSION['id_pessoa'];
-//$id_pessoa = mysqli_real_escape_string($conexao, $_SESSION['id_pessoa']);
-//$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-
 $id_pessoa = $_SESSION['id_pessoa'];
-
-$stmt = $conexao->prepare("SELECT * FROM funcionario WHERE id_pessoa = ?");
-$stmt->bind_param("i", $id_pessoa);
-$stmt->execute();
-$resultado = $stmt->get_result();
-
-
+$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
 if (!is_null($resultado)) {
   $id_cargo = mysqli_fetch_array($resultado);
   if (!is_null($id_cargo)) {
@@ -47,7 +36,7 @@ if (!is_null($resultado)) {
       header("Location: ../home.php?msg_c=$msg");
     }
     $permissao = $permissao['id_acao'];
-  } elseif($permissao == 1) {
+  } elseif($permissao = 1) {
     $msg = "Você não tem as permissões necessárias para essa página.";
     header("Location: ../home.php?msg_c=$msg");
   } else {
@@ -68,7 +57,7 @@ $listaCPF->listarCpf();
 require_once ROOT . "/controle/AtendidoControle.php";
 $listaCPF2 = new AtendidoControle;
 $listaCPF2->listarCpf();
-$cpf = $cpf = isset($_GET['cpf']) ? preg_replace('/\D/', '', $_GET['cpf']) : '';
+$cpf = $_GET['cpf'];
 $funcionario = new FuncionarioDAO;
 $informacoesFunc = $funcionario->listarPessoaExistente($cpf);
 
@@ -84,37 +73,14 @@ $raca = $mysqli->query("select * from pet_raca");
 
 /* fim */
 //Pedro
-
-
-
-if (isset($_GET['msg'])) {
-    $mensagem = htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8');
-
-    // Remove espaços extras e tags HTML
-    $mensagem = trim(strip_tags($mensagem));
-
-    // Verifica se a mensagem é válida (somente letras, números e espaços permitidos)
-    if (!preg_match('/^[\p{L}\p{N} ]+$/u', $mensagem)) {
-        exit(); // Sai do script se a mensagem tiver caracteres suspeitos
-    }
-
-    // Escapa caracteres especiais para evitar XSS
-    $mensagem = htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8');
-
-    // Transforma a mensagem em um formato seguro para JavaScript
-    $mensagem = json_encode($mensagem, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-    echo <<<HTML
-    <script>
-        alert($mensagem);
+if ($_GET['msg']) {
+  echo <<<HTML
+      <script>
+        alert('$_GET[msg]');
         window.location.href = "../../html/pet/cadastro_pet.php";
-    </script>
+      </script>
     HTML;
 }
-
-
-
-
 //============================
 ?>
 <!DOCTYPE html>
@@ -195,8 +161,7 @@ if (isset($_GET['msg'])) {
                   <div id="display_image" class="thumb-info mb-md"></div>
                   <div id="botima">
                     <h5 id="okText"></h5>
-                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(event, this)" id="okButton" value="Ok">
-
+                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(this)" id="okButton" id="botima" value="Ok">
                   </div>
                 </div>
               </div>
@@ -535,6 +500,7 @@ if (isset($_GET['msg'])) {
 
       if (c.length != 0) {
         alert("Caracteres inválidos encontrados. Tente novamente.");
+        alert(c);
         adicionar_cor();
         return;
       }
@@ -581,27 +547,20 @@ if (isset($_GET['msg'])) {
       $("#necEsp").prop('disabled', true);
     }
 
-    function submitButtonStyle(event, _this) {
-  // Impede o envio do formulário e o redirecionamento
-  event.preventDefault();
-
-  // Mudança de estilo no botão
-  _this.style.backgroundColor = "#5cb85c"; // verde
-  document.getElementById("okText").textContent = "Arquivo confirmado";
-
-  // Habilitar campos
-  $("#nome").prop('disabled', false);
-  $("#cor").prop('disabled', false);
-  $("#especie").prop('disabled', false);
-  $("#raca").prop('disabled', false);
-  $("#radioM").prop('disabled', false);
-  $("#radioF").prop('disabled', false);
-  $("#nascimento").prop('disabled', false);
-  $("#caracEsp").prop('disabled', false);
-  $("#vacinacao").prop('disabled', false);
-  $("#necEsp").prop('disabled', false);
-}
-
+    function submitButtonStyle(_this) {
+      _this.style.backgroundColor = "#5cb85c"; //verde
+      document.getElementById("okText").textContent = "Arquivo confirmado";
+      $("#nome").prop('disabled', false);
+      $("#cor").prop('disabled', false);
+      $("#especie").prop('disabled', false);
+      $("#raca").prop('disabled', false);
+      $("#radioM").prop('disabled', false);
+      $("#radioF").prop('disabled', false);
+      $("#nascimento").prop('disabled', false);
+      $("#caracEsp").prop('disabled', false);
+      $("#vacinacao").prop('disabled', false);
+      $("#necEsp").prop('disabled', false);
+    }
 
     function funcao1() {
       var send = $("#enviar");

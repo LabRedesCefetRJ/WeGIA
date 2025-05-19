@@ -1,17 +1,12 @@
 <?php
 require_once 'AdocaoControle.php';
 
-$post = json_decode(file_get_contents("php://input"), true);
+$post = json_decode(file_get_contents("php://input"));
 
-if (isset($post['comando']) && $post['comando'] === 'excluir' && isset($post['id_pet'])) {
-    $resultado = $a->excluirAdocaoPet($post['id_pet']);
-    echo json_encode(['status' => $resultado ? 'ok' : 'erro']);
-    exit;
+foreach( $post as $value){
+    $id = $value;
 }
 
-$id = $post['id'] ?? null;
+$id = $a->obterAdotante($id);
 
-if ($id) {
-    $dados = $a->obterAdotante($id);
-    echo json_encode($dados);
-}
+echo json_encode($id);

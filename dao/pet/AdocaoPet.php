@@ -15,44 +15,41 @@
 
     class AdocaoPet{
 
-        public function exibirAdotante($idPet) {
+        public function exibirAdotante($idPet){
             $pdo = Conexao::connect();
-        
-            // Verifica se o pet foi adotado
-            $stmt = $pdo->prepare("SELECT id_pessoa, data_adocao FROM pet_adocao WHERE id_pet = :id_pet");
-            $stmt->bindValue(':id_pet', $idPet);
-            $stmt->execute();
-            $adocao = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-            if (!$adocao) {
-                return ['adotado' => false];
+
+            $pd = $pdo->prepare("SELECT * FROM pet_adocao WHERE id_pet = :id_pet");
+            $pd->bindValue('id_pet', $idPet);
+            $pd->execute();
+            $p = $pd->fetchAll();
+
+            
+            foreach( $p as $value){
+                $id_pessoa = $value['id_pessoa'];
+                $data_adocao = $value['data_adocao'];
             }
-        
-            $id_pessoa = $adocao['id_pessoa'];
-            $data_adocao = $adocao['data_adocao'];
-        
-            // Busca o nome e RG do adotante
-            $stmt = $pdo->prepare("SELECT registro_geral AS rg, nome, sobrenome FROM pessoa WHERE id_pessoa = :id");
-            $stmt->bindValue(':id', $id_pessoa);
-            $stmt->execute();
-            $pessoa = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-            if (!$pessoa) {
-                return ['adotado' => false]; // Pessoa não encontrada
+
+            $pd = $pdo->prepare("SELECT registro_geral AS 'rg', nome, sobrenome FROM pessoa WHERE id_pessoa = :id");
+            $pd->bindValue(':id', $id_pessoa);
+            $pd->execute();
+            $p = $pd->fetchAll();
+
+            foreach( $p as $value){
+                $rg =  $value['rg'];
+                $nome = $value['nome'] . ' ' . $value['sobrenome'];
             }
-        
-            $nome_completo = $pessoa['nome'] . ' ' . $pessoa['sobrenome'];
-            $rg = $pessoa['rg'];
-        
-            return [
-                'adotado' => true,
-                'nome' => $nome_completo,
-                'rg' => $rg,
-                'id_pessoa' => $id_pessoa,
-                'data_adocao' => $data_adocao
-            ];
+
+            if($rg){
+                $adotado = true;
+                $dados = ['nome'=>$nome, 'rg'=>$rg, 'data_adocao'=>$data_adocao, 'adotado'=>$adotado];
+                return $dados;
+            }else{
+                $adotado = false;
+                return false;
+            }
+
         }
-        
+
         public function inserirAdocao($id_pet, $rg, $data_adocao){
             $pdo = Conexao::connect();
             $pd = $pdo->prepare("SELECT COUNT(*) AS 'total' FROM pet_adocao WHERE id_pet = :id_pet");
