@@ -1,7 +1,7 @@
 <?php
-require_once '../classes/Categoria.php';
-require_once 'Conexao.php';
-require_once '../Functions/funcoes.php';
+require_once ROOT .'/classes/Categoria.php';
+require_once ROOT .'/dao/Conexao.php';
+require_once ROOT .'/Functions/funcoes.php';
 class CategoriaDAO
 {
     public function incluir($categoria)

@@ -6,10 +6,10 @@
 	}
 
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once "personalizacao_display.php";
+	require_once ROOT . "/html/personalizacao_display.php";
 
 	// Funções de display de mensagens
-	require_once "./geral/msg.php";
+	require_once ROOT . "/html/geral/msg.php";
 ?>
 
 <!doctype html>
@@ -28,35 +28,35 @@
 	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
 
 	<!-- Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/bootstrap/css/bootstrap.css" />
-	<link rel="stylesheet" href="../assets/vendor/font-awesome/css/font-awesome.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css" SamSite="Strict"><!--integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">-->
-	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
-	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 
 	<!--Página Css que não interfere no estilo de oputras páginas do sistema-->
-	<link rel="stylesheet" href="../css/home-theme.css" />
+	<link rel="stylesheet" href="<?= WWW ?>css/home-theme.css" />
 
 	<!-- Specific Page Vendor CSS -->
-	<link rel="stylesheet" href="../assets/vendor/jquery-ui/css/ui-lightness/jquery-ui-1.10.4.custom.css" />
-	<link rel="stylesheet" href="../assets/vendor/bootstrap-multiselect/bootstrap-multiselect.css" />
-	<link rel="stylesheet" href="../assets/vendor/morris/morris.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/jquery-ui/css/ui-lightness/jquery-ui-1.10.4.custom.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-multiselect/bootstrap-multiselect.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/morris/morris.css" />
 
 	<!-- Theme CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
 	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon">
 
 	<!-- Skin CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/skins/default.css" />
 
 	<!-- Theme Custom CSS -->
-	<link rel="stylesheet" href="../assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
 
 	<!-- Head Libs -->
-	<script src="../assets/vendor/modernizr/modernizr.js"></script>
-	<script src="../Functions/lista.js"></script>
+	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
+	<script src="<?= WWW ?>Functions/lista.js"></script>
 	<!-- Vendor -->
-	<script src="../assets/vendor/jquery/jquery.min.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 
 	<style>
 		div#category-row > a:not(.visivel){ /* Faz com que apenas os selecionados por verificar_modulos se tornem visíveis*/
@@ -66,8 +66,8 @@
 
 	<script type="text/javascript">
 		$(function () {
-	      $("#header").load("header.php");
-	      $(".menuu").load("menu.php");
+	      $("#header").load("./header.php");
+	      $(".menuu").load("./menu.php");
 		  $(".category-item").on( "click", function() {
 			avancarCamada("first", "first", "second", true);
 		});
@@ -155,7 +155,7 @@
 	verificar_modulos();
 	})
 	function verificar_modulos(){
-		let url = "../dao/verificar_modulos_visiveis.php";
+		let url = "<?= WWW ?>dao/verificar_modulos_visiveis.php";
 		$.ajax({
 			type: "POST",
 			url: url,
@@ -330,13 +330,13 @@
 
 				<div class="row category-row-third">
 					<div  id="funcionarios" class="removeIn collapse">
-						<a href="../html/funcionario/pre_cadastro_funcionario.php">	
+						<a href="<?= WWW ?>html/funcionario/pre_cadastro_funcionario.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-address-book"></i>
 								<h4>Cadastrar Funcionário</h4>
 							</div>
 						</a>
-						<a href="../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php">	
+						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=<?= WWW ?>html/funcionario/informacao_funcionario.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-address-card"></i>
 								<h4>Informações Funcionários</h4>
@@ -347,16 +347,16 @@
 
 				<div class="row category-row-third">
 					<div  id="atendidos" class="removeIn collapse">
-						<a href="../html/atendido/pre_cadastro_atendido.php">	
+						<a href="<?= WWW ?>html/atendido/pre_cadastro_atendido.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-address-book"></i>
 								<h4>Cadastrar Atendido</h4>
 							</div>
 						</a>
 
-						<a href="../controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/Informacao_Atendido.php">
+						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=<?= WWW ?>html/atendido/Informacao_Atendido.php">
 							<div class="col-lg-2 col-md-8 i">
-								<form id="listarAtendido" method="POST" action="../controle/control.php">
+								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
 									<i  class="far fa-address-card" id="listarAtendido"></i>
 									<h4>Informação Atendidos</h4>
 								</form>
@@ -377,7 +377,26 @@
 
 				<div class="row category-row-third">
 					<div  id="ocorrencias" class="removeIn collapse">
+<<<<<<< HEAD
+					<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=.<?= WWW ?>html/atendido/cadastro_ocorrencia.php">
+							<div class="col-lg-2 col-md-8 i">
+								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
+									<i  class="fa fa-address-book" id="listarAtendido"></i>
+									<h4>Cadastrar Ocorrência</h4>
+								</form>
+							</div>
+						</a>
+						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=<?= WWW ?>html/atendido/listar_ocorrencias_ativas.php">
+							<div class="col-lg-2 col-md-8 i">
+								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
+									<i  class="far fa-address-card" id="listarAtendido"></i>
+									<h4>Ocorrências Ativas</h4>
+								</form>
+							</div>
+						</a>
+=======
 						
+>>>>>>> origin/pre-master-250514
 					</div>
 				</div>
 				<!--fim da parte interna de #pessoas-->
@@ -385,13 +404,13 @@
 				<!--parte interna de #pet-->
 				<div class="row category-row-second">
 					<div id="pet" class="collapse">
-						<a href="../html/pet/cadastro_pet.php">
+						<a href="<?= WWW ?>html/pet/cadastro_pet.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-paw"></i>
 								<h4>Cadastrar Pet</h4>
 							</div>
 						</a>
-						<a href="../html/pet/informacao_pet.php">
+						<a href="<?= WWW ?>html/pet/informacao_pet.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-clipboard-list"></i>
 								<h4>Informações Pets</h4>
@@ -415,13 +434,13 @@
 
 				<div class="row category-row-third">
 					<div  id="adotante" class="removeIn collapse">
-						<a href="../html/pet/adotantes/pre_cadastro_adotante.php">	
+						<a href="<?= WWW ?>html/pet/adotantes/pre_cadastro_adotante.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-address-book"></i>
 								<h4>Cadastrar Adotante</h4>
 							</div>
 						</a>
-						<a href="../html/pet/adotantes/informacao_adotantes.php">
+						<a href="<?= WWW ?>html/pet/adotantes/informacao_adotantes.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-address-card"></i>
 								<h4>Informações Adotantes</h4>
@@ -431,13 +450,13 @@
 				</div>
 				<div class="row category-row-third">
 					<div  id="saudePet" class="removeIn collapse">
-						<a href="../html/pet/cadastro_ficha_medica_pet.php">	
+						<a href="<?= WWW ?>html/pet/cadastro_ficha_medica_pet.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa-solid fa-book-medical"></i>
 								<h4>Cadastrar Ficha Médica Pet</h4>
 							</div>
 						</a>
-						<a href="../html/pet/informacao_saude_pet.php">	
+						<a href="<?= WWW ?>html/pet/informacao_saude_pet.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa-solid fa-clipboard-list"></i>
 								<h4>Informações Saúde Pet</h4>
@@ -454,13 +473,13 @@
 
 				<div class="row category-row-fourth">
 					<div  id="medicamentos" class="removeIn-2 collapse">
-						<a href="../html/pet/cadastrar_medicamento.php">
+						<a href="<?= WWW ?>html/pet/cadastrar_medicamento.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Cadastrar Medicamento</h4>
 							</div>
 						</a>
-						<a href="../html/pet/informacao_medicamento.php">
+						<a href="<?= WWW ?>html/pet/informacao_medicamento.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-clipboard-list"></i>
 								<h4>Informações Medicamentos</h4>
@@ -497,13 +516,13 @@
 
 				<div class="row category-row-third">
 					<div  id="entrada" class="removeIn collapse">
-						<a href="../html/cadastro_entrada.php">	
+						<a href="<?= WWW ?>html/matPat/cadastro_entrada.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Registrar Entrada</h4>
 							</div>
 						</a>
-						<a href="../html/listar_entrada.php">
+						<a href="<?= WWW ?>html/matPat/listar_entrada.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-barcode"></i>
 								<h4>Informações Entradas</h4>
@@ -514,13 +533,13 @@
 				
 				<div class="row category-row-third">
 					<div  id="saida" class="removeIn collapse">
-						<a href="../html/cadastro_saida.php">	
+						<a href="<?= WWW ?>html/matPat/cadastro_saida.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Registrar Saída</h4>
 							</div>
 						</a>
-						<a href="../html/listar_saida.php">
+						<a href="<?= WWW ?>html/matPat/listar_saida.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-barcode"></i>
 								<h4>Informações Saídas</h4>
@@ -531,7 +550,7 @@
 				
 				<div class="row category-row-third">
 					<div  id="estoque" class="removeIn collapse">
-						<a href="../html/relatorio.php">
+						<a href="<?= WWW ?>html/matPat/relatorio.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Gerar Relatório</h4>
@@ -554,7 +573,7 @@
 
 				<div class="row category-row-fourth">
 					<div  id="produtos" class="removeIn-2 collapse">
-						<a href="../html/cadastro_produto.php">
+						<a href="<?= WWW ?>html/matPat/cadastro_produto.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa fa-barcode"></i>
 								<h4>Cadastrar Produto</h4>
@@ -565,13 +584,13 @@
 
 				<div class="row category-row-fourth">
 					<div  id="almoxarifados" class="removeIn-2 collapse">
-						<a href="../html/adicionar_almoxarifado.php">
+						<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Adicionar Almoxarifado</h4>
 							</div>
 						</a>
-						<a href="../html/listar_almox.php">
+						<a href="<?= WWW ?>html/matPat/listar_almox.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-clipboard-list"></i>
 								<h4>Listar Almoxarifados</h4>
@@ -584,7 +603,7 @@
 				<!--parte interna de memorando-->
 				<div class="row">
 					<div id="memorando" class="collapse">
-						<a href="../html/memorando/listar_memorandos_ativos.php">	
+						<a href="<?= WWW ?>html/memorando/listar_memorandos_ativos.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-envelope"></i>
 								<h4>Caixa de Entrada</h4>
@@ -592,7 +611,7 @@
 
 							</div>
 						</a>
-						<a href="../html/memorando/novo_memorandoo.php">	
+						<a href="<?= WWW ?>html/memorando/novo_memorandoo.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-edit"></i>
 								<h4>Novo Memorando</h4>
@@ -600,7 +619,7 @@
 						</a>
 
 
-						<a href="../html/memorando/listar_memorandos_antigos.php">	
+						<a href="<?= WWW ?>html/memorando/listar_memorandos_antigos.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-mail-forward"></i>
 								<h4>Memorandos despachados</h4>
@@ -613,13 +632,13 @@
 				<!--parte interna de #socios-->
 				<div class="row category-row-second">
 					<div id="socios" class="collapse">
-						<a href="../html/socio/sistema/">
+						<a href="<?= WWW ?>html/socio/sistema/">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-users"></i>
 								<h4>Listar Sócios</h4>
 							</div>
 						</a>
-						<a href="../html/socio/sistema/relatorios_socios.php">	
+						<a href="<?= WWW ?>html/socio/sistema/relatorios_socios.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-clipboard"></i>
 								<h4>Relatórios</h4>
@@ -641,14 +660,20 @@
 				</div>
 				
 				<div class="row category-row-third">
-					<div  id="contribuicoes" class="removeIn collapse">
-						<a href="../html/socio/sistema/contribuicoes.php">
+					<div  id="cobrancas" class="removeIn collapse">
+						<a href="<?= WWW ?>html/socio/sistema/cobrancas.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i  class="far fa-chart-bar"></i>
+								<h4>Controle Cobranças (Antigo)</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/socio/sistema/contribuicoes.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-chart-bar"></i>
 								<h4>Controle de Contribuições</h4>
 							</div>
 						</a>
-						<a href="../html/socio/sistema/psocio_geracao.php">	
+						<a href="<?= WWW ?>html/socio/sistema/psocio_geracao.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fas fa-hand-holding-usd"></i>
 								<h4>Gerar Boleto</h4>
@@ -658,7 +683,7 @@
 				</div>
 				<div class="row category-row-third">
 					<div  id="extra" class="removeIn collapse">
-						<a href="../html/socio/sistema/tags.php">	
+						<a href="<?= WWW ?>html/socio/sistema/tags.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-tag"></i>
 								<h4>Tags (grupos)</h4>
@@ -688,13 +713,13 @@
 				
 				<div class="row category-row-third">
 					<div  id="paciente" class="removeIn collapse">
-						<a href="../html/saude/cadastro_ficha_medica.php">	
+						<a href="<?= WWW ?>html/saude/cadastro_ficha_medica.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-address-book"></i>
 								<h4>Cadastrar Ficha Médica</h4>
 							</div>
 						</a>
-						<a href="../html/saude/informacao_saude.php">	
+						<a href="<?= WWW ?>html/saude/informacao_saude.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="far fa-address-card"></i>
 								<h4>Informações Pacientes</h4>
@@ -705,13 +730,13 @@
 				
 				<div class="row category-row-third">
 					<div  id="enfermaria" class="removeIn collapse">
-						<a href="../html/saude/administrar_medicamento.php">	
+						<a href="<?= WWW ?>html/saude/administrar_medicamento.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-pills"></i>
 								<h4>Medicamentos</h4>
 							</div>
 						</a>
-						<a href="../html/saude/listar_historico_pacientes.php">	
+						<a href="<?= WWW ?>html/saude/listar_historico_pacientes.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-address-book"></i>
 								<h4>Histórico dos pacientes</h4>
@@ -725,19 +750,19 @@
 				<!--parte interna de #contribuicao-->
 				<div class="row">
 					<div  id="contribuicao" class="collapse">
-						<a href="../html/contribuicao/view/gateway_pagamento.php">
+						<a href="<?= WWW ?>html/contribuicao/view/gateway_pagamento.php">
 							<div class="col-lg-2 col-md-8 i" >
 								<i class="fa-solid fa-building"></i>
 								<h4>Gateway de pagamentos</h4>
 							</div>
 						</a>
-						<a href="../html/contribuicao/view/meio_pagamento.php">
+						<a href="<?= WWW ?>html/contribuicao/view/meio_pagamento.php">
 							<div class="col-lg-2 col-md-8 i" >
 								<i class="fa-regular fa-credit-card"></i>
 								<h4>Meio de pagamento</h4>
 							</div>
 						</a>
-						<a href="../html/contribuicao/view/regra_pagamento.php">
+						<a href="<?= WWW ?>html/contribuicao/view/regra_pagamento.php">
 							<div class="col-lg-2 col-md-8 i" >
 								<i class="fa-solid fa-circle-exclamation"></i>
 								<h4>Regras de pagamento</h4>
@@ -750,13 +775,13 @@
 				<!--parte interna de #configuracao-->
 				<div class="row">
 					<div  id="configuracao" class="collapse">
-						<a href="../html/personalizacao.php">
+						<a href="<?= WWW ?>html/personalizacao.php">
 							<div class="col-lg-2 col-md-8 i" >
 								<i  class="fa fa-font"></i>
 								<h4>Editar conteúdos</h4>
 							</div>
 						</a>
-						<a href="../html/personalizacao_imagem.php">
+						<a href="<?= WWW ?>html/personalizacao_imagem.php">
 							<div class="col-lg-2 col-md-8 i" >
 								<i  class="fa fa-picture-o"></i>
 								<h4>Lista de imagens</h4>
@@ -768,13 +793,13 @@
 								<h4>Configurações Gerais</h4>
 							</div>
 						</a>
-						<a href="../html/geral/editar_permissoes.php">
+						<a href="<?= WWW ?>html/geral/editar_permissoes.php">
 							<div class="col-lg-2 col-md-8 i" >
 								<i  class="fa fa-key"></i>
 								<h4>Permissões</h4>
 							</div>
 						</a>	
-						<a href="../html/geral/modulos_visiveis.php">
+						<a href="<?= WWW ?>html/geral/modulos_visiveis.php">
 							<div class="col-lg-2 col-md-8 i" >
 								<i class="fa fa-eye"></i>
 								<h4>Módulos Visíveis</h4>
@@ -789,40 +814,40 @@
 	</section>
 
 	<!-- Vendor -->
-	<script src="../assets/vendor/jquery/jquery.js"></script>
-	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
-	<script src="../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
-	<script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 		
 	<!-- Specific Page Vendor -->
-	<script src="../assets/vendor/jquery-ui/js/jquery-ui-1.10.4.custom.js"></script>
-	<script src="../assets/vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.js"></script>
-	<script src="../assets/vendor/jquery-appear/jquery.appear.js"></script>
-	<script src="../assets/vendor/bootstrap-multiselect/bootstrap-multiselect.js"></script>
-	<script src="../assets/vendor/jquery-easypiechart/jquery.easypiechart.js"></script>
-	<script src="../assets/vendor/flot/jquery.flot.js"></script>
-	<script src="../assets/vendor/flot-tooltip/jquery.flot.tooltip.js"></script>
-	<script src="../assets/vendor/flot/jquery.flot.pie.js"></script>
-	<script src="../assets/vendor/flot/jquery.flot.categories.js"></script>
-	<script src="../assets/vendor/flot/jquery.flot.resize.js"></script>
-	<script src="../assets/vendor/jquery-sparkline/jquery.sparkline.js"></script>
-	<script src="../assets/vendor/raphael/raphael.js"></script>
-	<script src="../assets/vendor/morris/morris.js"></script>
-	<script src="../assets/vendor/gauge/gauge.js"></script>
-	<script src="../assets/vendor/snap-svg/snap.svg.js"></script>
-	<script src="../assets/vendor/liquid-meter/liquid.meter.js"></script>
-	<script src="../assets/vendor/jqvmap/jquery.vmap.js"></script>
-	<script src="../assets/vendor/jqvmap/data/jquery.vmap.sampledata.js"></script>
-	<script src="../assets/vendor/jqvmap/maps/jquery.vmap.world.js"></script>
-	<script src="../assets/vendor/jqvmap/maps/continents/jquery.vmap.africa.js"></script>
-	<script src="../assets/vendor/jqvmap/maps/continents/jquery.vmap.asia.js"></script>
-	<script src="../assets/vendor/jqvmap/maps/continents/jquery.vmap.australia.js"></script>
-	<script src="../assets/vendor/jqvmap/maps/continents/jquery.vmap.europe.js"></script>
-	<script src="../assets/vendor/jqvmap/maps/continents/jquery.vmap.north-america.js"></script>
-	<script src="../assets/vendor/jqvmap/maps/continents/jquery.vmap.south-america.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-ui/js/jquery-ui-1.10.4.custom.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-ui-touch-punch/jquery.ui.touch-punch.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-appear/jquery.appear.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-multiselect/bootstrap-multiselect.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-easypiechart/jquery.easypiechart.js"></script>
+	<script src="<?= WWW ?>assets/vendor/flot/jquery.flot.js"></script>
+	<script src="<?= WWW ?>assets/vendor/flot-tooltip/jquery.flot.tooltip.js"></script>
+	<script src="<?= WWW ?>assets/vendor/flot/jquery.flot.pie.js"></script>
+	<script src="<?= WWW ?>assets/vendor/flot/jquery.flot.categories.js"></script>
+	<script src="<?= WWW ?>assets/vendor/flot/jquery.flot.resize.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-sparkline/jquery.sparkline.js"></script>
+	<script src="<?= WWW ?>assets/vendor/raphael/raphael.js"></script>
+	<script src="<?= WWW ?>assets/vendor/morris/morris.js"></script>
+	<script src="<?= WWW ?>assets/vendor/gauge/gauge.js"></script>
+	<script src="<?= WWW ?>assets/vendor/snap-svg/snap.svg.js"></script>
+	<script src="<?= WWW ?>assets/vendor/liquid-meter/liquid.meter.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/jquery.vmap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/data/jquery.vmap.sampledata.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/maps/jquery.vmap.world.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/maps/continents/jquery.vmap.africa.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/maps/continents/jquery.vmap.asia.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/maps/continents/jquery.vmap.australia.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/maps/continents/jquery.vmap.europe.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/maps/continents/jquery.vmap.north-america.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jqvmap/maps/continents/jquery.vmap.south-america.js"></script>
 	<script>
 		$(document).ready(function(){
 		setTimeout(function(){
@@ -833,7 +858,7 @@
 	</script>
 
 	<!-- Lida com as mensagens -->
-	<script src="./geral/msg.js"></script>
+	<script src="<?= WWW ?>html/geral/msg.js"></script>
 		
 	<div align="right">
 	<iframe src="https://www.wegia.org/software/footer/home.html" width="200" height="60" style="border:none;"></iframe>
