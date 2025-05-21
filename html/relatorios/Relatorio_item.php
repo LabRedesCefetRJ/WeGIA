@@ -1,6 +1,6 @@
 <?php
-require_once("../dao/Conexao.php");
-require_once("../classes/Util.php");
+require_once ROOT . "/dao/Conexao.php";
+require_once ROOT . "/classes/Util.php";
 
 class Item {
 
