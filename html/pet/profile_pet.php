@@ -1,99 +1,70 @@
 <?php
 
-ini_set('display_errors',1);
-ini_set('display_startup_erros',1);
-error_reporting(E_ALL);
-
-session_start();
-require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
-
-if (!isset($_SESSION['usuario'])) {
+  ini_set('display_errors',1);
+  ini_set('display_startup_erros',1);
+  error_reporting(E_ALL);
+  //extract($_REQUEST);
+  session_start();
+  require_once "../../dao/Conexao.php";
+  $pdo = Conexao::connect();
+  if (!isset($_SESSION['usuario'])) 
+  {
     header("Location: ../index.php");
-} else if (!isset($_SESSION['pet'])) {
+  } 
+  else if (!isset($_SESSION['pet'])) 
+  {
     $id_pet = $_GET['id_pet'];
     header('Location: ../../controle/control.php?modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage='. WWW. '/html/pet/profile_pet.php?id_pet=' . $id_pet . '&id_pet=' . $id_pet);
-} else {
+  }  
+  else 
+  {
     $petDados = $_SESSION['pet'];
     unset($_SESSION['pet']);
     $pet = json_encode($petDados);
-}
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
+ 
+  }
+  $config_path = "config.php";
+  if (file_exists($config_path)) 
+  {
     require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
+  } 
+  else 
+  {
+    while (true) 
+    {
+      $config_path = "../" . $config_path;
+      if (file_exists($config_path)) break;
     }
     require_once($config_path);
-}
+  }
+  require_once "../permissao/permissao.php";
+  permissao($_SESSION['id_pessoa'], 63, 7);
+  require_once "../personalizacao_display.php";
+  require_once "../../dao/Conexao.php";
+  require_once "../geral/msg.php";
+ 
+  // Lógica para listar os adotantes
+  $dsn = 'mysql:host=localhost;dbname=wegia;charset=utf8';  
+  $username = 'wegiauser'; 
+  $password = 'senha';
 
-require_once "../permissao/permissao.php";
-permissao($_SESSION['id_pessoa'], 63, 7);
-require_once "../personalizacao_display.php";
-require_once "../../dao/Conexao.php";
-require_once "../geral/msg.php";
+  try {
+      $conexao = new PDO($dsn, $username, $password);
+      $conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Lógica para listar os adotantes
-$dsn = 'mysql:host=localhost;dbname=wegia;charset=utf8';  
-$username = 'dev'; 
-$password = 'senha';
+      $sqlListarAdotantes = "SELECT id_pessoa, nome, sobrenome FROM pessoa;";
+      
+      $stmt = $conexao->prepare($sqlListarAdotantes);
+      $stmt->execute();
 
-try {
-    $conexao = new PDO($dsn, $username, $password);
-    $conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $resultadosListarAdotantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $sqlListarAdotantes = "SELECT id_pessoa, nome, sobrenome FROM pessoa;";
-    
-    $stmt = $conexao->prepare($sqlListarAdotantes);
-    $stmt->execute();
+  } catch (PDOException $e) {
+      echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
+  }
 
-    $resultadosListarAdotantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (PDOException $e) {
-    echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
-}
-
-// Lógica para buscar ficha médica
-$fichaMedica = null;
-
-// Também vamos buscar dados da adoção do pet
-$adocaoPet = null;
-
-if (isset($_GET['id_pet'])) {
-    $idPet = $_GET['id_pet'];
-   
-    try {
-     
-      $stmtFicha = $conexao->prepare("SELECT id_ficha_medica, castrado, necessidades_especiais FROM pet_ficha_medica WHERE id_pet = :idPet");
-      $stmtFicha->bindParam(':idPet', $idPet, PDO::PARAM_INT);
-      $stmtFicha->execute();
-    
-      $fichaMedica = $stmtFicha->fetch(PDO::FETCH_ASSOC);
-
-      // BUSCA ADOTAÇÃO DO PET
-      $stmtAdocao = $conexao->prepare("
-          SELECT a.data_adocao, a.id_pessoa, p.nome, p.rg 
-          FROM pet_adocao a 
-          INNER JOIN pessoa p ON a.id_pessoa = p.id_pessoa 
-          WHERE a.id_pet = :idPet
-          LIMIT 1
-      ");
-      $stmtAdocao->bindParam(':idPet', $idPet, PDO::PARAM_INT);
-      $stmtAdocao->execute();
-
-      $adocaoPet = $stmtAdocao->fetch(PDO::FETCH_ASSOC);
-
-    } catch (PDOException $e) {
-        echo "Erro ao buscar ficha médica ou adoção: " . $e->getMessage();
-    }
-}
-
-// Lógica para adicionar no banco de dados
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Lógica de Adoção
+  // Lógica para adicionar no banco de dados
+  if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $adotante = !empty($_POST["adotante_input"]) ? $_POST["adotante_input"] : NULL;
     $dataAdocao = !empty($_POST["dataAdocao"]) ? $_POST["dataAdocao"] : NULL;
     $idPet = !empty($_POST["id_pet"]) ? $_POST["id_pet"] : NULL;
@@ -120,52 +91,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } else {
         echo "Por favor, preencha todos os campos corretamente.";
     }
-
-    // **Lógica para Atualizar a Ficha Médica**
-    $idFichaMedica = !empty($_POST["id_ficha_medica"]) ? $_POST["id_ficha_medica"] : NULL;
-    $castrado = !empty($_POST["castrado"]) ? $_POST["castrado"] : NULL;
-    $texto = !empty($_POST["texto"]) ? $_POST["texto"] : NULL;
-    $idPet = !empty($_POST["id_pet"]) ? $_POST["id_pet"] : NULL;
-
-    // Se temos a ficha médica e o pet, vamos atualizar
-    if ($idFichaMedica && $idPet) {
-        $sqlAtualizarFichaMedica = "UPDATE ficha_medica_pet 
-                                    SET castrado = :castrado, texto = :texto 
-                                    WHERE id_ficha_medica = :idFichaMedica AND id_pet = :idPet";
-
-        try {
-            $conexao = new PDO($dsn, $username, $password);
-            $conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            $stmt = $conexao->prepare($sqlAtualizarFichaMedica);
-            $stmt->bindParam(':castrado', $castrado);
-            $stmt->bindParam(':texto', $texto);
-            $stmt->bindParam(':idFichaMedica', $idFichaMedica);
-            $stmt->bindParam(':idPet', $idPet);
-
-            $stmt->execute();
-            
-            // Redireciona após a atualização
-            header('Location: profile_pet.php?id_pet='.$idPet);
-            exit;
-        } catch (PDOException $e) {
-            echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
-        }
-    } else {
-        echo "Por favor, preencha todos os campos corretamente.";
-    }
-
-    
 }
 
+
 ?>
-
-<!-- Agora injetamos os dados da adoção para o JS -->
-<script>
-  const adocaoPet = <?php echo json_encode($adocaoPet ?? null); ?>;
-</script>
-
-
 
 <!doctype html>
 <html class="fixed">
@@ -290,9 +219,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       
 
 		
-    
-   
-
 
 	
       //Informações Pet
@@ -342,7 +268,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       }
 
       
-   
       $(function() 
       {
         $.each(pet, function(i, item) 
@@ -388,141 +313,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       });
 
       
-      
-      
-  const fichaMedica = {
-    castrado: "<?php echo isset($fichaMedica['castrado']) ? $fichaMedica['castrado'] : ''; ?>",
-    texto: "<?php echo isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais'], ENT_QUOTES) : ''; ?>"
-  };
-
-  function editar_ficha_medica() {
-    // Habilita os campos
-    document.getElementById('castradoS').disabled = false;
-    document.getElementById('castradoN').disabled = false;
-    document.getElementById('despacho').disabled = false;
-    document.getElementById('salvarFichaMedica').disabled = false;
-
-    const btnEditar = document.getElementById('editarFichaMedica');
-    btnEditar.innerHTML = 'Cancelar';
-    btnEditar.classList.remove('btn-secondary');
-    btnEditar.classList.add('btn-danger');
-
-    btnEditar.setAttribute('onclick', 'return cancelar_ficha_medica()');
-  }
-
-  function cancelar_ficha_medica() {
-    // Restaura valores antigos
-    if (fichaMedica.castrado === "S") {
-      document.getElementById('castradoS').checked = true;
-      document.getElementById('castradoN').checked = false;
-    } else {
-      document.getElementById('castradoS').checked = false;
-      document.getElementById('castradoN').checked = true;
-    }
-
-    document.getElementById('despacho').value = fichaMedica.texto;
-
-    // Desabilita os campos
-    document.getElementById('castradoS').disabled = true;
-    document.getElementById('castradoN').disabled = true;
-    document.getElementById('despacho').disabled = true;
-    document.getElementById('salvarFichaMedica').disabled = true;
-
-    const btnEditar = document.getElementById('editarFichaMedica');
-    btnEditar.innerHTML = 'Editar';
-    btnEditar.classList.remove('btn-danger');
-    btnEditar.classList.add('btn-secondary');
-
-    btnEditar.setAttribute('onclick', 'return editar_ficha_medica()');
-  }
-
-  // Desabilita campos ao carregar
-  document.addEventListener("DOMContentLoaded", function () {
-    document.getElementById('castradoS').disabled = true;
-    document.getElementById('castradoN').disabled = true;
-    document.getElementById('despacho').disabled = true;
-    document.getElementById('salvarFichaMedica').disabled = true;
-  });
-
-  document.addEventListener("DOMContentLoaded", () => {
-  const adotadoS = document.querySelector("#adotadoS");
-  const adotadoN = document.querySelector("#adotadoN");
-  const dataAdocao = document.querySelector("#dataAdocao");
-  const editarAdocao = document.querySelector("#editarAdocao");
-  const salvarAdocao = document.querySelector("#submit_adocao");
-  const adotante_input = document.querySelector("#adotante_input");
-
-  adotadoN.addEventListener("change", () => {
-  dataAdocao.value = '';
-  adotante_input.selectedIndex = 0;
-
-  let id = window.location.href.split("=")[1];
-
-  fetch('../../controle/pet/ControleObterAdotante.php', {
-    method: 'POST',
-    body: JSON.stringify({ comando: 'excluir', id_pet: id })
-  })
-  .then(resp => resp.json())
-  .then(data => {
-    if (data.status !== 'ok') {
-      alert("Erro ao excluir adoção.");
-    }
-  });
-});
-
-
-  // Desabilita os campos inicialmente
-  adotadoS.disabled = true;
-  adotadoN.disabled = true;
-  dataAdocao.disabled = true;
-  salvarAdocao.disabled = true;
-  adotante_input.disabled = true;
-
-  // Botão editar
-  window.editarAdocaoPet = function () {
-    const isEditando = editarAdocao.innerHTML === "Editar Adoção";
-
-    adotadoS.disabled = !isEditando;
-    adotadoN.disabled = !isEditando;
-    dataAdocao.disabled = !isEditando;
-    salvarAdocao.disabled = !isEditando;
-    adotante_input.disabled = !isEditando;
-
-    editarAdocao.innerHTML = isEditando ? "Cancelar" : "Editar Adoção";
-    editarAdocao.classList.toggle("btn-danger", isEditando);
-    editarAdocao.classList.toggle("btn-primary", !isEditando);
-
-    if (!isEditando) {
-      location.reload();
-    }
-  };
-
-  // Preencher dados da adoção
-  let id = window.location.href.split("=")[1];
-  fetch('../../controle/pet/ControleObterAdotante.php', {
-    method: "POST",
-    body: JSON.stringify({ id })
-  })
-    .then(resp => resp.json())
-    .then(resp => {
-      if (resp.adotado) {
-        adotadoS.checked = true;
-        dataAdocao.value = resp.data_adocao;
-        adotante_input.value = resp.id_pessoa; // É necessário retornar também o id_pessoa no PHP
-      } else {
-        adotadoN.checked = true;
-        dataAdocao.value = "";
-        adotante_input.selectedIndex = 0;
-      }
-    });
-});
-
-
-
     </script>
   </head>
   <body>
-
     <section class="body">
       <div id="header"></div>
       <!-- end: header -->
@@ -649,8 +442,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   <li>
                     <a href="#ficha_medica" data-toggle="tab">Ficha Médica</a>
                   </li>
-
-                  <!--
                   <li>
                     <a href="#atendimento" data-toggle="tab">Atendimento</a>
                   </li>
@@ -660,7 +451,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   <li>
                     <a href="#arquivosPet" data-toggle="tab">Exames do Pet</a>
                   </li>
-                    -->
                   <li>
                     <a href="#adocao" data-toggle="tab">Adoção</a>
                   </li>
@@ -890,58 +680,77 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
 
                 <!-- Ficha Medica-->
-                                          
                 <div id="ficha_medica" class="tab-pane">
-  <section id="secFichaMedica">
-    <h4 class="mb-xlg" id="fm">Ficha Médica</h4>
-    <div id="divFichaMedica">
-      <form class="form-horizontal" method="post" action="../../controle/control.php">
-        <input type="hidden" name="nomeClasse" value="controleSaudePet">
-        <input type="hidden" name="metodo" value="modificarFichaMedicaPet">
-        <input type="hidden" name="modulo" value="pet">
-        <fieldset>
+                  <section id="secFichaMedica"> <!--Corrigir o problema da impressão-->
+                      <h4 class="mb-xlg" id="fm">Ficha Médica</h4>
+                      <div id="divFichaMedica">
+                        <form class="form-horizontal" method="post" action="../../controle/control.php">
+                          <input type="hidden" name="nomeClasse" value="controleSaudePet">
+                          <input type="hidden" name="metodo" value="modificarFichaMedicaPet">
+                          <input type="hidden" name="modulo" value="pet">
+                          <fieldset>
+                            <!--Castrado-->
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
+                              <div class="col-md-8">
+                                <label><input type="radio" name="castrado" id="castradoS" value="S" style="margin-top: 10px; margin-left: 15px;" > <i class="fa" style="font-size: 20px;">Sim</i></label>
+                                <label><input type="radio" checked name="castrado" id="castradoN" value="N" style="margin-top: 10px; margin-left: 15px;" > <i class="fa" style="font-size: 20px;">Não</i></label>
+                              </div>
+                            </div>
 
-          <!--Castrado-->
-          <div class="form-group">
-        <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
-        <div class="col-md-8">
-            <label>
-                <input type="radio" name="castrado" id="castradoS" value="S" style="margin-top: 10px; margin-left: 15px;"
-                <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 'S') echo 'checked'; ?> required>
-                <i class="fa" style="font-size: 20px;">Sim</i>
-            </label>
-            <label>
-                <input type="radio" name="castrado" id="castradoN" value="N" style="margin-top: 10px; margin-left: 15px;"
-                <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'N') echo 'checked'; ?> required>
-                <i class="fa" style="font-size: 20px;">Não</i>
-            </label>
-        </div>
-    </div>
+                            <!--Vermifugado-->
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="profileLastName">Vermifugado:</label>
+                              <div class="col-md-8">
+                                <label><input type="radio" name="vermifugado" id="vermifugadoS" value="S" style="margin-top: 10px; margin-left: 15px;" > <i class="fa" style="font-size: 20px;">Sim</i></label>
+                                <label><input type="radio" checked name="vermifugado" id="vermifugadoN" value="N" style="margin-top: 10px; margin-left: 15px;" > <i class="fa" style="font-size: 20px;">Não</i></label>
+                              </div>
+                              <div class="form-group" id="div_vermifugado"> 
+                                <label class="col-md-3 control-label" for="dVermifugado">Data de vermifugação:<sup class="obrig">*</sup></label>
+                                <div class="col-md-8">
+                                  <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="dVermifugado" id="dVermifugado" max=<?php echo date('Y-m-d');?> required>
+                                </div>                                              
+                              </div>
+                            </div>
 
-    <!-- Necessidades Especiais (campo de texto) -->
-    <div class="form-group">
-  <div class="form-group">
-    <label for="texto" id="etiqueta_despacho" class="col-md-3 control-label">Outras informações:</label>
-    <div class="col-md-8">
-      <textarea name="texto" class="form-control col-md-8" id="despacho"><?php echo isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais']) : ''; ?></textarea>
-    </div>
-  </div>
-</div>
+                            <!--Vacinado-->
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="vacinado">Vacinado:</label>
+                              <div class="col-md-8">
+                                <label><input type="radio" name="vacinado" id="vacinadoS" value="S" style="margin-top: 10px; margin-left: 15px;" > <i class="fa" style="font-size: 20px;">Sim</i></label>
+                                <label><input type="radio" checked name="vacinado" id="vacinadoN" value="N" style="margin-top: 10px; margin-left: 15px;" > <i class="fa" style="font-size: 20px;">Não</i></label>                     
+                              </div>
+                              <div class="form-group" id="div_vacinado">
+                                <label class="col-md-3 control-label" for="dVacinado">Data de vacinação:<sup class="obrig">*</sup></label>
+                                <div class="col-md-8">
+                                  <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="dVacinado" id="dVacinado" max=<?php echo date('Y-m-d');?> required>
+                                </div>                                              
+                              </div>
+                            </div>
 
-          </br>
-          <div class="buttons">
-            <input type="hidden" name="id_pet" value="<?php echo $_GET['id_pet']; ?>">
-            <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? $fichaMedica['id_ficha_medica'] : ''; ?>">
-            <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
-            <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
-            <button type="button" class="d-print-none mb-xs mt-xs mr-xs btn btn-default" id="btnPrint2">Imprimir <i class="fa-solid fa-print" style="color:black"></i></button>
-          </div>
-        </fieldset>
-      </form>
-    </div>
-  </section>
-</div>
-
+                            <!--Outras informacoes-->
+                            <div class="form-group">
+                              <div class="form-group">
+                                <label for="texto" id="etiqueta_despacho" class="col-md-3 control-label">Outras informações:</label>
+                                <div class="col-md-8">
+                                  <textarea name="texto" class="form-control col-md-8" id="despacho"></textarea>
+                                </div>
+                              </div>
+                            </div>
+                            </br>
+                            <div class="buttons">
+                              <input type="hidden" name="id_pet" value=<?php echo $_GET['id_pet'] ?>>
+                              <input type="hidden" name="id_ficha_medica" id="id_ficha_medica">
+                              <button type="button" class="d-print-none btn btn-primary" id="editarFichaMedica" >Editar Ficha Médica</button>
+                              <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
+                              <button type="button" class="d-print-none mb-xs mt-xs mr-xs btn btn-default" id="btnPrint2">Imprimir <i class="fa-solid fa-print" style = "color:black"></i></button>
+                            </div>
+                          </fieldset>
+                        </form>
+                    </div>
+                  </section>
+                  <!-- </div> -->
+                </div>
 
                 <!--atendimento-->
                 <div id="atendimento" class="tab-pane">
@@ -1063,15 +872,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <div class="form-group">
                                         <label class="col-md-3 control-label" for="profileLastName">Adotado</label>
                                         <div class="col-md-8">
-                                        <label><input type="radio" name="adotado" id="adotadoS" value="S" style="margin-top: 10px; margin-left: 15px;"> <i class="fa" style="font-size: 20px;">Sim</i></label>
-                                      <label><input type="radio" name="adotado" id="adotadoN" value="N" style="margin-top: 10px; margin-left: 15px;"> <i class="fa" style="font-size: 20px;">Não</i></label>
+                                            <label><input type="radio" name="adotado" id="adotadoS" value="S" style="margin-top: 10px; margin-left: 15px;"> <i class="fa" style="font-size: 20px;">Sim</i></label>
+                                            <label><input type="radio" checked name="adotado" id="adotadoN" value="N" style="margin-top: 10px; margin-left: 15px;"> <i class="fa" style="font-size: 20px;">Não</i></label>
                                         </div>
                                     </div>
                                     <div id="dadosAdocao">
                                         <div class="form-group">
                                             <label class="col-md-3 control-label" for="profileName">Nome do Adotante</label>
                                             <div class="col-md-8">
-                                                <select class="form-control input-lg mb-md" name="adotante_input" id="adotante_input">
+                                                <select class="form-control input-lg mb-md" name="adotante_input" id="adotante_input" required>
                                                     <option selected disabled value="">Selecionar</option>
                                                     <?php
                                                     // Lista todos os adotantes
@@ -1095,7 +904,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                         <div class="form-group">
                                             <label class="col-md-3 control-label" for="profileCompany">Data da adoção</label>
                                             <div class="col-md-8">
-                                                <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="dataAdocao" id="dataAdocao" max="<?php echo date('Y-m-d'); ?>">
+                                                <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="dataAdocao" id="dataAdocao" max="<?php echo date('Y-m-d'); ?>" required>
                                             </div>
                                         </div>
 
@@ -1104,8 +913,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                                     <input type="hidden" name="id_pet" value="<?php echo $idPet; ?>">
                                     <button type="button" class="btn btn-primary" id="editarAdocao" onclick="return editarAdocaoPet()">Editar Adoção</button>
-                                    <button type="submit" class="btn btn-primary" id="submit_adocao" name="submit_adocao">Salvar</button>
-
+                                    <button type="submit" class="btn btn-primary" id="submit_adocao" name="submit_adocao" onclick="return enviarFormulário(event)">Salvar</button>
                                 </fieldset>
                             </form>
                         </div>
@@ -1121,10 +929,129 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </section>
     
     <script type="text/javascript">
+      const botaoAdocao = document.getElementById("submit_adocao");
+      botaoAdocao.addEventListener("click", function() {
+          alert("Adoção registrada com sucesso!");
+      });
+
+      //Adoção
+      let nomeAdotante = document.querySelector("#nomeAdotante");
+      let adotadoS = document.querySelector("#adotadoS");
+      let adotadoN = document.querySelector("#adotadoN");
+      let dataAdocao = document.querySelector("#dataAdocao");
+      let editarAdocao = document.querySelector("#editarAdocao");
+      let salvarAdocao = document.querySelector("#salvarAdocao");
+      let adotante_input = document.querySelector("#adotante_input");
+
+      adotadoS.disabled = true;
+      adotadoN.disabled = true;
+      
+      function editarAdocaoPet(){
+        if(editarAdocao.innerHTML == "Editar Adoção"){
+          adotadoS.disabled = false;
+          adotadoN.disabled = false;
+          dataAdocao.disabled = false;
+          salvarAdocao.disabled = false;
+          adotante_input.disabled = false;
+          editarAdocao.innerHTML = "Cancelar";
+        }else{
+          document.location.reload();
+        }
+      }
+
+      if( adotadoN.checked == true){
+        document.querySelector("#dadosAdocao").style.display = "none";
+      }
+
+      adotadoS.addEventListener("click", ()=>{
+        document.querySelector("#dadosAdocao").style.display = "";
+        nomeAdotante.value = '';
+        adotante_input.value = '';
+        dataAdocao.value = '';
+      })
+
+      adotadoN.addEventListener("click", ()=>{
+        document.querySelector("#dadosAdocao").style.display = "none";
+        nomeAdotante.value = '*';
+        adotante_input.value = '*';
+        dataAdocao.value = '1111-11-11';
+      })
+
+
+      (()=>{
+        adotadoS.disabled = true;
+        adotadoN.disabled = true;
+        nomeAdotante.disabled = true;
+        dataAdocao.disabled = true;
+        salvarAdocao.disabled = true;
+        adotante_input.disabled = true;
+      })();
+      
+
      
-            
+      let dadoRG = '';
+      rgAdotante.addEventListener("input", ()=>{
+        let rg = [];
+        let rg2 = '';
+        dadoRG = rgAdotante.value.split('');
 
+        dadoRG.forEach( (valor, i) =>{
+          if( valor >= 0 && valor <= 9){
+            rg[i] = valor;
+          }
+        })
 
+        rg.forEach( valor => {
+          if( rg2.length == 2 ){
+            rg2 += '.'+valor; 
+          }else if(rg2.length == 6 ){
+            rg2 += '.'+valor;
+          }else if(rg2.length == 10){
+            rg2 += '-'+valor;
+          }else if(rg2.length >= 12){
+            rg2 += '';
+          }else{
+            rg2 += valor;
+          }
+        })
+        rgAdotante.value = rg2;
+
+        if(rgAdotante.value.length == 12){
+          fetchRG = rgAdotante.value;
+          fetch('../../controle/pet/RGControle.php',{
+            method:'POST',
+            body: JSON.stringify({'rg': fetchRG })
+          }).then( 
+            resp => {return resp.json()} 
+          ).then( 
+            resp => {nomeAdotante.value = resp}
+          )
+        }else{
+          nomeAdotante.value = '';
+        }
+      });
+
+      (()=>{
+        let id = window.location.href;
+        id = id.split("=");
+        id = id[1];
+        fetch('../../controle/pet/ControleObterAdotante.php', {
+          method:"POST",
+          body:JSON.stringify({id})
+        })
+        .then( resp =>{
+          return resp.json();
+        })
+        .then( resp => {
+          if(resp.adotado){
+            adotadoS.checked = true;
+            dadosAdocao.style.display = '';
+            nomeAdotante.value = resp.nome;
+            rgAdotante.value = resp.rg;
+            dataAdocao.value = resp.data_adocao;
+          }
+        })
+      })();
             
       //Arquivo
       function excluirArquivo(dado){
@@ -1147,51 +1074,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
       } 
      
-      window.addTipoExame = async function () {
-    try {
-      let tipoExame = prompt("Cadastre um novo tipo de exame:");
-
-      if (tipoExame === null) return; // Usuário cancelou
-
-      tipoExame = tipoExame.trim();
-
-      if (tipoExame === '') return; // Entrada vazia
-
-      const url = '../../dao/pet/adicionar_tipo_exame.php';
-      const data = new URLSearchParams({ tipo_exame: tipoExame });
-
-      const response = await fetch(url, {
-        method: 'POST',
-        body: data,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Erro na resposta da rede');
-      }
-
-      const responseText = await response.text();
-      gerarTipoExamePet(responseText);
-
-    } catch (error) {
-      console.error('Erro ao adicionar tipo de exame:', error);
-    }
+  async function addTipoExame() {
+  const url = '../../dao/pet/adicionar_tipo_exame.php';
+  let tipoExame = window.prompt("Cadastre um novo tipo de exame:");
+  
+  if (!tipoExame) {
+    return;
+  }
+  
+  tipoExame = tipoExame.trim();
+  if (tipoExame === '') {
+    return;
   }
 
-  function gerarTipoExamePet(response) {
-    const tipoExame = JSON.parse(response);
-    const $tipoExame = $('#tipoExame');
+  const data = new URLSearchParams({ tipo_exame: tipoExame });
 
-    $tipoExame.empty();
-    $tipoExame.append('<option selected disabled>Selecionar...</option>');
-
-    $.each(tipoExame, function(i, item) {
-      $tipoExame.append('<option value="' + item.id_tipo_exame + '">' + item.descricao_exame + '</option>');
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: data,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
 
-    
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+
+    const responseText = await response.text();
+    gerarTipoExamePet(responseText);
+  } catch (error) {
+    console.error('Error adding tipo exame:', error);
+  }
+}
+
+      function gerarTipoExamePet(response)
+      {
+        var tipoExame = JSON.parse(response);
+        $('#tipoExame').empty();
+        $('#tipoExame').append('<option selected disabled>Selecionar...</option>');
+        $.each(tipoExame, function(i, item) 
+        {
+          $('#tipoExame').append('<option value="' + item.id_tipo_exame + '">' + item.descricao_exame + '</option>');
+        });
+      }
       //Funções que fazem a impressão
       $(function(){
         $("#btnPrint").click(function () {
@@ -1367,25 +1292,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       let medics = document.querySelector("#medics");
 
       window.addEventListener("load", ()=>{
-  fetch("../../controle/pet/controleGetMedicamento.php")
-    .then(resp => resp.json())
-    .then(resp => {
-      console.log(resp)
-      let corpo = ''; // Inicializa corretamente
-      resp.forEach(valor => {
-        corpo += `<option value='${valor.id_medicamento}?${valor.nome_medicamento}'>${valor.nome_medicamento}</option>`;
-      });
-      if (selectMedicamento) {
-        selectMedicamento.innerHTML += corpo;
-      } else {
-        console.error("Elemento selectMedicamento não encontrado.");
-      }
-    })
-    .catch(erro => {
-      console.error("Erro ao buscar medicamentos:", erro);
-    });
-});
-
+        fetch("../../controle/pet/controleGetMedicamento.php").then(
+          resp=>{
+            return resp.json();
+          }
+        ).then(
+          resp=>{
+            let corpo;
+            resp.forEach( (valor)=>{
+              corpo +=`<option value='${valor.id_medicamento}?${valor.nome_medicamento}' >${valor.nome_medicamento}</option>`;
+            })
+            selectMedicamento.innerHTML += corpo;
+          }
+        )
+      })
 
       prescreverMedicacao.addEventListener("click", ()=>{
         let dadoMed = selectMedicamento.value;

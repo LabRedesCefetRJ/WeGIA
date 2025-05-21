@@ -34,7 +34,7 @@ class EntradaControle
         $origens = $entradaDAO->listarTodos();
         session_start();
         $_SESSION['entrada']=$origens;
-        header('Location: ../html/listar_entrada.php');
+        header('Location: ../html/matPat/listar_entrada.php');
     }
 
     public function listarTodosComProdutos(){
@@ -43,7 +43,7 @@ class EntradaControle
         $origens = $entradaDAO->listarTodosComProdutos();
         session_start();
         $_SESSION['entrada']=$origens;
-        header('Location: ../html/listar_entrada.php');
+        header('Location: ../html/matPat/listar_entrada.php');
     }
     
     public function incluir(){
@@ -89,7 +89,7 @@ class EntradaControle
 
                 }
             $x++;
-            header('Location: ../html/cadastro_entrada.php');
+            header('Location: ../html/matPat/cadastro_entrada.php');
             }
         } catch (PDOException $e){
             $msg= "Não foi possível adicionar a entrada"."<br>".$e->getMessage();

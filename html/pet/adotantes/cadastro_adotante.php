@@ -1,127 +1,152 @@
 <?php
+include_once("conexao.php");
 session_start();
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ../index.php");
-    exit();
+  header("Location: ../index.php");
 }
 
-// Inclusão segura do config.php
 $config_path = "config.php";
-$max_depth = 5;
-$depth = 0;
-
-while (!file_exists($config_path) && $depth < $max_depth) {
+if (file_exists($config_path)) {
+  require_once($config_path);
+} else {
+  while (true) {
     $config_path = "../" . $config_path;
-    $depth++;
-}
-
-if ($depth === $max_depth || !realpath($config_path) || basename($config_path) !== 'config.php') {
-    die("Erro ao localizar o arquivo de configuração.");
-}
-require_once($config_path);
-
-// Função utilitária
-function negar_acesso($msg = "Você não tem as permissões necessárias para essa página.") {
-    header("Location: ../../home.php?msg_c=" . urlencode($msg));
-    exit();
-}
-
-try {
-    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASSWORD);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    $id_pessoa = $_SESSION['id_pessoa'];
-
-    // Obtem o cargo
-    $stmt = $pdo->prepare("SELECT id_cargo FROM funcionario WHERE id_pessoa = :id_pessoa");
-    $stmt->execute(['id_pessoa' => $id_pessoa]);
-    $id_cargo = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$id_cargo) negar_acesso();
-
-    // Verifica permissão
-    $stmt = $pdo->prepare("
-        SELECT a.id_acao 
-        FROM permissao p 
-        JOIN acao a ON p.id_acao = a.id_acao 
-        JOIN recurso r ON p.id_recurso = r.id_recurso 
-        WHERE p.id_cargo = :id_cargo 
-        AND a.descricao = 'LER, GRAVAR E EXECUTAR' 
-        AND r.descricao = 'Cadastrar Pet'
-    ");
-    $stmt->execute(['id_cargo' => $id_cargo['id_cargo']]);
-    $permissao = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$permissao || $permissao['id_acao'] < 5) negar_acesso();
-
-    // Consulta dados adicionais
-    $situacao = $pdo->query("SELECT * FROM situacao");
-    $cargo = $pdo->query("SELECT * FROM cargo");
-
-} catch (PDOException $e) {
-    die("Erro na conexão: " . $e->getMessage());
-}
-
-// Pega o CPF via GET (protegido)
-$cpf = isset($_GET['cpf']) ? htmlspecialchars($_GET['cpf'], ENT_QUOTES, 'UTF-8') : '';
-
-// Consulta lista de pets
-$sqlConsultaPet = "SELECT id_pet, nome FROM pet";
-$resultadoConsultaPet = $pdo->query($sqlConsultaPet);
-
-
-// Adicionar nova pessoa
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-  $campos = ['cpf','nome','sobrenome','gender','telefone','nascimento','imgperfil','cep','uf','cidade','bairro','logradouro','numero_endereco','complemento'];
-  $dados = [];
-  foreach ($campos as $campo) {
-      $dados[$campo] = !empty($_POST[$campo]) ? trim($_POST[$campo]) : null;
+    if (file_exists($config_path)) break;
   }
-
-  // Validação dos campos obrigatórios (sem 'imgperfil')
-  $obrigatorios = ['cpf','nome','sobrenome','gender','telefone','nascimento','cep','uf','cidade','bairro','logradouro','numero_endereco','complemento'];
-  foreach ($obrigatorios as $campo) {
-      if (is_null($dados[$campo])) {
-          die('Campos obrigatórios não preenchidos.');
-      }
-  }
-
-  try {
-      $stmt = $pdo->prepare("
-          INSERT INTO pessoa (
-              cpf, nome, sobrenome, sexo, telefone, data_nascimento, imagem, 
-              cep, estado, cidade, bairro, logradouro, numero_endereco, complemento
-          ) VALUES (
-              :cpf, :nome, :sobrenome, :sexo, :telefone, :data_nascimento, :imagem, 
-              :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento
-          )
-      ");
-      
-      $stmt->execute([
-          ':cpf' => $dados['cpf'],
-          ':nome' => $dados['nome'],
-          ':sobrenome' => $dados['sobrenome'],
-          ':sexo' => $dados['gender'],
-          ':telefone' => $dados['telefone'],
-          ':data_nascimento' => $dados['nascimento'],
-          ':imagem' => $dados['imgperfil'], // Pode ser null
-          ':cep' => $dados['cep'],
-          ':estado' => $dados['uf'],
-          ':cidade' => $dados['cidade'],
-          ':bairro' => $dados['bairro'],
-          ':logradouro' => $dados['logradouro'],
-          ':numero_endereco' => $dados['numero_endereco'],
-          ':complemento' => $dados['complemento'],
-      ]);
-
-      header("Location: ./informacao_adotantes.php");
-      exit();
-
-  } catch (PDOException $e) {
-      echo "Erro ao inserir: " . $e->getMessage();
-  }
+  require_once($config_path);
 }
+$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+$situacao = $mysqli->query("SELECT * FROM situacao");
+$cargo = $mysqli->query("SELECT * FROM cargo");
+$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+$id_pessoa = $_SESSION['id_pessoa'];
+$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
+if (!is_null($resultado)) {
+  $id_cargo = mysqli_fetch_array($resultado);
+  if (!is_null($id_cargo)) {
+    $id_cargo = $id_cargo['id_cargo'];
+  }
+  $resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN acao a ON(p.id_acao=a.id_acao) JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND a.descricao = 'LER, GRAVAR E EXECUTAR' AND r.descricao='Cadastrar Pet'");
+    if(!is_bool($resultado) and mysqli_num_rows($resultado))
+    {
+        $permissao = mysqli_fetch_array($resultado);
+        if($permissao['id_acao'] < 5)
+        {
+            $msg = "Você não tem as permissões necessárias para essa página.";
+            header("Location: ../../home.php?msg_c=$msg");
+        }
+        $permissao = $permissao['id_acao'];
+    }
+    else
+    {
+        $permissao = 1;
+          $msg = "Você não tem as permissões necessárias para essa página.";
+          header("Location: ../../home.php?msg_c=$msg");
+    }	
+    
+    }
+    else
+    {
+        $permissao = 1;
+        $msg = "Você não tem as permissões necessárias para essa página.";
+        header("Location: ../../home.php?msg_c=$msg");
+    }	
 
+// Pega o CPF passado via GET
+$cpf = $_GET["cpf"];
+
+// Lógica para listar pets
+$sqlConsultaPet = "SELECT id_pet, nome FROM pet;";
+$resultadoConsultaPet = mysqli_query($conexao, $sqlConsultaPet);
+
+// Lógica para adicionar na tabela pessoa
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $cpf = !empty($_POST["cpf"]) ? $_POST["cpf"] : NULL;
+    $nome = !empty($_POST["nome"]) ? $_POST["nome"] : NULL;
+    $sobrenome = !empty($_POST["sobrenome"]) ? $_POST["sobrenome"] : NULL;
+    $sexo = !empty($_POST["gender"]) ? $_POST["gender"] : NULL;
+    $telefone = !empty($_POST["telefone"]) ? $_POST["telefone"] : NULL;
+    $data_nascimento = !empty($_POST["nascimento"]) ? $_POST["nascimento"] : NULL;
+    $imagem = !empty($_POST["imgperfil"]) ? $_POST["imgperfil"] : NULL;
+    $cep = !empty($_POST["cep"]) ? $_POST["cep"] : NULL;
+    $estado = !empty($_POST["uf"]) ? $_POST["uf"] : NULL;
+    $cidade = !empty($_POST["cidade"]) ? $_POST["cidade"] : NULL;
+    $bairro = !empty($_POST["bairro"]) ? $_POST["bairro"] : NULL;
+    $logradouro = !empty($_POST["logradouro"]) ? $_POST["logradouro"] : NULL;
+    $numero_endereco = !empty($_POST["numero_endereco"]) ? $_POST["numero_endereco"] : NULL;
+    $complemento = !empty($_POST["complemento"]) ? $_POST["complemento"] : NULL;
+
+    if (empty($cpf) || empty($nome) || empty($sobrenome)) {
+        die('Campos obrigatórios não preenchidos.');
+    }
+
+    $sqlAdicionarPessoa = "
+        INSERT INTO pessoa (
+            cpf, 
+            nome, 
+            sobrenome, 
+            sexo, 
+            telefone, 
+            data_nascimento, 
+            imagem, 
+            cep, 
+            estado, 
+            cidade, 
+            bairro, 
+            logradouro, 
+            numero_endereco, 
+            complemento
+        ) 
+        VALUES (
+            :cpf,
+            :nome,
+            :sobrenome,
+            :sexo,
+            :telefone,
+            :data_nascimento,
+            :imagem,
+            :cep,
+            :estado,
+            :cidade,
+            :bairro,
+            :logradouro,
+            :numero_endereco,
+            :complemento
+        )
+    ";
+
+    $dsn = 'mysql:host=localhost;dbname=wegia;charset=utf8';  
+    $username = 'wegiauser'; 
+    $password = 'senha';
+
+    try {
+        $conexao = new PDO($dsn, $username, $password);
+        $conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        $stmt = $conexao->prepare($sqlAdicionarPessoa);
+        
+        $stmt->bindParam(':cpf', $cpf);
+        $stmt->bindParam(':nome', $nome);
+        $stmt->bindParam(':sobrenome', $sobrenome);
+        $stmt->bindParam(':sexo', $sexo);
+        $stmt->bindParam(':telefone', $telefone);
+        $stmt->bindParam(':data_nascimento', $data_nascimento);
+        $stmt->bindParam(':imagem', $imagem);
+        $stmt->bindParam(':cep', $cep);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->bindParam(':cidade', $cidade);
+        $stmt->bindParam(':bairro', $bairro);
+        $stmt->bindParam(':logradouro', $logradouro);
+        $stmt->bindParam(':numero_endereco', $numero_endereco);
+        $stmt->bindParam(':complemento', $complemento);
+        
+        $stmt->execute();
+
+        header('Location: ./informacao_adotantes.php');
+    } catch (PDOException $e) {
+        echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
+    }
+}
 ?>
 
 <!DOCTYPE html>
