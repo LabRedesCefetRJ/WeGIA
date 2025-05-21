@@ -1,6 +1,6 @@
 <?php
-include_once '../classes/TipoSaida.php';
-include_once '../dao/TipoSaidaDAO.php';
+include_once ROOT . '/classes/TipoSaida.php';
+include_once ROOT . '/dao/TipoSaidaDAO.php';
 class TipoSaidaControle
 {
     public function verificar(){
@@ -32,8 +32,8 @@ class TipoSaidaControle
             session_start();
             $_SESSION['msg']="Tipo de Saida cadastrado com sucesso";
             $_SESSION['proxima']="Cadastrar outro TipoSaida";
-            $_SESSION['link']="../html/adicionar_tipoSaida.php";
-            header("Location: ../html/cadastro_saida.php");
+            $_SESSION['link']= WWW . "html/matPat/adicionar_tipoSaida.php";
+            header("Location: ". WWW ."html/matPat/cadastro_saida.php");
         } catch (PDOException $e){
             $msg= "Não foi possível registrar o tipo"."<br>".$e->getMessage();
             echo $msg;
@@ -45,7 +45,7 @@ class TipoSaidaControle
         try {
             $tiposaidaDAO=new TipoSaidaDAO();
             $tiposaidaDAO->excluir($id_tipo);
-            header('Location:../html/listar_tipoSaida.php');
+            header('Location: '. WWW .'html/matPat/listar_tipoSaida.php');
         } catch (PDOException $e) {
             echo "ERROR: ".$e->getMessage();
         }

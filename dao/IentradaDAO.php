@@ -1,7 +1,7 @@
 <?php
-require_once'../classes/Ientrada.php';
-require_once'Conexao.php';
-require_once'../Functions/funcoes.php';
+require_once  ROOT . '/classes/Ientrada.php';
+require_once  ROOT . '/dao/Conexao.php';
+require_once  ROOT . '/Functions/funcoes.php';
 class IentradaDAO
 {
     //Consultar um utilizando o ID

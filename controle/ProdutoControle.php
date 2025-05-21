@@ -1,13 +1,13 @@
 <?php
-include_once '../classes/Categoria.php';
-include_once '../dao/CategoriaDAO.php';
-include_once '../classes/Unidade.php';
-include_once '../dao/UnidadeDAO.php';
-include_once '../classes/Produto.php';
-include_once '../dao/ProdutoDAO.php';
+include_once ROOT . '/classes/Categoria.php';
+include_once ROOT . '/dao/CategoriaDAO.php';
+include_once ROOT . '/classes/Unidade.php';
+include_once ROOT . '/dao/UnidadeDAO.php';
+include_once ROOT . '/classes/Produto.php';
+include_once ROOT . '/dao/ProdutoDAO.php';
 
-include_once '../classes/Estoque.php';
-include_once '../dao/EstoqueDAO.php';
+include_once ROOT . '/classes/Estoque.php';
+include_once ROOT . '/dao/EstoqueDAO.php';
 
 class ProdutoControle
 {
@@ -16,15 +16,15 @@ class ProdutoControle
         extract($_REQUEST);
         if ((!isset($descricao)) || empty(($descricao))) {
             $msg .= "descricao do produto nÃ£o informado. Por favor, informe um descricao!";
-            header('Location: ../html/produto.html?msg=' . $msg);
+            header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
         }
         if ((!isset($codigo)) || empty(($codigo))) {
             $msg .= "Código do produto nÃ£o informado. Por favor, informe o código!";
-            header('Location: ../html/produto.html?msg=' . $msg);
+            header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
         }
         if ((!isset($preco)) || empty(($preco))) {
             $msg .= "Preço do produto nÃ£o informado. Por favor, informe um preço!";
-            header('Location: ../html/produto.html?msg=' . $msg);
+            header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
         } else {
             $produto = new produto($descricao, $codigo, $preco);
 
@@ -72,7 +72,7 @@ class ProdutoControle
             $_SESSION['produto'] = $produto;
         } catch (Exception $e) {
             $msg = "Não foi possível listar o produto!";
-            header('Location: ../html/msg.php?msg=' . $msg);
+            header('Location: ' . WWW . 'html/geral/msg.php?msg=' . $msg);
         }
 
         $catDao = new CategoriaDAO();
@@ -111,7 +111,7 @@ class ProdutoControle
             $produtoDAO->incluir($produto);
 
             session_start();
-            header("Location: ../html/cadastro_produto.php");
+            header("Location: ". WWW ."html/matPat/cadastro_produto.php");
         } catch (PDOException $e) {
             $msg = "Não foi possível registrar o produto <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>" . "<br>" . $e->getMessage();
             echo $msg;
@@ -121,7 +121,7 @@ class ProdutoControle
     public function excluir()
     {
         extract($_REQUEST);
-        require_once '../dao/Conexao.php';
+        require_once ROOT . '/dao/Conexao.php';
         $pdo = Conexao::connect();
         $produto = $pdo->query("SELECT qtd FROM estoque WHERE id_produto = $id_produto");
         $registros = $pdo->query("SELECT * FROM isaida WHERE id_produto=$id_produto")->fetch(PDO::FETCH_ASSOC) || $pdo->query("SELECT * FROM ientrada WHERE id_produto=$id_produto")->fetch(PDO::FETCH_ASSOC);
@@ -131,24 +131,24 @@ class ProdutoControle
                 try {
                     $produtoDAO = new ProdutoDAO();
                     $produtoDAO->excluir($id_produto);
-                    header('Location:../html/listar_produto.php');
+                    header('Location:'. WWW .'html/matPat/listar_produto.php');
                 } catch (PDOException $e) {
                     echo "ERROR";
                 }
             } else {
-                header('Location: ../html/remover_produto.php?id_produto=' . $id_produto);
+                header('Location: '. WWW .'html/matPat/remover_produto.php?id_produto=' . $id_produto);
             }
         } else {
             if (!$registros) {
                 try {
                     $produtoDAO = new ProdutoDAO();
                     $produtoDAO->excluir($id_produto);
-                    header('Location:../html/listar_produto.php');
+                    header('Location: '. WWW .'html/matPat/listar_produto.php');
                 } catch (PDOException $e) {
                     echo "ERROR";
                 }
             } else {
-                header('Location: ../html/remover_produto.php?id_produto=' . $id_produto);
+                header('Location: '. WWW .'html/matPat/remover_produto.php?id_produto=' . $id_produto);
             }
         }
     }
