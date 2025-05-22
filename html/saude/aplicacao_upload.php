@@ -1,52 +1,82 @@
-<pre>
 <?php
-
-ini_set('display_errors',1);
-ini_set('display_startup_erros',1);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+header('Content-Type: application/json'); // <-- Isso é essencial
+
 session_start();
-extract($_REQUEST);
-if (!isset($_SESSION["usuario"])){
-    header("Location: ../../index.php");
+
+if (!isset($_SESSION["usuario"])) {
+    echo json_encode(["status" => "erro", "mensagem" => "Usuário não autenticado"]);
+    exit;
 }
+
 require_once "../../dao/Conexao.php";
 
 $pdo = Conexao::connect();
-$id_medicacao = $_GET['id_medicacao'];
+$dados = json_decode(file_get_contents('php://input'), true);
 
-$pessoa_id_pessoa = $_GET['id_pessoa'];
-
-// $funcionario_id_funcionario = $_GET['id_funcionario'];
-$teste = $pdo->query("SELECT id_funcionario FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa = " .$_SESSION['id_pessoa'])->fetchAll(PDO::FETCH_ASSOC);
-$funcionario_id_funcionario = $teste[0]['id_funcionario'];
-
-// echo file_put_contents('id_pessoa.txt',$pessoa_id_pessoa);
-// echo file_put_contents('id_func.txt',$funcionario_id_funcionario);
-
-date_default_timezone_set('America/Sao_Paulo');
-    
-$aplicacao = date('Y-m-d H:i:s', time()); 
-
-$id_fichamedica = $_SESSION['id_upload_med'];
-
-try {
-    $pdo = Conexao::connect();
-    $prep = $pdo->prepare("INSERT INTO saude_medicamento_administracao(aplicacao, saude_medicacao_id_medicacao, pessoa_id_pessoa, funcionario_id_funcionario) VALUES (:aplicacao, :saude_medicacao_id_medicacao, :pessoa_id_pessoa, :funcionario_id_funcionario)");
-
-    $prep->bindValue(":aplicacao", $aplicacao);
-    $prep->bindValue(":saude_medicacao_id_medicacao", $id_medicacao);
-    $prep->bindValue(":pessoa_id_pessoa", $pessoa_id_pessoa);
-    $prep->bindValue(":funcionario_id_funcionario", $funcionario_id_funcionario);
-
-    $prep->execute();
-
-    if(isset($id_fichamedica))
-        header("Location: aplicar_medicamento.php?id_fichamedica=$id_fichamedica");
-} catch (PDOException $e) {
-    echo("Houve um erro ao realizar o upload das aplicações:<br><br>$e");
+if (!$dados) {
+    echo json_encode(["status" => "erro", "mensagem" => "Dados inválidos"]);
+    exit;
 }
 
+$id_medicacao = $dados['id_medicacao'] ?? null;
+$pessoa_id_pessoa = $dados['id_pessoa'] ?? null;
+$aplicacao = $dados['dataHora'] ?? null;
+$id_fichamedica = $_SESSION['id_upload_med'] ?? null;
 
+if (!$id_medicacao || !$pessoa_id_pessoa || !$aplicacao) {
+    echo json_encode(["status" => "erro", "mensagem" => "Campos obrigatórios ausentes"]);
+    exit;
+}
 
+try {
+    $stmt = $pdo->prepare("
+        SELECT id_funcionario 
+        FROM pessoa p 
+        JOIN funcionario f ON (p.id_pessoa = f.id_pessoa) 
+        WHERE f.id_pessoa = ?
+    ");
+    $stmt->execute([$_SESSION['id_pessoa']]);
+    $func = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    if (!$func) {
+        echo json_encode(["status" => "erro", "mensagem" => "Funcionário não encontrado"]);
+        exit;
+    }
+
+    $funcionario_id_funcionario = $func['id_funcionario'];
+
+    date_default_timezone_set('America/Sao_Paulo');
+    $registro = date('Y-m-d H:i:s');
+
+    $prep = $pdo->prepare("
+        INSERT INTO saude_medicamento_administracao (
+            aplicacao, registro, saude_medicacao_id_medicacao, 
+            pessoa_id_pessoa, funcionario_id_funcionario
+        ) VALUES (
+            :aplicacao, :registro, :saude_medicacao_id_medicacao, 
+            :pessoa_id_pessoa, :funcionario_id_funcionario
+        )
+    ");
+
+    $prep->execute([
+        ':aplicacao' => $aplicacao,
+        ':registro' => $registro,
+        ':saude_medicacao_id_medicacao' => $id_medicacao,
+        ':pessoa_id_pessoa' => $pessoa_id_pessoa,
+        ':funcionario_id_funcionario' => $funcionario_id_funcionario
+    ]);
+
+    echo json_encode([
+        "status" => "sucesso",
+        "mensagem" => "Aplicação registrada com sucesso"
+    ]);
+} catch (PDOException $e) {
+    echo json_encode([
+        "status" => "erro",
+        "mensagem" => "Erro ao registrar aplicação: " . $e->getMessage()
+    ]);
+}
