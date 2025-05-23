@@ -1,13 +1,13 @@
 <?php
-include_once '../classes/Destino.php';
-include_once '../dao/DestinoDAO.php';
+include_once ROOT . '/classes/Destino.php';
+include_once ROOT . '/dao/DestinoDAO.php';
 class DestinoControle
 {
     public function verificar(){
         extract($_REQUEST);
         if((!isset($nome)) || (empty($nome))){
             $msg = "Nome do destino nÃ£o informado. Por favor, informe um nome!";
-            header('Location: ../html/destino.html?msg='.$msg);
+            header('Location: '. WWW .'html/destino.html?msg='.$msg);
         }
         if((!isset($cnpj)) || (empty($cnpj))){
             $cnpj='';
@@ -47,8 +47,8 @@ class DestinoControle
             session_start();
             $_SESSION['msg']="Destino cadastrado com sucesso";
             $_SESSION['proxima']="Cadastrar outro Destino";
-            $_SESSION['link']="../html/cadastro_destino.php";
-            header("Location: ../html/cadastro_destino.php");
+            $_SESSION['link']= WWW . "html/matPat/cadastro_destino.php";
+            header("Location: ". WWW ."html/matPat/cadastro_destino.php");
         } catch (PDOException $e){
             $msg= "Não foi possível registrar o tipo"."<br>".$e->getMessage();
             echo $msg;
@@ -59,7 +59,7 @@ class DestinoControle
         try {
             $destinoDAO=new DestinoDAO();
             $destinoDAO->excluir($id_destino);
-            header('Location:../html/listar_destino.php');
+            header('Location: '. WWW .'html/matPat/listar_destino.php');
         } catch (PDOException $e) {
             echo "ERROR: ".$e->getMessage();
         }
