@@ -73,7 +73,7 @@ if (isset($_GET['id_pet'])) {
 
       // BUSCA ADOTAÇÃO DO PET
       $stmtAdocao = $conexao->prepare("
-          SELECT a.data_adocao, a.id_pessoa, p.nome, p.rg 
+          SELECT a.data_adocao, a.id_pessoa, p.nome
           FROM pet_adocao a 
           INNER JOIN pessoa p ON a.id_pessoa = p.id_pessoa 
           WHERE a.id_pet = :idPet

@@ -21,12 +21,10 @@
 	}
 	
 	// Conexão única com PDO
-$dsn = 'mysql:host=localhost;dbname=wegia;charset=utf8';  
-$username = 'dev'; 
-$password = 'senha';
+
 
 try {
-	$conexao = new PDO($dsn, $username, $password);
+	$conexao = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASSWORD);
 	$conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 	$id_pessoa = $_SESSION['id_pessoa'];
