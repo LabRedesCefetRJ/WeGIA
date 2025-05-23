@@ -1858,31 +1858,39 @@ try {
       }
 
       function adicionar_enfermidade() {
-        url = 'adicionar_enfermidade.php';
+        const url = 'adicionar_enfermidade.php';
+        
         let nome_enfermidade = window.prompt("Insira o nome da enfermidade:");
         let cid_enfermidade = window.prompt("Insira o CID da enfermidade:");
-        let situacao = [cid_enfermidade, nome_enfermidade]
 
         if (!nome_enfermidade || !cid_enfermidade) {
-          return
-        }
-        if (nome_enfermidade == '' || cid_enfermidade == '') {
-          return
+          return;
         }
 
-        data = {
-          cid: cid_enfermidade,
-          nome: nome_enfermidade
-        };
-        console.log(data);
-        $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response) {
-            gerarEnfermidade();
+        const data = new URLSearchParams();
+        data.append('cid', cid_enfermidade);
+        data.append('nome', nome_enfermidade);
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
+          body: data.toString()
         })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erro na requisição');
+          }
+          return response.text();
+        })
+        .then(result => {
+          console.log('Resposta:', result);
+          gerarEnfermidade();
+        })
+        .catch(error => {
+          console.error('Erro ao enviar dados:', error);
+        });
       }
 
 
