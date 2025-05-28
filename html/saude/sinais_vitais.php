@@ -12,7 +12,7 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 if (!isset($_SESSION['id_fichamedica'])) {
-  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/historico_paciente.php');
+  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/sinais_vitais.php');
 }
 
 $config_path = "config.php";
@@ -26,39 +26,7 @@ if (file_exists($config_path)) {
   require_once($config_path);
 }
 
-
-require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
-
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = mysqli_real_escape_string($conexao, $_SESSION['id_pessoa']);
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND r.descricao='Módulo Saúde'");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    if ($permissao['id_acao'] < 5) {
-      $msg = "Você não tem as permissões necessárias para essa página.";
-      header("Location: ../home.php?msg_c=$msg");
-      exit();
-    }
-    $permissao = $permissao['id_acao'];
-  } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../home.php?msg_c=$msg");
-    exit();
-  }
-} else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: ../home.php?msg_c=$msg");
-  exit();
-}
+require_once "./verifica_permissao_saude.php";
 
 include_once '../../classes/Cache.php';
 require_once "../personalizacao_display.php";
@@ -78,23 +46,8 @@ require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
 if (!isset($teste)) {
-  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/historico_paciente.php?id_fichamedica=' . $id . '&id=' . $id);
+  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/sinais_vitais.php?id_fichamedica=' . $id . '&id=' . $id);
 }
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-
-$sqlMedicacao = "SELECT * FROM saude_medicacao sm JOIN saude_atendimento sa ON(sm.id_atendimento=sa.id_atendimento) JOIN saude_fichamedica sf ON(sa.id_fichamedica=sf.id_fichamedica) WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1 and sf.id_fichamedica=:idFichaMedica";
-
-$stmtMedicacao = $pdo->prepare($sqlMedicacao);
-
-$stmtMedicacao->bindParam(':idFichaMedica', $id);
-$stmtMedicacao->execute();
-
-$exibimedparaenfermeiro = $stmtMedicacao->fetchAll(PDO::FETCH_ASSOC);
-$exibimedparaenfermeiro = json_encode($exibimedparaenfermeiro);
-
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$medicamentoenfermeiro = $mysqli->query("SELECT * FROM saude_medicacao");
-$medstatus = $mysqli->query("SELECT * FROM saude_medicacao_status");
 
 $teste = $pdo->query("SELECT nome, f.id_funcionario FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa = " . $_SESSION['id_pessoa'])->fetchAll(PDO::FETCH_ASSOC);
 $id_funcionario = $teste[0]['nome'];
@@ -114,21 +67,6 @@ foreach ($sinaisvitais as $key => $value) {
 }
 
 $sinaisvitais = json_encode($sinaisvitais);
-
-$sqlProntuarioPublico = "SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica=:idFichaMedica";
-
-$stmtProntuarioPublico = $pdo->prepare($sqlProntuarioPublico);
-
-$stmtProntuarioPublico->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
-
-if (!$stmtProntuarioPublico->execute()) {
-  http_response_code(500);
-  echo json_encode(['erro' => 'Erro ao buscar descrição da ficha médica']);
-  exit();
-}
-
-$prontuariopublico = $stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC);
-$prontuariopublico = json_encode($prontuariopublico);
 
 $sqlPaciente = "SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica =:idFichaMedica";
 
@@ -265,63 +203,16 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
   <script>
     $(function() {
-      // pega no SaudeControle, listarUm //
-
-      if (localStorage.getItem("currentTab") === "2") {
-        $("#tab1").removeClass("active");
-        $("#tab2").addClass("active");
-        $("#overview").removeClass("active");
-        $("#atendimento_enfermeiro").addClass("active");
-
-      }
-
       var interno = <?php echo $_SESSION['id_fichamedica']; ?>;
       $.each(interno, function(i, item) {
         if (i = 1) {
-          $("#formulario").append($("<input type='hidden' name='id_fichamedica' value='" + item.id + "'>"));
-          $("#nome").text("Nome: " + item.nome + ' ' + item.sobrenome);
-          $("#nome").val(item.nome + " " + item.sobrenome);
-
           if (item.imagem != "" && item.imagem != null) {
             $("#imagem").attr("src", "data:image/gif;base64," + item.imagem);
           } else {
             $("#imagem").attr("src", "../../img/semfoto.png");
           }
-          if (item.sexo == "m") {
-            $("#sexo").html("Sexo: <i class='fa fa-male'></i>  Masculino");
-            $("#radioM").prop('checked', true);
-          } else if (item.sexo == "f") {
-            $("#sexo").html("Sexo: <i class='fa fa-female'>  Feminino");
-            $("#radioF").prop('checked', true);
-          }
-
-          $("#nascimento").text("Data de nascimento: " + item.data_nascimento);
-          $("#nascimento").val(item.data_nascimento);
-
-          $("#exibirtipo").show();
-          $("#sangue").text("Sangue: " + item.tipo_sanguineo);
-          $("#sangue").val(item.tipo_sanguineo);
-
         }
       });
-    });
-
-
-
-
-    $(function() {
-      var prontuariopublico = <?= $prontuariopublico ?>;
-
-      console.log(prontuariopublico);
-      let stringConcatenada = "";
-
-      $.each(prontuariopublico, function(i, item) {
-        stringConcatenada += item.descricao;
-      });
-      $("#prontuario_publico")
-        .append($("<tr>")
-          .append($("<td>")).html(stringConcatenada)
-        )
     });
 
 
@@ -441,18 +332,6 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
       margin-top: 10px;
     }
 
-    #prontuario_publico tr p {
-      max-width: 450px;
-      word-wrap: break-word;
-    }
-
-    @media(max-width:768px) {
-      #prontuario_publico tr p {
-        max-width: 250px;
-        word-wrap: break-word;
-      }
-    }
-
     .custom-input {
       color: #555555;
       background-color: #fff;
@@ -515,83 +394,14 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
           <div class="col-md-9 col-lg-9">
             <div class="tabs">
               <ul class="nav nav-tabs tabs-primary">
-                <li class="active" id="tab1">
-                  <a href="#overview" data-toggle="tab">Informações Pessoais</a>
-                </li>
-                <li id="tab2">
+                <li id="tab1" class="active">
                   <a href="#atendimento_enfermeiro" data-toggle="tab">Sinais vitais</a>
-                </li>
-                <li id="tab3">
-                  <a href="#cadastro_emergencia" data-toggle="tab">Informar Intercorrência</a>
                 </li>
               </ul>
 
               <div class="tab-content">
-                <div id="overview" class="tab-pane active">
-                  <form class="form-horizontal" method="post" action="../../controle/control.php">
-                    <input type="hidden" name="nomeClasse" value="SaudeControle">
-                    <section class="panel">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a href="#" class="fa fa-caret-down"></a>
-                        </div>
-                        <h2 class="panel-title">Informações pessoais</h2>
-                      </header>
-
-                      <div class="panel-body">
-                        <hr class="dotted short">
-                        <fieldset>
-
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
-                            <div class="col-md-8">
-                              <input type="text" class="form-control" disabled name="nome" id="nome">
-                            </div>
-                          </div>
-
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
-                            <div class="col-md-8">
-                              <label><input type="radio" name="gender" id="radioM" id="M" disabled value="m" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-male" style="font-size: 20px;"> </i></label>
-                              <label><input type="radio" name="gender" id="radioF" disabled id="F" value="f" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
-                            </div>
-                          </div>
-
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
-                            <div class="col-md-8">
-                              <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" disabled id="nascimento" max=<?php echo date('Y-m-d'); ?>>
-                            </div>
-                          </div>
-
-                          <div class="form-group" id="exibirtipo" style="display:none;">
-                            <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
-                            <div class="col-md-6">
-                              <input class="form-control input-lg mb-md" name="tipoSanguineo" disabled id="sangue">
-                            </div>
-                          </div>
-
-                          <div class="col-md-12">
-                            <table class="table table-bordered table-striped mb-none">
-                              <thead>
-                                <tr style="font-size:15px;">
-                                  <th>Prontuário público</th>
-                                </tr>
-                              </thead>
-                              <tbody id="prontuario_publico" style="font-size:15px;">
-
-                              </tbody>
-                            </table>
-                          </div>
-
-                      </div>
-                    </section>
-                  </form>
-                </div>
-
-
                 <!-- aba de atendimento enfermeiro -->
-                <div id="atendimento_enfermeiro" class="tab-pane">
+                <div id="atendimento_enfermeiro" class="tab-pane active">
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
@@ -704,96 +514,6 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
 
                   </section>
                 </div>
-
-                <div id="cadastro_emergencia" class="tab-pane">
-                  <section class="panel">
-                    <header class="panel-heading">
-                      <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
-                      </div>
-                      <h2 class="panel-title">Cadastro de intercorrências</h2>
-                    </header>
-                    <div class="panel-body">
-                      <form method="post" action="../../controle/control.php">
-                        <input type="hidden" name="nomeClasse" value="AvisoControle">
-                        <input type="hidden" name="metodo" value="incluir">
-                        <input type="hidden" name="idpaciente" value="<?php echo $idPaciente['id_pessoa']; ?>">
-                        <input type="hidden" name="idfuncionario" value="<?php echo $funcionario_id; ?>">
-                        <input type="hidden" name="idfichamedica" value="<?php echo $id; ?>">
-
-                        <div class="form-group">
-                          <label for="descricao_emergencia">Descrição da Intercorrência</label>
-                          <textarea class="form-control" name="descricao_emergencia" id="" cols="30" rows="10" placeholder="Insira aqui a descrição do ocorrido..." required></textarea>
-                        </div>
-
-                        <input type="submit" id="btn-cadastrar-emergencia" class="btn btn-primary" value="Cadastrar">
-                      </form>
-                    </div>
-                  </section>
-                </div>
-
-                <aside id="sidebar-right" class="sidebar-right">
-                  <div class="nano">
-                    <div class="nano-content">
-                      <a href="#" class="mobile-close visible-xs">
-                        Collapse <i class="fa fa-chevron-right"></i>
-                      </a>
-                      <div class="sidebar-right-wrapper">
-                        <div class="sidebar-widget widget-calendar">
-                          <h6>Upcoming Tasks</h6>
-                          <div data-plugin-datepicker data-plugin-skin="dark"></div>
-                          <ul>
-                            <li>
-                              <time datetime="2014-04-19T00:00+00:00">04/19/2014</time>
-                              <span>Company Meeting</span>
-                            </li>
-                          </ul>
-                        </div>
-                        <div class="sidebar-widget widget-friends">
-                          <h6>Friends</h6>
-                          <ul>
-                            <li class="status-online">
-                              <figure class="profile-picture">
-                                <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
-                              </figure>
-                              <div class="profile-info">
-                                <span class="name">Joseph Doe Junior</span>
-                                <span class="title">Hey, how are you?</span>
-                              </div>
-                            </li>
-                            <li class="status-online">
-                              <figure class="profile-picture">
-                                <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
-                              </figure>
-                              <div class="profile-info">
-                                <span class="name">Joseph Doe Junior</span>
-                                <span class="title">Hey, how are you?</span>
-                              </div>
-                            </li>
-                            <li class="status-offline">
-                              <figure class="profile-picture">
-                                <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
-                              </figure>
-                              <div class="profile-info">
-                                <span class="name">Joseph Doe Junior</span>
-                                <span class="title">Hey, how are you?</span>
-                              </div>
-                            </li>
-                            <li class="status-offline">
-                              <figure class="profile-picture">
-                                <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
-                              </figure>
-                              <div class="profile-info">
-                                <span class="name">Joseph Doe Junior</span>
-                                <span class="title">Hey, how are you?</span>
-                              </div>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </aside>
       </section>
       <!-- Vendor -->
       <script src="../../assets/vendor/select2/select2.js"></script>
@@ -807,69 +527,6 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
       <script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
       <script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
       <script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
-      <div class="modal fade" id="excluirimg" role="dialog">
-        <div class="modal-dialog">
-          <!-- Modal content-->
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">×</button>
-              <h3>Excluir um Documento</h3>
-            </div>
-            <div class="modal-body">
-              <p> Tem certeza que deseja excluir a imagem desse documento? Essa ação não poderá ser desfeita! </p>
-              <form action="../../controle/control.php" method="GET">
-                <input type="hidden" name="id_documento" id="excluirdoc">
-                <input type="hidden" name="nomeClasse" value="DocumentoControle">
-                <input type="hidden" name="metodo" value="excluir">
-                <input type="hidden" name="id" value="">
-                <input type="submit" value="Confirmar" class="btn btn-success">
-                <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-      <iv class="modal fade" id="editimg" role="dialog">
-        <div class="modal-dialog">
-          <!-- Modal content-->
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">×</button>
-              <h3>Alterar um Documento</h3>
-            </div>
-            <div class="modal-body">
-              <p> Selecione o benefício referente a nova imagem</p>
-              <form action="../../controle/control.php" method="POST" enctype="multipart/form-data">
-                <select name="descricao" id="teste">
-                  <option value="Certidão de Nascimento">Certidão de Nascimento</option>
-                  <option value="Certidão de Casamento">Certidão de Casamento</option>
-                  <option value="Curatela">Curatela</option>
-                  <option value="INSS">INSS</option>
-                  <option value="LOAS">LOAS</option>
-                  <option value="FUNRURAL">FUNRURAL</option>
-                  <option value="Título de Eleitor">Título de Eleitor</option>
-                  <option value="CTPS">CTPS</option>
-                  <option value="SAF">SAF</option>
-                  <option value="SUS">SUS</option>
-                  <option value="BPC">BPC</option>
-                  <option value="CPF">CPF</option>
-                  <option value="Registro Geral">RG</option>
-                </select><br />
-
-                <p> Selecione a nova imagem</p>
-                <div class="col-md-12">
-                  <input type="file" name="doc" size="60" class="form-control">
-                </div><br />
-                <input type="hidden" name="id_documento" id="id_documento">
-                <input type="hidden" name="id" value="">
-                <input type="hidden" name="nomeClasse" value="DocumentoControle">
-                <input type="hidden" name="metodo" value="alterar">
-                <input type="submit" value="Confirmar" class="btn btn-success">
-                <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-              </form>
-            </div>
-          </div>
-        </div>
     </div>
     <!-- Vendor -->
     <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
@@ -895,6 +552,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
     <div align="right">
       <iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>
     </div>
+  </section>
 </body>
 
 </html>

@@ -736,10 +736,16 @@
 								<h4>Medicamentos</h4>
 							</div>
 						</a>
-						<a href="<?= WWW ?>html/saude/listar_historico_pacientes.php">	
+						<a href="<?= WWW ?>html/saude/listar_sinais_vitais.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-address-book"></i>
-								<h4>Histórico dos pacientes</h4>
+								<h4>Sinais Vitais</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/saude/listar_cadastro_intercorrencia.php">	
+							<div class="col-lg-2 col-md-8 i">
+								<i  class="fa fa-edit"></i>
+								<h4>Intercorrências</h4>
 							</div>
 						</a>
 					</div>

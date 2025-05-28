@@ -403,8 +403,13 @@
 										</a>
 									</li>
 									<li>
-										<a href="<?= WWW ?>html/saude/listar_historico_pacientes.php">
-											<span>Histórico dos pacientes</span>
+										<a href="<?= WWW ?>html/saude/listar_sinais_vitais.php">
+											<span>Sinais Vitais</span>
+										</a>
+									</li>
+									<li>
+										<a href="<?= WWW ?>html/saude/listar_cadastro_intercorrencia.php">
+											<span>Intercorrências</span>
 										</a>
 									</li>
 								</ul>
