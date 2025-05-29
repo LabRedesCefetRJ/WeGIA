@@ -176,142 +176,136 @@ if (isset($_GET['msg'])) {
       </header>
       <!-- start: page -->
       <div class="row" id="formulario">
-        <form action="#" method="POST" id="formsubmit" enctype="multipart/form-data" target="frame">
-          <div class="col-md-4 col-lg-3">
-            <section class="panel">
-              <div class="panel-body">
-                <div class="thumb-info mb-md">
+      <form class="form-horizontal" method="POST" action="../../controle/pet/controlPet.php" enctype="multipart/form-data" onsubmit="verificarDataAcolhimento()">
+  <div class="row">
+  <div class="col-md-4 col-lg-3">
+  <section class="panel">
+    <div class="panel-body">
+      <div class="thumb-info mb-md">
+        <!-- Pré-visualização da imagem -->
+        <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
+        <img id="previewImagemPet" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
+        
+        <!-- Input para imagem -->
+    
+      </div>
+    </div>
+  </section>
+</div>
+
+
+    <div class="col-md-8 col-lg-8">
+      <div class="tabs">
+        <ul class="nav nav-tabs tabs-primary">
+          <li class="active">
+            <a href="#overview" data-toggle="tab">Cadastro dos Pets</a>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div id="overview" class="tab-pane active">
+            <h4 class="mb-xlg">Informações do Pet</h4>
+            <h5 class="obrig">Campos Obrigatórios(*)</h5>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="nome">Nome<sup class="obrig">*</sup></label>
+              <div class="col-md-8">
+                <input type="text" class="form-control" name="nome" id="nome" onkeypress="return Onlychars(event)" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="cor">Cor<sup class="obrig">*</sup></label>
+              <a onclick="adicionar_cor()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+              <div class="col-md-8">
+                <select class="form-control input-lg mb-md" name="cor" id="cor" required>
+                  <option selected disabled>Selecionar</option>
                   <?php
-                  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                    if (isset($_FILES['imgperfil'])) {
-                      $image = file_get_contents($_FILES['imgperfil']['tmp_name']);
-                      $_SESSION['nome_imagem'] = $_FILES['imgperfil']['name'];
-                      $_SESSION['imagem'] = $image;
-                      echo '<img src="data:image/gif;base64,' . base64_encode($image) . '" class="rounded img-responsive" alt="John Doe">';
-                    }
+                  while ($row = $cor->fetch_array(MYSQLI_NUM)) {
+                    echo "<option value='{$row[0]}'>{$row[1]}</option>";
                   }
                   ?>
-                  <input type="file" class="image_input form-control" onclick="okDisplay()" name="imgperfil" id="imgform">
-                  <div id="display_image" class="thumb-info mb-md"></div>
-                  <div id="botima">
-                    <h5 id="okText"></h5>
-                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(event, this)" id="okButton" value="Ok">
+                </select>
+              </div>
+            </div>
 
-                  </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="especie">Espécie<sup class="obrig">*</sup></label>
+              <a onclick="adicionar_especie()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+              <div class="col-md-8">
+                <select class="form-control input-lg mb-md" name="especie" id="especie" required>
+                  <option selected disabled>Selecionar</option>
+                  <?php
+                  while ($row = $especie->fetch_array(MYSQLI_NUM)) {
+                    echo "<option value='{$row[0]}'>{$row[1]}</option>";
+                  }
+                  ?>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="raca">Raça<sup class="obrig">*</sup></label>
+              <a onclick="adicionar_raca()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+              <div class="col-md-8">
+                <select class="form-control input-lg mb-md" name="raca" id="raca" required>
+                  <option selected disabled>Selecionar</option>
+                  <?php
+                  while ($row = $raca->fetch_array(MYSQLI_NUM)) {
+                    echo "<option value='{$row[0]}'>{$row[1]}</option>";
+                  }
+                  ?>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="gender">Sexo<sup class="obrig">*</sup></label>
+              <div class="col-md-8">
+                <label><input type="radio" name="gender" value="m" style="margin: 10px 5px 0 15px;" required><i class="fa fa-mars" style="font-size: 20px;"></i></label>
+                <label><input type="radio" name="gender" value="f" style="margin: 10px 5px 0 15px;"><i class="fa fa-venus" style="font-size: 20px;"></i></label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="nascimento">Data de Nascimento Aproximada<sup class="obrig">*</sup></label>
+              <div class="col-md-8">
+                <input type="date" class="form-control" name="nascimento" id="nascimento" max="<?php echo date('Y-m-d'); ?>" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="acolhimento">Data de Acolhimento<sup class="obrig">*</sup></label>
+              <div class="col-md-8">
+                <input type="date" class="form-control" name="acolhimento" id="acolhimento" max="<?php echo date('Y-m-d'); ?>" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="caracEsp">Características Específicas</label>
+              <div class="col-md-8">
+                <input type="text" class="form-control" name="caracEsp" id="caracEsp">
+              </div>
+            </div>
+
+            <hr class="dotted short">
+
+            <div class="panel-footer">
+              <div class="row">
+                <div class="col-md-9 col-md-offset-3">
+                  <input type="hidden" name="nomeClasse" value="PetControle">
+                  <input type="hidden" name="metodo" value="incluir">
+                  <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="validarFuncionario()">
+                  <input type="reset" class="btn btn-default">
                 </div>
               </div>
-            </section>
-          </div>
-        </form>
-        <div class="col-md-8 col-lg-8">
-          <div class="tabs">
-            <ul class="nav nav-tabs tabs-primary">
-              <li class="active">
-                <a href="#overview" data-toggle="tab">Cadastro dos Pets</a>
-              </li>
-            </ul>
-            <div class="tab-content">
-              <div id="overview" class="tab-pane active">
-                <form class="form-horizontal" method="POST" action="../../controle/pet/controlPet.php" onsubmit="verificarDataAcolhimento()">
-                  <h4 class="mb-xlg">Informações do Pet</h4>
-                  <h5 class="obrig">Campos Obrigatórios(*)</h5>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="nome">Nome<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
-                      <input type="text" class="form-control" name="nome" id="nome" onkeypress="return Onlychars(event)" required="required">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="cor">Cor<sup class="obrig">*</sup></label>
-                    <a onclick="adicionar_cor()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                    <div class="col-md-8">
-                      <!-- <input type="text" class="form-control" name="cor" id="cor" onkeypress="return Onlychars(event)" required> -->
-                      <select class="form-control input-lg mb-md" name="cor" id="cor" required="required">
-                        <option selected disabled>Selecionar</option>
-                        <?php
-                        while ($row = $cor->fetch_array(MYSQLI_NUM)) {
-                          echo "<option value=" . $row[0] . ">" . $row[1] . "</option>";
-                        }
-                        ?>
-                        <!-- <option value=1>cor1</option>
-                        <option value=2>cor2</option>
-                        <option value=3>cor3</option> -->
-                      </select>
-                      <?php
-                      ?>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="especie">Espécie<sup class="obrig">*</sup></label>
-                    <a onclick="adicionar_especie()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                    <div class="col-md-8">
-                      <!-- <input type="text" class="form-control" name="especie" id="especie" required> -->
-                      <select class="form-control input-lg mb-md" name="especie" id="especie" required="required">
-                        <option selected disabled>Selecionar</option>
-                        <?php
-                        while ($row = $especie->fetch_array(MYSQLI_NUM)) {
-                          echo "<option value=" . $row[0] . ">" . $row[1] . "</option>";
-                        }
-                        ?>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="raca">Raça<sup class="obrig">*</sup></label>
-                    <a onclick="adicionar_raca()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                    <div class="col-md-8">
-                      <!-- <input type="text" class="form-control" name="raca" id="raca" required> -->
-                      <select class="form-control input-lg mb-md" name="raca" id="raca" required="required">
-                        <option selected disabled>Selecionar</option>
-                        <?php
-                        while ($row = $raca->fetch_array(MYSQLI_NUM)) {
-                          echo "<option value=" . $row[0] . ">" . $row[1] . "</option>";
-                        }
-                        ?>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="gender">Sexo<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
-                      <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;margin-right: 5px;" required><i class="fa fa-mars" style="font-size: 20px;"></i></label>
-                      <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;margin-right: 5px;"><i class="fa fa-venus" style="font-size: 20px;"></i> </label>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="nascimento">Data de Nascimento Aproximada<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
-                      <input type="date" class="form-control" maxlength="10" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?> required>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="acolhimento">Data de Acolhimento<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
-                      <input type="date" class="form-control" maxlength="10" name="acolhimento" id="acolhimento" max=<?php echo date('Y-m-d'); ?> required>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="caracEsp">Características Específicas</label>
-                    <div class="col-md-8">
-                      <input type="text" class="form-control" name="caracEsp" id="caracEsp">
-                    </div>
-                  </div>
-                  <hr class="dotted short">
+            </div>
+          </div> 
+        </div> 
+      </div> 
+    </div> 
+  </div> 
+</form>
 
-                  <div class="panel-footer">
-                    <div class="row">
-                      <div class="col-md-9 col-md-offset-3">
-                        <input type="hidden" name="nomeClasse" value="PetControle">
-                        <!--<input type="hidden" name="nomeClasse" value="FuncionarioControle">-->
-                        <!--<input type="hidden" name="cpf" value="<?php echo $cpf ?>">-->
-                        <input type="hidden" name="metodo" value="incluir">
-                        <!--<input type="hidden" name="nomeFoto" value="<?php echo $imagem ?>">-->
-                        <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="validarFuncionario()">
-                        <input type="reset" class="btn btn-default">
-                      </div>
-                    </div>
-                  </div>
-                </form>
                 <!--<iframe name="frame"></iframe>!-->
                 <!-- end: page -->
     </section>
@@ -360,6 +354,28 @@ if (isset($_GET['msg'])) {
     }
   </style>
   <script type="text/javascript">
+    //Exibir imagem
+
+    document.getElementById('imgform').addEventListener('change', function(event) {
+  const input = event.target;
+  const preview = document.getElementById('previewImagemPet');
+
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    }
+
+    reader.readAsDataURL(input.files[0]);
+  } else {
+    preview.src = "#";
+    preview.style.display = "none";
+  }
+});
+
+
     //Pedro
     /** Aqui começa a implementação das funções relacionada a "PET" */
     // funções relacionadas a datas

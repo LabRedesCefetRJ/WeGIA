@@ -91,33 +91,50 @@ if (isset($_GET['id_pet'])) {
 
 // Lógica para adicionar no banco de dados
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Lógica de Adoção
-    $adotante = !empty($_POST["adotante_input"]) ? $_POST["adotante_input"] : NULL;
-    $dataAdocao = !empty($_POST["dataAdocao"]) ? $_POST["dataAdocao"] : NULL;
-    $idPet = !empty($_POST["id_pet"]) ? $_POST["id_pet"] : NULL;
+  // Lógica de Adoção
+  $adotante = !empty($_POST["adotante_input"]) ? $_POST["adotante_input"] : NULL;
+  $dataAdocao = !empty($_POST["dataAdocao"]) ? $_POST["dataAdocao"] : NULL;
+  $idPet = !empty($_POST["id_pet"]) ? $_POST["id_pet"] : NULL;
 
-    if ($adotante && $dataAdocao && $idPet) {
-        $sqlAdicionarPetAdotado = "INSERT INTO pet_adocao (id_pessoa, id_pet, data_adocao) VALUES (:adotante, :idPet, :dataAdocao)";
+  if ($adotante && $dataAdocao && $idPet) {
+      try {
+          $conexao = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASSWORD);
+          $conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        try {
-            $conexao = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASSWORD);
-            $conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+          // Verifica se já existe um registro de adoção para o pet
+          $verificaSql = "SELECT COUNT(*) FROM pet_adocao WHERE id_pet = :idPet";
+          $stmtVerifica = $conexao->prepare($verificaSql);
+          $stmtVerifica->bindParam(':idPet', $idPet);
+          $stmtVerifica->execute();
+          $existe = $stmtVerifica->fetchColumn();
 
-            $stmt = $conexao->prepare($sqlAdicionarPetAdotado);
-            $stmt->bindParam(':adotante', $adotante);
-            $stmt->bindParam(':idPet', $idPet);
-            $stmt->bindParam(':dataAdocao', $dataAdocao);
+          if ($existe) {
+              // Se já existe, atualiza o adotante e a data
+              $sql = "UPDATE pet_adocao 
+                      SET id_pessoa = :adotante, data_adocao = :dataAdocao 
+                      WHERE id_pet = :idPet";
+          } else {
+              // Caso contrário, insere novo registro
+              $sql = "INSERT INTO pet_adocao (id_pessoa, id_pet, data_adocao) 
+                      VALUES (:adotante, :idPet, :dataAdocao)";
+          }
 
-            $stmt->execute();
-            
-            header('Location: profile_pet.php?id_pet='.$idPet);
-            exit;
-        } catch (PDOException $e) {
-            echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
-        }
-    } else {
-        echo "Por favor, preencha todos os campos corretamente.";
-    }
+          $stmt = $conexao->prepare($sql);
+          $stmt->bindParam(':adotante', $adotante);
+          $stmt->bindParam(':idPet', $idPet);
+          $stmt->bindParam(':dataAdocao', $dataAdocao);
+
+          $stmt->execute();
+
+          header('Location: profile_pet.php?id_pet=' . $idPet);
+          exit;
+      } catch (PDOException $e) {
+          echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
+      }
+  }
+}
+
+  
 
     // **Lógica para Atualizar a Ficha Médica**
     $idFichaMedica = !empty($_POST["id_ficha_medica"]) ? $_POST["id_ficha_medica"] : NULL;
@@ -127,7 +144,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Se temos a ficha médica e o pet, vamos atualizar
     if ($idFichaMedica && $idPet) {
-        $sqlAtualizarFichaMedica = "UPDATE ficha_medica_pet 
+        $sqlAtualizarFichaMedica = "UPDATE pet_ficha_medica 
                                     SET castrado = :castrado, texto = :texto 
                                     WHERE id_ficha_medica = :idFichaMedica AND id_pet = :idPet";
 
@@ -154,7 +171,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     
-}
+
 
 ?>
 
@@ -579,7 +596,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                       </div>
                       </div>
                     </div>
-        <!----pedrofim-->
+          <!----pedrofim-->
 
           <div class="row">
             <div class="col-md-4 col-lg-3">
