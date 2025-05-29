@@ -1858,7 +1858,7 @@ try {
       }
 
       function adicionar_enfermidade() {
-        const url = 'adicionar_enfermidade.php';
+        const url = './adicionar_enfermidade.php';
         
         let nome_enfermidade = window.prompt("Insira o nome da enfermidade:");
         let cid_enfermidade = window.prompt("Insira o CID da enfermidade:");
