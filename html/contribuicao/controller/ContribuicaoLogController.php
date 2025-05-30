@@ -483,6 +483,241 @@ class ContribuicaoLogController
     }
 
     /**
+     * Cria um objeto do tipo ContribuicaoLog, chama o serviço de cartão de crédito registrado no banco de dados
+     * e insere a operação na tabela de contribuicao_log caso o serviço seja executado com sucesso.
+     */
+    public function processarCartaoCredito()
+    {
+        $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
+        $documento = filter_input(INPUT_POST, 'documento_socio');
+        $formaPagamento = 'CartaoCredito';
+
+        try {
+            $this->pdo->beginTransaction();
+            
+            // Buscar sócio
+            $socioDao = new SocioDAO($this->pdo);
+            $socio = $socioDao->buscarPorDocumento($documento);
+
+            if (is_null($socio)) {
+                throw new Exception('Sócio não encontrado');
+            }
+
+            // Buscar meio de pagamento
+            $meioPagamentoDao = new MeioPagamentoDAO();
+            $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
+
+            if (is_null($meioPagamento)) {
+                throw new Exception('Meio de pagamento não encontrado');
+            }
+
+            // Verificar regras de pagamento
+            $regraPagamentoDao = new RegraPagamentoDAO();
+            $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamentoPorIdMeioPagamento(
+                $meioPagamento->getId()
+            );
+            $this->verificarRegras($valor, $conjuntoRegrasPagamento);
+
+            // Buscar gateway de pagamento
+            $gatewayPagamentoDao = new GatewayPagamentoDAO();
+            $gatewayPagamentoArray = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
+
+            if (!$gatewayPagamentoArray) {
+                throw new Exception('Gateway de pagamento não encontrado');
+            }
+
+            $gatewayPagamento = new GatewayPagamento(
+                $gatewayPagamentoArray['plataforma'],
+                $gatewayPagamentoArray['endPoint'],
+                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['status']
+            );
+            $gatewayPagamento->setId($meioPagamento->getGatewayId());
+
+            // Carregar serviço de pagamento
+            $requisicaoServico = '../service/' . $gatewayPagamento->getNome() . $formaPagamento . 'Service.php';
+
+            if (!file_exists($requisicaoServico)) {
+                throw new Exception('Serviço de pagamento não encontrado');
+            }
+
+            require_once $requisicaoServico;
+
+            $classeService = $gatewayPagamento->getNome() . $formaPagamento . 'Service';
+
+            if (!class_exists($classeService)) {
+                throw new Exception('Classe do serviço não encontrada');
+            }
+
+            $servicoPagamento = new $classeService();
+
+            // Criar registro de contribuição
+            $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+            $contribuicaoLog = new ContribuicaoLog();
+            $contribuicaoLog
+                ->setValor($valor)
+                ->setCodigo($contribuicaoLog->gerarCodigo())
+                ->setDataGeracao(date('Y-m-d'))
+                ->setDataVencimento(date('Y-m-d'))
+                ->setSocio($socio)
+                ->setGatewayPagamento($gatewayPagamento)
+                ->setMeioPagamento($meioPagamento);
+
+            $contribuicaoLog = $contribuicaoLogDao->criar($contribuicaoLog);
+            $contribuicaoLog->setAgradecimento($contribuicaoLogDao->getAgradecimento());
+
+            // Processar pagamento
+            $codigoTransacao = $servicoPagamento->processarCartaoCredito($contribuicaoLog);
+            
+            if (!$codigoTransacao) {
+                throw new Exception('Falha no processamento do cartão');
+            }
+
+            // Atualizar registro com código da transação
+            $contribuicaoLogDao->alterarCodigoPorId($codigoTransacao, $contribuicaoLog->getId());
+            
+            // Registrar log do sócio
+            $mensagem = "Pagamento com cartão processado - ID: $codigoTransacao";
+            $socioDao->registrarLog($socio, $mensagem);
+
+            $this->pdo->commit();
+
+            echo json_encode([
+                'sucesso' => true, 
+                'mensagem' => 'Pagamento processado com sucesso!',
+                'transacao_id' => $codigoTransacao
+            ]);
+
+        } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            http_response_code(400);
+            echo json_encode(['erro' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Cria um objeto do tipo ContribuicaoLog, chama o serviço de cartão de crédito recorrente registrado no banco de dados
+     * e insere a operação na tabela de contribuicao_log caso o serviço seja executado com sucesso.
+     */
+    public function criarAssinatura()
+    {
+        $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
+        $documento = filter_input(INPUT_POST, 'documento_socio');
+        $formaPagamento = 'Recorrencia';
+
+        try {
+            $this->pdo->beginTransaction();
+            
+            // Buscar sócio
+            $socioDao = new SocioDAO($this->pdo);
+            $socio = $socioDao->buscarPorDocumento($documento);
+
+            if (is_null($socio)) {
+                throw new Exception('Sócio não encontrado');
+            }
+
+            // Buscar meio de pagamento
+            $meioPagamentoDao = new MeioPagamentoDAO();
+            $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
+
+            if (is_null($meioPagamento)) {
+                throw new Exception('Meio de pagamento não encontrado');
+            }
+
+            // Verificar se o meio de pagamento está ativo
+            if (!$meioPagamento->getStatus()) {
+                throw new Exception('Meio de pagamento indisponível');
+            }
+
+            // Verificar regras de pagamento
+            $regraPagamentoDao = new RegraPagamentoDAO();
+            $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamentoPorIdMeioPagamento(
+                $meioPagamento->getId()
+            );
+            $this->verificarRegras($valor, $conjuntoRegrasPagamento);
+
+            // Buscar gateway de pagamento
+            $gatewayPagamentoDao = new GatewayPagamentoDAO();
+            $gatewayPagamentoArray = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
+
+            if (!$gatewayPagamentoArray) {
+                throw new Exception('Gateway de pagamento não encontrado');
+            }
+
+            $gatewayPagamento = new GatewayPagamento(
+                $gatewayPagamentoArray['plataforma'],
+                $gatewayPagamentoArray['endPoint'],
+                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['status']
+            );
+            $gatewayPagamento->setId($meioPagamento->getGatewayId());
+
+            // Carregar serviço de pagamento
+            $requisicaoServico = '../service/' . $gatewayPagamento->getNome() . $formaPagamento . 'Service.php';
+
+            if (!file_exists($requisicaoServico)) {
+                throw new Exception('Serviço de pagamento não encontrado');
+            }
+
+            require_once $requisicaoServico;
+
+            $classeService = $gatewayPagamento->getNome() . $formaPagamento . 'Service';
+
+            if (!class_exists($classeService)) {
+                throw new Exception('Classe do serviço não encontrada');
+            }
+
+            $servicoPagamento = new $classeService();
+
+            // Criar registro de contribuição
+            $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+            $contribuicaoLog = new ContribuicaoLog();
+            $contribuicaoLog
+                ->setValor($valor)
+                ->setCodigo($contribuicaoLog->gerarCodigo())
+                ->setDataGeracao(date('Y-m-d'))
+                ->setDataVencimento(date('Y-m-d')) // Cobrança imediata
+                ->setSocio($socio)
+                ->setGatewayPagamento($gatewayPagamento)
+                ->setMeioPagamento($meioPagamento);
+
+            $contribuicaoLog = $contribuicaoLogDao->criar($contribuicaoLog);
+            $contribuicaoLog->setAgradecimento($contribuicaoLogDao->getAgradecimento());
+
+            // Criar assinatura
+            $codigoAssinatura = $servicoPagamento->criarAssinatura($contribuicaoLog);
+            
+            if (empty($codigoAssinatura)) {
+                throw new Exception('Falha ao criar assinatura');
+            }
+
+            // Atualizar registro com código da assinatura
+            $contribuicaoLogDao->alterarCodigoPorId($codigoAssinatura, $contribuicaoLog->getId());
+
+            // Registrar log do sócio
+            $mensagem = "Assinatura mensal criada - ID: $codigoAssinatura";
+            $socioDao->registrarLog($socio, $mensagem);
+
+            $this->pdo->commit();
+
+            // Mensagem de sucesso com detalhes
+            $diaCobranca = date('d');
+            echo json_encode([
+                'sucesso' => true, 
+                'mensagem' => "Assinatura criada com sucesso! Cobranças mensais no dia $diaCobranca.",
+                'assinatura_id' => $codigoAssinatura
+            ]);
+        } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            http_response_code(400);
+            echo json_encode(['erro' => $e->getMessage()]);
+        }
+    }
+    /**
      * Extraí o id da requisição POST e muda o status de pagamento da contribuição correspondente.
      */
     public function pagarPorId()
