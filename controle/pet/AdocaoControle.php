@@ -1,56 +1,52 @@
 <?php
-    $path = 'dao/pet/AdocaoPet.php';
+$path = 'dao/pet/AdocaoPet.php';
 
-    if(file_exists($path)){
-        require_once $path;
-    }else{
-        while(true){
-            $path = '../' . $path;
-            if(file_exists($path)){
-                break;
-            }
+if (file_exists($path)) {
+    require_once $path;
+} else {
+    while (true) {
+        $path = '../' . $path;
+        if (file_exists($path)) {
+            break;
         }
-        require_once $path;
+    }
+    require_once $path;
+}
+
+class AdocaoControle {
+    public function excluirAdocaoPet($id_pet) {
+        
+        $c = new AdocaoPet();
+        return $c->excluirAdocao($id_pet);
     }
 
-    class AdocaoControle{
-        public function excluirAdocaoPet($id_pet) {
-            $c = new AdocaoPet();
-            return $c->excluirAdocao($id_pet);
-        }
-        
-        
-        public function obterAdotante($id){
-            $c = new AdocaoPet();
-            $r = $c->exibirAdotante($id);
-
-            return $r;
-
-        }
-
-        public function nomeAdotante($rg){
-            $c = new AdocaoPet();
-            return $c->nomeAdotante($rg);
-        }
-
-        public function modificarAdocao(){
-            //$idPet, $rg, $data_adocao
-            extract($_REQUEST);
-            $c = new AdocaoPet();
-            if($adotado == 'S'){
-                if($rgAdotante || $dataAdocao){
-                    $c->inserirAdocao($id_pet, $rgAdotante, $dataAdocao);
-                    header('Location: ../../html/pet/profile_pet.php?id_pet='.$id_pet);
-                }else{
-                    header('Location: ../../html/pet/profile_pet.php?id_pet='.$id_pet);
-                }
-            }else if($adotado == 'N'){
-                $c->excluirAdocao($id_pet);
-                header('Location: ../../html/pet/profile_pet.php?id_pet='.$id_pet);
-            }
-        }
-
+    public function obterAdotante($id) {
+        $c = new AdocaoPet();
+        return $c->exibirAdotante($id);
     }
 
-    $a = new AdocaoControle();
-    
+    public function nomeAdotante($id_pessoa) {
+        $c = new AdocaoPet();
+        return $c->nomeAdotantePorId($id_pessoa);
+    }
+
+    public function modificarAdocao() {
+        extract($_REQUEST);
+        $c = new AdocaoPet();
+
+        if ($adotado === 'S') {
+            $id_pessoa = $_POST['adotante_input'] ?? null;
+            $dataAdocao = $_POST['dataAdocao'] ?? null;
+
+            if ($id_pessoa && $dataAdocao) {
+                $c->inserirAdocao($id_pet, $id_pessoa, $dataAdocao);
+            }
+        } else if ($adotado === 'N') {
+            $c->excluirAdocao($id_pet);
+        }
+
+        header('Location: ../../html/pet/profile_pet.php?id_pet=' . $id_pet);
+    }
+}
+
+$a = new AdocaoControle();

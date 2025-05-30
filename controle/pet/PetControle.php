@@ -134,7 +134,9 @@ class PetControle{
         //try {
             $petDAO = new PetDAO();
             $pet=$petDAO->listarUm($id_pet);
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             $_SESSION['pet']=$pet;
             header('Location:'.$nextPage);
         //} catch (PDOException $e) {
