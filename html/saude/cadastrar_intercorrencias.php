@@ -343,30 +343,20 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
 
                                     <input type="submit" id="btn-cadastrar-emergencia" class="btn btn-primary" value="Cadastrar">
                                 </form>
-                                <div id="intercorrencias" class="tab-pane">
-                                  <section class="panel">
-                                    <header class="panel-heading">
-                                      <div class="panel-actions">
-                                        <a href="#" class="fa fa-caret-down"></a>
-                                      </div>
-                                      <h2 class="panel-title">Intercorrências</h2>
-                                    </header>
-                                    <div class="panel-body">
-                                      <hr class="dotted short">
+                                
+                                <hr class="dotted short">
 
-                                      <div class="form-group" id="exibirintercorrencias">
-                                        <table class="table table-bordered table-striped" id="datatable-intercorrencias">
-                                          <thead>
-                                            <tr style="font-size:15px;">
-                                              <th>Descrição</th>
-                                              <th>Data</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody id="doc-tab-intercorrencias">
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                  </section>
+                                <div class="form-group" id="exibirintercorrencias">
+                                  <table class="table table-bordered table-striped" id="datatable-intercorrencias">
+                                    <thead>
+                                      <tr style="font-size:15px;">
+                                        <th>Descrição</th>
+                                        <th>Data</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody id="doc-tab-intercorrencias">
+                                    </tbody>
+                                  </table>
                                 </div>
                               </div>
                           </section>
