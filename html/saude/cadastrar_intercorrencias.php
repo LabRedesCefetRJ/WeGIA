@@ -341,7 +341,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                                     <textarea class="form-control" name="descricao_emergencia" cols="30" rows="10" placeholder="Insira aqui a descrição do ocorrido..." required></textarea>
                                     </div>
 
-                                    <input type="submit" id="btn-cadastrar-emergencia" class="btn btn-primary" value="Cadastrar" onsubmit="carregarIntercorrencias()">
+                                    <input type="submit" id="btn-cadastrar-emergencia" class="btn btn-primary" value="Cadastrar">
                                 </form>
                                 <div id="intercorrencias" class="tab-pane">
                                   <section class="panel">
