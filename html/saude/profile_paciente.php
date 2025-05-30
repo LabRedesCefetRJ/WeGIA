@@ -306,6 +306,14 @@ try {
   .small-text {
     font-size: small;
   }
+  table td, table th {
+    word-wrap: break-word;
+    white-space: normal;
+  }
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
 </style>
 
 
@@ -545,6 +553,35 @@ try {
       $("#mais_medicacoes").show();
       $(".meddisabled").val(nome_medicacao);
     }
+
+    function carregarIntercorrencias(){
+      let id = <?php echo $_GET['id_fichamedica']; ?>;
+      const url = `./listar_intercorrencias.php?&id_fichamedica=${id}`;
+      fetch(url)
+      .then(res => res.json())
+      .then(intercorrencias => {
+        console.log(intercorrencias)
+        const tbody = document.getElementById("doc-tab-intercorrencias");
+
+        intercorrencias.forEach(item => {
+          const tr = document.createElement("tr");
+
+          const td1 = document.createElement("td");
+          td1.textContent = item.descricao;
+
+          const td2 = document.createElement("td");
+          td2.textContent = item.data;
+
+          tr.append(td1, td2);
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error("Erro ao carregar aplicações:", err);
+      });
+    }
+
+    
   </script>
   <style type="text/css">
     .obrig {
@@ -645,6 +682,9 @@ try {
                 </li>
                 <li>
                   <a href="#sinais_vitais" data-toggle="tab">Sinais Vitais</a>
+                </li>
+                <li>
+                  <a href="#intercorrencias" data-toggle="tab">Intercorrências</a>
                 </li>
               </ul>
 
@@ -1552,6 +1592,31 @@ try {
                       <input type="hidden" name="a_enf">
                   </section>
                 </div>
+                <div id="intercorrencias" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Intercorrências</h2>
+                    </header>
+                    <div class="panel-body">
+                      <hr class="dotted short">
+
+                      <div class="form-group" id="exibirintercorrencias">
+                        <table class="table table-bordered table-striped" id="datatable-intercorrencias">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Descrição</th>
+                              <th>Data</th>
+                            </tr>
+                          </thead>
+                          <tbody id="doc-tab-intercorrencias">
+                          </tbody>
+                        </table>
+                      </div>
+                  </section>
+                </div>
 
                 <!-- Aba de medicações aplicadas -->
                 <div id="sinais_vitais" class="tab-pane">
@@ -2197,6 +2262,8 @@ try {
       const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
 
       btnCadastrarEnfermidade.addEventListener('click', cadastrarEnfermidade);
+
+      carregarIntercorrencias();
     </script>
 
     <!-- Vendor -->

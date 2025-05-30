@@ -200,6 +200,36 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                 }
             });
             });
+
+            function carregarIntercorrencias(){
+              let id = <?php echo $_GET['id_fichamedica']; ?>;
+              const url = `./listar_intercorrencias.php?&id_fichamedica=${id}`;
+              fetch(url)
+              .then(res => res.json())
+              .then(intercorrencias => {
+                const tbody = document.getElementById("doc-tab-intercorrencias");
+
+                while(tbody.firstChild){
+                  tbody.removeChild(tbody.firstChild)
+                }
+
+                intercorrencias.forEach(item => {
+                  const tr = document.createElement("tr");
+
+                  const td1 = document.createElement("td");
+                  td1.textContent = item.descricao;
+
+                  const td2 = document.createElement("td");
+                  td2.textContent = item.data;
+
+                  tr.append(td1, td2);
+                  tbody.appendChild(tr);
+                });
+              })
+              .catch(err => {
+                console.error("Erro ao carregar aplicações:", err);
+              });
+            }
         </script>
 
         <style type="text/css">
@@ -230,6 +260,14 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         .custom-input:focus {
             border-color: #86b7fe;
             box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        table td, table th {
+          word-wrap: break-word;
+          white-space: normal;
+        }
+        table {
+          table-layout: fixed;
+          width: 100%;
         }
         </style>
 
@@ -283,30 +321,55 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
 
                     <div class="tab-content">
                         <div id="cadastro_emergencia" class="tab-pane active in">
-                        <section class="panel">
-                            <header class="panel-heading">
-                            <div class="panel-actions">
-                                <a href="#" class="fa fa-caret-down"></a>
-                            </div>
-                            <h2 class="panel-title">Cadastro de intercorrências</h2>
-                            </header>
-                            <div class="panel-body">
-                            <form method="post" action="../../controle/control.php">
-                                <input type="hidden" name="nomeClasse" value="AvisoControle">
-                                <input type="hidden" name="metodo" value="incluir">
-                                <input type="hidden" name="idpaciente" value="<?php echo $idPaciente['id_pessoa']; ?>">
-                                <input type="hidden" name="idfuncionario" value="<?php echo $funcionario_id; ?>">
-                                <input type="hidden" name="idfichamedica" value="<?php echo $id; ?>">
+                          <section class="panel">
+                              <header class="panel-heading">
+                              <div class="panel-actions">
+                                  <a href="#" class="fa fa-caret-down"></a>
+                              </div>
+                              <h2 class="panel-title">Cadastro de intercorrências</h2>
+                              </header>
+                              <div class="panel-body">
+                                <form method="post" action="../../controle/control.php">
+                                    <input type="hidden" name="nomeClasse" value="AvisoControle">
+                                    <input type="hidden" name="metodo" value="incluir">
+                                    <input type="hidden" name="idpaciente" value="<?php echo $idPaciente['id_pessoa']; ?>">
+                                    <input type="hidden" name="idfuncionario" value="<?php echo $funcionario_id; ?>">
+                                    <input type="hidden" name="idfichamedica" value="<?php echo $id; ?>">
 
-                                <div class="form-group">
-                                <label for="descricao_emergencia">Descrição da Intercorrência</label>
-                                <textarea class="form-control" name="descricao_emergencia" cols="30" rows="10" placeholder="Insira aqui a descrição do ocorrido..." required></textarea>
+                                    <div class="form-group">
+                                    <label for="descricao_emergencia">Descrição da Intercorrência</label>
+                                    <textarea class="form-control" name="descricao_emergencia" cols="30" rows="10" placeholder="Insira aqui a descrição do ocorrido..." required></textarea>
+                                    </div>
+
+                                    <input type="submit" id="btn-cadastrar-emergencia" class="btn btn-primary" value="Cadastrar" onsubmit="carregarIntercorrencias()">
+                                </form>
+                                <div id="intercorrencias" class="tab-pane">
+                                  <section class="panel">
+                                    <header class="panel-heading">
+                                      <div class="panel-actions">
+                                        <a href="#" class="fa fa-caret-down"></a>
+                                      </div>
+                                      <h2 class="panel-title">Intercorrências</h2>
+                                    </header>
+                                    <div class="panel-body">
+                                      <hr class="dotted short">
+
+                                      <div class="form-group" id="exibirintercorrencias">
+                                        <table class="table table-bordered table-striped" id="datatable-intercorrencias">
+                                          <thead>
+                                            <tr style="font-size:15px;">
+                                              <th>Descrição</th>
+                                              <th>Data</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody id="doc-tab-intercorrencias">
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                  </section>
                                 </div>
-
-                                <input type="submit" id="btn-cadastrar-emergencia" class="btn btn-primary" value="Cadastrar">
-                            </form>
-                            </div>
-                        </section>
+                              </div>
+                          </section>
                         </div>
                     </div> <!-- end tab-content -->
                     </div> <!-- end tabs -->
@@ -321,6 +384,11 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
             </div>
         </section>
 
+        <script>
+          
+          carregarIntercorrencias();
+
+        </script>
         <!-- Scripts únicos e organizados -->
         <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
         <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
