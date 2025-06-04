@@ -16,6 +16,7 @@ if (file_exists($config_path)) {
 
 if(!isset($_SESSION['usuario'])){
 	header ("Location:  ". WWW ."html/index.php");
+	exit;
 }
 
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -86,11 +87,15 @@ $item = new Item(
 	$_POST['mostrarZerados'] == "on" ?? false
 );
 
-function quickQuery($query, $column)
+function quickQuery($query, $parametro, $column)
 {
 	$pdo = Conexao::connect();
-	$res = $pdo->query($query);
-	$res = $res->fetchAll(PDO::FETCH_ASSOC);
+	$stmt = $pdo->prepare($query);
+	$chave = array_key_first($parametro);
+	$valor = $parametro[$chave];
+	$stmt->bindValue($chave, $parametro);
+    $stmt->execute();
+	$res = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	return $res[0][$column];
 }
 
@@ -240,19 +245,19 @@ function quickQuery($query, $column)
 
 									if ($post[0] == 'entrada') {
 										if (isset($post[1])) {
-											$origem = quickQuery("select nome_origem from origem where id_origem = " . $post[1] . ";", "nome_origem");
+											$origem = quickQuery("select nome_origem from origem where id_origem =  :id_origem;", [':id_origem' => $post[1]] , "nome_origem");
 											echo ("<ul>Origem: " . $origem . "</ul>");
 										} else {
 											echo ("<ul>Origem: Todas</ul>");
 										}
 										if (isset($post[2])) {
-											$tipo = quickQuery("select descricao from tipo_entrada where id_tipo = " . $post[2] . ";", "descricao");
+											$tipo = quickQuery("select descricao from tipo_entrada where id_tipo = :id_tipo;", [':id_tipo' => $post[2]] , "descricao", );
 											echo ("<ul>Tipo: " . $tipo . "</ul>");
 										} else {
 											echo ("<ul>Tipo: Todos</ul>");
 										}
 										if (isset($post[3])) {
-											$responsavel = quickQuery("select nome from pessoa where id_pessoa = " . $post[3] . ";", "nome");
+											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;",  [':id_pessoa' => $post[3]], "nome");
 											echo ("<ul>Responsável: " . $responsavel . "</ul>");
 										} else {
 											echo ("<ul>Responsável: Todos</ul>");
@@ -261,19 +266,19 @@ function quickQuery($query, $column)
 
 									if ($post[0] == 'saida') {
 										if (isset($post[1])) {
-											$destino = quickQuery("select nome_destino from destino where id_destino = " . $post[1] . ";", "nome_destino");
+											$destino = quickQuery("select nome_destino from destino where id_destino =  :id_destino;", [':id_destino' => $post[1]] , "nome_destino");
 											echo ("<ul>Destino: " . $destino . "</ul>");
 										} else {
 											echo ("<ul>Destino: Todos</ul>");
 										}
 										if (isset($post[2])) {
-											$tipo = quickQuery("select descricao from tipo_saida where id_tipo = " . $post[2] . ";", "descricao");
+											$tipo = quickQuery("select descricao from tipo_saida where id_tipo = :id_tipo;", [':id_tipo' => $post[2]] , "descricao");
 											echo ("<ul>Tipo: " . $tipo . "</ul>");
 										} else {
 											echo ("<ul>Tipo: Todos</ul>");
 										}
 										if (isset($post[3])) {
-											$responsavel = quickQuery("select nome from pessoa where id_pessoa = " . $post[3] . ";", "nome");
+											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_tipo;", [':id_pessoa' => $post[3]] , "nome");
 											echo ("<ul>Responsável: " . $responsavel . "</ul>");
 										} else {
 											echo ("<ul>Responsável: Todos</ul>");
@@ -294,7 +299,7 @@ function quickQuery($query, $column)
 									}
 
 									if (isset($post[5])) {
-										$almoxarifado = quickQuery("select descricao_almoxarifado from almoxarifado where id_almoxarifado = " . $post[5] . ";", "descricao_almoxarifado");
+										$almoxarifado = quickQuery("select descricao_almoxarifado from almoxarifado where id_almoxarifado = :id_almoxarifado;", [':id_almoxarifado' => $post[5]], "descricao_almoxarifado");
 										echo ("<ul>Almoxarifado: " . $almoxarifado . "</ul>");
 									} else {
 										echo ("<ul>Almoxarifado: Todos</ul>");
