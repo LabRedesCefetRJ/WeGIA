@@ -158,6 +158,8 @@ INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 64),
 (1, 7, 91);
 
+/*
+// DESATIVADO - ANTIGO MEIO DE PAGAMENTO BOLETOBANCÁRIO.COM
 INSERT INTO `sistema_pagamento` (`id`, `nome_sistema`) VALUES 
 (1, 'PAGSEGURO'), 
 (2, 'PAYPAL'), 
@@ -178,6 +180,7 @@ INSERT INTO `doacao_boleto_info` (`id`, `api`, `token_api`, `sandbox`, `token_sa
 ('0', 'https://sandbox.boletobancario.com/boletofacil/integration/api/v1/issue-charge?', 'CADASTRA-SE NO GATEWAY DE PAGAMENTO PARA RECEBER UM TOKEN', '', '', '3', '1');
 
 INSERT INTO `doacao_cartao_avulso` (`url`, `id_sistema`) VALUES ('Cadastre sua instituição no gateway de pagamento', 1);
+*/
 
 INSERT INTO `funcionario_docfuncional`(`id_docfuncional`, `nome_docfuncional`) VALUES
 (1, 'Carteira de Identidade'),
@@ -292,7 +295,9 @@ INSERT INTO `contribuicao_regras` (`regra`) VALUES
 ('MIN_VALUE'), 
 ('MAX_VALUE');
 
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("NAO DEFINIDA","https://localhost/api","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe-Orders","https://api.pagar.me/core/v5/orders","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe-Subscriptions","https://api.pagar.me/core/v5/subscriptions","coloque o token aqui",0);
+
 
 INSERT INTO `contribuicao_meioPagamento` (meio,id_plataforma,status) VALUES ("Boleto",1,0), ("Pix",1,0), ("Carne",1,0), ("CartaoCredito",1,0), ("Recorrencia",1,0);
 
