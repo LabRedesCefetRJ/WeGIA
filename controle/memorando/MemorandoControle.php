@@ -109,7 +109,8 @@ class MemorandoControle
         try 
         {
             $memorandoDAO->alterarIdStatusMemorando($memorando);
-           //header("Location: ".WWW."html/memorando/DespachoControle.php");
+            header("Location: ". WWW . "html/memorando/listar_memorandos_ativos.php");
+            //header("Location: ".WWW."html/memorando/DespachoControle.php");
         } 
         catch (PDOException $e) 
         {

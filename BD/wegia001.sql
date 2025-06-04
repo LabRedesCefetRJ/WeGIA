@@ -664,7 +664,8 @@ CREATE TABLE IF NOT EXISTS `wegia`.`tabela_imagem_campo` (
     REFERENCES `wegia`.`imagem` (`id_imagem`))
 ENGINE = InnoDB;
 
--- SERÁ REMOVIDO EM NOVA VERSÃO - Módulo contribuição está sendo refatorado... --
+/*
+-- REMOVIDO - PAGAMENTOS USANDO O GATEWAY BOLETOBANCÁRIO.COM TOTALMENTE DESATIVADO --
 -- -----------------------------------------------------
 -- Table `wegia`.`sistema_pagamento`
 -- -----------------------------------------------------
@@ -764,6 +765,7 @@ ID_SISTEMA INT,
 FOREIGN KEY (TIPO_CHAVE) REFERENCES doacao_pix_tipos(ID),
 FOREIGN KEY (ID_SISTEMA) REFERENCES sistema_pagamento(ID))
 ENGINE = InnoDB;
+*/
 
 -- Novas tabelas para o módulo contribuição --
 -- -----------------------------------------------------
