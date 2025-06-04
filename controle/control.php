@@ -50,7 +50,9 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 			'SinaisVitaisControle' => [5],
 			'TipoEntradaControle' => [23],
 			'TipoSaidaControle' => [22, 24],
-			'UnidadeControle' => [22]			
+			'UnidadeControle' => [22],
+			'MemorandoControle' => [3],
+			'DespachoControle' => [3]
 		];
 
 		/*Por padrão o control.php irá recusar qualquer controladora informada,
