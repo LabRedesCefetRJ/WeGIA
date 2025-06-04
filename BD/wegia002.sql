@@ -295,8 +295,8 @@ INSERT INTO `contribuicao_regras` (`regra`) VALUES
 ('MIN_VALUE'), 
 ('MAX_VALUE');
 
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe-Orders","https://api.pagar.me/core/v5/orders","coloque o token aqui",0);
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe-Subscriptions","https://api.pagar.me/core/v5/subscriptions","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/orders","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/subscriptions","coloque o token aqui",0);
 
 INSERT INTO `contribuicao_meioPagamento` (meio,id_plataforma,status) VALUES ("Boleto",1,0), ("Pix",1,0), ("Carne",1,0), ("CartaoCredito",1,0), ("Recorrencia",2,0);
 
