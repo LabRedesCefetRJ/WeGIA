@@ -12,7 +12,7 @@
 	
 	session_start();
 	if(!isset($_SESSION['usuario'])){
-		header ("Location: ../index.php");
+		header ("Location: ".WWW."html/index.php");
 	}
 	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 	$id_pessoa = $_SESSION['id_pessoa'];
@@ -173,7 +173,7 @@
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li>
-								<a href="../home.php">
+								<a href="<?= WWW ?>html/home.php">
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
@@ -310,7 +310,7 @@
 											
 											<div class="center-content">
 												<input type="submit" value="Enviar" class="btn btn-primary" style="margin-right: 20px;">
-												<a class="btn btn-success" href="../listar_almoxarife.php">Listar Almoxarifes</a>
+												<a class="btn btn-success" href="<?= WWW ?>html/matPat/listar_almoxarife.php">Listar Almoxarifes</a>
 											</div>
 											
 										</form>
