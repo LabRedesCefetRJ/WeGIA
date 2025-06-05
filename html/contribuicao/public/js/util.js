@@ -303,7 +303,7 @@ async function cadastrarSocio() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
 
-    const documento = pegarDocumento();
+    const documento = formatarCPF(pegarDocumento());
 
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'criarSocio');
@@ -335,7 +335,7 @@ async function atualizarSocio() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
 
-    const documento = pegarDocumento();
+    const documento = formatarCPF(pegarDocumento());
 
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'atualizarSocio');
@@ -467,7 +467,7 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
 }
 
 function buscarSocio() {
-    const documento = pegarDocumento();
+    let documento = formatarCPF(pegarDocumento());
 
     if (!validarDocumento(documento)) {
         alert("O documento informado não é válido");
@@ -568,3 +568,11 @@ function setLoader(btn) {
         btn.appendChild(loader);
     }
 }
+
+function formatarCPF(cpf) {
+    // Remove tudo que não for número
+    cpf = cpf.replace(/\D/g, '');
+  
+    // Aplica a formatação: xxx.xxx.xxx-xx
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  }

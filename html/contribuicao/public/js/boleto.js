@@ -19,7 +19,7 @@ function gerarBoleto() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
 
-    const documento = pegarDocumento();
+    const documento = formatarCPF(pegarDocumento());
 
     formData.append('nomeClasse', 'ContribuicaoLogController');
     formData.append('metodo', 'criarBoleto');
