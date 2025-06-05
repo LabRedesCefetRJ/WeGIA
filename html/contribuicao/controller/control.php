@@ -22,6 +22,7 @@ try {
         'buscarPorDocumento',
         'criarSocio',
         'atualizarSocio',
+        'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento',
     ];
 
     //Blocks execution for unauthorized access

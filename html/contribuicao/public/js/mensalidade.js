@@ -53,6 +53,12 @@ function gerarMensalidade() {
 }
 
 function verificarValorMensalidade(valor, parcelas, diaVencimento) {
+
+    if (!valor || isNaN(valor) || valor <= 0) {
+        alert("Por favor, preencha um valor numérico válido.");
+        return false;
+    }
+
     if (regras && regras.length > 0) {
         console.log('Existem regras cadastradas no sistema');
 
