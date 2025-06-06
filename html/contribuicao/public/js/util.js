@@ -308,10 +308,13 @@ async function cadastrarSocio() {
 
     const telefone = formatarTelefone(formData.get('telefone'))
 
+    const cep = formatarCEP(formData.get('cep'));
+
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
     formData.append('telefone', telefone);
+    formData.append('cep', cep);
 
     try {
         const response = await fetch("../controller/control.php", {
@@ -341,6 +344,8 @@ async function atualizarSocio() {
 
     const documento = pegarDocumento();
 
+    //adicionar formatações de telefone e cep
+
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'atualizarSocio');
     formData.append('documento_socio', documento);
@@ -368,7 +373,7 @@ async function atualizarSocio() {
 }
 
 function verificarEndereco() {
-    const cep = document.getElementById('cep').value;
+    const cep = formatarCEP(document.getElementById('cep').value);
     const rua = document.getElementById('rua').value;
     const numeroEndereco = document.getElementById('numero').value;
     const bairro = document.getElementById('bairro').value;
@@ -571,6 +576,14 @@ function setLoader(btn) {
         loader.className = "loader";
         btn.appendChild(loader);
     }
+}
+
+function formatarCEP(cep){
+    // Remove tudo que não for número
+    cep = cep.replace(/\D/g, '');
+
+    //Aplica a formatação: xxxxx-xxx
+    return cep.replace(/(\d{5})(\d{3})/, "$1-$2");
 }
 
 function formatarCNPJ(cnpj){
