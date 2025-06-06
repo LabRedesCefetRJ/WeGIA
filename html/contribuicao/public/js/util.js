@@ -64,9 +64,9 @@ function pegarDocumento() {
     let documento;
 
     if (opcao == "fisica") {
-        documento = document.getElementById('dcpf').value;
+        documento = formatarCPF(document.getElementById('dcpf').value);
     } else if (opcao == "juridica") {
-        documento = document.getElementById('dcnpj').value;
+        documento = formatarCNPJ(document.getElementById('dcnpj').value);
     }
 
     return documento;
@@ -95,6 +95,7 @@ function validarDocumento(documento) {
             return false;
         }
     } else if (opcao == 'juridica') {
+        //fazer validação mais robusta posteriormente
         if (documentoSomenteNumeros.length != 14) {
             return false;
         }
@@ -303,7 +304,8 @@ async function cadastrarSocio() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
 
-    const documento = formatarCPF(pegarDocumento());
+    const documento = pegarDocumento();
+
     const telefone = formatarTelefone(formData.get('telefone'))
 
     formData.append('nomeClasse', 'SocioController');
@@ -337,7 +339,7 @@ async function atualizarSocio() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
 
-    const documento = formatarCPF(pegarDocumento());
+    const documento = pegarDocumento();
 
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'atualizarSocio');
@@ -469,7 +471,7 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
 }
 
 function buscarSocio() {
-    let documento = formatarCPF(pegarDocumento());
+    let documento = pegarDocumento();
 
     if (!validarDocumento(documento)) {
         alert("O documento informado não é válido");
@@ -569,6 +571,14 @@ function setLoader(btn) {
         loader.className = "loader";
         btn.appendChild(loader);
     }
+}
+
+function formatarCNPJ(cnpj){
+    // Remove tudo que não for número
+    cnpj = cnpj.replace(/\D/g, '');
+
+    //Aplica a formatação: xx.xxx.xxx/xxxx-xx
+    return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
 }
 
 function formatarCPF(cpf) {

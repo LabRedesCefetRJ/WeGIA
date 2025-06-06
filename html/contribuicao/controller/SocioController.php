@@ -150,15 +150,21 @@ class SocioController
         $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
         $valor = trim(filter_input(INPUT_POST, 'valor'));
 
+        $opcaoSelecionada = trim(filter_input(INPUT_POST, 'opcao', FILTER_SANITIZE_STRING));
+
         //validar dados (considerar separar em uma função própria)
         try {
             //validação do CPF
             require_once('../helper/Util.php');
             $util = new Util();
 
-            if (!$util->validarCPF($cpf)) {
+            if ($opcaoSelecionada == 'fisica' && !$util->validarCPF($cpf)) {
                 throw new InvalidArgumentException('O CPF informado não é válido');
-            }
+            }/*else if ($opcaoSelecionada == 'juridica' && !$util->validarCNPJ($documento)){
+                //lançar exceção para CNPJ inválido
+            }else{
+                //lançar exceção para opção inválida
+            }*/
 
             //validação do nome
             if (!$nome || strlen($nome) < 3) {
