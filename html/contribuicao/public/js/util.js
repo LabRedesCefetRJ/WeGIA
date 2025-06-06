@@ -1,3 +1,10 @@
+function disableAutocomplete(){
+    document.querySelectorAll('input').forEach(input => {
+        input.value = '';
+        input.autocomplete = 'off';
+    })
+}
+
 /**
  * Pega o campo radio com nome de opcao marcado na página 
  * @returns string
