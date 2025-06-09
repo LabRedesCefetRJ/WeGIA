@@ -172,8 +172,16 @@ class SocioController
             }
 
             //validação do telefone
-            if (!$telefone || strlen($telefone) != 14) { //considerar melhorar a validação posteriormente
-                throw new InvalidArgumentException('O telefone informado não está no formato válido');
+            if (!$telefone) {
+                throw new InvalidArgumentException('O telefone não foi informado.');
+            } elseif (strlen($telefone) != 14 && strlen($telefone) != 15) {
+                throw new InvalidArgumentException('O telefone informado não está no formato correto.');
+            } elseif (strlen($telefone) === 15) {
+                $celularNumeros = preg_replace('/\D/', '', $telefone);
+
+                if ($celularNumeros[2] != 9) {
+                    throw new InvalidArgumentException('O número de celular informado não é válido.');
+                }
             }
 
             //validação da data de nascimento

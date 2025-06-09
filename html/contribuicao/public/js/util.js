@@ -1,4 +1,4 @@
-function disableAutocomplete(){
+function disableAutocomplete() {
     document.querySelectorAll('input').forEach(input => {
         input.value = '';
         input.autocomplete = 'off';
@@ -313,14 +313,11 @@ async function cadastrarSocio() {
 
     const documento = pegarDocumento();
 
-    const telefone = formatarTelefone(formData.get('telefone'))
-
     const cep = formatarCEP(formData.get('cep'));
 
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
-    formData.append('telefone', telefone);
     formData.append('cep', cep);
 
     try {
@@ -351,11 +348,12 @@ async function atualizarSocio() {
 
     const documento = pegarDocumento();
 
-    //adicionar formatações de telefone e cep
+    const cep = formatarCEP(formData.get('cep'));
 
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'atualizarSocio');
     formData.append('documento_socio', documento);
+    formData.append('cep', cep);
 
     try {
         const response = await fetch("../controller/control.php", {
@@ -444,6 +442,16 @@ function verificarContato() {
     if (!telefone) {
         alert('O telefone não pode estar vazio.');
         return false;
+    } else if (telefone.length != 14 && telefone.length != 15) {
+        alert('O telefone informado não está no formato correto.');
+        return false;
+    } else if (telefone.length === 15) {
+        const celularNumeros = telefone.replace(/\D/g, '');
+
+        if (celularNumeros[2] != 9) {
+            alert('O número de celular informado não é válido.');
+            return false;
+        }
     }
 
     return true;
@@ -585,7 +593,7 @@ function setLoader(btn) {
     }
 }
 
-function formatarCEP(cep){
+function formatarCEP(cep) {
     // Remove tudo que não for número
     cep = cep.replace(/\D/g, '');
 
@@ -593,7 +601,7 @@ function formatarCEP(cep){
     return cep.replace(/(\d{5})(\d{3})/, "$1-$2");
 }
 
-function formatarCNPJ(cnpj){
+function formatarCNPJ(cnpj) {
     // Remove tudo que não for número
     cnpj = cnpj.replace(/\D/g, '');
 
@@ -604,15 +612,8 @@ function formatarCNPJ(cnpj){
 function formatarCPF(cpf) {
     // Remove tudo que não for número
     cpf = cpf.replace(/\D/g, '');
-  
+
     // Aplica a formatação: xxx.xxx.xxx-xx
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  }
+}
 
-  function formatarTelefone(telefone){
-    // Remove tudo que não for número
-    telefone = telefone.replace(/\D/g, '');
-  
-    // Aplica a formatação: (xx)xxxxx-xxxx
-    return telefone.replace(/(\d{2})(\d{5})(\d{4})/, "($1)$2-$3");
-  }
