@@ -136,7 +136,7 @@ class GatewayPagamentoDAO
     /**
      * Retorna o resultado encontrado no BD da aplicação, ou então false caso não haja um gateway com a descrição informada no parâmetro
      */
-    public function buscarPorPlataforma(string $descricao): False|GatewayPagamento
+    public function buscarPorPlataforma(string $descricao): False|array
     {
         //definir consulta sql
         $sql = "SELECT * FROM contribuicao_gatewayPagamento WHERE plataforma=:descricao AND status=1";
@@ -146,12 +146,16 @@ class GatewayPagamentoDAO
         //executar
         $stmt->execute();
 
-        if ($stmt->rowCount() === 1) {
-            //resultado
-            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($stmt->rowCount() >= 1) {
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            //retornar gateway
-            return new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['token'], $resultado['status']);
+            $gateways = [];
+
+            foreach($resultados as $resultado){
+                $gateways []= new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['token'], $resultado['status']);
+            }
+
+            return $gateways;
         }
 
         return false;
