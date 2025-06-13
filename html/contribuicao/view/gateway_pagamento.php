@@ -35,7 +35,7 @@ $gateways = $gatewayPagamentoController->buscaTodos();
 
 //Mascarar tokens para exibição
 foreach ($gateways as $key => $gateway) {
-    if ($gateway['token'] != '' || $gateway['token'] != 'coloque o token aqui') {
+    if ($gateway['token'] != '' && $gateway['token'] != 'coloque o token aqui') {
         $gateways[$key]['token'] = ofuscarToken($gateway['token']);
     }
 }
