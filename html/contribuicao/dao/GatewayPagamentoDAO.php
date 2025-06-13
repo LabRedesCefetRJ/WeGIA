@@ -70,24 +70,38 @@ class GatewayPagamentoDAO
     /**
      * Modifica os campos da tabela contribuicao_gatewaypagamento relacionados ao id informado
      */
-    public function editarPorId($id, $nome, $endpoint, $token)
+    public function editarPorId($id, $nome, $endpoint, $token = null)
     {
-        //definir consulta sql
-        $sqlEditarPorId = "UPDATE contribuicao_gatewayPagamento SET plataforma =:nome, endpoint =:endpoint, token =:token WHERE id=:id";
-        //utilizar prepared statements
-        $stmt = $this->pdo->prepare($sqlEditarPorId);
-        $stmt->bindParam(':nome', $nome);
-        $stmt->bindParam(':endpoint', $endpoint);
-        $stmt->bindParam(':token', $token);
-        $stmt->bindParam(':id', $id);
-        //executar
+        $campos = [
+            'plataforma' => $nome,
+            'endpoint' => $endpoint,
+        ];
+
+        // Adiciona o token somente se ele não for null
+        if ($token !== null) {
+            $campos['token'] = $token;
+        }
+
+        // Monta dinamicamente a SQL
+        $setParts = [];
+        foreach ($campos as $coluna => $valor) {
+            $setParts[] = "$coluna = :$coluna";
+        }
+
+        $sql = "UPDATE contribuicao_gatewayPagamento SET " . implode(', ', $setParts) . " WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        // Associa os valores dinamicamente
+        foreach ($campos as $coluna => $valor) {
+            $stmt->bindValue(":$coluna", $valor);
+        }
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+
         $stmt->execute();
 
-        //verificar se algum elemento foi de fato alterado
-        $gatewayExcluido = $stmt->rowCount();
-
-        if ($gatewayExcluido < 1) {
-            throw new Exception();
+        if ($stmt->rowCount() < 1) {
+            throw new Exception("Nenhuma alteração realizada ou ID inexistente.");
         }
     }
 
@@ -151,8 +165,8 @@ class GatewayPagamentoDAO
 
             $gateways = [];
 
-            foreach($resultados as $resultado){
-                $gateways []= new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['token'], $resultado['status']);
+            foreach ($resultados as $resultado) {
+                $gateways[] = new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['token'], $resultado['status']);
             }
 
             return $gateways;
