@@ -39,7 +39,7 @@
     // Função para fazer o checkout para uma branch
     function gitCheckout($branch) {
         $output = array();
-        exec("git -C ".ROOT." checkout $branch", $output);
+        exec("git -C " . ROOT . " checkout " . escapeshellarg($branch), $output);
         return $output;
     }
 
@@ -58,13 +58,17 @@
 
 
 	if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['branch'])) {
-        $branch = $_POST['branch']; 
-        $action = $_POST["action"]; 
+        $branch = filter_input(INPUT_POST, 'branch', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $action = filter_input(INPUT_POST, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS); 
+
+		if (!preg_match('/^[a-zA-Z0-9._\-\/]+$/', $branch)) {
+			die("Branch inválida.");
+		}
 
         if ($action == "switch") {
             $output = gitCheckout($branch);
         } elseif ($action == "update") {
-            header("Location: atualizacao.php?branch=$branch"); 
+            header("Location: atualizacao.php"); 
         }
     }
 	
@@ -286,7 +290,7 @@
            								<label for="branch">Escolha a branch para atualizar:</label>
             							<select name="branch" id="branch">
                							 	<?php foreach ($branches as $branch): ?>
-                    							<option value="<?php echo $branch; ?>" <?php if ($branch == getCurrentBranch()) echo 'style="color: #32CD32;"'; ?>><?php echo $branch; ?></option>
+                    							<option value="<?php echo htmlspecialchars($branch); ?>" <?php if ($branch == getCurrentBranch()) echo 'style="color: #32CD32;"'; ?>><?php echo htmlspecialchars($branch); ?></option>
                 							<?php endforeach; ?>
             							</select>
            								<button type="submit" name="action" value="switch">Trocar branch</button>
