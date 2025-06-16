@@ -5,6 +5,10 @@ if (!isset($_SESSION['usuario'])) {
 	exit();
 }
 
+// Verifica Permissão do Usuário
+require_once '../permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 9);
+
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -72,10 +76,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['branch'])) {
 		header("Location: atualizacao.php");
 	}
 }
-
-// Verifica Permissão do Usuário
-require_once '../permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 9);
 
 // Inclui display de Campos
 require_once "../personalizacao_display.php";
