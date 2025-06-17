@@ -1,30 +1,49 @@
 <?php
-$PetDAO_path = "dao/pet/SaudePetDAO.php";
-if(file_exists($PetDAO_path)){
-    require_once($PetDAO_path);
-}else{
-    while(true){
-        $PetDAO_path = "../" . $PetDAO_path;
-        if(file_exists($PetDAO_path)) break;
-    }
-    require_once($PetDAO_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'pet' . DIRECTORY_SEPARATOR . 'SaudePetDAO.php';
 
-class MedicamentoControle{
-    public function adicionarMedicamento(){
-        var_dump($_REQUEST);
-        extract($_REQUEST);
-        $c = new SaudePetDAO();
-        
-        $c->adicionarMedicamento( $nomeMedicamento, $descricaoMedicamento, $aplicacaoMedicamento);
-        if($id){
-           header("Location: ../../html/pet/profile_pet.php?id_pet=".$id);
-        }else{
-            header("Location: ../html/pet/informacao_medicamento.php");
+class MedicamentoControle
+{
+    public function adicionarMedicamento()
+    {
+        $nomeMedicamento = filter_input(INPUT_POST, 'nomeMedicamento', FILTER_SANITIZE_SPECIAL_CHARS);
+        $descricaoMedicamento = filter_input(INPUT_POST, 'descricaoMedicamento', FILTER_SANITIZE_SPECIAL_CHARS);
+        $aplicacaoMedicamento = filter_input(INPUT_POST, 'aplicacaoMedicamento', FILTER_SANITIZE_SPECIAL_CHARS);
+        $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+        try {
+            if (!is_null($id) && ($id === false || $id < 1)) {
+                throw new InvalidArgumentException('O id informado é inválido.', 400);
+            }
+
+            if (!$nomeMedicamento || strlen($nomeMedicamento) <= 0) {
+                throw new InvalidArgumentException('O nome do medicamento deve ser informado.', 400);
+            }            
+
+            if(!$descricaoMedicamento || strlen($descricaoMedicamento) <= 0){
+                throw new InvalidArgumentException('A descrição de um medicamento deve ser informada.', 400);
+            }
+
+            if(!$aplicacaoMedicamento || strlen($aplicacaoMedicamento) <= 0){
+                throw new InvalidArgumentException('A forma de aplicação de um medicamento deve ser informada.', 400);
+            }
+
+            $saudePetDao = new SaudePetDAO();
+            $saudePetDao->adicionarMedicamento($nomeMedicamento, $descricaoMedicamento, $aplicacaoMedicamento);
+
+            if ($id) {
+                header("Location: ../../html/pet/profile_pet.php?id_pet=" . $id);
+            } else {
+                header("Location: ../html/pet/informacao_medicamento.php");
+            }
+        } catch (Exception $e) {
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+            http_response_code($e->getCode());
+            echo json_encode(['erro' => $e->getMessage()]);
         }
     }
 
-    public function listarMedicamento(){
+    public function listarMedicamento()
+    {
         $c = new SaudePetDAO();
         return $c->listarMedicamento();
     }
