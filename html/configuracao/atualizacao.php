@@ -1,7 +1,7 @@
 <?php
     session_start();
     if (!isset($_SESSION['usuario'])) {
-        header("Locatiion ../../index.php");
+        header("Location ../../index.php");
     }
 
     // Verifica Permissão do Usuário

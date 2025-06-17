@@ -300,7 +300,7 @@ require_once ROOT."/html/personalizacao_display.php";
                                 </li>
                             </ul>
                                 <div id="overview" class="tab-pane active">
-                                    <form class="form-horizontal" id="doc" method="GET" action="../../controle/control.php">
+                                    <form class="form-horizontal" id="doc" method="POST" action="../../controle/control.php">
                                     <section class="panel">  
                                         <header class="panel-heading">
                                             <div class="panel-actions">
