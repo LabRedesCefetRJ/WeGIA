@@ -150,15 +150,21 @@ class SocioController
         $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
         $valor = trim(filter_input(INPUT_POST, 'valor'));
 
+        $opcaoSelecionada = trim(filter_input(INPUT_POST, 'opcao', FILTER_SANITIZE_STRING));
+
         //validar dados (considerar separar em uma função própria)
         try {
             //validação do CPF
             require_once('../helper/Util.php');
             $util = new Util();
 
-            if (!$util->validarCPF($cpf)) {
+            if ($opcaoSelecionada == 'fisica' && !$util->validarCPF($cpf)) {
                 throw new InvalidArgumentException('O CPF informado não é válido');
-            }
+            }/*else if ($opcaoSelecionada == 'juridica' && !$util->validarCNPJ($documento)){
+                //lançar exceção para CNPJ inválido
+            }else{
+                //lançar exceção para opção inválida
+            }*/
 
             //validação do nome
             if (!$nome || strlen($nome) < 3) {
@@ -166,8 +172,16 @@ class SocioController
             }
 
             //validação do telefone
-            if (!$telefone || strlen($telefone) != 14) { //considerar melhorar a validação posteriormente
-                throw new InvalidArgumentException('O telefone informado não está no formato válido');
+            if (!$telefone) {
+                throw new InvalidArgumentException('O telefone não foi informado.');
+            } elseif (strlen($telefone) != 14 && strlen($telefone) != 15) {
+                throw new InvalidArgumentException('O telefone informado não está no formato correto.');
+            } elseif (strlen($telefone) === 15) {
+                $celularNumeros = preg_replace('/\D/', '', $telefone);
+
+                if ($celularNumeros[2] != 9) {
+                    throw new InvalidArgumentException('O número de celular informado não é válido.');
+                }
             }
 
             //validação da data de nascimento

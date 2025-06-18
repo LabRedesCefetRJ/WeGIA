@@ -22,7 +22,7 @@ $tipoContribuicao = 'MENSALIDADE';
 
         <p class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
 
-        <form id="formulario">
+        <form id="formulario" autocomplete="off">
 
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
 
