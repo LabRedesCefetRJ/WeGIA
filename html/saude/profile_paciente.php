@@ -1904,22 +1904,17 @@ try {
       }
 
 
-      function gerarEnfermidade() {
-        url = 'exibir_enfermidade.php';
-        $.ajax({
-          data: '',
-          type: "POST",
-          url: url,
-          async: true,
-          success: function(response) {
-
-            var situacoes = response;
-            console.log("situacoes", situacoes)
-            let index = situacoes.length - 1;
-            $('#id_CID').append('<option value="' + situacoes[index].id_CID + '">' + situacoes[index].descricao + '</option>');
-          },
-          dataType: 'json'
-        });
+      async function  gerarEnfermidade() {
+          situacoes = await listarTodasAsEnfermidades()
+          console.log("situacoes", situacoes)
+          let length = situacoes.length - 1;
+          let select = document.getElementById("id_CID");
+          for(let i = 0; i <= length; i = i +1){
+            let option = document.createElement("option");
+            option.value = situacoes[i].id_CID;
+            option.textContent = situacoes[i].descricao;
+            select.appendChild(option);
+          }
       }
 
       function adicionar_enfermidade() {
@@ -2170,12 +2165,34 @@ try {
 
 
       //Buscar enfermidades
-      async function buscarEnfermidades() {
+      async function buscarEnfermidadesPorID() {
         const nomeClasse = 'EnfermidadeControle';
         const metodo = 'getEnfermidadesAtivasPorFichaMedica';
         const id_fichamedica = <?= json_encode($_GET['id_fichamedica']) ?>
 
         const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
+
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+          }
+
+          const data = await response.json();
+
+          return data ?? []; //Retorna um array vazio se `null`
+        } catch (error) {
+          console.error('Erro ao buscar enfermidades:', error);
+          return [];
+        }
+      }
+
+      async function listarTodasAsEnfermidades() {
+        const nomeClasse = 'EnfermidadeControle';
+        const metodo = 'listarTodasAsEnfermidades';
+
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}`;
 
         try {
           const response = await fetch(url);
@@ -2250,7 +2267,7 @@ try {
           const data = await response.json();
 
           // Chamar função para buscar e exibir nova tabela
-          const enfermidades = await buscarEnfermidades();
+          const enfermidades = await buscarEnfermidadesPorID();
 
           exibirEnfermidades(enfermidades);
 
