@@ -81,19 +81,6 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
   $exibimedparaenfermeiro = $exibimedparaenfermeiro->fetchAll(PDO::FETCH_ASSOC);
   $exibimedparaenfermeiro = json_encode($exibimedparaenfermeiro);
 
-  $a = $_GET['id_fichamedica'];
-
-  $medaplicadas = $pdo->query("SELECT medicamento, aplicacao, p.nome as nomeFuncionario FROM saude_medicacao sm JOIN saude_medicamento_administracao sa ON (sm.id_medicacao = sa.saude_medicacao_id_medicacao) join saude_atendimento saa on(saa.id_atendimento=sm.id_atendimento)
-  JOIN funcionario f ON (sa.funcionario_id_funcionario=f.id_funcionario) JOIN pessoa p ON (p.id_pessoa=f.id_pessoa) WHERE saa.id_fichamedica= '$a' ORDER BY aplicacao DESC");
-  $medaplicadas = $medaplicadas->fetchAll(PDO::FETCH_ASSOC);
-
-  foreach($medaplicadas as $key => $value){
-    //formatar data
-    $data = new DateTime($value['aplicacao']);
-    $medaplicadas[$key]['aplicacao'] = $data->format('d/m/Y h:i:s'); 
-  }
-
-  $medaplicadas = json_encode($medaplicadas);
 
   $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
   $medicamentoenfermeiro = $mysqli->query("SELECT * FROM saude_medicacao"); 
@@ -271,52 +258,92 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
               }
             });
           });
+
+          function limparInputDataTime(){
+            const dataHora = document.getElementById("dataHora")
+            dataHora.value = "";
+          }
          
-          $(function(){
-            var exibimedparaenfermeiro = <?= $exibimedparaenfermeiro ?>;
-            $.each(exibimedparaenfermeiro,function(i,item){
-              $("#tabela")
-              .append($("<tr class='item "+item.medicamento+"'>")
-                .append($("<td class='txt-center'>")
-                  .text(item.medicamento)
-                )
-                .append($("<td class='txt-center'>")
-                  .text(item.dosagem)
-                )
-                .append($("<td class='txt-center'>")
-                  .text(item.horario)
-                )
-                .append($("<td class='txt-center'>")
-                  .text(item.duracao)
-                )
-                .append($("<td style='display: flex; justify-content: space-evenly;'>")
-                  .append($("<a href='aplicacao_upload.php?id_medicacao=" + item.id_medicacao +"&id_pessoa="+item.id_pessoa+"&id_funcionario="+item.id_funcionario+"' title='Aplicar medicamento'><button class='btn btn-primary' onclick='variosMed();'><i class='glyphicon glyphicon-hand-up'></i></button></a>"))
-                 
-                )
-              )
-            });
-          });
+          function carregarMedicamentosParaAplicar() {
+            const exibimedparaenfermeiro = <?= $exibimedparaenfermeiro ?>;
+            const tabela = document.getElementById("tabela");
 
-          $(function() {
-          var medaplicadas = <?= $medaplicadas ?>;
-          //console.log(medaplicadas);
-          $.each(medaplicadas, function(i, item) {
-            $("#exibiaplicacao")
-              .append($("<tr>")
-                .append($("<td>").text(item.nomeFuncionario))
-                .append($("<td>").text(item.medicamento))
-                .append($("<td>").text(item.aplicacao))
-              )
-            });
-          });
+            exibimedparaenfermeiro.forEach(function(item) {
+              const tr = document.createElement("tr");
+              tr.className = `item ${item.medicamento}`;
 
-          $(function() {
-              $('#datatable-docfuncional').DataTable({
-                  "order": [
-                  [0, "asc"]
-                  ]
+              const td1 = document.createElement("td");
+              td1.className = "txt-center";
+              td1.textContent = item.medicamento;
+
+              const td2 = document.createElement("td");
+              td2.className = "txt-center";
+              td2.textContent = item.dosagem;
+
+              const td3 = document.createElement("td");
+              td3.className = "txt-center";
+              td3.textContent = item.horario;
+
+              const td4 = document.createElement("td");
+              td4.className = "txt-center";
+              td4.textContent = item.duracao;
+
+              const td5 = document.createElement("td");
+              td5.style.display = "flex";
+              td5.style.justifyContent = "space-evenly";
+
+              const a = document.createElement("a");
+              a.title = "Aplicar medicamento";
+
+              const button = document.createElement("button");
+              button.className = "btn btn-primary";
+              button.type = "button";
+              button.setAttribute("data-toggle", "modal");
+              button.setAttribute("data-target", "#modalHorarioAplicacao");
+              button.setAttribute("data-idMedicacao", item.id_medicacao);
+              button.setAttribute("data-idPessoa", item.id_pessoa);
+              button.setAttribute("data-idFuncionario", item.id_funcionario);
+              button.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i>";
+              button.addEventListener("click", function () {
+                enviarInformacoesParaModal(this);
+              });
+
+              a.appendChild(button);
+              td5.appendChild(a);
+
+              tr.append(td1, td2, td3, td4, td5);
+              tabela.appendChild(tr);
+            });
+          }
+
+          function carregarAplicacoes(id_fichamedica) {
+            fetch(`./listar_medicamentos_aplicados.php?id_fichamedica=${id_fichamedica}`)
+              .then(res => res.json())
+              .then(medaplicadas => {
+                const tabela = document.getElementById("exibiaplicacao");
+
+                limparContainer(tabela);
+
+                medaplicadas.forEach(item => {
+                  const tr = document.createElement("tr");
+
+                  const td1 = document.createElement("td");
+                  td1.textContent = item.nomeFuncionario;
+
+                  const td2 = document.createElement("td");
+                  td2.textContent = item.medicamento;
+
+                  const td3 = document.createElement("td");
+                  td3.textContent = item.aplicacao;
+
+                  tr.append(td1, td2, td3);
+                  tabela.appendChild(tr);
                 });
-            });
+              })
+              .catch(err => {
+                console.error("Erro ao carregar aplicações:", err);
+              });
+          }
           
          $(function() {
           var prontuariopublico = <?= $prontuariopublico ?>;
@@ -329,7 +356,81 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
                 .append($("<td>")).html(stringConcatenada)
             )
           });
-       
+
+          function limparContainer(container) {
+            while (container.firstChild) {
+              container.removeChild(container.firstChild);
+            }
+          }
+
+          function enviarInformacoesParaModal(botao){
+            let id_pessoa = botao.getAttribute("data-idPessoa");
+            let id_medicacao = botao.getAttribute("data-idMedicacao");
+            let id_funcionario = botao.getAttribute("data-idFuncionario");
+
+            
+            const input_id_pessoa = document.getElementById("id_pessoa");
+            const input_id_medicacao = document.getElementById("id_medicacao");
+            const input_id_funcionario = document.getElementById("id_funcionario");
+
+            input_id_pessoa.value = id_pessoa;
+            input_id_medicacao.value = id_medicacao;
+            input_id_funcionario.value = id_funcionario;
+          }
+
+          function enviarDataHoraAplicacaoMedicamento(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+
+            const dados = {
+              id_medicacao: formData.get('id_medicacao'),
+              id_pessoa: formData.get('id_pessoa'),
+              dataHora: formData.get('dataHora')
+            };
+
+           limparInputDataTime();
+
+            const json = JSON.stringify(dados);
+
+            fetch('./aplicacao_upload.php', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: json
+            })
+            .then(res => res.json())
+            .then(data => {
+              console.log('Resposta do servidor:', data.mensagem);
+              const id_fichamedica = document.getElementById("id_fichamedica").value;
+              carregarAplicacoes(id_fichamedica);
+
+              const modal = document.getElementById('modalHorarioAplicacao');
+              if (modal) {
+                $('#modalHorarioAplicacao').modal('hide')
+              }
+            })
+            .catch(erro => {
+              console.error('Erro ao enviar:', erro);
+            });
+          }
+
+          function definirDataHoraAtualSeVazio(campo) {
+            if (!campo.value) {
+              const agora = new Date();
+              const adicionarZero = numero => numero.toString().padStart(2, '0');
+
+              const ano = agora.getFullYear();
+              const mes = adicionarZero(agora.getMonth() + 1); // Janeiro = 0
+              const dia = adicionarZero(agora.getDate());
+              const horas = adicionarZero(agora.getHours());
+              const minutos = adicionarZero(agora.getMinutes());
+
+              campo.value = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
+            }
+          }
       </script>
       <style type="text/css">
       .obrig {
@@ -351,6 +452,7 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
         
    </head>
    <body>
+   <input type="hidden" id="id_fichamedica" value="<?= $_GET['id_fichamedica'] ?>">
       <section class="body">
          <div id="header"></div>
             <!-- end: header -->
@@ -476,7 +578,7 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
             <table class="table table-bordered table-striped mb-none" id="datatable-default">
 				    <thead>
 						<tr>
-						  <th class='txt-center' width='30%' id="id_medicacao">Medicações</th>
+						  <th class='txt-center' width='30%' id="med">Medicações</th>
 							<th class='txt-center' width='15%'>Dosagem</th>
 							<th class='txt-center' width='15%'>Horário</th>
 							<th class='txt-center' width='15%'>Duração</th>
@@ -487,7 +589,34 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
 					</tbody>
 				</table>
-        
+        <div class="modal fade" id="modalHorarioAplicacao" tabindex="-1" role="dialog" aria-labelledby="tituloModal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+
+              <form onsubmit="enviarDataHoraAplicacaoMedicamento(event)">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                  <h4 class="modal-title" id="tituloModal">Escolher Data e Hora</h4>
+                </div>
+
+                <div class="modal-body">
+                  <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control">
+                  <input type="hidden" id="id_funcionario" name="id_funcionario">
+                  <input type="hidden" id="id_medicacao" name="id_medicacao">
+                  <input type="hidden" id="id_pessoa" name="id_pessoa">
+                </div>
+
+                <div class="modal-footer">
+                  <button type="submit" class="btn btn-primary">Enviar</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal" onclick="limparInputDataTime()">Cancelar</button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        </div>
                      <br />
                     
                 <table class="table table-bordered table-striped mb-none" id="enf">
@@ -663,7 +792,9 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
                 localStorage.setItem("currentTab","2");
                 alert("Medicamento aplicado com sucesso!");
             }
-
+            carregarMedicamentosParaAplicar();
+            const id_fichamedica = document.getElementById("id_fichamedica").value;
+            carregarAplicacoes(id_fichamedica);
      </script>
         
         <!-- Vendor -->

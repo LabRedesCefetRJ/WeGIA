@@ -705,7 +705,7 @@
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#enfermaria">
 								<i class="fa fa-user-md"></i>
-								<h4>Enfermaria</h4>
+								<h4>Registro Diário</h4>
 							</div>
 						</a>
 					</div>
@@ -733,13 +733,19 @@
 						<a href="<?= WWW ?>html/saude/administrar_medicamento.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-pills"></i>
-								<h4>Administrar Medicamentos</h4>
+								<h4>Medicamentos</h4>
 							</div>
 						</a>
-						<a href="<?= WWW ?>html/saude/listar_historico_pacientes.php">	
+						<a href="<?= WWW ?>html/saude/listar_sinais_vitais.php">	
 							<div class="col-lg-2 col-md-8 i">
 								<i  class="fa fa-address-book"></i>
-								<h4>Histórico dos pacientes</h4>
+								<h4>Sinais Vitais</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/saude/listar_cadastro_intercorrencia.php">	
+							<div class="col-lg-2 col-md-8 i">
+								<i  class="fa fa-edit"></i>
+								<h4>Intercorrências</h4>
 							</div>
 						</a>
 					</div>

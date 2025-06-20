@@ -306,6 +306,14 @@ try {
   .small-text {
     font-size: small;
   }
+  table td, table th {
+    word-wrap: break-word;
+    white-space: normal;
+  }
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
 </style>
 
 
@@ -545,6 +553,35 @@ try {
       $("#mais_medicacoes").show();
       $(".meddisabled").val(nome_medicacao);
     }
+
+    function carregarIntercorrencias(){
+      let id = <?php echo $_GET['id_fichamedica']; ?>;
+      const url = `./listar_intercorrencias.php?&id_fichamedica=${id}`;
+      fetch(url)
+      .then(res => res.json())
+      .then(intercorrencias => {
+        console.log(intercorrencias)
+        const tbody = document.getElementById("doc-tab-intercorrencias");
+
+        intercorrencias.forEach(item => {
+          const tr = document.createElement("tr");
+
+          const td1 = document.createElement("td");
+          td1.textContent = item.descricao;
+
+          const td2 = document.createElement("td");
+          td2.textContent = item.data;
+
+          tr.append(td1, td2);
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error("Erro ao carregar aplicações:", err);
+      });
+    }
+
+    
   </script>
   <style type="text/css">
     .obrig {
@@ -645,6 +682,9 @@ try {
                 </li>
                 <li>
                   <a href="#sinais_vitais" data-toggle="tab">Sinais Vitais</a>
+                </li>
+                <li>
+                  <a href="#intercorrencias" data-toggle="tab">Intercorrências</a>
                 </li>
               </ul>
 
@@ -1552,6 +1592,31 @@ try {
                       <input type="hidden" name="a_enf">
                   </section>
                 </div>
+                <div id="intercorrencias" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Intercorrências</h2>
+                    </header>
+                    <div class="panel-body">
+                      <hr class="dotted short">
+
+                      <div class="form-group" id="exibirintercorrencias">
+                        <table class="table table-bordered table-striped" id="datatable-intercorrencias">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Descrição</th>
+                              <th>Data</th>
+                            </tr>
+                          </thead>
+                          <tbody id="doc-tab-intercorrencias">
+                          </tbody>
+                        </table>
+                      </div>
+                  </section>
+                </div>
 
                 <!-- Aba de medicações aplicadas -->
                 <div id="sinais_vitais" class="tab-pane">
@@ -1839,50 +1904,53 @@ try {
       }
 
 
-      function gerarEnfermidade() {
-        url = 'exibir_enfermidade.php';
-        $.ajax({
-          data: '',
-          type: "POST",
-          url: url,
-          async: true,
-          success: function(response) {
-
-            var situacoes = response;
-            console.log("situacoes", situacoes)
-            let index = situacoes.length - 1;
-            $('#id_CID').append('<option value="' + situacoes[index].id_CID + '">' + situacoes[index].descricao + '</option>');
-          },
-          dataType: 'json'
-        });
+      async function  gerarEnfermidade() {
+          situacoes = await listarTodasAsEnfermidades()
+          console.log("situacoes", situacoes)
+          let length = situacoes.length - 1;
+          let select = document.getElementById("id_CID");
+          for(let i = 0; i <= length; i = i +1){
+            let option = document.createElement("option");
+            option.value = situacoes[i].id_CID;
+            option.textContent = situacoes[i].descricao;
+            select.appendChild(option);
+          }
       }
 
       function adicionar_enfermidade() {
-        url = 'adicionar_enfermidade.php';
+        const url = './adicionar_enfermidade.php';
+        
         let nome_enfermidade = window.prompt("Insira o nome da enfermidade:");
         let cid_enfermidade = window.prompt("Insira o CID da enfermidade:");
-        let situacao = [cid_enfermidade, nome_enfermidade]
 
         if (!nome_enfermidade || !cid_enfermidade) {
-          return
-        }
-        if (nome_enfermidade == '' || cid_enfermidade == '') {
-          return
+          return;
         }
 
-        data = {
-          cid: cid_enfermidade,
-          nome: nome_enfermidade
-        };
-        console.log(data);
-        $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response) {
-            gerarEnfermidade();
+        const data = new URLSearchParams();
+        data.append('cid', cid_enfermidade);
+        data.append('nome', nome_enfermidade);
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
+          body: data.toString()
         })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erro na requisição');
+          }
+          return response.text();
+        })
+        .then(result => {
+          console.log('Resposta:', result);
+          gerarEnfermidade();
+        })
+        .catch(error => {
+          console.error('Erro ao enviar dados:', error);
+        });
       }
 
 
@@ -2097,12 +2165,34 @@ try {
 
 
       //Buscar enfermidades
-      async function buscarEnfermidades() {
+      async function buscarEnfermidadesPorID() {
         const nomeClasse = 'EnfermidadeControle';
         const metodo = 'getEnfermidadesAtivasPorFichaMedica';
         const id_fichamedica = <?= json_encode($_GET['id_fichamedica']) ?>
 
         const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
+
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+          }
+
+          const data = await response.json();
+
+          return data ?? []; //Retorna um array vazio se `null`
+        } catch (error) {
+          console.error('Erro ao buscar enfermidades:', error);
+          return [];
+        }
+      }
+
+      async function listarTodasAsEnfermidades() {
+        const nomeClasse = 'EnfermidadeControle';
+        const metodo = 'listarTodasAsEnfermidades';
+
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}`;
 
         try {
           const response = await fetch(url);
@@ -2177,7 +2267,7 @@ try {
           const data = await response.json();
 
           // Chamar função para buscar e exibir nova tabela
-          const enfermidades = await buscarEnfermidades();
+          const enfermidades = await buscarEnfermidadesPorID();
 
           exibirEnfermidades(enfermidades);
 
@@ -2189,6 +2279,8 @@ try {
       const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
 
       btnCadastrarEnfermidade.addEventListener('click', cadastrarEnfermidade);
+
+      carregarIntercorrencias();
     </script>
 
     <!-- Vendor -->

@@ -509,7 +509,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					},
 					type: "GET",
 					success: function(respostaProds) {
-						var produtos = JSON.parse(respostaProds);
+						var produtos = respostaProds;
 						prods = [];
 						// console.log(produtos);
 						$("#produtos_autocomplete").children().remove();
