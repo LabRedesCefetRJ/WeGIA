@@ -314,11 +314,13 @@ async function cadastrarSocio() {
     const documento = pegarDocumento();
 
     const cep = formatarCEP(formData.get('cep'));
+    const dataNascimento = converterDataParaISO(formData.get('data_nascimento'));
 
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
     formData.append('cep', cep);
+    formData.append('data_nascimento', dataNascimento);
 
     try {
         const response = await fetch("../controller/control.php", {
@@ -349,11 +351,13 @@ async function atualizarSocio() {
     const documento = pegarDocumento();
 
     const cep = formatarCEP(formData.get('cep'));
+    const dataNascimento = converterDataParaISO(formData.get('data_nascimento'));
 
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'atualizarSocio');
     formData.append('documento_socio', documento);
     formData.append('cep', cep);
+    formData.append('data_nascimento', dataNascimento);
 
     try {
         const response = await fetch("../controller/control.php", {
@@ -418,6 +422,55 @@ function verificarEndereco() {
     return true;
 }
 
+function converterDataParaISO(dataBR) {
+    const partes = dataBR.split('/');
+    if (partes.length !== 3) return null;
+
+    const [dia, mes, ano] = partes;
+    if (!dataValidaBR(dataBR)) return null;
+
+    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+}
+
+function converterDataParaBR(dataISO) {
+    const partes = dataISO.split('-');
+    if (partes.length !== 3) return null;
+
+    const [ano, mes, dia] = partes;
+
+    const dataBR = `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
+
+    if (!dataValidaBR(dataBR)) return null;
+
+    return dataBR;
+}
+
+function dataValidaBR(dataStr) {
+    const partes = dataStr.split('/');
+    if (partes.length !== 3) return false;
+
+    const [dia, mes, ano] = partes.map(Number);
+
+    // Verificação básica
+    if (ano < 1000 || ano > 9999) return false;
+    if (mes < 1 || mes > 12) return false;
+
+    const data = new Date(ano, mes - 1, dia);
+    const hoje = new Date();
+
+    // Zerar hora/min/seg dos dois objetos para comparar só as datas
+    data.setHours(0, 0, 0, 0);
+    hoje.setHours(0, 0, 0, 0);
+
+    // Verifica se a data é real e não está no futuro
+    return (
+        data.getFullYear() === ano &&
+        data.getMonth() === mes - 1 &&
+        data.getDate() === dia &&
+        data <= hoje
+    );
+}
+
 function verificarContato() {
     const nome = document.getElementById('nome').value;
     const dataNascimento = document.getElementById('data_nascimento').value;
@@ -431,6 +484,9 @@ function verificarContato() {
 
     if (!dataNascimento) {
         alert('A data de nascimento não pode estar vazia');
+        return false;
+    } else if (!dataValidaBR(dataNascimento)) {
+        alert('Informe uma data válida antes de prosseguir.');
         return false;
     }
 
@@ -478,7 +534,7 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
 
     //Atribuir valor aos campos
     nomeObject.value = nome;
-    dataNascimentoObject.value = dataNascimento;
+    dataNascimentoObject.value = converterDataParaBR(dataNascimento);
     emailObject.value = email;
     telefoneObject.value = telefone;
     cepObject.value = cep;
