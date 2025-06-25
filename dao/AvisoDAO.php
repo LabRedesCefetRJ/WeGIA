@@ -73,4 +73,24 @@ class AvisoDAO
             echo 'Erro ao procurar uma intercorrência com o id fornecido: '.$e->getMessage();
         }
     }
+
+     public function listarIntercorrenciaPorIdDaFichaMedica($id){
+        try{
+            $stmt = $this->pdo->prepare("
+                SELECT descricao, data
+                FROM aviso
+                JOIN saude_fichamedica sf on ( sf.id_fichamedica = :id_fichamedica)
+                WHERE id_pessoa_atendida = sf.id_pessoa
+                ORDER BY data DESC
+            ");
+            $stmt->bindValue(':id_fichamedica', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $intercorrencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return $intercorrencias;
+        } catch (PDOException $e){
+            echo 'Erro ao procurar uma intercorrência com o id da ficha médica fornecida: '.$e->getMessage();
+        }
+        
+    }
 }

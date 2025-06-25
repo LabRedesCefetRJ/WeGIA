@@ -54,4 +54,25 @@ class AvisoControle
             echo 'Erro ao registrar intercorrência: ' . $e->getMessage();
         }
     }
+
+    public function listarIntercorrenciaPorIdDaFichaMedica(){
+        header('Content-Type: application/json');
+        try{
+            $id = $_GET['id_fichamedica'];
+
+            $avisoDAO = new AvisoDAO();
+            $intercorrencias = $avisoDAO->listarIntercorrenciaPorIdDaFichaMedica($id);
+
+            foreach($intercorrencias as $key => $value){
+                $data = new DateTime($value['data']);
+                $intercorrencias[$key]['data'] = $data->format('d/m/Y H:i:s'); 
+            }
+
+            echo json_encode($intercorrencias);
+        } catch (Exception $e) {
+            http_response_code($e->getCode());
+            echo json_encode(['erro' => $e->getMessage()]);
+        }
+        
+    }
 }

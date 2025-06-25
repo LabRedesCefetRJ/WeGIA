@@ -556,7 +556,7 @@ try {
 
     function carregarIntercorrencias(){
       let id = <?php echo $_GET['id_fichamedica']; ?>;
-      const url = `./listar_intercorrencias.php?&id_fichamedica=${id}`;
+      const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("AvisoControle")}&metodo=${encodeURIComponent("listarIntercorrenciaPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id)}`;
       fetch(url)
       .then(res => res.json())
       .then(intercorrencias => {
