@@ -193,7 +193,7 @@ class ProdutoControle
     /**
      * Retorna uma lista dos produtos disponíveis no sistema e suas respectivas quantidades no almoxarifado especificado
      */
-    public function getProdutosPorAlmoxarifado()
+    public function getProdutosParaCadastrarEntradaOuSaidaPorAlmoxarifado()
     {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ProdutoDTOCadastro.php';
 
