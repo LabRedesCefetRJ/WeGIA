@@ -4,67 +4,102 @@ ini_set('display_startup_erros', 1);
 error_reporting(E_ALL);
 extract($_REQUEST);
 session_start();
-require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
+
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
-} else if (!isset($_SESSION['funcionario'])) {
-  $id_funcionario = $_GET['id_funcionario'];
-  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/profile_funcionario.php?id_funcionario=' . $id_funcionario . '&id_funcionario=' . $id_funcionario);
-} else {
-  $func = $_SESSION['funcionario'];
-  unset($_SESSION['funcionario']);
-  // Adiciona Descrição de escala e tipo
-  $func = json_decode($func);
-  if ($func) {
-    $func = $func[0];
-    if ($func->tipo) {
-      $func->tipo_descricao = $pdo->query("SELECT descricao FROM tipo_quadro_horario WHERE id_tipo=" . $func->tipo)->fetch(PDO::FETCH_ASSOC)['descricao'];
-    }
-    if ($func->escala) {
-      $func->escala_descricao = $pdo->query("SELECT descricao FROM escala_quadro_horario WHERE id_escala=" . $func->escala)->fetch(PDO::FETCH_ASSOC)['descricao'];
-    }
-    $func = json_encode([$func]);
-  }
+  exit();
 }
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
-require_once "../permissao/permissao.php";
-permissao($_SESSION['id_pessoa'], 11, 7);
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$situacao = $mysqli->query("SELECT * FROM situacao");
-$cargo = $mysqli->query("SELECT * FROM cargo");
-// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once "../personalizacao_display.php";
-require_once "../../dao/Conexao.php";
-require_once ROOT . "/controle/FuncionarioControle.php";
-$cpf = new FuncionarioControle;
-$cpf->listarCPF();
-require_once ROOT . "/controle/AtendidoControle.php";
-$cpf1 = new AtendidoControle;
-$cpf1->listarCPF();
-require_once "../geral/msg.php";
-$docfuncional = $pdo->query("SELECT * FROM funcionario_docs f JOIN funcionario_docfuncional docf ON f.id_docfuncional = docf.id_docfuncional WHERE id_funcionario = " . $_GET['id_funcionario']);
-$docfuncional = $docfuncional->fetchAll(PDO::FETCH_ASSOC);
-foreach ($docfuncional as $key => $value) {
-  $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
 
-  //formatar data
-  $data = new DateTime($value['data']);
-  $docfuncional[$key]['data'] = $data->format('d/m/Y h:i:s');
+//Sanitizar entrada do id_funcionario
+$idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+
+//Verificar se é um id válido
+if (!$idFuncionario || $idFuncionario < 1) {
+  echo json_encode(['erro' => 'O id de um funcionário deve ser maior ou igual a 1.']);
+  exit(400);
 }
-$docfuncional = json_encode($docfuncional);
-$dependente = $pdo->query("SELECT fdep.id_dependente AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.descricao AS parentesco FROM funcionario_dependentes fdep LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco WHERE fdep.id_funcionario = " . $_GET['id_funcionario']);
-$dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
-$dependente = json_encode($dependente);
+
+try {
+  require_once "../../dao/Conexao.php";
+  $pdo = Conexao::connect();
+
+  if (!isset($_SESSION['funcionario'])) {
+    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/profile_funcionario.php?id_funcionario=' . $idFuncionario . '&id_funcionario=' . $idFuncionario);
+  } else {
+    $func = $_SESSION['funcionario'];
+    unset($_SESSION['funcionario']);
+    // Adiciona Descrição de escala e tipo
+    $func = json_decode($func);
+    if ($func) {
+      $func = $func[0];
+      if ($func->tipo) {
+        $func->tipo_descricao = $pdo->query("SELECT descricao FROM tipo_quadro_horario WHERE id_tipo=" . $func->tipo)->fetch(PDO::FETCH_ASSOC)['descricao'];
+      }
+      if ($func->escala) {
+        $func->escala_descricao = $pdo->query("SELECT descricao FROM escala_quadro_horario WHERE id_escala=" . $func->escala)->fetch(PDO::FETCH_ASSOC)['descricao'];
+      }
+      $func = json_encode([$func]);
+    }
+  }
+  $config_path = "config.php";
+  if (file_exists($config_path)) {
+    require_once($config_path);
+  } else {
+    while (true) {
+      $config_path = "../" . $config_path;
+      if (file_exists($config_path)) break;
+    }
+    require_once($config_path);
+  }
+  require_once "../permissao/permissao.php";
+  permissao($_SESSION['id_pessoa'], 11, 7);
+
+  $situacao = $pdo->query("SELECT * FROM situacao")->fetchAll();
+  $cargo = $pdo->query("SELECT * FROM cargo")->fetchAll();
+  // Adiciona a Função display_campo($nome_campo, $tipo_campo)
+  require_once "../personalizacao_display.php";
+  require_once "../../dao/Conexao.php";
+  require_once ROOT . "/controle/FuncionarioControle.php";
+  $cpf = new FuncionarioControle;
+  $cpf->listarCPF();
+  require_once ROOT . "/controle/AtendidoControle.php";
+  $cpf1 = new AtendidoControle;
+  $cpf1->listarCPF();
+  require_once "../geral/msg.php";
+  $docfuncional = $pdo->prepare("SELECT * FROM funcionario_docs f JOIN funcionario_docfuncional docf ON f.id_docfuncional = docf.id_docfuncional WHERE id_funcionario =:idFuncionario");
+
+  $docfuncional->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+
+  if (!$docfuncional->execute()) {
+    echo json_encode(['erro' => 'Falha ao executar consulta da documentação do funcionário']);
+    exit(500);
+  }
+
+  $docfuncional = $docfuncional->fetchAll(PDO::FETCH_ASSOC);
+  foreach ($docfuncional as $key => $value) {
+    $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
+
+    //formatar data
+    $data = new DateTime($value['data']);
+    $docfuncional[$key]['data'] = $data->format('d/m/Y h:i:s');
+  }
+  $docfuncional = json_encode($docfuncional);
+  //SQL Injection abaixo
+  $dependente = $pdo->prepare("SELECT fdep.id_dependente AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.descricao AS parentesco FROM funcionario_dependentes fdep LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco WHERE fdep.id_funcionario =:idFuncionario");
+
+  $dependente->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+
+  if (!$dependente->execute()) {
+    echo json_encode(['erro' => 'Falha ao consultar dependentes de um funcionário']);
+    exit(500);
+  }
+
+  $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
+  $dependente = json_encode($dependente);
+} catch (Exception $e) {
+  echo json_encode(['erro' => $e->getMessage()]);
+  exit($e->getCode());
+}
 ?>
 <!doctype html>
 <html class="fixed">
@@ -676,18 +711,24 @@ $dependente = json_encode($dependente);
               <div class="panel-body">
                 <div class="thumb-info mb-md">
                   <?php
-                  $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
                   $id_pessoa = $_SESSION['id_pessoa'];
-                  $donoimagem = $_GET['id_funcionario'];
-                  //$resultado = mysqli_query($conexao, "SELECT `imagem`, `nome` FROM `pessoa` WHERE id_pessoa=$id_pessoa");
-                  $resultado = mysqli_query($conexao, "SELECT pessoa.imagem, pessoa.nome FROM pessoa, funcionario  WHERE pessoa.id_pessoa=funcionario.id_pessoa and funcionario.id_funcionario=$donoimagem");
-                  $pessoa = mysqli_fetch_array($resultado);
-                  if (isset($_SESSION['id_pessoa']) and !empty($_SESSION['id_pessoa'])) {
-                    $foto = $pessoa['imagem'];
-                    if ($foto != null and $foto != "") {
-                      $foto = 'data:image;base64,' . $foto;
-                    } else {
-                      $foto = WWW . "img/semfoto.png";
+
+                  //SQL Injection abaixo
+                  $stmtImagem = $pdo->prepare("SELECT pessoa.imagem, pessoa.nome FROM pessoa, funcionario  WHERE pessoa.id_pessoa=funcionario.id_pessoa and funcionario.id_funcionario=:idFuncionario");
+
+                  $stmtImagem->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+
+                  if (!$stmtImagem->execute()) {
+                    $foto = WWW . "img/semfoto.png";
+                  } else {
+                    $pessoa = $stmtImagem->fetch(PDO::FETCH_ASSOC);
+                    if (isset($_SESSION['id_pessoa']) and !empty($_SESSION['id_pessoa'])) {
+                      $foto = $pessoa['imagem'];
+                      if ($foto != null and $foto != "") {
+                        $foto = 'data:image;base64,' . $foto;
+                      } else {
+                        $foto = WWW . "img/semfoto.png";
+                      }
                     }
                   }
                   echo "<img src='$foto' style='margin-bottom: 15px;' id='imagem' class='rounded img-responsive' alt='John Doe'>";
@@ -715,7 +756,8 @@ $dependente = json_encode($dependente);
                               </div>
                           </div>
                           <div class="modal-footer">
-                            <input type="hidden" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
+                            <!-- Pegar id funcionário de variável sanitizada -->
+                            <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                             <input type="submit" id="formsubmit" value="Alterar imagem">
                           </div>
                         </div>
@@ -829,7 +871,8 @@ $dependente = json_encode($dependente);
                           </select>
                         </div>
                       </div>
-                      <input type="hidden" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
+                      <!-- Pegar id funcionário de variável sanitizada -->
+                      <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                       <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes_pessoais()">Editar</button>
                       <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
                     </fieldset>
@@ -851,7 +894,8 @@ $dependente = json_encode($dependente);
                         </div>
                         <div class="modal-body">
                           <p> Tem certeza que deseja demitir esse funcionário? Essa ação não poderá ser desfeita e todas as informações referentes a esse funcionário serão perdidas!</p>
-                          <a href="../../controle/control.php?metodo=excluir&nomeClasse=FuncionarioControle&id_funcionario=<?php echo $_GET['id_funcionario']; ?>"><button button type="button" class="btn btn-success">Confirmar</button></a>
+                          <!-- Pegar id funcionário de variável sanitizada -->
+                          <a href="../../controle/control.php?metodo=excluir&nomeClasse=FuncionarioControle&id_funcionario=<?= $idFuncionario ?>"><button button type="button" class="btn btn-success">Confirmar</button></a>
                           <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                         </div>
                       </div>
@@ -926,7 +970,8 @@ $dependente = json_encode($dependente);
                                   <input type="date" name="fim" id="fim_remuneracao" class="form-control">
                                 </div>
                               </div>
-                              <input type="hidden" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
+                              <!-- Pegar id funcionário de variável sanitizada -->
+                              <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                               <input type="hidden" name="action" value="remuneracao_adicionar">
                               <button class="btn btn-primary" id="botaoSalvarRemuneracao" onclick="adicionarRemuneracao('formRemuneracao', console.log)">Salvar</button>
                             </fieldset>
@@ -1060,7 +1105,7 @@ $dependente = json_encode($dependente);
                             <select class="form-control input-lg mb-md" name="situacao" id="situacao">
                               <option selected disabled>Selecionar</option>
                               <?php
-                              while ($row = $situacao->fetch_array(MYSQLI_NUM)) {
+                              foreach ($situacao as $row) {
                                 echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
@@ -1074,7 +1119,7 @@ $dependente = json_encode($dependente);
                             <select class="form-control input-lg mb-md" name="cargo" id="cargo">
                               <option selected disabled>Selecionar</option>
                               <?php
-                              while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
+                              foreach ($cargo as $row) {
                                 echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
@@ -1082,7 +1127,8 @@ $dependente = json_encode($dependente);
                           </div>
                           <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
-                        <input type="hidden" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
+                        <!-- Pegar id funcionário de variável sanitizada -->
+                        <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarOutros" onclick="return editar_outros()">Editar</button>
                         <input type="submit" class="btn btn-primary" value="Salvar" id="botaoSalvarOutros" disabled="true">
                       </form>
@@ -1097,17 +1143,27 @@ $dependente = json_encode($dependente);
                         </thead>
                         <tbody id="addInfo-tab">
                           <?php
-                          $id_funcionario = $_GET['id_funcionario'];
-                          $infoAdd = $pdo->query("SELECT * FROM funcionario_outrasinfo WHERE funcionario_id_funcionario = '$id_funcionario';")->fetchAll(PDO::FETCH_ASSOC);
-                          $tam = count($infoAdd);
-                          for ($i = 0; $i < $tam; $i++) {
-                            $dado = htmlspecialchars($infoAdd[$i]['dado']);
-                            $desc_id = htmlspecialchars($infoAdd[$i]['funcionario_listainfo_idfuncionario_listainfo']);
-                            $idInfoAdicional = $infoAdd[$i]['idfunncionario_outrasinfo'];
-                            $descricao = $pdo->query("SELECT descricao FROM funcionario_listainfo WHERE idfuncionario_listainfo = '$desc_id';")->fetchAll(PDO::FETCH_ASSOC);
-                            $nome_desc = htmlspecialchars($descricao[0]['descricao']);
-                            echo
-                            "
+                          try {
+                            $stmtInfoAdd = $pdo->prepare("SELECT * FROM funcionario_outrasinfo WHERE funcionario_id_funcionario =:idFuncionario");
+                            $stmtInfoAdd->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+                            $stmtInfoAdd->execute();
+                            $infoAdd = $stmtInfoAdd->fetchAll(PDO::FETCH_ASSOC);
+
+                            $tam = count($infoAdd);
+                            for ($i = 0; $i < $tam; $i++) {
+                              $dado = htmlspecialchars($infoAdd[$i]['dado']);
+                              $descricaoId = htmlspecialchars($infoAdd[$i]['funcionario_listainfo_idfuncionario_listainfo']);
+                              $idInfoAdicional = $infoAdd[$i]['idfunncionario_outrasinfo'];
+
+                              $stmtDescricao = $pdo->prepare("SELECT descricao FROM funcionario_listainfo WHERE idfuncionario_listainfo =:descricaoId");
+
+                              $stmtDescricao->bindValue(':descricaoId', $descricaoId, PDO::PARAM_INT);
+                              $stmtDescricao->execute();
+                              $descricao = $stmtDescricao->fetchAll(PDO::FETCH_ASSOC);
+
+                              $nome_desc = htmlspecialchars($descricao[0]['descricao']);
+                              echo
+                              "
                                   <tr id='$idInfoAdicional'>
                                     <td>$nome_desc</td>
                                     <td>$dado</td>
@@ -1116,6 +1172,10 @@ $dependente = json_encode($dependente);
                                     </td>
                                   </tr>
                                 ";
+                            }
+                          } catch (PDOException $e) {
+                            echo json_encode(['erro' => $e->getMessage()]);
+                            exit($e->getCode());
                           }
                           ?>
                         </tbody>
@@ -1155,7 +1215,8 @@ $dependente = json_encode($dependente);
                                   <textarea class="form-control" id="dados_addInfo" style="padding: 6px 12px; height: 120px;" name="dados" maxlength="255" required></textarea>
                                 </div>
                                 <input type="text" name="action" value="adicionar" hidden>
-                                <input type="text" name="id_funcionario" value="<?= $_GET['id_funcionario']; ?>" hidden>
+                                <!-- Pegar id funcionário de variável sanitizada -->
+                                <input type="text" name="id_funcionario" value="<?= $idFuncionario ?>" hidden>
                               </form>
                             </div>
                             <div class="modal-footer">
@@ -1168,7 +1229,8 @@ $dependente = json_encode($dependente);
                                       [0, "asc"]
                                     ]
                                   });
-                                  post("informacao_adicional.php", "action='listar'&id_funcionario=<?= $_GET['id_funcionario'] ?>")
+                                  //Pegar id funcionário de variável sanitizada
+                                  post("informacao_adicional.php", "action='listar'&id_funcionario=<?= $idFuncionario ?>")
                                 });
 
                                 function adicionar_addInfoDescricao() {
@@ -1212,10 +1274,11 @@ $dependente = json_encode($dependente);
 
                                 //Refazer lógica abaixo
                                 function listarInfoAdicional(lista) {
-
+                                  //Pegar id funcionário de variável sanitizada
+                                  console.log('Linha 1279');
                                   $.ajax({
                                     type: "GET",
-                                    url: `../../controle/control.php?nomeClasse=${encodeURIComponent('InformacaoAdicionalControle')}&metodo=${encodeURIComponent('getTodasInformacoesAdicionaisPorIdFuncionario')}&id_funcionario=<?= $_GET['id_funcionario'] ?>`,
+                                    url: `../../controle/control.php?nomeClasse=${encodeURIComponent('InformacaoAdicionalControle')}&metodo=${encodeURIComponent('getTodasInformacoesAdicionaisPorIdFuncionario')}&id_funcionario=<?= $idFuncionario ?>`,
                                     dataType: 'json',
                                     success: function(resp) {
                                       console.log('Informações adicionais', resp);
@@ -1422,7 +1485,7 @@ $dependente = json_encode($dependente);
                         <hr class="dotted short">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarCargaHoraria">
-                        <input type="hidden" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
+                        <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <div class="form-group center">
                           <button type="button" class="btn btn-primary" id="botaoEditar_editar_cargaHoraria" onclick="switchForm('editar_cargaHoraria')">Editar</button>
                           <input id="enviarCarga" type="submit" class="btn btn-primary" value="Alterar carga">
@@ -1477,7 +1540,7 @@ $dependente = json_encode($dependente);
                             <p class="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                           </div>
                         </div>
-                        <input type="hidden" id="id_funcionario" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
+                        <input type="hidden" id="id_funcionario" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao" onclick="return editar_documentacao()">Editar</button>
                         <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar" onclick="funcao3()">
                       </form>
@@ -1538,7 +1601,7 @@ $dependente = json_encode($dependente);
                                   <label for="arquivoDocumento">Arquivo</label>
                                   <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
                                 </div>
-                                <input type="number" name="id_funcionario" value="<?= $_GET['id_funcionario']; ?>" style='display: none;'>
+                                <input type="number" name="id_funcionario" value="<?= $idFuncionario ?>" style='display: none;'>
                               </div>
                               <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -1577,7 +1640,7 @@ $dependente = json_encode($dependente);
                         Adicionar Dependente
                       </button>
                     </div>
-                    
+
                     <!-- Modal Form Dependentes to Cpf -->
                     <div class="modal fade" id="depFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
                       <div class="modal-dialog" role="document">
@@ -1618,7 +1681,7 @@ $dependente = json_encode($dependente);
                                     <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                   </div>
                                 </div>
-                                <input type="hidden" name="id_funcionario" value=<?= $_GET['id_funcionario']; ?> readonly>
+                                <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?> readonly>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                                   <input id="enviarDependente" type="submit" value="Enviar" class="btn btn-primary">
@@ -1718,10 +1781,12 @@ $dependente = json_encode($dependente);
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                                   <div class="col-md-6">
-                                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" id="profileCompany" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?>>
+                                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" id="profileCompany" name="data_expedicao" id="data_expedicao" max=<?php //echo date('Y-m-d'); 
+                                                                                                                                                                                      ?>>
                                   </div>
                                 </div>
-                                <input type="hidden" name="id_funcionario" value=<?= $_GET['id_funcionario']; ?> readonly>
+                                <input type="hidden" name="id_funcionario" value=<?php //echo $idFuncionario
+                                                                                  ?> readonly>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                                   <input type="submit" value="Enviar" class="btn btn-primary">
@@ -1803,7 +1868,7 @@ $dependente = json_encode($dependente);
                           </div>
                         </div>
                         <div class="form-group center">
-                          <input type="hidden" name="id_funcionario" value=<?php echo $_GET['id_funcionario'] ?>>
+                          <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                           <button type="button" class="btn btn-primary" id="botaoEditarEndereco" onclick="return editar_endereco()">Editar</button>
                           <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar" onclick="funcao3()">
                         </div>
@@ -1914,7 +1979,7 @@ $dependente = json_encode($dependente);
 
     function removerRemuneracao(id) {
       var url = "remuneracao.php";
-      var data = "action=remover&id_remuneracao=" + id + "&id_funcionario=<?= $_GET['id_funcionario'] ?>";
+      var data = "action=remover&id_remuneracao=" + id + "&id_funcionario=<?= $idFuncionario ?>";
       post(url, data, listar_remuneracao);
     }
 
@@ -1930,11 +1995,11 @@ $dependente = json_encode($dependente);
       });
     }
     $(function() {
-      post("remuneracao.php", "action=listar&id_funcionario=<?= $_GET['id_funcionario'] ?>", listar_remuneracao);
+      post("remuneracao.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_remuneracao);
     })
 
     function funcao3() {
-      var idfunc = <?php echo $_GET['id_funcionario']; ?>;
+      var idfunc = <?= $idFuncionario ?>;
       var cpfs = <?php echo $_SESSION['cpf_funcionario']; ?>;
       var cpf_funcionario = $("#cpf").val();
       var cpf_funcionario_correto = cpf_funcionario.replace(".", "");
@@ -2057,7 +2122,7 @@ $dependente = json_encode($dependente);
 
     function removerDependente(id_dep) {
       let url = "dependente_remover.php";
-      let data = "id_funcionario=<?= $_GET['id_funcionario']; ?>&id_dependente=" + id_dep;
+      let data = "id_funcionario=<?= $idFuncionario ?>&id_dependente=" + id_dep;
       post(url, data, verificaSucesso);
     }
 
@@ -2065,7 +2130,7 @@ $dependente = json_encode($dependente);
       if (!window.confirm("Tem certeza que deseja remover esse documento?")) {
         return false;
       }
-      let url = "documento_excluir.php?id_doc=" + id_doc + "&id_funcionario=<?= $_GET["id_funcionario"] ?>";
+      let url = "documento_excluir.php?id_doc=" + id_doc + "&id_funcionario=<?= $idFuncionario ?>";
       let data = "";
       post(url, data, listarFunDocs);
     }
