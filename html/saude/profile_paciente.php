@@ -156,17 +156,6 @@ $prontuariopublico = $prontuariopublico->fetchAll(PDO::FETCH_ASSOC);
 $prontuarioPHP = $prontuariopublico;
 $prontuariopublico = json_encode($prontuariopublico);
 
-$medaplicadas = $pdo->query("SELECT medicamento, aplicacao, p.nome as nomeFuncionario FROM saude_medicacao sm JOIN saude_medicamento_administracao sa ON (sm.id_medicacao = sa.saude_medicacao_id_medicacao) join saude_atendimento saa on(saa.id_atendimento=sm.id_atendimento)
-  JOIN funcionario f ON (sa.funcionario_id_funcionario=f.id_funcionario) JOIN pessoa p ON (p.id_pessoa=f.id_pessoa) WHERE saa.id_fichamedica= '$id' ORDER BY aplicacao DESC");
-$medaplicadas = $medaplicadas->fetchAll(PDO::FETCH_ASSOC);
-
-foreach ($medaplicadas as $key => $value) {
-  //formata data
-  $data = new DateTime($value['aplicacao']);
-  $medaplicadas[$key]['aplicacao'] = $data->format('d/m/Y h:i:s');
-}
-
-$medaplicadas = json_encode($medaplicadas);
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $tabelacid_enfermidades = $mysqli->query("SELECT * FROM saude_tabelacid WHERE CID NOT LIKE 'T78.4%'");
@@ -521,17 +510,35 @@ try {
     });
 
     // listar aplicacao enfermeiro
-    $(function() {
-      var medaplicadas = <?= $medaplicadas ?>;
-      $.each(medaplicadas, function(i, item) {
-        $("#exibiaplicacao")
-          .append($("<tr>")
-            .append($("<td>").text(item.nomeFuncionario))
-            .append($("<td>").text(item.medicamento))
-            .append($("<td>").text(item.aplicacao))
-          )
-      });
-    });
+    document.addEventListener("DOMContentLoaded", () => {
+      let id_ficha_medica = <?php echo $_GET["id_fichamedica"]; ?>;
+      const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("MedicamentoPacienteControle")}&metodo=${encodeURIComponent("listarMedicamentosAplicadosPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id_ficha_medica)}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(medaplicadas => {
+          const tabela = document.getElementById("exibiaplicacao");
+
+          medaplicadas.forEach(item => {
+            const tr = document.createElement("tr");
+
+            const td1 = document.createElement("td");
+            td1.textContent = item.nomeFuncionario;
+
+            const td2 = document.createElement("td");
+            td2.textContent = item.medicamento;
+
+            const td3 = document.createElement("td");
+            td3.textContent = item.aplicacao;
+
+            tr.append(td1, td2, td3);
+            tabela.appendChild(tr);
+          });
+        })
+        .catch(err => {
+          console.error("Erro ao carregar aplicações:", err);
+        });
+    })
+    
 
     $(function() {
       $('#datatable-docfuncional').DataTable({

@@ -317,7 +317,8 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
           }
 
           function carregarAplicacoes(id_fichamedica) {
-            fetch(`./listar_medicamentos_aplicados.php?id_fichamedica=${id_fichamedica}`)
+            const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("MedicamentoPacienteControle")}&metodo=${encodeURIComponent("listarMedicamentosAplicadosPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
+            fetch(url)
               .then(res => res.json())
               .then(medaplicadas => {
                 const tabela = document.getElementById("exibiaplicacao");
@@ -378,32 +379,48 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
             input_id_funcionario.value = id_funcionario;
           }
 
-          function enviarDataHoraAplicacaoMedicamento(event) {
+
+          async function coletarIdFuncionarioComIdPessoa(id_pessoa){
+            try{
+              let requisicao = await fetch(`../../controle/control.php?nomeClasse=${encodeURIComponent("FuncionarioControle")}&metodo=${encodeURIComponent("getIdFuncionarioComIdPessoa")}&id_pessoa=${encodeURIComponent(id_pessoa)}`);
+              let id_funcionario = await requisicao.json();
+              return id_funcionario['id_funcionario'];
+            } catch (e){
+              alert(e);
+              return;
+            }
+          }
+
+          async function enviarDataHoraAplicacaoMedicamento(event) {
             event.preventDefault();
+
+            let idPessoaFuncionario = <?php echo $_SESSION['id_pessoa']; ?>;
 
             const form = event.target;
             const formData = new FormData(form);
 
             const dados = {
+              nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
+              metodo: encodeURIComponent("inserirAplicacao"),
               id_medicacao: formData.get('id_medicacao'),
               id_pessoa: formData.get('id_pessoa'),
+              id_funcionario: await coletarIdFuncionarioComIdPessoa(idPessoaFuncionario),
               dataHora: formData.get('dataHora')
             };
 
            limparInputDataTime();
 
-            const json = JSON.stringify(dados);
+            const dadosJson = JSON.stringify(dados);
 
-            fetch('./aplicacao_upload.php', {
+            fetch(`../../controle/control.php?`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: json
+              body: dadosJson
             })
             .then(res => res.json())
             .then(data => {
-              console.log('Resposta do servidor:', data.mensagem);
               const id_fichamedica = document.getElementById("id_fichamedica").value;
               carregarAplicacoes(id_fichamedica);
 
