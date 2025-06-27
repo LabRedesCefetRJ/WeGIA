@@ -33,6 +33,27 @@ class FuncionarioDAO
         return false;
     }
 
+    public function getIdFuncionarioComIdPessoa($idPessoa){
+        try{
+            $pdo = Conexao::connect();
+
+            $stmt = $pdo->prepare("
+                SELECT id_funcionario 
+                FROM pessoa p 
+                JOIN funcionario f ON (p.id_pessoa = f.id_pessoa) 
+                WHERE f.id_pessoa = :id_pessoa
+            ");
+            $stmt->bindParam(":id_pessoa", $idPessoa);
+            $stmt->execute();
+            $func = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return $func;
+
+        }catch (PDOException $e) {
+            echo 'Error:' . $e->getMessage();
+        }
+    }
+
     public function retornarIdPessoa($id_funcionario)
     {
         try {
