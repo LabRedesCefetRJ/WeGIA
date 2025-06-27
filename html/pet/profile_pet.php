@@ -699,7 +699,6 @@ if (isset($_GET['id_pet'])) {
                           <input type="hidden" name="id_pet" value=<?php echo $_GET['id_pet'] ?>>
                           <button type="button" class="not-printable btn btn-primary" id="editarPet" onclick="return editar_informacoes_pet()">Editar</button>
                           <input type="submit" class="not-printable btn btn-primary" disabled="true" value="Salvar" id="salvarPet">
-                          <button type="button" class="not-printable mb-xs mt-xs mr-xs btn btn-default" id="btnPrint">Imprimir <i class="fa-solid fa-print" style = "color:black"></i></button>
                         </fieldset>
                       
                     </form>
@@ -873,7 +872,6 @@ if (isset($_GET['id_pet'])) {
             <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? $fichaMedica['id_ficha_medica'] : ''; ?>">
             <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
             <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
-            <button type="button" class="d-print-none mb-xs mt-xs mr-xs btn btn-default" id="btnPrint2">Imprimir <i class="fa-solid fa-print" style="color:black"></i></button>
           </div>
         </fieldset>
       </form>
