@@ -17,12 +17,12 @@ if (file_exists($config_path)) {
 session_start();
 
 if (!isset($_SESSION['usuario'])) {
-	header("Location: " . WWW . "index.php");
+	header("Location: " . WWW . "html/index.php");
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once "../personalizacao_display.php";
-require_once "../../dao/Conexao.php";
+require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/dao/Conexao.php";
 
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
@@ -55,7 +55,7 @@ require_once ROOT . "/controle/memorando/DespachoControle.php";
 require_once ROOT . "/controle/FuncionarioControle.php";
 require_once ROOT . "/controle/memorando/MemorandoControle.php";
 require_once ROOT . "/controle/memorando/AnexoControle.php";
-require_once ROOT.'/controle/memorando/StatusMemorandoControle.php';
+require_once ROOT . '/controle/memorando/StatusMemorandoControle.php';
 
 
 $id_memorando = $_GET['id_memorando'];
@@ -174,6 +174,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		$(function() {
 			var impressao = 0;
 			var despacho = <?php echo $_SESSION['despacho'] ?>;
+
 			var despachoAnexo = <?php echo $_SESSION['despachoComAnexo'] ?>;
 			var arquivo = <?php echo $_SESSION['arquivos'] ?>;
 			<?php
@@ -641,9 +642,9 @@ require_once ROOT . "/html/personalizacao_display.php";
 									$pessoa_memorando = $pessoa_memorando["nome"] . ($pessoa_memorando["sobrenome"] ? (" " . $pessoa_memorando["sobrenome"]) : "");
 
 
-									$strArquivo = $pdo->query("SELECT nome FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
+									$strArquivo = $pdo->query("SELECT nome, extensao FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
 
-									$anexo = $pdo->query("SELECT anexo FROM anexo WHERE id_despacho=$id_memorando;");
+									$anexo = $pdo->query("SELECT anexo FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
 
 									//$anexo = $pdo->query("SELECT (COUNT*) FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
 									//var_dump($anexo);
@@ -654,11 +655,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 									echo ("
 
-								<p>MEMORANDO NR: $id_memorando</p>
-								<p>Assunto: $titulo</p>
-								<p> 
-								</p>
-								
+											<p>MEMORANDO NR: $id_memorando</p>
+											<p>Assunto: $titulo</p>
 								");
 									?>
 									<div class="panel-heading"> </div>
@@ -668,42 +666,73 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 										<?php
 
-										echo (" $cidade - $estado,  $data_expedicao 
-											");
+										echo (" $cidade - $estado,  $data_expedicao ");
 
 										?>
 
 									</p>
-
-
-
 									<?php
+										echo ("
+											<p> Ao Sr(a): $pessoa_destino</p>
+											<p> $despachoNome </p>
 
-
-									echo ("
-								<p> Ao Sr(a): $pessoa_destino</p>
-								<p> $despachoNome </p>
-
-								");
+										");
 									?>
 									<p align="center">
 
 										<?php
-										echo ("
-		                               $pessoa_memorando
-									")
+											echo ("$pessoa_memorando");
 										?>
 									</p>
+									<?php
+										$despachosArr = json_decode($_SESSION['despacho']);
+										$anexos = json_decode($_SESSION['arquivos']);
+										foreach($despachosArr as $despacho) {
+											$tabela = "";
+											$id = $despacho->id;
+											$remetente = $despacho->remetente;
+											$destinatario = $despacho->destinatario;
+											$data = $despacho->data;
+											$texto = $despacho->texto;
+											$tabela = "<table class='table table-bordered table-striped mb-none'>";
+											
+											$tabela .= "<tr>
+															<th>Remetente:</th>
+														 	<td>$remetente</td>
+														 	<th>Destinatário</th>
+														 	<td>$destinatario</td>
+														</tr>
+														<tr>
+															<th colspan='2'>Despacho</th>
+															<th>Data</th>
+															<td>$data</td>
+														</tr>
+														<tr>
+															<td colspan='4' id='texto$id'>
+																<p>$texto</p>
+															</td>
+														</tr>
+														<tr>
+															<th colspan='4'>Anexos</th>
+														</tr>";
+											$trAnexos = "<tr><td colspan='5'>";
+											foreach($anexos as $anexo) {
+												if($anexo->id_despacho == $id){
+													$nome = $anexo->nome;
+													$extensao = $anexo->extensao;
+													$trAnexos .= "<p>$nome$extensao</p>";
+												}
+											}
+											$trAnexos .= "</td></tr>";
 
-									<p>
-										<?php
-										echo (" <p> Anexos: </p>
-							<p> </p>
-							<p> </p>
-							<p> </p>
-");
-										?>
-									</p>
+											$tabela .= $trAnexos;
+
+											$tabela .= '</table>';
+
+											echo ($tabela);
+										}
+									?>
+									
 									<div class="panel-heading"> </div>
 
 									<br>
