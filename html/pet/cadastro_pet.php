@@ -177,21 +177,21 @@ if (isset($_GET['msg'])) {
       <!-- start: page -->
       <div class="row" id="formulario">
       <form class="form-horizontal" method="POST" action="../../controle/pet/controlPet.php" enctype="multipart/form-data" onsubmit="verificarDataAcolhimento()">
-  <div class="row">
-  <div class="col-md-4 col-lg-3">
-  <section class="panel">
-    <div class="panel-body">
-      <div class="thumb-info mb-md">
-        <!-- Pré-visualização da imagem -->
-        <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
-        <img id="previewImagemPet" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
-        
-        <!-- Input para imagem -->
-    
+        <div class="row">
+        <div class="col-md-4 col-lg-3">
+        <section class="panel">
+          <div class="panel-body">
+            <div class="thumb-info mb-md">
+              <!-- Pré-visualização da imagem -->
+              <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
+              <img id="previewImagemPet" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
+              
+              <!-- Input para imagem -->
+          
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
-  </section>
-</div>
 
 
     <div class="col-md-8 col-lg-8">

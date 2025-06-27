@@ -72,19 +72,49 @@ $resultadoConsultaPet = $pdo->query($sqlConsultaPet);
 
 // Adicionar nova pessoa
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-  $campos = ['cpf','nome','sobrenome','gender','telefone','nascimento','imgperfil','cep','uf','cidade','bairro','logradouro','numero_endereco','complemento'];
-  $dados = [];
-  foreach ($campos as $campo) {
-      $dados[$campo] = !empty($_POST[$campo]) ? trim($_POST[$campo]) : null;
-  }
+  $dados = [
+    'cpf' => !empty($_POST['cpf']) ? trim($_POST['cpf']) : null,
+    'nome' => !empty($_POST['nome']) ? trim($_POST['nome']) : null,
+    'sobrenome' => !empty($_POST['sobrenome']) ? trim($_POST['sobrenome']) : null,
+    'gender' => !empty($_POST['gender']) ? trim($_POST['gender']) : null,
+    'telefone' => !empty($_POST['telefone']) ? trim($_POST['telefone']) : null,
+    'nascimento' => !empty($_POST['nascimento']) ? trim($_POST['nascimento']) : null,
+    'imgperfil' => !empty($_POST['imgperfil']) ? trim($_POST['imgperfil']) : null,
+    'cep' => !empty($_POST['cep']) ? trim($_POST['cep']) : null,
+    'estado' => !empty($_POST['estado']) ? trim($_POST['estado']) : null,
+    'cidade' => !empty($_POST['cidade']) ? trim($_POST['cidade']) : null,
+    'bairro' => !empty($_POST['bairro']) ? trim($_POST['bairro']) : null,
+    'logradouro' => !empty($_POST['logradouro']) ? trim($_POST['logradouro']) : null,
+    'numero_endereco' => !empty($_POST['numero_endereco']) ? trim($_POST['numero_endereco']) : null,
+    'complemento' => !empty($_POST['complemento']) ? trim($_POST['complemento']) : null
+];
+
 
   // Validação dos campos obrigatórios (sem 'imgperfil')
-  $obrigatorios = ['cpf','nome','sobrenome','gender','telefone','nascimento','cep','uf','cidade','bairro','logradouro','numero_endereco','complemento'];
-  foreach ($obrigatorios as $campo) {
-      if (is_null($dados[$campo])) {
-          die('Campos obrigatórios não preenchidos.');
-      }
-  }
+
+  if (
+    is_null($dados['cpf']) ||
+    is_null($dados['nome']) ||
+    is_null($dados['sobrenome']) ||
+    is_null($dados['gender']) ||
+    is_null($dados['telefone']) ||
+    is_null($dados['nascimento']) ||
+    is_null($dados['cep']) ||
+    is_null($dados['estado']) ||
+    is_null($dados['cidade']) ||
+    is_null($dados['bairro']) ||
+    is_null($dados['logradouro']) ||
+    is_null($dados['numero_endereco'])
+) {
+  echo "<script>";
+  echo "alert('Campos obrigatórios não preenchidos. Dados recebidos: " . json_encode($dados) . "');";
+  echo "window.history.back();";
+  echo "</script>";
+  exit;
+   
+}
+
+
 
   try {
       $stmt = $pdo->prepare("
@@ -106,7 +136,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           ':data_nascimento' => $dados['nascimento'],
           ':imagem' => $dados['imgperfil'], // Pode ser null
           ':cep' => $dados['cep'],
-          ':estado' => $dados['uf'],
+          ':estado' => $dados['estado'],
           ':cidade' => $dados['cidade'],
           ':bairro' => $dados['bairro'],
           ':logradouro' => $dados['logradouro'],
@@ -267,32 +297,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
       </header>
       <div class="row" id="formulario">
-        <form action="#" method="POST" id="formsubmit" enctype="multipart/form-data" target="frame">
+      <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php" enctype="multipart/form-data" >
           <div class="col-md-4 col-lg-3">
             <section class="panel">
               <div class="panel-body">
                 <div class="thumb-info mb-md">
-                  <?php
-                  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                    if (isset($_FILES['imgperfil'])) {
-                      $image = file_get_contents($_FILES['imgperfil']['tmp_name']);
-                      $_SESSION['imagem'] = $image;
-                      echo '<img src="data:image/gif;base64,' . base64_encode($image) . '" class="rounded img-responsive" alt="John Doe">';
-                    }
-                  }
-                  ?>
-
-                  <input type="file" class="image_input form-control" onclick="okDisplay()" name="imgperfil" id="imgform">
-                  <div id="display_image" class="thumb-info mb-md"></div>
-                  <div id="botima">
-                    <h5 id="okText"></h5>
-                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(this)" style="display: none;" id="okButton" id="botima" value="Ok">
-                  </div>
+                  <!-- Pré-visualização da imagem -->
+                  <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
+                  <img id="previewImagemPessoa" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
+        
                 </div>
               </div>
             </section>
           </div>
-        </form>
+        
 
         <div class="col-md-8 col-lg-8">
           <div class="tabs">
@@ -304,7 +322,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             <div class="tab-content">
               <div id="overview" class="tab-pane active">
-                <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php">
+                
                   <h4 class="mb-xlg">Informações Pessoais</h4>
                   <h5 class="obrig">Campos Obrigatórios(*)</h5>
                   
@@ -368,65 +386,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cep">CEP<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="14" minlength="14" name="cep" id="cep" placeholder="Ex: 00000-000" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)">
+                      <input type="text" class="form-control" maxlength="14" minlength="14" name="cep" id="cep" placeholder="Ex: 00000-000" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)" onblur="BuscaCEP(this.value)">
                     </div>
-                  </div>                                                                                                                                                                                                                                                                                                                   
+                  </div>                                                                    
+                                                                                                                                                                                                                                                                                                                
 
                   <div class="form-group">
-                    <div class="div-estado">
-                          <span class="label-input100">Estado <span class="text-danger">*</span></span>
-                          <select class="form-control" id="uf" name="uf">
-                              <option value="Selecione sua unidade federativa" disabled></option>
-                              <option value="AC">Acre</option>
-                              <option value="AL">Alagoas</option>
-                              <option value="AP">Amapá</option>
-                              <option value="AM">Amazonas</option>
-                              <option value="BA">Bahia</option>
-                              <option value="CE">Ceará</option>
-                              <option value="DF">Distrito Federal</option>
-                              <option value="ES">Espírito Santo</option>
-                              <option value="GO">Goiás</option>
-                              <option value="MA">Maranhão</option>
-                              <option value="MT">Mato Grosso</option>
-                              <option value="MS">Mato Grosso do Sul</option>
-                              <option value="MG">Minas Gerais</option>
-                              <option value="PA">Pará</option>
-                              <option value="PB">Paraíba</option>
-                              <option value="PR">Paraná</option>
-                              <option value="PE">Pernambuco</option>
-                              <option value="PI">Piauí</option>
-                              <option value="RJ">Rio de Janeiro</option>
-                              <option value="RN">Rio Grande do Norte</option>
-                              <option value="RS">Rio Grande do Sul</option>
-                              <option value="RO">Rondônia</option>
-                              <option value="RR">Roraima</option>
-                              <option value="SC">Santa Catarina</option>
-                              <option value="SP">São Paulo</option>
-                              <option value="RS">Sergipe</option>
-                              <option value="TO">Tocantins</option>
-                          </select>
-                          <br>
+                  <label class="col-md-3 control-label" for="estado">Estado<sup class="obrig">*</sup></label>
+                    <div class="col-md-8">
+                      <input type="text" class="form-control" maxlength="30" name="estado" id="estado" required readonly>
                       </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cidade">Cidade<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="cidade" id="cidade" required>
+                      <input type="text" class="form-control" maxlength="30" name="cidade" id="cidade" required readonly>
                     </div>
                   </div>     
                   
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="bairro">Bairro<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="bairro" id="bairro" required>
+                      <input type="text" class="form-control" maxlength="30" name="bairro" id="bairro" required readonly>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="logradouro">Logradouro<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="logradouro" id="logradouro" required>
+                      <input type="text" class="form-control" maxlength="30" name="logradouro" id="logradouro" required readonly>
                     </div>
                   </div>
 
@@ -438,16 +427,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                   </div>
 
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="complemento">Complemento<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="complemento">Complemento<sup class="obrig"></sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="9999" name="complemento" id="complemento" required>
+                      <input type="text" class="form-control" maxlength="9999" name="complemento" id="complemento">
                     </div>
                   </div>
 
                   <div class="panel-footer">
                     <div class="row">
                       <div class="col-md-9 col-md-offset-3">
-                      <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="enviarFormularios()">
+                      <input id="enviar" type="submit" class="btn btn-primary" value="Salvar">
                         <input type="reset" class="btn btn-default">
                       </div>
                     </div>
@@ -481,7 +470,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
       <!-- SCRIPTS  -->  
       <script defer>
+      document.getElementById('imgform').addEventListener('change', function(event) {
+      const input = event.target;
+      const preview = document.getElementById('previewImagemPessoa');
 
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+
+        reader.readAsDataURL(input.files[0]);
+      } else {
+        preview.src = "#";
+        preview.style.display = "none";
+      }
+    })
         // Limita o número de caracteres do input com id "numero_endereco"
         var inputDoNumeroResidencial = document.getElementById("numero_endereco");
         inputDoNumeroResidencial.addEventListener("input", function(){
@@ -538,12 +544,63 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           $("#complemento").prop('disabled', false);
         }
 
-        // Funções para submeter o funcionário
-        function enviarFormularios(){
-          document.getElementById("form-adotante").submit();
-          document.getElementById("formsubmit").submit();
-        }
-      </script>                                                                                                                                                                                                                                                                        
+        async function BuscaCEP(cep) {
+  try {
+    cep = cep.replace(/\D/g, '');
+
+    const estado = document.querySelector("#estado");
+    const cidade = document.querySelector("#cidade");
+    const bairro = document.querySelector("#bairro");
+    const logradouro = document.querySelector("#logradouro");
+    const cepInput = document.querySelector("#cep");
+
+    // Limpa e deixa campos readonly inicialmente
+    estado.value = '';
+    cidade.value = '';
+    bairro.value = '';
+    logradouro.value = '';
+    bairro.readOnly = true;
+    logradouro.readOnly = true;
+
+    if (cep.length !== 8) return;
+
+    const url = `https://viacep.com.br/ws/${cep}/json/`;
+    const dadosJSON = await fetch(url);
+    const dados = await dadosJSON.json();
+
+    if (dados.erro) {
+      alert("CEP não encontrado. Por favor, verifique.");
+      cepInput.value = '';
+      cepInput.focus();
+      return;
+    }
+
+    estado.value = dados.uf || '';
+    cidade.value = dados.localidade || '';
+
+    if (dados.bairro && dados.bairro.trim() !== '') {
+      bairro.value = dados.bairro;
+      bairro.readOnly = true;
+    } else {
+      bairro.readOnly = false;
+    }
+
+    if (dados.logradouro && dados.logradouro.trim() !== '') {
+      logradouro.value = dados.logradouro;
+      logradouro.readOnly = true;
+    } else {
+      logradouro.readOnly = false;
+    }
+
+  } catch (erro) {
+    console.error("Erro ao buscar o CEP:", erro);
+  }
+}
+
+
+
+
+</script>                                                                          
 
     <div align="right">
       <iframe src="https://www.wegia.org/software/footer/pet.html" width="200" height="60" style="border:none;"></iframe>

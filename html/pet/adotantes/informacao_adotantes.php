@@ -189,7 +189,7 @@ try {
 									if (!empty($linha['cpf']) && !empty($linha['nome']) && !empty($linha['sobrenome']) && 
 										!empty($linha['telefone']) && !empty($linha['data_nascimento']) && !empty($linha['cep']) && 
 										!empty($linha['estado']) && !empty($linha['cidade']) && !empty($linha['bairro']) && 
-										!empty($linha['logradouro']) && !empty($linha['numero_endereco']) && !empty($linha['complemento'])) {
+										!empty($linha['logradouro']) && !empty($linha['numero_endereco']) ) {
 					
 										echo '<tr>';
 										echo '<td>' . $linha['nome'] . '</td>';
