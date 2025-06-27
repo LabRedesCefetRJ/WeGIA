@@ -126,7 +126,7 @@ class SaudeControle
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
 
-        $regex = '#^(\.\./html/saude/(aplicar_medicamento|historico_paciente|profile_paciente)\.php(\?id_fichamedica=\d+)?)$#';
+        $regex = '#^(\.\./html/saude/(aplicar_medicamento|sinais_vitais|cadastrar_intercorrencias|profile_paciente)\.php(\?id_fichamedica=\d+)?)$#';
 
         $cache = new Cache();
         $infSaude = $cache->read($id);

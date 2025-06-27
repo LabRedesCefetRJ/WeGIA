@@ -1,3 +1,5 @@
+
+
 <?php
 
 	ini_set('display_errors',1);
@@ -10,7 +12,7 @@
 	}
 
 	if(!isset($_SESSION['saude']))	{
-		header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/listar_historico_pacientes.php');
+		header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/listar_cadastro_intercorrencia.php');
 	}
 	$config_path = "config.php";
 	if(file_exists($config_path)){
@@ -120,7 +122,7 @@
 	<!-- jquery functions -->
 	<script>
 		function clicar(id) {
-			window.location.href = "historico_paciente.php?id_fichamedica="+id;
+			window.location.href = "cadastrar_intercorrencias.php?id_fichamedica="+id;
 		}
 		$(function() {
 
@@ -160,13 +162,13 @@
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Histórico dos pacientes</h2>
+					<h2>Intercorrências</h2>
 
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li><a href="../index.php"> <i class="fa fa-home"></i>
 							</a></li>
-							<li><span>Histórico dos pacientes</span></li>
+							<li><span>Intercorrências</span></li>
 						</ol>
 
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -226,4 +228,3 @@
 	</div>
 	</body>
 </html>
-

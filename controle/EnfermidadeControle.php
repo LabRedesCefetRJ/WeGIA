@@ -33,4 +33,16 @@ class EnfermidadeControle{
             echo json_encode(['erro' => 'Problema no servidor ao buscar enfermidades']);
         }
     }
+
+    public function listarTodasAsEnfermidades(){
+        try{
+            $enfermidadeDao = new EnfermidadeDAO($this->pdo);
+            $enfermidades = $enfermidadeDao->listarTodasAsEnfermidades();
+
+            echo json_encode($enfermidades);
+        }catch(PDOException $e){
+            http_response_code(500);
+            echo json_encode(['erro' => 'Problema no servidor ao buscar enfermidades']);
+        }
+    }
 }

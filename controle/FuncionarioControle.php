@@ -651,6 +651,22 @@ class FuncionarioControle
         }
     }
 
+    public function getIdFuncionarioComIdPessoa(){
+        $id_pessoa = $_GET["id_pessoa"];
+        
+         header('Content-Type: application/json');
+
+        try{
+
+            $funcionarioDAO = new FuncionarioDAO;
+            $id_funcionario = $funcionarioDAO->getIdFuncionarioComIdPessoa($id_pessoa);
+            echo json_encode($id_funcionario);
+
+        }catch (Exception $e) {
+            echo 'Error:' . $e->getMessage();
+        }
+    }
+
 
 
     /* public function listarEpi()

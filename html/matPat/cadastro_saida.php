@@ -503,15 +503,12 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				var almox = $(this).val();
 				$.ajax({
 					async: false,
-					url: "<?= WWW ?>controle/getProdutosPorAlmox.php",
-					data: {
-						"almox": almox
-					},
+					url: `../../controle/control.php?nomeClasse=${encodeURIComponent("ProdutoControle")}&metodo=${encodeURIComponent("getProdutosParaCadastrarEntradaOuSaidaPorAlmoxarifado")}&almoxarifado=${encodeURIComponent(almox)}`,
 					type: "GET",
 					success: function(respostaProds) {
-						var produtos = JSON.parse(respostaProds);
+						var produtos = JSON.parse(respostaProds)
 						prods = [];
-						// console.log(produtos);
+						console.log(produtos);
 						$("#produtos_autocomplete").children().remove();
 						for (let [i, produto] of produtos.entries()) {
 							// $("#produtos_autocomplete").append(

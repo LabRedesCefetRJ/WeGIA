@@ -48,10 +48,31 @@ class AvisoControle
             } else {
                 $aviso->setIdAviso($ultimaInsercao);
                 $avisoNotificacaoControle->incluir($aviso);
-                header("Location: ../html/saude/historico_paciente.php?id_fichamedica=$idfichamedica");
+                header("Location: ../html/saude/cadastrar_intercorrencias.php?id_fichamedica=$idfichamedica");
             }
         } catch (PDOException $e) {
             echo 'Erro ao registrar intercorrência: ' . $e->getMessage();
         }
+    }
+
+    public function listarIntercorrenciaPorIdDaFichaMedica(){
+        header('Content-Type: application/json');
+        try{
+            $id = $_GET['id_fichamedica'];
+
+            $avisoDAO = new AvisoDAO();
+            $intercorrencias = $avisoDAO->listarIntercorrenciaPorIdDaFichaMedica($id);
+
+            foreach($intercorrencias as $key => $value){
+                $data = new DateTime($value['data']);
+                $intercorrencias[$key]['data'] = $data->format('d/m/Y H:i:s'); 
+            }
+
+            echo json_encode($intercorrencias);
+        } catch (Exception $e) {
+            http_response_code($e->getCode());
+            echo json_encode(['erro' => $e->getMessage()]);
+        }
+        
     }
 }
