@@ -30,4 +30,21 @@ class EnfermidadeDAO{
 
         return $enfermidades;
     }
+
+    public function listarTodasAsEnfermidades() {
+        $sql = 'SELECT * FROM saude_tabelacid';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        $resultado = array();
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $resultado[] = array(
+                'id_CID' => $row['id_CID'],
+                'CID' => $row['CID'],
+                'descricao' => $row['descricao']
+            );
+        }
+
+            return $resultado;
+    }   
 }
