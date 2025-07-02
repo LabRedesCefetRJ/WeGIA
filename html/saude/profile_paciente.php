@@ -642,26 +642,33 @@ try {
           </div>
           <div class="col-md-8 col-lg-8">
             <?php
+            if(session_status() === PHP_SESSION_NONE){
+              session_start();
+            }
+
             if (isset($_SESSION['msg']) && !empty($_SESSION['msg'])) {
               $mensagem = $_SESSION['msg'];
-              if ($mensagem == 'Prontuário público adicionado ao histórico com sucesso') {
+
                 echo "<div class=\"alert alert-success\" role=\"alert\">
                   $mensagem
                   <button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">
                     <span aria-hidden=\"true\">&times;</span>
                   </button>
                 </div>";
-              } else {
+
+                unset($_SESSION['msg']);
+              } else if(isset($_SESSION['msg_e']) && !empty($_SESSION['msg_e'])){
+                $mensagem = $_SESSION['msg_e'];
+
                 echo "<div class=\"alert alert-danger\" role=\"alert\">
                   $mensagem
                   <button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">
                     <span aria-hidden=\"true\">&times;</span>
                   </button>
                 </div>";
-              }
 
-              unset($_SESSION['msg']);
-            }
+                unset($_SESSION['msg_e']);
+              }
             ?>
             <div class="tabs">
               <ul class="nav nav-tabs tabs-primary">
