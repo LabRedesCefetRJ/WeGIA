@@ -534,7 +534,10 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
 
     //Atribuir valor aos campos
     nomeObject.value = nome;
-    dataNascimentoObject.value = converterDataParaBR(dataNascimento);
+
+    if(dataNascimento != null && dataNascimento.length === 10)
+        dataNascimentoObject.value = converterDataParaBR(dataNascimento);
+    
     emailObject.value = email;
     telefoneObject.value = telefone;
     cepObject.value = cep;
