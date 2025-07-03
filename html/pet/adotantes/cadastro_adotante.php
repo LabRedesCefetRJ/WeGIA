@@ -1,152 +1,157 @@
 <?php
-include_once("conexao.php");
 session_start();
 if (!isset($_SESSION['usuario'])) {
-  header("Location: ../index.php");
+    header("Location: ../index.php");
+    exit();
 }
 
+// Inclusão segura do config.php
 $config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
+$max_depth = 5;
+$depth = 0;
+
+while (!file_exists($config_path) && $depth < $max_depth) {
     $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
+    $depth++;
 }
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$situacao = $mysqli->query("SELECT * FROM situacao");
-$cargo = $mysqli->query("SELECT * FROM cargo");
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN acao a ON(p.id_acao=a.id_acao) JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND a.descricao = 'LER, GRAVAR E EXECUTAR' AND r.descricao='Cadastrar Pet'");
-    if(!is_bool($resultado) and mysqli_num_rows($resultado))
-    {
-        $permissao = mysqli_fetch_array($resultado);
-        if($permissao['id_acao'] < 5)
-        {
-            $msg = "Você não tem as permissões necessárias para essa página.";
-            header("Location: ../../home.php?msg_c=$msg");
-        }
-        $permissao = $permissao['id_acao'];
-    }
-    else
-    {
-        $permissao = 1;
-          $msg = "Você não tem as permissões necessárias para essa página.";
-          header("Location: ../../home.php?msg_c=$msg");
-    }	
-    
-    }
-    else
-    {
-        $permissao = 1;
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: ../../home.php?msg_c=$msg");
-    }	
 
-// Pega o CPF passado via GET
-$cpf = $_GET["cpf"];
-
-// Lógica para listar pets
-$sqlConsultaPet = "SELECT id_pet, nome FROM pet;";
-$resultadoConsultaPet = mysqli_query($conexao, $sqlConsultaPet);
-
-// Lógica para adicionar na tabela pessoa
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $cpf = !empty($_POST["cpf"]) ? $_POST["cpf"] : NULL;
-    $nome = !empty($_POST["nome"]) ? $_POST["nome"] : NULL;
-    $sobrenome = !empty($_POST["sobrenome"]) ? $_POST["sobrenome"] : NULL;
-    $sexo = !empty($_POST["gender"]) ? $_POST["gender"] : NULL;
-    $telefone = !empty($_POST["telefone"]) ? $_POST["telefone"] : NULL;
-    $data_nascimento = !empty($_POST["nascimento"]) ? $_POST["nascimento"] : NULL;
-    $imagem = !empty($_POST["imgperfil"]) ? $_POST["imgperfil"] : NULL;
-    $cep = !empty($_POST["cep"]) ? $_POST["cep"] : NULL;
-    $estado = !empty($_POST["uf"]) ? $_POST["uf"] : NULL;
-    $cidade = !empty($_POST["cidade"]) ? $_POST["cidade"] : NULL;
-    $bairro = !empty($_POST["bairro"]) ? $_POST["bairro"] : NULL;
-    $logradouro = !empty($_POST["logradouro"]) ? $_POST["logradouro"] : NULL;
-    $numero_endereco = !empty($_POST["numero_endereco"]) ? $_POST["numero_endereco"] : NULL;
-    $complemento = !empty($_POST["complemento"]) ? $_POST["complemento"] : NULL;
-
-    if (empty($cpf) || empty($nome) || empty($sobrenome)) {
-        die('Campos obrigatórios não preenchidos.');
-    }
-
-    $sqlAdicionarPessoa = "
-        INSERT INTO pessoa (
-            cpf, 
-            nome, 
-            sobrenome, 
-            sexo, 
-            telefone, 
-            data_nascimento, 
-            imagem, 
-            cep, 
-            estado, 
-            cidade, 
-            bairro, 
-            logradouro, 
-            numero_endereco, 
-            complemento
-        ) 
-        VALUES (
-            :cpf,
-            :nome,
-            :sobrenome,
-            :sexo,
-            :telefone,
-            :data_nascimento,
-            :imagem,
-            :cep,
-            :estado,
-            :cidade,
-            :bairro,
-            :logradouro,
-            :numero_endereco,
-            :complemento
-        )
-    ";
-
-    $dsn = 'mysql:host=localhost;dbname=wegia;charset=utf8';  
-    $username = 'wegiauser'; 
-    $password = 'senha';
-
-    try {
-        $conexao = new PDO($dsn, $username, $password);
-        $conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        
-        $stmt = $conexao->prepare($sqlAdicionarPessoa);
-        
-        $stmt->bindParam(':cpf', $cpf);
-        $stmt->bindParam(':nome', $nome);
-        $stmt->bindParam(':sobrenome', $sobrenome);
-        $stmt->bindParam(':sexo', $sexo);
-        $stmt->bindParam(':telefone', $telefone);
-        $stmt->bindParam(':data_nascimento', $data_nascimento);
-        $stmt->bindParam(':imagem', $imagem);
-        $stmt->bindParam(':cep', $cep);
-        $stmt->bindParam(':estado', $estado);
-        $stmt->bindParam(':cidade', $cidade);
-        $stmt->bindParam(':bairro', $bairro);
-        $stmt->bindParam(':logradouro', $logradouro);
-        $stmt->bindParam(':numero_endereco', $numero_endereco);
-        $stmt->bindParam(':complemento', $complemento);
-        
-        $stmt->execute();
-
-        header('Location: ./informacao_adotantes.php');
-    } catch (PDOException $e) {
-        echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
-    }
+if ($depth === $max_depth || !realpath($config_path) || basename($config_path) !== 'config.php') {
+    die("Erro ao localizar o arquivo de configuração.");
 }
+require_once($config_path);
+
+// Função utilitária
+function negar_acesso($msg = "Você não tem as permissões necessárias para essa página.") {
+    header("Location: ../../home.php?msg_c=" . urlencode($msg));
+    exit();
+}
+
+try {
+    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASSWORD);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $id_pessoa = $_SESSION['id_pessoa'];
+
+    // Obtem o cargo
+    $stmt = $pdo->prepare("SELECT id_cargo FROM funcionario WHERE id_pessoa = :id_pessoa");
+    $stmt->execute(['id_pessoa' => $id_pessoa]);
+    $id_cargo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$id_cargo) negar_acesso();
+
+    // Verifica permissão
+    $stmt = $pdo->prepare("
+        SELECT a.id_acao 
+        FROM permissao p 
+        JOIN acao a ON p.id_acao = a.id_acao 
+        JOIN recurso r ON p.id_recurso = r.id_recurso 
+        WHERE p.id_cargo = :id_cargo 
+        AND a.descricao = 'LER, GRAVAR E EXECUTAR' 
+        AND r.descricao = 'Cadastrar Pet'
+    ");
+    $stmt->execute(['id_cargo' => $id_cargo['id_cargo']]);
+    $permissao = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$permissao || $permissao['id_acao'] < 5) negar_acesso();
+
+    // Consulta dados adicionais
+    $situacao = $pdo->query("SELECT * FROM situacao");
+    $cargo = $pdo->query("SELECT * FROM cargo");
+
+} catch (PDOException $e) {
+    die("Erro na conexão: " . $e->getMessage());
+}
+
+// Pega o CPF via GET (protegido)
+$cpf = isset($_GET['cpf']) ? htmlspecialchars($_GET['cpf'], ENT_QUOTES, 'UTF-8') : '';
+
+// Consulta lista de pets
+$sqlConsultaPet = "SELECT id_pet, nome FROM pet";
+$resultadoConsultaPet = $pdo->query($sqlConsultaPet);
+
+
+// Adicionar nova pessoa
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+  $dados = [
+    'cpf' => !empty($_POST['cpf']) ? trim($_POST['cpf']) : null,
+    'nome' => !empty($_POST['nome']) ? trim($_POST['nome']) : null,
+    'sobrenome' => !empty($_POST['sobrenome']) ? trim($_POST['sobrenome']) : null,
+    'gender' => !empty($_POST['gender']) ? trim($_POST['gender']) : null,
+    'telefone' => !empty($_POST['telefone']) ? trim($_POST['telefone']) : null,
+    'nascimento' => !empty($_POST['nascimento']) ? trim($_POST['nascimento']) : null,
+    'imgperfil' => !empty($_POST['imgperfil']) ? trim($_POST['imgperfil']) : null,
+    'cep' => !empty($_POST['cep']) ? trim($_POST['cep']) : null,
+    'estado' => !empty($_POST['estado']) ? trim($_POST['estado']) : null,
+    'cidade' => !empty($_POST['cidade']) ? trim($_POST['cidade']) : null,
+    'bairro' => !empty($_POST['bairro']) ? trim($_POST['bairro']) : null,
+    'logradouro' => !empty($_POST['logradouro']) ? trim($_POST['logradouro']) : null,
+    'numero_endereco' => !empty($_POST['numero_endereco']) ? trim($_POST['numero_endereco']) : null,
+    'complemento' => !empty($_POST['complemento']) ? trim($_POST['complemento']) : null
+];
+
+
+  // Validação dos campos obrigatórios (sem 'imgperfil')
+
+  if (
+    is_null($dados['cpf']) ||
+    is_null($dados['nome']) ||
+    is_null($dados['sobrenome']) ||
+    is_null($dados['gender']) ||
+    is_null($dados['telefone']) ||
+    is_null($dados['nascimento']) ||
+    is_null($dados['cep']) ||
+    is_null($dados['estado']) ||
+    is_null($dados['cidade']) ||
+    is_null($dados['bairro']) ||
+    is_null($dados['logradouro']) ||
+    is_null($dados['numero_endereco'])
+) {
+  echo "<script>";
+  echo "alert('Campos obrigatórios não preenchidos. Dados recebidos: " . json_encode($dados) . "');";
+  echo "window.history.back();";
+  echo "</script>";
+  exit;
+   
+}
+
+
+
+  try {
+      $stmt = $pdo->prepare("
+          INSERT INTO pessoa (
+              cpf, nome, sobrenome, sexo, telefone, data_nascimento, imagem, 
+              cep, estado, cidade, bairro, logradouro, numero_endereco, complemento
+          ) VALUES (
+              :cpf, :nome, :sobrenome, :sexo, :telefone, :data_nascimento, :imagem, 
+              :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento
+          )
+      ");
+      
+      $stmt->execute([
+          ':cpf' => $dados['cpf'],
+          ':nome' => $dados['nome'],
+          ':sobrenome' => $dados['sobrenome'],
+          ':sexo' => $dados['gender'],
+          ':telefone' => $dados['telefone'],
+          ':data_nascimento' => $dados['nascimento'],
+          ':imagem' => $dados['imgperfil'], // Pode ser null
+          ':cep' => $dados['cep'],
+          ':estado' => $dados['estado'],
+          ':cidade' => $dados['cidade'],
+          ':bairro' => $dados['bairro'],
+          ':logradouro' => $dados['logradouro'],
+          ':numero_endereco' => $dados['numero_endereco'],
+          ':complemento' => $dados['complemento'],
+      ]);
+
+      header("Location: ./informacao_adotantes.php");
+      exit();
+
+  } catch (PDOException $e) {
+      echo "Erro ao inserir: " . $e->getMessage();
+  }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -292,32 +297,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
       </header>
       <div class="row" id="formulario">
-        <form action="#" method="POST" id="formsubmit" enctype="multipart/form-data" target="frame">
+      <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php" enctype="multipart/form-data" >
           <div class="col-md-4 col-lg-3">
             <section class="panel">
               <div class="panel-body">
                 <div class="thumb-info mb-md">
-                  <?php
-                  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-                    if (isset($_FILES['imgperfil'])) {
-                      $image = file_get_contents($_FILES['imgperfil']['tmp_name']);
-                      $_SESSION['imagem'] = $image;
-                      echo '<img src="data:image/gif;base64,' . base64_encode($image) . '" class="rounded img-responsive" alt="John Doe">';
-                    }
-                  }
-                  ?>
-
-                  <input type="file" class="image_input form-control" onclick="okDisplay()" name="imgperfil" id="imgform">
-                  <div id="display_image" class="thumb-info mb-md"></div>
-                  <div id="botima">
-                    <h5 id="okText"></h5>
-                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(this)" style="display: none;" id="okButton" id="botima" value="Ok">
-                  </div>
+                  <!-- Pré-visualização da imagem -->
+                  <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
+                  <img id="previewImagemPessoa" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
+        
                 </div>
               </div>
             </section>
           </div>
-        </form>
+        
 
         <div class="col-md-8 col-lg-8">
           <div class="tabs">
@@ -329,7 +322,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="tab-content">
               <div id="overview" class="tab-pane active">
-                <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php">
+                
                   <h4 class="mb-xlg">Informações Pessoais</h4>
                   <h5 class="obrig">Campos Obrigatórios(*)</h5>
                   
@@ -393,65 +386,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cep">CEP<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="14" minlength="14" name="cep" id="cep" placeholder="Ex: 00000-000" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)">
+                      <input type="text" class="form-control" maxlength="14" minlength="14" name="cep" id="cep" placeholder="Ex: 00000-000" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)" onblur="BuscaCEP(this.value)">
                     </div>
-                  </div>                                                                                                                                                                                                                                                                                                                   
+                  </div>                                                                    
+                                                                                                                                                                                                                                                                                                                
 
                   <div class="form-group">
-                    <div class="div-estado">
-                          <span class="label-input100">Estado <span class="text-danger">*</span></span>
-                          <select class="form-control" id="uf" name="uf">
-                              <option value="Selecione sua unidade federativa" disabled></option>
-                              <option value="AC">Acre</option>
-                              <option value="AL">Alagoas</option>
-                              <option value="AP">Amapá</option>
-                              <option value="AM">Amazonas</option>
-                              <option value="BA">Bahia</option>
-                              <option value="CE">Ceará</option>
-                              <option value="DF">Distrito Federal</option>
-                              <option value="ES">Espírito Santo</option>
-                              <option value="GO">Goiás</option>
-                              <option value="MA">Maranhão</option>
-                              <option value="MT">Mato Grosso</option>
-                              <option value="MS">Mato Grosso do Sul</option>
-                              <option value="MG">Minas Gerais</option>
-                              <option value="PA">Pará</option>
-                              <option value="PB">Paraíba</option>
-                              <option value="PR">Paraná</option>
-                              <option value="PE">Pernambuco</option>
-                              <option value="PI">Piauí</option>
-                              <option value="RJ">Rio de Janeiro</option>
-                              <option value="RN">Rio Grande do Norte</option>
-                              <option value="RS">Rio Grande do Sul</option>
-                              <option value="RO">Rondônia</option>
-                              <option value="RR">Roraima</option>
-                              <option value="SC">Santa Catarina</option>
-                              <option value="SP">São Paulo</option>
-                              <option value="RS">Sergipe</option>
-                              <option value="TO">Tocantins</option>
-                          </select>
-                          <br>
+                  <label class="col-md-3 control-label" for="estado">Estado<sup class="obrig">*</sup></label>
+                    <div class="col-md-8">
+                      <input type="text" class="form-control" maxlength="30" name="estado" id="estado" required readonly>
                       </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cidade">Cidade<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="cidade" id="cidade" required>
+                      <input type="text" class="form-control" maxlength="30" name="cidade" id="cidade" required readonly>
                     </div>
                   </div>     
                   
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="bairro">Bairro<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="bairro" id="bairro" required>
+                      <input type="text" class="form-control" maxlength="30" name="bairro" id="bairro" required readonly>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="logradouro">Logradouro<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="logradouro" id="logradouro" required>
+                      <input type="text" class="form-control" maxlength="30" name="logradouro" id="logradouro" required readonly>
                     </div>
                   </div>
 
@@ -463,16 +427,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   </div>
 
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="complemento">Complemento<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="complemento">Complemento<sup class="obrig"></sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="9999" name="complemento" id="complemento" required>
+                      <input type="text" class="form-control" maxlength="9999" name="complemento" id="complemento">
                     </div>
                   </div>
 
                   <div class="panel-footer">
                     <div class="row">
                       <div class="col-md-9 col-md-offset-3">
-                      <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="enviarFormularios()">
+                      <input id="enviar" type="submit" class="btn btn-primary" value="Salvar">
                         <input type="reset" class="btn btn-default">
                       </div>
                     </div>
@@ -506,7 +470,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
       <!-- SCRIPTS  -->  
       <script defer>
+      document.getElementById('imgform').addEventListener('change', function(event) {
+      const input = event.target;
+      const preview = document.getElementById('previewImagemPessoa');
 
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+
+        reader.readAsDataURL(input.files[0]);
+      } else {
+        preview.src = "#";
+        preview.style.display = "none";
+      }
+    })
         // Limita o número de caracteres do input com id "numero_endereco"
         var inputDoNumeroResidencial = document.getElementById("numero_endereco");
         inputDoNumeroResidencial.addEventListener("input", function(){
@@ -563,12 +544,63 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           $("#complemento").prop('disabled', false);
         }
 
-        // Funções para submeter o funcionário
-        function enviarFormularios(){
-          document.getElementById("form-adotante").submit();
-          document.getElementById("formsubmit").submit();
-        }
-      </script>                                                                                                                                                                                                                                                                        
+        async function BuscaCEP(cep) {
+  try {
+    cep = cep.replace(/\D/g, '');
+
+    const estado = document.querySelector("#estado");
+    const cidade = document.querySelector("#cidade");
+    const bairro = document.querySelector("#bairro");
+    const logradouro = document.querySelector("#logradouro");
+    const cepInput = document.querySelector("#cep");
+
+    // Limpa e deixa campos readonly inicialmente
+    estado.value = '';
+    cidade.value = '';
+    bairro.value = '';
+    logradouro.value = '';
+    bairro.readOnly = true;
+    logradouro.readOnly = true;
+
+    if (cep.length !== 8) return;
+
+    const url = `https://viacep.com.br/ws/${cep}/json/`;
+    const dadosJSON = await fetch(url);
+    const dados = await dadosJSON.json();
+
+    if (dados.erro) {
+      alert("CEP não encontrado. Por favor, verifique.");
+      cepInput.value = '';
+      cepInput.focus();
+      return;
+    }
+
+    estado.value = dados.uf || '';
+    cidade.value = dados.localidade || '';
+
+    if (dados.bairro && dados.bairro.trim() !== '') {
+      bairro.value = dados.bairro;
+      bairro.readOnly = true;
+    } else {
+      bairro.readOnly = false;
+    }
+
+    if (dados.logradouro && dados.logradouro.trim() !== '') {
+      logradouro.value = dados.logradouro;
+      logradouro.readOnly = true;
+    } else {
+      logradouro.readOnly = false;
+    }
+
+  } catch (erro) {
+    console.error("Erro ao buscar o CEP:", erro);
+  }
+}
+
+
+
+
+</script>                                                                          
 
     <div align="right">
       <iframe src="https://www.wegia.org/software/footer/pet.html" width="200" height="60" style="border:none;"></iframe>
