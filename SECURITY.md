@@ -4,6 +4,9 @@
 
 You can help improve the security of the **WeGIA** project by analyzing the code during the design phase, running a local instance on your computer, or using the public test server.
 
+🚨Please do not submit vulnerabilities through other means like VulnDB plataform. Our vulnerability disclosure policy is fully centered on GitHub Advisory.🚨
+
+
 ---
 
 ### 🧠 Design-Time Analysis
