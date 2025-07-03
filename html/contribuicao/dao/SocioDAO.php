@@ -284,7 +284,8 @@ class SocioDAO
         $sqlBuscaPorDocumento =
             "SELECT 
             pessoa.id_pessoa, 
-            pessoa.nome, 
+            pessoa.nome,
+            pessoa.data_nascimento, 
             pessoa.telefone, 
             pessoa.cep, 
             pessoa.estado, 

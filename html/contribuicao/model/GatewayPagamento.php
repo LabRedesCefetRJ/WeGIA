@@ -1,5 +1,6 @@
 <?php
-class GatewayPagamento{
+class GatewayPagamento
+{
 
     //atributos
     private $id;
@@ -8,12 +9,12 @@ class GatewayPagamento{
     private $token;
     private $status;
 
-    public function __construct($nome, $endpoint, $token, $status=null)
+    public function __construct($nome, $endpoint, $token, $status = null)
     {
         $this->setNome($nome)->setEndpoint($endpoint)->setToken($token);
-        if(!$status){
+        if (!$status) {
             $this->setStatus(0);
-        }else{
+        } else {
             $this->setStatus($status);
         }
     }
@@ -22,7 +23,8 @@ class GatewayPagamento{
      * Pega os atributos nome, endpoint, token e status e realiza os procedimentos necessários
      * para inserir um Gateway de pagamento no sistema
      */
-    public function cadastrar(){
+    public function cadastrar()
+    {
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
         $gatewayPagamentoDao->cadastrar($this->nome, $this->endpoint, $this->token, $this->status);
@@ -31,15 +33,24 @@ class GatewayPagamento{
     /**
      * Altera os dados do sistema pelos novos fornecidos através dos atributos $nome e $endpoint e $token
      */
-    public function editar(){
+    public function editar()
+    {
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
-        $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->token);
+        
+        // Verifica se o token informado está ofuscado (possui apenas asteriscos ou é parcialmente ofuscado)
+        if (strpos($this->token, '*') !== false) {
+            // Não atualiza o token se ele estiver ofuscado
+            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, null);
+        } else {
+            // Token foi alterado, então atualiza normalmente
+            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->token);
+        }
     }
 
     /**
      * Get the value of status
-     */ 
+     */
     public function getStatus()
     {
         return $this->status;
@@ -49,13 +60,13 @@ class GatewayPagamento{
      * Set the value of status
      *
      * @return  self
-     */ 
+     */
     public function setStatus($status)
     {
         $statusLimpo = trim($status);
         //echo $statusLimpo;
 
-        if((!$statusLimpo || empty($statusLimpo)) && $statusLimpo != 0){
+        if ((!$statusLimpo || empty($statusLimpo)) && $statusLimpo != 0) {
             throw new InvalidArgumentException('O status de um gateway de pagamento não pode ser vazio.');
         }
 
@@ -66,7 +77,7 @@ class GatewayPagamento{
 
     /**
      * Get the value of token
-     */ 
+     */
     public function getToken()
     {
         return $this->token;
@@ -76,12 +87,12 @@ class GatewayPagamento{
      * Set the value of token
      *
      * @return  self
-     */ 
+     */
     public function setToken($token)
     {
         $tokenLimpo = trim($token);
 
-        if(!$tokenLimpo || empty($tokenLimpo)){
+        if (!$tokenLimpo || empty($tokenLimpo)) {
             throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
         }
 
@@ -92,7 +103,7 @@ class GatewayPagamento{
 
     /**
      * Get the value of endpoint
-     */ 
+     */
     public function getEndpoint()
     {
         return $this->endpoint;
@@ -102,12 +113,12 @@ class GatewayPagamento{
      * Set the value of endpoint
      *
      * @return  self
-     */ 
+     */
     public function setEndpoint($endpoint)
     {
         $endpointLimpo = trim($endpoint);
 
-        if(!$endpointLimpo || empty($endpointLimpo)){
+        if (!$endpointLimpo || empty($endpointLimpo)) {
             throw new InvalidArgumentException('O endpoint de um gateway de pagamento não pode ser vazio.');
         }
 
@@ -118,7 +129,7 @@ class GatewayPagamento{
 
     /**
      * Get the value of nome
-     */ 
+     */
     public function getNome()
     {
         return $this->nome;
@@ -128,12 +139,12 @@ class GatewayPagamento{
      * Set the value of nome
      *
      * @return  self
-     */ 
+     */
     public function setNome($nome)
     {
         $nomeLimpo = trim($nome);
 
-        if(!$nomeLimpo || empty($nomeLimpo)){
+        if (!$nomeLimpo || empty($nomeLimpo)) {
             throw new InvalidArgumentException('O nome de um gateway de pagamento não pode ser vazio.');
         }
         $this->nome = $nome;
@@ -143,7 +154,7 @@ class GatewayPagamento{
 
     /**
      * Get the value of id
-     */ 
+     */
     public function getId()
     {
         return $this->id;
@@ -153,12 +164,12 @@ class GatewayPagamento{
      * Set the value of id
      *
      * @return  self
-     */ 
+     */
     public function setId($id)
     {
         $idLimpo = trim($id);
 
-        if(!$idLimpo || $idLimpo <1){
+        if (!$idLimpo || $idLimpo < 1) {
             throw new InvalidArgumentException();
         }
         $this->id = $id;

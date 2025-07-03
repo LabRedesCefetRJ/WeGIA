@@ -1,40 +1,79 @@
-# Política de Segurança
+# Security Policy
 
-## Como contribuir com a segurança do WeGIA?
-Você pode contribuir com o projeto WeGIA, analisando o código em tempo de design, executando uma instância localmente em seu computador ou utilizando um servidor de testes
+## 🔐 How to Contribute to WeGIA's Security
 
-### Em tempo de design:
-Para testar o código do WeGIA em tempo de design, você pode utilizar ferramentas de análise de código, clone o repositório e teste localmente. Abaixo segue algumas dicas de ferramentas para isso:
+You can help improve the security of the **WeGIA** project by analyzing the code during the design phase, running a local instance on your computer, or using the public test server.
 
-- mn-analise: 
-    - Leia o whitepaper [Uma extensão para o VSCode que utiliza o ChatGPT como ferramenta de apoio ao desenvolvimento de software seguro](https://periodicos.univali.br/index.php/acotb/article/view/20376).
-    - Disponível para download no [Visual-Studio Marketplace](https://marketplace.visualstudio.com/items/MustafaNeto.mn-analise/)
-
-### Em tempo de execução (instância local)
-Você pode utilizar uma máquina virtual com o WeGIA pré instalado para executar seus testes de segurança.
-
-- VirtualBox
-    - Pré requisito: Instale o [VirtualBox](https://www.virtualbox.org/wiki/Downloads) no seu computador.
-    - Realize o download da [Máquina virtual do WeGIA](https://www.wegia.org/vm/)
-        - usuário da máquina: wegia
-        - senha do usuário: wegia
-    - [Assista o tutorial do uso da VM do WeGIA no Youtube](https://youtu.be/mGayZb2snqk)
-
-- Instalação Local
-
-Execute em um terminal os seguintes comandos:  
-
-```
-apt update
-apt install wget dialog -y
-wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/instalador/install.sh
-chmod +x install.sh
-./install.sh
-```
-
-### Em tempo de execução (servidor de teste)
-Você pode utilizar um servidor público com o WeGIA pré instalado para executar seus testes de segurança.
-
-- [Servidor para testes de segurança](https://sec.wegia.org/) 
+🚨Please do not submit vulnerabilities through other means like VulnDB plataform. Our vulnerability disclosure policy is fully centered on GitHub Advisory.🚨
 
 
+---
+
+### 🧠 Design-Time Analysis
+
+To test WeGIA’s code during the design phase, clone the repository and use static analysis tools. Here are some suggestions:
+
+- **mn-analise**
+  - Read the whitepaper: [An extension for VSCode that uses ChatGPT as a tool to support secure software development](https://periodicos.univali.br/index.php/acotb/article/view/20376)
+  - Available on the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items/MustafaNeto.mn-analise/)
+
+---
+
+### 🖥️ Runtime Testing (Local Instance)
+
+You can use a virtual machine with WeGIA pre-installed to run your security tests.
+
+- **VirtualBox**
+  - Prerequisite: Install [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+  - Download the [WeGIA Virtual Machine](https://www.wegia.org/vm/)
+    - **Username**: `wegia`  
+    - **Password**: `wegia`
+  - Watch the [WeGIA VM tutorial on YouTube](https://youtu.be/mGayZb2snqk)
+
+- **Local Installation**
+
+  Follow the [ installation instructions](https://github.com/LabRedesCefetRJ/WeGIA?tab=readme-ov-file#como-instalar)
+
+---
+
+### 🌐 Runtime Testing (Public Server)
+
+You can use a public server with WeGIA pre-installed to run your security tests.
+
+- [Security Testing Server](https://sec.wegia.org/)
+
+---
+
+## 📦 Supported Versions
+
+The following table indicates which versions of WeGIA receive security updates:
+
+| Version | Supported |
+|---------|-----------|
+| ≥ 3.4   | ✅ Yes     |
+| < 3.4   | ❌ No      |
+
+> Only versions 3.4 and above are actively maintained for security.
+
+---
+
+## 🛡️ Reporting a Vulnerability
+
+If you discover a security vulnerability in WeGIA, we encourage responsible disclosure.
+
+- **Preferred method:** Submit a private advisory via GitHub.
+- **GitHub Security Advisory:** [https://github.com/LabRedesCefetRJ/WeGIA/security/advisories](https://github.com/LabRedesCefetRJ/WeGIA/security/advisories)
+- **Alternative contact:** Send an email to `labredes@grupo.cefet-rj.br`
+
+Please include the following details if possible:
+
+- Description of the issue
+- Steps to reproduce
+- Affected version(s)
+- Potential impact
+
+We aim to respond within **72 business hours**.
+
+---
+
+**Thank you for helping to keep WeGIA secure.**

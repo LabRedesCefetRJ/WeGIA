@@ -1,3 +1,5 @@
+//window.onload = disableAutocomplete();
+
 let acao = 'boleto';
 let regras;
 

@@ -48,6 +48,12 @@ if (!is_null($resultado)) {
   header("Location: ../home.php?msg_c=$msg");
 }
 
+$idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_VALIDATE_INT);
+if(!$idFuncionario){
+  echo json_encode(['erro' => 'O id do funcionário informado não é válido']);
+  exit(400);
+}
+
 require_once ROOT . "/controle/FuncionarioControle.php";
 $listaCPF = new FuncionarioControle;
 $listaCPF->listarCpf();
@@ -219,7 +225,7 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                     <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                   </div>
                 </div>
-                <input type="hidden" name="id_funcionario" value=<?= $_GET['id_funcionario']; ?> readonly>
+                <input type="hidden" name="id_funcionario" value=<?= $idFuncionario?> readonly>
                 
                 <div class="modal-footer">
                     <input type="reset" class="btn btn-default">

@@ -22,7 +22,7 @@ $tipoContribuicao = 'Cartão de Crédito';
 
         <p class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
 
-        <form id="formulario">
+        <form id="formulario" autocomplete="off">
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
 
             <div id="pag1" class="wrap-input100">
