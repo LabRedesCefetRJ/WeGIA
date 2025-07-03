@@ -1016,13 +1016,13 @@ if (isset($_GET['id_pet'])) {
                                                     <?php
                                                     // Lista todos os adotantes
                                                     foreach ($resultadosListarAdotantes as $resultado) {
-                                                        if ($resultado["id_pessoa"] != 1 && $resultado["id_pessoa"] != 2) {
+                                                        if ($resultado["id_pessoa"] != 1) {
                                                             echo "<option value='" . $resultado["id_pessoa"] . "'>" . $resultado["nome"] . " " . $resultado["sobrenome"] . "</option>";
                                                         }
                                                     }
 
                                                     if (count($resultadosListarAdotantes) == 0 || !array_filter($resultadosListarAdotantes, function ($adotante) {
-                                                        return $adotante["id_pessoa"] != 1 && $adotante["id_pessoa"] != 2;
+                                                        return $adotante["id_pessoa"] != 1;
                                                     })) {
                                                         echo "<option value=''>Adotantes não encontrados.</option>";
                                                     }

@@ -65,6 +65,7 @@ try {
     die("Erro de conexão: " . $e->getMessage());
 }
 
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 ?>
@@ -271,7 +272,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             </header>
                             <div class="panel-body">
                            
-                                <form method="GET" action="./cadastro_adotante.php">
+                            <form method="GET" action="./cadastro_adotante.php">
                                     <!-- <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label> -->
                                     <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                                     <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>

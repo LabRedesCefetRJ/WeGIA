@@ -152,6 +152,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   }
 }
 
+if (!isset($cpf)) {
+  // Redireciona direto se o CPF estiver ausente
+  header("Location: pre_cadastro_adotante.php");
+  exit();
+}
+
+
+
+// Verifica no banco
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
+$stmt->execute([$cpf]);
+$existe = $stmt->fetchColumn();
+
+if ($existe > 0) {
+  // Exibe alerta e redireciona com JavaScript
+  echo "
+  <script>
+      alert('Este CPF já está cadastrado!');
+      window.location.href = 'pre_cadastro_adotante.php';
+  </script>
+  ";
+  exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -298,19 +321,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       </header>
       <div class="row" id="formulario">
       <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php" enctype="multipart/form-data" >
-          <div class="col-md-4 col-lg-3">
+          
+     <!-- <div class="col-md-4 col-lg-3">
             <section class="panel">
               <div class="panel-body">
                 <div class="thumb-info mb-md">
-                  <!-- Pré-visualização da imagem -->
+                  Pré-visualização da imagem
                   <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
                   <img id="previewImagemPessoa" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
         
                 </div>
               </div>
             </section>
-          </div>
-        
+          </div>-->        
 
         <div class="col-md-8 col-lg-8">
           <div class="tabs">
