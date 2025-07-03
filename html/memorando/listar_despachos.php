@@ -23,6 +23,7 @@ if (!isset($_SESSION['usuario'])) {
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 require_once ROOT . "/dao/Conexao.php";
+require_once ROOT . "/html/memorando/gerar_tabela_impressao.php";
 
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
@@ -506,8 +507,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 				var checkFile = function(fileName) {
 					var accepted = "invalid",
-						acceptedFileTypes =
-						this.acceptedFileTypes || settings.acceptedFileTypes,
+						acceptedFileTypes = this.acceptedFileTypes || settings.acceptedFileTypes,
 						regex;
 
 					for (var i = 0; i < acceptedFileTypes.length; i++) {
@@ -516,14 +516,12 @@ require_once ROOT . "/html/personalizacao_display.php";
 						if (regex.test(fileName)) {
 							accepted = "valid";
 							break;
-						} else {
-							accepted = "badFileName";
 						}
 					}
 
 					return accepted;
-
 				};
+
 
 			};
 
@@ -672,72 +670,12 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 									</p>
 									<?php
-										echo ("
-											<p> Ao Sr(a): $pessoa_destino</p>
-											<p> $despachoNome </p>
-
-										");
-									?>
-									<p align="center">
-
-										<?php
-											echo ("$pessoa_memorando");
-										?>
-									</p>
-									<?php
 										$despachosArr = json_decode($_SESSION['despacho']);
 										$anexos = json_decode($_SESSION['arquivos']);
-										foreach($despachosArr as $despacho) {
-											$tabela = "";
-											$id = $despacho->id;
-											$remetente = $despacho->remetente;
-											$destinatario = $despacho->destinatario;
-											$data = $despacho->data;
-											$texto = $despacho->texto;
-											$tabela = "<table class='table table-bordered table-striped mb-none'>";
-											
-											$tabela .= "<tr>
-															<th>Remetente:</th>
-														 	<td>$remetente</td>
-														 	<th>Destinatário</th>
-														 	<td>$destinatario</td>
-														</tr>
-														<tr>
-															<th colspan='2'>Despacho</th>
-															<th>Data</th>
-															<td>$data</td>
-														</tr>
-														<tr>
-															<td colspan='4' id='texto$id'>
-																<p>$texto</p>
-															</td>
-														</tr>
-														<tr>
-															<th colspan='4'>Anexos</th>
-														</tr>";
-											$trAnexos = "<tr><td colspan='5'>";
-											foreach($anexos as $anexo) {
-												if($anexo->id_despacho == $id){
-													$nome = $anexo->nome;
-													$extensao = $anexo->extensao;
-													$trAnexos .= "<p>$nome$extensao</p>";
-												}
-											}
-											$trAnexos .= "</td></tr>";
+										$tabela = gerarTabelaMemorando($despachosArr, $anexos);
 
-											$tabela .= $trAnexos;
-
-											$tabela .= '</table>';
-
-											echo ($tabela);
-										}
+										echo ($tabela);
 									?>
-									
-									<div class="panel-heading"> </div>
-
-									<br>
-
-
 								</div>
 
 							</div>
@@ -817,7 +755,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 </div>
 </div>
 </div>
-<?php } ?>
+<?php }; ?>
 	</section>
 	</section>
 	</div>
