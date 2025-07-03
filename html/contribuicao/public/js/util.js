@@ -1,3 +1,10 @@
+function disableAutocomplete() {
+    document.querySelectorAll('input').forEach(input => {
+        input.value = '';
+        input.autocomplete = 'off';
+    })
+}
+
 /**
  * Pega o campo radio com nome de opcao marcado na página 
  * @returns string
@@ -64,9 +71,9 @@ function pegarDocumento() {
     let documento;
 
     if (opcao == "fisica") {
-        documento = document.getElementById('dcpf').value;
+        documento = formatarCPF(document.getElementById('dcpf').value);
     } else if (opcao == "juridica") {
-        documento = document.getElementById('dcnpj').value;
+        documento = formatarCNPJ(document.getElementById('dcnpj').value);
     }
 
     return documento;
@@ -95,6 +102,7 @@ function validarDocumento(documento) {
             return false;
         }
     } else if (opcao == 'juridica') {
+        //fazer validação mais robusta posteriormente
         if (documentoSomenteNumeros.length != 14) {
             return false;
         }
@@ -136,6 +144,12 @@ function configurarConsulta(funcao) {
  * @returns 
  */
 function verificarValor(valor) {
+
+    if (!valor || isNaN(valor) || valor <= 0) {
+        alert("Por favor, preencha um valor numérico válido.");
+        return false;
+    }
+
     if (regras && regras.length > 0) {
         console.log('Existem regras cadastradas no sistema');
 
@@ -299,9 +313,14 @@ async function cadastrarSocio() {
 
     const documento = pegarDocumento();
 
+    const cep = formatarCEP(formData.get('cep'));
+    const dataNascimento = converterDataParaISO(formData.get('data_nascimento'));
+
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
+    formData.append('cep', cep);
+    formData.append('data_nascimento', dataNascimento);
 
     try {
         const response = await fetch("../controller/control.php", {
@@ -331,9 +350,14 @@ async function atualizarSocio() {
 
     const documento = pegarDocumento();
 
+    const cep = formatarCEP(formData.get('cep'));
+    const dataNascimento = converterDataParaISO(formData.get('data_nascimento'));
+
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'atualizarSocio');
     formData.append('documento_socio', documento);
+    formData.append('cep', cep);
+    formData.append('data_nascimento', dataNascimento);
 
     try {
         const response = await fetch("../controller/control.php", {
@@ -358,7 +382,7 @@ async function atualizarSocio() {
 }
 
 function verificarEndereco() {
-    const cep = document.getElementById('cep').value;
+    const cep = formatarCEP(document.getElementById('cep').value);
     const rua = document.getElementById('rua').value;
     const numeroEndereco = document.getElementById('numero').value;
     const bairro = document.getElementById('bairro').value;
@@ -398,6 +422,55 @@ function verificarEndereco() {
     return true;
 }
 
+function converterDataParaISO(dataBR) {
+    const partes = dataBR.split('/');
+    if (partes.length !== 3) return null;
+
+    const [dia, mes, ano] = partes;
+    if (!dataValidaBR(dataBR)) return null;
+
+    return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+}
+
+function converterDataParaBR(dataISO) {
+    const partes = dataISO.split('-');
+    if (partes.length !== 3) return null;
+
+    const [ano, mes, dia] = partes;
+
+    const dataBR = `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
+
+    if (!dataValidaBR(dataBR)) return null;
+
+    return dataBR;
+}
+
+function dataValidaBR(dataStr) {
+    const partes = dataStr.split('/');
+    if (partes.length !== 3) return false;
+
+    const [dia, mes, ano] = partes.map(Number);
+
+    // Verificação básica
+    if (ano < 1000 || ano > 9999) return false;
+    if (mes < 1 || mes > 12) return false;
+
+    const data = new Date(ano, mes - 1, dia);
+    const hoje = new Date();
+
+    // Zerar hora/min/seg dos dois objetos para comparar só as datas
+    data.setHours(0, 0, 0, 0);
+    hoje.setHours(0, 0, 0, 0);
+
+    // Verifica se a data é real e não está no futuro
+    return (
+        data.getFullYear() === ano &&
+        data.getMonth() === mes - 1 &&
+        data.getDate() === dia &&
+        data <= hoje
+    );
+}
+
 function verificarContato() {
     const nome = document.getElementById('nome').value;
     const dataNascimento = document.getElementById('data_nascimento').value;
@@ -412,6 +485,9 @@ function verificarContato() {
     if (!dataNascimento) {
         alert('A data de nascimento não pode estar vazia');
         return false;
+    } else if (!dataValidaBR(dataNascimento)) {
+        alert('Informe uma data válida antes de prosseguir.');
+        return false;
     }
 
     if (!email) {
@@ -422,6 +498,16 @@ function verificarContato() {
     if (!telefone) {
         alert('O telefone não pode estar vazio.');
         return false;
+    } else if (telefone.length != 14 && telefone.length != 15) {
+        alert('O telefone informado não está no formato correto.');
+        return false;
+    } else if (telefone.length === 15) {
+        const celularNumeros = telefone.replace(/\D/g, '');
+
+        if (celularNumeros[2] != 9) {
+            alert('O número de celular informado não é válido.');
+            return false;
+        }
     }
 
     return true;
@@ -448,7 +534,10 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
 
     //Atribuir valor aos campos
     nomeObject.value = nome;
-    dataNascimentoObject.value = dataNascimento;
+
+    if(dataNascimento != null && dataNascimento.length === 10)
+        dataNascimentoObject.value = converterDataParaBR(dataNascimento);
+    
     emailObject.value = email;
     telefoneObject.value = telefone;
     cepObject.value = cep;
@@ -461,7 +550,7 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
 }
 
 function buscarSocio() {
-    const documento = pegarDocumento();
+    let documento = pegarDocumento();
 
     if (!validarDocumento(documento)) {
         alert("O documento informado não é válido");
@@ -562,3 +651,28 @@ function setLoader(btn) {
         btn.appendChild(loader);
     }
 }
+
+function formatarCEP(cep) {
+    // Remove tudo que não for número
+    cep = cep.replace(/\D/g, '');
+
+    //Aplica a formatação: xxxxx-xxx
+    return cep.replace(/(\d{5})(\d{3})/, "$1-$2");
+}
+
+function formatarCNPJ(cnpj) {
+    // Remove tudo que não for número
+    cnpj = cnpj.replace(/\D/g, '');
+
+    //Aplica a formatação: xx.xxx.xxx/xxxx-xx
+    return cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+}
+
+function formatarCPF(cpf) {
+    // Remove tudo que não for número
+    cpf = cpf.replace(/\D/g, '');
+
+    // Aplica a formatação: xxx.xxx.xxx-xx
+    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+}
+

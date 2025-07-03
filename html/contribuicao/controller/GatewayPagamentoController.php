@@ -63,20 +63,28 @@ class GatewayPagamentoController
      */
     public function editarPorId()
     {
-        $gatewayId = $_POST['id'];
-        $gatewayNome = $_POST['nome'];
-        $gatewayEndepoint = $_POST['endpoint'];
-        $gatewayToken = $_POST['token'];
+        // Sanitiza o ID como número inteiro
+        $gatewayId = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+
+        // Sanitiza os campos de texto removendo caracteres especiais
+        $gatewayNome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $gatewayEndepoint = filter_input(INPUT_POST, 'endpoint', FILTER_SANITIZE_URL); // URL pode conter : / ? etc
+        $gatewayToken = filter_input(INPUT_POST, 'token', FILTER_UNSAFE_RAW); // Não sanitiza (token pode ter símbolos)
 
         try {
+            // Validação básica adicional
+            if (!$gatewayId || !$gatewayNome || !$gatewayEndepoint) {
+                throw new InvalidArgumentException('Falha na validação dos campos', 400);
+            }
+
             $gatewayPagamento = new GatewayPagamento($gatewayNome, $gatewayEndepoint, $gatewayToken);
             $gatewayPagamento->setId($gatewayId);
             $gatewayPagamento->editar();
             header("Location: ../view/gateway_pagamento.php?msg=editar-sucesso#mensagem-tabela");
         } catch (Exception $e) {
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
             header("Location: ../view/gateway_pagamento.php?msg=editar-falha#mensagem-tabela");
         }
-        //echo 'Editando gateway de id: '.$gatewayId;
     }
 
     /**
@@ -89,12 +97,14 @@ class GatewayPagamentoController
 
         if (!$gatewayId || empty($gatewayId)) {
             http_response_code(400);
-            echo json_encode(['Erro' => 'O id deve ser maior ou igual a 1.']);exit;
+            echo json_encode(['Erro' => 'O id deve ser maior ou igual a 1.']);
+            exit;
         }
 
         if (!$status || empty($status)) {
             http_response_code(400);
-            echo json_encode(['Erro' => 'O status informado não é válido.']);exit;
+            echo json_encode(['Erro' => 'O status informado não é válido.']);
+            exit;
         }
 
         if ($status === 'true') {
@@ -109,7 +119,8 @@ class GatewayPagamentoController
             echo json_encode(['Sucesso']);
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(['Erro'=>'Ocorreu um problema no servidor.']);exit;
+            echo json_encode(['Erro' => 'Ocorreu um problema no servidor.']);
+            exit;
         }
     }
 }

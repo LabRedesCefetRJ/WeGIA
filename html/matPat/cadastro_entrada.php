@@ -320,7 +320,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 				$.getJSON('<?= WWW ?>controle/control.php', {
 					nomeClasse: 'ProdutoControle',
-					metodo: 'getProdutosParaCadastrarEntradaPorAlmoxarifado',
+					metodo: 'getProdutosParaCadastrarEntradaOuSaidaPorAlmoxarifado',
 					almoxarifado: almoxarifadoId
 				}, function(produtos) {
 					produtos_autocomplete = produtos;
