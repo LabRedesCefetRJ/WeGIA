@@ -395,17 +395,22 @@
 							<li class="nav-parent nav-active" >
 								<a>
 									<i class="fa fa-user-md" aria-hidden="true"></i>
-									<span>Enfermaria</span>
+									<span>Registro Diário</span>
 								</a>
 								<ul class="nav nav-children">
 									<li>
 										<a href="<?= WWW ?>html/saude/administrar_medicamento.php">
-											<span>Administrar Medicamentos</span>
+											<span>Medicamentos</span>
 										</a>
 									</li>
 									<li>
-										<a href="<?= WWW ?>html/saude/listar_historico_pacientes.php">
-											<span>Histórico dos pacientes</span>
+										<a href="<?= WWW ?>html/saude/listar_sinais_vitais.php">
+											<span>Sinais Vitais</span>
+										</a>
+									</li>
+									<li>
+										<a href="<?= WWW ?>html/saude/listar_cadastro_intercorrencia.php">
+											<span>Intercorrências</span>
 										</a>
 									</li>
 								</ul>
