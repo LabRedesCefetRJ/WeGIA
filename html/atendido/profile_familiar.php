@@ -53,7 +53,7 @@ $cpf1->listarCPF();
 
 require_once "../geral/msg.php";
 
-$id_dependente = isset($_GET['id_dependente']) ? (int) $_GET['id_dependente'] : null;
+$id_dependente = filter_input(INPUT_GET, 'id_dependente', FILTER_SANITIZE_NUMBER_INT);
 
 if ($id_dependente) {
     $stmt = $pdo->prepare("
@@ -95,9 +95,11 @@ if ($id_dependente) {
         $JSON_dependente = json_encode($dependente);
     } else {
         echo "Dependente não encontrado.";
+        exit(400);
     }
 } else {
     echo "ID do dependente inválido ou não fornecido.";
+    exit(400);
 }
 
 
@@ -185,7 +187,7 @@ if ($id_dependente) {
         var dependente = <?= $JSON_dependente; ?>;
         console.log(dependente);
         var url = "familiar_listar_um.php",
-            data = "id_dependente=<?= $_GET["id_dependente"] ?>";
+            data = "id_dependente=<?= $id_dependente ?>";
         var formState = [],
             form = {
                 set: function(id, dep) {
@@ -322,7 +324,7 @@ if ($id_dependente) {
             getInfoDependente(idForm);
         }
 
-        var id_dependente = <?= $_GET['id_dependente'] ?? null; ?>;
+        var id_dependente = <?= $id_dependente ?? null; ?>;
 
         $(function() {
             $("#header").load("../header.php");
@@ -732,7 +734,7 @@ if ($id_dependente) {
                                                                     <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
                                                                 </div>
 
-                                                                <input type="number" name="id_dependente" value="<?= $_GET['id_dependente']; ?>" style='display: none;'>
+                                                                <input type="number" name="id_dependente" value="<?php //$_GET['id_dependente']; ?>" style='display: none;'>
 
                                                             </div>
                                                             <div class="modal-footer">
