@@ -10,7 +10,7 @@
 	}
 
 	if(!isset($_SESSION['saude']))	{
-		header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/administrar_medicamento.php');
+		header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/listar_sinais_vitais.php');
 	}
 	$config_path = "config.php";
 	if(file_exists($config_path)){
@@ -23,8 +23,9 @@
 		require_once($config_path);
 	}
 	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-	$id_pessoa = $_SESSION['id_pessoa'];
+	$id_pessoa = mysqli_real_escape_string($conexao, $_SESSION['id_pessoa']);
 	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
+
 	if(!is_null($resultado)){
 		$id_cargo = mysqli_fetch_array($resultado);
 		if(!is_null($id_cargo)){
@@ -72,6 +73,7 @@
 	<link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
+
 	<!-- Specific Page Vendor CSS -->
 	<link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
 	<link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
@@ -118,7 +120,7 @@
 	<!-- jquery functions -->
 	<script>
 		function clicar(id) {
-			window.location.href = "aplicar_medicamento.php?id_fichamedica="+id;
+			window.location.href = "sinais_vitais.php?id_fichamedica="+id;
 		}
 		$(function() {
 
@@ -158,13 +160,13 @@
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Medicamentos</h2>
+					<h2>Sinais Vitais</h2>
 
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li><a href="../index.php"> <i class="fa fa-home"></i>
 							</a></li>
-							<li><span>Medicamentos</span></li>
+							<li><span>Sinais Vitais</span></li>
 						</ol>
 
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>

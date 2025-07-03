@@ -108,7 +108,7 @@ class SinaisVitaisControle
             $_SESSION['msg']="Ficha médica cadastrada com sucesso!";
             $_SESSION['proxima']="Cadastrar outra ficha.";
             $_SESSION['link']="../html/saude/cadastro_ficha_medica.php";
-            header("Location: ../html/saude/historico_paciente.php?id_fichamedica=".$id_fichamedica);
+            header("Location: ../html/saude/sinais_vitais.php?id_fichamedica=".$id_fichamedica);
         } catch (PDOException $e){
             $msg= htmlspecialchars("Não foi possível registrar o paciente <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>"."<br>".$e->getMessage());
             echo $msg;

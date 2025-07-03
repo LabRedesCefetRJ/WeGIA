@@ -496,6 +496,7 @@ try {
               <tbody>
                 <?php
                 $mes_atual = date("m");
+                $ano_atual = date("Y");
                 $query = mysqli_query($conexao, "SELECT *, s.id_socio as socioid, DATE_FORMAT(p.data_nascimento, '%d/%m') as aniversario FROM socio AS s LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa  WHERE p.data_nascimento LIKE '%-$mes_atual-%'");
                 while ($resultado = mysqli_fetch_array($query)) {
 
@@ -505,6 +506,9 @@ try {
                   $email = htmlspecialchars($resultado['email']);
                   $telefone = htmlspecialchars($resultado['telefone']);
                   $tipo_socio = htmlspecialchars($resultado['tipo']);
+                  $data_nascimento = explode('-', $resultado['data_nascimento']);
+                  $dataFormatada = $data_nascimento['2'].'/'.$data_nascimento['1'];
+                  $idade = intval($ano_atual - $data_nascimento['0']);
                   if ($resultado['logradouro'] == "") {
                     $endereco = "Endereço não informado/incompleto.";
                   } else {
@@ -523,7 +527,7 @@ try {
                   }
 
                   $del_json = json_encode(array("id" => $id, "nome" => $nome_s, "pessoa" => $pessoa));
-                  echo ("<tr><td onclick='detalhar_socio($id);' style='cursor: pointer' class='$class'>$nome_s</td><td><a href='mailto:$email'>$email</a></td><td>$telefone</td><td>$aniversario</td></tr>");
+                  echo ("<tr><td onclick='detalhar_socio($id);' style='cursor: pointer' class='$class'>$nome_s</td><td><a href='mailto:$email'>$email</a></td><td>$telefone</td><td>$dataFormatada, $idade anos \u{1F382}</td></tr>");
                 }
                 ?>
               </tbody>
