@@ -79,7 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     'gender' => !empty($_POST['gender']) ? trim($_POST['gender']) : null,
     'telefone' => !empty($_POST['telefone']) ? trim($_POST['telefone']) : null,
     'nascimento' => !empty($_POST['nascimento']) ? trim($_POST['nascimento']) : null,
-    'imgperfil' => !empty($_POST['imgperfil']) ? trim($_POST['imgperfil']) : null,
+    'imgperfil' => !empty($_POST['imagem_base64']) ? trim($_POST['imagem_base64']) : null,
     'cep' => !empty($_POST['cep']) ? trim($_POST['cep']) : null,
     'estado' => !empty($_POST['estado']) ? trim($_POST['estado']) : null,
     'cidade' => !empty($_POST['cidade']) ? trim($_POST['cidade']) : null,
@@ -322,18 +322,19 @@ if ($existe > 0) {
       <div class="row" id="formulario">
       <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php" enctype="multipart/form-data" >
           
-     <!-- <div class="col-md-4 col-lg-3">
+     <<div class="col-md-4 col-lg-3">
             <section class="panel">
               <div class="panel-body">
                 <div class="thumb-info mb-md">
                   Pré-visualização da imagem
                   <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
                   <img id="previewImagemPessoa" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
-        
+
+                  <input type="hidden" name="imagem_base64" id="imagem_base64">
                 </div>
               </div>
             </section>
-          </div>-->        
+          </div>        
 
         <div class="col-md-8 col-lg-8">
           <div class="tabs">
@@ -493,24 +494,35 @@ if ($existe > 0) {
 
       <!-- SCRIPTS  -->  
       <script defer>
-      document.getElementById('imgform').addEventListener('change', function(event) {
-      const input = event.target;
-      const preview = document.getElementById('previewImagemPessoa');
+  document.getElementById('imgform').addEventListener('change', function(event) {
+  const input = event.target;
+  const preview = document.getElementById('previewImagemPessoa');
+  const hiddenBase64 = document.getElementById('imagem_base64'); // <-- campo hidden
 
-      if (input.files && input.files[0]) {
-        const reader = new FileReader();
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
 
-        reader.onload = function(e) {
-          preview.src = e.target.result;
-          preview.style.display = 'block';
-        }
+    reader.onload = function(e) {
+      const base64 = e.target.result;
 
-        reader.readAsDataURL(input.files[0]);
-      } else {
-        preview.src = "#";
-        preview.style.display = "none";
-      }
-    })
+      // Mostra a prévia da imagem
+      preview.src = base64;
+      preview.style.display = 'block';
+
+      // Armazena no campo hidden
+      hiddenBase64.value = base64;
+    }
+
+    reader.readAsDataURL(input.files[0]);
+  } else {
+    preview.src = "#";
+    preview.style.display = "none";
+
+    // Limpa o campo hidden
+    hiddenBase64.value = "";
+  }
+});
+
         // Limita o número de caracteres do input com id "numero_endereco"
         var inputDoNumeroResidencial = document.getElementById("numero_endereco");
         inputDoNumeroResidencial.addEventListener("input", function(){
@@ -577,13 +589,15 @@ if ($existe > 0) {
     const logradouro = document.querySelector("#logradouro");
     const cepInput = document.querySelector("#cep");
 
-    // Limpa e deixa campos readonly inicialmente
+    // Limpa os valores, mas garante que todos os campos sejam editáveis
     estado.value = '';
     cidade.value = '';
     bairro.value = '';
     logradouro.value = '';
-    bairro.readOnly = true;
-    logradouro.readOnly = true;
+    estado.readOnly = false;
+    cidade.readOnly = false;
+    bairro.readOnly = false;
+    logradouro.readOnly = false;
 
     if (cep.length !== 8) return;
 
@@ -592,34 +606,61 @@ if ($existe > 0) {
     const dados = await dadosJSON.json();
 
     if (dados.erro) {
-      alert("CEP não encontrado. Por favor, verifique.");
-      cepInput.value = '';
-      cepInput.focus();
+      alert("CEP não encontrado. Você pode preencher o endereço manualmente.");
       return;
     }
 
-    estado.value = dados.uf || '';
-    cidade.value = dados.localidade || '';
+    // Preenche os campos com os dados do CEP, se existirem
+    if (dados.uf) estado.value = dados.uf;
+    if (dados.localidade) cidade.value = dados.localidade;
+    if (dados.bairro && dados.bairro.trim() !== '') bairro.value = dados.bairro;
+    if (dados.logradouro && dados.logradouro.trim() !== '') logradouro.value = dados.logradouro;
 
-    if (dados.bairro && dados.bairro.trim() !== '') {
-      bairro.value = dados.bairro;
-      bairro.readOnly = true;
-    } else {
-      bairro.readOnly = false;
-    }
-
-    if (dados.logradouro && dados.logradouro.trim() !== '') {
-      logradouro.value = dados.logradouro;
-      logradouro.readOnly = true;
-    } else {
-      logradouro.readOnly = false;
-    }
+    // Garante que todos continuem editáveis
+    estado.readOnly = false;
+    cidade.readOnly = false;
+    bairro.readOnly = false;
+    logradouro.readOnly = false;
 
   } catch (erro) {
     console.error("Erro ao buscar o CEP:", erro);
+    alert("Erro ao buscar o CEP. Você pode preencher o endereço manualmente.");
+    estado.readOnly = false;
+    cidade.readOnly = false;
+    bairro.readOnly = false;
+    logradouro.readOnly = false;
   }
 }
 
+/*
+
+  document.getElementById("imgform").addEventListener("change", function () {
+    const input = this;
+    const file = input.files[0];
+
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      const base64 = e.target.result;
+
+      // Mostra a imagem no preview
+      const imgPreview = document.getElementById("previewImagemPessoa");
+      imgPreview.src = base64;
+      imgPreview.style.display = "block";
+
+      // Salva no campo hidden para enviar ao backend
+      document.getElementById("imagem_base64").value = base64;
+    };
+
+    reader.onerror = function () {
+      alert("Erro ao carregar a imagem.");
+    };
+
+    reader.readAsDataURL(file);
+  });
+*/
 
 
 
