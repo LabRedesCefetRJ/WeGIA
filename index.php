@@ -57,7 +57,8 @@
 			else
 			{
 				$erro = "";
-			}			
+			}
+			$erro = htmlspecialchars($erro, ENT_QUOTES, 'UTF-8');
 		?>
 		<script>
 			var erro = '<?= $erro;?>';
