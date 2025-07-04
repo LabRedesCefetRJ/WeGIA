@@ -112,54 +112,13 @@ $recurso = mysqli_query($conexao, "SELECT * FROM recurso");
 	<script src="<?php echo WWW; ?>Functions/onlyNumbers.js"></script>
 	<script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
 	<script src="<?php echo WWW; ?>Functions/mascara.js"></script>
+	<script src="<?php echo WWW; ?>Functions/cargos.js"></script>
 
 	<script type="text/javascript">
 		$(function() {
 			$("#header").load("<?php echo WWW; ?>html/header.php");
 			$(".menuu").load("<?php echo WWW; ?>html/menu.php");
 		});
-
-		function gerarCargo() {
-			url = '../../dao/exibir_cargo.php';
-			$.ajax({
-				data: '',
-				type: "POST",
-				url: url,
-				success: function(response) {
-					var cargo = response;
-					$('#tabela').empty();
-					$.each(cargo, function(i, item) {
-						if (item.id_cargo != 1 && item.id_cargo != 2)
-							$('#tabela').append(`<tr><td>${item.id_cargo}</td><td><input id='${item.id_cargo}' type='text' value='${item.cargo}'></td><td><a id='a_${item.id_cargo}' class='btn btn-primary' href='salvar_cargo.php?id_cargo=${item.id_cargo}&value='>Salvar</a><td><a class='btn btn-danger' href='deletar_cargo.php?id_cargo=${item.id_cargo}'>Deletar</a></td></tr>`);
-					});
-				},
-				dataType: 'json'
-			});
-		}
-
-		function adicionar_cargo() {
-			url = '../../dao/adicionar_cargo.php';
-			var cargo = window.prompt("Cadastre um Novo Cargo:");
-			if (!cargo) {
-				return
-			}
-			situacao = cargo.trim();
-			if (cargo == '') {
-				return
-			}
-
-			data = 'cargo=' + cargo;
-			console.log(data);
-			$.ajax({
-				type: "POST",
-				url: url,
-				data: data,
-				success: function(response) {
-					gerarCargo();
-				},
-				dataType: 'text'
-			})
-		}
 	</script>
 
 

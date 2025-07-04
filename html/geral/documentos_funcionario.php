@@ -118,49 +118,6 @@ $recurso = mysqli_query($conexao, "SELECT * FROM recurso");
 			$("#header").load("<?php echo WWW; ?>html/header.php");
 			$(".menuu").load("<?php echo WWW; ?>html/menu.php");
 		});
-
-		function gerarCargo() {
-			url = '../../dao/exibir_documento.php';
-			$.ajax({
-				data: '',
-				type: "POST",
-				url: url,
-				success: function(response) {
-					var cargo = response;
-					console.log(cargo);
-					$('#tabela').empty();
-					$.each(cargo, function(i, item) {
-						if (item.id_docfuncional != 1 && item.id_docfuncional != 2)
-							$('#tabela').append(`<tr><td>${item.id_docfuncional}</td><td><input id='${item.id_docfuncional}' type='text' value='${item.nome_docfuncional}' disabled></td><td><a class='btn btn-danger' href='deletar_documento.php?id_cargo=${item.id_docfuncional}'>Deletar</a></td></tr>`);
-					});
-				},
-				dataType: 'json'
-			});
-		}
-
-		function adicionar_cargo() {
-			url = '../../dao/adicionar_documento.php';
-			var cargo = window.prompt("Cadastre um Novo Documento:");
-			if (!cargo) {
-				return
-			}
-			situacao = cargo.trim();
-			if (cargo == '') {
-				return
-			}
-
-			data = 'nome_docfuncional=' + cargo;
-			console.log(data);
-			$.ajax({
-				type: "POST",
-				url: url,
-				data: data,
-				success: function(response) {
-					gerarCargo();
-				},
-				dataType: 'text'
-			})
-		}
 	</script>
 
 
@@ -240,7 +197,7 @@ $recurso = mysqli_query($conexao, "SELECT * FROM recurso");
 								</tbody>
 							</table>
 						</div><br>
-						<button onclick="adicionar_cargo()" class="btn btn-primary pull-right">Adicionar documento</button>
+						<button onclick="alert('Configurar botão para adicionar um novo documento na tabela do Banco de Dados');" class="btn btn-primary pull-right">Adicionar documento</button>
 					</section>
 			</section>
 		</div>
