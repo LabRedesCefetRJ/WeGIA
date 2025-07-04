@@ -322,7 +322,7 @@ if ($existe > 0) {
       <div class="row" id="formulario">
       <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php" enctype="multipart/form-data" >
           
-     <<div class="col-md-4 col-lg-3">
+     <!--<<div class="col-md-4 col-lg-3">
             <section class="panel">
               <div class="panel-body">
                 <div class="thumb-info mb-md">
@@ -335,7 +335,7 @@ if ($existe > 0) {
               </div>
             </section>
           </div>        
-
+      -->
         <div class="col-md-8 col-lg-8">
           <div class="tabs">
             <ul class="nav nav-tabs tabs-primary">
