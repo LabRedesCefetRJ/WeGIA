@@ -9,10 +9,10 @@ class CargoDAO
 
     public function __construct()
     {
-        try{
+        try {
             $this->pdo = Conexao::connect();
-        }catch(PDOException $e){
-            echo 'Erro ao instanciar objeto do tipo CargoDAO: '.$e->getMessage();
+        } catch (PDOException $e) {
+            echo 'Erro ao instanciar objeto do tipo CargoDAO: ' . $e->getMessage();
         }
     }
 
@@ -64,15 +64,35 @@ class CargoDAO
             $cargos = array();
             $consulta = $this->pdo->query("SELECT id_cargo, cargo FROM cargo");
             $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
-            if($resultados){
-                foreach($resultados as $resultado){
+            if ($resultados) {
+                foreach ($resultados as $resultado) {
                     $cargo = new Cargo($resultado['cargo'], $resultado['id_cargo']);
-                    $cargos []= $cargo;
+                    $cargos[] = $cargo;
                 }
             }
             return $cargos;
         } catch (PDOException $e) {
             echo 'Error:' . $e->getMessage();
         }
+    }
+
+    public function listarRecursos(int $cargo): array
+    {
+        $sql = 'SELECT id_recurso FROM permissao WHERE id_cargo=:cargo';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':cargo', $cargo);
+
+        $stmt->execute();
+
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $recursos = [];
+
+        foreach ($resultados as $resultado) {
+            $recursos[] = $resultado['id_recurso'];
+        }
+
+        return $recursos;
     }
 }

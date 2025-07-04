@@ -357,13 +357,10 @@
 	});
 	
 	  function verificar_recursos_cargo(cargo_id){
-          url = '../../dao/verificar_recursos_cargo.php';              
-          data = 'cargo=' +cargo_id; 
-          console.log(data);
+          url = `../../controle/control.php?nomeClasse=CargoControle&metodo=listarRecursos&cargo=${encodeURIComponent(cargo_id)}`;              
           $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
+          type: "GET",
+          url: url, 
           success: function(response){
 			var recursos = JSON.parse(response);
             console.log(response);
