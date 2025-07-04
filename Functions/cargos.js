@@ -1,20 +1,20 @@
 function gerarCargo() {
-    url = '../../dao/exibir_cargo.php';
+    url = '../../controle/control.php?nomeClasse=CargoControle&metodo=listarTodos';
+
     $.ajax({
-      data: '',
-      type: "POST",
-      url: url,
-      success: function(response) {
-        var cargo = response;
-        $('#cargo').empty();
-        $('#cargo').append('<option selected disabled>Selecionar</option>');
-        $.each(cargo, function(i, item) {
-          $('#cargo').append('<option value="' + item.id_cargo + '">' + item.cargo + '</option>');
-        });
-      },
-      dataType: 'json'
+        type: "GET",
+        url: url,
+        success: function (response) {
+            var cargo = response;
+            $('#cargo').empty();
+            $('#cargo').append('<option selected disabled>Selecionar</option>');
+            $.each(cargo, function (i, item) {
+                $('#cargo').append('<option value="' + item.id_cargo + '">' + item.cargo + '</option>');
+            });
+        },
+        dataType: 'json'
     });
-  }
+}
 
 function adicionar_cargo() {
     url = '../../controle/control.php';
