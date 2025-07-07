@@ -579,6 +579,12 @@
 								<h4>Cadastrar Produto</h4>
 							</div>
 						</a>
+						<a href="<?= WWW ?>html/matPat/listar_produto.php">
+							<div class="col-lg-2 col-md-8 i">
+							    <i class="fa fa-box"></i>
+								<h4>Listar Produtos</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 

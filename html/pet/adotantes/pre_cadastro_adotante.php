@@ -2,57 +2,72 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
+// Inclusão segura do config.php
 $config_path = "config.php";
-if(file_exists($config_path)){
-    require_once($config_path);
-}else{
-    while(true){
-        $config_path = "../" . $config_path;
-        if(file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
-session_start();
-if(!isset($_SESSION['usuario'])){
-    header ("Location: ".WWW."html/index.php");
+$max_depth = 2000;
+$depth = 0;
+
+while (!file_exists($config_path) && $depth < $max_depth) {
+    $config_path = "../" . $config_path;
+    $depth++;
 }
 
-  $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-  $id_pessoa = $_SESSION['id_pessoa'];
-  $resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-  if(!is_null($resultado)){
-    $id_cargo = mysqli_fetch_array($resultado);
-    if(!is_null($id_cargo)){
-      $id_cargo = $id_cargo['id_cargo'];
+if ($depth === $max_depth || !realpath($config_path) || basename($config_path) !== 'config.php') {
+    die("Erro ao localizar o arquivo de configuração.");
+}
+
+require_once($config_path);
+
+session_start();
+if (!isset($_SESSION['usuario'])) {
+    header("Location: " . WWW . "html/index.php");
+    exit();
+}
+
+// Função para negar acesso com redirecionamento
+function negar_acesso($msg = "Você não tem as permissões necessárias para essa página.") {
+    header("Location: ../../home.php?msg_c=" . urlencode($msg));
+    exit();
+}
+
+try {
+    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASSWORD);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $id_pessoa = $_SESSION['id_pessoa'];
+
+    // Obter cargo
+    $stmt = $pdo->prepare("SELECT id_cargo FROM funcionario WHERE id_pessoa = :id_pessoa");
+    $stmt->execute(['id_pessoa' => $id_pessoa]);
+    $id_cargo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$id_cargo) {
+        negar_acesso();
     }
-    $resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN acao a ON(p.id_acao=a.id_acao) JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND a.descricao = 'LER, GRAVAR E EXECUTAR' AND r.descricao='Cadastrar Pet'");
-    if(!is_bool($resultado) and mysqli_num_rows($resultado))
-    {
-        $permissao = mysqli_fetch_array($resultado);
-        if($permissao['id_acao'] < 5)
-        {
-            $msg = "Você não tem as permissões necessárias para essa página.";
-            header("Location: ../../home.php?msg_c=$msg");
-        }
-        $permissao = $permissao['id_acao'];
+
+    // Verificar permissão
+    $stmt = $pdo->prepare("
+        SELECT a.id_acao FROM permissao p
+        JOIN acao a ON p.id_acao = a.id_acao
+        JOIN recurso r ON p.id_recurso = r.id_recurso
+        WHERE p.id_cargo = :id_cargo 
+          AND a.descricao = 'LER, GRAVAR E EXECUTAR'
+          AND r.descricao = 'Cadastrar Pet'
+    ");
+    $stmt->execute(['id_cargo' => $id_cargo['id_cargo']]);
+    $permissao = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$permissao || $permissao['id_acao'] < 5) {
+        negar_acesso();
     }
-    else
-    {
-        $permissao = 1;
-          $msg = "Você não tem as permissões necessárias para essa página.";
-          header("Location: ../../home.php?msg_c=$msg");
-    }	
-    
-    }
-    else
-    {
-        $permissao = 1;
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: ../../home.php?msg_c=$msg");
-    }	 
-  
+
+} catch (PDOException $e) {
+    die("Erro de conexão: " . $e->getMessage());
+}
+
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once ROOT."/html/personalizacao_display.php";
+require_once ROOT . "/html/personalizacao_display.php";
 ?>
 
 <!DOCTYPE html>
@@ -232,24 +247,32 @@ require_once ROOT."/html/personalizacao_display.php";
 
                         <section class="panel" >
                         <?php
-									if(isset($_GET['msg_c'])){
-										$msg = $_GET['msg_c'];
-										echo('<div class="alert alert-success" role="alert">
-										'. $msg .'
-									  </div>');
-									}else if(isset($_GET['msg_e'])){
-										$msg = $_GET['msg_e'];
-										echo('<div class="alert alert-danger" role="alert">
-										'. $msg .'
-									  </div>');
-									}
+									
+                                    if (isset($_GET['msg_c'])) {
+                                        $msg_raw = $_GET['msg_c'];
+                                    
+                                        if (strpos($msg_raw, '<') === false && strpos($msg_raw, '>') === false) {
+                                            $msg = htmlspecialchars($msg_raw, ENT_QUOTES, 'UTF-8');
+                                            echo('<div class="alert alert-success" role="alert">' . $msg . '</div>');
+                                        }
+                                    
+                                    } else if (isset($_GET['msg_e'])) {
+                                        $msg_raw = $_GET['msg_e'];
+                                    
+                                        if (strpos($msg_raw, '<') === false && strpos($msg_raw, '>') === false) {
+                                            $msg = htmlspecialchars($msg_raw, ENT_QUOTES, 'UTF-8');
+                                            echo('<div class="alert alert-danger" role="alert">' . $msg . '</div>');
+                                        }
+                                    }
+                                    
+                                    
 							?>
                             <header class="panel-heading">
                                 <h2 class="panel-title">Digite seu CPF</h2>
                             </header>
                             <div class="panel-body">
                            
-                                <form method="GET" action="./cadastro_adotante.php">
+                            <form method="GET" action="./cadastro_adotante.php">
                                     <!-- <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label> -->
                                     <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                                     <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
