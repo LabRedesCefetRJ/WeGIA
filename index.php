@@ -51,13 +51,13 @@ require_once "html/personalizacao_display.php";
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 	<?php
 	if (isset($_GET['erro'])) {
-		$erro = $_GET['erro'];
+		$erro = trim(filter_var($_GET['erro'], FILTER_SANITIZE_SPECIAL_CHARS));
 	} else {
 		$erro = "";
 	}
 	?>
 	<script>
-		var erro = '<?= $erro; ?>';
+		const erro = '<?= htmlspecialchars($erro); ?>';
 		if (erro == 'erro') {
 			alert('Senha e/ou cpf inválido');
 		}
