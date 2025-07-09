@@ -4,77 +4,69 @@ ini_set('display_errors', 1);
 ini_set('display_startup_erros', 1);
 error_reporting(E_ALL);
 extract($_REQUEST);
-session_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
+  exit(401);
 }
 
 if (!isset($_SESSION['id_fichamedica'])) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/profile_paciente.php');
+  exit(400);
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
-
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN acao a ON(p.id_acao=a.id_acao) JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND a.descricao = 'LER, GRAVAR E EXECUTAR' AND r.descricao='Ficha do paciente'");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    if ($permissao['id_acao'] < 7) {
-      $msg = "Você não tem as permissões necessárias para essa página.";
-      header("Location: ../home.php?msg_c=$msg");
-    }
-    $permissao = $permissao['id_acao'];
-  } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../home.php?msg_c=$msg");
-  }
-} else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: ../home.php?msg_c=$msg");
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+  http_response_code(400);
+  echo json_encode(['erro' => 'O id da pessoa informado é inválido.']);
+  exit();
 }
+
+//Verifica permissão do usuário
+permissao($id_pessoa, 52, 7);
 
 include_once '../../classes/Cache.php';
 require_once "../personalizacao_display.php";
 
 require_once ROOT . "/controle/SaudeControle.php";
 
-$id = $_GET['id_fichamedica'];
+//sanitizar entrada
+$id_fichamedica = filter_input(INPUT_GET, 'id_fichamedica', FILTER_VALIDATE_INT);
+
+if (!$id_fichamedica || $id_fichamedica < 1) {
+  echo json_encode(['erro' => 'O id da ficha médica informado não é válido.']);
+  exit(400);
+}
+
 $cache = new Cache();
-$teste = $cache->read($id);
+$teste = $cache->read($id_fichamedica);
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
 if (!isset($teste)) {
-  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/profile_paciente.php?id_fichamedica=' . $id . '&id=' . $id);
+  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/profile_paciente.php?id_fichamedica=' . $id_fichamedica . '&id=' . $id_fichamedica);
 }
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
-$docfuncional = $pdo->query("SELECT * FROM saude_exames se JOIN saude_exame_tipos st ON se.id_exame_tipos  = st.id_exame_tipo WHERE id_fichamedica= " . $_GET['id_fichamedica']);
-$docfuncional = $docfuncional->fetchAll(PDO::FETCH_ASSOC);
+$stmt = $pdo->prepare("SELECT * FROM saude_exames se JOIN saude_exame_tipos st ON se.id_exame_tipos  = st.id_exame_tipo WHERE id_fichamedica=:idFichamedica");
+
+$stmt->bindValue(':idFichamedica', $id_fichamedica, PDO::PARAM_INT);
+$stmt->execute();
+
+$docfuncional = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 foreach ($docfuncional as $key => $value) {
   $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
   //formata data
@@ -85,7 +77,7 @@ $docfuncional = json_encode($docfuncional);
 
 $stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
 
-$stmtEnfermidades->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+$stmtEnfermidades->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 
 $stmtEnfermidades->execute();
 
@@ -103,7 +95,7 @@ foreach ($enfermidades as $index => $enfermidade) {
 $enfermidades = json_encode($enfermidades);
 
 $stmtAlergias = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
-$stmtAlergias->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+$stmtAlergias->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtAlergias->execute();
 
 $alergias = $stmtAlergias->fetchAll(PDO::FETCH_ASSOC);
@@ -114,7 +106,12 @@ foreach ($alergias as $index => $alergia) {
 
 $alergias = json_encode($alergias);
 
-$sinaisvitais = $pdo->query("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica = " . $id)->fetchAll(PDO::FETCH_ASSOC);
+$stmtSinaisVitais = $pdo->prepare("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
+
+$stmtSinaisVitais->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+$stmtSinaisVitais->execute();
+
+$sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($sinaisvitais as $key => $value) {
   //formata data
@@ -124,8 +121,12 @@ foreach ($sinaisvitais as $key => $value) {
 
 $sinaisvitais = json_encode($sinaisvitais);
 
-$descricao_medica = $pdo->query("SELECT descricao, data_atendimento FROM saude_atendimento WHERE id_fichamedica= " . $_GET['id_fichamedica']);
-$descricao_medica = $descricao_medica->fetchAll(PDO::FETCH_ASSOC);
+$stmtDescricaoMedica = $pdo->prepare("SELECT descricao, data_atendimento FROM saude_atendimento WHERE id_fichamedica=:idFichaMedica");
+
+$stmtDescricaoMedica->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+$stmtDescricaoMedica->execute();
+
+$descricao_medica = $stmtDescricaoMedica->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($descricao_medica as $key => $value) {
   //formata data
@@ -137,8 +138,7 @@ $descricao_medica = json_encode($descricao_medica);
 
 $stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica");
 
-$stmtMedicacoes->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
-
+$stmtMedicacoes->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtMedicacoes->execute();
 
 $exibimed = $stmtMedicacoes->fetchAll(PDO::FETCH_ASSOC);
@@ -151,11 +151,14 @@ foreach ($exibimed as $key => $value) {
 
 $exibimed = json_encode($exibimed);
 
-$prontuariopublico = $pdo->query("SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica= " . $_GET['id_fichamedica']);
-$prontuariopublico = $prontuariopublico->fetchAll(PDO::FETCH_ASSOC);
+$stmtProntuarioPublico = $pdo->prepare("SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica=:idFichaMedica");
+
+$stmtProntuarioPublico->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+$stmtProntuarioPublico->execute();
+
+$prontuariopublico = $stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC);
 $prontuarioPHP = $prontuariopublico;
 $prontuariopublico = json_encode($prontuariopublico);
-
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $tabelacid_enfermidades = $mysqli->query("SELECT * FROM saude_tabelacid WHERE CID NOT LIKE 'T78.4%'");
@@ -163,24 +166,28 @@ $tabelacid_alergias = $mysqli->query("SELECT * FROM saude_tabelacid WHERE CID LI
 $ultima_alergia = $mysqli->query("SELECT * FROM saude_tabelacid WHERE CID LIKE 'T78.4%' ORDER BY CID DESC LIMIT 1");
 $cargoMedico = $mysqli->query("SELECT * FROM pessoa p JOIN funcionario f ON (p.id_pessoa=f.id_pessoa) WHERE f.id_cargo = 3");
 $cargoEnfermeiro = $mysqli->query("SELECT * FROM pessoa p JOIN funcionario f ON (p.id_pessoa=f.id_pessoa) WHERE f.id_cargo = 4");
-$tipoexame = $pdo->query("SELECT * FROM saude_exame_tipos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC);
-$medicamentoenfermeiro = $mysqli->query("SELECT * FROM saude_medicacao");
-$medstatus = $mysqli->query("SELECT * FROM saude_medicacao_status");
-
-$teste1 = $pdo->query("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa = " . $_SESSION['id_pessoa'])->fetchAll(PDO::FETCH_ASSOC);
-$id_funcionario = $teste1[0]['nome'];
 
 try {
-  $stmtProcuraIdPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica =:idFicha");
-  $idFicha = $_GET['id_fichamedica'];
+  $tipoexame = $pdo->query("SELECT * FROM saude_exame_tipos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC);
+  $medicamentoenfermeiro = $mysqli->query("SELECT * FROM saude_medicacao");
+  $medstatus = $mysqli->query("SELECT * FROM saude_medicacao_status");
 
-  $stmtProcuraIdPaciente->bindParam(':idFicha', $idFicha);
+  //aplicar statement
+  $stmtFuncionario = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa");
+
+  $stmtFuncionario->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+  $stmtFuncionario->execute();
+
+  $funcionarioNome = $stmtFuncionario->fetch(PDO::FETCH_ASSOC)['nome'];
+
+  $stmtProcuraIdPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica =:idFicha");
+
+  $stmtProcuraIdPaciente->bindValue(':idFicha', $id_fichamedica, PDO::PARAM_INT);
   $stmtProcuraIdPaciente->execute();
   $idPaciente = $stmtProcuraIdPaciente->fetch(PDO::FETCH_ASSOC)['id_pessoa'];
 } catch (PDOException $e) {
   echo $e->getMessage();
 }
-
 
 ?>
 <!-- Vendor -->
@@ -295,10 +302,13 @@ try {
   .small-text {
     font-size: small;
   }
-  table td, table th {
+
+  table td,
+  table th {
     word-wrap: break-word;
     white-space: normal;
   }
+
   table {
     table-layout: fixed;
     width: 100%;
@@ -538,7 +548,7 @@ try {
           console.error("Erro ao carregar aplicações:", err);
         });
     })
-    
+
 
     $(function() {
       $('#datatable-docfuncional').DataTable({
@@ -561,34 +571,32 @@ try {
       $(".meddisabled").val(nome_medicacao);
     }
 
-    function carregarIntercorrencias(){
+    function carregarIntercorrencias() {
       let id = <?php echo $_GET['id_fichamedica']; ?>;
       const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("AvisoControle")}&metodo=${encodeURIComponent("listarIntercorrenciaPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id)}`;
       fetch(url)
-      .then(res => res.json())
-      .then(intercorrencias => {
-        console.log(intercorrencias)
-        const tbody = document.getElementById("doc-tab-intercorrencias");
+        .then(res => res.json())
+        .then(intercorrencias => {
+          console.log(intercorrencias)
+          const tbody = document.getElementById("doc-tab-intercorrencias");
 
-        intercorrencias.forEach(item => {
-          const tr = document.createElement("tr");
+          intercorrencias.forEach(item => {
+            const tr = document.createElement("tr");
 
-          const td1 = document.createElement("td");
-          td1.textContent = item.descricao;
+            const td1 = document.createElement("td");
+            td1.textContent = item.descricao;
 
-          const td2 = document.createElement("td");
-          td2.textContent = item.data;
+            const td2 = document.createElement("td");
+            td2.textContent = item.data;
 
-          tr.append(td1, td2);
-          tbody.appendChild(tr);
+            tr.append(td1, td2);
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(err => {
+          console.error("Erro ao carregar aplicações:", err);
         });
-      })
-      .catch(err => {
-        console.error("Erro ao carregar aplicações:", err);
-      });
     }
-
-    
   </script>
   <style type="text/css">
     .obrig {
@@ -642,33 +650,33 @@ try {
           </div>
           <div class="col-md-8 col-lg-8">
             <?php
-            if(session_status() === PHP_SESSION_NONE){
+            if (session_status() === PHP_SESSION_NONE) {
               session_start();
             }
 
             if (isset($_SESSION['msg']) && !empty($_SESSION['msg'])) {
               $mensagem = $_SESSION['msg'];
 
-                echo "<div class=\"alert alert-success\" role=\"alert\">
+              echo "<div class=\"alert alert-success\" role=\"alert\">
                   $mensagem
                   <button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">
                     <span aria-hidden=\"true\">&times;</span>
                   </button>
                 </div>";
 
-                unset($_SESSION['msg']);
-              } else if(isset($_SESSION['msg_e']) && !empty($_SESSION['msg_e'])){
-                $mensagem = $_SESSION['msg_e'];
+              unset($_SESSION['msg']);
+            } else if (isset($_SESSION['msg_e']) && !empty($_SESSION['msg_e'])) {
+              $mensagem = $_SESSION['msg_e'];
 
-                echo "<div class=\"alert alert-danger\" role=\"alert\">
+              echo "<div class=\"alert alert-danger\" role=\"alert\">
                   $mensagem
                   <button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">
                     <span aria-hidden=\"true\">&times;</span>
                   </button>
                 </div>";
 
-                unset($_SESSION['msg_e']);
-              }
+              unset($_SESSION['msg_e']);
+            }
             ?>
             <div class="tabs">
               <ul class="nav nav-tabs tabs-primary">
@@ -832,61 +840,6 @@ try {
 
                         </div>
                       </div>
-
-                      <!--<div class="form-group">
-                            <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
-                            <div class="col-md-8">
-                              <input type="text" class="form-control" disabled name="nome" id="nome">
-                            </div>
-                          </div>
-
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
-                            <div class="col-md-8">
-                              <label><input type="radio" name="gender" id="radioM" id="M" disabled value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"> </i></label>
-                              <label><input type="radio" name="gender" id="radioF" disabled id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
-                            </div>
-                          </div>
-
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
-                            <div class="col-md-8">
-                              <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" disabled id="nascimento" max=<?php echo date('Y-m-d'); ?>>
-                            </div>
-                          </div>-->
-
-                      <!-- caso o paciente já tenha o tipo sanguíneo definido -->
-                      <!--<div class="form-group" id="exibirtipo" style="display:none;">
-                            <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
-                            <div class="col-md-6">
-                              <input class="form-control input-lg mb-md" name="tipoSanguineo" disabled id="sangue">
-                            </div>
-                          </div>-->
-
-                      <!-- caso o paciente não tenha o tipo sanguineo definido -->
-                      <!--<div id="adicionartipo" style="display:none;" class="form-group">
-                            <input type="hidden" name="metodo" value="alterarInfPessoal">
-
-                            <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
-                            <div class="col-md-6">
-                              <select class="form-control input-lg mb-md" name="tipoSanguineo" id="tipoSanguineo">
-                                <option selected>Selecionar</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                              </select>
-                            </div>
-                            <input type="hidden" name="id_fichamedica" value=<?php //echo $_GET['id_fichamedica'] 
-                                                                              ?>>
-
-                            <input type="submit" class="btn btn-primary" value="Salvar" id="botaoSalvarTipoSanguineo">
-
-                          </div>-->
 
                     </div>
                   </section>
@@ -1502,7 +1455,7 @@ try {
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="inputSuccess">Médico:</label>
                             <div class="col-md-8">
-                              <input class="form-control" style="width:230px;" name="medico" id="medico" value="<?php echo $id_funcionario; ?>" disabled="true">
+                              <input class="form-control" style="width:230px;" name="medico" id="medico" value="<?php echo $funcionarioNome; ?>" disabled="true">
                             </div>
                           </div>
 
@@ -1918,22 +1871,22 @@ try {
       }
 
 
-      async function  gerarEnfermidade() {
-          situacoes = await listarTodasAsEnfermidades()
-          console.log("situacoes", situacoes)
-          let length = situacoes.length - 1;
-          let select = document.getElementById("id_CID");
-          for(let i = 0; i <= length; i = i +1){
-            let option = document.createElement("option");
-            option.value = situacoes[i].id_CID;
-            option.textContent = situacoes[i].descricao;
-            select.appendChild(option);
-          }
+      async function gerarEnfermidade() {
+        situacoes = await listarTodasAsEnfermidades()
+        console.log("situacoes", situacoes)
+        let length = situacoes.length - 1;
+        let select = document.getElementById("id_CID");
+        for (let i = 0; i <= length; i = i + 1) {
+          let option = document.createElement("option");
+          option.value = situacoes[i].id_CID;
+          option.textContent = situacoes[i].descricao;
+          select.appendChild(option);
+        }
       }
 
       function adicionar_enfermidade() {
         const url = './adicionar_enfermidade.php';
-        
+
         let nome_enfermidade = window.prompt("Insira o nome da enfermidade:");
         let cid_enfermidade = window.prompt("Insira o CID da enfermidade:");
 
@@ -1946,25 +1899,25 @@ try {
         data.append('nome', nome_enfermidade);
 
         fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: data.toString()
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Erro na requisição');
-          }
-          return response.text();
-        })
-        .then(result => {
-          console.log('Resposta:', result);
-          gerarEnfermidade();
-        })
-        .catch(error => {
-          console.error('Erro ao enviar dados:', error);
-        });
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: data.toString()
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Erro na requisição');
+            }
+            return response.text();
+          })
+          .then(result => {
+            console.log('Resposta:', result);
+            gerarEnfermidade();
+          })
+          .catch(error => {
+            console.error('Erro ao enviar dados:', error);
+          });
       }
 
 
