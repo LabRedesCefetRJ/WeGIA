@@ -22,19 +22,32 @@ class AvisoControle
      */
     public function incluir()
     {
-        $idFuncionario = intval(trim($_POST['idfuncionario']));
-        $idPessoaAtendida = intval(trim($_POST['idpaciente']));
-        $idfichamedica = intval(trim($_POST['idfichamedica']));
-        $descricao = trim($_POST['descricao_emergencia']);
+        //sanitizar parâmetros
+        $idFuncionario = filter_input(INPUT_POST, 'idfuncionario', FILTER_SANITIZE_NUMBER_INT);
+        $idPessoaAtendida = filter_input(INPUT_POST, 'idpaciente', FILTER_SANITIZE_NUMBER_INT);
+        $idfichamedica = filter_input(INPUT_POST, 'idfichamedica', FILTER_SANITIZE_NUMBER_INT);
+        $descricao = filter_input(INPUT_POST, 'descricao_emergencia', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
-            if ($idfichamedica < 1) {
-                throw new InvalidArgumentException('Erro, o id da ficha médica não pode ser menor que 1.');
+            if (!$idfichamedica || $idfichamedica < 1) {
+                throw new InvalidArgumentException('Erro, o id da ficha médica não pode ser menor que 1.', 400);
+            }
+
+            if (!$idPessoaAtendida || $idPessoaAtendida < 1) {
+                throw new InvalidArgumentException('Erro, o id de um atendido não pode ser menor que 1.', 400);
+            }
+
+            if (!$idFuncionario || $idFuncionario < 1) {
+                throw new InvalidArgumentException('Erro, o id de um funcionário não pode ser menor que 1.', 400);
+            }
+
+            if(!$descricao || strlen($descricao) < 1){
+                throw new InvalidArgumentException('Erro, a descrição informada não é válida.', 400);
             }
 
             $aviso = new Aviso($idFuncionario, $idPessoaAtendida, $descricao);
         } catch (InvalidArgumentException $e) {
-            http_response_code(400);
+            http_response_code($e->getCode());
             exit('Erro ao tentar cadastrar uma intercorrência: ' . $e->getMessage());
         }
 
@@ -55,17 +68,18 @@ class AvisoControle
         }
     }
 
-    public function listarIntercorrenciaPorIdDaFichaMedica(){
+    public function listarIntercorrenciaPorIdDaFichaMedica()
+    {
         header('Content-Type: application/json');
-        try{
+        try {
             $id = $_GET['id_fichamedica'];
 
             $avisoDAO = new AvisoDAO();
             $intercorrencias = $avisoDAO->listarIntercorrenciaPorIdDaFichaMedica($id);
 
-            foreach($intercorrencias as $key => $value){
+            foreach ($intercorrencias as $key => $value) {
                 $data = new DateTime($value['data']);
-                $intercorrencias[$key]['data'] = $data->format('d/m/Y H:i:s'); 
+                $intercorrencias[$key]['data'] = $data->format('d/m/Y H:i:s');
             }
 
             echo json_encode($intercorrencias);
@@ -73,6 +87,5 @@ class AvisoControle
             http_response_code($e->getCode());
             echo json_encode(['erro' => $e->getMessage()]);
         }
-        
     }
 }
