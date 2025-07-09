@@ -1213,7 +1213,7 @@ try {
                               <option selected disabled>Selecionar</option>
                               <?php
                               while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
-                                echo "<option value=" . $row[0] . ">" . $row[2] . "</option>";
+                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
                               }                            ?>
                             </select>
                           </div>
@@ -1974,7 +1974,7 @@ try {
       function alergia_upload() {
         url = 'alergia_upload.php';
         let id_CID_alergia = $("#id_CID_alergia").val();
-        let id_fichamedica = "<?= $_GET['id_fichamedica']; ?>";
+        let id_fichamedica = "<?= $id_fichamedica ?>";
         let data = {
           id_CID_alergia: id_CID_alergia,
           id_fichamedica: id_fichamedica
