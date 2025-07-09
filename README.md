@@ -14,8 +14,6 @@ A versão atual do sistema conta com os módulos:
 Contato: [Prof. Nilson  Lazarin](https://bsi.cefet-rj.br/~lazarin/)
 <hr>
 
-## Teste online: http://demo.wegia.org
-
 ## Como instalar?
 Em um terminal execute os comandos abaixo:
 ```
