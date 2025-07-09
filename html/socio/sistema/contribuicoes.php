@@ -275,6 +275,23 @@ try {
         </header>
 
         <!-- start: page -->
+        <?php
+        // Exibir mensagens de sucesso ou erro
+        if (isset($_GET['msg_s'])) {
+            echo '<div class="alert alert-success alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <h4><i class="icon fa fa-check"></i> Sucesso!</h4>
+                    ' . htmlspecialchars($_GET['msg_s']) . '
+                  </div>';
+        }
+        if (isset($_GET['msg_c'])) {
+            echo '<div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <h4><i class="icon fa fa-ban"></i> Erro!</h4>
+                    ' . htmlspecialchars($_GET['msg_c']) . '
+                  </div>';
+        }
+        ?>
         <div class="row">
 
           <div class="box box-warning collapsed-box">
@@ -333,6 +350,7 @@ try {
               </form>
 
               <button id="relatorio-imprimir-btn" class="btn btn-primary mt-10 hidden print-hide" onclick="window.print()">Imprimir</button>
+              <a href="../../contribuicao/view/recibo_doacao.php" class="btn btn-success mt-10 print-hide">Gerar Recibo de Doação</a>
 
               <div id="relatorio-gerado">
 
