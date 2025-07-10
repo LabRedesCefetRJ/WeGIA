@@ -1,19 +1,7 @@
 <?php
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
-
-require_once ROOT . '/classes/Aviso.php';
-require_once ROOT . '/controle/AvisoNotificacaoControle.php';
-require_once ROOT . '/dao/AvisoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Aviso.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'AvisoNotificacaoControle.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AvisoDAO.php';
 
 class AvisoControle
 {
@@ -41,14 +29,16 @@ class AvisoControle
                 throw new InvalidArgumentException('Erro, o id de um funcionário não pode ser menor que 1.', 400);
             }
 
-            if(!$descricao || strlen($descricao) < 1){
+            if (!$descricao || strlen($descricao) < 1) {
                 throw new InvalidArgumentException('Erro, a descrição informada não é válida.', 400);
             }
 
             $aviso = new Aviso($idFuncionario, $idPessoaAtendida, $descricao);
         } catch (InvalidArgumentException $e) {
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
             http_response_code($e->getCode());
-            exit('Erro ao tentar cadastrar uma intercorrência: ' . $e->getMessage());
+            echo json_encode(['erro' => 'Erro ao tentar cadastrar uma intercorrência: ' . $e->getMessage()]);
+            exit();
         }
 
         $avisoNotificacaoControle = new AvisoNotificacaoControle();
@@ -64,7 +54,9 @@ class AvisoControle
                 header("Location: ../html/saude/cadastrar_intercorrencias.php?id_fichamedica=$idfichamedica");
             }
         } catch (PDOException $e) {
-            echo 'Erro ao registrar intercorrência: ' . $e->getMessage();
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+            http_response_code($e->getCode());
+            echo json_encode(['erro' => 'Erro ao registrar intercorrência no banco de dados.']);
         }
     }
 
@@ -72,10 +64,14 @@ class AvisoControle
     {
         header('Content-Type: application/json');
         try {
-            $id = $_GET['id_fichamedica'];
+            $idfichamedica = filter_input(INPUT_POST, 'idfichamedica', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$idfichamedica || $idfichamedica < 1) {
+                throw new InvalidArgumentException('Erro, o id da ficha médica não pode ser menor que 1.', 400);
+            }
 
             $avisoDAO = new AvisoDAO();
-            $intercorrencias = $avisoDAO->listarIntercorrenciaPorIdDaFichaMedica($id);
+            $intercorrencias = $avisoDAO->listarIntercorrenciaPorIdDaFichaMedica($idfichamedica);
 
             foreach ($intercorrencias as $key => $value) {
                 $data = new DateTime($value['data']);
@@ -84,8 +80,13 @@ class AvisoControle
 
             echo json_encode($intercorrencias);
         } catch (Exception $e) {
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
             http_response_code($e->getCode());
-            echo json_encode(['erro' => $e->getMessage()]);
+            if ($e instanceof PDOException) {
+                echo json_encode(['erro' => 'Erro no servidor ao listar intercorrências.']);
+            } else {
+                echo json_encode(['erro' => $e->getMessage()]);
+            }
         }
     }
 }
