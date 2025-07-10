@@ -291,7 +291,13 @@
 							
 							$tipo = $_POST["tipo"];
 							if ($tipo == "img"){
-								$id = $_POST["id"];
+								$id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+								if(!$id || $id < 1){
+									http_response_code(400);
+									exit('O id informado não é válido.');
+								}
+
 								display_img_selection($id,$pdo,$img_tab);
 							}elseif ($tipo == "car"){
 								$nome_car = $_POST["nome_car"];
