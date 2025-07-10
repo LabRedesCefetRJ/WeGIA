@@ -13,6 +13,7 @@ if (!isset($_SESSION['usuario'])) {
 } else if (!isset($_SESSION['pet'])) {
     $id_pet = $_GET['id_pet'];
     header('Location: ../../controle/control.php?modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage='. WWW. '/html/pet/profile_pet.php?id_pet=' . $id_pet . '&id_pet=' . $id_pet);
+
 } else {
     $petDados = $_SESSION['pet'];
     unset($_SESSION['pet']);
@@ -102,6 +103,36 @@ if (isset($_GET['id_pet'])) {
 <!-- Agora injetamos os dados da adoção para o JS -->
 <script>
   const adocaoPet = <?php echo json_encode($adocaoPet ?? null); ?>;
+
+  document.addEventListener("DOMContentLoaded", async () => {
+
+  let opcoesMedicamento = document.querySelector("#selectMedicamento");
+  let url = '../../controle/pet/controleGetMedicamento.php';
+  const opcoes = {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'  
+    }
+  };
+
+  try {
+    const resposta = await fetch(url, opcoes);   
+    const dados = await resposta.json();   
+
+    while(opcoesMedicamento.firstChild)
+      opcoesMedicamento.removeChild(opcoesMedicamento.firstChild)
+
+    dados.forEach(dado =>{
+      const opcao = document.createElement('option');
+      opcao.textContent= dado.nome_medicamento;
+      opcao.dataset.id = dado.id_medicamento;
+      opcoesMedicamento.append(opcao);
+    })
+  } catch (erro) {
+    alert(erro);
+  }
+});
+
 </script>
 
 
@@ -589,10 +620,11 @@ if (isset($_GET['id_pet'])) {
                     <a href="#ficha_medica" data-toggle="tab">Ficha Médica</a>
                   </li>
 
-                  <!--
+                  
                   <li>
                     <a href="#atendimento" data-toggle="tab">Atendimento</a>
                   </li>
+                  <!--
                   <li>
                     <a href="#historico_medico" data-toggle="tab">Histórico Médico</a>
                   </li>
@@ -828,56 +860,56 @@ if (isset($_GET['id_pet'])) {
                 </div>
 
                 <!-- Ficha Medica-->
-                                          
+                                                          
                 <div id="ficha_medica" class="tab-pane">
-  <section id="secFichaMedica">
-    <h4 class="mb-xlg" id="fm">Ficha Médica</h4>
-    <div id="divFichaMedica">
-      <form class="form-horizontal" method="post" action="../../controle/control.php">
-        <input type="hidden" name="nomeClasse" value="controleSaudePet">
-        <input type="hidden" name="metodo" value="modificarFichaMedicaPet">
-        <input type="hidden" name="modulo" value="pet">
-        <fieldset>
+                  <section id="secFichaMedica">
+                    <h4 class="mb-xlg" id="fm">Ficha Médica</h4>
+                    <div id="divFichaMedica">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                        <input type="hidden" name="nomeClasse" value="controleSaudePet">
+                        <input type="hidden" name="metodo" value="modificarFichaMedicaPet">
+                        <input type="hidden" name="modulo" value="pet">
+                        <fieldset>
 
-          <!--Castrado-->
-          <div class="form-group">
-        <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
-        <div class="col-md-8">
-            <label>
-                <input type="radio" name="castrado" id="castradoS" value="S" style="margin-top: 10px; margin-left: 15px;"
-                <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 'S') echo 'checked'; ?> required>
-                <i class="fa" style="font-size: 20px;">Sim</i>
-            </label>
-            <label>
-                <input type="radio" name="castrado" id="castradoN" value="N" style="margin-top: 10px; margin-left: 15px;"
-                <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'N') echo 'checked'; ?> required>
-                <i class="fa" style="font-size: 20px;">Não</i>
-            </label>
-        </div>
-    </div>
+                          <!--Castrado-->
+                          <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
+                        <div class="col-md-8">
+                            <label>
+                                <input type="radio" name="castrado" id="castradoS" value="S" style="margin-top: 10px; margin-left: 15px;"
+                                <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 'S') echo 'checked'; ?> required>
+                                <i class="fa" style="font-size: 20px;">Sim</i>
+                            </label>
+                            <label>
+                                <input type="radio" name="castrado" id="castradoN" value="N" style="margin-top: 10px; margin-left: 15px;"
+                                <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'N') echo 'checked'; ?> required>
+                                <i class="fa" style="font-size: 20px;">Não</i>
+                            </label>
+                        </div>
+                    </div>
 
-    <!-- Necessidades Especiais (campo de texto) -->
-    <div class="form-group">
-  <div class="form-group">
-    <label for="texto" id="etiqueta_despacho" class="col-md-3 control-label">Outras informações:</label>
-    <div class="col-md-8">
-      <textarea name="texto" class="form-control col-md-8" id="despacho"><?php echo isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais']) : ''; ?></textarea>
-    </div>
-  </div>
-</div>
+                    <!-- Necessidades Especiais (campo de texto) -->
+                    <div class="form-group">
+                      <div class="form-group">
+                        <label for="texto" id="etiqueta_despacho" class="col-md-3 control-label">Outras informações:</label>
+                          <div class="col-md-8">
+                            <textarea name="texto" class="form-control col-md-8" id="despacho"><?php echo isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais']) : ''; ?></textarea>
+                          </div>
+                      </div>
+                    </div>
 
-          </br>
-          <div class="buttons">
-            <input type="hidden" name="id_pet" value="<?php echo $_GET['id_pet']; ?>">
-            <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? $fichaMedica['id_ficha_medica'] : ''; ?>">
-            <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
-            <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
-          </div>
-        </fieldset>
-      </form>
-    </div>
-  </section>
-</div>
+                          </br>
+                          <div class="buttons">
+                            <input type="hidden" name="id_pet" value="<?php echo $_GET['id_pet']; ?>">
+                            <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? $fichaMedica['id_ficha_medica'] : ''; ?>">
+                            <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
+                            <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
+                          </div>
+                        </fieldset>
+                      </form>
+                    </div>
+                  </section>
+                </div>
 
 
                 <!--atendimento-->
@@ -896,11 +928,7 @@ if (isset($_GET['id_pet'])) {
                           <input type="hidden" name="modulo" value="pet">
                           <fieldset>
 
-                            <div class="form-group"> 
-                              <div class="col-md-8">           
-                                <a href="./cadastrar_medicamento.php?pga=<?php echo $_GET["id_pet"]?>"><button type="button" class="btn btn-success" id="cadastrarMedicamento">Cadastrar Medicamento</button></a>
-                              </div>
-                            </div>
+                           
 
                             <div class="form-group">
                               <label class="col-md-3 control-label" for="profileCompany">Data do Atendimento<sup class="obrig">*</sup></label>
@@ -928,8 +956,7 @@ if (isset($_GET['id_pet'])) {
                                   <option value="Selecione" disabled selected>Selecione</option>
                                 </select>
                               </div>
-                              <button type="button" class="btn btn-success" id="prescreverMedicacao">Prescrever medicação</button>
-                              <input type="hidden" name="medics" id="medics">
+
                               <table class="table table-bordered table-striped mb-none" id="tabmed">
                                 <thead>
                                   <tr style="font-size:15px;">
@@ -945,6 +972,14 @@ if (isset($_GET['id_pet'])) {
 
                             
                             </br>
+                            <div class="form-group"> 
+                              <div class="col-md-8"> 
+                                
+                              <button type="button" class="btn btn-success" id="prescreverMedicacao">Prescrever medicação</button>
+                              <input type="hidden" name="medics" id="medics">          
+                                <a href="./cadastrar_medicamento.php?pga=<?php echo $_GET["id_pet"]?>"><button type="button" class="btn btn-success" id="cadastrarMedicamento">Cadastrar Medicamento</button></a>
+                              </div>
+                            </div>
                             <input type="hidden" name="id_pet" value=<?php echo $_GET['id_pet'] ?>>
                             <input type="submit" class="btn btn-primary" value="Salvar Atendimento" id="salvarAtendimento">
                           </fieldset>
@@ -1062,7 +1097,7 @@ if (isset($_GET['id_pet'])) {
     
     <script type="text/javascript">
      
-            
+                                      
 
 
             

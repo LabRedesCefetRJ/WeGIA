@@ -225,12 +225,17 @@ class SaudePetDAO
     }
 
     public function listarMedicamento(){
+        header( "Content-Type: application/json;charset=UTF-8" );
         $pdo = Conexao::connect();
-        $pd = $pdo->prepare("SELECT * FROM pet_medicamento");
-        $pd->execute();
-        $p = $pd->fetchAll();
-        
-        return $p;
+        $linhas = [];
+        $sql = <<<SQL
+                    SELECT *
+                    FROM pet_medicamento
+                SQL;
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $linhas = $stmt->fetchAll( PDO::FETCH_ASSOC );
+        return $linhas;
     }
 
     public function registrarAtendimento(){
