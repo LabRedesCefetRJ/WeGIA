@@ -64,7 +64,7 @@ class AvisoControle
     {
         header('Content-Type: application/json');
         try {
-            $idfichamedica = filter_input(INPUT_POST, 'idfichamedica', FILTER_SANITIZE_NUMBER_INT);
+            $idfichamedica = filter_input(INPUT_GET, 'id_fichamedica', FILTER_SANITIZE_NUMBER_INT);
 
             if (!$idfichamedica || $idfichamedica < 1) {
                 throw new InvalidArgumentException('Erro, o id da ficha médica não pode ser menor que 1.', 400);
