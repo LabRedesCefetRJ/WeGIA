@@ -32,69 +32,68 @@ class PetControle{
        $this->petClasse = new PetClasse();
     }
 
-    public function incluir(){
-        
+    public function incluir() {
         extract($_REQUEST);
-        $imgperfil = base64_encode($_SESSION['imagem']);
-        $nomeImagem = $_SESSION['nome_imagem'];
-        $sexo = strtoupper($gender);
-
-        if(!isset($nome) || empty($nome)){
-            $msg = "Nome não informado!";
-            header("Location: ../../html/pet/cadastro_pet.php?msg=".$msg);
-            return;
-        }
-
-        if(!isset($nascimento) || empty($nascimento)){
-            $msg = "Data de nascimento não informada!";
-            header("Location: ../../html/pet/cadastro_pet.php?msg=".$msg);
-            return;
-        }
-
-        if(!isset($acolhimento) || empty($acolhimento)){
-            $msg = "Data de acolhimento não informada!";
-            header("Location: ../../html/pet/cadastro_pet.php?msg=".$msg);
-            return;
-        }
-
-        if(!isset($sexo) || empty($sexo)){
-            $msg = "Sexo não informado!";
-            header("Location: ../../html/pet/cadastro_pet.php?msg=".$msg);
-            return;
-        }
-
-        if(!isset($especie) || empty($especie)){
-            $msg = "Especie não informada!";
-            header("Location: ../../html/pet/cadastro_pet.php?msg=".$msg);
-            return;
-        }
-
-        if(!isset($raca) || empty($raca)){
-            $msg = "Raca não informado!";
-            header("Location: ../../html/pet/cadastro_pet.php?msg=".$msg);
-            return;
-        }
-
-        if(!isset($cor) || empty($cor)){
-            $msg = "Cor não informada!";
-            header("Location: ../../html/pet/cadastro_pet.php?msg=".$msg);
-            return;
-        }
         
-        if(!isset($caracEsp) || empty($caracEsp)){
+        $sexo = strtoupper($gender);
+    
+        // Validações
+        if (!isset($nome) || empty($nome)) {
+            header("Location: ../../html/pet/cadastro_pet.php?msg=Nome não informado!");
+            return;
+        }
+    
+        if (!isset($nascimento) || empty($nascimento)) {
+            header("Location: ../../html/pet/cadastro_pet.php?msg=Data de nascimento não informada!");
+            return;
+        }
+    
+        if (!isset($acolhimento) || empty($acolhimento)) {
+            header("Location: ../../html/pet/cadastro_pet.php?msg=Data de acolhimento não informada!");
+            return;
+        }
+    
+        if (!isset($sexo) || empty($sexo)) {
+            header("Location: ../../html/pet/cadastro_pet.php?msg=Sexo não informado!");
+            return;
+        }
+    
+        if (!isset($especie) || empty($especie)) {
+            header("Location: ../../html/pet/cadastro_pet.php?msg=Espécie não informada!");
+            return;
+        }
+    
+        if (!isset($raca) || empty($raca)) {
+            header("Location: ../../html/pet/cadastro_pet.php?msg=Raça não informada!");
+            return;
+        }
+    
+        if (!isset($cor) || empty($cor)) {
+            header("Location: ../../html/pet/cadastro_pet.php?msg=Cor não informada!");
+            return;
+        }
+    
+        if (!isset($caracEsp)) {
             $caracEsp = '';
         }
-
-        if(!isset($imgperfil) || empty($imgperfil)){
-            $imgperfil = '';
-            $nomeImagem = ['', ''];
-        }else{
-            $nomeImagem = explode('.', $nomeImagem);
-            unset($_SESSION['imagem']);
-            unset($_SESSION['nome_imagem']);
+    
+        // Trata a imagem de perfil
+        $imgperfil = '';
+        $nomeImagem = ['', ''];
+    
+        if (isset($_FILES['imgperfil']) && $_FILES['imgperfil']['error'] == UPLOAD_ERR_OK) {
+            $tmpName = $_FILES['imgperfil']['tmp_name'];
+            $imgperfil = base64_encode(file_get_contents($tmpName));
+    
+            $nomeImagemCompleto = $_FILES['imgperfil']['name'];
+            $nomeImagem = explode('.', $nomeImagemCompleto);
+    
+            if (count($nomeImagem) < 2) {
+                $nomeImagem[1] = ''; // extensão vazia se não houver
+            }
         }
-
-
+    
+        // Define dados no objeto
         $this->petClasse->setNome($nome);
         $this->petClasse->setNascimento($nascimento);
         $this->petClasse->setAcolhimento($acolhimento);
@@ -105,9 +104,9 @@ class PetControle{
         $this->petClasse->setCor($cor);
         $this->petClasse->setImgPerfil($imgperfil);
         $this->petClasse->setNomeImagem($nomeImagem);
-
-
-        $this->petDAO->adicionarPet( 
+    
+        // Salva no banco
+        $this->petDAO->adicionarPet(
             $this->petClasse->getNome(),
             $this->petClasse->getNascimento(),
             $this->petClasse->getAcolhimento(),
@@ -119,9 +118,9 @@ class PetControle{
             $this->petClasse->getImgPerfil(),
             $this->petClasse->getNomeImagem()
         );
-        
+    
     }
-
+    
     public function listarTodos(){
         extract($_REQUEST);
         $PetDAO= new PetDAO();
@@ -135,7 +134,9 @@ class PetControle{
         //try {
             $petDAO = new PetDAO();
             $pet=$petDAO->listarUm($id_pet);
-            session_start();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             $_SESSION['pet']=$pet;
             header('Location:'.$nextPage);
         //} catch (PDOException $e) {
