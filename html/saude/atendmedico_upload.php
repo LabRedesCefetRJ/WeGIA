@@ -19,6 +19,9 @@ if ($_POST){
    
     $teste = $pdo->query("SELECT id_funcionario FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa = " .$_SESSION['id_pessoa'])->fetchAll(PDO::FETCH_ASSOC);
     $funcionario = $teste[0]['id_funcionario'];
+
+    date_default_timezone_set('America/Sao_Paulo');
+    $data_registro = date('Y-m-d');
     
     try {
         $pdo = Conexao::connect();
@@ -30,11 +33,13 @@ if ($_POST){
         var_dump($id_funcionario);
         $nome_funcionario = $registro_select_id_funcionario[1];
 
-        $prep = $pdo->prepare("INSERT INTO saude_atendimento(id_fichamedica, id_funcionario, data_atendimento, descricao) VALUES (:id_fichamedica, :id_funcionario, :data_atendimento, :descricao)");
+        $prep = $pdo->prepare("INSERT INTO saude_atendimento(id_fichamedica, id_funcionario, data_atendimento, descricao, id_medico, data_registro) VALUES (:id_fichamedica, :id_funcionario, :data_atendimento, :descricao, :id_medico, :data_registro)");
 
         $prep->bindValue(":id_fichamedica", $id_fichamedica);
         $prep->bindValue(":id_funcionario", $id_funcionario);
         $prep->bindValue(":data_atendimento", $data_atendimento);
+        $prep->bindValue(":data_registro", $data_registro);
+        $prep->bindValue(":id_medico", $medicos);
         $prep->bindValue(":descricao", $texto);
 
         $prep->execute();
