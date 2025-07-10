@@ -651,18 +651,18 @@ class FuncionarioControle
         }
     }
 
-    public function getIdFuncionarioComIdPessoa(){
+    public function getIdFuncionarioComIdPessoa()
+    {
         $id_pessoa = $_GET["id_pessoa"];
-        
-         header('Content-Type: application/json');
 
-        try{
+        header('Content-Type: application/json');
+
+        try {
 
             $funcionarioDAO = new FuncionarioDAO;
             $id_funcionario = $funcionarioDAO->getIdFuncionarioComIdPessoa($id_pessoa);
             echo json_encode($id_funcionario);
-
-        }catch (Exception $e) {
+        } catch (Exception $e) {
             echo 'Error:' . $e->getMessage();
         }
     }
@@ -683,15 +683,50 @@ class FuncionarioControle
         }
         
     }*/
-    public function adicionar_permissao()
+    public function adicionarPermissao()
     {
-        extract($_REQUEST);
         try {
-            $permissao = new PermissaoDAO();
-            $adicao_permissao = $permissao->adicionarPermissao($cargo, $acao, $recurso);
-            header('Location:' . $nextPage . '?msg_c=Permissão efetivada com sucesso.');
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
+            $acao = filter_input(INPUT_POST, 'acao', FILTER_SANITIZE_NUMBER_INT);
+            $recursos = filter_input(INPUT_POST, 'recurso', FILTER_VALIDATE_INT, [
+                'flags' => FILTER_REQUIRE_ARRAY,
+                'options' => ['min_range' => 1]
+            ]);
+
+            if (!$cargo || $cargo < 1) {
+                throw new InvalidArgumentException('O valor do id do cargo informado não é válido.', 400);
+            }
+
+            if (!$acao || $acao < 1) {
+                throw new InvalidArgumentException('O valor do id da ação informado não é válido.', 400);
+            }
+
+            if (!$recursos || $recursos < 1) {
+                throw new InvalidArgumentException('Os valores de id dos recursos informados não são válidos.', 400);
+            }
+
+            $pdo = Conexao::connect();
+            $permissao = new PermissaoDAO($pdo);
+
+            $pdo->beginTransaction();
+            if(!$permissao->adicionarPermissao($cargo, $acao, $recursos)){
+                throw new Exception('Falha no controle de transação', 500);
+            }
+            $pdo->commit();
+            
+            header('Location:' . '../html/geral/editar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
+        } catch (Exception $e) {
+            if($pdo->inTransaction()){
+                $pdo->rollBack();
+            }
+
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+            http_response_code($e->getCode());
+            if ($e instanceof PDOException) {
+                echo json_encode(['erro' => 'Erro no servidor ao adicionar a permissão do funcionário.']);
+            } else {
+                echo json_encode(['erro' => $e->getMessage()]);
+            }
         }
     }
 

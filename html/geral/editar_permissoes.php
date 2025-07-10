@@ -264,13 +264,11 @@
 												</div>	
                                             </div>
 											<input type="hidden" name="nomeClasse" value="FuncionarioControle">
-											<input type="hidden" name="metodo" value="adicionar_permissao">
-											<input type="hidden" name="nextPage" value="<?php echo(WWW.'html/geral/editar_permissoes.php'); ?>">
+											<input type="hidden" name="metodo" value="adicionarPermissao">
+											<input type="hidden" name="nextPage" value="../html/geral/editar_permissoes.php">
 											<div class="row">
 												<div class="col-md-9 col-md-offset-3">
 													<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
-					
-													
 												</div>
 											</div>
 											<?php
