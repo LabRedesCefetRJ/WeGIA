@@ -1,24 +1,22 @@
 <?php
-//require_once 'ApiBoletoServiceInterface.php';
+require_once 'ApiBoletoServiceInterface.php';
 require_once '../model/ContribuicaoLog.php';
 require_once '../dao/GatewayPagamentoDAO.php';
 require_once '../helper/Util.php';
-class PagarMeBoletoService implements ApiBoletoServiceInterface
+class MercadoPagoBoletoService implements ApiBoletoServiceInterface
 {
     public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
     {
+        //Xablau
         //gerar um número para o documento
-        $numeroDocumento = Util::gerarNumeroDocumento(16);
-
-        //Tipo do boleto
-        $type = 'DM';
+        $numeroDocumento = Util::gerarCodigoAleatorio(16);
 
         //Validar regras
 
         //Buscar Url da API e token no BD
         try {
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
-            $gatewayPagamento = $gatewayPagamentoDao->buscarPorId(1); //Pegar valor do id dinamicamente
+            $gatewayPagamento = $gatewayPagamentoDao->buscarPorId(3); //Pegar valor do id dinamicamente
         } catch (PDOException $e) {
             //Implementar tratamento de erro
             echo 'Erro: ' . $e->getMessage();
@@ -26,95 +24,84 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
 
         //Buscar mensagem de agradecimento no BD
         $msg = $contribuicaoLog->getAgradecimento();
-        //Configurar cabeçalho da requisição
-        $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
-            'Content-Type: application/json;charset=utf-8',
-        ];
-
-        //Montar array de Boleto
 
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());//preg_replace('/\D/', '', $contribuicaoLog->getSocio()->getDocumento());
 
-        $boleto = [
-            "items" => [
-                [
-                    "amount" => $contribuicaoLog->getValor() * 100,
-                    "description" => "Donation",
-                    "quantity" => 1,
-                    "code" => $contribuicaoLog->getCodigo()
-                ]
-            ],
-            "customer" => [
-                "name" => $contribuicaoLog->getSocio()->getNome(),
-                "email" => $contribuicaoLog->getSocio()->getEmail(),
-                "document_type" => "CPF",
-                "document" => $cpfSemMascara,
-                "type" => "Individual",
-                "address" => [
-                    "line_1" => $contribuicaoLog->getSocio()->getLogradouro() . ", n°" . $contribuicaoLog->getSocio()->getNumeroEndereco() . ", " . $contribuicaoLog->getSocio()->getBairro(),
-                    "line_2" => $contribuicaoLog->getSocio()->getComplemento(),
-                    "zip_code" => $contribuicaoLog->getSocio()->getCep(),
-                    "city" => $contribuicaoLog->getSocio()->getCidade(),
-                    "state" => $contribuicaoLog->getSocio()->getEstado(),
-                    "country" => "BR"
-                ],
-            ],
-            "payments" => [
-                [
-                    "payment_method" => "boleto",
-                    "boleto" => [
-                        "instructions" => $msg,
-                        "document_number" => $numeroDocumento,
-                        "due_at" => $contribuicaoLog->getDataVencimento(),
-                        "type" => $type
-                    ]
-                ]
-            ]
-        ];
+        $dateOfExpiration = $contribuicaoLog->getDataVencimento() . 'T12:59:59.000-04:00';
+        //"date_of_expiration": "2025-06-01T12:59:59.000-04:00",
 
-        // Transformar o boleto em JSON
-        $boleto_json = json_encode($boleto);
-        //echo $boleto_json;
+        $nome = explode(" ", $contribuicaoLog->getSocio()->getNome());
+        $primeiroNome = $nome[0];
+        $ultimoNome = implode(" ", array_slice($nome, 1)) == "" ? " " : implode(" ", array_slice($nome, 1));
 
-        //Iniciar requisição
+        $curl = curl_init();
 
-        // Iniciar a requisição cURL
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $gatewayPagamento['endPoint']);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $boleto_json);
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => $gatewayPagamento['endPoint'],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS =>'{
+            "description": "Pagamento via Boleto",
+            "transaction_amount": ' . $contribuicaoLog->getValor() . ',
+            "payment_method_id": "bolbradesco",
+            "date_of_expiration": "'. $dateOfExpiration .'",
+            "payer": {
+                "first_name": "'.$primeiroNome.'",
+                "last_name": "'.$ultimoNome.'",
+                "email": "'.$contribuicaoLog->getSocio()->getEmail().'",
+                "identification": {
+                    "type": "CPF",
+                    "number": "'.$cpfSemMascara.'"
+                },
+                "address": {
+                    "zip_code": "' .$contribuicaoLog->getSocio()->getCep(). '",
+                    "city": "' .$contribuicaoLog->getSocio()->getCidade(). '",
+                    "street_name": "' .$contribuicaoLog->getSocio()->getLogradouro(). '",
+                    "street_number": "' .$contribuicaoLog->getSocio()->getNumeroEndereco(). '",
+                    "neighborhood": "' .$contribuicaoLog->getSocio()->getBairro(). '",
+                    "federal_unit": "' .$contribuicaoLog->getSocio()->getEstado(). '"
+                }
+            },
+            "notification_url": "https://wegia.org",
+            "external_reference": "'.$contribuicaoLog->getCodigo().'"
+        }',
+        CURLOPT_HTTPHEADER => array(
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $gatewayPagamento['token'],
+            'X-Idempotency-Key: ' . $numeroDocumento
+        ),
+        ));
 
-        // Executar a requisição cURL
-        $response = curl_exec($ch);
-
-        // Lidar com a resposta da API (mesmo código de tratamento que você já possui)
+        $response = curl_exec($curl);
 
         // Verifica por erros no cURL
-        if (curl_errno($ch)) {
-            echo 'Erro na requisição: ' . curl_error($ch);
-            curl_close($ch);
+        if (curl_errno($curl)) {
+            echo 'Erro na requisição: ' . curl_error($curl);
+            curl_close($curl);
             return false;
         }
 
         // Obtém o código de status HTTP
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         // Fecha a conexão cURL
-        curl_close($ch);
+        curl_close($curl);
 
         // Verifica o código de status HTTP
         if ($httpCode === 200 || $httpCode === 201) {
             $responseData = json_decode($response, true);
-            $pdf_link = $responseData['charges'][0]['last_transaction']['pdf'];
+            $pdf_link = $responseData['transaction_details']['external_resource_url'];
 
             //pegar o id do pedido na plataforma
-            $idPagarMe = $responseData['id'];
+            $idMercadoPago = $responseData['id'];
 
             //armazena copia para segunda via
-            $contribuicaoLog->setCodigo($idPagarMe);
+            $contribuicaoLog->setCodigo($idMercadoPago);
             $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
 
             //envia resposta para o front-end
@@ -124,15 +111,9 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
             return false;
             // Verifica se há mensagens de erro na resposta JSON
             $responseData = json_decode($response, true);
-            if (isset($responseData['errors'])) {
-                //echo 'Detalhes do erro:';
-                foreach ($responseData['errors'] as $error) {
-                    //echo '<br> ' . htmlspecialchars($error['message']);
-                }
-            }
         }
 
-        return $idPagarMe;
+        return $idMercadoPago;
     }
     public function guardarSegundaVia($pdf_link, ContribuicaoLog $contribuicaoLog)
     {
