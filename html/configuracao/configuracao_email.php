@@ -296,7 +296,7 @@
 										<div class="form-group">
 											<label class="control-label">Senha</label>
 											<input type="password" class="form-control" name="smtp_password" value="<?= htmlspecialchars($smtp_password) ?>" placeholder="Senha ou senha de aplicsmtp_ativo">
-											<p class="help-block">Senha do email ou senha de aplicsmtp_ativo (recomendado para Gmail)</p>
+											<p class="help-block">Senha do email ou senha de aplicativo(recomendado para Gmail)</p>
 										</div>
 									</div>
 
