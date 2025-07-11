@@ -3,6 +3,7 @@
 	session_start();
 	if(!isset($_SESSION['usuario'])){
 		header ("Location: ../index.php");
+		exit();
 	}
 
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)

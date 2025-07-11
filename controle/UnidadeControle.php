@@ -15,12 +15,20 @@ class UnidadeControle
         return $unidade;
     }
     public function listarTodos(){
-        extract($_REQUEST);
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+
+        $regex = '#^(\.\./html/matPat/(alterar_produto|cadastro_produto|listar_unidade)\.php(\?id_produto=\d+)?)$#';
+
         $unidadeDAO = new UnidadeDAO();
         $unidades = $unidadeDAO->listarTodos();
         session_start();
         $_SESSION['unidade']=$unidades;
-        header('Location: '.$nextPage);
+
+        if(preg_match($regex, $nextPage)){
+            header('Location:' . htmlspecialchars($nextPage));
+        }else{
+            header('Location:' . '../html/home.php');
+        }
     }
     
     public function incluir(){

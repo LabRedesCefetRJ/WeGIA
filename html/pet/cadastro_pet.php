@@ -1,65 +1,30 @@
 <?php
 
+if(session_status() === PHP_SESSION_NONE){
+  session_start();
+}
+
 include_once("conexao.php");
-session_start();
+
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
+require_once dirname(__FILE__, 3). DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2). DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$situacao = $mysqli->query("SELECT * FROM situacao");
-$cargo = $mysqli->query("SELECT * FROM cargo");
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
-//$id_pessoa = $_SESSION['id_pessoa'];
-//$id_pessoa = mysqli_real_escape_string($conexao, $_SESSION['id_pessoa']);
-//$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 
-$id_pessoa = $_SESSION['id_pessoa'];
-
-$stmt = $conexao->prepare("SELECT * FROM funcionario WHERE id_pessoa = ?");
-$stmt->bind_param("i", $id_pessoa);
-$stmt->execute();
-$resultado = $stmt->get_result();
-
-
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN acao a ON(p.id_acao=a.id_acao) JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND a.descricao = 'LER, GRAVAR E EXECUTAR' AND r.descricao='Cadastrar Pet'");
-  //$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=61");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    if ($permissao['id_acao'] < 3) {
-      $msg = "Você não tem as permissões necessárias para essa página.";
-      header("Location: ../home.php?msg_c=$msg");
-    }
-    $permissao = $permissao['id_acao'];
-  } elseif($permissao == 1) {
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../home.php?msg_c=$msg");
-  } else {
-    $id_cargo = 2;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-  }
-} else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: ../home.php?msg_c=$msg");
+if($id_pessoa < 1){
+  http_response_code(400);
+  echo json_encode(['erro' => 'O id da pessoa informado é inválido']);
+  exit();
 }
-//ret
+
+permissao($id_pessoa, 61, 3);
 
 require_once ROOT . "/controle/FuncionarioControle.php";
 $listaCPF = new FuncionarioControle;
@@ -221,7 +186,7 @@ if (isset($_GET['msg'])) {
                   <option selected disabled>Selecionar</option>
                   <?php
                   while ($row = $cor->fetch_array(MYSQLI_NUM)) {
-                    echo "<option value='{$row[0]}'>{$row[1]}</option>";
+                    echo "<option value='{$row[0]}'>". htmlspecialchars($row[1]) ."</option>";
                   }
                   ?>
                 </select>
@@ -236,7 +201,7 @@ if (isset($_GET['msg'])) {
                   <option selected disabled>Selecionar</option>
                   <?php
                   while ($row = $especie->fetch_array(MYSQLI_NUM)) {
-                    echo "<option value='{$row[0]}'>{$row[1]}</option>";
+                    echo "<option value='{$row[0]}'>". htmlspecialchars($row[1]) ."</option>";
                   }
                   ?>
                 </select>
@@ -251,7 +216,7 @@ if (isset($_GET['msg'])) {
                   <option selected disabled>Selecionar</option>
                   <?php
                   while ($row = $raca->fetch_array(MYSQLI_NUM)) {
-                    echo "<option value='{$row[0]}'>{$row[1]}</option>";
+                    echo "<option value='{$row[0]}'>". htmlspecialchars($row[1]) ."</option>";
                   }
                   ?>
                 </select>

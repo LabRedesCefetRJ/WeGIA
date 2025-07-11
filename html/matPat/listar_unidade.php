@@ -54,7 +54,7 @@
           	include_once ROOT . '/dao/UnidadeDAO.php';
 
           	if(!isset($_SESSION['unidade'])){
-            	header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage='. WWW . 'html/matPat/listar_unidade.php');
+            	header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/listar_unidade.php');
           	}
           	if(isset($_SESSION['unidade'])){
             	$unidade = $_SESSION['unidade'];

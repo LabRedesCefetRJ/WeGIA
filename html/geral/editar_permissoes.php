@@ -119,6 +119,7 @@
     <script src="<?php echo WWW;?>Functions/onlyNumbers.js"></script>
     <script src="<?php echo WWW;?>Functions/onlyChars.js"></script>
 	<script src="<?php echo WWW;?>Functions/mascara.js"></script>
+	<script src="<?php echo WWW; ?>Functions/cargos.js"></script>
 	
 	<!-- Estoque CSS -->
 	<link rel="stylesheet" href="../../css/estoque.css">
@@ -263,13 +264,11 @@
 												</div>	
                                             </div>
 											<input type="hidden" name="nomeClasse" value="FuncionarioControle">
-											<input type="hidden" name="metodo" value="adicionar_permissao">
-											<input type="hidden" name="nextPage" value="<?php echo(WWW.'html/geral/editar_permissoes.php'); ?>">
+											<input type="hidden" name="metodo" value="adicionarPermissao">
+											<input type="hidden" name="nextPage" value="../html/geral/editar_permissoes.php">
 											<div class="row">
 												<div class="col-md-9 col-md-offset-3">
 													<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
-					
-													
 												</div>
 											</div>
 											<?php
@@ -354,52 +353,12 @@
 			$(".alert").fadeOut();
 		}, 3000);
 	});
-	function gerarCargo(){
-          url = '../../dao/exibir_cargo.php';
-          $.ajax({
-          data: '',
-          type: "POST",
-          url: url,
-          success: function(response){
-            var cargo = response;
-            $('#cargo').empty();
-            $('#cargo').append('<option selected disabled>Selecionar</option>');
-            $.each(cargo,function(i,item){
-              $('#cargo').append('<option value="' + item.id_cargo + '">' + item.cargo + '</option>');
-            });
-          },
-          dataType: 'json'
-        });
-      }
-
-      function adicionar_cargo(){
-        url = '../../dao/adicionar_cargo.php';
-        var cargo = window.prompt("Cadastre um Novo Cargo:");
-        if(!cargo){return}
-        situacao = cargo.trim();
-        if(cargo == ''){return}              
-        
-          data = 'cargo=' +cargo; 
-          console.log(data);
-          $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response){
-            gerarCargo();
-          },
-          dataType: 'text'
-        })
-      }
-
+	
 	  function verificar_recursos_cargo(cargo_id){
-          url = '../../dao/verificar_recursos_cargo.php';              
-          data = 'cargo=' +cargo_id; 
-          console.log(data);
+          url = `../../controle/control.php?nomeClasse=CargoControle&metodo=listarRecursos&cargo=${encodeURIComponent(cargo_id)}`;              
           $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
+          type: "GET",
+          url: url, 
           success: function(response){
 			var recursos = JSON.parse(response);
             console.log(response);
