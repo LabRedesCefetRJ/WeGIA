@@ -81,7 +81,7 @@ class CargoDAO
         $sql = 'SELECT id_recurso FROM permissao WHERE id_cargo=:cargo';
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':cargo', $cargo);
+        $stmt->bindParam(':cargo', $cargo, PDO::PARAM_INT);
 
         $stmt->execute();
 

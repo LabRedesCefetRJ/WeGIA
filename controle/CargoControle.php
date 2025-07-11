@@ -75,7 +75,11 @@ class CargoControle
         } catch (Exception $e) {
             error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
             http_response_code($e->getCode());
-            echo json_encode(['erro' => $e->getMessage()]);
+            if ($e instanceof PDOException) {
+                echo json_encode(['erro' => 'Erro no servidor ao listar os recursos do cargo.']);
+            } else {
+                echo json_encode(['erro' => $e->getMessage()]);
+            }
         }
     }
 }
