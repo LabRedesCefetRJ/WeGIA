@@ -69,7 +69,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
-	<title>Informações</title>
+	<title>Informações De Entradas Dos Almoxarifados</title>
 
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -116,7 +116,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		function listarId(id) {
-			window.location.replace('<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=<?= WWW ?>html/matPat/listar_Ientrada.php&id_entrada=' + id);
+			window.location.href = '<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=<?= WWW ?>html/matPat/listar_Ientrada.php&id_entrada=' + id;
 		}
 	</script>
 	<script>
@@ -127,19 +127,13 @@ require_once ROOT . "/html/personalizacao_display.php";
 							?>;
 
 			$.each(entrada, function(i, item) {
-				if (item.desc_produto.split(",").length >= 5) {
-					var msg = ", [clique para ver todos produtos]";
-				} else msg = "";
-
 				$('#tabela')
-					.append($('<tr />')
+					.append($('<tr style="cursor:pointer"/>')
 						.attr('onclick', 'listarId("' + item.id_entrada + '")')
 						.append($('<td />')
-							.text(item.desc_produto + msg))
+							.text(item.descricao_almoxarifado))
 						.append($('<td />')
 							.text(item.nome_origem))
-						.append($('<td />')
-							.text(item.descricao_almoxarifado))
 						.append($('<td />')
 							.text(item.descricao))
 						.append($('<td />')
@@ -157,7 +151,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 			$(".menuu").load("<?= WWW ?>html/menu.php");
 		});
 	</script>
-
 </head>
 
 <body>
@@ -171,7 +164,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Informações</h2>
+					<h2>Informações de Entradas Dos Almoxarifados</h2>
 
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
@@ -195,15 +188,16 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<a href="#" class="fa fa-caret-down"></a>
 						</div>
 
-						<h2 class="panel-title">Entrada</h2>
+						<h2 class="panel-title">Entradas</h2>
+
+						<span style="color:red">Para mais informações, clique em uma entrada(*)</span>
 					</header>
 					<div class="panel-body">
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>
-									<th>Produto(s)</th>
-									<th>Origem</th>
 									<th>Almoxarifado</th>
+									<th>Origem</th>
 									<th>Tipo</th>
 									<th>Resposável</th>
 									<th>Valor Total</th>

@@ -24,13 +24,18 @@
   }
   if(isset($_SESSION['ientrada'])){
 		$ientrada = $_SESSION['ientrada'];
-	    unset($_SESSION['ientrada']);
+	}
+	if(!isset($_SESSION['entradaUnica'])){
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage='. WWW . 'html/matPat/listar_Ientrada.php');
+  }
+  if(isset($_SESSION['entradaUnica'])){
+		$entrada = $_SESSION['entradaUnica'];
 	}
 ?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
-	<title>Informações Produtos Entrada</title>
+	<title>Informações Detalhadas de Entrada</title>
 		
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -88,6 +93,48 @@
 		
 	<!-- jquery functions -->
 	<script>
+		
+
+		async function getEntrada(){
+			return await <?php echo $entrada; ?>;
+		}
+		
+
+		document.addEventListener("DOMContentLoaded", async () => {
+			const container = document.getElementById("containerInformacoesDeEntrada");
+
+			let entrada = await getEntrada();
+
+			entrada = entrada[0];
+
+			const campos = [
+				{ label: "Almoxarifado", valor: entrada.descricao_almoxarifado },
+				{ label: "Origem", valor: entrada.nome_origem },
+				{ label: "Tipo", valor: entrada.descricao },
+				{ label: "Responsável", valor: entrada.nome},
+				{ label: "Valor Total", valor: entrada.valor_total },
+				{ label: "Data", valor: entrada.data },
+				{ label: "Hora", valor: entrada.hora }
+			];
+
+			campos.forEach(campo => {
+				const div = document.createElement("div");
+				div.className = "linha-informacao";
+
+				const span = document.createElement("span");
+				span.className = "campoDeTexto";
+				span.textContent = `${campo.label}:`;
+
+				const texto = document.createElement("p");
+				texto.textContent = campo.valor;
+
+				div.appendChild(span);
+				div.appendChild(texto);
+				container.appendChild(div);
+			});
+		});
+		
+
 		$(function(){
 			var ientrada= <?php 
 				echo $ientrada; 
@@ -102,14 +149,52 @@
 						.append($('<td />')
 							.text(item.qtd))
 						.append($('<td />')
-							.text(item.valor_unitario)))
+							.text(item.valor_unitario))
+						.append($('<td />')
+							.text(item.valor_unitario*item.qtd)))
 					});
 		});
 		$(function () {
 	      $("#header").load("<?= WWW ?>html/header.php");
 	      $(".menuu").load("<?= WWW ?>html/menu.php");
 	    });
+
+		$(document).ready(function() {
+			$('#datatable-default').DataTable({
+				paging: false,          
+				searching: false,       
+				info: false,         
+				lengthChange: false,    
+				ordering: false         
+			});
+		});
 	</script>
+	<style>
+		.linha-informacao {
+			margin-bottom: 10px;
+		}
+
+		.linha-informacao span {
+			font-weight: bold;
+			font-size: 13px;
+			display: inline-block;
+			min-width: 140px;
+		}
+
+		.linha-informacao p {
+			display: inline;
+			font-size: 13px;
+			margin: 0;
+		}
+
+		@media (max-width: 768px) {
+			.linha-informacao span,
+			.linha-informacao p {
+			display: block;
+			font-size: 14px;
+			}
+		}
+	</style>
 </head>
 <body>
 	<section class="body">
@@ -123,7 +208,7 @@
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Informações Produtos Entrada</h2>
+					<h2>Informações Detalhadas de Entrada</h2>
 				
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
@@ -132,7 +217,7 @@
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
-							<li><span>Informações Produto Entrada</span></li>
+							<li><span>Informações Detalhadas Entrada</span></li>
 						</ol>
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 					</div>
@@ -145,15 +230,18 @@
 						<div class="panel-actions">
 							<a href="#" class="fa fa-caret-down"></a>
 						</div>
-						<h2 class="panel-title">Informação Produto Entrada</h2>
+						<h2 class="panel-title">Entrada Detalhada</h2>
 					</header>
 					<div class="panel-body">
+						<div id="containerInformacoesDeEntrada" class="container"></div>
+
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>
 									<th>Produto</th>
 									<th>Quantidade</th>
 									<th>Valor Unitario</th>
+									<th>Valor Total</th>
 								</tr>
 							</thead>
 							<tbody id="tabela">	

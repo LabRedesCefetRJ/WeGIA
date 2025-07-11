@@ -83,7 +83,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
-	<title>Informações</title>
+	<title>Informações de Saídas dos Almoxarifados</title>
 
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -130,7 +130,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		function listarId(id) {
-			window.location.replace('<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=<?= WWW ?>html/matPat/listar_Isaida.php&id_saida=' + id);
+			window.location.href = '<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=<?= WWW ?>html/matPat/listar_Isaida.php&id_saida=' + id;
 		}
 	</script>
 	<script>
@@ -140,14 +140,13 @@ require_once ROOT . "/html/personalizacao_display.php";
 						?>;
 
 			$.each(saida, function(i, item) {
-
 				$('#tabela')
-					.append($('<tr />')
+					.append($('<tr style="cursor:pointer" />')
 						.attr('onclick', 'listarId("' + item.id_saida + '")')
 						.append($('<td />')
-							.text(item.nome_destino))
-						.append($('<td />')
 							.text(item.descricao_almoxarifado))
+						.append($('<td />')
+							.text(item.nome_destino))
 						.append($('<td />')
 							.text(item.descricao))
 						.append($('<td />')
@@ -168,7 +167,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 		});
 	</script>
 </head>
-
 <body>
 	<section class="body">
 		<div id="header"></div>
@@ -180,7 +178,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Informações</h2>
+					<h2>Informações de Saídas dos Almoxarifados</h2>
 
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
@@ -189,7 +187,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
-							<li><span>Informações Saida</span></li>
+							<li><span>Informações de Saídas</span></li>
 						</ol>
 
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -203,7 +201,9 @@ require_once ROOT . "/html/personalizacao_display.php";
 						<div class="panel-actions">
 							<a href="#" class="fa fa-caret-down"></a>
 						</div>
-						<h2 class="panel-title">Saida</h2>
+						<h2 class="panel-title">Saídas</h2>
+						
+						<span style="color:red">Para mais informações, clique em uma saída(*)</span>
 					</header>
 					<!-- start: page -->
 					
@@ -211,8 +211,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<table class="table table-bordered table-striped mb-none" id="datatable-default">
 								<thead>
 									<tr>
-										<th>Destino</th>
 										<th>Almoxarifado</th>
+										<th>Destino</th>
 										<th>Tipo</th>
 										<th>Responsável</th>
 										<th>Valor Total</th>
