@@ -42,17 +42,16 @@ class CargoControle
      */
     public function listarTodos()
     {
-        $cargosArray = [];
+        try {
+            $cargoDAO = new CargoDAO();
+            $cargos = $cargoDAO->listarTodos();
 
-        $cargoDAO = new CargoDAO();
-        $cargos = $cargoDAO->listarTodos();
-
-        foreach ($cargos as $cargo) {
-            $cargosArray[] = ['id_cargo' => $cargo->getId_cargo(), 'cargo' => $cargo->getCargo()];
+            echo json_encode($cargos);
+        } catch (PDOException $e) {
+            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+            http_response_code($e->getCode());
+            echo json_encode(['erro' => 'Erro no servidor ao listar os cargos.']);
         }
-
-        $cargosJSON = json_encode($cargosArray);
-        echo $cargosJSON;
     }
 
     /**

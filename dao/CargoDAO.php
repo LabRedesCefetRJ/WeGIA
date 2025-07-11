@@ -60,20 +60,16 @@ class CargoDAO
     }
     public function listarTodos()
     {
-        try {
-            $cargos = array();
-            $consulta = $this->pdo->query("SELECT id_cargo, cargo FROM cargo");
-            $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
-            if ($resultados) {
-                foreach ($resultados as $resultado) {
-                    $cargo = new Cargo($resultado['cargo'], $resultado['id_cargo']);
-                    $cargos[] = $cargo;
-                }
+        $cargos = array();
+        $consulta = $this->pdo->query("SELECT id_cargo, cargo FROM cargo");
+        $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
+        if ($resultados) {
+            foreach ($resultados as $resultado) {
+                $cargo = new Cargo($resultado['cargo'], $resultado['id_cargo']);
+                $cargos[] = $cargo;
             }
-            return $cargos;
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
         }
+        return $cargos;
     }
 
     public function listarRecursos(int $cargo): array
