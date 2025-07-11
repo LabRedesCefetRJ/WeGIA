@@ -350,7 +350,6 @@ try {
               </form>
 
               <button id="relatorio-imprimir-btn" class="btn btn-primary mt-10 hidden print-hide" onclick="window.print()">Imprimir</button>
-              <a href="../../contribuicao/view/recibo_doacao.php" class="btn btn-success mt-10 print-hide">Gerar Recibo de Doação</a>
 
               <div id="relatorio-gerado">
 

@@ -1995,6 +1995,22 @@ CREATE TABLE IF NOT EXISTS `wegia` . `aviso_notificacao` (
 
 ENGINE = InnoDB;
 
+-- ------------------------------------------------------
+-- Table `wegia` . `smtp_config`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`smtp_config` (
+    `smtp_id` INT(11) AUTO_INCREMENT PRIMARY KEY,
+    `smtp_host` VARCHAR(255) NOT NULL,
+    `smtp_port` INT(11) NOT NULL,
+    `smtp_user` VARCHAR(255) NOT NULL,
+    `smtp_password` VARCHAR(255) NOT NULL,
+    `smtp_secure` VARCHAR(20) DEFAULT 'tls',
+    `smtp_from_email` VARCHAR(255) NOT NULL,
+    `smtp_from_name` VARCHAR(255) NOT NULL,
+    `smtp_ativo` TINYINT(1) DEFAULT 1
+) ENGINE = InnoDB;
+
 -- ########################### PROCEDURES #################### --
 
 USE `wegia` ;

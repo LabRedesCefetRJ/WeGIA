@@ -3,13 +3,13 @@
  * Serviço de Email usando PHPMailer
  * 
  * Esta classe gerencia o envio de emails através de SMTP configurado no sistema.
- * As configurações são armazenadas na tabela selecao_paragrafo (mudar depois) do banco de dados.
+ * As configurações são armazenadas na tabela smtp_config do banco de dados.
  */
 
 $autoload_paths = [
-    __DIR__ . '/../contribuicao/vendor/autoload.php',
-    dirname(__DIR__) . '/contribuicao/vendor/autoload.php',
-    dirname(dirname(__DIR__)) . '/html/contribuicao/vendor/autoload.php'
+    __DIR__ . '/vendor/autoload.php',
+    dirname(__DIR__) . '/vendor/autoload.php',
+    dirname(dirname(__DIR__)) . '/vendor/autoload.php'
 ];
 
 $autoload_loaded = false;
@@ -22,7 +22,7 @@ foreach ($autoload_paths as $path) {
 }
 
 if (!$autoload_loaded) {
-    throw new Exception('PHPMailer autoload não encontrado. Verifique se o Composer foi executado no diretório html/contribuicao/');
+    throw new Exception('PHPMailer autoload não encontrado. Verifique se o Composer foi executado no diretório html/geral/');
 }
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -38,31 +38,52 @@ class EmailService {
         $this->carregarConfiguracoes();
     }
     
-    /**
-     * Carrega as configurações SMTP do banco de dados
-     */
+    //Função para carregar as configurações da tabela smtp no bd
     private function carregarConfiguracoes() {
-        $campos = [
-            'smtp_enabled',
-            'smtp_host',
-            'smtp_port',
-            'smtp_username',
-            'smtp_password',
-            'smtp_encryption',
-            'smtp_from_email',
-            'smtp_from_name'
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                smtp_host,
+                smtp_port,
+                smtp_user,
+                smtp_password,
+                smtp_secure,
+                smtp_from_email,
+                smtp_from_name,
+                smtp_ativo
+            FROM smtp_config 
+            WHERE smtp_ativo = 1 
+            LIMIT 1
+        ");
+        $stmt->execute();
+        $config = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$config) {
+            // Configuração padrão se não houver ativa
+            $this->config = [
+                'smtp_enabled' => '0',
+                'smtp_host' => '',
+                'smtp_port' => '587',
+                'smtp_username' => '',
+                'smtp_password' => '',
+                'smtp_encryption' => 'tls',
+                'smtp_from_email' => '',
+                'smtp_from_name' => ''
+            ];
+            return;
+        }
+
+        $this->config = [
+            'smtp_enabled' => $config['smtp_ativo'] ? '1' : '0',
+            'smtp_host' => $config['smtp_host'],
+            'smtp_port' => $config['smtp_port'],
+            'smtp_username' => $config['smtp_user'],
+            'smtp_password' => $config['smtp_password'],
+            'smtp_encryption' => $config['smtp_secure'] ?: 'tls',
+            'smtp_from_email' => $config['smtp_from_email'],
+            'smtp_from_name' => $config['smtp_from_name']
         ];
         
-        $this->config = [];
-        
-        foreach ($campos as $campo) {
-            $stmt = $this->pdo->prepare("SELECT paragrafo FROM selecao_paragrafo WHERE nome_campo = ?");
-            $stmt->execute([$campo]);
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            $this->config[$campo] = $result ? $result['paragrafo'] : '';
-        }
-        
-        // Valores padrão
+        //Valores padrão
         if (empty($this->config['smtp_port'])) {
             $this->config['smtp_port'] = '587';
         }
@@ -71,16 +92,10 @@ class EmailService {
         }
     }
     
-    /**
-     * Verifica se o SMTP está habilitado
-     */
     public function isEnabled() {
         return $this->config['smtp_enabled'] === '1';
     }
     
-    /**
-     * Verifica se as configurações básicas estão preenchidas
-     */
     public function isConfigured() {
         return !empty($this->config['smtp_host']) && 
                !empty($this->config['smtp_username']) && 
@@ -88,9 +103,9 @@ class EmailService {
                !empty($this->config['smtp_from_email']) &&
                filter_var($this->config['smtp_from_email'], FILTER_VALIDATE_EMAIL);
     }
+    
     public function enviarEmail($destinatario, $assunto, $mensagem, $nomeDestinatario = '', $anexos = []) {
         try {
-            //Verificar se está habilitado
             if (!$this->isEnabled()) {
                 return [
                     'success' => false,
@@ -98,7 +113,6 @@ class EmailService {
                 ];
             }
             
-            //Verificar se está configurado
             if (!$this->isConfigured()) {
                 return [
                     'success' => false,
@@ -106,10 +120,9 @@ class EmailService {
                 ];
             }
             
-            //Criar instância do PHPMailer
             $mail = new PHPMailer(true);
             
-            //Configurações do servidor SMTP
+            //CFG do servidor SMTP
             $mail->isSMTP();
             $mail->Host = $this->config['smtp_host'];
             $mail->SMTPAuth = true;
@@ -123,24 +136,16 @@ class EmailService {
             } elseif ($this->config['smtp_encryption'] === 'tls') {
                 $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             }
-            
-            //Configurações de charset e encoding
+
             $mail->CharSet = 'UTF-8';
             $mail->Encoding = 'base64';
+
+            $fromName = $this->config['smtp_from_name'] ?: 'WeGIA';
+            $mail->setFrom($this->config['smtp_from_email'], $fromName);
+
+            $mail->addReplyTo($this->config['smtp_from_email'], $fromName);
             
-            //Configurações do remetente
-            $mail->setFrom(
-                $this->config['smtp_from_email'], 
-                $this->config['smtp_from_name'] ?: 'WeGIA'
-            );
-            
-            //Configurações do destinatário
             $mail->addAddress($destinatario, $nomeDestinatario);
-            
-            //Configurações da mensagem
-            $mail->isHTML(true);
-            $mail->Subject = $assunto;
-            $mail->Body = $this->formatarMensagem($mensagem);
             
             //Adicionar anexos se fornecidos
             foreach ($anexos as $anexo) {
@@ -148,6 +153,12 @@ class EmailService {
                     $mail->addAttachment($anexo);
                 }
             }
+
+            $mail->isHTML(true);
+            $mail->Subject = $assunto;
+            $mail->Body = $this->formatarMensagem($mensagem);
+            
+            
             
             $mail->send();
             
@@ -163,6 +174,7 @@ class EmailService {
             ];
         }
     }
+    
     private function formatarMensagem($mensagem) {
         $template = '
         <!DOCTYPE html>
@@ -181,8 +193,6 @@ class EmailService {
                     padding: 20px;
                 }
                 .header {
-                    background-color: #dc2626;
-                    color: white;
                     padding: 20px;
                     text-align: center;
                     border-radius: 5px 5px 0 0;
@@ -200,7 +210,7 @@ class EmailService {
                     color: #666;
                 }
                 a {
-                    color: #dc2626;
+                    color: #2657dcff;
                     text-decoration: none;
                 }
                 a:hover {
@@ -216,7 +226,7 @@ class EmailService {
                 ' . $mensagem . '
             </div>
             <div class="footer">
-                <p>Este email foi enviado automaticamente pelo sistema WeGIA.</p>
+                <p>Este email foi enviado automaticamente pelo sistema.</p>
                 <p>Data: ' . date('d/m/Y H:i:s') . '</p>
             </div>
         </body>
@@ -224,6 +234,7 @@ class EmailService {
         
         return $template;
     }
+    
     public function enviarEmailMultiplo($destinatarios, $assunto, $mensagem) {
         $enviados = 0;
         $falhas = 0;
@@ -256,7 +267,7 @@ class EmailService {
 
     public function getConfiguracoes() {
         $config = $this->config;
-        unset($config['smtp_password']); //Não retornar a senha
+        unset($config['smtp_password']); // Não retornar a senha
         return $config;
     }
 }

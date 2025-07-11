@@ -17,39 +17,67 @@
 	require_once "../../dao/Conexao.php";
 	$pdo = Conexao::connect();
 
-	//buscar configuração
-	function getConfig($pdo, $campo) {
-		$stmt = $pdo->prepare("SELECT paragrafo FROM selecao_paragrafo WHERE nome_campo = ?");
-		$stmt->execute([$campo]);
-		$result = $stmt->fetch(PDO::FETCH_ASSOC);
-		return $result ? $result['paragrafo'] : '';
+	//obter configurações SMTP ativas
+	function obterSmtpConfig($pdo) {
+		$stmt = $pdo->prepare("SELECT * FROM smtp_config WHERE smtp_ativo = 1 LIMIT 1");
+		$stmt->execute();
+		return $stmt->fetch(PDO::FETCH_ASSOC);
 	}
 
-	//salvar configuração
-	function setConfig($pdo, $campo, $valor) {
-		$stmt = $pdo->prepare("SELECT id_selecao FROM selecao_paragrafo WHERE nome_campo = ?");
-		$stmt->execute([$campo]);
-		$exists = $stmt->fetch(PDO::FETCH_ASSOC);
-		
-		if ($exists) {
-			$stmt = $pdo->prepare("UPDATE selecao_paragrafo SET paragrafo = ? WHERE nome_campo = ?");
-			$stmt->execute([$valor, $campo]);
-		} else {
-			$stmt = $pdo->prepare("INSERT INTO selecao_paragrafo (nome_campo, paragrafo, original) VALUES (?, ?, 0)");
-			$stmt->execute([$campo, $valor]);
+	//salvar configurações SMTP
+	function salvarSmtpConfig($pdo, $config) {
+		try {
+			$pdo->beginTransaction();
+			
+			//Desativa todas as configurações existentes
+			$stmt = $pdo->prepare("UPDATE smtp_config SET smtp_ativo = 0");
+			$stmt->execute();
+			
+			//Se o SMTP está habilitado, insere nova configuração ativa
+			if ($config['smtp_ativo']) {
+				$stmt = $pdo->prepare("
+					INSERT INTO smtp_config (
+						smtp_host, smtp_port, smtp_user, smtp_password, 
+						smtp_secure, smtp_from_email, smtp_from_name, smtp_ativo
+					) VALUES (
+						:host, :port, :user, :password, :secure, 
+						:from_email, :from_name, 1
+					)
+				");
+				
+				$stmt->execute([
+					':host' => $config['host'],
+					':port' => $config['port'],
+					':user' => $config['user'],
+					':password' => $config['password'],
+					':secure' => $config['secure'],
+					':from_email' => $config['from_email'],
+					':from_name' => $config['from_name']
+				]);
+			}
+			
+			$pdo->commit();
+			return true;
+		} catch (Exception $e) {
+			$pdo->rollBack();
+			throw $e;
 		}
 	}
 
 	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		try {
-			setConfig($pdo, 'smtp_host', $_POST['smtp_host'] ?? '');
-			setConfig($pdo, 'smtp_port', $_POST['smtp_port'] ?? '587');
-			setConfig($pdo, 'smtp_username', $_POST['smtp_username'] ?? '');
-			setConfig($pdo, 'smtp_password', $_POST['smtp_password'] ?? '');
-			setConfig($pdo, 'smtp_encryption', $_POST['smtp_encryption'] ?? 'tls');
-			setConfig($pdo, 'smtp_from_email', $_POST['smtp_from_email'] ?? '');
-			setConfig($pdo, 'smtp_from_name', $_POST['smtp_from_name'] ?? '');
-			setConfig($pdo, 'smtp_enabled', isset($_POST['smtp_enabled']) ? '1' : '0');
+			$config = [
+				'host' => $_POST['smtp_host'] ?? '',
+				'port' => $_POST['smtp_port'] ?? '587',
+				'user' => $_POST['smtp_username'] ?? '',
+				'password' => $_POST['smtp_password'] ?? '',
+				'secure' => $_POST['smtp_encryption'] ?? 'tls',
+				'from_email' => $_POST['smtp_from_email'] ?? '',
+				'from_name' => $_POST['smtp_from_name'] ?? '',
+				'smtp_ativo' => isset($_POST['smtp_enabled']) ? 1 : 0
+			];
+			
+			salvarSmtpConfig($pdo, $config);
 			
 			$_SESSION['mensagem'] = 'Configurações de email salvas com sucesso!';
 			$_SESSION['tipo'] = 'success';
@@ -61,15 +89,18 @@
 		}
 	}
 
-	//Buscar configurações atuais
-	$smtp_host = getConfig($pdo, 'smtp_host');
-	$smtp_port = getConfig($pdo, 'smtp_port') ?: '587';
-	$smtp_username = getConfig($pdo, 'smtp_username');
-	$smtp_password = getConfig($pdo, 'smtp_password');
-	$smtp_encryption = getConfig($pdo, 'smtp_encryption') ?: 'tls';
-	$smtp_from_email = getConfig($pdo, 'smtp_from_email');
-	$smtp_from_name = getConfig($pdo, 'smtp_from_name');
-	$smtp_enabled = getConfig($pdo, 'smtp_enabled') === '1';
+	// Obter configurações atuais
+	$smtpConfig = obterSmtpConfig($pdo);
+	
+	//valores padrão
+	$smtp_host = $smtpConfig['smtp_host'] ?? '';
+	$smtp_port = $smtpConfig['smtp_port'] ?? '587';
+	$smtp_username = $smtpConfig['smtp_user'] ?? '';
+	$smtp_password = $smtpConfig['smtp_password'] ?? '';
+	$smtp_encryption = $smtpConfig['smtp_secure'] ?? 'tls';
+	$smtp_from_email = $smtpConfig['smtp_from_email'] ?? '';
+	$smtp_from_name = $smtpConfig['smtp_from_name'] ?? '';
+	$smtp_enabled = ($smtpConfig && $smtpConfig['smtp_ativo'] == 1);
 ?>
 <!doctype html>
 <html class="fixed">
@@ -264,8 +295,8 @@
 
 										<div class="form-group">
 											<label class="control-label">Senha</label>
-											<input type="password" class="form-control" name="smtp_password" value="<?= htmlspecialchars($smtp_password) ?>" placeholder="Senha ou senha de aplicativo">
-											<p class="help-block">Senha do email ou senha de aplicativo (recomendado para Gmail)</p>
+											<input type="password" class="form-control" name="smtp_password" value="<?= htmlspecialchars($smtp_password) ?>" placeholder="Senha ou senha de aplicsmtp_ativo">
+											<p class="help-block">Senha do email ou senha de aplicsmtp_ativo (recomendado para Gmail)</p>
 										</div>
 									</div>
 
