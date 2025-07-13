@@ -17,7 +17,8 @@ function modalSimples(titulo, msg, tipo){
   // }
 }
 function deletar_socio(id,pessoa){
-    $.ajax({
+    modalSimples('Comunicado', 'Funcionalidade indisponível no momento, aguardando revisões.', 'alerta');
+    /*$.ajax({
         url: "processa_deletar_socio.php",
         data: {"id_socio":id, "pessoa":pessoa},
         type: "POST",
@@ -33,9 +34,10 @@ function deletar_socio(id,pessoa){
               }
             },
             error: function (e) {
+              modalSimples("Status", "Não foi possível deletar o sócio.", "erro")
               console.dir(e);
             }
-      });
+      });*/
 }
 function gerarTags(){
   url = 'exibir_tags.php';
