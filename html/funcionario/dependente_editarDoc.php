@@ -70,7 +70,10 @@ try {
     $pessoa->bindValue(":data_expedicao", $data_expedicao, PDO::PARAM_STR);
     $pessoa->bindValue(":cpf", $cpf, PDO::PARAM_STR);
     $pessoa->bindValue(":registro_geral", $rg, PDO::PARAM_STR);
-    $pessoa->execute();
+    
+    if (!$pessoa->execute()) {
+        throw new PDOException('Falha ao executar a consulta', 500);
+    }
 
     header("Location: profile_dependente.php?id_dependente=$idatendido_familiares");
 } catch (Exception $e) {
