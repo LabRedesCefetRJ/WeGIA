@@ -260,14 +260,14 @@ require_once ROOT . "/html/personalizacao_display.php";
                 <section class="panel">
                     <?php
                     if (isset($_GET['msg_c'])) {
-                        $msg = $_GET['msg_c'];
+                        $msg = filter_input(INPUT_GET, 'msg_c', FILTER_SANITIZE_SPECIAL_CHARS);
                         echo ('<div class="alert alert-success" role="alert">
-										' . $msg . '
+										' . htmlspecialchars($msg) . '
 									  </div>');
                     } else if (isset($_GET['msg_e'])) {
-                        $msg = $_GET['msg_e'];
+                        $msg = filter_input(INPUT_GET, 'msg_e', FILTER_SANITIZE_SPECIAL_CHARS);
                         echo ('<div class="alert alert-danger" role="alert">
-										' . $msg . '
+										' . htmlspecialchars($msg) . '
 									  </div>');
                     }
                     ?>
