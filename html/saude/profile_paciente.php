@@ -567,7 +567,6 @@ try {
       fetch(url)
       .then(res => res.json())
       .then(intercorrencias => {
-        //console.log(intercorrencias)
         const tbody = document.getElementById("doc-tab-intercorrencias");
 
         intercorrencias.forEach(item => {
@@ -1825,7 +1824,6 @@ try {
         let url = "exame_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
         post(url, data, listarFunDocs);
-        console.log(listarFunDocs);
       }
 
       function removerEnfermidade(id_doc) {
@@ -1835,7 +1833,6 @@ try {
         let url = "enfermidade_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
         post(url, data, listarEnfermidades);
-        console.log(listarEnfermidades);
       }
 
       function removerAlergia(id_doc) {
@@ -1845,7 +1842,6 @@ try {
         let url = "alergia_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
         post(url, data, listarAlergias);
-        console.log(listarEnfermidades);
       }
 
       function editarStatusMedico(id_medicacao) {
@@ -1914,7 +1910,6 @@ try {
 
         data = 'situacao=' + situacao;
 
-        console.log(data);
         $.ajax({
           type: "POST",
           url: url,
@@ -1929,7 +1924,6 @@ try {
 
       async function  gerarEnfermidade() {
           situacoes = await listarTodasAsEnfermidades()
-          console.log("situacoes", situacoes)
           let length = situacoes.length - 1;
           let select = document.getElementById("id_CID");
           while(select.firstChild){
@@ -1952,7 +1946,6 @@ try {
 
       async function  gerarMedicos() {
           medicos = await listarTodosOsMedicos()
-          console.log("medicos:", medicos)
           let length = medicos.length - 1;
           let select = document.getElementById("medicos");
            while(select.firstChild){
@@ -1999,7 +1992,6 @@ try {
           return response.text();
         })
         .then(result => {
-          console.log('Resposta:', result);
           gerarEnfermidade();
         })
         .catch(error => {
@@ -2038,7 +2030,6 @@ try {
           return response.json();
         })
         .then(result => {
-          console.log('Resposta:', result);
           gerarMedicos();
         })
         .catch(error => {
@@ -2059,8 +2050,6 @@ try {
           success: function(response) {
             var situacoes_alergia = response;
             let alergias = <?= $alergias; ?>;
-            console.log(alergias)
-            console.log(situacoes_alergia);
             $('#id_CID_alergia').empty();
             $('#id_CID_alergia').append('<option selected disabled>Selecionar</option>');
             $.each(situacoes_alergia, function(i, item) {
@@ -2093,7 +2082,7 @@ try {
             gerar_alergia();
           },
           error: function(response) {
-            console.log(response);
+           console.log(response);
           },
         })
       }
@@ -2318,14 +2307,16 @@ try {
           });
 
           if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+            const data = await response.json();
+            let erro = data.erro;
+            throw new Error(`Erro na requisição: ${response.status} - ${erro}`);
           }
-
+          
           const data = await response.json();
 
           return data ?? []; //Retorna um array vazio se `null`
         } catch (error) {
-          console.error('Erro ao buscar médicos:', error);
+          console.error('Erro ao buscar médicos:', error.message);
           return [];
         }
       }

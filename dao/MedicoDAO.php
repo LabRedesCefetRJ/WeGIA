@@ -34,18 +34,14 @@ class MedicoDAO
     }
 
      public function listarTodosOsMedicos(){
-        try{
-            $stmt = $this->pdo->prepare("
-                SELECT id_medico, nome
-                FROM saude_medicos 
-                ORDER BY nome ASC
-            ");
-            $stmt->execute();
-            $medicos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->pdo->prepare("
+            SELECT id_medico, nome
+            FROM saude_medicos 
+            ORDER BY nome ASC
+        ");
+        $stmt->execute();
+        $medicos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            return $medicos;
-        } catch (PDOException $e){
-            throw new PDOException('Erro ao procurar os médicos: ' . $e->getMessage(), 500);
-        }
+        return $medicos;
     }
 }

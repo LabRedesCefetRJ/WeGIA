@@ -63,12 +63,17 @@
             try{
                 $MedicoDAO = new MedicoDAO();
                 $medicos = $MedicoDAO->listarTodosOsMedicos();
-
+                
                 echo json_encode($medicos);
                 exit;
-            } catch (Exception $e) {
+            } catch(PDOException $e){
                 http_response_code(500);
-                echo json_encode(['erro' => $e->getMessage()]);
+                echo json_encode(['erro' => "Erro ao Buscar Médicos no Banco de Dados"]);
+                exit;
+
+            } catch(Exception $e) {
+                http_response_code(500);
+                echo json_encode(['erro' => "Erro interno do Servidor"]);
                 exit;
             }
         }
