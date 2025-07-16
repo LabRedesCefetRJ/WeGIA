@@ -83,7 +83,6 @@ class SaidaDAO
         }
 
         public function listarUmCompletoPorId($id) {
-            try {
                 $pdo = Conexao::connect();
                 $consulta = $pdo->prepare("
                     SELECT 
@@ -125,10 +124,6 @@ class SaidaDAO
                 } else {
                     return json_encode([]);
                 }
-
-            } catch (PDOException $e) {
-                return json_encode(['erro' => $e->getMessage()]);
-            }
         }
 
     public function listarId($id_saida){
