@@ -4,9 +4,14 @@
     if (file_exists($config_path)) {
         require_once($config_path);
     } else {
-        while (true) {
-            $config_path = "../" . $config_path;
-            if (file_exists($config_path)) break;
+        $dir = __DIR__;
+        for($i=0; $i <= 10; $i++){
+            $path = $dir . "/" . $config_path;
+            if(file_exists($path)){
+                $config_path = $path;
+                break;
+            }
+            $dir = dirname($dir);
         }
         require_once($config_path);
     }
