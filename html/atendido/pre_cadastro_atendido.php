@@ -1,75 +1,17 @@
 <?php
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
+//realizar alteraçoes sugeridas pela issue #344
+if(session_status() === PHP_SESSION_NONE){
+    session_start();
 }
-session_start();
+
 if (!isset($_SESSION['usuario'])) {
     header("Location: " . WWW . "html/index.php");
+    exit();
 }
 
-require_once ROOT . "/controle/memorando/MemorandoControle.php";
-require_once ROOT . "/controle/FuncionarioControle.php";
-
-$funcionarios = new FuncionarioControle;
-$funcionarios->listarTodos2();
-
-$memorando = new MemorandoControle;
-$memorando->listarTodos();
-
-$memorando = $_POST['dados'];
-
-
-
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-
-if ($stmt = mysqli_prepare($conexao, "SELECT * FROM funcionario WHERE id_pessoa = ?")) {
-    mysqli_stmt_bind_param($stmt, "i", $id_pessoa);
-    mysqli_stmt_execute($stmt);
-    $resultado = mysqli_stmt_get_result($stmt);
-    
-    if ($resultado && mysqli_num_rows($resultado) > 0) {
-        $id_cargo = mysqli_fetch_array($resultado);
-        
-        if ($stmt2 = mysqli_prepare($conexao, "SELECT * FROM permissao WHERE id_cargo = ? AND id_recurso = 12")) {
-            $id_cargo_valor = $id_cargo['id_cargo'];
-            mysqli_stmt_bind_param($stmt2, "i", $id_cargo_valor);
-            mysqli_stmt_execute($stmt2);
-            $resultado_permissao = mysqli_stmt_get_result($stmt2);
-            
-            if ($resultado_permissao && mysqli_num_rows($resultado_permissao) > 0) {
-                $permissao = mysqli_fetch_array($resultado_permissao);
-                
-                if ($permissao['id_acao'] < 7) {
-                    $msg = "Você não tem as permissões necessárias para essa página.";
-                    header("Location: " . WWW . "html/home.php?msg_c=$msg");
-                    exit();
-                }
-                $permissao = $permissao['id_acao'];
-            } else {
-                $msg = "Você não tem as permissões necessárias para essa página.";
-                header("Location: " . WWW . "html/home.php?msg_c=$msg");
-                exit();
-            }
-        }
-    } else {
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: " . WWW . "html/home.php?msg_c=$msg");
-        exit();
-    }
-}
-require_once ROOT . "/controle/FuncionarioControle.php";
-require_once ROOT . "/controle/memorando/MemorandoControle.php";
-
-
+//Verifica se o usuário possui as permissões necessárias para a função
+require_once '../permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 12, 7);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -260,14 +202,14 @@ require_once ROOT . "/html/personalizacao_display.php";
                 <section class="panel">
                     <?php
                     if (isset($_GET['msg_c'])) {
-                        $msg = $_GET['msg_c'];
+                        $msg = filter_input(INPUT_GET, 'msg_c', FILTER_SANITIZE_SPECIAL_CHARS);
                         echo ('<div class="alert alert-success" role="alert">
-										' . $msg . '
+										' . htmlspecialchars($msg) . '
 									  </div>');
                     } else if (isset($_GET['msg_e'])) {
-                        $msg = $_GET['msg_e'];
+                        $msg = filter_input(INPUT_GET, 'msg_e', FILTER_SANITIZE_SPECIAL_CHARS);
                         echo ('<div class="alert alert-danger" role="alert">
-										' . $msg . '
+										' . htmlspecialchars($msg) . '
 									  </div>');
                     }
                     ?>
@@ -277,13 +219,6 @@ require_once ROOT . "/html/personalizacao_display.php";
                     <div class="panel-body">
 
                         <form method="GET" action="../../controle/control.php">
-                            <!-- <input type="text" id="assunto" name="assunto" required placeholder="Título do Novo Memorando" class="form-control">
-                                    <input type="hidden" name="nomeClasse" value="MemorandoControle" id="memorandocontrole">
-                                    <input type="hidden" id="incluir" name="metodo" value="incluir">
-                                    <input type='hidden' id="modulo" value='memorando' name='modulo'>
-                                    <input type='submit'  form= "form1" value='Criar memorando'   name='enviar' id='enviar' class='mb-xs mt-xs mr-xs btn btn-default'> -->
-
-                            <!-- <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label> -->
                             <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                             <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                             <br>

@@ -1,90 +1,40 @@
 <?php
-
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-extract($_REQUEST);
-session_start();
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
 }
-
-// if(!isset($_SESSION['atendido'])){
-//    header ("Location: Profile_Atendido.php?idatendido=$id");
-// }
-
 
 if (!isset($_SESSION['usuario'])) {
-  header("Location: " . WWW . "index.php");
+  header("Location: " . "../../index.php");
 }
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=12");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    if ($permissao['id_acao'] < 7) {
-      $msg = "Você não tem as permissões necessárias para essa página.";
-      header("Location: " . WWW . "html/home.php?msg_c=$msg");
-    }
-    $permissao = $permissao['id_acao'];
-  } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: " . WWW . "html/home.php?msg_c=$msg");
-  }
-} else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: " . WWW . "html/home.php?msg_c=$msg");
-}
-mysqli_close($conexao);
-//fechar conexao arq
-
+//verificação da permissão do usuário
+require_once '../permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 12, 7);
 
 include_once '../../classes/Cache.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
 
-require_once ROOT . "/controle/FuncionarioControle.php";
-$cpf1 = new FuncionarioControle;
-$cpf1->listarCpf();
+$id = filter_input(INPUT_GET, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
 
-require_once ROOT . "/controle/AtendidoControle.php";
-$cpf = new AtendidoControle;
-$cpf->listarCpf();
+if (!$id || $id < 0) {
+  http_response_code(400);
+  exit('O id do paciente informado não é válido');
+}
 
-require_once ROOT . "/controle/EnderecoControle.php";
-$endereco = new EnderecoControle;
-$endereco->listarInstituicao();
-
-
-$id = $_GET['idatendido'];
 $cache = new Cache();
 $teste = $cache->read($id);
 
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
-// $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
-// $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$docfuncional = $pdo->query("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos WHERE atendido_idatendido = " . $_GET['idatendido']);
-$docfuncional = $docfuncional->fetchAll(PDO::FETCH_ASSOC);
+$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos WHERE atendido_idatendido =:idAtendido");
+
+$stmtDocFuncional->bindParam(':idAtendido', $id);
+$stmtDocFuncional->execute();
+
+$docfuncional = $stmtDocFuncional->fetchAll(PDO::FETCH_ASSOC);
 foreach ($docfuncional as $key => $value) {
   $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
 
@@ -93,29 +43,26 @@ foreach ($docfuncional as $key => $value) {
   $docfuncional[$key]['data'] = $data->format('d/m/Y');
 }
 $docfuncional = json_encode($docfuncional);
-//$docs = $mysqli->query("SELECT * FROM atendido_docs_atendidos");
 
-//$atendidos = $_SESSION['idatendido'];
 $atend = $_SESSION['atendido'];
-// $atendido = new AtendidoDAO();
-// $atendido->listar($id);
-// var_dump($atendido);
 
 if (!isset($teste)) {
 
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=AtendidoControle&nextPage=../html/atendido/Profile_Atendido.php?idatendido=' . $id . '&id=' . $id);
 }
-$dependente = $pdo->query("SELECT
+$stmtDependente = $pdo->prepare("SELECT
       af.idatendido_familiares AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.parentesco AS parentesco
       FROM atendido_familiares af
       LEFT JOIN atendido a ON a.idatendido = af.atendido_idatendido
       LEFT JOIN pessoa p ON p.id_pessoa = af.pessoa_id_pessoa
       LEFT JOIN atendido_parentesco par ON par.idatendido_parentesco = af.atendido_parentesco_idatendido_parentesco
-      WHERE af.atendido_idatendido = " . $_GET['idatendido']);
-$dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
+      WHERE af.atendido_idatendido =:idAtendido");
+
+$stmtDependente->bindParam(':idAtendido', $id);
+$stmtDependente->execute();
+
+$dependente = $stmtDependente->fetchAll(PDO::FETCH_ASSOC);
 $dependente = json_encode($dependente);
-
-
 ?>
 
 <!doctype html>
@@ -188,14 +135,6 @@ $dependente = json_encode($dependente);
   <script src="../../Functions/onlyNumbers.js"></script>
   <script src="../../Functions/onlyChars.js"></script>
   <script>
-    // $(document).ready(function(){
-    //  	$('#doc').on("submit", function(event){
-    //  		event.preventDefault();
-
-    //  		var dados = $("#doc").serialize();
-    //  		alert(dados);
-    //  	}) 
-    //  });
     function exibir_reservista() {
 
       $("#reservista1").show();
@@ -205,7 +144,6 @@ $dependente = json_encode($dependente);
     function listarDependentes(dependente) {
       $("#dep-tab").empty();
       $.each(dependente, function(i, dependente) {
-        // dependente.cpf = [dependente.cpf.slice(0, 3), ".", dependente.cpf.slice(3, 6), ".", dependente.cpf.slice(6, 9), "-", dependente.cpf.slice(9, 11)].join("")
         $("#dep-tab")
           .append($("<tr>")
             .append($("<td>").text(dependente.nome))
@@ -322,23 +260,6 @@ $dependente = json_encode($dependente);
           $("#observacao").text("Observações: " + item.observacao);
           $("#observacaoform").val(item.observacao);
         }
-        //    if(item.imagem==null)
-        //    {
-        //       $('#docs').append($("<strong >").append($("<p >").text("Não foi possível encontrar nenhuma imagem referente a esse Atendido!")));
-        //    }
-        //    else{
-        //       b64 = item.imgdoc;
-        //       b64 = b64.replace("data:image/pdf;base64,", "");
-        //       b64 = b64.replace("data:image/png;base64,", "");
-        //       b64 = b64.replace("data:image/jpg;base64,", "");
-        //       b64 = b64.replace("data:image/jpeg;base64,", "");
-        //       console.log(b64);
-        //    if(b64.charAt(0) == "/" || b64.charAt(0) == "i"){
-        //       $('#docs').append($("<strong >").append($("<p >").text(item.descricao).attr("class","col-md-8"))).append($("<a >").attr("onclick","excluirimg("+item.id_documento+")").attr("class","link").append($("<i >").attr("class","fa fa-trash col-md-1 pull-right icones"))).append($("<a >").attr("onclick","editimg("+item.id_documento+",'"+item.descricao+"')").attr("class","link").append($("<i >").attr("class","fa fa-edit col-md-1 pull-right icones"))).append($("<div>").append($("<img />").attr("src", item.imgdoc).addClass("lazyload").attr("max-height","50px"))).append($("<form method='get' action='"+ item.imgdoc+"'><button type='submit'>Download</button></form>"));
-        //    }else{
-        //       $('#docs').append($("<strong >").append($("<p >").text(item.descricao).attr("class","col-md-8"))).append($("<a >").attr("onclick","excluirimg("+item.id_documento+")").attr("class","link").append($("<i >").attr("class","fa fa-trash col-md-1 pull-right icones"))).append($("<a >").attr("onclick","editimg("+item.id_documento+",'"+item.descricao+"')").attr("class","link").append($("<i >").attr("class","fa fa-edit col-md-1 pull-right icones"))).append($("<div>").append($( `<a href="data:application/pdf;base64,${b64}" download="${item.descricao}.pdf"><button type='submit'>Download</button></a>`)));
-        //    }
-        // }
       })
     });
     $(function() {
@@ -354,13 +275,10 @@ $dependente = json_encode($dependente);
       $("#radioM").prop('disabled', false);
       $("#radioF").prop('disabled', false);
       $("#telefone").prop('disabled', false);
-
       $("#nascimento").prop('disabled', false);
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
       $("#tipoSanguineo").prop('disabled', false);
-      //$("#sangueSelect").remove();
-      // $('#tipoSanguineo').append('<option selected >Selecionar...</option>');
       $("#botaoEditarIP").html('Cancelar');
       $("#botaoSalvarIP").prop('disabled', false);
       $("#botaoEditarIP").removeAttr('onclick');
@@ -643,10 +561,10 @@ $dependente = json_encode($dependente);
   </script>
 
   <script>
-		function clicar(id) {
-			window.location.href = "listar_ocorrencias.php?id="+id;
-		}
-	</script>
+    function clicar(id) {
+      window.location.href = "listar_ocorrencias.php?id=" + id;
+    }
+  </script>
 
 </head>
 
@@ -711,7 +629,7 @@ $dependente = json_encode($dependente);
                               </div>
                           </div>
                           <div class="modal-footer">
-                            <input type="hidden" name="idatendido" value="<?php echo $_GET['idatendido'] ?>">
+                            <input type="hidden" name="idatendido" value="<?=$id?>">
                             <input type="submit" id="formsubmit" value="Alterar imagem">
                           </div>
                         </div>
@@ -811,7 +729,7 @@ $dependente = json_encode($dependente);
                             </select>
                           </div>
                         </div>
-                        <input type="hidden" name="idatendido" value=<?php echo $_GET['idatendido'] ?>>
+                        <input type="hidden" name="idatendido" value=<?=$id?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes_pessoais()">Editar</button>
                         <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
                     </form>
@@ -822,22 +740,22 @@ $dependente = json_encode($dependente);
                     <div class="panel-footer">
                       <div class="row">
                         <div class="col-md-9 col-md-offset-3">
-                          <?php 
-                            $atend = json_decode($atend)[0];
-                            //print_r($atend);
-                            if($atend->status == 1):
-                          ?>
-                          <button id="excluir" type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Desativar</button>
                           <?php
-                            elseif ($atend->status == 2):
+                          $atend = json_decode($atend)[0];
+                          //print_r($atend);
+                          if ($atend->status == 1):
                           ?>
-                          <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post">
-                            <input type="hidden" name="idatendido" value= <?= $_GET['idatendido']?>>
-                            <input type="hidden" name="operacao" value= 'ativar'>
-                            <button class="btn btn-primary" type="submit">Ativar</button>
-                          </form>
+                            <button id="excluir" type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Desativar</button>
                           <?php
-                            endif;
+                          elseif ($atend->status == 2):
+                          ?>
+                            <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post">
+                              <input type="hidden" name="idatendido" value=<?=$id?>>
+                              <input type="hidden" name="operacao" value='ativar'>
+                              <button class="btn btn-primary" type="submit">Ativar</button>
+                            </form>
+                          <?php
+                          endif;
                           ?>
                         </div>
                       </div>
@@ -851,13 +769,13 @@ $dependente = json_encode($dependente);
                             <h3>Desativar um atendido</h3>
                           </div>
                           <div class="modal-body">
-                              <p>Tem certeza que deseja desativar esse atendido?</p>
-                              <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post" class="d-flex">
-                                  <input type="hidden" name="idatendido" value= <?= $_GET['idatendido']?>>
-                                  <input type="hidden" name="operacao" value= 'desativar'>
-                                  <button class="btn btn-primary me-2" type="submit">Desativar</button>
-                                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                              </form>
+                            <p>Tem certeza que deseja desativar esse atendido?</p>
+                            <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post" class="d-flex">
+                              <input type="hidden" name="idatendido" value=<?=$id?>>
+                              <input type="hidden" name="operacao" value='desativar'>
+                              <button class="btn btn-primary me-2" type="submit">Desativar</button>
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            </form>
                           </div>
 
                         </div>
@@ -943,7 +861,7 @@ $dependente = json_encode($dependente);
 
 
                           <div class="form-group center">
-                            <input type="hidden" name="idatendido" value=<?php echo $_GET['idatendido'] ?>>
+                            <input type="hidden" name="idatendido" value=<?=$id?>>
                             <button type="button" class="btn btn-primary" id="botaoEditarEndereco" onclick="return editar_endereco()">Editar</button>
                             <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
                         </form>
@@ -1002,8 +920,8 @@ $dependente = json_encode($dependente);
                               <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                             </div>
                           </div>
-                          <input type="hidden" name="idatendido" value="<?php echo $_GET['idatendido'] ?>">
-                          <br />
+                          <input type="hidden" name="idatendido" value="<?=$id?>">
+                          <br>
                           <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao" onclick="return editar_documentacao()">Editar</button>
                           <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
                         </form>
@@ -1083,7 +1001,7 @@ $dependente = json_encode($dependente);
                                       <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                     </div>
                                   </div>
-                                  <input type="hidden" name="idatendido" value="<?= $_GET['idatendido']; ?>" readonly>
+                                  <input type="hidden" name="idatendido" value="<?=$id?>" readonly>
                                   <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                                     <input type="submit" id="cadastrarFamiliar" value="Enviar" class="btn btn-primary">
@@ -1096,9 +1014,6 @@ $dependente = json_encode($dependente);
                       </div>
                     </section>
                   </div>
-
-
-
 
                   <!-- Aba de arquivo -->
                   <div id="arquivo" class="tab-pane">
@@ -1151,7 +1066,7 @@ $dependente = json_encode($dependente);
                                         ?>
 
                                       </select>
-                                      <!-- <a onclick="adicionarDocFuncional()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a> -->
+                                   
                                       <a onclick="adicionar_tipo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                     </div>
                                   </div>
@@ -1159,7 +1074,7 @@ $dependente = json_encode($dependente);
                                     <label for="arquivoDocumento">Arquivo</label>
                                     <input name="arquivo" type="file" class="form-control-file" id="id_documento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
                                   </div>
-                                  <input type="number" name="idatendido" value="<?= $_GET['idatendido']; ?>" style='display: none;'>
+                                  <input type="number" name="idatendido" value="<?=$id?>" style='display: none;'>
                                 </div>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -1171,7 +1086,6 @@ $dependente = json_encode($dependente);
                         </div>
                     </section>
                   </div>
-
 
                   <div id="ocorrencias" class="tab-pane">
                     <section class="panel">
@@ -1190,29 +1104,29 @@ $dependente = json_encode($dependente);
                             </tr>
                           </thead>
                           <tbody id="doc-tabl">
-                            <?php  
-                             $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
-                             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-                             $stmt->execute();
-                             
-                             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                             
-                             foreach ($resultados as $item) {
-                                echo "<tr style='cursor: pointer;' onclick='clicar($item[idatendido_ocorrencias])'>";
-                                $data = explode('-', $item["data"]);
-                                echo "<td>".$data[2]."/".$data[1]."/".$data[0]."</td>";
-                                echo"<td>".$item["descricao"]."</td>";
-                                echo "<tr>";
-                             }
-                              
+                            <?php
+                            $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
+                            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+                            $stmt->execute();
+
+                            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                            foreach ($resultados as $item) {
+                              echo "<tr style='cursor: pointer;' onclick='clicar($item[idatendido_ocorrencias])'>";
+                              $data = explode('-', $item["data"]);
+                              echo "<td>" . $data[2] . "/" . $data[1] . "/" . $data[0] . "</td>";
+                              echo "<td>" . $item["descricao"] . "</td>";
+                              echo "<tr>";
+                            }
+
                             ?>
                           </tbody>
                         </table>
                         <br>
-                        
+
                     </section>
                   </div>
-                  
+
                   <!-- end: page -->
       </section>
       <aside id="sidebar-right" class="sidebar-right">
@@ -1281,8 +1195,6 @@ $dependente = json_encode($dependente);
         <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
       </div>
   </section>
-
-  
 
   <!-- Vendor -->
   <script src="../../assets/vendor/select2/select2.js"></script>
@@ -1395,7 +1307,7 @@ $dependente = json_encode($dependente);
       }
 
       function funcao3() {
-        var idatend = <?php echo $_GET['idatendido']; ?>;
+        var idatend = <?=$id?>;
         var cpfs = <?php echo $_SESSION['cpf_atendido']; ?>;
         var cpf_atendido = $("#cpf").val();
         var cpf_atendido_correto = cpf_atendido.replace(".", "");
@@ -1468,7 +1380,7 @@ $dependente = json_encode($dependente);
         if (!window.confirm("Tem certeza que deseja remover esse documento?")) {
           return false;
         }
-        let url = "documento_excluir.php?id_doc=" + id_doc + "&idatendido=<?= $_GET['idatendido'] ?>";
+        let url = "documento_excluir.php?id_doc=" + id_doc + "&idatendido=<?=$id?>";
         let data = "";
         post(url, data, listarFunDocs);
       }
@@ -1476,7 +1388,7 @@ $dependente = json_encode($dependente);
     <script>
       function removerDependente(id_dep) {
         let url = "familiar_remover.php";
-        let data = "idatendido=<?= $_GET['idatendido']; ?>&id_dependente=" + id_dep;
+        let data = "idatendido=<?=$id?>&id_dependente=" + id_dep;
         post(url, data, verificaSucesso);
       }
     </script>
@@ -1512,8 +1424,6 @@ $dependente = json_encode($dependente);
           dataType: 'json'
         });
       }
-
-
 
       function adicionar_tipo() {
         url = '../../dao/adicionar_tipo_docs_atendido.php';
@@ -1554,11 +1464,9 @@ $dependente = json_encode($dependente);
       }
     </script>
 
-
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
 
-  
 </body>
 
 </html>

@@ -345,10 +345,10 @@
 						<?php if (isset($_GET['msg'])){ if ($_GET['msg'] == 'success'){ echo('<div class="alert alert-success"><i class="fas fa-check mr-md"></i><a href="#" class="close" onclick="closeMsg()" data-dismiss="alert" aria-label="close">&times;</a>Edição feita com sucesso!</div>');}}?>
 
 						<!-- Caso haja um erro fatal na alteração dos dados -->
-						<?php if (isset($_GET['msg'])){ if ($_GET['msg'] == 'error'){ echo('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle mr-md"></i><a href="#" class="close" onclick="closeMsg()" data-dismiss="alert" aria-label="close">&times;</a>'. $_GET["err"] .'</div>');}}?>
+						<?php if (isset($_GET['msg'])){ if ($_GET['msg'] == 'error'){ echo('<div class="alert alert-danger"><i class="fas fa-exclamation-triangle mr-md"></i><a href="#" class="close" onclick="closeMsg()" data-dismiss="alert" aria-label="close">&times;</a>'. htmlspecialchars($_GET["err"]) .'</div>');}}?>
 						
 						<!-- Caso haja um erro na alteração dos dados que não seja fatal -->
-						<?php if (isset($_GET['msg'])){ if ($_GET['msg'] == 'warn'){ echo('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle mr-md"></i><a href="#" class="close" onclick="closeMsg()" data-dismiss="alert" aria-label="close">&times;</a>'. $_GET["err"] .'</div>');}}?>
+						<?php if (isset($_GET['msg'])){ if ($_GET['msg'] == 'warn'){ echo('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle mr-md"></i><a href="#" class="close" onclick="closeMsg()" data-dismiss="alert" aria-label="close">&times;</a>'. htmlspecialchars($_GET["err"]) .'</div>');}}?>
 						
 						<ul class="nav nav-tabs" id="myTab" role="tablist">
 							<li class="nav-item active">
