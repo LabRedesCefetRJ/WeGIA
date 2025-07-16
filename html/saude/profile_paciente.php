@@ -1958,14 +1958,12 @@ try {
            while(select.firstChild){
             select.removeChild(select.firstChild)
           }
+          let selecionar = document.createElement("option");
+            selecionar.textContent = "Selecionar"
+            selecionar.selected = true;
+            selecionar.disabled = true;
+            select.appendChild(selecionar)
           for(let i = 0; i <= length; i = i +1){
-            if(i == 0){
-              let selecionar = document.createElement("option");
-              selecionar.textContent = "Selecionar"
-              selecionar.selected = true;
-              selecionar.disabled = true;
-              select.appendChild(selecionar)
-            }
             let option = document.createElement("option");
             option.value = medicos[i].id_medico;
             option.textContent = medicos[i].nome;
