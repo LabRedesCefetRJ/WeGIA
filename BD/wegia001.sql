@@ -1531,14 +1531,22 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_atendimento` (
   `id_atendimento` INT NOT NULL AUTO_INCREMENT,
   `id_fichamedica` INT NOT NULL,
   `id_funcionario` INT(11) NOT NULL,
+  `id_medico` INT NOT NULL,
+  `data_registro` DATE NULL,
   `data_atendimento` DATE NULL,
   `descricao` BLOB NULL,
   PRIMARY KEY (`id_atendimento`),
   INDEX `fk_saude_atendimento_saude_fichamedica1_idx` (`id_fichamedica` ASC),
   INDEX `fk_saude_atendimento_funcionario1_idx` (`id_funcionario` ASC),
+  INDEX `fk_saude_atendimento_medico1_idx` (`id_medico` ASC),
   CONSTRAINT `fk_saude_atendimento_saude_fichamedica1`
     FOREIGN KEY (`id_fichamedica`)
     REFERENCES `wegia`.`saude_fichamedica` (`id_fichamedica`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_saude_atendimento_medico1`
+    FOREIGN KEY (`id_medico`)
+    REFERENCES `wegia`.`saude_medicos` (`id_medico`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_saude_atendimento_funcionario1`
@@ -1546,6 +1554,17 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_atendimento` (
     REFERENCES `wegia`.`funcionario` (`id_funcionario`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`saude_medicos`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicos` (
+  `id_medico` INT NOT NULL AUTO_INCREMENT,
+  `crm` CHAR(10) NULL,
+  `nome` VARCHAR(50) NULL,
+  PRIMARY KEY (`id_medico`),
+  CONSTRAINT `uq_nome_crm` UNIQUE (`crm`, `nome`))
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
