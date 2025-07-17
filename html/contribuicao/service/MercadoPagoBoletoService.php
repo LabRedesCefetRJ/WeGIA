@@ -157,7 +157,6 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
                 $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
                 $headers = substr($response, 0, $headerSize);
                 $fileContent = substr($response, $headerSize);
-                
                 // Verifica o tipo de conteúdo
                 if (strpos($headers, 'content-type: application/pdf') !== false) {
                     // Salva o conteúdo do arquivo no diretório especificado
