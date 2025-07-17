@@ -47,7 +47,8 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                     $this->requisicaoPedidos($gatewayPagamento);
                 } elseif (end($endpointFragmentado) === 'subscriptions') {
                     //chamar função getSubscriptions quando a mesma for implementada
-                    $this->requisicaoPedidos($gatewayPagamento, "https://api.pagar.me/core/v5/invoices?page=1&size=30&status=$status&created_since=$dataAnaliseFormatada");
+                    $gatewayPagamento->setEndpoint(str_replace('subscriptions', 'invoices', $gatewayPagamento->getEndpoint()));
+                    $this->requisicaoPedidos($gatewayPagamento);
                 }
             }
 
@@ -80,27 +81,8 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         }
     }
 
-    //Pega as contribuições do endpoint orders
-    private function getOrders()
+    private function requisicaoPedidos(GatewayPagamento $gatewayPagamento)
     {
-        //futuramente transferir parte do código que for inerente de orders de requisicaoPedidos para cá.
-    }
-
-    //Pega as contribuições do endpoint subscription
-    private function getSubscriptions()
-    {
-        //implementar instruções para pegar as subscriptions da api.
-    }
-
-    //Pega as faturas da API
-    private function getInvoices() {}
-
-    private function requisicaoPedidos(GatewayPagamento $gatewayPagamento, string $endpoint = null)
-    {
-        if (is_null($endpoint)) {
-            $endpoint = $gatewayPagamento->getEndpoint();
-        }
-
         $headers = [
             'Authorization: Basic ' . base64_encode($gatewayPagamento->getToken() . ':'),
             'Content-Type: application/json;charset=utf-8',
@@ -109,7 +91,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_URL, $endpoint);
+        curl_setopt($ch, CURLOPT_URL, $gatewayPagamento->getEndpoint());
 
         $response = curl_exec($ch);
 
@@ -131,7 +113,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $this->atribuirPedidos($this->pedidosArray, $data['data']);
 
         // Paginação
-        $parsedUrl = parse_url($endpoint);
+        $parsedUrl = parse_url($gatewayPagamento->getEndpoint());
         parse_str($parsedUrl['query'], $queryParams);
 
         $size = intval($queryParams['size']);
