@@ -23,31 +23,31 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                 //verificar endpoint
                 $endpointFragmentado = explode('/', $gatewayPagamento->getEndpoint());
 
+                $url = $gatewayPagamento->getEndpoint() . '?page=1&size=30';
+
+                // Verificar o parâmetro de status
+                if (!is_null($status)) {
+                    $url .= "&status=$status";
+                }
+
+                // Definir o período de tempo de análise
+                $dataAtual = new DateTime();
+                $anoAtual = intval($dataAtual->format('Y'));
+
+                $anoAnalise = $anoAtual - 1;
+                $dataAnalise = new DateTime("{$anoAnalise}-12-01");
+                $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
+
+                $url .= "&created_since=$dataAnaliseFormatada";
+
+                $gatewayPagamento->setEndpoint($url);
+
                 if (end($endpointFragmentado) === 'orders') {
-
-                    $url = $gatewayPagamento->getEndpoint() . '?page=1&size=30';
-
-                    // Verificar o parâmetro de status
-                    if (!is_null($status)) {
-                        $url .= "&status=$status";
-                    }
-
-                    // Definir o período de tempo de análise
-                    $dataAtual = new DateTime();
-                    $anoAtual = intval($dataAtual->format('Y'));
-
-                    $anoAnalise = $anoAtual - 1;
-                    $dataAnalise = new DateTime("{$anoAnalise}-12-01");
-                    $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
-
-                    $url .= "&created_since=$dataAnaliseFormatada";
-
-                    $gatewayPagamento->setEndpoint($url);
-
                     // Realizar requisições
                     $this->requisicaoPedidos($gatewayPagamento);
-                } elseif (end($endpointFragmentado) === 'subscriptions'){
+                } elseif (end($endpointFragmentado) === 'subscriptions') {
                     //chamar função getSubscriptions quando a mesma for implementada
+                    $this->requisicaoPedidos($gatewayPagamento, "https://api.pagar.me/core/v5/invoices?page=1&size=30&status=$status&created_since=$dataAnaliseFormatada");
                 }
             }
 
@@ -55,10 +55,16 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
             $contribuicaoLogCollection = new ContribuicaoLogCollection();
             foreach ($this->pedidosArray as $pedido) {
                 $contribuicaoLog = new ContribuicaoLog();
-                $contribuicaoLog->setCodigo($pedido['id']);
 
-                //transformar a data de pagamento para a estrtutura aceita pelo MySQL
-                $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charges'][0]['paid_at'])->format('Y-m-d H:i:s');
+                if (key_exists('subscription', $pedido)) {
+                    $contribuicaoLog->setCodigo($pedido['subscription']['id']);
+                    //transformar a data de pagamento para a estrtutura aceita pelo MySQL
+                    $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charge']['paid_at'])->format('Y-m-d H:i:s');
+                } else {
+                    $contribuicaoLog->setCodigo($pedido['id']);
+                    //transformar a data de pagamento para a estrtutura aceita pelo MySQL
+                    $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charges'][0]['paid_at'])->format('Y-m-d H:i:s');
+                }
 
                 $contribuicaoLog->setDataPagamento($dataPagamento);
                 $contribuicaoLogCollection->add($contribuicaoLog);
@@ -75,17 +81,26 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
     }
 
     //Pega as contribuições do endpoint orders
-    private function getOrders() {
+    private function getOrders()
+    {
         //futuramente transferir parte do código que for inerente de orders de requisicaoPedidos para cá.
     }
 
     //Pega as contribuições do endpoint subscription
-    private function getSubscriptions() {
+    private function getSubscriptions()
+    {
         //implementar instruções para pegar as subscriptions da api.
     }
 
-    private function requisicaoPedidos(GatewayPagamento $gatewayPagamento)
+    //Pega as faturas da API
+    private function getInvoices() {}
+
+    private function requisicaoPedidos(GatewayPagamento $gatewayPagamento, string $endpoint = null)
     {
+        if (is_null($endpoint)) {
+            $endpoint = $gatewayPagamento->getEndpoint();
+        }
+
         $headers = [
             'Authorization: Basic ' . base64_encode($gatewayPagamento->getToken() . ':'),
             'Content-Type: application/json;charset=utf-8',
@@ -94,7 +109,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_URL, $gatewayPagamento->getEndpoint());
+        curl_setopt($ch, CURLOPT_URL, $endpoint);
 
         $response = curl_exec($ch);
 
@@ -116,7 +131,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $this->atribuirPedidos($this->pedidosArray, $data['data']);
 
         // Paginação
-        $parsedUrl = parse_url($gatewayPagamento->getEndpoint());
+        $parsedUrl = parse_url($endpoint);
         parse_str($parsedUrl['query'], $queryParams);
 
         $size = intval($queryParams['size']);
