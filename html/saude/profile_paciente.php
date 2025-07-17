@@ -295,14 +295,7 @@ try {
   .small-text {
     font-size: small;
   }
-  table td, table th {
-    word-wrap: break-word;
-    white-space: normal;
-  }
-  table {
-    table-layout: fixed;
-    width: 100%;
-  }
+  
 </style>
 
 
