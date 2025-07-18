@@ -16,6 +16,22 @@ class Util
     }
 
     /**
+     * Gera um código completamente aleatório (Xablau)
+     */
+    public static function gerarCodigoAleatorio()
+    {
+        $numeroDePartes = rand(2, 5); // entre 2 e 5 partes
+        $codigo = [];
+
+        for ($i = 0; $i < $numeroDePartes; $i++) {
+            $tamanho = rand(8, 20); // cada parte terá entre 8 e 20 caracteres
+            $codigo[] = bin2hex(random_bytes(intval($tamanho / 2)));
+        }
+
+        return implode('-', $codigo);
+    }
+
+    /**
      * Retorna apenas os números de um CPF
      */
     public static function limpaCpf($cpf)
