@@ -85,9 +85,13 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null, $data = null)
 			include_once $nomeClasse . ".php";
 		}
 
-		// Cria uma instância da classe e chama o método
 		$objeto = new $nomeClasse();
-		$objeto->$metodo($data);
+		
+		if (!is_null($data)) {
+			$objeto->$metodo($data);
+		} else {
+			$objeto->$metodo();
+		}
 	} else {
 		// Responde com erro se as variáveis necessárias não foram fornecidas
 		http_response_code(400);
@@ -107,8 +111,16 @@ if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'applica
 	$metodo = $data['metodo'] ?? null;
 	$modulo = $data['modulo'] ?? null;
 
-	// Processa a requisição
-	processaRequisicao($nomeClasse, $metodo, $modulo, $data);
+	// Remove as chaves de controle para verificar se há dados adicionais
+	$dadosExtras = $data;
+	unset($dadosExtras['nomeClasse'], $dadosExtras['metodo'], $dadosExtras['modulo']);
+
+	// Processa a requisição com ou sem dados adicionais
+	if (!empty($dadosExtras)) {
+		processaRequisicao($nomeClasse, $metodo, $modulo, $dadosExtras);
+	} else {
+		processaRequisicao($nomeClasse, $metodo, $modulo);
+	}
 } else {
 	// Recebe os dados do formulário normalmente
 	$nomeClasse = $_REQUEST['nomeClasse'] ?? null;
@@ -116,10 +128,15 @@ if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'applica
 	$modulo = $_REQUEST['modulo'] ?? null;
 
 	$json = file_get_contents('php://input');
-	// Decodifica o JSON
 	$data = json_decode($json, true);
 
-	// Processa a requisição
-	processaRequisicao($nomeClasse, $metodo, $modulo, $data);
-	
+	$dadosExtras = $data;
+	unset($dadosExtras['nomeClasse'], $dadosExtras['metodo'], $dadosExtras['modulo']);
+
+	if (!empty($dadosExtras)) {
+		processaRequisicao($nomeClasse, $metodo, $modulo, $dadosExtras);
+	} else {
+		processaRequisicao($nomeClasse, $metodo, $modulo);
+	}
 }
+
