@@ -67,6 +67,15 @@ if ($action == "download" || $g_action == "download") {
         echo "[{'exception': ['$th'], 'action': ['post': '$action', 'get': '$g_action'], 'id_doc': ['post': '$id_doc', 'get': '$g_id_doc']}]";
     }
 } else if ($action = "adicionar" || $g_action == "adicionar") {
+
+    $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+
+    if(!$nome || strlen($nome) < 1){
+        http_response_code(400);
+        echo json_encode(['erro' => 'O nome do documento fornecido é inválido.']);
+        exit();
+    }
+
     $sql = [
         "INSERT INTO funcionario_docdependentes (nome_docdependente) VALUES (:n);",
         "SELECT * FROM funcionario_docdependentes;"
@@ -77,11 +86,14 @@ if ($action == "download" || $g_action == "download") {
         $prep->execute();
         $query = $pdo->query($sql[1]);
         $docdependente = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach($docdependente as $key => $value){
+            $docdependente[$key]['nome_docdependente'] = htmlspecialchars($value['nome_docdependente']);
+        }
+
         $docdependente = json_encode($docdependente);
         echo $docdependente;
     } catch (PDOException $th) {
         echo "[{'exception': ['$th'], 'action': ['post': '$action', 'get': '$g_action'], 'id_doc': ['post': '$id_doc', 'get': '$g_id_doc']}]";
     }
 }
-
-die();
