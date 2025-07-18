@@ -12,36 +12,39 @@ if(file_exists($PetDAO_path)){
 }
 
 class AtendimentoControle{
-
-    public function registrarAtendimento(){
-        extract($_REQUEST);
-        $vrfcr = 0;
-
-        if( empty($dataAtendimento) || !isset($dataAtendimento) ){
-            $vrfcr = 1;
+    public function registrarAtendimento($data) {
+        if (
+            empty($data['dataAtendimento']) ||
+            empty($data['descricaoAtendimento']) ||
+            empty($data['medicamento']) || // Cuidado com o nome correto!
+            empty($data['idpet'])
+        ) {
+            echo json_encode(['erro' => 'Preencha todos os campos obrigatórios.']);
+            http_response_code(400);
+            return;
         }
+        $idFichaMedica = $data['idpet'];
+        $dataAtendimento = $data['dataAtendimento'];
+        $descricaoAtendimento = $data['descricaoAtendimento'];
 
-        if( empty($descricaoAtendimento) || !isset($descricaoAtendimento) ){
-            $vrfcr = 1;
-        }
-
-        if( empty($medics) || !isset($medics) ){
-            $vrfcr = 1;
-        }
-
-        if( empty($id_pet) || !isset($id_pet)){
-            $vrfcr = 1;
-        }
-
-        if( $vrfcr == 1){
-            header("Location: ../../html/pet/erro.php?id_pet=".$id_pet);
-            //controle/pet/erro.php
-        }else{
-            $c = new SaudePetDAO();
-            $c->registrarAtendimento();
-            header("Location: ../../html/pet/profile_pet.php?id_pet=".$id_pet);
-        }
-
+        $dao = new SaudePetDAO();
+        $dao->registrar_atendimento_pet($idFichaMedica, $dataAtendimento, $descricaoAtendimento); // ou use os campos separadamente
+    
+        echo json_encode(['sucesso' => 'Atendimento registrado com sucesso.']);
     }
+    public function obterMedicamentoPet($data){
+        if(empty($data['id'] || !isset($data['id']))){
+            http_response_code(400);
+            die(json_encode(['erro'=>'campo id não preenchido']));
+        }
+        $id = $data['id'];
 
+        $dao = new SaudePetDAO();
+        
+        
+
+        $resultado = $dao->obterMedicamento($id);
+        die(json_encode($resultado));
+    }
+    
 }
