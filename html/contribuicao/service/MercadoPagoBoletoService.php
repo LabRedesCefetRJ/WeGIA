@@ -9,7 +9,7 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
     {
         //Xablau
         //gerar um número para o documento
-        $numeroDocumento = Util::gerarCodigoAleatorio(16);
+        $numeroDocumento = Util::gerarCodigoAleatorio();
 
         //Validar regras
 
