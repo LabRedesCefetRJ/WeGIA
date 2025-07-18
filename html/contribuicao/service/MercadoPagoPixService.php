@@ -120,12 +120,11 @@ class MercadoPagoPixService implements ApiPixServiceInterface
         if ($responseData['status'] === 'pending') {
             // Gera um qr_code
             $qr_code_url = $responseData['point_of_interaction']['transaction_data']['qr_code_base64'];
-            $qr_code_url = file_get_contents($qr_code_url);
 
             $qr_code = $responseData['point_of_interaction']['transaction_data']['qr_code'];
             $idPedido = $responseData['id'];
             //envia o link da url
-            echo json_encode(['qrcode' => base64_encode($qr_code_url), 'copiaCola' => $qr_code]); //enviar posteriormente a cópia do QR para área de transferência junto
+            echo json_encode(['qrcode' => $qr_code_url, 'copiaCola' => $qr_code]); //enviar posteriormente a cópia do QR para área de transferência junto
             return $idPedido;
         } else {
             echo json_encode(["erro" => "Houve um erro ao gerar o QR CODE de pagamento. Verifique se as informações fornecidas são válidas."]);
