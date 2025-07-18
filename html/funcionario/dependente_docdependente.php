@@ -1,8 +1,14 @@
 <?php
+//realizar as sugestões de alteração da issue #311
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit();
+} else {
+    session_regenerate_id();
 }
 
 // Verifica Permissão do Usuário
@@ -11,12 +17,17 @@ permissao($_SESSION['id_pessoa'], 11, 7);
 
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
-extract($_POST);
-$id_doc = $_POST["id_doc"] ?? null;
-$action = $_POST["action"] ?? null;
-$g_id_doc = $_GET["id_doc"] ?? null;
-$g_action = $_GET["action"] ?? null;
 
+$idDoc = filter_var($_REQUEST["id_doc"], FILTER_SANITIZE_NUMBER_INT);
+$action = filter_var($_REQUEST["action"], FILTER_SANITIZE_SPECIAL_CHARS);
+
+$actions = ['download', 'excluir', 'adicionar'];
+
+if (!$action || !in_array($action, $actions)) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'A ação informada não é válida.']);
+    exit();
+}
 
 define("TYPEOF_EXTENSION", [
     'jpg' => 'image/jpg',
@@ -28,12 +39,37 @@ define("TYPEOF_EXTENSION", [
     'odp' => 'application/odp',
 ]);
 
-if ($action == "download" || $g_action == "download") {
+switch ($action) {
+    case 'download':
+        download($pdo, $idDoc);
+        break;
+    case 'excluir':
+        excluir($pdo, $idDoc);
+        break;
+    case 'adicionar':
+        adicionar($pdo);
+}
+
+function validarIdDoc(int $id): bool
+{
+    if (!$id || $id < 1)
+        return false;
+    return true;
+}
+
+function download(PDO $pdo, int $idDoc)
+{
+    if (!validarIdDoc($idDoc)) {
+        http_response_code(400);
+        echo json_encode(['erro' => 'O id fornecido para o documento não é válido.']);
+        exit();
+    }
+
     $sql = "SELECT extensao_arquivo, nome_arquivo, UNCOMPRESS(arquivo) AS arquivo FROM funcionario_dependentes_docs WHERE id_doc=:idDoc";
     try {
         $stmt = $pdo->prepare($sql);
 
-        $stmt->bindParam(':idDoc', $g_id_doc);
+        $stmt->bindParam(':idDoc', $idDoc);
 
         $stmt->execute();
 
@@ -43,17 +79,28 @@ if ($action == "download" || $g_action == "download") {
         ob_clean();
         flush();
         echo base64_decode($docdependente["arquivo"]);
-    } catch (PDOException $th) {
-        echo "[{'exception': ['$th'], 'action': ['post': '$action', 'get': '$g_action'], 'id_doc': ['post': '$id_doc', 'get': '$g_id_doc']}]";
+    } catch (PDOException $e) {
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+        http_response_code($e->getCode());
+        echo json_encode(['erro' => 'Erro no servidor ao baixar uma documentação.']);
     }
-} else if ($action == "excluir" || $g_action == "excluir") {
+}
+
+function excluir(PDO $pdo, int $idDoc)
+{
+    if (!validarIdDoc($idDoc)) {
+        http_response_code(400);
+        echo json_encode(['erro' => 'O id fornecido para o documento não é válido.']);
+        exit();
+    }
+
     $sql1 = "DELETE FROM funcionario_dependentes_docs WHERE id_doc=:idDoc";
 
     $sql2 = "SELECT doc.nome_docdependente AS descricao, ddoc.data, ddoc.id_doc FROM funcionario_dependentes_docs ddoc LEFT JOIN funcionario_docdependentes doc ON doc.id_docdependentes = ddoc.id_docdependentes WHERE ddoc.id_dependente=:idDependente";
 
     try {
         $stmt1 = $pdo->prepare($sql1);
-        $stmt1->bindParam(':idDoc', $id_doc);
+        $stmt1->bindParam(':idDoc', $idDoc);
         $stmt1->execute();
 
         $stmt2 = $pdo->prepare($sql2);
@@ -63,14 +110,18 @@ if ($action == "download" || $g_action == "download") {
         $docdependente = $stmt2->fetchAll(PDO::FETCH_ASSOC);
         $docdependente = json_encode($docdependente);
         echo $docdependente;
-    } catch (PDOException $th) {
-        echo "[{'exception': ['$th'], 'action': ['post': '$action', 'get': '$g_action'], 'id_doc': ['post': '$id_doc', 'get': '$g_id_doc']}]";
+    } catch (PDOException $e) {
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+        http_response_code($e->getCode());
+        echo json_encode(['erro' => 'Erro no servidor ao excluir uma documentação']);
     }
-} else if ($action = "adicionar" || $g_action == "adicionar") {
+}
 
+function adicionar(PDO $pdo)
+{
     $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
 
-    if(!$nome || strlen($nome) < 1){
+    if (!$nome || strlen($nome) < 1) {
         http_response_code(400);
         echo json_encode(['erro' => 'O nome do documento fornecido é inválido.']);
         exit();
@@ -87,13 +138,15 @@ if ($action == "download" || $g_action == "download") {
         $query = $pdo->query($sql[1]);
         $docdependente = $query->fetchAll(PDO::FETCH_ASSOC);
 
-        foreach($docdependente as $key => $value){
+        foreach ($docdependente as $key => $value) {
             $docdependente[$key]['nome_docdependente'] = htmlspecialchars($value['nome_docdependente']);
         }
 
         $docdependente = json_encode($docdependente);
         echo $docdependente;
-    } catch (PDOException $th) {
-        echo "[{'exception': ['$th'], 'action': ['post': '$action', 'get': '$g_action'], 'id_doc': ['post': '$id_doc', 'get': '$g_id_doc']}]";
+    } catch (PDOException $e) {
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+        http_response_code($e->getCode());
+        echo json_encode(['erro' => 'Erro no servidor ao adicionar uma documentação.']);
     }
 }
