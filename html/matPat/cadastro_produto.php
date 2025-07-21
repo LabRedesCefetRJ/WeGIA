@@ -58,7 +58,7 @@ require_once ROOT . "/html/geral/msg.php";
 	include_once ROOT .'/dao/UnidadeDAO.php';
 
 	if (!isset($_SESSION['unidade'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=' . WWW . 'html/matPat/cadastro_produto.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
 	}
 	if (!isset($_SESSION['categoria'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=' . WWW . 'html/matPat/cadastro_produto.php');

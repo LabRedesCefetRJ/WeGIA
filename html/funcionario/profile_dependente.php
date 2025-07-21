@@ -1,55 +1,58 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-extract($_REQUEST);
-session_start();
-require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
-function urlGetParams()
-{
-    $params = "?";
-    $first = true;
-    foreach ($_GET as $key => $value) {
-        $params .= ($first ? "" : "&") . $key . "=" . $value;
-        $first = false;
-    }
-    return $params;
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
+
+if (!isset($_SESSION['usuario'])) {
+    header('Location: ../../index.php');
+    exit();
 }
+
 require_once "../permissao/permissao.php";
 permissao($_SESSION['id_pessoa'], 11, 7);
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$situacao = $mysqli->query("SELECT * FROM situacao");
-$cargo = $mysqli->query("SELECT * FROM cargo");
-//$beneficios = $mysqli->query("SELECT * FROM beneficios");
-//$descricao_epi = $mysqli->query("SELECT * FROM epi");
-// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+
 require_once "../personalizacao_display.php";
-require_once "../../dao/Conexao.php";
-require_once ROOT . "/controle/FuncionarioControle.php";
-$cpf = new FuncionarioControle;
-$cpf->listarCPF();
-require_once ROOT . "/controle/AtendidoControle.php";
-$cpf1 = new AtendidoControle;
-$cpf1->listarCPF();
 require_once "../geral/msg.php";
-$dependente = $pdo->query("SELECT *, par.descricao AS parentesco FROM funcionario_dependentes fdep LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco WHERE fdep.id_dependente = " . $_GET['id_dependente']);
-$dependente = $dependente->fetch(PDO::FETCH_ASSOC);
-$dependente["nome_funcionario"] = ($pdo->query("SELECT p.nome FROM funcionario f LEFT JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE f.id_funcionario = " . $dependente["id_funcionario"] . ";")->fetch(PDO::FETCH_ASSOC))["nome"];
-$dependente["sobrenome_funcionario"] = ($pdo->query("SELECT p.sobrenome FROM funcionario f LEFT JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE f.id_funcionario = " . $dependente["id_funcionario"] . ";")->fetch(PDO::FETCH_ASSOC))["sobrenome"];
-$id_pessoa = $dependente["id_pessoa"];
-$id_dependente = $dependente["id_dependente"];
-$JSON_dependente = json_encode($dependente);
+require_once "../../dao/Conexao.php";
+
+try {
+    $pdo = Conexao::connect();
+
+    $id = filter_input(INPUT_GET, 'id_dependente', FILTER_SANITIZE_NUMBER_INT);
+
+    if (!$id || $id < 1) {
+        http_response_code(400);
+        exit('O id do dependente informado não é válido.');
+    }
+
+    $sql = "
+    SELECT 
+        fdep.*, 
+        p.nome AS nome_dependente, 
+        p.sobrenome AS sobrenome_dependente,
+        par.descricao AS parentesco,
+        pf.nome AS nome_funcionario,
+        pf.sobrenome AS sobrenome_funcionario
+    FROM funcionario_dependentes fdep
+    LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
+    LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario
+    LEFT JOIN pessoa pf ON pf.id_pessoa = f.id_pessoa
+    LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
+    WHERE fdep.id_dependente = :id_dependente
+";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':id_dependente' => $id]);
+    $dependente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $id_pessoa = $dependente["id_pessoa"];
+    $id_dependente = $dependente["id_dependente"];
+    $JSON_dependente = json_encode($dependente);
+} catch (PDOException $e) {
+    http_response_code(500);
+    exit('Erro ao buscar informações do dependente no banco de dados da aplicação');
+}
+
 ?>
 <!doctype html>
 <html class="fixed">
@@ -116,7 +119,7 @@ $JSON_dependente = json_encode($dependente);
     <script>
         var dependente = <?= $JSON_dependente; ?>;
         var url = "dependente_listar_um.php",
-            data = "id_dependente=<?= $_GET["id_dependente"] ?>";
+            data = "id_dependente=<?=$id_dependente?>";
         var formState = [],
             form = {
                 set: function(id, dep) {
@@ -240,7 +243,7 @@ $JSON_dependente = json_encode($dependente);
             post(url, "id_pessoa=" + dependente.id_pessoa + "&" + data);
             getInfoDependente(idForm);
         }
-        var id_dependente = <?= $_GET['id_dependente'] ?? null; ?>;
+        var id_dependente = <?=$id_dependente?>;
         $(function() {
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
@@ -529,7 +532,7 @@ $JSON_dependente = json_encode($dependente);
                                                 function Onlychars(e) {
                                                     var input = e.target;
                                                     input.value = input.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
-                                                    console.log("Filtered Input:", input.value); 
+                                                    console.log("Filtered Input:", input.value);
                                                 }
                                             </script>
                                             <div class="form-group">
@@ -607,7 +610,7 @@ $JSON_dependente = json_encode($dependente);
                                                                     <label for="arquivoDocumento">Arquivo do Documento</label>
                                                                     <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
                                                                 </div>
-                                                                <input type="number" name="id_dependente" value="<?= $_GET['id_dependente']; ?>" style='display: none;'>
+                                                                <input type="number" name="id_dependente" value="<?=$id_dependente?>" style='display: none;'>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>

@@ -1,5 +1,6 @@
 <?php
-class Cargo
+//implementar JsonSerializable
+class Cargo implements JsonSerializable
 {
     private $id_cargo;
     private $cargo;
@@ -10,6 +11,14 @@ class Cargo
         if($id){
             $this->setId_cargo($id);
         }
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return [
+            'id_cargo' => $this->id_cargo,
+            'cargo' => $this->cargo
+        ];
     }
 
     public function getId_cargo()
