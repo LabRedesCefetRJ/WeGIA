@@ -14,11 +14,6 @@ if (!isset($_SESSION['usuario'])) {
   exit(401);
 }
 
-if (!isset($_SESSION['id_fichamedica'])) {
-  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/profile_paciente.php');
-  exit(400);
-}
-
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
