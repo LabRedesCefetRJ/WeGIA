@@ -1,9 +1,19 @@
 <?php
-require_once '../../dao/Conexao.php';
+//Aplicar correções sugeridas pela issue #250
+if(session_status() === PHP_SESSION_NONE){
+	session_start();
+}
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR .'permissao.php';
+
+if(!isset($_SESSION['usuario'])){
+	header('Location: ../../index.php');
+	exit(401);
+}
+
+permissao($_SESSION['id_pessoa'], 54, 7);
+
+require_once '../../dao/Conexao.php';
 
 //Sanitização das variáveis
 $enfermidadeCid = filter_input(INPUT_POST, 'cid', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -33,5 +43,7 @@ try {
 	$stmt->bindParam('enfermidadeNome', $enfermidadeNome);
 	$stmt->execute();
 } catch (PDOException $e) {
-	echo json_encode(['erro' => 'Erro ao cadastrar enfermidade: ' . $e->getMessage()]);
+	error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+	http_response_code($e->getCode());
+	echo json_encode(['erro' => 'Erro no servidor ao adicionar enfermidade.']);
 }
