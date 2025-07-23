@@ -38,27 +38,213 @@ class EmailService {
         $this->carregarConfiguracoes();
     }
     
+    /**
+     * Obter configurações SMTP ativas do banco de dados
+     */
+    public function obterConfiguracoesBanco() {
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM smtp_config WHERE smtp_ativo = 1 LIMIT 1");
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Erro ao obter configurações SMTP: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Salvar configurações SMTP no banco de dados
+     */
+    public function salvarConfiguracoesBanco($config) {
+        try {
+            $this->pdo->beginTransaction();
+            
+            // Verifica se já existe uma configuração ativa
+            $stmt = $this->pdo->prepare("SELECT smtp_id FROM smtp_config WHERE smtp_ativo = 1 LIMIT 1");
+            $stmt->execute();
+            $configExistente = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($configExistente) {
+                // Atualiza a configuração existente
+                if ($config['smtp_ativo']) {
+                    $stmt = $this->pdo->prepare("
+                        UPDATE smtp_config SET 
+                            smtp_host = :host,
+                            smtp_port = :port,
+                            smtp_user = :user,
+                            smtp_password = :password,
+                            smtp_secure = :secure,
+                            smtp_from_email = :from_email,
+                            smtp_from_name = :from_name,
+                            smtp_ativo = 1
+                        WHERE smtp_id = :id
+                    ");
+                    
+                    $stmt->execute([
+                        ':host' => $config['host'],
+                        ':port' => $config['port'],
+                        ':user' => $config['user'],
+                        ':password' => $config['password'],
+                        ':secure' => $config['secure'],
+                        ':from_email' => $config['from_email'],
+                        ':from_name' => $config['from_name'],
+                        ':id' => $configExistente['smtp_id']
+                    ]);
+                } else {
+                    // Desativa a configuração existente
+                    $stmt = $this->pdo->prepare("UPDATE smtp_config SET smtp_ativo = 0 WHERE smtp_id = :id");
+                    $stmt->execute([':id' => $configExistente['smtp_id']]);
+                }
+            } else {
+                // Não existe configuração, cria uma nova apenas se SMTP estiver habilitado
+                if ($config['smtp_ativo']) {
+                    $stmt = $this->pdo->prepare("
+                        INSERT INTO smtp_config (
+                            smtp_host, smtp_port, smtp_user, smtp_password, 
+                            smtp_secure, smtp_from_email, smtp_from_name, smtp_ativo
+                        ) VALUES (
+                            :host, :port, :user, :password, :secure, 
+                            :from_email, :from_name, 1
+                        )
+                    ");
+                    
+                    $stmt->execute([
+                        ':host' => $config['host'],
+                        ':port' => $config['port'],
+                        ':user' => $config['user'],
+                        ':password' => $config['password'],
+                        ':secure' => $config['secure'],
+                        ':from_email' => $config['from_email'],
+                        ':from_name' => $config['from_name']
+                    ]);
+                }
+            }
+            
+            $this->pdo->commit();
+            
+            // Recarrega as configurações após salvar
+            $this->carregarConfiguracoes();
+            
+            return true;
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw new Exception("Erro ao salvar configurações SMTP: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Validar dados de configuração SMTP
+     */
+    public function validarConfiguracao($dados) {
+        $erros = [];
+        
+        $smtp_enabled = isset($dados['smtp_enabled']) ? 1 : 0;
+        
+        if ($smtp_enabled) {
+            // Validações obrigatórias quando SMTP está habilitado
+            if (empty(trim($dados['smtp_host'] ?? ''))) {
+                $erros[] = 'Servidor SMTP é obrigatório';
+            }
+            
+            $port = $dados['smtp_port'] ?? '';
+            if (empty($port) || !is_numeric($port) || $port < 1 || $port > 65535) {
+                $erros[] = 'Porta deve ser um número válido entre 1 e 65535';
+            }
+            
+            $username = trim($dados['smtp_username'] ?? '');
+            if (empty($username) || !filter_var($username, FILTER_VALIDATE_EMAIL)) {
+                $erros[] = 'Email de usuário deve ser um email válido';
+            }
+            
+            if (empty(trim($dados['smtp_password'] ?? ''))) {
+                $erros[] = 'Senha é obrigatória';
+            }
+            
+            $from_email = trim($dados['smtp_from_email'] ?? '');
+            if (empty($from_email) || !filter_var($from_email, FILTER_VALIDATE_EMAIL)) {
+                $erros[] = 'Email do remetente deve ser um email válido';
+            }
+            
+            if (empty(trim($dados['smtp_from_name'] ?? ''))) {
+                $erros[] = 'Nome do remetente é obrigatório';
+            }
+        }
+        
+        return $erros;
+    }
+    
+    /**
+     * Processar dados do formulário e preparar para salvamento
+     */
+    public function processarDadosFormulario($dados) {
+        return [
+            'host' => trim($dados['smtp_host'] ?? ''),
+            'port' => $dados['smtp_port'] ?? '587',
+            'user' => trim($dados['smtp_username'] ?? ''),
+            'password' => $dados['smtp_password'] ?? '',
+            'secure' => $dados['smtp_encryption'] ?? 'tls',
+            'from_email' => trim($dados['smtp_from_email'] ?? ''),
+            'from_name' => trim($dados['smtp_from_name'] ?? ''),
+            'smtp_ativo' => isset($dados['smtp_enabled']) ? 1 : 0
+        ];
+    }
+    
     //Função para carregar as configurações da tabela smtp no bd
     private function carregarConfiguracoes() {
-        $stmt = $this->pdo->prepare("
-            SELECT 
-                smtp_host,
-                smtp_port,
-                smtp_user,
-                smtp_password,
-                smtp_secure,
-                smtp_from_email,
-                smtp_from_name,
-                smtp_ativo
-            FROM smtp_config 
-            WHERE smtp_ativo = 1 
-            LIMIT 1
-        ");
-        $stmt->execute();
-        $config = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$config) {
-            // Configuração padrão se não houver ativa
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    smtp_host,
+                    smtp_port,
+                    smtp_user,
+                    smtp_password,
+                    smtp_secure,
+                    smtp_from_email,
+                    smtp_from_name,
+                    smtp_ativo
+                FROM smtp_config 
+                WHERE smtp_ativo = 1 
+                LIMIT 1
+            ");
+            $stmt->execute();
+            $config = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$config) {
+                // Configuração padrão se não houver ativa
+                $this->config = [
+                    'smtp_enabled' => '0',
+                    'smtp_host' => '',
+                    'smtp_port' => '587',
+                    'smtp_username' => '',
+                    'smtp_password' => '',
+                    'smtp_encryption' => 'tls',
+                    'smtp_from_email' => '',
+                    'smtp_from_name' => ''
+                ];
+                return;
+            }
+
+            $this->config = [
+                'smtp_enabled' => $config['smtp_ativo'] ? '1' : '0',
+                'smtp_host' => trim($config['smtp_host']),
+                'smtp_port' => $config['smtp_port'],
+                'smtp_username' => trim($config['smtp_user']),
+                'smtp_password' => $config['smtp_password'],
+                'smtp_encryption' => $config['smtp_secure'] ?: 'tls',
+                'smtp_from_email' => trim($config['smtp_from_email']),
+                'smtp_from_name' => trim($config['smtp_from_name'])
+            ];
+            
+            //Valores padrão e validações
+            if (empty($this->config['smtp_port']) || !is_numeric($this->config['smtp_port'])) {
+                $this->config['smtp_port'] = '587';
+            }
+            if (empty($this->config['smtp_encryption'])) {
+                $this->config['smtp_encryption'] = 'tls';
+            }
+            
+        } catch (Exception $e) {
+            // Em caso de erro, usar configuração padrão
             $this->config = [
                 'smtp_enabled' => '0',
                 'smtp_host' => '',
@@ -69,26 +255,6 @@ class EmailService {
                 'smtp_from_email' => '',
                 'smtp_from_name' => ''
             ];
-            return;
-        }
-
-        $this->config = [
-            'smtp_enabled' => $config['smtp_ativo'] ? '1' : '0',
-            'smtp_host' => $config['smtp_host'],
-            'smtp_port' => $config['smtp_port'],
-            'smtp_username' => $config['smtp_user'],
-            'smtp_password' => $config['smtp_password'],
-            'smtp_encryption' => $config['smtp_secure'] ?: 'tls',
-            'smtp_from_email' => $config['smtp_from_email'],
-            'smtp_from_name' => $config['smtp_from_name']
-        ];
-        
-        //Valores padrão
-        if (empty($this->config['smtp_port'])) {
-            $this->config['smtp_port'] = '587';
-        }
-        if (empty($this->config['smtp_encryption'])) {
-            $this->config['smtp_encryption'] = 'tls';
         }
     }
     
@@ -106,6 +272,28 @@ class EmailService {
     
     public function enviarEmail($destinatario, $assunto, $mensagem, $nomeDestinatario = '', $anexos = []) {
         try {
+            // Validações básicas
+            if (!filter_var($destinatario, FILTER_VALIDATE_EMAIL)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email de destinatário inválido: ' . $destinatario
+                ];
+            }
+            
+            if (empty(trim($assunto))) {
+                return [
+                    'success' => false,
+                    'message' => 'Assunto do email não pode estar vazio'
+                ];
+            }
+            
+            if (empty(trim($mensagem))) {
+                return [
+                    'success' => false,
+                    'message' => 'Mensagem do email não pode estar vazia'
+                ];
+            }
+            
             if (!$this->isEnabled()) {
                 return [
                     'success' => false,
@@ -122,6 +310,9 @@ class EmailService {
             
             $mail = new PHPMailer(true);
             
+            // Configurações de debug (desabilitado em produção)
+            // $mail->SMTPDebug = SMTP::DEBUG_SERVER;
+            
             //CFG do servidor SMTP
             $mail->isSMTP();
             $mail->Host = $this->config['smtp_host'];
@@ -129,6 +320,10 @@ class EmailService {
             $mail->Username = $this->config['smtp_username'];
             $mail->Password = $this->config['smtp_password'];
             $mail->Port = (int)$this->config['smtp_port'];
+            
+            // Timeout para conexão
+            $mail->Timeout = 30;
+            $mail->SMTPKeepAlive = true;
             
             //Configurar criptografia
             if ($this->config['smtp_encryption'] === 'ssl') {
@@ -148,9 +343,11 @@ class EmailService {
             $mail->addAddress($destinatario, $nomeDestinatario);
             
             //Adicionar anexos se fornecidos
-            foreach ($anexos as $anexo) {
-                if (file_exists($anexo)) {
-                    $mail->addAttachment($anexo);
+            if (!empty($anexos) && is_array($anexos)) {
+                foreach ($anexos as $anexo) {
+                    if (is_string($anexo) && file_exists($anexo)) {
+                        $mail->addAttachment($anexo);
+                    }
                 }
             }
 
@@ -158,13 +355,14 @@ class EmailService {
             $mail->Subject = $assunto;
             $mail->Body = $this->formatarMensagem($mensagem);
             
-            
+            // Versão texto alternativa
+            $mail->AltBody = strip_tags($mensagem);
             
             $mail->send();
             
             return [
                 'success' => true,
-                'message' => 'Email enviado com sucesso'
+                'message' => 'Email enviado com sucesso para ' . $destinatario
             ];
             
         } catch (Exception $e) {
@@ -269,6 +467,14 @@ class EmailService {
         $config = $this->config;
         unset($config['smtp_password']); // Não retornar a senha
         return $config;
+    }
+    
+    /**
+     * Recarrega as configurações do banco de dados
+     * Útil quando as configurações são alteradas durante a execução
+     */
+    public function recarregarConfiguracoes() {
+        $this->carregarConfiguracoes();
     }
 }
 ?>

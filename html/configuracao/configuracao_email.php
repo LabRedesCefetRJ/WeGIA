@@ -15,82 +15,37 @@
 	require_once "../geral/msg.php";
 
 	require_once "../../dao/Conexao.php";
+	require_once "../geral/servico_email.php";
+	
 	$pdo = Conexao::connect();
-
-	//obter configurações SMTP ativas
-	function obterSmtpConfig($pdo) {
-		$stmt = $pdo->prepare("SELECT * FROM smtp_config WHERE smtp_ativo = 1 LIMIT 1");
-		$stmt->execute();
-		return $stmt->fetch(PDO::FETCH_ASSOC);
-	}
-
-	//salvar configurações SMTP
-	function salvarSmtpConfig($pdo, $config) {
-		try {
-			$pdo->beginTransaction();
-			
-			//Desativa todas as configurações existentes
-			$stmt = $pdo->prepare("UPDATE smtp_config SET smtp_ativo = 0");
-			$stmt->execute();
-			
-			//Se o SMTP está habilitado, insere nova configuração ativa
-			if ($config['smtp_ativo']) {
-				$stmt = $pdo->prepare("
-					INSERT INTO smtp_config (
-						smtp_host, smtp_port, smtp_user, smtp_password, 
-						smtp_secure, smtp_from_email, smtp_from_name, smtp_ativo
-					) VALUES (
-						:host, :port, :user, :password, :secure, 
-						:from_email, :from_name, 1
-					)
-				");
-				
-				$stmt->execute([
-					':host' => $config['host'],
-					':port' => $config['port'],
-					':user' => $config['user'],
-					':password' => $config['password'],
-					':secure' => $config['secure'],
-					':from_email' => $config['from_email'],
-					':from_name' => $config['from_name']
-				]);
-			}
-			
-			$pdo->commit();
-			return true;
-		} catch (Exception $e) {
-			$pdo->rollBack();
-			throw $e;
-		}
-	}
+	$emailService = new EmailService($pdo);
 
 	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		try {
-			$config = [
-				'host' => $_POST['smtp_host'] ?? '',
-				'port' => $_POST['smtp_port'] ?? '587',
-				'user' => $_POST['smtp_username'] ?? '',
-				'password' => $_POST['smtp_password'] ?? '',
-				'secure' => $_POST['smtp_encryption'] ?? 'tls',
-				'from_email' => $_POST['smtp_from_email'] ?? '',
-				'from_name' => $_POST['smtp_from_name'] ?? '',
-				'smtp_ativo' => isset($_POST['smtp_enabled']) ? 1 : 0
-			];
+			// Validar dados usando o EmailService
+			$erros = $emailService->validarConfiguracao($_POST);
 			
-			salvarSmtpConfig($pdo, $config);
-			
-			$_SESSION['mensagem'] = 'Configurações de email salvas com sucesso!';
-			$_SESSION['tipo'] = 'success';
-			header("Location: configuracao_email.php");
-			exit;
+			if (!empty($erros)) {
+				$_SESSION['mensagem'] = 'Erros de validação: ' . implode(', ', $erros);
+				$_SESSION['tipo'] = 'error';
+			} else {
+				// Processar e salvar dados usando o EmailService
+				$config = $emailService->processarDadosFormulario($_POST);
+				$emailService->salvarConfiguracoesBanco($config);
+				
+				$_SESSION['mensagem'] = 'Configurações de email salvas com sucesso!';
+				$_SESSION['tipo'] = 'success';
+				header("Location: configuracao_email.php");
+				exit;
+			}
 		} catch (Exception $e) {
 			$_SESSION['mensagem'] = 'Erro ao salvar configurações: ' . $e->getMessage();
 			$_SESSION['tipo'] = 'error';
 		}
 	}
 
-	// Obter configurações atuais
-	$smtpConfig = obterSmtpConfig($pdo);
+	// Obter configurações atuais usando o EmailService
+	$smtpConfig = $emailService->obterConfiguracoesBanco();
 	
 	//valores padrão
 	$smtp_host = $smtpConfig['smtp_host'] ?? '';
