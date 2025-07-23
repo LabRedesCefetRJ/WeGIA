@@ -124,7 +124,7 @@ foreach ($sinaisvitais as $key => $value) {
 
 $sinaisvitais = json_encode($sinaisvitais);
 
-$descricao_medica = $pdo->query("SELECT descricao, data_atendimento FROM saude_atendimento WHERE id_fichamedica= " . $_GET['id_fichamedica']);
+$descricao_medica = $pdo->query("SELECT a.descricao AS descricao, a.data_atendimento AS data_atendimento, m.nome AS medicoNome, p.nome AS enfermeiraNome FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON (p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON (a.id_medico = m.id_medico) WHERE id_fichamedica= " . $_GET['id_fichamedica']);
 $descricao_medica = $descricao_medica->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($descricao_medica as $key => $value) {
@@ -481,6 +481,8 @@ try {
       $.each(descricao_medica, function(i, item) {
         $("#de-tab")
           .append($("<tr>")
+            .append($("<td>").text(item.medicoNome))
+            .append($("<td>").text(item.enfermeiraNome))
             .append($("<td>").html(item.descricao))
             .append($("<td>").text(item.data_atendimento))
           )
@@ -1392,6 +1394,8 @@ try {
                         <table class="table table-bordered table-striped mb-none">
                           <thead>
                             <tr style="font-size:15px;">
+                              <th>Médico</th>
+                              <th>Registro</th>
                               <th>Descrições</th>
                               <th>Data do atendimento</th>
                             </tr>
