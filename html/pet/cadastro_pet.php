@@ -141,7 +141,7 @@ if (isset($_GET['msg'])) {
       </header>
       <!-- start: page -->
       <div class="row" id="formulario">
-      <form class="form-horizontal" method="POST" action="../../controle/pet/controlPet.php" enctype="multipart/form-data" onsubmit="verificarDataAcolhimento()">
+      <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data" onsubmit="verificarDataAcolhimento()">
         <div class="row">
         <div class="col-md-4 col-lg-3">
         <section class="panel">
@@ -257,7 +257,9 @@ if (isset($_GET['msg'])) {
             <div class="panel-footer">
               <div class="row">
                 <div class="col-md-9 col-md-offset-3">
+
                   <input type="hidden" name="nomeClasse" value="PetControle">
+                  <input type="hidden" name="modulo" value="pet">
                   <input type="hidden" name="metodo" value="incluir">
                   <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="validarFuncionario()">
                   <input type="reset" class="btn btn-default">
