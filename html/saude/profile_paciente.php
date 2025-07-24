@@ -121,7 +121,7 @@ foreach ($sinaisvitais as $key => $value) {
 
 $sinaisvitais = json_encode($sinaisvitais);
 
-$stmtDescricaoMedica = $pdo->prepare("SELECT descricao, data_atendimento FROM saude_atendimento WHERE id_fichamedica=:idFichaMedica");
+$stmtDescricaoMedica = $pdo->prepare("SELECT a.descricao AS descricao, a.data_atendimento AS data_atendimento, m.nome AS medicoNome, p.nome AS enfermeiraNome FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON (p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON (a.id_medico = m.id_medico) WHERE id_fichamedica=:idFichaMedica");
 
 $stmtDescricaoMedica->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtDescricaoMedica->execute();
