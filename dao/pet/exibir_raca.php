@@ -13,7 +13,7 @@ try {
 
     $resultado = array();
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $resultado[] = array('id_raca' => $row['id_pet_raca'], 'raca' => $row['descricao']);
+        $resultado[] = array('id_raca' => $row['id_pet_raca'], 'raca' => htmlspecialchars($row['descricao']));
     }
 
     echo json_encode($resultado);

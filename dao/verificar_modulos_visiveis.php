@@ -1,26 +1,33 @@
 <?php
-    $config_path = "config.php";
-	if(file_exists($config_path)){
-		require_once($config_path);
-	}else{
-		while(true){
-			$config_path = "../" . $config_path;
-			if(file_exists($config_path)) break;
-		}
-		require_once($config_path);
-	}
-    extract($_REQUEST);
-    $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-    $resultado = mysqli_query($conexao, "SELECT `id_recurso` FROM `modulos_visiveis` WHERE `visivel` = 1");
-    $modulos = array();
-    $i = 0;
-    while($modulo = $resultado->fetch_array(MYSQLI_NUM))
-    {
-        $modulos[$i] = $modulo[0];
-        $i++;
-    }
+//Verifica se o usuário está autenticado no sistema
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['usuario'])) {
+    http_response_code(403);
+    $uriBase = dirname($_SERVER['PHP_SELF'], 2);
+    header("Location: {$uriBase}/index.php");
+    exit();
+}
+
+try {
+    //Estabelece comunicação com o banco de dados
+    require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Conexao.php';
+    $pdo = Conexao::connect();
+
+    //Realiza a consulta
+    $sql = "SELECT `id_recurso` FROM `modulos_visiveis` WHERE `visivel` = 1";
+    $modulos = $pdo->query($sql)->fetchAll(PDO::FETCH_NUM);
+
+    //Envia a resposta
     echo json_encode($modulos);
-   
-
-
-?>
+} catch (Exception $e) {
+    error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+    http_response_code($e->getCode());
+    if ($e instanceof PDOException) {
+        echo json_encode(['erro' => 'Erro no servidor ao verificar os módulos visíveis do sistema.']);
+    } else {
+        echo json_encode(['erro' => $e->getMessage()]);
+    }
+}
