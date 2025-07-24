@@ -316,6 +316,32 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
             });
           }
 
+          function formatarDataHoraBr(data) {
+
+            data = data.split(" ");
+
+            const hour = data[1].split(":");
+
+            const parts = data[0].split('-'); // Supondo que a data esteja no formato 'YYYY-MM-DD'
+
+            // Converte para uma nova data no fuso horário local
+            const dataObj = new Date(parts[0], parts[1] - 1, parts[2], hour[0], hour[1], hour[2]);
+
+            const options  = {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            };
+              const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+              });
+              const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+
+            return `${dataFormatada} ${horaFormatada}`
+          }
+
           function carregarAplicacoes(id_fichamedica) {
             const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("MedicamentoPacienteControle")}&metodo=${encodeURIComponent("listarMedicamentosAplicadosPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
             fetch(url)
@@ -326,6 +352,8 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
                 limparContainer(tabela);
 
                 medaplicadas.forEach(item => {
+
+                  item.aplicacao =  formatarDataHoraBr(item.aplicacao);
                   const tr = document.createElement("tr");
 
                   const td1 = document.createElement("td");

@@ -302,17 +302,6 @@ try {
   .small-text {
     font-size: small;
   }
-
-  table td,
-  table th {
-    word-wrap: break-word;
-    white-space: normal;
-  }
-
-  table {
-    table-layout: fixed;
-    width: 100%;
-  }
 </style>
 
 
@@ -498,6 +487,8 @@ try {
       $.each(descricao_medica, function(i, item) {
         $("#de-tab")
           .append($("<tr>")
+            .append($("<td>").text(item.medicoNome))
+            .append($("<td>").text(item.enfermeiraNome))
             .append($("<td>").html(item.descricao))
             .append($("<td>").text(item.data_atendimento))
           )
@@ -529,6 +520,13 @@ try {
           const tabela = document.getElementById("exibiaplicacao");
 
           medaplicadas.forEach(item => {
+
+            
+
+            item.aplicacao = formatarDataBr(item.aplicacao)
+
+            console.log(item)
+
             const tr = document.createElement("tr");
 
             const td1 = document.createElement("td");
@@ -1349,6 +1347,8 @@ try {
                         <table class="table table-bordered table-striped mb-none">
                           <thead>
                             <tr style="font-size:15px;">
+                              <th>Médico</th>
+                              <th>Registro</th>
                               <th>Descrições</th>
                               <th>Data do atendimento</th>
                             </tr>
@@ -2191,17 +2191,42 @@ try {
 
       //Formatar data para brasileiro
       function formatarDataBr(data) {
+        let hour = null;
+
+        // Verifica se existe parte de hora
+        if (data.split(" ")[1] !== undefined && data.split(" ")[1] !== null) {
+          const partes = data.split(" ");
+          hour = partes[1].split(":");
+          data = partes[0];
+        }
+
         const parts = data.split('-'); // Supondo que a data esteja no formato 'YYYY-MM-DD'
 
-        // Converte para uma nova data no fuso horário local
-        const dataFormatada = new Date(parts[0], parts[1] - 1, parts[2]);
+        let dataFinal = "";
+        let dataObj;
+
+        if (hour !== null) {
+          dataObj = new Date(parts[0], parts[1] - 1, parts[2], hour[0], hour[1], hour[2]);
+          const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          dataFinal += " " + horaFormatada;
+        } else {
+          dataObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
 
         const options = {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit'
         };
-        return dataFormatada.toLocaleDateString('pt-BR', options);
+
+        const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+        dataFinal = dataFormatada + dataFinal;
+
+        return dataFinal;
       }
 
 
