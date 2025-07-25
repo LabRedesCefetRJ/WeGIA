@@ -65,7 +65,7 @@ class PetDAO{
         $pd->execute();
 
         // Redireciona
-        header('Location: ../../html/pet/informacao_pet.php');
+        header('Location: ../../WeGIA/html/pet/informacao_pet.php');
 
     } catch (PDOException $e) {
         echo $e->getMessage();
