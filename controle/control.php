@@ -125,7 +125,6 @@ try {
 
 	processaRequisicao($nomeClasse, $metodo, $modulo);
 } catch (Exception $e) {
-	error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-	http_response_code($e->getCode());
-	echo json_encode(['erro' => $e->getMessage()]);
+	require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+	Util::tratarException($e);
 }
