@@ -1,19 +1,7 @@
 <?php
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-     require_once($config_path);
-} else {
-     while (true) {
-          $config_path = "../" . $config_path;
-          if (file_exists($config_path)) break;
-     }
-     require_once($config_path);
-}
-
-
-require_once ROOT . '/classes/AvisoNotificacao.php';
-require_once ROOT . '/dao/AvisoNotificacaoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'AvisoNotificacao.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AvisoNotificacaoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class AvisoNotificacaoControle
 {
@@ -29,8 +17,7 @@ class AvisoNotificacaoControle
                $avisoNotificacaoDAO = new AvisoNotificacaoDAO();
                $avisoNotificacaoDAO->cadastrar($avisoNotificacao);
           } catch (PDOException $e) {
-               error_log($e->getMessage());
-               echo 'Erro ao registrar notificação de intercorrência';
+               Util::tratarException($e);
           }
      }
 
@@ -44,8 +31,7 @@ class AvisoNotificacaoControle
                $recentes = $avisoNotificacaoDAO->buscarRecentes($idPessoa);
                return $recentes;
           } catch (PDOException $e) {
-               error_log($e->getMessage());
-               echo 'Erro ao listar as intercorrências recentes';
+               Util::tratarException($e);
           }
      }
 
@@ -59,8 +45,7 @@ class AvisoNotificacaoControle
                $historicos = $avisoNotificacaoDAO->buscarHistoricos($idPessoa);
                return $historicos;
           } catch (PDOException $e) {
-               error_log($e->getMessage());
-               echo 'Erro ao listar as intercorrências do histórico';
+               Util::tratarException($e);
           }
      }
 
@@ -74,8 +59,7 @@ class AvisoNotificacaoControle
                $recentesQuantidade = $avisoNotificacaoDAO->contarRecentes($idPessoa);
                return $recentesQuantidade;
           } catch (PDOException $e) {
-               error_log($e->getMessage());
-               echo 'Erro ao contabilizar a quantidade de intercorrências recentes';
+               Util::tratarException($e);
           }
      }
 
@@ -84,20 +68,18 @@ class AvisoNotificacaoControle
       */
      public function mudarStatus()
      {
-          $idNotificacao = trim($_POST['id_notificacao']);
+          $idNotificacao = filter_input(INPUT_POST, 'id_notificacao', FILTER_SANITIZE_NUMBER_INT);
 
-          if(!$idNotificacao || !is_numeric($idNotificacao)){
-               http_response_code(400);
-               exit('Erro, o id de uma notificação não está dentro dos padrões aceitados.');
-          }
-     
-          try{
+          try {
+               if (!$idNotificacao || $idNotificacao < 1) {
+                    throw new InvalidArgumentException('O id de uma notificação informado é inválido.', 400);
+               }
+
                $avisoNotificacaoDAO = new AvisoNotificacaoDAO();
                $avisoNotificacaoDAO->alterarStatus($idNotificacao);
                header("Location: ../html/saude/intercorrencia_visualizar.php");
-          }catch(PDOException $e){
-               error_log($e->getMessage());
-               echo 'Erro ao confirmar leitura de intercorrência.';
+          } catch (Exception $e) {
+               Util::tratarException($e);
           }
      }
 }
