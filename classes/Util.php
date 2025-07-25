@@ -2,6 +2,21 @@
 
 class Util
 {
+    /**
+     * Registra o log de erro e emite um JSON para o cliente
+     */
+    public static function tratarException(Exception $e): void
+    {
+        //Armazena exceção em um arquivo de log
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+        http_response_code($e->getCode());
+        //Adicionar futuramente verificação para outras exceções que precisem de uma mensagem personalizada
+        if ($e instanceof PDOException) {
+            echo json_encode(['erro' => 'Erro no servidor ao manipular o banco de dados']);
+        } else { //mensagem padrão
+            echo json_encode(['erro' => $e->getMessage()]);
+        }
+    }
 
     // esta função formata para o bd
     public function formatoDataYMD($data)
