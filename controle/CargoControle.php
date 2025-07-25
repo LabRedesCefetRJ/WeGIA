@@ -2,6 +2,7 @@
 
 require_once '../classes/Cargo.php';
 require_once '../dao/CargoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class CargoControle
 {
@@ -26,14 +27,11 @@ class CargoControle
 
         try {
             $cargo = new Cargo((string)($cargoDescricao));
-        } catch (InvalidArgumentException $e) {
-            echo 'Erro ao adicionar cargo: ' . $e->getMessage();
-            return;
-        }
 
-        if ($cargo) {
             $cargoDAO = new CargoDAO();
             $cargoDAO->incluir($cargo);
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -48,9 +46,7 @@ class CargoControle
 
             echo json_encode($cargos);
         } catch (PDOException $e) {
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code($e->getCode());
-            echo json_encode(['erro' => 'Erro no servidor ao listar os cargos.']);
+            Util::tratarException($e);
         }
     }
 
@@ -72,13 +68,7 @@ class CargoControle
 
             echo json_encode($recursos);
         } catch (Exception $e) {
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code($e->getCode());
-            if ($e instanceof PDOException) {
-                echo json_encode(['erro' => 'Erro no servidor ao listar os recursos do cargo.']);
-            } else {
-                echo json_encode(['erro' => $e->getMessage()]);
-            }
+            Util::tratarException($e);
         }
     }
 }
