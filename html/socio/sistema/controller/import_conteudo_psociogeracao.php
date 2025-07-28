@@ -104,7 +104,7 @@
 												<input type="radio" name="escolha-modo" value="personalizado" checked>
 												Número personalizado.
 											</label>
-											<label>
+											<label style="margin-left: 5px;">
 												<input type="radio" name="escolha-modo" value="fim-ano">
 												Até o final do ano.
 											</label>

@@ -38,7 +38,6 @@ $(document).ready(function () {
 
                         for (i = 0; i < parcelas; i++) {
 
-                            console.log(mesAA);
                             let data = new Date(arrayDataSegmentsA[0], mesAA, arrayDataSegmentsA[2]);
 
                             //Incrementar meses
@@ -137,14 +136,20 @@ $(document).ready(function () {
 
                     $("#btn_confirma").click(function () {
 
-                        var inputParcelas = $("#num_parcelas").val();
-                        var inputData = $("#data_vencimento").val();
-                        var inputValor = $("#valor_u").val();
-                        var tipo_boleto = $("#tipo_geracao").val();
+                        let inputParcelas = $("#num_parcelas").val();
+                        let inputData = $("#data_vencimento").val();
+                        let inputValor = $("#valor_u").val();
+                        let tipo_boleto = $("#tipo_geracao").val();
                         $("#btn_geracao_unica").css("display", "inline");
 
                         tipo = Number(tipo_boleto);
-                        periodicidade_socio = 1;
+
+                        const modo = $('input[name="escolha-modo"]:checked').val();
+                        if (modo === 'fim-ano') {
+                            inputParcelas = calcularParcelasAteFinalAno(inputData, tipo);
+                        } 
+
+                        console.log('Parcelas: ', inputParcelas);
 
                         if (inputParcelas <= 0 || inputParcelas == null || inputValor <= 0 || inputValor == null || inputData == '') {
                             alert("Dados inválidos, tente novamente!");
@@ -178,9 +183,13 @@ $(document).ready(function () {
                         const valor = document.getElementById('valor_u').value;
                         const socio = document.getElementById('id_pesquisa').value;
                         const dia = document.getElementById('data_vencimento').value;
-                        const parcela = document.getElementById('num_parcelas').value;
+                        let parcela = document.getElementById('num_parcelas').value;
 
                         //verificar se fim-ano está selecionado, caso esteja, o número de parcelas deve ser calculado automaticamente
+                        const modo = $('input[name="escolha-modo"]:checked').val();
+                        if (modo === 'fim-ano') {
+                            parcela = calcularParcelasAteFinalAno(dia, tipo);
+                        } 
 
                         const cpfCnpj = socio.split('|')[1];
 
@@ -230,23 +239,17 @@ $(document).ready(function () {
 
     /**
  * Calcula quantas parcelas cabem até o final do ano
- * @param {Date|string} dataInicial Data da primeira parcela
+ * @param {string} dataInicial Data da primeira parcela
  * @param {string|number} periodicidade Pode ser 'mensal', 'bimestral', 'trimestral', 'semestral' ou um número de meses
  * @returns {number} Quantidade de parcelas até 31 de dezembro
  */
-    function calcularParcelasAteFinalAno(dataInicial, periodicidade) {
+    function calcularParcelasAteFinalAno(dataStr, periodicidade) {
         const periodicidades = {
             mensal: 1,
             bimestral: 2,
             trimestral: 3,
             semestral: 6
         };
-
-        // Tenta converter data se vier como string
-        const data = new Date(dataInicial);
-        if (isNaN(data.getTime())) {
-            throw new Error("Data inicial inválida.");
-        }
 
         // Normaliza periodicidade
         let intervalo;
@@ -264,9 +267,15 @@ $(document).ready(function () {
             throw new Error("Periodicidade em formato inválido.");
         }
 
-        const mesInicial = data.getMonth(); // 0 a 11
-        let mesesRestantes = 11 - mesInicial; // Até dezembro
+        //
+        const [ano, mes, dia] = dataStr.split("-").map(Number);
+
+        console.log('Mês inicial:', mes);
+
+        let mesesRestantes = 12 - mes; // Até dezembro
         let parcelas = 1; // Conta a primeira parcela
+
+        console.log('Meses restantes: ', mesesRestantes);
 
         while (mesesRestantes >= intervalo) {
             parcelas++;
@@ -282,9 +291,9 @@ $(document).ready(function () {
         console.log("Togle ativado");
         const valor = $('input[name="escolha-modo"]:checked').val();
         if (valor === 'personalizado') {
-            $('#parcelas-quantidade').show(); // ou .show() se quiser sem animação
+            $('#parcelas-quantidade').show();
         } else {
-            $('#parcelas-quantidade').hide();   // ou .hide()
+            $('#parcelas-quantidade').hide();
         }
     }
 
