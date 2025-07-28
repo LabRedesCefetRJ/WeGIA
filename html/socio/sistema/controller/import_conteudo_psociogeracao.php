@@ -95,14 +95,28 @@
 
 								</div>
 								<div class="form-group mb-2 col-xs-6">
+									<!-- Adicionar radio para escolher entre personalizado ou até o final do ano -->
+									<div class="data" id="escolha-modo">
+										<label for="escolha-modo">Modo de geração</label>
 
-									<div class="data">
-										<label for="data_vencimento">Parcelas</label>
-										<input type="number" class="form-control" id="num_parcelas" name="num_parcelas" placeholder="num. parcelas" required>
+										<div>
+											<label>
+												<input type="radio" name="escolha-modo" value="personalizado" checked>
+												Número personalizado.
+											</label>
+											<label>
+												<input type="radio" name="escolha-modo" value="fim-ano">
+												Até o final do ano.
+											</label>
+										</div>
+
 									</div>
 
-
-
+									<!--Personalizado -->
+									<div class="data" id="parcelas-quantidade">
+										<label for="num_parcelas">Parcelas</label>
+										<input type="number" class="form-control" id="num_parcelas" name="num_parcelas" placeholder="num. parcelas" required>
+									</div>
 								</div>
 
 								<div style="display: none" class="col-xs-12 div_btn_gerar">
