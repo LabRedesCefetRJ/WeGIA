@@ -180,6 +180,8 @@ $(document).ready(function () {
                         const dia = document.getElementById('data_vencimento').value;
                         const parcela = document.getElementById('num_parcelas').value;
 
+                        //verificar se fim-ano está selecionado, caso esteja, o número de parcelas deve ser calculado automaticamente
+
                         const cpfCnpj = socio.split('|')[1];
 
                         console.log(dia);
@@ -226,6 +228,55 @@ $(document).ready(function () {
 
     })
 
+    /**
+ * Calcula quantas parcelas cabem até o final do ano
+ * @param {Date|string} dataInicial Data da primeira parcela
+ * @param {string|number} periodicidade Pode ser 'mensal', 'bimestral', 'trimestral', 'semestral' ou um número de meses
+ * @returns {number} Quantidade de parcelas até 31 de dezembro
+ */
+    function calcularParcelasAteFinalAno(dataInicial, periodicidade) {
+        const periodicidades = {
+            mensal: 1,
+            bimestral: 2,
+            trimestral: 3,
+            semestral: 6
+        };
+
+        // Tenta converter data se vier como string
+        const data = new Date(dataInicial);
+        if (isNaN(data.getTime())) {
+            throw new Error("Data inicial inválida.");
+        }
+
+        // Normaliza periodicidade
+        let intervalo;
+        if (typeof periodicidade === "string") {
+            intervalo = periodicidades[periodicidade.toLowerCase()];
+            if (!intervalo) {
+                throw new Error("Periodicidade inválida. Use mensal, bimestral, etc.");
+            }
+        } else if (typeof periodicidade === "number") {
+            intervalo = parseInt(periodicidade);
+            if (isNaN(intervalo) || intervalo <= 0 || intervalo > 12) {
+                throw new Error("Periodicidade numérica inválida.");
+            }
+        } else {
+            throw new Error("Periodicidade em formato inválido.");
+        }
+
+        const mesInicial = data.getMonth(); // 0 a 11
+        let mesesRestantes = 11 - mesInicial; // Até dezembro
+        let parcelas = 1; // Conta a primeira parcela
+
+        while (mesesRestantes >= intervalo) {
+            parcelas++;
+            mesesRestantes -= intervalo;
+        }
+
+        return parcelas;
+    }
+
+    //console.log('Número de parcelas: ', calcularParcelasAteFinalAno('2025-01-28', 6));
 
     function toggleParcelas() {
         console.log("Togle ativado");
