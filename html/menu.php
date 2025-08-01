@@ -125,6 +125,46 @@
 									<span>Informações Pets</span>
 								</a>
 							</li>
+							<li class="nav-parent nav-active" >
+								<a>
+									<i class="fa fa-ambulance" aria-hidden="true"></i>
+									<span>Saúde Pet</span>
+								</a>
+							
+								<ul class="nav nav-children">
+									<li>
+										<a href="<?= WWW ?>html/pet/cadastro_ficha_medica_pet.php">
+											<span>Cadastrar Ficha Médica Pet</span>
+										</a>
+									</li>
+									<li>
+										<a href="<?= WWW ?>html/pet/informacao_saude_pet.php">
+											<span>Informações Saúde Pet</span>
+										</a>
+									</li>
+
+									<li class="nav-parent nav-active">
+										<a>
+											<i class="fa fa-pills" aria-hidden="true"></i>
+											<span>Medicamentos</span>
+										</a>
+
+										<ul class="nav nav-children">
+											<li>
+												<a href="<?= WWW ?>html/pet/cadastrar_medicamento.php">
+													<span>Cadastrar Medicamentos</span>
+												</a>
+											</li>
+											<li>
+												<a href="<?= WWW ?>html/pet/informacao_medicamento.php">
+													<span>Informacões Medicamentos</span>
+												</a>
+											</li>
+										</ul>
+
+									</li>
+								</ul>
+							</li>
 							
 
 							<li class="nav-parent nav-active" >
@@ -265,12 +305,6 @@
 											<li>
 												<a href="<?= WWW ?>html/matPat/cadastro_produto.php">
 													<span>Cadastrar Produto</span>
-												</a>
-											</li>
-
-											<li>
-												<a href="<?= WWW ?>html/matPat/listar_produto.php">
-													<span>Listar Produtos</span>
 												</a>
 											</li>
 										</ul>
@@ -480,6 +514,11 @@
 								</a>
 							</li>
 							<li >
+								<a href="<?= WWW ?>html/configuracao/configuracao_email.php">
+									Configurações de Email
+								</a>
+							</li>
+							<li >
 								<a href="<?= WWW ?>html/geral/editar_permissoes.php">
 									Permissões
 								</a>
@@ -505,12 +544,6 @@
 								</a>
 							</li>
 						</ul>
-					</li>
-					<li id="5" class="visivel">
-						<a href="<?= WWW ?>manual/index.php">
-							<i class="fas fa-book" aria-hidden="true"></i>
-							<span>Manual</span>
-						</a>
 					</li>
 				</ul>
 			</nav>

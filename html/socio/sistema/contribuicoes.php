@@ -275,6 +275,23 @@ try {
         </header>
 
         <!-- start: page -->
+        <?php
+        // Exibir mensagens de sucesso ou erro
+        if (isset($_GET['msg_s'])) {
+            echo '<div class="alert alert-success alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <h4><i class="icon fa fa-check"></i> Sucesso!</h4>
+                    ' . htmlspecialchars($_GET['msg_s']) . '
+                  </div>';
+        }
+        if (isset($_GET['msg_c'])) {
+            echo '<div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <h4><i class="icon fa fa-ban"></i> Erro!</h4>
+                    ' . htmlspecialchars($_GET['msg_c']) . '
+                  </div>';
+        }
+        ?>
         <div class="row">
 
           <div class="box box-warning collapsed-box">
@@ -375,6 +392,10 @@ try {
 
               <div class="sync-control">
                 <button class="btn btn-primary" id="sync-btn" title="Sincroniza contribuições de acordo com os múltiplos gateways de pagamentos cadastrados">Sincronizar pagamentos</button>
+                <!-- <a href="<?php echo WWW; ?>html/contribuicao/view/gerar_recibo.php" class="btn btn-success" title="Gerar recibo de doações para sócios">
+                  <i class="fa fa-file-pdf-o"></i> Gerar Recibo
+                </a> 
+                      -->
 
                 <!--Informações de data e hora da última sincronização -->
                 <?php if (is_null($sistemaLogContribuicao)): ?>
