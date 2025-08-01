@@ -5,7 +5,7 @@ ini_set('display_startup_erros', 1);
 error_reporting(E_ALL);
 session_start();
 
-function processaRequisicao($nomeClasse, $metodo, $modulo = null, $data = null)
+function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 {
 	if ($nomeClasse && $metodo) {
 
@@ -33,6 +33,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null, $data = null)
 			'EnderecoControle' => [9, 12],
 			'EnfermidadeControle' => [5, 54],
 			'MedicamentoPacienteControle' => [5],
+			'MedicoControle' => [5],
 			'EntradaControle' => [23],
 			'EstoqueControle' => [22],
 			'FuncionarioControle' => [11, 91],
@@ -85,13 +86,9 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null, $data = null)
 			include_once $nomeClasse . ".php";
 		}
 
+		// Cria uma instância da classe e chama o método
 		$objeto = new $nomeClasse();
-		
-		if (!is_null($data)) {
-			$objeto->$metodo($data);
-		} else {
-			$objeto->$metodo();
-		}
+		$objeto->$metodo();
 	} else {
 		// Responde com erro se as variáveis necessárias não foram fornecidas
 		http_response_code(400);
@@ -111,32 +108,14 @@ if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'applica
 	$metodo = $data['metodo'] ?? null;
 	$modulo = $data['modulo'] ?? null;
 
-	// Remove as chaves de controle para verificar se há dados adicionais
-	$dadosExtras = $data;
-	unset($dadosExtras['nomeClasse'], $dadosExtras['metodo'], $dadosExtras['modulo']);
-
-	// Processa a requisição com ou sem dados adicionais
-	if (!empty($dadosExtras)) {
-		processaRequisicao($nomeClasse, $metodo, $modulo, $dadosExtras);
-	} else {
-		processaRequisicao($nomeClasse, $metodo, $modulo);
-	}
+	// Processa a requisição
+	processaRequisicao($nomeClasse, $metodo, $modulo);
 } else {
 	// Recebe os dados do formulário normalmente
 	$nomeClasse = $_REQUEST['nomeClasse'] ?? null;
 	$metodo = $_REQUEST['metodo'] ?? null;
 	$modulo = $_REQUEST['modulo'] ?? null;
 
-	$json = file_get_contents('php://input');
-	$data = json_decode($json, true);
-
-	$dadosExtras = $data;
-	unset($dadosExtras['nomeClasse'], $dadosExtras['metodo'], $dadosExtras['modulo']);
-
-	if (!empty($dadosExtras)) {
-		processaRequisicao($nomeClasse, $metodo, $modulo, $dadosExtras);
-	} else {
-		processaRequisicao($nomeClasse, $metodo, $modulo);
-	}
+	// Processa a requisição
+	processaRequisicao($nomeClasse, $metodo, $modulo);
 }
-

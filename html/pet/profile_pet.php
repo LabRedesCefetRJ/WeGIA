@@ -330,10 +330,11 @@ if (isset($_GET['id_pet'])) {
       
       
       
-  const fichaMedica = {
-    castrado: "<?php echo isset($fichaMedica['castrado']) ? $fichaMedica['castrado'] : ''; ?>",
-    texto: "<?php echo isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais'], ENT_QUOTES) : ''; ?>"
-  };
+      const fichaMedica = {
+      castrado: <?= json_encode(isset($fichaMedica['castrado']) ? $fichaMedica['castrado'] : '') ?>,
+      texto: <?= json_encode(isset($fichaMedica['necessidades_especiais']) ? $fichaMedica['necessidades_especiais'] : '') ?>
+};
+
 
   function editar_ficha_medica() {
     // Habilita os campos
@@ -497,7 +498,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     opcaoNull.text = "Selecionar";
     opcaoNull.disabled = true;
     opcaoNull.selected = true;
-    opcoesMedicamento.appendChild(opcaoNull); // ou insertBefore(..., firstChild)
+    opcoesMedicamento.appendChild(opcaoNull);
 
     // Adiciona os dados recebidos como opções
     dados.forEach(dado => {
@@ -512,129 +513,249 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-//ADICIONAR OS MEDICAMENTO NA TABELA
-
 document.addEventListener("DOMContentLoaded", async () => {
   const select = document.querySelector("#selectMedicamento");
+  const tabela = document.querySelector("#dep-tab"); // tbody
+
+  // Array para armazenar os IDs dos medicamentos já inseridos
+  const medicamentosAdicionados = [];
 
   select.addEventListener("change", async (e) => {
     const selectedOption = e.target.selectedOptions[0];
-    
+    const idMedicamento = selectedOption.dataset.id;
 
-    let Medicamento = {
-      id: selectedOption.dataset.id,
-      nomeClasse : document.querySelector("#classeAtendimento").value, //AtendimentoControle
-      metodo : "obterMedicamentoPet",
-      modulo : document.querySelector("#moduloAtendimento").value, //pet
-    }
-    
-    try{
-        const resposta = await fetch("../../controle/control.php", {
+    // Se já foi adicionado, não faz nada
+    if (medicamentosAdicionados.includes(idMedicamento)) return;
+
+    const Medicamento = {
+      id: idMedicamento,
+      nomeClasse: document.querySelector("#classeAtendimento").value,
+      metodo: "obterMedicamentoPet",
+      modulo: document.querySelector("#moduloAtendimento").value
+    };
+
+    try {
+      const resposta = await fetch("../../controle/control.php", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(Medicamento)
       });
 
-      const tabela = document.querySelector("#tabmed")
+      const medicamentoObtido = await resposta.json();
 
-      let medicamentoObtido = await resposta.json();
+      // Cria a nova linha
+      const linhaTabela = document.createElement("tr");
 
-      let linhaTabela = document.createElement('tr');
-
-      let tdNomeMedicamento = document.createElement('td');
+      // Coluna Medicamento (nome)
+      const tdNomeMedicamento = document.createElement("td");
       tdNomeMedicamento.textContent = medicamentoObtido.nome_medicamento;
 
-      let tdAplicacaoMedicamento = document.createElement('td');
-      tdAplicacaoMedicamento.textContent = medicamentoObtido.aplicacao;
+      // Coluna Ação (preserva seu conteúdo atual)
+      const tdAcao = document.createElement("td");
+      tdAcao.textContent = medicamentoObtido.aplicacao || "";
 
-      linhaTabela.append(tdNomeMedicamento, tdAplicacaoMedicamento);
-      tabela.append(linhaTabela);
+      // Coluna Excluir (botão)
+      const tdExcluir = document.createElement("td");
+      const btnExcluir = document.createElement("button");
+      btnExcluir.textContent = "Excluir";
+      btnExcluir.classList.add("btn", "btn-danger", "btn-sm");
 
-    }catch(erro){
-      alert(erro);
+      btnExcluir.addEventListener("click", () => {
+        linhaTabela.remove();
+        const index = medicamentosAdicionados.indexOf(idMedicamento);
+        if (index > -1) medicamentosAdicionados.splice(index, 1);
+      });
+
+      tdExcluir.appendChild(btnExcluir);
+
+      linhaTabela.append(tdNomeMedicamento, tdAcao, tdExcluir);
+      tabela.appendChild(linhaTabela);
+
+      // Registra o id no array
+      medicamentosAdicionados.push(idMedicamento);
+    } catch (erro) {
+      console.error(erro);
     }
-   
-
-  
   });
 
-});
+  const formAtendimento = document.querySelector("#formAtendimento");
+  formAtendimento.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
+    let atendimento = {
+      dataAtendimento: document.querySelector("#dataAtendimento").value,
+      descricaoAtendimento: document.querySelector("#descricaoAtendimento").value,
+      medicamentos: medicamentosAdicionados,
+      idpet: document.querySelector("#idPet").value,
+      nomeClasse: document.querySelector("#classeAtendimento").value,
+      metodo: document.querySelector("#metodoAtendimento").value,
+      modulo: document.querySelector("#moduloAtendimento").value
+    };
 
-//EDITAR ATENDIMENTO
-document.addEventListener("DOMContentLoaded", () => {
-  
-
-    const dataAtendimento = document.querySelector("#dataAtendimento")
-    const descricaoAtendimento = document.querySelector("#descricaoAtendimento")
-    const medicamento = document.querySelector("#selectMedicamento")
-    const salvarAtendimento = document.querySelector("#salvarAtendimento")
-    const editarAtendimento = document.querySelector("#editarAtendimento")
-
-    let editando = false;
-
-  document.querySelector("#editarAtendimento").addEventListener("click", () => {
-    
-    editando = !editando;
-
-    dataAtendimento.disabled = !editando;
-    descricaoAtendimento.disabled = !editando;
-    medicamento.disabled = !editando;
-    salvarAtendimento.disabled = !editando;
-
-    editarAtendimento.innerHTML = editando ? "Cancelar" : "Editar";;
-    editarAtendimento.classList.replace(editando ? "btn-primary" : "btn-danger", editando ? "btn-danger" : "btn-primary");
-  });
- 
-  
-});
-
-document.addEventListener("DOMContentLoaded", () =>{
- 
-const formAtendimento = document.querySelector("#formAtendimento");
-formAtendimento.addEventListener("submit", async (e) =>{
-  e.preventDefault();
-
-  let atendimento ={
-    dataAtendimento : document.querySelector("#dataAtendimento").value,
-    descricaoAtendimento : document.querySelector("#descricaoAtendimento").value,
-    medicamento : document.querySelector("#selectMedicamento").value,
-    idpet : document.querySelector("#idPet").value,
-    nomeClasse : document.querySelector("#classeAtendimento").value,
-    metodo : document.querySelector("#metodoAtendimento").value,
-    modulo : document.querySelector("#moduloAtendimento").value,
-  }
-
-  //Inserir ou atualizar
-  
-  try{
-    const resposta = await fetch("../../controle/control.php", {
+    try {
+      const resposta = await fetch("../../controle/control.php", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(atendimento)
       });
 
       const resultado = await resposta.json();
-      console.log(resultado);      
 
       if (resultado.sucesso) {
-        alert("Atendimento registrado com sucesso!");
+        location.reload();
       } else {
         alert(resultado.erro ?? "Erro ao registrar atendimento.");
       }
-  } catch (erro) {
-    console.error("Erro no envio:", erro);
-    //alert("Erro na requisição.");
+    } catch (erro) {
+      console.error("Erro no envio:", erro);
+    }
+  });
+});
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const info = {
+    metodo: "getHistoricoPet",
+    modulo: "pet",
+    nomeClasse: "controleSaudePet",
+    idpet: document.querySelector("#idPet").value
+  };
+
+  const container = document.querySelector("#divHistoricoAtendimento");
+
+  // Função para decodificar HTML escapado
+  function decodeHtml(html) {
+    var txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
   }
 
+  try {
+    const resp = await fetch("../../controle/control.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(info)
+    });
+
+    const data = await resp.json();
+
+    // Limpa conteúdo anterior
+    container.textContent = "";
+
+    if (!data || data.length === 0) {
+      const msg = document.createElement("p");
+      msg.textContent = "Nenhum histórico de atendimento encontrado.";
+      container.appendChild(msg);
+      return;
+    }
+
+    // Agrupar atendimentos por data
+    const atendimentos = {};
+    data.forEach(item => {
+      const dataAtendimento = item.data_atendimento;
+      if (!atendimentos[dataAtendimento]) {
+        atendimentos[dataAtendimento] = {
+          descricao_atendimento: item.descricao_atendimento || "Não informado.",
+          medicamentos: []
+        };
+      }
+      atendimentos[dataAtendimento].medicamentos.push(item);
+    });
+
+    let count = 0;
+
+    Object.entries(atendimentos).forEach(([dataAtendimento, dados]) => {
+      count++;
+
+      // Painel principal
+      const panel = document.createElement("div");
+      panel.classList.add("panel", "panel-default");
+      panel.style.marginBottom = "10px";
+
+      // Cabeçalho
+      const header = document.createElement("div");
+      header.classList.add("panel-heading");
+      header.style.cursor = "pointer";
+      header.dataset.toggle = "collapse";
+      header.dataset.target = `#atendimento${count}`;
+
+      const headerText = document.createElement("strong");
+      headerText.textContent = "Data: " + dataAtendimento;
+      header.appendChild(headerText);
+
+      // Corpo colapsável (fechado por padrão)
+      const collapseDiv = document.createElement("div");
+      collapseDiv.id = `atendimento${count}`;
+      collapseDiv.classList.add("panel-collapse", "collapse");
+
+      const body = document.createElement("div");
+      body.classList.add("panel-body");
+
+      // Descrição do atendimento
+      const pDescTitle = document.createElement("p");
+      const strongDesc = document.createElement("strong");
+      strongDesc.textContent = "Descrição do Atendimento:";
+      pDescTitle.appendChild(strongDesc);
+      body.appendChild(pDescTitle);
+
+      const pDesc = document.createElement("p");
+      pDesc.textContent = dados.descricao_atendimento;
+      body.appendChild(pDesc);
+
+      body.appendChild(document.createElement("hr"));
+
+      // Lista de medicações
+      const pMedTitle = document.createElement("p");
+      const strongMed = document.createElement("strong");
+      strongMed.textContent = "Medicações Utilizadas:";
+      pMedTitle.appendChild(strongMed);
+      body.appendChild(pMedTitle);
+
+      const lista = document.createElement("ul");
+      dados.medicamentos.forEach(med => {
+        const li = document.createElement("li");
+
+        // Nome do medicamento
+        const nome = document.createElement("strong");
+        nome.textContent = (med.nome_medicamento || "Medicamento") + ": ";
+        li.appendChild(nome);
+
+        // Aplicação
+        if (med.aplicacao) {
+          li.appendChild(document.createTextNode(med.aplicacao));
+        }
+
+        li.appendChild(document.createElement("br"));
+
+        // Descrição do medicamento com tags interpretadas e decodificadas
+        const em = document.createElement("em");
+        em.textContent = "Descrição:";
+        li.appendChild(em);
+        li.appendChild(document.createTextNode(" "));
+
+        const descMed = document.createElement("span");
+        descMed.innerHTML = decodeHtml(med.descricao_medicamento || "");
+        li.appendChild(descMed);
+
+        lista.appendChild(li);
+      });
+
+      body.appendChild(lista);
+
+      collapseDiv.appendChild(body);
+      panel.appendChild(header);
+      panel.appendChild(collapseDiv);
+      container.appendChild(panel);
+    });
+
+  } catch (erro) {
+    console.error("Erro ao buscar histórico:", erro);
+    container.textContent = "Erro ao carregar histórico de atendimento.";
+  }
 });
 
 
-});
+
 
     </script>
   </head>
@@ -1087,27 +1208,30 @@ formAtendimento.addEventListener("submit", async (e) =>{
                             <div class="form-group">
                               <label class="col-md-3 control-label" for="profileCompany">Data do Atendimento<sup class="obrig">*</sup></label>
                               <div class="col-md-8">
-                                <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="dataAtendimento" id="dataAtendimento" max=<?php echo date('Y-m-d');?> required disabled>
+                                <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="dataAtendimento" id="dataAtendimento" max=<?php echo date('Y-m-d');?> required >
                               </div>
                             </div>
 
                             <div class="form-group">
-                              <!--<div class='col-md-6' id='div_texto'>
-                                <label for="texto" id="etiqueta_despacho" style="padding-left: 15px;">Descrição do Atendimento:<sup class="obrig">*</sup></label>
-                                <textarea cols='30' rows='5' required id='descricaoAtendimento' name="descricaoAtendimento" class='form-control'></textarea>
-                              </div>-->
+                             
                               <label class="col-md-3 control-label" for="descricaoAtendimento">Descricao Atendimento<sup class="obrig" >*</sup></label>
                               <div class="col-md-8">
-                                <textarea name="descricaoAtendimento" class="form-control" id="descricaoAtendimento" disabled></textarea>
+                                <textarea name="descricaoAtendimento" class="form-control" id="descricaoAtendimento" required></textarea>
                               </div>
                             </div>
 
                             <div class="form-group">
                               <label class="col-md-3 control-label" for="inputSuccess">Medicamento</label>
-                              
-                              <div class="col-md-6">
-                                <select class="form-control input-lg mb-md" name="selectMedicamento" id="selectMedicamento" disabled>
+                              <div class="col-md-6 d-flex align-items-center" style="display: flex; gap: 8px;">
+                                
+                                <select class="form-control input-lg mb-md" name="selectMedicamento" id="selectMedicamento" style="flex: 1;">
                                 </select>
+
+                                <!-- Botão para cadastrar medicamento -->
+                                <a href="cadastrar_medicamento.php"  title="Cadastrar Novo Medicamento" style="padding: 0 12px;">
+                                  <i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
+                                </a>
+
                               </div>
 
                               <table class="table table-bordered table-striped mb-none" id="tabmed">
@@ -1115,26 +1239,43 @@ formAtendimento.addEventListener("submit", async (e) =>{
                                   <tr style="font-size:15px;">
                                     <th>Medicação</th>
                                     <th>Ação</th>
+                                    <th>Excluir</th>  <!-- Coluna nova para o botão -->
                                   </tr>
                                 </thead>
                                 <tbody id="dep-tab" style="font-size:15px">
-                                
+                                  <!-- Linhas dinâmicas -->
                                 </tbody>
                               </table>
-                            </div>
 
                             
                             </br>
                             <div class="form-group"> 
                             </div>
                             
-                            <button type="button" class="not-printable btn btn-primary" id="editarAtendimento">Editar</button>
-                            <input type="submit" class="btn btn-primary" value="Salvar Atendimento" id="salvarAtendimento" disabled>
+                            
+                            <input type="submit" class="btn btn-primary" value="Salvar Atendimento" id="salvarAtendimento" >
                           </fieldset>
                         </form>
                       </div>
-                  </section>                  
-                </div>
+                  </section>   
+                <div id="historicoAtendimento" class="tab-pane">
+                  <section class="panel">
+                      <header class="panel-heading">
+                          <div class="panel-actions">
+                              <a href="#" class="fa fa-caret-down"></a>
+                          </div>
+                          <h2 class="panel-title">Histórico de Atendimento</h2>
+                      </header>
+                      <div id="divHistoricoAtendimento" class="panel-body">
+
+            
+
+        </div>
+    </section>
+</div>
+
+            </div>    
+            
                 <!-- fim atendimento -->
 
                 <!-- Historico medico -->

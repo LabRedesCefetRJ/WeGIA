@@ -279,40 +279,47 @@ class SaudePetDAO
         $pd->execute();
         $p = $pd->fetchAll();
         
-        foreach( $medics as $valor){
-            if( $valor != ''){
-                $pd = $pdo->prepare("INSERT INTO pet_medicacao(id_medicamento, id_pet_atendimento) 
-                VALUES( :id_medicamento, :id_pet_atendimento)");
-                $pd->bindValue("id_medicamento", $valor);
-                $pd->bindValue("id_pet_atendimento", $p[0][0]);
-                $pd->execute();
-            }
-        }
+       
     }
 
+    
     public function getHistoricoPet($id){
         $pdo = Conexao::connect();
+    
+        // Buscar a ficha médica do pet
         $pd = $pdo->prepare("SELECT id_ficha_medica FROM pet_ficha_medica WHERE id_pet = :id");
         $pd->bindValue("id", $id);
         $pd->execute();
-        $p = $pd->fetch();
-
-        $idFichaMedica = $p['id_ficha_medica'];
-        
-        $pd = $pdo->prepare("SELECT * FROM pet_atendimento WHERE id_ficha_medica = :id_ficha_medica");
-        $pd->bindValue("id_ficha_medica", $idFichaMedica);
+        $result = $pd->fetch();
+    
+        if(!$result){
+            return [];
+        }
+    
+        $idFichaMedica = $result['id_ficha_medica'];
+    
+        // Buscar atendimentos + medicações
+        $sql = "SELECT 
+                a.id_ficha_medica,
+                a.data_atendimento,
+                a.descricao AS descricao_atendimento,
+                m.nome_medicamento,
+                m.descricao_medicamento,
+                m.aplicacao
+            FROM pet_atendimento a
+            LEFT JOIN pet_medicacao pm ON a.id_pet_atendimento = pm.id_pet_atendimento
+            LEFT JOIN pet_medicamento m ON pm.id_medicamento = m.id_medicamento
+            WHERE a.id_ficha_medica = :idFichaMedica
+            ORDER BY a.data_atendimento DESC";
+    
+        $pd = $pdo->prepare($sql);
+        $pd->bindValue("idFichaMedica", $idFichaMedica);
         $pd->execute();
-        $p = $pd->fetchAll();
-
-        //id_medicamento data_medicacao
-        $pd = $pdo->prepare("SELECT * FROM pet_medicacao WHERE id_pet_atendimento = 
-        :id_pet_atendimento");
-        $pd->bindValue("id_pet_atendimento", $p[0]['id_pet_atendimento']);
-        $pd->execute();
-        $q = $pd->fetchAll();
-
-        return $p;
+        $dados = $pd->fetchAll(PDO::FETCH_ASSOC);
+    
+        return $dados;
     }
+     
 
     public function getAtendimentoPet($id){
 
@@ -341,43 +348,65 @@ class SaudePetDAO
         
         return $dados;
     }
-    public function registrar_atendimento_pet(int $idpet, string $dataAtendimento, string $descricao): bool {
+    public function registrar_atendimento_pet(int $idpet, string $dataAtendimento, string $descricao, array $medicamentos): bool {
         $pdo = Conexao::connect();
         $idFichaMedica = null;
     
         try {
+            // Buscar ID da ficha médica
             $sql = "SELECT id_ficha_medica as idFichaMedica
                     FROM pet_ficha_medica
                     WHERE id_pet = :idpet";
             $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':idpet', $idpet);
+            $stmt->bindParam(':idpet', $idpet, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetch();
     
-            $idFichaMedica = $result ? (int) $result['idFichaMedica'] : null;
+            $idFichaMedica = $result ? (int)$result['idFichaMedica'] : null;
     
             if ($idFichaMedica === null) {
                 error_log("Ficha médica não encontrada para o pet $idpet.");
                 return false;
             }
     
-        } catch(PDOException $e){
+        } catch(PDOException $e) {
             error_log("Erro ao buscar ficha médica: " . $e->getMessage());
             return false;
         }
     
         try {
+            // Inserir atendimento
             $sql = "INSERT INTO pet_atendimento (id_ficha_medica, data_atendimento, descricao)
                     VALUES (:id_ficha_medica, :data_atendimento, :descricao)";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_ficha_medica', $idFichaMedica, PDO::PARAM_INT);
             $stmt->bindParam(':data_atendimento', $dataAtendimento);
             $stmt->bindParam(':descricao', $descricao);
+            $stmt->execute();
+            $idPetAtendimento = (int)$pdo->lastInsertId();
     
-            return $stmt->execute();
+            // Inserir medicamentos (se houver)
+            if (!empty($medicamentos)) {
+                foreach ($medicamentos as $medicamento) {
+                    try {
+                        $sql = "INSERT INTO pet_medicacao (id_medicamento, id_pet_atendimento)
+                                VALUES (:medicamento, :idPetAtendimento)";
+                        $stmt = $pdo->prepare($sql);
+                        $stmt->bindParam(':medicamento', $medicamento, PDO::PARAM_INT);
+                        $stmt->bindParam(':idPetAtendimento', $idPetAtendimento, PDO::PARAM_INT);
+                        $stmt->execute();
+                    } catch (PDOException $e) {
+                        error_log("Erro ao registrar medicação para atendimento $idPetAtendimento: " . $e->getMessage());
+                        return false;
+                    }
+                }
+            }
+    
+            return true;
+    
         } catch (PDOException $e) {
             error_log("Erro ao registrar atendimento: " . $e->getMessage());
             return false;
         }
     }
-}
+}    

@@ -133,11 +133,19 @@ class controleSaudePet
         
     }
 
-    public function getHistoricoPet($id){
+    public function getHistoricoPet(){
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+    
         $saudePetDAO = new SaudePetDAO();
-        return $saudePetDAO->getHistoricoPet($id);
+    
+        $resultado = $saudePetDAO->getHistoricoPet($data['idpet']);
+    
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($resultado);
+        exit;
     }
-
+    
     public function getAtendimentoPet($id){
         $saudePetDAO = new SaudePetDAO();
         return $saudePetDAO->getAtendimentoPet($id);
