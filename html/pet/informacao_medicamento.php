@@ -322,7 +322,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                                                                     <label class="col-md-3 control-label" for="profileCompany">Nome:<!--<sup class="obrig">*</sup>--></label>
                                                                     <div class="col-md-8">
                                                                         <select type="select" class="form-control" name="nomeMedicamento" id="nomeMedicamento" required>
-                                                                            <option value="selecionar" selected>Selecionar</option>
+                                                                            <option value="selecionar" disabled selected>Selecionar</option>
                                                                             <!-- <option value="seionar" >Select</option> -->
 
                                                                         </select>
@@ -347,7 +347,8 @@ require_once ROOT . "/html/personalizacao_display.php";
                                             <div class="form-group">
                                                 <div class='col-md-6' id='div_texto' style="height: 499px;"><!--necessidades especiais?-->
                                                     <label for="texto" id="etiqueta_despacho" style="padding-left: 15px;">Descricão:<!--<sup class="obrig">*</sup>--></label>
-                                                    <div id='descricaoMedicamento' class='form-control' style="height:150px; overflow:auto; border:1px solid #ccc; padding:10px;" disabled></div>
+                                                    <textarea cols='30' rows='5' id='despacho' name='descricaoMedicamento' class='form-control' disabled></textarea>
+
                                                 </div>
                                             </div>
                                             <br>
@@ -392,9 +393,16 @@ require_once ROOT . "/html/personalizacao_display.php";
 
     <!--Pedro-->
     <script>
+        var editor = CKEDITOR.replace('despacho');
         let nomeMedicamento = document.querySelector("#nomeMedicamento");
         let aplicacao = document.querySelector("#aplicacaoMedicamento");
-        let descricaoMedic = document.querySelector("#descricaoMedicamento");
+        let descricaoMedic = document.querySelector("#despacho");
+        
+        function decodeHtml(html) {
+             var txt = document.createElement("textarea");
+             txt.innerHTML = html;
+            return txt.value;
+        }
 
         window.addEventListener("load", () => {
             fetch("../../controle/pet/controleGetMedicamento.php").then(
@@ -412,7 +420,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                         resp.forEach(valor => {
                             if (valor.id_medicamento == nomeMedicamento.value) {
                                 aplicacao.value = valor.aplicacao;
-                                descricaoMedic.innerHTML = valor.descricao_medicamento;
+                                editor.setData(decodeHtml(valor.descricao_medicamento));
                                 console.log(valor.descricao_medicamento);
                             }
                         })

@@ -8,12 +8,9 @@ class MedicamentoControle
         $nomeMedicamento = filter_input(INPUT_POST, 'nomeMedicamento', FILTER_SANITIZE_SPECIAL_CHARS);
         $descricaoMedicamento = filter_input(INPUT_POST, 'descricaoMedicamento', FILTER_SANITIZE_SPECIAL_CHARS);
         $aplicacaoMedicamento = filter_input(INPUT_POST, 'aplicacaoMedicamento', FILTER_SANITIZE_SPECIAL_CHARS);
-        $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
-
+      
         try {
-            if (!is_null($id) && ($id === false || $id < 1)) {
-                throw new InvalidArgumentException('O id informado é inválido.', 400);
-            }
+       
 
             if (!$nomeMedicamento || strlen($nomeMedicamento) <= 0) {
                 throw new InvalidArgumentException('O nome do medicamento deve ser informado.', 400);
@@ -31,7 +28,7 @@ class MedicamentoControle
             $saudePetDao->adicionarMedicamento($nomeMedicamento, $descricaoMedicamento, $aplicacaoMedicamento);
 
             if ($id) {
-                header("Location: ../../html/pet/profile_pet.php?id_pet=" . $id);
+                header("Location: ../html/pet/informacao_medicamento.php");
             } else {
                 header("Location: ../html/pet/informacao_medicamento.php");
             }
