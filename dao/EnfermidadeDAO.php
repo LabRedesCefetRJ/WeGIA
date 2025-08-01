@@ -41,7 +41,7 @@ class EnfermidadeDAO{
             $resultado[] = array(
                 'id_CID' => $row['id_CID'],
                 'CID' => $row['CID'],
-                'descricao' => $row['descricao']
+                'descricao' => htmlspecialchars($row['descricao'])
             );
         }
 

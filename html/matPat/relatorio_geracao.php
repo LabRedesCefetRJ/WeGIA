@@ -241,24 +241,24 @@ function quickQuery($query, $parametro, $column)
 										echo "</pre>";
 									}
 
-									echo ("<h3>Relatório de " . $post[0] . "</h3>");
+									echo ("<h3>Relatório de " . htmlspecialchars($post[0]) . "</h3>");
 
 									if ($post[0] == 'entrada') {
 										if (isset($post[1])) {
 											$origem = quickQuery("select nome_origem from origem where id_origem =  :id_origem;", [':id_origem' => $post[1]] , "nome_origem");
-											echo ("<ul>Origem: " . $origem . "</ul>");
+											echo ("<ul>Origem: " . htmlspecialchars($origem) . "</ul>");
 										} else {
 											echo ("<ul>Origem: Todas</ul>");
 										}
 										if (isset($post[2])) {
 											$tipo = quickQuery("select descricao from tipo_entrada where id_tipo = :id_tipo;", [':id_tipo' => $post[2]] , "descricao", );
-											echo ("<ul>Tipo: " . $tipo . "</ul>");
+											echo ("<ul>Tipo: " . htmlspecialchars($tipo) . "</ul>");
 										} else {
 											echo ("<ul>Tipo: Todos</ul>");
 										}
 										if (isset($post[3])) {
 											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;",  [':id_pessoa' => $post[3]], "nome");
-											echo ("<ul>Responsável: " . $responsavel . "</ul>");
+											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
 										} else {
 											echo ("<ul>Responsável: Todos</ul>");
 										}
@@ -267,19 +267,19 @@ function quickQuery($query, $parametro, $column)
 									if ($post[0] == 'saida') {
 										if (isset($post[1])) {
 											$destino = quickQuery("select nome_destino from destino where id_destino =  :id_destino;", [':id_destino' => $post[1]] , "nome_destino");
-											echo ("<ul>Destino: " . $destino . "</ul>");
+											echo ("<ul>Destino: " . htmlspecialchars($destino) . "</ul>");
 										} else {
 											echo ("<ul>Destino: Todos</ul>");
 										}
 										if (isset($post[2])) {
 											$tipo = quickQuery("select descricao from tipo_saida where id_tipo = :id_tipo;", [':id_tipo' => $post[2]] , "descricao");
-											echo ("<ul>Tipo: " . $tipo . "</ul>");
+											echo ("<ul>Tipo: " . htmlspecialchars($tipo) . "</ul>");
 										} else {
 											echo ("<ul>Tipo: Todos</ul>");
 										}
 										if (isset($post[3])) {
 											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_tipo;", [':id_pessoa' => $post[3]] , "nome");
-											echo ("<ul>Responsável: " . $responsavel . "</ul>");
+											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
 										} else {
 											echo ("<ul>Responsável: Todos</ul>");
 										}
@@ -289,18 +289,18 @@ function quickQuery($query, $parametro, $column)
 										$dataInicio = $post[4]['inicio'];
 										$modeloBrasileiro = 'd/m/Y';
 										$dataInicioFormatada = date_format(date_create($dataInicio), $modeloBrasileiro);
-										echo ("<ul>A partir de: " . $dataInicioFormatada . "</ul>");
+										echo ("<ul>A partir de: " . htmlspecialchars($dataInicioFormatada) . "</ul>");
 									}
 
 									if (isset($post[4]['fim'])) {
 										$dataFim = $post[4]['fim'];
 										$dataFimFormatada = date_format(date_create($dataFim), $modeloBrasileiro);
-										echo ("<ul>Até: " . $dataFimFormatada . "</ul>");
+										echo ("<ul>Até: " . htmlspecialchars($dataFimFormatada) . "</ul>");
 									}
 
 									if (isset($post[5])) {
 										$almoxarifado = quickQuery("select descricao_almoxarifado from almoxarifado where id_almoxarifado = :id_almoxarifado;", [':id_almoxarifado' => $post[5]], "descricao_almoxarifado");
-										echo ("<ul>Almoxarifado: " . $almoxarifado . "</ul>");
+										echo ("<ul>Almoxarifado: " . htmlspecialchars($almoxarifado) . "</ul>");
 									} else {
 										echo ("<ul>Almoxarifado: Todos</ul>");
 									}

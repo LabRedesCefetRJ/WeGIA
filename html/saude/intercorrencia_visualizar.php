@@ -53,25 +53,22 @@ $avisoNotificacaoControle = new AvisoNotificacaoControle();
 $recentes = $avisoNotificacaoControle->listarRecentes($id_pessoa);
 $historicos = $avisoNotificacaoControle->listarHistoricos($id_pessoa);
 
-//Transforma as datas para o formato brasileiro
+/**Transforma as datas para o formato brasileiro e protege contra XSS*/
+function formataEProtege(array $intercorrencias){
+    foreach($intercorrencias as $num => $intercorrencia){
+        $data = new DateTime($intercorrencia['data']);
+        $intercorrencias[$num]['data'] = $data->format('d/m/Y h:i:s');
+        $intercorrencias[$num]['descricao'] = htmlspecialchars($intercorrencia['descricao']);
+    }
 
-foreach($recentes as $num => $recente){
-    $data = new DateTime($recente['data']);
-    $recente['data'] = $data->format('d/m/Y h:i:s');
-    $recentes[$num] = $recente;
-}
-
-foreach($historicos as $num => $historico){
-    $data = new DateTime($historico['data']);
-    $historico['data'] = $data->format('d/m/Y h:i:s');
-    $historicos[$num] = $historico;
+    return $intercorrencias;
 }
 
 $recentesJSON =  json_encode(
-    $recentes
+    formataEProtege($recentes)
 );
 $historicoJSON = json_encode(
-    $historicos
+    formataEProtege($historicos)
 );
 
 echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON</script>";
