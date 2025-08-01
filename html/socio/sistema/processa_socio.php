@@ -24,6 +24,7 @@ switch ($acao) {
         buscarPorCpf();
         break;
     default:
+        http_response_code(400);
         echo json_encode(['erro' => 'Ação inválida']);
         exit();
 }
@@ -41,26 +42,31 @@ function cadastrar()
         $pdo = Conexao::connect();
         $pdo->beginTransaction();
 
-        //criar pessoa
-        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
+        $idInterno = verificarInterno($dados['cpf']);
+        if (!$idInterno) {
+            //criar pessoa
+            $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
 
-        $stmtPessoa = $pdo->prepare($sqlPessoa);
+            $stmtPessoa = $pdo->prepare($sqlPessoa);
 
-        $stmtPessoa->bindParam(':cpf', $dados['cpf']);
-        $stmtPessoa->bindParam(':nome', $dados['nome']);
-        $stmtPessoa->bindParam(':telefone', $dados['telefone']);
-        $stmtPessoa->bindParam(':dataNascimento', $dados['dataNascimento']);
-        $stmtPessoa->bindParam(':cep', $dados['cep']);
-        $stmtPessoa->bindParam(':estado', $dados['uf']);
-        $stmtPessoa->bindParam(':cidade', $dados['cidade']);
-        $stmtPessoa->bindParam(':bairro', $dados['bairro']);
-        $stmtPessoa->bindParam(':logradouro', $dados['rua']);
-        $stmtPessoa->bindParam(':numeroEndereco', $dados['numero']);
-        $stmtPessoa->bindParam(':complemento', $dados['complemento']);
-        $stmtPessoa->bindParam(':ibge', $dados['ibge']);
+            $stmtPessoa->bindParam(':cpf', $dados['cpf']);
+            $stmtPessoa->bindParam(':nome', $dados['nome']);
+            $stmtPessoa->bindParam(':telefone', $dados['telefone']);
+            $stmtPessoa->bindParam(':dataNascimento', $dados['dataNascimento']);
+            $stmtPessoa->bindParam(':cep', $dados['cep']);
+            $stmtPessoa->bindParam(':estado', $dados['uf']);
+            $stmtPessoa->bindParam(':cidade', $dados['cidade']);
+            $stmtPessoa->bindParam(':bairro', $dados['bairro']);
+            $stmtPessoa->bindParam(':logradouro', $dados['rua']);
+            $stmtPessoa->bindParam(':numeroEndereco', $dados['numero']);
+            $stmtPessoa->bindParam(':complemento', $dados['complemento']);
+            $stmtPessoa->bindParam(':ibge', $dados['ibge']);
 
-        $stmtPessoa->execute();
-        $idPessoa = $pdo->lastInsertId();
+            $stmtPessoa->execute();
+            $idPessoa = $pdo->lastInsertId();
+        } else {
+            $idPessoa = $idInterno;
+        }
 
         //criar socio
         $idSocioStatus = 3; //Define o status do sócio como Inativo temporariamente
@@ -120,7 +126,8 @@ function cadastrar()
             exit();
         }
     } catch (PDOException $e) {
-        http_response_code(500);
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+        http_response_code($e->getCode());
         echo json_encode(['erro' => 'Erro ao cadastrar sócio no sistema']);
         exit();
     }
@@ -256,7 +263,8 @@ function atualizar()
             exit();
         }
     } catch (PDOException $e) {
-        http_response_code(500);
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+        http_response_code($e->getCode());
         echo json_encode(['erro' => 'Erro ao cadastrar sócio no sistema']);
         exit();
     }
@@ -276,9 +284,9 @@ function buscarPorCpf()
     }
 
     //Verifica se o sócio é um funcionário ou atendido
-    if (verificarInterno($cpf)) {
+    if (verificarInterno($cpf, true)) {
         http_response_code(403);
-        echo json_encode(['erro' => 'Você não possuí permissão para alterar os dados desse CPF']);
+        echo json_encode(['erro' => 'Você não possui permissão para alterar os dados desse CPF']);
         exit();
     }
 
@@ -316,18 +324,25 @@ function buscarPorCpf()
 
         echo json_encode(['retorno' => $socio]);
     } catch (PDOException $e) {
-        http_response_code(500);
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+        http_response_code($e->getCode());
         echo json_encode(['erro' => 'Erro ao buscar sócio no sistema']);
         exit();
     }
 }
 
 /**
- * Verifica se um sócio é um funcionário ou um atendido
+ * Verifica se é um funcionário ou um atendido
  */
-function verificarInterno(string $cpf)
+function verificarInterno(string $cpf, bool $socio = false)
 {
-    $sqlVerificarInterno = 'SELECT p.id_pessoa FROM pessoa p JOIN socio s ON (s.id_pessoa=p.id_pessoa) LEFT JOIN atendido a ON(a.pessoa_id_pessoa=p.id_pessoa) LEFT JOIN funcionario f ON(f.id_pessoa=p.id_pessoa) WHERE p.cpf=:cpf AND (a.pessoa_id_pessoa IS NOT NULL OR f.id_pessoa IS NOT NULL)';
+    $sqlVerificarInterno = 'SELECT p.id_pessoa FROM pessoa p ';
+
+    if ($socio) {
+        $sqlVerificarInterno .= 'JOIN socio s ON (s.id_pessoa=p.id_pessoa) ';
+    }
+
+    $sqlVerificarInterno .= 'LEFT JOIN atendido a ON(a.pessoa_id_pessoa=p.id_pessoa) LEFT JOIN funcionario f ON(f.id_pessoa=p.id_pessoa) WHERE p.cpf=:cpf AND (a.pessoa_id_pessoa IS NOT NULL OR f.id_pessoa IS NOT NULL)';
 
     try {
         $pdo = Conexao::connect();
@@ -336,13 +351,16 @@ function verificarInterno(string $cpf)
         $stmt->bindParam(':cpf', $cpf);
         $stmt->execute();
 
+        $interno = $stmt->fetch(PDO::FETCH_ASSOC);
+
         if ($stmt->rowCount() > 0) {
-            return true;
+            return $interno['id_pessoa'];
         }
 
         return false;
     } catch (PDOException $e) {
-        http_response_code(500);
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+        http_response_code($e->getCode());
         echo json_encode(['erro' => 'Erro ao verificar sócio no sistema']);
         exit();
     }
@@ -453,6 +471,7 @@ function extrairPost()
             throw new InvalidArgumentException('O dia escolhido não é válido');
         }
     } catch (InvalidArgumentException $e) {
+        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
         http_response_code(400);
         echo json_encode(['erro' => $e->getMessage()]);
         exit();

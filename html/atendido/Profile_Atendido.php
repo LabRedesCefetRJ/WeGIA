@@ -5,6 +5,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: " . "../../index.php");
+  exit(401);
+} else {
+  session_regenerate_id();
 }
 
 //verificação da permissão do usuário
@@ -629,7 +632,7 @@ $dependente = json_encode($dependente);
                               </div>
                           </div>
                           <div class="modal-footer">
-                            <input type="hidden" name="idatendido" value="<?=$id?>">
+                            <input type="hidden" name="idatendido" value="<?= $id ?>">
                             <input type="submit" id="formsubmit" value="Alterar imagem">
                           </div>
                         </div>
@@ -672,9 +675,6 @@ $dependente = json_encode($dependente);
                 </li>
               </ul>
               <div class="tab-content">
-
-
-
                 <div class="tab-content">
                   <div id="overview" class="tab-pane active">
                     <form class="form-horizontal" method="post" action="../../controle/control.php">
@@ -729,7 +729,7 @@ $dependente = json_encode($dependente);
                             </select>
                           </div>
                         </div>
-                        <input type="hidden" name="idatendido" value=<?=$id?>>
+                        <input type="hidden" name="idatendido" value=<?= $id ?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes_pessoais()">Editar</button>
                         <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
                     </form>
@@ -742,7 +742,6 @@ $dependente = json_encode($dependente);
                         <div class="col-md-9 col-md-offset-3">
                           <?php
                           $atend = json_decode($atend)[0];
-                          //print_r($atend);
                           if ($atend->status == 1):
                           ?>
                             <button id="excluir" type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Desativar</button>
@@ -750,7 +749,7 @@ $dependente = json_encode($dependente);
                           elseif ($atend->status == 2):
                           ?>
                             <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post">
-                              <input type="hidden" name="idatendido" value=<?=$id?>>
+                              <input type="hidden" name="idatendido" value=<?= $id ?>>
                               <input type="hidden" name="operacao" value='ativar'>
                               <button class="btn btn-primary" type="submit">Ativar</button>
                             </form>
@@ -771,7 +770,7 @@ $dependente = json_encode($dependente);
                           <div class="modal-body">
                             <p>Tem certeza que deseja desativar esse atendido?</p>
                             <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post" class="d-flex">
-                              <input type="hidden" name="idatendido" value=<?=$id?>>
+                              <input type="hidden" name="idatendido" value=<?= $id ?>>
                               <input type="hidden" name="operacao" value='desativar'>
                               <button class="btn btn-primary me-2" type="submit">Desativar</button>
                               <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -784,9 +783,6 @@ $dependente = json_encode($dependente);
                   </div>
 
                   <!-- Aba  de  Endereço -->
-
-
-
 
                   <div id="endereco" class="tab-pane">
                     <section class="panel">
@@ -856,12 +852,8 @@ $dependente = json_encode($dependente);
                               <input type="text" size="8" name="ibge" class="form-control" id="ibge">
                             </div>
                           </div>
-
-
-
-
                           <div class="form-group center">
-                            <input type="hidden" name="idatendido" value=<?=$id?>>
+                            <input type="hidden" name="idatendido" value=<?= $id ?>>
                             <button type="button" class="btn btn-primary" id="botaoEditarEndereco" onclick="return editar_endereco()">Editar</button>
                             <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
                         </form>
@@ -869,14 +861,9 @@ $dependente = json_encode($dependente);
 
                     </section>
                   </div>
-
-
-
                   <div id="docs" class="tab-pane">
 
                     <!-- Aba de documentos -->
-
-
                     <section class="panel">
                       <header class="panel-heading">
                         <div class="panel-actions">
@@ -920,7 +907,7 @@ $dependente = json_encode($dependente);
                               <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                             </div>
                           </div>
-                          <input type="hidden" name="idatendido" value="<?=$id?>">
+                          <input type="hidden" name="idatendido" value="<?= $id ?>">
                           <br>
                           <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao" onclick="return editar_documentacao()">Editar</button>
                           <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
@@ -1001,7 +988,7 @@ $dependente = json_encode($dependente);
                                       <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                     </div>
                                   </div>
-                                  <input type="hidden" name="idatendido" value="<?=$id?>" readonly>
+                                  <input type="hidden" name="idatendido" value="<?= $id ?>" readonly>
                                   <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                                     <input type="submit" id="cadastrarFamiliar" value="Enviar" class="btn btn-primary">
@@ -1066,7 +1053,7 @@ $dependente = json_encode($dependente);
                                         ?>
 
                                       </select>
-                                   
+
                                       <a onclick="adicionar_tipo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                     </div>
                                   </div>
@@ -1074,7 +1061,7 @@ $dependente = json_encode($dependente);
                                     <label for="arquivoDocumento">Arquivo</label>
                                     <input name="arquivo" type="file" class="form-control-file" id="id_documento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
                                   </div>
-                                  <input type="number" name="idatendido" value="<?=$id?>" style='display: none;'>
+                                  <input type="number" name="idatendido" value="<?= $id ?>" style='display: none;'>
                                 </div>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -1129,68 +1116,6 @@ $dependente = json_encode($dependente);
 
                   <!-- end: page -->
       </section>
-      <aside id="sidebar-right" class="sidebar-right">
-        <div class="nano">
-          <div class="nano-content">
-            <a href="#" class="mobile-close visible-xs">
-              Collapse <i class="fa fa-chevron-right"></i>
-            </a>
-            <div class="sidebar-right-wrapper">
-              <div class="sidebar-widget widget-calendar">
-                <h6>Upcoming Tasks</h6>
-                <div data-plugin-datepicker data-plugin-skin="dark"></div>
-                <ul>
-                  <li>
-                    <time datetime="2014-04-19T00:00+00:00">04/19/2014</time>
-                    <span>Company Meeting</span>
-                  </li>
-                </ul>
-              </div>
-              <div class="sidebar-widget widget-friends">
-                <h6>Friends</h6>
-                <ul>
-                  <li class="status-online">
-                    <figure class="profile-picture">
-                      <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
-                    </figure>
-                    <div class="profile-info">
-                      <span class="name">Joseph Doe Junior</span>
-                      <span class="title">Hey, how are you?</span>
-                    </div>
-                  </li>
-                  <li class="status-online">
-                    <figure class="profile-picture">
-                      <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
-                    </figure>
-                    <div class="profile-info">
-                      <span class="name">Joseph Doe Junior</span>
-                      <span class="title">Hey, how are you?</span>
-                    </div>
-                  </li>
-                  <li class="status-offline">
-                    <figure class="profile-picture">
-                      <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
-                    </figure>
-                    <div class="profile-info">
-                      <span class="name">Joseph Doe Junior</span>
-                      <span class="title">Hey, how are you?</span>
-                    </div>
-                  </li>
-                  <li class="status-offline">
-                    <figure class="profile-picture">
-                      <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
-                    </figure>
-                    <div class="profile-info">
-                      <span class="name">Joseph Doe Junior</span>
-                      <span class="title">Hey, how are you?</span>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </aside>
       <div align="right">
         <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
       </div>
@@ -1307,7 +1232,7 @@ $dependente = json_encode($dependente);
       }
 
       function funcao3() {
-        var idatend = <?=$id?>;
+        var idatend = <?= $id ?>;
         var cpfs = <?php echo $_SESSION['cpf_atendido']; ?>;
         var cpf_atendido = $("#cpf").val();
         var cpf_atendido_correto = cpf_atendido.replace(".", "");
@@ -1380,7 +1305,7 @@ $dependente = json_encode($dependente);
         if (!window.confirm("Tem certeza que deseja remover esse documento?")) {
           return false;
         }
-        let url = "documento_excluir.php?id_doc=" + id_doc + "&idatendido=<?=$id?>";
+        let url = "documento_excluir.php?id_doc=" + id_doc + "&idatendido=<?= $id ?>";
         let data = "";
         post(url, data, listarFunDocs);
       }
@@ -1388,7 +1313,7 @@ $dependente = json_encode($dependente);
     <script>
       function removerDependente(id_dep) {
         let url = "familiar_remover.php";
-        let data = "idatendido=<?=$id?>&id_dependente=" + id_dep;
+        let data = "idatendido=<?= $id ?>&id_dependente=" + id_dep;
         post(url, data, verificaSucesso);
       }
     </script>

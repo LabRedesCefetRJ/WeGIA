@@ -100,6 +100,22 @@ function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3
     <script src="../../../assets/javascripts/theme.custom.js"></script>
     <script src="../../../assets/javascripts/theme.init.js"></script>
 
+    <style>
+        .table {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .table th,
+        .table td {
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: normal;
+            vertical-align: middle;
+        }
+
+    </style>
+
 </head>
 
 <body>
@@ -227,7 +243,7 @@ function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3
                                         <thead>
                                             <th class="text-center">Plataforma</th>
                                             <th class="text-center">Endpoint</th>
-                                            <th class="text-center">Token API</th>
+                                            <th class="text-center col-token">Token API</th>
                                             <th class="text-center">Ativo</th>
                                             <th class="text-center">Ação</th>
                                         </thead>

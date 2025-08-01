@@ -23,31 +23,32 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                 //verificar endpoint
                 $endpointFragmentado = explode('/', $gatewayPagamento->getEndpoint());
 
+                $url = $gatewayPagamento->getEndpoint() . '?page=1&size=30';
+
+                // Verificar o parâmetro de status
+                if (!is_null($status)) {
+                    $url .= "&status=$status";
+                }
+
+                // Definir o período de tempo de análise
+                $dataAtual = new DateTime();
+                $anoAtual = intval($dataAtual->format('Y'));
+
+                $anoAnalise = $anoAtual - 1;
+                $dataAnalise = new DateTime("{$anoAnalise}-12-01");
+                $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
+
+                $url .= "&created_since=$dataAnaliseFormatada";
+
+                $gatewayPagamento->setEndpoint($url);
+
                 if (end($endpointFragmentado) === 'orders') {
-
-                    $url = $gatewayPagamento->getEndpoint() . '?page=1&size=30';
-
-                    // Verificar o parâmetro de status
-                    if (!is_null($status)) {
-                        $url .= "&status=$status";
-                    }
-
-                    // Definir o período de tempo de análise
-                    $dataAtual = new DateTime();
-                    $anoAtual = intval($dataAtual->format('Y'));
-
-                    $anoAnalise = $anoAtual - 1;
-                    $dataAnalise = new DateTime("{$anoAnalise}-12-01");
-                    $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
-
-                    $url .= "&created_since=$dataAnaliseFormatada";
-
-                    $gatewayPagamento->setEndpoint($url);
-
                     // Realizar requisições
                     $this->requisicaoPedidos($gatewayPagamento);
-                } elseif (end($endpointFragmentado) === 'subscriptions'){
+                } elseif (end($endpointFragmentado) === 'subscriptions') {
                     //chamar função getSubscriptions quando a mesma for implementada
+                    $gatewayPagamento->setEndpoint(str_replace('subscriptions', 'invoices', $gatewayPagamento->getEndpoint()));
+                    $this->requisicaoPedidos($gatewayPagamento);
                 }
             }
 
@@ -55,10 +56,16 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
             $contribuicaoLogCollection = new ContribuicaoLogCollection();
             foreach ($this->pedidosArray as $pedido) {
                 $contribuicaoLog = new ContribuicaoLog();
-                $contribuicaoLog->setCodigo($pedido['id']);
 
-                //transformar a data de pagamento para a estrtutura aceita pelo MySQL
-                $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charges'][0]['paid_at'])->format('Y-m-d H:i:s');
+                if (key_exists('subscription', $pedido)) {
+                    $contribuicaoLog->setCodigo($pedido['subscription']['id']);
+                    //transformar a data de pagamento para a estrtutura aceita pelo MySQL
+                    $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charge']['paid_at'])->format('Y-m-d H:i:s');
+                } else {
+                    $contribuicaoLog->setCodigo($pedido['id']);
+                    //transformar a data de pagamento para a estrtutura aceita pelo MySQL
+                    $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charges'][0]['paid_at'])->format('Y-m-d H:i:s');
+                }
 
                 $contribuicaoLog->setDataPagamento($dataPagamento);
                 $contribuicaoLogCollection->add($contribuicaoLog);
@@ -72,16 +79,6 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
             echo json_encode(['erro' => 'Problema no servidor']);
             exit();
         }
-    }
-
-    //Pega as contribuições do endpoint orders
-    private function getOrders() {
-        //futuramente transferir parte do código que for inerente de orders de requisicaoPedidos para cá.
-    }
-
-    //Pega as contribuições do endpoint subscription
-    private function getSubscriptions() {
-        //implementar instruções para pegar as subscriptions da api.
     }
 
     private function requisicaoPedidos(GatewayPagamento $gatewayPagamento)

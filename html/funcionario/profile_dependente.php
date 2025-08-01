@@ -599,7 +599,7 @@ try {
                                                                             <option selected disabled>Selecionar...</option>
                                                                             <?php
                                                                             foreach ($pdo->query("SELECT * FROM funcionario_docdependentes ORDER BY nome_docdependente ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                                                                echo ("<option value='" . $item["id_docdependentes"] . "' >" . $item["nome_docdependente"] . "</option>");
+                                                                                echo ("<option value='" . $item["id_docdependentes"] . "' >" . htmlspecialchars($item["nome_docdependente"]) . "</option>");
                                                                             }
                                                                             ?>
                                                                         </select>

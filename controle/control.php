@@ -1,20 +1,11 @@
 <?php
-
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
+}
 
 function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 {
 	if ($nomeClasse && $metodo) {
-
-		//Pessoas não autenticadas não devem ter acesso as funcionalidades do control.php
-		if (!isset($_SESSION['id_pessoa'])) {
-			http_response_code(401);
-			exit('Operação negada: Cliente não autorizado');
-		}
-
 		//Controladoras permitidas
 		$controladorasRecursos = [
 			'AdocaoControle' => [6, 64],
@@ -61,61 +52,80 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 		/*Por padrão o control.php irá recusar qualquer controladora informada,
 		adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
 		if (!array_key_exists($nomeClasse, $controladorasRecursos)) {
-			http_response_code(400);
-			echo json_encode(['erro' => 'Controladora inválida']);
-			exit();
+			throw new InvalidArgumentException('Controladora inválida', 400);
 		}
 
 		//Método de alterar senha é de acesso universal para todos os logados no sistema
 		if ($metodo != 'alterarSenha') {
-			$path = __DIR__;
-			require_once($path . '/../dao/MiddlewareDAO.php');
+			require_once(__DIR__ . '/../dao/MiddlewareDAO.php');
 			$middleware = new MiddlewareDAO();
 
-			//Verifica se a pessoa possuí o recurso necessário para acessar a funcionalidade desejada
+			//Verifica se a pessoa possui o recurso necessário para acessar a funcionalidade desejada
 			if (!$middleware->verificarPermissao($_SESSION['id_pessoa'], $nomeClasse, $controladorasRecursos)) {
-				http_response_code(401);
-				echo json_encode(['erro' => 'Acesso não autorizado']);
-				exit();
+				throw new LogicException('Acesso não autorizado', 401); // Considerar fazer uma exception de autorização para o projeto
 			}
 		}
 
+		$pathRequire = '';
+
 		if ($modulo) {
-			include_once $modulo . "/" . $nomeClasse . ".php";
-		} else {
-			include_once $nomeClasse . ".php";
+			$pathRequire = $modulo . DIRECTORY_SEPARATOR;
+		}
+
+		$pathRequire .= $nomeClasse . ".php";
+
+		if (!file_exists($pathRequire)) {
+			throw new InvalidArgumentException('O arquivo para requisição da classe não existe.', 400);
+		}
+
+		require_once($pathRequire);
+
+		if (!class_exists($nomeClasse)) {
+			throw new InvalidArgumentException('A classe informada não existe no sistema.', 400);
 		}
 
 		// Cria uma instância da classe e chama o método
 		$objeto = new $nomeClasse();
+
+		if (!method_exists($objeto, $metodo)) {
+			throw new InvalidArgumentException('O método informado não existe na classe.', 400);
+		}
+
 		$objeto->$metodo();
 	} else {
-		// Responde com erro se as variáveis necessárias não foram fornecidas
-		http_response_code(400);
-		echo json_encode(['erro' => 'O método e a controladora não podem ser vazios']);
-		exit();
+		throw new InvalidArgumentException('O método e a controladora não podem ser vazios', 400);
 	}
 }
 
-if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
-	// Recebe o JSON da requisição
-	$json = file_get_contents('php://input');
-	// Decodifica o JSON
-	$data = json_decode($json, true);
+try {
+	//Pessoas desautenticadas não devem ter acesso as funcionalidades do control.php
+	if (!isset($_SESSION['id_pessoa'])) {
+		throw new LogicException('Operação negada: Cliente não autorizado', 401); // Considerar fazer uma exception de autorização para o projeto
+	}
 
-	// Extrai as variáveis do array $data
-	$nomeClasse = $data['nomeClasse'] ?? null;
-	$metodo = $data['metodo'] ?? null;
-	$modulo = $data['modulo'] ?? null;
+	$nomeClasse = '';
+	$metodo = '';
+	$modulo = '';
 
-	// Processa a requisição
+	if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+		// Recebe o JSON da requisição
+		$json = file_get_contents('php://input');
+		// Decodifica o JSON
+		$data = json_decode($json, true);
+
+		// Extrai as variáveis do array $data
+		$nomeClasse = $data['nomeClasse'] ?? null;
+		$metodo = $data['metodo'] ?? null;
+		$modulo = $data['modulo'] ?? null;
+	} else {
+		// Recebe os dados do formulário normalmente
+		$nomeClasse = $_REQUEST['nomeClasse'] ?? null;
+		$metodo = $_REQUEST['metodo'] ?? null;
+		$modulo = $_REQUEST['modulo'] ?? null;
+	}
+
 	processaRequisicao($nomeClasse, $metodo, $modulo);
-} else {
-	// Recebe os dados do formulário normalmente
-	$nomeClasse = $_REQUEST['nomeClasse'] ?? null;
-	$metodo = $_REQUEST['metodo'] ?? null;
-	$modulo = $_REQUEST['modulo'] ?? null;
-
-	// Processa a requisição
-	processaRequisicao($nomeClasse, $metodo, $modulo);
+} catch (Exception $e) {
+	require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+	Util::tratarException($e);
 }
