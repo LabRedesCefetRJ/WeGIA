@@ -1119,7 +1119,7 @@ try {
                               $nome_desc = htmlspecialchars($descricao[0]['descricao']);
                               echo
                               "
-                                  <tr id='$idInfoAdicional'>
+                                  <tr id='informacao$idInfoAdicional'>
                                     <td>$nome_desc</td>
                                     <td>$dado</td>
                                     <td style='display: flex; justify-content: space-evenly;'>
@@ -1224,7 +1224,7 @@ try {
                                   let url = "informacao_adicional.php";
                                   let data = "action=remover&id_descricao=" + id_descricao;
                                   post(url, data, listarInfoAdicional);
-                                  $("#" + id_descricao + "").remove();
+                                  $("#" + 'informacao'+id_descricao + "").remove();
                                 }
 
                                 //Refazer lógica abaixo
@@ -1251,7 +1251,7 @@ try {
                                           let dado = info.dados;
 
                                           let linha = `
-                                              <tr id="${idInfoAdicional}">
+                                              <tr id="informacao${idInfoAdicional}">
                                                 <td>${nome_desc}</td>
                                                 <td>${dado}</td>
                                                 <td style='display: flex; justify-content: space-evenly;'>

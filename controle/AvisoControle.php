@@ -2,6 +2,7 @@
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Aviso.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'AvisoNotificacaoControle.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AvisoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class AvisoControle
 {
@@ -34,29 +35,20 @@ class AvisoControle
             }
 
             $aviso = new Aviso($idFuncionario, $idPessoaAtendida, $descricao);
-        } catch (InvalidArgumentException $e) {
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code($e->getCode());
-            echo json_encode(['erro' => 'Erro ao tentar cadastrar uma intercorrência: ' . $e->getMessage()]);
-            exit();
-        }
 
-        $avisoNotificacaoControle = new AvisoNotificacaoControle();
+            $avisoNotificacaoControle = new AvisoNotificacaoControle();
 
-        try {
             $avisoDAO = new AvisoDAO();
             $ultimaInsercao = $avisoDAO->cadastrar($aviso);
             if (!$ultimaInsercao) {
-                throw new PDOException();
+                throw new LogicException('Falha ao conferir lançamento da última inserção', 500);
             } else {
                 $aviso->setIdAviso($ultimaInsercao);
                 $avisoNotificacaoControle->incluir($aviso);
                 header("Location: ../html/saude/cadastrar_intercorrencias.php?id_fichamedica=$idfichamedica");
             }
-        } catch (PDOException $e) {
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code($e->getCode());
-            echo json_encode(['erro' => 'Erro ao registrar intercorrência no banco de dados.']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -80,13 +72,7 @@ class AvisoControle
 
             echo json_encode($intercorrencias);
         } catch (Exception $e) {
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code($e->getCode());
-            if ($e instanceof PDOException) {
-                echo json_encode(['erro' => 'Erro no servidor ao listar intercorrências.']);
-            } else {
-                echo json_encode(['erro' => $e->getMessage()]);
-            }
+            Util::tratarException($e);
         }
     }
 }
