@@ -392,6 +392,9 @@ try {
 
               <div class="sync-control">
                 <button class="btn btn-primary" id="sync-btn" title="Sincroniza contribuições de acordo com os múltiplos gateways de pagamentos cadastrados">Sincronizar pagamentos</button>
+                <a href="<?php echo WWW; ?>html/contribuicao/view/gerar_recibo.php" class="btn btn-success" title="Gerar recibo de doações para sócios">
+                  <i class="fa fa-file-pdf-o"></i> Gerar Recibo
+                </a>
 
                 <!--Informações de data e hora da última sincronização -->
                 <?php if (is_null($sistemaLogContribuicao)): ?>

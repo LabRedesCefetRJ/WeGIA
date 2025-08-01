@@ -23,6 +23,8 @@ try {
         'criarSocio',
         'atualizarSocio',
         'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento',
+        'gerarRecibo',
+        'download'
     ];
 
     //Blocks execution for unauthorized access

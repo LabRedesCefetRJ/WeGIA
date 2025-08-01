@@ -15,23 +15,23 @@
 	require_once "../geral/msg.php";
 
 	require_once "../../dao/Conexao.php";
-	require_once "../geral/servico_email.php";
+	require_once "../../controle/EmailControle.php";
 	
 	$pdo = Conexao::connect();
-	$emailService = new EmailService($pdo);
+	$emailControle = new EmailControle($pdo);
 
 	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 		try {
-			// Validar dados usando o EmailService
-			$erros = $emailService->validarConfiguracao($_POST);
+			// Validar dados usando o EmailControle
+			$erros = $emailControle->validarConfiguracao($_POST);
 			
 			if (!empty($erros)) {
 				$_SESSION['mensagem'] = 'Erros de validação: ' . implode(', ', $erros);
 				$_SESSION['tipo'] = 'error';
 			} else {
-				// Processar e salvar dados usando o EmailService
-				$config = $emailService->processarDadosFormulario($_POST);
-				$emailService->salvarConfiguracoesBanco($config);
+				// Processar e salvar dados usando o EmailControle
+				$config = $emailControle->processarDadosFormulario($_POST);
+				$emailControle->salvarConfiguracoesBanco($config);
 				
 				$_SESSION['mensagem'] = 'Configurações de email salvas com sucesso!';
 				$_SESSION['tipo'] = 'success';
@@ -44,8 +44,8 @@
 		}
 	}
 
-	// Obter configurações atuais usando o EmailService
-	$smtpConfig = $emailService->obterConfiguracoesBanco();
+	// Obter configurações atuais usando o EmailControle
+	$smtpConfig = $emailControle->obterConfiguracoesBanco();
 	
 	//valores padrão
 	$smtp_host = $smtpConfig['smtp_host'] ?? '';

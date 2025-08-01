@@ -16,12 +16,12 @@ if (!$email) {
 
 
 require_once "../../dao/Conexao.php";
-require_once "../geral/servico_email.php";
+require_once "../../controle/EmailControle.php";
 
 try {
     $pdo = Conexao::connect();
     
-    $emailService = new EmailService($pdo);
+    $emailControle = new EmailControle($pdo);
     
     $assunto = "Teste de Configuração SMTP - WeGIA";
     $mensagem = "
@@ -33,7 +33,7 @@ try {
     <p><em>Se você recebeu este email, significa que as configurações SMTP estão funcionando perfeitamente!</em></p>
     ";
     
-    $resultado = $emailService->enviarEmail($email, $assunto, $mensagem);
+    $resultado = $emailControle->enviarEmail($email, $assunto, $mensagem);
     
     if ($resultado['success']) {
         echo json_encode([
