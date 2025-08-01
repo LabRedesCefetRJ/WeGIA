@@ -103,7 +103,7 @@ class DespachoControle
 		}
 	}
 
-	//Busca um despacho pelo id
+	//Busca um despacho pelo id do memorando
 	public function getPorId(int $id){
 		try{
 			if($id < 1){

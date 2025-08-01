@@ -12,7 +12,6 @@ require_once "html/personalizacao_display.php";
 ?>
 <!doctype html>
 <html>
-
 <head>
 	<title><?php display_campo("Titulo", "str"); ?> - <?php display_campo("Subtitulo", "str"); ?></title>
 	<meta charset="UTF-8" />
