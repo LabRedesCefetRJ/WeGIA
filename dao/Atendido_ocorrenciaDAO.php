@@ -190,11 +190,12 @@ class Atendido_ocorrenciaDAO
             $paciente = array();
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $paciente[] = array(
-                    'nome_atendido' => $linha['nome_atendido'], 'arquivo_nome' => $linha['arquivo_nome'], 'arquivo_extensao' => $linha['arquivo_extensao'], 'idatendido_ocorrencias' => $linha['idatendido_ocorrencias'], 'sobrenome_atendido' => $linha['sobrenome_atendido'], 'atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos' => $linha['descricao_tipo'], 'funcionario_id_funcionario' => $linha['func'],
-                    'data' => $linha['data'], 'descricao' => $linha['descricao_ocorrencia'], 'idatendido_ocorrencia_doc' => $linha['idatendido_ocorrencia_doc']                );
+                    'nome_atendido' => $linha['nome_atendido'], 'arquivo_nome' => isset($linha['arquivo_nome'])?$linha['arquivo_nome']:null, 'arquivo_extensao' => isset($linha['arquivo_extensao'])?$linha['arquivo_extensao']:null, 'idatendido_ocorrencias' => $linha['idatendido_ocorrencias'], 'sobrenome_atendido' => $linha['sobrenome_atendido'], 'atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos' => $linha['descricao_tipo'], 'funcionario_id_funcionario' => $linha['func'],
+                    'data' => $linha['data'], 'descricao' => $linha['descricao_ocorrencia'], 'idatendido_ocorrencia_doc' => isset($linha['idatendido_ocorrencia_doc'])?$linha['idatendido_ocorrencia_doc']:null);
             }
-        } catch (PDOException $e) {
-            echo 'Error: ' .  $e->getMessage();
+        } catch (Exception $e) {
+            require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+            Util::tratarException($e);
         }
         return json_encode($paciente);
     }
