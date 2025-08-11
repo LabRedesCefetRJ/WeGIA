@@ -207,12 +207,6 @@ class FuncionarioDAO
             $secao = $funcionario->getSecao();
             $certificadoReservistaNumero = $funcionario->getCertificado_reservista_numero();
             $certificadoReservistaSerie = $funcionario->getCertificado_reservista_serie();
-            /*$calcado=$funcionario->getCalcado();
-            $calca=$funcionario->getCalca();
-            $jaleco=$funcionario->getJaleco();
-            $camisa=$funcionario->getCamisa();
-            $usaVtp=$funcionario->getUsa_vtp();
-            $cestaBasica=$funcionario->getCesta_basica();*/
             $situacao = $funcionario->getId_situacao();
             $cargo = $funcionario->getId_cargo();
 
@@ -249,12 +243,6 @@ class FuncionarioDAO
             $stmt->bindParam(':secao', $secao);
             $stmt->bindParam(':certificado_reservista_numero', $certificadoReservistaNumero);
             $stmt->bindParam(':certificado_reservista_serie', $certificadoReservistaSerie);
-            /*$stmt->bindParam(':calcado', $calcado);
-            $stmt->bindParam(':calca', $calca);
-            $stmt->bindParam(':jaleco', $jaleco);
-            $stmt->bindParam(':camisa', $camisa);
-            $stmt->bindParam(':usa_vtp', $usaVtp);
-            $stmt->bindParam(':cesta_basica', $cestaBasica);*/
             $stmt->bindParam(':id_situacao', $situacao);
             $stmt->bindParam(':data_expedicao', $dataExpedicao);
             $stmt->execute();
