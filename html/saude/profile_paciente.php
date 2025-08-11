@@ -516,7 +516,7 @@ try {
 
           medaplicadas.forEach(item => {
 
-            
+
 
             item.aplicacao = formatarDataBr(item.aplicacao)
 
@@ -570,7 +570,7 @@ try {
       fetch(url)
         .then(res => res.json())
         .then(intercorrencias => {
-            const tbody = document.getElementById("doc-tab-intercorrencias");
+          const tbody = document.getElementById("doc-tab-intercorrencias");
 
           intercorrencias.forEach(item => {
             const tr = document.createElement("tr");
@@ -1202,11 +1202,11 @@ try {
                           <div class="col-md-6">
 
                             <select class="form-control input-lg mb-md" name="id_CID" id="id_CID" required>
-                              <option selected disabled>Selecionar</option>
+                              <option selected disabled>Qualquer coisa</option>
                               <?php
-                              while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
+                              /*while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
                                 echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
-                              }                            ?>
+                              }*/                            ?>
                             </select>
                           </div>
                           <a onclick="adicionar_enfermidade()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
@@ -1444,7 +1444,7 @@ try {
                             </div>
 
                           </div>
-                         
+
 
                           <!-- listar o funcionario, pessoa nome onde cargo = 3 -->
                           <div class="form-group">
@@ -1455,16 +1455,16 @@ try {
                           </div>
 
                           <div class="form-group">
-                          <label class="col-md-3 control-label" for="inputSuccess">Médico:<sup class="obrig">*</sup></label>
-                          <div class="col-md-6">
+                            <label class="col-md-3 control-label" for="inputSuccess">Médico:<sup class="obrig">*</sup></label>
+                            <div class="col-md-6">
 
-                            <select class="form-control input-lg mb-md" name="medicos" id="medicos" required>
-                              <option selected disabled>Selecionar</option>
-                                                       
-                            </select>
+                              <select class="form-control input-lg mb-md" name="medicos" id="medicos" required>
+                                <option selected disabled>Selecionar</option>
+
+                              </select>
+                            </div>
+                            <a onclick="adicionar_medico()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                           </div>
-                          <a onclick="adicionar_medico()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                        </div>
 
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany" for="texto">Descrição:<sup class="obrig">*</sup></label>
@@ -1826,10 +1826,6 @@ try {
         })
       });
 
-
-
-
-
       function gerarExame() {
         url = 'exibir_exame.php';
         $.ajax({
@@ -1874,46 +1870,46 @@ try {
       }
 
 
-      async function  gerarEnfermidade() {
-          situacoes = await listarTodasAsEnfermidades()
-          let length = situacoes.length - 1;
-          let select = document.getElementById("id_CID");
-          while(select.firstChild){
-            select.removeChild(select.firstChild)
-          }
-          for(let i = 0; i <= length; i = i +1){
-            if(i == 0){
-              let selecionar = document.createElement("option");
-              selecionar.textContent = "Selecionar"
-              selecionar.selected = true;
-              selecionar.disabled = true;
-              select.appendChild(selecionar)
-            }
-            let option = document.createElement("option");
-            option.value = situacoes[i].id_CID;
-            option.textContent = situacoes[i].descricao;
-            select.appendChild(option);
-          }
-      }
-
-      async function  gerarMedicos() {
-          medicos = await listarTodosOsMedicos()
-          let length = medicos.length - 1;
-          let select = document.getElementById("medicos");
-           while(select.firstChild){
-            select.removeChild(select.firstChild)
-          }
-          let selecionar = document.createElement("option");
+      async function gerarEnfermidade() {
+        situacoes = await listarTodasAsEnfermidades()
+        let length = situacoes.length - 1;
+        let select = document.getElementById("id_CID");
+        while (select.firstChild) {
+          select.removeChild(select.firstChild)
+        }
+        for (let i = 0; i <= length; i = i + 1) {
+          if (i == 0) {
+            let selecionar = document.createElement("option");
             selecionar.textContent = "Selecionar"
             selecionar.selected = true;
             selecionar.disabled = true;
             select.appendChild(selecionar)
-          for(let i = 0; i <= length; i = i +1){
-            let option = document.createElement("option");
-            option.value = medicos[i].id_medico;
-            option.textContent = medicos[i].nome;
-            select.appendChild(option);
           }
+          let option = document.createElement("option");
+          option.value = situacoes[i].id_CID;
+          option.textContent = situacoes[i].descricao;
+          select.appendChild(option);
+        }
+      }
+
+      async function gerarMedicos() {
+        medicos = await listarTodosOsMedicos()
+        let length = medicos.length - 1;
+        let select = document.getElementById("medicos");
+        while (select.firstChild) {
+          select.removeChild(select.firstChild)
+        }
+        let selecionar = document.createElement("option");
+        selecionar.textContent = "Selecionar"
+        selecionar.selected = true;
+        selecionar.disabled = true;
+        select.appendChild(selecionar)
+        for (let i = 0; i <= length; i = i + 1) {
+          let option = document.createElement("option");
+          option.value = medicos[i].id_medico;
+          option.textContent = medicos[i].nome;
+          select.appendChild(option);
+        }
       }
 
       function adicionar_enfermidade() {
@@ -1952,9 +1948,9 @@ try {
           });
       }
 
-       function adicionar_medico() {
+      function adicionar_medico() {
         const url = '../../controle/control.php'
-        
+
         let nome_medico = window.prompt("Insira o nome do médico:");
         let crm_medico = window.prompt("Insira o CRM do médico:");
 
@@ -1969,30 +1965,27 @@ try {
           metodo: "inserirMedico"
         }
 
-        fetch(url, { 
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data)
-        })
-        .then(response => {
-          if (!response.ok) {
-            throw new Error('Erro na requisição');
-          }
-          return response.json();
-        })
-        .then(result => {
-          gerarMedicos();
-        })
-        .catch(error => {
-          console.error('Erro ao enviar dados:', error);
-        });
+        fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Erro na requisição');
+            }
+            return response.json();
+          })
+          .then(result => {
+            gerarMedicos();
+          })
+          .catch(error => {
+            console.error('Erro ao enviar dados:', error);
+          });
       }
-      //preciso criar a classe dao e controle Medicos e continuar a resolução da issue, basear-se na de enfermidades e medicamentos
-
-
-
+    
       function gerar_alergia() {
         url = 'exibir_alergia.php';
         $.ajax({
@@ -2009,8 +2002,6 @@ try {
               if (!(alergias.includes(item))) {
                 $('#id_CID_alergia').append('<option value="' + item.id_CID + '">' + item.descricao + '</option>');
               }
-
-
             });
           },
           dataType: 'json'
@@ -2035,7 +2026,7 @@ try {
             gerar_alergia();
           },
           error: function(response) {
-           console.log(response);
+            console.log(response);
           },
         })
       }
@@ -2289,7 +2280,7 @@ try {
             let erro = data.erro;
             throw new Error(`Erro na requisição: ${response.status} - ${erro}`);
           }
-          
+
           const data = await response.json();
 
           return data ?? []; //Retorna um array vazio se `null`
