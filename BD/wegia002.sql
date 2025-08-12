@@ -158,30 +158,6 @@ INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 64),
 (1, 7, 91);
 
-/*
-// DESATIVADO - ANTIGO MEIO DE PAGAMENTO BOLETOBANCÁRIO.COM
-INSERT INTO `sistema_pagamento` (`id`, `nome_sistema`) VALUES 
-(1, 'PAGSEGURO'), 
-(2, 'PAYPAL'), 
-(3, 'BOLETOFACIL'), 
-(4, 'WIDEPAY'),
-(5, 'PIX');
-
-INSERT INTO `doacao_pix_tipos` (`ID`, `TIPO`) VALUES
-(1, 'CNPJ'),
-(2, 'e-mail'),
-(3, 'telefone'),
-(4, 'aleatória');
-
-INSERT INTO `doacao_boleto_regras` (`id`, `min_boleto_uni`, `max_dias_venc`, `juros`, `multa`, `max_parcela`, `min_parcela`, `agradecimento`, `dias_boleto_a_vista`, `dias_venc_carne_op1`, `dias_venc_carne_op2`, `dias_venc_carne_op3`, `dias_venc_carne_op4`, `dias_venc_carne_op5`, `dias_venc_carne_op6`) VALUES 
-('1', '10.00', '29', '0', '0', '1000.00', '30.00', 'Agradecemos sua ajuda financeira!', '3', '1', '5', '10', '15', '20', '25');
-
-INSERT INTO `doacao_boleto_info` (`id`, `api`, `token_api`, `sandbox`, `token_sandbox`, `id_sistema`, `id_regras`) VALUES 
-('0', 'https://sandbox.boletobancario.com/boletofacil/integration/api/v1/issue-charge?', 'CADASTRA-SE NO GATEWAY DE PAGAMENTO PARA RECEBER UM TOKEN', '', '', '3', '1');
-
-INSERT INTO `doacao_cartao_avulso` (`url`, `id_sistema`) VALUES ('Cadastre sua instituição no gateway de pagamento', 1);
-*/
-
 INSERT INTO `funcionario_docfuncional`(`id_docfuncional`, `nome_docfuncional`) VALUES
 (1, 'Carteira de Identidade'),
 (2, 'CPF'),
@@ -280,23 +256,15 @@ INSERT INTO `saude_exame_tipos` (`id_exame_tipo`, `descricao`) VALUES
 (14, 'TGO'),
 (15, 'TGP');
 
--- Inserir as descrições existentes na tabela `saude_fichamedica` na tabela `saude_fichamedica_descricoes`
-/*INSERT INTO `wegia`.`saude_fichamedica_descricoes` (`id_fichamedica`, `descricao`)
-SELECT `id_fichamedica`, `descricao`
-FROM `wegia`.`saude_fichamedica`
-WHERE `descricao` IS NOT NULL;*/
-
 INSERT INTO `saude_medicacao_status` (`descricao`) VALUES ('Em tratamento'), ('Concluído') , ('Substituído'), ('Cancelado');
 
 INSERT INTO `saude_tabelacid` (`CID`, `descricao`) VALUES ('B34.2', 'Infecção por coronavírus de localização não especificada');
 
--- 240621: Refatoração do módulo Contribuição, dados para as novas tabelas --
-INSERT INTO `contribuicao_regras` (`regra`) VALUES 
-('MIN_VALUE'), 
-('MAX_VALUE');
+INSERT INTO `contribuicao_regras` (`regra`) VALUES ('MIN_VALUE'), ('MAX_VALUE');
 
 INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/orders","coloque o token aqui",0);
 INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/subscriptions","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("MercadoPago","https://api.mercadopago.com/v1/payments","coloque o token aqui",0);
 
 INSERT INTO `contribuicao_meioPagamento` (meio,id_plataforma,status) VALUES ("Boleto",1,0), ("Pix",1,0), ("Carne",1,0), ("CartaoCredito",1,0), ("Recorrencia",2,0);
 
@@ -305,3 +273,6 @@ VALUES (1,1,1,0), (1,2,1000,0), (2,1,1,0), (2,2,1000,0), (3,1,1,0), (3,2,1000,0)
 
 INSERT INTO `almoxarifado` (`id_almoxarifado`, `descricao_almoxarifado`) VALUES (1, 'Almoxarifado Central');
 INSERT INTO `almoxarife` (`id_almoxarife`, `id_funcionario`, `id_almoxarifado`, `data_registro`) VALUES (1,1,1, current_timestamp());
+
+INSERT INTO `saude_medicos` (`id_medico`, `crm`, `nome`) VALUES ('0', '123456/RJ', 'Sem médico definido');
+UPDATE `saude_medicos` SET `id_medico` = '0' WHERE `saude_medicos`.`id_medico` = 1;

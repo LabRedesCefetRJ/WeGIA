@@ -17,12 +17,13 @@ if (file_exists($config_path)) {
 session_start();
 
 if (!isset($_SESSION['usuario'])) {
-	header("Location: " . WWW . "index.php");
+	header("Location: " . WWW . "html/index.php");
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once "../personalizacao_display.php";
-require_once "../../dao/Conexao.php";
+require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/dao/Conexao.php";
+require_once ROOT . "/html/memorando/gerar_tabela_impressao.php";
 
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
@@ -55,7 +56,7 @@ require_once ROOT . "/controle/memorando/DespachoControle.php";
 require_once ROOT . "/controle/FuncionarioControle.php";
 require_once ROOT . "/controle/memorando/MemorandoControle.php";
 require_once ROOT . "/controle/memorando/AnexoControle.php";
-require_once ROOT.'/controle/memorando/StatusMemorandoControle.php';
+require_once ROOT . '/controle/memorando/StatusMemorandoControle.php';
 
 
 $id_memorando = $_GET['id_memorando'];
@@ -174,6 +175,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		$(function() {
 			var impressao = 0;
 			var despacho = <?php echo $_SESSION['despacho'] ?>;
+
 			var despachoAnexo = <?php echo $_SESSION['despachoComAnexo'] ?>;
 			var arquivo = <?php echo $_SESSION['arquivos'] ?>;
 			<?php
@@ -505,8 +507,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 				var checkFile = function(fileName) {
 					var accepted = "invalid",
-						acceptedFileTypes =
-						this.acceptedFileTypes || settings.acceptedFileTypes,
+						acceptedFileTypes = this.acceptedFileTypes || settings.acceptedFileTypes,
 						regex;
 
 					for (var i = 0; i < acceptedFileTypes.length; i++) {
@@ -515,14 +516,12 @@ require_once ROOT . "/html/personalizacao_display.php";
 						if (regex.test(fileName)) {
 							accepted = "valid";
 							break;
-						} else {
-							accepted = "badFileName";
 						}
 					}
 
 					return accepted;
-
 				};
+
 
 			};
 
@@ -641,9 +640,9 @@ require_once ROOT . "/html/personalizacao_display.php";
 									$pessoa_memorando = $pessoa_memorando["nome"] . ($pessoa_memorando["sobrenome"] ? (" " . $pessoa_memorando["sobrenome"]) : "");
 
 
-									$strArquivo = $pdo->query("SELECT nome FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
+									$strArquivo = $pdo->query("SELECT nome, extensao FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
 
-									$anexo = $pdo->query("SELECT anexo FROM anexo WHERE id_despacho=$id_memorando;");
+									$anexo = $pdo->query("SELECT anexo FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
 
 									//$anexo = $pdo->query("SELECT (COUNT*) FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
 									//var_dump($anexo);
@@ -654,11 +653,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 									echo ("
 
-								<p>MEMORANDO NR: $id_memorando</p>
-								<p>Assunto: $titulo</p>
-								<p> 
-								</p>
-								
+											<p>MEMORANDO NR: $id_memorando</p>
+											<p>Assunto: $titulo</p>
 								");
 									?>
 									<div class="panel-heading"> </div>
@@ -668,47 +664,18 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 										<?php
 
-										echo (" $cidade - $estado,  $data_expedicao 
-											");
+										echo (" $cidade - $estado,  $data_expedicao ");
 
 										?>
 
 									</p>
-
-
-
 									<?php
+										$despachosArr = json_decode($_SESSION['despacho']);
+										$anexos = json_decode($_SESSION['arquivos']);
+										$tabela = gerarTabelaMemorando($despachosArr, $anexos);
 
-
-									echo ("
-								<p> Ao Sr(a): $pessoa_destino</p>
-								<p> $despachoNome </p>
-
-								");
+										echo ($tabela);
 									?>
-									<p align="center">
-
-										<?php
-										echo ("
-		                               $pessoa_memorando
-									")
-										?>
-									</p>
-
-									<p>
-										<?php
-										echo (" <p> Anexos: </p>
-							<p> </p>
-							<p> </p>
-							<p> </p>
-");
-										?>
-									</p>
-									<div class="panel-heading"> </div>
-
-									<br>
-
-
 								</div>
 
 							</div>
@@ -788,7 +755,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 </div>
 </div>
 </div>
-<?php } ?>
+<?php }; ?>
 	</section>
 	</section>
 	</div>

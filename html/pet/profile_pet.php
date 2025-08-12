@@ -13,6 +13,7 @@ if (!isset($_SESSION['usuario'])) {
 } else if (!isset($_SESSION['pet'])) {
     $id_pet = $_GET['id_pet'];
     header('Location: ../../controle/control.php?modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage='. WWW. '/html/pet/profile_pet.php?id_pet=' . $id_pet . '&id_pet=' . $id_pet);
+    
 } else {
     $petDados = $_SESSION['pet'];
     unset($_SESSION['pet']);
@@ -329,10 +330,11 @@ if (isset($_GET['id_pet'])) {
       
       
       
-  const fichaMedica = {
-    castrado: "<?php echo isset($fichaMedica['castrado']) ? $fichaMedica['castrado'] : ''; ?>",
-    texto: "<?php echo isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais'], ENT_QUOTES) : ''; ?>"
-  };
+      const fichaMedica = {
+      castrado: <?= json_encode(isset($fichaMedica['castrado']) ? $fichaMedica['castrado'] : '') ?>,
+      texto: <?= json_encode(isset($fichaMedica['necessidades_especiais']) ? $fichaMedica['necessidades_especiais'] : '') ?>
+};
+
 
   function editar_ficha_medica() {
     // Habilita os campos
@@ -377,6 +379,7 @@ if (isset($_GET['id_pet'])) {
 
   // Desabilita campos ao carregar
   document.addEventListener("DOMContentLoaded", function () {
+   
     document.getElementById('castradoS').disabled = true;
     document.getElementById('castradoN').disabled = true;
     document.getElementById('despacho').disabled = true;
@@ -384,6 +387,7 @@ if (isset($_GET['id_pet'])) {
   });
 
   document.addEventListener("DOMContentLoaded", () => {
+    
   const adotadoS = document.querySelector("#adotadoS");
   const adotadoN = document.querySelector("#adotadoN");
   const dataAdocao = document.querySelector("#dataAdocao");
@@ -392,6 +396,7 @@ if (isset($_GET['id_pet'])) {
   const adotante_input = document.querySelector("#adotante_input");
 
   adotadoN.addEventListener("change", () => {
+    
   dataAdocao.value = '';
   adotante_input.selectedIndex = 0;
 
@@ -399,7 +404,10 @@ if (isset($_GET['id_pet'])) {
 
   fetch('../../controle/pet/ControleObterAdotante.php', {
     method: 'POST',
-    body: JSON.stringify({ comando: 'excluir', id_pet: id })
+    body: JSON.stringify({ comando: 'excluir', id_pet: id }),
+    headers: {
+    "Content-Type": "application/json"
+  }
   })
   .then(resp => resp.json())
   .then(data => {
@@ -440,7 +448,10 @@ if (isset($_GET['id_pet'])) {
   let id = window.location.href.split("=")[1];
   fetch('../../controle/pet/ControleObterAdotante.php', {
     method: "POST",
-    body: JSON.stringify({ id })
+    body: JSON.stringify({ id }),
+    headers: {
+    "Content-Type": "application/json"
+  }
   })
     .then(resp => resp.json())
     .then(resp => {
@@ -455,6 +466,294 @@ if (isset($_GET['id_pet'])) {
       }
     });
 });
+
+//ATENDIMENTO PET
+
+
+
+
+//EXIBIR AS OPTIONS DO MEDICAMENTOS
+document.addEventListener("DOMContentLoaded", async () => {
+  let opcoesMedicamento = document.querySelector("#selectMedicamento");
+  let url = '../../controle/pet/controleGetMedicamento.php';
+
+  const opcoes = {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'  
+    }
+  };
+
+  try {
+    let resposta = await fetch(url, opcoes);   
+    let dados = await resposta.json();   
+
+    // Limpa as opções anteriores
+    while(opcoesMedicamento.firstChild) {
+      opcoesMedicamento.removeChild(opcoesMedicamento.firstChild);
+    }
+
+    // Cria a opção padrão "Selecionar"
+    const opcaoNull = document.createElement('option');
+    opcaoNull.text = "Selecionar";
+    opcaoNull.disabled = true;
+    opcaoNull.selected = true;
+    opcoesMedicamento.appendChild(opcaoNull);
+
+    // Adiciona os dados recebidos como opções
+    dados.forEach(dado => {
+      const opcao = document.createElement('option');
+      opcao.textContent = dado.nome_medicamento;
+      opcao.dataset.id = dado.id_medicamento;
+      opcoesMedicamento.appendChild(opcao);
+    });
+
+  } catch (erro) {
+    alert(erro);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const select = document.querySelector("#selectMedicamento");
+  const tabela = document.querySelector("#dep-tab"); // tbody
+
+  // Array para armazenar os IDs dos medicamentos já inseridos
+  const medicamentosAdicionados = [];
+
+  select.addEventListener("change", async (e) => {
+    const selectedOption = e.target.selectedOptions[0];
+    const idMedicamento = selectedOption.dataset.id;
+
+    // Se já foi adicionado, não faz nada
+    if (medicamentosAdicionados.includes(idMedicamento)) return;
+
+    const Medicamento = {
+      id: idMedicamento,
+      nomeClasse: document.querySelector("#classeAtendimento").value,
+      metodo: "obterMedicamentoPet",
+      modulo: document.querySelector("#moduloAtendimento").value
+    };
+
+    try {
+      const resposta = await fetch("../../controle/control.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Medicamento)
+      });
+
+      const medicamentoObtido = await resposta.json();
+
+      // Cria a nova linha
+      const linhaTabela = document.createElement("tr");
+
+      // Coluna Medicamento (nome)
+      const tdNomeMedicamento = document.createElement("td");
+      tdNomeMedicamento.textContent = medicamentoObtido.nome_medicamento;
+
+      // Coluna Ação (preserva seu conteúdo atual)
+      const tdAcao = document.createElement("td");
+      tdAcao.textContent = medicamentoObtido.aplicacao || "";
+
+      // Coluna Excluir (botão)
+      const tdExcluir = document.createElement("td");
+      const btnExcluir = document.createElement("button");
+      btnExcluir.textContent = "Excluir";
+      btnExcluir.classList.add("btn", "btn-danger", "btn-sm");
+
+      btnExcluir.addEventListener("click", () => {
+        linhaTabela.remove();
+        const index = medicamentosAdicionados.indexOf(idMedicamento);
+        if (index > -1) medicamentosAdicionados.splice(index, 1);
+      });
+
+      tdExcluir.appendChild(btnExcluir);
+
+      linhaTabela.append(tdNomeMedicamento, tdAcao, tdExcluir);
+      tabela.appendChild(linhaTabela);
+
+      // Registra o id no array
+      medicamentosAdicionados.push(idMedicamento);
+    } catch (erro) {
+      console.error(erro);
+    }
+  });
+
+  const formAtendimento = document.querySelector("#formAtendimento");
+  formAtendimento.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    let atendimento = {
+      dataAtendimento: document.querySelector("#dataAtendimento").value,
+      descricaoAtendimento: document.querySelector("#descricaoAtendimento").value,
+      medicamentos: medicamentosAdicionados,
+      idpet: document.querySelector("#idPet").value,
+      nomeClasse: document.querySelector("#classeAtendimento").value,
+      metodo: document.querySelector("#metodoAtendimento").value,
+      modulo: document.querySelector("#moduloAtendimento").value
+    };
+
+    try {
+      const resposta = await fetch("../../controle/control.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(atendimento)
+      });
+
+      const resultado = await resposta.json();
+
+      if (resultado.sucesso) {
+        location.reload();
+      } else {
+        alert(resultado.erro ?? "Erro ao registrar atendimento.");
+      }
+    } catch (erro) {
+      console.error("Erro no envio:", erro);
+    }
+  });
+});
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const info = {
+    metodo: "getHistoricoPet",
+    modulo: "pet",
+    nomeClasse: "controleSaudePet",
+    idpet: document.querySelector("#idPet").value
+  };
+
+  const container = document.querySelector("#divHistoricoAtendimento");
+
+  // Função para decodificar HTML escapado
+  function decodeHtml(html) {
+    var txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+  }
+
+  try {
+    const resp = await fetch("../../controle/control.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(info)
+    });
+
+    const data = await resp.json();
+
+    // Limpa conteúdo anterior
+    container.textContent = "";
+
+    if (!data || data.length === 0) {
+      const msg = document.createElement("p");
+      msg.textContent = "Nenhum histórico de atendimento encontrado.";
+      container.appendChild(msg);
+      return;
+    }
+
+    // Agrupar atendimentos por data
+    const atendimentos = {};
+    data.forEach(item => {
+      const dataAtendimento = item.data_atendimento;
+      if (!atendimentos[dataAtendimento]) {
+        atendimentos[dataAtendimento] = {
+          descricao_atendimento: item.descricao_atendimento || "Não informado.",
+          medicamentos: []
+        };
+      }
+      atendimentos[dataAtendimento].medicamentos.push(item);
+    });
+
+    let count = 0;
+
+    Object.entries(atendimentos).forEach(([dataAtendimento, dados]) => {
+      count++;
+
+      // Painel principal
+      const panel = document.createElement("div");
+      panel.classList.add("panel", "panel-default");
+      panel.style.marginBottom = "10px";
+
+      // Cabeçalho
+      const header = document.createElement("div");
+      header.classList.add("panel-heading");
+      header.style.cursor = "pointer";
+      header.dataset.toggle = "collapse";
+      header.dataset.target = `#atendimento${count}`;
+
+      const headerText = document.createElement("strong");
+      headerText.textContent = "Data: " + dataAtendimento;
+      header.appendChild(headerText);
+
+      // Corpo colapsável (fechado por padrão)
+      const collapseDiv = document.createElement("div");
+      collapseDiv.id = `atendimento${count}`;
+      collapseDiv.classList.add("panel-collapse", "collapse");
+
+      const body = document.createElement("div");
+      body.classList.add("panel-body");
+
+      // Descrição do atendimento
+      const pDescTitle = document.createElement("p");
+      const strongDesc = document.createElement("strong");
+      strongDesc.textContent = "Descrição do Atendimento:";
+      pDescTitle.appendChild(strongDesc);
+      body.appendChild(pDescTitle);
+
+      const pDesc = document.createElement("p");
+      pDesc.textContent = dados.descricao_atendimento;
+      body.appendChild(pDesc);
+
+      body.appendChild(document.createElement("hr"));
+
+      // Lista de medicações
+      const pMedTitle = document.createElement("p");
+      const strongMed = document.createElement("strong");
+      strongMed.textContent = "Medicações Utilizadas:";
+      pMedTitle.appendChild(strongMed);
+      body.appendChild(pMedTitle);
+
+      const lista = document.createElement("ul");
+      dados.medicamentos.forEach(med => {
+        const li = document.createElement("li");
+
+        // Nome do medicamento
+        const nome = document.createElement("strong");
+        nome.textContent = (med.nome_medicamento || "Medicamento") + ": ";
+        li.appendChild(nome);
+
+        // Aplicação
+        if (med.aplicacao) {
+          li.appendChild(document.createTextNode(med.aplicacao));
+        }
+
+        li.appendChild(document.createElement("br"));
+
+        // Descrição do medicamento com tags interpretadas e decodificadas
+        const em = document.createElement("em");
+        em.textContent = "Descrição:";
+        li.appendChild(em);
+        li.appendChild(document.createTextNode(" "));
+
+        const descMed = document.createElement("span");
+        descMed.innerHTML = decodeHtml(med.descricao_medicamento || "");
+        li.appendChild(descMed);
+
+        lista.appendChild(li);
+      });
+
+      body.appendChild(lista);
+
+      collapseDiv.appendChild(body);
+      panel.appendChild(header);
+      panel.appendChild(collapseDiv);
+      container.appendChild(panel);
+    });
+
+  } catch (erro) {
+    console.error("Erro ao buscar histórico:", erro);
+    container.textContent = "Erro ao carregar histórico de atendimento.";
+  }
+});
+
 
 
 
@@ -589,10 +888,11 @@ if (isset($_GET['id_pet'])) {
                     <a href="#ficha_medica" data-toggle="tab">Ficha Médica</a>
                   </li>
 
-                  <!--
+                  
                   <li>
                     <a href="#atendimento" data-toggle="tab">Atendimento</a>
                   </li>
+                  <!--
                   <li>
                     <a href="#historico_medico" data-toggle="tab">Histórico Médico</a>
                   </li>
@@ -828,56 +1128,56 @@ if (isset($_GET['id_pet'])) {
                 </div>
 
                 <!-- Ficha Medica-->
-                                          
+                                                          
                 <div id="ficha_medica" class="tab-pane">
-  <section id="secFichaMedica">
-    <h4 class="mb-xlg" id="fm">Ficha Médica</h4>
-    <div id="divFichaMedica">
-      <form class="form-horizontal" method="post" action="../../controle/control.php">
-        <input type="hidden" name="nomeClasse" value="controleSaudePet">
-        <input type="hidden" name="metodo" value="modificarFichaMedicaPet">
-        <input type="hidden" name="modulo" value="pet">
-        <fieldset>
+                  <section id="secFichaMedica">
+                    <h4 class="mb-xlg" id="fm">Ficha Médica</h4>
+                    <div id="divFichaMedica">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                        <input type="hidden" name="nomeClasse" value="controleSaudePet">
+                        <input type="hidden" name="metodo" value="modificarFichaMedicaPet">
+                        <input type="hidden" name="modulo" value="pet">
+                        <fieldset>
 
-          <!--Castrado-->
-          <div class="form-group">
-        <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
-        <div class="col-md-8">
-            <label>
-                <input type="radio" name="castrado" id="castradoS" value="S" style="margin-top: 10px; margin-left: 15px;"
-                <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 'S') echo 'checked'; ?> required>
-                <i class="fa" style="font-size: 20px;">Sim</i>
-            </label>
-            <label>
-                <input type="radio" name="castrado" id="castradoN" value="N" style="margin-top: 10px; margin-left: 15px;"
-                <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'N') echo 'checked'; ?> required>
-                <i class="fa" style="font-size: 20px;">Não</i>
-            </label>
-        </div>
-    </div>
+                          <!--Castrado-->
+                          <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
+                        <div class="col-md-8">
+                            <label>
+                                <input type="radio" name="castrado" id="castradoS" value="S" style="margin-top: 10px; margin-left: 15px;"
+                                <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 'S') echo 'checked'; ?> required>
+                                <i class="fa" style="font-size: 20px;">Sim</i>
+                            </label>
+                            <label>
+                                <input type="radio" name="castrado" id="castradoN" value="N" style="margin-top: 10px; margin-left: 15px;"
+                                <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'N') echo 'checked'; ?> required>
+                                <i class="fa" style="font-size: 20px;">Não</i>
+                            </label>
+                        </div>
+                    </div>
 
-    <!-- Necessidades Especiais (campo de texto) -->
-    <div class="form-group">
-  <div class="form-group">
-    <label for="texto" id="etiqueta_despacho" class="col-md-3 control-label">Outras informações:</label>
-    <div class="col-md-8">
-      <textarea name="texto" class="form-control col-md-8" id="despacho"><?php echo isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais']) : ''; ?></textarea>
-    </div>
-  </div>
-</div>
+                    <!-- Necessidades Especiais (campo de texto) -->
+                    <div class="form-group">
+                      <div class="form-group">
+                        <label for="texto" id="etiqueta_despacho" class="col-md-3 control-label">Outras informações:</label>
+                          <div class="col-md-8">
+                            <textarea name="texto" class="form-control col-md-8" id="despacho"><?php echo isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais']) : ''; ?></textarea>
+                          </div>
+                      </div>
+                    </div>
 
-          </br>
-          <div class="buttons">
-            <input type="hidden" name="id_pet" value="<?php echo $_GET['id_pet']; ?>">
-            <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? $fichaMedica['id_ficha_medica'] : ''; ?>">
-            <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
-            <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
-          </div>
-        </fieldset>
-      </form>
-    </div>
-  </section>
-</div>
+                          </br>
+                          <div class="buttons">
+                            <input type="hidden" name="id_pet" value="<?php echo $_GET['id_pet']; ?>">
+                            <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? $fichaMedica['id_ficha_medica'] : ''; ?>">
+                            <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
+                            <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
+                          </div>
+                        </fieldset>
+                      </form>
+                    </div>
+                  </section>
+                </div>
 
 
                 <!--atendimento-->
@@ -890,68 +1190,92 @@ if (isset($_GET['id_pet'])) {
                         <h2 class="panel-title">Atendimento</h2>
                       </header>
                       <div id="divAtendimento" class="panel-body">
-                        <form class="form-horizontal" method="post" action="../../controle/control.php">
-                          <input type="hidden" name="nomeClasse" value="AtendimentoControle">
-                          <input type="hidden" name="metodo" value="registrarAtendimento">
-                          <input type="hidden" name="modulo" value="pet">
+
+
+
+
+
+
+                        <form class="form-horizontal" id="formAtendimento">
+                          <input type="hidden" name="nomeClasse" value="AtendimentoControle" id ="classeAtendimento">
+                          <input type="hidden" name="metodo" value="registrarAtendimento" id="metodoAtendimento">
+                          <input type="hidden" name="modulo" value="pet" id="moduloAtendimento">
+                          <input type="hidden" name="id_pet" value=<?php echo $_GET['id_pet'] ?> id="idPet">
                           <fieldset>
 
-                            <div class="form-group"> 
-                              <div class="col-md-8">           
-                                <a href="./cadastrar_medicamento.php?pga=<?php echo $_GET["id_pet"]?>"><button type="button" class="btn btn-success" id="cadastrarMedicamento">Cadastrar Medicamento</button></a>
-                              </div>
-                            </div>
+                           
 
                             <div class="form-group">
                               <label class="col-md-3 control-label" for="profileCompany">Data do Atendimento<sup class="obrig">*</sup></label>
                               <div class="col-md-8">
-                                <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="dataAtendimento" id="dataAtendimento" max=<?php echo date('Y-m-d');?> required>
+                                <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="dataAtendimento" id="dataAtendimento" max=<?php echo date('Y-m-d');?> required >
                               </div>
                             </div>
 
                             <div class="form-group">
-                              <!--<div class='col-md-6' id='div_texto'>
-                                <label for="texto" id="etiqueta_despacho" style="padding-left: 15px;">Descrição do Atendimento:<sup class="obrig">*</sup></label>
-                                <textarea cols='30' rows='5' required id='descricaoAtendimento' name="descricaoAtendimento" class='form-control'></textarea>
-                              </div>-->
-                              <label class="col-md-3 control-label" for="descricaoAtendimento">Descricao Atendimento<sup class="obrig">*</sup></label>
+                             
+                              <label class="col-md-3 control-label" for="descricaoAtendimento">Descricao Atendimento<sup class="obrig" >*</sup></label>
                               <div class="col-md-8">
-                                <textarea name="descricaoAtendimento" class="form-control" id="descricaoAtendimento"></textarea>
+                                <textarea name="descricaoAtendimento" class="form-control" id="descricaoAtendimento" required></textarea>
                               </div>
                             </div>
 
                             <div class="form-group">
                               <label class="col-md-3 control-label" for="inputSuccess">Medicamento</label>
-                              
-                              <div class="col-md-6">
-                                <select class="form-control input-lg mb-md" name="selectMedicamento" id="selectMedicamento">
-                                  <option value="Selecione" disabled selected>Selecione</option>
+                              <div class="col-md-6 d-flex align-items-center" style="display: flex; gap: 8px;">
+                                
+                                <select class="form-control input-lg mb-md" name="selectMedicamento" id="selectMedicamento" style="flex: 1;">
                                 </select>
+
+                                <!-- Botão para cadastrar medicamento -->
+                                <a href="cadastrar_medicamento.php"  title="Cadastrar Novo Medicamento" style="padding: 0 12px;">
+                                  <i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
+                                </a>
+
                               </div>
-                              <button type="button" class="btn btn-success" id="prescreverMedicacao">Prescrever medicação</button>
-                              <input type="hidden" name="medics" id="medics">
+
                               <table class="table table-bordered table-striped mb-none" id="tabmed">
                                 <thead>
                                   <tr style="font-size:15px;">
                                     <th>Medicação</th>
                                     <th>Ação</th>
+                                    <th>Excluir</th>  <!-- Coluna nova para o botão -->
                                   </tr>
                                 </thead>
                                 <tbody id="dep-tab" style="font-size:15px">
-                                
+                                  <!-- Linhas dinâmicas -->
                                 </tbody>
                               </table>
-                            </div>
 
                             
                             </br>
-                            <input type="hidden" name="id_pet" value=<?php echo $_GET['id_pet'] ?>>
-                            <input type="submit" class="btn btn-primary" value="Salvar Atendimento" id="salvarAtendimento">
+                            <div class="form-group"> 
+                            </div>
+                            
+                            
+                            <input type="submit" class="btn btn-primary" value="Salvar Atendimento" id="salvarAtendimento" >
                           </fieldset>
                         </form>
                       </div>
-                  </section>                  
-                </div>
+                  </section>   
+                <div id="historicoAtendimento" class="tab-pane">
+                  <section class="panel">
+                      <header class="panel-heading">
+                          <div class="panel-actions">
+                              <a href="#" class="fa fa-caret-down"></a>
+                          </div>
+                          <h2 class="panel-title">Histórico de Atendimento</h2>
+                      </header>
+                      <div id="divHistoricoAtendimento" class="panel-body">
+
+            
+
+        </div>
+    </section>
+</div>
+
+            </div>    
+            
                 <!-- fim atendimento -->
 
                 <!-- Historico medico -->
@@ -1062,7 +1386,7 @@ if (isset($_GET['id_pet'])) {
     
     <script type="text/javascript">
      
-            
+     
 
 
             
@@ -1075,7 +1399,10 @@ if (isset($_GET['id_pet'])) {
         if(response === true){
             fetch('../../controle/pet/PetExameControle.php', {
             method: 'POST',
-            body: JSON.stringify({"idExamePet":dado, "metodo":"excluir"})
+            body: JSON.stringify({"idExamePet":dado, "metodo":"excluir"}),
+            headers: {
+              "Content-Type": "application/json"
+            }
           }).then(
             (resp) =>{ return resp.json() }
           ).then(
@@ -1105,7 +1432,7 @@ if (isset($_GET['id_pet'])) {
         body: data,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-        },
+        }
       });
 
       if (!response.ok) {
@@ -1169,7 +1496,10 @@ if (isset($_GET['id_pet'])) {
 
       fetch("../../controle/pet/controleGetPet.php",{
         method: "POST",
-        body: JSON.stringify(dado)
+        body: JSON.stringify(dado),
+        headers: {
+          "Content-Type": "application/json"
+        }
       }).then( resp => {
         return resp.json()
       }).then( resp => {
@@ -1244,7 +1574,10 @@ if (isset($_GET['id_pet'])) {
 
       fetch('../../controle/pet/controleGetPet.php', {
         method: 'POST',
-        body: JSON.stringify(dado)
+        body: JSON.stringify(dado),
+        headers: {
+         "Content-Type": "application/json"
+        }
       }).then(
         resp => { return resp.json();}
       ).then(
@@ -1297,77 +1630,7 @@ if (isset($_GET['id_pet'])) {
           location.reload();
         }
       })
-
-      //Atendimento
-      let dataAtendimento = document.querySelector("#dataAtendimento");
-      let descricaoAtendimento = document.querySelector("#descricaoAtendimento");
-      let selectMedicamento = document.querySelector("#selectMedicamento");
-      let prescreverMedicacao = document.querySelector("#prescreverMedicacao");
-      let depTab = document.querySelector("#dep-tab");
-      let medics = document.querySelector("#medics");
-
-      window.addEventListener("load", ()=>{
-  fetch("../../controle/pet/controleGetMedicamento.php")
-    .then(resp => resp.json())
-    .then(resp => {
-      console.log(resp)
-      let corpo = ''; // Inicializa corretamente
-      resp.forEach(valor => {
-        corpo += `<option value='${valor.id_medicamento}?${valor.nome_medicamento}'>${valor.nome_medicamento}</option>`;
-      });
-      if (selectMedicamento) {
-        selectMedicamento.innerHTML += corpo;
-      } else {
-        console.error("Elemento selectMedicamento não encontrado.");
-      }
-    })
-    .catch(erro => {
-      console.error("Erro ao buscar medicamentos:", erro);
-    });
-});
-
-
-      prescreverMedicacao.addEventListener("click", ()=>{
-        let dadoMed = selectMedicamento.value;
-        dadoMed = dadoMed.split("?");
-
-        let array = medics.value.split("?");
-        let vrfcr = array.find( (valor) => dadoMed[0] == valor);
-
-        if( selectMedicamento.value != "Selecione" && dadoMed[0] != vrfcr ){
-          depTab.innerHTML += `<tr id="dadoMed${dadoMed[0]}" class="tabmed">
-            <td>${dadoMed[1]}</td>
-            <td style="display: flex; justify-content: space-evenly;">
-            <button  id="bMed" class="btn btn-danger dadoMed${dadoMed[0]}">
-              <i class="fas fa-trash-alt"></i>
-            </button>
-            </td>
-          </tr>
-        `;
-
-          // a terminar
-          medics.value += `${dadoMed[0]}?`;
-
-          document.querySelectorAll("#bMed").forEach( valor => {
-              valor.addEventListener("click", (e)=>{
-                let idClass = valor.classList+'';
-                idClass = idClass.split(" ");
-                idClass = idClass[(idClass.length) - 1];
-                document.querySelector(`#${idClass}`).remove();
-                
-                let vrfcr = idClass.replace("dadoMed", '');
-                console.log(vrfcr);
-                medics.value = medics.value.replace(vrfcr+"?", '');
-                console.log(medics.value);
-                
-                e.preventDefault();
-              })
-          })
-        }else{
-          alert("Você não selecionou um medicamento ou já selecionou este!");
-        }
-        console.log(medics.value);
-      })
+    }
 
       //Fim Atendimento
       //historico_medico
@@ -1389,7 +1652,7 @@ if (isset($_GET['id_pet'])) {
       ).then(
         resp=>{
           let atendimento = resp;
-          console.log(resp);
+          //console.log(resp);
           atendimento.forEach( valor =>{
             let data = valor['data_atendimento'].split('-');
             tabAtendimento.innerHTML += `

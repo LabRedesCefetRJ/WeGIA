@@ -12,36 +12,58 @@ if(file_exists($PetDAO_path)){
 }
 
 class AtendimentoControle{
-
-    public function registrarAtendimento(){
-        extract($_REQUEST);
-        $vrfcr = 0;
-
-        if( empty($dataAtendimento) || !isset($dataAtendimento) ){
-            $vrfcr = 1;
+    public function registrarAtendimento() {
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+    
+        if (
+            empty($data['dataAtendimento']) ||
+            empty($data['descricaoAtendimento']) || 
+            empty($data['idpet'])
+        ) {
+            echo json_encode(['erro' => 'Preencha todos os campos obrigatórios.']);
+            http_response_code(400);
+            return;
         }
-
-        if( empty($descricaoAtendimento) || !isset($descricaoAtendimento) ){
-            $vrfcr = 1;
+    
+        if (!array_key_exists('medicamentos', $data) || !is_array($data['medicamentos'])) {
+            echo json_encode(['erro' => 'Campo "medicamentos" deve ser um array.']);
+            http_response_code(400);
+            return;
         }
-
-        if( empty($medics) || !isset($medics) ){
-            $vrfcr = 1;
+    
+        $idPet = (int)$data['idpet'];
+        $dataAtendimento = trim($data['dataAtendimento']);
+        $descricaoAtendimento = trim($data['descricaoAtendimento']);
+        $medicamentos = $data['medicamentos']; // pode ser vazio
+    
+        $dao = new SaudePetDAO();
+    
+        try {
+            $dao->registrar_atendimento_pet($idPet, $dataAtendimento, $descricaoAtendimento, $medicamentos);
+            echo json_encode(['sucesso' => 'Atendimento registrado com sucesso.']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao registrar atendimento: ' . $e->getMessage()]);
         }
-
-        if( empty($id_pet) || !isset($id_pet)){
-            $vrfcr = 1;
-        }
-
-        if( $vrfcr == 1){
-            header("Location: ../../html/pet/erro.php?id_pet=".$id_pet);
-            //controle/pet/erro.php
-        }else{
-            $c = new SaudePetDAO();
-            $c->registrarAtendimento();
-            header("Location: ../../html/pet/profile_pet.php?id_pet=".$id_pet);
-        }
-
     }
-
-}
+    
+    public function obterMedicamentoPet() {
+        $json = file_get_contents('php://input');
+        $data = json_decode($json, true);
+    
+        if (!isset($data['id']) || empty($data['id'])) {
+            http_response_code(400);
+            die(json_encode(['erro' => 'campo id não preenchido']));
+        }
+    
+        $id = $data['id'];
+    
+        $dao = new SaudePetDAO();
+        $resultado = $dao->obterMedicamento($id);
+    
+        header('Content-Type: application/json');
+        echo json_encode($resultado);
+        exit;
+    }
+}    

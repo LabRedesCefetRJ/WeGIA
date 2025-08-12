@@ -116,13 +116,13 @@ class DespachoDAO
 		return $lastId;
 	}
 
-	//Função para pegar o id do despacho
+	//Função para pegar o id do despacho pelo id do memorando
 	public function getPorId(int $id){
-		$sql = 'SELECT * FROM despacho WHERE id_despacho=:idDespacho';
+		$sql = 'SELECT * FROM despacho WHERE id_memorando=:idMemorando';
 		$pdo = Conexao::connect();
 
 		$stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':idDespacho', $id);
+        $stmt->bindParam(':idMemorando', $id);
         $stmt->execute();
         $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 

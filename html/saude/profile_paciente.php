@@ -116,7 +116,7 @@ foreach ($sinaisvitais as $key => $value) {
 
 $sinaisvitais = json_encode($sinaisvitais);
 
-$stmtDescricaoMedica = $pdo->prepare("SELECT descricao, data_atendimento FROM saude_atendimento WHERE id_fichamedica=:idFichaMedica");
+$stmtDescricaoMedica = $pdo->prepare("SELECT a.descricao AS descricao, a.data_atendimento AS data_atendimento, m.nome AS medicoNome, p.nome AS enfermeiraNome FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON (p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON (a.id_medico = m.id_medico) WHERE id_fichamedica=:idFichaMedica");
 
 $stmtDescricaoMedica->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtDescricaoMedica->execute();
@@ -296,17 +296,6 @@ try {
 
   .small-text {
     font-size: small;
-  }
-
-  table td,
-  table th {
-    word-wrap: break-word;
-    white-space: normal;
-  }
-
-  table {
-    table-layout: fixed;
-    width: 100%;
   }
 </style>
 
@@ -493,6 +482,8 @@ try {
       $.each(descricao_medica, function(i, item) {
         $("#de-tab")
           .append($("<tr>")
+            .append($("<td>").text(item.medicoNome))
+            .append($("<td>").text(item.enfermeiraNome))
             .append($("<td>").html(item.descricao))
             .append($("<td>").text(item.data_atendimento))
           )
@@ -524,6 +515,13 @@ try {
           const tabela = document.getElementById("exibiaplicacao");
 
           medaplicadas.forEach(item => {
+
+
+
+            item.aplicacao = formatarDataBr(item.aplicacao)
+
+            console.log(item)
+
             const tr = document.createElement("tr");
 
             const td1 = document.createElement("td");
@@ -572,7 +570,6 @@ try {
       fetch(url)
         .then(res => res.json())
         .then(intercorrencias => {
-          console.log(intercorrencias)
           const tbody = document.getElementById("doc-tab-intercorrencias");
 
           intercorrencias.forEach(item => {
@@ -1205,11 +1202,11 @@ try {
                           <div class="col-md-6">
 
                             <select class="form-control input-lg mb-md" name="id_CID" id="id_CID" required>
-                              <option selected disabled>Selecionar</option>
+                              <option selected disabled>Qualquer coisa</option>
                               <?php
-                              while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
+                              /*while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
                                 echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
-                              }                            ?>
+                              }*/                            ?>
                             </select>
                           </div>
                           <a onclick="adicionar_enfermidade()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
@@ -1345,6 +1342,8 @@ try {
                         <table class="table table-bordered table-striped mb-none">
                           <thead>
                             <tr style="font-size:15px;">
+                              <th>Médico</th>
+                              <th>Registro</th>
                               <th>Descrições</th>
                               <th>Data do atendimento</th>
                             </tr>
@@ -1446,12 +1445,25 @@ try {
 
                           </div>
 
+
                           <!-- listar o funcionario, pessoa nome onde cargo = 3 -->
                           <div class="form-group">
-                            <label class="col-md-3 control-label" for="inputSuccess">Médico:</label>
+                            <label class="col-md-3 control-label" for="inputSuccess">Usuário:</label>
                             <div class="col-md-8">
-                              <input class="form-control" style="width:230px;" name="medico" id="medico" value="<?php echo $funcionarioNome; ?>" disabled="true">
+                              <input class="form-control" style="width:230px;" name="usuario" id="usuario" value="<?php echo $id_funcionario; ?>" disabled="true">
                             </div>
+                          </div>
+
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="inputSuccess">Médico:<sup class="obrig">*</sup></label>
+                            <div class="col-md-6">
+
+                              <select class="form-control input-lg mb-md" name="medicos" id="medicos" required>
+                                <option selected disabled>Selecionar</option>
+
+                              </select>
+                            </div>
+                            <a onclick="adicionar_medico()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                           </div>
 
                           <div class="form-group">
@@ -1764,7 +1776,6 @@ try {
         let url = "exame_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
         post(url, data, listarFunDocs);
-        console.log(listarFunDocs);
       }
 
       function removerEnfermidade(id_doc) {
@@ -1774,7 +1785,6 @@ try {
         let url = "enfermidade_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
         post(url, data, listarEnfermidades);
-        console.log(listarEnfermidades);
       }
 
       function removerAlergia(id_doc) {
@@ -1784,7 +1794,6 @@ try {
         let url = "alergia_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
         post(url, data, listarAlergias);
-        console.log(listarEnfermidades);
       }
 
       function editarStatusMedico(id_medicacao) {
@@ -1816,10 +1825,6 @@ try {
           $("#salvarAlergia").css("display", "block");
         })
       });
-
-
-
-
 
       function gerarExame() {
         url = 'exibir_exame.php';
@@ -1853,7 +1858,6 @@ try {
 
         data = 'situacao=' + situacao;
 
-        console.log(data);
         $.ajax({
           type: "POST",
           url: url,
@@ -1868,13 +1872,42 @@ try {
 
       async function gerarEnfermidade() {
         situacoes = await listarTodasAsEnfermidades()
-        console.log("situacoes", situacoes)
         let length = situacoes.length - 1;
         let select = document.getElementById("id_CID");
+        while (select.firstChild) {
+          select.removeChild(select.firstChild)
+        }
         for (let i = 0; i <= length; i = i + 1) {
+          if (i == 0) {
+            let selecionar = document.createElement("option");
+            selecionar.textContent = "Selecionar"
+            selecionar.selected = true;
+            selecionar.disabled = true;
+            select.appendChild(selecionar)
+          }
           let option = document.createElement("option");
           option.value = situacoes[i].id_CID;
           option.textContent = situacoes[i].descricao;
+          select.appendChild(option);
+        }
+      }
+
+      async function gerarMedicos() {
+        medicos = await listarTodosOsMedicos()
+        let length = medicos.length - 1;
+        let select = document.getElementById("medicos");
+        while (select.firstChild) {
+          select.removeChild(select.firstChild)
+        }
+        let selecionar = document.createElement("option");
+        selecionar.textContent = "Selecionar"
+        selecionar.selected = true;
+        selecionar.disabled = true;
+        select.appendChild(selecionar)
+        for (let i = 0; i <= length; i = i + 1) {
+          let option = document.createElement("option");
+          option.value = medicos[i].id_medico;
+          option.textContent = medicos[i].nome;
           select.appendChild(option);
         }
       }
@@ -1915,8 +1948,44 @@ try {
           });
       }
 
+      function adicionar_medico() {
+        const url = '../../controle/control.php'
 
+        let nome_medico = window.prompt("Insira o nome do médico:");
+        let crm_medico = window.prompt("Insira o CRM do médico:");
 
+        if (!nome_medico || !crm_medico) {
+          return;
+        }
+
+        const data = {
+          crm: crm_medico,
+          nome: nome_medico,
+          nomeClasse: "MedicoControle",
+          metodo: "inserirMedico"
+        }
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Erro na requisição');
+            }
+            return response.json();
+          })
+          .then(result => {
+            gerarMedicos();
+          })
+          .catch(error => {
+            console.error('Erro ao enviar dados:', error);
+          });
+      }
+    
       function gerar_alergia() {
         url = 'exibir_alergia.php';
         $.ajax({
@@ -1927,16 +1996,12 @@ try {
           success: function(response) {
             var situacoes_alergia = response;
             let alergias = <?= $alergias; ?>;
-            console.log(alergias)
-            console.log(situacoes_alergia);
             $('#id_CID_alergia').empty();
             $('#id_CID_alergia').append('<option selected disabled>Selecionar</option>');
             $.each(situacoes_alergia, function(i, item) {
               if (!(alergias.includes(item))) {
                 $('#id_CID_alergia').append('<option value="' + item.id_CID + '">' + item.descricao + '</option>');
               }
-
-
             });
           },
           dataType: 'json'
@@ -2112,17 +2177,42 @@ try {
 
       //Formatar data para brasileiro
       function formatarDataBr(data) {
+        let hour = null;
+
+        // Verifica se existe parte de hora
+        if (data.split(" ")[1] !== undefined && data.split(" ")[1] !== null) {
+          const partes = data.split(" ");
+          hour = partes[1].split(":");
+          data = partes[0];
+        }
+
         const parts = data.split('-'); // Supondo que a data esteja no formato 'YYYY-MM-DD'
 
-        // Converte para uma nova data no fuso horário local
-        const dataFormatada = new Date(parts[0], parts[1] - 1, parts[2]);
+        let dataFinal = "";
+        let dataObj;
+
+        if (hour !== null) {
+          dataObj = new Date(parts[0], parts[1] - 1, parts[2], hour[0], hour[1], hour[2]);
+          const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          dataFinal += " " + horaFormatada;
+        } else {
+          dataObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
 
         const options = {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit'
         };
-        return dataFormatada.toLocaleDateString('pt-BR', options);
+
+        const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+        dataFinal = dataFormatada + dataFinal;
+
+        return dataFinal;
       }
 
 
@@ -2171,6 +2261,39 @@ try {
           return [];
         }
       }
+
+      async function listarTodosOsMedicos() {
+        const nomeClasse = 'MedicoControle';
+        const metodo = 'listarTodosOsMedicos';
+
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}`;
+
+        try {
+          const response = await fetch(url, {
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            let erro = data.erro;
+            throw new Error(`Erro na requisição: ${response.status} - ${erro}`);
+          }
+
+          const data = await response.json();
+
+          return data ?? []; //Retorna um array vazio se `null`
+        } catch (error) {
+          console.error('Erro ao buscar médicos:', error.message);
+          return [];
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        await gerarEnfermidade();
+        await gerarMedicos();
+      })
 
       //Gerar tabela de enfermidades
       function exibirEnfermidades(enfermidades) {

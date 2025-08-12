@@ -93,7 +93,7 @@ function quickQuery($query, $parametro, $column)
 	$stmt = $pdo->prepare($query);
 	$chave = array_key_first($parametro);
 	$valor = $parametro[$chave];
-	$stmt->bindValue($chave, $parametro);
+	$stmt->bindValue($chave, $valor);
     $stmt->execute();
 	$res = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	return $res[0][$column];
@@ -300,7 +300,7 @@ function quickQuery($query, $parametro, $column)
 
 									if (isset($post[5])) {
 										$almoxarifado = quickQuery("select descricao_almoxarifado from almoxarifado where id_almoxarifado = :id_almoxarifado;", [':id_almoxarifado' => $post[5]], "descricao_almoxarifado");
-										echo ("<ul>Almoxarifado: " . htmlspecialchars($almoxarifado) . "</ul>");
+										echo ("<ul>Almoxarifado: " . htmlspecialchars($almoxarifado) . "</ul>"); // <- alterar aqui 
 									} else {
 										echo ("<ul>Almoxarifado: Todos</ul>");
 									}

@@ -49,6 +49,7 @@ function gerarQRCode() {
                 // Adicionar o QR Code como imagem
                 let qrcode = document.createElement("img");
                 qrcode.src = "data:image/jpeg;base64," + resposta.qrcode;
+                qrcode.style.maxWidth = "51%";
                 qrContainer.appendChild(qrcode);
 
                 // Adicionar um botão abaixo do QR Code
