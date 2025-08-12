@@ -337,4 +337,19 @@ class ContribuicaoLogDAO
 
         return $resultados;
     }
+
+    public function getContribuicoesPorSocioEPeriodo($idSocio, $dataInicio, $dataFim) {
+        $sql = "SELECT * FROM contribuicao_log 
+                WHERE id_socio = :idSocio 
+                AND status_pagamento = 1 
+                AND data_pagamento BETWEEN :dataInicio AND :dataFim";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':idSocio', $idSocio, PDO::PARAM_INT);
+        $stmt->bindParam(':dataInicio', $dataInicio);
+        $stmt->bindParam(':dataFim', $dataFim);
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

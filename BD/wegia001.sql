@@ -1531,14 +1531,22 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_atendimento` (
   `id_atendimento` INT NOT NULL AUTO_INCREMENT,
   `id_fichamedica` INT NOT NULL,
   `id_funcionario` INT(11) NOT NULL,
+  `id_medico` INT NOT NULL,
+  `data_registro` DATE NULL,
   `data_atendimento` DATE NULL,
   `descricao` BLOB NULL,
   PRIMARY KEY (`id_atendimento`),
   INDEX `fk_saude_atendimento_saude_fichamedica1_idx` (`id_fichamedica` ASC),
   INDEX `fk_saude_atendimento_funcionario1_idx` (`id_funcionario` ASC),
+  INDEX `fk_saude_atendimento_medico1_idx` (`id_medico` ASC),
   CONSTRAINT `fk_saude_atendimento_saude_fichamedica1`
     FOREIGN KEY (`id_fichamedica`)
     REFERENCES `wegia`.`saude_fichamedica` (`id_fichamedica`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_saude_atendimento_medico1`
+    FOREIGN KEY (`id_medico`)
+    REFERENCES `wegia`.`saude_medicos` (`id_medico`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_saude_atendimento_funcionario1`
@@ -1546,6 +1554,17 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_atendimento` (
     REFERENCES `wegia`.`funcionario` (`id_funcionario`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`saude_medicos`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicos` (
+  `id_medico` INT NOT NULL AUTO_INCREMENT,
+  `crm` CHAR(10) NULL,
+  `nome` VARCHAR(50) NULL,
+  PRIMARY KEY (`id_medico`),
+  CONSTRAINT `uq_nome_crm` UNIQUE (`crm`, `nome`))
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
@@ -1994,6 +2013,22 @@ CREATE TABLE IF NOT EXISTS `wegia` . `aviso_notificacao` (
     ON UPDATE CASCADE)
 
 ENGINE = InnoDB;
+
+-- ------------------------------------------------------
+-- Table `wegia` . `smtp_config`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`smtp_config` (
+    `smtp_id` INT(11) AUTO_INCREMENT PRIMARY KEY,
+    `smtp_host` VARCHAR(255) NOT NULL,
+    `smtp_port` INT(11) NOT NULL,
+    `smtp_user` VARCHAR(255) NOT NULL,
+    `smtp_password` VARCHAR(255) NOT NULL,
+    `smtp_secure` VARCHAR(20) DEFAULT 'tls',
+    `smtp_from_email` VARCHAR(255) NOT NULL,
+    `smtp_from_name` VARCHAR(255) NOT NULL,
+    `smtp_ativo` TINYINT(1) DEFAULT 1
+) ENGINE = InnoDB;
 
 -- ########################### PROCEDURES #################### --
 

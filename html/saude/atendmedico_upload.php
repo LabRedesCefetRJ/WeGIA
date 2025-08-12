@@ -1,75 +1,92 @@
-<pre>
 <?php
-
-ini_set('display_errors',1);
-ini_set('display_startup_erros',1);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 session_start();
 extract($_REQUEST);
-if (!isset($_SESSION["usuario"])){
+
+if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit();
 }
 
-if ($_POST){
-    require_once "../../dao/Conexao.php";	
-    $query = new Conexao();
-    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+require_once '../permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 5, 7);
+
+if ($_POST) {
+    require_once "../../dao/Conexao.php";
     $pdo = Conexao::connect();
-   
-    $teste = $pdo->query("SELECT id_funcionario FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa = " .$_SESSION['id_pessoa'])->fetchAll(PDO::FETCH_ASSOC);
-    $funcionario = $teste[0]['id_funcionario'];
-    
+
     try {
-        $pdo = Conexao::connect();
+        // Obter ID do funcionário
+        $stmt = $pdo->prepare("SELECT id_funcionario FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_pessoa = :id_pessoa");
+        $stmt->bindValue(':id_pessoa', $_SESSION['id_pessoa']);
+        $stmt->execute();
+        $funcionario = $stmt->fetchColumn();
 
-        $aa = "SELECT * FROM funcionario WHERE id_funcionario = '$funcionario'";
-        $resultado_select_id_funcionario = $mysqli->query($aa);
-        $registro_select_id_funcionario = mysqli_fetch_row($resultado_select_id_funcionario);
-        $id_funcionario = $registro_select_id_funcionario[0];
-        var_dump($id_funcionario);
-        $nome_funcionario = $registro_select_id_funcionario[1];
-
-        $prep = $pdo->prepare("INSERT INTO saude_atendimento(id_fichamedica, id_funcionario, data_atendimento, descricao) VALUES (:id_fichamedica, :id_funcionario, :data_atendimento, :descricao)");
-
-        $prep->bindValue(":id_fichamedica", $id_fichamedica);
-        $prep->bindValue(":id_funcionario", $id_funcionario);
-        $prep->bindValue(":data_atendimento", $data_atendimento);
-        $prep->bindValue(":descricao", $texto);
-
-        $prep->execute();
-
-        // medicacao 
-        
-        $comando_select_id_atendimento = "select * from saude_atendimento where id_fichamedica = '$id_fichamedica' and id_funcionario = '$id_funcionario' and data_atendimento = '$data_atendimento' and descricao = '$texto'";
-        $resultado_select_id_atendimento = $mysqli->query($comando_select_id_atendimento);
-        $registro_select_id_atendimento = mysqli_fetch_row($resultado_select_id_atendimento);
-        $id_atendimento = $registro_select_id_atendimento[0];
-
-        $obj_post = $_POST['acervo'];
-        $obj = json_decode($obj_post, true);
-        $total = count($obj);
-
-        for($i=0;$i<$total;$i++)
-        { 
-            $medicamento = $obj[$i]["nome_medicacao"];
-            $dosagem = $obj[$i]["dosagem"];
-            $horario_medicacao = $obj[$i]["horario"];
-            $duracao_medicacao = $obj[$i]["tempo"];
-            $idsaude_medicacaostatus = 1;
-
-            $comando_insert_medicacao = "insert into saude_medicacao (id_atendimento,medicamento, dosagem,horario,duracao, saude_medicacao_status_idsaude_medicacao_status) values ('$id_atendimento','$medicamento','$dosagem','$horario_medicacao','$duracao_medicacao', '$idsaude_medicacaostatus')";
-            $resultado_insert_medicacao = $mysqli->query($comando_insert_medicacao);
+        if (!$funcionario) {
+            throw new Exception("Funcionário não encontrado.");
         }
 
-        
+        date_default_timezone_set('America/Sao_Paulo');
+        $data_registro = date('Y-m-d');
+
+        // Buscar dados completos do funcionário
+        $stmt = $pdo->prepare("SELECT * FROM funcionario WHERE id_funcionario = :id_funcionario");
+        $stmt->bindValue(':id_funcionario', $funcionario);
+        $stmt->execute();
+        $registro_funcionario = $stmt->fetch(PDO::FETCH_NUM);
+        $id_funcionario = $registro_funcionario[0];
+        $nome_funcionario = $registro_funcionario[1];
+
+        // Inserir atendimento
+        $stmt = $pdo->prepare("INSERT INTO saude_atendimento (id_fichamedica, id_funcionario, data_atendimento, descricao, id_medico, data_registro)
+                               VALUES (:id_fichamedica, :id_funcionario, :data_atendimento, :descricao, :id_medico, :data_registro)");
+        $stmt->bindValue(':id_fichamedica', $id_fichamedica);
+        $stmt->bindValue(':id_funcionario', $id_funcionario);
+        $stmt->bindValue(':data_atendimento', $data_atendimento);
+        $stmt->bindValue(':descricao', $texto);
+        $stmt->bindValue(':id_medico', $medicos);
+        $stmt->bindValue(':data_registro', $data_registro);
+        $stmt->execute();
+
+        // Buscar id do atendimento recém-inserido
+        $stmt = $pdo->prepare("SELECT id_atendimento FROM saude_atendimento WHERE id_fichamedica = :id_fichamedica AND id_funcionario = :id_funcionario AND data_atendimento = :data_atendimento AND descricao = :descricao ORDER BY id_atendimento DESC LIMIT 1");
+        $stmt->bindValue(':id_fichamedica', $id_fichamedica);
+        $stmt->bindValue(':id_funcionario', $id_funcionario);
+        $stmt->bindValue(':data_atendimento', $data_atendimento);
+        $stmt->bindValue(':descricao', $texto);
+        $stmt->execute();
+        $id_atendimento = $stmt->fetchColumn();
+
+        if (!$id_atendimento) {
+            throw new Exception("Atendimento não encontrado após inserção.");
+        }
+
+        // Inserir medicações
+        $obj_post = $_POST['acervo'];
+        $obj = json_decode($obj_post, true);
+
+        foreach ($obj as $med) {
+            $stmt = $pdo->prepare("INSERT INTO saude_medicacao (id_atendimento, medicamento, dosagem, horario, duracao, saude_medicacao_status_idsaude_medicacao_status)
+                                   VALUES (:id_atendimento, :medicamento, :dosagem, :horario, :duracao, :status)");
+            $stmt->bindValue(':id_atendimento', $id_atendimento);
+            $stmt->bindValue(':medicamento', $med["nome_medicacao"]);
+            $stmt->bindValue(':dosagem', $med["dosagem"]);
+            $stmt->bindValue(':horario', $med["horario"]);
+            $stmt->bindValue(':duracao', $med["tempo"]);
+            $stmt->bindValue(':status', 1);
+            $stmt->execute();
+        }
+
         header("Location: profile_paciente.php?id_fichamedica=$id_fichamedica");
-        
-    } catch (PDOException $e) {
-        echo("Houve um erro ao realizar o cadastro do atendimento medico e medicação:<br><br>$e");
+        exit();
+    } catch (Exception $e) {
+        echo "Erro ao cadastrar atendimento e medicação: <br>" . $e->getMessage();
+        exit();
     }
-
-
-}else {
+} else {
     header("Location: profile_paciente.php");
+    exit();
 }

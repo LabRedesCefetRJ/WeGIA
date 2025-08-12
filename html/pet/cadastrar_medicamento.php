@@ -203,19 +203,9 @@ require_once ROOT."/html/personalizacao_display.php";
     <script>
 
         $(function(){
-            var pet= JSON.parse('<?php echo json_encode($nomesCertos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>');
-            $.each(pet,function(i,item){
-                console.log("ID: " + item.id_pet);
-                console.log("NOME: " + item.nome);
-                $("#destinatario")
-                    .append($("<option>").val(item.id_pet).text(item.nome));
-            });
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
-
-
             var editor = CKEDITOR.replace('despacho');
-            
         });
     </script>    
     

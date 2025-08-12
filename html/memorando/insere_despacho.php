@@ -360,7 +360,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                     <div class="right-wrapper pull-right">
                         <ol class="breadcrumbs">
                             <li>
-                                <a href="home.php">
+                                <a href="<?= WWW ?>html/home.php">
                                     <i class="fa fa-home"></i>
                                 </a>
                             </li>

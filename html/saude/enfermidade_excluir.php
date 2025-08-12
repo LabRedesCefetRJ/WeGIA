@@ -24,7 +24,7 @@ if (!$en->getException()){
     $en->delete();
     
     try{
-        $sql = "SELECT se.id_CID, se.data_diagnostico, se.status, stc.descricao FROM saude_enfermidades se JOIN saude_tabelacid stc ON se.id_CID = stc.id_CID WHERE status = 1 AND id_fichamedica = ? ;";
+        $sql = "SELECT se.id_CID, se.data_diagnostico, se.status, stc.descricao FROM saude_enfermidades se JOIN saude_tabelacid stc ON se.id_CID = stc.id_CID WHERE status = 1  AND stc.CID NOT LIKE 'T78.4%' AND id_fichamedica = ? ;";
         
         $pdo = Conexao::connect();
         $stmt = $pdo->prepare($sql);

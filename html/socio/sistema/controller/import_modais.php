@@ -96,7 +96,7 @@ try {
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="valor">Data referência (ínicio contribuição)</label>
-                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" min="<?= date('Y-m-d')?>">
+                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" max="<?= date('Y-m-d')?>">
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Valor/período em R$</label>

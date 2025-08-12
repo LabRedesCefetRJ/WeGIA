@@ -1,20 +1,15 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-extract($_REQUEST);
-session_start();
 
 // if(!isset($_SESSION['saude_id'])){
 //     header ("Location: profile_paciente.php?idsaude=$id");
 // }
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../index.php");
-}
-
-if (!isset($_SESSION['atendido_ocorrencia'])) {
-    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=Atendido_ocorrenciaControle&nextPage=../html/atendido/listar_ocorrencias.php');
+    exit();
 }
 
 $config_path = "config.php";
@@ -33,7 +28,7 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
 
 $stmt = mysqli_prepare($conexao, "SELECT id_cargo FROM funcionario WHERE id_pessoa = ?");
-mysqli_stmt_bind_param($stmt, 'i', $id_pessoa); 
+mysqli_stmt_bind_param($stmt, 'i', $id_pessoa);
 mysqli_stmt_execute($stmt);
 $resultado = mysqli_stmt_get_result($stmt);
 
@@ -96,22 +91,17 @@ require_once "../../controle/Atendido_ocorrenciaDocControle.php";
   $endereco->listarInstituicao();*/
 
 
-$id = $_GET['id'];
-$cache = new Cache();
-$teste = $cache->read($id);
-//$atendidos = $_SESSION['idatendido'];
-// $atendido = new AtendidoDAO();
-// $atendido->listar($id);
-// var_dump($atendido);
+$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 
-//  $sessao_saude = $_SESSION['id_fichamedica'];
-
-if (!isset($teste)) {
-
-    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=Atendido_ocorrenciaControle&nextPage=../html/atendido/listar_ocorrencias.php?id=' . $id . '&id=' . $id);
+if (!$id || $id < 1) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'O id da ocorrência informado está fora dos limites permitidos.']);
+    exit();
 }
 
-// $_SESSION['atendido_ocorrencia'];
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Atendido_ocorrenciaDAO.php';
+$atendidoOcorrenciaDao = new Atendido_ocorrenciaDAO();
+$atendidoOcorrencia = $atendidoOcorrenciaDao->listar($id);
 
 ?>
 
@@ -131,7 +121,7 @@ if (!isset($teste)) {
 <!-- <script src="<?php echo WWW; ?>assets/javascripts/theme.js"></script> -->
 
 <!-- Theme CSS -->
-<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon">
+<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon">
 
 <!-- Theme Custom -->
 <script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
@@ -268,7 +258,7 @@ if (!isset($teste)) {
 
         $(function() {
             // pega no SaudeControle, listarUm
-            var interno = <?php echo $_SESSION['atendido_ocorrencia']; ?>;
+            var interno = <?= $atendidoOcorrencia ?>;
 
 
             console.log(interno);
