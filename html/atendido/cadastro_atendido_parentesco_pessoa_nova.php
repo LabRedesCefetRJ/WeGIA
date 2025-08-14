@@ -618,6 +618,8 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
 		}
 	</script>
 
+	<script src="../../Functions/atendido_parentesco.js"></script>
+
 	<div align="right">
     	<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
   	</div>
