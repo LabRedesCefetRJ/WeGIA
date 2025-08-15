@@ -24,9 +24,6 @@ class Perfil
             
             $stmt->bindParam(':descricao', $descricao);
             $stmt->execute();
-            
-            $logs = new Logs();
-            $logs->incluir($_SESSION['idusuarios'], $sql, 'perfil', 'Inserir');
         } catch (PDOException $e) {
             echo 'Error: <b>  na tabela perfil = ' . $sql . '</b> <br /><br />' . $e->getMessage();
         }
@@ -48,9 +45,6 @@ class Perfil
             $stmt->bindParam(':idperfil', $idperfil);
             
             $stmt->execute();
-            
-            $logs = new Logs();
-            $logs->incluir($_SESSION['idusuarios'], $sql, 'perfil', 'Alterar');
         } catch (PDOException $e) {
             echo 'Error: <b>  na tabela perfil = ' . $sql . '</b> <br /><br />' . $e->getMessage();
         }
@@ -72,9 +66,6 @@ class Perfil
             $stmt->bindParam(':idperfil', $idperfil);
             $stmt->bindParam(':descricao', $descricao);
             $stmt->execute();
-            
-            $logs = new Logs();
-            $logs->incluir($_SESSION['idusuarios'], $sql, 'perfil', 'Alterar');
         } catch (PDOException $e) {
             echo 'Error: <b>  na tabela perfil = ' . $sql . '</b> <br /><br />' . $e->getMessage();
         }
@@ -85,8 +76,6 @@ class Perfil
         $acesso = new Acesso();
         $acesso->conexao();
         $acesso->query($sql);
-        $this->Linha = $acesso->linha;
-        $this->Result = $acesso->result;
     }
 }
 
