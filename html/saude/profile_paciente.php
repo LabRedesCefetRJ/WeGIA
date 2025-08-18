@@ -685,11 +685,11 @@ try {
                   <a href="#arquivo" data-toggle="tab">Exames</a>
                 </li>
                 <li>
-                  <a href="#historico_medico" data-toggle="tab">Histórico Médico</a>
+                  <a href="#historico_medico" data-toggle="tab">Histórico do Paciente</a>
                 </li>
                 <li>
                 <li>
-                  <a href="#atendimento_medico" data-toggle="tab">Atendimento Médico</a>
+                  <a href="#atendimento_medico" data-toggle="tab">Atendimento do Paciente</a>
                 </li>
                 <li>
                   <a href="#medicacoes_aplicadas" data-toggle="tab">Medicações Aplicadas</a>
@@ -1333,7 +1333,7 @@ try {
                       <div class="panel-actions">
                         <a href="#" class="fa fa-caret-down"></a>
                       </div>
-                      <h2 class="panel-title">Histórico Médico</h2>
+                      <h2 class="panel-title">Histórico do Paciente</h2>
                     </header>
 
                     <div class="panel-body">
@@ -1424,7 +1424,7 @@ try {
                         <a href="#" class="fa fa-caret-down"></a>
                       </div>
 
-                      <h2 class="panel-title">Atendimento médico</h2>
+                      <h2 class="panel-title">Atendimento do paciente</h2>
                     </header>
                     <div class="panel-body">
                       <div class="form-group" id="escondermedicacao">
@@ -1506,6 +1506,10 @@ try {
                       </div>
 
                       <br>
+                      <br>
+                      <button type="button" class="btn btn-success" id="botao">Cadastrar medicação</button>
+
+                      <br>
                       <hr class="dotted short">
                       <table class="table table-bordered table-striped mb-none datatable-docfuncional" id="tabmed">
                         <thead>
@@ -1523,12 +1527,9 @@ try {
                       </table>
                       <br>
                       <br>
-                      <button type="button" class="btn btn-success" id="botao">Prescrever medicação</button>
-                      <br>
-                      <br>
                       <input type="number" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
                       <input type="hidden" name="acervo">
-                      <input type="submit" class="btn btn-primary" value="Cadastrar" id="salvar_bd">
+                      <input type="submit" class="btn btn-primary" value="Cadastrar atendimento" id="salvar_bd">
                     </div>
                     </form>
                   </section>
@@ -1985,7 +1986,7 @@ try {
             console.error('Erro ao enviar dados:', error);
           });
       }
-    
+
       function gerar_alergia() {
         url = 'exibir_alergia.php';
         $.ajax({
