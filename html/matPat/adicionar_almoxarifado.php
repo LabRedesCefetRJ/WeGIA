@@ -1,49 +1,28 @@
 <?php
-session_start();
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
 }
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ". WWW ."html/index.php");
+	header("Location: " . WWW . "html/index.php");
+	exit();
+} else {
+	session_regenerate_id();
 }
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=21");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 3) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ". WWW ."html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ". WWW ."html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: ". WWW ."html/home.php?msg_c=$msg");
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+	http_response_code(400);
+	echo json_encode(['erro' => 'O id do usuário da sessão é inválido']);
+	exit();
 }
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($id_pessoa, 21, 3);
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once ROOT . "/html/personalizacao_display.php";
+require_once "../personalizacao_display.php";
 ?>
 <!doctype html>
 <html class="fixed">
@@ -102,17 +81,9 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 	<!-- javascript functions -->
-	<script
-		src="<?= WWW ?>Functions/onlyNumbers.js"></script>
-	<script
-		src="<?= WWW ?>Functions/onlyChars.js"></script>
-	<script
-		src="<?= WWW ?>Functions/mascara.js"></script>
-
-	<!-- jquery functions -->
-	<script>
-		document.write('<a href="' + document.referrer + '"></a>');
-	</script>
+	<script src="<?= WWW ?>Functions/onlyNumbers.js"></script>
+	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
+	<script src="<?= WWW ?>Functions/mascara.js"></script>
 
 	<script type="text/javascript">
 		$(function() {
@@ -171,29 +142,29 @@ require_once ROOT . "/html/personalizacao_display.php";
 								<div id="overview" class="tab-pane active">
 									<fieldset>
 										<form method="post" id="formulario" action="<?= WWW ?>controle/control.php">
-										<?php
-											if($permissao == 1){
-												echo($msg);
-											}else{
-										?>
-											<div class="form-group"><br>
-												<label class="col-md-3 control-label">Insira o nome do almoxarifado:</label>
-												<div class="col-md-8">
-													<input type="text" class="form-control" name="descricao_almoxarifado" id="descricao_almoxarifado" required>
-												</div>
-											</div><br/>
-											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
-											<input type="hidden" name="metodo" value="incluir">
-											<div class="row">
-												<div class="col-md-9 col-md-offset-3">
-													<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
-													<input type="reset" class="btn btn-default">
-													<a href="cadastro_entrada.php" style="color: white; text-decoration: none;">
-														<button class="btn btn-info" type="button">Voltar</button>
-													</a>
-													<a href="<?= WWW ?>html/matPat/listar_almox.php" style="color: white; text-decoration:none;">
-														<button class="btn btn-success" type="button">Listar almoxarifado</button></a>
-                          </div>
+											<?php
+											if ($permissao == 1) {
+												echo ($msg);
+											} else {
+											?>
+												<div class="form-group"><br>
+													<label class="col-md-3 control-label">Insira o nome do almoxarifado:</label>
+													<div class="col-md-8">
+														<input type="text" class="form-control" name="descricao_almoxarifado" id="descricao_almoxarifado" required>
+													</div>
+												</div><br />
+												<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+												<input type="hidden" name="metodo" value="incluir">
+												<div class="row">
+													<div class="col-md-9 col-md-offset-3">
+														<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
+														<input type="reset" class="btn btn-default">
+														<a href="cadastro_entrada.php" style="color: white; text-decoration: none;">
+															<button class="btn btn-info" type="button">Voltar</button>
+														</a>
+														<a href="<?= WWW ?>html/matPat/listar_almox.php" style="color: white; text-decoration:none;">
+															<button class="btn btn-success" type="button">Listar almoxarifado</button></a>
+													</div>
 												</div>
 											<?php
 											}
@@ -208,15 +179,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 				<!-- end: page -->
 			</section>
 		</div>
-		<aside id="sidebar-right" class="sidebar-right">
-			<div class="nano">
-				<div class="nano-content">
-					<a href="#" class="mobile-close visible-xs">
-						Collapse <i class="fa fa-chevron-right"></i>
-					</a>
-				</div>
-			</div>
-		</aside>
+
 		<div align="right">
 			<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 		</div>

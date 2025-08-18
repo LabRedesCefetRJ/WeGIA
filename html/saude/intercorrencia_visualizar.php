@@ -58,7 +58,7 @@ function formataEProtege(array $intercorrencias){
     foreach($intercorrencias as $num => $intercorrencia){
         $data = new DateTime($intercorrencia['data']);
         $intercorrencias[$num]['data'] = $data->format('d/m/Y h:i:s');
-        $intercorrencias[$num]['descricao'] = htmlspecialchars($intercorrencia['descricao']);
+        $intercorrencias[$num]['descricao'] = htmlspecialchars(html_entity_decode($intercorrencia['descricao'], ENT_QUOTES, 'UTF-8'));
     }
 
     return $intercorrencias;

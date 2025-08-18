@@ -25,21 +25,11 @@ try {
         exit('O id do dependente informado não é válido.');
     }
 
-    $sql = "
-    SELECT 
-        fdep.*, 
-        p.nome AS nome_dependente, 
-        p.sobrenome AS sobrenome_dependente,
-        par.descricao AS parentesco,
-        pf.nome AS nome_funcionario,
-        pf.sobrenome AS sobrenome_funcionario
+    $sql = 'SELECT *, par.descricao AS parentesco
     FROM funcionario_dependentes fdep
     LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-    LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario
-    LEFT JOIN pessoa pf ON pf.id_pessoa = f.id_pessoa
     LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
-    WHERE fdep.id_dependente = :id_dependente
-";
+    WHERE fdep.id_dependente = :id_dependente';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':id_dependente' => $id]);
@@ -119,7 +109,7 @@ try {
     <script>
         var dependente = <?= $JSON_dependente; ?>;
         var url = "dependente_listar_um.php",
-            data = "id_dependente=<?=$id_dependente?>";
+            data = "id_dependente=<?= $id_dependente ?>";
         var formState = [],
             form = {
                 set: function(id, dep) {
@@ -243,7 +233,7 @@ try {
             post(url, "id_pessoa=" + dependente.id_pessoa + "&" + data);
             getInfoDependente(idForm);
         }
-        var id_dependente = <?=$id_dependente?>;
+        var id_dependente = <?= $id_dependente ?>;
         $(function() {
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
@@ -388,7 +378,12 @@ try {
         }
 
         function excluir_docdependente(id_doc) {
-            post('dependente_docdependente.php', "action=excluir&id_doc=" + id_doc + "&id_dependente=" + dependente.id_dependente, listarDocDependente);
+            if (!window.confirm("Tem certeza que deseja remover esse documento?")) {
+                return false;
+            }
+
+            const url = `dependente_docdependente.php?action=excluir&id_doc=${id_doc}&id_dependente=${dependente.id_dependente}`; 
+            post(url, '', listarDocDependente);
         }
 
         function gerarDocFuncional(response) {
@@ -610,7 +605,7 @@ try {
                                                                     <label for="arquivoDocumento">Arquivo do Documento</label>
                                                                     <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
                                                                 </div>
-                                                                <input type="number" name="id_dependente" value="<?=$id_dependente?>" style='display: none;'>
+                                                                <input type="number" name="id_dependente" value="<?= $id_dependente ?>" style='display: none;'>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
