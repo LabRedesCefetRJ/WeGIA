@@ -116,7 +116,7 @@ foreach ($sinaisvitais as $key => $value) {
 
 $sinaisvitais = json_encode($sinaisvitais);
 
-$stmtDescricaoMedica = $pdo->prepare("SELECT a.descricao AS descricao, a.data_atendimento AS data_atendimento, m.nome AS medicoNome, p.nome AS enfermeiraNome FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON (p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON (a.id_medico = m.id_medico) WHERE id_fichamedica=:idFichaMedica");
+$stmtDescricaoMedica = $pdo->prepare("SELECT a.descricao AS descricao, a.data_atendimento AS data_atendimento, m.nome AS medicoNome, p.nome AS enfermeiraNome, p.sobrenome AS enfermeiraSobrenome FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON (p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON (a.id_medico = m.id_medico) WHERE id_fichamedica=:idFichaMedica");
 
 $stmtDescricaoMedica->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtDescricaoMedica->execute();
@@ -483,7 +483,7 @@ try {
         $("#de-tab")
           .append($("<tr>")
             .append($("<td>").text(item.medicoNome))
-            .append($("<td>").text(item.enfermeiraNome))
+            .append($("<td>").text(item.enfermeiraNome + ' ' + item.enfermeiraSobrenome))
             .append($("<td>").html(item.descricao))
             .append($("<td>").text(item.data_atendimento))
           )
@@ -1450,7 +1450,7 @@ try {
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="inputSuccess">Usuário:</label>
                             <div class="col-md-8">
-                              <input class="form-control" style="width:230px;" name="usuario" id="usuario" value="<?php echo $id_funcionario; ?>" disabled="true">
+                              <input class="form-control" style="width:230px;" name="usuario" id="usuario" value="<?php echo $funcionarioNome; ?>" disabled="true">
                             </div>
                           </div>
 
