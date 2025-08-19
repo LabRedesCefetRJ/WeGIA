@@ -1,15 +1,18 @@
 <?php
 require_once 'ApiRecorrenciaServiceInterface.php';
 require_once '../helper/Util.php';
-require_once '../model/ContribuicaoLog.php';
+require_once '../dao/ContribuicaoLogDAO.php';
 require_once '../dao/GatewayPagamentoDAO.php';
 
 class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
-    public function criarAssinatura(ContribuicaoLog $contribuicaoLog) {
-        error_log("Iniciando criação de assinatura para: " . $contribuicaoLog->getSocio()->getDocumento());
+    public function criarAssinatura(Recorrencia $recorrencia) {
+        $contribuicaoLogDao = new ContribuicaoLogDAO();
+        $agradecimento = $contribuicaoLogDao->getAgradecimento();
+
+        error_log("Iniciando criação de assinatura para: " . $recorrencia->getSocio()->getDocumento());
         
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
-        $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($contribuicaoLog->getGatewayPagamento()->getId());
+        $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($recorrencia->getGatewayPagamento()->getId());
 
         $headers = [
             'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
@@ -23,9 +26,9 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
         $cardHolderName = filter_input(INPUT_POST, 'card_holder_name');
         $cardCvv = filter_input(INPUT_POST, 'card_cvv');
         
-        $code = $contribuicaoLog->getCodigo();
-        $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
-        $telefone = Util::limpaTelefone($contribuicaoLog->getSocio()->getTelefone());
+        $code = $recorrencia->getCodigo();
+        $cpfSemMascara = Util::limpaCpf($recorrencia->getSocio()->getDocumento());
+        $telefone = Util::limpaTelefone($recorrencia->getSocio()->getTelefone());
 
         // Estrutura de dados para criação de assinatura Pagar.me
         $data = [
@@ -36,10 +39,10 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
             'interval_count' => 1,
             'billing_type' => 'prepaid',
             'installments' => 1,
-            'statement_descriptor' => substr($contribuicaoLog->getAgradecimento(), 0, 13),
+            'statement_descriptor' => substr($agradecimento, 0, 13),
             'customer' => [
-                'name' => $contribuicaoLog->getSocio()->getNome(),
-                'email' => $contribuicaoLog->getSocio()->getEmail(),
+                'name' => $recorrencia->getSocio()->getNome(),
+                'email' => $recorrencia->getSocio()->getEmail(),
                 'type' => 'individual',
                 'document_type' => 'CPF',
                 'document' => $cpfSemMascara,
@@ -58,20 +61,20 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                 'exp_year' => (int)$cardExpYear,
                 'cvv' => $cardCvv,
                 'billing_address' => [
-                    'line_1' => $contribuicaoLog->getSocio()->getLogradouro() . ", " . $contribuicaoLog->getSocio()->getNumeroEndereco(),
-                    'zip_code' => preg_replace('/\D/', '', $contribuicaoLog->getSocio()->getCep()),
-                    'city' => $contribuicaoLog->getSocio()->getCidade(),
-                    'state' => $contribuicaoLog->getSocio()->getEstado(),
+                    'line_1' => $recorrencia->getSocio()->getLogradouro() . ", " . $recorrencia->getSocio()->getNumeroEndereco(),
+                    'zip_code' => preg_replace('/\D/', '', $recorrencia->getSocio()->getCep()),
+                    'city' => $recorrencia->getSocio()->getCidade(),
+                    'state' => $recorrencia->getSocio()->getEstado(),
                     'country' => 'BR'
                 ]
             ],
             'items' => [
                 [
-                    'description' => $contribuicaoLog->getAgradecimento(),
+                    'description' => $agradecimento,
                     'quantity' => 1,
                     'pricing_scheme' => [
                         'scheme_type' => 'unit',
-                        'price' => intval($contribuicaoLog->getValor() * 100) // Converter para centavos
+                        'price' => intval($recorrencia->getValor() * 100) // Converter para centavos
                     ]
                 ]
             ]

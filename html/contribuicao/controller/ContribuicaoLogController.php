@@ -601,7 +601,7 @@ class ContribuicaoLogController
      * Cria um objeto do tipo ContribuicaoLog, chama o serviço de cartão de crédito recorrente registrado no banco de dados
      * e insere a operação na tabela de contribuicao_log caso o serviço seja executado com sucesso.
      */
-    public function criarAssinatura()
+    public function criarAssinatura() //<-- Considerar mover para uma nova controladora de recorrências 
     {
         $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
         $documento = filter_input(INPUT_POST, 'documento_socio');
@@ -671,30 +671,32 @@ class ContribuicaoLogController
 
             $servicoPagamento = new $classeService();
 
-            // Criar registro de contribuição
-            $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+            //começar a alterar daqui para baixo
             $contribuicaoLog = new ContribuicaoLog();
-            $contribuicaoLog
+
+            //Criar registro de recorrência
+            require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR .'RecorrenciaDAO.php';
+            $recorrenciaDao = new RecorrenciaDAO($this->pdo);
+            $recorrencia = new Recorrencia($recorrenciaDao);
+            $recorrencia
                 ->setValor($valor)
                 ->setCodigo($contribuicaoLog->gerarCodigo())
-                ->setDataGeracao(date('Y-m-d'))
-                ->setDataVencimento(date('Y-m-d')) // Cobrança imediata
+                ->setInicio(new DateTime('now'))
                 ->setSocio($socio)
                 ->setGatewayPagamento($gatewayPagamento)
-                ->setMeioPagamento($meioPagamento);
+                ->setStatus(true);
 
-            $contribuicaoLog = $contribuicaoLogDao->criar($contribuicaoLog);
-            $contribuicaoLog->setAgradecimento($contribuicaoLogDao->getAgradecimento());
+            $recorrencia->create();
 
             // Criar assinatura
-            $codigoAssinatura = $servicoPagamento->criarAssinatura($contribuicaoLog);
+            $codigoAssinatura = $servicoPagamento->criarAssinatura($recorrencia);
             
             if (empty($codigoAssinatura)) {
                 throw new Exception('Falha ao criar assinatura');
             }
 
             // Atualizar registro com código da assinatura
-            $contribuicaoLogDao->alterarCodigoPorId($codigoAssinatura, $contribuicaoLog->getId());
+            $recorrenciaDao->alterarCodigoPorId($codigoAssinatura, $this->pdo->lastInsertId());
 
             // Registrar log do sócio
             $mensagem = "Assinatura mensal criada - ID: $codigoAssinatura";
