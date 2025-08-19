@@ -153,4 +153,23 @@ class Util
         //Retornar resultado
         return true;
     }
+
+    public static function verificarRegras($valor, array $conjuntoRegrasPagamento)
+    {
+        if ($conjuntoRegrasPagamento && count($conjuntoRegrasPagamento) > 0) {
+            foreach ($conjuntoRegrasPagamento as $regraPagamento) {
+                if ($regraPagamento['id_regra'] == 1) {
+                    if ($valor < $regraPagamento['valor']) {
+                        echo json_encode(['erro' => "O valor informado está abaixo do permitido (R\${$regraPagamento['valor']})."]);
+                        exit;
+                    }
+                } else if ($regraPagamento['id_regra'] == 2) {
+                    if ($valor > $regraPagamento['valor']) {
+                        echo json_encode(['erro' => "O valor informado está acima do permitido (R\${$regraPagamento['valor']})."]);
+                        exit;
+                    }
+                }
+            }
+        }
+    }
 }
