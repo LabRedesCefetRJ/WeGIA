@@ -6,6 +6,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 {
     private $pedidosArray = [];
 
+    //Aproveitar função abaixo
     public function getContribuicoes(?string $status): ContribuicaoLogCollection
     {
         try {
@@ -44,11 +45,9 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 
                 if (end($endpointFragmentado) === 'orders') {
                     // Realizar requisições
-                    $this->requisicaoPedidos($gatewayPagamento);
+                    $this->atribuirPedidos($this->pedidosArray, $this->requisicaoPedidos($gatewayPagamento));
                 } elseif (end($endpointFragmentado) === 'subscriptions') {
-                    //chamar função getSubscriptions quando a mesma for implementada
-                    $gatewayPagamento->setEndpoint(str_replace('subscriptions', 'invoices', $gatewayPagamento->getEndpoint()));
-                    $this->requisicaoPedidos($gatewayPagamento);
+                    $this->atribuirPedidos($this->pedidosArray, $this->getInvoices($gatewayPagamento));
                 }
             }
 
@@ -81,8 +80,17 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         }
     }
 
+    /**Retorna as faturas do gateway de pagamento */
+    public function getInvoices(GatewayPagamento $gatewayPagamento):array
+    {
+        $gatewayPagamento->setEndpoint(str_replace('subscriptions', 'invoices', $gatewayPagamento->getEndpoint()));
+        return $this->requisicaoPedidos($gatewayPagamento);
+    }
+
     private function requisicaoPedidos(GatewayPagamento $gatewayPagamento)
     {
+        $pedidosArray = [];
+
         $headers = [
             'Authorization: Basic ' . base64_encode($gatewayPagamento->getToken() . ':'),
             'Content-Type: application/json;charset=utf-8',
@@ -110,7 +118,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
             exit();
         }
 
-        $this->atribuirPedidos($this->pedidosArray, $data['data']);
+        $this->atribuirPedidos($pedidosArray, $data['data']);
 
         // Paginação
         $parsedUrl = parse_url($gatewayPagamento->getEndpoint());
@@ -142,11 +150,13 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                     exit();
                 }
 
-                $this->atribuirPedidos($this->pedidosArray, $data['data']);
+                $this->atribuirPedidos($pedidosArray, $data['data']);
             }
         }
 
         curl_close($ch);
+
+        return $pedidosArray;
     }
 
     private function atribuirPedidos(array &$pedidosTotais, array $pedidosRequisicao): void
