@@ -2,6 +2,7 @@
 require_once '../model/Socio.php';
 require_once '../model/GatewayPagamento.php';
 require_once '../model/MeioPagamento.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'RecorrenciaDTO.php';
 
 class ContribuicaoLog
 {
@@ -14,6 +15,7 @@ class ContribuicaoLog
     private Socio $socio;
     private GatewayPagamento $gatewayPagamento;
     private MeioPagamento $meioPagamento;
+    private ?RecorrenciaDTO $recorrenciaDTO;
     private $statusPagamento = 0;
     private $agradecimento;
 
@@ -247,6 +249,26 @@ class ContribuicaoLog
     public function setDataPagamento($dataPagamento)
     {
         $this->dataPagamento = $dataPagamento;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of recorrenciaDTO
+     */ 
+    public function getRecorrenciaDTO()
+    {
+        return $this->recorrenciaDTO;
+    }
+
+    /**
+     * Set the value of recorrenciaDTO
+     *
+     * @return  self
+     */ 
+    public function setRecorrenciaDTO(RecorrenciaDTO $recorrenciaDTO)
+    {
+        $this->recorrenciaDTO = $recorrenciaDTO;
 
         return $this;
     }
