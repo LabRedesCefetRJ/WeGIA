@@ -33,7 +33,7 @@
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
-	<title>Informações Detalhadas De Sáida</title>
+	<title>Informações Detalhadas De Saída</title>
 		
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -203,7 +203,7 @@
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Informações Detalhadas De Sáida</h2>
+					<h2>Informações Detalhadas De Saída</h2>
 				
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
@@ -212,7 +212,7 @@
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
-							<li><span>Informações Detalhadas Saida</span></li>
+							<li><span>Informações Detalhadas Saída</span></li>
 						</ol>
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 					</div>
@@ -225,7 +225,7 @@
 						<div class="panel-actions">
 							<a href="#" class="fa fa-caret-down"></a>
 						</div>
-						<h2 class="panel-title">Saida Detalhada</h2>
+						<h2 class="panel-title">Saída Detalhada</h2>
 					</header>
 					<div class="panel-body">
 						<div id="containerInformacoesDeSaida" class="container"></div>
@@ -234,7 +234,7 @@
 								<tr>
 									<th>Produto</th>
 									<th>Quantidade</th>
-									<th>Valor Unitario</th>
+									<th>Valor Unitário</th>
 									<th>Valor Total</th>
 								</tr>
 							</thead>
