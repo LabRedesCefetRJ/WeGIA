@@ -1,21 +1,5 @@
 <?php
-$config_path = "config.php";
-$loopLimit = 2000;
-if(file_exists($config_path)){
-    require_once($config_path);
-}else{
-    while(true){
-        $loopLimit--;
-        $config_path = "../" . $config_path;
-        if(file_exists($config_path)) break;
-        if($loopLimit < 0) { 
-            // Caso config.php não seja encontrado
-            header("Location: ". WWW ."instalador/index.php");
-            break;
-        }
-    }
-    require_once($config_path);
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
 class  Conexao
 {

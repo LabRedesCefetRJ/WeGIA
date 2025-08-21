@@ -9,12 +9,7 @@ class OrigemControle
             $msg = "Nome do origem não informado. Por favor, informe um nome!";
             header('Location: ../html/origem.html?msg='.$msg);
         }
-        if((!isset($cnpj)) || (empty($cnpj))){
-            $calcado='null';
-        }
-        if((!isset($cpf)) || (empty($cpf))){
-            $calca='null';
-        }
+       
         if((!isset($telefone)) || (empty($telefone))){
             $msg .= "Telefone do origem não informado. Por favor, informe um telefone!";
             header('Location: ../html/origem.html?msg='.$msg);

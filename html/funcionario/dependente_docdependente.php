@@ -94,6 +94,15 @@ function excluir(PDO $pdo, int $idDoc)
         exit();
     }
 
+    //buscar $id_dependente de $_REQUEST
+    $idDependente = filter_var($_REQUEST['id_dependente'], FILTER_VALIDATE_INT);
+
+    if(!$idDependente || $idDependente < 1){
+        http_response_code(400);
+        echo json_encode(['erro' => 'O id do dependente fornecido não é válido']);
+        exit();
+    }
+
     $sql1 = "DELETE FROM funcionario_dependentes_docs WHERE id_doc=:idDoc";
 
     $sql2 = "SELECT doc.nome_docdependente AS descricao, ddoc.data, ddoc.id_doc FROM funcionario_dependentes_docs ddoc LEFT JOIN funcionario_docdependentes doc ON doc.id_docdependentes = ddoc.id_docdependentes WHERE ddoc.id_dependente=:idDependente";
@@ -104,7 +113,7 @@ function excluir(PDO $pdo, int $idDoc)
         $stmt1->execute();
 
         $stmt2 = $pdo->prepare($sql2);
-        $stmt2->bindParam(':idDependente', $id_dependente);
+        $stmt2->bindParam(':idDependente', $idDependente);
         $stmt2->execute();
 
         $docdependente = $stmt2->fetchAll(PDO::FETCH_ASSOC);

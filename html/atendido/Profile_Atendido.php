@@ -1164,7 +1164,7 @@ $dependente = json_encode($dependente);
       <!-- Modal content-->
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">×</button>
+          <button type="button" class="close" data-dismiss="modal">X</button>
           <h3>Alterar um Documento</h3>
         </div>
         <div class="modal-body">
@@ -1208,47 +1208,41 @@ $dependente = json_encode($dependente);
           "id": "1"
         }];
         var cpf_atendido = $("#cpf").val();
-        var cpf_atendido_correto = cpf_atendido.replace(".", "");
-        var cpf_atendido_correto1 = cpf_atendido_correto.replace(".", "");
-        var cpf_atendido_correto2 = cpf_atendido_correto1.replace(".", "");
-        var cpf_atendido_correto3 = cpf_atendido_correto2.replace("-", "");
+        var cpf_atendido_correto = cpf_atendido.replace(".", "").replace(".", "").replace(".", "").replace("-", "");
         var apoio = 0;
         var cpfs1 = [];
         $.each(cpfs, function(i, item) {
-          if (item.cpf == cpf_atendido_correto3) {
+          if (item.cpf == cpf_atendido_correto) {
             alert("Alteração não realizada! O CPF informado já está cadastrado no sistema");
             apoio = 1;
           }
         });
         $.each(cpfs1, function(i, item) {
-          if (item.cpf == cpf_atendido_correto3) {
+          if (item.cpf == cpf_atendido_correto) {
             alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
             apoio = 1;
           }
         });
         if (apoio == 0) {
-          alert("Cadastrado com sucesso!")
+          alert("Cadastrado com sucesso!");
         }
       }
 
       function funcao3() {
-        var idatend = <?= $id ?>;
-        var cpfs = <?php echo $_SESSION['cpf_atendido']; ?>;
+        var idatend = <?= json_encode($id) ?>;
+        var cpfs = <?= json_encode($_SESSION['cpf_atendido']) ?>;
         var cpf_atendido = $("#cpf").val();
-        var cpf_atendido_correto = cpf_atendido.replace(".", "");
-        var cpf_atendido_correto1 = cpf_atendido_correto.replace(".", "");
-        var cpf_atendido_correto2 = cpf_atendido_correto1.replace(".", "");
-        var cpf_atendido_correto3 = cpf_atendido_correto2.replace("-", "");
+        var cpf_atendido_correto = cpf_atendido.replace(".", "").replace(".", "").replace(".", "").replace("-", "");
         var apoio = 0;
-        var cpfs1 = <?php echo $_SESSION['cpf_atendido']; ?>;
+        var cpfs1 = <?= json_encode($_SESSION['cpf_atendido']) ?>;
         $.each(cpfs, function(i, item) {
-          if (item.cpf == cpf_atendido_correto3 && item.id != idatend) {
+          if (item.cpf == cpf_atendido_correto && item.id != idatend) {
             alert("Alteração não realizada! O CPF informado já está cadastrado no sistema");
             apoio = 1;
           }
         });
         $.each(cpfs1, function(i, item) {
-          if (item.cpf == cpf_atendido_correto3) {
+          if (item.cpf == cpf_atendido_correto) {
             alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
             apoio = 1;
           }
@@ -1257,49 +1251,8 @@ $dependente = json_encode($dependente);
           alert("Editado com sucesso!");
         }
       }
-
-      function gerarParentesco() {
-        url = './atendido_parentesco_listar.php';
-        $.ajax({
-          data: '',
-          type: "POST",
-          url: url,
-          async: true,
-          success: function(response) {
-            var parentesco = response;
-            $('#parentesco').empty();
-            $('#parentesco').append('<option selected disabled>Selecionar...</option>');
-            $.each(parentesco, function(i, item) {
-              $('#parentesco').append('<option value="' + item.idatendido_parentesco + '">' + item.parentesco + '</option>');
-            });
-          },
-          dataType: 'json'
-        });
-      }
-
-      function adicionarParentesco() {
-        url = './atendido_parentesco_adicionar.php';
-        var descricao = window.prompt("Cadastre um novo tipo de Parentesco:");
-        if (!descricao) {
-          return
-        }
-        descricao = descricao.trim();
-        if (descricao == '') {
-          return
-        }
-        data = 'descricao=' + descricao;
-
-        $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response) {
-            gerarParentesco();
-          },
-          dataType: 'text'
-        });
-      }
     </script>
+
     <script>
       function removerFuncionarioDocs(id_doc) {
         if (!window.confirm("Tem certeza que deseja remover esse documento?")) {
@@ -1391,6 +1344,7 @@ $dependente = json_encode($dependente);
 
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
+    <script src="../../Functions/atendido_parentesco.js"></script>
 
 </body>
 

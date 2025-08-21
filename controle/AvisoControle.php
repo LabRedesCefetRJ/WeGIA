@@ -68,6 +68,7 @@ class AvisoControle
             foreach ($intercorrencias as $key => $value) {
                 $data = new DateTime($value['data']);
                 $intercorrencias[$key]['data'] = $data->format('d/m/Y H:i:s');
+                $intercorrencias[$key]['descricao'] = htmlspecialchars(html_entity_decode($value['descricao'], ENT_QUOTES, 'UTF-8'));
             }
 
             echo json_encode($intercorrencias);
