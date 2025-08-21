@@ -125,46 +125,8 @@
 									<span>Informações Pets</span>
 								</a>
 							</li>
-							<li class="nav-parent nav-active" >
-								<a>
-									<i class="fa fa-ambulance" aria-hidden="true"></i>
-									<span>Saúde Pet</span>
-								</a>
 							
-								<ul class="nav nav-children">
-									<li>
-										<a href="<?= WWW ?>html/pet/cadastro_ficha_medica_pet.php">
-											<span>Cadastrar Ficha Médica Pet</span>
-										</a>
-									</li>
-									<li>
-										<a href="<?= WWW ?>html/pet/informacao_saude_pet.php">
-											<span>Informações Saúde Pet</span>
-										</a>
-									</li>
 
-									<li class="nav-parent nav-active">
-										<a>
-											<i class="fa fa-pills" aria-hidden="true"></i>
-											<span>Medicamentos</span>
-										</a>
-
-										<ul class="nav nav-children">
-											<li>
-												<a href="<?= WWW ?>html/pet/cadastrar_medicamento.php">
-													<span>Cadastrar Medicamentos</span>
-												</a>
-											</li>
-											<li>
-												<a href="<?= WWW ?>html/pet/informacao_medicamento.php">
-													<span>Informacões Medicamentos</span>
-												</a>
-											</li>
-										</ul>
-
-									</li>
-								</ul>
-							</li>
 							
 
 							<li class="nav-parent nav-active" >
