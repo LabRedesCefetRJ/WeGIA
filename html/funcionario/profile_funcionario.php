@@ -1312,8 +1312,13 @@ try {
                           <div class="col-md-6">
                             <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input">
                               <option selected disabled value="">Selecionar</option>
-                              <option value="1"> Segunda à Sexta, folga Sábado e Domingo</option>
-                              <option value="2"> Dias Alternados</option>
+                              <?php
+                                $pdo = Conexao::connect();
+                                $tipoCarga = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
+                                foreach ($tipoCarga as $key => $value) {
+                                  echo ("<option id='tipo_" . $value["id_tipo"] . "' value=" . $value["id_tipo"] . ">" . htmlspecialchars($value["descricao"]) . "</option>");
+                                };
+                              ?>
                             </select>
                             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
                             <script>
