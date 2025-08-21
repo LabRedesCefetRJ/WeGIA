@@ -216,7 +216,7 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileCompany">Data de expedição<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
+                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required disabled>
                   </div>
                 </div>
                 <div class="form-group">
@@ -456,6 +456,26 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
         dataType: 'text'
       })
     }
+
+    // Delimitando a data mínima para a data de expedição da identidade por meio da data de nascimento
+    $("#nascimento").on('change', function () {
+      if($(this).val()){
+        $('#data_expedicao').prop('disabled', false);
+        const nascimento = new  Date( $(this).val() );
+        const dataMinimaExpedicao = new Date(nascimento);
+        dataMinimaExpedicao.setDate(dataMinimaExpedicao.getDate() + 1);
+
+        $('#data_expedicao').attr('min', dataMinimaExpedicao.toISOString().split('T')[0]);
+      }
+      else{
+        $('#data_expedicao').prop('disabled', true).val('');
+      }
+    });
+    // Desabilitando o input Data de Expedição quando o formulário é resetado
+    $('input[type="reset"]').on('click', function() {
+      $('#data_expedicao').val('').prop('disabled', true);
+      $('#data_expedicao').removeAttr('min');
+    });
 
     $(function() {
 
