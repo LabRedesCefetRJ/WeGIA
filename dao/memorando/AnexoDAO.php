@@ -9,20 +9,21 @@ class AnexoDAO
 	public function listarTodos($id_memorando)
 	{
 		try {
-			$Anexos = array();
 			$pdo = Conexao::connect();
-			$consulta = $pdo->query("SELECT a.extensao, a.nome, d.id_despacho, a.id_anexo FROM anexo a JOIN despacho d ON(a.id_despacho=d.id_despacho) JOIN memorando m ON(d.id_memorando=m.id_memorando) WHERE m.id_memorando=$id_memorando");
-			$x = 0;
 
-			while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-				$AnexoDAO = new AnexoDAO;
-				$Anexos[$x] = array('extensao' => $linha['extensao'], 'nome' => $linha['nome'], 'id_despacho' => $linha['id_despacho'], 'id_anexo' => $linha['id_anexo']);
-				$x++;
+			$stmtAnexos = $pdo->prepare("SELECT a.extensao, a.nome, d.id_despacho, a.id_anexo FROM anexo a JOIN despacho d ON(a.id_despacho=d.id_despacho) JOIN memorando m ON(d.id_memorando=m.id_memorando) WHERE m.id_memorando=:idMemorando");
+			$stmtAnexos->bindParam(':idMemorando', $id_memorando, PDO::PARAM_INT);
+			$stmtAnexos->execute();
+
+			$anexos = $stmtAnexos->fetchAll(PDO::FETCH_ASSOC);
+
+			foreach($anexos as $key => $value){
+				$anexos[$key] = ['extensao' => $value['extensao'], 'nome' => $value['nome'], 'id_despacho' => $value['id_despacho'], 'id_anexo' => $value['id_anexo']];
 			}
 		} catch (PDOException $e) {
 			echo 'Error:' . $e->getMessage();
 		}
-		return json_encode($Anexos);
+		return json_encode($anexos);
 	}
 
 	//Função para listar anexos

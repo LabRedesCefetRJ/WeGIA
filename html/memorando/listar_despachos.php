@@ -59,7 +59,13 @@ require_once ROOT . "/controle/memorando/AnexoControle.php";
 require_once ROOT . '/controle/memorando/StatusMemorandoControle.php';
 
 
-$id_memorando = $_GET['id_memorando'];
+$id_memorando = filter_input(INPUT_GET, 'id_memorando', FILTER_VALIDATE_INT);
+
+if(!$id_memorando || $id_memorando < 1){
+	http_response_code(400);
+	echo json_encode(['erro' => 'O id do memorando informado não está dentro dos limites permitidos.']);
+	exit();
+}
 
 //Cria novos objetos (Despachos)
 $despachos = new DespachoControle;
@@ -595,22 +601,22 @@ require_once ROOT . "/html/personalizacao_display.php";
 								<div class="just-printable">
 
 									<?php
-									
+
 									$pdo = Conexao::connect();
 									$memorandosDespachados->listarTodosId($id_memorando);
 									$memorando = $_SESSION['memorandoId'][0];
 									extract($memorando);
 									$statusMemorandoControle = new StatusMemorandoControle();
 									$statusMemorando = $statusMemorandoControle->getPorId(intval($id_status_memorando));
-									if($statusMemorando){
+									if ($statusMemorando) {
 										$status = $statusMemorando->getStatus();
 									}
 
 									$despachoControle = new DespachoControle();
 									$despacho = $despachoControle->getPorId(intval($id_memorando));
-									if($despacho){
+									if ($despacho) {
 										$despachoNome = $despacho['texto'];
-									}else{
+									} else {
 										$despachoNome = 'Nenhum despacho';
 									}
 
@@ -639,17 +645,23 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 									$pessoa_memorando = $pessoa_memorando["nome"] . ($pessoa_memorando["sobrenome"] ? (" " . $pessoa_memorando["sobrenome"]) : "");
 
+									$stmtArquivo = $pdo->prepare("SELECT nome, extensao FROM anexo WHERE id_despacho=:idMemorando");
+									$stmtArquivo->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
+									$stmtArquivo->execute();
 
-									$strArquivo = $pdo->query("SELECT nome, extensao FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
+									$strArquivo = $stmtArquivo->fetchAll(PDO::FETCH_ASSOC);
 
-									$anexo = $pdo->query("SELECT anexo FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
+									$stmtAnexo = $pdo->prepare("SELECT anexo FROM anexo WHERE id_despacho=:idMemorando");
+									$stmtAnexo->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
+									$stmtAnexo->execute();
 
-									//$anexo = $pdo->query("SELECT (COUNT*) FROM anexo WHERE id_despacho=$id_memorando;")->fetchAll(PDO::FETCH_ASSOC);
-									//var_dump($anexo);
-									//echo "<br />";
-									//var_dump($strArquivo);
+									$anexo = $stmtAnexo->fetchAll(PDO::FETCH_ASSOC);
 
-									$data_expedicao = $pdo->query("SELECT `data` FROM memorando WHERE id_memorando=$id_memorando")->fetch(PDO::FETCH_ASSOC)["data"];
+									$stmtDataExpedicao = $pdo->prepare("SELECT `data` FROM memorando WHERE id_memorando=:idMemorando");
+									$stmtDataExpedicao->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
+									$stmtDataExpedicao->execute();
+
+									$data_expedicao = $stmtDataExpedicao->fetch(PDO::FETCH_ASSOC)["data"];
 
 									echo ("
 
@@ -670,11 +682,11 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 									</p>
 									<?php
-										$despachosArr = json_decode($_SESSION['despacho']);
-										$anexos = json_decode($_SESSION['arquivos']);
-										$tabela = gerarTabelaMemorando($despachosArr, $anexos);
+									$despachosArr = json_decode($_SESSION['despacho']);
+									$anexos = json_decode($_SESSION['arquivos']);
+									$tabela = gerarTabelaMemorando($despachosArr, $anexos);
 
-										echo ($tabela);
+									echo ($tabela);
 									?>
 								</div>
 
