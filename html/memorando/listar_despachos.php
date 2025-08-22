@@ -1,67 +1,43 @@
 <?php
-
-/*ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);*/
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
 }
-session_start();
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: " . WWW . "html/index.php");
+	exit();
+} else {
+	session_regenerate_id();
 }
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+	http_response_code(400);
+	echo json_encode(['erro' => 'O id do usuário informado não é válido.']);
+	exit();
+}
+
+permissao($id_pessoa, 3, 7);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/html/memorando/gerar_tabela_impressao.php";
-
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=3");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] == 1) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-}
-
 require_once ROOT . "/controle/memorando/DespachoControle.php";
 require_once ROOT . "/controle/FuncionarioControle.php";
 require_once ROOT . "/controle/memorando/MemorandoControle.php";
 require_once ROOT . "/controle/memorando/AnexoControle.php";
 require_once ROOT . '/controle/memorando/StatusMemorandoControle.php';
 
-
 $id_memorando = filter_input(INPUT_GET, 'id_memorando', FILTER_VALIDATE_INT);
 
-if(!$id_memorando || $id_memorando < 1){
+if (!$id_memorando || $id_memorando < 1) {
 	http_response_code(400);
 	echo json_encode(['erro' => 'O id do memorando informado não está dentro dos limites permitidos.']);
 	exit();
@@ -234,7 +210,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		$("#header").load("<?php echo WWW; ?>html/header.php");
 		$(".menuu").load("<?php echo WWW; ?>html/menu.php");
 
-		var id_memorando = <?php echo $_GET['id_memorando'] ?>;
+		var id_memorando = <?= htmlspecialchars($_GET['id_memorando']) ?>;
 		$("#id_memorando").val(id_memorando);
 
 		<?php if (!empty($_SESSION['ultimo_despacho'])) { ?>
@@ -255,7 +231,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 			$("#header").load("<?php echo WWW; ?>html/header.php");
 			$(".menuu").load("<?php echo WWW; ?>html/menu.php");
 
-			var id_memorando = <?php echo $_GET['id_memorando'] ?>;
+			var id_memorando = <?= htmlspecialchars($_GET['id_memorando']) ?>;
 			$("#id_memorando").val(id_memorando);
 
 			CKEDITOR.replace('despacho');
@@ -599,88 +575,82 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 
 								<div class="just-printable">
-
 									<?php
+									try {
+										$pdo = Conexao::connect();
+										$memorandosDespachados->listarTodosId($id_memorando);
+										$memorando = $_SESSION['memorandoId'][0];
+										extract($memorando);
+										$statusMemorandoControle = new StatusMemorandoControle();
+										$statusMemorando = $statusMemorandoControle->getPorId(intval($id_status_memorando));
+										if ($statusMemorando) {
+											$status = $statusMemorando->getStatus();
+										}
 
-									$pdo = Conexao::connect();
-									$memorandosDespachados->listarTodosId($id_memorando);
-									$memorando = $_SESSION['memorandoId'][0];
-									extract($memorando);
-									$statusMemorandoControle = new StatusMemorandoControle();
-									$statusMemorando = $statusMemorandoControle->getPorId(intval($id_status_memorando));
-									if ($statusMemorando) {
-										$status = $statusMemorando->getStatus();
-									}
+										$despachoControle = new DespachoControle();
+										$despacho = $despachoControle->getPorId(intval($id_memorando));
+										if ($despacho) {
+											$despachoNome = $despacho['texto'];
+										} else {
+											$despachoNome = 'Nenhum despacho';
+										}
 
-									$despachoControle = new DespachoControle();
-									$despacho = $despachoControle->getPorId(intval($id_memorando));
-									if ($despacho) {
-										$despachoNome = $despacho['texto'];
-									} else {
-										$despachoNome = 'Nenhum despacho';
-									}
+										$enderecoInstituicao = $pdo->query("SELECT nome, bairro, estado, cidade FROM endereco_instituicao")->fetch(PDO::FETCH_ASSOC);
 
-									$enderecoInstituicao = $pdo->query("SELECT nome, bairro, estado, cidade FROM endereco_instituicao")->fetch(PDO::FETCH_ASSOC);
+										if ($enderecoInstituicao) {
+											$endereco = $enderecoInstituicao['nome'];
+											$bairro = $enderecoInstituicao['bairro'];
+											$estado = $enderecoInstituicao['estado'];
+											$cidade = $enderecoInstituicao['cidade'];
+										} else {
+											$endereco = '';
+											$bairro = '';
+											$estado = '';
+											$cidade = '';
+										}
 
-									if ($enderecoInstituicao) {
-										$endereco = $enderecoInstituicao['nome'];
-										$bairro = $enderecoInstituicao['bairro'];
-										$estado = $enderecoInstituicao['estado'];
-										$cidade = $enderecoInstituicao['cidade'];
-									} else {
-										$endereco = '';
-										$bairro = '';
-										$estado = '';
-										$cidade = '';
-									}
+										$pessoa_destino = $pdo->prepare("SELECT p.nome, p.sobrenome FROM pessoa p JOIN despacho d ON(p.id_pessoa=d.id_remetente) WHERE d.id_remetente=:idPessoa");
 
-									$pessoa1 = $pdo->query("SELECT id_destinatario FROM despacho WHERE id_remetente=$id_pessoa;")->fetch(PDO::FETCH_ASSOC)["id_destinatario"];
+										$pessoa_destino->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+										$pessoa_destino->execute();
+										$pessoa_destino = $pessoa_destino->fetch(PDO::FETCH_ASSOC);
 
+										$pessoa_destino = $pessoa_destino["nome"] . ($pessoa_destino["sobrenome"] ? (" " . $pessoa_destino["sobrenome"]) : "");
 
-									$pessoa_destino = $pdo->query("SELECT nome, sobrenome FROM pessoa WHERE id_pessoa=$pessoa1;")->fetch(PDO::FETCH_ASSOC);
+										$pessoa_memorando = $pdo->query("SELECT nome, sobrenome FROM pessoa WHERE id_pessoa=$id_pessoa;")->fetch(PDO::FETCH_ASSOC);
 
-									$pessoa_destino = $pessoa_destino["nome"] . ($pessoa_destino["sobrenome"] ? (" " . $pessoa_destino["sobrenome"]) : "");
+										$pessoa_memorando = $pessoa_memorando["nome"] . ($pessoa_memorando["sobrenome"] ? (" " . $pessoa_memorando["sobrenome"]) : "");
 
-									$pessoa_memorando = $pdo->query("SELECT nome, sobrenome FROM pessoa WHERE id_pessoa=$id_pessoa;")->fetch(PDO::FETCH_ASSOC);
+										$stmtArquivo = $pdo->prepare("SELECT nome, extensao FROM anexo WHERE id_despacho=:idMemorando");
+										$stmtArquivo->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
+										$stmtArquivo->execute();
 
-									$pessoa_memorando = $pessoa_memorando["nome"] . ($pessoa_memorando["sobrenome"] ? (" " . $pessoa_memorando["sobrenome"]) : "");
+										$strArquivo = $stmtArquivo->fetchAll(PDO::FETCH_ASSOC);
 
-									$stmtArquivo = $pdo->prepare("SELECT nome, extensao FROM anexo WHERE id_despacho=:idMemorando");
-									$stmtArquivo->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
-									$stmtArquivo->execute();
+										$stmtAnexo = $pdo->prepare("SELECT anexo FROM anexo WHERE id_despacho=:idMemorando");
+										$stmtAnexo->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
+										$stmtAnexo->execute();
 
-									$strArquivo = $stmtArquivo->fetchAll(PDO::FETCH_ASSOC);
+										$anexo = $stmtAnexo->fetchAll(PDO::FETCH_ASSOC);
 
-									$stmtAnexo = $pdo->prepare("SELECT anexo FROM anexo WHERE id_despacho=:idMemorando");
-									$stmtAnexo->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
-									$stmtAnexo->execute();
+										$stmtDataExpedicao = $pdo->prepare("SELECT `data` FROM memorando WHERE id_memorando=:idMemorando");
+										$stmtDataExpedicao->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
+										$stmtDataExpedicao->execute();
 
-									$anexo = $stmtAnexo->fetchAll(PDO::FETCH_ASSOC);
+										$data_expedicao = $stmtDataExpedicao->fetch(PDO::FETCH_ASSOC)["data"];
 
-									$stmtDataExpedicao = $pdo->prepare("SELECT `data` FROM memorando WHERE id_memorando=:idMemorando");
-									$stmtDataExpedicao->bindValue(':idMemorando', $id_memorando, PDO::PARAM_INT);
-									$stmtDataExpedicao->execute();
-
-									$data_expedicao = $stmtDataExpedicao->fetch(PDO::FETCH_ASSOC)["data"];
-
-									echo ("
+										echo ("
 
 											<p>MEMORANDO NR: ${htmlspecialchars($id_memorando)}</p>
 											<p>Assunto: $titulo</p>
-								");
+										");
+									} catch (Exception $e) {
+										require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+										Util::tratarException($e);
+									}
 									?>
 									<div class="panel-heading"> </div>
-
-
-									<p align="right">
-
-										<?php
-
-										echo (" $cidade - $estado,  $data_expedicao ");
-
-										?>
-
-									</p>
+									<p align="right"><?= " $cidade - $estado,  $data_expedicao " ?></p>
 									<?php
 									$despachosArr = json_decode($_SESSION['despacho']);
 									$anexos = json_decode($_SESSION['arquivos']);
@@ -689,24 +659,16 @@ require_once ROOT . "/html/personalizacao_display.php";
 									echo ($tabela);
 									?>
 								</div>
-
 							</div>
-
-
 						</div>
 						<header class="panel-heading">
 							<h2 class="panel-title">Conteúdo do despacho:</h2>
 						</header>
 						<div class="panel-body" id="listaDeDespachos"></div>
-
-						<?php
-						$id ?>
-
 						<header class="panel-heading">
 							<h3 class="panel-title">Encaminhar despacho</h3>
 						</header>
 						<div class="panel-body">
-
 							<?php
 							echo "<form action='" . WWW . "controle/control.php' method='post' enctype='multipart/form-data'>";
 							?>
@@ -750,9 +712,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 							</div>
 							</form>
 						</div>
-
-
-
 						<div class="printable"></div>
 						<?php
 						if ($_SESSION['id_status_memorando'][0] != 6) {
@@ -772,10 +731,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 	</section>
 	</div>
 	</section>
-
-
-
-
 	<!-- end: page -->
 	<!-- Vendor -->
 	<script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
