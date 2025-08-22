@@ -139,10 +139,18 @@ $dadosForm = $_SESSION['form_produto'];
 							echo $unidade;
 							?>;
 			$.each(categoria, function(i, item) {
-				$('#id_categoria').append('<option value="' + item.id_categoria_produto + '">' + item.descricao_categoria + '</option>');
+				if(atualizarSelect('id_categoria') == item.id_categoria_produto) {
+					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '" selected>' + item.descricao_categoria + '</option>');
+				} else {
+					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '">' + item.descricao_categoria + '</option>');
+				}
 			})
 			$.each(unidade, function(i, item) {
-				$('#id_unidade').append('<option value="' + item.id_unidade + '">' + item.descricao_unidade + '</option>');
+				if(atualizarSelect('id_unidade') == item.id_unidade) {
+					$('#id_unidade').append('<option value="' + item.id_unidade + '" selected>' + item.descricao_unidade + '</option>');
+				} else {
+					$('#id_unidade').append('<option value="' + item.id_unidade + '">' + item.descricao_unidade + '</option>');
+				}
 			})
 		});
 	</script>
