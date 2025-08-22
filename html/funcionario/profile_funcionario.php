@@ -1546,8 +1546,8 @@ try {
                                 <div class="form-group" style="display: grid;">
                                   <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
                                   <div style="display: flex;">
-                                    <select name="id_docfuncional" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
-                                      <option selected disabled>Selecionar...</option>
+                                    <select name="id_docfuncional" id="id_docfuncional" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
+                                      <option value="" selected disabled>Selecionar...</option>
                                       <?php
                                       foreach ($pdo->query("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
                                         echo ("<option value='" . htmlspecialchars($item["id_docfuncional"]) . "' >" . htmlspecialchars($item["nome_docfuncional"]) . "</option>");
