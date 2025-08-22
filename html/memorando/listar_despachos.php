@@ -665,7 +665,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 									echo ("
 
-											<p>MEMORANDO NR: $id_memorando</p>
+											<p>MEMORANDO NR: ${htmlspecialchars($id_memorando)}</p>
 											<p>Assunto: $titulo</p>
 								");
 									?>
