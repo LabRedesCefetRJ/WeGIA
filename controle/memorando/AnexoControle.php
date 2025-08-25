@@ -30,14 +30,25 @@ class AnexoControle
 	}
 
 	//Função para listar anexos
-	public function listarAnexo($id_anexo)
+	public function listarAnexo($idAnexo)
 	{
-		$AnexoDAO = new AnexoDAO();
-		$anexos = $AnexoDAO->listarAnexo($id_anexo);
-		if (session_status() !== PHP_SESSION_ACTIVE) {
-			session_start();
+		try {
+			$idAnexo = filter_var($idAnexo, FILTER_VALIDATE_INT);
+
+			if (!$idAnexo || $idAnexo < 1) {
+				throw new InvalidArgumentException('O id fornecido para o anexo não é válido.', 400);
+			}
+
+			$AnexoDAO = new AnexoDAO();
+			$anexos = $AnexoDAO->listarAnexo($idAnexo);
+			if (session_status() !== PHP_SESSION_ACTIVE) {
+				session_start();
+			}
+			$_SESSION['arq'] = $anexos;
+		} catch (Exception $e) {
+			require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+			Util::tratarException($e);
 		}
-		$_SESSION['arq'] = $anexos;
 	}
 
 	//Função para comprimir uma string de dados

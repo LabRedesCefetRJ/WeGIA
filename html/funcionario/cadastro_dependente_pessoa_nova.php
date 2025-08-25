@@ -471,6 +471,7 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
   <script src="../../Functions/onlyChars.js"></script>
   <script src="../../Functions/mascara.js"></script>
   <script src="../../Functions/lista.js"></script>
+  <script src="../../Functions/funcionario_parentesco.js"></script>
   <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
   <script language="JavaScript">
     var numValidos = "0123456789-()";
