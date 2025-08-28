@@ -229,6 +229,7 @@ require_once "../personalizacao_display.php";
                     <label class="col-md-3 control-label" for="profileCompany">Data de expedição<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
                       <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_expedicao" id="data_expedicao" id="profileCompany" max=<?php echo date('Y-m-d'); ?> required disabled>
+                      <p id="dataNascInvalida" style="display: block; color: #b30000">Selecione a data de nascimento primeiro!</p>
                     </div>
                   </div>
                   <div class="form-group">
@@ -685,6 +686,7 @@ require_once "../personalizacao_display.php";
     $("#nascimento").on('change', function () {
       if($(this).val()){
         $('#data_expedicao').prop('disabled', false);
+        $('#dataNascInvalida').hide();
         const nascimento = new  Date( $(this).val() );
         const dataMinimaExpedicao = new Date(nascimento);
         dataMinimaExpedicao.setDate(dataMinimaExpedicao.getDate() + 1);
@@ -693,6 +695,7 @@ require_once "../personalizacao_display.php";
       }
       else{
         $('#data_expedicao').prop('disabled', true).val('');
+        $('#dataNascInvalida').show();
       }
     });
 
