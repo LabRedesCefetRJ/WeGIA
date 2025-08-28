@@ -80,11 +80,31 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         }
     }
 
-    /**Retorna as faturas do gateway de pagamento */
-    public function getInvoices(GatewayPagamento $gatewayPagamento):array
+    /**Retorna as faturas do gateway de pagamento. True em objectReturn faz com que seja retornado um objeto do tipo ContribuicaoLogCollection
+     */
+    public function getInvoices(GatewayPagamento $gatewayPagamento, ?bool $objectReturn = false):array|ContribuicaoLogCollection
     {
         $gatewayPagamento->setEndpoint(str_replace('subscriptions', 'invoices', $gatewayPagamento->getEndpoint()));
-        return $this->requisicaoPedidos($gatewayPagamento);
+        $faturas = $this->requisicaoPedidos($gatewayPagamento);
+
+        if(!$objectReturn){
+            return $faturas;
+        }
+
+        $contribuicaoLogCollection = new ContribuicaoLogCollection();
+        
+        foreach($faturas as $fatura){
+            $contribuicaoLog = new ContribuicaoLog();
+            $contribuicaoLog
+                ->setCodigo($fatura['id'])
+                ->setDataGeracao($fatura['charge']['created_at'])
+                ->setDataVencimento($fatura['charge']['due_at'])
+                ->setRecorrenciaDTO(new RecorrenciaDTO($fatura['subscription']['id']));
+
+            $contribuicaoLogCollection->add($contribuicaoLog);
+        }
+
+        return $contribuicaoLogCollection;
     }
 
     private function requisicaoPedidos(GatewayPagamento $gatewayPagamento)

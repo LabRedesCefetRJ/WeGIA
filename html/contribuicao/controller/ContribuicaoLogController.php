@@ -495,7 +495,7 @@ class ContribuicaoLogController
 
         try {
             $this->pdo->beginTransaction();
-            
+
             // Buscar sócio
             $socioDao = new SocioDAO($this->pdo);
             $socio = $socioDao->buscarPorDocumento($documento);
@@ -569,14 +569,14 @@ class ContribuicaoLogController
 
             // Processar pagamento
             $codigoTransacao = $servicoPagamento->processarCartaoCredito($contribuicaoLog);
-            
+
             if (!$codigoTransacao) {
                 throw new Exception('Falha no processamento do cartão');
             }
 
             // Atualizar registro com código da transação
             $contribuicaoLogDao->alterarCodigoPorId($codigoTransacao, $contribuicaoLog->getId());
-            
+
             // Registrar log do sócio
             $mensagem = "Pagamento com cartão processado - ID: $codigoTransacao";
             $socioDao->registrarLog($socio, $mensagem);
@@ -584,11 +584,10 @@ class ContribuicaoLogController
             $this->pdo->commit();
 
             echo json_encode([
-                'sucesso' => true, 
+                'sucesso' => true,
                 'mensagem' => 'Pagamento processado com sucesso!',
                 'transacao_id' => $codigoTransacao
             ]);
-
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -598,7 +597,7 @@ class ContribuicaoLogController
         }
     }
 
-    
+
     /**
      * Extraí o id da requisição POST e muda o status de pagamento da contribuição correspondente.
      */
@@ -715,7 +714,7 @@ class ContribuicaoLogController
     /**
      * Retorna o JSON do relatório de contribuições solicitado
      */
-    public function getRelatorio():void
+    public function getRelatorio(): void
     {
         $periodo = (filter_input(INPUT_GET, 'periodo', FILTER_SANITIZE_NUMBER_INT));
         $socioId = (filter_input(INPUT_GET, 'socio', FILTER_SANITIZE_NUMBER_INT));
@@ -723,15 +722,15 @@ class ContribuicaoLogController
 
         try {
 
-            if(is_null($periodo)){
+            if (is_null($periodo)) {
                 throw new InvalidArgumentException('O período não pode ser nulo.', 400);
             }
 
-            if(is_null($socioId)){
+            if (is_null($socioId)) {
                 throw new InvalidArgumentException('O id de um sócio não pode ser nulo.', 400);
             }
 
-            if(is_null($status)){
+            if (is_null($status)) {
                 throw new InvalidArgumentException('O status não pode ser nulo.', 400);
             }
 
@@ -750,5 +749,52 @@ class ContribuicaoLogController
             http_response_code($e->getCode());
             echo json_encode(['erro' => 'Erro ao buscar o relatório de contribuições']);
         }
+    }
+
+    /**
+     * Chama o serviço de pagamento adequado, pegando suas faturas e inserindo novos elementos no banco de dados da aplicação
+     */
+    public function registrarFaturas()
+    {
+        //chamar gateway de pagamento associado ao método de pagamento de recorrências
+        $meioPagamentoDao = new MeioPagamentoDAO($this->pdo);
+        $meioPagamento = $meioPagamentoDao->buscarPorNome('Recorrencia');
+
+        $gatewayPagamentoDao = new GatewayPagamentoDAO($this->pdo);
+        $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
+
+        //instanciar serviço do gateway de pagamento
+        $api = $gatewayPagamento['plataforma'] . 'ContribuicoesService';
+        $caminhoArquivo = dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . $api . '.php';
+
+        if (!file_exists($caminhoArquivo)) {
+            //lançar excessão
+            exit();
+        }
+
+        require_once $caminhoArquivo;
+
+        if (!class_exists($api)) {
+            //lançar excessão
+            exit();
+        }
+
+        $apiContribuicoesService = new $api;
+
+        if (!($apiContribuicoesService instanceof $api) || !method_exists($apiContribuicoesService, 'getInvoices')) {
+           //lançar excessão
+           exit();
+        }
+
+        //chamar método do serviço que retorna as faturas
+        $faturas = $apiContribuicoesService->getInvoices();
+
+        //instanciar RecorrenciaDAO
+
+        //chamar método que busca as faturas recorrências salvas no sistema
+
+        //comparar códigos das faturas externas com as contribuições internas para evitar inserir repetidas
+
+        //registrar no sistema as novas faturas como contribuições
     }
 }
