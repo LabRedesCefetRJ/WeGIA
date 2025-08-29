@@ -404,7 +404,7 @@ class Item
 
         echo ('
     <tr class="table-info">
-        <td scope="row" colspan="3">Valor total:</td>
+        <td scope="row" colspan="5">Valor total:</td>
         <td>R$ ' . number_format($tot_val, 2) . '</td>
     </tr>
     ');
