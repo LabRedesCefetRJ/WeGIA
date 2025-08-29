@@ -320,9 +320,9 @@ class Item
             ");
 
             $this->setQuery("
-                SELECT qtd AS qtd_total, descricao, Total AS valor_total, PrecoMedio 
-                FROM estoque_com_preco_atualizado 
-                WHERE qtd != 0 AND oculto = false 
+                SELECT e.qtd AS qtd_total, e.descricao, e.Total AS valor_total, e.PrecoMedio, u.descricao_unidade as unidade
+                FROM estoque_com_preco_atualizado e, unidade u
+                WHERE qtd != 0 AND oculto = false AND u.id_unidade = e.id_unidade
                 ORDER BY descricao;
             ");
         }
@@ -404,7 +404,7 @@ class Item
 
         echo ('
     <tr class="table-info">
-        <td scope="row" colspan="5">Valor total:</td>
+        <td scope="row" colspan="'.(($this->getRelatorio() == 'estoque') ? 4: 5) .'">Valor total:</td>
         <td>R$ ' . number_format($tot_val, 2) . '</td>
     </tr>
     ');
