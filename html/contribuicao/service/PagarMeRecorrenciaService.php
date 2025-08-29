@@ -8,8 +8,6 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
     public function criarAssinatura(Recorrencia $recorrencia) {
         $contribuicaoLogDao = new ContribuicaoLogDAO();
         $agradecimento = $contribuicaoLogDao->getAgradecimento();
-
-        error_log("Iniciando criação de assinatura para: " . $recorrencia->getSocio()->getDocumento());
         
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
         $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($recorrencia->getGatewayPagamento()->getId());
@@ -100,7 +98,6 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
         curl_close($ch);
 
         $responseData = json_decode($response, true);
-        error_log("Resposta Pagar.me: " . print_r($responseData, true));
 
         if ($httpCode === 200 || $httpCode === 201) {
             if (empty($responseData['id'])) {
