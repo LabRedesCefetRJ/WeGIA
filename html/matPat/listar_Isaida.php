@@ -147,6 +147,8 @@
 						.append($('<td />')
 							.text(item.valor_unitario))
 						.append($('<td />')
+							.text(item.unidade))
+						.append($('<td />')
 							.text(item.valor_unitario*item.qtd)))
 					});
 		});
@@ -235,6 +237,7 @@
 									<th>Produto</th>
 									<th>Quantidade</th>
 									<th>Valor Unitário</th>
+									<th>Tipo de Unidade</th>
 									<th>Valor Total</th>
 								</tr>
 							</thead>

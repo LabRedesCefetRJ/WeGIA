@@ -153,7 +153,7 @@
 						.append($('<td />')
 							.text(item.valor_unitario))
 						.append($('<td />')
-						.text(item.unidade))
+							.text(item.unidade))
 						.append($('<td />')
 							.text(item.valor_unitario*item.qtd)))
 					});

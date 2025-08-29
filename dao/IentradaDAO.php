@@ -8,11 +8,11 @@ class IentradaDAO
     public function listarId($id_entrada){
         try{
             $pdo = Conexao::connect();
-            $sql = "SELECT i.id_ientrada,i.id_entrada,p.descricao,i.qtd,i.valor_unitario, u.descricao_unidade
-            FROM ientrada i 
-            INNER JOIN produto p ON p.id_produto = i.id_produto
-            INNER JOIN unidade u ON u.id_unidade = p.id_unidade
-            WHERE i.id_entrada = :id_entrada AND i.oculto = false";
+            $sql = "SELECT i.id_ientrada,i.id_entrada,p.descricao,i.qtd,i.valor_unitario,u.descricao_unidade
+             FROM ientrada i 
+             INNER JOIN produto p ON p.id_produto = i.id_produto
+             INNER JOIN unidade u ON u.id_unidade = p.id_unidade
+             WHERE i.id_entrada = :id_entrada AND i.oculto = false";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_entrada',$id_entrada);
 

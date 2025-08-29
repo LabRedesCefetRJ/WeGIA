@@ -238,9 +238,10 @@ class Item
             $table1 = [
                 // Caso 0: não mostrar zerados
                 "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_produto_entrada 
-                SELECT produto.id_produto, produto.preco, sum(qtd) as somatorio, produto.descricao, (sum(qtd) * ientrada.valor_unitario) as Total, 
+                SELECT produto.id_produto, produto.preco, sum(qtd) as somatorio, produto.descricao, unidade.descricao_unidade as unidade, (sum(qtd) * ientrada.valor_unitario) as Total, 
                 concat(ientrada.id_produto, valor_unitario) as kungfu 
-                FROM ientrada, produto 
+                FROM ientrada, produto
+                INNER JOIN unidade ON unidade.id_unidade = produto.id_unidade
                 WHERE ientrada.id_produto = produto.id_produto
                 GROUP BY kungfu 
                 ORDER BY produto.descricao;
@@ -248,10 +249,11 @@ class Item
 
                 // Caso 1: mostrar zerados
                 "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_produto_entrada 
-                SELECT produto.id_produto, produto.preco, IFNULL(sum(qtd), 0) as somatorio, produto.descricao, (sum(qtd) * ientrada.valor_unitario) as Total, 
+                SELECT produto.id_produto, produto.preco, IFNULL(sum(qtd), 0) as somatorio, produto.descricao, unidade.descricao_unidade as unidade, (sum(qtd) * ientrada.valor_unitario) as Total, 
                 concat(produto.id_produto, IFNULL(ientrada.valor_unitario, 0)) as kungfu 
                 FROM produto 
                 LEFT JOIN ientrada ON ientrada.id_produto = produto.id_produto 
+                LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
                 GROUP BY kungfu 
                 ORDER BY produto.descricao;
                 "
@@ -268,11 +270,12 @@ class Item
                 CREATE TEMPORARY TABLE IF NOT EXISTS estoque_com_preco_atualizado 
                 SELECT 
                     p.id_produto, p.id_categoria_produto, p.id_unidade, p.codigo, 
-                    IFNULL(e.qtd, 0) AS qtd, p.descricao, pm.PrecoMedio, 
+                    IFNULL(e.qtd, 0) AS qtd, p.descricao, u.descricao_unidade As unidade, pm.PrecoMedio, 
                     IFNULL(e.qtd * pm.PrecoMedio, 0) AS Total, 
                     a.id_almoxarifado, p.oculto 
                 FROM tabelaPrecoMedio pm
-                LEFT JOIN produto p ON pm.id_produto = p.id_produto 
+                LEFT JOIN produto p ON pm.id_produto = p.id_produto
+                LEFT JOIN unidade u ON u.id_unidade = p.id_unidade 
                 LEFT JOIN estoque e ON e.id_produto = p.id_produto 
                 LEFT JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
                 WHERE p.id_produto = pm.id_produto;
@@ -296,9 +299,10 @@ class Item
             // Parte sem filtros continua igual (sem entrada externa)
             $this->setDDL_cmd("
                 CREATE TEMPORARY TABLE IF NOT EXISTS tabela1 
-                SELECT produto.id_produto, SUM(qtd) AS somatorio, produto.descricao, (SUM(qtd) * ientrada.valor_unitario) AS Total, 
+                SELECT produto.id_produto, SUM(qtd) AS somatorio, produto.descricao, unidade.descricao_unidade as unidade, (SUM(qtd) * ientrada.valor_unitario) AS Total, 
                 CONCAT(ientrada.id_produto, valor_unitario) AS kungfu 
-                FROM ientrada, produto 
+                FROM ientrada, produto
+                INNER JOIN unidade ON unidade.id_unidade = produto.id_unidade
                 WHERE ientrada.id_produto = produto.id_produto 
                 GROUP BY kungfu 
                 ORDER BY produto.descricao;
