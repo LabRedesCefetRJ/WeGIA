@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLogCollection.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'RecorrenciaDTO.php';
 
 class RecorrenciaDAO
 {
@@ -77,5 +78,31 @@ class RecorrenciaDAO
         }
 
         return $contribuicaoLogCollection;
+    }
+
+    public function getRecorrenciaPorCodigo(string $codigo): RecorrenciaDTO|null
+    {
+        $sql = "SELECT * FROM recorrencia WHERE codigo=:codigo";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':codigo', $codigo, PDO::PARAM_STR);
+        $stmt->execute();
+
+        if ($stmt->rowCount() != 1) {
+            return null;
+        }
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $recorrenciaDto = new RecorrenciaDTO($resultado['codigo']);
+        $recorrenciaDto->id = $resultado['id'];
+        $recorrenciaDto->idGatewayPagamento = $resultado['id_gateway'];
+        $recorrenciaDto->codigo = $resultado['codigo'];
+        $recorrenciaDto->valor = $resultado['valor'];
+        $recorrenciaDto->status = $resultado['status'];
+        $recorrenciaDto->inicio = new DateTime($resultado['data_inicio']);
+        $recorrenciaDto->termino = new DateTime($resultado['data_termino']);
+
+        return $recorrenciaDto;
     }
 }
