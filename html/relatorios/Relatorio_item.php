@@ -99,18 +99,20 @@ class Item
 
             $this->setQuery("
                 SELECT 
-                SUM(ientrada.qtd) as qtd_total, 
-                produto.descricao, 
-                SUM(ientrada.qtd*ientrada.valor_unitario) as valor_total, 
-                ientrada.valor_unitario, 
-                entrada.data as data  
+                    SUM(ientrada.qtd) as qtd_total, 
+                    produto.descricao, 
+                    SUM(ientrada.qtd*ientrada.valor_unitario) as valor_total, 
+                    ientrada.valor_unitario, 
+                    entrada.data as data,
+                    unidade.descricao_unidade as unidade
                 FROM ientrada 
                 LEFT JOIN produto ON produto.id_produto = ientrada.id_produto 
                 LEFT JOIN entrada ON entrada.id_entrada = ientrada.id_entrada 
                 LEFT JOIN origem ON origem.id_origem = entrada.id_origem 
                 LEFT JOIN tipo_entrada ON tipo_entrada.id_tipo = entrada.id_tipo 
                 LEFT JOIN almoxarifado ON almoxarifado.id_almoxarifado = entrada.id_almoxarifado 
-                LEFT JOIN pessoa ON pessoa.id_pessoa = entrada.id_responsavel 
+                LEFT JOIN pessoa ON pessoa.id_pessoa = entrada.id_responsavel
+                LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
                 $params
                 GROUP BY concat(ientrada.id_produto, ientrada.valor_unitario)
                 ORDER BY produto.descricao
@@ -118,14 +120,16 @@ class Item
         } else {
             $this->setQuery("
                 SELECT 
-                SUM(ientrada.qtd) as qtd_total, 
-                produto.descricao, 
-                SUM(ientrada.qtd*ientrada.valor_unitario) as valor_total, 
-                ientrada.valor_unitario, 
-                entrada.data as data 
+                    SUM(ientrada.qtd) as qtd_total, 
+                    produto.descricao, 
+                    SUM(ientrada.qtd*ientrada.valor_unitario) as valor_total, 
+                    ientrada.valor_unitario, 
+                    entrada.data as data,
+                    unidade.descricao_unidade as unidade
                 FROM ientrada 
                 LEFT JOIN produto ON produto.id_produto = ientrada.id_produto 
-                LEFT JOIN entrada ON entrada.id_entrada = ientrada.id_entrada 
+                LEFT JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
+                LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
                 WHERE ientrada.qtd > 0 AND ientrada.oculto = false 
                 GROUP BY concat(ientrada.id_produto, ientrada.valor_unitario)
                 ORDER BY produto.descricao
@@ -182,7 +186,8 @@ class Item
                     produto.descricao, 
                     SUM(isaida.qtd * isaida.valor_unitario) as valor_total, 
                     isaida.valor_unitario, 
-                    saida.data as data
+                    saida.data as data,
+                    unidade.descricao_unidade as unidade
                 FROM isaida 
                 LEFT JOIN produto ON produto.id_produto = isaida.id_produto 
                 LEFT JOIN saida ON saida.id_saida = isaida.id_saida 
@@ -190,6 +195,7 @@ class Item
                 LEFT JOIN tipo_saida ON tipo_saida.id_tipo = saida.id_tipo 
                 LEFT JOIN almoxarifado ON almoxarifado.id_almoxarifado = saida.id_almoxarifado 
                 LEFT JOIN pessoa ON pessoa.id_pessoa = saida.id_responsavel 
+                LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
                 $params
                 GROUP BY concat(isaida.id_produto, isaida.valor_unitario)
                 ORDER BY produto.descricao
@@ -197,16 +203,18 @@ class Item
         } else {
             $this->setQuery("
                 SELECT 
-                    SUM(isaida.qtd) as qtd_total, 
+                    SUM(ientrada.qtd) as qtd_total, 
                     produto.descricao, 
-                    SUM(isaida.qtd * isaida.valor_unitario) as valor_total, 
-                    isaida.valor_unitario, 
-                    saida.data as data 
-                FROM isaida 
-                LEFT JOIN produto ON produto.id_produto = isaida.id_produto 
-                LEFT JOIN saida ON saida.id_saida = isaida.id_saida  
-                WHERE isaida.qtd > 0 AND isaida.oculto = false 
-                GROUP BY concat(isaida.id_produto, isaida.valor_unitario)
+                    SUM(ientrada.qtd*ientrada.valor_unitario) as valor_total, 
+                    ientrada.valor_unitario, 
+                    entrada.data as data,
+                    unidade.descricao_unidade as unidade
+                FROM ientrada 
+                LEFT JOIN produto ON produto.id_produto = ientrada.id_produto 
+                LEFT JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
+                LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
+                WHERE ientrada.qtd > 0 AND ientrada.oculto = false
+                GROUP BY concat(ientrada.id_produto, ientrada.valor_unitario)
                 ORDER BY produto.descricao
             ");
         }
@@ -233,7 +241,7 @@ class Item
                 SELECT produto.id_produto, produto.preco, sum(qtd) as somatorio, produto.descricao, (sum(qtd) * ientrada.valor_unitario) as Total, 
                 concat(ientrada.id_produto, valor_unitario) as kungfu 
                 FROM ientrada, produto 
-                WHERE ientrada.id_produto = produto.id_produto 
+                WHERE ientrada.id_produto = produto.id_produto
                 GROUP BY kungfu 
                 ORDER BY produto.descricao;
                 ",
@@ -277,7 +285,8 @@ class Item
                     e.qtd AS qtd_total, 
                     e.descricao, 
                     e.Total AS valor_total, 
-                    e.PrecoMedio 
+                    e.PrecoMedio,
+                    e.unidade
                 FROM estoque_com_preco_atualizado e 
                 $params
                 ORDER BY e.descricao;
@@ -368,6 +377,7 @@ class Item
                     <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
                     <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
                     <td>R$ ' . number_format($item['PrecoMedio'], 2) . '</td>
+                    <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
                     <td>R$ ' . number_format($item['valor_total'], 2) . '</td>
                 </tr>
             ');
@@ -379,6 +389,7 @@ class Item
                     <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
                     <td>' . htmlspecialchars($util->formatoDataDMY($item['data']), ENT_QUOTES, 'UTF-8') . '</td>
                     <td>R$ ' . number_format($item['valor_unitario'], 2) . '</td>
+                    <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
                     <td>R$ ' . number_format($item['valor_total'], 2) . '</td>
                 </tr>
             ');
