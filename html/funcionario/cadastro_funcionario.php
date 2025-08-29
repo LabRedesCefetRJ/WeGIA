@@ -521,6 +521,10 @@ require_once "../personalizacao_display.php";
       var d = document.getElementById('tipoCargaHoraria_input');
       var tipo = d.options[d.selectedIndex].text;
 
+      const data_nascimento = document.querySelector("#nascimento").value;
+      if(dt_expedicao < data_nascimento){
+        return false;
+      }
       if (nome && sobrenome && sexo && telefone && dt_nasc && rg && orgao_emissor && dt_expedicao && dt_admissao && situacao && cargo && escala && tipo) {
         alert("Cadastrado com sucesso!");
       }
