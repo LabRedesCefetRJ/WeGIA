@@ -756,45 +756,73 @@ class ContribuicaoLogController
      */
     public function registrarFaturas()
     {
-        //chamar gateway de pagamento associado ao método de pagamento de recorrências
-        $meioPagamentoDao = new MeioPagamentoDAO($this->pdo);
-        $meioPagamento = $meioPagamentoDao->buscarPorNome('Recorrencia');
+        try {
+            //chamar gateway de pagamento associado ao método de pagamento de recorrências
+            $meioPagamentoDao = new MeioPagamentoDAO($this->pdo);
+            $meioPagamento = $meioPagamentoDao->buscarPorNome('Recorrencia');
 
-        $gatewayPagamentoDao = new GatewayPagamentoDAO($this->pdo);
-        $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
+            $gatewayPagamentoDao = new GatewayPagamentoDAO($this->pdo);
+            $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
 
-        //instanciar serviço do gateway de pagamento
-        $api = $gatewayPagamento['plataforma'] . 'ContribuicoesService';
-        $caminhoArquivo = dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . $api . '.php';
+            $gatewayPagamentoObject = new GatewayPagamento($gatewayPagamento['plataforma'], $gatewayPagamento['endPoint'], $gatewayPagamento['token'], $gatewayPagamento['status']);
 
-        if (!file_exists($caminhoArquivo)) {
-            //lançar excessão
-            exit();
+            //instanciar serviço do gateway de pagamento
+            $api = $gatewayPagamento['plataforma'] . 'ContribuicoesService';
+            $caminhoArquivo = dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . $api . '.php';
+
+            if (!file_exists($caminhoArquivo)) {
+                throw new InvalidArgumentException('O arquivo informado não existe', 400);
+            }
+
+            require_once $caminhoArquivo;
+
+            if (!class_exists($api)) {
+                throw new InvalidArgumentException('A API de pagamento informada não existe no sistema', 400);
+            }
+
+            $apiContribuicoesService = new $api;
+
+            if (!($apiContribuicoesService instanceof $api) || !method_exists($apiContribuicoesService, 'getInvoices')) {
+                throw new InvalidArgumentException('O método de busca de faturas não existe na classe de serviços da API', 400);
+            }
+
+            //chamar método do serviço que retorna as faturas
+            $faturasExternas = $apiContribuicoesService->getInvoices($gatewayPagamentoObject, true);
+
+            //instanciar RecorrenciaDAO
+            $recorrenciaDao = new RecorrenciaDAO();
+
+            //chamar método que busca as faturas recorrências salvas no sistema
+            $faturasInternas = $recorrenciaDao->getContribuicoesPorRecorrencia();
+
+            //comparar códigos das faturas externas com as contribuições internas para evitar inserir repetidas
+            $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+            $this->pdo->beginTransaction();
+
+            $registrou = false;
+            foreach ($faturasExternas as $externa) {
+                $busca = $faturasInternas->findByCodigo($externa->getCodigo());
+
+                //registrar no sistema as novas faturas como contribuições
+                if (is_null($busca)) {
+                    $contribuicaoLogDao->criar($externa);
+                    $registrou = true;
+                }
+            }
+
+            if (!$registrou) {
+                $this->pdo->rollBack();
+                throw new LogicException('Nenhuma nova fatura foi encontrada.', 200);
+            }
+
+            $this->pdo->commit();
+            echo json_encode(['sucesso' => 'Faturas registradas com sucesso.', 200]);
+        } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
         }
-
-        require_once $caminhoArquivo;
-
-        if (!class_exists($api)) {
-            //lançar excessão
-            exit();
-        }
-
-        $apiContribuicoesService = new $api;
-
-        if (!($apiContribuicoesService instanceof $api) || !method_exists($apiContribuicoesService, 'getInvoices')) {
-           //lançar excessão
-           exit();
-        }
-
-        //chamar método do serviço que retorna as faturas
-        $faturas = $apiContribuicoesService->getInvoices();
-
-        //instanciar RecorrenciaDAO
-
-        //chamar método que busca as faturas recorrências salvas no sistema
-
-        //comparar códigos das faturas externas com as contribuições internas para evitar inserir repetidas
-
-        //registrar no sistema as novas faturas como contribuições
     }
 }
