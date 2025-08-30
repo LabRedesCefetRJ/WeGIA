@@ -69,6 +69,8 @@ require_once ROOT . "/html/geral/msg.php";
 		unset($_SESSION['unidade']);
 		unset($_SESSION['categoria']);
 	}
+
+$dadosForm = $_SESSION['form_produto'];
 ?>
 
 <head>
@@ -137,10 +139,18 @@ require_once ROOT . "/html/geral/msg.php";
 							echo $unidade;
 							?>;
 			$.each(categoria, function(i, item) {
-				$('#id_categoria').append('<option value="' + item.id_categoria_produto + '">' + item.descricao_categoria + '</option>');
+				if(atualizarSelect('id_categoria') == item.id_categoria_produto) {
+					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '" selected>' + item.descricao_categoria + '</option>');
+				} else {
+					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '">' + item.descricao_categoria + '</option>');
+				}
 			})
 			$.each(unidade, function(i, item) {
-				$('#id_unidade').append('<option value="' + item.id_unidade + '">' + item.descricao_unidade + '</option>');
+				if(atualizarSelect('id_unidade') == item.id_unidade) {
+					$('#id_unidade').append('<option value="' + item.id_unidade + '" selected>' + item.descricao_unidade + '</option>');
+				} else {
+					$('#id_unidade').append('<option value="' + item.id_unidade + '">' + item.descricao_unidade + '</option>');
+				}
 			})
 		});
 	</script>
@@ -214,7 +224,7 @@ require_once ROOT . "/html/geral/msg.php";
 											<div class="form-group"><br>
 												<label class="col-md-3 control-label">Nome do produto</label>
 												<div class="col-md-8">
-													<input type="text" class="form-control" name="descricao" id="produto" required>
+													<input type="text" class="form-control" name="descricao" id="produto" onchange="addSessionStorage(this)" value="" required>
 												</div>
 											</div>
 
@@ -224,17 +234,17 @@ require_once ROOT . "/html/geral/msg.php";
 													<i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
 												</a>
 												<div class="col-md-6">
-													<select name="id_categoria" id="id_categoria" class="form-control input-lg mb-md">
+													<select name="id_categoria" id="id_categoria" class="form-control input-lg mb-md" onchange="addSessionStorage(this)">
 														<option selected disabled value="blank">Selecionar</option>
 													</select>
 												</div>
 											</div>
 
 											<div class="form-group">
-												<label class="col-md-3 control-label">Unidade</label>
+												<label class="col-md-3 control-label" for="id_unidade">Unidade</label>
 												<a href="<?= WWW ?>html/matPat/adicionar_unidade.php"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
 												<div class="col-md-6">
-													<select name="id_unidade" id="id_unidade" class="form-control input-lg mb-md">
+													<select name="id_unidade" id="id_unidade" class="form-control input-lg mb-md" onchange="addSessionStorage(this)">
 														<option selected disabled value="blank">Selecionar</option>
 
 
@@ -243,9 +253,9 @@ require_once ROOT . "/html/geral/msg.php";
 											</div>
 
 											<div class="form-group">
-												<label class="col-md-3 control-label" for="profileCompany">Código</label>
+												<label class="col-md-3 control-label" for="codigo">Código</label>
 												<div class="col-md-8">
-													<input type="number" name="codigo" class="form-control" id="profileCompany" id="codigo" required>
+													<input type="number" name="codigo" class="form-control" id="codigo" onchange="addSessionStorage(this)" required>
 
 													<input type="hidden" name="nomeClasse" value="ProdutoControle">
 
@@ -256,7 +266,7 @@ require_once ROOT . "/html/geral/msg.php";
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="profileCompany">Valor</label>
 												<div class="col-md-8">
-													<input type="number" name="preco" class="form-control" step="any" placeholder="Ex: 22.00" required>
+													<input type="number" name="preco" class="form-control" id="valor-form" step="any" placeholder="Ex: 22.00" onchange="addSessionStorage(this)" required>
 
 													<input type="hidden" name="nomeClasse" value="ProdutoControle">
 
@@ -268,8 +278,8 @@ require_once ROOT . "/html/geral/msg.php";
 											<div class="panel-footer">
 												<div class="row">
 													<div class="col-md-9 col-md-offset-3">
-														<button type="submit" class="btn btn-primary">Enviar</button>
-														<input type="reset" class="btn btn-default">
+														<button type="submit" class="btn btn-primary" onclick="limparSessionStorage()">Enviar</button>
+														<input type="reset" class="btn btn-default" onclick="limparSessionStorage()">
 														<a href="<?= WWW ?>html/matPat/cadastro_entrada.php" style="color: white; text-decoration: none;">
 															<button class="btn btn-info" type="button">Voltar</button>
 														</a>
@@ -321,6 +331,34 @@ require_once ROOT . "/html/geral/msg.php";
 
 	<!-- MSG Script -->
 	<script src="<?= WWW ?>html/geral/msg.js"></script>
+
+	<!-- Input content restoration -->
+	<script type="text/javascript" defer>
+		//Xablau
+		function addSessionStorage (el) {
+			sessionStorage.setItem(el.id, el.value);
+		}
+
+		function atualizarSelect (id) {
+			return sessionStorage.getItem(id) || 'blank';
+		}
+
+		function atualizarInput (id) {
+			document.getElementById(id).value = sessionStorage.getItem(id) || '';
+		}
+
+		function limparSessionStorage () {
+			sessionStorage.clear();
+		}
+		document.addEventListener("DOMContentLoaded", () => {
+			atualizarInput("produto");
+			atualizarSelect("id_categoria");
+			atualizarSelect("id_unidade");
+			atualizarInput("codigo");
+			atualizarInput("valor-form");
+		})
+	</script>
+
 	<div align="right">
 		<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 	</div>

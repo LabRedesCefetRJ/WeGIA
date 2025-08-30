@@ -329,6 +329,7 @@ function quickQuery($query, $parametro, $column)
 								} else {
 									echo ('<th scope="col" width="14%">Preço Médio</th>');
 								} ?>
+								<th scope="col" width="14%" class="tot">Tipo de Unidade</th>
 								<th scope="col" width="14%" class="tot">Total</th>
 							</tr>
 						</thead>

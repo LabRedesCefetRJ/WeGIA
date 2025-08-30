@@ -4,22 +4,30 @@ require_once  ROOT . '/dao/Conexao.php';
 require_once  ROOT . '/Functions/funcoes.php';
 class IentradaDAO
 {
-    //Consultar um utilizando o ID
+    //Consultar um utilizando o ID - Xablau
     public function listarId($id_entrada){
         try{
             $pdo = Conexao::connect();
-            $sql = "SELECT i.id_ientrada,i.id_entrada,p.descricao,i.qtd,i.valor_unitario 
-            FROM ientrada i 
-            RIGHT JOIN produto p ON p.id_produto = i.id_produto
-            WHERE i.id_entrada = :id_entrada AND i.oculto = false";
+            $sql = "SELECT i.id_ientrada,i.id_entrada,p.descricao,i.qtd,i.valor_unitario,u.descricao_unidade
+             FROM ientrada i 
+             INNER JOIN produto p ON p.id_produto = i.id_produto
+             INNER JOIN unidade u ON u.id_unidade = p.id_unidade
+             WHERE i.id_entrada = :id_entrada AND i.oculto = false";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_entrada',$id_entrada);
 
             $stmt->execute();
             $entradas = array();
             while($linha = $stmt->fetch(PDO::FETCH_ASSOC)){
-                $entradas[]=array('id_ientrada'=>$linha['id_ientrada'], 'id_entrada'=>$linha['id_entrada'], 'descricao'=>$linha['descricao'], 'qtd'=>$linha['qtd'], 'valor_unitario'=>$linha['valor_unitario']);
-                }
+                $entradas[] = array(
+                    'id_ientrada'=>$linha['id_ientrada'], 
+                    'id_entrada'=>$linha['id_entrada'], 
+                    'descricao'=>$linha['descricao'], 
+                    'qtd'=>$linha['qtd'], 
+                    'valor_unitario'=>$linha['valor_unitario'],
+                    'unidade'=>$linha['descricao_unidade']
+                );
+            }
         } catch(PDOException $e){
             echo 'Erro: ' .  $e->getMessage();
         }

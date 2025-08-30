@@ -140,6 +140,8 @@
 				echo $ientrada; 
 				?>;
 
+			console.log(ientrada);
+
 			$.each(ientrada, function(i,item){
 
 				$('#tabela')
@@ -150,6 +152,8 @@
 							.text(item.qtd))
 						.append($('<td />')
 							.text(item.valor_unitario))
+						.append($('<td />')
+							.text(item.unidade))
 						.append($('<td />')
 							.text(item.valor_unitario*item.qtd)))
 					});
@@ -241,6 +245,7 @@
 									<th>Produto</th>
 									<th>Quantidade</th>
 									<th>Valor Unitario</th>
+									<th>Tipo de Unidade</th>
 									<th>Valor Total</th>
 								</tr>
 							</thead>
