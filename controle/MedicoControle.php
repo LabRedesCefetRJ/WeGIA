@@ -42,15 +42,15 @@
                 $MedicoDAO = new MedicoDAO;
                 $resposta = $MedicoDAO->inserirMedico($crm, $nome);
                 if($resposta === true){
-                    echo json_encode([
+                    die(json_encode([
                         "status" => "sucesso",
                         "mensagem" => "Médico registrado com sucesso"
-                    ]);
+                    ]));
                 } else{
-                    echo json_encode([
+                    die(json_encode([
                         "status" => "erro",
                         "mensagem" => "Erro ao registrar Médico: " . $resposta
-                    ]);
+                    ]));
                 }
             } catch (Exception $e){
                 http_response_code($e->getCode());
