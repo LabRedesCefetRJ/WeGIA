@@ -1,28 +1,45 @@
 <?php
-$config_path = "config.php";
-if(file_exists($config_path)){
-    require_once($config_path);
-}else{
-    while(true){
-        $config_path = "../" . $config_path;
-        if(file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
-
 //Inicia a sessão
-session_start();
-
-//Ao inicar a sessão, redireciona o usuário para a página principal
-if(!isset($_SESSION['usuario'])){
-	header ("Location: ".WWW."index.php");
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-require_once ROOT."/controle/memorando/AnexoControle.php";
+if (!isset($_SESSION['usuario'])) {
+    header("Location: " . WWW . "index.php");
+    exit();
+}else{
+    session_regenerate_id();
+}
 
-$id_anexo = $_GET['id_anexo'];
-$extensao = $_GET['extensao'];
-$nome = $_GET['nome'];
+$idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+
+if(!$idPessoa || $idPessoa < 1){
+    http_response_code(400);
+    echo json_encode(['erro' => 'O id fornecido do usuário na sessão não é válido.']);
+    exit();
+}
+
+//verificar permissão
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($idPessoa, 3, 5);
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'memorando' . DIRECTORY_SEPARATOR . 'AnexoControle.php';
+
+$id_anexo = filter_input(INPUT_GET, 'id_anexo', FILTER_VALIDATE_INT);
+$extensao = filter_input(INPUT_GET, 'extensao', FILTER_SANITIZE_SPECIAL_CHARS);
+$nome = filter_input(INPUT_GET, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+
+if(!$id_anexo || $id_anexo < 1){
+    throw new InvalidArgumentException('O id do anexo fornecido não é válido.', 400);
+}
+
+if(!$extensao){
+    throw new InvalidArgumentException('O nome da extensão informado não é válido.', 400);
+}
+
+if(!$nome || strlen($nome) < 1){
+    throw new InvalidArgumentException('O nome do anexo não é válido.', 400);
+}
 
 //Cria um novo objeto (Anexo de controle)
 $AnexoControle = new AnexoControle;
@@ -33,4 +50,3 @@ header('Content-Disposition: attachment; filename="' . $nome . '.' . $extensao .
 
 //Header('Content-Disposition: attachment; filename="'.$nome.'.'.$extensao);
 echo $_SESSION['arq'][0]['anexo'];
-?>

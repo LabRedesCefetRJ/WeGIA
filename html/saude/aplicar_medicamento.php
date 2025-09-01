@@ -72,6 +72,8 @@ $stmtProntuarioPublico->bindValue('idFichaMedica', $id);
 $stmtProntuarioPublico->execute();
 
 $prontuariopublico = json_encode($stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC));
+
+$dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -623,7 +625,7 @@ $prontuariopublico = json_encode($stmtProntuarioPublico->fetchAll(PDO::FETCH_ASS
                               </div>
 
                               <div class="modal-body">
-                                <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control">
+                                <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control" max="<?=$dataAtual->format('Y-m-d\TH:i')?>">
                                 <input type="hidden" id="id_funcionario" name="id_funcionario">
                                 <input type="hidden" id="id_medicacao" name="id_medicacao">
                                 <input type="hidden" id="id_pessoa" name="id_pessoa">
