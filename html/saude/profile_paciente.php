@@ -116,7 +116,7 @@ foreach ($sinaisvitais as $key => $value) {
 
 $sinaisvitais = json_encode($sinaisvitais);
 
-$stmtDescricaoMedica = $pdo->prepare("SELECT a.descricao AS descricao, a.data_atendimento AS data_atendimento, m.nome AS medicoNome, p.nome AS enfermeiraNome FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON (p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON (a.id_medico = m.id_medico) WHERE id_fichamedica=:idFichaMedica");
+$stmtDescricaoMedica = $pdo->prepare("SELECT a.descricao AS descricao, a.data_atendimento AS data_atendimento, m.nome AS medicoNome, p.nome AS enfermeiraNome, p.sobrenome AS enfermeiraSobrenome FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON (p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON (a.id_medico = m.id_medico) WHERE id_fichamedica=:idFichaMedica");
 
 $stmtDescricaoMedica->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtDescricaoMedica->execute();
@@ -483,7 +483,7 @@ try {
         $("#de-tab")
           .append($("<tr>")
             .append($("<td>").text(item.medicoNome))
-            .append($("<td>").text(item.enfermeiraNome))
+            .append($("<td>").text(item.enfermeiraNome + ' ' + item.enfermeiraSobrenome))
             .append($("<td>").html(item.descricao))
             .append($("<td>").text(item.data_atendimento))
           )
@@ -685,11 +685,11 @@ try {
                   <a href="#arquivo" data-toggle="tab">Exames</a>
                 </li>
                 <li>
-                  <a href="#historico_medico" data-toggle="tab">Histórico Médico</a>
+                  <a href="#historico_medico" data-toggle="tab">Histórico do Paciente</a>
                 </li>
                 <li>
                 <li>
-                  <a href="#atendimento_medico" data-toggle="tab">Atendimento Médico</a>
+                  <a href="#atendimento_medico" data-toggle="tab">Atendimento do Paciente</a>
                 </li>
                 <li>
                   <a href="#medicacoes_aplicadas" data-toggle="tab">Medicações Aplicadas</a>
@@ -1333,7 +1333,7 @@ try {
                       <div class="panel-actions">
                         <a href="#" class="fa fa-caret-down"></a>
                       </div>
-                      <h2 class="panel-title">Histórico Médico</h2>
+                      <h2 class="panel-title">Histórico do Paciente</h2>
                     </header>
 
                     <div class="panel-body">
@@ -1424,7 +1424,7 @@ try {
                         <a href="#" class="fa fa-caret-down"></a>
                       </div>
 
-                      <h2 class="panel-title">Atendimento médico</h2>
+                      <h2 class="panel-title">Atendimento do paciente</h2>
                     </header>
                     <div class="panel-body">
                       <div class="form-group" id="escondermedicacao">
@@ -1450,7 +1450,7 @@ try {
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="inputSuccess">Usuário:</label>
                             <div class="col-md-8">
-                              <input class="form-control" style="width:230px;" name="usuario" id="usuario" value="<?php echo $id_funcionario; ?>" disabled="true">
+                              <input class="form-control" style="width:230px;" name="usuario" id="usuario" value="<?php echo $funcionarioNome; ?>" disabled="true">
                             </div>
                           </div>
 
@@ -1506,6 +1506,10 @@ try {
                       </div>
 
                       <br>
+                      <br>
+                      <button type="button" class="btn btn-success" id="botao">Cadastrar medicação</button>
+
+                      <br>
                       <hr class="dotted short">
                       <table class="table table-bordered table-striped mb-none datatable-docfuncional" id="tabmed">
                         <thead>
@@ -1523,12 +1527,9 @@ try {
                       </table>
                       <br>
                       <br>
-                      <button type="button" class="btn btn-success" id="botao">Prescrever medicação</button>
-                      <br>
-                      <br>
                       <input type="number" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
                       <input type="hidden" name="acervo">
-                      <input type="submit" class="btn btn-primary" value="Cadastrar" id="salvar_bd">
+                      <input type="submit" class="btn btn-primary" value="Cadastrar atendimento" id="salvar_bd">
                     </div>
                     </form>
                   </section>
@@ -1985,7 +1986,7 @@ try {
             console.error('Erro ao enviar dados:', error);
           });
       }
-    
+
       function gerar_alergia() {
         url = 'exibir_alergia.php';
         $.ajax({

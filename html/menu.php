@@ -307,6 +307,11 @@
 													<span>Cadastrar Produto</span>
 												</a>
 											</li>
+											<li>
+												<a href="<?= WWW ?>html/matPat/listar_produto.php">
+													<span>Listar Produtos</span>
+												</a>
+											</li>
 										</ul>
 									</li>
 									<li class="nav-parent nav-active" >
