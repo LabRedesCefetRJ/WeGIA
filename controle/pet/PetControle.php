@@ -129,6 +129,16 @@ class PetControle{
         //header('Location: '.$nextPage);
     }
 
+    public function listarUmPet(){
+        extract($_REQUEST);
+        //try {
+            $petDAO = new PetDAO();
+            $pet=$petDAO->listarUm($idPet);
+            die(json_encode($pet));
+        //} catch (PDOException $e) {
+        //    echo $e->getMessage();
+        //}
+    }
     public function listarUm(){
         extract($_REQUEST);
         //try {
@@ -187,6 +197,19 @@ class PetControle{
         }catch(PDOException $e){
             echo $e->getMessage();
         }
+    }
+
+    public function listarPets(){
+        
+        header("Content-Type: application/json; charset=utf-8");
+        
+        $petDao = new PetDAO();
+
+        
+
+        $registros = $petDao->listarPets();
+        http_response_code(200);
+        echo json_encode($registros, JSON_UNESCAPED_UNICODE);
     }
 }
 

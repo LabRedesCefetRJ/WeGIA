@@ -56,14 +56,6 @@ class PetDAO{
         // 🆕 Captura o ID do pet inserido
         $idPet = $pdo->lastInsertId();
 
-        // 🆕 Cria a ficha médica padrão
-        $pd = $pdo->prepare("INSERT INTO pet_ficha_medica(id_pet, castrado, necessidades_especiais) 
-            VALUES(:id_pet, :castrado, :necessidades)");
-        $pd->bindValue(":id_pet", $idPet);
-        $pd->bindValue(":castrado", 'n');
-        $pd->bindValue(":necessidades", null, PDO::PARAM_NULL);
-        $pd->execute();
-
         // Redireciona
         header('Location: ../../WeGIA/html/pet/informacao_pet.php');
 
@@ -209,6 +201,27 @@ class PetDAO{
         }
     }
 
+    public function listarPets() {
+        $linhas = [];
+        try {
+            $sql = "SELECT *
+                    FROM pet";
+            $pdo = Conexao::connect();
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute();
+            $linhas = $stmt->fetchAll( PDO::FETCH_ASSOC);
+            
+         
+        } catch (PDOException $e) {
+            return [
+                "erro" => true,
+                "mensagem" => $e->getMessage()
+            ];
+        }
+        return $linhas;
+    }
+    
+    
     /*public function listarExames($idPet){
         $pdo = Conexao::connect();
 
