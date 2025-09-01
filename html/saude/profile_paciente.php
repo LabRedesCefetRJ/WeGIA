@@ -55,21 +55,6 @@ if (!isset($teste)) {
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
-$stmt = $pdo->prepare("SELECT * FROM saude_exames se JOIN saude_exame_tipos st ON se.id_exame_tipos  = st.id_exame_tipo WHERE id_fichamedica=:idFichamedica");
-
-$stmt->bindValue(':idFichamedica', $id_fichamedica, PDO::PARAM_INT);
-$stmt->execute();
-
-$docfuncional = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-foreach ($docfuncional as $key => $value) {
-  $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
-  //formata data
-  $data = new DateTime($value['data']);
-  $docfuncional[$key]['data'] = $data->format('d/m/Y');
-}
-$docfuncional = json_encode($docfuncional);
-
 $stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
 
 $stmtEnfermidades->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
@@ -389,37 +374,69 @@ try {
     });
 
     // exame // 
-    $(function() {
-      var docfuncional = <?= $docfuncional ?>;
-      $.each(docfuncional, function(i, item) {
-        $("#dep-tab")
-          .append($("<tr>")
-            .append($("<td>").text(item.arquivo_nome))
-            .append($("<td>").text(item.descricao))
-            .append($("<td>").text(item.data))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='exame_download.php?id_doc=" + item.id_exame + "' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.id_exame + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
-            )
-          )
+   async function gerarExames() {
+      const docfuncional = await listarExamesPorId(<?php echo $_GET["id_fichamedica"];?>); 
+
+      const depTab = document.getElementById("dep-tab");
+
+      while(depTab.firstChild){
+        depTab.removeChild(depTab.firstChild);
+      }
+      docfuncional.forEach(item => {
+        const tr = document.createElement("tr");
+
+        // coluna arquivo_nome
+        const tdArquivo = document.createElement("td");
+        tdArquivo.textContent = item.arquivo_nome;
+        tr.appendChild(tdArquivo);
+
+        // coluna descricao
+        const tdDesc = document.createElement("td");
+        tdDesc.textContent = item.descricao;
+        tr.appendChild(tdDesc);
+
+        // coluna data
+        const tdData = document.createElement("td");
+        tdData.textContent = item.data;
+        tr.appendChild(tdData);
+
+        // coluna ações
+        const tdAcoes = document.createElement("td");
+        tdAcoes.style.display = "flex";
+        tdAcoes.style.justifyContent = "space-evenly";
+
+        // botão download
+        const linkDownload = document.createElement("a");
+        linkDownload.onclick = (e) => {
+          e.preventDefault;
+          baixarArquivo(item.id_exame);
+        }
+        linkDownload.title = "Visualizar ou Baixar";
+        const btnDownload = document.createElement("button");
+        btnDownload.className = "btn btn-primary";
+        btnDownload.innerHTML = "<i class='fas fa-download'></i>";
+        linkDownload.appendChild(btnDownload);
+
+        // botão excluir
+        const linkExcluir = document.createElement("a");
+        linkExcluir.href = "#";
+        linkExcluir.title = "Excluir";
+        linkExcluir.onclick = function(e) {
+          e.preventDefault();
+          deletar_exame(item.id_exame);
+        };
+        const btnExcluir = document.createElement("button");
+        btnExcluir.className = "btn btn-danger";
+        btnExcluir.innerHTML = "<i class='fas fa-trash-alt'></i>";
+        linkExcluir.appendChild(btnExcluir);
+
+        tdAcoes.appendChild(linkDownload);
+        tdAcoes.appendChild(linkExcluir);
+        tr.appendChild(tdAcoes);
+
+        depTab.appendChild(tr);
       });
-    });
-    // importante para remover exame //
-    function listarFunDocs(docfuncional) {
-      $("#dep-tab").empty();
-      $.each(docfuncional, function(i, item) {
-        $("#dep-tab")
-          .append($("<tr>")
-            .append($("<td>").text(item.arquivo_nome))
-            .append($("<td>").text(item.descricao))
-            .append($("<td>").text(item.data))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='exame_download.php?id_doc=" + item.id_exame + "' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.id_exame + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
-            )
-          )
-      });
-    }
+    };
 
     // enfermidade //
     $(function() {
@@ -516,11 +533,7 @@ try {
 
           medaplicadas.forEach(item => {
 
-
-
             item.aplicacao = formatarDataBr(item.aplicacao)
-
-            console.log(item)
 
             const tr = document.createElement("tr");
 
@@ -1268,7 +1281,7 @@ try {
                       </table>
                       <br>
                       <!-- Button trigger modal -->
-                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal">
+                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal" onclick="gerar_tipo_exame()">
                         Adicionar
                       </button>
                       <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
@@ -1282,13 +1295,13 @@ try {
                               </button>
                             </div>
 
-                            <form action='exame_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                            <form id='ExameDocForm'>
                               <div class="modal-body" style="padding: 15px 40px">
                                 <div class="form-group" style="display: grid;">
 
                                   <div class="form-group">
                                     <label for="arquivoDocumento">Exame</label>
-                                    <input name="arquivo" type="file" class="form-control-file" id="id_documento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
+                                    <input name="arquivo" type="file" class="form-control-file" id="documentoExame" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
                                   </div>
 
                                   <div class="form-group">
@@ -1297,22 +1310,14 @@ try {
 
                                     <div style="display: flex;">
 
-                                      <select class="form-control input-lg mb-md" name="id_docfuncional" id="tipoDocumento" style="width:170px;" required>
-                                        <option value="" selected disabled>Selecionar</option>
-                                        <?php
-                                        foreach ($tipoexame as $tipo) {
-                                          $id = $tipo['id_exame_tipo'];
-                                          $descricao = $tipo['descricao'];
-                                          echo "<option value=\"$id\">$descricao</option>";
-                                        }
-                                        ?>
+                                      <select class="form-control input-lg mb-md" name="id_docfuncional" id="tipoDocumentoExame" style="width:170px;" required>
                                       </select>
-                                      <a onclick="adicionar_exame()"><i class="fas fa-plus w3-xlarge" style="margin: 15px 15px 15px 15px;"></i></a>
+                                      <a onclick="adicionar_tipo_exame()"><i class="fas fa-plus w3-xlarge" style="margin: 15px 15px 15px 15px;"></i></a>
                                     </div>
 
                                   </div>
 
-                                  <input type="number" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
+                                  <input type="number" id="exame_id_fichamedica" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
                                 </div>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -1517,7 +1522,7 @@ try {
                             <th>Ação</th>
                           </tr>
                         </thead>
-                        <tbody id="dep-tab" style="font-size:15px">
+                        <tbody style="font-size:15px">
 
                         </tbody>
                       </table>
@@ -1769,15 +1774,6 @@ try {
     </div>
 
     <script>
-      function removerFuncionarioDocs(id_doc) {
-        if (!window.confirm("Tem certeza que deseja remover esse exame?")) {
-          return false;
-        }
-        let url = "exame_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
-        let data = "";
-        post(url, data, listarFunDocs);
-      }
-
       function removerEnfermidade(id_doc) {
         if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
           return false;
@@ -1826,48 +1822,179 @@ try {
         })
       });
 
-      function gerarExame() {
-        url = 'exibir_exame.php';
-        $.ajax({
-          data: '',
-          type: "POST",
-          url: url,
-          async: true,
-          success: function(response) {
-            var situacoes = response;
-            $('#tipoDocumento').empty();
-            $('#tipoDocumento').append('<option selected disabled>Selecionar</option>');
-            $.each(situacoes, function(i, item) {
-              $('#tipoDocumento').append('<option value="' + item.id_exame_tipo + '">' + item.descricao + '</option>');
-            });
-          },
-          dataType: 'json'
-        });
+      async function gerar_tipo_exame() {
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("listarTodosTiposDeExame")}`;
+
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error('Erro na requisição');
+          }
+
+          const situacoes = await response.json();
+
+          const select = document.getElementById('tipoDocumentoExame');
+
+          while (select.firstChild) {
+            select.removeChild(select.firstChild);
+          }
+
+          const defaultOption = document.createElement('option');
+          defaultOption.value = "";
+          defaultOption.disabled = true;
+          defaultOption.selected = true;
+          defaultOption.appendChild(document.createTextNode('Selecionar'));
+          select.appendChild(defaultOption);
+
+          situacoes.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id_exame_tipo;
+            option.appendChild(document.createTextNode(item.descricao));
+            select.appendChild(option);
+          });
+
+        } catch (error) {
+          console.error('Erro ao carregar exames:', error);
+        }
       }
 
-      function adicionar_exame() {
-        url = 'adicionar_exame.php';
-        let situacao = window.prompt("Cadastre uma novo exame:");
-        if (!situacao) {
-          return
-        }
-        situacao = situacao.trim();
-        if (situacao == '') {
-          return
-        }
+      function adicionar_tipo_exame() { 
+        const url = '../../controle/control.php'; 
+        let exame = window.prompt("Cadastre um novo exame: "); 
+        if (!exame) { 
+          return; 
+        } 
+        const data = { 
+          exame: exame, 
+          nomeClasse: "ExameControle", 
+          metodo: "inserirTipoExame" 
+        } 
+        fetch(url, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json'},
+          body: JSON.stringify(data) 
+        }).then(response => { if (!response.ok) { 
+          throw new Error('Erro na requisição'); 
+        } return response.json(); 
+      }) .then(result => { 
+        gerar_tipo_exame(); 
+      }) 
+      .catch(error => { console.error('Erro ao enviar dados:', error); }); 
+    }
 
-        data = 'situacao=' + situacao;
+    async function adicionar_exame(){
+      const formData = new FormData();
+      const documentos = document.getElementById("documentoExame");
+      const idFichaMedica = document.getElementById("exame_id_fichamedica");
+      const tipoDocumento = document.getElementById("tipoDocumentoExame");
 
-        $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response) {
-            gerarExame();
-          },
-          dataType: 'text'
+      if(!documentos.files[0]){
+        window.alert("É necessário inserir um documento");
+        return;
+      }
+
+      if(!tipoDocumento){
+        window.alert("É necessário escolher um tipo de exame");
+        return;
+      }
+
+      formData.append("arquivo", documentos.files[0]);
+      formData.append("tipoDocumento", tipoDocumento.value);
+      formData.append("id_fichamedica", idFichaMedica.value);
+      formData.append("nomeClasse", "ExameControle");
+      formData.append("metodo", "inserirExame");
+
+      let mensagem = "";
+      
+      try{
+        const requisicao = await fetch("../../controle/control.php", {
+          method: "POST",
+          body: formData
         })
+        if(requisicao.ok){
+          mensagem = "Exame adicionado com sucesso";
+          gerarExames();
+        }
+      }catch(e){
+        mensagem = "Erro ao adicionar exame";
+      }finally{
+        documentos.value = '';
+        tipoDocumento.value = "";
+        $('#docFormModal').modal('hide');
+        window.alert(mensagem);
       }
+    }
+
+    async function listarExamesPorId(id){
+      const url = `../../controle/control.php?id_fichamedica=${id}&nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("listarExamesPorId")}`;
+
+      try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error('Erro na requisição');
+        }
+
+        const dados = await response.json();
+
+        return dados;
+
+      } catch (error) {
+        console.error('Erro ao carregar exames:', error);
+      }
+    }
+
+    async function deletar_exame(id){
+      if (!window.confirm("Tem certeza que deseja remover esse exame?")) {
+          return;
+        }
+      let url = `../../controle/control.php?id_exame=${id}&metodo=${encodeURIComponent("removerExame")}&nomeClasse=${encodeURIComponent("ExameControle")}`;
+    
+      let options = {
+        method: "GET"//usei GET pois aparentemente o delete ta desabilitado
+      }
+      let mensagem = "";
+
+      try{
+        let response = await fetch(url, options);
+        if(response.ok){
+          mensagem = "Exame deletado com sucesso";
+        }else{
+          throw new Error("Erro HTTP: " + response.status);
+        }
+      }catch(e){
+        mensagem = "Erro ao deletar exame";
+      }finally{
+        window.alert(mensagem);
+        gerarExames();
+      }  
+    }
+    async function baixarArquivo(id) {
+      try{
+        const response = await fetch(`../../controle/control.php?nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("retornaArquivoPorId")}&id_exame=${id}`);
+        if(response.ok){
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "exame_"+id;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+        }
+      }catch(e){
+        window.alert("Erro ao Baixar arquivo");
+      }
+    }
+
+    const formExames = document.getElementById("ExameDocForm");
+
+    formExames.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      adicionar_exame();
+    })
 
 
       async function gerarEnfermidade() {
@@ -1940,7 +2067,6 @@ try {
             return response.text();
           })
           .then(result => {
-            console.log('Resposta:', result);
             gerarEnfermidade();
           })
           .catch(error => {
@@ -1966,7 +2092,7 @@ try {
         }
 
         fetch(url, {
-            method: 'POST',
+            method:"POST",
             headers: {
               'Content-Type': 'application/json',
             },
@@ -2026,7 +2152,7 @@ try {
             gerar_alergia();
           },
           error: function(response) {
-            console.log(response);
+           // console.log(response);
           },
         })
       }
@@ -2293,6 +2419,7 @@ try {
       document.addEventListener("DOMContentLoaded", async () => {
         await gerarEnfermidade();
         await gerarMedicos();
+        await gerarExames();
       })
 
       //Gerar tabela de enfermidades
