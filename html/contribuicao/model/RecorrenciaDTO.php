@@ -3,6 +3,7 @@ class RecorrenciaDTO{
     //propriedades
     public int $id;
     public int $idGatewayPagamento;
+    public int $idSocio;
     public string $codigo;
     public DateTime $inicio;
     public DateTime $termino;

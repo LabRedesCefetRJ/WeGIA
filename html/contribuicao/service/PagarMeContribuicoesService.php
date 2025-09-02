@@ -57,7 +57,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                 $contribuicaoLog = new ContribuicaoLog();
 
                 if (key_exists('subscription', $pedido)) {
-                    $contribuicaoLog->setCodigo($pedido['subscription']['id']);
+                    $contribuicaoLog->setCodigo($pedido['id']);
                     //transformar a data de pagamento para a estrtutura aceita pelo MySQL
                     $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charge']['paid_at'])->format('Y-m-d H:i:s');
                 } else {
@@ -82,23 +82,45 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 
     /**Retorna as faturas do gateway de pagamento. True em objectReturn faz com que seja retornado um objeto do tipo ContribuicaoLogCollection
      */
-    public function getInvoices(GatewayPagamento $gatewayPagamento, ?bool $objectReturn = false):array|ContribuicaoLogCollection
+    public function getInvoices(GatewayPagamento $gatewayPagamento, ?bool $objectReturn = false): array|ContribuicaoLogCollection
     {
         $gatewayPagamento->setEndpoint(str_replace('subscriptions', 'invoices', $gatewayPagamento->getEndpoint()));
+
+        // Definir o período de tempo de análise
+        $dataAtual = new DateTime();
+        $anoAtual = intval($dataAtual->format('Y'));
+
+        $anoAnalise = $anoAtual - 1;
+        $dataAnalise = new DateTime("{$anoAnalise}-12-01");
+        $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
+
+        $completarEndpoint =
+            [
+                'page' => '?page=1',
+                'size' => '&size=30',
+                'created_since' => "&created_since=$dataAnaliseFormatada",
+            ];
+
+        foreach ($completarEndpoint as $key => $value) {
+            if (!str_contains($gatewayPagamento->getEndpoint(), $key)) {
+                $gatewayPagamento->setEndpoint($gatewayPagamento->getEndpoint() . $value);
+            }
+        }
+
         $faturas = $this->requisicaoPedidos($gatewayPagamento);
 
-        if(!$objectReturn){
+        if (!$objectReturn) {
             return $faturas;
         }
 
         $contribuicaoLogCollection = new ContribuicaoLogCollection();
-        
-        foreach($faturas as $fatura){
+
+        foreach ($faturas as $fatura) {
             $contribuicaoLog = new ContribuicaoLog();
             $contribuicaoLog
                 ->setCodigo($fatura['id'])
-                ->setDataGeracao($fatura['charge']['created_at'])
-                ->setDataVencimento($fatura['charge']['due_at'])
+                ->setDataGeracao(DateTime::createFromFormat(DateTime::ATOM, $fatura['charge']['created_at'])->format('Y-m-d H:i:s'))
+                ->setDataVencimento(DateTime::createFromFormat(DateTime::ATOM, $fatura['charge']['due_at'])->format('Y-m-d H:i:s'))
                 ->setRecorrenciaDTO(new RecorrenciaDTO($fatura['subscription']['id']));
 
             $contribuicaoLogCollection->add($contribuicaoLog);

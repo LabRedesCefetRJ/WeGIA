@@ -12,7 +12,6 @@ require_once '../model/ContribuicaoLogCollection.php';
 require_once '../model/StatusPagamento.php';
 require_once '../../../config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
-
 class ContribuicaoLogController
 {
 
@@ -764,7 +763,9 @@ class ContribuicaoLogController
             $gatewayPagamentoDao = new GatewayPagamentoDAO($this->pdo);
             $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
 
+            //tem que de alguma forma enviar os parâmetros da URL
             $gatewayPagamentoObject = new GatewayPagamento($gatewayPagamento['plataforma'], $gatewayPagamento['endPoint'], $gatewayPagamento['token'], $gatewayPagamento['status']);
+            $gatewayPagamentoObject->setId($gatewayPagamento['id']);
 
             //instanciar serviço do gateway de pagamento
             $api = $gatewayPagamento['plataforma'] . 'ContribuicoesService';
@@ -790,6 +791,7 @@ class ContribuicaoLogController
             $faturasExternas = $apiContribuicoesService->getInvoices($gatewayPagamentoObject, true);
 
             //instanciar RecorrenciaDAO
+            require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'RecorrenciaDAO.php';
             $recorrenciaDao = new RecorrenciaDAO();
 
             //chamar método que busca as faturas recorrências salvas no sistema
@@ -805,8 +807,24 @@ class ContribuicaoLogController
 
                 //registrar no sistema as novas faturas como contribuições
                 if (is_null($busca)) {
-                    $contribuicaoLogDao->criar($externa);
-                    $registrou = true;
+
+                    $recorrenciaDTO = $externa->getRecorrenciaDTO();
+                    $socio = new Socio();
+                    $recorrenciaDao = new RecorrenciaDAO($this->pdo);
+
+                    $recorrenciaDTO = $recorrenciaDao->getRecorrenciaPorCodigo($recorrenciaDTO->codigo);
+
+                    if (!is_null($recorrenciaDTO)) {
+                        $socio->setId($recorrenciaDTO->idSocio);
+
+                        $externa->setRecorrenciaDTO($recorrenciaDTO);
+                        $externa->setSocio($socio);
+                        $externa->setGatewayPagamento($gatewayPagamentoObject);
+                        $externa->setMeioPagamento($meioPagamento);
+
+                        $contribuicaoLogDao->criar($externa);
+                        $registrou = true;
+                    }
                 }
             }
 
@@ -823,6 +841,23 @@ class ContribuicaoLogController
             }
 
             Util::tratarException($e);
+        } finally {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            try {
+                require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
+
+                $sistemaLogDao = new SistemaLogDAO($this->pdo);
+                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Sincronização da tabela de contribuições com os gateways de pagamento');
+
+                if (!$sistemaLogDao->registrar($sistemaLog)) {
+                    throw new Exception('Falha ao registrar log do sistema');
+                }
+            } catch (Exception $e) {
+                Util::tratarException($e);
+            }
         }
     }
 }

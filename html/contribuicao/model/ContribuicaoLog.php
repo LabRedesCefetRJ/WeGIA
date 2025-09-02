@@ -15,7 +15,7 @@ class ContribuicaoLog
     private Socio $socio;
     private GatewayPagamento $gatewayPagamento;
     private MeioPagamento $meioPagamento;
-    private ?RecorrenciaDTO $recorrenciaDTO;
+    private ?RecorrenciaDTO $recorrenciaDTO = null;
     private $statusPagamento = 0;
     private $agradecimento;
 

@@ -97,6 +97,7 @@ class RecorrenciaDAO
         $recorrenciaDto = new RecorrenciaDTO($resultado['codigo']);
         $recorrenciaDto->id = $resultado['id'];
         $recorrenciaDto->idGatewayPagamento = $resultado['id_gateway'];
+        $recorrenciaDto->idSocio = $resultado['id_socio'];
         $recorrenciaDto->codigo = $resultado['codigo'];
         $recorrenciaDto->valor = $resultado['valor'];
         $recorrenciaDto->status = $resultado['status'];
