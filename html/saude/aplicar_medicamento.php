@@ -384,18 +384,6 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
       input_id_funcionario.value = id_funcionario;
     }
 
-
-    async function coletarIdFuncionarioComIdPessoa(id_pessoa) {
-      try {
-        let requisicao = await fetch(`../../controle/control.php?nomeClasse=${encodeURIComponent("FuncionarioControle")}&metodo=${encodeURIComponent("getIdFuncionarioComIdPessoa")}&id_pessoa=${encodeURIComponent(id_pessoa)}`);
-        let id_funcionario = await requisicao.json();
-        return id_funcionario['id_funcionario'];
-      } catch (e) {
-        alert(e);
-        return;
-      }
-    }
-
     async function enviarDataHoraAplicacaoMedicamento(event) {
       event.preventDefault();
 
@@ -409,7 +397,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
         metodo: encodeURIComponent("inserirAplicacao"),
         id_medicacao: formData.get('id_medicacao'),
         id_pessoa: formData.get('id_pessoa'),
-        id_funcionario: await coletarIdFuncionarioComIdPessoa(idPessoaFuncionario),
+        id_pessoa_funcionario: idPessoaFuncionario,
         dataHora: formData.get('dataHora')
       };
 
