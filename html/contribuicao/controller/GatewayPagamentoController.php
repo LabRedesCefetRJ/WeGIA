@@ -152,13 +152,33 @@ class GatewayPagamentoController
             if (!$gatewayId || !$gatewayNome || !$gatewayEndepoint) {
                 throw new InvalidArgumentException('Falha na validação dos campos', 400);
             }
+            $this->pdo->beginTransaction();
 
             $gatewayPagamento = new GatewayPagamento($gatewayNome, $gatewayEndepoint, $gatewayToken);
             $gatewayPagamento->setId($gatewayId);
             $gatewayPagamento->editar();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração do gateway de pagamento de id $gatewayId.");
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/gateway_pagamento.php?msg=editar-falha#mensagem-tabela");
+                exit();
+            }
+
+            $this->pdo->commit();
             header("Location: ../view/gateway_pagamento.php?msg=editar-sucesso#mensagem-tabela");
         } catch (Exception $e) {
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/gateway_pagamento.php?msg=editar-falha#mensagem-tabela");
         }
     }
