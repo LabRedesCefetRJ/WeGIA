@@ -63,10 +63,30 @@ class GatewayPagamentoController
     public function buscaTodos()
     {
         try {
+            $this->pdo->beginTransaction();
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gateways = $gatewayPagamentoDao->buscaTodos();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de gateways de pagamento.');
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                exit();
+            }
+
+            $this->pdo->commit();
             return $gateways;
         } catch (PDOException $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             echo 'Erro na busca de gateways de pagamento: ' . $e->getMessage();
         }
     }
