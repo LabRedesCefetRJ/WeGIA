@@ -71,7 +71,7 @@ class GatewayPagamentoController
                 session_start();
             }
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de gateways de pagamento.');
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de gateways de pagamento.');
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -96,7 +96,7 @@ class GatewayPagamentoController
      */
     public function excluirPorId()
     {
-        $gatewayId = trim($_POST['gateway-id']);
+        $gatewayId = filter_input(INPUT_POST, 'gateway-id', FILTER_SANITIZE_NUMBER_INT);
 
         if (!$gatewayId || empty($gatewayId) || $gatewayId < 1) {
             //parar operação
@@ -105,13 +105,33 @@ class GatewayPagamentoController
         }
 
         try {
+            $this->pdo->beginTransaction();
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamentoDao->excluirPorId($gatewayId);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão do gateway de pagamento de id $gatewayId.");
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/gateway_pagamento.php?msg=excluir-falha#mensagem-tabela");
+                exit();
+            }
+
+            $this->pdo->commit();
             header("Location: ../view/gateway_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
         } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/gateway_pagamento.php?msg=excluir-falha#mensagem-tabela");
         }
-        //echo 'O id do gateway que será excluído é: '.$gatewayId;
     }
 
     /**
