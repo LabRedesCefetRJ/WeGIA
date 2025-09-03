@@ -265,6 +265,7 @@ function quickQuery($query, $column)
 									almoxarifado.descricao_almoxarifado,
 									produto.descricao,
 									categoria_produto.descricao_categoria,
+									unidade.descricao_unidade as unidade,
 									ientrada.qtd AS quantidade_entrada,
 									isaida.id_saida,
 									saida.data AS data_saida,
@@ -296,6 +297,8 @@ function quickQuery($query, $column)
 								LEFT JOIN
 									estoque ON estoque.id_produto = produto.id_produto 
 									AND estoque.id_almoxarifado = almoxarifado.id_almoxarifado
+								LEFT JOIN 
+									unidade ON unidade.id_unidade = produto.id_unidade
 								WHERE 
 									almoxarifado.id_almoxarifado = :idAlmoxarifado
 									AND produto.id_produto = :idProduto
@@ -320,6 +323,7 @@ function quickQuery($query, $column)
 										almoxarifado.descricao_almoxarifado,
 										produto.descricao,
 										categoria_produto.descricao_categoria,
+										unidade.descricao_unidade as unidade,
 										ientrada.qtd AS quantidade_entrada,
 										tipo_entrada.descricao AS descricao_tipo_entrada,
 										estoque.qtd AS estoque_atual
@@ -333,6 +337,8 @@ function quickQuery($query, $column)
 										produto ON ientrada.id_produto = produto.id_produto
 									LEFT JOIN 
 										categoria_produto ON produto.id_categoria_produto = categoria_produto.id_categoria_produto
+									LEFT JOIN 
+										unidade ON unidade.id_unidade = produto.id_unidade
 									LEFT JOIN 
 										tipo_entrada ON entrada.id_tipo = tipo_entrada.id_tipo
 									LEFT JOIN
@@ -380,6 +386,7 @@ function quickQuery($query, $column)
 									almoxarifado.descricao_almoxarifado,
 									produto.descricao,
 									categoria_produto.descricao_categoria,
+									unidade.descricao_unidade as unidade,
 									isaida.qtd AS quantidade_saida,
 									tipo_saida.descricao AS descricao_tipo_saida
 								FROM 
@@ -392,6 +399,8 @@ function quickQuery($query, $column)
 									produto ON isaida.id_produto = produto.id_produto
 								LEFT JOIN 
 									categoria_produto ON produto.id_categoria_produto = categoria_produto.id_categoria_produto
+								LEFT JOIN 
+									unidade ON unidade.id_unidade = produto.id_unidade
 								LEFT JOIN 
 									tipo_saida ON saida.id_tipo = tipo_saida.id_tipo
 								WHERE 
@@ -443,6 +452,9 @@ function quickQuery($query, $column)
 							</tr>
 							<tr>
 								<td>CATEGORIA: <?php echo !empty($entradas[0]['descricao_categoria']) ? htmlspecialchars($entradas[0]['descricao_categoria']) : 'Não registrado'; ?></td>
+							</tr>
+							<tr>
+								<td>UNIDADE: <?php echo !empty($entradas[0]['unidade']) ? htmlspecialchars($entradas[0]['unidade']) : 'Não registrado'; ?></td>
 							</tr>    
 							<tr>
 								<td>ESTOQUE ATUAL: <?php echo !empty($entradas[0]['estoque_atual']) ? htmlspecialchars($entradas[0]['estoque_atual']) : 'Não registrado'; ?></td>
