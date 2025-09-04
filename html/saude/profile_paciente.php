@@ -512,10 +512,10 @@ try {
       $.each(exibimed, function(i, item) {
         $("#exibimed")
           .append($("<tr>")
-            .append($("<td>").text(item.data_atendimento))
-            .append($("<td>").text(item.medicamento + ", " + item.dosagem + ", " + item.horario + ", " + item.duracao + "."))
-            .append($("<td>").text(item.descricao))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.data_atendimento))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + item.horario + ", " + item.duracao + "."))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
+            .append($("<td style='text-align: center; vertical-align: middle;'>")
               .append($("<a onclick='editarStatusMedico(" + item.id_medicacao + ")' href='#'title='Editar'><button class='btn btn-primary' id='teste'><i class='glyphicon glyphicon-pencil'></i></button></a>"))
             )
           )
@@ -1361,7 +1361,7 @@ try {
 
                       <div class="form-group">
                         <hr class="dotted short">
-                        <table class="table table-bordered table-striped mb-none datatable-docfuncional">
+                        <table class="table table-bordered table-striped mb-none datatable-docfuncional" ">
                           <thead>
                             <tr style="font-size:15px;">
                               <th>Data do atendimento</th>
