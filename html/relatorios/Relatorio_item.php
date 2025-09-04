@@ -230,20 +230,34 @@ class Item
             $table1 = [
                 // Caso 0: não mostrar zerados
                 "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_produto_entrada 
-                SELECT produto.id_produto, produto.preco, sum(qtd) as somatorio, produto.descricao, (sum(qtd) * ientrada.valor_unitario) as Total, 
-                concat(ientrada.id_produto, valor_unitario) as kungfu 
-                FROM ientrada, produto 
+                SELECT 
+                    produto.id_produto, 
+                    produto.preco, 
+                    SUM(ientrada.qtd) as somatorio, 
+                    produto.descricao,
+                    (sum(qtd) * ientrada.valor_unitario) as Total, 
+                    concat(ientrada.id_produto, valor_unitario) as kungfu 
+                FROM produto, ientrada
+                JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
                 WHERE ientrada.id_produto = produto.id_produto 
+                AND entrada.data >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH) /*Filtro de 24 meses - Xablau*/
                 GROUP BY kungfu 
                 ORDER BY produto.descricao;
                 ",
 
                 // Caso 1: mostrar zerados
                 "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_produto_entrada 
-                SELECT produto.id_produto, produto.preco, IFNULL(sum(qtd), 0) as somatorio, produto.descricao, (sum(qtd) * ientrada.valor_unitario) as Total, 
-                concat(produto.id_produto, IFNULL(ientrada.valor_unitario, 0)) as kungfu 
-                FROM produto 
-                LEFT JOIN ientrada ON ientrada.id_produto = produto.id_produto 
+                SELECT 
+                    produto.id_produto, 
+                    produto.preco, 
+                    IFNULL(sum(qtd), 0) as somatorio, 
+                    produto.descricao, 
+                    (sum(qtd) * ientrada.valor_unitario) as Total, 
+                    concat(produto.id_produto, IFNULL(ientrada.valor_unitario, 0)) as kungfu 
+                FROM produto
+                LEFT JOIN ientrada ON ientrada.id_produto = produto.id_produto
+                JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
+                WHERE entrada.data >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH) /*Filtro de 24 meses - Xablau*/
                 GROUP BY kungfu 
                 ORDER BY produto.descricao;
                 "
@@ -289,8 +303,10 @@ class Item
                 CREATE TEMPORARY TABLE IF NOT EXISTS tabela1 
                 SELECT produto.id_produto, SUM(qtd) AS somatorio, produto.descricao, (SUM(qtd) * ientrada.valor_unitario) AS Total, 
                 CONCAT(ientrada.id_produto, valor_unitario) AS kungfu 
-                FROM ientrada, produto 
-                WHERE ientrada.id_produto = produto.id_produto 
+                FROM produto, ientrada
+                JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
+                WHERE ientrada.id_produto = produto.id_produto
+                AND entrada.data >= DATE_SUB(CURDATE(), INTERVAL 24 MONTH) /*Filtro de 24 meses - Xablau*/
                 GROUP BY kungfu 
                 ORDER BY produto.descricao;
     
