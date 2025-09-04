@@ -100,6 +100,11 @@ try {
   echo json_encode(['erro' => $e->getMessage()]);
   exit($e->getCode());
 }
+
+// Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
+$stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa='. $_SESSION['id_pessoa']);
+$stmt->execute();
+$adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 ?>
 <!doctype html>
 <html class="fixed">
@@ -284,6 +289,8 @@ try {
     }
 
     function editar_outros() {
+      let adm_configurado = <?php echo $adm_configurado; ?>;
+      
       $("#pis").prop('disabled', false);
       $("#ctps").prop('disabled', false);
       $("#uf_ctps").prop('disabled', false);
@@ -293,7 +300,9 @@ try {
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      $("#cargo").prop('disabled', false);
+      if(adm_configurado){
+        $("#cargo").prop('disabled', false);
+      }
       $("#botaoEditarOutros").html('Cancelar');
       $("#botaoSalvarOutros").prop('disabled', false);
       $("#botaoEditarOutros").removeAttr('onclick');
