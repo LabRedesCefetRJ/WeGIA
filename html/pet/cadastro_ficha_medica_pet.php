@@ -152,17 +152,65 @@ require_once ROOT."/html/personalizacao_display.php";
         });
 
 
+
 document.addEventListener("DOMContentLoaded", async () => {
 
-    document.querySelector("#editarFichaMedica").addEventListener("click", () => {
-    // Habilita textarea
-    document.querySelector("#despacho").removeAttribute("disabled");
+   
+   
 
-    // Habilita os radios de castrado
-    document.querySelectorAll('input[name="castrado"]').forEach(input => {
-        input.removeAttribute("disabled");
-    });
+const btnEditar = document.getElementById("editarFichaMedica");
+const despacho = document.getElementById("despacho");
+const enviar = document.getElementById("enviar");
+const castradoS = document.getElementById("radioS");
+const castradoN = document.getElementById("radioN");
+
+// Função para habilitar edição
+function editarFichaMedica() {
+    despacho.disabled = false;
+    enviar.disabled = false;
+    castradoS.disabled = false;
+    castradoN.disabled = false;
+
+    btnEditar.innerHTML = "Cancelar";
+    btnEditar.classList.remove("btn-secondary");
+    btnEditar.classList.add("btn-danger");
+
+    btnEditar.dataset.editando = "true"; // flag de estado
+}
+
+// Função para cancelar edição e restaurar valores
+function cancelarFichaMedica() {
+    despacho.value = dados.necessidades_especiais || "";
+    if (dados.castrado === "S") {
+        castradoS.checked = true;
+        castradoN.checked = false;
+    } else {
+        castradoS.checked = false;
+        castradoN.checked = true;
+    }
+
+    despacho.disabled = true;
+    enviar.disabled = true;
+    castradoS.disabled = true;
+    castradoN.disabled = true;
+
+    btnEditar.innerHTML = "Editar";
+    btnEditar.classList.remove("btn-danger");
+    btnEditar.classList.add("btn-secondary");
+
+    btnEditar.dataset.editando = "false";
+}
+
+// Evento do botão Editar / Cancelar
+btnEditar.addEventListener("click", () => {
+    if (btnEditar.dataset.editando === "true") {
+        cancelarFichaMedica();
+    } else {
+        editarFichaMedica();
+    }
 });
+    
+
 
 
     let nomePet = document.querySelector("#nome");
@@ -170,7 +218,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
         let resposta = await fetch(url);
-        let dados = await resposta.json();
+        let info = await resposta.json();
 
         while(nomePet.firstChild) nomePet.removeChild(nomePet.firstChild);
 
@@ -180,7 +228,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         opcaoNull.selected = true;
         nomePet.appendChild(opcaoNull);
 
-        dados.forEach(dado => {
+        info.forEach(dado => {
             const opcao = document.createElement('option');
             opcao.dataset.id = dado.id_pet;
             opcao.text = dado.nome;
@@ -193,6 +241,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     let idPet = "";
     // Quando mudar o pet
     nomePet.addEventListener("change", async (e) => {
+        let editarFichaMedica = document.querySelector("#editarFichaMedica");
+        editarFichaMedica.disabled = false
         let descricao = document.querySelector("#despacho");
         descricao.textContent = "";
 
@@ -206,7 +256,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         try {
             let resposta = await fetch(urlFicha);
-            let dados = await resposta.json();
+            dados = await resposta.json();
 
             if(dados){
                 let idFichaMedica = document.querySelector("#idFichaMedica");
@@ -222,6 +272,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             alert("Erro ao carregar pets: " + erro);
         }
     });
+
 
     // Submit do formulário
     document.querySelector("#doc").addEventListener("submit", async (e) => {
@@ -283,6 +334,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     
 
     <style type="text/css">
+       
         .select{
             position: absolute;
             width: 235px;
@@ -316,6 +368,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         .col-md-3 {
             width: 10%;
         }
+        .panel-footer .col-md-9 {
+            display: flex;
+            justify-content: flex-end; /* alinha à direita */
+            gap: 10px; /* espaço entre os botões */
+            }
+
     </style>
 </head>
 
@@ -391,22 +449,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                                             <div class="form-group">
                                                 <div class="form-group">
-                                                <div class='col-md-6' id='div_texto' style="height: 499px;"><!--necessidades especiais?-->
+                                                <div class='col-md-6' id='div_texto' style="height: 250px;"><!--necessidades especiais?-->
                                                     <label for="texto" id="etiqueta_despacho" style="padding-left: 15px;">Outras informações:</label>
-                                                    <textarea cols='30' rows='5' id='despacho' name='texto' class='form-control' disabled></textarea>
+                                                    <textarea cols='20' rows='10' id='despacho' name='texto' class='form-control' disabled></textarea>
                                                 </div>
                                             </div>
                                             <br>
                                         </div> 
                                             <div class="panel-footer">
                                                 <div class='row'>
-                                                    <div class="col-md-9 col-md-offset-3">
-                                                        <input type="hidden" name="idFichaMedica" id="idFichaMedica" value="">
-                                                        <input id="enviar" type="submit" class="btn btn-primary" value="Enviar">
-                                                        <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary">Editar</button>
+                                                    <div class="col-md-9 col-md-offset-3 d-flex justify-content-end gap-2">
+                                                    <input type="hidden" name="idFichaMedica" id="idFichaMedica" value="">
+                                                     <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" disabled>Editar</button>
+                                                    <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" disabled>
+                                                   
                                                     </div>
                                                 </div>
-                                                </form>
+                                                </div>
+
                                             </div>
                                         </div>
                                     </section> 
@@ -420,16 +480,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             </section>
         </div>
     </section><!--section do body-->
-    <?php
-          $nomesCertos = json_encode($nomesCertos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-    ?>
+   
     
-    <script>
-        let pets = JSON.parse('<?= $nomesCertos ?>');
-            $.each(pets, function(i, item){
-                $("#nome").append($("<option value="+item.id_pet +">").text(item.nome));
-            })
-    </script>
+    
     <!-- end: page -->
     <!-- Vendor -->
         <script src="<?php echo htmlspecialchars(WWW, ENT_QUOTES, 'UTF-8');?>assets/vendor/select2/select2.js"></script>

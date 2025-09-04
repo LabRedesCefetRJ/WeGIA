@@ -1224,7 +1224,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             <input type="hidden" name="id_pet" value="<?php echo $_GET['id_pet']; ?>">
                             <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? $fichaMedica['id_ficha_medica'] : ''; ?>">
                             <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
-                            <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
+                            <input type="submit" class="d-print-none btn btn-primary" value="Salvar" id="salvarFichaMedica">
                           </div>
                         </fieldset>
                       </form>
@@ -1420,7 +1420,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     </br>
 
                                     <input type="hidden" name="id_pet" value="<?php echo $idPet; ?>">
-                                    <button type="button" class="btn btn-primary" id="editarAdocao" onclick="return editarAdocaoPet()">Editar Adoção</button>
+                                    <button type="button" class="btn btn-primary" id="editarAdocao" onclick="return editarAdocaoPet()">Editar</button>
                                     <button type="submit" class="btn btn-primary" id="submit_adocao" name="submit_adocao">Salvar</button>
 
                                 </fieldset>
