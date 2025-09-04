@@ -47,7 +47,7 @@ class FuncionarioDAO
             $stmt->execute();
             $func = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            return $func;
+            return $func["id_funcionario"];
 
         }catch (PDOException $e) {
             echo 'Error:' . $e->getMessage();
