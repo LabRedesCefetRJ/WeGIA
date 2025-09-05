@@ -37,7 +37,7 @@ class MeioPagamentoController{
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
                 $this->pdo->rollBack();
-                header("Location: ../view/gateway_pagamento.php?msg=cadastrar-falha");
+                header("Location: ../view/meio_pagamento.php?msg=cadastrar-falha");
                 exit();
             }
 
@@ -59,11 +59,31 @@ class MeioPagamentoController{
      */
     public function buscaTodos(){
         try{
+            $this->pdo->beginTransaction();
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meiosPagamento = $meioPagamentoDao->buscaTodos();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de meios de pagamento.');
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                exit();
+            }
+
+            $this->pdo->commit();
+
             return $meiosPagamento;
         }catch(PDOException $e){
-            echo 'Erro na busca de meios de pagamento: '.$e->getMessage();
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
         }
     }
 
