@@ -775,6 +775,19 @@ class FuncionarioControle
         $cpf = str_replace("-", "", $cpf);
 
         $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa='. $_SESSION['id_pessoa']);
+        $stmt->execute();
+        $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+
+        $stmt = $pdo->prepare('SELECT id_cargo FROM funcionario WHERE id_funcionario=' . $id_funcionario);
+        $stmt->execute();
+        $cargo_anterior_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_cargo'];
+        if(!$adm_configurado && $cargo_anterior_funcionario == 1){
+            echo ( json_encode( ["erro" => "O usuário, mesmo como administrador, não pode alterar esse funcionário"] ) );
+            die();
+        }
+        
 
         $funcionario->setId_funcionario($id_funcionario);
         $funcionario->setId_cargo($cargo);
