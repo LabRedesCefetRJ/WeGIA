@@ -110,7 +110,7 @@ class MeioPagamentoController{
      * Realiza os procedimentos necessários para remover um meio de pagamento do sistema.
      */
     public function excluirPorId(){
-        $meioPagamentoId = trim($_POST['meio-pagamento-id']);
+        $meioPagamentoId = filter_input(INPUT_POST, 'meio-pagamento-id', FILTER_SANITIZE_NUMBER_INT); //trim($_POST['meio-pagamento-id']);
 
         if (!$meioPagamentoId || empty($meioPagamentoId) || $meioPagamentoId < 1) {
             //parar operação
@@ -119,10 +119,32 @@ class MeioPagamentoController{
         }
 
         try{
+            $this->pdo->beginTransaction();
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamentoDao->excluirPorId($meioPagamentoId);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão do meio de pagamento de id $meioPagamentoId.");
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/meio_pagamento.php?msg=excluir-falha#mensagem-tabela");
+                exit();
+            }
+
+            $this->pdo->commit();
+
             header("Location: ../view/meio_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
         }catch(Exception $e){
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=excluir-falha#mensagem-tabela");
         }
     }
