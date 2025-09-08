@@ -6,6 +6,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 {
     private $pedidosArray = [];
 
+    //Aproveitar função abaixo
     public function getContribuicoes(?string $status): ContribuicaoLogCollection
     {
         try {
@@ -44,11 +45,9 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 
                 if (end($endpointFragmentado) === 'orders') {
                     // Realizar requisições
-                    $this->requisicaoPedidos($gatewayPagamento);
+                    $this->atribuirPedidos($this->pedidosArray, $this->requisicaoPedidos($gatewayPagamento));
                 } elseif (end($endpointFragmentado) === 'subscriptions') {
-                    //chamar função getSubscriptions quando a mesma for implementada
-                    $gatewayPagamento->setEndpoint(str_replace('subscriptions', 'invoices', $gatewayPagamento->getEndpoint()));
-                    $this->requisicaoPedidos($gatewayPagamento);
+                    $this->atribuirPedidos($this->pedidosArray, $this->getInvoices($gatewayPagamento));
                 }
             }
 
@@ -58,7 +57,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                 $contribuicaoLog = new ContribuicaoLog();
 
                 if (key_exists('subscription', $pedido)) {
-                    $contribuicaoLog->setCodigo($pedido['subscription']['id']);
+                    $contribuicaoLog->setCodigo($pedido['id']);
                     //transformar a data de pagamento para a estrtutura aceita pelo MySQL
                     $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pedido['charge']['paid_at'])->format('Y-m-d H:i:s');
                 } else {
@@ -81,8 +80,59 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         }
     }
 
+    /**Retorna as faturas do gateway de pagamento. True em objectReturn faz com que seja retornado um objeto do tipo ContribuicaoLogCollection
+     */
+    public function getInvoices(GatewayPagamento $gatewayPagamento, ?bool $objectReturn = false): array|ContribuicaoLogCollection
+    {
+        $gatewayPagamento->setEndpoint(str_replace('subscriptions', 'invoices', $gatewayPagamento->getEndpoint()));
+
+        // Definir o período de tempo de análise
+        $dataAtual = new DateTime();
+        $anoAtual = intval($dataAtual->format('Y'));
+
+        $anoAnalise = $anoAtual - 1;
+        $dataAnalise = new DateTime("{$anoAnalise}-12-01");
+        $dataAnaliseFormatada = $dataAnalise->format('Y-m-d');
+
+        $completarEndpoint =
+            [
+                'page' => '?page=1',
+                'size' => '&size=30',
+                'created_since' => "&created_since=$dataAnaliseFormatada",
+            ];
+
+        foreach ($completarEndpoint as $key => $value) {
+            if (!str_contains($gatewayPagamento->getEndpoint(), $key)) {
+                $gatewayPagamento->setEndpoint($gatewayPagamento->getEndpoint() . $value);
+            }
+        }
+
+        $faturas = $this->requisicaoPedidos($gatewayPagamento);
+
+        if (!$objectReturn) {
+            return $faturas;
+        }
+
+        $contribuicaoLogCollection = new ContribuicaoLogCollection();
+
+        foreach ($faturas as $fatura) {
+            $contribuicaoLog = new ContribuicaoLog();
+            $contribuicaoLog
+                ->setCodigo($fatura['id'])
+                ->setDataGeracao(DateTime::createFromFormat(DateTime::ATOM, $fatura['charge']['created_at'])->format('Y-m-d H:i:s'))
+                ->setDataVencimento(DateTime::createFromFormat(DateTime::ATOM, $fatura['charge']['due_at'])->format('Y-m-d H:i:s'))
+                ->setRecorrenciaDTO(new RecorrenciaDTO($fatura['subscription']['id']));
+
+            $contribuicaoLogCollection->add($contribuicaoLog);
+        }
+
+        return $contribuicaoLogCollection;
+    }
+
     private function requisicaoPedidos(GatewayPagamento $gatewayPagamento)
     {
+        $pedidosArray = [];
+
         $headers = [
             'Authorization: Basic ' . base64_encode($gatewayPagamento->getToken() . ':'),
             'Content-Type: application/json;charset=utf-8',
@@ -110,7 +160,7 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
             exit();
         }
 
-        $this->atribuirPedidos($this->pedidosArray, $data['data']);
+        $this->atribuirPedidos($pedidosArray, $data['data']);
 
         // Paginação
         $parsedUrl = parse_url($gatewayPagamento->getEndpoint());
@@ -142,11 +192,13 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                     exit();
                 }
 
-                $this->atribuirPedidos($this->pedidosArray, $data['data']);
+                $this->atribuirPedidos($pedidosArray, $data['data']);
             }
         }
 
         curl_close($ch);
+
+        return $pedidosArray;
     }
 
     private function atribuirPedidos(array &$pedidosTotais, array $pedidosRequisicao): void
