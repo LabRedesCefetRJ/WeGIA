@@ -2,17 +2,54 @@
 
 require_once '../model/MeioPagamento.php';
 require_once '../dao/MeioPagamentoDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'SistemaLog.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class MeioPagamentoController{
+
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        if (is_null($pdo)) {
+            $this->pdo = ConexaoDAO::conectar();
+        } else {
+            $this->pdo = $pdo;
+        }
+    }
+
     public function cadastrar(){
-        //Implementar restante da lógica do código...
         $descricao = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $gatewayId = filter_input(INPUT_POST, 'meio-pagamento-plataforma', FILTER_SANITIZE_NUMBER_INT);
         try{
+            $this->pdo->beginTransaction();
             $meioPagamento = new MeioPagamento($descricao, $gatewayId);
             $meioPagamento->cadastrar();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Cadastro de meio de pagamento.');
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/meio_pagamento.php?msg=cadastrar-falha");
+                exit();
+            }
+
+            $this->pdo->commit();
+
             header("Location: ../view/meio_pagamento.php?msg=cadastrar-sucesso");
         }catch(Exception $e){
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=cadastrar-falha");
         }
     }
@@ -22,11 +59,31 @@ class MeioPagamentoController{
      */
     public function buscaTodos(){
         try{
+            $this->pdo->beginTransaction();
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meiosPagamento = $meioPagamentoDao->buscaTodos();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de meios de pagamento.');
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                exit();
+            }
+
+            $this->pdo->commit();
+
             return $meiosPagamento;
         }catch(PDOException $e){
-            echo 'Erro na busca de meios de pagamento: '.$e->getMessage();
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
         }
     }
 
@@ -53,7 +110,7 @@ class MeioPagamentoController{
      * Realiza os procedimentos necessários para remover um meio de pagamento do sistema.
      */
     public function excluirPorId(){
-        $meioPagamentoId = trim($_POST['meio-pagamento-id']);
+        $meioPagamentoId = filter_input(INPUT_POST, 'meio-pagamento-id', FILTER_SANITIZE_NUMBER_INT); //trim($_POST['meio-pagamento-id']);
 
         if (!$meioPagamentoId || empty($meioPagamentoId) || $meioPagamentoId < 1) {
             //parar operação
@@ -62,10 +119,32 @@ class MeioPagamentoController{
         }
 
         try{
+            $this->pdo->beginTransaction();
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamentoDao->excluirPorId($meioPagamentoId);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão do meio de pagamento de id $meioPagamentoId.");
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/meio_pagamento.php?msg=excluir-falha#mensagem-tabela");
+                exit();
+            }
+
+            $this->pdo->commit();
+
             header("Location: ../view/meio_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
         }catch(Exception $e){
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=excluir-falha#mensagem-tabela");
         }
     }

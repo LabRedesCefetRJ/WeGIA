@@ -40,7 +40,7 @@ function alterarStatus(ev, URL, controller) {
             } else {
                 return response.json().then(errData => {
                     // Lança o erro com a mensagem extraída do backend
-                    throw new Error(errData.Erro || 'Erro desconhecido no servidor');
+                    throw new Error(errData.erro || 'Erro desconhecido no servidor');
                 });
             }
         })
