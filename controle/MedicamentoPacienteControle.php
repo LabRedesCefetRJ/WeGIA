@@ -17,6 +17,8 @@
     {
         public function inserirAplicacao()
         {
+            require_once ROOT . '/dao/FuncionarioDAO.php';
+
             header('Content-Type: application/json');
             $dados = json_decode(file_get_contents('php://input'), true);
 
@@ -28,9 +30,10 @@
             $id_medicacao = $dados['id_medicacao'] ?? null;
             $id_pessoa = $dados['id_pessoa'] ?? null;
             $aplicacao = $dados['dataHora'] ?? null;
-            $id_funcionario = $dados['id_funcionario'] ?? null;
+            $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
 
-            if (!$id_medicacao || !$id_pessoa || !$aplicacao || !$id_funcionario) {
+            if (!$id_medicacao || !$id_pessoa || !$aplicacao || !$id_pessoa_funcionario) {
+                http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Campos obrigatórios ausentes"]);
                 exit;
             }
@@ -38,14 +41,26 @@
             $registro = date('Y-m-d H:i:s');
 
             try{
+                $FuncionarioDAO = new FuncionarioDAO;
+                $id_funcionario = $FuncionarioDAO->getIdFuncionarioComIdPessoa($id_pessoa_funcionario);
+                if(!$id_funcionario){
+                    http_response_code(400);
+                    echo json_encode([
+                        "status" => "erro",
+                        "mensagem" => "Erro ao registrar aplicação: " . $resposta
+                    ]);
+                    exit;
+                }
                 $MedicamentosPacienteDAO = new MedicamentoPacienteDAO;
                 $resposta = $MedicamentosPacienteDAO->inserirAplicacao($registro, $aplicacao, $id_funcionario, $id_pessoa, $id_medicacao);
                 if($resposta === true){
+                    http_response_code(200);
                     echo json_encode([
                         "status" => "sucesso",
                         "mensagem" => "Aplicação registrada com sucesso"
                     ]);
                 } else{
+                    http_response_code(400);
                     echo json_encode([
                         "status" => "erro",
                         "mensagem" => "Erro ao registrar aplicação: " . $resposta
@@ -55,6 +70,7 @@
                 http_response_code($e->getCode());
                 echo json_encode(['erro' => $e->getMessage()]);
             }
+            exit;
         }
 
         public function listarMedicamentosAplicadosPorIdDaFichaMedica(){

@@ -614,6 +614,59 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
 document.addEventListener("DOMContentLoaded", async () => {
+
+
+  document.querySelector("#doc").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+       let fichaMedica = {
+            id_pet: document.querySelector("#idPet").value,
+            necessidadesEspeciais: document.querySelector("#despacho").value,
+            castrado: document.querySelector('input[name="castrado"]:checked')?.value || '',
+            metodo: "modificarFichaMedicaPet",
+            nomeClasse: "controleSaudePet",
+            modulo: "pet"
+        };
+        console.log(fichaMedica);
+        
+        
+            const url = "../../controle/control.php";
+            const opcoes = {
+                method: 'POST',
+                headers: {
+                    'Content-Type':'application/json;charset=UTF-8'
+                },
+                body: JSON.stringify(fichaMedica)
+              }
+
+            try{
+             
+              let resposta = await fetch(url, opcoes);
+              let info = await resposta.json();
+
+              if (info.status === "sucesso") {
+                window.location.href = info.redirect;
+              } else {
+                alert("Erro ao salvar ficha médica!");
+              }
+
+            } catch(erro){
+                alert(erro);
+            }
+        
+    });
+
+
+
+
+
+
+
+
+
+
+
+
   const info = {
     metodo: "getHistoricoPet",
     modulo: "pet",
@@ -1133,7 +1186,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                   <section id="secFichaMedica">
                     <h4 class="mb-xlg" id="fm">Ficha Médica</h4>
                     <div id="divFichaMedica">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <form class="form-horizontal" id="doc">
                         <input type="hidden" name="nomeClasse" value="controleSaudePet">
                         <input type="hidden" name="metodo" value="modificarFichaMedicaPet">
                         <input type="hidden" name="modulo" value="pet">

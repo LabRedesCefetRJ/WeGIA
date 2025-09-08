@@ -3,8 +3,10 @@ if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
 
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+
 if (!isset($_SESSION['usuario'])) {
-	header("Location: ../index.php");
+	header("Location: ".WWW."index.php");
 	exit();
 } else {
 	session_regenerate_id();
@@ -34,7 +36,9 @@ require_once "personalizacao_display.php";
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+	<?php if(function_exists('display_campo')):?>
+		<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+	<?php endif;?>
 	<script src="../assets/vendor/jquery/jquery.min.js"></script>
 	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
 	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
