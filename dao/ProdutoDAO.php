@@ -14,9 +14,9 @@ class ProdutoDAO
 				// Caso já exista
 				if ($oculto) {
 					// Caso já exista e esteja oculto
-					header("Location: ". WWW ."html/matPat/restaurar_produto.php?id_produto=" . $existente['id_produto']);
+					header("Location: " . WWW . "html/matPat/restaurar_produto.php?id_produto=" . $existente['id_produto']);
 				} else {
-					echo ("Location: ". WWW ."html/matPat/cadastro_produto.php?flag=warn&msg=A descrição inserida já existe!");
+					echo ("Location: " . WWW . "html/matPat/cadastro_produto.php?flag=warn&msg=A descrição inserida já existe!");
 				}
 			} else {
 				$sql = 'INSERT produto(id_categoria_produto,id_unidade,descricao,codigo,preco) VALUES( :id_categoria_produto,:id_unidade,:descricao,:codigo,:preco)';
@@ -48,14 +48,11 @@ class ProdutoDAO
 	public function excluir($id_produto)
 	{
 		$sql = 'DELETE FROM produto WHERE id_produto = :id_produto';
-		try {
-			$pdo = Conexao::connect();
-			$stmt = $pdo->prepare($sql);
-			$stmt->bindParam(':id_produto', $id_produto);
-			$stmt->execute();
-		} catch (PDOException $e) {
-			echo 'Error: <b>  na tabela produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-		}
+
+		$pdo = Conexao::connect();
+		$stmt = $pdo->prepare($sql);
+		$stmt->bindParam(':id_produto', $id_produto);
+		$stmt->execute();
 	}
 
 	public function listarTodos()
@@ -214,7 +211,8 @@ class ProdutoDAO
 		}
 	}
 
-	public function getProdutosPorAlmoxarifado(int $almoxarifadoId){
+	public function getProdutosPorAlmoxarifado(int $almoxarifadoId)
+	{
 		$sql = "SELECT produto.id_produto, produto.codigo, produto.descricao, estoque.qtd, produto.preco FROM produto, estoque WHERE produto.id_produto=estoque.id_produto AND estoque.qtd>0 AND estoque.id_almoxarifado=:almoxarifadoId";
 
 		$pdo = Conexao::connect();
