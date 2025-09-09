@@ -107,28 +107,20 @@ class ProdutoControle
 
     public function incluir()
     {
-        $produto = $this->verificar();
-        //extract($_REQUEST);
-        $id_categoria = $_REQUEST['id_categoria'];
-        $id_unidade = $_REQUEST['id_unidade'];
-        $produtoDAO = new ProdutoDAO();
-        //$catDAO = new CategoriaDAO();
-        //$uniDAO = new UnidadeDAO();
-
-        //$categoria = $catDAO->listarUm($id_categoria);
-        //$unidade = $uniDAO->listarUm($id_unidade);
         try {
+            $produto = $this->verificar();
+            $id_categoria = filter_var($_REQUEST['id_categoria'], FILTER_SANITIZE_NUMBER_INT);
+            $id_unidade = filter_var($_REQUEST['id_unidade'], FILTER_SANITIZE_NUMBER_INT);
+            $produtoDAO = new ProdutoDAO($this->pdo);
 
             $produto->set_categoria_produto($id_categoria);
             $produto->set_unidade($id_unidade);
 
             $produtoDAO->incluir($produto);
 
-            session_start();
             header("Location: " . WWW . "html/matPat/cadastro_produto.php");
-        } catch (PDOException $e) {
-            $msg = "Não foi possível registrar o produto <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>" . "<br>" . $e->getMessage();
-            echo $msg;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -155,7 +147,7 @@ class ProdutoControle
             $stmtEntradas->execute();
 
             $registros = $stmtSaidas->fetchAll(PDO::FETCH_ASSOC) || $stmtEntradas->fetchAll(PDO::FETCH_ASSOC);
-            
+
             if ($produto) {
                 if (intval($produto['qtd']) < 0 && !$registros) {
                     $produtoDAO = new ProdutoDAO();

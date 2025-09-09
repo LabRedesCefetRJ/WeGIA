@@ -83,7 +83,7 @@ class Produto
         if (!$descricao || empty($descricao)) {
             throw new InvalidArgumentException('A descrição de um produto não pode ser vazia.');
         }
-        $this->descricao = $descricao;
+        $this->descricao = filter_var($descricao, FILTER_SANITIZE_SPECIAL_CHARS);
     }
 
     public function setCodigo($codigo)
@@ -91,6 +91,6 @@ class Produto
         if (!$codigo || empty($codigo)) {
             throw new InvalidArgumentException('O código de um produto não pode ser vazio.');
         }
-        $this->codigo = $codigo;
+        $this->codigo = filter_var($codigo, FILTER_SANITIZE_SPECIAL_CHARS);
     }
 }

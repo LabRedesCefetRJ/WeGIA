@@ -4,44 +4,54 @@ require_once ROOT . '/dao/Conexao.php';
 require_once ROOT . '/Functions/funcoes.php';
 class ProdutoDAO
 {
+	private PDO $pdo;
+
+	public function __construct(?PDO $pdo = null)
+	{
+		if (is_null($pdo)) {
+			$this->pdo = $pdo = Conexao::connect();
+		} else {
+			$this->pdo = $pdo;
+		}
+	}
 	public function incluir($produto)
 	{
-		try {
-			$pdo = Conexao::connect();
-			$existente = $pdo->query("SELECT id_produto, oculto FROM produto WHERE descricao='" . $produto->getDescricao() . "'")->fetch(PDO::FETCH_ASSOC);
-			$oculto = !!intval($existente['oculto']);
-			if ($existente) {
-				// Caso já exista
-				if ($oculto) {
-					// Caso já exista e esteja oculto
-					header("Location: " . WWW . "html/matPat/restaurar_produto.php?id_produto=" . $existente['id_produto']);
-				} else {
-					echo ("Location: " . WWW . "html/matPat/cadastro_produto.php?flag=warn&msg=A descrição inserida já existe!");
-				}
+		//sql injection
+		$stmtExistente = $this->pdo->prepare("SELECT id_produto, oculto FROM produto WHERE descricao=:descricao");
+		$stmtExistente->bindValue(':descricao', $produto->getDescricao(), PDO::PARAM_STR);
+		$stmtExistente->execute();
+		$existente = $stmtExistente->fetch(PDO::FETCH_ASSOC);
+
+		$oculto = !!intval($existente['oculto']);
+		if ($existente) {
+			// Caso já exista
+			if ($oculto) {
+				// Caso já exista e esteja oculto
+				header("Location: " . WWW . "html/matPat/restaurar_produto.php?id_produto=" . htmlspecialchars($existente['id_produto']));
 			} else {
-				$sql = 'INSERT produto(id_categoria_produto,id_unidade,descricao,codigo,preco) VALUES( :id_categoria_produto,:id_unidade,:descricao,:codigo,:preco)';
-				$sql = str_replace("'", "\'", $sql);
-
-				$stmt = $pdo->prepare($sql);
-
-				$id_categoria_produto = $produto->get_categoria_produto();
-				$id_unidade = $produto->get_unidade();
-				$descricao = $produto->getDescricao();
-				$codigo = $produto->getCodigo();
-				$preco = $produto->getPreco();
-
-				$descricao = preg_replace('/( )+/', ' ', trim($descricao));
-
-				$stmt->bindParam(':id_categoria_produto', $id_categoria_produto);
-				$stmt->bindParam(':id_unidade', $id_unidade);
-				$stmt->bindParam(':descricao', $descricao);
-				$stmt->bindParam(':codigo', $codigo);
-				$stmt->bindParam(':preco', $preco);
-
-				$stmt->execute();
+				echo ("Location: " . WWW . "html/matPat/cadastro_produto.php?flag=warn&msg=A descrição inserida já existe!");
 			}
-		} catch (PDOException $e) {
-			echo 'Error: <b>  na tabela produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+		} else {
+			$sql = 'INSERT produto(id_categoria_produto,id_unidade,descricao,codigo,preco) VALUES( :id_categoria_produto,:id_unidade,:descricao,:codigo,:preco)';
+			$sql = str_replace("'", "\'", $sql);
+
+			$stmt = $this->pdo->prepare($sql);
+
+			$id_categoria_produto = $produto->get_categoria_produto();
+			$id_unidade = $produto->get_unidade();
+			$descricao = $produto->getDescricao();
+			$codigo = $produto->getCodigo();
+			$preco = $produto->getPreco();
+
+			$descricao = preg_replace('/( )+/', ' ', trim($descricao));
+
+			$stmt->bindParam(':id_categoria_produto', $id_categoria_produto);
+			$stmt->bindParam(':id_unidade', $id_unidade);
+			$stmt->bindParam(':descricao', $descricao);
+			$stmt->bindParam(':codigo', $codigo);
+			$stmt->bindParam(':preco', $preco);
+
+			$stmt->execute();
 		}
 	}
 
