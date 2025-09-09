@@ -104,11 +104,11 @@ $dadosForm = $_SESSION['form_produto'];
 	<!-- jquery functions -->
 	<script>
 		$(function() {
-			var categoria = <?php
-							echo $categoria;
+			const categoria = <?php
+							echo htmlspecialchars($categoria);
 							?>;
-			var unidade = <?php
-							echo $unidade;
+			const unidade = <?php
+							echo htmlspecialchars($unidade);
 							?>;
 			$.each(categoria, function(i, item) {
 				if (atualizarSelect('id_categoria') == item.id_categoria_produto) {
@@ -128,8 +128,8 @@ $dadosForm = $_SESSION['form_produto'];
 	</script>
 	<script type="text/javascript">
 		function validar() {
-			var id_categoria = document.getElementyById("id_categoria").value;
-			var id_unidade = document.getElementyById("id_unidade").value;
+			const id_categoria = document.getElementyById("id_categoria").value;
+			const id_unidade = document.getElementyById("id_unidade").value;
 			if (id_categoria == "blank") {
 				alert("Selecione uma categoria");
 				document.getElementyById("id_categoria").focus();
@@ -270,15 +270,6 @@ $dadosForm = $_SESSION['form_produto'];
 			</section>
 		</div>
 
-		<aside id="sidebar-right" class="sidebar-right">
-			<div class="nano">
-				<div class="nano-content">
-					<a href="#" class="mobile-close visible-xs">
-						Collapse <i class="fa fa-chevron-right"></i>
-					</a>
-				</div>
-			</div>
-		</aside>
 	</section>
 
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.js"></script>
