@@ -1,47 +1,19 @@
 <?php
-session_start();
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
 }
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ". WWW ."html/index.php");
+	header("Location: " . WWW . "html/index.php");
+	exit();
+}else{
+	session_regenerate_id();
 }
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=22");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 3) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ". WWW ."html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ". WWW ."html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: ". WWW ."html/home.php?msg_c=$msg");
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 22, 3);
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -53,22 +25,22 @@ require_once ROOT . "/html/geral/msg.php";
 <!doctype html>
 <html class="fixed">
 <?php
-	include_once ROOT .'/dao/Conexao.php';
-	include_once ROOT .'/dao/CategoriaDAO.php';
-	include_once ROOT .'/dao/UnidadeDAO.php';
+include_once ROOT . '/dao/Conexao.php';
+include_once ROOT . '/dao/CategoriaDAO.php';
+include_once ROOT . '/dao/UnidadeDAO.php';
 
-	if (!isset($_SESSION['unidade'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
-	}
-	if (!isset($_SESSION['categoria'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=' . WWW . 'html/matPat/cadastro_produto.php');
-	}
-	if (isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
-		extract($_SESSION);
+if (!isset($_SESSION['unidade'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
+}
+if (!isset($_SESSION['categoria'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=' . WWW . 'html/matPat/cadastro_produto.php');
+}
+if (isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
+	extract($_SESSION);
 
-		unset($_SESSION['unidade']);
-		unset($_SESSION['categoria']);
-	}
+	unset($_SESSION['unidade']);
+	unset($_SESSION['categoria']);
+}
 
 $dadosForm = $_SESSION['form_produto'];
 ?>
@@ -139,14 +111,14 @@ $dadosForm = $_SESSION['form_produto'];
 							echo $unidade;
 							?>;
 			$.each(categoria, function(i, item) {
-				if(atualizarSelect('id_categoria') == item.id_categoria_produto) {
+				if (atualizarSelect('id_categoria') == item.id_categoria_produto) {
 					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '" selected>' + item.descricao_categoria + '</option>');
 				} else {
 					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '">' + item.descricao_categoria + '</option>');
 				}
 			})
 			$.each(unidade, function(i, item) {
-				if(atualizarSelect('id_unidade') == item.id_unidade) {
+				if (atualizarSelect('id_unidade') == item.id_unidade) {
 					$('#id_unidade').append('<option value="' + item.id_unidade + '" selected>' + item.descricao_unidade + '</option>');
 				} else {
 					$('#id_unidade').append('<option value="' + item.id_unidade + '">' + item.descricao_unidade + '</option>');
@@ -335,19 +307,19 @@ $dadosForm = $_SESSION['form_produto'];
 	<!-- Input content restoration -->
 	<script type="text/javascript" defer>
 		//Xablau
-		function addSessionStorage (el) {
+		function addSessionStorage(el) {
 			sessionStorage.setItem(el.id, el.value);
 		}
 
-		function atualizarSelect (id) {
+		function atualizarSelect(id) {
 			return sessionStorage.getItem(id) || 'blank';
 		}
 
-		function atualizarInput (id) {
+		function atualizarInput(id) {
 			document.getElementById(id).value = sessionStorage.getItem(id) || '';
 		}
 
-		function limparSessionStorage () {
+		function limparSessionStorage() {
 			sessionStorage.clear();
 		}
 		document.addEventListener("DOMContentLoaded", () => {
