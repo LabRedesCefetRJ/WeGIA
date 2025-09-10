@@ -26,22 +26,24 @@ if (!is_null($resultado)) {
 		$permissao = mysqli_fetch_array($resultado);
 		if ($permissao['id_acao'] < 5) {
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ". WWW ."html/home.php?msg_c=$msg");
+			header("Location: " . WWW . "html/home.php?msg_c=$msg");
 		}
 		$permissao = $permissao['id_acao'];
 	} else {
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ". WWW ."html/home.php?msg_c=$msg");
+		header("Location: " . WWW . "html/home.php?msg_c=$msg");
 	}
 } else {
 	$permissao = 1;
 	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: ". WWW ."html/home.php?msg_c=$msg");
+	header("Location: " . WWW . "html/home.php?msg_c=$msg");
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 
 <!doctype html>
@@ -54,7 +56,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: '. WWW .'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/listar_almox.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/listar_almox.php');
 	}
 	if (isset($_SESSION['almoxarifado'])) {
 		$almoxarifado = $_SESSION['almoxarifado'];
@@ -122,27 +124,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	<!-- jquery functions -->
 	<script>
-		function excluir(id) {
-			window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=AlmoxarifadoControle&id_almoxarifado=' + id);
-		}
-	</script>
-	<script>
-		$(function() {
-			var almoxarifado = <?php
-								echo $almoxarifado;
-								?>;
-
-			$.each(almoxarifado, function(i, item) {
-
-				$('#tabela')
-					.append($('<tr />')
-						.append($('<td />')
-							.text(item.descricao_almoxarifado))
-						.append($('<td />')
-							.attr('onclick', 'excluir("' + item.id_almoxarifado + '")')
-							.html('<i class="fas fa-trash-alt"></i>')));
-			});
-		});
+		
 		$(function() {
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
@@ -195,6 +177,22 @@ require_once ROOT . "/html/personalizacao_display.php";
 								</tr>
 							</thead>
 							<tbody id="tabela">
+								<?php foreach (json_decode($almoxarifado, true) as $item): ?>
+									<tr>
+										<td><?= htmlspecialchars($item['descricao_almoxarifado']) ?></td>
+										<td>
+											<form method="POST" action="<?= WWW ?>controle/control.php">
+												<input type="hidden" name="metodo" value="excluir">
+												<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+												<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
+												<?= Csrf::inputField() ?>
+												<button type="submit" style="border:none;background:none;cursor:pointer;" title="Excluir">
+													<i class="fas fa-trash-alt"></i>
+												</button>
+											</form>
+										</td>
+									</tr>
+								<?php endforeach; ?>
 							</tbody>
 						</table>
 					</div><br>
