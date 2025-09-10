@@ -1,49 +1,24 @@
 <?php
-session_start();
+if (session_start() === PHP_SESSION_NONE) {
+	session_start();
+}
+
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit();
+}else{
+	session_regenerate_id();
 }
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=21");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 5) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: " . WWW . "html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW . "html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW . "html/home.php?msg_c=$msg");
-}
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+
+permissao($_SESSION['id_pessoa'], 21, 5);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 
 <!doctype html>
@@ -124,7 +99,6 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
 	<!-- jquery functions -->
 	<script>
-		
 		$(function() {
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
@@ -201,7 +175,6 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
 				<!-- Vendor -->
 
-
 				<!-- Specific Page Vendor -->
 				<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
 				<script src="<?= WWW ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
@@ -216,7 +189,6 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
 				<!-- Theme Initialization Files -->
 				<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
-
 
 				<!-- Examples -->
 				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
