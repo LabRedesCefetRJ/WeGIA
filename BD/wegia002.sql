@@ -119,6 +119,9 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('64', 'Adotantes Pet'),
 ('7', 'Módulo Contribuição'),
 ('71', 'Sincronizar contribuições'),
+('72', 'Gateways de Pagamento'),
+('73', 'Meios de Pagamento'),
+('74', 'Regras de Pagamento'),
 ('9', 'Configurações'),
 ('91', 'Permissões');
 

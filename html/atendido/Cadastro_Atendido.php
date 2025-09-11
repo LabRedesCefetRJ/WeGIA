@@ -432,13 +432,6 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 				reader.readAsDataURL(input.files[0]);
 			}
 		}
-
-		$('#form-cadastro').submit(function() {
-			let imgForm = document.getElementById("imgform");
-			document.getElementById("form-cadastro").append(imgForm);
-			return true;
-		});
-
 		function funcao1() {
 			var send = $("#enviar");
 			var cpfs = [{
@@ -533,7 +526,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 					return false;
 				}
 			})
-			if ($("#telefone") = null) {
+			if ($("#telefone") == null) {
 				$("#telefone") = "";
 			};
 

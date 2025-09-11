@@ -24,6 +24,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 			'EnderecoControle' => [9, 12],
 			'EnfermidadeControle' => [5, 54],
 			'MedicamentoPacienteControle' => [5],
+			'ExameControle' => [5],
 			'MedicoControle' => [5],
 			'EntradaControle' => [23],
 			'EstoqueControle' => [22],
