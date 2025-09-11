@@ -268,7 +268,7 @@ if (tecla != 8) { // Ignora o backspace
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="profileCompany">Telefone</label>
 												<div class="col-md-6">
-													<input type="text" class="form-control" minlength="12" name="telefone" id="telefone" id="profileCompany" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
+													<input type="text" class="form-control" minlength="12" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
 												</div>
 											</div>
 
