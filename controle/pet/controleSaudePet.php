@@ -116,23 +116,52 @@ class controleSaudePet
         $saudePetDAO = new SaudePetDAO();
         return $saudePetDAO->getPet($id);
     }
-
-    public function getFichaMedicaPet($id){
+    public function getFichaMedicaPet() {
+        extract($_REQUEST);
+        $idPet = $_REQUEST['idPet'];
         $saudePetDAO = new SaudePetDAO();
-        return $saudePetDAO->getFichaMedicaPet($id);
+    
+        header('Content-Type: application/json; charset=utf-8');
+    
+        $dados = $saudePetDAO->getFichaMedicaPet($idPet);
+    
+        if (!$dados) {
+            // sempre retorna um objeto JSON válido
+            $dados = [
+                "id_ficha_medica" => null,
+                "necessidades_especiais" => "",
+                "castrado" => ""
+            ];
+        }
+    
+        echo json_encode($dados);
     }
+    
+    
 
     public function fichaMedicaPetExiste($id){
         $saudePetDAO = new SaudePetDAO();
         return $saudePetDAO->fichaMedicaPetExiste($id);
     }
-
-    public function modificarFichaMedicaPet(){
+    public function modificarFichaMedicaPet() {
+        $input = json_decode(file_get_contents('php://input'), true);
+    
+        $id_pet = $input['id_pet'] ?? null;
+        $descricao = $input['necessidadesEspeciais'] ?? null;
+        $castrado = $input['castrado'] ?? null;
+    
         $saudePetDAO = new SaudePetDAO();
-        echo $saudePetDAO->modificarFichaMedicaPet($_REQUEST);
-        
+        $ok = $saudePetDAO->modificarFichaMedicaPet($id_pet, $descricao, $castrado);
+    
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            "status"   => $ok ? "sucesso" : "erro",
+            "redirect" => "../../html/pet/profile_pet.php?id_pet=".$id_pet
+        ]);
+        exit;
     }
-
+    
+    
     public function getHistoricoPet(){
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);

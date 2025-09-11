@@ -4,13 +4,14 @@ require_once'Conexao.php';
 require_once'../Functions/funcoes.php';
 class IsaidaDAO
 {
-    //Consultar um utilizando o ID
+    //Consultar um utilizando o ID - Xablau
     public function listarId($id_saida){
         try{
             $pdo = Conexao::connect();
-            $sql = "SELECT i.id_isaida,i.id_saida,p.descricao,i.qtd,i.valor_unitario
+            $sql = "SELECT i.id_isaida,i.id_saida,p.descricao,i.qtd,i.valor_unitario,u.descricao_unidade
              FROM isaida i 
              RIGHT JOIN produto p ON p.id_produto = i.id_produto 
+             INNER JOIN unidade u ON u.id_unidade = p.id_unidade
              WHERE i.id_saida = :id_saida AND i.oculto = false";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_saida',$id_saida);
@@ -18,8 +19,15 @@ class IsaidaDAO
             $stmt->execute();
             $isaidas = array();
             while($linha = $stmt->fetch(PDO::FETCH_ASSOC)){
-                $isaidas[]=array('id_isaida'=>$linha['id_isaida'], 'id_saida'=>$linha['id_saida'], 'descricao'=>$linha['descricao'], 'qtd'=>$linha['qtd'], 'valor_unitario'=>$linha['valor_unitario']);
-                }
+                $isaidas[]=array(
+                    'id_isaida'=>$linha['id_isaida'], 
+                    'id_saida'=>$linha['id_saida'], 
+                    'descricao'=>$linha['descricao'], 
+                    'qtd'=>$linha['qtd'], 
+                    'valor_unitario'=>$linha['valor_unitario'],
+                    'unidade'=>$linha['descricao_unidade']
+                );
+            }
         } catch(PDOException $e){
             echo 'Erro: ' .  $e->getMessage();
         }
