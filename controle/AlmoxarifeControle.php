@@ -1,39 +1,57 @@
 <?php
-    require_once '../dao/AlmoxarifeDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AlmoxarifeDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
 
-    class AlmoxarifeControle {
-        public function listarTodos(){
-            $nextPage = trim($_REQUEST['nextPage']);
+class AlmoxarifeControle
+{
+    private PDO $pdo;
 
-            if(!filter_var($nextPage, FILTER_VALIDATE_URL)){
-                http_response_code(400);
-                exit('Erro, a URL informada para a próxima página não é válida.');
-            }
-
-            $almoxarifeDAO = new almoxarifeDAO();
-            $almoxarifes = $almoxarifeDAO->listarTodos();
-            session_start();
-            $_SESSION['almoxarife']=$almoxarifes;
-            header('Location: '.$nextPage);
-        }
-
-        public function excluir(){
-            $nextPage = trim($_REQUEST['nextPage']);
-            $id_almoxarife = trim($_REQUEST['id_almoxarife']);
-
-            if(!filter_var($nextPage, FILTER_VALIDATE_URL)){
-                http_response_code(400);
-                exit('Erro, a URL informada para a próxima página não é válida.');
-            }
-
-            if(!$id_almoxarife || !is_numeric($id_almoxarife) || $id_almoxarife < 1){
-                http_response_code(400);
-                exit('O id de um almoxarife deve ser um inteiro maior ou igual a 1.');
-            }
-            
-            $almoxarifeDAO = new almoxarifeDAO();
-            $almoxarifeDAO->excluir($id_almoxarife);
-            header('Location: '.$nextPage);
+    public function __construct(?PDO $pdo = null)
+    {
+        if(is_null($pdo)){
+            $this->pdo = Conexao::connect();
+        }else{
+            $this->pdo = $pdo;
         }
     }
-?>
+
+    public function listarTodos()
+    {
+        try {
+            $almoxarifeDAO = new almoxarifeDAO($this->pdo);
+            $almoxarifes = $almoxarifeDAO->listarTodos();
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $_SESSION['almoxarife'] = $almoxarifes;
+            header('Location: ' . WWW . 'html/matPat/listar_almoxarife.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function excluir()
+    {
+        $id_almoxarife = filter_var($_REQUEST['id_almoxarife'], FILTER_SANITIZE_NUMBER_INT);
+
+        try {
+            if(!Csrf::validateToken($_POST['csrf_token'])){
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
+
+            if (!$id_almoxarife || !is_numeric($id_almoxarife) || $id_almoxarife < 1) {
+                throw new InvalidArgumentException('O id de um almoxarife deve ser um inteiro maior ou igual a 1.', 400);
+            }
+
+            $almoxarifeDAO = new almoxarifeDAO($this->pdo);
+            $almoxarifeDAO->excluir($id_almoxarife);
+            header('Location: ' . WWW . 'html/matPat/listar_almoxarife.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+}
