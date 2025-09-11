@@ -2,18 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) 
 	session_start();
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
-
-require_once ROOT . '/dao/Conexao.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: ". WWW ."html/index.php");
@@ -22,8 +11,6 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 23, 3);
-
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
