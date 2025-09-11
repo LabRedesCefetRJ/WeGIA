@@ -1,14 +1,6 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 include_once ROOT . "/dao/Conexao.php";
 include_once ROOT . '/classes/Funcionario.php';
 include_once ROOT . '/classes/QuadroHorario.php';
@@ -567,15 +559,24 @@ class FuncionarioControle
 
     public function listarUm()
     {
-        extract($_REQUEST);
         try {
+            $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$idFuncionario || $idFuncionario < 1) {
+                throw new InvalidArgumentException('O id do funcionário informado não é válido.', 400);
+            }
+
             $funcionarioDAO = new FuncionarioDAO();
-            $funcionario = $funcionarioDAO->listar($id_funcionario);
-            session_start();
+            $funcionario = $funcionarioDAO->listar($idFuncionario);
+            if (session_start() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
             $_SESSION['funcionario'] = $funcionario;
-            header('Location:' . $nextPage);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+
+            header('Location:' . WWW . "/html/funcionario/profile_funcionario.php?id_funcionario=' . $idFuncionario");
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -621,14 +622,14 @@ class FuncionarioControle
             $permissao = new PermissaoDAO($pdo);
 
             $pdo->beginTransaction();
-            if(!$permissao->adicionarPermissao($cargo, $acao, $recursos)){
+            if (!$permissao->adicionarPermissao($cargo, $acao, $recursos)) {
                 throw new Exception('Falha no controle de transação', 500);
             }
             $pdo->commit();
-            
+
             header('Location:' . '../html/geral/editar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
         } catch (Exception $e) {
-            if($pdo->inTransaction()){
+            if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
 
@@ -672,7 +673,7 @@ class FuncionarioControle
             http_response_code(400);
             exit('Erro, a data de nascimento de um funcionário não está dentro dos limites permitidos.');
         }
-       
+
         $funcionarioDAO = new FuncionarioDAO();
         $horarioDAO = new QuadroHorarioDAO();
 
@@ -767,7 +768,7 @@ class FuncionarioControle
             }
         }
     }
-    
+
     public function alterarOutros()
     {
         extract($_REQUEST);

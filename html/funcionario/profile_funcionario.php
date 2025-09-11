@@ -1,14 +1,16 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-extract($_REQUEST);
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
   exit();
+}else{
+  session_regenerate_id();
 }
+
+extract($_REQUEST);
 
 //Sanitizar entrada do id_funcionario
 $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
@@ -24,7 +26,7 @@ try {
   $pdo = Conexao::connect();
 
   if (!isset($_SESSION['funcionario'])) {
-    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/profile_funcionario.php?id_funcionario=' . $idFuncionario . '&id_funcionario=' . $idFuncionario);
+    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&id_funcionario=' . $idFuncionario);
   } else {
     $func = $_SESSION['funcionario'];
     unset($_SESSION['funcionario']);
@@ -33,10 +35,18 @@ try {
     if ($func) {
       $func = $func[0];
       if ($func->tipo) {
-        $func->tipo_descricao = $pdo->query("SELECT descricao FROM tipo_quadro_horario WHERE id_tipo=" . $func->tipo)->fetch(PDO::FETCH_ASSOC)['descricao'];
+        $stmtTipo = $pdo->prepare("SELECT descricao FROM tipo_quadro_horario WHERE id_tipo=:tipo");
+        $stmtTipo->bindValue(':tipo', $func->tipo, PDO::PARAM_INT);
+        $stmtTipo->execute();
+
+        $func->tipo_descricao = $stmtTipo->fetch(PDO::FETCH_ASSOC)['descricao'];
       }
       if ($func->escala) {
-        $func->escala_descricao = $pdo->query("SELECT descricao FROM escala_quadro_horario WHERE id_escala=" . $func->escala)->fetch(PDO::FETCH_ASSOC)['descricao'];
+        $stmtEscala = $pdo->prepare("SELECT descricao FROM escala_quadro_horario WHERE id_escala=:escala");
+        $stmtEscala->bindValue(':escala', $func->escala, PDO::PARAM_INT);
+        $stmtEscala->execute();
+
+        $func->escala_descricao = $stmtEscala->fetch(PDO::FETCH_ASSOC)['descricao'];
       }
       $func = json_encode([$func]);
     }
@@ -51,6 +61,8 @@ try {
     }
     require_once($config_path);
   }
+
+  require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
   require_once "../permissao/permissao.php";
   permissao($_SESSION['id_pessoa'], 11, 7);
 
@@ -1225,7 +1237,7 @@ try {
                                   let url = "informacao_adicional.php";
                                   let data = "action=remover&id_descricao=" + id_descricao;
                                   post(url, data, listarInfoAdicional);
-                                  $("#" + 'informacao'+id_descricao + "").remove();
+                                  $("#" + 'informacao' + id_descricao + "").remove();
                                 }
 
                                 //Refazer lógica abaixo
@@ -1314,11 +1326,11 @@ try {
                             <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input">
                               <option selected disabled value="">Selecionar</option>
                               <?php
-                                $pdo = Conexao::connect();
-                                $tipoCarga = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
-                                foreach ($tipoCarga as $key => $value) {
-                                  echo ("<option id='tipo_" . $value["id_tipo"] . "' value=" . $value["id_tipo"] . ">" . htmlspecialchars($value["descricao"]) . "</option>");
-                                };
+                              $pdo = Conexao::connect();
+                              $tipoCarga = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
+                              foreach ($tipoCarga as $key => $value) {
+                                echo ("<option id='tipo_" . $value["id_tipo"] . "' value=" . $value["id_tipo"] . ">" . htmlspecialchars($value["descricao"]) . "</option>");
+                              };
                               ?>
                             </select>
                             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
