@@ -1995,10 +1995,10 @@ try {
         async: true,
         success: function(response) {
           var documento = response;
-          $('#tipoDocumento').empty();
-          $('#tipoDocumento').append('<option selected disabled>Selecionar...</option>');
+          $('#id_docfuncional').empty();
+          $('#id_docfuncional').append('<option selected disabled>Selecionar...</option>');
           $.each(documento, function(i, item) {
-            $('#tipoDocumento').append('<option value="' + item.id_docfuncional + '">' + item.nome_docfuncional + '</option>');
+            $('#id_docfuncional').append('<option value="' + item.id_docfuncional + '">' + item.nome_docfuncional + '</option>');
           });
         },
         dataType: 'json'
