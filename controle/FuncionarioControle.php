@@ -330,6 +330,14 @@ class FuncionarioControle
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
+
+        if(strtotime($data_expedicao) < strtotime($nascimento)){
+            session_start();
+            $_SESSION['erro'] = 'A data de expedição é anterior à do nascimento. Por favor, informa uma data válida!';
+            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf='. $cpf);
+            exit;
+        }
+
         session_start();
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
