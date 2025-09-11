@@ -1,5 +1,6 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) 
+	session_start();
 
 $config_path = "config.php";
 if (file_exists($config_path)) {
@@ -12,38 +13,73 @@ if (file_exists($config_path)) {
 	require_once($config_path);
 }
 
+require_once ROOT . '/dao/Conexao.php';
+
 if (!isset($_SESSION['usuario'])) {
     header("Location: ". WWW ."html/index.php");
 }
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
+$pdo = Conexao::connect();
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+if ($id_pessoa === false) {
+    error_log("ID de pessoa inválido na sessão.");
+    session_destroy();
+    header("Location: " . WWW . "html/home.php");
+    exit;
+}
+
+try { 
+	$sql = "SELECT * FROM funcionario WHERE id_pessoa = :ID_PESSOA";
+	$stmt = $pdo->prepare($sql);
+	$stmt->bindParam(':ID_PESSOA', $id_pessoa, PDO::PARAM_INT);
+	$stmt->execute();
+	$resultado = $stmt->fetch(PDO::FETCH_ASSOC); 
+} catch(PDOException $e){ 
+	error_log('Erro: ' . $e->getMessage());
+}
+
+
 if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
+	$id_cargo = $resultado['id_cargo'];
+	try {
+		$sql = "SELECT * FROM permissao WHERE id_cargo = :id_cargo AND id_recurso = :id_recurso";
+		$stmt = $pdo->prepare($sql);
+		$stmt->bindValue(':id_cargo', $id_cargo, PDO::PARAM_INT);
+		$stmt->bindValue(':id_recurso', 23, PDO::PARAM_INT);
+		$stmt->execute();
+		$permissao = $stmt->fetch(PDO::FETCH_ASSOC);
+	} catch (PDOException $e) {
+		error_log("Erro no banco (permissao): " . $e->getMessage());
+		$permissao = false;
 	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=23");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 3) {
+	if ($permissao) {
+		if ((int)$permissao['id_acao'] >= 3) {
+			$permissao = $permissao['id_acao'];
+		} else {
 			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ". WWW ."html/home.php?msg_c=$msg");
+			header("Location: " . WWW . "html/home.php?msg_c=" . urlencode($msg));
+			exit;
 		}
-		$permissao = $permissao['id_acao'];
 	} else {
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ". WWW ."html/home.php?msg_c=$msg");
+		header("Location: " . WWW . "html/home.php?msg_c=" . urlencode($msg));
+		exit;
 	}
 } else {
 	$permissao = 1;
 	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: ". WWW ."html/home.php?msg_c=$msg");
+	header("Location: " . WWW . "html/home.php?msg_c=" . urlencode($msg));
+	exit;
 }
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+
+// Headers de segurança (contra XSS, Clickjacking, etc.)
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
+header("Content-Security-Policy: default-src 'self'; script-src 'self' https://code.jquery.com; style-src 'self' 'unsafe-inline' https://use.fontawesome.com; img-src 'self' data:");
 ?>
 
 <!doctype html>
