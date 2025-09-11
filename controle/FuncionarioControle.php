@@ -834,6 +834,16 @@ class FuncionarioControle
     {
         extract($_REQUEST);
 
+        if($_SESSION['data_nasc']){
+            if(strtotime($data_expedicao) < strtotime($_SESSION['data_nasc'])){
+                session_start();
+                $_SESSION['erro'] = 'A data de expedição é anterior à do nascimento. Por favor, informa uma data válida!';
+                header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
+                exit;
+            }
+            unset($_SESSION['data_nasc']);
+        }
+
         $funcionario = new Funcionario($cpf, '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
         $funcionario->setData_admissao($data_admissao);

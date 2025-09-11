@@ -38,9 +38,12 @@ try {
       if ($func->escala) {
         $func->escala_descricao = $pdo->query("SELECT descricao FROM escala_quadro_horario WHERE id_escala=" . $func->escala)->fetch(PDO::FETCH_ASSOC)['descricao'];
       }
+      $_SESSION['data_nasc'] = $func->data_nascimento;
+      $_SESSION['data_emissao'] = $func->data_expedicao;
       $func = json_encode([$func]);
     }
   }
+
   $config_path = "config.php";
   if (file_exists($config_path)) {
     require_once($config_path);
