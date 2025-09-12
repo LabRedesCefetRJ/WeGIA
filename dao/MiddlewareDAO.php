@@ -15,12 +15,7 @@ class MiddlewareDAO{
 
         $permissao = false;
 
-        //print_r($controladorasRecursos);
-        //echo $controladora;
-
         $controladoraRecursos = $controladorasRecursos[$controladora];
-
-        //print_r($controladoraRecursos);exit;
 
         $sqlCargo = 'SELECT id_cargo FROM funcionario WHERE id_pessoa=:idPessoa';
         $stmtCargo = $this->pdo->prepare($sqlCargo);

@@ -1,4 +1,6 @@
 <?php
+header('Content-Type: text/html; charset=utf-8');
+
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
@@ -54,7 +56,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 		adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
 		if (!array_key_exists($nomeClasse, $controladorasRecursos)) {
 			throw new InvalidArgumentException('Controladora inválida', 400);
-		}
+		}   //print_r($controladoraRecursos);exit;
 
 		//Método de alterar senha é de acesso universal para todos os logados no sistema
 		if ($metodo != 'alterarSenha') {
@@ -67,7 +69,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 			}
 		}
 
-		$pathRequire = '';
+		$pathRequire = dirname(__FILE__) . DIRECTORY_SEPARATOR;
 
 		if ($modulo) {
 			$pathRequire = $modulo . DIRECTORY_SEPARATOR;
@@ -115,14 +117,14 @@ try {
 		$data = json_decode($json, true);
 
 		// Extrai as variáveis do array $data
-		$nomeClasse = $data['nomeClasse'] ?? null;
-		$metodo = $data['metodo'] ?? null;
-		$modulo = $data['modulo'] ?? null;
+		$nomeClasse = filter_var($data['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+		$metodo = filter_var($data['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+		$modulo = filter_var($data['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
 	} else {
 		// Recebe os dados do formulário normalmente
-		$nomeClasse = $_REQUEST['nomeClasse'] ?? null;
-		$metodo = $_REQUEST['metodo'] ?? null;
-		$modulo = $_REQUEST['modulo'] ?? null;
+		$nomeClasse = filter_var($_REQUEST['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+		$metodo = filter_var($_REQUEST['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+		$modulo = filter_var($_REQUEST['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
 	}
 
 	processaRequisicao($nomeClasse, $metodo, $modulo);
