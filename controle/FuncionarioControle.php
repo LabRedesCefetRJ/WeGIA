@@ -331,7 +331,7 @@ class FuncionarioControle
             $certificado_reservista_serie = '';
         }
 
-        if(strtotime($data_expedicao) < strtotime($nascimento)){
+        if(strtotime($data_expedicao) < strtotime(($nascimento))){
             session_start();
             $_SESSION['erro'] = 'A data de expedição é anterior à do nascimento. Por favor, informa uma data válida!';
             header('Location: ../html/funcionario/cadastro_funcionario.php?cpf='. $cpf);
@@ -834,11 +834,12 @@ class FuncionarioControle
     {
         extract($_REQUEST);
 
+        $formatar = new Util();
+
         if($_SESSION['data_nasc']){
-            if(strtotime($data_expedicao) < strtotime($_SESSION['data_nasc'])){
-                session_start();
-                $_SESSION['erro'] = 'A data de expedição é anterior à do nascimento. Por favor, informa uma data válida!';
-                header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
+            if(strtotime($data_expedicao) < strtotime( $formatar->formatoDataYMD( $_SESSION['data_nasc'] ) ) ){
+                echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
+                header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . $id_funcionario);
                 exit;
             }
             unset($_SESSION['data_nasc']);

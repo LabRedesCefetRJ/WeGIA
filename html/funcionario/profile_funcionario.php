@@ -63,6 +63,7 @@ try {
   require_once "../personalizacao_display.php";
   require_once "../../dao/Conexao.php";
   require_once ROOT . "/controle/FuncionarioControle.php";
+  require_once ROOT . '/classes/Util.php';
   $cpf = new FuncionarioControle;
   $cpf->listarCPF();
   require_once ROOT . "/controle/AtendidoControle.php";
@@ -1480,7 +1481,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                     <div class="panel-body">
                       <!--Documentação-->
                       <hr class="dotted short">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarDocumentacao">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarDocumentacao">
                         <div class="form-group">
@@ -1515,7 +1516,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         </div>
                         <input type="hidden" id="id_funcionario" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao" onclick="return editar_documentacao()">Editar</button>
-                        <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar" onclick="funcao3()">
+                        <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar" >
                       </form>
                     </div>
                   </section>
@@ -1784,7 +1785,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                     <div class="panel-body">
                       <!--Endereço-->
                       <hr class="dotted short">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarEndereco">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarEndereco">
                         <div class="form-group">
@@ -1843,7 +1844,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         <div class="form-group center">
                           <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                           <button type="button" class="btn btn-primary" id="botaoEditarEndereco" onclick="return editar_endereco()">Editar</button>
-                          <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar" onclick="funcao3()">
+                          <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
                         </div>
                     </div>
                     </form>
@@ -1971,7 +1972,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
       post("remuneracao.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_remuneracao);
     })
 
-    function funcao3() {
+    function funcao3(){
       var idfunc = <?= $idFuncionario ?>;
       var cpfs = <?php echo $_SESSION['cpf_funcionario']; ?>;
       var cpf_funcionario = $("#cpf").val();
@@ -1993,10 +1994,31 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
           apoio = 1;
         }
       });
+
+      const data_nasc = new Date($('#nascimento').val());
+      const data_exp = new Date($('#data_expedicao').val());
+      if(data_exp < data_nasc){
+        alert("Edição não efetuada. A data de expedição não pode ser anterior à de nascimento");
+        apoio = 1;
+      }
+      
       if (apoio == 0) {
         alert("Editado com sucesso!");
+        return true;
       }
+      return false;
     }
+
+    $('#formAlterarDocumentacao').on('submit', function(e){
+      if(!funcao3()){
+        e.preventDefault();
+      }
+    });
+    $('#formAlterarEndereco').on('submit', function(e){
+      if(!funcao3()){
+        e.preventDefault();
+      }
+    });
 
     function gerarDocFuncional() {
       url = 'documento_listar.php';
