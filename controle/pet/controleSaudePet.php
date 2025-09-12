@@ -337,4 +337,18 @@ public function listarVermifugo(){
         $saudePetDAO = new SaudePetDAO();
         return $saudePetDAO->dataAplicacao($dados);
     }
+
+    public function getHistoricoVacinacao(){
+        $input = json_decode(file_get_contents('php://input'), true);
+        $saudePetDAO = new SaudePetDAO();
+        echo json_encode($saudePetDAO->getHistoricoVacinacao($input['idpet']), JSON_UNESCAPED_UNICODE);
+
+        
+    }
+    public function getHistoricoVermifugacao(){
+    $input = json_decode(file_get_contents('php://input'), true);
+    $saudePetDAO = new SaudePetDAO();
+    echo json_encode($saudePetDAO->getHistoricoVermifugacao($input['idpet']), JSON_UNESCAPED_UNICODE);
+}
+
 }

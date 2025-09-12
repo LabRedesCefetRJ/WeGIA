@@ -474,6 +474,80 @@ public function cadastroVermifugacao($idVermifugo, $idFichaMedica, $dataVermifug
         return false;
     }
 }
+ 
+public function getHistoricoVacinacao($idPet){
+    $pdo = Conexao::connect();
+    $linhas = [];
+    try {
+        
+        $sqlFicha = "SELECT id_ficha_medica 
+                     FROM pet_ficha_medica 
+                     WHERE id_pet = :idPet ";
+        $stmtFicha = $pdo->prepare($sqlFicha);
+        $stmtFicha->bindParam(':idPet', $idPet, PDO::PARAM_INT);
+        $stmtFicha->execute();
+        $ficha = $stmtFicha->fetch(PDO::FETCH_ASSOC);
+
+        if (!$ficha) {
+            return [];
+        }
+
+        $idFichaMedica = $ficha['id_ficha_medica'];
+
+        
+        $sql = "SELECT pv.data_vacinacao, v.nome, v.marca
+                FROM pet_vacinacao pv
+                JOIN pet_vacina v ON v.id_vacina = pv.id_vacina
+                WHERE pv.id_ficha_medica = :idFichaMedica";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->execute();
+        $linhas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+        http_response_code(400);
+        die(json_encode(["Erro ao obter registros. {$e->getMessage()}"], JSON_UNESCAPED_UNICODE));
+    }
+    return $linhas;
+}
+
+public function getHistoricoVermifugacao($idPet){
+    $pdo = Conexao::connect();
+    $linhas = [];
+    try {
+        // Pegar a ficha médica do pet
+        $sqlFicha = "SELECT id_ficha_medica 
+                     FROM pet_ficha_medica 
+                     WHERE id_pet = :idPet";
+        $stmtFicha = $pdo->prepare($sqlFicha);
+        $stmtFicha->bindParam(':idPet', $idPet, PDO::PARAM_INT);
+        $stmtFicha->execute();
+        $ficha = $stmtFicha->fetch(PDO::FETCH_ASSOC);
+
+        if (!$ficha) {
+            return [];
+        }
+
+        $idFichaMedica = $ficha['id_ficha_medica'];
+
+        // Buscar histórico de vermifugação
+        $sql = "SELECT pv.data_vermifugacao, v.nome, v.marca
+                FROM pet_vermifugacao pv
+                JOIN pet_vermifugo v ON v.id_vermifugo = pv.id_vermifugo
+                WHERE pv.id_ficha_medica_vermifugo = :idFichaMedica";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->execute();
+        $linhas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e) {
+        http_response_code(400);
+        die(json_encode(["Erro ao obter registros. {$e->getMessage()}"], JSON_UNESCAPED_UNICODE));
+    }
+
+    return $linhas;
+}
 
 
 }    
+
