@@ -1,49 +1,22 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) 
+	session_start();
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: ". WWW ."html/index.php");
+	exit;
 }
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=24");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 3) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: " . WWW . "html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW . "html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW . "html/home.php?msg_c=$msg");
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 23, 3);
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
 ?>
 
 <!doctype html>
@@ -295,7 +268,7 @@ if (tecla != 8) { // Ignora o backspace
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="profileCompany">Telefone</label>
 												<div class="col-md-6">
-													<input type="text" class="form-control" minlength="12" name="telefone" id="telefone" id="profileCompany" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
+													<input type="text" class="form-control" minlength="12" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
 												</div>
 											</div>
 
