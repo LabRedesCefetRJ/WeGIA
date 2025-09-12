@@ -241,8 +241,8 @@ btnEditar.addEventListener("click", () => {
     let idPet = "";
     // Quando mudar o pet
     nomePet.addEventListener("change", async (e) => {
-        let editarFichaMedica = document.querySelector("#editarFichaMedica");
-        editarFichaMedica.disabled = false
+        let editaFichaMedica = document.querySelector("#editarFichaMedica");
+        editaFichaMedica.disabled = false
         let descricao = document.querySelector("#despacho");
         descricao.textContent = "";
 
@@ -267,6 +267,9 @@ btnEditar.addEventListener("click", () => {
                 if(dados['castrado'] === 'S') castradoS.checked = true;
                 else castradoN.checked = true;
             }
+            else{
+              editarFichaMedica();
+            }
 
         } catch (erro) {
             alert("Erro ao carregar pets: " + erro);
@@ -287,11 +290,10 @@ btnEditar.addEventListener("click", () => {
         modulo: "pet"
     };
 
-    console.log(fichaMedica);
-
+    
     let idFicha = document.querySelector("#idFichaMedica").value;
 
-    if (idFicha > 0) {
+
         const url = "../../controle/control.php";
         const opcoes = {
             method: 'POST',
@@ -310,7 +312,7 @@ btnEditar.addEventListener("click", () => {
             }
 
             let info = await resposta.json();
-            console.log(info);
+         
 
             // Se o backend retornar {status: "sucesso"}, recarrega a página
             if (info.status && info.status.toLowerCase() === "sucesso") {
@@ -322,7 +324,7 @@ btnEditar.addEventListener("click", () => {
         } catch (erro) {
             alert("Erro ao salvar ficha médica: " + erro);
         }
-    }
+    
 });
 
 });
@@ -470,7 +472,8 @@ btnEditar.addEventListener("click", () => {
                                             </div>
                                         </div>
                                     </section> 
-                                </div>      <!-- </form> -->
+                                    </form>
+                                </div>      
                             </div> 
                         </div>
                     </div>

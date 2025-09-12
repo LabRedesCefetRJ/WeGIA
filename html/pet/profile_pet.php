@@ -336,6 +336,7 @@ if (isset($_GET['id_pet'])) {
 };
 
 
+
   function editar_ficha_medica() {
     // Habilita os campos
     document.getElementById('castradoS').disabled = false;
@@ -353,7 +354,7 @@ if (isset($_GET['id_pet'])) {
 
   function cancelar_ficha_medica() {
     // Restaura valores antigos
-    if (fichaMedica.castrado === "S") {
+    if (fichaMedica.castrado === "s") {
       document.getElementById('castradoS').checked = true;
       document.getElementById('castradoN').checked = false;
     } else {
@@ -627,7 +628,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             nomeClasse: "controleSaudePet",
             modulo: "pet"
         };
-        console.log(fichaMedica);
+   
         
         
             const url = "../../controle/control.php";
@@ -766,32 +767,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const lista = document.createElement("ul");
       dados.medicamentos.forEach(med => {
-        const li = document.createElement("li");
+      const li = document.createElement("li");
 
-        // Nome do medicamento
-        const nome = document.createElement("strong");
-        nome.textContent = (med.nome_medicamento || "Medicamento") + ": ";
-        li.appendChild(nome);
+      // Nome
+      const nome = document.createElement("div");
+      nome.innerHTML = `<strong>Nome:</strong> ${med.nome_medicamento || "Medicamento"}`;
+      li.appendChild(nome);
 
-        // Aplicação
-        if (med.aplicacao) {
-          li.appendChild(document.createTextNode(med.aplicacao));
-        }
+      // Aplicação
+      const aplicacao = document.createElement("div");
+      aplicacao.innerHTML = `<strong>Aplicação:</strong> ${med.aplicacao || "Não informada"}`;
+      li.appendChild(aplicacao);
 
-        li.appendChild(document.createElement("br"));
+      // Descrição (na mesma linha)
+      const descricao = document.createElement("div");
+      descricao.innerHTML = `<strong>Descrição:</strong> ${decodeHtml(med.descricao_medicamento || "")}`;
+      li.appendChild(descricao);
 
-        // Descrição do medicamento com tags interpretadas e decodificadas
-        const em = document.createElement("em");
-        em.textContent = "Descrição:";
-        li.appendChild(em);
-        li.appendChild(document.createTextNode(" "));
+      lista.appendChild(li);
+    });
 
-        const descMed = document.createElement("span");
-        descMed.innerHTML = decodeHtml(med.descricao_medicamento || "");
-        li.appendChild(descMed);
-
-        lista.appendChild(li);
-      });
 
       body.appendChild(lista);
 
@@ -945,14 +940,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                   <li>
                     <a href="#atendimento" data-toggle="tab">Atendimento</a>
                   </li>
-                  <!--
+                  
                   <li>
                     <a href="#historico_medico" data-toggle="tab">Histórico Médico</a>
                   </li>
                   <li>
                     <a href="#arquivosPet" data-toggle="tab">Exames do Pet</a>
                   </li>
-                    -->
+                    
                   <li>
                     <a href="#adocao" data-toggle="tab">Adoção</a>
                   </li>
@@ -1197,13 +1192,13 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
                         <div class="col-md-8">
                             <label>
-                                <input type="radio" name="castrado" id="castradoS" value="S" style="margin-top: 10px; margin-left: 15px;"
-                                <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 'S') echo 'checked'; ?> required>
+                                <input type="radio" name="castrado" id="castradoS" value="s" style="margin-top: 10px; margin-left: 15px;"
+                                <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 's') echo 'checked'; ?> required>
                                 <i class="fa" style="font-size: 20px;">Sim</i>
                             </label>
                             <label>
-                                <input type="radio" name="castrado" id="castradoN" value="N" style="margin-top: 10px; margin-left: 15px;"
-                                <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'N') echo 'checked'; ?> required>
+                                <input type="radio" name="castrado" id="castradoN" value="n" style="margin-top: 10px; margin-left: 15px;"
+                                <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'n') echo 'checked'; ?> required>
                                 <i class="fa" style="font-size: 20px;">Não</i>
                             </label>
                         </div>
@@ -1311,22 +1306,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         </form>
                       </div>
                   </section>   
-                <div id="historicoAtendimento" class="tab-pane">
-                  <section class="panel">
-                      <header class="panel-heading">
-                          <div class="panel-actions">
-                              <a href="#" class="fa fa-caret-down"></a>
-                          </div>
-                          <h2 class="panel-title">Histórico de Atendimento</h2>
-                      </header>
-                      <div id="divHistoricoAtendimento" class="panel-body">
-
-            
-
-        </div>
-    </section>
-</div>
-
+              
             </div>    
             
                 <!-- fim atendimento -->
@@ -1340,26 +1320,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                       </div>
                       <h2 class="panel-title">Histórico Médico</h2>
                     </header>
-               
+
                     <div class="panel-body">
                       <hr class="dotted short">
-                      <div class="form-group" id="tab_atendimento" >
-                      <table class="table table-bordered table-striped mb-none">
-                        <thead>
-                          <tr style="font-size:15px;">
-                            <th>Data do atendimento</th>
-                            <th>Descrições</th>
-                            <th>Ação</th>
-                          </tr>
-                        </thead>
-                        <tbody id="tab_historico" style="font-size:15px">                
-                            
-                        </tbody>
-                      </table>                
-                      </div>          
+                      <div class="form-group" id="tab_atendimento">
+                        <div id="divHistoricoAtendimento" class="panel-body">
+                          <!-- Conteúdo do histórico médico será carregado aqui -->
+                        </div>
+                      </div>
                     </div>
                   </section>
                 </div>
+
                 <!-- fim historico medico -->
 
                 <!-- Adoção -->
@@ -1563,7 +1535,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         id_ficha_medica.value = resp[0].id_ficha_medica;
 
          if(resp[0].necessidades_especiais){
-           console.log(resp[0].necessidades_especiais);
+           
            let infoPet = resp[0].necessidades_especiais;
            infoPet = infoPet.replace("<p>", '');
            infoPet = infoPet.replace("</p>", '');
@@ -1705,7 +1677,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ).then(
         resp=>{
           let atendimento = resp;
-          //console.log(resp);
+          
           atendimento.forEach( valor =>{
             let data = valor['data_atendimento'].split('-');
             tabAtendimento.innerHTML += `

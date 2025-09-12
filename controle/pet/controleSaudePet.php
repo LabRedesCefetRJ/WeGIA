@@ -88,6 +88,161 @@ class controleSaudePet
         return $saudePet;
     }
 
+    public function cadastroVacinacao(){
+        // Pega os dados enviados via JSON
+        $input = json_decode(file_get_contents('php://input'), true);
+
+        $idVacina = $input['idVacina'] ?? null;
+        $idFichaMedica = $input['idFichaMedica'] ?? null;
+        $dataVacinacao = $input['dataVacinacao'] ?? null;
+
+        // Validação básica
+        if (!isset($idVacina) || !isset($idFichaMedica) || !isset($dataVacinacao)) {
+            http_response_code(400);
+            die(json_encode([
+                'status' => 'erro',
+                'mensagem' => 'Alguma informação não foi enviada'
+            ]));
+        }
+
+        $saudePetDao = new SaudePetDao();
+
+        // Chama o método DAO para inserir no banco
+        $resultado = $saudePetDao->cadastroVacinacao($idVacina, $idFichaMedica, $dataVacinacao);
+
+        if ($resultado > 0) {
+            http_response_code(200);
+            die(json_encode([
+                'status' => 'sucesso',
+                'mensagem' => 'Vacinação registrada com sucesso'
+            ]));
+        } else {
+            http_response_code(500);
+            die(json_encode([
+                'status' => 'erro',
+                'mensagem' => 'Erro ao registrar vacinação no banco'
+            ]));
+        }
+    }
+
+
+    public function cadastroVacina(){
+        $input = json_decode(file_get_contents('php://input'), true);
+        $nome = $input['nomeVacina'];
+        $marca = $input['marcaVacina'];
+        
+       if (!isset($nome) || !isset($marca)) {
+        http_response_code(400);
+        die(json_encode([
+            'status' => 'erro',
+            'mensagem' => 'Alguma informação não foi enviada'
+        ]));
+    }
+
+    $saudePetDao = new SaudePetDao();
+    if ($saudePetDao->cadastroVacina($nome, $marca) > 0) {
+        http_response_code(200);
+        die(json_encode([
+            'status' => 'sucesso',
+            'mensagem' => 'Informação Inserida com Sucesso'
+        ]));
+    } else {
+        http_response_code(500);
+        die(json_encode([
+            'status' => 'erro',
+            'mensagem' => 'Erro ao inserir no banco'
+        ]));
+    }
+
+    }
+
+    public function listarVacina(){
+        
+        
+        header("Content-Type: application/json; charset=utf-8");
+        
+        $saudePetDao = new SaudePetDAO();
+
+        
+
+        $registros = $saudePetDao->listarVacina();
+        http_response_code(200);
+        echo json_encode($registros, JSON_UNESCAPED_UNICODE);
+    
+    }
+
+    public function cadastroVermifugacao(){
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    $idVermifugo = $input['idVermifugo'] ?? null;
+    $idFichaMedica = $input['idFichaMedica'] ?? null;
+    $dataVermifugacao = $input['dataVermifugacao'] ?? null;
+
+    if (!isset($idVermifugo) || !isset($idFichaMedica) || !isset($dataVermifugacao)) {
+        http_response_code(400);
+        die(json_encode([
+            'status' => 'erro',
+            'mensagem' => 'Alguma informação não foi enviada'
+        ]));
+    }
+
+    $saudePetDao = new SaudePetDao();
+    $resultado = $saudePetDao->cadastroVermifugacao($idVermifugo, $idFichaMedica, $dataVermifugacao);
+
+    if ($resultado > 0) {
+        http_response_code(200);
+        die(json_encode([
+            'status' => 'sucesso',
+            'mensagem' => 'Vermifugação registrada com sucesso'
+        ]));
+    } else {
+        http_response_code(500);
+        die(json_encode([
+            'status' => 'erro',
+            'mensagem' => 'Erro ao registrar vermifugacao no banco'
+        ]));
+    }
+}
+
+public function cadastroVermifugo(){
+    $input = json_decode(file_get_contents('php://input'), true);
+    $nome = $input['nomeVermifugo'] ?? null;
+    $marca = $input['marcaVermifugo'] ?? null;
+
+    if (!isset($nome) || !isset($marca)) {
+        http_response_code(400);
+        die(json_encode([
+            'status' => 'erro',
+            'mensagem' => 'Alguma informação não foi enviada'
+        ]));
+    }
+
+    $saudePetDao = new SaudePetDao();
+    if ($saudePetDao->cadastroVermifugo($nome, $marca) > 0) {
+        http_response_code(200);
+        die(json_encode([
+            'status' => 'sucesso',
+            'mensagem' => 'Informação inserida com sucesso'
+        ]));
+    } else {
+        http_response_code(500);
+        die(json_encode([
+            'status' => 'erro',
+            'mensagem' => 'Erro ao inserir no banco'
+        ]));
+    }
+}
+
+public function listarVermifugo(){
+    header("Content-Type: application/json; charset=utf-8");
+    
+    $saudePetDao = new SaudePetDAO();
+    $registros = $saudePetDao->listarVermifugo();
+
+    http_response_code(200);
+    echo json_encode($registros, JSON_UNESCAPED_UNICODE);
+}
+
     
     public function listarTodos(){
         extract($_REQUEST);
@@ -127,16 +282,13 @@ class controleSaudePet
     
         if (!$dados) {
             // sempre retorna um objeto JSON válido
-            $dados = [
-                "id_ficha_medica" => null,
-                "necessidades_especiais" => "",
-                "castrado" => ""
-            ];
+            $dados = "";
+                
         }
     
         echo json_encode($dados);
     }
-    
+  
     
 
     public function fichaMedicaPetExiste($id){

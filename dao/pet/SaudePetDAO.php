@@ -359,4 +359,121 @@ class SaudePetDAO
             return false;
         }
     }
+
+        
+    public  function cadastroVacina($nome, $marca) {
+            // A conexão PDO deve estar disponível
+            $pdo = Conexao::connect();
+
+            try {
+                // Prepara a query de inserção
+                $stmt = $pdo->prepare("INSERT INTO pet_vacina (nome, marca) VALUES (:nome, :marca)");
+                
+                // Faz o bind dos parâmetros
+                $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
+                $stmt->bindParam(':marca', $marca, PDO::PARAM_STR);
+
+                // Executa a query
+                $stmt->execute();
+
+                // Retorna o ID do último item inserido
+                return intval($pdo->lastInsertId());
+
+            } catch (PDOException $e) {
+                // Em caso de erro, loga e retorna false
+                error_log("Erro ao cadastrar vacina: " . $e->getMessage());
+                return false;
+            }
+            
+}
+
+    public function listarVacina(){
+        $linhas = [];
+        $pdo = Conexao::connect();
+        try{
+            $sql = "SELECT * 
+                    FROM pet_vacina";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute();
+            $linhas = $stmt->fetchAll( PDO::FETCH_ASSOC );
+            return $linhas;
+        }catch(PDOException $e){
+            echo 'Error:' . $e->getMessage();
+        }
+    }
+
+    public function cadastroVacinacao($idVacina, $idFichaMedica, $dataVacinacao) {
+    // A conexão PDO deve estar disponível
+    $pdo = Conexao::connect();
+
+    try {
+        // Prepara a query de inserção
+        $stmt = $pdo->prepare("INSERT INTO pet_vacinacao (id_vacina, id_ficha_medica, data_vacinacao) 
+                               VALUES (:id_vacina, :id_ficha_medica, :data_vacinacao)");
+        
+        // Faz o bind dos parâmetros
+        $stmt->bindParam(':id_vacina', $idVacina, PDO::PARAM_INT);
+        $stmt->bindParam(':id_ficha_medica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->bindParam(':data_vacinacao', $dataVacinacao, PDO::PARAM_STR);
+
+        // Executa a query
+        $stmt->execute();
+
+        // Retorna o ID do último item inserido
+        return intval($pdo->lastInsertId());
+
+    } catch (PDOException $e) {
+        // Em caso de erro, loga e retorna false
+        error_log("Erro ao cadastrar vacinação: " . $e->getMessage());
+        return false;
+    }
+}
+
+public function cadastroVermifugo($nome, $marca) {
+    $pdo = Conexao::connect();
+
+    try {
+        $stmt = $pdo->prepare("INSERT INTO pet_vermifugo (nome, marca) VALUES (:nome, :marca)");
+        $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
+        $stmt->bindParam(':marca', $marca, PDO::PARAM_STR);
+        $stmt->execute();
+        return intval($pdo->lastInsertId());
+    } catch (PDOException $e) {
+        error_log("Erro ao cadastrar vermifugo: " . $e->getMessage());
+        return false;
+    }
+}
+
+public function listarVermifugo() {
+    $linhas = [];
+    $pdo = Conexao::connect();
+    try {
+        $sql = "SELECT * FROM pet_vermifugo";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $linhas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $linhas;
+    } catch (PDOException $e) {
+        echo 'Error: ' . $e->getMessage();
+    }
+}
+
+public function cadastroVermifugacao($idVermifugo, $idFichaMedica, $dataVermifugacao) {
+    $pdo = Conexao::connect();
+
+    try {
+        $stmt = $pdo->prepare("INSERT INTO pet_vermifugacao (id_vermifugo, id_ficha_medica_vermifugo, data_vermifugacao) 
+                               VALUES (:id_vermifugo, :id_ficha_medica, :data_vermifugacao)");
+        $stmt->bindParam(':id_vermifugo', $idVermifugo, PDO::PARAM_INT);
+        $stmt->bindParam(':id_ficha_medica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->bindParam(':data_vermifugacao', $dataVermifugacao, PDO::PARAM_STR);
+        $stmt->execute();
+        return intval($pdo->lastInsertId());
+    } catch (PDOException $e) {
+        error_log("Erro ao cadastrar vermifugação: " . $e->getMessage());
+        return false;
+    }
+}
+
+
 }    
