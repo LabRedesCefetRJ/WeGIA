@@ -33,7 +33,7 @@ if (!isset($_SESSION['unidade'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
 }
 if (!isset($_SESSION['categoria'])) {
-	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=' . WWW . 'html/matPat/cadastro_produto.php');
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/cadastro_produto.php');
 }
 if (isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
 	extract($_SESSION);
@@ -105,10 +105,10 @@ $dadosForm = $_SESSION['form_produto'];
 	<script>
 		$(function() {
 			const categoria = <?php
-							echo htmlspecialchars($categoria);
+							echo $categoria;
 							?>;
 			const unidade = <?php
-							echo htmlspecialchars($unidade);
+							echo $unidade;
 							?>;
 			$.each(categoria, function(i, item) {
 				if (atualizarSelect('id_categoria') == item.id_categoria_produto) {
