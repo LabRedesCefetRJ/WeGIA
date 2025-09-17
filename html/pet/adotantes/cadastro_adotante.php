@@ -494,7 +494,7 @@ if ($existe > 0) {
 
       <!-- SCRIPTS  -->  
       <script defer>
-  document.getElementById('imgform').addEventListener('change', function(event) {
+  /*document.getElementById('imgform').addEventListener('change', function(event) {
   const input = event.target;
   const preview = document.getElementById('previewImagemPessoa');
   const hiddenBase64 = document.getElementById('imagem_base64'); // <-- campo hidden
@@ -521,7 +521,7 @@ if ($existe > 0) {
     // Limpa o campo hidden
     hiddenBase64.value = "";
   }
-});
+});*/
 
         // Limita o número de caracteres do input com id "numero_endereco"
         var inputDoNumeroResidencial = document.getElementById("numero_endereco");
@@ -532,7 +532,7 @@ if ($existe > 0) {
         });
 
         // Adiciona a imagem do adotante
-        const image_input = document.querySelector(".image_input");
+       /* const image_input = document.querySelector(".image_input");
         var uploaded_image;
 
         image_input.addEventListener('change', function() {
@@ -542,7 +542,7 @@ if ($existe > 0) {
             document.querySelector("#display_image").style.backgroundImage = `url(${uploaded_image})`;
           });
           reader.readAsDataURL(this.files[0]);
-        });
+        });*/
 
         function okDisplay() {
           document.getElementById("okButton").style.backgroundColor = "#0275d8"; //azul

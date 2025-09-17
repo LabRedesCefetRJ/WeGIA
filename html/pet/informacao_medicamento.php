@@ -203,8 +203,7 @@ require_once ROOT . "/html/personalizacao_display.php";
         $(function() {
             var pet = JSON.parse('<?php echo json_encode($nomesCertos, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>');
             $.each(pet, function(i, item) {
-                console.log("ID: " + item.id_pet);
-                console.log("NOME: " + item.nome);
+               
                 $("#destinatario")
                 .append($("<option>").val(item.id_pet).text(item.nome));
             });
@@ -421,7 +420,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             if (valor.id_medicamento == nomeMedicamento.value) {
                                 aplicacao.value = valor.aplicacao;
                                 editor.setData(decodeHtml(valor.descricao_medicamento));
-                                console.log(valor.descricao_medicamento);
+                               
                             }
                         })
                     })

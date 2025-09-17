@@ -413,7 +413,7 @@ if (isset($_GET['msg'])) {
       }
       //=============================
       data = 'raca=' + raca;
-      console.log(data);
+    
       $.ajax({
         type: "POST",
         url: url,
@@ -468,7 +468,7 @@ if (isset($_GET['msg'])) {
       //============================
 
       data = 'especie=' + especie;
-      console.log(data);
+      
       $.ajax({
         type: "POST",
         url: url,
@@ -524,7 +524,7 @@ if (isset($_GET['msg'])) {
       //====================================
 
       data = 'cor=' + cor;
-      console.log(data);
+      
       $.ajax({
         type: "POST",
         url: url,
@@ -614,7 +614,7 @@ if (isset($_GET['msg'])) {
       var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo $_SESSION['cpf_interno']; ?>);
       var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>);
       var cpf = (($("#cpf").val()).replaceAll(".", "")).replaceAll("-", "");
-      console.log(this);
+
       $.each(cpf_cadastrado, function(i, item) {
         if (item.cpf == cpf) {
           alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");

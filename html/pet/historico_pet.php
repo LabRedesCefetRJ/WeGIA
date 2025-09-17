@@ -285,7 +285,7 @@
                         let ids = [];
 
                         tabMedic.forEach( (valor,i) => {
-							console.log(!valor.data_medicacao);
+							
                             
                             if( !valor.data_medicacao === true){
                         		data_medicacao = 'A aplicar';
