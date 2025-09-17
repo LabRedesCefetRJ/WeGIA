@@ -351,4 +351,55 @@ public function listarVermifugo(){
     echo json_encode($saudePetDAO->getHistoricoVermifugacao($input['idpet']), JSON_UNESCAPED_UNICODE);
 }
 
+public function cadastroTipoExame() {
+    // pega o JSON enviado pelo fetch
+    $input = json_decode(file_get_contents('php://input'), true);
+    $descricao = $input['descricaoExame'] ?? null;
+
+    if (!$descricao) {
+        http_response_code(400);
+        echo json_encode([
+            'status'   => 'erro',
+            'mensagem' => 'Descrição do exame não foi enviada'
+        ]);
+        return;
+    }
+
+    try {
+        $saudePetDAO = new SaudePetDAO();
+        $id = $saudePetDAO->adicionarTipoExame($descricao);
+        $lista = $saudePetDAO->listarTipoExame();
+
+        echo json_encode([
+            'status' => 'sucesso',
+            'id'     => $id,
+            'dados'  => $lista
+        ]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode([
+            'status'   => 'erro',
+            'mensagem' => $e->getMessage()
+        ]);
+    }
+}
+    public function listarTipoExame(){
+         
+        header("Content-Type: application/json; charset=utf-8");
+        try{
+        $saudePetDao = new SaudePetDAO();
+
+        $registros = $saudePetDao->listarTipoExame();
+        http_response_code(200);
+        echo json_encode($registros, JSON_UNESCAPED_UNICODE);
+        }catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode([
+            'status'   => 'erro',
+            'mensagem' => $e->getMessage()
+        ]);
+    }
+        
+    }
+
 }

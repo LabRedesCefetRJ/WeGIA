@@ -245,7 +245,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         hiddenInput.name = "idFichaMedica";
         hiddenInput.id = "idFichaMedica";
         hiddenInput.value = idFichaMedica;
-        console.log(hiddenInput);
+    
         // botão enviar
         const enviarBtn = document.createElement("input");
         enviarBtn.type = "submit";
@@ -518,7 +518,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             hiddenInput.name = "idFichaMedica";
             hiddenInput.id = "idFichaMedicaVermifugo";
             hiddenInput.value = idFichaMedica;
-            console.log(hiddenInput);
+      
 
             const enviarBtn = document.createElement("input");
             enviarBtn.type = "submit";
@@ -588,7 +588,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
  
 
-    let idFicha = document.querySelector("#idFichaMedica").value;
+    //let idFicha = document.querySelector("#idFichaMedica").value;
 
     const url = "../../controle/control.php";
     const opcoes = {
@@ -635,7 +635,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             modulo: "pet"
         };
         
-        console.log(vermifugacaoPet);
+      
         const url = "../../controle/control.php";
         const opcoes = {
             method: 'POST',
@@ -765,7 +765,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" style="padding-left:29px;">Vacina <sup class="obrig">*</sup></label>
                                                 <div class="col-md-6" style="display: flex; align-items: center; gap: 5px;">
-                                                    <select class="form-control input-lg mb-md" name="vacina" id="vacina" style="flex:1;" disabled></select>
+                                                    <select class="form-control input-lg mb-md" name="vacina" id="vacina" style="flex:1;" disabled required></select>
                                                     <a href="#" data-target="#docFormModal" title="Adicionar Vacina" id="btnModal" style="padding:0 12px; display:flex; align-items:center;">
                                                         <i class="fas fa-plus w3-xlarge"></i>
                                                     </a>
@@ -774,7 +774,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="dataDeVacinacao">Data de Vacinação<sup class="obrig">*</sup></label>
                                                 <div class="col-md-8">
-                                                    <input type="date" class="form-control" name="dataDeVacinacao" id="dataDeVacinacao" max=<?php echo date('Y-m-d'); ?> disabled>
+                                                    <input type="date" class="form-control" name="dataDeVacinacao" id="dataDeVacinacao" max=<?php echo date('Y-m-d'); ?> disabled required>
                                                 </div>
                                             </div>
                                             <br>
@@ -813,7 +813,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" style="padding-left:29px;">Vermífugo <sup class="obrig">*</sup></label>
                                                 <div class="col-md-6" style="display: flex; align-items: center; gap: 5px;">
-                                                    <select class="form-control input-lg mb-md" name="vermifugo" id="vermifugo" style="flex:1;" disabled></select>
+                                                    <select class="form-control input-lg mb-md" name="vermifugo" id="vermifugo" style="flex:1;" disabled required></select>
                                                     <a href="#" data-target="#docFormModalVermifugo" title="Adicionar Vermífugo" id="btnModalVermifugo" style="padding:0 12px; display:flex; align-items:center;">
                                                         <i class="fas fa-plus w3-xlarge"></i>
                                                     </a>
@@ -822,7 +822,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="dataDeVermifugacao">Data de Vermifugação<sup class="obrig">*</sup></label>
                                                 <div class="col-md-8">
-                                                    <input type="date" class="form-control" name="dataDeVermifugacao" id="dataDeVermifugacao" max=<?php echo date('Y-m-d'); ?> disabled>
+                                                    <input type="date" class="form-control" name="dataDeVermifugacao" id="dataDeVermifugacao" max=<?php echo date('Y-m-d'); ?> disabled required>
                                                 </div>
                                             </div>
                                             <br>

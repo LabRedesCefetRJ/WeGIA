@@ -181,7 +181,7 @@ function editarFichaMedica() {
 // Função para cancelar edição e restaurar valores
 function cancelarFichaMedica() {
     despacho.value = dados.necessidades_especiais || "";
-    if (dados.castrado === "S") {
+    if (dados.castrado === "s") {
         castradoS.checked = true;
         castradoN.checked = false;
     } else {
@@ -264,7 +264,7 @@ btnEditar.addEventListener("click", () => {
 
                 descricao.textContent = dados['necessidades_especiais'];
 
-                if(dados['castrado'] === 'S') castradoS.checked = true;
+                if(dados['castrado'] === 's') castradoS.checked = true;
                 else castradoN.checked = true;
             }
             else{

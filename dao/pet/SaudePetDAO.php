@@ -547,7 +547,24 @@ public function getHistoricoVermifugacao($idPet){
 
     return $linhas;
 }
+    public function adicionarTipoExame($descricao) {
+        $pdo = Conexao::connect();
 
+        $sql = "INSERT INTO pet_tipo_exame(descricao_exame) VALUES (:tipoExame)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':tipoExame', $descricao);
+        $stmt->execute();
+
+        return $pdo->lastInsertId(); // retorna o ID do novo registro
+    }
+
+    public function listarTipoExame() {
+        $pdo = Conexao::connect();
+
+        $sql = "SELECT id_tipo_exame, descricao_exame FROM pet_tipo_exame";
+        $stmt = $pdo->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
 }    
 
