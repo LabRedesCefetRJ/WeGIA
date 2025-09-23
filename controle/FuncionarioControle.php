@@ -614,17 +614,34 @@ class FuncionarioControle
                 throw new InvalidArgumentException('O valor do id da ação informado não é válido.', 400);
             }
 
-            if (!$recursos || $recursos < 1) {
-                throw new InvalidArgumentException('Os valores de id dos recursos informados não são válidos.', 400);
-            }
-
             $pdo = Conexao::connect();
             $permissao = new PermissaoDAO($pdo);
 
             $pdo->beginTransaction();
-            if (!$permissao->adicionarPermissao($cargo, $acao, $recursos)) {
-                throw new Exception('Falha no controle de transação', 500);
+
+            // permissões atuais no banco
+            $permissoesBd = $permissao->getPermissoesByCargo($cargo);
+            $recursosBd = $permissoesBd ? array_column($permissoesBd, 'id_recurso') : [];
+
+            // normalizar para int
+            $recursos = array_map('intval', $recursos);
+
+            // calcular diferenças
+            $inserirPermissoes = array_diff($recursos, $recursosBd);
+            $removerPermissoes = array_diff($recursosBd, $recursos);
+
+            // remove permissões desmarcadas
+            if (!empty($removerPermissoes)) {
+                $permissao->removePermissoesByCargo($cargo, $removerPermissoes);
             }
+
+            // adiciona novas permissões
+            if (!empty($inserirPermissoes)) {
+                if (!$permissao->adicionarPermissao($cargo, $acao, $inserirPermissoes)) {
+                    throw new Exception('Falha no controle de transação', 500);
+                }
+            }
+
             $pdo->commit();
 
             header('Location:' . '../html/geral/editar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
@@ -642,6 +659,7 @@ class FuncionarioControle
             }
         }
     }
+
 
     public function selecionarCadastro()
     {
