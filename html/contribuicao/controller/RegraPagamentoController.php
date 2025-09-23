@@ -61,7 +61,7 @@ class RegraPagamentoController
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
-            
+
             Util::tratarException($e);
         }
     }
@@ -99,15 +99,36 @@ class RegraPagamentoController
         $regraContribuicaoId = $_POST['regra-pagamento'];
         $valor = $_POST['valor'];
         try {
-            $regraPagamento = new RegraPagamento();
+            $this->pdo->beginTransaction();
+            $regraPagamento = new RegraPagamento($this->pdo);
             $regraPagamento
                 ->setMeioPagamentoId($meioPagamentoId)
                 ->setRegraContribuicaoId($regraContribuicaoId)
                 ->setValor($valor)
                 ->setStatus(0)
                 ->cadastrar();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Cadastro de regras de pagamento.');
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/regra_pagamento.php?msg=cadastrar-falha");
+                exit();
+            }
+
+            $this->pdo->commit();
             header("Location: ../view/regra_pagamento.php?msg=cadastrar-sucesso");
         } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=cadastrar-falha");
         }
     }
