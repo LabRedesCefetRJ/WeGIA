@@ -2,9 +2,24 @@
 
 require_once '../model/RegraPagamento.php';
 require_once '../dao/RegraPagamentoDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'SistemaLog.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class RegraPagamentoController
 {
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        if (is_null($pdo)) {
+            $this->pdo = ConexaoDAO::conectar();
+        } else {
+            $this->pdo = $pdo;
+        }
+    }
+
     /**
      * Retorna as regras de contribuição presentes no sistema
      */
@@ -20,9 +35,35 @@ class RegraPagamentoController
      */
     public function buscaConjuntoRegrasPagamento()
     {
-        $regraPagamentoDao = new RegraPagamentoDAO();
-        $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamento();
-        return $conjuntoRegrasPagamento;
+        try {
+            $this->pdo->beginTransaction();
+            $regraPagamentoDao = new RegraPagamentoDAO($this->pdo);
+            $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamento();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            if (isset($_SESSION['id_pessoa'])) {
+                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de regras de pagamento.');
+
+                $sistemaLogDao = new SistemaLogDAO($this->pdo);
+                if (!$sistemaLogDao->registrar($sistemaLog)) {
+                    $this->pdo->rollBack();
+                    exit();
+                }
+            }
+
+            $this->pdo->commit();
+
+            return $conjuntoRegrasPagamento;
+        } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            
+            Util::tratarException($e);
+        }
     }
 
     /**
