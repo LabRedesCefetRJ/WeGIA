@@ -138,19 +138,39 @@ class RegraPagamentoController
      */
     public function excluirPorId()
     {
-        $regraPagamentoId = trim($_POST['regra-pagamento-id']);
-
-        if (!$regraPagamentoId || empty($regraPagamentoId) || $regraPagamentoId < 1) {
-            //parar operação
-            header("Location: ../view/regra_pagamento.php?msg=excluir-falha#mensagem-tabela");
-            exit();
-        }
+        $regraPagamentoId = filter_input(INPUT_POST, 'regra-pagamento-id', FILTER_SANITIZE_NUMBER_INT);
 
         try {
-            $regraPagamentoDao = new RegraPagamentoDAO();
+            if (!$regraPagamentoId || empty($regraPagamentoId) || $regraPagamentoId < 1) {
+                throw new InvalidArgumentException('O id informado não é válido.', 400);
+            }
+
+            $this->pdo->beginTransaction();
+            $regraPagamentoDao = new RegraPagamentoDAO($this->pdo);
             $regraPagamentoDao->excluirPorId($regraPagamentoId);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Exclusão de regras de pagamento.');
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/regra_pagamento.php?msg=cadastrar-falha");
+                exit();
+            }
+
+            $this->pdo->commit();
+
             header("Location: ../view/regra_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
         } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=excluir-falha#mensagem-tabela");
         }
     }
