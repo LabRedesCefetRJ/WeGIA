@@ -222,35 +222,55 @@ class RegraPagamentoController
      */
     public function alterarStatus()
     {
-        $regraPagamentoId = $_POST['id'];
-        $status = trim($_POST['status']);
-
-        if (!$regraPagamentoId || empty($regraPagamentoId)) {
-            http_response_code(400);
-            echo json_encode(['Erro' => 'O id deve ser maior ou igual a 1.']);
-            exit;
-        }
-
-        if (!$status || empty($status)) {
-            http_response_code(400);
-            echo json_encode(['Erro' => 'O status informado não é válido.']);
-            exit;
-        }
-
-        if ($status === 'true') {
-            $status = 1;
-        } elseif ($status === 'false') {
-            $status = 0;
-        }
+        $regraPagamentoId = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+        $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
-            $regraPagamentoDao = new RegraPagamentoDAO();
+            if (!$regraPagamentoId || empty($regraPagamentoId)) {
+                throw new InvalidArgumentException('O id deve ser maior ou igual a 1.', 400);
+            }
+
+            if (!$status || empty($status)) {
+                throw new InvalidArgumentException('O status informado não é válido.', 400);
+            }
+
+            $descricao = "A regra de pagamento de id $regraPagamentoId foi ";
+
+            if ($status === 'true') {
+                $status = 1;
+                $descricao .= 'ativada.';
+            } elseif ($status === 'false') {
+                $status = 0;
+                $descricao .= 'desativada.';
+            }
+
+            $this->pdo->beginTransaction();
+            $regraPagamentoDao = new RegraPagamentoDAO($this->pdo);
             $regraPagamentoDao->alterarStatusPorId($status, $regraPagamentoId, $status);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "$descricao");
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/regra_pagamento.php?msg=editar-falha#mensagem-tabela");
+                exit();
+            }
+
+            $this->pdo->commit();
+
             echo json_encode(['Sucesso']);
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['Erro' => 'Ocorreu um problema no servidor.']);
-            exit;
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
+            header("Location: ../view/regra_pagamento.php?msg=editar-falha#mensagem-tabela");
         }
     }
 }
