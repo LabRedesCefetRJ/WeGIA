@@ -160,16 +160,37 @@ class MeioPagamentoController
      */
     public function editarPorId()
     {
-        $descricao = $_POST['nome'];
-        $gatewayId = $_POST['plataforma'];
-        $meioPagamentoId = $_POST['id'];
+        $descricao = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+        $gatewayId = filter_input(INPUT_POST, 'plataforma', FILTER_SANITIZE_SPECIAL_CHARS);
+        $meioPagamentoId = filter_input(INPUT_POST, 'id');
 
         try {
+            $this->pdo->beginTransaction();
             $meioPagamento = new MeioPagamento($descricao, $gatewayId);
             $meioPagamento->setId($meioPagamentoId);
             $meioPagamento->editar();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração do meio de pagamento de id {$meioPagamento->getId()}.");
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/meio_pagamento.php?msg=editar-falha#mensagem-tabela");
+                exit();
+            }
+
+            $this->pdo->commit();
             header("Location: ../view/meio_pagamento.php?msg=editar-sucesso#mensagem-tabela");
         } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=editar-falha#mensagem-tabela");
         }
     }
