@@ -153,7 +153,7 @@ class RegraPagamentoController
                 session_start();
             }
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Exclusão de regras de pagamento.');
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão da regra de pagamento de id $regraPagamentoId.");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -180,17 +180,39 @@ class RegraPagamentoController
      */
     public function editarPorId()
     {
-        $valor = $_POST['valor'];
-        $regraPagamentoId = $_POST['id'];
+        $valor = filter_input(INPUT_POST, 'valor', FILTER_SANITIZE_NUMBER_FLOAT);
+        $regraPagamentoId = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
 
         try {
-            $regraPagamento = new RegraPagamento();
+            $this->pdo->beginTransaction();
+            $regraPagamento = new RegraPagamento($this->pdo);
             $regraPagamento
                 ->setId($regraPagamentoId)
                 ->setValor($valor)
                 ->editar();
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração da regra de pagamento de id {$regraPagamento->getId()}.");
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                header("Location: ../view/regra_pagamento.php?msg=editar-falha#mensagem-tabela");
+                exit();
+            }
+
+            $this->pdo->commit();
+
             header("Location: ../view/regra_pagamento.php?msg=editar-sucesso#mensagem-tabela");
         } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=editar-falha#mensagem-tabela");
         }
     }
