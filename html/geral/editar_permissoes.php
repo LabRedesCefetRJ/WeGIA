@@ -364,7 +364,7 @@
             console.log(response);
 			$(".recurso").prop("checked",false ).attr("disabled", false);
 			for(recurso of recursos){
-				$("#recurso_"+recurso).prop("checked",true ).attr("disabled", true);
+				$("#recurso_"+recurso).prop("checked",true );
 			}
           },
           dataType: 'text'

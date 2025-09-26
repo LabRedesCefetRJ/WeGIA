@@ -4,58 +4,65 @@ require_once ROOT . '/dao/Conexao.php';
 require_once ROOT . '/Functions/funcoes.php';
 class ProdutoDAO
 {
+	private PDO $pdo;
+
+	public function __construct(?PDO $pdo = null)
+	{
+		if (is_null($pdo)) {
+			$this->pdo = $pdo = Conexao::connect();
+		} else {
+			$this->pdo = $pdo;
+		}
+	}
 	public function incluir($produto)
 	{
-		try {
-			$pdo = Conexao::connect();
-			$existente = $pdo->query("SELECT id_produto, oculto FROM produto WHERE descricao='" . $produto->getDescricao() . "'")->fetch(PDO::FETCH_ASSOC);
-			$oculto = !!intval($existente['oculto']);
-			if ($existente) {
-				// Caso já exista
-				if ($oculto) {
-					// Caso já exista e esteja oculto
-					header("Location: ". WWW ."html/matPat/restaurar_produto.php?id_produto=" . $existente['id_produto']);
-				} else {
-					echo ("Location: ". WWW ."html/matPat/cadastro_produto.php?flag=warn&msg=A descrição inserida já existe!");
-				}
+		//sql injection
+		$stmtExistente = $this->pdo->prepare("SELECT id_produto, oculto FROM produto WHERE descricao=:descricao");
+		$stmtExistente->bindValue(':descricao', $produto->getDescricao(), PDO::PARAM_STR);
+		$stmtExistente->execute();
+		$existente = $stmtExistente->fetch(PDO::FETCH_ASSOC);
+
+		$oculto = !!intval($existente['oculto']);
+		if ($existente) {
+			// Caso já exista
+			if ($oculto) {
+				// Caso já exista e esteja oculto
+				header("Location: " . WWW . "html/matPat/restaurar_produto.php?id_produto=" . htmlspecialchars($existente['id_produto']));
 			} else {
-				$sql = 'INSERT produto(id_categoria_produto,id_unidade,descricao,codigo,preco) VALUES( :id_categoria_produto,:id_unidade,:descricao,:codigo,:preco)';
-				$sql = str_replace("'", "\'", $sql);
-
-				$stmt = $pdo->prepare($sql);
-
-				$id_categoria_produto = $produto->get_categoria_produto();
-				$id_unidade = $produto->get_unidade();
-				$descricao = $produto->getDescricao();
-				$codigo = $produto->getCodigo();
-				$preco = $produto->getPreco();
-
-				$descricao = preg_replace('/( )+/', ' ', trim($descricao));
-
-				$stmt->bindParam(':id_categoria_produto', $id_categoria_produto);
-				$stmt->bindParam(':id_unidade', $id_unidade);
-				$stmt->bindParam(':descricao', $descricao);
-				$stmt->bindParam(':codigo', $codigo);
-				$stmt->bindParam(':preco', $preco);
-
-				$stmt->execute();
+				echo ("Location: " . WWW . "html/matPat/cadastro_produto.php?flag=warn&msg=A descrição inserida já existe!");
 			}
-		} catch (PDOException $e) {
-			echo 'Error: <b>  na tabela produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+		} else {
+			$sql = 'INSERT produto(id_categoria_produto,id_unidade,descricao,codigo,preco) VALUES( :id_categoria_produto,:id_unidade,:descricao,:codigo,:preco)';
+			$sql = str_replace("'", "\'", $sql);
+
+			$stmt = $this->pdo->prepare($sql);
+
+			$id_categoria_produto = $produto->get_categoria_produto();
+			$id_unidade = $produto->get_unidade();
+			$descricao = $produto->getDescricao();
+			$codigo = $produto->getCodigo();
+			$preco = $produto->getPreco();
+
+			$descricao = preg_replace('/( )+/', ' ', trim($descricao));
+
+			$stmt->bindParam(':id_categoria_produto', $id_categoria_produto);
+			$stmt->bindParam(':id_unidade', $id_unidade);
+			$stmt->bindParam(':descricao', $descricao);
+			$stmt->bindParam(':codigo', $codigo);
+			$stmt->bindParam(':preco', $preco);
+
+			$stmt->execute();
 		}
 	}
 
 	public function excluir($id_produto)
 	{
 		$sql = 'DELETE FROM produto WHERE id_produto = :id_produto';
-		try {
-			$pdo = Conexao::connect();
-			$stmt = $pdo->prepare($sql);
-			$stmt->bindParam(':id_produto', $id_produto);
-			$stmt->execute();
-		} catch (PDOException $e) {
-			echo 'Error: <b>  na tabela produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-		}
+
+		$pdo = Conexao::connect();
+		$stmt = $pdo->prepare($sql);
+		$stmt->bindParam(':id_produto', $id_produto);
+		$stmt->execute();
 	}
 
 	public function listarTodos()
@@ -214,7 +221,8 @@ class ProdutoDAO
 		}
 	}
 
-	public function getProdutosPorAlmoxarifado(int $almoxarifadoId){
+	public function getProdutosPorAlmoxarifado(int $almoxarifadoId)
+	{
 		$sql = "SELECT produto.id_produto, produto.codigo, produto.descricao, estoque.qtd, produto.preco FROM produto, estoque WHERE produto.id_produto=estoque.id_produto AND estoque.qtd>0 AND estoque.id_almoxarifado=:almoxarifadoId";
 
 		$pdo = Conexao::connect();

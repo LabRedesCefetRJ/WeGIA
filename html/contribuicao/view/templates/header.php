@@ -1,6 +1,6 @@
 <?php
 require_once "../../../config.php";
-require_once "../../../classes/Conexao.php";
+require_once "../../../dao/Conexao.php";
 require_once "../../../classes/Personalizacao_display.php";
 require_once "../../personalizacao_display.php";
 ?>

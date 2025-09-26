@@ -188,35 +188,53 @@ class GatewayPagamentoController
      */
     public function alterarStatus()
     {
-        $gatewayId = $_POST['id'];
-        $status = trim($_POST['status']);
-
-        if (!$gatewayId || empty($gatewayId)) {
-            http_response_code(400);
-            echo json_encode(['Erro' => 'O id deve ser maior ou igual a 1.']);
-            exit;
-        }
-
-        if (!$status || empty($status)) {
-            http_response_code(400);
-            echo json_encode(['Erro' => 'O status informado não é válido.']);
-            exit;
-        }
-
-        if ($status === 'true') {
-            $status = 1;
-        } elseif ($status === 'false') {
-            $status = 0;
-        }
+        $gatewayId = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+        $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
+            if (!$gatewayId || empty($gatewayId)) {
+                throw new InvalidArgumentException('O id do gateway informado não é válido.', 400);
+            }
+
+            if (!$status || empty($status)) {
+                throw new InvalidArgumentException('O status informado não é válido.', 400);
+            }
+
+            $descricao = "O gateway de pagamento de id $gatewayId foi ";
+
+            if ($status === 'true') {
+                $status = 1;
+                $descricao .= 'ativado.';
+            } elseif ($status === 'false') {
+                $status = 0;
+                $descricao .= 'desativado';
+            }
+
+            $this->pdo->beginTransaction();
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamentoDao->alterarStatusPorId($status, $gatewayId);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), $descricao);
+
+            $sistemaLogDao = new SistemaLogDAO($this->pdo);
+            if (!$sistemaLogDao->registrar($sistemaLog)) {
+                $this->pdo->rollBack();
+                exit();
+            }
+
+            $this->pdo->commit();
+
             echo json_encode(['Sucesso']);
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['Erro' => 'Ocorreu um problema no servidor.']);
-            exit;
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            Util::tratarException($e);
         }
     }
 }

@@ -5,11 +5,15 @@ require_once '../dao/ConexaoDAO.php';
 
 class RegraPagamentoDAO
 {
-    private $pdo;
+    private PDO $pdo;
 
-    public function __construct()
+    public function __construct(?PDO $pdo=null)
     {
-        $this->pdo = ConexaoDAO::conectar();
+        if (is_null($pdo)) {
+            $this->pdo = ConexaoDAO::conectar();
+        } else {
+            $this->pdo = $pdo;
+        }
     }
 
     /**

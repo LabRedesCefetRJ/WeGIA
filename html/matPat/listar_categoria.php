@@ -55,7 +55,7 @@
   	include_once ROOT . '/dao/CategoriaDAO.php';
 
 	if(!isset($_SESSION['categoria'])){
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage='.WWW.'/html/matPat/listar_categoria.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/listar_categoria.php');
 	}
 	if(isset($_SESSION['msg'])){
 		$msg = $_SESSION['msg'];
