@@ -350,7 +350,7 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
 												<input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" id="profileCompany" name="data_expedicao" id="data_expedicaoD" max="<?php echo date('Y-m-d'); ?>">
 												</div>
 											</div>
-											<input type="hidden" name="idatendido" value="<?= $_GET['idatendido']; ?>" readonly>
+											<input type="hidden" name="idatendido" value="<?= htmlspecialchars($_GET['idatendido']); ?>" readonly>
 											<div class="modal-footer">
 												<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
 												<input type="submit" id="cadastrarFamiliar" value="Enviar" class="btn btn-primary">
