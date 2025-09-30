@@ -568,13 +568,13 @@ class FuncionarioControle
 
             $funcionarioDAO = new FuncionarioDAO();
             $funcionario = $funcionarioDAO->listar($idFuncionario);
-            if (session_start() === PHP_SESSION_NONE) {
+
+            if (session_start() === PHP_SESSION_NONE)
                 session_start();
-            }
 
             $_SESSION['funcionario'] = $funcionario;
 
-            header('Location:' . WWW . "/html/funcionario/profile_funcionario.php?id_funcionario=' . $idFuncionario");
+            header('Location:' . WWW . "/html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($idFuncionario));
         } catch (Exception $e) {
             Util::tratarException($e);
         }
