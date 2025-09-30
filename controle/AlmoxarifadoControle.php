@@ -19,7 +19,9 @@ class AlmoxarifadoControle
     }
     public function listarTodos()
     {
-        $nextPage = trim($_GET['nextPage']);
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat|geral)/(editar_permissoes|cadastro_entrada|cadastro_saida|listar_almox|remover_produto)\.php(\?id_produto=\d+)?)$#';
 
         if (!filter_var($nextPage, FILTER_VALIDATE_URL)) {
             http_response_code(400);
@@ -28,9 +30,13 @@ class AlmoxarifadoControle
 
         $almoxarifadoDAO = new AlmoxarifadoDAO();
         $almoxarifados = $almoxarifadoDAO->listarTodos();
-        session_start();
+
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+
         $_SESSION['almoxarifado'] = $almoxarifados;
-        header('Location: ' . $nextPage);
+
+        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
     }
     public function incluir()
     {
