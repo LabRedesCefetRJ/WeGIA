@@ -1,9 +1,7 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-extract($_REQUEST);
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
@@ -19,25 +17,10 @@ function urlGetParams()
     return $params;
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once "../permissao/permissao.php";
-permissao($_SESSION['id_pessoa'], 11, 7);
-
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$situacao = $mysqli->query("SELECT * FROM situacao");
-$cargo = $mysqli->query("SELECT * FROM cargo");
-//$beneficios = $mysqli->query("SELECT * FROM beneficios");
-
+permissao($_SESSION['id_pessoa'], 12, 7);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
@@ -45,7 +28,6 @@ require_once "../../dao/Conexao.php";
 require_once ROOT . "/controle/FuncionarioControle.php";
 $cpf = new FuncionarioControle;
 $cpf->listarCPF();
-
 
 require_once ROOT . "/controle/AtendidoControle.php";
 $cpf1 = new AtendidoControle;
@@ -63,10 +45,10 @@ if ($id_dependente) {
         LEFT JOIN atendido_parentesco ap ON ap.idatendido_parentesco = af.atendido_parentesco_idatendido_parentesco
         WHERE af.idatendido_familiares = :id_dependente
     ");
-    
+
     $stmt->bindParam(':id_dependente', $id_dependente, PDO::PARAM_INT);
     $stmt->execute();
-    
+
     $dependente = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($dependente) {
@@ -242,16 +224,6 @@ if ($id_dependente) {
 
             };
 
-
-
-
-
-
-
-
-
-
-
         function switchButton(idForm) {
             if (!formState[idForm]) {
                 $("#botaoEditar_" + idForm).text("Editar").prop("class", "btn btn-primary");
@@ -346,18 +318,6 @@ if ($id_dependente) {
         });
     </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
     <script type="text/javascript">
         function numero_residencial() {
             if ($("#numResidencial").prop('checked')) {
@@ -368,11 +328,6 @@ if ($id_dependente) {
                 document.getElementById("numero_residencia").disabled = false;
             }
         }
-
-
-
-
-
 
         function meu_callback(conteudo) {
             if (!("erro" in conteudo)) {
@@ -734,7 +689,8 @@ if ($id_dependente) {
                                                                     <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
                                                                 </div>
 
-                                                                <input type="number" name="id_dependente" value="<?php //$_GET['id_dependente']; ?>" style='display: none;'>
+                                                                <input type="number" name="id_dependente" value="<?php //$_GET['id_dependente']; 
+                                                                                                                    ?>" style='display: none;'>
 
                                                             </div>
                                                             <div class="modal-footer">

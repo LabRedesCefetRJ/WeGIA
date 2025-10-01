@@ -14,19 +14,21 @@ class CategoriaControle
         }
     }
     public function listarTodos(){
-        $nextPage = trim($_REQUEST['nextPage']);
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
 
-        if(!filter_var($nextPage, FILTER_VALIDATE_URL)){
-            http_response_code(400);
-            exit('Erro, a URL informada para a próxima página não é válida.');
-        }
+        $regex = '#^(\.\./html/matPat/(alterar_produto|cadastro_produto|listar_categoria)\.php(\?id_produto=\d+)?)$#';
 
         $categoriaDAO= new CategoriaDAO();
         $categorias = $categoriaDAO->listarTodos();
         session_start();
         $_SESSION['categoria']=$categorias;
         echo $_SESSION['categoria'];
-        header('Location: '.$nextPage);
+
+        if(preg_match($regex, $nextPage)){
+            header('Location:' . htmlspecialchars($nextPage));
+        }else{
+            header('Location:' . '../html/home.php');
+        }
     }
     
     public function incluir(){

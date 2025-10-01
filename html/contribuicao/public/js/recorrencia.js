@@ -20,7 +20,7 @@ function criarAssinatura(){
     const formData = new FormData(form);
     const documento = pegarDocumento();
 
-    formData.append("nomeClasse", "ContribuicaoLogController");
+    formData.append("nomeClasse", "RecorrenciaController");
     formData.append("metodo", "criarAssinatura"); 
     formData.append("documento_socio", documento);
 

@@ -9,8 +9,22 @@ include_once ROOT . '/dao/ProdutoDAO.php';
 include_once ROOT . '/classes/Estoque.php';
 include_once ROOT . '/dao/EstoqueDAO.php';
 
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+
 class ProdutoControle
 {
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        if (is_null($pdo)) {
+            $this->pdo = Conexao::connect();
+        } else {
+            $this->pdo = $pdo;
+        }
+    }
+
     public function verificar()
     {
         extract($_REQUEST);
@@ -93,63 +107,67 @@ class ProdutoControle
 
     public function incluir()
     {
-        $produto = $this->verificar();
-        //extract($_REQUEST);
-        $id_categoria = $_REQUEST['id_categoria'];
-        $id_unidade = $_REQUEST['id_unidade'];
-        $produtoDAO = new ProdutoDAO();
-        //$catDAO = new CategoriaDAO();
-        //$uniDAO = new UnidadeDAO();
-
-        //$categoria = $catDAO->listarUm($id_categoria);
-        //$unidade = $uniDAO->listarUm($id_unidade);
         try {
+            $produto = $this->verificar();
+            $id_categoria = filter_var($_REQUEST['id_categoria'], FILTER_SANITIZE_NUMBER_INT);
+            $id_unidade = filter_var($_REQUEST['id_unidade'], FILTER_SANITIZE_NUMBER_INT);
+            $produtoDAO = new ProdutoDAO($this->pdo);
 
             $produto->set_categoria_produto($id_categoria);
             $produto->set_unidade($id_unidade);
 
             $produtoDAO->incluir($produto);
 
-            session_start();
-            header("Location: ". WWW ."html/matPat/cadastro_produto.php");
-        } catch (PDOException $e) {
-            $msg = "Não foi possível registrar o produto <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>" . "<br>" . $e->getMessage();
-            echo $msg;
+            header("Location: " . WWW . "html/matPat/cadastro_produto.php");
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function excluir()
     {
-        extract($_REQUEST);
-        require_once ROOT . '/dao/Conexao.php';
-        $pdo = Conexao::connect();
-        $produto = $pdo->query("SELECT qtd FROM estoque WHERE id_produto = $id_produto");
-        $registros = $pdo->query("SELECT * FROM isaida WHERE id_produto=$id_produto")->fetch(PDO::FETCH_ASSOC) || $pdo->query("SELECT * FROM ientrada WHERE id_produto=$id_produto")->fetch(PDO::FETCH_ASSOC);
-        $produto = $produto->fetch(PDO::FETCH_ASSOC);
-        if ($produto) {
-            if (intval($produto['qtd']) < 0 && !$registros) {
-                try {
+        try {
+            $idProduto = filter_input(INPUT_GET, 'id_produto', FILTER_VALIDATE_INT);
+
+            if (!$idProduto || $idProduto < 1) {
+                throw new InvalidArgumentException('O id do produto informado não é válido.', 400);
+            }
+
+            $stmtProduto = $this->pdo->prepare("SELECT qtd FROM estoque WHERE id_produto =:idProduto");
+            $stmtProduto->bindValue(':idProduto', $idProduto, PDO::PARAM_INT);
+            $stmtProduto->execute();
+            $produto = $stmtProduto->fetch(PDO::FETCH_ASSOC);
+
+            $stmtSaidas = $this->pdo->prepare("SELECT * FROM isaida WHERE id_produto=:idProduto");
+            $stmtSaidas->bindValue(':idProduto', $idProduto, PDO::PARAM_INT);
+            $stmtSaidas->execute();
+
+            $stmtEntradas = $this->pdo->prepare("SELECT * FROM ientrada WHERE id_produto=:idProduto");
+            $stmtEntradas->bindValue(':idProduto', $idProduto, PDO::PARAM_INT);
+            $stmtEntradas->execute();
+
+            $registros = $stmtSaidas->fetchAll(PDO::FETCH_ASSOC) || $stmtEntradas->fetchAll(PDO::FETCH_ASSOC);
+
+            if ($produto) {
+                if (intval($produto['qtd']) < 0 && !$registros) {
                     $produtoDAO = new ProdutoDAO();
-                    $produtoDAO->excluir($id_produto);
-                    header('Location:'. WWW .'html/matPat/listar_produto.php');
-                } catch (PDOException $e) {
-                    echo "ERROR";
+                    $produtoDAO->excluir($idProduto);
+                    header('Location:' . WWW . 'html/matPat/listar_produto.php');
+                } else {
+                    header('Location: ' . WWW . 'html/matPat/remover_produto.php?id_produto=' . htmlspecialchars($idProduto));
                 }
             } else {
-                header('Location: '. WWW .'html/matPat/remover_produto.php?id_produto=' . $id_produto);
-            }
-        } else {
-            if (!$registros) {
-                try {
+                if (!$registros) {
+
                     $produtoDAO = new ProdutoDAO();
-                    $produtoDAO->excluir($id_produto);
-                    header('Location: '. WWW .'html/matPat/listar_produto.php');
-                } catch (PDOException $e) {
-                    echo "ERROR";
+                    $produtoDAO->excluir($idProduto);
+                    header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+                } else {
+                    header('Location: ' . WWW . 'html/matPat/remover_produto.php?id_produto=' . htmlspecialchars($idProduto));
                 }
-            } else {
-                header('Location: '. WWW .'html/matPat/remover_produto.php?id_produto=' . $id_produto);
             }
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 

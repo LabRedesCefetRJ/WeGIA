@@ -56,7 +56,7 @@ include_once ROOT . '/dao/ProdutoDAO.php';
 	}
 	if(!isset($_SESSION['categoria'])){
 		extract($_REQUEST);
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage='.WWW.'html/matPat/alterar_produto.php?id_produto='.$id_produto);
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/alterar_produto.php?id_produto='.$id_produto);
 	}
 	if(!isset($_SESSION['produto'])) {
 		extract($_REQUEST);

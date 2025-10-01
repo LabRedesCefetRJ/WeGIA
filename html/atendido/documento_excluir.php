@@ -1,24 +1,26 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../index.php");
+    exit();
+}else{
+    session_regenerate_id();
 }
 
 // Verifica Permissão do Usuário
 require_once '../permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 11, 7);
+permissao($_SESSION['id_pessoa'], 12, 7);
 
 require_once "../../dao/Conexao.php";
 require_once "documento.php";
 
-$id_doc = $_GET['id_doc'];
-$idAtendido = $_GET['idatendido'];
+$id_doc = filter_input(INPUT_GET, 'id_doc', FILTER_SANITIZE_NUMBER_INT);
+$idAtendido = filter_input(INPUT_GET, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
 
-if (!$id_doc || !$idAtendido || !is_numeric($id_doc) || !is_numeric($idAtendido)) {
+if (!$id_doc || !$idAtendido || $id_doc < 1 || $idAtendido < 1) {
     http_response_code(400);
     exit("Erro ao tentar remover o arquivo selecionado, os id's fornecidos não são válidos");
 }
@@ -26,11 +28,9 @@ if (!$id_doc || !$idAtendido || !is_numeric($id_doc) || !is_numeric($idAtendido)
 $arquivo = new DocumentoAtendido($id_doc);
 if (!$arquivo->getException()) {
     $arquivo->delete();
-    // $sql = "SELECT f.id_fundocs, f.`data`, docf.nome_docfuncional FROM funcionario_docs f JOIN funcionario_docfuncional docf ON f.id_docfuncional = docf.id_docfuncional WHERE id_funcionario = " . $_GET['id_funcionario'] . ";";
     try {
         $sql = "SELECT a.idatendido_documentacao, a.`data`, ada.descricao FROM atendido_documentacao a JOIN atendido_docs_atendidos ada ON a.atendido_docs_atendidos_idatendido_docs_atendidos = ada.idatendido_docs_atendidos WHERE atendido_idatendido =:idAtendido";
         $pdo = Conexao::connect();
-        //$docfuncional = $pdo->query($sql);
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':idAtendido', $idAtendido);
         $stmt->execute();
