@@ -1,14 +1,5 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once ROOT . '/classes/Saude.php';
 require_once ROOT . '/dao/SaudeDAO.php';
@@ -109,16 +100,24 @@ class SaudeControle
         return $saude;
     }
 
-    // aq era atendidos
+    /**
+     * Atribui à chave 'saude' da sessão o resultado da pesquisa de todos os pacientes registrados no banco de dados da aplicação.
+     */
     public function listarTodos()
     {
-        extract($_REQUEST);
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+
+        $regex = '#^(\.\./html/saude/(administrar_medicamento|informacao_saude|listar_cadastro_intercorrencia|listar_sinais_vitais)\.php)$#';
 
         $SaudeDAO = new SaudeDAO();
         $pacientes = $SaudeDAO->listarTodos();
-        session_start();
+
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+
         $_SESSION['saude'] = $pacientes;
-        header('Location: ' . $nextPage);
+
+        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
     }
 
     public function listarUm()
@@ -139,18 +138,18 @@ class SaudeControle
                 $_SESSION['id_fichamedica'] = $infSaude;
                 $cache->save($id, $infSaude, '1 seconds');
 
-                if(preg_match($regex, $nextPage)){
+                if (preg_match($regex, $nextPage)) {
                     header('Location:' . htmlspecialchars($nextPage));
-                }else{
+                } else {
                     header('Location:' . '../html/home.php');
                 }
             } catch (PDOException $e) {
                 echo $e->getMessage();
             }
         } else {
-            if(preg_match($regex, $nextPage)){
+            if (preg_match($regex, $nextPage)) {
                 header('Location:' . htmlspecialchars($nextPage));
-            }else{
+            } else {
                 header('Location:' . '../html/home.php');
             }
         }
