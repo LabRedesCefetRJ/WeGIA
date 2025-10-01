@@ -794,7 +794,7 @@ class Util
      * Recebe uma string como parâmetro e realiza os procedimentos necessários para validar o cpf informado
      * @return boolean
      */
-    public function validarCPF(string $cpf)
+    public static function validarCPF(string $cpf)
     {
         //Limpar formatação
         $cpfLimpo = preg_replace('/[^0-9]/', '', $cpf);
