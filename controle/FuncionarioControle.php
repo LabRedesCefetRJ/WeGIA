@@ -740,50 +740,53 @@ class FuncionarioControle
         }
     }
 
+    /**
+     * Altera a chave de acesso ao sistema de determinado usuário, permite que administradores configurados possam alterar a senha de outras pessoas
+     */
     public function alterarSenha()
     {
-        extract($_REQUEST);
+        $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+        $nova_senha = filter_input(INPUT_POST, 'nova_senha');
+        $redir = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
 
+        try {
+            if (!$id_pessoa || $id_pessoa < 1) {
+                throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
+            }
 
-        $funcionarioDAO = new FuncionarioDAO();
+            $funcionarioDAO = new FuncionarioDAO();
 
-        if ($id_pessoa != $_SESSION['id_pessoa']) {
-            try {
+            if ($id_pessoa != $_SESSION['id_pessoa']) {
+
                 if (!$funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
                     http_response_code(401);
                     exit('Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha');
                 }
-            } catch (PDOException $e) {
-                echo $e->getMessage();
-                exit();
             }
-        }
 
-        $nova_senha = hash('sha256', $nova_senha);
-        if (isset($redir)) {
-            $page = $redir;
-            $verificacao = $this->verificarSenhaConfig();
-        } else {
-            $verificacao = $this->verificarSenha();
-            $page = "alterar_senha.php";
-        }
-        if ($verificacao == 1) {
-            header("Location: " . WWW . "html/$page?verificacao=" . $verificacao);
-        } elseif ($verificacao == 2) {
-            header("Location: " . WWW . "html/$page?verificacao=" . $verificacao);
-        } else {
-            try {
+            $nova_senha = hash('sha256', $nova_senha);
+            if (isset($redir)) {
+                $page = $redir;
+                $verificacao = $this->verificarSenhaConfig();
+            } else {
+                $verificacao = $this->verificarSenha();
+                $page = "alterar_senha.php";
+            }
+            if ($verificacao == 1 || $verificacao == 2) {
+                header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '?verificacao=' . htmlspecialchars($verificacao));
+                exit();
+            } else {
                 $funcionarioDAO->alterarSenha($id_pessoa, $nova_senha);
+
                 $conexao =  mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
                 $resultado = mysqli_query($conexao, "UPDATE pessoa set adm_configurado=1 where cpf='admin'");
                 $resultado = mysqli_query($conexao, "SELECT original from selecao_paragrafo where id_selecao = 1");
                 $registro = mysqli_fetch_array($resultado);
-                if ($registro['original'] == 1) {
-                    header("Location: " . WWW . "html/$page?verificacao=" . $verificacao . "&redir_config=true");
-                } else  header("Location: " . WWW . "html/$page.php?verificacao=" . $verificacao);
-            } catch (PDOException $e) {
-                echo $e->getMessage();
+
+                $registro['original'] == 1 ? header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '?verificacao=' . htmlspecialchars($verificacao) . "&redir_config=true") : header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '.php?verificacao=' . htmlspecialchars($verificacao));
             }
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -880,15 +883,24 @@ class FuncionarioControle
         }
     }
 
+    /**
+     * Pega o parâmetro id_funcionario da requisição e remove do sistema o funcionário de id equivalente.
+     */
     public function excluir()
     {
-        extract($_REQUEST);
-        $funcionarioDAO = new FuncionarioDAO();
+        $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+
         try {
-            $funcionarioDAO->excluir($id_funcionario);
+            if (!$idFuncionario || $idFuncionario < 1) {
+                throw new InvalidArgumentException('O id do funcionário fornecido é inválido.', 400);
+            }
+
+            $funcionarioDAO = new FuncionarioDAO();
+
+            $funcionarioDAO->excluir($idFuncionario);
             header("Location:../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php");
         } catch (Exception $e) {
-            echo $e->getMessage();
+            Util::tratarException($e);
         }
     }
 }
