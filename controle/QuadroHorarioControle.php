@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 include_once '../dao/QuadroHorarioDAO.php';
 
 class QuadroHorarioControle
@@ -7,7 +8,6 @@ class QuadroHorarioControle
 
     public function listarTipo()
     {
-        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
         $regex = '#^((\.\./|' . WWW . ')html/quadro_horario/(listar_tipo_quadro_horario)\.php)$#';
 
@@ -49,18 +49,31 @@ class QuadroHorarioControle
 
     public function removerTipo()
     {
-        extract($_REQUEST);
+        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+        if(!$id || $id < 1){
+            http_response_code(400);
+            echo json_encode(['erro' => 'O id do tipo fornecido é inválido.']);
+            exit();
+        }
+
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/quadro_horario/(listar_tipo_quadro_horario)\.php)$#';
+
         $log = (new QuadroHorarioDAO)->removerTipo($id);
-        session_start();
+
+        if(session_status() === PHP_SESSION_NONE)
+            session_start();
+
         $_SESSION['msg'] = $log;
-        header("Location: $nextPage");
+
+        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
     }
 
     // Escalas
 
     public function listarEscala()
     {
-        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
         $regex = '#^((\.\./|' . WWW . ')html/quadro_horario/(listar_escala)\.php)$#';
 
