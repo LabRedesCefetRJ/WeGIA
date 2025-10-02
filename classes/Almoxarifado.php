@@ -31,7 +31,7 @@ class almoxarifado
     public function setDescricao_almoxarifado(string $descricao_almoxarifado)
     {
         if (empty($descricao_almoxarifado)) {
-            throw new InvalidArgumentException('A descrição de um almoxarifado não pode ser vazia.');
+            throw new InvalidArgumentException('A descrição de um almoxarifado não pode ser vazia.', 400);
         }
         $this->descricao_almoxarifado = $descricao_almoxarifado;
     }
