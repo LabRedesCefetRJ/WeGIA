@@ -84,24 +84,25 @@ class QuadroHorarioControle
 
     public function adicionarEscala()
     {
-        $escala = trim(filter_input(INPUT_POST, 'escala', FILTER_SANITIZE_SPECIAL_CHARS));
-        $nextPage = trim(filter_input(INPUT_POST, 'nextPage', FILTER_SANITIZE_URL));
-        $regex = '#^((\.\./|' . WWW . ')html/quadro_horario/(adicionar_escala)\.php)$#';
-
-        if (!$escala || strlen($escala) == 0) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'A escala não pode ser vazia.']);
-            exit();
-        }
-
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
+            $escala = trim(filter_input(INPUT_POST, 'escala', FILTER_SANITIZE_SPECIAL_CHARS));
+            $nextPage = trim(filter_input(INPUT_POST, 'nextPage', FILTER_SANITIZE_URL));
+            $regex = '#^((\.\./|' . WWW . ')html/quadro_horario/(adicionar_escala)\.php)$#';
+
+            if (!$escala || strlen($escala) == 0)
+                throw new InvalidArgumentException('A escala não pode ser vazia.', 400);
+
             $log = (new QuadroHorarioDAO())->adicionarEscala($escala);
             $_SESSION['msg'] = $log;
-        } catch (PDOException $e) {
-            echo ('Erro ao adicionar escala ' . htmlspecialchars($escala) . ' ao banco de dados: ' . $e->getMessage());
-            $_SESSION['msg'] = "Erro ao adicionar escala: " . $e->getMessage();
+        } catch (Exception $e) {
+            Util::tratarException($e);
+            $e instanceof PDOException ? $_SESSION['msg'] = 'Erro no servidor ao manipular o banco de dados.' : $_SESSION['msg'] = "Erro ao adicionar escala: " . $e->getMessage();
             $_SESSION['flag'] = "erro";
         }
+        
         $_SESSION['btnVoltar'] = true;
 
         if ($nextPage) {
