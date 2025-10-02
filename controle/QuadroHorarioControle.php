@@ -1,6 +1,11 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
-include_once '../dao/QuadroHorarioDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'QuadroHorarioDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class QuadroHorarioControle
 {
@@ -22,36 +27,33 @@ class QuadroHorarioControle
         $nextPage = trim(filter_input(INPUT_POST, 'nextPage', FILTER_SANITIZE_URL));
         $regex = '#^((\.\./|' . WWW . ')html/quadro_horario/(adicionar_tipo_quadro_horario)\.php)$#';
 
-        if (!$tipo || strlen($tipo) == 0) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'O tipo não pode ser vazio.']);
-            exit();
-        }
-
-        if (session_status() === PHP_SESSION_NONE)
-            session_start();
-
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
+            if (!$tipo || strlen($tipo) == 0)
+                throw new InvalidArgumentException('O tipo do quadro de horários não pode ser vazio.', 400);
+
             $log = (new QuadroHorarioDAO())->adicionarTipo($tipo);
-            $_SESSION['msg'] = $log;
-        } catch (PDOException $e) {
-            echo ('Erro ao adicionar tipo ' . htmlspecialchars($tipo) . ' ao banco de dados: ' . $e->getMessage());
-            $_SESSION['msg'] = "Erro ao adicionar tipo: " . $e->getMessage();
+
+            $log === TRUE ? $_SESSION['msg'] = sprintf("Tipo '%s' cadastrado com sucesso.", htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8')): $_SESSION['msg'] = sprintf("O tipo '%s' já foi cadastrado.", htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8'));
+        } catch (Exception $e) {
+            Util::tratarException($e);
+            $e instanceof PDOException ? $_SESSION['msg'] = 'Erro no servidor ao manipular o banco de dados.' : $_SESSION['msg'] = "Erro ao adicionar tipo: " . $e->getMessage();
             $_SESSION['flag'] = "erro";
         }
 
         $_SESSION['btnVoltar'] = true;
 
-        if ($nextPage) {
+        if ($nextPage)
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
-        }
     }
 
     public function removerTipo()
     {
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
 
-        if(!$id || $id < 1){
+        if (!$id || $id < 1) {
             http_response_code(400);
             echo json_encode(['erro' => 'O id do tipo fornecido é inválido.']);
             exit();
@@ -61,9 +63,6 @@ class QuadroHorarioControle
         $regex = '#^((\.\./|' . WWW . ')html/quadro_horario/(listar_tipo_quadro_horario)\.php)$#';
 
         $log = (new QuadroHorarioDAO)->removerTipo($id);
-
-        if(session_status() === PHP_SESSION_NONE)
-            session_start();
 
         $_SESSION['msg'] = $log;
 
@@ -94,9 +93,6 @@ class QuadroHorarioControle
             exit();
         }
 
-        if (session_status() === PHP_SESSION_NONE)
-            session_start();
-
         try {
             $log = (new QuadroHorarioDAO())->adicionarEscala($escala);
             $_SESSION['msg'] = $log;
@@ -126,9 +122,6 @@ class QuadroHorarioControle
         }
 
         $log = (new QuadroHorarioDAO)->removerEscala($id);
-
-        if (session_status() === PHP_SESSION_NONE)
-            session_start();
 
         $_SESSION['msg'] = $log;
 
