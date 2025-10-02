@@ -91,7 +91,7 @@ class QuadroHorarioDAO
         }
     }
 
-    public function adicionarTipo($descricao):bool
+    public function adicionarTipo($descricao): bool
     {
         $ins = $this->pdo->prepare("INSERT IGNORE INTO tipo_quadro_horario (descricao) VALUES (:descricao)");
         $ins->bindParam(':descricao', $descricao, PDO::PARAM_STR);
@@ -154,21 +154,16 @@ class QuadroHorarioDAO
 
     public function removerTipo($id)
     {
-        $pdo = Conexao::connect();
-        try {
-            if ($pdo->query("SELECT id_quadro_horario FROM quadro_horario_funcionario WHERE tipo = $id;")->fetch(PDO::FETCH_ASSOC)) {
-                $_SESSION['flag'] = "warn";
-                return "Não é possível excluir um tipo ainda atribuído ao quadro horário de um funcionário.";
-            }
-            $ins = $pdo->prepare("DELETE FROM tipo_quadro_horario WHERE id_tipo=:id;");
-            $ins->bindParam(':id', $id);
-            $ins->execute();
-            return "Tipo removido";
-        } catch (PDOException $e) {
-            echo "Erro ao excluir o tipo de id $id: " . $e->getMessage();
-            $_SESSION['flag'] = "erro";
-            return "Erro ao remover tipo: " . $e->getMessage();
+        $ins = $this->pdo->prepare("DELETE IGNORE FROM tipo_quadro_horario WHERE id_tipo=:id;");
+        $ins->bindParam(':id', $id);
+        $ins->execute();
+
+        if ($ins->rowCount() < 1) {
+            $_SESSION['flag'] = 'warn';
+            return false;
         }
+
+        return true;
     }
 
     public function removerEscala($id)
