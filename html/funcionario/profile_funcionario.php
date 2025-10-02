@@ -139,6 +139,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
   <!-- Theme Custom CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
   <link rel="stylesheet" href="../../css/profile-theme.css" />
+  <link rel="stylesheet" href="../../css/modalInfoFuncionario.css" />
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
   <script src="../../Functions/onlyNumbers.js"></script>
@@ -148,6 +149,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
   <script src="../../Functions/funcionario_parentesco.js"></script>
   <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
   <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
+  <script src="<?php echo WWW; ?>Functions/modalControl.js" defer></script>
 
   <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
   <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
@@ -776,7 +778,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
               <div class="tab-content">
                 <!--Aba de Informações Pessoais-->
                 <div id="overview" class="tab-pane active">
-                  <form class="form-horizontal" method="post" action="../../controle/control.php">
+                  <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarInformacoesPessoais">
                     <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                     <input type="hidden" name="metodo" value="alterarInfPessoal">
                     <h4 class="mb-xlg">Informações Pessoais</h4>
@@ -846,6 +848,28 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
                     </fieldset>
                   </form><br>
+
+                  <!-- MODAL QUE SERÁ UTILIZADO CASO A DATA DE NASCIMENTO SEJA ANTERIOR A DATA DE EXPEDIÇÃO -->
+                  <div id="customModal" class="custom-modal-overlay">
+                      <div class="custom-modal-container">
+                          <div class="custom-modal-header">
+                              <h3 class="custom-modal-title">Informe a Data</h3>
+                              <button class="custom-modal-close">&times;</button>
+                          </div>
+                          <div class="custom-modal-body">
+                              <div class="custom-form-group">
+                                  <label for="customDataInput" class="custom-form-label">Data de expedição:</label>
+                                  <input type="date" class="custom-form-input" id="customDataInput" placeholder="dd/mm/aaaa" maxlength="10">
+                                  <div class="custom-text-error" id="customErrorData">Data inválida! Ela deve ser posterior a data de nascimento</div>
+                              </div>
+                          </div>
+                          <div class="custom-modal-footer">
+                              <button class="custom-btn custom-btn-primary" id="customBtnConfirmar">Confirmar</button>
+                          </div>
+                      </div>
+                  </div>
+
+
                   <div class="panel-footer">
                     <div class="row">
                       <div class="col-md-9 col-md-offset-3">
@@ -1997,8 +2021,8 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 
       const data_nasc = new Date($('#nascimento').val());
       const data_exp = new Date($('#data_expedicao').val());
-      if(data_exp < data_nasc){
-        alert("Edição não efetuada. A data de expedição não pode ser anterior à de nascimento");
+      if(data_exp <= data_nasc){
+        alert("Edição não efetuada. A data de expedição não pode ser anterior ou igual à de nascimento");
         apoio = 1;
       }
       
@@ -2019,6 +2043,38 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
         e.preventDefault();
       }
     });
+    
+    $('#customBtnConfirmar').on('click', function() {
+      const data_nasc = new Date($('#nascimento').val());
+      const data = $('#nascimento').val();
+      const data_exp = new Date($('#customDataInput').val());
+        if (data_exp > data_nasc) {
+          
+          let funcionario = <?= $func ?>;
+          const cpf = funcionario[0].cpf;
+          
+          $("#data_expedicao").val( $(customDataInput).val() ).prop('disabled', false);
+          $("#rg").val(funcionario[0].registro_geral).prop('disabled', false);
+          $("#orgao_emissor").val(funcionario[0].orgao_emissor).prop('disabled', false);
+          $("#cpf").val(cpf).prop('disabled', false);
+          $("#data_admissao").val(alterardate(funcionario[0].data_admissao)).prop('disabled', false);
+
+          $('#formAlterarDocumentacao').submit()
+            
+          // Envia o formulário
+          $('#formAlterarInformacoesPessoais').submit();
+        } else {
+            customErrorData.style.display = 'block';
+            customDataInput.focus();
+        }
+    });
+    // Evento de submit do formulário
+      $('#formAlterarInformacoesPessoais').on('submit', function(e) {
+          if(!funcao3()) {
+              e.preventDefault();
+              showCustomModal();
+          }
+      });
 
     function gerarDocFuncional() {
       url = 'documento_listar.php';
