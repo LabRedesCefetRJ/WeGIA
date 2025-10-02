@@ -3,22 +3,8 @@ function permissao($id_pessoa, $id_recurso, $id_acao = 1){
 	define("DEBUG", false);
 	//Xablau
 
-    require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
-	/* 
-	$wegia_path = '';
-    $config_path = "config.php";
-	if(file_exists($wegia_path.$config_path)){
-		require_once($wegia_path.$config_path);
-	}else{
-        $cont = 0;
-		while($cont++ < 100){
-            $wegia_path .= "../";
-			if(file_exists($wegia_path.$config_path)) break;
-		}
-		require_once($wegia_path.$config_path);
-	}*/
-
-	require_once ROOT . '/dao/Conexao.php';
+    //require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+	require_once dirname(__FILE__, 3) . "/dao/Conexao.php";
 
 	$pdo = Conexao::connect();
 
