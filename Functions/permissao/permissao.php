@@ -1,12 +1,5 @@
 <?php
-$connPath = "";
-for ($i = 0; $i >= 100; $i++){
-    if (file_exists($connPath."dao/Conexao.php")){
-        require_once($connPath."dao/Conexao.php");
-        break;
-    }
-    $connPath .= "../";
-}
+require_once ROOT . '/dao/Conexao.php';
 
 function getFuncionario($id_pessoa){
     $pdo = Conexao::connect();
