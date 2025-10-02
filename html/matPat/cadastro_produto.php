@@ -1,94 +1,23 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) 
+	session_start();
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ". WWW ."html/index.php");
+	header("Location: ". WWW ."html/index.php");
+	exit;
 }
 
 require_once ROOT . '/dao/Conexao.php';
 
-$pdo = Conexao::connect(); $id_pessoa = $_SESSION['id_pessoa']; 
-try { 
-	$sql = "SELECT * FROM funcionario WHERE id_pessoa = :ID_PESSOA";
-	$stmt = $pdo->prepare($sql);
-	$stmt->bindParam(':ID_PESSOA', $id_pessoa, PDO::PARAM_INT);
-	$stmt->execute();
-	$resultado = $stmt->fetch(PDO::FETCH_ASSOC); 
-} catch(PDOException $e){ 
-	error_log('Erro: ' . $e->getMessage()); echo "Um erro ocorreu";
-}
-if (!is_null($resultado)) {
-	$id_cargo = $resultado['id_cargo'];
-	try {
-		$sql = "SELECT * FROM permissao WHERE id_cargo = :id_cargo AND id_recurso = :id_recurso";
-		$stmt = $pdo->prepare($sql);
-		$stmt->bindValue(':id_cargo', $id_cargo, PDO::PARAM_INT);
-		$stmt->bindValue(':id_recurso', 22, PDO::PARAM_INT);
-		$stmt->execute();
-		$permissao = $stmt->fetch(PDO::FETCH_ASSOC);
-	} catch (PDOException $e) {
-		error_log("Erro no banco (permissao): " . $e->getMessage());
-		$permissao = false;
-	}
-	if ($permissao) {
-		if ((int)$permissao['id_acao'] < 3) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: " . WWW . "html/home.php?msg_c=" . urlencode($msg));
-			exit;
-		}
-		$permissao = (int)$permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW . "html/home.php?msg_c=" . urlencode($msg));
-		exit;
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW . "html/home.php?msg_c=" . urlencode($msg));
-	exit;
-}
-
-// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once ROOT . "/html/personalizacao_display.php";
-
-// Adiciona Função de mensagem
-require_once ROOT . "/html/geral/msg.php";
-?>
-
-<!doctype html>
-<html class="fixed">
-<?php
-	include_once ROOT .'/dao/Conexao.php';
-	include_once ROOT .'/dao/CategoriaDAO.php';
-	include_once ROOT .'/dao/UnidadeDAO.php';
-
-	if (!isset($_SESSION['unidade'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
-	}
-	if (!isset($_SESSION['categoria'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=' . WWW . 'html/matPat/cadastro_produto.php');
-	}
-	if (isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
-		extract($_SESSION);
-
-		unset($_SESSION['unidade']);
-		unset($_SESSION['categoria']);
-	}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 22, 3);
 
 $dadosForm = $_SESSION['form_produto'];
+
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
 ?>
 
 <head>
