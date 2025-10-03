@@ -2060,9 +2060,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
           $("#data_admissao").val(alterardate(funcionario[0].data_admissao)).prop('disabled', false);
 
           $('#formAlterarDocumentacao').submit()
-            
-          // Envia o formulário
-          $('#formAlterarInformacoesPessoais').submit();
+          alert("Agora é possível alterar a data de nascimento para a data desejada!")
         } else {
             customErrorData.style.display = 'block';
             customDataInput.focus();
