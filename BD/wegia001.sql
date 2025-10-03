@@ -586,7 +586,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`escala_quadro_horario` (
   `id_escala` INT(11) NOT NULL AUTO_INCREMENT,
-  `descricao` VARCHAR(200) NOT NULL,
+  `descricao` VARCHAR(200) NOT NULL UNIQUE,
   PRIMARY KEY (`id_escala`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;

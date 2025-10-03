@@ -96,18 +96,18 @@ class QuadroHorarioControle
                 throw new InvalidArgumentException('A escala não pode ser vazia.', 400);
 
             $log = (new QuadroHorarioDAO())->adicionarEscala($escala);
-            $_SESSION['msg'] = $log;
+
+            $log === TRUE ? $_SESSION['msg'] = sprintf("Escala '%s' cadastrada com sucesso.", htmlspecialchars($escala, ENT_QUOTES, 'UTF-8')) : $_SESSION['msg'] = sprintf(" A escala '%s' já existe no sistema.", htmlspecialchars($escala, ENT_QUOTES, 'UTF-8'));
         } catch (Exception $e) {
             Util::tratarException($e);
             $e instanceof PDOException ? $_SESSION['msg'] = 'Erro no servidor ao manipular o banco de dados.' : $_SESSION['msg'] = "Erro ao adicionar escala: " . $e->getMessage();
             $_SESSION['flag'] = "erro";
         }
-        
+
         $_SESSION['btnVoltar'] = true;
 
-        if ($nextPage) {
+        if ($nextPage)
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
-        }
     }
 
     public function removerEscala()

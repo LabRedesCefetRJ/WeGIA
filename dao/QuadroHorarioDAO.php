@@ -105,23 +105,16 @@ class QuadroHorarioDAO
         return true;
     }
 
-    public function adicionarEscala($desc)
+    public function adicionarEscala($desc):bool
     {
-        $pdo = Conexao::connect();
-        try {
-            $desc = str_replace("'", "\'", $desc);
-            if ($pdo->query("SELECT id_escala FROM escala_quadro_horario WHERE descricao='$desc';")->fetch(PDO::FETCH_ASSOC)) {
-                $_SESSION['flag'] = 'warn';
-                return "A escala '$desc' já foi cadastrada.";
-            }
-            $ins = $pdo->prepare("INSERT INTO escala_quadro_horario (descricao) VALUES (:d);");
-            $ins->bindParam(':d', $desc);
-            $ins->execute();
-            return "Escala '$desc' adicionada com sucesso.";
-        } catch (PDOException $e) {
-            echo "Erro ao incluir a escala '$desc': " . $e->getMessage();
-            return "Houve um erro ao cadastrar a escala '$desc': " . $e->getMessage();
-        }
+        $ins = $this->pdo->prepare("INSERT IGNORE INTO escala_quadro_horario (descricao) VALUES (:descricao)");
+        $ins->bindParam(':descricao', $desc);
+        $ins->execute();
+
+        if($ins->rowCount() < 1)
+            return false;
+
+        return true;
     }
 
     public function alterarTipo($id, $desc)
