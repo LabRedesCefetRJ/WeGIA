@@ -699,7 +699,7 @@ if (isset($_GET['msg'])) {
   <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 
   <!-- img form -->
-  <script>
+  <script>/*
     const image_input = document.querySelector(".image_input");
     var uploaded_image;
 
@@ -710,7 +710,7 @@ if (isset($_GET['msg'])) {
         document.querySelector("#display_image").style.backgroundImage = `url(${uploaded_image})`;
       });
       reader.readAsDataURL(this.files[0]);
-    });
+    });*/
   </script>
 
   <div align="right">

@@ -10,67 +10,21 @@ if(!isset($_SESSION['usuario'])){
     header ("Location: ../index.php");
     exit;
 }
-
-$config_path = "config.php";
-if(file_exists($config_path)){
-    require_once($config_path);
-} else {
-    $max_depth = 10; 
-    $current_depth = 0;
-    while($current_depth < $max_depth){
-        $config_path = "../" . $config_path;
-        if(file_exists($config_path)) {
-            require_once($config_path);
-            break;
-        }
-        $current_depth++;
-    }
-    if($current_depth >= $max_depth) {
-        die("Arquivo de configuração não encontrado.");
-    }
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once "../permissao/permissao.php";
 require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
+require_once dirname(__FILE__, 3) . '/html/permissao/permissao.php';
 
 try {
     $id_pessoa = $_SESSION['id_pessoa'];
-    
-    $stmt = $pdo->prepare("SELECT id_cargo FROM funcionario WHERE id_pessoa = ?");
-    $stmt->execute([$id_pessoa]);
-    $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($resultado) {
-        $id_cargo = $resultado['id_cargo'];
-
-        $stmt = $pdo->prepare(
-            "SELECT p.id_acao FROM permissao p 
-            JOIN acao a ON p.id_acao = a.id_acao 
-            JOIN recurso r ON p.id_recurso = r.id_recurso 
-            WHERE p.id_cargo = ? 
-            AND a.descricao = 'LER, GRAVAR E EXECUTAR' 
-            AND r.descricao = 'Saúde Pet'"
-        );
-        $stmt->execute([$id_cargo]);
-        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($resultado && $resultado['id_acao'] >= 7) {
-            $permissao = $resultado['id_acao'];
-        } else {
-            $msg = "Você não tem as permissões necessárias para essa página.";
-            header("Location: ../home.php?msg_c=" . urlencode($msg));
-            exit;
-        }
-    } else {
-        $permissao = 1;
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: ../home.php?msg_c=" . urlencode($msg));
-        exit;
-    }
-} catch (PDOException $e) {
+    // Exemplo: recurso 5 = Saúde Pet, ação 7 = LER, GRAVAR E EXECUTAR
+    permissao($id_pessoa, 5, 7); 
+} catch (Exception $e) {
     error_log("Erro de banco de dados: " . $e->getMessage());
     header("Location: ../error.php?msg=Erro ao acessar o banco de dados");
     exit;
 }
+
 
 require_once ROOT."/controle/SaudeControle.php";
 require_once ROOT."/html/personalizacao_display.php";

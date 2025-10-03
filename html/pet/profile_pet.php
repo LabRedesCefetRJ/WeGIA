@@ -169,7 +169,7 @@ if (isset($_GET['id_pet'])) {
     <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
     <!-- printThis -->
     <script src="<?php echo WWW;?>assets/vendor/jasonday-printThis-f73ca19/printThis.js"></script>
-    <link rel="stylesheet" href="../../assets/print.css">
+
     <!-- jkeditor -->
     <script src="<?php echo WWW;?>assets/vendor/ckeditor/ckeditor.js"></script>
 
@@ -698,145 +698,133 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         
     });
+  });
 
-
-
+document.addEventListener("DOMContentLoaded", async ()=>{
 
   const info = {
-    metodo: "getHistoricoPet",
-    modulo: "pet",
-    nomeClasse: "controleSaudePet",
-    idpet: document.querySelector("#idPet").value
-  };
-  
+  metodo: "getHistoricoPet",
+  modulo: "pet",
+  nomeClasse: "controleSaudePet",
+  idpet: document.querySelector("#idPet").value
+};
 
-  const container = document.querySelector("#divHistoricoAtendimento");
+const container = document.querySelector("#divHistoricoAtendimento");
 
-  // Função para decodificar HTML escapado
-  function decodeHtml(html) {
-    var txt = document.createElement("textarea");
-    txt.innerHTML = html;
-    return txt.value;
+// Função para decodificar HTML escapado
+function decodeHtml(html) {
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+try {
+  const resp = await fetch("../../controle/control.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(info)
+  });
+
+  const data = await resp.json();
+  console.log(data); // Para depuração
+
+  // Limpa conteúdo anterior
+  container.textContent = "";
+
+  // Verifica se não há dados
+  if (!data || data.length === 0) {
+    const msg = document.createElement("p");
+    msg.textContent = "Nenhum histórico de atendimento encontrado.";
+    container.appendChild(msg);
+    return;
   }
 
-  try {
-    const resp = await fetch("../../controle/control.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(info)
-    });
+  // Cria um painel para cada atendimento, mesmo que a data seja igual
+  data.forEach((item, index) => {
+    // Painel principal
+    const panel = document.createElement("div");
+    panel.classList.add("panel", "panel-default");
+    panel.style.marginBottom = "10px";
 
-    const data = await resp.json();
-   
+    // Cabeçalho
+    const header = document.createElement("div");
+    header.classList.add("panel-heading");
+    header.style.cursor = "pointer";
+    header.dataset.toggle = "collapse";
+    header.dataset.target = `#atendimento${index + 1}`;
 
-    // Limpa conteúdo anterior
-    container.textContent = "";
+    const headerText = document.createElement("strong");
+    headerText.textContent = "Data: " + item.data_atendimento;
+    header.appendChild(headerText);
 
-    if (!data || data.length === 0) {
-      const msg = document.createElement("p");
-      msg.textContent = "Nenhum histórico de atendimento encontrado.";
-      container.appendChild(msg);
-      return;
-    }
+    // Corpo colapsável
+    const collapseDiv = document.createElement("div");
+    collapseDiv.id = `atendimento${index + 1}`;
+    collapseDiv.classList.add("panel-collapse", "collapse");
 
-    // Agrupar atendimentos por data
-    const atendimentos = {};
-    data.forEach(item => {
-      const dataAtendimento = item.data_atendimento;
-      if (!atendimentos[dataAtendimento]) {
-        atendimentos[dataAtendimento] = {
-          descricao_atendimento: item.descricao_atendimento || "Não informado.",
-          medicamentos: []
-        };
-      }
-      atendimentos[dataAtendimento].medicamentos.push(item);
-    });
+    const body = document.createElement("div");
+    body.classList.add("panel-body");
 
-    let count = 0;
+    // Descrição do atendimento
+    const pDescTitle = document.createElement("p");
+    const strongDesc = document.createElement("strong");
+    strongDesc.textContent = "Descrição do Atendimento:";
+    pDescTitle.appendChild(strongDesc);
+    body.appendChild(pDescTitle);
 
-    Object.entries(atendimentos).forEach(([dataAtendimento, dados]) => {
-      count++;
+    const pDesc = document.createElement("p");
+    pDesc.textContent = item.descricao_atendimento || "Não informado.";
+    body.appendChild(pDesc);
 
-      // Painel principal
-      const panel = document.createElement("div");
-      panel.classList.add("panel", "panel-default");
-      panel.style.marginBottom = "10px";
+    body.appendChild(document.createElement("hr"));
 
-      // Cabeçalho
-      const header = document.createElement("div");
-      header.classList.add("panel-heading");
-      header.style.cursor = "pointer";
-      header.dataset.toggle = "collapse";
-      header.dataset.target = `#atendimento${count}`;
+    // Lista de medicações
+    const pMedTitle = document.createElement("p");
+    const strongMed = document.createElement("strong");
+    strongMed.textContent = "Medicações Utilizadas:";
+    pMedTitle.appendChild(strongMed);
+    body.appendChild(pMedTitle);
 
-      const headerText = document.createElement("strong");
-      headerText.textContent = "Data: " + dataAtendimento;
-      header.appendChild(headerText);
+    const lista = document.createElement("ul");
 
-      // Corpo colapsável (fechado por padrão)
-      const collapseDiv = document.createElement("div");
-      collapseDiv.id = `atendimento${count}`;
-      collapseDiv.classList.add("panel-collapse", "collapse");
-
-      const body = document.createElement("div");
-      body.classList.add("panel-body");
-
-      // Descrição do atendimento
-      const pDescTitle = document.createElement("p");
-      const strongDesc = document.createElement("strong");
-      strongDesc.textContent = "Descrição do Atendimento:";
-      pDescTitle.appendChild(strongDesc);
-      body.appendChild(pDescTitle);
-
-      const pDesc = document.createElement("p");
-      pDesc.textContent = dados.descricao_atendimento;
-      body.appendChild(pDesc);
-
-      body.appendChild(document.createElement("hr"));
-
-      // Lista de medicações
-      const pMedTitle = document.createElement("p");
-      const strongMed = document.createElement("strong");
-      strongMed.textContent = "Medicações Utilizadas:";
-      pMedTitle.appendChild(strongMed);
-      body.appendChild(pMedTitle);
-
-      const lista = document.createElement("ul");
-      dados.medicamentos.forEach(med => {
+    // Caso haja medicação
+    if (item.nome_medicamento || item.aplicacao || item.descricao_medicamento) {
       const li = document.createElement("li");
 
-      // Nome
       const nome = document.createElement("div");
-      nome.innerHTML = `<strong>Nome:</strong> ${med.nome_medicamento || "Medicamento"}`;
+      nome.innerHTML = `<strong>Nome:</strong> ${item.nome_medicamento || "Medicamento"}`;
       li.appendChild(nome);
 
-      // Aplicação
       const aplicacao = document.createElement("div");
-      aplicacao.innerHTML = `<strong>Aplicação:</strong> ${med.aplicacao || "Não informada"}`;
+      aplicacao.innerHTML = `<strong>Aplicação:</strong> ${item.aplicacao || "Não informada"}`;
       li.appendChild(aplicacao);
 
-      // Descrição (na mesma linha)
       const descricao = document.createElement("div");
-      descricao.innerHTML = `<strong>Descrição:</strong> ${decodeHtml(med.descricao_medicamento || "")}`;
+      descricao.innerHTML = `<strong>Descrição:</strong> ${decodeHtml(item.descricao_medicamento || "")}`;
       li.appendChild(descricao);
 
       lista.appendChild(li);
-    });
+    } else {
+      const li = document.createElement("li");
+      li.textContent = "Nenhuma medicação registrada.";
+      lista.appendChild(li);
+    }
 
+    body.appendChild(lista);
+    collapseDiv.appendChild(body);
+    panel.appendChild(header);
+    panel.appendChild(collapseDiv);
+    container.appendChild(panel);
+  });
 
-      body.appendChild(lista);
+} catch (erro) {
+  
+  container.textContent = "Erro ao carregar histórico de atendimento.";
+}
 
-      collapseDiv.appendChild(body);
-      panel.appendChild(header);
-      panel.appendChild(collapseDiv);
-      container.appendChild(panel);
-    });
+})
 
-  } catch (erro) {
-
-    container.textContent = "Erro ao carregar histórico de atendimento.";
-  }
-
+document.addEventListener("DOMContentLoaded", async () => {
 
 const info2 = {
   metodo: "getHistoricoVacinacao",
@@ -925,6 +913,10 @@ try {
   alert("Erro ao buscar histórico de vacinação:", erro);
   containerVacinacao.textContent = "Erro ao carregar histórico de vacinação.";
 }
+})
+
+document.addEventListener("DOMContentLoaded", async () => {
+  
 
 
 // Dados para requisição
@@ -1015,12 +1007,9 @@ try {
   alert("Erro ao buscar histórico de vermifugação");
   containerVermifugacao.textContent = "Erro ao carregar histórico de vermifugação.";
 }
-
-
-
-
-
 });
+
+
 
 //ADICIONAR TIPO DE EXAME
 
