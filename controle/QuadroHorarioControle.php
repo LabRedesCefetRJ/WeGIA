@@ -112,21 +112,22 @@ class QuadroHorarioControle
 
     public function removerEscala()
     {
-        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+        try {
+            if(!Csrf::validateToken($_POST['csrf_token'] ?? NULL))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
 
-        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
-        $regex = '#^((\.\./|' . WWW . ')html/quadro_horario/(listar_escala)\.php)$#';
+            $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
 
-        if (!$id || $id < 1) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'O id da escala fornecido é inválido.']);
-            exit();
+            if (!$id || $id < 1) 
+                throw new InvalidArgumentException('O id da escala fornecido é inválido.', 422);
+
+            $log = (new QuadroHorarioDAO)->removerEscala($id);
+
+            $log === TRUE ? $_SESSION['msg'] = 'Escala removida com sucesso.' : $_SESSION['msg'] = 'Não é possível excluir uma escala ainda atribuída ao quadro horário de um funcionário.';
+        } catch (Exception $e) {
+            Util::tratarException($e);
+            $e instanceof PDOException ? $_SESSION['msg'] = 'Erro no servidor ao manipular o banco de dados.' : $_SESSION['msg'] = "Erro ao remover escala: " . $e->getMessage();
+            $_SESSION['flag'] = "erro";
         }
-
-        $log = (new QuadroHorarioDAO)->removerEscala($id);
-
-        $_SESSION['msg'] = $log;
-
-        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
     }
 }
