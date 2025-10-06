@@ -845,4 +845,46 @@ class Util
         //Retornar resultado
         return true;
     }
+
+    /**
+     * Valida e formata números de telefone brasileiros.
+     * 
+     * Aceita números com ou sem máscara e retorna no formato:
+     * (XX)91234-5678 para celular ou (XX)1234-5678 para fixo.
+     * 
+     * @param string $telefone
+     * @return string|false Telefone formatado ou false se inválido.
+     */
+    public static function validarTelefone(string $telefone)
+    {
+        // Remove tudo que não for número
+        $numeros = preg_replace('/\D/', '', $telefone);
+
+        // Validação básica
+        if (strlen($numeros) < 10 || strlen($numeros) > 11) {
+            return false;
+        }
+
+        // DDD (dois primeiros dígitos)
+        $ddd = substr($numeros, 0, 2);
+        // Resto do número (após o DDD)
+        $resto = substr($numeros, 2);
+
+        // Verifica se é celular (11 dígitos e começa com 9)
+        if (strlen($numeros) === 11 && $resto[0] === '9') {
+            $parte1 = substr($resto, 0, 5);
+            $parte2 = substr($resto, 5);
+            return sprintf('(%s)%s-%s', $ddd, $parte1, $parte2);
+        }
+
+        // Verifica se é fixo (10 dígitos)
+        if (strlen($numeros) === 10) {
+            $parte1 = substr($resto, 0, 4);
+            $parte2 = substr($resto, 4);
+            return sprintf('(%s)%s-%s', $ddd, $parte1, $parte2);
+        }
+
+        // Se não passou em nenhum formato válido
+        return false;
+    }
 }
