@@ -31,6 +31,7 @@ if (!isset($_SESSION['pet'])) {
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
 require_once "../personalizacao_display.php";
 require_once "../../dao/Conexao.php";
@@ -793,6 +794,7 @@ try {
                 <div class="modal-body">
                   <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
                     <input type="hidden" name="nomeClasse" value="PetControle">
+                    <?= Csrf::inputField() ?>
                     <input type="hidden" name="metodo" value="alterarImagem">
                     <input type="hidden" name="modulo" value="pet">
                     <div class="form-group">
@@ -821,7 +823,7 @@ try {
 
                   <?php
                   echo "<img  id='imagem' class='rounded img-responsive' alt='John Doe'>";
-                  
+
                   $id_pessoa = $_SESSION['id_pessoa'];
                   $donoimagem = htmlspecialchars($id_pet);
 
@@ -900,6 +902,7 @@ try {
                   <form class="form-horizontal" method="post" action="../../controle/control.php">
                     <div class="myModal print">
                       <input type="hidden" name="nomeClasse" value="PetControle">
+                      <?= Csrf::inputField() ?>
                       <input type="hidden" name="metodo" value="alterarPetDados">
                       <input type="hidden" name="modulo" value="pet">
 
@@ -970,7 +973,7 @@ try {
                               $raca = mysqli_query($conexao, "SELECT id_pet_raca AS id_raca, descricao AS 'raca' FROM pet_raca");
                               foreach ($raca as $valor) {
                                 echo "<option value=" . htmlspecialchars($valor['id_raca']) . " >" . htmlspecialchars($valor['raca']) . "</option>";
-                              } 
+                              }
                               ?>
                             </select>
                           </div>
@@ -1010,17 +1013,17 @@ try {
                         </thead>
                         <tbody id="doc-tab">
                           <?php
-                            $stmtExames = $pdo->prepare("SELECT *, pte.descricao_exame AS 'arkivo' FROM pet_exame pe JOIN pet_tipo_exame pte ON pe.id_tipo_exame = pte.id_tipo_exame JOIN pet_ficha_medica pfm ON pe.id_ficha_medica =pfm.id_ficha_medica  WHERE pfm.id_pet=:idPet");
-                            $stmtExames->bindParam('idPet', $id_pet, PDO::PARAM_INT);
-                            $stmtExames->execute();
+                          $stmtExames = $pdo->prepare("SELECT *, pte.descricao_exame AS 'arkivo' FROM pet_exame pe JOIN pet_tipo_exame pte ON pe.id_tipo_exame = pte.id_tipo_exame JOIN pet_ficha_medica pfm ON pe.id_ficha_medica =pfm.id_ficha_medica  WHERE pfm.id_pet=:idPet");
+                          $stmtExames->bindParam('idPet', $id_pet, PDO::PARAM_INT);
+                          $stmtExames->execute();
 
-                            $exame = $stmtExames->fetchAll();
-                            if ($exame) {
-                              foreach ($exame as $valor) {
-                                $data = explode('-', $valor['data_exame']);
-                                $data = $data[2] . '-' . $data[1] . '-' . $data[0];
-                                $arkivo = $valor['arkivo'];
-                                echo <<<HTML
+                          $exame = $stmtExames->fetchAll();
+                          if ($exame) {
+                            foreach ($exame as $valor) {
+                              $data = explode('-', $valor['data_exame']);
+                              $data = $data[2] . '-' . $data[1] . '-' . $data[0];
+                              $arkivo = $valor['arkivo'];
+                              echo <<<HTML
                                     <tr id="tr$valor[id_exame]">
                                       <td><p id="ark$valor[id_exame]">$arkivo</p></td>
                                       <td>$data</td>
@@ -1038,8 +1041,8 @@ try {
                                       </td>
                                     </tr>
                                   HTML;
-                              }
                             }
+                          }
                           ?>
                         </tbody>
                       </table><br>
@@ -1093,6 +1096,7 @@ try {
                                 </div>
                                 <input type="hidden" name="modulo" value="pet">
                                 <input type="hidden" name="nomeClasse" value="PetControle">
+                                <?= Csrf::inputField() ?>
                                 <input type="hidden" name="metodo" value="incluirExamePet">
                                 <input type="hidden" name="id_ficha_medica" value="<?= htmlspecialchars($id_ficha_medica) ?>">
                                 <input type="hidden" name="id_pet" value="<?= htmlspecialchars($id_pet) ?>">
