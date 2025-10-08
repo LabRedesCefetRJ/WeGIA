@@ -1,6 +1,6 @@
 <?php
 
-if(session_status() === PHP_SESSION_NONE){
+if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
@@ -10,15 +10,15 @@ if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
 }
 
-require_once dirname(__FILE__, 3). DIRECTORY_SEPARATOR . 'config.php';
-require_once dirname(__FILE__, 2). DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 
-if($id_pessoa < 1){
+if ($id_pessoa < 1) {
   http_response_code(400);
   echo json_encode(['erro' => 'O id da pessoa informado é inválido']);
   exit();
@@ -53,28 +53,30 @@ $raca = $mysqli->query("select * from pet_raca");
 
 
 if (isset($_GET['msg'])) {
-    $mensagem = htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8');
+  $mensagem = htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8');
 
-    // Remove espaços extras e tags HTML
-    $mensagem = trim(strip_tags($mensagem));
+  // Remove espaços extras e tags HTML
+  $mensagem = trim(strip_tags($mensagem));
 
-    // Verifica se a mensagem é válida (somente letras, números e espaços permitidos)
-    if (!preg_match('/^[\p{L}\p{N} ]+$/u', $mensagem)) {
-        exit(); // Sai do script se a mensagem tiver caracteres suspeitos
-    }
+  // Verifica se a mensagem é válida (somente letras, números e espaços permitidos)
+  if (!preg_match('/^[\p{L}\p{N} ]+$/u', $mensagem)) {
+    exit(); // Sai do script se a mensagem tiver caracteres suspeitos
+  }
 
-    // Escapa caracteres especiais para evitar XSS
-    $mensagem = htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8');
+  // Escapa caracteres especiais para evitar XSS
+  $mensagem = htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8');
 
-    // Transforma a mensagem em um formato seguro para JavaScript
-    $mensagem = json_encode($mensagem, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+  // Transforma a mensagem em um formato seguro para JavaScript
+  $mensagem = json_encode($mensagem, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-    echo <<<HTML
+  echo <<<HTML
     <script>
         alert($mensagem);
         window.location.href = "../../html/pet/cadastro_pet.php";
     </script>
     HTML;
+
+  require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 }
 
 
@@ -141,140 +143,141 @@ if (isset($_GET['msg'])) {
       </header>
       <!-- start: page -->
       <div class="row" id="formulario">
-      <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data" onsubmit="verificarDataAcolhimento()">
-        <div class="row">
-        <div class="col-md-4 col-lg-3">
-        <section class="panel">
-          <div class="panel-body">
-            <div class="thumb-info mb-md">
-              <!-- Pré-visualização da imagem -->
-              <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
-              <img id="previewImagemPet" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
-              
-              <!-- Input para imagem -->
-          
-            </div>
-          </div>
-        </section>
-      </div>
+        <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data" onsubmit="verificarDataAcolhimento()">
+          <div class="row">
+            <div class="col-md-4 col-lg-3">
+              <section class="panel">
+                <div class="panel-body">
+                  <div class="thumb-info mb-md">
+                    <!-- Pré-visualização da imagem -->
+                    <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
+                    <img id="previewImagemPet" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
 
+                    <!-- Input para imagem -->
 
-    <div class="col-md-8 col-lg-8">
-      <div class="tabs">
-        <ul class="nav nav-tabs tabs-primary">
-          <li class="active">
-            <a href="#overview" data-toggle="tab">Cadastro dos Pets</a>
-          </li>
-        </ul>
-        <div class="tab-content">
-          <div id="overview" class="tab-pane active">
-            <h4 class="mb-xlg">Informações do Pet</h4>
-            <h5 class="obrig">Campos Obrigatórios(*)</h5>
-
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="nome">Nome<sup class="obrig">*</sup></label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" name="nome" id="nome" onkeypress="return Onlychars(event)" required>
-              </div>
+                  </div>
+                </div>
+              </section>
             </div>
 
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="cor">Cor<sup class="obrig">*</sup></label>
-              <a onclick="adicionar_cor()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-              <div class="col-md-8">
-                <select class="form-control input-lg mb-md" name="cor" id="cor" required>
-                  <option selected disabled>Selecionar</option>
-                  <?php
-                  while ($row = $cor->fetch_array(MYSQLI_NUM)) {
-                    echo "<option value='{$row[0]}'>". htmlspecialchars($row[1]) ."</option>";
-                  }
-                  ?>
-                </select>
-              </div>
-            </div>
 
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="especie">Espécie<sup class="obrig">*</sup></label>
-              <a onclick="adicionar_especie()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-              <div class="col-md-8">
-                <select class="form-control input-lg mb-md" name="especie" id="especie" required>
-                  <option selected disabled>Selecionar</option>
-                  <?php
-                  while ($row = $especie->fetch_array(MYSQLI_NUM)) {
-                    echo "<option value='{$row[0]}'>". htmlspecialchars($row[1]) ."</option>";
-                  }
-                  ?>
-                </select>
-              </div>
-            </div>
+            <div class="col-md-8 col-lg-8">
+              <div class="tabs">
+                <ul class="nav nav-tabs tabs-primary">
+                  <li class="active">
+                    <a href="#overview" data-toggle="tab">Cadastro dos Pets</a>
+                  </li>
+                </ul>
+                <div class="tab-content">
+                  <div id="overview" class="tab-pane active">
+                    <h4 class="mb-xlg">Informações do Pet</h4>
+                    <h5 class="obrig">Campos Obrigatórios(*)</h5>
 
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="raca">Raça<sup class="obrig">*</sup></label>
-              <a onclick="adicionar_raca()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-              <div class="col-md-8">
-                <select class="form-control input-lg mb-md" name="raca" id="raca" required>
-                  <option selected disabled>Selecionar</option>
-                  <?php
-                  while ($row = $raca->fetch_array(MYSQLI_NUM)) {
-                    echo "<option value='{$row[0]}'>". htmlspecialchars($row[1]) ."</option>";
-                  }
-                  ?>
-                </select>
-              </div>
-            </div>
+                    <div class="form-group">
+                      <label class="col-md-3 control-label" for="nome">Nome<sup class="obrig">*</sup></label>
+                      <div class="col-md-8">
+                        <input type="text" class="form-control" name="nome" id="nome" onkeypress="return Onlychars(event)" required>
+                      </div>
+                    </div>
 
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="gender">Sexo<sup class="obrig">*</sup></label>
-              <div class="col-md-8">
-                <label><input type="radio" name="gender" value="m" style="margin: 10px 5px 0 15px;" required><i class="fa fa-mars" style="font-size: 20px;"></i></label>
-                <label><input type="radio" name="gender" value="f" style="margin: 10px 5px 0 15px;"><i class="fa fa-venus" style="font-size: 20px;"></i></label>
-              </div>
-            </div>
+                    <div class="form-group">
+                      <label class="col-md-3 control-label" for="cor">Cor<sup class="obrig">*</sup></label>
+                      <a onclick="adicionar_cor()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                      <div class="col-md-8">
+                        <select class="form-control input-lg mb-md" name="cor" id="cor" required>
+                          <option selected disabled>Selecionar</option>
+                          <?php
+                          while ($row = $cor->fetch_array(MYSQLI_NUM)) {
+                            echo "<option value='{$row[0]}'>" . htmlspecialchars($row[1]) . "</option>";
+                          }
+                          ?>
+                        </select>
+                      </div>
+                    </div>
 
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="nascimento">Data de Nascimento Aproximada<sup class="obrig">*</sup></label>
-              <div class="col-md-8">
-                <input type="date" class="form-control" name="nascimento" id="nascimento" max="<?php echo date('Y-m-d'); ?>" required>
-              </div>
-            </div>
+                    <div class="form-group">
+                      <label class="col-md-3 control-label" for="especie">Espécie<sup class="obrig">*</sup></label>
+                      <a onclick="adicionar_especie()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                      <div class="col-md-8">
+                        <select class="form-control input-lg mb-md" name="especie" id="especie" required>
+                          <option selected disabled>Selecionar</option>
+                          <?php
+                          while ($row = $especie->fetch_array(MYSQLI_NUM)) {
+                            echo "<option value='{$row[0]}'>" . htmlspecialchars($row[1]) . "</option>";
+                          }
+                          ?>
+                        </select>
+                      </div>
+                    </div>
 
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="acolhimento">Data de Acolhimento<sup class="obrig">*</sup></label>
-              <div class="col-md-8">
-                <input type="date" class="form-control" name="acolhimento" id="acolhimento" max="<?php echo date('Y-m-d'); ?>" required>
-              </div>
-            </div>
+                    <div class="form-group">
+                      <label class="col-md-3 control-label" for="raca">Raça<sup class="obrig">*</sup></label>
+                      <a onclick="adicionar_raca()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                      <div class="col-md-8">
+                        <select class="form-control input-lg mb-md" name="raca" id="raca" required>
+                          <option selected disabled>Selecionar</option>
+                          <?php
+                          while ($row = $raca->fetch_array(MYSQLI_NUM)) {
+                            echo "<option value='{$row[0]}'>" . htmlspecialchars($row[1]) . "</option>";
+                          }
+                          ?>
+                        </select>
+                      </div>
+                    </div>
 
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="caracEsp">Características Específicas</label>
-              <div class="col-md-8">
-                <input type="text" class="form-control" name="caracEsp" id="caracEsp">
-              </div>
-            </div>
+                    <div class="form-group">
+                      <label class="col-md-3 control-label" for="gender">Sexo<sup class="obrig">*</sup></label>
+                      <div class="col-md-8">
+                        <label><input type="radio" name="gender" value="m" style="margin: 10px 5px 0 15px;" required><i class="fa fa-mars" style="font-size: 20px;"></i></label>
+                        <label><input type="radio" name="gender" value="f" style="margin: 10px 5px 0 15px;"><i class="fa fa-venus" style="font-size: 20px;"></i></label>
+                      </div>
+                    </div>
 
-            <hr class="dotted short">
+                    <div class="form-group">
+                      <label class="col-md-3 control-label" for="nascimento">Data de Nascimento Aproximada<sup class="obrig">*</sup></label>
+                      <div class="col-md-8">
+                        <input type="date" class="form-control" name="nascimento" id="nascimento" max="<?php echo date('Y-m-d'); ?>" required>
+                      </div>
+                    </div>
 
-            <div class="panel-footer">
-              <div class="row">
-                <div class="col-md-9 col-md-offset-3">
+                    <div class="form-group">
+                      <label class="col-md-3 control-label" for="acolhimento">Data de Acolhimento<sup class="obrig">*</sup></label>
+                      <div class="col-md-8">
+                        <input type="date" class="form-control" name="acolhimento" id="acolhimento" max="<?php echo date('Y-m-d'); ?>" required>
+                      </div>
+                    </div>
 
-                  <input type="hidden" name="nomeClasse" value="PetControle">
-                  <input type="hidden" name="modulo" value="pet">
-                  <input type="hidden" name="metodo" value="incluir">
-                  <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="validarFuncionario()">
-                  <input type="reset" class="btn btn-default">
+                    <div class="form-group">
+                      <label class="col-md-3 control-label" for="caracEsp">Características Específicas</label>
+                      <div class="col-md-8">
+                        <input type="text" class="form-control" name="caracEsp" id="caracEsp">
+                      </div>
+                    </div>
+
+                    <hr class="dotted short">
+
+                    <div class="panel-footer">
+                      <div class="row">
+                        <div class="col-md-9 col-md-offset-3">
+
+                          <input type="hidden" name="nomeClasse" value="PetControle">
+                          <?= Csrf::inputField() ?>
+                          <input type="hidden" name="modulo" value="pet">
+                          <input type="hidden" name="metodo" value="incluir">
+                          <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="validarFuncionario()">
+                          <input type="reset" class="btn btn-default">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div> 
-        </div> 
-      </div> 
-    </div> 
-  </div> 
-</form>
+          </div>
+        </form>
 
-                <!--<iframe name="frame"></iframe>!-->
-                <!-- end: page -->
+        <!--<iframe name="frame"></iframe>!-->
+        <!-- end: page -->
     </section>
   </div>
 
@@ -324,48 +327,48 @@ if (isset($_GET['msg'])) {
     //Exibir imagem
 
     document.getElementById('imgform').addEventListener('change', function(event) {
-  const input = event.target;
-  const preview = document.getElementById('previewImagemPet');
+      const input = event.target;
+      const preview = document.getElementById('previewImagemPet');
 
-  if (input.files && input.files[0]) {
-    const reader = new FileReader();
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
 
-    reader.onload = function(e) {
-      preview.src = e.target.result;
-      preview.style.display = 'block';
-    }
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
 
-    reader.readAsDataURL(input.files[0]);
-  } else {
-    preview.src = "#";
-    preview.style.display = "none";
-  }
-});
+        reader.readAsDataURL(input.files[0]);
+      } else {
+        preview.src = "#";
+        preview.style.display = "none";
+      }
+    });
 
 
     //Pedro
     /** Aqui começa a implementação das funções relacionada a "PET" */
     // funções relacionadas a datas
     function verificarDataAcolhimento() {
-    let nasc = document.querySelector("#nascimento").value;
-    let acol = document.querySelector("#acolhimento").value;
+      let nasc = document.querySelector("#nascimento").value;
+      let acol = document.querySelector("#acolhimento").value;
 
-    nasc = nasc.split('-').join('');
-    acol = acol.split('-').join('');
+      nasc = nasc.split('-').join('');
+      acol = acol.split('-').join('');
 
-    let anoLimite = 1990;
+      let anoLimite = 1990;
 
-    if (parseInt(nasc.substring(0, 4)) < anoLimite) {
+      if (parseInt(nasc.substring(0, 4)) < anoLimite) {
         alert("Ano de nascimento não pode ser anterior ao ano limite de " + anoLimite + "!");
         event.preventDefault();
         return;
-    }
+      }
 
-    if (acol < nasc) {
+      if (acol < nasc) {
         alert("Data de acolhimento não pode ser anterior a data de nascimento!");
         event.preventDefault();
+      }
     }
-}
 
     /*
     function noType(){
@@ -457,7 +460,7 @@ if (isset($_GET['msg'])) {
         return
       }
       //===========================
-      let e = especie.replace(/[A-ZÁÉÍÓÚáéíóúâêîôûàèìòùÃÕãõÇç ]/gi, '');    
+      let e = especie.replace(/[A-ZÁÉÍÓÚáéíóúâêîôûàèìòùÃÕãõÇç ]/gi, '');
       e = e.replaceAll('-', '');
 
       if (e.length != 0) {
@@ -565,25 +568,25 @@ if (isset($_GET['msg'])) {
     }
 
     function submitButtonStyle(event, _this) {
-  // Impede o envio do formulário e o redirecionamento
-  event.preventDefault();
+      // Impede o envio do formulário e o redirecionamento
+      event.preventDefault();
 
-  // Mudança de estilo no botão
-  _this.style.backgroundColor = "#5cb85c"; // verde
-  document.getElementById("okText").textContent = "Arquivo confirmado";
+      // Mudança de estilo no botão
+      _this.style.backgroundColor = "#5cb85c"; // verde
+      document.getElementById("okText").textContent = "Arquivo confirmado";
 
-  // Habilitar campos
-  $("#nome").prop('disabled', false);
-  $("#cor").prop('disabled', false);
-  $("#especie").prop('disabled', false);
-  $("#raca").prop('disabled', false);
-  $("#radioM").prop('disabled', false);
-  $("#radioF").prop('disabled', false);
-  $("#nascimento").prop('disabled', false);
-  $("#caracEsp").prop('disabled', false);
-  $("#vacinacao").prop('disabled', false);
-  $("#necEsp").prop('disabled', false);
-}
+      // Habilitar campos
+      $("#nome").prop('disabled', false);
+      $("#cor").prop('disabled', false);
+      $("#especie").prop('disabled', false);
+      $("#raca").prop('disabled', false);
+      $("#radioM").prop('disabled', false);
+      $("#radioF").prop('disabled', false);
+      $("#nascimento").prop('disabled', false);
+      $("#caracEsp").prop('disabled', false);
+      $("#vacinacao").prop('disabled', false);
+      $("#necEsp").prop('disabled', false);
+    }
 
 
     function funcao1() {

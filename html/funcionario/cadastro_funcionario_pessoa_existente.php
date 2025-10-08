@@ -1,5 +1,4 @@
 <?php
-
 include_once("conexao.php");
 session_start();
 if (!isset($_SESSION['usuario'])) {
@@ -16,7 +15,6 @@ if (file_exists($config_path)) {
   }
   require_once($config_path);
 }
-
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
@@ -62,17 +60,19 @@ require_once "../personalizacao_display.php";
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
-$cpf = $_GET['cpf'];
+$cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
+if (!$cpf || $cpf < 1) {
+  http_response_code(400);
+  echo json_encode(['erro' => 'O CPF informado não é válido.']);
+  exit();
+}
+
+//SQL Injection está em algum dos métodos abaixo
 $funcionario = new FuncionarioDAO;
 $informacoesFunc = $funcionario->listarPessoaExistente($cpf);
 $id_pessoaForm = $funcionario->listarIdPessoa($cpf);
 $sobrenome = $funcionario->listarSobrenome($cpf);
-
-
-// echo $id_pessoaForm;
-
-
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -116,13 +116,6 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
 
         $("#nome").val(item.nome).prop('disabled', true);
         $("#sobrenome").val(item.sobrenome).prop('disabled', true);
-        // if (item.sobrenome==null) {
-        //         $("#sobrenome").prop('disabled',false);
-        //       }
-        // else {
-        //   $("#sobrenome").val(item.sobrenome).prop('disabled',true);
-        // }
-        // $("#sobrenome").val(item.sobrenome).prop('disabled', true);
         $("#telefone").val(item.telefone).prop('disabled', true);
         $("#orgao_emissor").val(item.orgao_emissor);
         $("#nascimento").val(alterardate(item.data_nascimento)).prop('disabled', true);
@@ -142,16 +135,6 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
         } else if (item.sexo = null) {
           $("#radio").prop('disabled', false);
         }
-
-        // if (item.sexo == "m") {
-        //   $("#radioM").prop('checked', true).prop('disabled', true);
-        //   $("#radioF").prop('checked', false).prop('disabled', true);
-        //   $("#reservista1").show();
-        //   $("#reservista2").show();
-        // } else if (item.sexo == "f") {
-        //   $("#radioM").prop('checked', false).prop('disabled', true)
-        //   $("#radioF").prop('checked', true).prop('disabled', true);
-        // }
       })
 
       function alterardate(data) {
@@ -542,28 +525,6 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
       }
 
     };
-
-    /*function testaCPF(strCPF) { //strCPF é o cpf que será validado. Ele deve vir em formato string e sem nenhum tipo de pontuação.
-      var strCPF = strCPF.replace(/[^\d]+/g, ''); // Limpa a string do CPF removendo espaços em branco e caracteres especiais.
-      var Soma;
-      var Resto;
-      Soma = 0;
-      if (strCPF == "00000000000") return false;
-
-      for (i = 1; i <= 9; i++) Soma = Soma + parseInt(strCPF.substring(i - 1, i)) * (11 - i);
-      Resto = (Soma * 10) % 11;
-
-      if ((Resto == 10) || (Resto == 11)) Resto = 0;
-      if (Resto != parseInt(strCPF.substring(9, 10))) return false;
-
-      Soma = 0;
-      for (i = 1; i <= 10; i++) Soma = Soma + parseInt(strCPF.substring(i - 1, i)) * (12 - i);
-      Resto = (Soma * 10) % 11;
-
-      if ((Resto == 10) || (Resto == 11)) Resto = 0;
-      if (Resto != parseInt(strCPF.substring(10, 11))) return false;
-      return true;
-    }*/
 
     function validarCPF(strCPF) {
 
