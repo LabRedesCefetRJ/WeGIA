@@ -323,7 +323,8 @@ try {
   <script src="../../Functions/enviar_dados.js"></script>
   <script src="../../Functions/mascara.js"></script>
   <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
-  <script>
+  <script src="script/profile_paciente_script/funcoes/enfermidades_funcoes.js" defer></script>
+  <script> 
     function excluirimg(id) {
       $("#excluirimg").modal('show');
       $('input[name="id_documento"]').val(id);
@@ -373,7 +374,7 @@ try {
       });
     });
 
-    // exame // 
+    // exame //
    async function gerarExames() {
       const docfuncional = await listarExamesPorId(<?php echo $_GET["id_fichamedica"];?>); 
 
@@ -440,19 +441,6 @@ try {
 
     // enfermidade //
     $(function() {
-      var enfermidades = <?= $enfermidades ?>;
-      $.each(enfermidades, function(i, item) {
-        $("#doc-tab")
-          .append($("<tr>")
-            .append($("<td>").text(item.descricao))
-            .append($("<td>").text(item.data_diagnostico))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a onclick='removerEnfermidade(" + item.id_CID + ")' href='#' title='Inativar'><button class='btn btn-dark'><i class='glyphicon glyphicon-remove'></i></button></a>"))
-
-            )
-          )
-      });
-
       let alergias = <?= $alergias ?>;
       $.each(alergias, function(i, item) {
         $("#doc-tab-alergias")
@@ -466,19 +454,7 @@ try {
       });
     });
 
-    function listarEnfermidades(enfermidades) {
-      $("#doc-tab").empty();
-      $.each(enfermidades, function(i, item) {
-        $("#doc-tab")
-          .append($("<tr>")
-            .append($("<td>").text(item.descricao))
-            .append($("<td>").text(item.data_diagnostico))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a onclick='removerEnfermidade(" + item.id_CID + ")' href='#' title='Inativar'><button class='btn btn-primary'><i class='glyphicon glyphicon-remove'></i></button></a>"))
-            )
-          )
-      });
-    }
+    
 
     function listarAlergias(alergias) {
       $("#doc-tab-alergias").empty();
@@ -512,10 +488,10 @@ try {
       $.each(exibimed, function(i, item) {
         $("#exibimed")
           .append($("<tr>")
-            .append($("<td>").text(item.data_atendimento))
-            .append($("<td>").text(item.medicamento + ", " + item.dosagem + ", " + item.horario + ", " + item.duracao + "."))
-            .append($("<td>").text(item.descricao))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.data_atendimento))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + item.horario + ", " + item.duracao + "."))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
+            .append($("<td style='text-align: center; vertical-align: middle;'>")
               .append($("<a onclick='editarStatusMedico(" + item.id_medicacao + ")' href='#'title='Editar'><button class='btn btn-primary' id='teste'><i class='glyphicon glyphicon-pencil'></i></button></a>"))
             )
           )
@@ -1226,7 +1202,7 @@ try {
                         </div>
 
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany" id="data_diagnostico">Data do diagnóstico<sup class="obrig">*</sup></label>
+                          <label class="col-md-3 control-label" for="profileCompany">Data do diagnóstico<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
                             <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_diagnostico" id="data_diagnostico" max=<?php echo date('Y-m-d'); ?> required>
                           </div>
@@ -1236,7 +1212,7 @@ try {
                           <label class="col-md-3 control-label" for="inputSuccess">Status<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
                             <select class="form-control input-lg mb-md" name="intStatus" id="intStatus" required>
-                              <option selected disabled>Selecionar</option>
+                              <option value="" selected disabled>Selecionar</option>
                               <option value="1">Ativo</option>
                               <option value="0">Inativo</option>
                             </select>
@@ -1245,8 +1221,7 @@ try {
 
                         <div class="form-group">
                           <div class="col-md-6">
-                            <input type="number" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
-                            <input type="hidden" name="id_fichamedica" value=<?php echo $_GET['id_fichamedica'] ?>>
+                            <input type="hidden" id="id_fichamedica_enfermidade" name="id_fichamedica" value=<?php echo $_GET['id_fichamedica'] ?>>
                             <input type="submit" class="btn btn-primary" value="Cadastrar" id="btn-cadastrar-enfermidade">
                           </div>
                         </div>
@@ -1361,7 +1336,7 @@ try {
 
                       <div class="form-group">
                         <hr class="dotted short">
-                        <table class="table table-bordered table-striped mb-none datatable-docfuncional">
+                        <table class="table table-bordered table-striped mb-none datatable-docfuncional" ">
                           <thead>
                             <tr style="font-size:15px;">
                               <th>Data do atendimento</th>
@@ -1774,15 +1749,7 @@ try {
         </div>
     </div>
 
-    <script>
-      function removerEnfermidade(id_doc) {
-        if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
-          return false;
-        }
-        let url = "enfermidade_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
-        let data = "";
-        post(url, data, listarEnfermidades);
-      }
+    <script defer> 
 
       function removerAlergia(id_doc) {
         if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
@@ -1997,29 +1964,6 @@ try {
       adicionar_exame();
     })
 
-
-      async function gerarEnfermidade() {
-        situacoes = await listarTodasAsEnfermidades()
-        let length = situacoes.length - 1;
-        let select = document.getElementById("id_CID");
-        while (select.firstChild) {
-          select.removeChild(select.firstChild)
-        }
-        for (let i = 0; i <= length; i = i + 1) {
-          if (i == 0) {
-            let selecionar = document.createElement("option");
-            selecionar.textContent = "Selecionar"
-            selecionar.selected = true;
-            selecionar.disabled = true;
-            select.appendChild(selecionar)
-          }
-          let option = document.createElement("option");
-          option.value = situacoes[i].id_CID;
-          option.textContent = situacoes[i].descricao;
-          select.appendChild(option);
-        }
-      }
-
       async function gerarMedicos() {
         medicos = await listarTodosOsMedicos()
         let length = medicos.length - 1;
@@ -2038,41 +1982,6 @@ try {
           option.textContent = medicos[i].nome;
           select.appendChild(option);
         }
-      }
-
-      function adicionar_enfermidade() {
-        const url = './adicionar_enfermidade.php';
-
-        let nome_enfermidade = window.prompt("Insira o nome da enfermidade:");
-        let cid_enfermidade = window.prompt("Insira o CID da enfermidade:");
-
-        if (!nome_enfermidade || !cid_enfermidade) {
-          return;
-        }
-
-        const data = new URLSearchParams();
-        data.append('cid', cid_enfermidade);
-        data.append('nome', nome_enfermidade);
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: data.toString()
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Erro na requisição');
-            }
-            return response.text();
-          })
-          .then(result => {
-            gerarEnfermidade();
-          })
-          .catch(error => {
-            console.error('Erro ao enviar dados:', error);
-          });
       }
 
       function adicionar_medico() {
@@ -2343,52 +2252,6 @@ try {
       }
 
 
-      //Buscar enfermidades
-      async function buscarEnfermidadesPorID() {
-        const nomeClasse = 'EnfermidadeControle';
-        const metodo = 'getEnfermidadesAtivasPorFichaMedica';
-        const id_fichamedica = <?= json_encode($_GET['id_fichamedica']) ?>
-
-        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
-
-        try {
-          const response = await fetch(url);
-
-          if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-          }
-
-          const data = await response.json();
-
-          return data ?? []; //Retorna um array vazio se `null`
-        } catch (error) {
-          console.error('Erro ao buscar enfermidades:', error);
-          return [];
-        }
-      }
-
-      async function listarTodasAsEnfermidades() {
-        const nomeClasse = 'EnfermidadeControle';
-        const metodo = 'listarTodasAsEnfermidades';
-
-        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}`;
-
-        try {
-          const response = await fetch(url);
-
-          if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-          }
-
-          const data = await response.json();
-
-          return data ?? []; //Retorna um array vazio se `null`
-        } catch (error) {
-          console.error('Erro ao buscar enfermidades:', error);
-          return [];
-        }
-      }
-
       async function listarTodosOsMedicos() {
         const nomeClasse = 'MedicoControle';
         const metodo = 'listarTodosOsMedicos';
@@ -2421,77 +2284,14 @@ try {
         await gerarEnfermidade();
         await gerarMedicos();
         await gerarExames();
+        await gerarEnfermidadesDoPaciente();
+        const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
+        btnCadastrarEnfermidade.addEventListener('click', cadastrarEnfermidade);
       })
 
-      //Gerar tabela de enfermidades
-      function exibirEnfermidades(enfermidades) {
+      
 
-        if (!Array.isArray(enfermidades) || enfermidades.length === 0) {
-          console.warn('Nenhuma enfermidade encontrada!');
-          return;
-        }
-
-        $("#doc-tab").empty(); //Limpa a tabela antes de adicionar novas linhas
-
-        $.each(enfermidades, function(i, item) {
-
-          // Certifique-se de que `descricao` e `data_diagnostico` existem no objeto
-          if (!item.descricao || !item.data_diagnostico) {
-            console.warn('Dados inválidos:', item);
-            return;
-          }
-
-          $("#doc-tab").append(
-            $("<tr>")
-            .append($("<td>").text(item.descricao))
-            .append($("<td>").text(formatarDataBr(item.data_diagnostico)))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a>")
-                .attr("href", "#")
-                .attr("title", "Inativar")
-                .attr("onclick", `removerEnfermidade(${item.id_CID})`)
-                .append($("<button class='btn btn-dark'>")
-                  .append($("<i class='glyphicon glyphicon-remove'>"))
-                )
-              )
-            )
-          );
-        });
-
-        $("#doc-tab").hide().show(); //Força atualização visual da tabela
-      }
-
-
-      async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
-        ev.preventDefault();
-
-        const formEnfermidade = document.getElementById('form-enfermidade');
-        const formData = new FormData(formEnfermidade);
-
-        try {
-          const response = await fetch('./enfermidade_upload.php', {
-            method: 'POST',
-            body: new URLSearchParams([...formData]), // Converte FormData para URL-encoded
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
-            }
-          });
-
-          const data = await response.json();
-
-          // Chamar função para buscar e exibir nova tabela
-          const enfermidades = await buscarEnfermidadesPorID();
-
-          exibirEnfermidades(enfermidades);
-
-        } catch (error) {
-          console.error('Erro:', error);
-        }
-      }
-
-      const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
-
-      btnCadastrarEnfermidade.addEventListener('click', cadastrarEnfermidade);
+      
 
       carregarIntercorrencias();
     </script>
@@ -2514,7 +2314,6 @@ try {
     <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
     <!-- importante para a aba de exames -->
-    <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
 
     <div align="right">

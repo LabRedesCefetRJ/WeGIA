@@ -266,8 +266,8 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
         td4.textContent = item.duracao;
 
         const td5 = document.createElement("td");
-        td5.style.display = "flex";
-        td5.style.justifyContent = "space-evenly";
+        td5.style.textAlign = "center";
+        td5.style.verticalAlign = "middle";
 
         const a = document.createElement("a");
         a.title = "Aplicar medicamento";
