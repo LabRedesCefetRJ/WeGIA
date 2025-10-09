@@ -1,14 +1,9 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 require_once ROOT . '/classes/Saude.php';
 require_once ROOT . '/dao/SaudeDAO.php';
@@ -109,16 +104,21 @@ class SaudeControle
         return $saude;
     }
 
-    // aq era atendidos
+    /**
+     * Atribui à chave 'saude' da sessão o resultado da pesquisa de todos os pacientes registrados no banco de dados da aplicação.
+     */
     public function listarTodos()
     {
-        extract($_REQUEST);
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+
+        $regex = '#^(\.\./html/saude/(administrar_medicamento|informacao_saude|listar_cadastro_intercorrencia|listar_sinais_vitais)\.php)$#';
 
         $SaudeDAO = new SaudeDAO();
         $pacientes = $SaudeDAO->listarTodos();
-        session_start();
+
         $_SESSION['saude'] = $pacientes;
-        header('Location: ' . $nextPage);
+
+        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
     }
 
     public function listarUm()
@@ -128,44 +128,37 @@ class SaudeControle
 
         $regex = '#^(\.\./html/saude/(aplicar_medicamento|sinais_vitais|cadastrar_intercorrencias|profile_paciente)\.php(\?id_fichamedica=\d+)?)$#';
 
-        $cache = new Cache();
-        $infSaude = $cache->read($id);
+        try {
+            $cache = new Cache();
+            $infSaude = $cache->read($id);
 
-        if (!$infSaude) {
-            try {
+            if (!$infSaude) {
                 $SaudeDAO = new SaudeDAO();
                 $infSaude = $SaudeDAO->listar($id);
-                session_start();
                 $_SESSION['id_fichamedica'] = $infSaude;
                 $cache->save($id, $infSaude, '1 seconds');
+            }
 
-                if(preg_match($regex, $nextPage)){
-                    header('Location:' . htmlspecialchars($nextPage));
-                }else{
-                    header('Location:' . '../html/home.php');
-                }
-            } catch (PDOException $e) {
-                echo $e->getMessage();
-            }
-        } else {
-            if(preg_match($regex, $nextPage)){
-                header('Location:' . htmlspecialchars($nextPage));
-            }else{
-                header('Location:' . '../html/home.php');
-            }
+            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarImagem()
     {
-        extract($_REQUEST);
-        $imagem = file_get_contents($_FILES['imgperfil']['tmp_name']);
-        $SaudeDAO = new SaudeDAO();
+        $id_fichamedica = filter_input(INPUT_POST, 'id_fichamedica', FILTER_SANITIZE_NUMBER_INT);
         try {
+            if (!$id_fichamedica || $id_fichamedica < 1)
+                throw new InvalidArgumentException('O id da ficha médica informado é inválido.', 422);
+
+            $imagem = file_get_contents($_FILES['imgperfil']['tmp_name']);
+            $SaudeDAO = new SaudeDAO();
+
             $SaudeDAO->alterarImagem($id_fichamedica, $imagem);
-            header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . $id_fichamedica);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . htmlspecialchars($id_fichamedica));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -174,13 +167,13 @@ class SaudeControle
      */
     public function incluir()
     {
-        $saude = $this->verificar();
-        $texto_descricao = $saude->getTexto();
-
-        $saudeDao = new SaudeDAO();
-        $descricao = new DescricaoControle();
-
         try {
+            $saude = $this->verificar();
+            $texto_descricao = $saude->getTexto();
+
+            $saudeDao = new SaudeDAO();
+            $descricao = new DescricaoControle();
+
             $saudeDao->incluir($saude);
             $descricao->incluir($texto_descricao);
 
@@ -188,25 +181,28 @@ class SaudeControle
             $_SESSION['proxima'] = "Cadastrar outra ficha.";
             $_SESSION['link'] = "../html/saude/cadastro_ficha_medica.php";
             header("Location: ../html/saude/informacao_saude.php");
-        } catch (PDOException $e) {
-            $msg = "Não foi possível registrar o paciente <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>" . "<br>" . $e->getMessage();
-            echo $msg;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarInfPessoal()
     {
-        extract($_REQUEST);
-        // $paciente = new Saude('',$nome,$sobrenome,$sexo,$nascimento,'','','','','',$tipoSanguineo,'','',$imagem,'','','','','','','','');
-        $paciente = new Saude('', '', '', '', '', '', '', '', '', '', $tipoSanguineo, '', '', '', '', '', '', '', '', '', '', '');
-        $paciente->setId_pessoa($id_fichamedica);
-        //echo $funcionario->getId_Funcionario();
-        $SaudeDAO = new SaudeDAO();
+        $tipoSanguineo = filter_input(INPUT_POST, 'tipoSanguineo', FILTER_SANITIZE_SPECIAL_CHARS);
+        $idFichamedica = filter_input(INPUT_POST, 'id_fichamedica', FILTER_SANITIZE_SPECIAL_CHARS);
+
         try {
+            if (!$idFichamedica || $idFichamedica < 1)
+                throw new InvalidArgumentException('O id da ficha médica fornecido é inválido.', 422);
+
+            $paciente = new Saude('', '', '', '', '', '', '', '', '', '', $tipoSanguineo, '', '', '', '', '', '', '', '', '', '', '');
+            $paciente->setId_pessoa($idFichamedica);
+            $SaudeDAO = new SaudeDAO();
+
             $SaudeDAO->alterarInfPessoal($paciente);
-            header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . $id_fichamedica);
+            header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . htmlspecialchars($idFichamedica));
         } catch (PDOException $e) {
-            echo $e->getMessage();
+            Util::tratarException($e);
         }
     }
 
@@ -215,15 +211,19 @@ class SaudeControle
      */
     public function alterarProntuario()
     {
+        $idFichamedica = filter_input(INPUT_POST, 'id_fichamedica', FILTER_SANITIZE_NUMBER_INT);
+        $textoProntuario = trim($_POST['textoProntuario']);
 
-        extract($_REQUEST);
-
-        $descricao = new DescricaoControle();
         try {
-            $descricao->alterarProntuario($id_fichamedica, $textoProntuario);
-            header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . $id_fichamedica);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            if (!$idFichamedica || $idFichamedica < 1)
+                throw new InvalidArgumentException('O id da ficha médica fornecido é inválido.', 422);
+
+            $descricao = new DescricaoControle();
+
+            $descricao->alterarProntuario($idFichamedica, $textoProntuario);
+            header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . htmlspecialchars($idFichamedica));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -232,32 +232,41 @@ class SaudeControle
      */
     public function adicionarProntuarioAoHistorico()
     {
-        extract($_REQUEST);
-        session_start();
-        $saudeDao = new SaudeDAO();
+        $idFichamedica = filter_input(INPUT_POST, 'id_fichamedica', FILTER_SANITIZE_NUMBER_INT);
+        $idPaciente = filter_input(INPUT_POST, 'id_paciente', FILTER_SANITIZE_NUMBER_INT);
+
         try {
-            $saudeDao->adicionarProntuarioAoHistorico($id_fichamedica, $id_paciente);
+            if (!$idFichamedica || $idFichamedica < 1)
+                throw new InvalidArgumentException('O id da ficha médica fornecido é inválido.', 422);
+
+            if (!$idPaciente || $idPaciente < 1)
+                throw new InvalidArgumentException('O id do paciente fornecido é inválido.', 422);
+
+            $saudeDao = new SaudeDAO();
+            $saudeDao->adicionarProntuarioAoHistorico($idFichamedica, $idPaciente);
             $_SESSION['msg'] = "Prontuário público adicionado ao histórico com sucesso";
-            header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . $id_fichamedica);
-        } catch (Error $e) {
-            $erro = $e->getMessage();
-            $_SESSION['msg'] = "Ops! Ocorreu o seguinte erro ao tentar inserir o prontuário público: $erro";
-            header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . $id_fichamedica);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+            $e instanceof PDOException ? $_SESSION['msg'] = 'Erro ao manipular o banco de dados da aplicação.' : $_SESSION['msg'] = "Ops! Ocorreu o seguinte erro ao tentar inserir o prontuário público: $e";
         }
+
+        header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . htmlspecialchars($idFichamedica));
     }
 
     /**
      * Recebe como parâmetro o id de um paciente, instancia um objeto do tipo SaudeDAO e chama o método listarProntuariosDoHistorico passando o id do paciente informado, em caso de sucesso retorna os prontuários do histórico e em caso de falha da um echo na mensagem do erro.
      */
-    public function listarProntuariosDoHistorico($idPaciente)
+    public function listarProntuariosDoHistorico(int $idPaciente)
     {
-        $saudeDao = new SaudeDAO();
-
         try {
+            if (!$idPaciente || $idPaciente < 1)
+                throw new InvalidArgumentException('O id do paciente fornecido é inválido.', 422);
+
+            $saudeDao = new SaudeDAO();
             $prontuariosHistorico = $saudeDao->listarProntuariosDoHistorico($idPaciente);
             return $prontuariosHistorico;
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -266,20 +275,22 @@ class SaudeControle
      * 
      * Instancia um objeto do tipo SaudeDAO e chama o método listarDescricoesHistoricoPorId passando o id da ficha médica do histórico, em caso de sucesso faz um echo do JSON das descrições, em caso de falha da um echo na mensagem do erro.
      */
-    public function listarProntuarioHistoricoPorId($idHistorico = -1)
+    public function listarProntuarioHistoricoPorId(?int $idHistorico = null)
     {
         header('Content-Type: application/json');
 
-        if ($idHistorico == -1) {
-            $idHistorico = $_GET['idHistorico'];
-        }
+        if(is_null($idHistorico))
+            $idHistorico = filter_input(INPUT_GET, 'idHistorico', FILTER_SANITIZE_NUMBER_INT);
 
         try {
+            if(!$idHistorico || $idHistorico < 1)
+                throw new InvalidArgumentException('O id do histórico fornecido é inválido.', 422);
+
             $saudeDao = new SaudeDAO();
             $descricoes = $saudeDao->listarDescricoesHistoricoPorId($idHistorico);
             echo json_encode($descricoes);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 }

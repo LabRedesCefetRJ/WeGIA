@@ -221,13 +221,26 @@ class AtendidoControle
 
     public function listarTodos()
     {
-        extract($_REQUEST);
-        $status = $_GET['select_status'];
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/atendido/(Informacao_Atendido|cadastro_ocorrencia|listar_ocorrencias_ativas)\.php)$#';
+
+        $status = filter_input(INPUT_GET, 'select_status', FILTER_SANITIZE_NUMBER_INT);
+
+        if (isset($status) && $status < 1) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'O id do status fornecido não é válido.']);
+            exit();
+        }
+
         $AtendidoDAO = new AtendidoDAO();
         $atendidos = $AtendidoDAO->listarTodos($status);
-        session_start();
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
+
         $_SESSION['atendidos'] = $atendidos;
-        header('Location: ' . $nextPage);
+
+        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
     }
 
     public function listarTodos2()
@@ -243,23 +256,36 @@ class AtendidoControle
 
     public function listarUm()
     {
-        extract($_REQUEST);
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/atendido/Profile_Atendido\.php(\?id=\d+|\?idatendido=\d+(\&id=\d+)?)?)$#';
+
+        $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+        if(!$id || $id < 1){
+            http_response_code(400);
+            echo json_encode(['erro' => 'O id fornecido é inválido.']);
+            exit();
+        }
+
         $cache = new Cache();
         $infAtendido = $cache->read($id);
         if (!$infAtendido) {
             try {
                 $AtendidoDAO = new AtendidoDAO();
                 $infAtendido = $AtendidoDAO->listar($id);
-                session_start();
+
+                if(session_status() ===PHP_SESSION_NONE)
+                    session_start();
+
                 $_SESSION['atendido'] = $infAtendido;
                 $cache->save($id, $infAtendido, '15 seconds');
-                header('Location:' . $nextPage);
             } catch (PDOException $e) {
                 echo $e->getMessage();
             }
-        } else {
-            header('Location:' . $nextPage);
         }
+
+        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
     }
 
     public function listarCpf()
@@ -281,7 +307,7 @@ class AtendidoControle
         $cpf = $_GET['cpf'];
         $validador = new Util();
 
-        if(!$validador->validarCPF($cpf)){
+        if (!$validador->validarCPF($cpf)) {
             http_response_code(400);
             exit('Erro, o CPF informado não é válido');
         }
@@ -297,12 +323,12 @@ class AtendidoControle
         $cpf = $_GET['cpf'];
         $validador = new Util();
 
-        if(!$validador->validarCPF($cpf)){
+        if (!$validador->validarCPF($cpf)) {
             http_response_code(400);
             exit('Erro, o CPF informado não é válido');
         }
 
-        if($atendido->getDataNascimento() > Atendido::getDataNascimentoMaxima() || $atendido->getDataNascimento() < Atendido::getDataNascimentoMinima()){
+        if ($atendido->getDataNascimento() > Atendido::getDataNascimentoMaxima() || $atendido->getDataNascimento() < Atendido::getDataNascimentoMinima()) {
             http_response_code(400);
             exit('Erro, a data de nascimento informada está fora dos limites permitidos.');
         }
@@ -437,35 +463,40 @@ class AtendidoControle
         }
     }
 
-    public function alterarStatus(){
+    public function alterarStatus()
+    {
         $id = filter_input(INPUT_POST, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
         $operacao = filter_input(INPUT_POST, 'operacao', FILTER_SANITIZE_STRING);
 
-        if(!$id || $id < 1){
+        if (!$id || $id < 1) {
             http_response_code(400);
-            echo json_encode(['erro' => 'O id informado não é válido'. " $id"]);
+            echo json_encode(['erro' => 'O id informado não é válido' . " $id"]);
             exit();
         }
 
-        if($operacao != 'desativar' && $operacao != 'ativar'){
+        if ($operacao != 'desativar' && $operacao != 'ativar') {
             http_response_code(400);
             echo json_encode(['erro' => 'A operação informada é inválida']);
             exit();
         }
 
-        try{
+        try {
             $status = null;
 
-            switch($operacao){
-                case 'desativar': $status = 2;break;
-                case 'ativar': $status = 1;break;
+            switch ($operacao) {
+                case 'desativar':
+                    $status = 2;
+                    break;
+                case 'ativar':
+                    $status = 1;
+                    break;
             }
 
             $atendidoDAO = new AtendidoDAO();
             $atendidoDAO->alterarStatus($id, $status);
 
             header('Location: ./control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/Informacao_Atendido.php');
-        }catch(PDOException){
+        } catch (PDOException) {
             http_response_code(500);
             echo json_encode(['erro' => 'Erro no servidor ao alterar o status do atendido.']);
             exit();

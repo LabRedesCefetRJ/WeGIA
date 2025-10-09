@@ -1,50 +1,23 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
+
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../../index.php");
+	exit();
+}else{
+	session_regenerate_id();
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=11");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 7) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ../home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ../home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: ../home.php?msg_c=$msg");
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 11, 7);
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
 
 // Funções de mensagem
 require_once "../geral/msg.php";
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!doctype html>
 <html class="fixed">
@@ -182,21 +155,22 @@ require_once "../geral/msg.php";
 													</div>
 												</div><br />
 												<input type="hidden" name="nomeClasse" value="QuadroHorarioControle">
+												<?= Csrf::inputField() ?>
 												<input type="hidden" name="metodo" value="adicionarEscala">
 												<input type="hidden" name="nextPage" value="<?= WWW . "html/" . basename(__DIR__) . "/" . basename(__FILE__); ?>">
 												<div class="row">
 													<div class="col-md-9 col-md-offset-3">
 														<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
 														<input type="reset" class="btn btn-default">
-														<?php if(!$_SESSION['btnVoltar']):?>
-														<button class="btn btn-info" type="button" onclick="window.history.back()">Voltar</button>
+														<?php if (!$_SESSION['btnVoltar']): ?>
+															<button class="btn btn-info" type="button" onclick="window.history.back()">Voltar</button>
 														<?php else:
-															if (isset($_SESSION['btnVoltar'])){
+															if (isset($_SESSION['btnVoltar'])) {
 																unset($_SESSION['btnVoltar']);
-															}	
+															}
 														?>
-														<button class="btn btn-info" type="button" onclick="window.history.go(-2)">Voltar</button>
-														<?php endif?>
+															<button class="btn btn-info" type="button" onclick="window.history.go(-2)">Voltar</button>
+														<?php endif ?>
 														<a href="listar_escala.php" style="color: white; text-decoration:none;">
 															<button class="btn btn-success" type="button">Listar escalas</button>
 														</a>

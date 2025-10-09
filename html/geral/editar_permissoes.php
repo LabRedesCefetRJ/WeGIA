@@ -50,7 +50,7 @@
 	require_once '../geral/msg.php';
 	  
   if(!isset($_SESSION['almoxarifado'])){
-    header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage='.WWW.'/html/geral/editar_permissoes.php');
+    header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage='.WWW.'html/geral/editar_permissoes.php');
   }
   if(!isset($_SESSION['funcionarios'])){
     header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/geral/editar_permissoes.php');

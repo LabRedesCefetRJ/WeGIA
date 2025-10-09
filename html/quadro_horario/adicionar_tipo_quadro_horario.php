@@ -45,6 +45,7 @@ require_once "../personalizacao_display.php";
 
 // Funções de mensagem
 require_once "../geral/msg.php";
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!doctype html>
 <html class="fixed">
@@ -182,6 +183,7 @@ require_once "../geral/msg.php";
 													</div>
 												</div><br />
 												<input type="hidden" name="nomeClasse" value="QuadroHorarioControle">
+												<?=Csrf::inputField()?>
 												<input type="hidden" name="metodo" value="adicionarTipo">
 												<input type="hidden" name="nextPage" value="<?= WWW . "html/" . basename(__DIR__) . "/" . basename(__FILE__); ?>">
 												<div class="row">

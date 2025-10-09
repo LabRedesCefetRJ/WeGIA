@@ -3,8 +3,6 @@
 	if(!isset($_SESSION['usuario'])){
 		header ("Location: ../../index.php");
 	}
-
-
 	
 	// Verifica Permissão do Usuário
 	require_once '../permissao/permissao.php';

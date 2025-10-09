@@ -116,14 +116,19 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $contribuicaoLogCollection = new ContribuicaoLogCollection();
 
         foreach ($faturas as $fatura) {
-            $contribuicaoLog = new ContribuicaoLog();
-            $contribuicaoLog
-                ->setCodigo($fatura['id'])
-                ->setDataGeracao(DateTime::createFromFormat(DateTime::ATOM, $fatura['charge']['created_at'])->format('Y-m-d H:i:s'))
-                ->setDataVencimento(DateTime::createFromFormat(DateTime::ATOM, $fatura['charge']['due_at'])->format('Y-m-d H:i:s'))
-                ->setRecorrenciaDTO(new RecorrenciaDTO($fatura['subscription']['id']));
+            $dataGeracao = DateTime::createFromFormat(DateTime::ATOM, $fatura['charge']['created_at']);
+            $dataVencimento = DateTime::createFromFormat(DateTime::ATOM, $fatura['charge']['due_at']);
 
-            $contribuicaoLogCollection->add($contribuicaoLog);
+            if ($dataGeracao instanceof DateTime && $dataVencimento instanceof DateTime) {
+                $contribuicaoLog = new ContribuicaoLog();
+                $contribuicaoLog
+                    ->setCodigo($fatura['id'])
+                    ->setDataGeracao($dataGeracao->format('Y-m-d H:i:s'))
+                    ->setDataVencimento($dataVencimento->format('Y-m-d H:i:s'))
+                    ->setRecorrenciaDTO(new RecorrenciaDTO($fatura['subscription']['id']));
+
+                $contribuicaoLogCollection->add($contribuicaoLog);
+            }
         }
 
         return $contribuicaoLogCollection;
