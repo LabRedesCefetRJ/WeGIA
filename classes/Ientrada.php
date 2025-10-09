@@ -44,12 +44,12 @@ class Ientrada
         return $this->valor_unitario;
     }
 
-    public function setId_saida($id_saida)
+    public function setId_entrada($id_entrada)
     {
-        if (!is_numeric($id_saida) || $id_saida <= 0) {
+        if (!is_numeric($id_entrada) || $id_entrada <= 0) {
             throw new InvalidArgumentException("ID de saída inválido.");
         }
-        $this->id_saida = (int) $id_saida;
+        $this->id_entrada = (int) $id_entrada;
     }
 
     public function setId_produto($id_produto)
@@ -75,7 +75,7 @@ class Ientrada
         }
         $this->valor_unitario = (float) $valor_unitario;
     }
-    
+
     /*
     public function setId_entrada($id_entrada)
     {
