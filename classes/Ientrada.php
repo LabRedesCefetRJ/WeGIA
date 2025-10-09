@@ -10,6 +10,9 @@ class Ientrada
    
     public function __construct($qtd,$valor_unitario)
     {
+        if (!is_numeric($qtd) || !is_numeric($valor_unitario)) {
+            throw new InvalidArgumentException("Os parâmetros devem ser números.");
+        }
 
         $this->qtd=$qtd;
         $this->valor_unitario=$valor_unitario;
