@@ -47,7 +47,7 @@ class Ientrada
     public function setId_entrada($id_entrada)
     {
         if (!is_numeric($id_entrada) || $id_entrada <= 0) {
-            throw new InvalidArgumentException("ID de saída inválido.");
+            throw new InvalidArgumentException("ID de entrada inválido.");
         }
         $this->id_entrada = (int) $id_entrada;
     }
