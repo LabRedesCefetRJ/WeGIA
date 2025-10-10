@@ -14,19 +14,19 @@ class ProdutoControle
     public function verificar()
     {
         extract($_REQUEST);
-        if ((!isset($descricao)) || empty(($descricao))) {
+        if ((!isset($descricao)) || empty($descricao)) {
             $msg .= "descricao do produto nÃ£o informado. Por favor, informe um descricao!";
             header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
         }
-        if ((!isset($codigo)) || empty(($codigo))) {
+        if ((!isset($codigo)) || empty($codigo)) {
             $msg .= "Código do produto nÃ£o informado. Por favor, informe o código!";
             header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
         }
-        if ((!isset($preco)) || empty(($preco))) {
+        if ((!isset($preco)) || empty($preco)) {
             $msg .= "Preço do produto nÃ£o informado. Por favor, informe um preço!";
             header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
         } else {
-            $produto = new produto($descricao, $codigo, $preco);
+            $produto = new Produto($descricao, $codigo, $preco);
 
             return $produto;
         }
@@ -35,7 +35,7 @@ class ProdutoControle
     public function listarTodos()
     {
         extract($_REQUEST);
-        $produtoDAO = new produtoDAO();
+        $produtoDAO = new ProdutoDAO();
         $produtos = $produtoDAO->listarTodos();
         session_start();
         $_SESSION['produtos'] = $produtos;
@@ -45,7 +45,7 @@ class ProdutoControle
     public function listarporCodigo($codigo)
     {
         session_start();
-        $codigo = $_REQUEST['codigo'];
+        //$codigo = $_REQUEST['codigo'];
         try {
             $produtoDao = new ProdutoDAO();
             $produto = $produtoDao->listarUm($codigo);
@@ -65,7 +65,7 @@ class ProdutoControle
     public function listarporNome($descricao)
     {
         session_start();
-        $descricao = $_REQUEST['descricao'];
+        //$descricao = $_REQUEST['descricao'];
         try {
             $produtoDao = new ProdutoDAO();
             $produto = $produtoDao->listarUm($descricao);
@@ -124,7 +124,7 @@ class ProdutoControle
         require_once ROOT . '/dao/Conexao.php';
         $pdo = Conexao::connect();
         $produto = $pdo->query("SELECT qtd FROM estoque WHERE id_produto = $id_produto");
-        $registros = $pdo->query("SELECT * FROM isaida WHERE id_produto=$id_produto")->fetch(PDO::FETCH_ASSOC) || $pdo->query("SELECT * FROM ientrada WHERE id_produto=$id_produto")->fetch(PDO::FETCH_ASSOC);
+        $registros = $pdo->query("SELECT * FROM isaida WHERE id_produto=$id_produto")->fetch(PDO::FETCH_ASSOC) or $pdo->query("SELECT * FROM ientrada WHERE id_produto=$id_produto")->fetch(PDO::FETCH_ASSOC);
         $produto = $produto->fetch(PDO::FETCH_ASSOC);
         if ($produto) {
             if (intval($produto['qtd']) < 0 && !$registros) {
