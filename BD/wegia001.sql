@@ -1788,7 +1788,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pet_ficha_medica` (
     `id_ficha_medica` INT NOT NULL AUTO_INCREMENT,
     `id_pet` INT(11) NOT NULL,
     `castrado` CHAR(1) NOT NULL,
-    `necessidades_especiais` VARCHAR(255) NULL,
+    `necessidades_especiais` VARCHAR(500) NULL,
     PRIMARY KEY (`id_ficha_medica`),
     CONSTRAINT `fk_id_pet`
      FOREIGN KEY (`id_pet`)
@@ -1919,7 +1919,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `wegia`.`pet_medicamento`(
     `id_medicamento` INT NOT NULL AUTO_INCREMENT,
     `nome_medicamento` VARCHAR(200) NOT NULL,
-    `descricao_medicamento` VARCHAR(200) NOT NULL,
+    `descricao_medicamento` VARCHAR(1000) NOT NULL,
     `aplicacao` VARCHAR(250) NOT NULL,
     PRIMARY KEY (`id_medicamento`))
 ENGINE = InnoDB;
