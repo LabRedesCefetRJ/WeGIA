@@ -561,6 +561,46 @@ $dependente = json_encode($dependente);
         ]
       });
     });
+
+      function validarDataExpedicao() {
+          const dataNascimento = document.getElementById('nascimento').value;
+          const dataExpedicao = document.getElementById('dataExpedicao').value;
+          
+          if (dataExpedicao && dataNascimento) {
+              const nascimento = new Date(dataNascimento);
+              const expedicao = new Date(dataExpedicao);
+              
+              if (expedicao < nascimento) {
+                  alert('Erro: A data de expedição do documento não pode ser anterior à data de nascimento!');
+                  document.getElementById('dataExpedicao').value = '';
+                  document.getElementById('botaoSalvarDocumentacao').disabled = true;
+                  return false;
+              }
+          }
+          
+          document.getElementById('botaoSalvarDocumentacao').disabled = false;
+          return true;
+      }
+
+      function validarDataNascimento() {
+          const dataNascimento = document.getElementById('nascimento').value;
+          const dataExpedicao = document.getElementById('dataExpedicao').value;
+          
+          if (dataNascimento && dataExpedicao) {
+              const nascimento = new Date(dataNascimento);
+              const expedicao = new Date(dataExpedicao);
+              
+              if (nascimento > expedicao) {
+                  alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
+                  document.getElementById('nascimento').value = '';
+                  document.getElementById('botaoSalvarIP').disabled = true;
+                  return false;
+              }
+          }
+          
+          document.getElementById('botaoSalvarIP').disabled = false;
+          return true;
+      }
   </script>
 
   <script>
@@ -710,7 +750,7 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                           <div class="col-md-8">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" disabled id="nascimento" max=<?php echo date('Y-m-d'); ?>>
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" disabled id="nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()">
                           </div>
                         </div>
                         <div class="form-group">
@@ -892,7 +932,7 @@ $dependente = json_encode($dependente);
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                             <div class="col-md-6">
-                              <input type="date" class="form-control" disabled maxlength="10" placeholder="dd/mm/aaaa" name="dataExpedicao" id="dataExpedicao" max=<?php echo date('Y-m-d'); ?>>
+                              <input type="date" class="form-control" disabled maxlength="10" placeholder="dd/mm/aaaa" name="dataExpedicao" id="dataExpedicao" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataExpedicao()">
                             </div>
                           </div>
                           <div class="form-group">

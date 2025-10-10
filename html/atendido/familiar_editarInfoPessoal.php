@@ -56,6 +56,36 @@ if (!$data_nascimento || empty($data_nascimento)) { //Posteriormente fazer valid
     exit('Erro, a data de nascimento fornecida não está em um formato válido.');
 }
 
+if ($data_nascimento && $id) {
+    try {
+        $pdo = Conexao::connect();
+        
+        // Buscar data de expedição atual da pessoa
+        $sql_expedicao = "SELECT data_expedicao FROM pessoa WHERE id_pessoa = :id_pessoa";
+        $stmt_expedicao = $pdo->prepare($sql_expedicao);
+        $stmt_expedicao->bindParam(':id_pessoa', $id);
+        $stmt_expedicao->execute();
+        $pessoa_doc = $stmt_expedicao->fetch(PDO::FETCH_ASSOC);
+        
+        // Só valida se existe data de expedição no banco
+        if ($pessoa_doc && $pessoa_doc['data_expedicao']) {
+            $data_nascimento_obj = new DateTime($data_nascimento);
+            $data_expedicao_obj = new DateTime($pessoa_doc['data_expedicao']);
+            
+            if ($data_nascimento_obj >= $data_expedicao_obj) {
+                //$_SESSION['msg'] = "Erro: A data de nascimento não pode ser posterior à data de expedição do documento!";
+                //$_SESSION['tipo'] = "error";
+                //header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+                //exit;
+                die( json_encode( ['A data de nascimento não pode ser posterior ou igual à data de expedição do documento!'] ) );
+            }
+        }
+        // Se não existe data de expedição no banco, permite a alteração sem validação
+    } catch (PDOException $e) {
+        die( json_encode( ["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"] ) );   
+    }
+}
+
 try {
     $pdo = Conexao::connect();
     $pessoa = $pdo->prepare(ALTERAR_INFO_PESSOAL);
