@@ -242,16 +242,6 @@ if ($id_dependente) {
 
             };
 
-
-
-
-
-
-
-
-
-
-
         function switchButton(idForm) {
             if (!formState[idForm]) {
                 $("#botaoEditar_" + idForm).text("Editar").prop("class", "btn btn-primary");
@@ -296,6 +286,51 @@ if ($id_dependente) {
                     switchButton(id);
                 })
             }
+        }
+
+        // Funções de validação de datas
+        function validarDataExpedicao() {
+            const dataNascimento = document.getElementById('nascimentoForm').value;
+            const dataExpedicao = document.getElementById('data_expedicao').value;
+            
+            // Só valida se AMBOS os campos estão preenchidos
+            if (dataExpedicao && dataNascimento) {
+                const nascimento = new Date(dataNascimento);
+                const expedicao = new Date(dataExpedicao);
+                
+                if (expedicao <= nascimento) {
+                    alert('A data de expedição do documento não pode ser anterior ou igual à data de nascimento!');
+                    document.getElementById('data_expedicao').value = '';
+                    document.getElementById('botaoSalvar_formDocumentacao').disabled = true;
+                    return false;
+                }
+            }
+            
+            // Se um dos campos estiver vazio, permite a edição
+            document.getElementById('botaoSalvar_formDocumentacao').disabled = false;
+            return true;
+        }
+
+        function validarDataNascimento() {
+            const dataNascimento = document.getElementById('nascimentoForm').value;
+            const dataExpedicao = document.getElementById('data_expedicao').value;
+            
+            // Só valida se AMBOS os campos estão preenchidos
+            if (dataNascimento && dataExpedicao) {
+                const nascimento = new Date(dataNascimento);
+                const expedicao = new Date(dataExpedicao);
+                
+                if (nascimento >= expedicao) {
+                    alert('A data de nascimento não pode ser posterior ou igual à data de expedição do documento!');
+                    document.getElementById('nascimentoForm').value = '';
+                    document.getElementById('botaoSalvar_formInfoPessoal').disabled = true;
+                    return false;
+                }
+            }
+            
+            // Se um dos campos estiver vazio, permite a edição
+            document.getElementById('botaoSalvar_formInfoPessoal').disabled = false;
+            return true;
         }
 
         function submitForm(idForm) {
@@ -346,18 +381,6 @@ if ($id_dependente) {
         });
     </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
     <script type="text/javascript">
         function numero_residencial() {
             if ($("#numResidencial").prop('checked')) {
@@ -368,11 +391,6 @@ if ($id_dependente) {
                 document.getElementById("numero_residencia").disabled = false;
             }
         }
-
-
-
-
-
 
         function meu_callback(conteudo) {
             if (!("erro" in conteudo)) {
@@ -654,7 +672,7 @@ if ($id_dependente) {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="nascimento">Nascimento</label>
                                                 <div class="col-md-8">
-                                                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimentoForm" max="<?php echo date('Y-m-d'); ?>">
+                                                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimentoForm" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()">
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -770,7 +788,7 @@ if ($id_dependente) {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                                                 <div class="col-md-8">
-                                                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?>>
+                                                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataExpedicao()">
                                                 </div>
                                             </div>
                                             <div class="form-group">
