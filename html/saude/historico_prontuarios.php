@@ -200,13 +200,6 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
                   <label for="historicoOpcao" class="font-weight-bold">Selecione a data do histórico que você deseja visualizar</label>
                   <select name="historicoOpcao" id="historicoOpcao" class="form-control">
                     <option value="" selected disabled>Selecionar ...</option>
-                    <?php
-                    foreach ($prontuariosDoHistorico as $prontuario) {
-                      $idHistorico = $prontuario['idHistorico'];
-                      $data = $prontuario['data'];
-                      echo "<option value=\"$idHistorico\">$data</option>";
-                    }
-                    ?>
                   </select>
                 </div>
                 <button class="btn btn-primary" id="visualizar" onclick="event.preventDefault(); visualizarProntuario();">Visualizar</button>
@@ -262,6 +255,60 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
   </section>
 
   <script>
+
+    function formatarDataBr(data) {
+      let hour = null;
+
+      // Verifica se existe parte de hora
+      if (data.split(" ")[1] !== undefined && data.split(" ")[1] !== null) {
+        const partes = data.split(" ");
+        hour = partes[1].split(":");
+        data = partes[0];
+      }
+
+      const parts = data.split('-'); // Supondo que a data esteja no formato 'YYYY-MM-DD'
+
+      let dataFinal = "";
+      let dataObj;
+
+      if (hour !== null) {
+        dataObj = new Date(parts[0], parts[1] - 1, parts[2], hour[0], hour[1], hour[2]);
+        const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        dataFinal += " " + horaFormatada;
+      } else {
+        dataObj = new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+
+      const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      };
+
+      const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+      dataFinal = dataFormatada + dataFinal;
+
+      return dataFinal;
+    }
+
+    function gerarOptions(dados, idSelect){
+      const select = document.getElementById(idSelect);
+      dados.forEach((obj) => {
+        const option = document.createElement("option");
+        option.value = obj.idHistorico;
+        option.textContent = formatarDataBr(obj.data);
+        select.appendChild(option);
+      })
+    }
+    
+    const prontuarios = <?=json_encode($prontuariosDoHistorico);?>;
+
+    document.addEventListener("DOMContentLoaded", gerarOptions(prontuarios, "historicoOpcao"))
+
     async function visualizarProntuario() {
 
       const opcao = document.getElementById('historicoOpcao').value;
