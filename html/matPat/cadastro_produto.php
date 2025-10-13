@@ -43,6 +43,9 @@ if (isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
 }
 
 $dadosForm = $_SESSION['form_produto'];
+
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
 ?>
 
 <head>
