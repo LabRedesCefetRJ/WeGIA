@@ -75,14 +75,9 @@ if (isset($_GET['msg'])) {
         window.location.href = "../../html/pet/cadastro_pet.php";
     </script>
     HTML;
-
-  require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 }
 
-
-
-
-//============================
+ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!DOCTYPE html>
 <html class="fixed">

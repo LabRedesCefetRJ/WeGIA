@@ -10,12 +10,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-
-if (!$conexao) {
-	die("Erro na conexão com o banco de dados.");
-}
-
 $id_pessoa = $_SESSION['id_pessoa'];
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
