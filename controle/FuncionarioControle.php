@@ -330,6 +330,14 @@ class FuncionarioControle
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
+
+        if(strtotime($data_expedicao) < strtotime(($nascimento))){
+            session_start();
+            $_SESSION['erro'] = 'A data de expedição é anterior à do nascimento. Por favor, informa uma data válida!';
+            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf='. $cpf);
+            exit;
+        }
+
         session_start();
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
@@ -775,6 +783,19 @@ class FuncionarioControle
         $cpf = str_replace("-", "", $cpf);
 
         $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa='. $_SESSION['id_pessoa']);
+        $stmt->execute();
+        $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+
+        $stmt = $pdo->prepare('SELECT id_cargo FROM funcionario WHERE id_funcionario=' . $id_funcionario);
+        $stmt->execute();
+        $cargo_anterior_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_cargo'];
+        if(!$adm_configurado && $cargo_anterior_funcionario == 1){
+            echo ( json_encode( ["erro" => "O usuário, mesmo como administrador, não pode alterar esse funcionário"] ) );
+            die();
+        }
+        
 
         $funcionario->setId_funcionario($id_funcionario);
         $funcionario->setId_cargo($cargo);
@@ -812,6 +833,17 @@ class FuncionarioControle
     public function alterarDocumentacao()
     {
         extract($_REQUEST);
+
+        $formatar = new Util();
+
+        if($_SESSION['data_nasc']){
+            if(strtotime($data_expedicao) < strtotime( $formatar->formatoDataYMD( $_SESSION['data_nasc'] ) ) ){
+                echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
+                header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . $id_funcionario);
+                exit;
+            }
+            unset($_SESSION['data_nasc']);
+        }
 
         $funcionario = new Funcionario($cpf, '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 

@@ -208,9 +208,63 @@ try {
             }
         }
 
+        function validarDatasNascimentoExpedicao() {
+            const dataNascimento = document.getElementById('nascimento').value;
+            const dataExpedicao = document.getElementById('data_expedicao').value;
+            
+            if (dataNascimento && dataExpedicao) {
+                const nascimento = new Date(dataNascimento);
+                const expedicao = new Date(dataExpedicao);
+                
+                if (expedicao < nascimento) {
+                    alert('Erro: A data de expedição do documento não pode ser anterior à data de nascimento!');
+                    document.getElementById('data_expedicao').value = '';
+                    document.getElementById('botaoSalvar_formDocumentacao').disabled = true;
+                    return false;
+                }
+            }
+            
+            document.getElementById('botaoSalvar_formDocumentacao').disabled = false;
+            return true;
+        }
+
+        function validarDataNascimentoContraExpedicao() {
+            const dataNascimento = document.getElementById('nascimento').value;
+            const dataExpedicao = document.getElementById('data_expedicao').value;
+            
+            if (dataNascimento && dataExpedicao) {
+                const nascimento = new Date(dataNascimento);
+                const expedicao = new Date(dataExpedicao);
+                
+                if (nascimento > expedicao) {
+                    alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
+                    document.getElementById('nascimento').value = '';
+                    document.getElementById('botaoSalvar_formInfoPessoal').disabled = true;
+                    return false;
+                }
+            }
+            
+            document.getElementById('botaoSalvar_formInfoPessoal').disabled = false;
+            return true;
+        }
+
         function submitForm(idForm) {
             var data = getFormPostParams(idForm);
             var url;
+
+            // Validações cruzadas entre os formulários
+            if (idForm === "formDocumentacao") {
+                if (!validarDatasNascimentoExpedicao()) {
+                    return false;
+                }
+            }
+            
+            if (idForm === "formInfoPessoal") {
+                if (!validarDataNascimentoContraExpedicao()) {
+                    return false;
+                }
+            }
+
             switch (idForm) {
                 case "formInfoPessoal":
                     url = "../pessoa/editar_info_pessoal.php";
@@ -520,7 +574,7 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="nascimento">Nascimento</label>
                                                 <div class="col-md-8">
-                                                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max="<?php echo date('Y-m-d'); ?>">
+                                                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimentoContraExpedicao()">
                                                 </div>
                                             </div>
                                             <script>
@@ -638,7 +692,7 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                                                 <div class="col-md-8">
-                                                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?>>
+                                                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max="<?php echo date('Y-m-d'); ?>" onchange="validarDatasNascimentoExpedicao()">
                                                 </div>
                                             </div>
                                             <div class="form-group">

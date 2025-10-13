@@ -29,6 +29,26 @@ if ($action == "mudarInfoPessoal"){
     $nome_pai = $_POST['nome_pai'];
     $nome_mae = $_POST['nome_mae'];
 
+    // Buscar data de expedição atual da pessoa
+    $sql_expedicao = "SELECT data_expedicao FROM pessoa WHERE id_pessoa = :id_pessoa";
+    $stmt_expedicao = $pdo->prepare($sql_expedicao);
+    $stmt_expedicao->bindParam(':id_pessoa', $id_pessoa);
+    $stmt_expedicao->execute();
+    $pessoa_doc = $stmt_expedicao->fetch(PDO::FETCH_ASSOC);
+
+    var_dump($pessoa_doc);
+    die();
+    
+    if ($pessoa_doc && $pessoa_doc['data_expedicao']) {
+        $data_nascimento_obj = new DateTime($data_nascimento);
+        $data_expedicao_obj = new DateTime($pessoa_doc['data_expedicao']);
+        
+        if ($data_nascimento_obj >= $data_expedicao_obj) {
+            http_response_code(400);
+            die(json_encode( [ 'Erro: A data de nascimento não pode ser posterior ou igual à data de expedição do documento!' ] ) );
+        }
+    }
+
     $sql = "UPDATE pessoa SET nome = :nome, sobrenome = :sobrenome, telefone = :telefone, sexo = :sexo, nome_pai = :nome_pai, nome_mae = :nome_mae, data_nascimento = :data_nascimento WHERE id_pessoa = :id_pessoa";
 
     $stmt = $pdo->prepare($sql);

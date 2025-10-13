@@ -42,6 +42,37 @@ if (!$rg || !$orgao_emissor || !$data_expedicao || empty($rg) || empty($orgao_em
     exit('Erro, estão faltando informações necessárias para realizar a alteração do RG.');
 }
 
+if ($data_expedicao && $id) {
+    try {
+        $pdo = Conexao::connect();
+        
+        // Buscar data de nascimento atual da pessoa
+        $sql_nascimento = "SELECT data_nascimento FROM pessoa WHERE id_pessoa = :id_pessoa";
+        $stmt_nascimento = $pdo->prepare($sql_nascimento);
+        $stmt_nascimento->bindParam(':id_pessoa', $id);
+        $stmt_nascimento->execute();
+        $pessoa = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
+        
+        // Só valida se existe data de nascimento no banco
+        if ($pessoa && $pessoa['data_nascimento']) {
+            $data_nascimento = new DateTime($pessoa['data_nascimento']);
+            $data_expedicao_obj = new DateTime($data_expedicao);
+            
+            if ($data_expedicao_obj <= $data_nascimento) {
+                //$_SESSION['msg'] = "Erro: A data de expedição do documento não pode ser anterior à data de nascimento!";
+                //$_SESSION['tipo'] = "error";
+                //header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+                //exit;
+                die( json_encode( ['A data de expedição do documento não pode ser anterior ou igual à data de nascimento!'] ) );
+            }
+        }
+        // Se não existe data de nascimento no banco, permite a alteração sem validação
+    } catch (PDOException $e) {
+        die( json_encode( ["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"] ) );   
+    }
+}
+
+
 try {
     $pdo = Conexao::connect();
     $pessoa = $pdo->prepare(ALTERAR_DOC);
