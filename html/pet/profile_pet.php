@@ -3,13 +3,10 @@ if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
 
-require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
-
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
   exit();
-}else{
+} else {
   session_regenerate_id();
 }
 
@@ -18,30 +15,23 @@ permissao($_SESSION['id_pessoa'], 63, 7);
 
 $id_pet = filter_input(INPUT_GET, 'id_pet', FILTER_SANITIZE_NUMBER_INT);
 
-if(!$id_pet || $id_pet < 1){
+if (!$id_pet || $id_pet < 1) {
   http_response_code(400);
   echo json_encode('O id do pet informado não é válido.');
   exit();
 }
 
 if (!isset($_SESSION['pet'])) {
-  header('Location: ../../controle/control.php?modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage=' . WWW . '/html/pet/profile_pet.php?id_pet=' . $id_pet);
+  header('Location: ../../controle/control.php?modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage=' . WWW . '/html/pet/profile_pet.php?id_pet=' . htmlspecialchars($id_pet));
 } else {
   $petDados = $_SESSION['pet'];
   unset($_SESSION['pet']);
   $pet = json_encode($petDados);
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
 require_once "../personalizacao_display.php";
 require_once "../../dao/Conexao.php";
@@ -50,52 +40,43 @@ require_once "../geral/msg.php";
 // Lógica para listar os adotantes
 
 try {
-  $conexao = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASSWORD);
-  $conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  $pdo = Conexao::connect();
 
   $sqlListarAdotantes = "SELECT id_pessoa, nome, sobrenome FROM pessoa;";
 
-  $stmt = $conexao->prepare($sqlListarAdotantes);
+  $stmt = $pdo->prepare($sqlListarAdotantes);
   $stmt->execute();
 
   $resultadosListarAdotantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-  echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
-}
 
-// Lógica para buscar ficha médica
-$fichaMedica = null;
+  // Lógica para buscar ficha médica
+  $fichaMedica = null;
 
-// Também vamos buscar dados da adoção do pet
-$adocaoPet = null;
+  // Também vamos buscar dados da adoção do pet
+  $adocaoPet = null;
 
-if (isset($_GET['id_pet'])) {
+  $stmtFicha = $pdo->prepare("SELECT id_ficha_medica, castrado, necessidades_especiais FROM pet_ficha_medica WHERE id_pet = :idPet");
+  $stmtFicha->bindParam(':idPet', $id_pet, PDO::PARAM_INT);
+  $stmtFicha->execute();
 
-  try {
+  $fichaMedica = $stmtFicha->fetch(PDO::FETCH_ASSOC);
 
-    $stmtFicha = $conexao->prepare("SELECT id_ficha_medica, castrado, necessidades_especiais FROM pet_ficha_medica WHERE id_pet = :idPet");
-    $stmtFicha->bindParam(':idPet', $id_pet, PDO::PARAM_INT);
-    $stmtFicha->execute();
-
-    $fichaMedica = $stmtFicha->fetch(PDO::FETCH_ASSOC);
-
-    // BUSCA ADOTAÇÃO DO PET
-    $stmtAdocao = $conexao->prepare("
+  // BUSCA ADOÇÃO DO PET
+  $stmtAdocao = $pdo->prepare("
           SELECT a.data_adocao, a.id_pessoa, p.nome
           FROM pet_adocao a 
           INNER JOIN pessoa p ON a.id_pessoa = p.id_pessoa 
           WHERE a.id_pet = :idPet
           LIMIT 1
       ");
-    $stmtAdocao->bindParam(':idPet', $id_pet, PDO::PARAM_INT);
-    $stmtAdocao->execute();
+  $stmtAdocao->bindParam(':idPet', $id_pet, PDO::PARAM_INT);
+  $stmtAdocao->execute();
 
-    $adocaoPet = $stmtAdocao->fetch(PDO::FETCH_ASSOC);
-  } catch (PDOException $e) {
-    echo "Erro ao buscar ficha médica ou adoção: " . $e->getMessage();
-  }
+  $adocaoPet = $stmtAdocao->fetch(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+  Util::tratarException($e);
+  exit();
 }
-
 ?>
 
 <!-- Agora injetamos os dados da adoção para o JS -->
@@ -303,8 +284,8 @@ if (isset($_GET['id_pet'])) {
     });
 
     const fichaMedica = {
-      castrado: <?= json_encode(isset($fichaMedica['castrado']) ? $fichaMedica['castrado'] : '') ?>,
-      texto: <?= json_encode(isset($fichaMedica['necessidades_especiais']) ? $fichaMedica['necessidades_especiais'] : '') ?>
+      castrado: <?= json_encode(isset($fichaMedica['castrado']) ? htmlspecialchars($fichaMedica['castrado']) : '') ?>,
+      texto: <?= json_encode(isset($fichaMedica['necessidades_especiais']) ? htmlspecialchars($fichaMedica['necessidades_especiais']) : '') ?>
     };
 
     function editar_ficha_medica() {
@@ -391,7 +372,6 @@ if (isset($_GET['id_pet'])) {
           });
       });
 
-
       // Desabilita os campos inicialmente
       adotadoS.disabled = true;
       adotadoN.disabled = true;
@@ -443,9 +423,9 @@ if (isset($_GET['id_pet'])) {
         });
     });
 
-    //ATENDIMENTO PET
+    //Atendimento pet
 
-    //EXIBIR AS OPTIONS DO MEDICAMENTOS
+    //Exibir as opções dos medicamentos
     document.addEventListener("DOMContentLoaded", async () => {
       let opcoesMedicamento = document.querySelector("#selectMedicamento");
       let url = '../../controle/pet/controleGetMedicamento.php';
@@ -589,9 +569,7 @@ if (isset($_GET['id_pet'])) {
       });
     });
 
-
     document.addEventListener("DOMContentLoaded", async () => {
-
 
       document.querySelector("#doc").addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -604,8 +582,6 @@ if (isset($_GET['id_pet'])) {
           nomeClasse: "controleSaudePet",
           modulo: "pet"
         };
-        console.log(fichaMedica);
-
 
         const url = "../../controle/control.php";
         const opcoes = {
@@ -818,6 +794,7 @@ if (isset($_GET['id_pet'])) {
                 <div class="modal-body">
                   <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
                     <input type="hidden" name="nomeClasse" value="PetControle">
+                    <?= Csrf::inputField() ?>
                     <input type="hidden" name="metodo" value="alterarImagem">
                     <input type="hidden" name="modulo" value="pet">
                     <div class="form-group">
@@ -828,7 +805,7 @@ if (isset($_GET['id_pet'])) {
                     </div>
                 </div>
                 <div class="modal-footer">
-                  <input type="hidden" name="id_pet" value=<?php echo $id_pet ?>>
+                  <input type="hidden" name="id_pet" value=<?php echo htmlspecialchars($id_pet) ?>>
                   <input type="hidden" name="id_foto" id="id_foto">
                   <input type="submit" id="formsubmit" value="Alterar imagem">
                 </div>
@@ -837,7 +814,6 @@ if (isset($_GET['id_pet'])) {
             </div>
           </div>
         </div>
-        <!----pedrofim-->
 
         <div class="row">
           <div class="col-md-4 col-lg-3">
@@ -847,11 +823,10 @@ if (isset($_GET['id_pet'])) {
 
                   <?php
                   echo "<img  id='imagem' class='rounded img-responsive' alt='John Doe'>";
-                  //Pedro
-                  $id_pessoa = $_SESSION['id_pessoa'];
-                  $donoimagem = $id_pet;
 
-                  //
+                  $id_pessoa = $_SESSION['id_pessoa'];
+                  $donoimagem = htmlspecialchars($id_pet);
+
                   $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
                   if (isset($_SESSION['id_pessoa']) and !empty($_SESSION['id_pessoa'])) {
                     echo "
@@ -905,7 +880,6 @@ if (isset($_GET['id_pet'])) {
                   <a href="#ficha_medica" data-toggle="tab">Ficha Médica</a>
                 </li>
 
-
                 <li>
                   <a href="#atendimento" data-toggle="tab">Atendimento</a>
                 </li>
@@ -928,6 +902,7 @@ if (isset($_GET['id_pet'])) {
                   <form class="form-horizontal" method="post" action="../../controle/control.php">
                     <div class="myModal print">
                       <input type="hidden" name="nomeClasse" value="PetControle">
+                      <?= Csrf::inputField() ?>
                       <input type="hidden" name="metodo" value="alterarPetDados">
                       <input type="hidden" name="modulo" value="pet">
 
@@ -969,7 +944,7 @@ if (isset($_GET['id_pet'])) {
                               <?php
                               $cor = mysqli_query($conexao, "SELECT id_pet_cor AS id_cor, descricao AS 'cor' FROM pet_cor");
                               foreach ($cor as $valor) {
-                                echo "<option value=" . $valor['id_cor'] . " >" . $valor['cor'] . "</option>";
+                                echo "<option value=" . htmlspecialchars($valor['id_cor']) . " >" . htmlspecialchars($valor['cor']) . "</option>";
                               }
                               ?>
                             </select>
@@ -983,7 +958,7 @@ if (isset($_GET['id_pet'])) {
                               <?php
                               $especie = mysqli_query($conexao, "SELECT id_pet_especie AS id_especie, descricao AS 'especie' FROM pet_especie");
                               foreach ($especie as $valor) {
-                                echo "<option value=" . $valor['id_especie'] . " >" . $valor['especie'] . "</option>";
+                                echo "<option value=" . htmlspecialchars($valor['id_especie']) . " >" . htmlspecialchars($valor['especie']) . "</option>";
                               }
                               ?>
                             </select>
@@ -997,10 +972,8 @@ if (isset($_GET['id_pet'])) {
                               <?php
                               $raca = mysqli_query($conexao, "SELECT id_pet_raca AS id_raca, descricao AS 'raca' FROM pet_raca");
                               foreach ($raca as $valor) {
-                                echo "<option value=" . $valor['id_raca'] . " >" . $valor['raca'] . "</option>";
-                              }        /* .col-md-3 {
-                                    width: 10%;
-                                } */
+                                echo "<option value=" . htmlspecialchars($valor['id_raca']) . " >" . htmlspecialchars($valor['raca']) . "</option>";
+                              }
                               ?>
                             </select>
                           </div>
@@ -1013,7 +986,7 @@ if (isset($_GET['id_pet'])) {
                         </div>
                     </div>
                     </br>
-                    <input type="hidden" name="id_pet" value=<?php echo $id_pet ?>>
+                    <input type="hidden" name="id_pet" value=<?php echo htmlspecialchars($id_pet) ?>>
                     <button type="button" class="not-printable btn btn-primary" id="editarPet" onclick="return editar_informacoes_pet()">Editar</button>
                     <input type="submit" class="not-printable btn btn-primary" disabled="true" value="Salvar" id="salvarPet">
                     </fieldset>
@@ -1040,25 +1013,17 @@ if (isset($_GET['id_pet'])) {
                         </thead>
                         <tbody id="doc-tab">
                           <?php
-                          $stmt1 = $pdo->prepare("SELECT id_ficha_medica FROM pet_ficha_medica WHERE id_pet=:idPet");
-                          $stmt1->bindParam(':idPet', $id_pet);
-                          $stmt1->execute();
+                          $stmtExames = $pdo->prepare("SELECT *, pte.descricao_exame AS 'arkivo' FROM pet_exame pe JOIN pet_tipo_exame pte ON pe.id_tipo_exame = pte.id_tipo_exame JOIN pet_ficha_medica pfm ON pe.id_ficha_medica =pfm.id_ficha_medica  WHERE pfm.id_pet=:idPet");
+                          $stmtExames->bindParam('idPet', $id_pet, PDO::PARAM_INT);
+                          $stmtExames->execute();
 
-                          $p = $stmt1->fetch();
-                          if ($p != false) {
-                            $id_ficha_medica = $p['id_ficha_medica'];
-
-                            $stmtExames = $pdo->prepare("SELECT *, pte.descricao_exame AS 'arkivo' FROM pet_exame pe JOIN pet_tipo_exame pte ON pe.id_tipo_exame = pte.id_tipo_exame WHERE pe.id_ficha_medica =:idFichaMedica");
-                            $stmtExames->bindParam('idFichaMedica', $id_ficha_medica, PDO::PARAM_INT);
-                            $stmtExames->execute();
-
-                            $exame = $stmtExames->fetchAll();
-                            if ($exame) {
-                              foreach ($exame as $valor) {
-                                $data = explode('-', $valor['data_exame']);
-                                $data = $data[2] . '-' . $data[1] . '-' . $data[0];
-                                $arkivo = $valor['arkivo'];
-                                echo <<<HTML
+                          $exame = $stmtExames->fetchAll();
+                          if ($exame) {
+                            foreach ($exame as $valor) {
+                              $data = explode('-', $valor['data_exame']);
+                              $data = $data[2] . '-' . $data[1] . '-' . $data[0];
+                              $arkivo = $valor['arkivo'];
+                              echo <<<HTML
                                     <tr id="tr$valor[id_exame]">
                                       <td><p id="ark$valor[id_exame]">$arkivo</p></td>
                                       <td>$data</td>
@@ -1076,7 +1041,6 @@ if (isset($_GET['id_pet'])) {
                                       </td>
                                     </tr>
                                   HTML;
-                              }
                             }
                           }
                           ?>
@@ -1119,7 +1083,7 @@ if (isset($_GET['id_pet'])) {
                                       <option selected disabled>Selecionar Tipo</option>
                                       <?php
                                       foreach ($pdo->query("SELECT * FROM pet_tipo_exame ORDER BY descricao_exame ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                        echo ("<option value=" . $item["id_tipo_exame"] . ">" . $item["descricao_exame"] . "</option>");
+                                        echo ("<option value=" . htmlspecialchars($item["id_tipo_exame"]) . ">" . htmlspecialchars($item["descricao_exame"]) . "</option>");
                                       }
                                       ?>
                                     </select>
@@ -1132,9 +1096,10 @@ if (isset($_GET['id_pet'])) {
                                 </div>
                                 <input type="hidden" name="modulo" value="pet">
                                 <input type="hidden" name="nomeClasse" value="PetControle">
+                                <?= Csrf::inputField() ?>
                                 <input type="hidden" name="metodo" value="incluirExamePet">
-                                <input type="hidden" name="id_ficha_medica" value="<?= $id_ficha_medica ?>">
-                                <input type="hidden" name="id_pet" value="<?= $id_pet ?>">
+                                <input type="hidden" name="id_ficha_medica" value="<?= htmlspecialchars($id_ficha_medica) ?>">
+                                <input type="hidden" name="id_pet" value="<?= htmlspecialchars($id_pet) ?>">
                               </div>
                               <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -1190,7 +1155,7 @@ if (isset($_GET['id_pet'])) {
                           </br>
                           <div class="buttons">
                             <input type="hidden" name="id_pet" value="<?php echo $id_pet; ?>">
-                            <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? $fichaMedica['id_ficha_medica'] : ''; ?>">
+                            <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? htmlspecialchars($fichaMedica['id_ficha_medica']) : ''; ?>">
                             <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
                             <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
                           </div>
@@ -1199,7 +1164,6 @@ if (isset($_GET['id_pet'])) {
                     </div>
                   </section>
                 </div>
-
 
                 <!--atendimento-->
                 <div id="atendimento" class="tab-pane">
@@ -1216,7 +1180,7 @@ if (isset($_GET['id_pet'])) {
                         <input type="hidden" name="nomeClasse" value="AtendimentoControle" id="classeAtendimento">
                         <input type="hidden" name="metodo" value="registrarAtendimento" id="metodoAtendimento">
                         <input type="hidden" name="modulo" value="pet" id="moduloAtendimento">
-                        <input type="hidden" name="id_pet" value=<?php echo $id_pet ?> id="idPet">
+                        <input type="hidden" name="id_pet" value=<?php echo htmlspecialchars($id_pet) ?> id="idPet">
                         <fieldset>
 
                           <div class="form-group">
@@ -1261,11 +1225,9 @@ if (isset($_GET['id_pet'])) {
                               </tbody>
                             </table>
 
-
                             </br>
                             <div class="form-group">
                             </div>
-
 
                             <input type="submit" class="btn btn-primary" value="Salvar Atendimento" id="salvarAtendimento">
                         </fieldset>
@@ -1281,8 +1243,6 @@ if (isset($_GET['id_pet'])) {
                         <h2 class="panel-title">Histórico de Atendimento</h2>
                       </header>
                       <div id="divHistoricoAtendimento" class="panel-body">
-
-
 
                       </div>
                     </section>
@@ -1355,7 +1315,7 @@ if (isset($_GET['id_pet'])) {
                                   // Lista todos os adotantes
                                   foreach ($resultadosListarAdotantes as $resultado) {
                                     if ($resultado["id_pessoa"] != 1) {
-                                      echo "<option value='" . $resultado["id_pessoa"] . "'>" . $resultado["nome"] . " " . $resultado["sobrenome"] . "</option>";
+                                      echo "<option value='" . htmlspecialchars($resultado["id_pessoa"]) . "'>" . htmlspecialchars($resultado["nome"]) . " " . htmlspecialchars($resultado["sobrenome"]) . "</option>";
                                     }
                                   }
 
@@ -1380,7 +1340,7 @@ if (isset($_GET['id_pet'])) {
                           </div>
                           </br>
 
-                          <input type="hidden" name="id_pet" value="<?php echo $idPet; ?>">
+                          <input type="hidden" name="id_pet" value="<?php echo htmlspecialchars($idPet); ?>">
                           <button type="button" class="btn btn-primary" id="editarAdocao" onclick="return editarAdocaoPet()">Editar Adoção</button>
                           <button type="submit" class="btn btn-primary" id="submit_adocao" name="submit_adocao">Salvar</button>
 
@@ -1526,7 +1486,6 @@ if (isset($_GET['id_pet'])) {
         id_ficha_medica.value = resp[0].id_ficha_medica;
 
         if (resp[0].necessidades_especiais) {
-          console.log(resp[0].necessidades_especiais);
           let infoPet = resp[0].necessidades_especiais;
           infoPet = infoPet.replace("<p>", '');
           infoPet = infoPet.replace("</p>", '');
@@ -1629,7 +1588,6 @@ if (isset($_GET['id_pet'])) {
         divVermifugado.style.display = 'none';
       })
 
-
       editarFichaMedica.addEventListener('click', () => {
         if (editarFichaMedica.innerHTML != "Cancelar") {
 
@@ -1670,7 +1628,6 @@ if (isset($_GET['id_pet'])) {
     ).then(
       resp => {
         let atendimento = resp;
-        //console.log(resp);
         atendimento.forEach(valor => {
           let data = valor['data_atendimento'].split('-');
           tabAtendimento.innerHTML += `
@@ -1748,7 +1705,6 @@ if (isset($_GET['id_pet'])) {
       }
       switchButton(idForm);
     }
-    //switchForm("editar_cargaHoraria", false)
   </script>
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pet.html" width="200" height="60" style="border:none;"></iframe>
