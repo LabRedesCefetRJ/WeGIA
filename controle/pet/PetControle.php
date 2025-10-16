@@ -24,19 +24,20 @@ class PetControle
         $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
         $nascimento = filter_input(INPUT_POST, 'nascimento', FILTER_SANITIZE_SPECIAL_CHARS);
         $acolhimento = filter_input(INPUT_POST, 'acolhimento', FILTER_SANITIZE_SPECIAL_CHARS);
-        $especie = filter_input(INPUT_POST, 'especie', FILTER_SANITIZE_SPECIAL_CHARS);
-        $cor = filter_input(INPUT_POST, 'cor', FILTER_SANITIZE_SPECIAL_CHARS);
+        $especie = filter_input(INPUT_POST, 'especie', FILTER_SANITIZE_NUMBER_INT);
+        $cor = filter_input(INPUT_POST, 'cor', FILTER_SANITIZE_NUMBER_INT);
+        $raca = filter_input(INPUT_POST, 'raca', FILTER_SANITIZE_NUMBER_INT);
         $caracEsp = filter_input(INPUT_POST, 'caracEsp', FILTER_SANITIZE_SPECIAL_CHARS);
 
         // Validações
         if (!isset($nome) || strlen($nome) < 3) {
             header("Location: ../../html/pet/cadastro_pet.php?msg=Nome não informado ou inválido!");
-            return;
+            exit();
         }
 
         if (!isset($nascimento) || empty($nascimento)) {
             header("Location: ../../html/pet/cadastro_pet.php?msg=Data de nascimento não informada!");
-            return;
+            exit();
         }
 
         $dataAtual = new DateTime();
@@ -44,39 +45,39 @@ class PetControle
 
         if ($dataAtual < $dataNascimento) {
             header("Location: ../../html/pet/cadastro_pet.php?msg=Data de nascimento é inválida!");
-            return;
+            exit();
         }
 
         if (!isset($acolhimento) || empty($acolhimento)) {
             header("Location: ../../html/pet/cadastro_pet.php?msg=Data de acolhimento não informada!");
-            return;
+            exit();
         }
 
         $dataAcolhimento = new DateTime($acolhimento);
 
         if ($dataAtual < $dataAcolhimento) {
             header("Location: ../../html/pet/cadastro_pet.php?msg=Data de acolhimento é inválida!");
-            return;
+            exit();
         }
 
         if ($sexo != 'M' && $sexo != 'F') {
             header("Location: ../../html/pet/cadastro_pet.php?msg=O sexo informado é inválido!");
-            return;
+            exit();
         }
 
-        if (!isset($especie) || strlen($especie) < 3) {
+        if (!isset($especie) || $especie < 1) {
             header("Location: ../../html/pet/cadastro_pet.php?msg=Espécie não informada ou inválida");
-            return;
+            exit();
         }
 
-        if (!isset($raca) || empty($raca)) {
+        if (!isset($raca) || $raca < 1) {
             header("Location: ../../html/pet/cadastro_pet.php?msg=Raça não informada ou inválida!");
-            return;
+            exit();
         }
 
-        if (!isset($cor) || empty($cor)) {
+        if (!isset($cor) || $cor < 1) {
             header("Location: ../../html/pet/cadastro_pet.php?msg=Cor não informada ou inválida!");
-            return;
+            exit();
         }
 
         if (!isset($caracEsp)) {
