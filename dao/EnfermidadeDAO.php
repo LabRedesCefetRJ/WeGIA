@@ -48,7 +48,7 @@ class EnfermidadeDAO{
     }
 
     public function listarTodasAsEnfermidades() {
-        $sql = "SELECT * FROM saude_tabelacid WHERE CID NOT LIKE 'T78.4%'";
+        $sql = "SELECT * FROM saude_tabelacid WHERE CID NOT LIKE 'T78.4%'ORDER BY descricao ASC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
