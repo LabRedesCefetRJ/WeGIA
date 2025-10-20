@@ -75,14 +75,9 @@ if (isset($_GET['msg'])) {
         window.location.href = "../../html/pet/cadastro_pet.php";
     </script>
     HTML;
-
-  require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 }
 
-
-
-
-//============================
+ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -416,7 +411,7 @@ if (isset($_GET['msg'])) {
       }
       //=============================
       data = 'raca=' + raca;
-      console.log(data);
+    
       $.ajax({
         type: "POST",
         url: url,
@@ -471,7 +466,7 @@ if (isset($_GET['msg'])) {
       //============================
 
       data = 'especie=' + especie;
-      console.log(data);
+      
       $.ajax({
         type: "POST",
         url: url,
@@ -527,7 +522,7 @@ if (isset($_GET['msg'])) {
       //====================================
 
       data = 'cor=' + cor;
-      console.log(data);
+      
       $.ajax({
         type: "POST",
         url: url,
@@ -617,7 +612,7 @@ if (isset($_GET['msg'])) {
       var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo $_SESSION['cpf_interno']; ?>);
       var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>);
       var cpf = (($("#cpf").val()).replaceAll(".", "")).replaceAll("-", "");
-      console.log(this);
+
       $.each(cpf_cadastrado, function(i, item) {
         if (item.cpf == cpf) {
           alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
@@ -702,7 +697,7 @@ if (isset($_GET['msg'])) {
   <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 
   <!-- img form -->
-  <script>
+  <script>/*
     const image_input = document.querySelector(".image_input");
     var uploaded_image;
 
@@ -713,7 +708,7 @@ if (isset($_GET['msg'])) {
         document.querySelector("#display_image").style.backgroundImage = `url(${uploaded_image})`;
       });
       reader.readAsDataURL(this.files[0]);
-    });
+    });*/
   </script>
 
   <div align="right">

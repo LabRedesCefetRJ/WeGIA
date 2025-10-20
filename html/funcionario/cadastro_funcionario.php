@@ -64,6 +64,12 @@ $dataNascimentoMinima = Funcionario::getDataNascimentoMinima();
 // Inclui display de Campos
 require_once "../personalizacao_display.php";
 
+$erro = null;
+if (isset($_SESSION['erro'])) {
+    $erro = $_SESSION['erro'];
+    unset($_SESSION['erro']);
+}
+
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -142,6 +148,11 @@ require_once "../personalizacao_display.php";
       </header>
       <!-- start: page -->
       <div class="row" id="formulario">
+        <?php if ($erro): ?>
+            <div style="color: red; font-weight: bold; text-align:center">
+                <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
+            </div>
+        <?php endif; ?>
         <form action="#" method="POST" id="formsubmit" enctype="multipart/form-data" target="frame">
           <div class="col-md-4 col-lg-3">
             <section class="panel">

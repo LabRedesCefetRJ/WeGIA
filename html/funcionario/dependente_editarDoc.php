@@ -23,6 +23,24 @@ try {
     $data_expedicao = trim(filter_input(INPUT_POST, 'data_expedicao', FILTER_UNSAFE_RAW));
     $idatendido_familiares = filter_input(INPUT_GET, 'idatendido_familiares', FILTER_SANITIZE_NUMBER_INT);
 
+    if ($data_expedicao) {
+        // Buscar data de nascimento atual da pessoa
+        $sql_nascimento = "SELECT data_nascimento FROM pessoa WHERE id_pessoa = :id_pessoa";
+        $stmt_nascimento = $pdo->prepare($sql_nascimento);
+        $stmt_nascimento->bindParam(':id_pessoa', $id);
+        $stmt_nascimento->execute();
+        $pessoa = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
+        
+        if ($pessoa && $pessoa['data_nascimento']) {
+            $data_nascimento = new DateTime($pessoa['data_nascimento']);
+            $data_expedicao_obj = new DateTime($data_expedicao);
+            
+            if ($data_expedicao_obj <= $data_nascimento) {
+                throw new InvalidArgumentException('Erro: A data de expedição do documento não pode ser anterior ou igual à data de nascimento!', 400);
+            }
+        }
+    }
+
     if (!$id || $id < 0) {
         throw new InvalidArgumentException('O id da pessoa informado é inválido.', 400);
     }

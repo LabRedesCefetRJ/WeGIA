@@ -22,7 +22,7 @@ if (!$id_pet || $id_pet < 1) {
 }
 
 if (!isset($_SESSION['pet'])) {
-  header('Location: ../../controle/control.php?modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage=' . WWW . '/html/pet/profile_pet.php?id_pet=' . htmlspecialchars($id_pet));
+  header('Location: ../../controle/control.php?id_pet=' . htmlspecialchars($id_pet). '&modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage=' . WWW . 'html/pet/profile_pet.php?id_pet=' . htmlspecialchars($id_pet));
 } else {
   $petDados = $_SESSION['pet'];
   unset($_SESSION['pet']);
@@ -151,6 +151,18 @@ try {
   <script src="<?php echo WWW; ?>assets/vendor/ckeditor/ckeditor.js"></script>
 
   <style type="text/css">
+      .panel-title a {
+          color: inherit;      /* Mantém a cor do texto do painel */
+          text-decoration: none; /* Remove sublinhado */
+          display: block;       /* Faz o link ocupar toda a largura do header */
+          cursor: pointer;      /* Mantém cursor de clique */
+        }
+
+        .panel-title a:hover {
+          color: inherit;       /* Mantém a cor ao passar o mouse */
+          text-decoration: none; /* Mantém sem sublinhado */
+        }
+
     .btn span.fa-check {
       opacity: 0;
     }
@@ -303,15 +315,15 @@ try {
       btnEditar.setAttribute('onclick', 'return cancelar_ficha_medica()');
     }
 
-    function cancelar_ficha_medica() {
-      // Restaura valores antigos
-      if (fichaMedica.castrado === "S") {
-        document.getElementById('castradoS').checked = true;
-        document.getElementById('castradoN').checked = false;
-      } else {
-        document.getElementById('castradoS').checked = false;
-        document.getElementById('castradoN').checked = true;
-      }
+  function cancelar_ficha_medica() {
+    // Restaura valores antigos
+    if (fichaMedica.castrado === "s") {
+      document.getElementById('castradoS').checked = true;
+      document.getElementById('castradoN').checked = false;
+    } else {
+      document.getElementById('castradoS').checked = false;
+      document.getElementById('castradoN').checked = true;
+    }
 
       document.getElementById('despacho').value = fichaMedica.texto;
 
@@ -347,41 +359,51 @@ try {
       const salvarAdocao = document.querySelector("#submit_adocao");
       const adotante_input = document.querySelector("#adotante_input");
 
-      adotadoN.addEventListener("change", () => {
+  const idPet = window.location.href.split("=")[1];
 
-        dataAdocao.value = '';
-        adotante_input.selectedIndex = 0;
+  // Desabilita campos inicialmente
+  adotadoS.disabled = true;
+  adotadoN.disabled = true;
+  dataAdocao.disabled = true;
+  salvarAdocao.disabled = true;
+  adotante_input.disabled = true;
 
-        let id = window.location.href.split("=")[1];
+  let valoresOriginais = {};
 
-        fetch('../../controle/pet/ControleObterAdotante.php', {
-            method: 'POST',
-            body: JSON.stringify({
-              comando: 'excluir',
-              id_pet: id
-            }),
-            headers: {
-              "Content-Type": "application/json"
-            }
-          })
-          .then(resp => resp.json())
-          .then(data => {
-            if (data.status !== 'ok') {
-              alert("Erro ao excluir adoção.");
-            }
-          });
-      });
+  // Preencher dados da adoção
+  fetch('../../controle/pet/ControleObterAdotante.php', {
+    method: "POST",
+    body: JSON.stringify({ id: idPet }),
+    headers: { "Content-Type": "application/json" }
+  })
+  .then(resp => resp.json())
+  .then(resp => {
+    if (resp.adotado) {
+      adotadoS.checked = true;
+      dataAdocao.value = resp.data_adocao;
+      adotante_input.value = resp.id_pessoa || "";
+    } else {
+      adotadoN.checked = true;
+      dataAdocao.value = "";
+      adotante_input.selectedIndex = 0;
+    }
 
-      // Desabilita os campos inicialmente
-      adotadoS.disabled = true;
-      adotadoN.disabled = true;
-      dataAdocao.disabled = true;
-      salvarAdocao.disabled = true;
-      adotante_input.disabled = true;
+    valoresOriginais = {
+      adotadoS: adotadoS.checked,
+      adotadoN: adotadoN.checked,
+      dataAdocao: dataAdocao.value,
+      adotante_input: adotante_input.value
+    };
+  });
 
-      // Botão editar
-      window.editarAdocaoPet = function() {
-        const isEditando = editarAdocao.innerHTML === "Editar Adoção";
+  // Inicializa o atributo data-editando
+  editarAdocao.dataset.editando = "false";
+
+  // Botão Editar/Cancela usando data-attribute
+  editarAdocao.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    const isEditando = editarAdocao.dataset.editando === "false";
 
         adotadoS.disabled = !isEditando;
         adotadoN.disabled = !isEditando;
@@ -389,39 +411,41 @@ try {
         salvarAdocao.disabled = !isEditando;
         adotante_input.disabled = !isEditando;
 
-        editarAdocao.innerHTML = isEditando ? "Cancelar" : "Editar Adoção";
-        editarAdocao.classList.toggle("btn-danger", isEditando);
-        editarAdocao.classList.toggle("btn-primary", !isEditando);
+    editarAdocao.innerHTML = isEditando ? "Cancelar" : "Editar Adoção";
+    editarAdocao.classList.toggle("btn-danger", isEditando);
+    editarAdocao.classList.toggle("btn-primary", !isEditando);
 
-        if (!isEditando) {
-          location.reload();
-        }
-      };
+    // Atualiza o data-attribute
+    editarAdocao.dataset.editando = isEditando ? "true" : "false";
 
-      // Preencher dados da adoção
-      let id = window.location.href.split("=")[1];
-      fetch('../../controle/pet/ControleObterAdotante.php', {
-          method: "POST",
-          body: JSON.stringify({
-            id
-          }),
-          headers: {
-            "Content-Type": "application/json"
-          }
-        })
-        .then(resp => resp.json())
-        .then(resp => {
-          if (resp.adotado) {
-            adotadoS.checked = true;
-            dataAdocao.value = resp.data_adocao;
-            adotante_input.value = resp.id_pessoa; // É necessário retornar também o id_pessoa no PHP
-          } else {
-            adotadoN.checked = true;
-            dataAdocao.value = "";
-            adotante_input.selectedIndex = 0;
-          }
-        });
+    if (!isEditando) {
+      // Restaurar valores originais
+      adotadoS.checked = valoresOriginais.adotadoS;
+      adotadoN.checked = valoresOriginais.adotadoN;
+      dataAdocao.value = valoresOriginais.dataAdocao;
+      adotante_input.value = valoresOriginais.adotante_input;
+    }
+  });
+
+  // Marcar "Não" para excluir adoção
+  adotadoN.addEventListener("change", () => {
+    dataAdocao.value = '';
+    adotante_input.selectedIndex = 0;
+
+    fetch('../../controle/pet/ControleObterAdotante.php', {
+      method: 'POST',
+      body: JSON.stringify({ comando: 'excluir', id_pet: idPet }),
+      headers: { "Content-Type": "application/json" }
+    })
+    .then(resp => resp.json())
+    .then(data => {
+      if (data.status !== 'ok') {
+        alert("Erro ao excluir adoção.");
+      }
     });
+  });
+});
+
 
     //Atendimento pet
 
@@ -465,7 +489,6 @@ try {
         alert(erro);
       }
     });
-
     document.addEventListener("DOMContentLoaded", async () => {
       const select = document.querySelector("#selectMedicamento");
       const tabela = document.querySelector("#dep-tab"); // tbody
@@ -477,8 +500,12 @@ try {
         const selectedOption = e.target.selectedOptions[0];
         const idMedicamento = selectedOption.dataset.id;
 
-        // Se já foi adicionado, não faz nada
-        if (medicamentosAdicionados.includes(idMedicamento)) return;
+    // Se já foi adicionado, não faz nada
+    if (medicamentosAdicionados.includes(idMedicamento)) {
+      // Volta para a opção nula
+      select.selectedIndex = 0;
+      return;
+    }
 
         const Medicamento = {
           id: idMedicamento,
@@ -526,12 +553,16 @@ try {
           linhaTabela.append(tdNomeMedicamento, tdAcao, tdExcluir);
           tabela.appendChild(linhaTabela);
 
-          // Registra o id no array
-          medicamentosAdicionados.push(idMedicamento);
-        } catch (erro) {
-          console.error(erro);
-        }
-      });
+      // Registra o id no array
+      medicamentosAdicionados.push(idMedicamento);
+
+      // Volta para a option null
+      select.selectedIndex = 0;
+
+    } catch (erro) {
+      alert("Erro ao obter medicamento. ");
+    }
+  });
 
       const formAtendimento = document.querySelector("#formAtendimento");
       formAtendimento.addEventListener("submit", async (e) => {
@@ -558,16 +589,18 @@ try {
 
           const resultado = await resposta.json();
 
-          if (resultado.sucesso) {
-            location.reload();
-          } else {
-            alert(resultado.erro ?? "Erro ao registrar atendimento.");
-          }
-        } catch (erro) {
-          console.error("Erro no envio:", erro);
-        }
-      });
-    });
+      if (resultado.sucesso) {
+        location.reload();
+      } else {
+        alert(resultado.erro ?? "Erro ao registrar atendimento.");
+      }
+    } catch (erro) {
+      alert("Erro no envio");
+    }
+  });
+});
+
+
 
     document.addEventListener("DOMContentLoaded", async () => {
 
@@ -603,90 +636,78 @@ try {
             alert("Erro ao salvar ficha médica!");
           }
 
-        } catch (erro) {
-          alert(erro);
-        }
+            } catch(erro){
+                alert(erro);
+            }
+        
+    });
+  });
 
-      });
+document.addEventListener("DOMContentLoaded", async ()=>{
 
-      const info = {
-        metodo: "getHistoricoPet",
-        modulo: "pet",
-        nomeClasse: "controleSaudePet",
-        idpet: document.querySelector("#idPet").value
-      };
+  const info = {
+  metodo: "getHistoricoPet",
+  modulo: "pet",
+  nomeClasse: "controleSaudePet",
+  idpet: document.querySelector("#idPet").value
+};
 
-      const container = document.querySelector("#divHistoricoAtendimento");
+    const container = document.querySelector("#divHistoricoAtendimento");
 
-      // Função para decodificar HTML escapado
-      function decodeHtml(html) {
-        var txt = document.createElement("textarea");
-        txt.innerHTML = html;
-        return txt.value;
-      }
+    // Função para decodificar HTML escapado
+    function decodeHtml(html) {
+      const txt = document.createElement("textarea");
+      txt.innerHTML = html;
+      return txt.value;
+    }
 
-      try {
-        const resp = await fetch("../../controle/control.php", {
-          method: "POST",
-          headers: {
+    try {
+      const resp = await fetch("../../controle/control.php", {
+        method: "POST",
+        headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(info)
-        });
+        body: JSON.stringify(info)
+      });
 
         const data = await resp.json();
 
-        // Limpa conteúdo anterior
-        container.textContent = "";
+      // Limpa conteúdo anterior
+      container.textContent = "";
 
-        if (!data || data.length === 0) {
-          const msg = document.createElement("p");
-          msg.textContent = "Nenhum histórico de atendimento encontrado.";
-          container.appendChild(msg);
-          return;
-        }
+      // Verifica se não há dados
+  if (!data || data.length === 0) {
+        const msg = document.createElement("p");
+        msg.textContent = "Nenhum histórico de atendimento encontrado.";
+        container.appendChild(msg);
+        return;
+      }
 
-        // Agrupar atendimentos por data
-        const atendimentos = {};
-        data.forEach(item => {
-          const dataAtendimento = item.data_atendimento;
-          if (!atendimentos[dataAtendimento]) {
-            atendimentos[dataAtendimento] = {
-              descricao_atendimento: item.descricao_atendimento || "Não informado.",
-              medicamentos: []
-            };
-          }
-          atendimentos[dataAtendimento].medicamentos.push(item);
-        });
+  // Cria um painel para cada atendimento, mesmo que a data seja igual
+  data.forEach((item, index) => {
+    // Painel principal
+    const panel = document.createElement("div");
+    panel.classList.add("panel", "panel-default");
+    panel.style.marginBottom = "10px";
 
-        let count = 0;
+    // Cabeçalho
+    const header = document.createElement("div");
+    header.classList.add("panel-heading");
+    header.style.cursor = "pointer";
+    header.dataset.toggle = "collapse";
+    header.dataset.target = `#atendimento${index + 1}`;
 
-        Object.entries(atendimentos).forEach(([dataAtendimento, dados]) => {
-          count++;
+        const headerText = document.createElement("strong");
+        headerText.textContent = "Data: " + item.data_atendimento;
+        header.appendChild(headerText);
 
-          // Painel principal
-          const panel = document.createElement("div");
-          panel.classList.add("panel", "panel-default");
-          panel.style.marginBottom = "10px";
+        // Corpo colapsável
+        const collapseDiv = document.createElement("div");
+        collapseDiv.id = `atendimento${index + 1}`;
+        collapseDiv.classList.add("panel-collapse", "collapse");
 
-          // Cabeçalho
-          const header = document.createElement("div");
-          header.classList.add("panel-heading");
-          header.style.cursor = "pointer";
-          header.dataset.toggle = "collapse";
-          header.dataset.target = `#atendimento${count}`;
-
-          const headerText = document.createElement("strong");
-          headerText.textContent = "Data: " + dataAtendimento;
-          header.appendChild(headerText);
-
-          // Corpo colapsável (fechado por padrão)
-          const collapseDiv = document.createElement("div");
-          collapseDiv.id = `atendimento${count}`;
-          collapseDiv.classList.add("panel-collapse", "collapse");
-
-          const body = document.createElement("div");
-          body.classList.add("panel-body");
+        const body = document.createElement("div");
+        body.classList.add("panel-body");
 
           // Descrição do atendimento
           const pDescTitle = document.createElement("p");
@@ -695,65 +716,366 @@ try {
           pDescTitle.appendChild(strongDesc);
           body.appendChild(pDescTitle);
 
-          const pDesc = document.createElement("p");
-          pDesc.textContent = dados.descricao_atendimento;
-          body.appendChild(pDesc);
+        const pDesc = document.createElement("p");
+        pDesc.textContent = item.descricao_atendimento || "Não informado.";
+        body.appendChild(pDesc);
 
-          body.appendChild(document.createElement("hr"));
+        body.appendChild(document.createElement("hr"));
 
-          // Lista de medicações
-          const pMedTitle = document.createElement("p");
-          const strongMed = document.createElement("strong");
-          strongMed.textContent = "Medicações Utilizadas:";
-          pMedTitle.appendChild(strongMed);
-          body.appendChild(pMedTitle);
+        // Lista de medicações
+        const pMedTitle = document.createElement("p");
+        const strongMed = document.createElement("strong");
+        strongMed.textContent = "Medicações Utilizadas:";
+        pMedTitle.appendChild(strongMed);
+        body.appendChild(pMedTitle);
 
-          const lista = document.createElement("ul");
-          dados.medicamentos.forEach(med => {
-            const li = document.createElement("li");
+    const lista = document.createElement("ul");
 
-            // Nome do medicamento
-            const nome = document.createElement("strong");
-            nome.textContent = (med.nome_medicamento || "Medicamento") + ": ";
-            li.appendChild(nome);
+    // Caso haja medicação
+    if (item.nome_medicamento || item.aplicacao || item.descricao_medicamento) {
+      const li = document.createElement("li");
 
-            // Aplicação
-            if (med.aplicacao) {
-              li.appendChild(document.createTextNode(med.aplicacao));
-            }
+      const nome = document.createElement("div");
+      nome.innerHTML = `<strong>Nome:</strong> ${item.nome_medicamento || "Medicamento"}`;
+      li.appendChild(nome);
 
-            li.appendChild(document.createElement("br"));
+      const aplicacao = document.createElement("div");
+      aplicacao.innerHTML = `<strong>Aplicação:</strong> ${item.aplicacao || "Não informada"}`;
+      li.appendChild(aplicacao);
 
-            // Descrição do medicamento com tags interpretadas e decodificadas
-            const em = document.createElement("em");
-            em.textContent = "Descrição:";
-            li.appendChild(em);
-            li.appendChild(document.createTextNode(" "));
+      const descricao = document.createElement("div");
+      descricao.innerHTML = `<strong>Descrição:</strong> ${decodeHtml(item.descricao_medicamento || "")}`;
+      li.appendChild(descricao);
 
-            const descMed = document.createElement("span");
-            descMed.innerHTML = decodeHtml(med.descricao_medicamento || "");
-            li.appendChild(descMed);
+      lista.appendChild(li);
+    } else {
+      const li = document.createElement("li");
+      li.textContent = "Nenhuma medicação registrada.";
+      lista.appendChild(li);
+    }
 
-            lista.appendChild(li);
-          });
+    body.appendChild(lista);
+    collapseDiv.appendChild(body);
+    panel.appendChild(header);
+    panel.appendChild(collapseDiv);
+    container.appendChild(panel);
+  });
 
-          body.appendChild(lista);
+} catch (erro) {
+  
+  container.textContent = "Erro ao carregar histórico de atendimento.";
+}
 
-          collapseDiv.appendChild(body);
-          panel.appendChild(header);
-          panel.appendChild(collapseDiv);
-          container.appendChild(panel);
+})
+
+document.addEventListener("DOMContentLoaded", async () => {
+
+const info2 = {
+  metodo: "getHistoricoVacinacao",
+  modulo: "pet",
+  nomeClasse: "controleSaudePet",
+  idpet: document.querySelector("#idPet").value
+};
+
+const containerVacinacao = document.querySelector("#divHistoricoVacinacao");
+
+// Função para decodificar HTML escapado
+function decodeHtml(html) {
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+try {
+  const resp2 = await fetch("../../controle/control.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(info2)
+  });
+
+  const data2 = await resp2.json();
+
+  // Limpa conteúdo anterior
+  containerVacinacao.textContent = "";
+
+  if (!data2 || data2.length === 0) {
+    const msg = document.createElement("p");
+    msg.textContent = "Nenhum histórico de vacinação encontrado.";
+    containerVacinacao.appendChild(msg);
+    return;
+  }
+
+  let count = 0;
+
+  data2.forEach(item => {
+    count++;
+
+    // Painel principal
+    const panel = document.createElement("div");
+    panel.classList.add("panel", "panel-default");
+    panel.style.marginBottom = "10px";
+
+    // Cabeçalho
+    const header = document.createElement("div");
+    header.classList.add("panel-heading");
+
+    const h4 = document.createElement("h4");
+    h4.classList.add("panel-title");
+
+    const link = document.createElement("a");
+    link.setAttribute("data-toggle", "collapse");
+    link.setAttribute("href", `#vacinacao${count}`);
+    link.textContent = `Vacina: ${item.nome || "Não informada"}`;
+
+    h4.appendChild(link);
+    header.appendChild(h4);
+
+    // Corpo colapsável (fechado por padrão)
+    const collapseDiv = document.createElement("div");
+    collapseDiv.id = `vacinacao${count}`;
+    collapseDiv.classList.add("panel-collapse", "collapse");
+
+    const body = document.createElement("div");
+    body.classList.add("panel-body");
+
+    // Conteúdo do corpo
+    const pMarca = document.createElement("p");
+    pMarca.innerHTML = `<strong>Marca:</strong> ${item.marca || "Não informada"}`;
+    body.appendChild(pMarca);
+
+    const pData = document.createElement("p");
+    pData.innerHTML = `<strong>Data da Vacinação:</strong> ${item.data_vacinacao || "Não informada"}`;
+    body.appendChild(pData);
+
+    collapseDiv.appendChild(body);
+    panel.appendChild(header);
+    panel.appendChild(collapseDiv);
+    containerVacinacao.appendChild(panel);
+  });
+
+} catch (erro) {
+  alert("Erro ao buscar histórico de vacinação:", erro);
+  containerVacinacao.textContent = "Erro ao carregar histórico de vacinação.";
+}
+})
+
+document.addEventListener("DOMContentLoaded", async () => {
+  
+
+
+// Dados para requisição
+const info3 = {
+  metodo: "getHistoricoVermifugacao",
+  modulo: "pet",
+  nomeClasse: "controleSaudePet",
+  idpet: document.querySelector("#idPet").value
+};
+
+const containerVermifugacao = document.querySelector("#divHistoricoVermifugacao");
+
+// Função para decodificar HTML escapado, caso necessário
+function decodeHtml(html) {
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  return txt.value;
+}
+
+try {
+  const resp3 = await fetch("../../controle/control.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(info3)
+  });
+
+  const data3 = await resp3.json();
+
+  // Limpa conteúdo anterior
+  containerVermifugacao.textContent = "";
+
+  if (!data3 || data3.length === 0) {
+    const msg = document.createElement("p");
+    msg.textContent = "Nenhum histórico de vermifugação encontrado.";
+    containerVermifugacao.appendChild(msg);
+    return;
+  }
+
+  let count = 0;
+
+  data3.forEach(item => {
+    count++;
+
+    // Painel principal
+    const panel = document.createElement("div");
+    panel.classList.add("panel", "panel-default");
+    panel.style.marginBottom = "10px";
+
+    // Cabeçalho
+    const header = document.createElement("div");
+    header.classList.add("panel-heading");
+
+    const h4 = document.createElement("h4");
+    h4.classList.add("panel-title");
+
+    const link = document.createElement("a");
+    link.setAttribute("data-toggle", "collapse");
+    link.setAttribute("href", `#vermifugacao${count}`);
+    link.textContent = `Vermífugo: ${item.nome || "Não informado"}`;
+
+    h4.appendChild(link);
+    header.appendChild(h4);
+
+    // Corpo colapsável (fechado por padrão)
+    const collapseDiv = document.createElement("div");
+    collapseDiv.id = `vermifugacao${count}`;
+    collapseDiv.classList.add("panel-collapse", "collapse");
+
+    const body = document.createElement("div");
+    body.classList.add("panel-body");
+
+    // Conteúdo do corpo
+    const pMarca = document.createElement("p");
+    pMarca.innerHTML = `<strong>Marca:</strong> ${item.marca || "Não informada"}`;
+    body.appendChild(pMarca);
+
+    const pData = document.createElement("p");
+    pData.innerHTML = `<strong>Data da Vermifugação:</strong> ${item.data_vermifugacao || "Não informada"}`;
+    body.appendChild(pData);
+
+    collapseDiv.appendChild(body);
+    panel.appendChild(header);
+    panel.appendChild(collapseDiv);
+    containerVermifugacao.appendChild(panel);
+  });
+
+} catch (erro) {
+  alert("Erro ao buscar histórico de vermifugação");
+  containerVermifugacao.textContent = "Erro ao carregar histórico de vermifugação.";
+}
+});
+
+
+
+//ADICIONAR TIPO DE EXAME
+
+
+// Função que faz o fetch e já popula o select
+async function fetchAndPopulateTiposExame() {
+    const select = document.getElementById('tipoExame');
+    select.innerHTML = '<option value="" selected disabled>Selecionar Tipo</option>';
+
+    try {
+        let resposta = await fetch('../../controle/control.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                modulo: "pet",
+                nomeClasse: "controleSaudePet",
+                metodo: "listarTipoExame"
+            })
         });
 
-      } catch (erro) {
-        console.error("Erro ao buscar histórico:", erro);
-        container.textContent = "Erro ao carregar histórico de atendimento.";
-      }
-    });
-  </script>
-</head>
+        if (!resposta.ok) throw new Error("Erro na requisição");
 
-<body>
+        let dados = await resposta.json();
+
+        dados.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.id_tipo_exame;
+            option.textContent = item.descricao_exame;
+            select.appendChild(option);
+        });
+
+    } catch (erro) {
+        console.error("Erro ao buscar tipos de exame:", erro);
+        alert("Não foi possível carregar os tipos de exame.");
+    }
+}
+
+// Função que escuta o evento do modal
+function initModalListener() {
+    $('#docFormModal').on('shown.bs.modal', function () {
+        fetchAndPopulateTiposExame();
+    });
+}
+
+// inicializa o listener quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', initModalListener);
+
+
+
+window.addTipoExame = async function () {
+  try {
+    let tipoExame = prompt("Cadastre um novo tipo de exame:");
+
+    if (tipoExame === null) return; // Usuário cancelou
+    tipoExame = tipoExame.trim();
+    if (tipoExame === '') return; // Entrada vazia
+
+    const url = '../../controle/control.php';
+
+    const data = {
+      metodo: "cadastroTipoExame",
+      modulo: "pet",
+      nomeClasse: "controleSaudePet",
+      descricaoExame: tipoExame
+    };
+
+    
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    let resultado;
+    try {
+      resultado = await response.json();
+    } catch (jsonError) {
+      throw new Error('Resposta do servidor não é JSON válido');
+    }
+
+    if (!response.ok || resultado.status === 'erro') {
+      throw new Error(resultado.mensagem || 'Erro ao adicionar tipo de exame');
+    }
+
+
+    // 🔥 Depois de cadastrar, atualiza o select
+    await fetchAndPopulateTiposExame();
+
+  } catch (error) {
+    alert('Erro ao adicionar tipo de exame: ' + error.message);
+  }
+}
+
+function excluirArquivo(dado){
+        let trId = document.querySelector("#tr"+dado);
+        let arkivo = document.querySelector("#ark"+dado).innerHTML;
+        let response = window.confirm('Deseja realmente excluir o arquivo "' + arkivo + '"?');
+        
+        if(response === true){
+            fetch('../../controle/pet/PetExameControle.php', {
+            method: 'POST',
+            body: JSON.stringify({"idExamePet":dado, "metodo":"excluir"}),
+            headers: {
+              "Content-Type": "application/json"
+            }
+          }).then(
+            (resp) =>{ return resp.json() }
+          ).then(
+            (resp) =>{
+              alert(resp);
+              trId.remove();
+            }
+          )
+        }
+      } 
+
+    </script>
+  </head>
+  <body>
 
   <section class="body">
     <div id="header"></div>
@@ -855,42 +1177,42 @@ try {
                           });
                         </script>
                       ";
-                  }
-                  ?>
-                  <i class="fas fa-camera-retro btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"></i>
-
-                </div>
-                <div class="widget-toggle-expand mb-md">
-                  <div class="widget-header">
-                    <div class="widget-content-expanded">
-                      <ul class="simple-todo-list"></ul>
+                      }
+                      ?>
+                    <i class="fas fa-camera-retro btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"></i>
+                    
+                  </div>
+                  <div class="widget-toggle-expand mb-md">
+                    <div class="widget-header">
+                      <div class="widget-content-expanded">
+                        <ul class="simple-todo-list"></ul>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </section>
-          </div>
-          <div class="col-md-8 col-lg-8">
-            <div class="tabs">
-              <ul class="nav nav-tabs tabs-primary">
-                <li class="active">
-                  <a href="#overview" data-toggle="tab">Informações do Pet</a>
-                </li>
-                <li>
-                  <a href="#ficha_medica" data-toggle="tab">Ficha Médica</a>
-                </li>
-
-                <li>
-                  <a href="#atendimento" data-toggle="tab">Atendimento</a>
-                </li>
-                <!--
+              </section>
+            </div>
+            <div class="col-md-8 col-lg-8">
+              <div class="tabs">
+                <ul class="nav nav-tabs tabs-primary">
+                  <li class="active">
+                    <a href="#overview" data-toggle="tab">Informações do Pet</a>
+                  </li>
+                  <li>
+                    <a href="#ficha_medica" data-toggle="tab">Ficha Médica</a>
+                  </li>
+                  
+                  <li>
+                    <a href="#atendimento" data-toggle="tab">Atendimento</a>
+                  </li>
+                  
                   <li>
                     <a href="#historico_medico" data-toggle="tab">Histórico Médico</a>
                   </li>
                   <li>
                     <a href="#arquivosPet" data-toggle="tab">Exames do Pet</a>
                   </li>
-                    -->
+                    
                 <li>
                   <a href="#adocao" data-toggle="tab">Adoção</a>
                 </li>
@@ -1064,53 +1386,80 @@ try {
                       }
                       ?>
 
-                      <!-- Modal Form Documentos -->
-                      <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                          <div class="modal-content">
-                            <div class="modal-header" style="display: flex;justify-content: space-between;">
-                              <h5 class="modal-title" id="exampleModalLabel">Adicionar Arquivo</h5>
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                            </div>
-                            <form action='../../controle/control.php' method='post' enctype='multipart/form-data'>
-                              <div class="modal-body" style="padding: 15px 40px">
-                                <div class="form-group" style="display: grid;">
-                                  <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
-                                  <div style="display: flex;">
-                                    <select name="id_tipo_exame" class="custom-select my-1 mr-sm-2" id="tipoExame" required>
-                                      <option selected disabled>Selecionar Tipo</option>
-                                      <?php
-                                      foreach ($pdo->query("SELECT * FROM pet_tipo_exame ORDER BY descricao_exame ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                        echo ("<option value=" . htmlspecialchars($item["id_tipo_exame"]) . ">" . htmlspecialchars($item["descricao_exame"]) . "</option>");
-                                      }
-                                      ?>
-                                    </select>
-                                    <a onclick="addTipoExame()" style="margin: 0 20px;" id="btn_adicionar_tipo_remuneracao"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                        <!-- Modal Form Documentos -->
+                        <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header" style="display: flex;justify-content: space-between;">
+                                <h5 class="modal-title" id="exampleModalLabel">Adicionar Arquivo</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                                <form id="formDocPet" action='../../controle/control.php' method='post' enctype='multipart/form-data'>
+                                <div class="modal-body" style="padding: 15px 40px">
+                                  <div class="form-group" style="display: grid;">
+                                    <label class="my-1 mr-2" for="tipoExame">Tipo de Arquivo</label><br>
+                                    <div style="display: flex;">
+                                      <select name="id_tipo_exame" class="custom-select my-1 mr-sm-2" id="tipoExame" required>
+                                        <option value="" selected disabled>Selecionar Tipo</option>
+                                       
+                                      </select>
+                                      <a onclick="addTipoExame()" style="margin: 0 20px;" id="btn_adicionar_tipo_remuneracao">
+                                        <i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
+                                      </a>
+                                    </div>
                                   </div>
+
+                                  <div class="form-group">
+                                    <label for="arquivoDocumento">Arquivo</label>
+                                    <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png,jpeg,jpg,pdf,docx,doc,odp" required>
+                                  </div>
+
+                                  <input type="hidden" name="modulo" value="pet">
+                                  <input type="hidden" name="nomeClasse" value="PetControle">
+                                  <input type="hidden" name="metodo" value="incluirExamePet">
+                                  <input type="hidden" name="id_ficha_medica" value="<?= $id_ficha_medica ?>">
+                                  <input type="hidden" name="id_pet" value="<?= $_GET['id_pet'] ?>">
                                 </div>
-                                <div class="form-group">
-                                  <label for="arquivoDocumento">Arquivo</label>
-                                  <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                  <input type="submit" value="Enviar" class="btn btn-primary">
                                 </div>
-                                <input type="hidden" name="modulo" value="pet">
-                                <input type="hidden" name="nomeClasse" value="PetControle">
-                                <?= Csrf::inputField() ?>
-                                <input type="hidden" name="metodo" value="incluirExamePet">
-                                <input type="hidden" name="id_ficha_medica" value="<?= htmlspecialchars($id_ficha_medica) ?>">
-                                <input type="hidden" name="id_pet" value="<?= htmlspecialchars($id_pet) ?>">
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                <input type="submit" value="Enviar" class="btn btn-primary">
-                              </div>
-                            </form>
+                              </form>
+
+                              <script>
+                              document.getElementById('formDocPet').addEventListener('submit', function(e) {
+                                // Verificar tipo de exame selecionado
+                                const tipoExame = document.getElementById('tipoExame').value;
+                                if (!tipoExame) {
+                                  alert('Por favor, selecione um tipo de arquivo.');
+                                  e.preventDefault();
+                                  return;
+                                }
+
+                                // Verificar extensão do arquivo
+                                const arquivo = document.getElementById('arquivoDocumento').files[0];
+                                if (arquivo) {
+                                  const extensoesPermitidas = ['png','jpeg','jpg','pdf','docx','doc','odp'];
+                                  const extensao = arquivo.name.split('.').pop().toLowerCase();
+                                  if (!extensoesPermitidas.includes(extensao)) {
+                                    alert('Extensão de arquivo não permitida. Use: ' + extensoesPermitidas.join(', '));
+                                    e.preventDefault();
+                                    return;
+                                  }
+                                } else {
+                                  alert('Por favor, selecione um arquivo.');
+                                  e.preventDefault();
+                                }
+                              });
+                              </script>
+
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </section>
+                  </section>                  
                 </div>
 
                 <!-- Ficha Medica-->
@@ -1127,16 +1476,16 @@ try {
 
                           <!--Castrado-->
                           <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
-                            <div class="col-md-8">
-                              <label>
-                                <input type="radio" name="castrado" id="castradoS" value="S" style="margin-top: 10px; margin-left: 15px;"
-                                  <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 'S') echo 'checked'; ?> required>
+                        <label class="col-md-3 control-label" for="profileLastName">Animal Castrado:</label>
+                        <div class="col-md-8">
+                            <label>
+                                <input type="radio" name="castrado" id="castradoS" value="s" style="margin-top: 10px; margin-left: 15px;"
+                                <?php if (isset($fichaMedica['castrado']) && $fichaMedica['castrado'] === 's') echo 'checked'; ?> required>
                                 <i class="fa" style="font-size: 20px;">Sim</i>
-                              </label>
-                              <label>
-                                <input type="radio" name="castrado" id="castradoN" value="N" style="margin-top: 10px; margin-left: 15px;"
-                                  <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'N') echo 'checked'; ?> required>
+                            </label>
+                            <label>
+                                <input type="radio" name="castrado" id="castradoN" value="n" style="margin-top: 10px; margin-left: 15px;"
+                                <?php if (!isset($fichaMedica['castrado']) || $fichaMedica['castrado'] === 'n') echo 'checked'; ?> required>
                                 <i class="fa" style="font-size: 20px;">Não</i>
                               </label>
                             </div>
@@ -1157,7 +1506,7 @@ try {
                             <input type="hidden" name="id_pet" value="<?php echo $id_pet; ?>">
                             <input type="hidden" name="id_ficha_medica" id="id_ficha_medica" value="<?php echo isset($fichaMedica['id_ficha_medica']) ? htmlspecialchars($fichaMedica['id_ficha_medica']) : ''; ?>">
                             <button type="button" id="editarFichaMedica" class="not-printable btn btn-primary" onclick="return editar_ficha_medica()">Editar</button>
-                            <input type="submit" class="d-print-none btn btn-primary" value="Salvar Ficha Médica" id="salvarFichaMedica">
+                            <input type="submit" class="d-print-none btn btn-primary" value="Salvar" id="salvarFichaMedica">
                           </div>
                         </fieldset>
                       </form>
@@ -1253,34 +1602,74 @@ try {
                 <!-- fim atendimento -->
 
                 <!-- Historico medico -->
-                <div id="historico_medico" class="tab-pane">
-                  <section class="panel">
-                    <header class="panel-heading">
-                      <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
-                      </div>
-                      <h2 class="panel-title">Histórico Médico</h2>
-                    </header>
+     <div id="historico_medico" class="tab-pane">
+  <section class="panel">
+    <header class="panel-heading">
+      <div class="panel-actions">
+        <a href="#" class="fa fa-caret-down"></a>
+      </div>
+      <h2 class="panel-title">Histórico Médico</h2>
+    </header>
 
-                    <div class="panel-body">
-                      <hr class="dotted short">
-                      <div class="form-group" id="tab_atendimento">
-                        <table class="table table-bordered table-striped mb-none">
-                          <thead>
-                            <tr style="font-size:15px;">
-                              <th>Data do atendimento</th>
-                              <th>Descrições</th>
-                              <th>Ação</th>
-                            </tr>
-                          </thead>
-                          <tbody id="tab_historico" style="font-size:15px">
+    <div class="panel-body">
+      <hr class="dotted short">
 
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </section>
-                </div>
+      <div class="panel-group" id="accordionHistorico">
+
+        <!-- Histórico de Atendimento -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#accordionHistorico" href="#collapseAtendimento">
+                Histórico de Atendimento
+              </a>
+            </h4>
+          </div>
+          <div id="collapseAtendimento" class="panel-collapse collapse">
+            <div class="panel-body" id="divHistoricoAtendimento">
+              <!-- Conteúdo do histórico de atendimento será carregado aqui -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Histórico de Vacinação -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#accordionHistorico" href="#collapseVacinacao">
+                Histórico de Vacinação
+              </a>
+            </h4>
+          </div>
+          <div id="collapseVacinacao" class="panel-collapse collapse">
+            <div class="panel-body" id="divHistoricoVacinacao">
+              <!-- Conteúdo do histórico de vacinação será carregado aqui -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Histórico de Vermifugação -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#accordionHistorico" href="#collapseVermifugacao">
+                Histórico de Vermifugação
+              </a>
+            </h4>
+          </div>
+          <div id="collapseVermifugacao" class="panel-collapse collapse">
+            <div class="panel-body" id="divHistoricoVermifugacao">
+              <!-- Conteúdo do histórico de vermifugação será carregado aqui -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+
                 <!-- fim historico medico -->
 
                 <!-- Adoção -->
@@ -1341,8 +1730,8 @@ try {
                           </br>
 
                           <input type="hidden" name="id_pet" value="<?php echo htmlspecialchars($idPet); ?>">
-                          <button type="button" class="btn btn-primary" id="editarAdocao" onclick="return editarAdocaoPet()">Editar Adoção</button>
-                          <button type="submit" class="btn btn-primary" id="submit_adocao" name="submit_adocao">Salvar</button>
+                          <button type="button" class="btn btn-primary" id="editarAdocao" >Editar</button>
+                          <input type="submit" class="btn btn-primary" id="submit_adocao" name="submit_adocao" value = "Salvar">
 
                         </fieldset>
                       </form>

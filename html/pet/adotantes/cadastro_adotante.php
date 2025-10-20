@@ -321,21 +321,7 @@ if ($existe > 0) {
       </header>
       <div class="row" id="formulario">
       <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php" enctype="multipart/form-data" >
-          
-     <!--<<div class="col-md-4 col-lg-3">
-            <section class="panel">
-              <div class="panel-body">
-                <div class="thumb-info mb-md">
-                  Pré-visualização da imagem
-                  <input type="file" class="image_input form-control" name="imgperfil" id="imgform" accept="image/*">
-                  <img id="previewImagemPessoa" src="#" alt="Prévia da imagem" class="rounded img-responsive" style="display:none; max-height: 200px; margin-bottom: 10px;">
-
-                  <input type="hidden" name="imagem_base64" id="imagem_base64">
-                </div>
-              </div>
-            </section>
-          </div>        
-      -->
+ 
         <div class="col-md-8 col-lg-8">
           <div class="tabs">
             <ul class="nav nav-tabs tabs-primary">
@@ -494,34 +480,7 @@ if ($existe > 0) {
 
       <!-- SCRIPTS  -->  
       <script defer>
-  document.getElementById('imgform').addEventListener('change', function(event) {
-  const input = event.target;
-  const preview = document.getElementById('previewImagemPessoa');
-  const hiddenBase64 = document.getElementById('imagem_base64'); // <-- campo hidden
 
-  if (input.files && input.files[0]) {
-    const reader = new FileReader();
-
-    reader.onload = function(e) {
-      const base64 = e.target.result;
-
-      // Mostra a prévia da imagem
-      preview.src = base64;
-      preview.style.display = 'block';
-
-      // Armazena no campo hidden
-      hiddenBase64.value = base64;
-    }
-
-    reader.readAsDataURL(input.files[0]);
-  } else {
-    preview.src = "#";
-    preview.style.display = "none";
-
-    // Limpa o campo hidden
-    hiddenBase64.value = "";
-  }
-});
 
         // Limita o número de caracteres do input com id "numero_endereco"
         var inputDoNumeroResidencial = document.getElementById("numero_endereco");
@@ -531,18 +490,7 @@ if ($existe > 0) {
           }
         });
 
-        // Adiciona a imagem do adotante
-        const image_input = document.querySelector(".image_input");
-        var uploaded_image;
-
-        image_input.addEventListener('change', function() {
-          const reader = new FileReader();
-          reader.addEventListener('load', () => {
-            uploaded_image = reader.result;
-            document.querySelector("#display_image").style.backgroundImage = `url(${uploaded_image})`;
-          });
-          reader.readAsDataURL(this.files[0]);
-        });
+    
 
         function okDisplay() {
           document.getElementById("okButton").style.backgroundColor = "#0275d8"; //azul
@@ -632,35 +580,6 @@ if ($existe > 0) {
   }
 }
 
-/*
-
-  document.getElementById("imgform").addEventListener("change", function () {
-    const input = this;
-    const file = input.files[0];
-
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-      const base64 = e.target.result;
-
-      // Mostra a imagem no preview
-      const imgPreview = document.getElementById("previewImagemPessoa");
-      imgPreview.src = base64;
-      imgPreview.style.display = "block";
-
-      // Salva no campo hidden para enviar ao backend
-      document.getElementById("imagem_base64").value = base64;
-    };
-
-    reader.onerror = function () {
-      alert("Erro ao carregar a imagem.");
-    };
-
-    reader.readAsDataURL(file);
-  });
-*/
 
 
 
