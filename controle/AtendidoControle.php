@@ -216,14 +216,12 @@ class AtendidoControle
         return $atendido;
     }
 
-
-
-
+    /**
+     * Insere na chave 'atendidos' da variável de sessão todos os atendidos registrados no banco de dados da aplicação
+     */
     public function listarTodos()
     {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
-        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
-        $regex = '#^((\.\./|' . WWW . ')html/atendido/(Informacao_Atendido|cadastro_ocorrencia|listar_ocorrencias_ativas)\.php)$#';
 
         $status = filter_input(INPUT_GET, 'select_status', FILTER_SANITIZE_NUMBER_INT);
 
@@ -240,7 +238,11 @@ class AtendidoControle
 
         $_SESSION['atendidos'] = $atendidos;
 
-        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+        if (isset($_GET['nextPage'])) {
+            $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+            $regex = '#^((\.\./|' . WWW . ')html/atendido/(Informacao_Atendido|cadastro_ocorrencia|listar_ocorrencias_ativas)\.php)$#';
+            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+        }
     }
 
     public function listarTodos2()
@@ -262,7 +264,7 @@ class AtendidoControle
 
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
 
-        if(!$id || $id < 1){
+        if (!$id || $id < 1) {
             http_response_code(400);
             echo json_encode(['erro' => 'O id fornecido é inválido.']);
             exit();
@@ -275,7 +277,7 @@ class AtendidoControle
                 $AtendidoDAO = new AtendidoDAO();
                 $infAtendido = $AtendidoDAO->listar($id);
 
-                if(session_status() ===PHP_SESSION_NONE)
+                if (session_status() === PHP_SESSION_NONE)
                     session_start();
 
                 $_SESSION['atendido'] = $infAtendido;
@@ -402,7 +404,7 @@ class AtendidoControle
         if ($nascimento && $idatendido) {
             try {
                 $pdo = Conexao::connect();
-                
+
                 // Buscar data de expedição atual do atendido
                 $sql_expedicao = "SELECT p.data_expedicao 
                                 FROM atendido a 
@@ -412,11 +414,11 @@ class AtendidoControle
                 $stmt_expedicao->bindParam(':idatendido', $idatendido);
                 $stmt_expedicao->execute();
                 $atendido_doc = $stmt_expedicao->fetch(PDO::FETCH_ASSOC);
-                
+
                 if ($atendido_doc && $atendido_doc['data_expedicao']) {
                     $data_nascimento_obj = new DateTime($nascimento);
                     $data_expedicao_obj = new DateTime($atendido_doc['data_expedicao']);
-                    
+
                     if ($data_nascimento_obj > $data_expedicao_obj) {
                         $_SESSION['msg'] = "Erro: A data de nascimento não pode ser posterior à data de expedição do documento!";
                         $_SESSION['tipo'] = "error";
@@ -425,7 +427,7 @@ class AtendidoControle
                     }
                 }
             } catch (PDOException $e) {
-                die( json_encode( ["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"] ) );
+                die(json_encode(["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"]));
             }
         }
 
@@ -454,7 +456,7 @@ class AtendidoControle
         if ($dataExpedicao && $idatendido) {
             try {
                 $pdo = Conexao::connect();
-                
+
                 // Buscar data de nascimento atual do atendido
                 $sql_nascimento = "SELECT p.data_nascimento 
                                 FROM atendido a 
@@ -464,21 +466,21 @@ class AtendidoControle
                 $stmt_nascimento->bindParam(':idatendido', $idatendido);
                 $stmt_nascimento->execute();
                 $atendido_data = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
-                
+
                 if ($atendido_data && $atendido_data['data_nascimento']) {
                     $data_nascimento = new DateTime($atendido_data['data_nascimento']);
                     $data_expedicao_obj = new DateTime($dataExpedicao);
-                    
+
                     if ($data_expedicao_obj <= $data_nascimento) {
                         //$_SESSION['msg'] = "Erro: A data de expedição do documento não pode ser anterior à data de nascimento!";
                         //$_SESSION['tipo'] = "error";
                         //header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
                         //exit;
-                        die( json_encode( ['A data de expedição do documento não pode ser anterior ou igual à data de nascimento!'] ) );
+                        die(json_encode(['A data de expedição do documento não pode ser anterior ou igual à data de nascimento!']));
                     }
                 }
             } catch (PDOException $e) {
-                die( json_encode( ["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"] ) );
+                die(json_encode(["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"]));
             }
         }
 
