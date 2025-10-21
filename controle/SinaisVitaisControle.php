@@ -28,6 +28,7 @@ class SinaisVitaisControle
         $freq_resp = trim($_REQUEST['freq_resp']);
         $temperatura = trim($_REQUEST['temperatura']);
         $hgt = trim($_REQUEST['hgt']);
+        $observacao = trim($_REQUEST['observacao']);
 
         if((!isset($id_fichamedica)) || (empty($id_fichamedica))){
             $id_fichamedica = "";
@@ -77,7 +78,18 @@ class SinaisVitaisControle
             $hgt = floatval($hgt);
         } 
         
-        $sinaisvitais = new SinaisVitais($id_fichamedica, $id_funcionario, $data_afericao, $saturacao, $pres_art, $freq_card, $freq_resp, $temperatura, $hgt);
+        if(empty($observacao)) {
+            $observacao = "";
+        }else{
+            $observacao = filter_var($observacao, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $max_len_obs = 255;
+
+        if(mb_strlen($observacao, 'UTF-8') > $max_len_obs) {
+            $observacao = mb_substr($observacao, 0, $max_len_obs, 'UTF-8');
+        }
+    }
+        
+        $sinaisvitais = new SinaisVitais($id_fichamedica, $id_funcionario, $data_afericao, $saturacao, $pres_art, $freq_card, $freq_resp, $temperatura, $hgt, $observacao);
 
         $sinaisvitais->setIdFuncionario($id_funcionario);
         $sinaisvitais->setIdFichamedica($id_fichamedica);
@@ -88,6 +100,7 @@ class SinaisVitaisControle
         $sinaisvitais->setFrequenciaRespiratoria($freq_resp);
         $sinaisvitais->setTemperatura($temperatura);
         $sinaisvitais->setHgt($hgt);
+        $sinaisvitais->setObservacao($observacao);
 
         return $sinaisvitais;
     }

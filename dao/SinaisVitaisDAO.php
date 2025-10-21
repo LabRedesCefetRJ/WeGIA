@@ -28,6 +28,7 @@ class SinaisVitaisDAO
             $freq_resp = $sinaisvitais->getFrequenciaRespiratoria();
             $temperatura = $sinaisvitais->getTemperatura();
             $hgt = $sinaisvitais->getHgt();
+            $observacao = $sinaisvitais->getObservacao();
             if ($saturacao === '') {
                 $saturacao = null;
             }
@@ -46,8 +47,11 @@ class SinaisVitaisDAO
             if ($hgt === '') {
                 $hgt = null;
             }
+            if ($observacao === '') {
+                $observacao = null;
+            }
             
-            $sql = "INSERT INTO saude_sinais_vitais (id_fichamedica, id_funcionario, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt) VALUES (:id_fichamedica, :id_funcionario, :data, :saturacao, :pressao_arterial, :frequencia_cardiaca, :frequencia_respiratoria, :temperatura, :hgt)";
+            $sql = "INSERT INTO saude_sinais_vitais (id_fichamedica, id_funcionario, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao) VALUES (:id_fichamedica, :id_funcionario, :data, :saturacao, :pressao_arterial, :frequencia_cardiaca, :frequencia_respiratoria, :temperatura, :hgt, :observacao)";
             $pdo = Conexao::connect();
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_fichamedica',$id_fichamedica);
@@ -59,6 +63,7 @@ class SinaisVitaisDAO
             $stmt->bindParam(':frequencia_respiratoria',$freq_resp);
             $stmt->bindParam(':temperatura',$temperatura);
             $stmt->bindParam(':hgt',$hgt);
+            $stmt->bindParam(':observacao', $observacao);
             $stmt->execute();
            
             

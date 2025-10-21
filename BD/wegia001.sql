@@ -1675,6 +1675,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_sinais_vitais` (
   `frequencia_respiratoria` INT(5) NULL DEFAULT NULL,
   `temperatura` DECIMAL(7,2) NULL DEFAULT NULL,
   `hgt` DECIMAL(7,2) NULL DEFAULT NULL,
+  `observacao` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id_sinais_vitais`),
   INDEX `fk_saude_sinais_vitais_saude_fichamedica1_idx` (`id_fichamedica` ASC),
   INDEX `fk_saude_sinais_vitais_funcionario1_idx` (`id_funcionario` ASC),

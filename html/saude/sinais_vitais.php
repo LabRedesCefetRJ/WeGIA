@@ -322,6 +322,24 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         campo.value = numeroInteiro + '.' + numeroDecimal[0];
       }
     }
+
+    function validarObservacao(campo){
+      campo.value = campo.value.replace(/<|>/g, '');
+
+      const maxLength = campo.maxLength;
+      let currentLength = campo.value.length;
+
+      if (currentLength > maxLength) {
+        campo.value = campo.value.slice(0, maxLength);
+        currentLength = maxLength;
+      }
+
+      const contadorElemento = document.getElementById('contador-caracteres');
+      if (contadorElemento) {
+        contadorElemento.textContent = currentLength;
+      }
+    }
+
   </script>
   <style type="text/css">
     .obrig {
@@ -351,6 +369,12 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   .custom-input:focus {
     border-color: #86b7fe;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+
+  .contador-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
   }
   </style>
 
@@ -474,6 +498,17 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                         <label class="col-md-3 control-label" for="profileCompany">HGT (mg/dL):</label>
                         <div class="col-md-6">
                           <input type="number" maxlength="3" class="form-control" name="hgt" id="hgt" oninput="limitarValorPositivoComTamanho(this)" onkeypress="return Onlynumbers(event)">
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Observações:</label>
+                        <div class="col-md-6">
+                          <!-- <input type="text-area" maxlength="" class="form-control" name="" id="" oninput="" onkeypress="return ">! -->
+                          <textarea name="observacao" id="observacao" maxlength="255" class="form-control" rows="5" oninput="validarObservacao(this)" onkeypress="return " placeholder="Descreva suas observações..."></textarea>
+                          <div class="form-group contador-container">
+                            <span class="row-md-1"><span id="contador-caracteres">0</span> / 255</span>
+                          </div>
                         </div>
                       </div>
 
