@@ -1,4 +1,5 @@
 <?php
+//var_dump($_REQUEST);
 session_start();
 
 define("DEBUG", false);
@@ -86,6 +87,9 @@ $item = new Item(
 	$_POST['almoxarifado'],
 	$_POST['mostrarZerados'] == "on" ?? false
 );
+
+//echo '<br> Objeto item: <br>';
+//var_dump($item);
 
 function quickQuery($query, $parametro, $column)
 {
@@ -335,7 +339,9 @@ function quickQuery($query, $parametro, $column)
 						</thead>
 						<tbody>
 							<?php
-							$item->display();
+							//echo $item->getRelatorio();
+							//error_log('Query: ' . $item->getQuery());
+							$item->display();//está exibindo incorretamente
 							?>
 						</tbody>
 					</table>
