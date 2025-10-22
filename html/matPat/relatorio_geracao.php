@@ -1,5 +1,4 @@
 <?php
-//var_dump($_REQUEST);
 session_start();
 
 define("DEBUG", false);
@@ -87,9 +86,6 @@ $item = new Item(
 	$_POST['almoxarifado'],
 	$_POST['mostrarZerados'] == "on" ?? false
 );
-
-//echo '<br> Objeto item: <br>';
-//var_dump($item);
 
 function quickQuery($query, $parametro, $column)
 {
@@ -201,8 +197,6 @@ function quickQuery($query, $parametro, $column)
 
 	<!-- javascript tab management script -->
 
-
-
 </head>
 
 <body>
@@ -282,7 +276,7 @@ function quickQuery($query, $parametro, $column)
 											echo ("<ul>Tipo: Todos</ul>");
 										}
 										if (isset($post[3])) {
-											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_tipo;", [':id_pessoa' => $post[3]] , "nome");
+											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;", [':id_pessoa' => $post[3]] , "nome");
 											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
 										} else {
 											echo ("<ul>Responsável: Todos</ul>");
@@ -339,9 +333,7 @@ function quickQuery($query, $parametro, $column)
 						</thead>
 						<tbody>
 							<?php
-							//echo $item->getRelatorio();
-							//error_log('Query: ' . $item->getQuery());
-							$item->display();//está exibindo incorretamente
+								$item->display();
 							?>
 						</tbody>
 					</table>
