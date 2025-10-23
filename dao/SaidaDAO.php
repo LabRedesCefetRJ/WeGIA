@@ -46,26 +46,26 @@ class SaidaDAO
             extract($_REQUEST);
             $pdo = Conexao::connect();
 
-            $sql = 'INSERT saida(id_destino,id_almoxarifado,id_tipo,id_responsavel,data,hora,valor_total) VALUES( :id_destino,:id_almoxarifado,:id_tipo,:id_responsavel,:data,:hora,:valor_total)';
-            $sql = str_replace("'", "\'", $sql);            
+            $sql = 'INSERT INTO saida (id_destino, id_almoxarifado, id_tipo, id_responsavel, data, hora, valor_total)
+                    VALUES (:id_destino, :id_almoxarifado, :id_tipo, :id_responsavel, :data, :hora, :valor_total)';
+
             $stmt = $pdo->prepare($sql);
 
             $id_destino = $saida->getId_destino()->getId_destino();
-            
             $id_almoxarifado = $saida->getId_almoxarifado()->getId_almoxarifado();
             $id_tipo = $saida->getId_tipo()->getId_tipo();
             $id_responsavel = $saida->getId_responsavel();
-            $data = $saida->getdata();
-            $hora = $saida->gethora();
-            $valor_total = $saida->getvalor_total();
+            $data = $saida->getData();
+            $hora = $saida->getHora();
+            $valor_total = $saida->getValor_total();
 
-            $stmt->bindParam(':id_destino',$id_destino);
-            $stmt->bindParam(':id_almoxarifado',$id_almoxarifado);
-            $stmt->bindParam(':id_tipo',$id_tipo);
-            $stmt->bindParam(':id_responsavel',$id_responsavel);
-            $stmt->bindParam(':data',$data);
-            $stmt->bindParam(':hora',$hora);
-            $stmt->bindParam(':valor_total',$valor_total);
+            $stmt->bindParam(':id_destino', $id_destino, PDO::PARAM_INT);
+            $stmt->bindParam(':id_almoxarifado', $id_almoxarifado, PDO::PARAM_INT);
+            $stmt->bindParam(':id_tipo', $id_tipo, PDO::PARAM_INT);
+            $stmt->bindParam(':id_responsavel', $id_responsavel, PDO::PARAM_INT);
+            $stmt->bindParam(':data', $data);
+            $stmt->bindParam(':hora', $hora);
+            $stmt->bindParam(':valor_total', $valor_total);
 
             $stmt->execute();
         } catch(PDOException $e){
