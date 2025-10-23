@@ -57,25 +57,25 @@ class ContribuicaoLogDAO
                     :statusPagamento)";
 
         $stmt = $this->pdo->prepare($sqlInserirContribuicaoLog);
-        $stmt->bindParam(':idSocio', $contribuicaoLog->getSocio()->getId());
-        $stmt->bindParam(':idGateway', $contribuicaoLog->getGatewayPagamento()->getId());
-        $stmt->bindParam(':idMeioPagamento', $contribuicaoLog->getMeioPagamento()->getId());
+        $stmt->bindValue(':idSocio', $contribuicaoLog->getSocio()->getId());
+        $stmt->bindValue(':idGateway', $contribuicaoLog->getGatewayPagamento()->getId());
+        $stmt->bindValue(':idMeioPagamento', $contribuicaoLog->getMeioPagamento()->getId());
 
         if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
-            $stmt->bindParam(':idRecorrencia', $contribuicaoLog->getRecorrenciaDTO()->id);
+            $stmt->bindValue(':idRecorrencia', $contribuicaoLog->getRecorrenciaDTO()->id);
         }
 
-        $stmt->bindParam(':codigo', $contribuicaoLog->getCodigo());
+        $stmt->bindValue(':codigo', $contribuicaoLog->getCodigo());
 
         if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
-            $stmt->bindParam(':valor', $contribuicaoLog->getRecorrenciaDTO()->valor);
+            $stmt->bindValue(':valor', $contribuicaoLog->getRecorrenciaDTO()->valor);
         }else{
-            $stmt->bindParam(':valor', $contribuicaoLog->getValor());
+            $stmt->bindValue(':valor', $contribuicaoLog->getValor());
         }
         
-        $stmt->bindParam(':dataGeracao', $contribuicaoLog->getDataGeracao());
-        $stmt->bindParam(':dataVencimento', $contribuicaoLog->getDataVencimento());
-        $stmt->bindParam(':statusPagamento', $contribuicaoLog->getStatusPagamento());
+        $stmt->bindValue(':dataGeracao', $contribuicaoLog->getDataGeracao());
+        $stmt->bindValue(':dataVencimento', $contribuicaoLog->getDataVencimento());
+        $stmt->bindValue(':statusPagamento', $contribuicaoLog->getStatusPagamento());
 
         $stmt->execute();
 
