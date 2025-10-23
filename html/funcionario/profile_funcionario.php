@@ -1,14 +1,16 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-extract($_REQUEST);
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
   exit();
+}else{
+  session_regenerate_id();
 }
+
+extract($_REQUEST);
 
 //Sanitizar entrada do id_funcionario
 $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
@@ -24,7 +26,7 @@ try {
   $pdo = Conexao::connect();
 
   if (!isset($_SESSION['funcionario'])) {
-    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/profile_funcionario.php?id_funcionario=' . $idFuncionario . '&id_funcionario=' . $idFuncionario);
+    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&id_funcionario=' . $idFuncionario);
   } else {
     $func = $_SESSION['funcionario'];
     unset($_SESSION['funcionario']);
@@ -33,14 +35,25 @@ try {
     if ($func) {
       $func = $func[0];
       if ($func->tipo) {
-        $func->tipo_descricao = $pdo->query("SELECT descricao FROM tipo_quadro_horario WHERE id_tipo=" . $func->tipo)->fetch(PDO::FETCH_ASSOC)['descricao'];
+        $stmtTipo = $pdo->prepare("SELECT descricao FROM tipo_quadro_horario WHERE id_tipo=:tipo");
+        $stmtTipo->bindValue(':tipo', $func->tipo, PDO::PARAM_INT);
+        $stmtTipo->execute();
+
+        $func->tipo_descricao = $stmtTipo->fetch(PDO::FETCH_ASSOC)['descricao'];
       }
       if ($func->escala) {
-        $func->escala_descricao = $pdo->query("SELECT descricao FROM escala_quadro_horario WHERE id_escala=" . $func->escala)->fetch(PDO::FETCH_ASSOC)['descricao'];
+        $stmtEscala = $pdo->prepare("SELECT descricao FROM escala_quadro_horario WHERE id_escala=:escala");
+        $stmtEscala->bindValue(':escala', $func->escala, PDO::PARAM_INT);
+        $stmtEscala->execute();
+
+        $func->escala_descricao = $stmtEscala->fetch(PDO::FETCH_ASSOC)['descricao'];
       }
+      $_SESSION['data_nasc'] = $func->data_nascimento;
+      $_SESSION['data_emissao'] = $func->data_expedicao;
       $func = json_encode([$func]);
     }
   }
+
   $config_path = "config.php";
   if (file_exists($config_path)) {
     require_once($config_path);
@@ -51,6 +64,8 @@ try {
     }
     require_once($config_path);
   }
+
+  require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
   require_once "../permissao/permissao.php";
   permissao($_SESSION['id_pessoa'], 11, 7);
 
@@ -60,6 +75,7 @@ try {
   require_once "../personalizacao_display.php";
   require_once "../../dao/Conexao.php";
   require_once ROOT . "/controle/FuncionarioControle.php";
+  require_once ROOT . '/classes/Util.php';
   $cpf = new FuncionarioControle;
   $cpf->listarCPF();
   require_once ROOT . "/controle/AtendidoControle.php";
@@ -100,6 +116,11 @@ try {
   echo json_encode(['erro' => $e->getMessage()]);
   exit($e->getCode());
 }
+
+// Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
+$stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa='. $_SESSION['id_pessoa']);
+$stmt->execute();
+$adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 ?>
 <!doctype html>
 <html class="fixed">
@@ -130,6 +151,7 @@ try {
   <!-- Theme Custom CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
   <link rel="stylesheet" href="../../css/profile-theme.css" />
+  <link rel="stylesheet" href="../../css/modalInfoFuncionario.css" />
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
   <script src="../../Functions/onlyNumbers.js"></script>
@@ -139,6 +161,7 @@ try {
   <script src="../../Functions/funcionario_parentesco.js"></script>
   <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
   <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
+  <script src="<?php echo WWW; ?>Functions/modalControl.js" defer></script>
 
   <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
   <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
@@ -284,6 +307,8 @@ try {
     }
 
     function editar_outros() {
+      let adm_configurado = <?php echo $adm_configurado; ?>;
+      
       $("#pis").prop('disabled', false);
       $("#ctps").prop('disabled', false);
       $("#uf_ctps").prop('disabled', false);
@@ -293,7 +318,9 @@ try {
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      $("#cargo").prop('disabled', false);
+      if(adm_configurado){
+        $("#cargo").prop('disabled', false);
+      }
       $("#botaoEditarOutros").html('Cancelar');
       $("#botaoSalvarOutros").prop('disabled', false);
       $("#botaoEditarOutros").removeAttr('onclick');
@@ -763,7 +790,7 @@ try {
               <div class="tab-content">
                 <!--Aba de Informações Pessoais-->
                 <div id="overview" class="tab-pane active">
-                  <form class="form-horizontal" method="post" action="../../controle/control.php">
+                  <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarInformacoesPessoais">
                     <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                     <input type="hidden" name="metodo" value="alterarInfPessoal">
                     <h4 class="mb-xlg">Informações Pessoais</h4>
@@ -833,6 +860,28 @@ try {
                       <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
                     </fieldset>
                   </form><br>
+
+                  <!-- MODAL QUE SERÁ UTILIZADO CASO A DATA DE NASCIMENTO SEJA ANTERIOR A DATA DE EXPEDIÇÃO -->
+                  <div id="customModal" class="custom-modal-overlay">
+                      <div class="custom-modal-container">
+                          <div class="custom-modal-header">
+                              <h3 class="custom-modal-title">Informe a Data</h3>
+                              <button class="custom-modal-close">&times;</button>
+                          </div>
+                          <div class="custom-modal-body">
+                              <div class="custom-form-group">
+                                  <label for="customDataInput" class="custom-form-label">Data de expedição:</label>
+                                  <input type="date" class="custom-form-input" id="customDataInput" placeholder="dd/mm/aaaa" maxlength="10">
+                                  <div class="custom-text-error" id="customErrorData">Data inválida! Ela deve ser posterior a data de nascimento</div>
+                              </div>
+                          </div>
+                          <div class="custom-modal-footer">
+                              <button class="custom-btn custom-btn-primary" id="customBtnConfirmar">Confirmar</button>
+                          </div>
+                      </div>
+                  </div>
+
+
                   <div class="panel-footer">
                     <div class="row">
                       <div class="col-md-9 col-md-offset-3">
@@ -1225,7 +1274,7 @@ try {
                                   let url = "informacao_adicional.php";
                                   let data = "action=remover&id_descricao=" + id_descricao;
                                   post(url, data, listarInfoAdicional);
-                                  $("#" + 'informacao'+id_descricao + "").remove();
+                                  $("#" + 'informacao' + id_descricao + "").remove();
                                 }
 
                                 //Refazer lógica abaixo
@@ -1314,11 +1363,11 @@ try {
                             <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input">
                               <option selected disabled value="">Selecionar</option>
                               <?php
-                                $pdo = Conexao::connect();
-                                $tipoCarga = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
-                                foreach ($tipoCarga as $key => $value) {
-                                  echo ("<option id='tipo_" . $value["id_tipo"] . "' value=" . $value["id_tipo"] . ">" . htmlspecialchars($value["descricao"]) . "</option>");
-                                };
+                              $pdo = Conexao::connect();
+                              $tipoCarga = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
+                              foreach ($tipoCarga as $key => $value) {
+                                echo ("<option id='tipo_" . $value["id_tipo"] . "' value=" . $value["id_tipo"] . ">" . htmlspecialchars($value["descricao"]) . "</option>");
+                              };
                               ?>
                             </select>
                             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -1468,7 +1517,7 @@ try {
                     <div class="panel-body">
                       <!--Documentação-->
                       <hr class="dotted short">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarDocumentacao">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarDocumentacao">
                         <div class="form-group">
@@ -1503,7 +1552,7 @@ try {
                         </div>
                         <input type="hidden" id="id_funcionario" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao" onclick="return editar_documentacao()">Editar</button>
-                        <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar" onclick="funcao3()">
+                        <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar" >
                       </form>
                     </div>
                   </section>
@@ -1772,7 +1821,7 @@ try {
                     <div class="panel-body">
                       <!--Endereço-->
                       <hr class="dotted short">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarEndereco">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarEndereco">
                         <div class="form-group">
@@ -1831,7 +1880,7 @@ try {
                         <div class="form-group center">
                           <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                           <button type="button" class="btn btn-primary" id="botaoEditarEndereco" onclick="return editar_endereco()">Editar</button>
-                          <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar" onclick="funcao3()">
+                          <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
                         </div>
                     </div>
                     </form>
@@ -1959,7 +2008,7 @@ try {
       post("remuneracao.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_remuneracao);
     })
 
-    function funcao3() {
+    function funcao3(){
       var idfunc = <?= $idFuncionario ?>;
       var cpfs = <?php echo $_SESSION['cpf_funcionario']; ?>;
       var cpf_funcionario = $("#cpf").val();
@@ -1981,10 +2030,61 @@ try {
           apoio = 1;
         }
       });
+
+      const data_nasc = new Date($('#nascimento').val());
+      const data_exp = new Date($('#data_expedicao').val());
+      if(data_exp <= data_nasc){
+        alert("Edição não efetuada. A data de expedição não pode ser anterior ou igual à de nascimento");
+        apoio = 1;
+      }
+      
       if (apoio == 0) {
         alert("Editado com sucesso!");
+        return true;
       }
+      return false;
     }
+
+    $('#formAlterarDocumentacao').on('submit', function(e){
+      if(!funcao3()){
+        e.preventDefault();
+      }
+    });
+    $('#formAlterarEndereco').on('submit', function(e){
+      if(!funcao3()){
+        e.preventDefault();
+      }
+    });
+    
+    $('#customBtnConfirmar').on('click', function() {
+      const data_nasc = new Date($('#nascimento').val());
+      const data = $('#nascimento').val();
+      const data_exp = new Date($('#customDataInput').val());
+        if (data_exp > data_nasc) {
+          
+          let funcionario = <?= $func ?>;
+          const cpf = funcionario[0].cpf;
+          
+          $("#data_expedicao").val( $(customDataInput).val() ).prop('disabled', false);
+          $("#rg").val(funcionario[0].registro_geral).prop('disabled', false);
+          $("#orgao_emissor").val(funcionario[0].orgao_emissor).prop('disabled', false);
+          $("#cpf").val(cpf).prop('disabled', false);
+          $("#data_admissao").val(alterardate(funcionario[0].data_admissao)).prop('disabled', false);
+
+          $('#formAlterarDocumentacao').submit()
+          alert("Agora é possível alterar a data de nascimento para a data desejada!")
+        } else {
+            customErrorData.style.display = 'block';
+            customDataInput.focus();
+        }
+    });
+    // Evento de submit do formulário
+      $('#formAlterarInformacoesPessoais').on('submit', function(e) {
+          if(!funcao3()) {
+              e.preventDefault();
+              showCustomModal();
+          }
+      });
 
     function gerarDocFuncional() {
       url = 'documento_listar.php';

@@ -1,5 +1,8 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
     exit();
@@ -7,10 +10,10 @@ if (!isset($_SESSION["usuario"])) {
 
 // Verifica Permissão do Usuário
 require_once '../permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 11, 7);
+permissao($_SESSION['id_pessoa'], 12, 7);
 require_once '../../dao/Conexao.php';
 
-$descricao = trim(filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_STRING));
+$descricao = trim(filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS));
 
 if (!$descricao || empty($descricao)) {
     http_response_code(400);

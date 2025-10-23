@@ -43,7 +43,7 @@ class AlmoxarifadoDAO
             }
         } catch (PDOException $e) {
             throw $e;
-        }     
+        }
     }
 
     public function excluir($id_almoxarifado)
@@ -60,18 +60,15 @@ class AlmoxarifadoDAO
     }
     public function listarTodos()
     {
-        try {
-            $almoxarifados = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado");
-            $x = 0;
-            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $almoxarifados[$x] = array('id_almoxarifado' => $linha['id_almoxarifado'], 'descricao_almoxarifado' => $linha['descricao_almoxarifado']);
-                $x++;
-            }
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+        $almoxarifados = array();
+        $pdo = Conexao::connect();
+        $consulta = $pdo->query("SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado");
+        $x = 0;
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $almoxarifados[$x] = array('id_almoxarifado' => htmlspecialchars($linha['id_almoxarifado']), 'descricao_almoxarifado' => htmlspecialchars($linha['descricao_almoxarifado']));
+            $x++;
         }
+
         return json_encode($almoxarifados);
     }
 }

@@ -24,7 +24,8 @@ try {
         'atualizarSocio',
         'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento',
         'gerarRecibo',
-        'download'
+        'download',
+        'criarAssinatura',
     ];
 
     //Blocks execution for unauthorized access

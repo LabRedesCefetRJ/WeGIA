@@ -1,7 +1,7 @@
 <?php
-require_once ROOT .'/classes/Categoria.php';
-require_once ROOT .'/dao/Conexao.php';
-require_once ROOT .'/Functions/funcoes.php';
+require_once ROOT . '/classes/Categoria.php';
+require_once ROOT . '/dao/Conexao.php';
+require_once ROOT . '/Functions/funcoes.php';
 class CategoriaDAO
 {
     public function incluir($categoria)
@@ -83,7 +83,7 @@ class CategoriaDAO
             $consulta = $pdo->query("SELECT id_categoria_produto, descricao_categoria FROM categoria_produto");
             $x = 0;
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $categorias[$x] = array('id_categoria_produto' => $linha['id_categoria_produto'], 'descricao_categoria' => $linha['descricao_categoria']);
+                $categorias[$x] = array('id_categoria_produto' => htmlspecialchars($linha['id_categoria_produto']), 'descricao_categoria' => htmlspecialchars($linha['descricao_categoria']));
                 $x++;
             }
         } catch (PDOException $e) {

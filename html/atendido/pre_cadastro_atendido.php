@@ -5,7 +5,7 @@ if(session_status() === PHP_SESSION_NONE){
 }
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: " . WWW . "html/index.php");
+    header("Location: ../../index.php");
     exit();
 }
 

@@ -1,43 +1,39 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Funcionario.php";
 require_once ROOT . "/Functions/funcoes.php";
 
 class FuncionarioDAO
 {
+    private PDO $pdo;
 
-    public function verificaAdm($id){
-        $pdo = Conexao::connect();
+    public function __construct(?PDO $pdo = null)
+    {
+        is_null($pdo) ? $this->pdo = Conexao::connect() : $this->pdo = $pdo;
+    }
 
+    public function verificaAdm($id)
+    {
         $buscaAdm = 'SELECT * FROM pessoa WHERE id_pessoa=:id AND adm_configurado=1';
 
-        $stmt = $pdo->prepare($buscaAdm);
+        $stmt = $this->pdo->prepare($buscaAdm);
         $stmt->bindParam(':id', $id);
 
         $stmt->execute();
 
-        if($stmt->rowCount() == 1){
+        if ($stmt->rowCount() == 1) {
             return true;
         }
 
         return false;
     }
 
-    public function getIdFuncionarioComIdPessoa($idPessoa){
-        try{
-            $pdo = Conexao::connect();
-
-            $stmt = $pdo->prepare("
+    public function getIdFuncionarioComIdPessoa($idPessoa)
+    {
+        try {
+            $stmt = $this->pdo->prepare("
                 SELECT id_funcionario 
                 FROM pessoa p 
                 JOIN funcionario f ON (p.id_pessoa = f.id_pessoa) 
@@ -48,8 +44,7 @@ class FuncionarioDAO
             $func = $stmt->fetch(PDO::FETCH_ASSOC);
 
             return $func["id_funcionario"];
-
-        }catch (PDOException $e) {
+        } catch (PDOException $e) {
             echo 'Error:' . $e->getMessage();
         }
     }
@@ -58,8 +53,8 @@ class FuncionarioDAO
     {
         try {
             $pessoa = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT f.id_funcionario FROM pessoa p INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario='$id_funcionario'");
+
+            $consulta = $this->pdo->query("SELECT f.id_funcionario FROM pessoa p INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario='$id_funcionario'");
             $x = 0;
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
                 $pessoa[$x] = $linha['id_funcionario'];
@@ -74,57 +69,42 @@ class FuncionarioDAO
     public function listarIdPessoa($cpf)
     {
         try {
-            $pessoa = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT id_pessoa from pessoa WHERE cpf='$cpf'");
-            $linha = $consulta->fetch(PDO::FETCH_ASSOC);
-            // $x=0;
-            // while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
-            //     $pessoa[$x]=$linha['id_pessoa'];
-            //     $x++;
-            // }
+            $stmtConsulta = $this->pdo->prepare("SELECT id_pessoa from pessoa WHERE cpf=:cpf");
+            $stmtConsulta->bindParam(':cpf', $cpf);
+            $stmtConsulta->execute();
+            $linha = $stmtConsulta->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+            Util::tratarException($e);
         }
-        // return $pessoa;
+
         return $linha['id_pessoa'];
     }
 
     public function listarSobrenome($cpf)
     {
         try {
-            $pessoa = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT sobrenome from pessoa WHERE cpf='$cpf'");
-            $linha = $consulta->fetch(PDO::FETCH_ASSOC);
-            // $x=0;
-            // while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
-            //     $pessoa[$x]=$linha['id_pessoa'];
-            //     $x++;
-            // }
+            $stmtConsulta = $this->pdo->prepare("SELECT sobrenome from pessoa WHERE cpf=:cpf");
+            $stmtConsulta->bindParam(':cpf', $cpf);
+            $stmtConsulta->execute();
+            $linha = $stmtConsulta->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+            Util::tratarException($e);
         }
-        // return $pessoa;
+
         return $linha['sobrenome'];
     }
 
     public function listarSituacao($cpf)
     {
         try {
-            $pessoa = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT situacao from pessoa WHERE cpf='$cpf'");
-            $linha = $consulta->fetch(PDO::FETCH_ASSOC);
-            // $x=0;
-            // while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
-            //     $pessoa[$x]=$linha['id_pessoa'];
-            //     $x++;
-            // }
+            $stmtConsulta = $this->pdo->prepare("SELECT situacao from pessoa WHERE cpf=:cpf");
+            $stmtConsulta->bindParam(':cpf', $cpf);
+            $stmtConsulta->execute();
+            $linha = $stmtConsulta->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+            Util::tratarException($e);
         }
-        // return $pessoa;
+        
         return $linha['situacao'];
     }
 
@@ -142,24 +122,26 @@ class FuncionarioDAO
 
     public function selecionarCadastro($cpf)
     {
-        $pdo = Conexao::connect();
+        $cpf = filter_var($cpf, FILTER_SANITIZE_SPECIAL_CHARS);
+
         $valor = 0;
-        // if()
-        $consultaFunc = $pdo->query("select id_pessoa from funcionario where id_pessoa = (SELECT id_pessoa from pessoa where cpf = '$cpf')")->fetchAll(PDO::FETCH_ASSOC);
+    
+        $stmt = $this->pdo->prepare("SELECT id_pessoa FROM funcionario WHERE id_pessoa = (SELECT id_pessoa FROM pessoa WHERE cpf =:cpf)");
+        $stmt->bindValue(':cpf',$cpf, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $consultaFunc = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if ($consultaFunc == null) {
-            // echo file_put_contents('ar.txt', "oiiiiiiii");
-            $consultaCPF = $pdo->query("select cpf,id_pessoa from pessoa;")->fetchAll(PDO::FETCH_ASSOC);
+            $consultaCPF = $this->pdo->query("SELECT cpf,id_pessoa FROM pessoa")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($consultaCPF as $key => $value) {
                 if ($cpf == $value['cpf']) {
                     $valor++;
                 }
             }
             if ($valor == 0) {
-                header("Location: ../html/funcionario/cadastro_funcionario.php?cpf=$cpf");
+                header('Location: ../html/funcionario/cadastro_funcionario.php?cpf='.htmlspecialchars($cpf));
             } else {
-                header("Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=$cpf");
-                // header("Location: ../controle/control.php?metodo=listarPessoaExistente($cpf)&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=$cpf");
-
+                header('Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf='.htmlspecialchars($cpf));
             }
         } else {
             header("Location: ../html/funcionario/pre_cadastro_funcionario.php?msg_e=Erro, Funcionário já cadastrado no sistema.");
@@ -173,8 +155,8 @@ class FuncionarioDAO
             $sql = 'call cadfuncionario(:nome,:sobrenome,:cpf,:senha,:sexo,:telefone,:data_nascimento,:imagem,:cep,:estado,:cidade,:bairro,:logradouro,:numero_endereco,:complemento,:ibge,:registro_geral,:orgao_emissor,:data_expedicao,:nome_pai,:nome_mae,:tipo_sangue,:data_admissao,:pis,:ctps,:uf_ctps,:numero_titulo,:zona,:secao,:certificado_reservista_numero,:certificado_reservista_serie,:id_situacao,:id_cargo)';
 
             $sql = str_replace("'", "\'", $sql);
-            $pdo = Conexao::connect();
-            $stmt = $pdo->prepare($sql);
+
+            $stmt = $this->pdo->prepare($sql);
             $nome = $funcionario->getNome();
             $sobrenome = $funcionario->getSobrenome();
             // $cpf=$funcionario->getCpf();
@@ -261,10 +243,10 @@ class FuncionarioDAO
             $sql2 = "INSERT INTO funcionario(id_pessoa,id_cargo,id_situacao,data_admissao,certificado_reservista_numero,certificado_reservista_serie, ctps)
             values(:id_pessoa,:id_cargo,:id_situacao,:data_admissao,:certificado_reservista_numero,:certificado_reservista_serie, 'NULL')";
 
-            $pdo = Conexao::connect();
-            $pdo->beginTransaction();
-            $stmt = $pdo->prepare($sql);
-            $stmt2 = $pdo->prepare($sql2);
+
+            $this->pdo->beginTransaction();
+            $stmt = $this->pdo->prepare($sql);
+            $stmt2 = $this->pdo->prepare($sql2);
 
             $nome = $funcionario->getNome();
             $sobrenome = $funcionario->getSobrenome();
@@ -318,9 +300,9 @@ class FuncionarioDAO
 
             $stmt->execute();
             if ($stmt2->execute()) {
-                $pdo->commit();
+                $this->pdo->commit();
             } else {
-                $pdo->rollBack();
+                $this->pdo->rollBack();
                 http_response_code(500);
                 exit('Erro, não foi possível concluir a operação de cadastro.');
             }
@@ -336,10 +318,10 @@ class FuncionarioDAO
             // $sql = 'call excluirfuncionario(:id_funcionario)';
             $sql = 'UPDATE funcionario set id_situacao = 2 where id_funcionario = :id_funcionario';
             $sql = str_replace("'", "\'", $sql);
-            $pdo = Conexao::connect();
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            $stmt = $pdo->prepare($sql);
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            $stmt = $this->pdo->prepare($sql);
 
             $stmt->bindParam(':id_funcionario', $id_funcionario);
 
@@ -356,10 +338,10 @@ class FuncionarioDAO
             $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set nome=:nome,sobrenome=:sobrenome,sexo=:sexo,telefone=:telefone,data_nascimento=:data_nascimento,nome_pai=:nome_pai,nome_mae=:nome_mae,tipo_sanguineo=:tipo_sanguineo where id_funcionario=:id_funcionario';
 
             $sql = str_replace("'", "\'", $sql);
-            $pdo = Conexao::connect();
-            $stmt = $pdo->prepare($sql);
 
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
+
+            $stmt = $this->pdo->prepare($sql);
             $nome = $funcionario->getNome();
             $sobrenome = $funcionario->getSobrenome();
             $id_funcionario = $funcionario->getId_funcionario();
@@ -389,11 +371,11 @@ class FuncionarioDAO
     {
         $imagem = base64_encode($imagem);
         try {
-            $pdo = Conexao::connect();
-            $id_pessoa = (($pdo->query("SELECT id_pessoa FROM funcionario WHERE id_funcionario=$id_funcionario"))->fetch(PDO::FETCH_ASSOC))["id_pessoa"];
+
+            $id_pessoa = (($this->pdo->query("SELECT id_pessoa FROM funcionario WHERE id_funcionario=$id_funcionario"))->fetch(PDO::FETCH_ASSOC))["id_pessoa"];
 
             $sql = "UPDATE pessoa SET imagem = :imagem WHERE id_pessoa = :id_pessoa;";
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':id_pessoa', $id_pessoa);
             $stmt->bindValue(':imagem', $imagem);
             $stmt->execute();
@@ -408,10 +390,10 @@ class FuncionarioDAO
             $sql = 'update pessoa set senha=:nova_senha where id_pessoa=:id_pessoa';
 
             $sql = str_replace("'", "\'", $sql);
-            $pdo = Conexao::connect();
-            $stmt = $pdo->prepare($sql);
 
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
+
+            $stmt = $this->pdo->prepare($sql);
 
             $stmt->bindParam(':id_pessoa', $id_pessoa);
             $stmt->bindParam(':nova_senha', $nova_senha);
@@ -428,8 +410,8 @@ class FuncionarioDAO
 
             $sql = str_replace("'", "\'", $sql);
 
-            $pdo = Conexao::connect();
-            $stmt = $pdo->prepare($sql);
+
+            $stmt = $this->pdo->prepare($sql);
 
             $id_funcionario = $funcionario->getId_funcionario();
             $cep = $funcionario->getCep();
@@ -464,8 +446,8 @@ class FuncionarioDAO
 
             $sql = str_replace("'", "\'", $sql);
 
-            $pdo = Conexao::connect();
-            $stmt = $pdo->prepare($sql);
+
+            $stmt = $this->pdo->prepare($sql);
 
             //$cpf=$funcionario->getCpf();
             $id_funcionario = $funcionario->getId_funcionario();
@@ -493,8 +475,8 @@ class FuncionarioDAO
 
             $sql = str_replace("'", "\'", $sql);
 
-            $pdo = Conexao::connect();
-            $stmt = $pdo->prepare($sql);
+
+            $stmt = $this->pdo->prepare($sql);
 
             $id_funcionario = $funcionario->getId_funcionario();
             $id_cargo = $funcionario->getId_cargo();
@@ -536,11 +518,11 @@ class FuncionarioDAO
                 $situacao_selecionada = 1;
             else
                 $situacao_selecionada = $situacao;
-            
-            $funcionarios = array();
-            $pdo = Conexao::connect();
 
-            $consulta = $pdo->prepare("SELECT f.id_funcionario, p.nome, p.sobrenome,p.cpf, c.cargo, s.situacoes FROM pessoa p 
+            $funcionarios = array();
+
+
+            $consulta = $this->pdo->prepare("SELECT f.id_funcionario, p.nome, p.sobrenome,p.cpf, c.cargo, s.situacoes FROM pessoa p 
             JOIN funcionario f ON p.id_pessoa = f.id_pessoa JOIN cargo c ON c.id_cargo=f.id_cargo JOIN situacao s 
             ON f.id_situacao=s.id_situacao where s.id_situacao =:situacao");
             $consulta->bindParam(':situacao', $situacao_selecionada);
@@ -564,8 +546,8 @@ class FuncionarioDAO
             $usuario = new UsuarioDAO();
             $id_usuario = $usuario->obterUsuario($_SESSION['usuario'])[0]["id_pessoa"];
             $funcionarios = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT p.id_pessoa, p.nome, p.sobrenome FROM funcionario f INNER JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE p.id_pessoa!='$id_usuario'");
+
+            $consulta = $this->pdo->query("SELECT p.id_pessoa, p.nome, p.sobrenome FROM funcionario f INNER JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE p.id_pessoa!='$id_usuario'");
             $produtos = array();
             $x = 0;
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
@@ -582,8 +564,8 @@ class FuncionarioDAO
     {
         try {
             $cpfs = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT f.id_funcionario, p.cpf from pessoa p INNER JOIN funcionario f ON(p.id_pessoa=f.id_pessoa)");
+
+            $consulta = $this->pdo->query("SELECT f.id_funcionario, p.cpf from pessoa p INNER JOIN funcionario f ON(p.id_pessoa=f.id_pessoa)");
             $x = 0;
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
                 $cpfs[$x] = array('cpf' => $linha['cpf'], 'id' => $linha['id_funcionario']);
@@ -599,7 +581,7 @@ class FuncionarioDAO
     public function listar($id_funcionario)
     {
         try {
-            $pdo = Conexao::connect();
+
             $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf,p.senha,p.sexo,p.telefone,p.data_nascimento,p.cep,p.ibge,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,f.id_funcionario,f.data_admissao,f.pis,f.ctps,f.uf_ctps,f.numero_titulo,f.zona,f.secao,f.certificado_reservista_numero,f.certificado_reservista_serie,s.id_situacao,s.situacoes,c.id_cargo,c.cargo,qh.escala,qh.tipo,qh.carga_horaria,qh.entrada1,qh.saida1,qh.entrada2,qh.saida2,qh.total,qh.dias_trabalhados,qh.folga 
             FROM pessoa p 
             INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa 
@@ -608,7 +590,7 @@ class FuncionarioDAO
             LEFT JOIN cargo c ON c.id_cargo = f.id_cargo 
             WHERE f.id_funcionario = :id_funcionario";
 
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':id_funcionario', $id_funcionario);
 
             $stmt->execute();
@@ -626,22 +608,9 @@ class FuncionarioDAO
     public function listarPessoaExistente($cpf)
     {
         try {
-
-            $pdo = Conexao::connect();
-            // $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf,p.sexo,p.telefone,p.data_nascimento,p.registro_geral,p.orgao_emissor,p.data_expedicao,f.data_admissao,s.id_situacao,c.id_cargo,qh.escala,qh.tipo
-            // FROM pessoa p 
-            // INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa 
-            // LEFT JOIN quadro_horario_funcionario qh ON qh.id_funcionario = f.id_funcionario 
-            // LEFT JOIN situacao s ON s.id_situacao = f.id_situacao 
-            // LEFT JOIN cargo c ON c.id_cargo = f.id_cargo 
-            // WHERE p.cpf = :cpf";
             $sql = "SELECT id_pessoa,nome,sobrenome,sexo,telefone,data_nascimento,cpf,imagem,registro_geral,orgao_emissor,data_expedicao FROM `pessoa` WHERE cpf = :cpf";
-            // $cpf = '577.153.780-20';
-            // echo file_put_contents('ar.txt', $cpf);
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':cpf', $cpf);
-            // echo file_put_contents('ar.txt', $sql);
-
             $stmt->execute();
             $funcionario = array();
 
@@ -657,9 +626,9 @@ class FuncionarioDAO
     public function retornaId($cpf)
     {
         try {
-            $pdo = Conexao::connect();
+
             $sql = "SELECT f.id_funcionario FROM pessoa p INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE p.cpf = :cpf";
-            $stmt = $pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':cpf', $cpf);
 
             $stmt->execute();

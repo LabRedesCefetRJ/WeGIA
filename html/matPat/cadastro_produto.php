@@ -1,18 +1,46 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) 
+if (session_status() === PHP_SESSION_NONE) {
 	session_start();
-
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
-
-if (!isset($_SESSION['usuario'])) {
-	header("Location: ". WWW ."html/index.php");
-	exit;
 }
 
-require_once ROOT . '/dao/Conexao.php';
+if (!isset($_SESSION['usuario'])) {
+	header("Location: " . WWW . "html/index.php");
+	exit();
+}else{
+	session_regenerate_id();
+}
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 22, 3);
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . "/html/personalizacao_display.php";
+
+// Adiciona Função de mensagem
+require_once ROOT . "/html/geral/msg.php";
+?>
+
+<!doctype html>
+<html class="fixed">
+<?php
+include_once ROOT . '/dao/Conexao.php';
+include_once ROOT . '/dao/CategoriaDAO.php';
+include_once ROOT . '/dao/UnidadeDAO.php';
+
+if (!isset($_SESSION['unidade'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
+}
+if (!isset($_SESSION['categoria'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/cadastro_produto.php');
+}
+if (isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
+	extract($_SESSION);
+
+	unset($_SESSION['unidade']);
+	unset($_SESSION['categoria']);
+}
 
 $dadosForm = $_SESSION['form_produto'];
 
@@ -79,21 +107,21 @@ header("X-Content-Type-Options: nosniff");
 	<!-- jquery functions -->
 	<script>
 		$(function() {
-			var categoria = <?php
+			const categoria = <?php
 							echo $categoria;
 							?>;
-			var unidade = <?php
+			const unidade = <?php
 							echo $unidade;
 							?>;
 			$.each(categoria, function(i, item) {
-				if(atualizarSelect('id_categoria') == item.id_categoria_produto) {
+				if (atualizarSelect('id_categoria') == item.id_categoria_produto) {
 					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '" selected>' + item.descricao_categoria + '</option>');
 				} else {
 					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '">' + item.descricao_categoria + '</option>');
 				}
 			})
 			$.each(unidade, function(i, item) {
-				if(atualizarSelect('id_unidade') == item.id_unidade) {
+				if (atualizarSelect('id_unidade') == item.id_unidade) {
 					$('#id_unidade').append('<option value="' + item.id_unidade + '" selected>' + item.descricao_unidade + '</option>');
 				} else {
 					$('#id_unidade').append('<option value="' + item.id_unidade + '">' + item.descricao_unidade + '</option>');
@@ -103,8 +131,8 @@ header("X-Content-Type-Options: nosniff");
 	</script>
 	<script type="text/javascript">
 		function validar() {
-			var id_categoria = document.getElementyById("id_categoria").value;
-			var id_unidade = document.getElementyById("id_unidade").value;
+			const id_categoria = document.getElementyById("id_categoria").value;
+			const id_unidade = document.getElementyById("id_unidade").value;
 			if (id_categoria == "blank") {
 				alert("Selecione uma categoria");
 				document.getElementyById("id_categoria").focus();
@@ -245,15 +273,6 @@ header("X-Content-Type-Options: nosniff");
 			</section>
 		</div>
 
-		<aside id="sidebar-right" class="sidebar-right">
-			<div class="nano">
-				<div class="nano-content">
-					<a href="#" class="mobile-close visible-xs">
-						Collapse <i class="fa fa-chevron-right"></i>
-					</a>
-				</div>
-			</div>
-		</aside>
 	</section>
 
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.js"></script>
@@ -282,19 +301,19 @@ header("X-Content-Type-Options: nosniff");
 	<!-- Input content restoration -->
 	<script type="text/javascript" defer>
 		//Xablau
-		function addSessionStorage (el) {
+		function addSessionStorage(el) {
 			sessionStorage.setItem(el.id, el.value);
 		}
 
-		function atualizarSelect (id) {
+		function atualizarSelect(id) {
 			return sessionStorage.getItem(id) || 'blank';
 		}
 
-		function atualizarInput (id) {
+		function atualizarInput(id) {
 			document.getElementById(id).value = sessionStorage.getItem(id) || '';
 		}
 
-		function limparSessionStorage () {
+		function limparSessionStorage() {
 			sessionStorage.clear();
 		}
 		document.addEventListener("DOMContentLoaded", () => {

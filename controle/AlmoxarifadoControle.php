@@ -1,64 +1,85 @@
 <?php
-include_once ROOT . '/classes/Almoxarifado.php';
-include_once ROOT . '/dao/AlmoxarifadoDAO.php';
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Almoxarifado.php';
+include_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AlmoxarifadoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+
 class AlmoxarifadoControle
 {
-    public function verificar()
-    {
-        $descricao_almoxarifado= trim($_POST['descricao_almoxarifado']);
-        try {
-            $almoxarifado = new Almoxarifado($descricao_almoxarifado);
-            return $almoxarifado;
-        } catch (InvalidArgumentException $e) {
-            http_response_code(400);
-            exit('Erro ao verificar almoxarifado: ' . $e->getMessage());
-        }
-    }
+    /**
+     * Atribui para a chave 'almoxarifado' da sessão um array de todos os almoxarifados cadastrados no BD da aplicação.
+     */
     public function listarTodos()
     {
-        $nextPage = trim($_GET['nextPage']);
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat|geral)/(editar_permissoes|cadastro_entrada|cadastro_saida|listar_almox|remover_produto)\.php(\?id_produto=\d+)?)$#';
 
-        if(!filter_var($nextPage, FILTER_VALIDATE_URL)){
-            http_response_code(400);
-            exit('Erro, a URL informada para a próxima página não é válida.');
+        try {
+            if (!filter_var($nextPage, FILTER_VALIDATE_URL))
+                throw new InvalidArgumentException('Erro, a URL informada para a próxima página não é válida.', 400);
+
+            $almoxarifadoDAO = new AlmoxarifadoDAO();
+            $almoxarifados = $almoxarifadoDAO->listarTodos();
+
+            $_SESSION['almoxarifado'] = $almoxarifados;
+
+            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-
-        $almoxarifadoDAO = new AlmoxarifadoDAO();
-        $almoxarifados = $almoxarifadoDAO->listarTodos();
-        session_start();
-        $_SESSION['almoxarifado'] = $almoxarifados;
-        header('Location: ' . $nextPage);
     }
+
+    /**
+     * Extrai de um formulário HTTP via requisição POST o parâmetro 'descricao_almoxarifado' e cadastra no BD da aplicação um novo almoxarifado.
+     */
     public function incluir()
     {
-        $almoxarifado = $this->verificar();
-        $almoxarifadoDAO = new AlmoxarifadoDAO();
         try {
+            $descricao_almoxarifado = filter_input(INPUT_POST, 'descricao_almoxarifado', FILTER_SANITIZE_SPECIAL_CHARS);
+            $almoxarifado = new Almoxarifado($descricao_almoxarifado);
+
+            $almoxarifadoDAO = new AlmoxarifadoDAO();
             $almoxarifadoDAO->incluir($almoxarifado);
-            session_start();
+
             $_SESSION['msg'] = "Almoxarifado cadastrado com sucesso";
             $_SESSION['proxima'] = "Cadastrar outro almoxarifado";
-            $_SESSION['link'] = WWW ."html/matPat/adicionar_almoxarifado.php";
-            header("Location: " . WWW ."html/matPat/adicionar_almoxarifado.php");
-        } catch (PDOException $e) {
-            echo "Não foi possível registrar o almoxarifado";
+            $_SESSION['link'] = WWW . "html/matPat/adicionar_almoxarifado.php";
+
+            header("Location: " . WWW . "html/matPat/adicionar_almoxarifado.php");
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
+
+    /**
+     * Extrai de um formulário HTTP via requisição POST o parâmetro 'id_almoxarifado' e remove do sistema o almoxarifado de id equivalente no BD da aplicação.
+     */
     public function excluir()
     {
-        $id_almoxarifado = trim($_GET['id_almoxarifado']);
-
-        if(!$id_almoxarifado || !is_numeric($id_almoxarifado) || $id_almoxarifado < 1){
-            http_response_code(400);
-            exit("O id de um almoxarifado deve ser um inteiro maior ou igual a 1");
-        }
-
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
+            $idAlmoxarifado = filter_input(INPUT_POST, 'id_almoxarifado', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$idAlmoxarifado || !is_numeric($idAlmoxarifado))
+                throw new InvalidArgumentException("O parâmetro idAlmoxarifado deve ser um número válido.", 400);
+
+
+            if ($idAlmoxarifado < 1)
+                throw new InvalidArgumentException("O id de um almoxarifado deve ser um inteiro maior ou igual a 1.", 422);
+
             $almoxarifadoDAO = new AlmoxarifadoDAO();
-            $almoxarifadoDAO->excluir($id_almoxarifado);
-            header('Location: '. WWW .'html/matPat/listar_almox.php');
-        } catch (PDOException $e) {
-            echo "Não foi possível excluir o almoxarifado";
+            $almoxarifadoDAO->excluir($idAlmoxarifado);
+            header('Location: ' . WWW . 'html/matPat/listar_almox.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
+
+    //Futuramente adicionar um método para alterar a descrição de um almoxarifado
 }

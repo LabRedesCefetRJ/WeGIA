@@ -23,12 +23,18 @@ class ContribuicaoLogDAO
 
     public function criar(ContribuicaoLog $contribuicaoLog)
     {
-        $sqlInserirContribuicaoLog =
-            "INSERT INTO contribuicao_log (
+        $sqlInserirContribuicaoLog = "INSERT INTO contribuicao_log (
                     id_socio,
                     id_gateway,
-                    id_meio_pagamento, 
-                    codigo, 
+                    id_meio_pagamento,
+                    ";
+
+        if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
+            $sqlInserirContribuicaoLog .= 'id_recorrencia,';
+        }
+
+        $sqlInserirContribuicaoLog .=
+            "       codigo, 
                     valor, 
                     data_geracao, 
                     data_vencimento, 
@@ -38,20 +44,35 @@ class ContribuicaoLogDAO
                     :idSocio, 
                     :idGateway,
                     :idMeioPagamento,
-                    :codigo, 
+                    ";
+                    
+        if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
+            $sqlInserirContribuicaoLog .= ':idRecorrencia,';
+        }
+        
+        $sqlInserirContribuicaoLog .= ":codigo, 
                     :valor, 
                     :dataGeracao, 
                     :dataVencimento, 
-                    :statusPagamento
-                )
-            ";
+                    :statusPagamento)";
 
         $stmt = $this->pdo->prepare($sqlInserirContribuicaoLog);
         $stmt->bindParam(':idSocio', $contribuicaoLog->getSocio()->getId());
         $stmt->bindParam(':idGateway', $contribuicaoLog->getGatewayPagamento()->getId());
         $stmt->bindParam(':idMeioPagamento', $contribuicaoLog->getMeioPagamento()->getId());
+
+        if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
+            $stmt->bindParam(':idRecorrencia', $contribuicaoLog->getRecorrenciaDTO()->id);
+        }
+
         $stmt->bindParam(':codigo', $contribuicaoLog->getCodigo());
-        $stmt->bindParam(':valor', $contribuicaoLog->getValor());
+
+        if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
+            $stmt->bindParam(':valor', $contribuicaoLog->getRecorrenciaDTO()->valor);
+        }else{
+            $stmt->bindParam(':valor', $contribuicaoLog->getValor());
+        }
+        
         $stmt->bindParam(':dataGeracao', $contribuicaoLog->getDataGeracao());
         $stmt->bindParam(':dataVencimento', $contribuicaoLog->getDataVencimento());
         $stmt->bindParam(':statusPagamento', $contribuicaoLog->getStatusPagamento());

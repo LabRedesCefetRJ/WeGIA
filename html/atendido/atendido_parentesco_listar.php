@@ -1,12 +1,17 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+}else{
+    session_regenerate_id();
 }
 
 // Verifica Permissão do Usuário
 require_once '../permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 11, 7);
+permissao($_SESSION['id_pessoa'], 12, 7);
 
 require_once "../../dao/Conexao.php";
 

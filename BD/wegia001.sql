@@ -586,7 +586,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`escala_quadro_horario` (
   `id_escala` INT(11) NOT NULL AUTO_INCREMENT,
-  `descricao` VARCHAR(200) NOT NULL,
+  `descricao` VARCHAR(200) NOT NULL UNIQUE,
   PRIMARY KEY (`id_escala`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
@@ -597,7 +597,7 @@ DEFAULT CHARACTER SET = utf8mb4;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`tipo_quadro_horario` (
   `id_tipo` INT(11) NOT NULL AUTO_INCREMENT,
-  `descricao` VARCHAR(200) NOT NULL,
+  `descricao` VARCHAR(200) NOT NULL UNIQUE,
   PRIMARY KEY (`id_tipo`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4;
@@ -822,6 +822,28 @@ CREATE TABLE `wegia`.`contribuicao_conjuntoRegras` (
 ) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`recorrencia`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS wegia.recorrencia (
+id INT NOT NULL AUTO_INCREMENT,
+id_socio INT(11) NOT NULL,
+id_gateway INT(11) NOT NULL,
+codigo VARCHAR(255) NOT NULL UNIQUE,
+valor DECIMAL(10,2) NOT NULL,
+data_inicio DATE NOT NULL,
+data_termino DATE,
+status BOOLEAN DEFAULT TRUE,
+PRIMARY KEY (id),
+CONSTRAINT FK_recorrencia_socios
+FOREIGN KEY (id_socio)
+REFERENCES wegia.socio (id_socio),
+CONSTRAINT FK_recorrencia_gateways
+FOREIGN KEY (id_gateway)
+REFERENCES wegia.contribuicao_gatewayPagamento (id)
+)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`contribuicao_log`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS wegia.contribuicao_log (
@@ -829,6 +851,7 @@ id INT NOT NULL AUTO_INCREMENT,
 id_socio INT(11) NOT NULL,
 id_gateway INT(11) NOT NULL,
 id_meio_pagamento INT(11) NOT NULL,
+id_recorrencia INT(11) DEFAULT NULL,
 codigo VARCHAR(255) NOT NULL UNIQUE,
 valor DECIMAL(10,2) NOT NULL,
 data_geracao DATE NOT NULL,
@@ -844,7 +867,10 @@ FOREIGN KEY (id_gateway)
 REFERENCES wegia.contribuicao_gatewayPagamento (id),
 CONSTRAINT FK_id_meio_pagamentos
 FOREIGN KEY (id_meio_pagamento)
-REFERENCES wegia.contribuicao_meioPagamento (id)
+REFERENCES wegia.contribuicao_meioPagamento (id),
+CONSTRAINT FK_id_recorrencia
+FOREIGN KEY (id_recorrencia)
+REFERENCES wegia.recorrencia (id)
 )
 ENGINE = InnoDB;
 
@@ -1762,7 +1788,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pet_ficha_medica` (
     `id_ficha_medica` INT NOT NULL AUTO_INCREMENT,
     `id_pet` INT(11) NOT NULL,
     `castrado` CHAR(1) NOT NULL,
-    `necessidades_especiais` VARCHAR(255) NULL,
+    `necessidades_especiais` VARCHAR(500) NULL,
     PRIMARY KEY (`id_ficha_medica`),
     CONSTRAINT `fk_id_pet`
      FOREIGN KEY (`id_pet`)
@@ -1893,7 +1919,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `wegia`.`pet_medicamento`(
     `id_medicamento` INT NOT NULL AUTO_INCREMENT,
     `nome_medicamento` VARCHAR(200) NOT NULL,
-    `descricao_medicamento` VARCHAR(200) NOT NULL,
+    `descricao_medicamento` VARCHAR(1000) NOT NULL,
     `aplicacao` VARCHAR(250) NOT NULL,
     PRIMARY KEY (`id_medicamento`))
 ENGINE = InnoDB;

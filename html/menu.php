@@ -143,7 +143,12 @@
 											<span>Cadastrar Ficha Médica Pet</span>
 										</a>
 									</li>
-								
+									
+									<li>
+												<a href="<?= WWW ?>html/pet/vacinacao_vermifugacao.php">
+													<span>Vacinação e Vermifugação</span>
+												</a>
+											</li>
 
 									<li class="nav-parent nav-active">
 										<a>
@@ -162,6 +167,7 @@
 													<span>Informacões Medicamentos</span>
 												</a>
 											</li>
+											
 										</ul>
 
 									</li>

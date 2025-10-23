@@ -2,7 +2,7 @@
 //verificar se o meio de pagamento está ativo
 require_once '../controller/MeioPagamentoController.php';
 $meioPagamentoController = new MeioPagamentoController();
-if(!$meioPagamentoController->verificarStatus('Pix', true)){
+if (!$meioPagamentoController->verificarStatus('Pix', true)) {
     header("Location: ./forma_contribuicao.php");
     exit();
 }
@@ -14,7 +14,15 @@ $textoTipoContribuicao = 'GERAR QRCode';
 $tipoContribuicao = 'QRCode';
 
 ?>
-<div class="container-contact100">
+
+<style>
+    #pix-page {
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+
+<div class="container-contact100" id="pix-page">
     <div class="wrap-contact100">
 
         <!--Adiciona a logo e o título ao topo da página-->
@@ -58,19 +66,20 @@ $tipoContribuicao = 'QRCode';
 
     <div class="wrap-contact100 mt-5 hidden text-center" id="qrcode-div">
         <h4>Escaneie seu QRCode, <br> ou então clique no nosso copia e cola!</h4>
-       
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
+</div>
 
-    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 
-    <script src="../vendor/select2/select2.min.js"></script>
-    <script src="../public/js/mascara.js"></script>
-    <script src="../public/js/util.js"></script>
-    <script src="../public/js/pix.js"></script>
-    <!--Busca cep-->
-    <script src="../../../Functions/busca_cep.js"></script>
-    <?php
-    require_once './templates/footer.php';
-    ?>
+<script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+
+<script src="../vendor/select2/select2.min.js"></script>
+<script src="../public/js/mascara.js"></script>
+<script src="../public/js/util.js"></script>
+<script src="../public/js/pix.js"></script>
+<!--Busca cep-->
+<script src="../../../Functions/busca_cep.js"></script>
+<?php
+require_once './templates/footer.php';
+?>

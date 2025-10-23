@@ -1,14 +1,6 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 include_once ROOT . "/dao/Conexao.php";
 include_once ROOT . '/classes/Funcionario.php';
 include_once ROOT . '/classes/QuadroHorario.php';
@@ -330,6 +322,14 @@ class FuncionarioControle
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
+
+        if(strtotime($data_expedicao) < strtotime(($nascimento))){
+            session_start();
+            $_SESSION['erro'] = 'A data de expedição é anterior à do nascimento. Por favor, informa uma data válida!';
+            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf='. $cpf);
+            exit;
+        }
+
         session_start();
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
@@ -567,15 +567,24 @@ class FuncionarioControle
 
     public function listarUm()
     {
-        extract($_REQUEST);
         try {
+            $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$idFuncionario || $idFuncionario < 1) {
+                throw new InvalidArgumentException('O id do funcionário informado não é válido.', 400);
+            }
+
             $funcionarioDAO = new FuncionarioDAO();
-            $funcionario = $funcionarioDAO->listar($id_funcionario);
-            session_start();
+            $funcionario = $funcionarioDAO->listar($idFuncionario);
+
+            if (session_start() === PHP_SESSION_NONE)
+                session_start();
+
             $_SESSION['funcionario'] = $funcionario;
-            header('Location:' . $nextPage);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+
+            header('Location:' . WWW . "/html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($idFuncionario));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -613,22 +622,39 @@ class FuncionarioControle
                 throw new InvalidArgumentException('O valor do id da ação informado não é válido.', 400);
             }
 
-            if (!$recursos || $recursos < 1) {
-                throw new InvalidArgumentException('Os valores de id dos recursos informados não são válidos.', 400);
-            }
-
             $pdo = Conexao::connect();
             $permissao = new PermissaoDAO($pdo);
 
             $pdo->beginTransaction();
-            if(!$permissao->adicionarPermissao($cargo, $acao, $recursos)){
-                throw new Exception('Falha no controle de transação', 500);
+
+            // permissões atuais no banco
+            $permissoesBd = $permissao->getPermissoesByCargo($cargo);
+            $recursosBd = $permissoesBd ? array_column($permissoesBd, 'id_recurso') : [];
+
+            // normalizar para int
+            $recursos = array_map('intval', $recursos);
+
+            // calcular diferenças
+            $inserirPermissoes = array_diff($recursos, $recursosBd);
+            $removerPermissoes = array_diff($recursosBd, $recursos);
+
+            // remove permissões desmarcadas
+            if (!empty($removerPermissoes)) {
+                $permissao->removePermissoesByCargo($cargo, $removerPermissoes);
             }
+
+            // adiciona novas permissões
+            if (!empty($inserirPermissoes)) {
+                if (!$permissao->adicionarPermissao($cargo, $acao, $inserirPermissoes)) {
+                    throw new Exception('Falha no controle de transação', 500);
+                }
+            }
+
             $pdo->commit();
-            
+
             header('Location:' . '../html/geral/editar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
         } catch (Exception $e) {
-            if($pdo->inTransaction()){
+            if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
 
@@ -641,6 +667,7 @@ class FuncionarioControle
             }
         }
     }
+
 
     public function selecionarCadastro()
     {
@@ -672,7 +699,7 @@ class FuncionarioControle
             http_response_code(400);
             exit('Erro, a data de nascimento de um funcionário não está dentro dos limites permitidos.');
         }
-       
+
         $funcionarioDAO = new FuncionarioDAO();
         $horarioDAO = new QuadroHorarioDAO();
 
@@ -721,53 +748,56 @@ class FuncionarioControle
         }
     }
 
+    /**
+     * Altera a chave de acesso ao sistema de determinado usuário, permite que administradores configurados possam alterar a senha de outras pessoas
+     */
     public function alterarSenha()
     {
-        extract($_REQUEST);
+        $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+        $nova_senha = filter_input(INPUT_POST, 'nova_senha');
+        $redir = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
 
+        try {
+            if (!$id_pessoa || $id_pessoa < 1) {
+                throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
+            }
 
-        $funcionarioDAO = new FuncionarioDAO();
+            $funcionarioDAO = new FuncionarioDAO();
 
-        if ($id_pessoa != $_SESSION['id_pessoa']) {
-            try {
+            if ($id_pessoa != $_SESSION['id_pessoa']) {
+
                 if (!$funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
                     http_response_code(401);
                     exit('Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha');
                 }
-            } catch (PDOException $e) {
-                echo $e->getMessage();
-                exit();
             }
-        }
 
-        $nova_senha = hash('sha256', $nova_senha);
-        if (isset($redir)) {
-            $page = $redir;
-            $verificacao = $this->verificarSenhaConfig();
-        } else {
-            $verificacao = $this->verificarSenha();
-            $page = "alterar_senha.php";
-        }
-        if ($verificacao == 1) {
-            header("Location: " . WWW . "html/$page?verificacao=" . $verificacao);
-        } elseif ($verificacao == 2) {
-            header("Location: " . WWW . "html/$page?verificacao=" . $verificacao);
-        } else {
-            try {
+            $nova_senha = hash('sha256', $nova_senha);
+            if (isset($redir)) {
+                $page = $redir;
+                $verificacao = $this->verificarSenhaConfig();
+            } else {
+                $verificacao = $this->verificarSenha();
+                $page = "alterar_senha.php";
+            }
+            if ($verificacao == 1 || $verificacao == 2) {
+                header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '?verificacao=' . htmlspecialchars($verificacao));
+                exit();
+            } else {
                 $funcionarioDAO->alterarSenha($id_pessoa, $nova_senha);
+
                 $conexao =  mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
                 $resultado = mysqli_query($conexao, "UPDATE pessoa set adm_configurado=1 where cpf='admin'");
                 $resultado = mysqli_query($conexao, "SELECT original from selecao_paragrafo where id_selecao = 1");
                 $registro = mysqli_fetch_array($resultado);
-                if ($registro['original'] == 1) {
-                    header("Location: " . WWW . "html/$page?verificacao=" . $verificacao . "&redir_config=true");
-                } else  header("Location: " . WWW . "html/$page.php?verificacao=" . $verificacao);
-            } catch (PDOException $e) {
-                echo $e->getMessage();
+
+                $registro['original'] == 1 ? header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '?verificacao=' . htmlspecialchars($verificacao) . "&redir_config=true") : header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '.php?verificacao=' . htmlspecialchars($verificacao));
             }
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
-    
+
     public function alterarOutros()
     {
         extract($_REQUEST);
@@ -775,6 +805,19 @@ class FuncionarioControle
         $cpf = str_replace("-", "", $cpf);
 
         $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa='. $_SESSION['id_pessoa']);
+        $stmt->execute();
+        $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+
+        $stmt = $pdo->prepare('SELECT id_cargo FROM funcionario WHERE id_funcionario=' . $id_funcionario);
+        $stmt->execute();
+        $cargo_anterior_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_cargo'];
+        if(!$adm_configurado && $cargo_anterior_funcionario == 1){
+            echo ( json_encode( ["erro" => "O usuário, mesmo como administrador, não pode alterar esse funcionário"] ) );
+            die();
+        }
+        
 
         $funcionario->setId_funcionario($id_funcionario);
         $funcionario->setId_cargo($cargo);
@@ -812,6 +855,17 @@ class FuncionarioControle
     public function alterarDocumentacao()
     {
         extract($_REQUEST);
+
+        $formatar = new Util();
+
+        if($_SESSION['data_nasc']){
+            if(strtotime($data_expedicao) < strtotime( $formatar->formatoDataYMD( $_SESSION['data_nasc'] ) ) ){
+                echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
+                header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . $id_funcionario);
+                exit;
+            }
+            unset($_SESSION['data_nasc']);
+        }
 
         $funcionario = new Funcionario($cpf, '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
@@ -861,15 +915,24 @@ class FuncionarioControle
         }
     }
 
+    /**
+     * Pega o parâmetro id_funcionario da requisição e remove do sistema o funcionário de id equivalente.
+     */
     public function excluir()
     {
-        extract($_REQUEST);
-        $funcionarioDAO = new FuncionarioDAO();
+        $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+
         try {
-            $funcionarioDAO->excluir($id_funcionario);
+            if (!$idFuncionario || $idFuncionario < 1) {
+                throw new InvalidArgumentException('O id do funcionário fornecido é inválido.', 400);
+            }
+
+            $funcionarioDAO = new FuncionarioDAO();
+
+            $funcionarioDAO->excluir($idFuncionario);
             header("Location:../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php");
         } catch (Exception $e) {
-            echo $e->getMessage();
+            Util::tratarException($e);
         }
     }
 }
