@@ -621,7 +621,7 @@ try {
         </header>
         <!-- start: page -->
         <div class="row">
-          <div class="col-md-4 col-lg-3">
+          <div class="col-md-4 col-lg-2">
             <section class="panel">
               <div class="panel-body">
                 <div class="thumb-info mb-md">
