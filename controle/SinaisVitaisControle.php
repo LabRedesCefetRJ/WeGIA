@@ -81,7 +81,6 @@ class SinaisVitaisControle
         if(empty($observacao)) {
             $observacao = "";
         }else{
-            $observacao = filter_var($observacao, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
             $max_len_obs = 255;
 
         if(mb_strlen($observacao, 'UTF-8') > $max_len_obs) {
