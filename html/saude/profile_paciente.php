@@ -97,7 +97,7 @@ foreach ($sinaisvitais as $key => $value) {
   //formata data e observacao
   $data = new DateTime($value['data']);
   $sinaisvitais[$key]['data'] = $data->format('d/m/Y h:i:s');
-  $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao']);
+  $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
 }
 
 $sinaisvitais = json_encode($sinaisvitais);
