@@ -236,9 +236,14 @@ try {
   #div_texto {
     width: 100%;
   }
+  
 
   #cke_despacho {
     height: 500px;
+  }
+
+  #cke_5_contents{
+    height: 87%!important;
   }
 
   .cke_inner {
