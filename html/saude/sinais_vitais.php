@@ -64,7 +64,7 @@ $sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
 foreach ($sinaisvitais as $key => $value) {
   $data = new DateTime($value['data']);
   $sinaisvitais[$key]['data'] = $data->format('d/m/Y H:i');
-  $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao']);
+  $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
 }
 
 $sinaisvitais = json_encode($sinaisvitais);
