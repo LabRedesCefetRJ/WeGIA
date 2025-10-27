@@ -448,6 +448,8 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
     }
 
     #prontuario_publico tr p {
+      padding-top: 5px;
+      padding-left: 10px;
       max-width: 450px;
       word-wrap: break-word;
     }
