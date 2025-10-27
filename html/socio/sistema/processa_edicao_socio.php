@@ -67,17 +67,16 @@ $sqlUpdatePessoa = "UPDATE pessoa
 $stmt = mysqli_prepare($conexao, $sqlUpdatePessoa);
 
 //sanitização das entradas
-$cpf_cnpj = filter_var($cpf_cnpj,FILTER_SANITIZE_STRING);
-$socio_nome = filter_var($socio_nome, FILTER_SANITIZE_STRING);
-$telefone = filter_var($telefone, FILTER_SANITIZE_STRING);
-//$data_nasc = filter_var($data_nasc, FILTER_SANITIZE_STRING);
-$cep = filter_var($cep, FILTER_SANITIZE_STRING);
-$estado = filter_var($estado, FILTER_SANITIZE_STRING);
-$cidade = filter_var($cidade, FILTER_SANITIZE_STRING);
-$bairro = filter_var($bairro, FILTER_SANITIZE_STRING);
-$rua = filter_var($rua, FILTER_SANITIZE_STRING);
-$numero = filter_var($numero, FILTER_SANITIZE_STRING);
-$complemento = filter_var($complemento, FILTER_SANITIZE_STRING);
+$cpf_cnpj = filter_var($cpf_cnpj,FILTER_SANITIZE_SPECIAL_CHARS);
+$socio_nome = filter_var($socio_nome, FILTER_SANITIZE_SPECIAL_CHARS);
+$telefone = filter_var($telefone, FILTER_SANITIZE_SPECIAL_CHARS);
+$cep = filter_var($cep, FILTER_SANITIZE_SPECIAL_CHARS);
+$estado = filter_var($estado, FILTER_SANITIZE_SPECIAL_CHARS);
+$cidade = filter_var($cidade, FILTER_SANITIZE_SPECIAL_CHARS);
+$bairro = filter_var($bairro, FILTER_SANITIZE_SPECIAL_CHARS);
+$rua = filter_var($rua, FILTER_SANITIZE_SPECIAL_CHARS);
+$numero = filter_var($numero, FILTER_SANITIZE_SPECIAL_CHARS);
+$complemento = filter_var($complemento, FILTER_SANITIZE_SPECIAL_CHARS);
 $id_pessoa = filter_var($id_pessoa, FILTER_SANITIZE_NUMBER_INT);
 
 if ($stmt) {
@@ -209,12 +208,12 @@ if ($stmt) {
 
         $stmt = mysqli_prepare($conexao, $sqlUpdateSocio);
 
-        $status = filter_var($status, FILTER_SANITIZE_STRING);         // String (id_sociostatus)
-        $email = filter_var($email, FILTER_SANITIZE_EMAIL);          // String (email)
-        $data_referencia = filter_var($data_referencia, FILTER_SANITIZE_STRING); // String (data_referencia)
-        $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION); // Double (valor_periodo)
-        $tag = filter_var($tag, FILTER_SANITIZE_NUMBER_INT);            // Inteiro (id_sociotag)
-        $id_socio = filter_var($id_socio, FILTER_SANITIZE_NUMBER_INT);       // Inteiro (id_socio)
+        $status = filter_var($status, FILTER_SANITIZE_SPECIAL_CHARS);        
+        $email = filter_var($email, FILTER_SANITIZE_EMAIL);       
+        $data_referencia = filter_var($data_referencia, FILTER_SANITIZE_SPECIAL_CHARS); 
+        $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION); 
+        $tag = filter_var($tag, FILTER_SANITIZE_NUMBER_INT);           
+        $id_socio = filter_var($id_socio, FILTER_SANITIZE_NUMBER_INT);      
 
         if ($stmt) {
             // Bind dos parâmetros
