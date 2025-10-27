@@ -160,6 +160,19 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   .col-md-3 {
     width: 10%;
   }
+
+  #sin-vit-tab tr > td:last-child {
+    display: flex;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  #sin-vit-tab tr {
+    height: 100%;
+  }
+
 </style>
 
 
@@ -232,7 +245,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
             .append($("<td>").text(item.temperatura))
             .append($("<td>").text(item.hgt))
             .append($("<td>").text(item.observacao))
-            .append($("<td style='display: flex; justify-content: center;'>")
+            .append($("<td style=''>")
               .append($("<a onclick='removerSinVit(" + item.id_sinais_vitais + "," + i + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
