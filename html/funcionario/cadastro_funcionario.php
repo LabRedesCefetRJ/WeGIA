@@ -1,50 +1,18 @@
 <?php
+if(session_status() === PHP_SESSION_NONE)
+  session_start();
 
-include_once("conexao.php");
-session_start();
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
+  exit();
+}else{
+  session_regenerate_id();
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$situacao = $mysqli->query("SELECT * FROM situacao");
-$cargo = $mysqli->query("SELECT * FROM cargo");
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=11");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    if ($permissao['id_acao'] < 3) {
-      $msg = "Você não tem as permissões necessárias para essa página.";
-      header("Location: ../home.php?msg_c=$msg");
-    }
-    $permissao = $permissao['id_acao'];
-  } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../home.php?msg_c=$msg");
-  }
-} else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: ../home.php?msg_c=$msg");
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($_SESSION['id_pessoa'], 11, 3);
 
 require_once ROOT . "/controle/FuncionarioControle.php";
 $listaCPF = new FuncionarioControle;
@@ -70,6 +38,9 @@ if (isset($_SESSION['erro'])) {
     unset($_SESSION['erro']);
 }
 
+$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+$situacao = $mysqli->query("SELECT * FROM situacao");
+$cargo = $mysqli->query("SELECT * FROM cargo");
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -103,23 +74,6 @@ if (isset($_SESSION['erro'])) {
   <!--JS Functions-->
   <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
 
-  <!-- <script>
-
-    console.log("oi");
-    $(function(){
-
-      
-      
-      var funcionario = <?php echo $informacoesFunc ?>; 
-      console.log(funcionario);
-      console.log("oi");
-      $.each(funcionario, function(i, item) {
-        
-        $("#cpf").val(item.cpf).prop('disabled', true);
-        }
-    
-
-  </script> -->
 </head>
 
 <body>
@@ -458,7 +412,6 @@ if (isset($_SESSION['erro'])) {
       var cpf_funcionario_correto2 = cpf_funcionario_correto1.replace(".", "");
       var cpf_funcionario_correto3 = cpf_funcionario_correto2.replace("-", "");
       var apoio = 0;
-      //var cpfs1 = <?php echo $_SESSION['cpf_interno']; ?>;
       $.each(cpfs, function(i, item) {
         if (item.cpf == cpf_funcionario_correto3) {
           alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
@@ -474,7 +427,7 @@ if (isset($_SESSION['erro'])) {
 
     function validarFuncionario() {
       var btn = $("#enviar");
-      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo $_SESSION['cpf_interno']; ?>);
+      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo isset($_SESSION['cpf_interno'])?$_SESSION['cpf_interno']:''; ?>);
       var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>);
       var cpf = (($("#cpf").val()).replaceAll(".", "")).replaceAll("-", "");
       console.log(this);
@@ -540,8 +493,6 @@ if (isset($_SESSION['erro'])) {
         alert("Cadastrado com sucesso!");
       }
     }
-
-
 
     function numero_residencial() {
 
