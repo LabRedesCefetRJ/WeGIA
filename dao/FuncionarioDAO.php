@@ -514,18 +514,12 @@ class FuncionarioDAO
     public function listarTodos($situacao)
     {
         try {
-            if (!isset($situacao))
-                $situacao_selecionada = 1;
-            else
-                $situacao_selecionada = $situacao;
-
             $funcionarios = array();
-
 
             $consulta = $this->pdo->prepare("SELECT f.id_funcionario, p.nome, p.sobrenome,p.cpf, c.cargo, s.situacoes FROM pessoa p 
             JOIN funcionario f ON p.id_pessoa = f.id_pessoa JOIN cargo c ON c.id_cargo=f.id_cargo JOIN situacao s 
             ON f.id_situacao=s.id_situacao where s.id_situacao =:situacao");
-            $consulta->bindParam(':situacao', $situacao_selecionada);
+            $consulta->bindParam(':situacao', $situacao);
             $consulta->execute();
 
             $x = 0;
