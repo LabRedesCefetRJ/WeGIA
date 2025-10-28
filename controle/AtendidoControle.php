@@ -348,6 +348,28 @@ class AtendidoControle
         }
     }
 
+
+    public function incluirSemCpf()
+{
+    $atendido = $this->verificar();  // Extrai dados do formulário
+
+    // Passa o CPF vazio ou NULL
+    $cpf = '';
+
+    $intDAO = new AtendidoDAO();
+    try {
+        $intDAO->incluir($atendido, $cpf);
+        $_SESSION['msg'] = "Atendido cadastrado sem CPF com sucesso";
+        header('Location: ../html/atendido/Cadastro_Atendido.php');
+        exit();
+    } catch (PDOException $e) {
+        echo "Erro ao cadastrar: " . $e->getMessage();
+    }
+}
+
+
+
+
     public function incluirExistente()
     {
         $atendido = $this->verificarExistente();

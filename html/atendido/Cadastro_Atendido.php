@@ -2,6 +2,10 @@
 require_once "../personalizacao_display.php";
 require_once "../../classes/Atendido.php";
 session_start();
+$semCpf = isset($_GET['semCpf']) && $_GET['semCpf'] == '1';
+$cpf = isset($_GET['cpf']) ? $_GET['cpf'] : '';
+$statusInativoId = 1; // Ajuste para o ID correto do status "Inativo" no seu banco
+
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
 }
@@ -296,7 +300,9 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 									<div class="form-group">
 										<label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
 										<div class="col-md-6">
-											<input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required>
+											<input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)"
+    											<?php if (!$semCpf) echo 'required'; ?>
+    											value="<?php echo isset($sobrenome) ? htmlspecialchars($sobrenome) : ''; ?>">
 										</div>
 									</div>
 									<div class="form-group">
@@ -317,7 +323,9 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 							<div class="form-horizontal form-group">
 								<label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
 								<div class="col-md-6">
-									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" min=<?= $dataNascimentoMinima ?> max=<?= $dataNascimentoMaxima ?> required>
+									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" 
+										min=<?= $dataNascimentoMinima ?> max=<?= $dataNascimentoMaxima ?> 
+										<?php if (!$semCpf) echo 'required'; ?> value="<?php echo isset($nascimento) ? htmlspecialchars($nascimento) : ''; ?>">
 								</div>
 							</div>
 
@@ -375,6 +383,9 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 										<input type="hidden" name="cpf" value="<?php echo htmlspecialchars($cpf) ?>">
 										<input type="hidden" name="metodo" value="incluir">
 										<input id="enviar" type="submit" class="btn btn-primary" value="Enviar" onclick="validarInterno()">
+										<input type="hidden" name="nomeClasse" value="AtendidoControle">
+										<input type="hidden" name="semCpf" value="<?php echo $semCpf ? '1' : '0'; ?>">
+										<input type="hidden" name="metodo" value="<?php echo $semCpf ? 'incluirSemCpf' : 'incluir'; ?>">
 									</div>
 								</div>
 							</div>

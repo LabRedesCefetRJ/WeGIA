@@ -43,7 +43,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `id_pessoa` INT(11) NOT NULL AUTO_INCREMENT,
-  `cpf` VARCHAR(120) NOT NULL,
+  `cpf` VARCHAR(120) NULL,
   `senha` VARCHAR(70) NULL DEFAULT NULL,
   `nome` VARCHAR(100) NULL DEFAULT NULL,
   `sobrenome` VARCHAR(100) NULL DEFAULT NULL,
@@ -67,7 +67,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `tipo_sanguineo` VARCHAR(5) NULL DEFAULT NULL,
   `nivel_acesso` TINYINT(4) NULL DEFAULT '0',
   `adm_configurado` TINYINT(4) NULL DEFAULT '0',
-  UNIQUE INDEX (`cpf` ASC),
   PRIMARY KEY (`id_pessoa`))
 ENGINE = InnoDB;
 
