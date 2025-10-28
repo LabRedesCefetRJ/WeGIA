@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiContribuicoesServiceInterface.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 {
@@ -72,10 +73,8 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
 
             // Retornar contribuições
             return $contribuicaoLogCollection;
-        } catch (PDOException $e) {
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code(500);
-            echo json_encode(['erro' => 'Problema no servidor']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
             exit();
         }
     }
@@ -151,18 +150,14 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
         $response = curl_exec($ch);
 
         if (curl_errno($ch)) {
-            http_response_code(500);
-            echo "Erro: " . curl_error($ch);
             curl_close($ch);
-            exit();
+            throw new LogicException('Erro: ' . curl_error($ch), 500);
         }
 
         $data = json_decode($response, true);
         if (!is_array($data) || !isset($data['data'])) {
-            http_response_code(500);
-            echo "Erro: Resposta inválida da API.";
             curl_close($ch);
-            exit();
+            throw new LogicException('Erro: Resposta inválida da API.', 500);
         }
 
         $this->atribuirPedidos($pedidosArray, $data['data']);
@@ -183,18 +178,14 @@ class PagarMeContribuicoesService implements ApiContribuicoesServiceInterface
                 $response = curl_exec($ch);
 
                 if (curl_errno($ch)) {
-                    echo http_response_code(500);
-                    echo "Erro: " . curl_error($ch);
                     curl_close($ch);
-                    exit();
+                    throw new LogicException('Erro: ' . curl_error($ch), 500);
                 }
 
                 $data = json_decode($response, true);
                 if (!is_array($data) || !isset($data['data'])) {
-                    echo http_response_code(500);
-                    echo "Erro: Resposta inválida da API.";
                     curl_close($ch);
-                    exit();
+                    throw new LogicException('Erro: Resposta inválida da API.', 500);
                 }
 
                 $this->atribuirPedidos($pedidosArray, $data['data']);
