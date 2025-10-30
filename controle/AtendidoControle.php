@@ -1,29 +1,17 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
-//include_once "/dao/Conexao.php";
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+
 require_once ROOT . '/classes/Atendido.php';
 require_once ROOT . '/dao/AtendidoDAO.php';
 require_once ROOT . '/classes/Documento.php';
 require_once ROOT . '/dao/DocumentoDAO.php';
-require_once 'DocumentoControle.php';
+require_once ROOT . '/controle/DocumentoControle.php';
 include_once ROOT . '/classes/Cache.php';
 require_once ROOT . '/classes/Util.php';
-
 include_once ROOT . "/dao/Conexao.php";
-
-//require_once ROOT."/controle/AtendidoControle.php";
-//$listaAtendidos = new AtendidoControle();
-//$listaAtendidos->listarTodos2();
 
 class AtendidoControle
 {
@@ -37,12 +25,16 @@ class AtendidoControle
         return $datac;
     }
 
+    /**
+     * Extrai os dados da requisição e realiza a validação dos seus valores
+     */
     public function verificar()
     {
         extract($_REQUEST);
         if ((!isset($cpf)) || (empty($cpf))) {
             $msg .= "cpf do atendido não informado. Por favor, informe o cpf!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
+            exit();
         }
         if ((!isset($nome)) || (empty($nome))) {
             $nome = "";
@@ -53,10 +45,12 @@ class AtendidoControle
         if ((!isset($sexo)) || (empty($sexo))) {
             $msg .= "Sexo do atendido não informado. Por favor, informe o sexo!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
+            exit();
         }
         if ((!isset($nascimento)) || (empty($nascimento))) {
             $msg .= "Nascimento do atendido não informado. Por favor, informe a data!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
+            exit();
         }
         if ((!isset($registroGeral)) || (empty($registroGeral))) {
             $registroGeral = "";
@@ -109,7 +103,7 @@ class AtendidoControle
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
         }
-        session_start();
+
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -117,10 +111,6 @@ class AtendidoControle
             unset($_SESSION['imagem']);
         }
 
-
-        // $cpf=str_replace(".", '', $cpf);
-        // $cpf=str_replace("-", "", $cpf);
-        //$nascimento=str_replace("-", "", $nascimento);
         $senha = 'null';
         $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
         $atendido->setIntTipo($intTipo);
@@ -197,7 +187,7 @@ class AtendidoControle
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
         }
-        session_start();
+
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -205,10 +195,6 @@ class AtendidoControle
             unset($_SESSION['imagem']);
         }
 
-
-        // $cpf=str_replace(".", '', $cpf);
-        // $cpf=str_replace("-", "", $cpf);
-        //$nascimento=str_replace("-", "", $nascimento);
         $senha = 'null';
         $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
         $atendido->setIntTipo($intTipo);
@@ -221,41 +207,43 @@ class AtendidoControle
      */
     public function listarTodos()
     {
-        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
-
         $status = filter_input(INPUT_GET, 'select_status', FILTER_SANITIZE_NUMBER_INT);
 
-        if (isset($status) && $status < 1) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'O id do status fornecido não é válido.']);
-            exit();
-        }
+        try {
+            if (isset($status) && $status < 1)
+                throw new InvalidArgumentException('O id do status fornecido não é válido.', 412);
 
-        $AtendidoDAO = new AtendidoDAO();
-        $atendidos = $AtendidoDAO->listarTodos($status);
-        if (session_status() === PHP_SESSION_NONE)
-            session_start();
+            $AtendidoDAO = new AtendidoDAO();
+            $atendidos = $AtendidoDAO->listarTodos($status);
 
-        $_SESSION['atendidos'] = $atendidos;
+            $_SESSION['atendidos'] = $atendidos;
 
-        if (isset($_GET['nextPage'])) {
-            $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
-            $regex = '#^((\.\./|' . WWW . ')html/atendido/(Informacao_Atendido|cadastro_ocorrencia|listar_ocorrencias_ativas)\.php)$#';
-            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+            if (isset($_GET['nextPage'])) {
+                $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+                $regex = '#^((\.\./|' . WWW . ')html/atendido/(Informacao_Atendido|cadastro_ocorrencia|listar_ocorrencias_ativas)\.php)$#';
+                preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+            }
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function listarTodos2()
     {
         extract($_REQUEST);
-        $AtendidoDAO = new AtendidoDAO();
-        $atendidos = $AtendidoDAO->listarTodos2();
-        if (session_status() !== PHP_SESSION_ACTIVE) {
-            session_start();
+        try {
+            $AtendidoDAO = new AtendidoDAO();
+            $atendidos = $AtendidoDAO->listarTodos2();
+
+            $_SESSION['atendidos2'] = $atendidos;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-        $_SESSION['atendidos2'] = $atendidos;
     }
 
+    /**
+     * Atribui a chave 'atendido' do array da variável de sessão as informações de um atendido.
+     */
     public function listarUm()
     {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
@@ -264,44 +252,56 @@ class AtendidoControle
 
         $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
 
-        if (!$id || $id < 1) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'O id fornecido é inválido.']);
-            exit();
-        }
+        try {
+            if (!$id || $id < 1)
+                throw new InvalidArgumentException('O id fornecido é inválido.', 400);
 
-        $cache = new Cache();
-        $infAtendido = $cache->read($id);
-        if (!$infAtendido) {
-            try {
+            $cache = new Cache();
+            $infAtendido = $cache->read($id);
+            if (!$infAtendido) {
                 $AtendidoDAO = new AtendidoDAO();
                 $infAtendido = $AtendidoDAO->listar($id);
 
-                if (session_status() === PHP_SESSION_NONE)
-                    session_start();
-
                 $_SESSION['atendido'] = $infAtendido;
                 $cache->save($id, $infAtendido, '15 seconds');
-            } catch (PDOException $e) {
-                echo $e->getMessage();
             }
+            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-
-        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
     }
 
+    /**Atribui a chave 'cpf_atendido' do array da variável de sessão os valores dos CPF's dos atendidos registrados no sistema */
     public function listarCpf()
     {
-        extract($_REQUEST);
-        $atendidosDAO = new AtendidoDAO();
-        $atendidoscpf = $atendidosDAO->listarcpf();
-        $_SESSION['cpf_atendido'] = $atendidoscpf;
+        try {
+            $atendidosDAO = new AtendidoDAO();
+            $atendidoscpf = $atendidosDAO->listarcpf();
+
+            $_SESSION['cpf_atendido'] = $atendidoscpf;
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 
-    public function comprimir($documParaCompressao)
+    /**
+     * Recebe como parâmetro a string de um documento e realiza o processo necessário para retornar a sua compressão
+     */
+    public function comprimir(string $documento)
     {
-        $documento_zip = gzcompress($documParaCompressao);
-        return $documento_zip;
+        try {
+            if (empty($documento) || strlen($documento))
+                throw new InvalidArgumentException('Não é possível comprimir um documento vazio.', 400);
+
+            $documentoZip = gzcompress($documento);
+
+            if ($documentoZip === false)
+                throw new LogicException('Falha ao comprimir o documento informado.', 500);
+
+            return $documentoZip;
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 
     public function selecionarCadastro()
@@ -309,15 +309,16 @@ class AtendidoControle
         $cpf = $_GET['cpf'];
         $validador = new Util();
 
-        if (!$validador->validarCPF($cpf)) {
-            http_response_code(400);
-            exit('Erro, o CPF informado não é válido');
+        try {
+            if (!$validador->validarCPF($cpf))
+                throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+
+            $atendido = new AtendidoDAO();
+            $atendido->selecionarCadastro($cpf);
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-
-        $atendido = new AtendidoDAO();
-        $atendido->selecionarCadastro($cpf);
     }
-
 
     public function incluir()
     {
@@ -325,28 +326,23 @@ class AtendidoControle
         $cpf = $_GET['cpf'];
         $validador = new Util();
 
-        if (!$validador->validarCPF($cpf)) {
-            http_response_code(400);
-            exit('Erro, o CPF informado não é válido');
-        }
-
-        if ($atendido->getDataNascimento() > Atendido::getDataNascimentoMaxima() || $atendido->getDataNascimento() < Atendido::getDataNascimentoMinima()) {
-            http_response_code(400);
-            exit('Erro, a data de nascimento informada está fora dos limites permitidos.');
-        }
-
-        $intDAO = new AtendidoDAO();
-        $docDAO = new DocumentoDAO();
         try {
-            $idatendido = $intDAO->incluir($atendido, $cpf);
+            if (!$validador->validarCPF($cpf))
+                throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+
+            if ($atendido->getDataNascimento() > Atendido::getDataNascimentoMaxima() || $atendido->getDataNascimento() < Atendido::getDataNascimentoMinima())
+                throw new InvalidArgumentException('Erro, a data de nascimento informada está fora dos limites permitidos.', 400);
+
+            $intDAO = new AtendidoDAO();
+
+            $intDAO->incluir($atendido, $cpf);
             $_SESSION['msg'] = "Atendido cadastrado com sucesso";
             $_SESSION['proxima'] = "Cadastrar outro atendido";
             $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
+
             header("Location: ../html/atendido/Informacao_Atendido.php");
-            // header("Location: ../dao/AtendidoDAO.php");
-        } catch (PDOException $e) {
-            $msg = "Não foi possível registrar o atendido <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>" . "<br>" . $e->getMessage();
-            echo $msg;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -355,54 +351,54 @@ class AtendidoControle
         $atendido = $this->verificarExistente();
         $idPessoa = $_GET['id_pessoa'];
         $sobrenome = $_GET['sobrenome'];
-        $atendidoDAO = new AtendidoDAO();
 
         try {
+            $atendidoDAO = new AtendidoDAO();
+
             $atendidoDAO->incluirExistente($atendido, $idPessoa, $sobrenome);
-            // $horarioDAO->incluir($horario);
-            //$beneficiadosDAO->incluir($beneficiados);
-            //$epiDAO->incluir($epi);
             $_SESSION['msg'] = "Atendido cadastrado com sucesso";
             $_SESSION['proxima'] = "Cadastrar outro atendido";
             $_SESSION['link'] = "../html/atendido/cadastro_atendido.php";
+
             header("Location: ../html/atendido/Informacao_Atendido.php");
-        } catch (PDOException $e) {
-            $msg = "Não foi possível registrar o atendido" . "<br>" . $e->getMessage();
-            echo $msg;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterar()
     {
         extract($_REQUEST);
-        $atendido = $this->verificar();
-        $atendido->setidatendido($idatendido);
-        $AtendidoDAO = new AtendidoDAO();
         try {
+            $atendido = $this->verificar();
+            $atendido->setidatendido($idatendido);
+            $AtendidoDAO = new AtendidoDAO();
+
             $AtendidoDAO->alterar($atendido);
-            header("Location: ../html/Profile_Atendido.php?id=" . $idatendido);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/Profile_Atendido.php?id=" . htmlspecialchars($idatendido));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function excluir()
     {
         extract($_REQUEST);
-        $AtendidoDAO = new AtendidoDAO();
         try {
+            $AtendidoDAO = new AtendidoDAO();
+
             $AtendidoDAO->excluir($idatendido);
             header("Location:../controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/Informacao_Atendido.php");
         } catch (Exception $e) {
-            echo $e->getMessage();
+            Util::tratarException($e);
         }
     }
+
     public function alterarInfPessoal()
     {
         extract($_REQUEST);
-
-        if ($nascimento && $idatendido) {
-            try {
+        try {
+            if ($nascimento && is_numeric($idatendido) && $idatendido >= 1) {
                 $pdo = Conexao::connect();
 
                 // Buscar data de expedição atual do atendido
@@ -422,39 +418,31 @@ class AtendidoControle
                     if ($data_nascimento_obj > $data_expedicao_obj) {
                         $_SESSION['msg'] = "Erro: A data de nascimento não pode ser posterior à data de expedição do documento!";
                         $_SESSION['tipo'] = "error";
-                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
                         exit;
                     }
                 }
-            } catch (PDOException $e) {
-                die(json_encode(["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"]));
             }
-        }
 
-        $atendido = new Atendido('', $nome, $sobrenome, $sexo, $nascimento, '', '', '', '', '', $tipoSanguineo, '', $telefone, '', '', '', '', '', '', '', '', '');
-        $atendido->setIdatendido($idatendido);
-        //echo $funcionario->getId_Funcionario();
-        $atendidoDAO = new AtendidoDAO();
-        try {
+            $atendido = new Atendido('', $nome, $sobrenome, $sexo, $nascimento, '', '', '', '', '', $tipoSanguineo, '', $telefone, '', '', '', '', '', '', '', '', '');
+            $atendido->setIdatendido($idatendido);
+
+            $atendidoDAO = new AtendidoDAO();
+
             $atendidoDAO->alterarInfPessoal($atendido);
-            //echo "<script type='javascript'>alert('Email enviado com Sucesso!');</script>";
-            //echo "javascript:window.location='index.php';</script>";
+
             header("Location: ../html/atendido/Informacao_Atendido.php");
-            //sleep(2);
-            // header("Location: ../html/atendido/Profile_Atendido.php?idatendido=".$idatendido);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarDocumentacao()
     {
         extract($_REQUEST);
-        //$cpf=str_replace(".", '', $cpf);
-        //$cpf=str_replace("-", "", $cpf);
+        try {
+            if ($dataExpedicao && $idatendido) {
 
-        if ($dataExpedicao && $idatendido) {
-            try {
                 $pdo = Conexao::connect();
 
                 // Buscar data de nascimento atual do atendido
@@ -471,42 +459,38 @@ class AtendidoControle
                     $data_nascimento = new DateTime($atendido_data['data_nascimento']);
                     $data_expedicao_obj = new DateTime($dataExpedicao);
 
-                    if ($data_expedicao_obj <= $data_nascimento) {
-                        //$_SESSION['msg'] = "Erro: A data de expedição do documento não pode ser anterior à data de nascimento!";
-                        //$_SESSION['tipo'] = "error";
-                        //header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-                        //exit;
-                        die(json_encode(['A data de expedição do documento não pode ser anterior ou igual à data de nascimento!']));
-                    }
+                    if ($data_expedicao_obj <= $data_nascimento)
+                        throw new InvalidArgumentException('A data de expedição do documento não pode ser anterior ou igual à data de nascimento!', 400);
                 }
-            } catch (PDOException $e) {
-                die(json_encode(["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"]));
             }
-        }
 
-        $atendido = new Atendido($cpf, '', '', '', '', $registroGeral, $orgaoEmissor, $dataExpedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $atendido = new Atendido($cpf, '', '', '', '', $registroGeral, $orgaoEmissor, $dataExpedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
-        $atendido->setIdatendido($idatendido);
+            $atendido->setIdatendido($idatendido);
 
-        $atendidoDAO = new atendidoDAO();
-        try {
+            $atendidoDAO = new atendidoDAO();
+
             $atendidoDAO->alterarDocumentacao($atendido);
-            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarImagem()
     {
         extract($_REQUEST);
-        $img = file_get_contents($_FILES['imgperfil']['tmp_name']);
-        $atendidoDAO = new AtendidoDAO();
         try {
+            if(!$idatendido || $idatendido < 1)
+                throw new InvalidArgumentException('O id do atendido informado não é válido.', 412);
+
+            $img = file_get_contents($_FILES['imgperfil']['tmp_name']);
+            $atendidoDAO = new AtendidoDAO();
+
             $atendidoDAO->alterarImagem($idatendido, $img);
-            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -516,35 +500,30 @@ class AtendidoControle
         if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
             $numero_residencia = "null";
         }
-        $atendido = new Atendido('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $estado, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
-        $atendido->setIdatendido($idatendido);
-        $atendidoDAO = new AtendidoDAO();
         try {
+            $atendido = new Atendido('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $estado, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+            $atendido->setIdatendido($idatendido);
+            $atendidoDAO = new AtendidoDAO();
+
             $atendidoDAO->alterarEndereco($atendido);
-            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarStatus()
     {
         $id = filter_input(INPUT_POST, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
-        $operacao = filter_input(INPUT_POST, 'operacao', FILTER_SANITIZE_STRING);
-
-        if (!$id || $id < 1) {
-            http_response_code(400);
-            echo json_encode(['erro' => 'O id informado não é válido' . " $id"]);
-            exit();
-        }
-
-        if ($operacao != 'desativar' && $operacao != 'ativar') {
-            http_response_code(400);
-            echo json_encode(['erro' => 'A operação informada é inválida']);
-            exit();
-        }
+        $operacao = filter_input(INPUT_POST, 'operacao', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
+            if (!$id || $id < 1)
+                throw new InvalidArgumentException('O id informado não é válido.', 412);
+
+            if ($operacao != 'desativar' && $operacao != 'ativar')
+                throw new InvalidArgumentException('A operação informada é inválida.', 412);
+
             $status = null;
 
             switch ($operacao) {
@@ -560,10 +539,8 @@ class AtendidoControle
             $atendidoDAO->alterarStatus($id, $status);
 
             header('Location: ./control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/Informacao_Atendido.php');
-        } catch (PDOException) {
-            http_response_code(500);
-            echo json_encode(['erro' => 'Erro no servidor ao alterar o status do atendido.']);
-            exit();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 }

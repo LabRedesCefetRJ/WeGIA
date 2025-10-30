@@ -26,8 +26,11 @@ class Atendido extends Pessoa
         return $this->intTipo;
     }
    
-    public function setIdatendido($idatendido)
+    public function setIdatendido(int $idatendido)
     {
+        if(!$idatendido || $idatendido < 1)
+            throw new InvalidArgumentException('O id do atendido fornecido não é válido.', 412);
+
         $this->idatendido = $idatendido;
     }
 
