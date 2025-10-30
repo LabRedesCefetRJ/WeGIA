@@ -190,4 +190,53 @@ class Util
             }
         }
     }
+
+    /**
+     * Valida se a ESTRUTURA de um CNPJ é válido (Xablau)
+     */
+    public static function validaEstruturaCnpj($cnpj) {
+        if(strlen($cnpj) === 18 && strpos($cnpj, ".") === 2 && strpos($cnpj, ".", 3) === 6 && strpos($cnpj, "/") === 10 && strpos($cnpj, "-") === 15) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Valida se um CNPJ é válido (Xablau)
+     */
+    public static function validaCNPJ($cnpj) {
+        // Remove caracteres não numéricos
+        $cnpjLimpo = preg_replace('/[^0-9]/', '', $cnpj);
+
+        // Verifica se tem 14 dígitos
+        if (strlen($cnpjLimpo) != 14) {
+            return false;
+        }
+
+        // Elimina CNPJs com todos os dígitos iguais (ex: 11111111111111)
+        if (preg_match('/(\d)\1{13}/', $cnpjLimpo)) {
+            return false;
+        }
+
+        // Calcula o primeiro dígito verificador
+        $peso1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        $soma = 0;
+        for ($i = 0; $i < 12; $i++) {
+            $soma += $cnpjLimpo[$i] * $peso1[$i];
+        }
+        $resto = $soma % 11;
+        $digito1 = ($resto < 2) ? 0 : 11 - $resto;
+
+        // Calcula o segundo dígito verificador
+        $peso2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        $soma = 0;
+        for ($i = 0; $i < 13; $i++) {
+            $soma += $cnpjLimpo[$i] * $peso2[$i];
+        }
+        $resto = $soma % 11;
+        $digito2 = ($resto < 2) ? 0 : 11 - $resto;
+
+        // Verifica se os dígitos calculados conferem com os do CNPJ informado
+        return ($cnpjLimpo[12] == $digito1 && $cnpjLimpo[13] == $digito2);
+    }
 }

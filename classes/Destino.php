@@ -1,4 +1,5 @@
 <?php
+require_once '../html/contribuicao/helper/Util.php';
 
 class Destino
 {
@@ -55,19 +56,21 @@ class Destino
 
     public function setCnpj($cnpj) {
         // Validar se o CNPJ possui um formato válido - Xablau
-        if ($this->validaCnpj($cnpj)) {
+        if (Destino::validaEstruturaCnpj($cnpj) && Destino::validaCnpj($cnpj)) {
             $this->cnpj = $cnpj;
         } else {
             throw new Exception('CNPJ inválido');
         }
     }
 
+    /*
     private function validaCnpj($cnpj) {
         if(strlen($cnpj) === 18 && strpos($cnpj, ".") === 2 && strpos($cnpj, ".", 3) === 6 && strpos($cnpj, "/") === 10 && strpos($cnpj, "-") === 15) {
             return true;
         }
         return false;
     }
+    */
 
     public function setCpf($cpf)
     {
