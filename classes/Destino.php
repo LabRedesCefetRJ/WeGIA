@@ -56,7 +56,7 @@ class Destino
 
     public function setCnpj($cnpj) {
         // Validar se o CNPJ possui um formato válido - Xablau
-        if (Destino::validaEstruturaCnpj($cnpj) && Destino::validaCnpj($cnpj)) {
+        if (Util::validaEstruturaCnpj($cnpj) && Util::validaCnpj($cnpj)) {
             $this->cnpj = $cnpj;
         } else {
             throw new Exception('CNPJ inválido');
@@ -72,9 +72,13 @@ class Destino
     }
     */
 
-    public function setCpf($cpf)
-    {
-        $this->cpf = $cpf;
+    public function setCpf($cpf) {
+        if (Util::validarCPF($cpf)) {
+            $this->cpf = $cpf;
+        } else {
+            throw new Exception('CPF inválido');
+        }
+        
     }
 
     public function setTelefone($telefone)
