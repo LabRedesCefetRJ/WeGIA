@@ -1,17 +1,17 @@
 <?php
 include_once '../classes/Estoque.php';
 include_once '../dao/EstoqueDAO.php';
-session_start();
 
 class EstoqueControle
 {
     public function listarTodos() {
-        // Sanitização de entrada
+        // Sanitização de entrada - Xablau
         $nextPage = isset($_REQUEST['nextPage']) 
             ? filter_var($_REQUEST['nextPage'], FILTER_SANITIZE_URL) 
             : '../html/estoque.html';
             
         try {
+            session_start();
             $estoqueDAO = new EstoqueDAO();
             $estoques = $estoqueDAO->listarTodos();
             $_SESSION['estoque'] = $estoques;
@@ -33,6 +33,7 @@ class EstoqueControle
         extract($_REQUEST);
         $estoqueDAO= new EstoqueDAO();
         $estoques = $estoqueDAO->listarTodos();
+        session_start();
         $_SESSION['estoque']=$estoques;
         header('Location: '.$nextPage);
     }    
