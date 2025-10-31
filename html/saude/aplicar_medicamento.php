@@ -37,12 +37,26 @@
     echo json_encode(['erro' => 'O id da ficha médica informado não está dentro dos limites permitidos.']);
     exit();
   }
+  
+  require_once "../../dao/Conexao.php";
+  $pdo = Conexao::connect();
+  
+  $stmtPessoaPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :id_fichamedica");
+  $stmtPessoaPaciente->bindValue(':id_fichamedica', $id, PDO::PARAM_INT);
+  $stmtPessoaPaciente->execute();
+  $paciente = $stmtPessoaPaciente->fetch(PDO::FETCH_ASSOC);
+
+  if (!$paciente || !isset($paciente['id_pessoa'])) {
+      http_response_code(404);
+      echo 'Ficha médica não encontrada ou não associada a uma pessoa.';
+      exit();
+  }
+  $idPessoaPaciente = $paciente['id_pessoa']; 
+
 
   $cache = new Cache();
   $teste = $cache->read($id);
   $_SESSION['id_upload_med'] = $id;
-  require_once "../../dao/Conexao.php";
-  $pdo = Conexao::connect();
 
   if (!isset($teste)) {
     header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php?id_fichamedica=' . $id . '&id=' . $id);
@@ -441,6 +455,68 @@
         campo.value = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
       }
     }
+
+ 
+    async function enviarMedicacaoSOS(event) {
+      event.preventDefault(); 
+
+      const dadosForm = {
+        medicamento: document.getElementById('nome_medicacao').value,
+        dosagem: document.getElementById('dosagem_sos').value,
+        horario: document.getElementById('horario_medicacao_sos').value,
+        duracao: document.getElementById('duracao_medicacao_sos').value,
+        status_id: 1 // 1 = "Prescrito" (padrão)
+      };
+
+      const id_pessoa_paciente = <?= $idPessoaPaciente; ?>;
+      const id_pessoa_funcionario = <?= $idPessoa; ?>; 
+      
+
+      if (!dadosForm.medicamento || !dadosForm.dosagem || !dadosForm.horario || !dadosForm.duracao) {
+        alert('Por favor, preencha todos os campos do Medicamento SOS.');
+        return;
+      }
+      const payload = {
+        nomeClasse: "MedicamentoPacienteControle",
+        metodo: "cadastrarMedicacaoSOS",
+
+        id_pessoa_paciente: id_pessoa_paciente,
+        id_pessoa_funcionario: id_pessoa_funcionario,
+        medicamento: dadosForm.medicamento,
+        dosagem: dadosForm.dosagem,
+        horario: dadosForm.horario,
+        duracao: dadosForm.duracao,
+        status_id: dadosForm.status_id
+      };
+
+      try {
+        const response = await fetch(`../../controle/control.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.status === "erro") {
+          throw new Error(data.mensagem || 'Erro desconhecido ao cadastrar.');
+        }
+
+        location.reload();
+
+      } catch (error) {
+        console.error('Erro ao cadastrar SOS:', error);
+        alert('Falha ao cadastrar: ' + error.message);
+      }
+    }
+
+    $(document).ready(function() {
+      const botaoSOS = document.getElementById('botao_cadastrar_sos');
+      if (botaoSOS) {
+        botaoSOS.addEventListener('click', enviarMedicacaoSOS);
+      }
+    });
+
   </script>
   <style type="text/css">
     .obrig {
@@ -587,7 +663,7 @@
                     </header>
 
                     <div class="panel-body collapse">
-                      <form id="form_medicacao_sos" class="form-horizontal form-bordered">
+                      <form id="form_medicacao_sos" class="form-horizontal form-bordered" onsubmit="event.preventDefault();">
 
                         <div class="form-group" id="primeira_medicacao">
                           <label class="col-md-3 control-label" for="nome_medicacao">
