@@ -86,7 +86,7 @@ foreach ($alergias as $index => $alergia) {
 
 $alergias = json_encode($alergias);
 
-$stmtSinaisVitais = $pdo->prepare("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
+$stmtSinaisVitais = $pdo->prepare("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
 
 $stmtSinaisVitais->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtSinaisVitais->execute();
@@ -94,9 +94,10 @@ $stmtSinaisVitais->execute();
 $sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($sinaisvitais as $key => $value) {
-  //formata data
+  //formata data e observacao
   $data = new DateTime($value['data']);
   $sinaisvitais[$key]['data'] = $data->format('d/m/Y h:i:s');
+  $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
 }
 
 $sinaisvitais = json_encode($sinaisvitais);
@@ -235,9 +236,14 @@ try {
   #div_texto {
     width: 100%;
   }
+  
 
   #cke_despacho {
     height: 500px;
+  }
+
+  #cke_5_contents{
+    height: 87%!important;
   }
 
   .cke_inner {
@@ -620,7 +626,7 @@ try {
         </header>
         <!-- start: page -->
         <div class="row">
-          <div class="col-md-4 col-lg-3">
+          <div class="col-md-4 col-lg-2">
             <section class="panel">
               <div class="panel-body">
                 <div class="thumb-info mb-md">
@@ -994,6 +1000,9 @@ try {
 
                   $sqlHgt = "SELECT hgt, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.hgt !='' ORDER BY data DESC LIMIT 5";
 
+                  $sqlObservacao = "SELECT observacao, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.observacao !='' ORDER BY data DESC LIMIT 5";
+
+
                   try {
                     $sinaisVitaisArray['saturacao'] = pegarSinalVital($sqlSaturacao, $pdo);
                     $sinaisVitaisArray['pressaoArterial'] = pegarSinalVital($sqlPressaoArterial, $pdo);
@@ -1001,6 +1010,7 @@ try {
                     $sinaisVitaisArray['frequenciaRespiratoria'] = pegarSinalVital($sqlFrequenciaRespiratoria, $pdo);
                     $sinaisVitaisArray['temperatura'] = pegarSinalVital($sqlTemperatura, $pdo);
                     $sinaisVitaisArray['hgt'] = pegarSinalVital($sqlHgt, $pdo);
+                    $sinaisVitaisArray['observacao'] = pegarSinalVital($sqlObservacao, $pdo);
                   } catch (PDOException $e) {
                     http_response_code(500);
                     echo json_encode(['erro' => 'Erro ao buscar o histórico dos sinais vitais']);
@@ -1018,9 +1028,9 @@ try {
                           <h2 class="panel-title">Informações vitais</h2>
                         </header>
 
-                        <div class="panel-body panel-informacoes-gerais" style="display: none;">
+                        <div class="panel-body panel-informacoes-gerais table-responsive" style="display: none;">
 
-                          <table class="table table-hover small-text">
+                          <table class="table table-hover small-text ">
                             <thead>
                               <th>#</th>
                               <th class="text-center">Saturação</th>
@@ -1029,6 +1039,7 @@ try {
                               <th class="text-center">Frequência respiratória</th>
                               <th class="text-center">Temperatura</th>
                               <th class="text-center">HGT</th>
+                              <th class="text-center">Observação</th>
                             </thead>
 
                             <tbody>
@@ -1044,6 +1055,7 @@ try {
                                   <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data'])) : 'Sem registro' ?></td>
                                   <td class="text-center"><?= isset($sinaisVitaisArray['temperatura'][$i]['data']) ? $sinaisVitaisArray['temperatura'][$i]['temperatura'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['temperatura'][$i]['data'])) : 'Sem registro' ?></td>
                                   <td class="text-center"><?= isset($sinaisVitaisArray['hgt'][$i]['data']) ? $sinaisVitaisArray['hgt'][$i]['hgt'] . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['hgt'][$i]['data'])) : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['observacao'][$i]['data']) ? htmlspecialchars($sinaisVitaisArray['observacao'][$i]['observacao']) . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['observacao'][$i]['data'])) : 'Sem registro' ?></td>
                                 </tr>
                               <?php
                               endfor;
@@ -1596,6 +1608,7 @@ try {
                           <th>Frequência repiratória</th>
                           <th>Temperatura</th>
                           <th>HGT</th>
+                          <th>Observação</th>
                         </tr>
                       </thead>
                       <tbody id="exibe-sinais-vitais" style="font-size:15px">
@@ -2164,6 +2177,7 @@ try {
               .append($("<td>").text(item.frequencia_respiratoria))
               .append($("<td>").text(item.temperatura))
               .append($("<td>").text(item.hgt))
+              .append($("<td>").text(item.observacao))
             )
         });
       });
