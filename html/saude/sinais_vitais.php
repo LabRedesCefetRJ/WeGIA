@@ -175,6 +175,9 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   .celula-observacao {
     white-space: pre-wrap;
   }
+  .dataTables_empty {
+    display: none !important;
+  } 
 
 </style>
 
