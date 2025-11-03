@@ -15,20 +15,13 @@ $tipoContribuicao = 'QRCode';
 
 ?>
 
-<style>
-    #pix-page {
-        display: flex;
-        flex-direction: column;
-    }
-</style>
-
 <div class="container-contact100" id="pix-page">
     <div class="wrap-contact100">
 
         <!--Adiciona a logo e o título ao topo da página-->
         <?php include('./components/contribuicao_brand.php'); ?>
 
-        <p class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
+        <p id="instrucao" class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
 
         <form id="formulario" autocomplete="off">
 
@@ -60,12 +53,12 @@ $tipoContribuicao = 'QRCode';
                 <!--Adiciona a página para agradecimento e confirmação da geração do boleto-->
                 <?php include('./components/contribuicao_confirmacao.php'); ?>
             </div>
-    </div>
 
-    </form>
+        </form>
 
-    <div class="wrap-contact100 mt-5 hidden text-center" id="qrcode-div">
-        <h4>Escaneie seu QRCode, <br> ou então clique no nosso copia e cola!</h4>
+        <div class="wrap-input100 mt-5 hidden text-center" id="qrcode-div">
+            <h4>Escaneie seu QRCode, <br> ou então clique no nosso copia e cola!</h4>
+        </div>
     </div>
 
 </div>

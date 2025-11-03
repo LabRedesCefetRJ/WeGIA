@@ -40,7 +40,13 @@ function gerarQRCode() {
         .then(resposta => {
             if (resposta.qrcode) {
                 const qrCodeDiv = document.getElementById('qrcode-div');
-                qrCodeDiv.classList.remove('hidden');
+
+                //Remove texto de campos obrigatórios na página final
+                const instrucao = document.getElementById('instrucao');
+                instrucao.classList.add('hidden');
+
+                // Mostrar div do qrcode gerado
+                alternarPaginas('qrcode-div', 'pag5');
 
                 // Criar uma div para centralizar o conteúdo
                 let qrContainer = document.createElement("div");
@@ -54,7 +60,7 @@ function gerarQRCode() {
 
                 // Adicionar um botão abaixo do QR Code
                 let copyButton = document.createElement("button");
-                copyButton.textContent = "Copiar Código QR";
+                copyButton.textContent = "Copiar QRCode";
                 copyButton.style.display = "block";
                 copyButton.style.marginTop = "10px";
                 copyButton.style.margin = "auto";
@@ -66,7 +72,11 @@ function gerarQRCode() {
 
                 // Ajustar a largura do botão após a imagem carregar
                 qrcode.onload = function () {
-                    copyButton.style.width = qrcode.width * (0.75) + "px";
+                    const desktop = window.matchMedia("(min-width: 768px)");
+
+                    if (desktop.matches) {
+                        copyButton.style.width = qrcode.width * 0.75 + "px";
+                    }
                 };
 
                 // Rolar a página para o form3
@@ -90,9 +100,9 @@ function gerarQRCode() {
                     alert("Código QR copiado para a área de transferência!");
                 });
 
-            } else if (resposta.erro){
-                alert('Erro: '+ resposta.erro);
-            }else {
+            } else if (resposta.erro) {
+                alert('Erro: ' + resposta.erro);
+            } else {
                 alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
             }
 

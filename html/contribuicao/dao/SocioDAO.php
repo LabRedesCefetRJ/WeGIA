@@ -323,7 +323,7 @@ class SocioDAO
         VALUES (:idSocio, :mensagem)";
 
         $stmt = $this->pdo->prepare($sqlRegistrarSocioLog);
-        $stmt->bindParam(':idSocio', $socio->getId());
+        $stmt->bindValue(':idSocio', $socio->getId());
         $stmt->bindParam(':mensagem', $mensagem);
 
         return $stmt->execute();

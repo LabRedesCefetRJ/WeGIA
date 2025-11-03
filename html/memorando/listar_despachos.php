@@ -640,17 +640,28 @@ require_once ROOT . "/html/personalizacao_display.php";
 										$data_expedicao = $stmtDataExpedicao->fetch(PDO::FETCH_ASSOC)["data"];
 
 										echo ("
-
-											<p>MEMORANDO NR: ${htmlspecialchars($id_memorando)}</p>
+											<p>MEMORANDO NR: " . htmlspecialchars($id_memorando) . "</p>
 											<p>Assunto: $titulo</p>
 										");
 									} catch (Exception $e) {
 										require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 										Util::tratarException($e);
 									}
+
+									$endereco = '';
+
+									if (isset($cidade) && strlen($cidade) > 0)
+										$endereco .= $cidade;
+
+									if (isset($estado) && strlen($estado) > 0)
+										strlen($endereco) > 0 ? $endereco .= ' - ' . $estado : $endereco .= $estado;
+
+									if (isset($data_expedicao) && strlen($data_expedicao) > 0)
+										strlen($endereco) > 0 ? $endereco .= ', ' . $data_expedicao : $endereco .= $data_expedicao;
+
 									?>
 									<div class="panel-heading"> </div>
-									<p align="right"><?= " $cidade - $estado,  $data_expedicao " ?></p>
+									<p align="right"><?= htmlspecialchars($endereco) ?></p>
 									<?php
 									$despachosArr = json_decode($_SESSION['despacho']);
 									$anexos = json_decode($_SESSION['arquivos']);

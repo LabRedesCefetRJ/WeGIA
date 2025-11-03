@@ -1,4 +1,6 @@
 <?php
+if(session_status() === PHP_SESSION_NONE)
+    session_start();
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 include_once ROOT . "/dao/Conexao.php";
@@ -323,14 +325,13 @@ class FuncionarioControle
             $certificado_reservista_serie = '';
         }
 
-        if(strtotime($data_expedicao) < strtotime(($nascimento))){
-            session_start();
+        if (strtotime($data_expedicao) < strtotime(($nascimento))) {
             $_SESSION['erro'] = 'A data de expedição é anterior à do nascimento. Por favor, informa uma data válida!';
-            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf='. $cpf);
+            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . $cpf);
             exit;
         }
 
-        session_start();
+        
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -459,7 +460,7 @@ class FuncionarioControle
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
-        session_start();
+        
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -480,8 +481,6 @@ class FuncionarioControle
         $funcionario->setCertificado_reservista_serie($certificado_reservista_serie);
         $funcionario->setId_situacao($situacao);
         $funcionario->setId_cargo($cargo);
-
-
 
         return $funcionario;
     }
@@ -528,9 +527,11 @@ class FuncionarioControle
     public function listarTodos()
     {
         extract($_REQUEST);
-        $situacao = $_GET['select_situacao'];
+
+        isset($_GET['select_situacao']) === false ? $situacao_selecionada = 1 : $situacao_selecionada = $_GET['select_situacao'];
+
         $funcionariosDAO = new FuncionarioDAO();
-        $funcionarios = $funcionariosDAO->listarTodos($situacao);
+        $funcionarios = $funcionariosDAO->listarTodos($situacao_selecionada);
 
         $whitePages =
             [
@@ -538,15 +539,10 @@ class FuncionarioControle
                 WWW . "html/funcionario/informacao_funcionario.php",
                 '../html/geral/editar_permissoes.php',
             ];
-
-        session_start();
+        
         $_SESSION['funcionarios'] = $funcionarios;
 
-        if (in_array($nextPage, $whitePages)) {
-            header('Location: ' . $nextPage);
-        } else {
-            header('Location: ' . WWW . 'html/home.php');
-        }
+        isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
     }
 
     public function listarTodos2()
@@ -576,9 +572,6 @@ class FuncionarioControle
 
             $funcionarioDAO = new FuncionarioDAO();
             $funcionario = $funcionarioDAO->listar($idFuncionario);
-
-            if (session_start() === PHP_SESSION_NONE)
-                session_start();
 
             $_SESSION['funcionario'] = $funcionario;
 
@@ -806,18 +799,18 @@ class FuncionarioControle
 
         $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
         $pdo = Conexao::connect();
-        $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa='. $_SESSION['id_pessoa']);
+        $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=' . $_SESSION['id_pessoa']);
         $stmt->execute();
         $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 
         $stmt = $pdo->prepare('SELECT id_cargo FROM funcionario WHERE id_funcionario=' . $id_funcionario);
         $stmt->execute();
         $cargo_anterior_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_cargo'];
-        if(!$adm_configurado && $cargo_anterior_funcionario == 1){
-            echo ( json_encode( ["erro" => "O usuário, mesmo como administrador, não pode alterar esse funcionário"] ) );
+        if (!$adm_configurado && $cargo_anterior_funcionario == 1) {
+            echo (json_encode(["erro" => "O usuário, mesmo como administrador, não pode alterar esse funcionário"]));
             die();
         }
-        
+
 
         $funcionario->setId_funcionario($id_funcionario);
         $funcionario->setId_cargo($cargo);
@@ -858,8 +851,8 @@ class FuncionarioControle
 
         $formatar = new Util();
 
-        if($_SESSION['data_nasc']){
-            if(strtotime($data_expedicao) < strtotime( $formatar->formatoDataYMD( $_SESSION['data_nasc'] ) ) ){
+        if ($_SESSION['data_nasc']) {
+            if (strtotime($data_expedicao) < strtotime($formatar->formatoDataYMD($_SESSION['data_nasc']))) {
                 echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
                 header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . $id_funcionario);
                 exit;
@@ -905,7 +898,7 @@ class FuncionarioControle
         $quadroHorarioDAO = new QuadroHorarioDAO();
         try {
             $quadroHorarioDAO->alterar($carga_horaria, $id_funcionario);
-            session_start();
+            
             $_SESSION['msg'] = "Informações do funcionário alteradas com sucesso!";
             $_SESSION['proxima'] = "Ver lista de funcionario";
             $_SESSION['link'] = "../html/funcionario/informacao_funcionario.php";

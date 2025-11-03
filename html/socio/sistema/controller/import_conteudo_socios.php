@@ -44,7 +44,7 @@
             <!-- /.box-tools -->
           </div>
           <!-- /.box-header -->
-          <div class="box-body" style="">
+          <div class="box-body">
             <table id="example" class="table table-hover" style="width: 100%">
               <thead>
                 <tr>
@@ -98,6 +98,8 @@
                   }
 
                   $class = "bg-normal";
+
+                  /* Verificar viabilidade de retornar funcionalidade de exibir quantidade de sócios atrasados
                   if ($contribuinte == "mensal") {
                     $data_ultima_doacao = date_create($resultado['ultima_data_doacao']);
                     $data_hoje = date_create();
@@ -107,7 +109,8 @@
                       $socios_atrasados++;
                       $class = "bg-danger";
                     }
-                  }
+                  }*/
+
                   $id = htmlspecialchars($resultado['socioid']);
                   $cpf_cnpj = htmlspecialchars($resultado['cpf']);
                   $nome_s = htmlspecialchars($resultado['nome']);
@@ -213,23 +216,23 @@
           </div>
           <!-- /.box-body -->
         </div>
-        
+
       </div>
       <!-- end: page -->
-      <div class="row">
-        <!-- ./col -->
+
+      <!-- Verificar viabilidade de retornar funcionalidade de exibir quantidade de sócios atrasados 
+       <div class="row"> 
         <div class="col-lg-3 col-xs-6">
-          <!-- small box -->
           <div class="small-box bg-red">
             <div class="inner">
-              <h3><?php echo ($socios_atrasados); ?></h3>
-
+              <h3><?php //echo ($socios_atrasados); 
+                  ?></h3>
               <p>Sócio(s) com pagamento atrasado.</p>
             </div>
           </div>
         </div>
-        <!-- ./col -->
-      </div>
+      </div>-->
+
     </section>
   </div>
   <aside id="sidebar-right" class="sidebar-right">

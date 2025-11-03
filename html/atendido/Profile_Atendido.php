@@ -562,45 +562,45 @@ $dependente = json_encode($dependente);
       });
     });
 
-      function validarDataExpedicao() {
-          const dataNascimento = document.getElementById('nascimento').value;
-          const dataExpedicao = document.getElementById('dataExpedicao').value;
-          
-          if (dataExpedicao && dataNascimento) {
-              const nascimento = new Date(dataNascimento);
-              const expedicao = new Date(dataExpedicao);
-              
-              if (expedicao < nascimento) {
-                  alert('Erro: A data de expedição do documento não pode ser anterior à data de nascimento!');
-                  document.getElementById('dataExpedicao').value = '';
-                  document.getElementById('botaoSalvarDocumentacao').disabled = true;
-                  return false;
-              }
-          }
-          
-          document.getElementById('botaoSalvarDocumentacao').disabled = false;
-          return true;
+    function validarDataExpedicao() {
+      const dataNascimento = document.getElementById('nascimento').value;
+      const dataExpedicao = document.getElementById('dataExpedicao').value;
+
+      if (dataExpedicao && dataNascimento) {
+        const nascimento = new Date(dataNascimento);
+        const expedicao = new Date(dataExpedicao);
+
+        if (expedicao < nascimento) {
+          alert('Erro: A data de expedição do documento não pode ser anterior à data de nascimento!');
+          document.getElementById('dataExpedicao').value = '';
+          document.getElementById('botaoSalvarDocumentacao').disabled = true;
+          return false;
+        }
       }
 
-      function validarDataNascimento() {
-          const dataNascimento = document.getElementById('nascimento').value;
-          const dataExpedicao = document.getElementById('dataExpedicao').value;
-          
-          if (dataNascimento && dataExpedicao) {
-              const nascimento = new Date(dataNascimento);
-              const expedicao = new Date(dataExpedicao);
-              
-              if (nascimento > expedicao) {
-                  alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
-                  document.getElementById('nascimento').value = '';
-                  document.getElementById('botaoSalvarIP').disabled = true;
-                  return false;
-              }
-          }
-          
-          document.getElementById('botaoSalvarIP').disabled = false;
-          return true;
+      document.getElementById('botaoSalvarDocumentacao').disabled = false;
+      return true;
+    }
+
+    function validarDataNascimento() {
+      const dataNascimento = document.getElementById('nascimento').value;
+      const dataExpedicao = document.getElementById('dataExpedicao').value;
+
+      if (dataNascimento && dataExpedicao) {
+        const nascimento = new Date(dataNascimento);
+        const expedicao = new Date(dataExpedicao);
+
+        if (nascimento > expedicao) {
+          alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
+          document.getElementById('nascimento').value = '';
+          document.getElementById('botaoSalvarIP').disabled = true;
+          return false;
+        }
       }
+
+      document.getElementById('botaoSalvarIP').disabled = false;
+      return true;
+    }
   </script>
 
   <script>
@@ -1105,7 +1105,7 @@ $dependente = json_encode($dependente);
                                 </div>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                  <input type="submit" value="Enviar" class="btn btn-primary">
+                                  <input type="submit" value="Enviar" class="btn btn-primary" id="btn-atendido" onclick="verificaTipo(event)">
                                 </div>
                               </form>
                             </div>
@@ -1270,11 +1270,11 @@ $dependente = json_encode($dependente);
 
       function funcao3() {
         var idatend = <?= json_encode($id) ?>;
-        var cpfs = <?= json_encode($_SESSION['cpf_atendido']) ?>;
+        var cpfs = <?= json_encode(isset($_SESSION['cpf_atendido']) ? $_SESSION['cpf_atendido'] : []) ?>;
         var cpf_atendido = $("#cpf").val();
         var cpf_atendido_correto = cpf_atendido.replace(".", "").replace(".", "").replace(".", "").replace("-", "");
         var apoio = 0;
-        var cpfs1 = <?= json_encode($_SESSION['cpf_atendido']) ?>;
+        var cpfs1 = <?= json_encode(isset($_SESSION['cpf_atendido']) ? $_SESSION['cpf_atendido'] : []) ?>;
         $.each(cpfs, function(i, item) {
           if (item.cpf == cpf_atendido_correto && item.id != idatend) {
             alert("Alteração não realizada! O CPF informado já está cadastrado no sistema");
@@ -1379,6 +1379,20 @@ $dependente = json_encode($dependente);
 
           document.getElementById("cadastrarFamiliar").disabled = false;
         }
+      }
+
+      /**verifica se um tipo de documento foi selecionado antes de submeter o formulário ao backend */
+      function verificaTipo(ev) {
+        const tipo = document.getElementById('tipoDocumento');
+
+        if (isNaN(tipo.value) || tipo.value < 1) {
+          alert('Erro: selecione um tipo de documento adequado antes de prosseguir.');
+          ev.preventDefault(); // impede o envio
+          return false; // impede o fluxo normal do onclick
+        }
+
+        // retorno true permite o envio normal do formulário
+        return true;
       }
     </script>
 
