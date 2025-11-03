@@ -288,6 +288,9 @@ try {
   .small-text {
     font-size: small;
   }
+  .celula-observacao {
+    white-space: pre-wrap;
+  }
 </style>
 
 
@@ -1055,7 +1058,7 @@ try {
                                   <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data'])) : 'Sem registro' ?></td>
                                   <td class="text-center"><?= isset($sinaisVitaisArray['temperatura'][$i]['data']) ? $sinaisVitaisArray['temperatura'][$i]['temperatura'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['temperatura'][$i]['data'])) : 'Sem registro' ?></td>
                                   <td class="text-center"><?= isset($sinaisVitaisArray['hgt'][$i]['data']) ? $sinaisVitaisArray['hgt'][$i]['hgt'] . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['hgt'][$i]['data'])) : 'Sem registro' ?></td>
-                                  <td class="text-center"><?= isset($sinaisVitaisArray['observacao'][$i]['data']) ? htmlspecialchars($sinaisVitaisArray['observacao'][$i]['observacao']) . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['observacao'][$i]['data'])) : 'Sem registro' ?></td>
+                                  <td class="text-center celula-observacao"><?= isset($sinaisVitaisArray['observacao'][$i]['data']) ? htmlspecialchars($sinaisVitaisArray['observacao'][$i]['observacao']) . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['observacao'][$i]['data'])) : 'Sem registro' ?></td>
                                 </tr>
                               <?php
                               endfor;
@@ -2177,7 +2180,7 @@ try {
               .append($("<td>").text(item.frequencia_respiratoria))
               .append($("<td>").text(item.temperatura))
               .append($("<td>").text(item.hgt))
-              .append($("<td>").text(item.observacao))
+              .append($("<td>").addClass("celula-observacao").text(item.observacao))
             )
         });
       });

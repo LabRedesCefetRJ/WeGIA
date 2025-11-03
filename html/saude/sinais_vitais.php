@@ -172,6 +172,9 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   #sin-vit-tab tr {
     height: 100%;
   }
+  .celula-observacao {
+    white-space: pre-wrap;
+  }
 
 </style>
 
@@ -244,7 +247,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
             .append($("<td>").text(item.frequencia_respiratoria))
             .append($("<td>").text(item.temperatura))
             .append($("<td>").text(item.hgt))
-            .append($("<td>").text(item.observacao))
+            .append($("<td>").addClass("celula-observacao").text(item.observacao))
             .append($("<td style=''>")
               .append($("<a onclick='removerSinVit(" + item.id_sinais_vitais + "," + i + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
