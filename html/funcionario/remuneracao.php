@@ -1,13 +1,19 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
-session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit();
+} else {
+    session_regenerate_id();
 }
 
 // Verifica Permissão do Usuário
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 11, 7);
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 extract($_REQUEST);
 $action = trim($_REQUEST['action']);
@@ -22,7 +28,7 @@ try {
 }
 
 if ($action == "tipo_adicionar") {
-    $descricao = trim(filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_STRING));
+    $descricao = trim(filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS));
     $query = "SELECT * FROM funcionario_remuneracao_tipo WHERE descricao = :descricao";
     $sql = "INSERT INTO funcionario_remuneracao_tipo VALUES (default , :descricao)";
     try {
@@ -52,40 +58,31 @@ if ($action == "remuneracao_adicionar") {
     $idFuncionario = trim(filter_input(INPUT_POST, 'id_funcionario', FILTER_VALIDATE_INT));
     $idTipo = trim(filter_input(INPUT_POST, 'id_tipo', FILTER_VALIDATE_INT));
     $valor = trim(filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT));
-    $inicio = trim(filter_input(INPUT_POST, 'inicio', FILTER_SANITIZE_STRING));
-    $fim = trim(filter_input(INPUT_POST, 'fim', FILTER_SANITIZE_STRING));
-
-    if (!$idFuncionario || !is_numeric($idFuncionario) || $idFuncionario < 1) {
-        http_response_code(400);
-        echo json_encode(['erro' => 'O id de um funcionário deve ser um inteiro positivo.']);
-    }
-
-    if (!$idTipo || !is_numeric($idTipo) || $idTipo < 1) {
-        http_response_code(400);
-        echo json_encode(['erro' => 'O id de um tipo deve ser um inteiro positivo.']);
-    }
-
-    if (!$valor || !is_numeric($valor) || $valor < 0) {
-        http_response_code(400);
-        echo json_encode(['erro' => 'O id de um funcionário deve ser um inteiro positivo.']);
-    }
-
-    $inicioDateArray = explode('-', $inicio);
-    $fimDateArray = explode('-', $fim);
-
-    if (!checkdate(intval($inicioDateArray[1]), intval($inicioDateArray[2]), intval($inicioDateArray[0]))) {
-        http_response_code(400);
-        echo json_encode(['erro' => 'A data de início informada não é válida.']);
-    }
-
-    if (!checkdate(intval($fimDateArray[1]), intval($fimDateArray[2]), intval($fimDateArray[0]))) {
-        http_response_code(400);
-        echo json_encode(['erro' => 'A data de fim informada não é válida.']);
-    }
-
-    $sql = "INSERT INTO funcionario_remuneracao VALUES (default , :idFuncionario, :idTipo, :valor, :inicio, :fim);";
+    $inicio = trim(filter_input(INPUT_POST, 'inicio', FILTER_UNSAFE_RAW));
+    $fim = trim(filter_input(INPUT_POST, 'fim', FILTER_UNSAFE_RAW));
 
     try {
+
+        if (!$idFuncionario || !is_numeric($idFuncionario) || $idFuncionario < 1)
+            throw new InvalidArgumentException('O id de um funcionário deve ser um inteiro positivo.', 400);
+
+        if (!$idTipo || !is_numeric($idTipo) || $idTipo < 1)
+            throw new InvalidArgumentException('O id de um tipo deve ser um inteiro positivo.', 400);
+
+        if (!$valor || !is_numeric($valor) || $valor < 0)
+            throw new InvalidArgumentException('O valor de uma remuneração não pode possuir um valor negativo.');
+
+        $inicioDateArray = explode('-', $inicio);
+        $fimDateArray = explode('-', $fim);
+
+        if (!checkdate(intval($inicioDateArray[1]), intval($inicioDateArray[2]), intval($inicioDateArray[0])))
+            throw new InvalidArgumentException('A data de início informada não é válida.', 400);
+
+        if (!checkdate(intval($fimDateArray[1]), intval($fimDateArray[2]), intval($fimDateArray[0])))
+            throw new InvalidArgumentException('A data de fim informada não é válida.', 400);
+
+        $sql = "INSERT INTO funcionario_remuneracao VALUES (default , :idFuncionario, :idTipo, :valor, :inicio, :fim);";
+
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(':idFuncionario', $idFuncionario);
@@ -95,9 +92,8 @@ if ($action == "remuneracao_adicionar") {
         $stmt->bindParam(':fim', $fim);
 
         $stmt->execute();
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['erro' => 'Erro ao adicionar uma remuneração no banco de dados.']);
+    } catch (Exception $e) {
+        Util::tratarException($e);
         exit();
     }
 
@@ -106,8 +102,8 @@ if ($action == "remuneracao_adicionar") {
 
 if ($action == "remuneracao_editar") {
     $idRemuneracao = trim(filter_input(INPUT_POST, 'id_remuneracao', FILTER_VALIDATE_INT));
-    $inicio = trim(filter_input(INPUT_POST, 'inicio', FILTER_SANITIZE_STRING));
-    $fim = trim(filter_input(INPUT_POST, 'fim', FILTER_SANITIZE_STRING));
+    $inicio = trim(filter_input(INPUT_POST, 'inicio', FILTER_UNSAFE_RAW));
+    $fim = trim(filter_input(INPUT_POST, 'fim', FILTER_UNSAFE_RAW));
     $idFuncionarioRemuneracao = trim(filter_input(INPUT_POST, 'id_funcionario_remuneracao', FILTER_VALIDATE_INT));
 
     if (!$idRemuneracao || !is_numeric($idRemuneracao) || $idRemuneracao < 1) {

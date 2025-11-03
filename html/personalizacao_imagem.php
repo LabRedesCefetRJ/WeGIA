@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
 	exit(401);
-}else{
+} else {
 	session_regenerate_id();
 }
 
@@ -376,30 +376,29 @@ $img_tab = $res->fetchAll(PDO::FETCH_ASSOC);
 					}
 
 					function submitDel() {
-						var form = document.getElementById("del_form")
-						var i = 0
-						if (item_state.find(function(val) {
-								if (val) {
-									return true
-								}
-							})) {
-							const confirmed = window.confirm("ATENÇÃO! Tem certeza que deseja excluir os itens selecionados do Banco de Dados?")
-							item_state.forEach(function(selecionado, key) {
-								if (selecionado && confirmed) {
-									input = document.createElement("INPUT")
-									input.style.display = 'none'
-									input.readOnly = true
-									input.type = "number"
-									input.name = "imagem_" + i
-									input.value = key
-									form.appendChild(input)
-									i++
-								}
-							})
-							form.submit()
-						} else {
-							window.alert("Nenhuma imagem foi selecionada.")
+						const form = document.getElementById("del_form");
+						const selecionados = item_state
+							.map((sel, idx) => sel ? idx : null)
+							.filter(val => val !== null);
+
+						if (selecionados.length === 0) {
+							alert("Nenhuma imagem foi selecionada.");
+							return;
 						}
+
+						if (!confirm("ATENÇÃO! Tem certeza que deseja excluir os itens selecionados do Banco de Dados?")) {
+							return;
+						}
+
+						selecionados.forEach(id => {
+							const input = document.createElement("input");
+							input.type = "hidden";
+							input.name = "imagem[]";
+							input.value = id;
+							form.appendChild(input);
+						});
+
+						form.submit();
 					}
 
 					function post(path, params, method = 'post') {

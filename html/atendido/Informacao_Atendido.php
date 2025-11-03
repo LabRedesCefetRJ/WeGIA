@@ -145,8 +145,7 @@
 			var atendidos =<?php 
 				$response = new AtendidoControle;
 				$response->ListarTodos();
-				echo $_SESSION['atendidos'];?>;
-				<?php //unset($_SESSION['atendidos']);?>; 
+				echo $_SESSION['atendidos'];?>; 
 				console.log(atendidos);
 			$.each(atendidos, function(i, item) {
 				$("#tabela")

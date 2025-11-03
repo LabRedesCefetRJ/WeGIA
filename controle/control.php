@@ -2,9 +2,8 @@
 
 header('Content-Type: text/html; charset=utf-8'); 
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
 function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 {
@@ -53,42 +52,39 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'DespachoControle' => [3]
         ];
 
-        if (!array_key_exists($nomeClasse, $controladorasRecursos)) {
-            throw new InvalidArgumentException('Controladora inválida', 400);
-        }
+		/*Por padrão o control.php irá recusar qualquer controladora informada,
+		adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
+		if (!array_key_exists($nomeClasse, $controladorasRecursos))
+			throw new InvalidArgumentException('Controladora inválida', 400);
 
         if ($metodo != 'alterarSenha') {
             require_once(__DIR__ . '/../dao/MiddlewareDAO.php');
             $middleware = new MiddlewareDAO();
 
-            if (!$middleware->verificarPermissao($_SESSION['id_pessoa'], $nomeClasse, $controladorasRecursos)) {
-                throw new LogicException('Acesso não autorizado', 401);
-            }
-        }
+			//Verifica se a pessoa possui o recurso necessário para acessar a funcionalidade desejada
+			if (!$middleware->verificarPermissao($_SESSION['id_pessoa'], $nomeClasse, $controladorasRecursos))
+				throw new LogicException('Acesso não autorizado', 401); // Considerar fazer uma exception de autorização para o projeto
+		}
 
         $pathRequire = dirname(__FILE__) . DIRECTORY_SEPARATOR;
 
-        if ($modulo) {
-            $pathRequire = $modulo . DIRECTORY_SEPARATOR;
-        }
+		if ($modulo)
+			$pathRequire = $modulo . DIRECTORY_SEPARATOR;
 
         $pathRequire .= $nomeClasse . ".php";
 
-        if (!file_exists($pathRequire)) {
-            throw new InvalidArgumentException('O arquivo para requisição da classe não existe.', 400);
-        }
+		if (!file_exists($pathRequire))
+			throw new InvalidArgumentException('O arquivo para requisição da classe não existe.', 400);
 
         require_once($pathRequire);
 
-        if (!class_exists($nomeClasse)) {
-            throw new InvalidArgumentException('A classe informada não existe no sistema.', 400);
-        }
+		if (!class_exists($nomeClasse))
+			throw new InvalidArgumentException('A classe informada não existe no sistema.', 400);
 
         $objeto = new $nomeClasse();
 
-        if (!method_exists($objeto, $metodo)) {
-            throw new InvalidArgumentException('O método informado não existe na classe.', 400);
-        }
+		if (!method_exists($objeto, $metodo))
+			throw new InvalidArgumentException('O método informado não existe na classe.', 400);
 
         $objeto->$metodo();
     } else {
@@ -100,9 +96,9 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 $is_json_request = false;
 
 try {
-    if (!isset($_SESSION['id_pessoa'])) {
-        throw new LogicException('Operação negada: Cliente não autorizado', 401);
-    }
+	//Pessoas desautenticadas não devem ter acesso as funcionalidades do control.php
+	if (!isset($_SESSION['id_pessoa']))
+		throw new LogicException('Operação negada: Cliente não autorizado', 401); // Considerar fazer uma exception de autorização para o projeto
 
     $nomeClasse = '';
     $metodo = '';
@@ -115,15 +111,16 @@ try {
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
 
-        $nomeClasse = filter_var($data['nomeClasse'] ?? null, FILTER_SANITIZE_SPECIAL_CHARS);
-        $metodo = filter_var($data['metodo'] ?? null, FILTER_SANITIZE_SPECIAL_CHARS);
-        $modulo = filter_var($data['modulo'] ?? null, FILTER_SANITIZE_SPECIAL_CHARS);
-
-    } else {
-        $nomeClasse = filter_var($_REQUEST['nomeClasse'] ?? null, FILTER_SANITIZE_SPECIAL_CHARS);
-        $metodo = filter_var($_REQUEST['metodo'] ?? null, FILTER_SANITIZE_SPECIAL_CHARS);
-        $modulo = filter_var($_REQUEST['modulo'] ?? null, FILTER_SANITIZE_SPECIAL_CHARS);
-    }
+		// Extrai as variáveis do array $data
+		$nomeClasse = filter_var($data['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+		$metodo = filter_var($data['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+		isset($data['modulo']) ? $modulo = filter_var($data['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
+	} else {
+		// Recebe os dados do formulário normalmente
+		$nomeClasse = filter_var($_REQUEST['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+		$metodo = filter_var($_REQUEST['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+		isset($_REQUEST['modulo']) ? $modulo = filter_var($_REQUEST['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
+	}
 
     processaRequisicao($nomeClasse, $metodo, $modulo);
 
