@@ -318,36 +318,51 @@ class AtendidoControle
 
 
     public function incluir()
-    {
-        $atendido = $this->verificar();
-        $cpf = $_GET['cpf'];
-        $validador = new Util();
+{
+    $atendido = $this->verificar();
+    $cpf = $_GET['cpf'];
+    $validador = new Util();
 
-        if (!$validador->validarCPF($cpf)) {
+    // Verificar se o CPF já está cadastrado (quando CPF não for vazio)
+    if (!empty($cpf)) {
+        $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+        $stmt = $mysqli->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
+        $stmt->bind_param("s", $cpf);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+        $mysqli->close();
+
+        if ($count > 0) {
             http_response_code(400);
-            exit('Erro, o CPF informado não é válido');
-        }
-
-        if ($atendido->getDataNascimento() > Atendido::getDataNascimentoMaxima() || $atendido->getDataNascimento() < Atendido::getDataNascimentoMinima()) {
-            http_response_code(400);
-            exit('Erro, a data de nascimento informada está fora dos limites permitidos.');
-        }
-
-        $intDAO = new AtendidoDAO();
-        $docDAO = new DocumentoDAO();
-        try {
-            $idatendido = $intDAO->incluir($atendido, $cpf);
-            $_SESSION['msg'] = "Atendido cadastrado com sucesso";
-            $_SESSION['proxima'] = "Cadastrar outro atendido";
-            $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
-            header("Location: ../html/atendido/Informacao_Atendido.php");
-            // header("Location: ../dao/AtendidoDAO.php");
-        } catch (PDOException $e) {
-            $msg = "Não foi possível registrar o atendido <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>" . "<br>" . $e->getMessage();
-            echo $msg;
+            exit('Erro: CPF já cadastrado no sistema.');
         }
     }
 
+    if (!$validador->validarCPF($cpf)) {
+        http_response_code(400);
+        exit('Erro, o CPF informado não é válido');
+    }
+
+    if ($atendido->getDataNascimento() > Atendido::getDataNascimentoMaxima() || $atendido->getDataNascimento() < Atendido::getDataNascimentoMinima()) {
+        http_response_code(400);
+        exit('Erro, a data de nascimento informada está fora dos limites permitidos.');
+    }
+
+    $intDAO = new AtendidoDAO();
+    $docDAO = new DocumentoDAO();
+    try {
+        $idatendido = $intDAO->incluir($atendido, $cpf);
+        $_SESSION['msg'] = "Atendido cadastrado com sucesso";
+        $_SESSION['proxima'] = "Cadastrar outro atendido";
+        $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
+        header("Location: ../html/atendido/Informacao_Atendido.php");
+    } catch (PDOException $e) {
+        $msg = "Não foi possível registrar o atendido <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>" . "<br>" . $e->getMessage();
+        echo $msg;
+    }
+}
 
     public function incluirSemCpf()
 {
