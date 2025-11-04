@@ -323,16 +323,13 @@ class AtendidoControle
     $cpf = $_GET['cpf'];
     $validador = new Util();
 
-    // Verificar se o CPF já está cadastrado (quando CPF não for vazio)
+    $pdo = Conexao::connect();
+
     if (!empty($cpf)) {
-        $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-        $stmt = $mysqli->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
-        $stmt->bind_param("s", $cpf);
-        $stmt->execute();
-        $stmt->bind_result($count);
-        $stmt->fetch();
-        $stmt->close();
-        $mysqli->close();
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
+        $stmt->execute([$cpf]);
+        $count = $stmt->fetchColumn();
+
 
         if ($count > 0) {
             http_response_code(400);
@@ -351,7 +348,7 @@ class AtendidoControle
     }
 
     $intDAO = new AtendidoDAO();
-    $docDAO = new DocumentoDAO();
+    
     try {
         $idatendido = $intDAO->incluir($atendido, $cpf);
         $_SESSION['msg'] = "Atendido cadastrado com sucesso";
@@ -375,7 +372,7 @@ class AtendidoControle
     try {
         $intDAO->incluir($atendido, $cpf);
         $_SESSION['msg'] = "Atendido cadastrado sem CPF com sucesso";
-        header('Location: ../html/atendido/Cadastro_Atendido.php');
+        header('Location: ../html/atendido/Informacao_Atendido.php');
         exit();
     } catch (PDOException $e) {
         echo "Erro ao cadastrar: " . $e->getMessage();

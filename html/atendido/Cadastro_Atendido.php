@@ -297,14 +297,19 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 											<input type="text" class="form-control" name="nome" id="nome" id="profileFirstName" onkeypress="return Onlychars(event)" required>
 										</div>
 									</div>
-									<div class="form-group">
-										<label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
-										<div class="col-md-6">
+										<div class="form-group">
+											<label class="col-md-3 control-label">
+												Sobrenome
+												<?php if (!$semCpf): ?>
+													<sup class="obrig">*</sup>
+												<?php endif; ?>
+											</label>
+											<div class="col-md-6">
 											<input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)"
-    											<?php if (!$semCpf) echo 'required'; ?>
-    											value="<?php echo isset($sobrenome) ? htmlspecialchars($sobrenome) : ''; ?>">
+												<?php if (!$semCpf) echo 'required'; ?>
+												value="<?php echo isset($sobrenome) ? htmlspecialchars($sobrenome) : ''; ?>">
+											</div>
 										</div>
-									</div>
 									<div class="form-group">
 										<label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
 										<div class="col-md-6">
