@@ -1,7 +1,8 @@
 <?php
-session_start();
-$config_path = '../../config.php';
-require_once $config_path;
+if(session_status()===PHP_SESSION_NONE)
+    session_start();
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once ROOT .'/html/permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 91);
