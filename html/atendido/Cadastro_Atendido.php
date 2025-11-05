@@ -324,16 +324,28 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 									<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" id="profileCompany" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
 								</div>
 							</div>
-
 							<div class="form-horizontal form-group">
-								<label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
+								<label class="col-md-3 control-label" for="nascimento">
+									Nascimento
+									<?php if (!$semCpf): ?>
+										<sup class="obrig">*</sup>
+									<?php endif; ?>
+								</label>
 								<div class="col-md-6">
-									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" 
-										min=<?= $dataNascimentoMinima ?> max=<?= $dataNascimentoMaxima ?> 
-										<?php if (!$semCpf) echo 'required'; ?> value="<?php echo isset($nascimento) ? htmlspecialchars($nascimento) : ''; ?>">
+									<input 
+										type="date" 
+										placeholder="dd/mm/aaaa" 
+										maxlength="10" 
+										class="form-control" 
+										name="nascimento" 
+										id="nascimento" 
+										min="<?= $dataNascimentoMinima ?>" 
+										max="<?= $dataNascimentoMaxima ?>" 
+										<?php if (!$semCpf) echo 'required'; ?> 
+										value="<?php echo isset($nascimento) ? htmlspecialchars($nascimento) : ''; ?>"
+									>
 								</div>
 							</div>
-
 							<div class="form-horizontal form-group">
 								<label class="col-md-3 control-label" for="inputSuccess">Status<sup class="obrig">*</sup></label>
 								<a onclick="adicionar_status()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>

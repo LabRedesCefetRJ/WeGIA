@@ -56,7 +56,7 @@ class AtendidoControle
         }
         if ((!isset($nascimento)) || (empty($nascimento))) {
             $msg .= "Nascimento do atendido não informado. Por favor, informe a data!";
-            header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
+           header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
         }
         if ((!isset($registroGeral)) || (empty($registroGeral))) {
             $registroGeral = "";
@@ -341,11 +341,15 @@ class AtendidoControle
         http_response_code(400);
         exit('Erro, o CPF informado não é válido');
     }
-
-    if ($atendido->getDataNascimento() > Atendido::getDataNascimentoMaxima() || $atendido->getDataNascimento() < Atendido::getDataNascimentoMinima()) {
-        http_response_code(400);
-        exit('Erro, a data de nascimento informada está fora dos limites permitidos.');
+    
+    $dataNascimento = $atendido->getDataNascimento();
+    if (!empty($dataNascimento)){
+        if ($dataNascimento > Atendido::getDataNascimentoMaxima() || $dataNascimento < Atendido::getDataNascimentoMinima()) {
+            http_response_code(400);
+            exit('Erro, a data de nascimento informada está fora dos limites permitidos.');
+        }
     }
+    
 
     $intDAO = new AtendidoDAO();
     
@@ -363,19 +367,19 @@ class AtendidoControle
 
     public function incluirSemCpf()
 {
-    $atendido = $this->verificar();  // Extrai dados do formulário
-
-    // Passa o CPF vazio ou NULL
-    $cpf = '';
-
-    $intDAO = new AtendidoDAO();
     try {
+        $atendido = $this->verificar();  // Extrai dados do formulário
+        // Passa o CPF vazio ou NULL
+        $cpf = '';
+
+        $intDAO = new AtendidoDAO();
+        
         $intDAO->incluir($atendido, $cpf);
         $_SESSION['msg'] = "Atendido cadastrado sem CPF com sucesso";
         header('Location: ../html/atendido/Informacao_Atendido.php');
         exit();
-    } catch (PDOException $e) {
-        echo "Erro ao cadastrar: " . $e->getMessage();
+    } catch (Exception $e) {
+        Util::tratarException($e) ;
     }
 }
 
