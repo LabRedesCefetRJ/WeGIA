@@ -321,70 +321,64 @@ class AtendidoControle
     }
 
     public function incluir()
-{
-    $atendido = $this->verificar();
-    $cpf = $_GET['cpf'];
-    $validador = new Util();
+    {
+        try {
+            $atendido = $this->verificar();
+            $cpf = $_GET['cpf'];
+            $validador = new Util();
 
-    $pdo = Conexao::connect();
+            $pdo = Conexao::connect();
 
-    if (!empty($cpf)) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
-        $stmt->execute([$cpf]);
-        $count = $stmt->fetchColumn();
+            if (!empty($cpf)) {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
+                $stmt->execute([$cpf]);
+                $count = $stmt->fetchColumn();
 
+                if ($count > 0) {
+                    throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
+                }
+            }
 
-        if ($count > 0) {
-            http_response_code(400);
-            exit('Erro: CPF já cadastrado no sistema.');
+            if (!$validador->validarCPF($cpf)) {
+                throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+            }
+
+            $dataNascimento = $atendido->getDataNascimento();
+            if (!empty($dataNascimento)) {
+                if ($dataNascimento > Atendido::getDataNascimentoMaxima() || $dataNascimento < Atendido::getDataNascimentoMinima()) {
+                    throw new InvalidArgumentException('Erro, a data de nascimento informada está fora dos limites permitidos.', 400);
+                }
+            }
+
+            $intDAO = new AtendidoDAO();
+
+            $intDAO->incluir($atendido, $cpf);
+            $_SESSION['msg'] = "Atendido cadastrado com sucesso";
+            $_SESSION['proxima'] = "Cadastrar outro atendido";
+            $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
+            header("Location: ../html/atendido/Informacao_Atendido.php");
+        } catch (PDOException $e) {
+            Util::tratarException($e);
         }
     }
-
-    if (!$validador->validarCPF($cpf)) {
-        http_response_code(400);
-        exit('Erro, o CPF informado não é válido');
-    }
-    
-    $dataNascimento = $atendido->getDataNascimento();
-    if (!empty($dataNascimento)){
-        if ($dataNascimento > Atendido::getDataNascimentoMaxima() || $dataNascimento < Atendido::getDataNascimentoMinima()) {
-            http_response_code(400);
-            exit('Erro, a data de nascimento informada está fora dos limites permitidos.');
-        }
-    }
-    
-
-    $intDAO = new AtendidoDAO();
-    
-    try {
-        $idatendido = $intDAO->incluir($atendido, $cpf);
-        $_SESSION['msg'] = "Atendido cadastrado com sucesso";
-        $_SESSION['proxima'] = "Cadastrar outro atendido";
-        $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
-        header("Location: ../html/atendido/Informacao_Atendido.php");
-    } catch (PDOException $e) {
-        $msg = "Não foi possível registrar o atendido <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>" . "<br>" . $e->getMessage();
-        echo $msg;
-    }
-}
 
     public function incluirSemCpf()
-{
-    try {
-        $atendido = $this->verificar();  // Extrai dados do formulário
-        // Passa o CPF vazio ou NULL
-        $cpf = '';
+    {
+        try {
+            $atendido = $this->verificar();  // Extrai dados do formulário
+            // Passa o CPF vazio ou NULL
+            $cpf = '';
 
-        $intDAO = new AtendidoDAO();
-        
-        $intDAO->incluir($atendido, $cpf);
-        $_SESSION['msg'] = "Atendido cadastrado sem CPF com sucesso";
-        header('Location: ../html/atendido/Informacao_Atendido.php');
-        exit();
-    } catch (Exception $e) {
-        Util::tratarException($e) ;
+            $intDAO = new AtendidoDAO();
+
+            $intDAO->incluir($atendido, $cpf);
+            $_SESSION['msg'] = "Atendido cadastrado sem CPF com sucesso";
+            header('Location: ../html/atendido/Informacao_Atendido.php');
+            exit();
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
-}
 
 
 
@@ -524,7 +518,7 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
-            if(!$idatendido || $idatendido < 1)
+            if (!$idatendido || $idatendido < 1)
                 throw new InvalidArgumentException('O id do atendido informado não é válido.', 412);
 
             $img = file_get_contents($_FILES['imgperfil']['tmp_name']);
