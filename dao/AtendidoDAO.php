@@ -50,50 +50,50 @@ class AtendidoDAO
     }
 
     public function incluir($atendido, $cpf)
-{
-    $pdo = Conexao::connect();
+    {
+        $pdo = Conexao::connect();
 
-    // Inserção na tabela pessoa
-    $sqlPessoa = "INSERT INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento) 
+        // Inserção na tabela pessoa
+        $sqlPessoa = "INSERT INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento) 
                   VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :dataNascimento)";
-    $stmtPessoa = $pdo->prepare($sqlPessoa);
+        $stmtPessoa = $pdo->prepare($sqlPessoa);
 
-    $nome = $atendido->getNome();
-    $sobrenome = $atendido->getSobrenome();
-    $cpf = $atendido->getCpf();
-    $sexo = $atendido->getSexo();
-    $telefone = $atendido->getTelefone();
-    $dataNascimento = $atendido->getDataNascimento();
-    if (empty($dataNascimento)) {
-        $dataNascimento = null; // permite nulo
-    }
+        $nome = $atendido->getNome();
+        $sobrenome = $atendido->getSobrenome();
+        //$cpf = $atendido->getCpf();
+        $sexo = $atendido->getSexo();
+        $telefone = $atendido->getTelefone();
+        $dataNascimento = $atendido->getDataNascimento();
+        if (empty($dataNascimento)) {
+            $dataNascimento = null; // permite nulo
+        }
 
-    $stmtPessoa->bindParam(':cpf', $cpf);
-    $stmtPessoa->bindParam(':nome', $nome);
-    $stmtPessoa->bindParam(':sobrenome', $sobrenome);
-    $stmtPessoa->bindParam(':sexo', $sexo);
-    $stmtPessoa->bindParam(':telefone', $telefone);
-    $stmtPessoa->bindParam(':dataNascimento', $dataNascimento);
+        $stmtPessoa->bindParam(':cpf', $cpf);
+        $stmtPessoa->bindParam(':nome', $nome);
+        $stmtPessoa->bindParam(':sobrenome', $sobrenome);
+        $stmtPessoa->bindParam(':sexo', $sexo);
+        $stmtPessoa->bindParam(':telefone', $telefone);
+        $stmtPessoa->bindParam(':dataNascimento', $dataNascimento);
 
-    $stmtPessoa->execute();
+        $stmtPessoa->execute();
 
-    // Obtém o último id inserido em pessoa
-    $idPessoa = $pdo->lastInsertId();
+        // Obtém o último id inserido em pessoa
+        $idPessoa = $pdo->lastInsertId();
 
-    // Inserção na tabela atendido
-    $sqlAtendido = "INSERT INTO atendido (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
+        // Inserção na tabela atendido
+        $sqlAtendido = "INSERT INTO atendido (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
                     VALUES (:pessoaId, :tipo, :status)";
-    $stmtAtendido = $pdo->prepare($sqlAtendido);
+        $stmtAtendido = $pdo->prepare($sqlAtendido);
 
-    $intTipo = $atendido->getIntTipo();
-    $intStatus = $atendido->getIntStatus();
+        $intTipo = $atendido->getIntTipo();
+        $intStatus = $atendido->getIntStatus();
 
-    $stmtAtendido->bindParam(':pessoaId', $idPessoa);
-    $stmtAtendido->bindParam(':tipo', $intTipo);
-    $stmtAtendido->bindParam(':status', $intStatus);
+        $stmtAtendido->bindParam(':pessoaId', $idPessoa);
+        $stmtAtendido->bindParam(':tipo', $intTipo);
+        $stmtAtendido->bindParam(':status', $intStatus);
 
-    $stmtAtendido->execute();
-}
+        $stmtAtendido->execute();
+    }
     // incluirExistente
 
     public function incluirExistente($atendido, $idPessoa, $sobrenome)

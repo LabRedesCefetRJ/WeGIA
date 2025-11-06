@@ -367,7 +367,7 @@ class AtendidoControle
         try {
             $atendido = $this->verificar();  // Extrai dados do formulário
             // Passa o CPF vazio ou NULL
-            $cpf = '';
+            $cpf = null;
 
             $intDAO = new AtendidoDAO();
 
