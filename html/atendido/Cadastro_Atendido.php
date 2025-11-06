@@ -381,7 +381,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
 								<div class="col-md-4">
-									<input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?php echo htmlspecialchars($cpf) ?>" disabled>
+									<input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= isset($cpf) ? htmlspecialchars($cpf) : '' ?>" disabled>
 								</div>
 
 							</div>
@@ -397,7 +397,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 								<div class="row">
 									<div class="col-md-9 col-md-offset-3">
 										<input type="hidden" name="nomeClasse" value="AtendidoControle">
-										<input type="hidden" name="cpf" value="<?php echo htmlspecialchars($cpf) ?>">
+										<input type="hidden" name="cpf" value="<?= isset($cpf) ? htmlspecialchars($cpf) : '' ?>">
 										<input type="hidden" name="metodo" value="incluir">
 										<input id="enviar" type="submit" class="btn btn-primary" value="Enviar" onclick="validarInterno()">
 										<input type="hidden" name="nomeClasse" value="AtendidoControle">

@@ -31,7 +31,7 @@ class AtendidoControle
     public function verificar()
     {
         extract($_REQUEST);
-        if ((!isset($cpf)) || (empty($cpf))) {
+        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf = '0' )) {
             $msg .= "cpf do atendido não informado. Por favor, informe o cpf!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -47,7 +47,7 @@ class AtendidoControle
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
         }
-        if ((!isset($nascimento)) || (empty($nascimento))) {
+        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf = '0' )) {
             $msg .= "Nascimento do atendido não informado. Por favor, informe a data!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
