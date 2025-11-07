@@ -56,7 +56,7 @@ class Origem
 
     public function setCnpj($cnpj) {
         // Validar se o CNPJ possui um formato válido - Xablau
-        if (Util::validaEstruturaCnpj($cnpj) && Util::validaCnpj($cnpj)) {
+        if (Util::validaCnpj($cnpj)) {
             $this->cnpj = $cnpj;
         } else {
             throw new Exception('CNPJ inválido');
