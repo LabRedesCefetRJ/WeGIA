@@ -1,16 +1,18 @@
 <?php
-
+/*  
 	ini_set('display_errors',1);
 	ini_set('display_startup_erros',1);
 	error_reporting(E_ALL);
-
+*/
 	session_start();
 	if(!isset($_SESSION['usuario'])){
 		header ("Location: ../index.php");
+		exit();
 	}
 
 	if(!isset($_SESSION['saude']))	{
 		header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/administrar_medicamento.php');
+		exit(); 
 	}
 	$config_path = "config.php";
 	if(file_exists($config_path)){
@@ -22,37 +24,84 @@
 		}
 		require_once($config_path);
 	}
+	
 	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-	$id_pessoa = $_SESSION['id_pessoa'];
-	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-	if(!is_null($resultado)){
-		$id_cargo = mysqli_fetch_array($resultado);
-		if(!is_null($id_cargo)){
-			$id_cargo = $id_cargo['id_cargo'];
-		} 
-		$resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND r.descricao='Módulo Saúde'");
-		if(!is_bool($resultado) and mysqli_num_rows($resultado)){
-			$permissao = mysqli_fetch_array($resultado);
-			if($permissao['id_acao'] < 5){
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: ../home.php?msg_c=$msg");
-			}
-			$permissao = $permissao['id_acao'];
-		}else{
-        	$permissao = 1;
-          $msg = "Você não tem as permissões necessárias para essa página.";
-          header("Location: ../home.php?msg_c=$msg");
-		}	
-	}else{
-		$permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../../home.php?msg_c=$msg");
-	}	
 
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+	if (!$conexao) {
+		$msg = "Erro de conexão com o banco de dados.";
+		header("Location: ../../home.php?msg_c=$msg");
+		exit();
+	}
+
+	$id_pessoa = $_SESSION['id_pessoa'];
+	$permissao = 1; 
+	$id_cargo = null;
+
+
+	$sql1 = "SELECT * FROM funcionario WHERE id_pessoa = ?";
+	$stmt1 = mysqli_prepare($conexao, $sql1);
+	
+	if ($stmt1) {
+		mysqli_stmt_bind_param($stmt1, "i", $id_pessoa); 
+		mysqli_stmt_execute($stmt1);
+		$resultado1 = mysqli_stmt_get_result($stmt1);
+
+		$funcionario_data = mysqli_fetch_array($resultado1);
+
+		if ($funcionario_data) {
+			$id_cargo = $funcionario_data['id_cargo'];
+
+			$sql2 = "SELECT * FROM permissao p JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo = ? AND r.descricao = ?";
+			$stmt2 = mysqli_prepare($conexao, $sql2);
+
+			if ($stmt2) {
+				$descricao_recurso = 'Módulo Saúde';
+				mysqli_stmt_bind_param($stmt2, "is", $id_cargo, $descricao_recurso); 
+				mysqli_stmt_execute($stmt2);
+				$resultado2 = mysqli_stmt_get_result($stmt2);
+
+				if ($resultado2 && mysqli_num_rows($resultado2) > 0) {
+					$permissao_data = mysqli_fetch_array($resultado2);
+					
+					if($permissao_data['id_acao'] < 5){
+						$msg = "Você não tem as permissões necessárias para essa página.";
+						header("Location: ../home.php?msg_c=$msg");
+						exit();
+					}
+					$permissao = $permissao_data['id_acao'];
+				
+				} else {
+					$permissao = 1;
+					$msg = "Você não tem as permissões necessárias para essa página.";
+					header("Location: ../home.php?msg_c=$msg");
+					exit();
+				}
+				mysqli_stmt_close($stmt2);
+
+			} else {
+				$permissao = 1;
+				$msg = "Erro ao verificar permissões (STMT2).";
+				header("Location: ../../home.php?msg_c=$msg");
+				exit();
+			}
+
+		} else {
+			$permissao = 1;
+			$msg = "Usuário funcionário não encontrado.";
+			header("Location: ../../home.php?msg_c=$msg");
+			exit();
+		}
+		mysqli_stmt_close($stmt1);
+
+	} else {
+		$permissao = 1;
+		$msg = "Erro ao consultar dados do usuário (STMT1).";
+		header("Location: ../../home.php?msg_c=$msg");
+		exit();
+	}
+	
 	require_once "../personalizacao_display.php";
 ?>
-
 
 <!doctype html>
 <html class="fixed">
