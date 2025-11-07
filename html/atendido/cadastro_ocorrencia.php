@@ -6,13 +6,13 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
     header("Location: " . WWW . "index.php");
     exit();
-}else{
+} else {
     session_regenerate_id();
 }
 
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 
-if(!$id_pessoa || $id_pessoa < 1){
+if (!$id_pessoa || $id_pessoa < 1) {
     http_response_code(400);
     echo json_encode(['erro' => 'O id do usuário é inválido.']);
     exit();
@@ -86,6 +86,7 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
     <script src="<?php echo WWW; ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+
 
     <!-- Specific Page Vendor -->
     <script src="<?php echo WWW; ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
@@ -467,17 +468,15 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                                             <h2 class="panel-title">Informações </h2>
                                         </header>
                                         <div class="panel-body">
-                                                                                        <?php
-                                                if (session_status() === PHP_SESSION_NONE) {
-                                                    session_start();
-                                                }
-
-                                                if (isset($_SESSION['mensagem_erro'])) {
-                                                    echo '<div class="alert alert-danger">' . $_SESSION['mensagem_erro'] . '</div>';
-                                                    unset($_SESSION['mensagem_erro']);
-                                                }
-                                                ?>
-
+                                            <?php
+                                            if (isset($_SESSION['mensagem_erro'])) {
+                                                echo '<div class="alert alert-danger" style="position:relative; padding-right:25px;">';
+                                                echo $_SESSION['mensagem_erro'];
+                                                echo ' <a href="#" class="close" data-dismiss="alert" aria-label="close" style="position:absolute; top:5px; right:10px; font-size:20px; text-decoration:none;">×</a>';
+                                                echo '</div>';
+                                                unset($_SESSION['mensagem_erro']);
+                                            }
+                                            ?>
                                             <form class="form-horizontal" method="post" onsubmit="alertaBemSucedido()" action="../../controle/control.php" enctype="multipart/form-data">
                                                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                                                 <br>
