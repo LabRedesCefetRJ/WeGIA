@@ -68,7 +68,8 @@ class SinaisVitaisDAO
            
             
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            error_log('Error: na tabela saude_sinais_vitais = ' . $sql . ' | Erro=' . $e->getMessage());
+            throw $e;
         }
         
     }

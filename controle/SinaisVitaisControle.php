@@ -10,11 +10,14 @@ if(file_exists($config_path)){
     require_once($config_path);
 }
 
-//include_once "/dao/Conexao.php";
 require_once ROOT.'/classes/SinaisVitais.php';
 require_once ROOT.'/dao/SinaisVitaisDAO.php';
 include_once ROOT.'/classes/Cache.php';
 include_once ROOT."/dao/Conexao.php";
+
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
 class SinaisVitaisControle 
 {  
@@ -116,12 +119,15 @@ class SinaisVitaisControle
         $sinVitDAO = new SinaisVitaisDAO();
         
         try{
+            // Caminho de Sucesso (como estava no seu original)
             $intDAO=$sinVitDAO->incluir($sinaisvitais);
             $_SESSION['msg']="Ficha médica cadastrada com sucesso!";
             $_SESSION['proxima']="Cadastrar outra ficha.";
             $_SESSION['link']="../html/saude/cadastro_ficha_medica.php";
             header("Location: ../html/saude/sinais_vitais.php?id_fichamedica=".$id_fichamedica);
-        } catch (PDOException $e){
+            exit;
+
+        } catch (PDOException $e) {
             $msg= htmlspecialchars("Não foi possível registrar o paciente <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>"."<br>".$e->getMessage());
             echo $msg;
         }
