@@ -1,4 +1,5 @@
 <?php
+require_once ROOT . '/html/contribuicao/helper/Util.php';
 
 class Origem
 {
@@ -53,14 +54,21 @@ class Origem
         $this->nome = $nome;
     }
 
-    public function setCnpj($cnpj)
-    {
-        $this->cnpj = $cnpj;
+    public function setCnpj($cnpj) {
+        // Validar se o CNPJ possui um formato válido - Xablau
+        if (Util::validaEstruturaCnpj($cnpj) && Util::validaCnpj($cnpj)) {
+            $this->cnpj = $cnpj;
+        } else {
+            throw new Exception('CNPJ inválido');
+        }
     }
 
-    public function setCpf($cpf)
-    {
-        $this->cpf = $cpf;
+    public function setCpf($cpf) {
+        if (Util::validarCPF($cpf)) {
+            $this->cpf = $cpf;
+        } else {
+            throw new Exception('CPF inválido');
+        }
     }
 
     public function setTelefone($telefone)
