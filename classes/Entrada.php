@@ -110,46 +110,4 @@ class Entrada
     {
         $this->valor_total = $valor_total;
     }
-
-    /*
-    public function setId_entrada($id_entrada)
-    {
-        $this->id_entrada = $id_entrada;
-    }
-
-    public function set_origem($id_origem)
-    {
-        $this->id_origem = $id_origem;
-    }
-
-    public function set_almoxarifado($id_almoxarifado)
-    {
-        $this->id_almoxarifado = $id_almoxarifado;
-    }
-
-    public function set_tipo($id_tipo)
-    {
-        $this->id_tipo = $id_tipo;
-    }
-
-    public function set_responsavel($id_responsavel)
-    {
-        $this->id_responsavel = $id_responsavel;
-    }
-
-    public function setData($data)
-    {
-        $this->data = $data;
-    }
-
-    public function setHora($hora)
-    {
-        $this->hora = $hora;
-    }
-
-    public function setValor_total($valor_total)
-    {
-        $this->valor_total = $valor_total;
-    }
-    */
 }

@@ -68,31 +68,4 @@ class Ientrada
     {
         $this->valor_unitario = $valor_unitario;
     }
-
-    /*
-    public function setId_entrada($id_entrada)
-    {
-        $this->id_entrada = $id_entrada;
-    }
-
-    public function setId_produto($id_produto)
-    {
-        $this->id_produto = $id_produto;
-    }
-
-    public function setData($data)
-    {
-        $this->data = $data;
-    }
-
-    public function setQtd($qtd)
-    {
-        $this->qtd = $qtd;
-    }
-
-    public function setValor_unitario($valor_unitario)
-    {
-        $this->valor_unitario = $valor_unitario;
-    }
-    */
 }
