@@ -32,6 +32,7 @@ $tipo = $pdo->query("SELECT * FROM atendido_ocorrencia_tipos")->fetchAll(PDO::FE
 $recupera_id_funcionario = $pdo->query("SELECT id_funcionario FROM funcionario WHERE id_pessoa=" . $id_pessoa . ";")->fetchAll(PDO::FETCH_ASSOC);
 $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
 
+
 ?>
 
 <!DOCTYPE html>
@@ -371,9 +372,9 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
             })
         }
 
-        function alertaBemSucedido() {
-            alert("Cadastro de ocorrência bem sucedido")
-        }
+        //function alertaBemSucedido() {
+        //    alert("Cadastro de ocorrência bem sucedido")
+        //}
     </script>
 
 
@@ -466,7 +467,16 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                                             <h2 class="panel-title">Informações </h2>
                                         </header>
                                         <div class="panel-body">
+                                                                                        <?php
+                                                if (session_status() === PHP_SESSION_NONE) {
+                                                    session_start();
+                                                }
 
+                                                if (isset($_SESSION['mensagem_erro'])) {
+                                                    echo '<div class="alert alert-danger">' . $_SESSION['mensagem_erro'] . '</div>';
+                                                    unset($_SESSION['mensagem_erro']);
+                                                }
+                                                ?>
 
                                             <form class="form-horizontal" method="post" onsubmit="alertaBemSucedido()" action="../../controle/control.php" enctype="multipart/form-data">
                                                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
