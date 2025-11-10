@@ -57,7 +57,7 @@ class Atendido_ocorrenciaDAO
         try {
             $Despachos = array();
             $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT arquivo FROM atendido_ocorrencia_doc  WHERE idatendido_ocorrencia_doc=$id_memorando");
+            $consulta = $pdo->query("SELECT arquivo FROM atendido_ocorrencia_doc  WHERE idatendido_ocorrencia_doc = $id_ocorrencia");
             $x = 0;
 
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
@@ -72,32 +72,56 @@ class Atendido_ocorrenciaDAO
 
 
     public function incluir($ocorrencia)
-    {
-        try {
-            $sql = "INSERT INTO `atendido_ocorrencia` (`idatendido_ocorrencias`, `atendido_idatendido`, `atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos`, `funcionario_id_funcionario`, `data`, `descricao`) values (default, :atendido_idatendido, :id_tipos_ocorrencia, :funcionario_idfuncionario, :datao, :descricao)";
-            //$sql = str_replace("'", "\'", $sql); 
-            $pdo = Conexao::connect();
-            $stmt = $pdo->prepare($sql);
-            // $idatendido_ocorrencias=$ocorrencia->getIdatendido_ocorrencias();
-            $atendido_idatendido = $ocorrencia->getAtendido_idatendido();
-            $id_tipos_ocorrencia = $ocorrencia->getId_tipos_ocorrencia();
-            $funcionario_idfuncionario = $ocorrencia->getFuncionario_idfuncionario();
-            $datao = $ocorrencia->getData();
-            $descricao = $ocorrencia->getDescricao();
+{
+    try {
+        $pdo = Conexao::connect();
 
+        $atendido_idatendido = $ocorrencia->getAtendido_idatendido();
+        $id_tipos_ocorrencia = $ocorrencia->getId_tipos_ocorrencia();
 
-            $stmt->bindParam(':descricao', $descricao);
-            $stmt->bindParam(':atendido_idatendido', $atendido_idatendido);
-            $stmt->bindParam(':funcionario_idfuncionario', $funcionario_idfuncionario);
-            $stmt->bindParam(':id_tipos_ocorrencia', $id_tipos_ocorrencia);
-            // $stmt->bindParam(':idatendido_ocorrencias',$id_atendido_ocorrencias);
-            $stmt->bindParam(':datao', $datao);
-            // $stmt->bindParam(':nome',$nome);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+        // Verifica se já existe falecimento para este atendido
+        if ($id_tipos_ocorrencia == 2) {
+            $stmtVerifica = $pdo->prepare("SELECT COUNT(*) FROM atendido_ocorrencia WHERE atendido_idatendido = :idAtendido AND atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = 2");
+            $stmtVerifica->execute([':idAtendido' => $atendido_idatendido]);
+            $count = $stmtVerifica->fetchColumn();
+
+            if ($count > 0) {
+                header('Location: ../html/atendido/cadastro_ocorrencia.php');
+                $_SESSION['mensagem_erro'] = "Já existe uma ocorrência de falecimento registrada para este atendido.";
+                exit;
+            }
         }
+
+        // Continuação da inserção
+        $sql = "INSERT INTO atendido_ocorrencia 
+                (atendido_idatendido, atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos, funcionario_id_funcionario, data, descricao) 
+                VALUES (:atendido_idatendido, :id_tipos_ocorrencia, :funcionario_idfuncionario, :datao, :descricao)";
+
+        $stmt = $pdo->prepare($sql);
+
+        $funcionario_idfuncionario = $ocorrencia->getFuncionario_idfuncionario();
+        $datao = $ocorrencia->getData();
+        $descricao = $ocorrencia->getDescricao();
+
+        $stmt->bindParam(':descricao', $descricao);
+        $stmt->bindParam(':atendido_idatendido', $atendido_idatendido);
+        $stmt->bindParam(':funcionario_idfuncionario', $funcionario_idfuncionario);
+        $stmt->bindParam(':id_tipos_ocorrencia', $id_tipos_ocorrencia);
+        $stmt->bindParam(':datao', $datao);
+
+        $stmt->execute();
+
+    } catch (PDOException $e) {
+        header('Location: formulario_ocorrencia.php');
+        $_SESSION['mensagem_erro'] = 'Erro no banco de dados: ' . $e->getMessage();
+        exit;
+    } catch (Exception $e) {
+        $_SESSION['mensagem_erro'] = 'Erro: ' . $e->getMessage();
+        header('Location: formulario_ocorrencia.php');
+        exit;
     }
+
+}
 
     public function incluirArquivos($arquivos){
 
