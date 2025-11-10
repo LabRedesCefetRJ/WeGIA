@@ -128,6 +128,7 @@ class SinaisVitaisControle
             exit;
 
         } catch (PDOException $e) {
+            error_log('Error: na tabela saude_sinais_vitais, Erro=' . $e->getMessage());
             $msg= htmlspecialchars("Não foi possível registrar o paciente <form> <input type='button' value='Voltar' onClick='history.go(-1)'> </form>"."<br>".$e->getMessage());
             echo $msg;
         }
