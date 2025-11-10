@@ -1,8 +1,9 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
-require_once '../../classes/session.php';
 require_once './MedicamentoControle.php';
-header( "Content-Type: application/json;charset=UTF-8" );
+header("Content-Type: application/json;charset=UTF-8");
 
 $c = new MedicamentoControle();
 
