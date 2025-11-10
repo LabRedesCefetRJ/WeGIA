@@ -64,8 +64,6 @@ class SinaisVitaisDAO
         $stmt->bindParam(':hgt',$hgt);
         $stmt->bindParam(':observacao', $observacao);
         $stmt->execute();
-        
     }
-    
 }
-error_log('Error: na tabela saude_sinais_vitais = ' . $sql . ' | Erro=' . $e->getMessage());
+
