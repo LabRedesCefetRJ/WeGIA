@@ -24,6 +24,7 @@
             $dados = json_decode(file_get_contents('php://input'), true);
 
             if (!$dados) {
+                http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Dados inválidos"]);
                 exit;
             }
@@ -46,12 +47,7 @@
                 $id_funcionario = $FuncionarioDAO->getIdFuncionarioComIdPessoa($id_pessoa_funcionario);
                 
                 if(!$id_funcionario){
-                    http_response_code(400);
-                    echo json_encode([
-                        "status" => "erro",
-                        "mensagem" => "Erro ao registrar aplicação: Funcionário não encontrado."
-                    ]);
-                    exit;
+                    throw new Exception("Funcionário não encontrado. ID pessoa: $id_pessoa_funcionario", 404);
                 }
 
                 $MedicamentosPacienteDAO = new MedicamentoPacienteDAO;
@@ -63,7 +59,18 @@
                     "mensagem" => "Aplicação registrada com sucesso"
                 ]);
 
+            } catch (InvalidArgumentException $e) {
+                http_response_code(400);
+                echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
+            } catch (PDOException $e){
+                // Erro de Banco de Dados
+                http_response_code(500); 
+                echo json_encode([
+                    'status' => 'erro',
+                    'mensagem' => "Erro ao registrar aplicação (BD): " . $e->getMessage()
+                ]);
             } catch (Exception $e){
+                // Erro de lógica ou outro tipo de exceção
                 $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
                 http_response_code($codigo);
                 echo json_encode([
@@ -91,6 +98,16 @@
                 }
                 echo json_encode($aplicacoes); 
 
+            } catch (InvalidArgumentException $e) {
+                http_response_code(400);
+                echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
+            } catch (PDOException $e){
+                // Erro de Banco de Dados
+                http_response_code(500);
+                echo json_encode([
+                    'status' => 'erro',
+                    'mensagem' => 'Erro ao listar medicamentos aplicados (BD): ' . $e->getMessage()
+                ]);
             } catch (Exception $e) {
                 $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
                 http_response_code($codigo);
@@ -149,11 +166,11 @@
                     $id_pessoa_paciente
                 );
                 
-                if (!is_numeric($novo_id_atendimento)) {
-                    throw new Exception("Erro ao criar atendimento: " . $novo_id_atendimento, 500);
+                if (!is_numeric($novo_id_atendimento) || $novo_id_atendimento <= 0) {
+                    throw new Exception("Falha ao obter ID do atendimento recém-criado.", 500);
                 }
 
-                $sucesso_medicacao = $MedicamentosPacienteDAO->cadastrarMedicamentoSos(
+                $MedicamentosPacienteDAO->cadastrarMedicamentoSos(
                     $novo_id_atendimento,
                     $medicamento,
                     $dosagem,
@@ -162,10 +179,6 @@
                     (int)$status_id
                 );
                 
-                if ($sucesso_medicacao !== true) {
-                    throw new Exception("Erro ao cadastrar medicação: " . $sucesso_medicacao, 500);
-                }
-
                 $MedicamentosPacienteDAO->commit();
 
                 http_response_code(201); 
@@ -175,9 +188,21 @@
                     "id_atendimento_criado" => $novo_id_atendimento
                 ]);
 
+            } catch (InvalidArgumentException $e) {
+                $MedicamentosPacienteDAO->rollBack();
+                http_response_code(400);
+                echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
+            } catch (PDOException $e) {
+                $MedicamentosPacienteDAO->rollBack();
+                // Erro de Banco de Dados
+                http_response_code(500);
+                echo json_encode([
+                    'status' => 'erro',
+                    'mensagem' => 'Erro de BD durante transação: ' . $e->getMessage()
+                ]);
             } catch (Exception $e) {
                 $MedicamentosPacienteDAO->rollBack();
-                
+                // Erro de lógica ou outro tipo de exceção
                 $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
                 http_response_code($codigo);
                 echo json_encode([
