@@ -708,7 +708,7 @@ $dependente = json_encode($dependente);
                   <a href="#arquivo" data-toggle="tab">Arquivos</a>
                 </li>
                 <li>
-                  <a href="#familiares" data-toggle="tab">Familiares</a>
+                  <a href="#familiares" data-toggle="tab">Composição Familiar</a>
                 </li>
                 <li>
                   <a href="#ocorrencias" data-toggle="tab">Ocorrências</a>
@@ -957,14 +957,14 @@ $dependente = json_encode($dependente);
 
                   </div>
 
-                  <!-- familiares -->
+                  <!-- Composição Familiar -->
                   <div id="familiares" class="tab-pane">
                     <section class="panel">
                       <header class="panel-heading">
                         <div class="panel-actions">
                           <a href="#" class="fa fa-caret-down"></a>
                         </div>
-                        <h2 class="panel-title">Familiares</h2>
+                        <h2 class="panel-title">Composição Familiar</h2>
                       </header>
                       <div class="panel-body">
                         <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
@@ -983,16 +983,16 @@ $dependente = json_encode($dependente);
                         <br>
                         <!-- Button trigger modal -->
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#depFormModal">
-                          Adicionar Familiar
+                          Adicionar Membro
                         </button>
                       </div>
 
-                      <!-- Modal Form Familiares -->
+                      <!-- Modal Form Composição Familiar -->
                       <div class="modal fade" id="depFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">
                           <div class="modal-content">
                             <div class="modal-header" style="display: flex;justify-content: space-between;">
-                              <h5 class="modal-title" id="exampleModalLabel">Adicionar Familiar</h5>
+                              <h5 class="modal-title" id="exampleModalLabel">Adicionar Membro à Composição Familiar</h5>
                               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                               </button>
