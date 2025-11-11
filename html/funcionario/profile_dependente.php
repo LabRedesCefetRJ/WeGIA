@@ -25,10 +25,11 @@ try {
         exit('O id do dependente informado não é válido.');
     }
 
-    $sql = 'SELECT *, par.descricao AS parentesco
+    $sql = 'SELECT *, par.descricao AS parentesco, p2.nome as nome_funcionario, p2.sobrenome as sobrenome_funcionario
     FROM funcionario_dependentes fdep
     LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
     LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
+    JOIN funcionario f ON (fdep.id_funcionario=f.id_funcionario) JOIN pessoa p2 ON (f.id_pessoa=p2.id_pessoa)
     WHERE fdep.id_dependente = :id_dependente';
 
     $stmt = $pdo->prepare($sql);

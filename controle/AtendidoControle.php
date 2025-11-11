@@ -31,7 +31,7 @@ class AtendidoControle
     public function verificar()
     {
         extract($_REQUEST);
-        if ((!isset($cpf)) || (empty($cpf))) {
+        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf = '0' )) {
             $msg .= "cpf do atendido não informado. Por favor, informe o cpf!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -47,7 +47,7 @@ class AtendidoControle
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
         }
-        if ((!isset($nascimento)) || (empty($nascimento))) {
+        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf = '0' )) {
             $msg .= "Nascimento do atendido não informado. Por favor, informe a data!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -322,16 +322,33 @@ class AtendidoControle
 
     public function incluir()
     {
-        $atendido = $this->verificar();
-        $cpf = $_GET['cpf'];
-        $validador = new Util();
-
         try {
-            if (!$validador->validarCPF($cpf))
-                throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+            $atendido = $this->verificar();
+            $cpf = $_GET['cpf'];
+            $validador = new Util();
 
-            if ($atendido->getDataNascimento() > Atendido::getDataNascimentoMaxima() || $atendido->getDataNascimento() < Atendido::getDataNascimentoMinima())
-                throw new InvalidArgumentException('Erro, a data de nascimento informada está fora dos limites permitidos.', 400);
+            $pdo = Conexao::connect();
+
+            if (!empty($cpf)) {
+                $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
+                $stmt->execute([$cpf]);
+                $count = $stmt->fetchColumn();
+
+                if ($count > 0) {
+                    throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
+                }
+            }
+
+            if (!$validador->validarCPF($cpf)) {
+                throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+            }
+
+            $dataNascimento = $atendido->getDataNascimento();
+            if (!empty($dataNascimento)) {
+                if ($dataNascimento > Atendido::getDataNascimentoMaxima() || $dataNascimento < Atendido::getDataNascimentoMinima()) {
+                    throw new InvalidArgumentException('Erro, a data de nascimento informada está fora dos limites permitidos.', 400);
+                }
+            }
 
             $intDAO = new AtendidoDAO();
 
@@ -339,12 +356,32 @@ class AtendidoControle
             $_SESSION['msg'] = "Atendido cadastrado com sucesso";
             $_SESSION['proxima'] = "Cadastrar outro atendido";
             $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
-
             header("Location: ../html/atendido/Informacao_Atendido.php");
+        } catch (PDOException $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function incluirSemCpf()
+    {
+        try {
+            $atendido = $this->verificar();  // Extrai dados do formulário
+            // Passa o CPF vazio ou NULL
+            $cpf = null;
+
+            $intDAO = new AtendidoDAO();
+
+            $intDAO->incluir($atendido, $cpf);
+            $_SESSION['msg'] = "Atendido cadastrado sem CPF com sucesso";
+            header('Location: ../html/atendido/Informacao_Atendido.php');
+            exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
+
+
+
 
     public function incluirExistente()
     {
@@ -481,7 +518,7 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
-            if(!$idatendido || $idatendido < 1)
+            if (!$idatendido || $idatendido < 1)
                 throw new InvalidArgumentException('O id do atendido informado não é válido.', 412);
 
             $img = file_get_contents($_FILES['imgperfil']['tmp_name']);

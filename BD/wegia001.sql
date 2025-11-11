@@ -43,7 +43,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `id_pessoa` INT(11) NOT NULL AUTO_INCREMENT,
-  `cpf` VARCHAR(120) NOT NULL,
+  `cpf` VARCHAR(120) NULL,
   `senha` VARCHAR(70) NULL DEFAULT NULL,
   `nome` VARCHAR(100) NULL DEFAULT NULL,
   `sobrenome` VARCHAR(100) NULL DEFAULT NULL,
@@ -67,7 +67,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `tipo_sanguineo` VARCHAR(5) NULL DEFAULT NULL,
   `nivel_acesso` TINYINT(4) NULL DEFAULT '0',
   `adm_configurado` TINYINT(4) NULL DEFAULT '0',
-  UNIQUE INDEX (`cpf` ASC),
   PRIMARY KEY (`id_pessoa`))
 ENGINE = InnoDB;
 
@@ -995,32 +994,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`endereco_instituicao` (
   `ibge` VARCHAR(256) NOT NULL,
   PRIMARY KEY (`id_inst`))
 ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS `recibo_emitido` (
-  `id_recibo` INT(11) NOT NULL AUTO_INCREMENT,
-  `codigo` VARCHAR(64) NOT NULL,
-  `id_socio` INT(11) NOT NULL,
-  `email` VARCHAR(256) NULL DEFAULT NULL,
-  `data_inicio` DATE NOT NULL,
-  `data_fim` DATE NOT NULL,
-  `valor_total` DECIMAL(10,2) NOT NULL,
-  `total_contribuicoes` INT NOT NULL,
-  `data_geracao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `caminho_pdf` VARCHAR(512) NOT NULL,
-
-  PRIMARY KEY (`id_recibo`),
-
-  INDEX `fk_recibo_emitido_socio_idx` (`id_socio` ASC),
-
-  CONSTRAINT `fk_recibo_emitido_socio`
-    FOREIGN KEY (`id_socio`)
-    REFERENCES `socio` (`id_socio`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
-)
-ENGINE = InnoDB
-DEFAULT CHARSET = utf8mb4
-COLLATE = utf8mb4_unicode_ci;
 
 -- -------------------------------------------------------
 -- Table `wegia`.`remessa`

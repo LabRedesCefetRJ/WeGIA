@@ -2,6 +2,10 @@
 require_once "../personalizacao_display.php";
 require_once "../../classes/Atendido.php";
 session_start();
+$semCpf = isset($_GET['semCpf']) && $_GET['semCpf'] == '1';
+$cpf = isset($_GET['cpf']) ? $_GET['cpf'] : '';
+$statusInativoId = 1; // Ajuste para o ID correto do status "Inativo" no seu banco
+
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
 }
@@ -293,12 +297,19 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 											<input type="text" class="form-control" name="nome" id="nome" id="profileFirstName" onkeypress="return Onlychars(event)" required>
 										</div>
 									</div>
-									<div class="form-group">
-										<label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
-										<div class="col-md-6">
-											<input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required>
+										<div class="form-group">
+											<label class="col-md-3 control-label">
+												Sobrenome
+												<?php if (!$semCpf): ?>
+													<sup class="obrig">*</sup>
+												<?php endif; ?>
+											</label>
+											<div class="col-md-6">
+											<input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)"
+												<?php if (!$semCpf) echo 'required'; ?>
+												value="<?php echo isset($sobrenome) ? htmlspecialchars($sobrenome) : ''; ?>">
+											</div>
 										</div>
-									</div>
 									<div class="form-group">
 										<label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
 										<div class="col-md-6">
@@ -313,14 +324,28 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 									<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" id="profileCompany" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
 								</div>
 							</div>
-
 							<div class="form-horizontal form-group">
-								<label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
+								<label class="col-md-3 control-label" for="nascimento">
+									Nascimento
+									<?php if (!$semCpf): ?>
+										<sup class="obrig">*</sup>
+									<?php endif; ?>
+								</label>
 								<div class="col-md-6">
-									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" min=<?= $dataNascimentoMinima ?> max=<?= $dataNascimentoMaxima ?> required>
+									<input 
+										type="date" 
+										placeholder="dd/mm/aaaa" 
+										maxlength="10" 
+										class="form-control" 
+										name="nascimento" 
+										id="nascimento" 
+										min="<?= $dataNascimentoMinima ?>" 
+										max="<?= $dataNascimentoMaxima ?>" 
+										<?php if (!$semCpf) echo 'required'; ?> 
+										value="<?php echo isset($nascimento) ? htmlspecialchars($nascimento) : ''; ?>"
+									>
 								</div>
 							</div>
-
 							<div class="form-horizontal form-group">
 								<label class="col-md-3 control-label" for="inputSuccess">Status<sup class="obrig">*</sup></label>
 								<a onclick="adicionar_status()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
@@ -356,7 +381,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
 								<div class="col-md-4">
-									<input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?php echo htmlspecialchars($cpf) ?>" disabled>
+									<input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= isset($cpf) ? htmlspecialchars($cpf) : '' ?>" disabled>
 								</div>
 
 							</div>
@@ -372,9 +397,12 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 								<div class="row">
 									<div class="col-md-9 col-md-offset-3">
 										<input type="hidden" name="nomeClasse" value="AtendidoControle">
-										<input type="hidden" name="cpf" value="<?php echo htmlspecialchars($cpf) ?>">
+										<input type="hidden" name="cpf" value="<?= isset($cpf) ? htmlspecialchars($cpf) : '' ?>">
 										<input type="hidden" name="metodo" value="incluir">
 										<input id="enviar" type="submit" class="btn btn-primary" value="Enviar" onclick="validarInterno()">
+										<input type="hidden" name="nomeClasse" value="AtendidoControle">
+										<input type="hidden" name="semCpf" value="<?php echo $semCpf ? '1' : '0'; ?>">
+										<input type="hidden" name="metodo" value="<?php echo $semCpf ? 'incluirSemCpf' : 'incluir'; ?>">
 									</div>
 								</div>
 							</div>

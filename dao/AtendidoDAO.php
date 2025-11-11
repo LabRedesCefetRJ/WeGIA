@@ -51,28 +51,48 @@ class AtendidoDAO
 
     public function incluir($atendido, $cpf)
     {
-        $sql = "call cadatendido(:strNome,:strSobrenome,:strCpf,:strSexo,:strTelefone,:dateNascimento, :intStatus, :intTipo)";
         $pdo = Conexao::connect();
-        $stmt = $pdo->prepare($sql);
+
+        // Inserção na tabela pessoa
+        $sqlPessoa = "INSERT INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento) 
+                  VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :dataNascimento)";
+        $stmtPessoa = $pdo->prepare($sqlPessoa);
 
         $nome = $atendido->getNome();
         $sobrenome = $atendido->getSobrenome();
-        $cpf = $atendido->getCpf();
+        //$cpf = $atendido->getCpf();
         $sexo = $atendido->getSexo();
         $telefone = $atendido->getTelefone();
         $dataNascimento = $atendido->getDataNascimento();
+        if (empty($dataNascimento)) {
+            $dataNascimento = null; // permite nulo
+        }
+
+        $stmtPessoa->bindParam(':cpf', $cpf);
+        $stmtPessoa->bindParam(':nome', $nome);
+        $stmtPessoa->bindParam(':sobrenome', $sobrenome);
+        $stmtPessoa->bindParam(':sexo', $sexo);
+        $stmtPessoa->bindParam(':telefone', $telefone);
+        $stmtPessoa->bindParam(':dataNascimento', $dataNascimento);
+
+        $stmtPessoa->execute();
+
+        // Obtém o último id inserido em pessoa
+        $idPessoa = $pdo->lastInsertId();
+
+        // Inserção na tabela atendido
+        $sqlAtendido = "INSERT INTO atendido (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
+                    VALUES (:pessoaId, :tipo, :status)";
+        $stmtAtendido = $pdo->prepare($sqlAtendido);
+
         $intTipo = $atendido->getIntTipo();
         $intStatus = $atendido->getIntStatus();
 
-        $stmt->bindParam(':strNome', $nome);
-        $stmt->bindParam(':strSobrenome', $sobrenome);
-        $stmt->bindParam(':strCpf', $cpf);
-        $stmt->bindParam(':strSexo', $sexo);
-        $stmt->bindParam(':strTelefone', $telefone);
-        $stmt->bindParam(':dateNascimento', $dataNascimento);
-        $stmt->bindParam(':intStatus', $intStatus);
-        $stmt->bindParam(':intTipo', $intTipo);
-        $stmt->execute();
+        $stmtAtendido->bindParam(':pessoaId', $idPessoa);
+        $stmtAtendido->bindParam(':tipo', $intTipo);
+        $stmtAtendido->bindParam(':status', $intStatus);
+
+        $stmtAtendido->execute();
     }
     // incluirExistente
 
