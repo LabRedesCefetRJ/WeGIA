@@ -374,7 +374,7 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
       var cpf_funcionario_correto2 = cpf_funcionario_correto1.replace(".", "");
       var cpf_funcionario_correto3 = cpf_funcionario_correto2.replace("-", "");
       var apoio = 0;
-      //var cpfs1 = <?php echo $_SESSION['cpf_interno']; ?>;
+
       $.each(cpfs, function(i, item) {
         if (item.cpf == cpf_funcionario_correto3) {
           alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
@@ -390,7 +390,6 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
 
     function validarFuncionario() {
       var btn = $("#enviar");
-      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo $_SESSION['cpf_interno']; ?>);
       var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>);
       var cpf = (($("#cpf").val()).replaceAll(".", "")).replaceAll("-", "");
       console.log(this);

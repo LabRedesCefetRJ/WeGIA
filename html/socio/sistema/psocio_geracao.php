@@ -7,9 +7,6 @@
     if(!isset($_SESSION['usuario'])) header("Location: ../erros/login_erro/");
     $id = $_SESSION['usuario'];
     $id_pessoa = $_SESSION['id_pessoa'];
-	$resultado = mysqli_query($conexao, "SELECT `imagem`, `nome` FROM `pessoa` WHERE id_pessoa=$id_pessoa");
-    $pessoa = mysqli_fetch_array($resultado);
-    $nome = $pessoa['nome'];
 
 	$config_path = "config.php";
 	if(file_exists($config_path)){

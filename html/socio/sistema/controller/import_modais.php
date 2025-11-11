@@ -505,7 +505,6 @@ try {
                   $nome_s = htmlspecialchars($resultado['nome']);
                   $email = htmlspecialchars($resultado['email']);
                   $telefone = htmlspecialchars($resultado['telefone']);
-                  $tipo_socio = htmlspecialchars($resultado['tipo']);
                   $data_nascimento = explode('-', $resultado['data_nascimento']);
                   $dataFormatada = $data_nascimento['2'].'/'.$data_nascimento['1'];
                   $idade = intval($ano_atual - $data_nascimento['0']);

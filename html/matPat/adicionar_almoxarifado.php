@@ -1,7 +1,8 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE) 
 	session_start();
-}
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: " . WWW . "html/index.php");
@@ -143,7 +144,7 @@ require_once "../personalizacao_display.php";
 									<fieldset>
 										<form method="post" id="formulario" action="<?= WWW ?>controle/control.php">
 											<?php
-											if ($permissao == 1) {
+											if (isset($permissao) && $permissao == 1) {
 												echo ($msg);
 											} else {
 											?>

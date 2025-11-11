@@ -8,7 +8,9 @@ function gerarTabelaMemorando($despachos, $anexos){
         $id = $despacho->id;
         $remetente = $despacho->remetente;
         $destinatario = $despacho->destinatario;
-        $data = $despacho->data;
+        $dataSeparada = explode('-', $despacho->data);
+        $diaHora = explode(' ', $dataSeparada[2]);
+        $data = "{$diaHora[0]}/{$dataSeparada[1]}/{$dataSeparada[0]} às {$diaHora[1]}";
         $texto = $despacho->texto;
         $tabela .= "<table class='table table-bordered table-striped mb-none'>";
         

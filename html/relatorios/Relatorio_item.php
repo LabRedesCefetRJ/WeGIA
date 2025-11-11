@@ -138,6 +138,7 @@ class Item
     }
 
 
+    //analisar método
     private function saida()
     {
         if ($this->hasValue()) {
@@ -203,18 +204,18 @@ class Item
         } else {
             $this->setQuery("
                 SELECT 
-                    SUM(ientrada.qtd) as qtd_total, 
+                    SUM(isaida.qtd) as qtd_total, 
                     produto.descricao, 
-                    SUM(ientrada.qtd*ientrada.valor_unitario) as valor_total, 
-                    ientrada.valor_unitario, 
-                    entrada.data as data,
+                    SUM(isaida.qtd*isaida.valor_unitario) as valor_total, 
+                    isaida.valor_unitario, 
+                    saida.data as data,
                     unidade.descricao_unidade as unidade
-                FROM ientrada 
-                LEFT JOIN produto ON produto.id_produto = ientrada.id_produto 
-                LEFT JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
+                FROM isaida 
+                LEFT JOIN produto ON produto.id_produto = isaida.id_produto 
+                LEFT JOIN saida ON saida.id_saida = isaida.id_saida
                 LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
-                WHERE ientrada.qtd > 0 AND ientrada.oculto = false
-                GROUP BY concat(ientrada.id_produto, ientrada.valor_unitario)
+                WHERE isaida.qtd > 0 AND isaida.oculto = false
+                GROUP BY concat(isaida.id_produto, isaida.valor_unitario)
                 ORDER BY produto.descricao
             ");
         }
@@ -352,6 +353,7 @@ class Item
             $pdo->exec($this->getDDL_cmd());
         }
 
+        //echo $this->getQuery();exit();
         $res = $pdo->prepare($this->getQuery());
 
         foreach ($this->paramsExternos as $key => $value) {

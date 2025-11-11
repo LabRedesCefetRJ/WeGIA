@@ -43,7 +43,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `id_pessoa` INT(11) NOT NULL AUTO_INCREMENT,
-  `cpf` VARCHAR(120) NOT NULL,
+  `cpf` VARCHAR(120) NULL,
   `senha` VARCHAR(70) NULL DEFAULT NULL,
   `nome` VARCHAR(100) NULL DEFAULT NULL,
   `sobrenome` VARCHAR(100) NULL DEFAULT NULL,
@@ -67,7 +67,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `tipo_sanguineo` VARCHAR(5) NULL DEFAULT NULL,
   `nivel_acesso` TINYINT(4) NULL DEFAULT '0',
   `adm_configurado` TINYINT(4) NULL DEFAULT '0',
-  UNIQUE INDEX (`cpf` ASC),
   PRIMARY KEY (`id_pessoa`))
 ENGINE = InnoDB;
 
@@ -996,34 +995,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`endereco_instituicao` (
   PRIMARY KEY (`id_inst`))
 ENGINE = InnoDB;
 
--- Em desuso devido ao novo módulo contribuicao
--- -----------------------------------------------------
--- Table `wegia`.`cobrancas`
--- -----------------------------------------------------
--- CREATE TABLE IF NOT EXISTS `wegia`.`cobrancas` (
---   `id` INT NOT NULL AUTO_INCREMENT,
---   `codigo` INT NULL DEFAULT NULL,
---   `descricao` VARCHAR(255) NULL DEFAULT NULL,
---   `data_emissao` DATE NULL DEFAULT NULL,
---   `data_vencimento` DATE NULL DEFAULT NULL,
---   `data_pagamento` DATE NULL DEFAULT NULL,
---   `valor` DECIMAL(10,2) NULL DEFAULT NULL,
---   `valor_pago` DECIMAL(10,2) NULL DEFAULT NULL,
---   `status` VARCHAR(255) NULL DEFAULT NULL,
---   `link_cobranca` VARCHAR(255) NULL DEFAULT NULL,
---   `link_boleto` VARCHAR(255) NULL DEFAULT NULL,
---   `linha_digitavel` VARCHAR(255) NULL DEFAULT NULL,
---   `id_socio` INT NULL DEFAULT NULL,
---   PRIMARY KEY (`id`),
---   UNIQUE INDEX (`codigo` ASC),
---   INDEX `fk_cobranca_socio` (`id_socio` ASC),
---   CONSTRAINT `fk_cobranca_socio`
---     FOREIGN KEY (`id_socio`)
---     REFERENCES `wegia`.`socio` (`id_socio`)
---     ON DELETE RESTRICT
---     ON UPDATE RESTRICT)
--- ENGINE = InnoDB;
-
 -- -------------------------------------------------------
 -- Table `wegia`.`remessa`
 -- -------------------------------------------------------
@@ -1675,6 +1646,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_sinais_vitais` (
   `frequencia_respiratoria` INT(5) NULL DEFAULT NULL,
   `temperatura` DECIMAL(7,2) NULL DEFAULT NULL,
   `hgt` DECIMAL(7,2) NULL DEFAULT NULL,
+  `observacao` VARCHAR(255) NULL DEFAULT NULL,
   PRIMARY KEY (`id_sinais_vitais`),
   INDEX `fk_saude_sinais_vitais_saude_fichamedica1_idx` (`id_fichamedica` ASC),
   INDEX `fk_saude_sinais_vitais_funcionario1_idx` (`id_funcionario` ASC),
@@ -2006,7 +1978,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`aviso`(
   `id_aviso` INT(11) NOT NULL AUTO_INCREMENT,
   `id_funcionario_aviso` INT(11) NOT NULL,
   `id_pessoa_atendida` INT(11) NOT NULL,
-  `descricao` VARCHAR(512) NOT NULL,
+  `descricao` VARCHAR(1024) NOT NULL,
   `data` DATETIME NOT NULL,
   PRIMARY KEY(`id_aviso`),
   FOREIGN KEY(`id_funcionario_aviso`)

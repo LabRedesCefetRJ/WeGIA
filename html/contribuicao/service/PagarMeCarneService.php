@@ -25,138 +25,121 @@ class PagarMeCarneService implements ApiCarneServiceInterface
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamento = $gatewayPagamentoDao->buscarPorId(1); //Pegar valor do id dinamicamente
 
-            //print_r($gatewayPagamento);
-        } catch (PDOException $e) {
-            //Implementar tratamento de erro
-            echo 'Erro: ' . $e->getMessage();
-        }
-
-        //Configurar cabeçalho da requisição
-        $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
-            'Content-Type: application/json;charset=utf-8',
-        ];
-
-        //Montar array de parcelas
-        $parcelas = [];
-
-        foreach ($contribuicaoLogCollection as $contribuicaoLog) {
-            //gerar um número para o documento
-            $numeroDocumento = Util::gerarNumeroDocumento(16);
-            $boleto = [
-                "items" => [
-                    [
-                        "amount" => $contribuicaoLog->getValor() * 100,
-                        "description" => "Donation",
-                        "quantity" => 1,
-                        "code" => $contribuicaoLog->getCodigo()
-                    ]
-                ],
-                "customer" => [
-                    "name" => $contribuicaoLog->getSocio()->getNome(),
-                    "email" => $contribuicaoLog->getSocio()->getEmail(),
-                    "document_type" => "CPF",
-                    "document" => $cpfSemMascara,
-                    "type" => "Individual",
-                    "address" => [
-                        "line_1" => $contribuicaoLog->getSocio()->getLogradouro() . ", n°" . $contribuicaoLog->getSocio()->getNumeroEndereco() . ", " . $contribuicaoLog->getSocio()->getBairro(),
-                        "line_2" => $contribuicaoLog->getSocio()->getComplemento(),
-                        "zip_code" => $contribuicaoLog->getSocio()->getCep(),
-                        "city" => $contribuicaoLog->getSocio()->getCidade(),
-                        "state" => $contribuicaoLog->getSocio()->getEstado(),
-                        "country" => "BR"
-                    ],
-                ],
-                "payments" => [
-                    [
-                        "payment_method" => "boleto",
-                        "boleto" => [
-                            "instructions" => $contribuicaoLog->getAgradecimento(),
-                            "document_number" => $numeroDocumento,
-                            "due_at" => $contribuicaoLog->getDataVencimento(),
-                            "type" => $type
-                        ]
-                    ]
-                ]
+            //Configurar cabeçalho da requisição
+            $headers = [
+                'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+                'Content-Type: application/json;charset=utf-8',
             ];
 
-            // Transformar o boleto em JSON e inserir no array de parcelas
-            $parcelas[] = json_encode($boleto);
-        }
+            //Montar array de parcelas
+            $parcelas = [];
 
-        //print_r($parcelas);
+            foreach ($contribuicaoLogCollection as $contribuicaoLog) {
+                //gerar um número para o documento
+                $numeroDocumento = Util::gerarNumeroDocumento(16);
+                $boleto = [
+                    "items" => [
+                        [
+                            "amount" => $contribuicaoLog->getValor() * 100,
+                            "description" => "Donation",
+                            "quantity" => 1,
+                            "code" => $contribuicaoLog->getCodigo()
+                        ]
+                    ],
+                    "customer" => [
+                        "name" => $contribuicaoLog->getSocio()->getNome(),
+                        "email" => $contribuicaoLog->getSocio()->getEmail(),
+                        "document_type" => "CPF",
+                        "document" => $cpfSemMascara,
+                        "type" => "Individual",
+                        "address" => [
+                            "line_1" => $contribuicaoLog->getSocio()->getLogradouro() . ", n°" . $contribuicaoLog->getSocio()->getNumeroEndereco() . ", " . $contribuicaoLog->getSocio()->getBairro(),
+                            "line_2" => $contribuicaoLog->getSocio()->getComplemento(),
+                            "zip_code" => $contribuicaoLog->getSocio()->getCep(),
+                            "city" => $contribuicaoLog->getSocio()->getCidade(),
+                            "state" => $contribuicaoLog->getSocio()->getEstado(),
+                            "country" => "BR"
+                        ],
+                    ],
+                    "payments" => [
+                        [
+                            "payment_method" => "boleto",
+                            "boleto" => [
+                                "instructions" => $contribuicaoLog->getAgradecimento(),
+                                "document_number" => $numeroDocumento,
+                                "due_at" => $contribuicaoLog->getDataVencimento(),
+                                "type" => $type
+                            ]
+                        ]
+                    ]
+                ];
 
-        //Implementar requisição para API
-        $pdf_links = [];
-        $codigosAPI = [];
-
-        // Iniciar a requisição cURL
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $gatewayPagamento['endPoint']);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-        foreach ($parcelas as $boleto_json) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $boleto_json);
-
-            // Executar a requisição cURL
-            $response = curl_exec($ch);
-
-            // Lidar com a resposta da API (mesmo código de tratamento que você já possui)
-
-            // Verifica por erros no cURL
-            if (curl_errno($ch)) {
-                echo 'Erro na requisição: ' . curl_error($ch);
-                curl_close($ch);
-                return false;
+                // Transformar o boleto em JSON e inserir no array de parcelas
+                $parcelas[] = json_encode($boleto);
             }
 
-            // Obtém o código de status HTTP
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            //Implementar requisição para API
+            $pdf_links = [];
+            $codigosAPI = [];
 
-            // Fecha a conexão cURL
-            curl_close($ch);
+            // Iniciar a requisição cURL
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $gatewayPagamento['endPoint']);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-            // Verifica o código de status HTTP
-            if ($httpCode === 200 || $httpCode === 201) {
-                $responseData = json_decode($response, true);
-                $pdf_links[] = $responseData['charges'][0]['last_transaction']['pdf'];
-                $codigosAPI[] = $responseData['id'];
-            } else {
-                echo json_encode(['Erro' => 'A API retornou o código de status HTTP ' . $httpCode]);
-                return false;
-                // Verifica se há mensagens de erro na resposta JSON
-                $responseData = json_decode($response, true);
-                if (isset($responseData['errors'])) {
-                    //echo 'Detalhes do erro:';
-                    foreach ($responseData['errors'] as $error) {
-                        //echo '<br> ' . htmlspecialchars($error['message']);
-                    }
+            foreach ($parcelas as $boleto_json) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $boleto_json);
+
+                // Executar a requisição cURL
+                $response = curl_exec($ch);
+
+                // Verifica por erros no cURL
+                if (curl_errno($ch)) {
+                    curl_close($ch);
+                    throw new LogicException(curl_error($ch), 500);
+                }
+
+                // Obtém o código de status HTTP
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+                // Fecha a conexão cURL
+                curl_close($ch);
+
+                // Verifica o código de status HTTP
+                if ($httpCode === 200 || $httpCode === 201) {
+                    $responseData = json_decode($response, true);
+                    $pdf_links[] = $responseData['charges'][0]['last_transaction']['pdf'];
+                    $codigosAPI[] = $responseData['id'];
+                } else {
+                    throw new LogicException("A API retornou o código de status HTTP $httpCode", $httpCode);
                 }
             }
-        }
 
-        //Pega os códigos retornados pela API e atribuí na propriedade codigo das contribuicoes de contribuicaoLogCollection
-        foreach ($contribuicaoLogCollection as $index => $contribuicaoLog) {
-            $contribuicaoLog->setCodigo($codigosAPI[$index]);
-        }
+            //Pega os códigos retornados pela API e atribui na propriedade codigo das contribuicoes de contribuicaoLogCollection
+            foreach ($contribuicaoLogCollection as $index => $contribuicaoLog) {
+                $contribuicaoLog->setCodigo($codigosAPI[$index]);
+            }
 
-        //print_r($pdf_links);
-        $arquivos = $this->salvarTemp($pdf_links);
+            $arquivos = $this->salvarTemp($pdf_links);
 
-        //guardar segunda via
-        $logArray = $contribuicaoLogCollection->getIterator()->getArrayCopy();
-        $ultimaParcela = end($logArray);
-        $caminho = $this->guardarSegundaVia($arquivos, $cpfSemMascara, $ultimaParcela);
-        $this->removerTemp();
+            //guardar segunda via
+            $logArray = $contribuicaoLogCollection->getIterator()->getArrayCopy();
+            $ultimaParcela = end($logArray);
+            $caminho = $this->guardarSegundaVia($arquivos, $cpfSemMascara, $ultimaParcela);
+            $this->removerTemp();
 
-        if (!$caminho || empty($caminho)) {
+            if (!$caminho || empty($caminho)) {
+                return false;
+            }
+
+            //Retorna o link e a coleção de contribuições
+            return ['link' => $caminho, 'contribuicoes' => $contribuicaoLogCollection];
+        } catch (Exception $e) {
+            Util::tratarException($e);
             return false;
         }
-
-        //Retorna o link e a coleção de contribuições
-        return ['link' => $caminho, 'contribuicoes' => $contribuicaoLogCollection];
     }
 
     public function salvarTemp($pdf_links)
@@ -195,8 +178,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
             // Verifica se ocorreu algum erro durante a execução do cURL
             if (curl_errno($ch)) {
-                echo json_encode('Erro ao baixar o arquivo.'); //. curl_error($ch) . PHP_EOL;
-                exit();
+                throw new LogicException('Erro ao estabelecer conexão para baixar o arquivo', 500);
             } else {
                 // Verifica o código de resposta HTTP
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -213,11 +195,10 @@ class PagarMeCarneService implements ApiCarneServiceInterface
                         file_put_contents($savePath, $fileContent);
                         $arquivos[] = $savePath;
                     } else {
-                        //echo "Erro: O conteúdo da URL não é um PDF." . PHP_EOL;
+                        throw new LogicException('Erro: O conteúdo da URL não é um PDF.', 400);
                     }
                 } else {
-                    echo json_encode("Erro ao baixar o arquivo: HTTP $httpCode");
-                    exit();
+                    throw new LogicException("Erro ao baixar o arquivo: HTTP $httpCode", $httpCode);
                 }
             }
 

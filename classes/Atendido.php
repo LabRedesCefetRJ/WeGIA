@@ -26,8 +26,11 @@ class Atendido extends Pessoa
         return $this->intTipo;
     }
    
-    public function setIdatendido($idatendido)
+    public function setIdatendido(int $idatendido)
     {
+        if(!$idatendido || $idatendido < 1)
+            throw new InvalidArgumentException('O id do atendido fornecido não é válido.', 412);
+
         $this->idatendido = $idatendido;
     }
 
@@ -58,7 +61,7 @@ class Atendido extends Pessoa
      * Retorna a data mínima de nascimento permitida para um atendido ser cadastrado no sistema
      */
     static public function getDataNascimentoMinima(){
-        $idadeMaxima = 120;
+        $idadeMaxima = 170;
         $data = date('Y-m-d', strtotime("-$idadeMaxima years"));
         return $data;
     }  

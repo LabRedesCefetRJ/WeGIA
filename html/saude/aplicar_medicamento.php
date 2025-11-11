@@ -1,79 +1,93 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-  session_start();
-}
+  if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+  }
 
-//Mudar para session
-if (!isset($_SESSION['usuario'])) {
-  header("Location: ../index.php");
-  exit();
-}
+  //Mudar para session
+  if (!isset($_SESSION['usuario'])) {
+    header("Location: ../index.php");
+    exit();
+  }
 
-$idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+  $idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
 
-if(!$idPessoa || $idPessoa < 1){
-  http_response_code(400);
-  echo json_encode(['erro' => 'O id do usuário não está dentro dos limites permitidos.']);
-  exit();
-}
+  if (!$idPessoa || $idPessoa < 1) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'O id do usuário não está dentro dos limites permitidos.']);
+    exit();
+  }
 
-if (!isset($_SESSION['id_fichamedica'])) {
-  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php');
-}
+  if (!isset($_SESSION['id_fichamedica'])) {
+    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php');
+  }
 
-//verificar se o usuário possui as permissões necessárias para acessar a página
-require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
-permissao($_SESSION['id_pessoa'], 5); 
+  //verificar se o usuário possui as permissões necessárias para acessar a página
+  require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+  permissao($_SESSION['id_pessoa'], 5);
 
-include_once '../../classes/Cache.php';
-require_once "../personalizacao_display.php";
+  include_once '../../classes/Cache.php';
+  require_once "../personalizacao_display.php";
 
-require_once ROOT . "/controle/SaudeControle.php";
+  require_once ROOT . "/controle/SaudeControle.php";
 
-$id = filter_input(INPUT_GET, 'id_fichamedica', FILTER_VALIDATE_INT);
+  $id = filter_input(INPUT_GET, 'id_fichamedica', FILTER_VALIDATE_INT);
 
-if(!$id || $id < 1){
-  http_response_code(400);
-  echo json_encode(['erro' => 'O id da ficha médica informado não está dentro dos limites permitidos.']);
-  exit();
-}
+  if (!$id || $id < 1) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'O id da ficha médica informado não está dentro dos limites permitidos.']);
+    exit();
+  }
+  
+  require_once "../../dao/Conexao.php";
+  $pdo = Conexao::connect();
+  
+  $stmtPessoaPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :id_fichamedica");
+  $stmtPessoaPaciente->bindValue(':id_fichamedica', $id, PDO::PARAM_INT);
+  $stmtPessoaPaciente->execute();
+  $paciente = $stmtPessoaPaciente->fetch(PDO::FETCH_ASSOC);
 
-$cache = new Cache();
-$teste = $cache->read($id);
-$_SESSION['id_upload_med'] = $id;
-require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
+  if (!$paciente || !isset($paciente['id_pessoa'])) {
+      http_response_code(404);
+      echo 'Ficha médica não encontrada ou não associada a uma pessoa.';
+      exit();
+  }
+  $idPessoaPaciente = $paciente['id_pessoa']; 
 
-if (!isset($teste)) {
-  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php?id_fichamedica=' . $id . '&id=' . $id);
-}
 
-$stmtExibirMedicamento = $pdo->prepare("SELECT * FROM saude_medicacao sm JOIN saude_atendimento sa ON(sm.id_atendimento=sa.id_atendimento) JOIN saude_fichamedica sf ON(sa.id_fichamedica=sf.id_fichamedica) WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1 and sf.id_fichamedica=:idFichaMedica");
+  $cache = new Cache();
+  $teste = $cache->read($id);
+  $_SESSION['id_upload_med'] = $id;
 
-$stmtExibirMedicamento->bindValue(':idFichaMedica', $id, PDO::PARAM_INT);
-$stmtExibirMedicamento->execute();
+  if (!isset($teste)) {
+    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php?id_fichamedica=' . $id . '&id=' . $id);
+  }
 
-$exibimedparaenfermeiro = json_encode($stmtExibirMedicamento->fetchAll(PDO::FETCH_ASSOC));
+  $stmtExibirMedicamento = $pdo->prepare("SELECT * FROM saude_medicacao sm JOIN saude_atendimento sa ON(sm.id_atendimento=sa.id_atendimento) JOIN saude_fichamedica sf ON(sa.id_fichamedica=sf.id_fichamedica) WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1 and sf.id_fichamedica=:idFichaMedica");
 
-$medicamentoenfermeiro = $pdo->query("SELECT * FROM saude_medicacao");
-$medstatus = $pdo->query("SELECT * FROM saude_medicacao_status");
+  $stmtExibirMedicamento->bindValue(':idFichaMedica', $id, PDO::PARAM_INT);
+  $stmtExibirMedicamento->execute();
 
-$stmtPessoa = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa ");
+  $exibimedparaenfermeiro = json_encode($stmtExibirMedicamento->fetchAll(PDO::FETCH_ASSOC));
 
-$stmtPessoa->bindValue(':idPessoa', $idPessoa);
+  $medicamentoenfermeiro = $pdo->query("SELECT * FROM saude_medicacao");
+  $medstatus = $pdo->query("SELECT * FROM saude_medicacao_status");
 
-$stmtPessoa->execute();
+  $stmtPessoa = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa ");
 
-$id_funcionario = $stmtPessoa->fetch(PDO::FETCH_ASSOC)['nome'];
+  $stmtPessoa->bindValue(':idPessoa', $idPessoa);
 
-$stmtProntuarioPublico = $pdo->prepare("SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica=:idFichaMedica");
+  $stmtPessoa->execute();
 
-$stmtProntuarioPublico->bindValue('idFichaMedica', $id);
-$stmtProntuarioPublico->execute();
+  $id_funcionario = $stmtPessoa->fetch(PDO::FETCH_ASSOC)['nome'];
 
-$prontuariopublico = json_encode($stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC));
+  $stmtProntuarioPublico = $pdo->prepare("SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica=:idFichaMedica");
 
-$dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+  $stmtProntuarioPublico->bindValue('idFichaMedica', $id);
+  $stmtProntuarioPublico->execute();
+
+  $prontuariopublico = json_encode($stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC));
+
+  $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -293,31 +307,31 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
       });
     }
 
-          function formatarDataHoraBr(data) {
+    function formatarDataHoraBr(data) {
 
-            data = data.split(" ");
+      data = data.split(" ");
 
-            const hour = data[1].split(":");
+      const hour = data[1].split(":");
 
-            const parts = data[0].split('-'); // Supondo que a data esteja no formato 'YYYY-MM-DD'
+      const parts = data[0].split('-'); // Supondo que a data esteja no formato 'YYYY-MM-DD'
 
-            // Converte para uma nova data no fuso horário local
-            const dataObj = new Date(parts[0], parts[1] - 1, parts[2], hour[0], hour[1], hour[2]);
+      // Converte para uma nova data no fuso horário local
+      const dataObj = new Date(parts[0], parts[1] - 1, parts[2], hour[0], hour[1], hour[2]);
 
-            const options  = {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            };
-              const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-              });
-              const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+      const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      };
+      const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
 
-            return `${dataFormatada} ${horaFormatada}`
-          }
+      return `${dataFormatada} ${horaFormatada}`
+    }
 
     function carregarAplicacoes(id_fichamedica) {
       const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("MedicamentoPacienteControle")}&metodo=${encodeURIComponent("listarMedicamentosAplicadosPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
@@ -330,7 +344,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 
           medaplicadas.forEach(item => {
 
-                  item.aplicacao =  formatarDataHoraBr(item.aplicacao);
+            item.aplicacao = formatarDataHoraBr(item.aplicacao);
             const tr = document.createElement("tr");
 
             const td1 = document.createElement("td");
@@ -387,7 +401,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
     async function enviarDataHoraAplicacaoMedicamento(event) {
       event.preventDefault();
 
-      let idPessoaFuncionario = <?=$idPessoa?>;
+      let idPessoaFuncionario = <?= $idPessoa ?>;
 
       const form = event.target;
       const formData = new FormData(form);
@@ -441,6 +455,68 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
         campo.value = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
       }
     }
+
+ 
+    async function enviarMedicacaoSOS(event) {
+      event.preventDefault(); 
+
+      const dadosForm = {
+        medicamento: document.getElementById('nome_medicacao').value,
+        dosagem: document.getElementById('dosagem_sos').value,
+        horario: document.getElementById('horario_medicacao_sos').value,
+        duracao: document.getElementById('duracao_medicacao_sos').value,
+        status_id: 1 // 1 = "Prescrito" (padrão)
+      };
+
+      const id_pessoa_paciente = <?= $idPessoaPaciente; ?>;
+      const id_pessoa_funcionario = <?= $idPessoa; ?>; 
+      
+
+      if (!dadosForm.medicamento || !dadosForm.dosagem || !dadosForm.horario || !dadosForm.duracao) {
+        alert('Por favor, preencha todos os campos do Medicamento SOS.');
+        return;
+      }
+      const payload = {
+        nomeClasse: "MedicamentoPacienteControle",
+        metodo: "cadastrarMedicacaoSOS",
+
+        id_pessoa_paciente: id_pessoa_paciente,
+        id_pessoa_funcionario: id_pessoa_funcionario,
+        medicamento: dadosForm.medicamento,
+        dosagem: dadosForm.dosagem,
+        horario: dadosForm.horario,
+        duracao: dadosForm.duracao,
+        status_id: dadosForm.status_id
+      };
+
+      try {
+        const response = await fetch(`../../controle/control.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.status === "erro") {
+          throw new Error(data.mensagem || 'Erro desconhecido ao cadastrar.');
+        }
+
+        location.reload();
+
+      } catch (error) {
+        console.error('Erro ao cadastrar SOS:', error);
+        alert('Falha ao cadastrar: ' + error.message);
+      }
+    }
+
+    $(document).ready(function() {
+      const botaoSOS = document.getElementById('botao_cadastrar_sos');
+      if (botaoSOS) {
+        botaoSOS.addEventListener('click', enviarMedicacaoSOS);
+      }
+    });
+
   </script>
   <style type="text/css">
     .obrig {
@@ -448,10 +524,12 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
     }
 
     #prontuario_publico tr p {
-      max-width: 450px;
+      padding: 5px 10px 5px 10px;
       word-wrap: break-word;
     }
-
+    #form_medicacao_sos{
+      padding: 10px;
+    }
     @media(max-width:768px) {
       #prontuario_publico tr p {
         max-width: 250px;
@@ -463,7 +541,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 </head>
 
 <body>
-  <input type="hidden" id="id_fichamedica" value="<?=$id?>">
+  <input type="hidden" id="id_fichamedica" value="<?= $id ?>">
   <section class="body">
     <div id="header"></div>
     <!-- end: header -->
@@ -573,8 +651,65 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
                 </div>
 
 
-                <!-- aba de atendimento enfermeiro -->
+                <!-- aba de cadastrar de medicação e atendimento enfermeiro -->
                 <div id="atendimento_enfermeiro" class="tab-pane">
+
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-up" data-toggle="collapse"></a>
+                      </div>
+                      <h2 class="panel-title">Cadastrar Medicamento SOS</h2>
+                    </header>
+
+                    <div class="panel-body collapse">
+                      <form id="form_medicacao_sos" class="form-horizontal form-bordered" onsubmit="event.preventDefault();">
+
+                        <div class="form-group" id="primeira_medicacao">
+                          <label class="col-md-3 control-label" for="nome_medicacao">
+                            Medicamento:<sup class="obrig">*</sup>
+                          </label>
+                          <div class="col-md-6">
+                            <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao" required>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="dosagem_sos">
+                            Dosagem:<sup class="obrig">*</sup>
+                          </label>
+                          <div class="col-md-6">
+                            <input type="text" class="form-control" name="dosagem_sos" id="dosagem_sos" required>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="horario_medicacao_sos">
+                            Horário:<sup class="obrig">*</sup>
+                          </label>
+                          <div class="col-md-6">
+                            <input type="time" class="form-control" name="horario_medicacao_sos" id="horario_medicacao_sos" required>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="duracao_medicacao_sos">
+                            Duração:<sup class="obrig">*</sup>
+                          </label>
+                          <div class="col-md-6">
+                            <input type="text" class="form-control" name="duracao_medicacao_sos" id="duracao_medicacao_sos" required>
+                          </div>
+                        </div>
+
+                        <br>
+                        <br>
+                        <button type="button" class="btn btn-success" id="botao_cadastrar_sos">
+                          Cadastrar medicação
+                        </button>
+                      </form>
+                    </div>
+                  </section>
+
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
@@ -613,7 +748,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
                               </div>
 
                               <div class="modal-body">
-                                <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control" max="<?=$dataAtual->format('Y-m-d\TH:i')?>">
+                                <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control" max="<?= $dataAtual->format('Y-m-d\TH:i') ?>">
                                 <input type="hidden" id="id_funcionario" name="id_funcionario">
                                 <input type="hidden" id="id_medicacao" name="id_medicacao">
                                 <input type="hidden" id="id_pessoa" name="id_pessoa">
