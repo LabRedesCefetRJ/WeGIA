@@ -1,7 +1,7 @@
 # WeGIA
 WeGIA: Web Gerenciador para Instituições Assistenciais 
 
-Este projeto desenvolve/mantém um sistema integrado de gestão licenciado sob a GNU GPL v3.0, que concede as liberdades de executar, modificar e redistribuir cópias do software. Ele pode ser utilizado para melhorar a gestão, controle e transparência de entidades que prestam serviços de utilidade pública para a sociedade. 
+O WeGIA é um software livre desenvolvido pela Extensão Universitária do Cefet/RJ para melhorar a gestão, o controle e a transparência de instituições do terceiro setor no Brasil.
 
 A versão atual do sistema conta com os módulos: 
 1) Pessoas, para cadastro de funcionários e atendidos; 
