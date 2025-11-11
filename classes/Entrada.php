@@ -16,8 +16,18 @@ class Entrada
 
         $this->data=$data;
         $this->hora=$hora;
-        $this->valor_total=$valor_total;
-        $this->id_responsavel=$id_responsavel;
+        
+        // Valor total
+        if (!is_numeric($valor_total) || $valor_total < 0) {
+            throw new InvalidArgumentException("Valor total deve ser um número positivo.");
+        }
+        $this->valor_total = (float) $valor_total;
+
+        // ID do responsável
+        if (!is_numeric($id_responsavel) || $id_responsavel <= 0) {
+            throw new InvalidArgumentException("ID do responsável inválido.");
+        }
+        $this->id_responsavel = (int) $id_responsavel;
 
     }
 

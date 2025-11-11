@@ -14,6 +14,46 @@ class ProdutoDAO
 			$this->pdo = $pdo;
 		}
 	}
+	public function incluir($produto) {
+		try {
+			$pdo = Conexao::connect();
+			// Verifica se o produto já existe - Xablau
+			$stmtExistente = $pdo->prepare("
+				SELECT id_produto, oculto 
+				FROM produto 
+				WHERE descricao = :descricao
+			");
+			$stmtExistente->bindValue(':descricao', trim($produto->getDescricao()), PDO::PARAM_STR);
+			$stmtExistente->execute();
+			$existente = $stmtExistente->fetch(PDO::FETCH_ASSOC);
+
+			if ($existente) {
+				$oculto = (bool) intval($existente['oculto']);
+				if ($oculto) {
+					header("Location: " . WWW . "html/matPat/restaurar_produto.php?id_produto=" . urlencode($existente['id_produto']));
+				} else {
+					header("Location: " . WWW . "html/matPat/cadastro_produto.php?flag=warn&msg=" . urlencode("A descrição inserida já existe!"));
+				}
+				exit;
+			}
+
+			$sql = "INSERT INTO produto (id_categoria_produto, id_unidade, descricao, codigo, preco)
+					VALUES (:id_categoria_produto, :id_unidade, :descricao, :codigo, :preco)";
+			$stmt = $pdo->prepare($sql);
+
+			$stmt->bindValue(':id_categoria_produto', $produto->get_categoria_produto(), PDO::PARAM_INT);
+			$stmt->bindValue(':id_unidade', $produto->get_unidade(), PDO::PARAM_INT);
+			$stmt->bindValue(':descricao', preg_replace('/\s+/', ' ', trim($produto->getDescricao())), PDO::PARAM_STR);
+			$stmt->bindValue(':codigo', $produto->getCodigo(), PDO::PARAM_STR);
+			$stmt->bindValue(':preco', $produto->getPreco(), PDO::PARAM_STR);
+			$stmt->execute();
+		} catch (PDOException $e) {
+			error_log("Erro ao incluir produto: " . $e->getMessage());
+			throw $e;
+		}
+	}
+
+	/*
 	public function incluir($produto)
 	{
 		//sql injection
@@ -54,6 +94,7 @@ class ProdutoDAO
 			$stmt->execute();
 		}
 	}
+	*/
 
 	public function excluir($id_produto)
 	{

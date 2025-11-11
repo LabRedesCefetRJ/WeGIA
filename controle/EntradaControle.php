@@ -14,16 +14,25 @@ include_once '../dao/ProdutoDAO.php';
 class EntradaControle
 {
     public function verificar(){
+        
         session_start();
-        extract($_REQUEST);
+
+        // Acesse variáveis diretamente e valide
+        $total_total = isset($_REQUEST['total_total']) ? floatval($_REQUEST['total_total']) : 0;
+        //extract($_REQUEST);
+
         date_default_timezone_set('America/Sao_Paulo');
-        $horadata = date('Y-m-d H:i');
-        $horadata = explode(" ", $horadata);
+        $horadata = explode(" ", date('Y-m-d H:i'));
         $data = $horadata[0];
         $hora = $horadata[1];
         $valor_total = $total_total;
         $responsavel = $_SESSION['id_pessoa'];
-        $entrada = new Entrada($data,$hora,$valor_total,$responsavel);
+
+        if (!$responsavel) {
+            throw new Exception("Responsável não encontrado na sessão.");
+        }
+
+        $entrada = new Entrada($data, $hora, $valor_total, $responsavel);
         
         return $entrada;
     }
