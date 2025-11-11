@@ -656,9 +656,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 									if (isset($estado) && strlen($estado) > 0)
 										strlen($endereco) > 0 ? $endereco .= ' - ' . $estado : $endereco .= $estado;
 
-									if (isset($data_expedicao) && strlen($data_expedicao) > 0)
-										strlen($endereco) > 0 ? $endereco .= ', ' . $data_expedicao : $endereco .= $data_expedicao;
-
 									?>
 									<div class="panel-heading"> </div>
 									<p align="right"><?= htmlspecialchars($endereco) ?></p>
