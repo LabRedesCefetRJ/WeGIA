@@ -3,7 +3,7 @@
 class TipoEntrada
 {
    private $id_tipo;
-   private $descricao;
+   private string $descricao;
    
     public function __construct($descricao)
     {
@@ -24,6 +24,8 @@ class TipoEntrada
 
     public function setId_tipo($id_tipo)
     {
+        if (!is_numeric($id_tipo) || $id_tipo <= 0)
+            throw new InvalidArgumentException("ID inválido.");
         $this->id_tipo = $id_tipo;
     }
 

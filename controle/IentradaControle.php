@@ -7,15 +7,24 @@ class IentradaControle
 {
     public function listarId(){
         extract($_REQUEST);
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         try{
             $ientradaDAO = new IentradaDAO();
-            $ientrada = $ientradaDAO->listarId($id_entrada);
             $entradaDAO = new EntradaDAO();
-            $entrada = $entradaDAO->listarId($id_entrada);
-            session_start();
+            
+            if ($id_entrada === false || $id_entrada === null) {
+                throw new Exception("ID de entrada inválido ou ausente.");
+            } else {
+                $ientrada = $ientradaDAO->listarId($id_entrada);
+                $entrada = $entradaDAO->listarId($id_entrada);
+            }
             $_SESSION['ientrada'] = $ientrada;
             $_SESSION['entradaUnica'] = $entrada;
-            header('Location: ' . $nextPage);
+            if (! strpos($nextPage, 'http')) {
+                header('Location: ' . $nextPage);
+            }
         } catch (PDOException $e) {
             echo "ERROR: " . $e->getMessage();
         }
