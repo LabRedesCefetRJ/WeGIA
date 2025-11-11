@@ -702,9 +702,6 @@ $dependente = json_encode($dependente);
                   <a href="#endereco" data-toggle="tab">Endereço</a>
                 </li>
                 <li>
-                  <a href="#docs" data-toggle="tab">Documentação</a>
-                </li>
-                <li>
                   <a href="#arquivo" data-toggle="tab">Arquivos</a>
                 </li>
                 <li>
@@ -767,6 +764,12 @@ $dependente = json_encode($dependente);
                               <option value="AB+">AB+</option>
                               <option value="AB-">AB-</option>
                             </select>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
+                          <div class="col-md-6">
+                            <input type="text" class="form-control" id="cpf" name="cpf" disabled placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" readonly>
                           </div>
                         </div>
                         <input type="hidden" name="idatendido" value=<?= $id ?>>
@@ -898,65 +901,8 @@ $dependente = json_encode($dependente);
                             <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
                         </form>
                       </div>
-
                     </section>
                   </div>
-                  <div id="docs" class="tab-pane">
-
-                    <!-- Aba de documentos -->
-                    <section class="panel">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a href="#" class="fa fa-caret-down"></a>
-                        </div>
-                        <h2 class="panel-title">Documentos</h2>
-                      </header>
-                      <!--Documentação-->
-                      <hr class="dotted short">
-                      <div class="panel-body">
-                        <form class="form-horizontal" id="doc" method="post" action="../../controle/control.php">
-                          <input type="hidden" name="nomeClasse" value="AtendidoControle">
-                          <input type="hidden" name="metodo" value="alterarDocumentacao">
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
-                            <div class="col-md-6">
-                              <input type="text" class="form-control" name="registroGeral" id="registroGeral" disabled onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)">
-                            </div>
-                          </div>
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
-                            <div class="col-md-6">
-                              <input type="text" class="form-control" name="orgaoEmissor" disabled id="orgaoEmissor" onkeypress="return Onlychars(event)">
-                            </div>
-                          </div>
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
-                            <div class="col-md-6">
-                              <input type="date" class="form-control" disabled maxlength="10" placeholder="dd/mm/aaaa" name="dataExpedicao" id="dataExpedicao" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataExpedicao()">
-                            </div>
-                          </div>
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
-                            <div class="col-md-6">
-                              <input type="text" class="form-control" id="cpf" name="cpf" disabled placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" readonly>
-                            </div>
-                          </div>
-                          <div class="form-group">
-                            <label class="col-md-3 control-label" for="profileCompany"></label>
-                            <div class="col-md-6">
-                              <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
-                            </div>
-                          </div>
-                          <input type="hidden" name="idatendido" value="<?= $id ?>">
-                          <br>
-                          <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao" onclick="return editar_documentacao()">Editar</button>
-                          <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
-                        </form>
-                      </div>
-                    </section>
-
-                  </div>
-
                   <!-- Composição Familiar -->
                   <div id="familiares" class="tab-pane">
                     <section class="panel">
