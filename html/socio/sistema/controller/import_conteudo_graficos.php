@@ -69,6 +69,9 @@
                           $mensal = 0;
                           $casual = 0;
                           $si_contrib = 0;
+                          $bimestral = 0;
+                          $trimestral = 0;
+                          $semestral = 0;
 
                           $possible_paths = [
                             dirname(__FILE__) . '/../../../../dao/Conexao.php',
@@ -98,13 +101,25 @@
                         ");
                           while($resultado = $stmt->fetch(PDO::FETCH_ASSOC)){
                             switch($resultado['id_sociotipo']){
-                              case 0: case 1: 
+                              case 0: case 1:  case 20: case 21:
                                   $casual++;
                                   $contribuinte = "casual";
                                   break;
-                              case 2: case 3:
+                              case 2: case 3: case 22: case 23:
                                   $mensal++;
                                   $contribuinte = "mensal";
+                                  break;
+                              case 6: case 7: case 24: case 25:
+                                  $bimestral++;
+                                  $contribuinte = "bimestral";
+                                  break;
+                              case 8: case 9: case 26: case 27:
+                                  $trimestral++;
+                                  $contribuinte = "trimestral";
+                                  break;
+                              case 10: case 11: case 28: case 29:
+                                  $semestral++;
+                                  $contribuinte = "semestral";
                                   break;
                               default:
                                   $si_contrib++;
@@ -113,7 +128,7 @@
                             }
 
                             $class = "bg-normal";
-                            if($contribuinte == "mensal"){
+                            if($contribuinte == "mensal" && isset($resultado['ultima_data_doacao'])){
                               $data_ultima_doacao = date_create($resultado['ultima_data_doacao']);
                               $data_hoje = date_create();
                               $subtracao_datas = date_diff($data_ultima_doacao, $data_hoje);

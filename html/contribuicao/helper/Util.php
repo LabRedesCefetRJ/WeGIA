@@ -114,8 +114,8 @@ class Util
         // Abre o diretório
         $arquivos = scandir($diretorio);
 
-        // Remove os diretórios '.' e '..' da lista de arquivos
-        $arquivos = array_diff($arquivos, array('.', '..'));
+        // Remove os diretórios '.' e '..' e o arquivo index.php da lista de arquivos
+        $arquivos = array_diff($arquivos, array('.', '..', 'index.php',));
 
         return $arquivos;
     }

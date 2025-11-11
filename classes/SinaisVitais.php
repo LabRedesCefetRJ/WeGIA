@@ -10,7 +10,7 @@
         private $frequencia_respiratoria;
         private $temperatura;
         private $hgt;
-        
+        private $observacao;
 
 
         public function getIdFuncionario(){
@@ -45,6 +45,10 @@
 
         public function getHgt(){
             return $this->hgt;
+        }
+
+        public function getObservacao(){
+            return $this->observacao;
         }
 
         public function setIdFuncionario($id_funcionario){
@@ -82,6 +86,9 @@
         public function setHgt($hgt){
             $this->hgt = $hgt;
         }
-    }
 
+        public function setObservacao($observacao){
+            $this->observacao = $observacao;
+        }
+    }
 ?>

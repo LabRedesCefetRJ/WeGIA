@@ -276,12 +276,12 @@
 					// 	var certo=0;
 					// 	console.log(certo);
 					// }
-					else if($("#nascimento").val() == ""){
-						alert("Por favor, insira uma data de nascimento");
-						$("#nascimento").focus();
-						var certo=0;
-						console.log(certo);
-					}
+					//else if($("#nascimento").val() == ""){
+					//	alert("Por favor, insira uma data de nascimento");
+					//	$("#nascimento").focus();
+					//	var certo=0;
+					//	console.log(certo);
+					// }
 					else if($("#rg").val() == ""){
 						if($("#registro").prop("checked")){
 							certo=1;

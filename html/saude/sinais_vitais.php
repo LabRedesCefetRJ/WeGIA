@@ -53,7 +53,7 @@ $teste = $pdo->query("SELECT nome, f.id_funcionario FROM pessoa p JOIN funcionar
 $id_funcionario = $teste[0]['nome'];
 $funcionario_id = $teste[0]['id_funcionario'];
 
-$stmtSinaisVitais = $pdo->prepare("SELECT id_sinais_vitais, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
+$stmtSinaisVitais = $pdo->prepare("SELECT id_sinais_vitais, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
 
 $stmtSinaisVitais->bindParam(':idFichaMedica', $id);
 $stmtSinaisVitais->execute();
@@ -64,6 +64,7 @@ $sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
 foreach ($sinaisvitais as $key => $value) {
   $data = new DateTime($value['data']);
   $sinaisvitais[$key]['data'] = $data->format('d/m/Y H:i');
+  $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
 }
 
 $sinaisvitais = json_encode($sinaisvitais);
@@ -159,6 +160,25 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   .col-md-3 {
     width: 10%;
   }
+
+  #sin-vit-tab tr > td:last-child {
+    display: flex;
+    padding: 0;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  #sin-vit-tab tr {
+    height: 100%;
+  }
+  .celula-observacao {
+    white-space: pre-wrap;
+  }
+  .dataTables_empty {
+    display: none !important;
+  } 
+
 </style>
 
 
@@ -230,7 +250,8 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
             .append($("<td>").text(item.frequencia_respiratoria))
             .append($("<td>").text(item.temperatura))
             .append($("<td>").text(item.hgt))
-            .append($("<td style='display: flex; justify-content: center;'>")
+            .append($("<td>").addClass("celula-observacao").text(item.observacao))
+            .append($("<td style=''>")
               .append($("<a onclick='removerSinVit(" + item.id_sinais_vitais + "," + i + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
@@ -322,6 +343,24 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         campo.value = numeroInteiro + '.' + numeroDecimal[0];
       }
     }
+
+    function validarObservacao(campo){
+      campo.value = campo.value.replace(/<|>/g, '');
+
+      const maxLength = campo.maxLength;
+      let currentLength = campo.value.length;
+
+      if (currentLength > maxLength) {
+        campo.value = campo.value.slice(0, maxLength);
+        currentLength = maxLength;
+      }
+
+      const contadorElemento = document.getElementById('contador-caracteres');
+      if (contadorElemento) {
+        contadorElemento.textContent = currentLength;
+      }
+    }
+
   </script>
   <style type="text/css">
     .obrig {
@@ -351,6 +390,12 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   .custom-input:focus {
     border-color: #86b7fe;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+
+  .contador-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
   }
   </style>
 
@@ -477,6 +522,16 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                         </div>
                       </div>
 
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Observações:</label>
+                        <div class="col-md-6">
+                          <textarea name="observacao" id="observacao" maxlength="255" class="form-control" rows="5" oninput="validarObservacao(this)" onkeypress="return " placeholder="Descreva suas observações..."></textarea>
+                          <div class="form-group contador-container">
+                            <span class="row-md-1"><span id="contador-caracteres">0</span> / 255</span>
+                          </div>
+                        </div>
+                      </div>
+
                       <input type="hidden" name="id_funcionario" id="id_funcionario" value="<?php echo $funcionario_id; ?>">
 
                       <input type="hidden" name="id_fichamedica" id="id_fichamedica" value="<?php echo $_SESSION['id_upload_med']; ?>">
@@ -504,6 +559,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                             <th>Frequência repiratória</th>
                             <th>Temperatura</th>
                             <th>HGT</th>
+                            <th>Observação</th>
                             <th>Excluir</th>
                           </tr>
                         </thead>

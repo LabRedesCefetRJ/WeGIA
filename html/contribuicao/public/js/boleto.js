@@ -33,7 +33,7 @@ function gerarBoleto() {
     })
         .then(response => {
             if (!response.ok) {
-                throw new Error("Erro na requisição: " + response.status);
+                throw new Error(response.statusText + ' ' + response.status);
             }
             return response.json(); // Converte a resposta para JSON
         })
@@ -51,6 +51,7 @@ function gerarBoleto() {
 
         })
         .catch(error => {
+            alert(error);
             console.error("Erro:", error);
         });
 }

@@ -147,7 +147,7 @@ $(document).ready(function () {
                         const modo = $('input[name="escolha-modo"]:checked').val();
                         if (modo === 'fim-ano') {
                             inputParcelas = calcularParcelasAteFinalAno(inputData, tipo);
-                        } 
+                        }
 
                         console.log('Parcelas: ', inputParcelas);
 
@@ -189,7 +189,7 @@ $(document).ready(function () {
                         const modo = $('input[name="escolha-modo"]:checked').val();
                         if (modo === 'fim-ano') {
                             parcela = calcularParcelasAteFinalAno(dia, tipo);
-                        } 
+                        }
 
                         const cpfCnpj = socio.split('|')[1];
 
@@ -214,10 +214,14 @@ $(document).ready(function () {
                             }
 
                             btnGeracaoUnica.disabled = false;
+                        }).fail(function (xhr, status, errorThrown) {
+                            console.error("Erro AJAX:", status, errorThrown);
+                            alert("Erro no servidor: " + (xhr.responseText || "Erro desconhecido"));
+                        }).always(function () {
+                            btnGeracaoUnica.disabled = false;
                         });
                     });
                 } else {
-
                     alert(`Para gerar carnês/boletos para o sócio desejado você deve completar o cadastro dele primeiro com os seguintes dados: valor por período, data de referência e a periodicidade.`);
                 }
             })

@@ -960,7 +960,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="valor_remuneracao">Valor</label>
                                 <div class="col-md-8">
-                                  <input type="number" class="form-control" name="valor" id="valor_remuneracao" onkeypress="return Onlynumbers(event)" required>
+                                  <input type="number" class="form-control" name="valor" id="valor_remuneracao" onkeypress="return Onlynumbers(event)" required min="0">
                                 </div>
                               </div>
                               <div class="form-group">

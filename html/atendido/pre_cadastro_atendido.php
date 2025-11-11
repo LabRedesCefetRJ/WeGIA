@@ -225,6 +225,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             <input type="hidden" name="nomeClasse" value="AtendidoControle">
                             <input type="hidden" name="metodo" value="selecionarCadastro">
                             <input type='submit' value='Enviar' name='enviar' id='enviar' class='mb-xs mt-xs mr-xs btn btn-primary'>
+                            <button type="button" id="btnSemCpf" class="btn btn-warning"> Cadastrar sem CPF</bottun>
                         </form>
                     </div>
                 </section>
@@ -244,6 +245,10 @@ require_once ROOT . "/html/personalizacao_display.php";
                 document.getElementById("enviar").disabled = false;
             }
         }
+        const url = '<?php echo WWW; ?>html/atendido/Cadastro_Atendido.php?semCpf=1';
+    document.getElementById('btnSemCpf').addEventListener('click', function() {
+        window.location.href = url;
+    });
     </script>
     <!-- end: page -->
     <!-- Vendor -->

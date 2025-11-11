@@ -21,9 +21,9 @@ class ReciboController {
     public function gerarRecibo() {
         try {
             // Sanitizar entrada
-            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_STRING);
-            $dataInicio = filter_input(INPUT_POST, 'data_inicio', FILTER_SANITIZE_STRING);
-            $dataFim = filter_input(INPUT_POST, 'data_fim', FILTER_SANITIZE_STRING);
+            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            $dataInicio = filter_input(INPUT_POST, 'data_inicio', FILTER_SANITIZE_SPECIAL_CHARS);
+            $dataFim = filter_input(INPUT_POST, 'data_fim', FILTER_SANITIZE_SPECIAL_CHARS);
 
             // Validações básicas
             if (empty($cpf)) {
