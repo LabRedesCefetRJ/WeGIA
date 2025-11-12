@@ -15,7 +15,7 @@ class EntradaDAO
                         id_almoxarifado,
                         id_tipo,
                         id_responsavel,
-                        datta,
+                        data,
                         hora,
                         valor_total
                     ) VALUES (
@@ -23,7 +23,7 @@ class EntradaDAO
                         :id_almoxarifado,
                         :id_tipo,
                         :id_responsavel,
-                        :datta,
+                        :data,
                         :hora,
                         :valor_total
                     )';
@@ -42,7 +42,7 @@ class EntradaDAO
             $stmt->bindParam(':id_almoxarifado',$id_almoxarifado);
             $stmt->bindParam(':id_tipo',$id_tipo);
             $stmt->bindParam(':id_responsavel',$id_responsavel);
-            $stmt->bindParam(':datta',$data);
+            $stmt->bindParam(':data',$data);
             $stmt->bindParam(':hora',$hora);
             $stmt->bindParam(':valor_total',$valor_total);
 
