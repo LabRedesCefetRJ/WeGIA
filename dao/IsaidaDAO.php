@@ -75,8 +75,8 @@ class IsaidaDAO
 
             $stmt = $pdo->prepare($sql);
 
-            $id_saida = $isaida->getId_saida()->getId_saida();
-            $id_produto = $isaida->getId_produto()->getId_produto();
+            $id_saida = $isaida->getId_saida();
+            $id_produto = $isaida->getId_produto();
             $qtd = $isaida->getQtd();
             $valor_unitario = $isaida->getValor_unitario();
 

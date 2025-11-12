@@ -1,5 +1,5 @@
 <?php
-require_once ROOT . '/html/contribuicao/helper/Util.php';
+require_once ROOT . '/classes/Util.php';
 
 class Destino
 {

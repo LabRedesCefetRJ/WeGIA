@@ -59,6 +59,7 @@ class Isaida
     public function setId_produto($id_produto)
     {
         if (!is_numeric($id_produto) || $id_produto <= 0) {
+            error_log('ID PRODUTO: ' .$id_produto);
             throw new InvalidArgumentException("ID do produto inválido.");
         }
         $this->id_produto = (int) $id_produto;
