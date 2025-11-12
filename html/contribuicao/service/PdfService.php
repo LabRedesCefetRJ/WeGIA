@@ -55,7 +55,7 @@ class PdfService {
             $corAzul = [0, 70, 160]; // Azul MSF
             $pdf->SetTextColor(...$corAzul);
             $pdf->SetFont('Arial', 'B', 22);
-            $pdf->Cell(0, 18, 'RECIBO DE DOAÇÕES', 0, 1, 'C');
+            $pdf->Cell(0, 18, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'RECIBO DE DOAÇÕES'), 0, 1, 'C');
             $pdf->Ln(2);
 
             // Divisor azul
@@ -67,13 +67,14 @@ class PdfService {
             // Mensagem de agradecimento dinâmica
             $pdf->SetFont('Arial', '', 15);
             $pdf->SetTextColor(...$corAzul);
-            $mensagem = sprintf(
+            $mensagem = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', sprintf(
                 "Agradecemos a %s (Código de Doador: %s) pela doação de R$ %s para NOME ORGANIZAÇÃO no ano de %d. Sua contribuição é fundamental para a nossa organização!",
-                mb_convert_encoding($socio->getNome(), 'UTF-8'),
+                $socio->getNome(),
                 $recibo->getCodigo(),
                 number_format($recibo->getValorTotal(), 2, ',', '.'),
                 date('Y', strtotime($recibo->getDataFim()->format('Y-m-d')))
-            );
+            ));
+
             $pdf->MultiCell(0, 12, $mensagem, 0, 'C');
             $pdf->Ln(12);
 
@@ -86,17 +87,17 @@ class PdfService {
             // Informações adicionais
             $pdf->SetFont('Arial', '', 12);
             $pdf->SetTextColor(0, 0, 0);
-            $pdf->Cell(0, 8, 'Código do Recibo: ' . $recibo->getCodigo(), 0, 1, 'L');
-            $pdf->Cell(0, 8, 'Data de Emissão: ' . date('d/m/Y H:i:s'), 0, 1, 'L');
-            $pdf->Cell(0, 8, 'Período: ' . $recibo->getDataInicio()->format('d/m/Y') . ' a ' . $recibo->getDataFim()->format('d/m/Y'), 0, 1, 'L');
-            $pdf->Cell(0, 8, 'CPF: ' . $this->formatarCPF($socio->getDocumento()), 0, 1, 'L');
+            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Código do Recibo: ' . $recibo->getCodigo()), 0, 1, 'L');
+            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Data de Emissão: ' . date('d/m/Y H:i:s')), 0, 1, 'L');
+            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Período: ' . $recibo->getDataInicio()->format('d/m/Y') . ' a ' . $recibo->getDataFim()->format('d/m/Y')), 0, 1, 'L');
+            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'CPF: ' . $this->formatarCPF($socio->getDocumento())), 0, 1, 'L');
             $pdf->Ln(10);
             // ...não há campo de assinatura...
 
             // Salvar arquivo
             $nomeArquivo = 'recibo_' . $recibo->getCodigo() . '.pdf';
             $caminho = $diretorio . $nomeArquivo;
-            $pdf->Output('F', $caminho);
+            $pdf->Output('F', $caminho); //Trocar para string
             return $caminho;
             
         } catch (Exception $e) {

@@ -275,7 +275,7 @@ class EmailControle {
             if (!empty($anexos) && is_array($anexos)) {
                 foreach ($anexos as $anexo) {
                     if (is_string($anexo) && file_exists($anexo)) {
-                        $mail->addAttachment($anexo);
+                        $mail->addAttachment($anexo); // addStringAttachment() mudar para enviar um e-mail a partir da memória do servidor, ao invés de realizar uma gravação física no disco
                     }
                 }
             }
