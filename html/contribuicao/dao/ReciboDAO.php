@@ -15,10 +15,10 @@ class ReciboDAO {
         try {
             $sql = "INSERT INTO recibo_emitido (
                 codigo, id_socio, email, data_inicio, data_fim, 
-                valor_total, total_contribuicoes, data_geracao, caminho_pdf
+                valor_total, total_contribuicoes, data_geracao
             ) VALUES (
                 :codigo, :idSocio, :email, :dataInicio, :dataFim,
-                :valorTotal, :totalContribuicoes, NOW(), :caminhoPdf
+                :valorTotal, :totalContribuicoes, NOW()
             )";
             
             $stmt = $this->pdo->prepare($sql);
@@ -29,8 +29,7 @@ class ReciboDAO {
                 ':dataInicio' => $recibo->getDataInicio()->format('Y-m-d'),
                 ':dataFim' => $recibo->getDataFim()->format('Y-m-d'),
                 ':valorTotal' => $recibo->getValorTotal(),
-                ':totalContribuicoes' => $recibo->getTotalContribuicoes(),
-                ':caminhoPdf' => $recibo->getCaminhoPdf()
+                ':totalContribuicoes' => $recibo->getTotalContribuicoes()
             ]);
             
             return $this->pdo->lastInsertId();

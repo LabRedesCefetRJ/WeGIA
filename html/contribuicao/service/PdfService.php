@@ -94,12 +94,7 @@ class PdfService {
             $pdf->Ln(10);
             // ...não há campo de assinatura...
 
-            // Salvar arquivo
-            $nomeArquivo = 'recibo_' . $recibo->getCodigo() . '.pdf';
-            $caminho = $diretorio . $nomeArquivo;
-            $pdf->Output('F', $caminho); //Trocar para string
-            return $caminho;
-            
+            return $pdf->Output('S');
         } catch (Exception $e) {
             error_log("Erro ao gerar PDF: " . $e->getMessage());
             throw new Exception('Erro ao gerar PDF: ' . $e->getMessage());
