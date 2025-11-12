@@ -6,7 +6,7 @@ class Recibo {
     private $valorTotal;
     private $dataInicio;
     private $dataFim;
-    private $caminhoPdf;
+    private $arquivo;
     private $dataGeracao;
     private $expirado;
     private $email;
@@ -115,19 +115,19 @@ class Recibo {
     }
     
     /**
-     * Get the value of caminhoPdf
+     * Get the value of arquivo
      */
-    public function getCaminhoPdf() { 
-        return $this->caminhoPdf; 
+    public function getArquivo() { 
+        return $this->arquivo; 
     }
 
     /**
-     * Set the value of caminhoPdf
+     * Set the value of arquivo
      *
      * @return  self
      */
-    public function setCaminhoPdf($caminhoPdf) { 
-        $this->caminhoPdf = $caminhoPdf; 
+    public function setArquivo($arquivo) { 
+        $this->arquivo = $arquivo; 
         return $this; 
     }
     

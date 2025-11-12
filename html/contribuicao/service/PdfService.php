@@ -1,30 +1,29 @@
 <?php
 require_once '../vendor/autoload.php';
-require_once dirname(__DIR__).'/dao/ImagemDAO.php';
-require_once dirname(__DIR__).'/dao/ConexaoDAO.php';
+require_once dirname(__DIR__) . '/dao/ImagemDAO.php';
+require_once dirname(__DIR__) . '/dao/ConexaoDAO.php';
 
 use setasign\Fpdi\Fpdi;
 
-class PdfService {
-    
+class PdfService
+{
+
     /**
      * Gerar recibo em PDF
      */
-    public function gerarRecibo(Recibo $recibo, Socio $socio, $diretorio = null) {
+    public function gerarRecibo(Recibo $recibo, Socio $socio, $diretorio = null)
+    {
         try {
-            // Configurar diretório
-            if ($diretorio === null) {
-                $diretorio = '../pdfs/';
-            }
-            
-            // Garantir que termina com separador
-            if (substr($diretorio, -1) !== DIRECTORY_SEPARATOR) {
-                $diretorio .= DIRECTORY_SEPARATOR;
-            }
-            
-            // Criar diretório se não existir
-            if (!is_dir($diretorio)) {
-                mkdir($diretorio, 0755, true);
+            if (isset($diretorio)) {
+                // Garantir que termina com separador
+                if (substr($diretorio, -1) !== DIRECTORY_SEPARATOR) {
+                    $diretorio .= DIRECTORY_SEPARATOR;
+                }
+
+                // Criar diretório se não existir
+                if (!is_dir($diretorio)) {
+                    mkdir($diretorio, 0755, true);
+                }
             }
 
             // Criar PDF
@@ -94,28 +93,44 @@ class PdfService {
             $pdf->Ln(10);
             // ...não há campo de assinatura...
 
-            return $pdf->Output('S');
+            if (isset($diretorio)) {
+                $nomeArquivo = 'recibo_' . $recibo->getCodigo() . '.pdf';
+                return $this->salvarPdf($pdf, $nomeArquivo);
+            } else {
+                return $pdf->Output('S');
+            }
         } catch (Exception $e) {
             error_log("Erro ao gerar PDF: " . $e->getMessage());
             throw new Exception('Erro ao gerar PDF: ' . $e->getMessage());
         }
     }
-    
+
+    /**
+     * Cria um arquivo pdf no destino informado
+     */
+    public function salvarPdf(Fpdi $pdf, string $path): string
+    {
+        // Salvar arquivo
+        $pdf->Output('F', $path);
+        return $path;
+    }
+
     /**
      * Formatar CPF
      */
-    private function formatarCPF($cpf) {
+    private function formatarCPF($cpf)
+    {
         // Remove caracteres não numéricos
         $cpf = preg_replace('/[^0-9]/', '', $cpf);
-        
+
         // Aplica máscara se tiver 11 dígitos
         if (strlen($cpf) === 11) {
-            return substr($cpf, 0, 3) . '.' . 
-                   substr($cpf, 3, 3) . '.' . 
-                   substr($cpf, 6, 3) . '-' . 
-                   substr($cpf, 9, 2);
+            return substr($cpf, 0, 3) . '.' .
+                substr($cpf, 3, 3) . '.' .
+                substr($cpf, 6, 3) . '-' .
+                substr($cpf, 9, 2);
         }
-        
+
         return $cpf;
     }
 }

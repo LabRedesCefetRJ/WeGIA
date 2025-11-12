@@ -104,17 +104,18 @@ class ReciboController {
 
             // Gerar PDF
             $pdfService = new PdfService();
-            $pdfDir = '../pdfs';
+            
+            /*$pdfDir = '../pdfs';
             
             // Garantir que o diretório existe
             if (!is_dir($pdfDir)) {
                 if (!mkdir($pdfDir, 0755, true)) {
                     throw new Exception('Não foi possível criar o diretório de PDFs');
                 }
-            }
+            }*/
 
-            $caminhoPdf = $pdfService->gerarRecibo($recibo, $socio, $pdfDir);
-            $recibo->setCaminhoPdf($caminhoPdf);
+            $arquivo = $pdfService->gerarRecibo($recibo, $socio);
+            $recibo->setArquivo($arquivo);
 
             // Salvar no banco
             $reciboDAO = new ReciboDAO($this->pdo);
@@ -218,7 +219,7 @@ class ReciboController {
                 $assunto,
                 $mensagem,
                 $socio->getNome(),
-                [$recibo->getCaminhoPdf()]
+                [$recibo->getArquivo()]
             );
             
         } catch (Exception $e) {
