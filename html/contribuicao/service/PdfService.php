@@ -44,7 +44,7 @@ class PdfService
                     file_put_contents($logoPath, base64_decode($logoData));
                     $pdf->Image($logoPath, 85, 20, 40, 0, strtoupper($ext)); // Centraliza logo no topo
                     unlink($logoPath);
-                    $pdf->Ln(18);
+                    $pdf->Ln(40);
                 }
             } else {
                 $pdf->Ln(30); // Espaço caso não tenha logo
