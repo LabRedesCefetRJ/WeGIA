@@ -45,23 +45,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     alertDiv.appendChild(message);
                     
                     // Informações do recibo
+
                     const info = document.createElement('div');
                     info.className = 'recibo-info mt-3';
                     info.innerHTML = `
                         <p><strong>Email:</strong> ${data.email}</p>
                         <p><strong>Código:</strong> ${data.codigo}</p>
-                        <p><strong>Valor Total:</strong> R$ ${data.valor_total}</p>
-                        <p><strong>Contribuições:</strong> ${data.total_contribuicoes}</p>
                     `;
                     alertDiv.appendChild(info);
                     
                     // Botão de download
-                    const downloadBtn = document.createElement('a');
+                    /*const downloadBtn = document.createElement('a');
                     downloadBtn.href = `../controller/control.php?nomeClasse=ReciboController&metodo=download&codigo=${data.codigo}`;
                     downloadBtn.className = 'btn btn-primary mt-3';
                     downloadBtn.innerHTML = '<i class="fa fa-download"></i> Baixar Recibo PDF';
                     downloadBtn.target = '_blank';
-                    alertDiv.appendChild(downloadBtn);
+                    alertDiv.appendChild(downloadBtn);*/
                     
                     resultado.innerHTML = '';
                     resultado.appendChild(alertDiv);

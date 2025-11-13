@@ -1,5 +1,9 @@
 <?php
 $title = 'Gerar Recibo de Doação';
+$publicsFiles = [
+    'css' => ['recibo.css']
+];
+
 require_once './templates/header.php';
 require_once '../controller/BrandController.php';
 

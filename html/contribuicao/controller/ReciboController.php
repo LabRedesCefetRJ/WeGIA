@@ -55,13 +55,13 @@ class ReciboController {
             $socio = $socioDAO->buscarPorDocumento($cpf);
             
             if (!$socio) {
-                echo json_encode(['erro' => 'Sócio não encontrado']);
+                echo json_encode(['erro' => 'Sócio não localizado, verifique se o CPF digitado está correto.']);
                 exit;
             }
 
             // Validar email do sócio
             if (empty($socio->getEmail()) || !filter_var($socio->getEmail(), FILTER_VALIDATE_EMAIL)) {
-                echo json_encode(['erro' => 'Sócio não possui email válido cadastrado']);
+                echo json_encode(['erro' => 'Sócio não possui email válido cadastrado, entre em contato com nosso suporte para atualizar seus dados.']);
                 exit;
             }
 
@@ -134,7 +134,7 @@ class ReciboController {
             $response = [
                 'sucesso' => true,
                 'codigo' => $recibo->getCodigo(),
-                'email' => $recibo->getEmail(),
+                'email' => $recibo->getEmail(true),
                 'valor_total' => number_format($valorTotal, 2, ',', '.'),
                 'total_contribuicoes' => count($contribuicoes)
             ];
@@ -204,13 +204,11 @@ class ReciboController {
                 "<p>Prezado(a) %s,</p>
                 <p>Anexamos o recibo de suas doações no período de %s a %s.</p>
                 <p><strong>Valor Total: R$ %s</strong></p>
-                <p><strong>Total de Contribuições: %d</strong></p>
                 <p>Atenciosamente,<br>%s</p>",
                 htmlspecialchars($socio->getNome()),
                 $recibo->getDataInicio()->format('d/m/Y'),
                 $recibo->getDataFim()->format('d/m/Y'),
                 number_format($recibo->getValorTotal(), 2, ',', '.'),
-                $recibo->getTotalContribuicoes(),
                 htmlspecialchars($emailControle->getConfiguracoes()['smtp_from_name'] ?: 'WeGIA')
             );
 
