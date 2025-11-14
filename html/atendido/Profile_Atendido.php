@@ -1096,6 +1096,9 @@ $dependente = json_encode($dependente);
                           </tbody>
                         </table>
                         <br>
+                        <div>
+                          <a href="cadastro_ocorrencia.php?atendido_id=<?= $id ?>" class="btn btn-primary">Cadastrar Ocorrência</a>
+                        </div>
 
                     </section>
                   </div>

@@ -33,6 +33,16 @@ $recupera_id_funcionario = $pdo->query("SELECT id_funcionario FROM funcionario W
 $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
 
 
+$atendido_id = filter_input(INPUT_GET, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
+
+// Se parâmetro existe e é inválido, erro
+if ($atendido_id !== null && $atendido_id !== false) {
+    if ($atendido_id < 1) {
+        echo "O id do paciente informado não é válido";
+        exit();
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -483,14 +493,28 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                                                 <div class="form-group">
                                                     <label class="col-md-3 control-label" for="profileLastName">Atendido:<sup class="obrig">*</sup></label>
                                                     <div class="col-md-6">
-                                                        <select class="form-control input-lg mb-md" name="atendido_idatendido" id="atendido_idatendido" required>
-                                                            <option selected disabled>Selecionar</option>
-                                                            <?php
-                                                            foreach ($nome as $key => $value) {
-                                                                echo "<option value=" . $nome[$key]['idatendido'] . ">" . $nome[$key]['nome'] . " " . $nome[$key]['sobrenome'] . "</option>";
+                                                        <?php if ($atendido_id) :
+                                                            // Encontra nome do atendido do id passado
+                                                            $atendido_nome = '';
+                                                            foreach ($nome as $item) {
+                                                                if ($item['idatendido'] == $atendido_id) {
+                                                                    $atendido_nome = $item['nome'] . ' ' . $item['sobrenome'];
+                                                                    break;
+                                                                }
                                                             }
-                                                            ?>
-                                                        </select>
+                                                        ?>
+                                                            <input type="hidden" name="atendido_idatendido" value="<?= $atendido_id ?>">
+                                                            <input type="text" class="form-control input-lg mb-md" value="<?= htmlspecialchars($atendido_nome) ?>" disabled>
+                                                        <?php else : ?>
+                                                            <select class="form-control input-lg mb-md" name="atendido_idatendido" id="atendido_idatendido" required>
+                                                                <option selected disabled>Selecionar</option>
+                                                                <?php
+                                                                foreach ($nome as $key => $value) {
+                                                                    echo "<option value=\"" . $nome[$key]['idatendido'] . "\">" . $nome[$key]['nome'] . " " . $nome[$key]['sobrenome'] . "</option>";
+                                                                }
+                                                                ?>
+                                                            </select>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
 
