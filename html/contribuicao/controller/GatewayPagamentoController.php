@@ -1,7 +1,9 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
-require_once '../model/GatewayPagamento.php';
-require_once '../dao/GatewayPagamentoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'GatewayPagamento.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'SistemaLog.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
@@ -13,11 +15,7 @@ class GatewayPagamentoController
 
     public function __construct(?PDO $pdo = null)
     {
-        if (is_null($pdo)) {
-            $this->pdo = ConexaoDAO::conectar();
-        } else {
-            $this->pdo = $pdo;
-        }
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = ConexaoDAO::conectar();;
     }
 
     /**Realiza os procedimentos necessários para inserir um Gateway de pagamento na aplicação */
@@ -31,10 +29,6 @@ class GatewayPagamentoController
             $this->pdo->beginTransaction();
             $gatewayPagamento = new GatewayPagamento($nome, $endpoint, $token);
             $gatewayPagamento->cadastrar();
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Cadastro de gateway de pagamento.');
 
@@ -66,10 +60,6 @@ class GatewayPagamentoController
             $this->pdo->beginTransaction();
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gateways = $gatewayPagamentoDao->buscaTodos();
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de gateways de pagamento.');
 
@@ -108,10 +98,6 @@ class GatewayPagamentoController
             $this->pdo->beginTransaction();
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamentoDao->excluirPorId($gatewayId);
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão do gateway de pagamento de id $gatewayId.");
 
@@ -157,10 +143,6 @@ class GatewayPagamentoController
             $gatewayPagamento = new GatewayPagamento($gatewayNome, $gatewayEndepoint, $gatewayToken);
             $gatewayPagamento->setId($gatewayId);
             $gatewayPagamento->editar();
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração do gateway de pagamento de id $gatewayId.");
 
@@ -213,10 +195,6 @@ class GatewayPagamentoController
             $this->pdo->beginTransaction();
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamentoDao->alterarStatusPorId($status, $gatewayId);
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), $descricao);
 

@@ -7,6 +7,7 @@ require_once '../dao/ContribuicaoLogDAO.php';
 require_once '../dao/ConexaoDAO.php';
 require_once '../service/PdfService.php';
 require_once dirname(__DIR__, 3) . '/controle/EmailControle.php';
+require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class ReciboController {
     private $pdo;
@@ -148,11 +149,10 @@ class ReciboController {
             echo json_encode($response);
 
         } catch (Exception $e) {
-            if ($this->pdo->inTransaction()) {
+            if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
-            }
-            error_log("Erro ao gerar recibo: " . $e->getMessage());
-            echo json_encode(['erro' => 'Erro interno: ' . $e->getMessage()]);
+            
+            Util::tratarException($e);
         }
     }
 

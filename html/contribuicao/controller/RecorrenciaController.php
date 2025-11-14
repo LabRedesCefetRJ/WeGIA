@@ -12,9 +12,9 @@ class RecorrenciaController
 {
     private PDO $pdo;
 
-    public function __construct()
+    public function __construct(?PDO $pdo = null)
     {
-        $this->pdo = ConexaoDAO::conectar(); //Considerar implementar injeção de dependência caso a aplicação precise de mais flexibilidade
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = ConexaoDAO::conectar();
     }
 
     /**
@@ -35,7 +35,7 @@ class RecorrenciaController
             $socio = $socioDao->buscarPorDocumento($documento);
 
             if (is_null($socio)) {
-                throw new Exception('Sócio não encontrado');
+                throw new Exception('Sócio não encontrado', 400);
             }
 
             // Buscar meio de pagamento
@@ -43,12 +43,12 @@ class RecorrenciaController
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
 
             if (is_null($meioPagamento)) {
-                throw new Exception('Meio de pagamento não encontrado');
+                throw new Exception('Meio de pagamento não encontrado', 400);
             }
 
             // Verificar se o meio de pagamento está ativo
             if (!$meioPagamento->getStatus()) {
-                throw new Exception('Meio de pagamento indisponível');
+                throw new Exception('Meio de pagamento indisponível', 400);
             }
 
             // Verificar regras de pagamento
@@ -64,7 +64,7 @@ class RecorrenciaController
             $gatewayPagamentoArray = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
 
             if (!$gatewayPagamentoArray) {
-                throw new Exception('Gateway de pagamento não encontrado');
+                throw new Exception('Gateway de pagamento não encontrado', 400);
             }
 
             $gatewayPagamento = new GatewayPagamento(
@@ -79,7 +79,7 @@ class RecorrenciaController
             $requisicaoServico = '../service/' . $gatewayPagamento->getNome() . $formaPagamento . 'Service.php';
 
             if (!file_exists($requisicaoServico)) {
-                throw new Exception('Serviço de pagamento não encontrado');
+                throw new Exception('Serviço de pagamento não encontrado', 400);
             }
 
             require_once $requisicaoServico;
@@ -87,7 +87,7 @@ class RecorrenciaController
             $classeService = $gatewayPagamento->getNome() . $formaPagamento . 'Service';
 
             if (!class_exists($classeService)) {
-                throw new Exception('Classe do serviço não encontrada');
+                throw new Exception('Classe do serviço não encontrada', 400);
             }
 
             $servicoPagamento = new $classeService();
@@ -113,14 +113,14 @@ class RecorrenciaController
             $codigoAssinatura = $servicoPagamento->criarAssinatura($recorrencia);
 
             if (empty($codigoAssinatura)) {
-                throw new Exception('Falha ao criar assinatura');
+                throw new Exception('Falha ao criar assinatura', 500);
             }
 
             // Atualizar registro com código da assinatura
             $recorrenciaDao->alterarCodigoPorId($codigoAssinatura, $this->pdo->lastInsertId());
 
             // Registrar log do sócio
-            $mensagem = "Assinatura mensal criada - ID: $codigoAssinatura";
+            $mensagem = 'Assinatura mensal criada - ID:' . htmlspecialchars($codigoAssinatura);
             $socioDao->registrarLog($socio, $mensagem);
 
             $this->pdo->commit();
@@ -130,14 +130,13 @@ class RecorrenciaController
             echo json_encode([
                 'sucesso' => true,
                 'mensagem' => "Assinatura criada com sucesso! Cobranças mensais no dia $diaCobranca.",
-                'assinatura_id' => $codigoAssinatura
+                'assinatura_id' => htmlspecialchars($codigoAssinatura)
             ]);
         } catch (Exception $e) {
-            if ($this->pdo->inTransaction()) {
+            if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
-            }
-            http_response_code(400);
-            echo json_encode(['erro' => $e->getMessage()]);
+            
+            Util::tratarException($e);
         }
     }
 }
