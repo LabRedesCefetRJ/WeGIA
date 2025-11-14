@@ -99,6 +99,7 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('11', 'Funcionário'),
 ('12', 'Atendido'),
 ('13', 'Voluntário'),
+('14', 'Processo de Aceitação'),
 ('2', 'Módulo Material e Patrimônio'),
 ('21', 'Almoxarifado'),
 ('22', 'Produto'),
