@@ -55,14 +55,15 @@ class ReciboController {
             $socioDAO = new SocioDAO($this->pdo);
             $socio = $socioDAO->buscarPorDocumento($cpf);
             
+            //TO-DO: enviar o número do suporte.
             if (!$socio) {
-                echo json_encode(['erro' => 'Sócio não localizado, verifique se o CPF digitado está correto.']);
+                echo json_encode(['erro' => 'Doador não localizado: Verifique se o CPF digitado está correto, caso o problema persista contate nosso suporte.']);
                 exit;
             }
 
             // Validar email do sócio
             if (empty($socio->getEmail()) || !filter_var($socio->getEmail(), FILTER_VALIDATE_EMAIL)) {
-                echo json_encode(['erro' => 'Sócio não possui email válido cadastrado, entre em contato com nosso suporte para atualizar seus dados.']);
+                echo json_encode(['erro' => 'Doador não possui email válido cadastrado: Entre em contato com nosso suporte para atualizar seus dados.']);
                 exit;
             }
 
@@ -75,7 +76,7 @@ class ReciboController {
             );
 
             if (empty($contribuicoes)) {
-                echo json_encode(['erro' => 'Nenhuma contribuição paga encontrada no período informado']);
+                echo json_encode(['erro' => 'Nenhuma contribuição encontrada no período de tempo informado: Experimente realizar uma consulta com datas diferentes.']);
                 exit;
             }
 

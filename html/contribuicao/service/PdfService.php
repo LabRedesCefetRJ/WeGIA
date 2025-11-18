@@ -66,6 +66,8 @@ class PdfService
             // Mensagem de agradecimento dinâmica
             $pdf->SetFont('Arial', '', 15);
             $pdf->SetTextColor(...$corAzul);
+
+            //TO-DO: inserir o nome da instituição dinamicamente
             $mensagem = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', sprintf(
                 "Agradecemos a %s (Código de Doador: %s) pela doação de R$ %s para NOME ORGANIZAÇÃO no ano de %d. Sua contribuição é fundamental para a nossa organização!",
                 $socio->getNome(),

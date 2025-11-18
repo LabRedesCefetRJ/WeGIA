@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Desabilitar botão e mostrar loading
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Gerando...';
-            resultado.innerHTML = '<div class="alert alert-info"><i class="fa fa-clock-o"></i> Processando recibo...</div>';
+            submitBtn.innerHTML = 'Gerando &nbsp <i class="fa fa-spinner fa-spin"></i>';
+            resultado.innerHTML = '<div class="alert alert-info"><i class="fa fa-clock-o"></i> Processando recibo ...</div>';
 
             const formData = new FormData(form);
             
@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     info.className = 'recibo-info mt-3';
                     info.innerHTML = `
                         <p><strong>Email:</strong> ${data.email}</p>
-                        <p><strong>Código:</strong> ${data.codigo}</p>
                     `;
                     alertDiv.appendChild(info);
                     
@@ -81,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 resultado.innerHTML = `
                     <div class="alert alert-danger">
                         <i class="fa fa-times-circle"></i> 
-                        Erro na comunicação com o servidor: ${error.message}
+                        Erro na comunicação com o servidor: Se o problema persistir, contate o suporte!
                     </div>
                 `;
             })
