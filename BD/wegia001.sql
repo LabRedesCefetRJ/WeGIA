@@ -1004,7 +1004,7 @@ CREATE TABLE IF NOT EXISTS `recibo_emitido` (
   `data_fim` DATE NOT NULL,
   `valor_total` DECIMAL(10,2) NOT NULL,
   `total_contribuicoes` INT NOT NULL,
-  `data_geracao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  `data_geracao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (`id_recibo`),
 
