@@ -995,6 +995,10 @@ CREATE TABLE IF NOT EXISTS `wegia`.`endereco_instituicao` (
   PRIMARY KEY (`id_inst`))
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `wegia`.`contato_instituicao` TO-DO
+-- -----------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS `recibo_emitido` (
   `id_recibo` INT(11) NOT NULL AUTO_INCREMENT,
   `codigo` VARCHAR(64) NOT NULL,
