@@ -35,6 +35,16 @@ class ContatoInstituicao {
         return $this->contatoInstituicaoDao->incluir($this);
     }
 
+    /**
+     * Retorna um objeto do tipo ContatoInstituicao de acordo com o quê está salvo no banco de dados.
+     */
+    public static function listarPorId(int $id, ?ContatoInstituicaoDAO $contatoInstituicaoDao = null){
+        if(!isset($contatoInstituicaoDao))
+            $contatoInstituicaoDao = new ContatoInstituicaoMySQL(Conexao::connect());
+
+        return $contatoInstituicaoDao->listarPorId($id);
+    }
+
     //métodos acessores
 
     public function setId(int $id){
