@@ -51,7 +51,20 @@ class ContatoInstituicaoMySQL implements ContatoInstituicaoDAO{
 
     public function listarTodos(): ?array
     {
-        throw new \Exception('Not implemented');
+        $sql = 'SELECT * FROM contato_instituicao';
+        $query = $this->pdo->query($sql);
+
+        if($query->rowCount() < 1)
+            return null;
+
+        $resultado = $query->fetchAll(PDO::FETCH_ASSOC);
+        $contatos = [];
+
+        foreach($resultado as $contato){
+            $contatos []= new ContatoInstituicao($contato['descricao'], $contato['contato'])->setId($contato['id']);
+        }
+
+        return $contatos;
     }
 
     public function alterar(ContatoInstituicao $contato): bool
