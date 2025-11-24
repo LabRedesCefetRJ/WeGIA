@@ -119,6 +119,61 @@ document.addEventListener('click', (e) => {
     }
 });
 
+//Comportamento do formulário de cadastro
+document.getElementById('formAddContato').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const url = '../controle/control.php?nomeClasse=ContatoInstituicaoControle&metodo=incluir';
+
+    try {
+
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+
+        // Tenta ler o JSON sempre
+        const data = await response.json();
+
+        // -------------------------
+        // Sucesso (status 2xx)
+        // -------------------------
+        if (response.ok) {
+
+            // Fecha o modal (Bootstrap 3)
+            $('#modalAddContato').modal('hide');
+
+            // Limpa o formulário
+            form.reset();
+
+            // Recarrega a página inteira
+            location.reload();
+
+            return; // fim
+        }
+
+
+        // -------------------------
+        // Erro vindo do backend
+        // -------------------------
+        if (data.erro) {
+            alert('Erro ao cadastrar contato:\n' + data.erro);
+            return;
+        }
+
+        // Caso raro: sem erro mas também não OK
+        alert('Erro inesperado ao cadastrar contato.');
+
+    } catch (err) {
+        console.error(err);
+        alert('Falha ao enviar requisição. Verifique sua conexão.');
+    }
+});
+
+
 //preenchimento da tabela ao abrir a página
 getContacts(apiEndpoint).then(contatos => {
     renderContactsTable(contatos);

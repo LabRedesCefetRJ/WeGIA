@@ -13,6 +13,26 @@ class ContatoInstituicaoControle{
     }
 
     /**
+     * Extrai os dados de uma requisição POST e armazena a persistência no banco de dados MySQL da aplicação.
+     */
+    public function incluir(){
+        try{
+            $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+            $contato = filter_input(INPUT_POST, 'contato', FILTER_SANITIZE_SPECIAL_CHARS);
+
+            $contatoInstituicao = new ContatoInstituicao($descricao, $contato, new ContatoInstituicaoMySQL($this->pdo));
+            $resultado = $contatoInstituicao->incluir();
+
+            if($resultado === false)
+                throw new Exception('Falha no servidor ao cadastrar um novo contato.', 500);
+
+            echo json_encode(['resultado' => $resultado]);
+        }catch(Exception $e){
+            Util::tratarException($e);
+        }
+    }
+
+    /**
      * Imprime um JSON de todos os contatos salvos no banco de dados MySQL da aplicação.
      */
     public function listarTodos(){
