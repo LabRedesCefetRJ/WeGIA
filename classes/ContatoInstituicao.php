@@ -70,6 +70,17 @@ class ContatoInstituicao
         return $this->contatoInstituicaoDao->alterar($this);
     }
 
+    /**
+     * Remove o contato com id equivalente ao informado da persistência do banco de dados da instituição.
+     */
+    public static function excluirPorId(int $id, ?ContatoInstituicaoDAO $contatoInstituicaoDao = null)
+    {
+        if (!isset($contatoInstituicaoDao))
+            $contatoInstituicaoDao = new ContatoInstituicaoMySQL(Conexao::connect());
+
+        return $contatoInstituicaoDao->excluirPorId($id);
+    }
+
     //métodos acessores
 
     public function setId(int $id)

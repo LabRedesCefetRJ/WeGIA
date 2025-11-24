@@ -85,6 +85,15 @@ class ContatoInstituicaoMySQL implements ContatoInstituicaoDAO{
 
     public function excluirPorId(int $id): bool
     {
-        throw new \Exception('Not implemented');
+        $sql = 'DELETE FROM contato_instituicao WHERE id=:id';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        if($stmt->rowCount() < 1)
+            return false;
+
+        return true;
     }
 }
