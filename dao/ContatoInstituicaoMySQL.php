@@ -69,7 +69,18 @@ class ContatoInstituicaoMySQL implements ContatoInstituicaoDAO{
 
     public function alterar(ContatoInstituicao $contato): bool
     {
-        throw new \Exception('Not implemented');
+        $sql = "UPDATE contato_instituicao SET descricao=:descricao, contato=:contato WHERE id=:id";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':descricao', $contato->getDescricao(), PDO::PARAM_STR);
+        $stmt->bindValue(':contato', $contato->getContato(), PDO::PARAM_STR);
+        $stmt->bindValue(':id', $contato->getId(), PDO::PARAM_INT);
+        $stmt->execute();
+
+        if($stmt->rowCount() < 1)
+            return false;
+
+        return true;
     }
 
     public function excluirPorId(int $id): bool

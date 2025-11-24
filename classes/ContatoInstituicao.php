@@ -59,6 +59,17 @@ class ContatoInstituicao
         return $contatoInstituicaoDao->listarTodos();
     }
 
+    /**
+     * Altera os valores dos campos de descrição e contato na persistência do banco de dados da instituição.
+     */
+    public function alterar()
+    {
+        if (!isset($this->contatoInstituicaoDao))
+            $this->contatoInstituicaoDao = new ContatoInstituicaoMySQL(Conexao::connect());
+
+        return $this->contatoInstituicaoDao->alterar($this);
+    }
+
     //métodos acessores
 
     public function setId(int $id)
