@@ -4,7 +4,7 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPA
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ContatoInstituicaoDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ContatoInstituicaoMySQL.php';
 
-class ContatoInstituicao
+class ContatoInstituicao implements JsonSerializable
 {
     //atributos primitivos
     private int $id;
@@ -79,6 +79,15 @@ class ContatoInstituicao
             $contatoInstituicaoDao = new ContatoInstituicaoMySQL(Conexao::connect());
 
         return $contatoInstituicaoDao->excluirPorId($id);
+    }
+
+    public function jsonSerialize(): mixed
+    {
+        return [
+            'id' => $this->id,
+            'descricao' => $this->descricao,
+            'contato' => $this->contato,
+        ];
     }
 
     //métodos acessores

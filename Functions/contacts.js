@@ -119,6 +119,7 @@ document.addEventListener('click', (e) => {
     }
 });
 
+//preenchimento da tabela ao abrir a página
 getContacts(apiEndpoint).then(contatos => {
     renderContactsTable(contatos);
 });
