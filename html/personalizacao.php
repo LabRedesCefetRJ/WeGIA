@@ -275,6 +275,12 @@ $endereco->listarInstituicao();
 		};
 	</script>
 
+	<style>
+		.obrigatorio {
+			color: red;
+		}
+	</style>
+
 </head>
 
 <body>
@@ -339,6 +345,9 @@ $endereco->listarInstituicao();
 							</li>
 							<li class="nav-item">
 								<a class="nav-link" id="txt-tab-selector" data-toggle="tab" href="#address-tab" role="tab" aria-controls="txt" aria-selected="false">Endereço da instituição</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" id="txt-tab-selector" data-toggle="tab" href="#contact-tab" role="tab" aria-controls="txt" aria-selected="false">Contatos da instituição</a>
 							</li>
 						</ul>
 						<div class="tab-content" id="myTabContent">
@@ -484,6 +493,124 @@ $endereco->listarInstituicao();
 								</form>
 							</div>
 
+							<div class="tab-pane fade" id="contact-tab" role="tabpanel" aria-labelledby="txt-tab">
+								<h3>Contatos Institucionais</h3>
+
+								<div class="text-left" style="margin-bottom: 15px;">
+									<button class="btn btn-primary" data-toggle="modal" data-target="#modalAddContato">
+										<i class="fa fa-plus"></i> Adicionar Contato
+									</button>
+								</div>
+
+								<!-- Modal de Criar (Bootstrap 3) -->
+								<div class="modal fade" id="modalAddContato" tabindex="-1" role="dialog" aria-labelledby="modalAddContatoLabel">
+									<div class="modal-dialog" role="document">
+										<div class="modal-content">
+
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+													&times;
+												</button>
+												<h4 class="modal-title" id="modalAddContatoLabel">Cadastrar Novo Contato</h4>
+											</div>
+
+											<form id="formAddContato">
+												<div class="modal-body">
+													<div class="form-group">
+														<label for="descricao">Descrição <span class="obrigatorio">*</span></label>
+														<input type="text" id="descricao" name="descricao" class="form-control" required>
+													</div>
+
+													<div class="form-group">
+														<label for="contato">Contato <span class="obrigatorio">*</span></label>
+														<input type="text" id="contato" name="contato" class="form-control" required>
+													</div>
+
+												</div>
+
+												<div class="modal-footer">
+													<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+													<button type="submit" class="btn btn-primary">
+														<i class="fa fa-save"></i> Cadastrar
+													</button>
+												</div>
+											</form>
+
+										</div>
+									</div>
+								</div>
+
+								<!-- Modal Editar Contato (Bootstrap 3) -->
+								<div class="modal fade" id="modalEditarContato" tabindex="-1" role="dialog" aria-labelledby="modalEditarContatoLabel">
+									<div class="modal-dialog" role="document">
+										<div class="modal-content">
+
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal">&times;</button>
+												<h4 class="modal-title" id="modalEditarContatoLabel">Editar Contato</h4>
+											</div>
+
+											<form id="formEditarContato">
+												<div class="modal-body">
+
+													<input type="hidden" id="editar-id" name="id">
+
+													<div class="form-group">
+														<label for="editar-descricao">Descrição</label>
+														<input type="text" id="editar-descricao" name="descricao" class="form-control" required>
+													</div>
+
+													<div class="form-group">
+														<label for="editar-contato">Contato</label>
+														<input type="text" id="editar-contato" name="contato" class="form-control" required>
+													</div>
+
+												</div>
+
+												<div class="modal-footer">
+													<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+													<button type="submit" class="btn btn-primary">
+														<i class="fa fa-save"></i> Salvar Alterações
+													</button>
+												</div>
+											</form>
+
+										</div>
+									</div>
+								</div>
+
+								<!-- Modal Excluir Contato -->
+								<div class="modal fade" id="modalExcluirContato" tabindex="-1" role="dialog" aria-labelledby="modalExcluirContatoLabel">
+									<div class="modal-dialog modal-sm" role="document">
+										<div class="modal-content">
+
+											<div class="modal-header bg-danger" style="color:white;">
+												<button type="button" class="close" data-dismiss="modal">&times;</button>
+												<h4 class="modal-title" id="modalExcluirContatoLabel">
+													<i class="fa fa-exclamation-triangle"></i> Confirmar Exclusão
+												</h4>
+											</div>
+
+											<div class="modal-body">
+												Tem certeza que deseja excluir o contato:
+												<strong id="excluir-descricao"></strong>?
+											</div>
+
+											<div class="modal-footer">
+												<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+												<button id="btn-confirmar-excluir" class="btn btn-danger">
+													<i class="fa fa-trash"></i> Excluir
+												</button>
+											</div>
+
+										</div>
+									</div>
+								</div>
+
+
+								<div id="contacts-table"></div>
+							</div>
+
 							<!-- end: text tab pane-->
 
 						</div>
@@ -553,6 +680,8 @@ $endereco->listarInstituicao();
 	<div align="right">
 		<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60" style="border:none;"></iframe>
 	</div>
+
+	<script src="../Functions/contacts.js"></script>
 </body>
 
 </html>
