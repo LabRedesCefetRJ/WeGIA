@@ -212,6 +212,43 @@ document.getElementById('btn-confirmar-excluir').addEventListener('click', funct
     excluirContato(id);
 });
 
+// Função para alterar o contato
+function alterarContato(form) {
+
+    const url = '../controle/control.php?nomeClasse=ContatoInstituicaoControle&metodo=alterar';
+    const formData = new FormData(form);
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+
+        if (response.ok) {
+
+            // Fechar modal
+            $('#modalEditarContato').modal('hide');
+
+            // Recarregar página
+            location.reload();
+            return;
+        }
+
+        // Se não estiver OK, tentar extrair JSON de erro
+        return response.json().then(data => {
+            alert(data.erro || 'Erro ao atualizar o contato.');
+        });
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Erro inesperado ao alterar o contato.');
+    });
+}
+
+document.getElementById('formEditarContato').addEventListener('submit', function(e) {
+    e.preventDefault();
+    alterarContato(this);
+});
 
 //preenchimento da tabela ao abrir a página
 getContacts(apiEndpoint).then(contatos => {

@@ -507,7 +507,7 @@ $endereco->listarInstituicao();
 									<div class="modal-dialog" role="document">
 										<div class="modal-content">
 
-											<div class="modal-header">
+											<div class="modal-header bg-primary">
 												<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 													&times;
 												</button>
@@ -518,12 +518,12 @@ $endereco->listarInstituicao();
 												<div class="modal-body">
 													<div class="form-group">
 														<label for="descricao">Descrição <span class="obrigatorio">*</span></label>
-														<input type="text" id="descricao" name="descricao" class="form-control" required>
+														<input type="text" id="descricao" name="descricao" class="form-control" placeholder="Dê um nome ao seu novo contato ..." required>
 													</div>
 
 													<div class="form-group">
 														<label for="contato">Contato <span class="obrigatorio">*</span></label>
-														<input type="text" id="contato" name="contato" class="form-control" required>
+														<input type="text" id="contato" name="contato" class="form-control" placeholder="Informe um número de telefone ou e-mail ..." required>
 													</div>
 
 												</div>
@@ -545,7 +545,7 @@ $endereco->listarInstituicao();
 									<div class="modal-dialog" role="document">
 										<div class="modal-content">
 
-											<div class="modal-header">
+											<div class="modal-header bg-primary">
 												<button type="button" class="close" data-dismiss="modal">&times;</button>
 												<h4 class="modal-title" id="modalEditarContatoLabel">Editar Contato</h4>
 											</div>
