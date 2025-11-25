@@ -67,12 +67,56 @@ class PdfService
             $pdf->SetFont('Arial', '', 15);
             $pdf->SetTextColor(...$corAzul);
 
-            //TO-DO: inserir o nome da instituição dinamicamente
+            //insere o nome da instituição dinamicamente
+            require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'EnderecoDAO.php';
+            $enderecoDao = new EnderecoDAO();
+            $retorno = $enderecoDao->listarInstituicao();         // recebe o JSON
+            $array = json_decode($retorno, true);         // vira array PHP
+            $nomeInstituicao = $array[0]['nome'] ?? null; // pega o nome do primeiro registro
+
+            if (!isset($nomeInstituicao) || empty($nomeInstituicao) || strlen($nomeInstituicao) === 0) {
+                $nomeInstituicao = 'nossa instituição';
+            } else {
+
+                // Lista de substantivos femininos mais comuns
+                $femininos = [
+                    'instituição',
+                    'associação',
+                    'fundação',
+                    'escola',
+                    'empresa',
+                    'igreja',
+                    'universidade',
+                    'faculdade'
+                ];
+
+                // Normaliza para comparação
+                $primeiraPalavra = strtolower(strtok($nomeInstituicao, ' '));
+
+                // Verifica se é feminino
+                $isFeminino = false;
+
+                if (in_array($primeiraPalavra, $femininos)) {
+                    $isFeminino = true;
+                } elseif (str_ends_with($primeiraPalavra, 'a')) {
+                    // Heurística simples: termina com 'a'
+                    $isFeminino = true;
+                }
+
+                // Define o artigo
+                if ($isFeminino) {
+                    $nomeInstituicao = 'a ' . $nomeInstituicao;
+                } else {
+                    $nomeInstituicao = 'o ' . $nomeInstituicao;
+                }
+            }
+
             $mensagem = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', sprintf(
-                "Agradecemos a %s (Código de Doador: %s) pela doação de R$ %s para NOME ORGANIZAÇÃO no ano de %d. Sua contribuição é fundamental para a nossa organização!",
+                "Agradecemos a %s (Código de Doador: %s) pela doação de R$ %s para %s no ano de %d. Sua contribuição é fundamental para a nossa organização!",
                 $socio->getNome(),
                 $recibo->getCodigo(),
                 number_format($recibo->getValorTotal(), 2, ',', '.'),
+                $nomeInstituicao,
                 date('Y', strtotime($recibo->getDataFim()->format('Y-m-d')))
             ));
 
