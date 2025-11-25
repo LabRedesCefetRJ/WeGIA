@@ -173,6 +173,45 @@ document.getElementById('formAddContato').addEventListener('submit', async (e) =
     }
 });
 
+// Função para excluir o contato
+function excluirContato(id) {
+
+    const url = '../controle/control.php?nomeClasse=ContatoInstituicaoControle&metodo=excluir';
+
+    const formData = new FormData();
+    formData.append('id', id);
+
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+
+        if (response.ok) {
+            // Fecha modal
+            $('#modalExcluirContato').modal('hide');
+
+            // Recarrega página (simples e direto)
+            location.reload();
+            return;
+        }
+
+        // Se não for ok, tenta extrair erro
+        return response.json().then(data => {
+            alert(data.erro || 'Erro ao excluir o contato.');
+        });
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Erro inesperado ao excluir o contato.');
+    });
+}
+
+document.getElementById('btn-confirmar-excluir').addEventListener('click', function () {
+    const id = this.dataset.id;
+    excluirContato(id);
+});
+
 
 //preenchimento da tabela ao abrir a página
 getContacts(apiEndpoint).then(contatos => {

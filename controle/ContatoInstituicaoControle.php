@@ -47,4 +47,23 @@ class ContatoInstituicaoControle{
             Util::tratarException($e);
         }
     }
+
+    /**
+     * Remove a persistência de id equivalente ao informado do banco de dados MySQL da aplicação.
+     */
+    public function excluir(){
+        try{
+            $id = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+            $contatoInstituicaoMysql = new ContatoInstituicaoMySQL($this->pdo);
+            $resultado = ContatoInstituicao::excluirPorId($id, $contatoInstituicaoMysql);
+
+            if($resultado === false)
+                throw new Exception('Falha no servidor ao excluir um contato.', 500);
+
+            echo json_encode(['resultado' => $resultado]);
+        }catch(Exception $e){
+            Util::tratarException($e);
+        }
+    }
 }
