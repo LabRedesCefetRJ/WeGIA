@@ -111,13 +111,22 @@ class PdfService
                 }
             }
 
+            //mensagem de agradecimento ao doador.
+            require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SelecaoParagrafoDAO.php';
+            $selecaoParagrafo = new SelecaoParagrafoDAO();
+            $agradecimento = $selecaoParagrafo->getAgradecimentoDoador();
+
+            if(is_null($agradecimento))
+                $agradecimento = 'Sua contribuição é fundamental para a nossa organização!';
+
             $mensagem = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', sprintf(
-                "Agradecemos a %s (Código de Doador: %s) pela doação de R$ %s para %s no ano de %d. Sua contribuição é fundamental para a nossa organização!",
+                "Agradecemos a %s (Código de Doador: %s) pela doação de R$ %s para %s no ano de %d. %s",
                 $socio->getNome(),
                 $recibo->getCodigo(),
                 number_format($recibo->getValorTotal(), 2, ',', '.'),
                 $nomeInstituicao,
-                date('Y', strtotime($recibo->getDataFim()->format('Y-m-d')))
+                date('Y', strtotime($recibo->getDataFim()->format('Y-m-d'))),
+                $agradecimento
             ));
 
             $pdf->MultiCell(0, 12, $mensagem, 0, 'C');
