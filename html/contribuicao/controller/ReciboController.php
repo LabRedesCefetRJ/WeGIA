@@ -8,6 +8,7 @@ require_once '../dao/ConexaoDAO.php';
 require_once '../service/PdfService.php';
 require_once dirname(__DIR__, 3) . '/controle/EmailControle.php';
 require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
+date_default_timezone_set('America/Sao_Paulo');
 
 class ReciboController {
     private $pdo;
