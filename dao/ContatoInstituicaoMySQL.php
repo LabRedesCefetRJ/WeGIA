@@ -61,7 +61,9 @@ class ContatoInstituicaoMySQL implements ContatoInstituicaoDAO{
         $contatos = [];
 
         foreach($resultado as $contato){
-            $contatos []= new ContatoInstituicao($contato['descricao'], $contato['contato'])->setId($contato['id']);
+            $contatoInstituicao = new ContatoInstituicao($contato['descricao'], $contato['contato']);
+            $contatoInstituicao->setId($contato['id']); 
+            $contatos []= $contatoInstituicao;
         }
 
         return $contatos;

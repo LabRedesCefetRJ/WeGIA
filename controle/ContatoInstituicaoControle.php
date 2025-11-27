@@ -83,7 +83,8 @@ class ContatoInstituicaoControle
             $contato = filter_input(INPUT_POST, 'contato', FILTER_SANITIZE_SPECIAL_CHARS);
 
             $contatoInstituicaoMysql = new ContatoInstituicaoMySQL($this->pdo);
-            $contatoInstituicao = new ContatoInstituicao($descricao, $contato, $contatoInstituicaoMysql)->setId($id);
+            $contatoInstituicao = new ContatoInstituicao($descricao, $contato, $contatoInstituicaoMysql);
+            $contatoInstituicao->setId($id);
 
             $resultado = $contatoInstituicao->alterar();
 
