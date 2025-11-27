@@ -10,7 +10,7 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 //verificação da permissão do usuário
-require_once '../permissao/permissao.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 4, 3);
 
 require_once('../conexao.php');
