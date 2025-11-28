@@ -9,12 +9,15 @@ class Destino
    private $cpf;
    private $telefone;
    
-    public function __construct($nome,$cnpj,$cpf,$telefone)
+    public function __construct($nome,$cnpj,$cpf = null,$telefone)
     {
 
         $this->nome=$nome;
         $this->cnpj=$cnpj;
-        $this->cpf=$cpf;
+
+        if(isset($cpf))
+            $this->cpf=$cpf;
+
         $this->telefone=$telefone;
 
     }
