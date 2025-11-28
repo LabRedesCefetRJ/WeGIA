@@ -25,6 +25,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'DocumentoControle' => [5],
             'EnderecoControle' => [9, 12],
             'EnfermidadeControle' => [5, 54],
+            'EtapaProcessoControle' => [12, 14],
             'MedicamentoPacienteControle' => [5],
             'ExameControle' => [5],
             'MedicoControle' => [5],
@@ -38,6 +39,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'ModuloControle' => [91],
             'MedicamentoControle' => [6, 61, 62, 63],
             'OrigemControle' => [23],
+            'PaStatusControle' => [12, 14],
             'ProdutoControle' => [22, 23, 24],
             'ProcessoAceitacaoControle' => [1, 12, 14],
             'PetControle' => [6, 61, 62, 63],
@@ -80,7 +82,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
         require_once($pathRequire);
 
 		if (!class_exists($nomeClasse))
-			throw new InvalidArgumentException('A classe informada não existe no sistema.', 400);
+			throw new InvalidArgumentException("A classe informada não existe no sistema. $nomeClasse", 400);
 
         $objeto = new $nomeClasse();
 
