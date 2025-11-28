@@ -72,9 +72,8 @@ class SocioController
 
             http_response_code(200);
             echo json_encode(['mensagem' => 'Sócio criado com sucesso!']);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(['erro' => $e->getMessage()]);
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -102,30 +101,22 @@ class SocioController
             $socioDao = new SocioDAO($this->pdo);
 
             //Verifica se o sócio é um funcionário ou atendido
-            if ($socioDao->verificarInternoPorDocumento($socio->getDocumento())) {
-                http_response_code(403);
-                echo json_encode(['erro' => 'Você não possuí permissão para alterar os dados desse CPF']);
-                exit();
-            }
+            if ($socioDao->verificarInternoPorDocumento($socio->getDocumento()))
+                throw new LogicException('Você não possui permissão para alterar os dados desse CPF', 403);
 
             $this->pdo->beginTransaction();
             $socioDao->registrarLogPorDocumento($socio->getDocumento(), 'Atualização recente');
 
-            if ($socioDao->atualizarSocio($socio)) {
-                $this->pdo->commit();
-                http_response_code(200);
-                echo json_encode(['mensagem' => 'Atualizado com sucesso!']);
-                exit();
-            } else {
+            if (!$socioDao->atualizarSocio($socio)) {
                 $this->pdo->rollBack();
-                http_response_code(500);
-                echo json_encode(['erro' => 'Erro ao atualizar sócio no sistema']);
-                exit();
+                throw new LogicException('Erro ao atualizar sócio no sistema', 500);
             }
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(['erro' => $e->getMessage()]);
-            exit();
+
+            $this->pdo->commit();
+            http_response_code(200);
+            echo json_encode(['mensagem' => 'Atualizado com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -135,7 +126,7 @@ class SocioController
     function extrairPost()
     {
         //extrair dados da requisição (considerar separar em uma função própria)
-        $cpf = trim(filter_input(INPUT_POST, 'documento_socio'));
+        $documento = trim(filter_input(INPUT_POST, 'documento_socio'));
         $nome = trim(filter_input(INPUT_POST, 'nome'));
         $telefone = trim(filter_input(INPUT_POST, 'telefone'));
         $dataNascimento = trim(filter_input(INPUT_POST, 'data_nascimento'));
@@ -150,37 +141,34 @@ class SocioController
         $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
         $valor = trim(filter_input(INPUT_POST, 'valor'));
 
-        $opcaoSelecionada = trim(filter_input(INPUT_POST, 'opcao', FILTER_SANITIZE_STRING));
+        $opcaoSelecionada = trim(filter_input(INPUT_POST, 'opcao', FILTER_SANITIZE_SPECIAL_CHARS));
 
         //validar dados (considerar separar em uma função própria)
         try {
-            //validação do CPF
-            require_once('../helper/Util.php');
-            $util = new Util();
-
-            if ($opcaoSelecionada == 'fisica' && !$util->validarCPF($cpf)) {
-                throw new InvalidArgumentException('O CPF informado não é válido');
-            }/*else if ($opcaoSelecionada == 'juridica' && !$util->validarCNPJ($documento)){
-                //lançar exceção para CNPJ inválido
-            }else{
-                //lançar exceção para opção inválida
-            }*/
+            //validação do documento
+            if ($opcaoSelecionada == 'fisica' && !Util::validarCPF($documento)) {
+                throw new InvalidArgumentException('O CPF informado é inválido', 400);
+            } else if ($opcaoSelecionada == 'juridica' && !Util::validaCNPJ($documento)) {
+                throw new InvalidArgumentException('O CNPJ informado é inválido', 400);
+            } else if ($opcaoSelecionada != 'fisica' && $opcaoSelecionada != 'juridica') {
+                throw new InvalidArgumentException('O tipo de sócio selecionado é inválido.', 400);
+            }
 
             //validação do nome
             if (!$nome || strlen($nome) < 3) {
-                throw new InvalidArgumentException('O nome informado não pode ser vazio');
+                throw new InvalidArgumentException('O nome informado não pode ser vazio.', 400);
             }
 
             //validação do telefone
             if (!$telefone) {
-                throw new InvalidArgumentException('O telefone não foi informado.');
+                throw new InvalidArgumentException('O telefone não foi informado.', 400);
             } elseif (strlen($telefone) != 14 && strlen($telefone) != 15) {
-                throw new InvalidArgumentException('O telefone informado não está no formato correto.');
+                throw new InvalidArgumentException('O telefone informado não está no formato correto.', 400);
             } elseif (strlen($telefone) === 15) {
                 $celularNumeros = preg_replace('/\D/', '', $telefone);
 
                 if ($celularNumeros[2] != 9) {
-                    throw new InvalidArgumentException('O número de celular informado não é válido.');
+                    throw new InvalidArgumentException('O número de celular informado não é válido.', 400);
                 }
             }
 
@@ -189,65 +177,63 @@ class SocioController
             $hoje = $hoje->format('Y-m-d');
 
             if ($dataNascimento > $hoje) {
-                throw new InvalidArgumentException('A data de nascimento não pode ser maior que a data atual');
+                throw new InvalidArgumentException('A data de nascimento não pode ser maior que a data atual.', 400);
             }
 
             //validação do CEP
             if (!$cep || strlen($cep) != 9) {
-                throw new InvalidArgumentException('O CEP informado não está no formato válido');
+                throw new InvalidArgumentException('O CEP informado não está no formato válido.', 400);
             }
 
             //validação da rua
             if (!$rua || empty($rua)) {
-                throw new InvalidArgumentException('A rua informada não pode ser vazia');
+                throw new InvalidArgumentException('A rua informada não pode ser vazia.', 400);
             }
 
             //validação do bairro
             if (!$bairro || empty($bairro)) {
-                throw new InvalidArgumentException('O bairro informado não pode ser vazio');
+                throw new InvalidArgumentException('O bairro informado não pode ser vazio.', 400);
             }
 
             //validação do estado
             if (!$uf || strlen($uf) != 2) {
-                throw new InvalidArgumentException('O Estado informada não pode ser vazio');
+                throw new InvalidArgumentException('O Estado informada não pode ser vazio.', 400);
             }
 
             //validação da cidade
             if (!$cidade || empty($cidade)) {
-                throw new InvalidArgumentException('A cidade informada não pode ser vazia');
+                throw new InvalidArgumentException('A cidade informada não pode ser vazia.', 400);
             }
 
             //validação do número da residência
             if (!$numero || empty($numero)) {
-                throw new InvalidArgumentException('O número da residência informada não pode ser vazio');
+                throw new InvalidArgumentException('O número da residência informada não pode ser vazio.', 400);
             }
 
             //validação do email
             if (!$email || empty($email)) {
-                throw new InvalidArgumentException('O email informado não está em um formato válido');
+                throw new InvalidArgumentException('O email informado não está em um formato válido.', 400);
             }
-        } catch (InvalidArgumentException $e) {
-            http_response_code(400);
-            echo json_encode(['erro' => $e->getMessage()]);
-            exit();
-        }
 
-        return [
-            'cpf' => $cpf,
-            'nome' => $nome,
-            'telefone' => $telefone,
-            'dataNascimento' => $dataNascimento,
-            'cep' => $cep,
-            'rua' => $rua,
-            'bairro' => $bairro,
-            'uf' => $uf,
-            'cidade' => $cidade,
-            'complemento' => $complemento,
-            'numero' => $numero,
-            'ibge' => $ibge,
-            'email' => $email,
-            'valor' => $valor,
-        ];
+            return [
+                'cpf' => $documento,
+                'nome' => $nome,
+                'telefone' => $telefone,
+                'dataNascimento' => $dataNascimento,
+                'cep' => $cep,
+                'rua' => $rua,
+                'bairro' => $bairro,
+                'uf' => $uf,
+                'cidade' => $cidade,
+                'complemento' => $complemento,
+                'numero' => $numero,
+                'ibge' => $ibge,
+                'email' => $email,
+                'valor' => $valor,
+            ];
+        } catch (InvalidArgumentException $e) {
+            Util::tratarException($e);
+        }
     }
 
     /**
@@ -257,28 +243,21 @@ class SocioController
     {
         $documento = filter_input(INPUT_GET, 'documento');
 
-        if (!$documento || empty($documento)) {
-            http_response_code(400);
-            echo json_encode(['Erro' => 'O documento informado não é válido.']);
-            exit;
-        }
-
         try {
+            if (!$documento || empty($documento))
+                throw new InvalidArgumentException('O documento informado não é válido.', 400);
+
             $socioDao = new SocioDAO();
             $socio = $socioDao->buscarPorDocumento($documento);
 
             if (!$socio || is_null($socio)) {
                 echo json_encode(['resultado' => 'Sócio não encontrado']);
-                exit;
+                exit();
             }
 
-            //print_r($socio); //Averiguar a melhor maneira de retornar um sócio para o requisitante
             echo json_encode(['resultado' => $socio]);
-            exit();
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(['Erro' => $e->getMessage()]);
-            exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 

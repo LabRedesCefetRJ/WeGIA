@@ -1,5 +1,9 @@
 <?php
 $title = 'Gerar Recibo de Doação';
+$publicsFiles = [
+    'css' => ['recibo.css']
+];
+
 require_once './templates/header.php';
 require_once '../controller/BrandController.php';
 
@@ -22,7 +26,7 @@ $brand = $brandController->getBrand();
         <form id="form-recibo" autocomplete="off">
             
             <div class="wrap-input100">
-                <span class="label-input100">CPF do Sócio</span>
+                <span class="label-input100">CPF do Doador</span>
                 <input class="input100" type="text" name="cpf" id="cpf" 
                     placeholder="000.000.000-00" onkeyup="return Onlynumbers(event)" onkeypress="mascara('###.###.###-##',this,event)" maxlength="14" required>
             </div>

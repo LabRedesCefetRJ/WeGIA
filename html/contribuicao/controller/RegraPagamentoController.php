@@ -1,7 +1,9 @@
 <?php
+if(session_status() === PHP_SESSION_NONE)
+    session_start();
 
-require_once '../model/RegraPagamento.php';
-require_once '../dao/RegraPagamentoDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'RegraPagamento.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'RegraPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'SistemaLog.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
@@ -13,11 +15,7 @@ class RegraPagamentoController
 
     public function __construct(?PDO $pdo = null)
     {
-        if (is_null($pdo)) {
-            $this->pdo = ConexaoDAO::conectar();
-        } else {
-            $this->pdo = $pdo;
-        }
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = ConexaoDAO::conectar();
     }
 
     /**
@@ -39,10 +37,6 @@ class RegraPagamentoController
             $this->pdo->beginTransaction();
             $regraPagamentoDao = new RegraPagamentoDAO($this->pdo);
             $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamento();
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             if (isset($_SESSION['id_pessoa'])) {
                 $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de regras de pagamento.');
@@ -81,10 +75,8 @@ class RegraPagamentoController
             http_response_code(200);
             echo json_encode(['regras' => $conjuntoRegrasPagamento]);
             exit();
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(['erro' => 'erro ao buscar conjunto de regras de pagamento no servidor.']);
-            exit();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -107,10 +99,6 @@ class RegraPagamentoController
                 ->setValor($valor)
                 ->setStatus(0)
                 ->cadastrar();
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Cadastro de regras de pagamento.');
 
@@ -149,10 +137,6 @@ class RegraPagamentoController
             $regraPagamentoDao = new RegraPagamentoDAO($this->pdo);
             $regraPagamentoDao->excluirPorId($regraPagamentoId);
 
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão da regra de pagamento de id $regraPagamentoId.");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
@@ -190,10 +174,6 @@ class RegraPagamentoController
                 ->setId($regraPagamentoId)
                 ->setValor($valor)
                 ->editar();
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração da regra de pagamento de id {$regraPagamento->getId()}.");
 
@@ -247,10 +227,6 @@ class RegraPagamentoController
             $this->pdo->beginTransaction();
             $regraPagamentoDao = new RegraPagamentoDAO($this->pdo);
             $regraPagamentoDao->alterarStatusPorId($status, $regraPagamentoId, $status);
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "$descricao");
 

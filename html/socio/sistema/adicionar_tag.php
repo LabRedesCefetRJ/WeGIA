@@ -1,21 +1,34 @@
 <?php
-	require_once('../conexao.php');
-	$tag = trim(filter_input(INPUT_POST, 'tag', FILTER_SANITIZE_STRING));
-	
-	$sql = "INSERT into socio_tag(tag) values(?)";
-	$stmt = mysqli_prepare($conexao, $sql);
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
-	if(!$stmt){
-		http_response_code(500);
-		exit('Erro ao preparar consulta');
-	}
+if (!isset($_SESSION['usuario'])) {
+	header("Location: " . "../../index.php");
+	exit(401);
+} else {
+	session_regenerate_id();
+}
 
-	$stmt->bind_param('s', $tag);
-	if(!$stmt->execute()){
-		http_response_code(500);
-		exit('Erro ao realizar consulta');
-	}
+//verificação da permissão do usuário
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 3);
 
-	http_response_code(200);
-	exit('Consulta realizada com sucesso');
-?>
+require_once('../conexao.php');
+$tag = trim(filter_input(INPUT_POST, 'tag', FILTER_SANITIZE_SPECIAL_CHARS));
+
+$sql = "INSERT into socio_tag(tag) values(?)";
+$stmt = mysqli_prepare($conexao, $sql);
+
+if (!$stmt) {
+	http_response_code(500);
+	exit('Erro ao preparar consulta');
+}
+
+$stmt->bind_param('s', $tag);
+if (!$stmt->execute()) {
+	http_response_code(500);
+	exit('Erro ao realizar consulta');
+}
+
+http_response_code(200);
+exit('Consulta realizada com sucesso');

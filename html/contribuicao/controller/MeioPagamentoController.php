@@ -1,6 +1,9 @@
 <?php
-require_once '../model/MeioPagamento.php';
-require_once '../dao/MeioPagamentoDAO.php';
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'MeioPagamento.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR .  'MeioPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'SistemaLog.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
@@ -8,16 +11,11 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_S
 
 class MeioPagamentoController
 {
-
     private PDO $pdo;
 
     public function __construct(?PDO $pdo = null)
     {
-        if (is_null($pdo)) {
-            $this->pdo = ConexaoDAO::conectar();
-        } else {
-            $this->pdo = $pdo;
-        }
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = ConexaoDAO::conectar();;
     }
 
     public function cadastrar()
@@ -28,10 +26,6 @@ class MeioPagamentoController
             $this->pdo->beginTransaction();
             $meioPagamento = new MeioPagamento($descricao, $gatewayId);
             $meioPagamento->cadastrar();
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Cadastro de meio de pagamento.');
 
@@ -65,10 +59,6 @@ class MeioPagamentoController
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meiosPagamento = $meioPagamentoDao->buscaTodos();
 
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-
             if (isset($_SESSION['id_pessoa'])) {
                 $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de meios de pagamento.');
 
@@ -96,7 +86,6 @@ class MeioPagamentoController
      */
     public function verificarStatus(string $meioPagamento, bool $status): bool
     {
-
         $meioPagamentoDao = new MeioPagamentoDAO();
         $meioPagamento = $meioPagamentoDao->buscarPorNome($meioPagamento);
 
@@ -128,10 +117,6 @@ class MeioPagamentoController
             $this->pdo->beginTransaction();
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamentoDao->excluirPorId($meioPagamentoId);
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão do meio de pagamento de id $meioPagamentoId.");
 
@@ -169,10 +154,6 @@ class MeioPagamentoController
             $meioPagamento = new MeioPagamento($descricao, $gatewayId);
             $meioPagamento->setId($meioPagamentoId);
             $meioPagamento->editar();
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração do meio de pagamento de id {$meioPagamento->getId()}.");
 
@@ -225,10 +206,6 @@ class MeioPagamentoController
             $this->pdo->beginTransaction();
             $meioPagamentoDao = new MeioPagamentoDAO($this->pdo);
             $meioPagamentoDao->alterarStatusPorId($status, $meioPagamentoId);
-
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
 
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "$descricao");
 

@@ -7,18 +7,24 @@ require_once '../dao/ContribuicaoLogDAO.php';
 require_once '../dao/ConexaoDAO.php';
 require_once '../service/PdfService.php';
 require_once dirname(__DIR__, 3) . '/controle/EmailControle.php';
+require_once dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ContatoInstituicao.php';
+date_default_timezone_set('America/Sao_Paulo');
 
-class ReciboController {
+class ReciboController
+{
     private $pdo;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->pdo = ConexaoDAO::conectar();
     }
 
     /**
      * Gerar recibo de doação para um sócio
      */
-    public function gerarRecibo() {
+    public function gerarRecibo()
+    {
         try {
             // Sanitizar entrada
             $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -39,12 +45,12 @@ class ReciboController {
             // Validação de datas
             $dtInicio = DateTime::createFromFormat('Y-m-d', $dataInicio);
             $dtFim = DateTime::createFromFormat('Y-m-d', $dataFim);
-            
+
             if (!$dtInicio || !$dtFim) {
                 echo json_encode(['erro' => 'Formato de data inválido']);
                 exit;
             }
-            
+
             if ($dtInicio > $dtFim) {
                 echo json_encode(['erro' => 'Data inicial não pode ser maior que a data final']);
                 exit;
@@ -53,15 +59,22 @@ class ReciboController {
             // Buscar sócio
             $socioDAO = new SocioDAO($this->pdo);
             $socio = $socioDAO->buscarPorDocumento($cpf);
-            
+
+            $suporte = ContatoInstituicao::listarPorId(1);
             if (!$socio) {
-                echo json_encode(['erro' => 'Sócio não encontrado']);
+                echo json_encode([
+                    'erro' => 'Doador não localizado: Verifique se o CPF digitado está correto.',
+                    'suporte' => $suporte->getContato()
+                ]);
                 exit;
             }
 
             // Validar email do sócio
             if (empty($socio->getEmail()) || !filter_var($socio->getEmail(), FILTER_VALIDATE_EMAIL)) {
-                echo json_encode(['erro' => 'Sócio não possui email válido cadastrado']);
+                echo json_encode([
+                    'erro' => 'Doador não possui email válido cadastrado: Atualize seus dados para conseguir completar a requisição.',
+                    'suporte' => $suporte->getContato()
+                ]);
                 exit;
             }
 
@@ -74,7 +87,10 @@ class ReciboController {
             );
 
             if (empty($contribuicoes)) {
-                echo json_encode(['erro' => 'Nenhuma contribuição paga encontrada no período informado']);
+                echo json_encode([
+                    'erro' => 'Nenhuma contribuição encontrada no período de tempo informado: Experimente realizar uma consulta com datas diferentes.',
+                    'suporte' => $suporte->getContato()
+                ]);
                 exit;
             }
 
@@ -104,17 +120,9 @@ class ReciboController {
 
             // Gerar PDF
             $pdfService = new PdfService();
-            $pdfDir = '../pdfs';
-            
-            // Garantir que o diretório existe
-            if (!is_dir($pdfDir)) {
-                if (!mkdir($pdfDir, 0755, true)) {
-                    throw new Exception('Não foi possível criar o diretório de PDFs');
-                }
-            }
 
-            $caminhoPdf = $pdfService->gerarRecibo($recibo, $socio, $pdfDir);
-            $recibo->setCaminhoPdf($caminhoPdf);
+            $arquivo = $pdfService->gerarRecibo($recibo, $socio);
+            $recibo->setArquivo($arquivo);
 
             // Salvar no banco
             $reciboDAO = new ReciboDAO($this->pdo);
@@ -122,7 +130,7 @@ class ReciboController {
 
             // Enviar email
             $resultadoEmail = $this->enviarEmail($recibo, $socio);
-            
+
             // Registrar log do sócio
             $mensagem = "Recibo gerado - Código: " . $recibo->getCodigo();
             $socioDAO->registrarLog($socio, $mensagem);
@@ -133,7 +141,7 @@ class ReciboController {
             $response = [
                 'sucesso' => true,
                 'codigo' => $recibo->getCodigo(),
-                'email' => $recibo->getEmail(),
+                'email' => $recibo->getEmail(true),
                 'valor_total' => number_format($valorTotal, 2, ',', '.'),
                 'total_contribuicoes' => count($contribuicoes)
             ];
@@ -145,37 +153,36 @@ class ReciboController {
             }
 
             echo json_encode($response);
-
         } catch (Exception $e) {
-            if ($this->pdo->inTransaction()) {
+            if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
-            }
-            error_log("Erro ao gerar recibo: " . $e->getMessage());
-            echo json_encode(['erro' => 'Erro interno: ' . $e->getMessage()]);
+
+            Util::tratarException($e);
         }
     }
 
     /**
      * Download do recibo por código
      */
-    public function download() {
+    public function download()
+    {
         $codigo = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_STRING);
-        
+
         if (empty($codigo)) {
             http_response_code(400);
             exit('Código não fornecido');
         }
-        
+
         $reciboDAO = new ReciboDAO($this->pdo);
         $recibo = $reciboDAO->buscarPorCodigo($codigo);
-        
+
         if (!$recibo || !file_exists($recibo['caminho_pdf'])) {
             http_response_code(404);
             exit('Recibo não encontrado');
         }
 
         header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="recibo_'.$codigo.'.pdf"');
+        header('Content-Disposition: attachment; filename="recibo_' . $codigo . '.pdf"');
         header('Content-Length: ' . filesize($recibo['caminho_pdf']));
         readfile($recibo['caminho_pdf']);
         exit;
@@ -184,10 +191,11 @@ class ReciboController {
     /**
      * Enviar email com recibo
      */
-    private function enviarEmail(Recibo $recibo, Socio $socio) {
+    private function enviarEmail(Recibo $recibo, Socio $socio)
+    {
         try {
             $emailControle = new EmailControle($this->pdo);
-            
+
             // Verificar se o email está configurado
             if (!$emailControle->isEnabled() || !$emailControle->isConfigured()) {
                 return [
@@ -195,7 +203,7 @@ class ReciboController {
                     'message' => 'Sistema de email não está configurado'
                 ];
             }
-            
+
             $assunto = 'Recibo de Doação - ' . ($emailControle->getConfiguracoes()['smtp_from_name'] ?: 'WeGIA');
 
             // Mensagem HTML formatada
@@ -203,13 +211,11 @@ class ReciboController {
                 "<p>Prezado(a) %s,</p>
                 <p>Anexamos o recibo de suas doações no período de %s a %s.</p>
                 <p><strong>Valor Total: R$ %s</strong></p>
-                <p><strong>Total de Contribuições: %d</strong></p>
                 <p>Atenciosamente,<br>%s</p>",
                 htmlspecialchars($socio->getNome()),
                 $recibo->getDataInicio()->format('d/m/Y'),
                 $recibo->getDataFim()->format('d/m/Y'),
                 number_format($recibo->getValorTotal(), 2, ',', '.'),
-                $recibo->getTotalContribuicoes(),
                 htmlspecialchars($emailControle->getConfiguracoes()['smtp_from_name'] ?: 'WeGIA')
             );
 
@@ -218,9 +224,8 @@ class ReciboController {
                 $assunto,
                 $mensagem,
                 $socio->getNome(),
-                [$recibo->getCaminhoPdf()]
+                [$recibo->getArquivo()]
             );
-            
         } catch (Exception $e) {
             error_log("Erro ao enviar email do recibo: " . $e->getMessage());
             return [

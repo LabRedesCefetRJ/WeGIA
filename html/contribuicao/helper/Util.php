@@ -192,7 +192,7 @@ class Util
     }
 
     /**
-     * Valida se a ESTRUTURA de um CNPJ é válido (Xablau)
+     * Valida se a ESTRUTURA de um CNPJ é válido
      */
     public static function validaEstruturaCnpj($cnpj) {
         if(strlen($cnpj) === 18 && strpos($cnpj, ".") === 2 && strpos($cnpj, ".", 3) === 6 && strpos($cnpj, "/") === 10 && strpos($cnpj, "-") === 15) {
@@ -202,7 +202,7 @@ class Util
     }
 
     /**
-     * Valida se um CNPJ é válido (Xablau)
+     * Valida se um CNPJ é válido
      */
     public static function validaCNPJ($cnpj) {
         // Remove caracteres não numéricos

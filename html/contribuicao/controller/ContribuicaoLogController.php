@@ -86,38 +86,32 @@ class ContribuicaoLogController
             }
 
             $servicoPagamento = new $classeService;
-        } catch (PDOException $e) {
-            //implementar tratamento de erro
-            echo json_encode(['erro' => $e->getMessage()]);
-            exit();
-        }
 
-        //Verificar qual fuso horário será utilizado posteriormente
+            //Verificar qual fuso horário será utilizado posteriormente
 
-        if (isset($_POST['dia']) && !empty($_POST['dia'])) {
-            require_once '../../permissao/permissao.php';
+            if (isset($_POST['dia']) && !empty($_POST['dia'])) {
+                require_once '../../permissao/permissao.php';
 
-            session_start();
-            permissao($_SESSION['id_pessoa'], 4);
+                session_start();
+                permissao($_SESSION['id_pessoa'], 4);
 
-            $dataGeracao = date('Y-m-d');
-            $dataVencimento = $_POST['dia'];
-        } else {
-            $dataGeracao = date('Y-m-d');
-            $dataVencimento = date_modify(new DateTime(), '+7 day')->format('Y-m-d');
-        }
+                $dataGeracao = date('Y-m-d');
+                $dataVencimento = $_POST['dia'];
+            } else {
+                $dataGeracao = date('Y-m-d');
+                $dataVencimento = date_modify(new DateTime(), '+7 day')->format('Y-m-d');
+            }
 
-        $contribuicaoLog = new ContribuicaoLog();
-        $contribuicaoLog
-            ->setValor($valor)
-            ->setCodigo($contribuicaoLog->gerarCodigo())
-            ->setDataGeracao($dataGeracao)
-            ->setDataVencimento($dataVencimento)
-            ->setSocio($socio)
-            ->setGatewayPagamento($gatewayPagamento)
-            ->setMeioPagamento($meioPagamento);
+            $contribuicaoLog = new ContribuicaoLog();
+            $contribuicaoLog
+                ->setValor($valor)
+                ->setCodigo($contribuicaoLog->gerarCodigo())
+                ->setDataGeracao($dataGeracao)
+                ->setDataVencimento($dataVencimento)
+                ->setSocio($socio)
+                ->setGatewayPagamento($gatewayPagamento)
+                ->setMeioPagamento($meioPagamento);
 
-        try {
             /*Controle de transação para que o log só seja registrado
             caso o serviço de pagamento tenha sido executado*/
             $this->pdo->beginTransaction();
@@ -141,9 +135,8 @@ class ContribuicaoLogController
                 $contribuicaoLogDao->alterarCodigoPorId($codigoApi, $contribuicaoLog->getId());
                 $this->pdo->commit();
             }
-        } catch (PDOException $e) {
-            //implementar tratamento de erro
-            echo json_encode(['erro' => $e->getMessage()]);
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -361,9 +354,8 @@ class ContribuicaoLogController
 
                 echo json_encode(['link' => WWW . 'html/contribuicao/' . $resultado['link']]);
             }
-        } catch (PDOException $e) {
-            //implementar tratamento de erro
-            echo json_encode(['erro' => $e->getMessage()]);
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -431,27 +423,21 @@ class ContribuicaoLogController
             }
 
             $servicoPagamento = new $classeService;
-        } catch (PDOException $e) {
-            //implementar tratamento de erro
-            echo 'Erro: ' . $e->getMessage();
-            exit();
-        }
 
-        //Verificar qual fuso horário será utilizado posteriormente
-        $dataGeracao = date('Y-m-d');
-        $dataVencimento = date_modify(new DateTime(), '+1 day')->format('Y-m-d');
+            //Verificar qual fuso horário será utilizado posteriormente
+            $dataGeracao = date('Y-m-d');
+            $dataVencimento = date_modify(new DateTime(), '+1 day')->format('Y-m-d');
 
-        $contribuicaoLog = new ContribuicaoLog();
-        $contribuicaoLog
-            ->setValor($valor)
-            ->setCodigo($contribuicaoLog->gerarCodigo())
-            ->setDataGeracao($dataGeracao)
-            ->setDataVencimento($dataVencimento)
-            ->setSocio($socio)
-            ->setGatewayPagamento($gatewayPagamento)
-            ->setMeioPagamento($meioPagamento);
+            $contribuicaoLog = new ContribuicaoLog();
+            $contribuicaoLog
+                ->setValor($valor)
+                ->setCodigo($contribuicaoLog->gerarCodigo())
+                ->setDataGeracao($dataGeracao)
+                ->setDataVencimento($dataVencimento)
+                ->setSocio($socio)
+                ->setGatewayPagamento($gatewayPagamento)
+                ->setMeioPagamento($meioPagamento);
 
-        try {
             /*Controle de transação para que o log só seja registrado
             caso o serviço de pagamento tenha sido executado*/
             $this->pdo->beginTransaction();
@@ -476,9 +462,8 @@ class ContribuicaoLogController
                 $contribuicaoLogDao->alterarCodigoPorId($codigoApi, $contribuicaoLog->getId());
                 $this->pdo->commit();
             }
-        } catch (PDOException $e) {
-            //implementar tratamento de erro
-            echo 'Erro: ' . $e->getMessage();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -500,7 +485,7 @@ class ContribuicaoLogController
             $socio = $socioDao->buscarPorDocumento($documento);
 
             if (is_null($socio)) {
-                throw new Exception('Sócio não encontrado');
+                throw new Exception('Sócio não encontrado', 400);
             }
 
             // Buscar meio de pagamento
@@ -508,7 +493,7 @@ class ContribuicaoLogController
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
 
             if (is_null($meioPagamento)) {
-                throw new Exception('Meio de pagamento não encontrado');
+                throw new Exception('Meio de pagamento não encontrado', 400);
             }
 
             // Verificar regras de pagamento
@@ -516,6 +501,7 @@ class ContribuicaoLogController
             $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamentoPorIdMeioPagamento(
                 $meioPagamento->getId()
             );
+
             Util::verificarRegras($valor, $conjuntoRegrasPagamento);
 
             // Buscar gateway de pagamento
@@ -523,7 +509,7 @@ class ContribuicaoLogController
             $gatewayPagamentoArray = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
 
             if (!$gatewayPagamentoArray) {
-                throw new Exception('Gateway de pagamento não encontrado');
+                throw new Exception('Gateway de pagamento não encontrado', 400);
             }
 
             $gatewayPagamento = new GatewayPagamento(
@@ -538,7 +524,7 @@ class ContribuicaoLogController
             $requisicaoServico = '../service/' . $gatewayPagamento->getNome() . $formaPagamento . 'Service.php';
 
             if (!file_exists($requisicaoServico)) {
-                throw new Exception('Serviço de pagamento não encontrado');
+                throw new Exception('Serviço de pagamento não encontrado', 400);
             }
 
             require_once $requisicaoServico;
@@ -546,7 +532,7 @@ class ContribuicaoLogController
             $classeService = $gatewayPagamento->getNome() . $formaPagamento . 'Service';
 
             if (!class_exists($classeService)) {
-                throw new Exception('Classe do serviço não encontrada');
+                throw new Exception('Classe do serviço não encontrada', 400);
             }
 
             $servicoPagamento = new $classeService();
@@ -570,14 +556,14 @@ class ContribuicaoLogController
             $codigoTransacao = $servicoPagamento->processarCartaoCredito($contribuicaoLog);
 
             if (!$codigoTransacao) {
-                throw new Exception('Falha no processamento do cartão');
+                throw new Exception('Falha no processamento do cartão', 500);
             }
 
             // Atualizar registro com código da transação
             $contribuicaoLogDao->alterarCodigoPorId($codigoTransacao, $contribuicaoLog->getId());
 
             // Registrar log do sócio
-            $mensagem = "Pagamento com cartão processado - ID: $codigoTransacao";
+            $mensagem = 'Pagamento com cartão processado - ID: ' . htmlspecialchars($codigoTransacao);
             $socioDao->registrarLog($socio, $mensagem);
 
             $this->pdo->commit();
@@ -585,35 +571,32 @@ class ContribuicaoLogController
             echo json_encode([
                 'sucesso' => true,
                 'mensagem' => 'Pagamento processado com sucesso!',
-                'transacao_id' => $codigoTransacao
+                'transacao_id' => htmlspecialchars($codigoTransacao)
             ]);
         } catch (Exception $e) {
-            if ($this->pdo->inTransaction()) {
+            if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
-            }
-            http_response_code(400);
-            echo json_encode(['erro' => $e->getMessage()]);
+
+            Util::tratarException($e);
         }
     }
 
 
     /**
-     * Extraí o id da requisição POST e muda o status de pagamento da contribuição correspondente.
+     * Extrai o id da requisição POST e muda o status de pagamento da contribuição correspondente.
      */
     public function pagarPorId()
     {
-        $idContribuicaoLog = filter_input(INPUT_POST, 'id_contribuicao');
-
-        if (!$idContribuicaoLog || $idContribuicaoLog < 1) {
-            http_response_code(400);
-            exit('O id fornecido não é válido'); //substituir posteriormente por redirecionamento com mensagem de feedback
-        }
+        $idContribuicaoLog = filter_input(INPUT_POST, 'id_contribuicao', FILTER_SANITIZE_NUMBER_INT);
 
         try {
+            if (!$idContribuicaoLog || $idContribuicaoLog < 1)
+                throw new InvalidArgumentException('O id fornecido não é válido', 400);
+
             $contribuicaoLogDao = new ContribuicaoLogDAO();
             $contribuicaoLogDao->pagarPorId($idContribuicaoLog);
-        } catch (PDOException $e) {
-            echo 'Erro: ' . $e->getMessage(); //substituir posteriormente por redirecionamento com mensagem de feedback
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -677,20 +660,17 @@ class ContribuicaoLogController
             $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Sincronização da tabela de contribuições com os gateways de pagamento');
 
             if (!$sistemaLogDao->registrar($sistemaLog)) {
-                throw new Exception('Falha ao registrar log do sistema');
+                throw new Exception('Falha ao registrar log do sistema', 500);
             }
 
             $this->pdo->commit();
 
             echo json_encode(['sucesso' => 'Sincronização realizada com sucesso']);
         } catch (Exception $e) {
-            if ($this->pdo->inTransaction()) {
+            if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
-            }
 
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code(500);
-            echo json_encode(['erro' => 'Erro interno ao sincronizar as contribuições']);
+            Util::tratarException($e);
         }
     }
 
@@ -704,9 +684,8 @@ class ContribuicaoLogController
             $contribuicoes = $contribuicaoLogDao->getContribuicoes();
 
             echo json_encode(["data" => $contribuicoes]);
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(['erro' => 'Erro ao buscar contribuições no banco de dados.']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -744,9 +723,7 @@ class ContribuicaoLogController
 
             echo json_encode($relatorio);
         } catch (Exception $e) {
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code($e->getCode());
-            echo json_encode(['erro' => 'Erro ao buscar o relatório de contribuições']);
+            Util::tratarException($e);
         }
     }
 
