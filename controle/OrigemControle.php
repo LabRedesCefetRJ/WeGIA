@@ -29,30 +29,22 @@ class OrigemControle
             exit;
         }
 
-        // Sanitização de CPF e CNPJ
-        $cpf  = preg_replace('/[^0-9]/', '', $cpf);
-        $cnpj = preg_replace('/[^0-9]/', '', $cnpj);
-
         // Validação de CPF e CNPJ
-        if (!empty($cpf) && !Util::validarCPF($cpf)) {
+        if (strlen($cpf) > 0 && !Util::validarCPF($cpf)) {
             $msg = urlencode("CPF inválido!");
             header('Location: ../html/origem.html?msg=' . $msg);
             exit;
         }
 
-        if (!empty($cnpj) && !Util::validaEstruturaCnpj($cnpj) && !Util::validaCnpj($cnpj)) {
+        if (strlen($cnpj) > 0 && (!Util::validaCnpj($cnpj))) {
             $msg = urlencode("CNPJ inválido!");
             header('Location: ../html/origem.html?msg=' . $msg);
             exit;
         }
 
         // Criação do objeto de forma segura
+        $cpf = strlen($cpf) > 0 ? $cpf : null;
         $origem = new Origem($nome, $cnpj, $cpf, $telefone);
-
-        $origem->setNome($nome);
-        $origem->setCnpj($cnpj);
-        $origem->setCpf($cpf);
-        $origem->setTelefone($telefone);
 
         return $origem;
     }
@@ -111,7 +103,7 @@ class OrigemControle
             error_log("Erro ao incluir origem: " . $e->getMessage());
             echo "Erro ao cadastrar origem. Tente novamente mais tarde.";
         } catch (Exception $e) {
-            error_log("Erro geral: " . $e->getMessage());
+            error_log("Erro geral: " . $e->getMessage() . 'Line ' . $e->getLine() . 'File ' . $e->getFile());
             echo "Erro inesperado. Contate o administrador do sistema.";
         }
     }
@@ -136,4 +128,3 @@ class OrigemControle
         }
     }
 }
-?>
