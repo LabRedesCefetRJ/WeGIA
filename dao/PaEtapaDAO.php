@@ -13,10 +13,17 @@ class PaEtapaDAO
 
     public function listarPorProcesso(int $idProcesso): array
     {
-        $sql = "SELECT id, data_inicio, data_fim, descricao, id_status 
-                FROM pa_etapa
-                WHERE id_processo = :id_processo
-                ORDER BY data_inicio ASC";
+        $sql = "SELECT 
+                    e.id,
+                    e.data_inicio,
+                    e.data_fim,
+                    e.descricao,
+                    e.id_status,
+                    s.descricao AS status_nome
+                FROM pa_etapa e
+                JOIN pa_status s ON e.id_status = s.id
+                WHERE e.id_processo = :id_processo
+                ORDER BY e.data_inicio ASC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':id_processo', $idProcesso, PDO::PARAM_INT);
         $stmt->execute();
@@ -24,43 +31,43 @@ class PaEtapaDAO
     }
 
     public function inserirEtapa(
-    int $idProcesso,
-    int $statusId,
-    string $descricao,
-    ?string $dataInicio,
-    ?string $dataFim
-): int {
-    $sql = "INSERT INTO pa_etapa (data_inicio, data_fim, descricao, id_processo, id_status)
-            VALUES (:data_inicio, :data_fim, :descricao, :id_processo, :id_status)";
-    $stmt = $this->pdo->prepare($sql);
+        int $idProcesso,
+        int $statusId,
+        string $descricao,
+        ?string $dataInicio,
+        ?string $dataFim
+    ): int {
+        $sql = "INSERT INTO pa_etapa (data_inicio, data_fim, descricao, id_processo, id_status)
+                VALUES (:data_inicio, :data_fim, :descricao, :id_processo, :id_status)";
+        $stmt = $this->pdo->prepare($sql);
 
-    $data_inicio = $dataInicio ?: date('Y-m-d');
-    $data_fim    = $dataFim ?: null;
+        $data_inicio = $dataInicio ?: date('Y-m-d');
+        $data_fim    = $dataFim ?: null;
 
-    $stmt->bindParam(':data_inicio',  $data_inicio);
-    $stmt->bindParam(':data_fim',     $data_fim);
-    $stmt->bindParam(':descricao',    $descricao);
-    $stmt->bindParam(':id_processo',  $idProcesso, PDO::PARAM_INT);
-    $stmt->bindParam(':id_status',    $statusId,   PDO::PARAM_INT);
+        $stmt->bindParam(':data_inicio',  $data_inicio);
+        $stmt->bindParam(':data_fim',     $data_fim);
+        $stmt->bindParam(':descricao',    $descricao);
+        $stmt->bindParam(':id_processo',  $idProcesso, PDO::PARAM_INT);
+        $stmt->bindParam(':id_status',    $statusId,   PDO::PARAM_INT);
 
-    $stmt->execute();
-    return (int)$this->pdo->lastInsertId();
-}
+        $stmt->execute();
+        return (int)$this->pdo->lastInsertId();
+    }
 
-public function atualizar(int $idEtapa, int $statusId, ?string $dataFim, string $descricao): bool
-{
-    $sql = "UPDATE pa_etapa
-            SET id_status = :status_id,
-                data_fim  = :data_fim,
-                descricao = :descricao
-            WHERE id = :id";
-    $stmt = $this->pdo->prepare($sql);
-    $stmt->bindParam(':status_id', $statusId, PDO::PARAM_INT);
-    $stmt->bindParam(':data_fim',  $dataFim);
-    $stmt->bindParam(':descricao', $descricao);
-    $stmt->bindParam(':id',        $idEtapa, PDO::PARAM_INT);
-    return $stmt->execute();
-}
+    public function atualizar(int $idEtapa, int $statusId, ?string $dataFim, string $descricao): bool
+    {
+        $sql = "UPDATE pa_etapa
+                SET id_status = :status_id,
+                    data_fim  = :data_fim,
+                    descricao = :descricao
+                WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':status_id', $statusId, PDO::PARAM_INT);
+        $stmt->bindParam(':data_fim',  $dataFim);
+        $stmt->bindParam(':descricao', $descricao);
+        $stmt->bindParam(':id',        $idEtapa, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
 
 ?>

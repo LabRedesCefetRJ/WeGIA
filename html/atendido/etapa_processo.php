@@ -23,7 +23,6 @@ require_once '../../dao/PaStatusDAO.php';
 require_once '../../dao/ProcessoAceitacaoDAO.php';
 require_once "../personalizacao_display.php";
 
-
 $pdo       = Conexao::connect();
 $etapaDAO  = new PaEtapaDAO($pdo);
 $statusDAO = new PaStatusDAO($pdo);
@@ -31,9 +30,10 @@ $procDAO   = new ProcessoAceitacaoDAO($pdo);
 
 $etapas    = $etapaDAO->listarPorProcesso($idProcesso);
 $statuses  = $statusDAO->listarTodos();
-$processo  = $procDAO->buscarResumoPorId($idProcesso);
+$processo  = $procDAO->buscarResumoPorId($idProcesso); // precisa trazer também pa.id_status
 
-$nomeCompleto = $processo ? ($processo['nome'].' '.$processo['sobrenome']) : ('Processo #'.$idProcesso);
+$nomeCompleto    = $processo ? ($processo['nome'] . ' ' . $processo['sobrenome']) : ('Processo #' . $idProcesso);
+$processoStatusId = isset($processo['id_status']) ? (int)$processo['id_status'] : null;
 
 $msg   = $_SESSION['msg'] ?? '';
 $error = $_SESSION['mensagem_erro'] ?? '';
@@ -58,7 +58,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
     <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
-    <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+    <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css" />
 
     <script src="../../assets/vendor/modernizr/modernizr.js"></script>
 </head>
@@ -101,6 +101,34 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                 </div>
             <?php endif; ?>
 
+            <!-- Status do processo + botão cadastrar etapas -->
+            <div class="mb-3">
+                <form method="post" action="../../controle/control.php" class="form-inline d-inline-block mr-3">
+                    <input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
+                    <input type="hidden" name="metodo" value="atualizarStatus">
+                    <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
+
+                    <label class="mr-2">Status do Processo:</label>
+                    <select name="id_status" class="form-control mr-2" style="min-width: 200px;">
+                        <?php foreach ($statuses as $st): ?>
+                            <option value="<?= (int)$st['id'] ?>"
+                                <?= ($processoStatusId !== null && $processoStatusId === (int)$st['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($st['descricao']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+
+                    <button type="submit" class="btn btn-primary">
+                        Alterar Status
+                    </button>
+                </form>
+
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalNovaEtapa">
+                    Cadastrar Etapas
+                </button>
+            </div>
+
+            <!-- Lista de etapas -->
             <section class="panel panel-primary">
                 <header class="panel-heading">
                     <h2 class="panel-title">Etapas do Processo de <?= htmlspecialchars($nomeCompleto) ?></h2>
@@ -117,8 +145,10 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                     <tr>
                                         <th>Data de Início</th>
                                         <th>Data de Conclusão</th>
+                                        <th>Status</th>
                                         <th>Descrição</th>
                                         <th>Arquivos</th>
+                                        <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -126,6 +156,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                         <tr>
                                             <td><?= htmlspecialchars($etapa['data_inicio']) ?></td>
                                             <td><?= htmlspecialchars($etapa['data_fim'] ?? 'Em andamento') ?></td>
+                                            <td><?= htmlspecialchars($etapa['status_nome']) ?></td>
                                             <td><?= htmlspecialchars($etapa['descricao']) ?></td>
                                             <td>
                                                 <form method="post" action="../../controle/control.php"
@@ -135,8 +166,21 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                     <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
                                                     <input type="hidden" name="id_etapa" value="<?= (int)$etapa['id'] ?>">
                                                     <input type="file" name="arquivo" class="form-control input-sm" />
-                                                    <button type="submit" class="btn btn-sm btn-default">Anexar</button>
+                                                    <button type="submit" class="btn btn-sm btn-default mt-1">Anexar</button>
                                                 </form>
+                                            </td>
+                                            <td>
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-xs btn-primary btn-editar-etapa"
+                                                    data-toggle="modal"
+                                                    data-target="#modalEditarEtapa"
+                                                    data-id="<?= (int)$etapa['id'] ?>"
+                                                    data-descricao="<?= htmlspecialchars($etapa['descricao'], ENT_QUOTES) ?>"
+                                                    data-datafim="<?= htmlspecialchars($etapa['data_fim'] ?? '', ENT_QUOTES) ?>"
+                                                    data-status="<?= (int)$etapa['id_status'] ?>">
+                                                    <i class="fa fa-edit"></i> Editar
+                                                </button>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -147,44 +191,95 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                 </div>
             </section>
 
-            <section class="panel panel-primary" style="border-color: #0088cc;">
-                <header class="panel-heading">
-                    <h2 class="panel-title">Nova Etapa</h2>
-                </header>
-                <div class="panel-body">
-                    <form method="post" action="../../controle/control.php" enctype="multipart/form-data">
-                        <input type="hidden" name="nomeClasse" value="EtapaProcessoControle">
-                        <input type="hidden" name="metodo" value="salvar">
-                        <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
+            <!-- Modal Nova Etapa -->
+            <div class="modal fade" id="modalNovaEtapa" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <form method="post" action="../../controle/control.php" enctype="multipart/form-data" class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Nova Etapa</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="nomeClasse" value="EtapaProcessoControle">
+                            <input type="hidden" name="metodo" value="salvar">
+                            <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
 
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Data de Início</label>
-                                    <input type="date" name="data_inicio" class="form-control">
-                                </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="id_status" class="form-control">
+                                    <?php foreach ($statuses as $st): ?>
+                                        <option value="<?= (int)$st['id'] ?>"><?= htmlspecialchars($st['descricao']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label>Data de Conclusão</label>
-                                    <input type="date" name="data_fim" class="form-control">
-                                </div>
+
+                            <div class="form-group">
+                                <label>Data de Início</label>
+                                <input type="date" name="data_inicio" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Data de Conclusão</label>
+                                <input type="date" name="data_fim" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Descrição da Etapa <span class="obrig">*</span></label>
+                                <textarea name="descricao" class="form-control" rows="3" required></textarea>
                             </div>
                         </div>
-
-                        <div class="form-group">
-                            <label>Descrição da Etapa <span class="obrig">*</span></label>
-                            <textarea name="descricao" class="form-control" rows="3" required
-                                      placeholder="Ex.: Entrevista inicial com a família, visita técnica, etc."></textarea>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Salvar Etapa</button>
                         </div>
-
-                        <button type="submit" class="btn btn-success">
-                            <i class="fa fa-plus"></i> Adicionar Etapa
-                        </button>
-                        <a href="processo_aceitacao.php" class="btn btn-default">Voltar</a>
                     </form>
                 </div>
-            </section>
+            </div>
+
+            <!-- Modal Editar Etapa -->
+            <div class="modal fade" id="modalEditarEtapa" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <form method="post" action="../../controle/control.php" class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Editar Etapa</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="nomeClasse" value="EtapaProcessoControle">
+                            <input type="hidden" name="metodo" value="atualizar">
+                            <input type="hidden" name="id_processo" id="edit_id_processo" value="<?= (int)$idProcesso ?>">
+                            <input type="hidden" name="id_etapa" id="edit_id_etapa">
+
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="id_status" id="edit_id_status" class="form-control">
+                                    <?php foreach ($statuses as $st): ?>
+                                        <option value="<?= (int)$st['id'] ?>"><?= htmlspecialchars($st['descricao']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Data de Conclusão</label>
+                                <input type="date" name="data_fim" id="edit_data_fim" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Descrição</label>
+                                <textarea name="descricao" id="edit_descricao" class="form-control" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success">Salvar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
         </section>
     </div>
@@ -201,13 +296,23 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 <script src="../../assets/javascripts/theme.js"></script>
 <script src="../../assets/javascripts/theme.custom.js"></script>
 <script src="../../assets/javascripts/theme.init.js"></script>
+
 <style type="text/css">
     .obrig { color: #ff0000; }
 </style>
+
 <script>
     $(function() {
         $("#header").load("../header.php");
         $(".menuu").load("../menu.php");
+
+        $('.btn-editar-etapa').on('click', function() {
+            var btn = $(this);
+            $('#edit_id_etapa').val(btn.data('id'));
+            $('#edit_descricao').val(btn.data('descricao'));
+            $('#edit_data_fim').val(btn.data('datafim'));
+            $('#edit_id_status').val(btn.data('status'));
+        });
     });
 
     function onlyNumbers(evt) {

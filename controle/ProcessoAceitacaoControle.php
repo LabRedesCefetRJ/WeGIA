@@ -8,6 +8,34 @@ require_once ROOT . '/dao/Conexao.php';
 
 class ProcessoAceitacaoControle
 {
+    
+    public function atualizarStatus()
+{
+    session_start();
+    require_once ROOT . '/dao/Conexao.php';
+    require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
+
+    $idProcesso = (int)($_POST['id_processo'] ?? 0);
+    $idStatus   = (int)($_POST['id_status'] ?? 0);
+
+    if ($idProcesso <= 0 || $idStatus <= 0) {
+        $_SESSION['mensagem_erro'] = 'Processo ou status inválido.';
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit();
+    }
+
+    $pdo = Conexao::connect();
+    $dao = new ProcessoAceitacaoDAO($pdo);
+    $dao->atualizarStatus($idProcesso, $idStatus);
+
+    $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
+    header("Location: ../html/atendido/etapa_processo.php?id=".$idProcesso);
+    exit();
+}
+    
+    
+    
+    
     public function incluir()
     {
         try {

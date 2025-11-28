@@ -68,6 +68,7 @@ class ProcessoAceitacaoDAO
     $sql = "
         SELECT 
             pa.id,
+            pa.id_status,
             p.nome,
             p.sobrenome
         FROM processo_de_aceitacao pa
@@ -80,5 +81,18 @@ class ProcessoAceitacaoDAO
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row ?: null;
 }
+
+public function atualizarStatus(int $idProcesso, int $idStatus): bool
+{
+    $sql = "UPDATE processo_de_aceitacao
+            SET id_status = :id_status
+            WHERE id = :id";
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->bindParam(':id_status', $idStatus, PDO::PARAM_INT);
+    $stmt->bindParam(':id',        $idProcesso, PDO::PARAM_INT);
+    return $stmt->execute();
+}
+
+
 
 }
