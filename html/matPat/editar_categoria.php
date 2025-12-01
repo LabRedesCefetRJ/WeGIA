@@ -1,53 +1,64 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
-	
-	$config_path = "config.php";
-	if(file_exists($config_path)){
-		require_once($config_path);
-	}else{
-		while(true){
-			$config_path = "../" . $config_path;
-			if(file_exists($config_path)) break;
-		}
-		require_once($config_path);
-	}
-	
-	if (!isset($_SESSION['usuario'])) {
-		header("Location: ". WWW ."html/index.php");
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
+if (!isset($_SESSION['usuario'])) {
+	header("Location: " . WWW . "html/index.php");
+	exit();
+} else {
+	session_regenerate_id();
+}
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+	http_response_code(403);
+	echo json_encode(['erro' => 'Falha na autenticação, o id da pessoa informado não é válido.']);
+	exit();
+}
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($id_pessoa, 22, 3);
+
+$id_categoria = filter_var($_REQUEST['id_categoria'], FILTER_SANITIZE_NUMBER_INT);
+
+if (!$id_categoria || $id_categoria < 1) {
+	http_response_code(412);
+	echo json_encode(['erro' => 'O id da categoria informado não é válido.']);
+	header("Location: " . WWW . "html/matPat/listar_categoria.php");
+	exit();
+}
+
+try {
+	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
+	$pdo = Conexao::connect();
+	$sql = 'SELECT * FROM categoria_produto WHERE id_categoria_produto =:idCategoria';
+	$stmt = $pdo->prepare($sql);
+	$stmt->bindValue(':idCategoria', $id_categoria, FILTER_SANITIZE_NUMBER_INT);
+	$stmt->execute();
+
+	if ($stmt->rowCount() < 1) {
+		http_response_code(412);
+		echo json_encode(['erro' => 'Nenhuma categoria de produto encontrada.']);
+		header("Location: " . WWW . "html/matPat/listar_categoria.php");
+		exit();
 	}
 
-	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-	$id_pessoa = $_SESSION['id_pessoa'];
-	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-	if(!is_null($resultado)){
-		$id_cargo = mysqli_fetch_array($resultado);
-		if(!is_null($id_cargo)){
-			$id_cargo = $id_cargo['id_cargo'];
-		}
-		$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=22");
-		if(!is_bool($resultado) and mysqli_num_rows($resultado)){
-			$permissao = mysqli_fetch_array($resultado);
-			if($permissao['id_acao'] < 3){
-				$msg = "Você não tem as permissões necessárias para essa página.";
-				header("Location: ". WWW ."html/home.php?msg_c=$msg");
-			}
-			$permissao = $permissao['id_acao'];
-		}else{
-        	$permissao = 1;
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ". WWW ."html/home.php?msg_c=$msg");
-		}	
-	}else{
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ". WWW ."html/home.php?msg_c=$msg");
-	}
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once ROOT . "/html/personalizacao_display.php";
+	$cat = $stmt->fetch(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+	Util::tratarException($e);
+}
+
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . "/html/personalizacao_display.php";
 ?>
 
 <!doctype html>
 <html class="fixed">
+
 <head>
 
 	<!-- Basic -->
@@ -67,7 +78,7 @@
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
+	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 
 	<!-- Theme CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
@@ -89,49 +100,49 @@
 	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-		
+
 	<!-- Specific Page Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-		
+
 	<!-- Theme Base, Components and Settings -->
 	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
-		
+
 	<!-- Theme Custom -->
 	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
-		
+
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
-
 	<!-- javascript functions -->
-	<script	src="<?= WWW ?>Functions/onlyNumbers.js"></script> 
-	<script	src="<?= WWW ?>Functions/onlyChars.js"></script>
-	<script	src="<?= WWW ?>Functions/mascara.js"></script>
+	<script src="<?= WWW ?>Functions/onlyNumbers.js"></script>
+	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
+	<script src="<?= WWW ?>Functions/mascara.js"></script>
 
 	<!-- jquery functions -->
 	<script>
-    	document.write('<a href="' + document.referrer + '"></a>');
+		document.write('<a href="' + document.referrer + '"></a>');
 	</script>
 
-<script type="text/javascript">
-		$(function () {
-	      $(".header").load("<?= WWW ?>html/header.php");
-	      $(".menuu").load("<?= WWW ?>html/menu.php");
-	    });	
+	<script type="text/javascript">
+		$(function() {
+			$(".header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
+		});
 	</script>
 </head>
+
 <body>
 	<section class="body">
 		<!-- start: header -->
 		<header class="header">
-			
+
 		</header>
 		<!-- end: header -->
 
 		<div class="inner-wrapper">
 			<!-- start: sidebar -->
 			<aside id="sidebar-left" class="sidebar-left menuu">
-				
+
 			</aside>
 			<!-- end: sidebar -->
 
@@ -148,7 +159,7 @@
 							<li><span>Páginas</span></li>
 							<li><span>Editar Categoria</span></li>
 						</ol>
-					
+
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 					</div>
 				</header>
@@ -156,7 +167,7 @@
 				<!-- start: page -->
 				<div class="row">
 					<div class="col-md-4 col-lg-2" style="visibility: hidden;"></div>
-					<div class="col-md-8 col-lg-8" >
+					<div class="col-md-8 col-lg-8">
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li class="active">
@@ -166,39 +177,29 @@
 							<div class="tab-content">
 								<div id="overview" class="tab-pane active">
 									<fieldset>
-                                    <?php
-                                        extract($_REQUEST);
-                                        if(!isset($id_categoria)){
-                                            header("Location: ". WWW ."html/matPat/listar_categoria.php");
-                                        }else{
-                                            $cat = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM categoria_produto WHERE id_categoria_produto = $id_categoria"));
-                                        }
-                                    ?>
 										<form id="formulario" method="post" action="<?= WWW ?>controle/control.php">
 											<div class="form-group"><br>
 												<label class="col-md-3 control-label">Categoria</label>
 												<div class="col-md-8">
-													<input type="text" class="form-control" value="<?php echo($cat['descricao_categoria']); ?>" name="descricao_categoria" id="categoria" required>
-                                                    <input type="hidden" value="<?php echo($cat['id_categoria_produto']); ?>" name="id_categoria_produto" required>
+													<input type="text" class="form-control" value="<?= htmlspecialchars($cat['descricao_categoria']) ?>" name="descricao_categoria" id="categoria" required>
+													<input type="hidden" value="<?= htmlspecialchars($cat['id_categoria_produto']) ?>" name="id_categoria_produto" required>
 													<input type="hidden" name="nomeClasse" value="CategoriaControle">
-													
+
 													<input type="hidden" name="metodo" value="editar">
 
 												</div>
-											</div><br/>
+											</div><br />
 											<div class="row">
 												<div class="col-md-9 col-md-offset-3">
 													<button id="enviar" class="btn btn-primary" type="submit">Confirmar edição</button>
-												
-													
-													
+
 													<a href="<?= WWW ?>html/matPat/listar_categoria.php" style="color: white; text-decoration: none;">
 														<button class="btn btn-danger" type="button">Cancelar</button>
 													</a>
 												</div>
 											</div>
 										</form>
-									</fieldset>	
+									</fieldset>
 								</div>
 							</div>
 						</div>
@@ -206,7 +207,7 @@
 				</div>
 			</section>
 		</div>
-	
+
 		<aside id="sidebar-right" class="sidebar-right">
 			<div class="nano">
 				<div class="nano-content">
@@ -219,4 +220,5 @@
 	</section>
 	<!-- end: page -->
 </body>
+
 </html>
