@@ -13,7 +13,7 @@ class ReciboDAO {
      */
     public function salvar(Recibo $recibo) {
         try {
-            $sql = "INSERT INTO recibo_emitido (
+            $sql = "INSERT INTO contribuicao_recibo (
                 codigo, id_socio, email, data_inicio, data_fim, 
                 valor_total, total_contribuicoes, data_geracao
             ) VALUES (
@@ -45,7 +45,7 @@ class ReciboDAO {
      */
     public function buscarPorCodigo($codigo) {
         try {
-            $sql = "SELECT * FROM recibo_emitido WHERE codigo = :codigo";
+            $sql = "SELECT * FROM contribuicao_recibo WHERE codigo = :codigo";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([':codigo' => $codigo]);
             

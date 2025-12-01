@@ -1005,7 +1005,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`contato_instituicao` (
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
-CREATE TABLE IF NOT EXISTS `recibo_emitido` (
+CREATE TABLE IF NOT EXISTS `contribuicao_recibo` (
   `id_recibo` INT(11) NOT NULL AUTO_INCREMENT,
   `codigo` VARCHAR(64) NOT NULL,
   `id_socio` INT(11) NOT NULL,
@@ -1018,13 +1018,13 @@ CREATE TABLE IF NOT EXISTS `recibo_emitido` (
 
   PRIMARY KEY (`id_recibo`),
 
-  INDEX `fk_recibo_emitido_socio_idx` (`id_socio` ASC),
+  INDEX `fk_contribuicao_recibo_socio_idx` (`id_socio` ASC),
 
-  CONSTRAINT `fk_recibo_emitido_socio`
+  CONSTRAINT `fk_contribuicao_recibo_socio`
     FOREIGN KEY (`id_socio`)
     REFERENCES `socio` (`id_socio`)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+    ON DELETE SET NULL
+    ON UPDATE CASCADE 
 )
 ENGINE = InnoDB
 DEFAULT CHARSET = utf8mb4
