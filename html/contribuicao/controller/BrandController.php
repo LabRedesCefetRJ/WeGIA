@@ -2,19 +2,19 @@
 require_once dirname(__DIR__).'/dao/ConexaoDAO.php';
 require_once dirname(__DIR__).'/dao/BrandDAO.php';
 require_once dirname(__DIR__).'/model/Brand.php';
+require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class BrandController
 {
 
     private $pdo;
 
-    public function __construct()
+    public function __construct(?PDO $pdo = null)
     {
         try {
-            $this->pdo = ConexaoDAO::conectar();
-        } catch (PDOException $e) {
-            //implementar tratamento de erro
-            exit();
+            isset($pdo) ? $this->pdo = $pdo : $this->pdo = ConexaoDAO::conectar();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -25,9 +25,9 @@ class BrandController
             $brand = $brandDao->getBrand();
 
             return $brand;
-        } catch (PDOException $e) {
-            //implementar tratamento de erro
-            exit("erro: {$e->getMessage()}");
+        } catch (Exception $e) {
+            Util::tratarException($e);
+            exit();
         }
     }
 }

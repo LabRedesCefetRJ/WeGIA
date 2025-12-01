@@ -75,8 +75,8 @@ class SaidaControle
                     $produto = $produtoDAO->listarUm(${$id.$x});
                     $saida = $saidaDAO->listarUm($id_responsavel);
 
-                    $isaida->setId_produto($produto);
-                    $isaida->setId_saida($saida);
+                    $isaida->setId_produto($produto->getId_produto());
+                    $isaida->setId_saida($saida->getId_saida());
 
                     $isaida = $isaidaDAO->incluir($isaida);
 

@@ -2,6 +2,7 @@
 
 error_reporting(0);
 ini_set('display_errors', 0 );
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Conexao.php';
 
 class EnderecoDAO
 {
@@ -58,7 +59,7 @@ class EnderecoDAO
             } catch (PDOException $e){
                 echo 'Error:' . $e->getMessage();
             }
-            return json_encode($endereco);
+            return json_encode($endereco); //refatorar esse método, DAO não deve retornar JSON!
     }
 
     public function alterarEndereco($endereco)

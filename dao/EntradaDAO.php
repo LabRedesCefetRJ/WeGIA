@@ -10,8 +10,23 @@ class EntradaDAO
             extract($_REQUEST);
             $pdo = Conexao::connect();
 
-            $sql = 'INSERT entrada(id_origem,id_almoxarifado,id_tipo,id_responsavel,data,hora,valor_total) VALUES( :id_origem,:id_almoxarifado,:id_tipo,:id_responsavel,:data,:hora,:valor_total)';
-            $sql = str_replace("'", "\'", $sql);            
+            $sql = 'INSERT INTO entrada (
+                        id_origem,
+                        id_almoxarifado,
+                        id_tipo,
+                        id_responsavel,
+                        data,
+                        hora,
+                        valor_total
+                    ) VALUES (
+                        :id_origem,
+                        :id_almoxarifado,
+                        :id_tipo,
+                        :id_responsavel,
+                        :data,
+                        :hora,
+                        :valor_total
+                    )';
             $stmt = $pdo->prepare($sql);
 
             $id_origem = $entrada->get_origem()->getId_origem();

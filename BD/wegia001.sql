@@ -995,6 +995,38 @@ CREATE TABLE IF NOT EXISTS `wegia`.`endereco_instituicao` (
   PRIMARY KEY (`id_inst`))
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `wegia`.`contato_instituicao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`contato_instituicao` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(256) NOT NULL,
+  `contato` VARCHAR(256) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_recibo` (
+  `id_recibo` INT(11) NOT NULL AUTO_INCREMENT,
+  `codigo` VARCHAR(64) NOT NULL,
+  `id_socio` INT(11) NOT NULL,
+  `email` VARCHAR(256) NULL DEFAULT NULL,
+  `data_inicio` DATE NOT NULL,
+  `data_fim` DATE NOT NULL,
+  `valor_total` DECIMAL(10,2) NOT NULL,
+  `total_contribuicoes` INT NOT NULL,
+  `data_geracao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_recibo`),
+  INDEX `fk_contribuicao_recibo_socio` (`id_socio` ASC),
+  CONSTRAINT `fk_contribuicao_recibo_socio`
+    FOREIGN KEY (`id_socio`)
+    REFERENCES `wegia`.`socio` (`id_socio`)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE 
+)
+ENGINE = InnoDB
+DEFAULT CHARSET = utf8mb4
+COLLATE = utf8mb4_unicode_ci;
+
 -- -------------------------------------------------------
 -- Table `wegia`.`remessa`
 -- -------------------------------------------------------

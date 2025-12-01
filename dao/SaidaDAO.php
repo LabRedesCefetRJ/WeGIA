@@ -8,21 +8,32 @@ class SaidaDAO
 	public function listarTodos(){
 
     try{
-        $saidas=array();
         $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT s.id_saida, d.nome_destino, a.descricao_almoxarifado, t.descricao, p.nome, s.data, s.hora, s.valor_total 
-            FROM saida s
-            INNER JOIN destino d ON d.id_destino = s.id_destino
-            INNER JOIN almoxarifado a ON a.id_almoxarifado = s.id_almoxarifado
-            INNER JOIN tipo_saida t ON t.id_tipo = s.id_tipo
-            INNER JOIN pessoa p ON p.id_pessoa = s.id_responsavel");
-        $x=0;
-        while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
-            //formatar data
-            $data = new DateTime($linha['data']);
-            $saidas[$x]=array('id_saida'=>$linha['id_saida'],'nome_destino'=>$linha['nome_destino'],'descricao_almoxarifado'=>$linha['descricao_almoxarifado'],'descricao'=>$linha['descricao'],'nome'=>$linha['nome'],'data'=>$data->format('d/m/Y'),'hora'=>$linha['hora'],'valor_total'=>$linha['valor_total']);
-            $x++;
-        }
+            $sql = "SELECT s.id_saida, d.nome_destino, a.descricao_almoxarifado, 
+                           t.descricao, p.nome, s.data, s.hora, s.valor_total 
+                    FROM saida s
+                    INNER JOIN destino d ON d.id_destino = s.id_destino
+                    INNER JOIN almoxarifado a ON a.id_almoxarifado = s.id_almoxarifado
+                    INNER JOIN tipo_saida t ON t.id_tipo = s.id_tipo
+                    INNER JOIN pessoa p ON p.id_pessoa = s.id_responsavel";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute();
+
+            $saidas = [];
+            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $data = new DateTime($linha['data']);
+                $saidas[] = [
+                    'id_saida' => $linha['id_saida'],
+                    'nome_destino' => $linha['nome_destino'],
+                    'descricao_almoxarifado' => $linha['descricao_almoxarifado'],
+                    'descricao' => $linha['descricao'],
+                    'nome' => $linha['nome'],
+                    'data' => $data->format('d/m/Y'),
+                    'hora' => $linha['hora'],
+                    'valor_total' => $linha['valor_total']
+                ];
+            }
+            return json_encode($saidas);
         } catch (PDOException $e){
             echo 'Error:' . $e->getMessage();
         }
@@ -35,26 +46,26 @@ class SaidaDAO
             extract($_REQUEST);
             $pdo = Conexao::connect();
 
-            $sql = 'INSERT saida(id_destino,id_almoxarifado,id_tipo,id_responsavel,data,hora,valor_total) VALUES( :id_destino,:id_almoxarifado,:id_tipo,:id_responsavel,:data,:hora,:valor_total)';
-            $sql = str_replace("'", "\'", $sql);            
+            $sql = 'INSERT INTO saida (id_destino, id_almoxarifado, id_tipo, id_responsavel, data, hora, valor_total)
+                    VALUES (:id_destino, :id_almoxarifado, :id_tipo, :id_responsavel, :data, :hora, :valor_total)';
+
             $stmt = $pdo->prepare($sql);
 
             $id_destino = $saida->getId_destino()->getId_destino();
-            
             $id_almoxarifado = $saida->getId_almoxarifado()->getId_almoxarifado();
             $id_tipo = $saida->getId_tipo()->getId_tipo();
             $id_responsavel = $saida->getId_responsavel();
-            $data = $saida->getdata();
-            $hora = $saida->gethora();
-            $valor_total = $saida->getvalor_total();
+            $data = $saida->getData();
+            $hora = $saida->getHora();
+            $valor_total = $saida->getValor_total();
 
-            $stmt->bindParam(':id_destino',$id_destino);
-            $stmt->bindParam(':id_almoxarifado',$id_almoxarifado);
-            $stmt->bindParam(':id_tipo',$id_tipo);
-            $stmt->bindParam(':id_responsavel',$id_responsavel);
-            $stmt->bindParam(':data',$data);
-            $stmt->bindParam(':hora',$hora);
-            $stmt->bindParam(':valor_total',$valor_total);
+            $stmt->bindParam(':id_destino', $id_destino, PDO::PARAM_INT);
+            $stmt->bindParam(':id_almoxarifado', $id_almoxarifado, PDO::PARAM_INT);
+            $stmt->bindParam(':id_tipo', $id_tipo, PDO::PARAM_INT);
+            $stmt->bindParam(':id_responsavel', $id_responsavel, PDO::PARAM_INT);
+            $stmt->bindParam(':data', $data);
+            $stmt->bindParam(':hora', $hora);
+            $stmt->bindParam(':valor_total', $valor_total);
 
             $stmt->execute();
         } catch(PDOException $e){

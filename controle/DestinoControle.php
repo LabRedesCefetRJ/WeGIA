@@ -19,14 +19,10 @@ class DestinoControle
             $msg .= "Telefone do destino não informado. Por favor, informe um telefone!";
             header('Location: ../html/destino.html?msg='.$msg);
         }
-        $cpf=str_replace(".", '', $cpf);
-        $cpf=str_replace("-", "", $cpf);
+
+        $cpf = strlen($cpf) > 0 ? $cpf : null;
+   
         $destino = new Destino($nome,$cnpj,$cpf,$telefone);
-        $destino->setNome($nome);
-        $destino->setCnpj($cnpj);
-        $destino->setCpf($cpf);
-        $destino->setTelefone($telefone);
-        
         return $destino;
     }
     

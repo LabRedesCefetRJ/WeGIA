@@ -20,6 +20,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'AvisoNotificacaoControle' => [5],
             'CargoControle' => [11],
             'CategoriaControle' => [21, 2],
+            'ContatoInstituicaoControle' => [9],
             'controleSaudePet' => [6, 61, 62, 63],
             'DestinoControle' => [21, 2],
             'DocumentoControle' => [5],

@@ -1,55 +1,19 @@
 <?php
-require("../conexao.php");
-// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once ROOT . "/html/personalizacao_display.php";
-session_start();
-if (!isset($_SESSION['usuario'])) header("Location: ../erros/login_erro/");
-$id = $_SESSION['usuario'];
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT `imagem`, `nome` FROM `pessoa` WHERE id_pessoa=$id_pessoa");
-$pessoa = mysqli_fetch_array($resultado);
-$nome = $pessoa['nome'];
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: " . WWW . "index.php");
-}
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-    $id_cargo = mysqli_fetch_array($resultado);
-    if (!is_null($id_cargo)) {
-        $id_cargo = $id_cargo['id_cargo'];
-    }
-    $resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=4");
-    if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-        $permissao = mysqli_fetch_array($resultado);
-        if ($permissao['id_acao'] < 7) {
-            $msg = "Você não tem as permissões necessárias para essa página.";
-            header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-        }
-        $permissao = $permissao['id_acao'];
-    } else {
-        $permissao = 1;
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-    }
+    header("Location: " . "../../../index.php");
+    exit(401);
 } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+    session_regenerate_id();
 }
+
+//trocar verificação de permissão para permissao.php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
+
+require("../conexao.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 ?>
@@ -140,14 +104,6 @@ require_once ROOT . "/html/personalizacao_display.php";
     <!-- Theme Initialization Files -->
     <script src="<?php echo WWW; ?>assets/javascripts/theme.init.js"></script>
 
-
-    <!-- javascript functions -->
-    <script src="../../../Functions/onlyNumbers.js"></script>
-    <script src="../../../Functions/onlyChars.js"></script>
-    <script src="../../../Functions/mascara.js"></script>
-    <script src="../../contribuicao/js/geraboleto.js"></script>
-    <script src="./controller/script/relatorios_socios.js"></script>
-
     <script type="text/javascript">
         $(function() {
             $("#header").load("<?php echo WWW; ?>html/header.php");
@@ -166,6 +122,16 @@ require_once ROOT . "/html/personalizacao_display.php";
     <div align="right">
         <iframe src="https://www.wegia.org/software/footer/socio.html" width="200" height="60" style="border:none;"></iframe>
     </div>
+
+    <!-- javascript functions -->
+    <script src="../../../Functions/onlyNumbers.js"></script>
+    <script src="../../../Functions/onlyChars.js"></script>
+    <script src="../../../Functions/mascara.js"></script>
+    <script src="../../contribuicao/js/geraboleto.js"></script>
+    <script src="./controller/script/relatorios_socios.js"></script>
+
+    <!-- Adicionar verificação da existência de um sócio no formulário -->
+    <script src="../js/verifica_socio.js"></script>
 </body>
 
 </html>

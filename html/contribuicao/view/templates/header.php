@@ -3,6 +3,72 @@ require_once "../../../config.php";
 require_once "../../../dao/Conexao.php";
 require_once "../../../classes/Personalizacao_display.php";
 require_once "../../personalizacao_display.php";
+
+/**
+ * Carrega dinamicamente arquivos CSS e JS de uma página.
+ *
+ * @param array $publicsFile Exemplo:
+ * [
+ *     'css' => ['estilo.css', 'tema.css'],
+ *     'js'  => ['script.js', 'app.js']
+ * ]
+ */
+function loadPublicFiles(array $publicsFile): void
+{
+    // Diretório base do projeto (ajuste se necessário)
+    $baseDir = realpath(__DIR__ . '/../../public');
+
+    if (!$baseDir) {
+        error_log('Diretório público não encontrado.');
+        return;
+    }
+
+    // === CSS ===
+    if (!empty($publicsFile['css']) && is_array($publicsFile['css'])) {
+        foreach ($publicsFile['css'] as $file) {
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+
+            // Verifica se é um CSS válido
+            if (strtolower($ext) !== 'css') {
+                error_log("Arquivo CSS inválido ignorado: $file");
+                continue;
+            }
+
+            $filePath = $baseDir . '/css/' . $file;
+
+            // Verifica se o arquivo existe
+            if (!file_exists($filePath)) {
+                error_log("Arquivo CSS não encontrado: $filePath");
+                continue;
+            }
+
+            echo '<link rel="stylesheet" href="../public/css/' . htmlspecialchars($file) . '">' . PHP_EOL;
+        }
+    }
+
+    // === JS ===
+    if (!empty($publicsFile['js']) && is_array($publicsFile['js'])) {
+        foreach ($publicsFile['js'] as $file) {
+            $ext = pathinfo($file, PATHINFO_EXTENSION);
+
+            // Verifica se é um JS válido
+            if (strtolower($ext) !== 'js') {
+                error_log("Arquivo JS inválido ignorado: $file");
+                continue;
+            }
+
+            $filePath = $baseDir . '/js/' . $file;
+
+            // Verifica se o arquivo existe
+            if (!file_exists($filePath)) {
+                error_log("Arquivo JS não encontrado: $filePath");
+                continue;
+            }
+
+            echo '<script src="../public/js/' . htmlspecialchars($file) . '"></script>' . PHP_EOL;
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -48,6 +114,11 @@ require_once "../../personalizacao_display.php";
     <link rel="stylesheet" type="text/css" href="../public/css/donation.css">
     <link rel="stylesheet" type="text/css" href="../public/css/segundaVia.css">
 
+    <!-- Carrega dinamicamente arquivos específicos de uma página -->
+    <?php
+    if (isset($publicsFiles) && is_array($publicsFiles))
+        loadPublicFiles($publicsFiles);
+    ?>
     <!-- Função para validar CPF -->
     <script src="../../../Functions/testaCPF.js"></script>
 
@@ -99,7 +170,7 @@ require_once "../../personalizacao_display.php";
             color: red;
         }
 
-        .doacao_boleto{
+        .doacao_boleto {
             justify-content: center;
             border-radius: 20px;
             text-align: center;

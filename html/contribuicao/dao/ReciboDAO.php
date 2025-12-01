@@ -13,12 +13,12 @@ class ReciboDAO {
      */
     public function salvar(Recibo $recibo) {
         try {
-            $sql = "INSERT INTO recibo_emitido (
+            $sql = "INSERT INTO contribuicao_recibo (
                 codigo, id_socio, email, data_inicio, data_fim, 
-                valor_total, total_contribuicoes, data_geracao, caminho_pdf
+                valor_total, total_contribuicoes, data_geracao
             ) VALUES (
                 :codigo, :idSocio, :email, :dataInicio, :dataFim,
-                :valorTotal, :totalContribuicoes, NOW(), :caminhoPdf
+                :valorTotal, :totalContribuicoes, NOW()
             )";
             
             $stmt = $this->pdo->prepare($sql);
@@ -29,8 +29,7 @@ class ReciboDAO {
                 ':dataInicio' => $recibo->getDataInicio()->format('Y-m-d'),
                 ':dataFim' => $recibo->getDataFim()->format('Y-m-d'),
                 ':valorTotal' => $recibo->getValorTotal(),
-                ':totalContribuicoes' => $recibo->getTotalContribuicoes(),
-                ':caminhoPdf' => $recibo->getCaminhoPdf()
+                ':totalContribuicoes' => $recibo->getTotalContribuicoes()
             ]);
             
             return $this->pdo->lastInsertId();
@@ -46,7 +45,7 @@ class ReciboDAO {
      */
     public function buscarPorCodigo($codigo) {
         try {
-            $sql = "SELECT * FROM recibo_emitido WHERE codigo = :codigo";
+            $sql = "SELECT * FROM contribuicao_recibo WHERE codigo = :codigo";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([':codigo' => $codigo]);
             

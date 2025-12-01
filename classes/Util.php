@@ -3,6 +3,57 @@
 class Util
 {
     /**
+     * Valida se a ESTRUTURA de um CNPJ é válido
+     */
+    public static function validaEstruturaCnpj($cnpj)
+    {
+        if (strlen($cnpj) === 18 && strpos($cnpj, ".") === 2 && strpos($cnpj, ".", 3) === 6 && strpos($cnpj, "/") === 10 && strpos($cnpj, "-") === 15) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Verifica se um CNPJ é válido
+     */
+    public static function validaCNPJ($cnpj)
+    {
+        // Remove caracteres não numéricos
+        $cnpjLimpo = preg_replace('/[^0-9]/', '', $cnpj);
+
+        // Verifica se tem 14 dígitos
+        if (strlen($cnpjLimpo) != 14) {
+            return false;
+        }
+
+        // Elimina CNPJs com todos os dígitos iguais (ex: 11111111111111)
+        if (preg_match('/(\d)\1{13}/', $cnpjLimpo)) {
+            return false;
+        }
+
+        // Calcula o primeiro dígito verificador
+        $peso1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        $soma = 0;
+        for ($i = 0; $i < 12; $i++) {
+            $soma += $cnpjLimpo[$i] * $peso1[$i];
+        }
+        $resto = $soma % 11;
+        $digito1 = ($resto < 2) ? 0 : 11 - $resto;
+
+        // Calcula o segundo dígito verificador
+        $peso2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+        $soma = 0;
+        for ($i = 0; $i < 13; $i++) {
+            $soma += $cnpjLimpo[$i] * $peso2[$i];
+        }
+        $resto = $soma % 11;
+        $digito2 = ($resto < 2) ? 0 : 11 - $resto;
+
+        // Verifica se os dígitos calculados conferem com os do CNPJ informado
+        return ($cnpjLimpo[12] == $digito1 && $cnpjLimpo[13] == $digito2);
+    }
+
+    /**
      * Registra o log de erro e emite um JSON para o cliente
      */
     public static function tratarException(Exception $e): void
@@ -858,33 +909,126 @@ class Util
     public static function validarTelefone(string $telefone)
     {
         // Remove tudo que não for número
-        $numeros = preg_replace('/\D/', '', $telefone);
+        $numero = preg_replace('/\D/', '', $telefone);
 
-        // Validação básica
-        if (strlen($numeros) < 10 || strlen($numeros) > 11) {
+        // Quantidade de dígitos deve ser 10 (fixo) ou 11 (celular)
+        $tamanho = strlen($numero);
+        if ($tamanho !== 10 && $tamanho !== 11) {
             return false;
         }
 
-        // DDD (dois primeiros dígitos)
-        $ddd = substr($numeros, 0, 2);
-        // Resto do número (após o DDD)
-        $resto = substr($numeros, 2);
+        // Lista de DDDs brasileiros válidos (ANATEL)
+        $dddsValidos = [
+            '11',
+            '12',
+            '13',
+            '14',
+            '15',
+            '16',
+            '17',
+            '18',
+            '19',
+            '21',
+            '22',
+            '24',
+            '27',
+            '28',
+            '31',
+            '32',
+            '33',
+            '34',
+            '35',
+            '37',
+            '38',
+            '41',
+            '42',
+            '43',
+            '44',
+            '45',
+            '46',
+            '47',
+            '48',
+            '49',
+            '51',
+            '53',
+            '54',
+            '55',
+            '61',
+            '62',
+            '64',
+            '65',
+            '66',
+            '67',
+            '68',
+            '69',
+            '71',
+            '73',
+            '74',
+            '75',
+            '77',
+            '79',
+            '81',
+            '82',
+            '83',
+            '84',
+            '85',
+            '86',
+            '87',
+            '88',
+            '89',
+            '91',
+            '92',
+            '93',
+            '94',
+            '95',
+            '96',
+            '97',
+            '98',
+            '99'
+        ];
 
-        // Verifica se é celular (11 dígitos e começa com 9)
-        if (strlen($numeros) === 11 && $resto[0] === '9') {
+        // Extrai DDD
+        $ddd = substr($numero, 0, 2);
+
+        // Verifica se o DDD é válido
+        if (!in_array($ddd, $dddsValidos)) {
+            return false;
+        }
+
+        // Parte após o DDD
+        $resto = substr($numero, 2);
+
+        // ------------------------
+        // CELULAR (11 dígitos)
+        // ------------------------
+        if ($tamanho === 11) {
+            // Celular DEVE começar com 9
+            if ($resto[0] !== '9') {
+                return false;
+            }
+
             $parte1 = substr($resto, 0, 5);
-            $parte2 = substr($resto, 5);
+            $parte2 = substr($resto, 5, 4);
+
             return sprintf('(%s)%s-%s', $ddd, $parte1, $parte2);
         }
 
-        // Verifica se é fixo (10 dígitos)
-        if (strlen($numeros) === 10) {
+        // ------------------------
+        // FIXO (10 dígitos)
+        // ------------------------
+        if ($tamanho === 10) {
+            // Fixos devem começar com 2, 3, 4 ou 5
+            if (!in_array($resto[0], ['2', '3', '4', '5'])) {
+                return false;
+            }
+
             $parte1 = substr($resto, 0, 4);
-            $parte2 = substr($resto, 4);
+            $parte2 = substr($resto, 4, 4);
+
             return sprintf('(%s)%s-%s', $ddd, $parte1, $parte2);
         }
 
-        // Se não passou em nenhum formato válido
+        // Qualquer outra combinação é inválida
         return false;
     }
 }
