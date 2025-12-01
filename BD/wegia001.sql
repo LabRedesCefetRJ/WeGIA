@@ -1005,7 +1005,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`contato_instituicao` (
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
-CREATE TABLE IF NOT EXISTS `contribuicao_recibo` (
+CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_recibo` (
   `id_recibo` INT(11) NOT NULL AUTO_INCREMENT,
   `codigo` VARCHAR(64) NOT NULL,
   `id_socio` INT(11) NOT NULL,
@@ -1015,14 +1015,11 @@ CREATE TABLE IF NOT EXISTS `contribuicao_recibo` (
   `valor_total` DECIMAL(10,2) NOT NULL,
   `total_contribuicoes` INT NOT NULL,
   `data_geracao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
   PRIMARY KEY (`id_recibo`),
-
-  INDEX `fk_contribuicao_recibo_socio_idx` (`id_socio` ASC),
-
+  INDEX `fk_contribuicao_recibo_socio` (`id_socio` ASC),
   CONSTRAINT `fk_contribuicao_recibo_socio`
     FOREIGN KEY (`id_socio`)
-    REFERENCES `socio` (`id_socio`)
+    REFERENCES `wegia`.`socio` (`id_socio`)
     ON DELETE SET NULL
     ON UPDATE CASCADE 
 )
