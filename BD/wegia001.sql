@@ -1020,7 +1020,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_recibo` (
   CONSTRAINT `fk_contribuicao_recibo_socio`
     FOREIGN KEY (`id_socio`)
     REFERENCES `wegia`.`socio` (`id_socio`)
-    ON DELETE SET NULL
+    ON DELETE NO ACTION
     ON UPDATE CASCADE 
 )
 ENGINE = InnoDB
