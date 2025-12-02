@@ -21,6 +21,7 @@ require_once ROOT . "/dao/Atendido_ocorrenciaDAO.php";
 require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 require_once ROOT . "/classes/Atendido_ocorrenciaDoc.php";
 require_once ROOT . "/classes/Cache.php";
+require_once ROOT . "/classes/Util.php";
 
 
 class Atendido_ocorrenciaControle
@@ -28,12 +29,16 @@ class Atendido_ocorrenciaControle
 	//Listar despachos
 	public function listarTodos()
 	{
-		extract($_REQUEST);
-		$atendido_ocorrenciaDAO = new atendido_ocorrenciaDAO();
-		$ocorrencias = $atendido_ocorrenciaDAO->listarTodos();
-		session_start();
-		$_SESSION['ocorrencia'] = $ocorrencias;
-		header('Location: ' . $nextPage);
+		try{
+			extract($_REQUEST);
+			$atendido_ocorrenciaDAO = new atendido_ocorrenciaDAO();
+			$ocorrencias = $atendido_ocorrenciaDAO->listarTodos();
+			session_start();
+			$_SESSION['ocorrencia'] = $ocorrencias;
+			header('Location: ' . $nextPage);
+		}catch(PDOException $e){
+			Util::tratarException($e);
+		}
 	}
 
 
@@ -101,8 +106,8 @@ class Atendido_ocorrenciaControle
 			$sccd = "Ocorrencia enviada com sucesso";
 			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?msg=" . $msg . "&sccd=" . $sccd);
 		} catch (PDOException $e) {
-			$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
-			echo $msg;
+			echo "Não foi possível criar o despacho" . "<br>" . Util::tratarException($e);
+			
 		}
 	}
 
@@ -222,15 +227,15 @@ class Atendido_ocorrenciaControle
 				$anexo->setNome($nome);
 				$anexo->setExtensao($extensao);
 			} catch (InvalidArgumentException $e) {
-				echo 'Erro ao tentar incluir documentação: ' . $e->getMessage();
+				echo 'Erro ao tentar incluir documentação: ' . Util::tratarException($e);
 			}
 
 			try {
 				$anexoDAO = new AnexoDAO();
 				$anexoDAO->incluir($anexo);
 			} catch (PDOException $e) {
-				$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
-				echo $msg;
+				echo "Não foi possível criar o despacho" . "<br>" . Util::tratarException($e);
+				
 			}
 		}
 	}
@@ -248,7 +253,7 @@ class Atendido_ocorrenciaControle
 				$cache->save($id, $inf, '15 seconds');
 				header('Location:' . $nextPage);
 			} catch (PDOException $e) {
-				echo $e->getMessage();
+				Util::tratarException($e);
 			}
 		} else {
 			header('Location:' . $nextPage);

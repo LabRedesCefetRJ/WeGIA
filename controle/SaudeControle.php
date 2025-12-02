@@ -109,17 +109,23 @@ class SaudeControle
      */
     public function listarTodos()
     {
-        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        try{
+            $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
 
-        $regex = '#^(\.\./html/saude/(administrar_medicamento|informacao_saude|listar_cadastro_intercorrencia|listar_sinais_vitais)\.php)$#';
+            $regex = '#^(\.\./html/saude/(administrar_medicamento|informacao_saude|listar_cadastro_intercorrencia|listar_sinais_vitais)\.php)$#';
 
-        $SaudeDAO = new SaudeDAO();
-        $pacientes = $SaudeDAO->listarTodos();
+            $SaudeDAO = new SaudeDAO();
+            $pacientes = $SaudeDAO->listarTodos();
 
-        $_SESSION['saude'] = $pacientes;
+            $_SESSION['saude'] = $pacientes;
 
-        preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+        }catch(PDOException $e){
+            Util::tratarException($e);
+        }
     }
+
+    
 
     public function listarUm()
     {
