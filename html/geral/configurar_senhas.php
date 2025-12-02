@@ -22,7 +22,7 @@ if (!$id_pessoa || $id_pessoa < 1) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($id_pessoa, 91, 1);
 
-try{
+try {
 	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
 	$sql = 'SELECT p.nome, p.id_pessoa as id_pessoa, c.cargo as nome_cargo from pessoa p join funcionario f on f.id_pessoa = p.id_pessoa join cargo c on f.id_cargo = c.id_cargo';
 
@@ -30,7 +30,7 @@ try{
 
 	$query = $pdo->query($sql);
 	$funcionarios = $query->fetchAll(PDO::FETCH_ASSOC);
-}catch(Exception $e){
+} catch (Exception $e) {
 	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 	Util::tratarException($e);
 	exit();
@@ -60,6 +60,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 	<link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="../../css/error.css" />
 	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 
 	<!-- Specific Page Vendor CSS -->
@@ -179,7 +180,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<div>
 										<h3 id="erro">Selecione um funcionário para modificar a senha</h3>
 									</div>
-									<form class="form-horizontal" method="post" action="<?php echo (WWW . 'controle/control.php'); ?>">
+									<form class="form-horizontal" method="post" id="password-form" action="<?php echo (WWW . 'controle/control.php'); ?>">
 										<fieldset>
 											<div class="form-group">
 												<label class="col-md-3 control-label">Funcionário:
@@ -188,7 +189,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 													<select name="id_pessoa" id="id_pessoa" class="form-control mb-md">
 														<option selected disabled>Selecionar</option>
 														<?php
-														foreach($funcionarios as $funcionario) {
+														foreach ($funcionarios as $funcionario) {
 															echo "<option value=" . htmlspecialchars($funcionario['id_pessoa']) . ">" . htmlspecialchars($funcionario['nome']) . " - " . htmlspecialchars($funcionario['nome_cargo']) . "</option>";
 														}
 														?>
@@ -201,9 +202,9 @@ require_once ROOT . "/html/personalizacao_display.php";
 												<label class="col-md-3 control-label">Nova senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" name="nova_senha" class="form-control" required><br />
+													<input type="password" id="nova_senha" name="nova_senha" class="form-control" required><br /> <!-- Aumentar a robustez da política de definição de senhas -->
 													</label>
-
+													<div id="password-div"></div>
 												</div>
 											</div>
 											<div class="form-group">
@@ -247,11 +248,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- Theme Initialization Files -->
 	<script src="../../assets/javascripts/theme.init.js"></script>
 
-
-	<!-- Examples -->
-	<script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
-	<script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-	<script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+	<script src="../../Functions/password_policy.js"></script>
 
 	<div align="right">
 		<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60" style="border:none;"></iframe>
