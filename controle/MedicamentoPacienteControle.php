@@ -13,6 +13,7 @@
 
     require_once ROOT . '/dao/MedicamentoPacienteDAO.php';
     require_once ROOT . '/dao/FuncionarioDAO.php';
+    require_once ROOT . '/classes/Util.php';
 
 
     class MedicamentoPacienteControle
@@ -202,13 +203,7 @@
                 ]);
             } catch (Exception $e) {
                 $MedicamentosPacienteDAO->rollBack();
-                // Erro de lógica ou outro tipo de exceção
-                $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-                http_response_code($codigo);
-                echo json_encode([
-                    'status' => 'erro',
-                    'mensagem' => $e->getMessage()
-                ]);
+                Util::tratarException($e);
             }
             exit;
         }
