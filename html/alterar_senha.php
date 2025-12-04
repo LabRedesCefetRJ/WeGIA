@@ -140,7 +140,7 @@ require_once "personalizacao_display.php";
 									<div>
 										<h3 id="erro"></h3>
 									</div>
-									<form class="form-horizontal" method="post" action="../controle/control.php">
+									<form class="form-horizontal" id="password-form" method="post" action="../controle/control.php">
 										<fieldset>
 											<div class="form-group">
 												<label class="col-md-3 control-label">Senha antiga:
