@@ -27,7 +27,7 @@ require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 require_once ROOT . "/html/personalizacao_display.php";
 
 $pdo = Conexao::connect();
-$nome = $pdo->query("SELECT a.idatendido, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) ORDER BY p.nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+$nome = $pdo->query("SELECT a.idatendido, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) ORDER BY p.nome ASC, p.sobrenome ASC")->fetchAll(PDO::FETCH_ASSOC);
 $tipo = $pdo->query("SELECT * FROM atendido_ocorrencia_tipos")->fetchAll(PDO::FETCH_ASSOC);
 $recupera_id_funcionario = $pdo->query("SELECT id_funcionario FROM funcionario WHERE id_pessoa=" . $id_pessoa . ";")->fetchAll(PDO::FETCH_ASSOC);
 $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
