@@ -1,5 +1,5 @@
 <?php
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
     session_start();
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
@@ -331,7 +331,7 @@ class FuncionarioControle
             exit;
         }
 
-        
+
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -460,7 +460,7 @@ class FuncionarioControle
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
-        
+
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -539,7 +539,7 @@ class FuncionarioControle
                 WWW . "html/funcionario/informacao_funcionario.php",
                 '../html/geral/editar_permissoes.php',
             ];
-        
+
         $_SESSION['funcionarios'] = $funcionarios;
 
         isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
@@ -730,12 +730,25 @@ class FuncionarioControle
     public function alterarInfPessoal()
     {
         extract($_REQUEST);
+
+        $id_funcionario = filter_var($id_funcionario, FILTER_VALIDATE_INT);
+
+        if(!$id_funcionario || $id_funcionario < 1){
+            http_response_code(400);
+            exit('Erro, o id do funcionário não está dentro dos limites permitidos.');
+        }
+
+        if ($nascimento > Funcionario::getDataNascimentoMaxima() || $nascimento < Funcionario::getDataNascimentoMinima()) {
+            http_response_code(400);
+            exit('Erro, a data de nascimento de um funcionário não está dentro dos limites permitidos.');
+        }
+
         $funcionario = new Funcionario('', $nome, $sobrenome, $gender, $nascimento, '', '', '', $nome_mae, $nome_pai, $sangue, '', $telefone, '', '', '', '', '', '', '', '', '');
         $funcionario->setId_funcionario($id_funcionario);
         $funcionarioDAO = new FuncionarioDAO();
         try {
             $funcionarioDAO->alterarInfPessoal($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($id_funcionario));
         } catch (PDOException $e) {
             echo $e->getMessage();
         }
@@ -898,7 +911,7 @@ class FuncionarioControle
         $quadroHorarioDAO = new QuadroHorarioDAO();
         try {
             $quadroHorarioDAO->alterar($carga_horaria, $id_funcionario);
-            
+
             $_SESSION['msg'] = "Informações do funcionário alteradas com sucesso!";
             $_SESSION['proxima'] = "Ver lista de funcionario";
             $_SESSION['link'] = "../html/funcionario/informacao_funcionario.php";
