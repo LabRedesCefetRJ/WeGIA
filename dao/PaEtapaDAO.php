@@ -68,6 +68,19 @@ class PaEtapaDAO
         $stmt->bindParam(':id',        $idEtapa, PDO::PARAM_INT);
         return $stmt->execute();
     }
-}
 
-?>
+    public function excluir($idEtapa)
+    {
+
+        $sqlArq = "DELETE FROM etapa_arquivo WHERE etapa_id = :id";
+        $stmtArq = $this->pdo->prepare($sqlArq);
+        $stmtArq->bindValue(':id', $idEtapa, PDO::PARAM_INT);
+        $stmtArq->execute();
+
+
+        $sql = "DELETE FROM pa_etapa WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $idEtapa, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+}

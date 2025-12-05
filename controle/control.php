@@ -13,6 +13,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'AdocaoControle' => [6, 64],
             'AlmoxarifadoControle' => [2, 21, 22, 23, 24, 91],
             'AlmoxarifeControle' => [91],
+            'ArquivoEtapaControle' => [1, 12, 14],
             'Atendido_ocorrenciaControle' => [12],
             'Atendido_ocorrenciaDocControle' => [12],
             'AtendidoControle' => [12],
@@ -39,6 +40,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'ModuloControle' => [91],
             'MedicamentoControle' => [6, 61, 62, 63],
             'OrigemControle' => [23],
+            'PaArquivoControle' => [1, 12, 14],
             'PaStatusControle' => [12, 14],
             'ProdutoControle' => [22, 23, 24],
             'ProcessoAceitacaoControle' => [1, 12, 14],
@@ -129,7 +131,7 @@ try {
 
 } catch (Exception $e) {
     
-    $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
+    $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? intval($e->getCode()) : 500;
     http_response_code($codigo);
 
     if ($is_json_request) {
