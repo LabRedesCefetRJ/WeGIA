@@ -1,5 +1,5 @@
 <?php
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
     session_start();
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
@@ -331,7 +331,7 @@ class FuncionarioControle
             exit;
         }
 
-        
+
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -460,7 +460,7 @@ class FuncionarioControle
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
-        
+
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -539,7 +539,7 @@ class FuncionarioControle
                 WWW . "html/funcionario/informacao_funcionario.php",
                 '../html/geral/editar_permissoes.php',
             ];
-        
+
         $_SESSION['funcionarios'] = $funcionarios;
 
         isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
@@ -765,6 +765,13 @@ class FuncionarioControle
                 }
             }
 
+            $minLength = 8;
+            $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
+
+            if (!preg_match($regex, $nova_senha)) {
+                throw new InvalidArgumentException('A senha informada não atende aos requisitos mínimos estabelecidos.', 412);
+            }
+
             $nova_senha = hash('sha256', $nova_senha);
             if (isset($redir)) {
                 $page = $redir;
@@ -898,7 +905,7 @@ class FuncionarioControle
         $quadroHorarioDAO = new QuadroHorarioDAO();
         try {
             $quadroHorarioDAO->alterar($carga_horaria, $id_funcionario);
-            
+
             $_SESSION['msg'] = "Informações do funcionário alteradas com sucesso!";
             $_SESSION['proxima'] = "Ver lista de funcionario";
             $_SESSION['link'] = "../html/funcionario/informacao_funcionario.php";
