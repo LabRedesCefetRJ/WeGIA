@@ -18,8 +18,7 @@
 
     class MedicamentoPacienteControle
     {
-        public function inserirAplicacao()
-        {
+        public function inserirAplicacao(){
 
             header('Content-Type: application/json');
             $dados = json_decode(file_get_contents('php://input'), true);
@@ -32,15 +31,34 @@
 
             $id_medicacao = $dados['id_medicacao'] ?? null;
             $id_pessoa = $dados['id_pessoa'] ?? null;
-            $aplicacao = $dados['dataHora'] ?? null;
+            $dataHora = $dados['dataHora'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
+            $limite = new DateTime('1929-01-01');
+            $aplicacao = null; 
 
-            if (!$id_medicacao || !$id_pessoa || !$aplicacao || !$id_pessoa_funcionario) {
+            if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
                 http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Campos obrigatórios ausentes"]);
                 exit;
             }
-             date_default_timezone_set('America/Sao_Paulo');
+            
+            try {
+                
+                $aplicacao = new DateTime($dataHora);
+
+            } catch (\Exception $e) {
+                http_response_code(400);
+                echo json_encode(["status" => "erro", "mensagem" => "Formato de dataHora inválido."]);
+                exit;
+            }
+            if($aplicacao < $limite){
+                http_response_code(400); 
+                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser anterior a 1929-01-01."]);
+                exit;
+            }
+            
+            $aplicacao= $aplicacao->format('Y-m-d H:i:s'); 
+            date_default_timezone_set('America/Sao_Paulo');
             $registro = date('Y-m-d H:i:s');
 
             try{
