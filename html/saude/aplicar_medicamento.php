@@ -441,20 +441,27 @@
         });
     }
 
-    function definirDataHoraAtualSeVazio(campo) {
-      if (!campo.value) {
-        const agora = new Date();
-        const adicionarZero = numero => numero.toString().padStart(2, '0');
+    function getDataLocalAtual() {
+      const agora = new Date();
+      const adicionarZero = numero => numero.toString().padStart(2, '0');
 
-        const ano = agora.getFullYear();
-        const mes = adicionarZero(agora.getMonth() + 1); // Janeiro = 0
-        const dia = adicionarZero(agora.getDate());
-        const horas = adicionarZero(agora.getHours());
-        const minutos = adicionarZero(agora.getMinutes());
+      const ano = agora.getFullYear();
+      const mes = adicionarZero(agora.getMonth() + 1);
+      const dia = adicionarZero(agora.getDate());
+      const horas = adicionarZero(agora.getHours());
+      const minutos = adicionarZero(agora.getMinutes());
 
-        campo.value = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
-      }
+      return `${ano}-${mes}-${dia}T${horas}:${minutos}`;
     }
+
+    function definirDataHoraAtualSeVazio(campo) {
+      const nowString = getCurrentDateTimeLocalString();
+      campo.setAttribute('max', nowString);
+
+      if (!campo.value) {
+        campo.value = nowString;
+      }
+  }
 
  
     async function enviarMedicacaoSOS(event) {
@@ -516,6 +523,16 @@
         botaoSOS.addEventListener('click', enviarMedicacaoSOS);
       }
     });
+
+    $('#modalHorarioAplicacao').on('show.bs.modal', function(e) {
+        const dataHoraInput = document.getElementById("dataHora");
+        const nowString = getDataLocalAtual();
+        
+        dataHoraInput.setAttribute('max', nowString);
+        if (!dataHoraInput.value) {
+          dataHoraInput.value = nowString;
+        }
+      });
 
   </script>
   <style type="text/css">
@@ -748,7 +765,7 @@
                               </div>
 
                               <div class="modal-body">
-                                <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control" max="<?= $dataAtual->format('Y-m-d\TH:i') ?>">
+                                <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control">
                                 <input type="hidden" id="id_funcionario" name="id_funcionario">
                                 <input type="hidden" id="id_medicacao" name="id_medicacao">
                                 <input type="hidden" id="id_pessoa" name="id_pessoa">
