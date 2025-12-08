@@ -21,6 +21,7 @@ INSERT INTO `selecao_paragrafo` (`id_selecao`, `nome_campo`, `paragrafo`, `origi
 (5, 'Rodapé', 'WeGIA - Desenvolvido pelo Cefet/RJ UnED Nova Friburgo', 1),
 (6, 'ContribuiçãoMSG', 'Contribua você também!', 1),
 (7, 'agradecimento_doador', 'Mensagem de Agradecimento ao DOADOR', 1);
+(8, 'CNPJ', 'Insira aqui o CNPJ da sua instituição', 1);
 
 INSERT INTO `campo_imagem` (`id_campo`, `nome_campo`, `tipo`) VALUES 
 (1, 'Logo', 'img'), 
