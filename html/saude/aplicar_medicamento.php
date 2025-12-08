@@ -401,6 +401,20 @@
     async function enviarDataHoraAplicacaoMedicamento(event) {
       event.preventDefault();
 
+      const dataHoraInput = document.getElementById("dataHora");
+      const agoraString = getDataLocalAtual();
+
+      dataHoraInput.setAttribute('max', agoraString);
+      
+      const valorInput = new Date(dataHoraInput.value);
+      const limiteAtual = new Date(agoraString);
+
+      if (valorInput > limiteAtual) {
+          alert("A data e hora da aplicação não pode ser no futuro. Por favor, ajuste o horário para o momento atual (" + agoraString.replace('T', ' ') + ").");
+          dataHoraInput.value = agoraString;
+          return; 
+      }
+      
       let idPessoaFuncionario = <?= $idPessoa ?>;
 
       const form = event.target;
@@ -455,14 +469,13 @@
     }
 
     function definirDataHoraAtualSeVazio(campo) {
-      const nowString = getCurrentDateTimeLocalString();
-      campo.setAttribute('max', nowString);
-
+      const nowString = getDataLocalAtual();
+      campo.setAttribute('max', nowString); 
+      
       if (!campo.value) {
         campo.value = nowString;
       }
-  }
-
+    }
  
     async function enviarMedicacaoSOS(event) {
       event.preventDefault(); 
@@ -522,9 +535,8 @@
       if (botaoSOS) {
         botaoSOS.addEventListener('click', enviarMedicacaoSOS);
       }
-    });
-
-    $('#modalHorarioAplicacao').on('show.bs.modal', function(e) {
+      
+      $('#modalHorarioAplicacao').on('show.bs.modal', function(e) {
         const dataHoraInput = document.getElementById("dataHora");
         const nowString = getDataLocalAtual();
         
@@ -533,6 +545,7 @@
           dataHoraInput.value = nowString;
         }
       });
+    });
 
   </script>
   <style type="text/css">
