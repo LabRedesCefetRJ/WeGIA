@@ -778,6 +778,13 @@ class FuncionarioControle
                 }
             }
 
+            $minLength = 8;
+            $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
+
+            if (!preg_match($regex, $nova_senha)) {
+                throw new InvalidArgumentException('A senha informada não atende aos requisitos mínimos estabelecidos.', 412);
+            }
+
             $nova_senha = hash('sha256', $nova_senha);
             if (isset($redir)) {
                 $page = $redir;
