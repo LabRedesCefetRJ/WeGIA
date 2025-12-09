@@ -802,13 +802,13 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)">
+                          <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)" required>
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Sobrenome</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)">
+                          <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)" required>
                         </div>
                       </div>
                       <div class="form-group">
@@ -819,9 +819,9 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
+                        <label class="col-md-3 control-label" for="profileCompany" >Telefone</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                          <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
                         </div>
                       </div>
                       <div class="form-group">
@@ -834,7 +834,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                             name="nascimento"
                             id="nascimento"
                             min="<?= $dataNascimentoMinima ?>"
-                            max="<?= $dataNascimentoMaxima ?>">
+                            max="<?= $dataNascimentoMaxima ?>" required>
                         </div>
                       </div>
                       <div class="form-group">
@@ -1534,25 +1534,25 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)">
+                            <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
+                            <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                           <div class="col-md-6">
-                            <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?>>
+                            <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                           </div>
                         </div>
                         <div class="form-group">
