@@ -402,19 +402,33 @@
       event.preventDefault();
 
       const dataHoraInput = document.getElementById("dataHora");
-      const agoraString = getDataLocalAtual();
-
-      dataHoraInput.setAttribute('max', agoraString);
+      const divErro = document.getElementById("msg_erro_modal");
       
-      const valorInput = new Date(dataHoraInput.value);
-      const limiteAtual = new Date(agoraString);
+      if (divErro) {
+          divErro.style.display = "none";
+          divErro.innerText = "";
+      }
 
-      if (valorInput > limiteAtual) {
-          alert("A data e hora da aplicação não pode ser no futuro. Por favor, ajuste o horário para o momento atual (" + agoraString.replace('T', ' ') + ").");
-          dataHoraInput.value = agoraString;
-          return; 
+      // Valida se está vazio
+      if (!dataHoraInput.value) {
+          mostrarErro("Por favor, preencha a data e hora.");
+          return false;
       }
       
+      const anoDigitado = parseInt(dataHoraInput.value.substring(0, 4));
+      const anoMinimo = 1929;
+
+      console.log("Ano digitado:", anoDigitado);
+
+      if (anoDigitado < anoMinimo) {
+          mostrarErro("Data inválida: O ano não pode ser anterior a 1929.");
+          return false; 
+      }
+
+      const agoraString = getDataLocalAtual();
+      const dataSelecionada = new Date(dataHoraInput.value);
+      const dataLimite = new Date(agoraString);
+
       let idPessoaFuncionario = <?= $idPessoa ?>;
 
       const form = event.target;
@@ -452,7 +466,18 @@
         })
         .catch(erro => {
           console.error('Erro ao enviar:', erro);
+          alert('Erro ao conectar com o servidor.');
         });
+    }
+
+    function mostrarErro(mensagem) {
+        const divErro = document.getElementById("msg_erro_modal");
+        if (divErro) {
+            divErro.innerText = mensagem;
+            divErro.style.display = "block";
+        } else {
+            alert(mensagem);
+        }
     }
 
     function getDataLocalAtual() {
@@ -778,7 +803,16 @@
                               </div>
 
                               <div class="modal-body">
-                                <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control">
+                                <input type="datetime-local" 
+                                       id="dataHora" 
+                                       name="dataHora" 
+                                       onfocus="definirDataHoraAtualSeVazio(this)" 
+                                       oninput="document.getElementById('msg_erro_modal').style.display = 'none'" 
+                                       required 
+                                       class="form-control">
+
+                                <div id="msg_erro_modal" style="color: #d9534f; font-family: 'Open Sans', sans-serif; font-weight: bold; margin-top: 10px; display: none;"></div>
+
                                 <input type="hidden" id="id_funcionario" name="id_funcionario">
                                 <input type="hidden" id="id_medicacao" name="id_medicacao">
                                 <input type="hidden" id="id_pessoa" name="id_pessoa">
@@ -827,6 +861,7 @@
       <script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
       <script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
       <script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
       <div class="modal fade" id="excluirimg" role="dialog">
         <div class="modal-dialog">
           <!-- Modal content-->
@@ -849,7 +884,7 @@
           </div>
         </div>
       </div>
-      <iv class="modal fade" id="editimg" role="dialog">
+      <div class="modal fade" id="editimg" role="dialog">
         <div class="modal-dialog">
           <!-- Modal content-->
           <div class="modal-content">
