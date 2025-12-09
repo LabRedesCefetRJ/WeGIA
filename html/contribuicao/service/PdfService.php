@@ -55,7 +55,7 @@ class PdfService
             $corAzul = [0, 70, 160]; // Azul MSF
             $pdf->SetTextColor(...$corAzul);
             $pdf->SetFont('Arial', 'B', 22);
-            $pdf->Cell(0, 18, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'RECIBO DE DOAÇÕES'), 0, 1, 'C');
+            $pdf->Cell(0, 18, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'COMPROVANTE DE DOAÇÕES'), 0, 1, 'C');
             $pdf->Ln(2);
 
             // Divisor azul
@@ -144,7 +144,7 @@ class PdfService
             // Informações adicionais
             $pdf->SetFont('Arial', '', 12);
             $pdf->SetTextColor(0, 0, 0);
-            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Código do Recibo: ' . $recibo->getCodigo()), 0, 1, 'L');
+            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Código do Comprovante: ' . $recibo->getCodigo()), 0, 1, 'L');
             $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Data de Emissão: ' . date('d/m/Y H:i:s')), 0, 1, 'L');
             $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Período: ' . $recibo->getDataInicio()->format('d/m/Y') . ' a ' . $recibo->getDataFim()->format('d/m/Y')), 0, 1, 'L');
             $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'CPF: ' . $this->formatarCPF($socio->getDocumento())), 0, 1, 'L');

@@ -275,7 +275,7 @@ class EmailControle {
             if (!empty($anexos) && is_array($anexos)) {
                 foreach ($anexos as $anexo) {
                     if (is_string($anexo)) {
-                        $mail->addStringAttachment($anexo, 'recibo.pdf', 'base64', 'application/pdf'); // addStringAttachment() mudar para enviar um e-mail a partir da memória do servidor, ao invés de realizar uma gravação física no disco
+                        $mail->addStringAttachment($anexo, 'comprovante.pdf', 'base64', 'application/pdf');
                     }
                 }
             }

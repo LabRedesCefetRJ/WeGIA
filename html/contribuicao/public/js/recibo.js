@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Desabilitar botão e mostrar loading
             submitBtn.disabled = true;
             submitBtn.innerHTML = 'Gerando &nbsp <i class="fa fa-spinner fa-spin"></i>';
-            resultado.innerHTML = '<div class="alert alert-info"><i class="fa fa-clock-o"></i> Processando recibo ...</div>';
+            resultado.innerHTML = '<div class="alert alert-info"><i class="fa fa-clock-o"></i> Processando comprovante ...</div>';
 
             const formData = new FormData(form);
 
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         // Título
                         const titulo = document.createElement('h4');
-                        titulo.innerHTML = '<i class="fa fa-check-circle"></i> Recibo Gerado com Sucesso!';
+                        titulo.innerHTML = '<i class="fa fa-check-circle"></i> Comprovante Gerado com Sucesso!';
                         alertDiv.appendChild(titulo);
 
                         // Mensagem
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .finally(() => {
                     // Reabilitar botão
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'Gerar Recibo';
+                    submitBtn.innerHTML = 'Gerar Comprovante';
                 });
         });
     }

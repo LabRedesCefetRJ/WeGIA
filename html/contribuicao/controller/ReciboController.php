@@ -132,7 +132,7 @@ class ReciboController
             $resultadoEmail = $this->enviarEmail($recibo, $socio);
 
             // Registrar log do sócio
-            $mensagem = "Recibo gerado - Código: " . $recibo->getCodigo();
+            $mensagem = "Comprovante gerado - Código: " . $recibo->getCodigo();
             $socioDAO->registrarLog($socio, $mensagem);
 
             $this->pdo->commit();
@@ -147,9 +147,9 @@ class ReciboController
             ];
 
             if ($resultadoEmail['success']) {
-                $response['mensagem'] = 'Recibo gerado e enviado por email com sucesso';
+                $response['mensagem'] = 'Comprovante gerado e enviado por email com sucesso';
             } else {
-                $response['mensagem'] = 'Recibo gerado com sucesso. Aviso: ' . $resultadoEmail['message'];
+                $response['mensagem'] = 'Comprovante gerado com sucesso. Aviso: ' . $resultadoEmail['message'];
             }
 
             echo json_encode($response);
@@ -178,7 +178,7 @@ class ReciboController
 
         if (!$recibo || !file_exists($recibo['caminho_pdf'])) {
             http_response_code(404);
-            exit('Recibo não encontrado');
+            exit('Comprovante não encontrado');
         }
 
         header('Content-Type: application/pdf');
@@ -204,12 +204,12 @@ class ReciboController
                 ];
             }
 
-            $assunto = 'Recibo de Doação - ' . ($emailControle->getConfiguracoes()['smtp_from_name'] ?: 'WeGIA');
+            $assunto = 'Comprovante de Doação - ' . ($emailControle->getConfiguracoes()['smtp_from_name'] ?: 'WeGIA');
 
             // Mensagem HTML formatada
             $mensagem = sprintf(
                 "<p>Prezado(a) %s,</p>
-                <p>Anexamos o recibo de suas doações no período de %s a %s.</p>
+                <p>Anexamos o comprovante de suas doações no período de %s a %s.</p>
                 <p><strong>Valor Total: R$ %s</strong></p>
                 <p>Atenciosamente,<br>%s</p>",
                 htmlspecialchars($socio->getNome()),
@@ -227,7 +227,7 @@ class ReciboController
                 [$recibo->getArquivo()]
             );
         } catch (Exception $e) {
-            error_log("Erro ao enviar email do recibo: " . $e->getMessage());
+            error_log("Erro ao enviar email do comprovante: " . $e->getMessage());
             return [
                 'success' => false,
                 'message' => 'Erro ao enviar email: ' . $e->getMessage()
