@@ -13,7 +13,7 @@ if (file_exists($config_path)) {
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Atendido.php";
 require_once ROOT . "/Functions/funcoes.php";
-require_once ROOT . "classes/Util.php";
+require_once ROOT . "/classes/Util.php";
 
 class AtendidoDAO
 {
