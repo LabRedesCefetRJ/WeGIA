@@ -493,15 +493,50 @@
       return `${ano}-${mes}-${dia}T${horas}:${minutos}`;
     }
 
+    let intervaloDataHora = null;
+    let usuarioAlterouManualmente = false;
+
+    function iniciarAtualizacaoAutomatica(campo) {
+      if (intervaloDataHora) {
+        clearInterval(intervaloDataHora);
+      }
+
+      intervaloDataHora = setInterval(() => {
+        if (usuarioAlterouManualmente) {
+          return;
+        }
+        const nowString = getDataLocalAtual();
+        campo.setAttribute('max', nowString);
+        campo.value = nowString;
+      }, 1000);
+    }
+
+    function pararAtualizacaoAutomatica() {
+      if (intervaloDataHora) {
+        clearInterval(intervaloDataHora);
+        intervaloDataHora = null;
+      }
+    }
+
     function definirDataHoraAtualSeVazio(campo) {
       const nowString = getDataLocalAtual();
-      campo.setAttribute('max', nowString); 
-      
+      campo.setAttribute('max', nowString);
+
       if (!campo.value) {
         campo.value = nowString;
       }
+
+      usuarioAlterouManualmente = false;
+      iniciarAtualizacaoAutomatica(campo);
     }
- 
+
+    function usuarioAlterouDataHora() {
+      usuarioAlterouManualmente = true;
+      const divErro = document.getElementById('msg_erro_modal');
+      if (divErro) {
+        divErro.style.display = 'none';
+      }
+    }
     async function enviarMedicacaoSOS(event) {
       event.preventDefault(); 
 
@@ -569,6 +604,15 @@
         if (!dataHoraInput.value) {
           dataHoraInput.value = nowString;
         }
+
+        usuarioAlterouManualmente = false;
+        iniciarAtualizacaoAutomatica(dataHoraInput);
+      });
+
+      $('#modalHorarioAplicacao').on('hidden.bs.modal', function(e) {
+        pararAtualizacaoAutomatica();
+        usuarioAlterouManualmente = false;
+        limparInputDataTime();
       });
     });
 
@@ -807,7 +851,7 @@
                                        id="dataHora" 
                                        name="dataHora" 
                                        onfocus="definirDataHoraAtualSeVazio(this)" 
-                                       oninput="document.getElementById('msg_erro_modal').style.display = 'none'" 
+                                       oninput="usuarioAlterouDataHora()" 
                                        required 
                                        class="form-control">
 
