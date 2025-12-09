@@ -769,7 +769,12 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" disabled placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" readonly>
+                            <input type="text" class="form-control" id="cpf" name="cpf" disabled
+                              placeholder="Ex: 222.222.222-22" maxlength="14"
+                              value="<?= htmlspecialchars($atend->cpf ?? '') ?>"
+                              onblur="validarCPF(this.value)"
+                              onkeypress="return Onlynumbers(event)"
+                              onkeyup="mascara('###.###.###-##',this,event)">
                           </div>
                         </div>
                         <input type="hidden" name="idatendido" value=<?= $id ?>>
@@ -1344,7 +1349,27 @@ $dependente = json_encode($dependente);
         return true;
       }
     </script>
+    <script>
+      function editar_informacoes_pessoais() {
+        document.getElementById('nome').disabled = false;
+        document.getElementById('sobrenome').disabled = false;
+        document.getElementById('telefone').disabled = false;
+        document.getElementById('nascimento').disabled = false;
+        document.getElementById('tipoSanguineo').disabled = false;
 
+        var cpfField = document.getElementById('cpf');
+        var cpfValue = cpfField.value.replace(/\D/g, '');
+
+        if (cpfValue === '' || cpfValue.length === 0) {
+          cpfField.disabled = false;
+          cpfField.focus();
+        }
+
+
+        document.getElementById('botaoEditarIP').style.display = 'none';
+        document.getElementById('botaoSalvarIP').disabled = false;
+      }
+    </script>
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
     <script src="../../Functions/atendido_parentesco.js"></script>
