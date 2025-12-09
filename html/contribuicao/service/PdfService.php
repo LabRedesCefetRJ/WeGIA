@@ -2,6 +2,7 @@
 require_once '../vendor/autoload.php';
 require_once dirname(__DIR__) . '/dao/ImagemDAO.php';
 require_once dirname(__DIR__) . '/dao/ConexaoDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SelecaoParagrafoDAO.php';
 
 use setasign\Fpdi\Fpdi;
 
@@ -111,10 +112,12 @@ class PdfService
                 }
             }
 
+            //CNPJ
+            $cnpj = SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Cnpj);
+            $nomeInstituicao .= " (CNPJ: $cnpj)";
+
             //mensagem de agradecimento ao doador.
-            require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SelecaoParagrafoDAO.php';
-            $selecaoParagrafo = new SelecaoParagrafoDAO();
-            $agradecimento = $selecaoParagrafo->getAgradecimentoDoador();
+            $agradecimento = SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Agradecimento);
 
             if(is_null($agradecimento))
                 $agradecimento = 'Sua contribuição é fundamental para a nossa organização!';
