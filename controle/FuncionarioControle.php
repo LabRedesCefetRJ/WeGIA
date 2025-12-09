@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE)
     session_start();
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 include_once ROOT . "/dao/Conexao.php";
 include_once ROOT . '/classes/Funcionario.php';
 include_once ROOT . '/classes/QuadroHorario.php';
@@ -764,6 +765,10 @@ class FuncionarioControle
         $redir = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
+            if(!Csrf::validateToken($_POST['csrf_token'])){
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
+
             if (!$id_pessoa || $id_pessoa < 1) {
                 throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
             }
