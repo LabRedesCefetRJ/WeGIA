@@ -398,6 +398,15 @@
       input_id_funcionario.value = id_funcionario;
     }
 
+    function mostrarErro(mensagem) {
+        const divErro = document.getElementById("msg_erro_modal");
+        if (divErro) {
+            divErro.innerText = mensagem;
+            divErro.style.display = "block";
+        } else {
+            alert(mensagem);
+        }
+    }
     async function enviarDataHoraAplicacaoMedicamento(event) {
       event.preventDefault();
 
@@ -405,30 +414,30 @@
       const divErro = document.getElementById("msg_erro_modal");
       
       if (divErro) {
-          divErro.style.display = "none";
+          divErro.style.display = "none"; 
           divErro.innerText = "";
       }
-
-      // Valida se está vazio
       if (!dataHoraInput.value) {
           mostrarErro("Por favor, preencha a data e hora.");
-          return false;
+          return;
       }
       
       const anoDigitado = parseInt(dataHoraInput.value.substring(0, 4));
       const anoMinimo = 1929;
 
-      console.log("Ano digitado:", anoDigitado);
-
       if (anoDigitado < anoMinimo) {
           mostrarErro("Data inválida: O ano não pode ser anterior a 1929.");
-          return false; 
+          return; 
       }
 
       const agoraString = getDataLocalAtual();
       const dataSelecionada = new Date(dataHoraInput.value);
       const dataLimite = new Date(agoraString);
 
+      if (dataSelecionada > dataLimite) {
+          mostrarErro("A data e hora da aplicação não pode ser no futuro. Ajuste para o momento atual.");
+          return;
+      }
       let idPessoaFuncionario = <?= $idPessoa ?>;
 
       const form = event.target;
@@ -470,15 +479,6 @@
         });
     }
 
-    function mostrarErro(mensagem) {
-        const divErro = document.getElementById("msg_erro_modal");
-        if (divErro) {
-            divErro.innerText = mensagem;
-            divErro.style.display = "block";
-        } else {
-            alert(mensagem);
-        }
-    }
 
     function getDataLocalAtual() {
       const agora = new Date();
@@ -493,45 +493,15 @@
       return `${ano}-${mes}-${dia}T${horas}:${minutos}`;
     }
 
-    let intervaloDataHora = null;
-    let usuarioAlterouManualmente = false;
-
-    function iniciarAtualizacaoAutomatica(campo) {
-      if (intervaloDataHora) {
-        clearInterval(intervaloDataHora);
-      }
-
-      intervaloDataHora = setInterval(() => {
-        if (usuarioAlterouManualmente) {
-          return;
-        }
-        const nowString = getDataLocalAtual();
-        campo.setAttribute('max', nowString);
-        campo.value = nowString;
-      }, 1000);
-    }
-
-    function pararAtualizacaoAutomatica() {
-      if (intervaloDataHora) {
-        clearInterval(intervaloDataHora);
-        intervaloDataHora = null;
-      }
-    }
-
     function definirDataHoraAtualSeVazio(campo) {
       const nowString = getDataLocalAtual();
-      campo.setAttribute('max', nowString);
-
+      
       if (!campo.value) {
         campo.value = nowString;
       }
-
-      usuarioAlterouManualmente = false;
-      iniciarAtualizacaoAutomatica(campo);
     }
 
     function usuarioAlterouDataHora() {
-      usuarioAlterouManualmente = true;
       const divErro = document.getElementById('msg_erro_modal');
       if (divErro) {
         divErro.style.display = 'none';
@@ -600,18 +570,19 @@
         const dataHoraInput = document.getElementById("dataHora");
         const nowString = getDataLocalAtual();
         
-        dataHoraInput.setAttribute('max', nowString);
         if (!dataHoraInput.value) {
           dataHoraInput.value = nowString;
         }
 
-        usuarioAlterouManualmente = false;
-        iniciarAtualizacaoAutomatica(dataHoraInput);
+        // Limpa a mensagem de erro ao abrir
+        const divErro = document.getElementById("msg_erro_modal");
+        if (divErro) {
+          divErro.style.display = "none";
+        }
       });
 
       $('#modalHorarioAplicacao').on('hidden.bs.modal', function(e) {
-        pararAtualizacaoAutomatica();
-        usuarioAlterouManualmente = false;
+        // Garante que o campo esteja limpo ao fechar
         limparInputDataTime();
       });
     });
@@ -663,7 +634,6 @@
             <a class="sidebar-right-toggle" data-open="sidebar-right"><i class="fa fa-chevron-left"></i></a>
           </div>
         </header>
-        <!-- start: page -->
         <div class="row">
           <div class="col-md-4 col-lg-3">
             <section class="panel">
@@ -851,6 +821,7 @@
                                        id="dataHora" 
                                        name="dataHora" 
                                        onfocus="definirDataHoraAtualSeVazio(this)" 
+                                       onclick="definirDataHoraAtualSeVazio(this)"
                                        oninput="usuarioAlterouDataHora()" 
                                        required 
                                        class="form-control">
@@ -863,7 +834,7 @@
                               </div>
 
                               <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary">Enviar</button>
+                                <button type="submit" class="btn btn-primary" id="enviar_medicação" formnovalidate>Enviar</button>
                                 <button type="button" class="btn btn-default" data-dismiss="modal" onclick="limparInputDataTime()">Cancelar</button>
                               </div>
                             </form>
