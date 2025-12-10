@@ -727,19 +727,63 @@ class FuncionarioControle
         }
     }
 
-    public function alterarInfPessoal()
-    {
-        extract($_REQUEST);
-        $funcionario = new Funcionario('', $nome, $sobrenome, $gender, $nascimento, '', '', '', $nome_mae, $nome_pai, $sangue, '', $telefone, '', '', '', '', '', '', '', '', '');
-        $funcionario->setId_funcionario($id_funcionario);
-        $funcionarioDAO = new FuncionarioDAO();
-        try {
-            $funcionarioDAO->alterarInfPessoal($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
-        }
+   public function alterarInfPessoal()
+{
+    extract($_REQUEST);
+
+    $erros = [];
+
+    if (!isset($nome) || trim($nome) === '') {
+        $erros[] = "Nome do funcionário não pode ser vazio.";
     }
+    if (!isset($sobrenome) || trim($sobrenome) === '') {
+        $erros[] = "Sobrenome do funcionário não pode ser vazio.";
+    }
+    if (!isset($gender) || ($gender !== 'm' && $gender !== 'f')) {
+        $erros[] = "Sexo do funcionário é obrigatório.";
+    }
+    if (!isset($nascimento) || trim($nascimento) === '') {
+        $erros[] = "Data de nascimento é obrigatória.";
+    }
+    if (!isset($telefone) || trim($telefone) === '') {
+        $erros[] = "Telefone do funcionário é obrigatório.";
+    }
+
+    if (!empty($erros)) {
+        $_SESSION['msg']  = implode(' ', $erros);
+        $_SESSION['tipo'] = 'error';
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($id_funcionario));
+        exit(); 
+    }
+
+    if ($nascimento === '') {
+        $nascimento = null;
+    }
+
+    $funcionario = new Funcionario(
+        '', $nome, $sobrenome, $gender, $nascimento,
+        '', '', '', $nome_mae, $nome_pai,
+        $sangue, '', $telefone,
+        '', '', '', '', '', '', '', '', ''
+    );
+    $funcionario->setId_funcionario($id_funcionario);
+
+    $funcionarioDAO = new FuncionarioDAO();
+    try {
+        $funcionarioDAO->alterarInfPessoal($funcionario);
+        $_SESSION['msg']  = "Informações pessoais atualizadas com sucesso!";
+        $_SESSION['tipo'] = 'success';
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($id_funcionario));
+        exit();
+    } catch (PDOException $e) {
+        $_SESSION['msg']  = "Erro ao atualizar informações do funcionário.";
+        $_SESSION['tipo'] = 'error';
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($id_funcionario));
+        exit();
+    }
+}
+
+
 
     /**
      * Altera a chave de acesso ao sistema de determinado usuário, permite que administradores configurados possam alterar a senha de outras pessoas
