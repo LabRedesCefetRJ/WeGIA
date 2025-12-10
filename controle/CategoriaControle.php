@@ -1,80 +1,91 @@
 <?php
 include_once ROOT . '/classes/Categoria.php';
 include_once ROOT . '/dao/CategoriaDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 class CategoriaControle
 {
-    public function verificar(){
+    public function verificar()
+    {
         $descricao_categoria = trim($_REQUEST['descricao_categoria']);
-    
-        try{
+
+        try {
             $categoria = new Categoria($descricao_categoria);
             return $categoria;
-        }catch(InvalidArgumentException $e){
-            header('Location: '. WWW .'html/home.php?msg_c='.$e->getMessage());//Envio de temporariamente para a home, posteriormente criar um sistema de exibição de mensagens em html/adicionar_categoria.php
+        } catch (InvalidArgumentException $e) {
+            header('Location: ' . WWW . 'html/home.php?msg_c=' . $e->getMessage()); //Envio de temporariamente para a home, posteriormente criar um sistema de exibição de mensagens em html/adicionar_categoria.php
         }
     }
-    public function listarTodos(){
+    public function listarTodos()
+    {
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
 
         $regex = '#^(\.\./html/matPat/(alterar_produto|cadastro_produto|listar_categoria)\.php(\?id_produto=\d+)?)$#';
 
-        $categoriaDAO= new CategoriaDAO();
+        $categoriaDAO = new CategoriaDAO();
         $categorias = $categoriaDAO->listarTodos();
         session_start();
-        $_SESSION['categoria']=$categorias;
+        $_SESSION['categoria'] = $categorias;
         echo $_SESSION['categoria'];
 
-        if(preg_match($regex, $nextPage)){
+        if (preg_match($regex, $nextPage)) {
             header('Location:' . htmlspecialchars($nextPage));
-        }else{
+        } else {
             header('Location:' . '../html/home.php');
         }
     }
-    
-    public function incluir(){
+
+    public function incluir()
+    {
         $categoria = $this->verificar();
         $categoriaDAO = new CategoriaDAO();
-        try{
+        try {
             $categoriaDAO->incluir($categoria);
-            header("Location: ". WWW ."html/matPat/adicionar_categoria.php");
-        } catch (PDOException $e){
+            header("Location: " . WWW . "html/matPat/adicionar_categoria.php");
+        } catch (PDOException $e) {
             echo "Não foi possível registrar a categoria";
         }
     }
-    public function editar(){
+    public function editar()
+    {
         $id_categoria_produto = trim($_REQUEST['id_categoria_produto']);
         $descricao_categoria = trim($_REQUEST['descricao_categoria']);
 
-        if(!$id_categoria_produto || !is_numeric($id_categoria_produto) || $id_categoria_produto < 1){
+        if (!Csrf::validateToken($_POST['csrf_token'])) {
+            http_response_code(403);
+            exit('O Token CSRF informado é inválido.');
+        }
+
+        if (!$id_categoria_produto || !is_numeric($id_categoria_produto) || $id_categoria_produto < 1) {
             http_response_code(400);
             exit('O id de uma categoria deve ser um inteiro maior ou igual a 1.');
         }
 
-        if(!$descricao_categoria || empty($descricao_categoria)){
+        if (!$descricao_categoria || empty($descricao_categoria)) {
             http_response_code(400);
             exit('A descrição de uma categoria não pode ser vazia.');
         }
 
         $categoriaDAO = new CategoriaDAO();
-        try{
+        try {
             $categoriaDAO->editar($id_categoria_produto, $descricao_categoria);
-            header("Location: ". WWW ."html/matPat/listar_categoria.php");
-        } catch (PDOException $e){
+            header("Location: " . WWW . "html/matPat/listar_categoria.php");
+        } catch (PDOException $e) {
             echo "Não foi possível editar a categoria";
         }
     }
-    public function excluir(){
+    public function excluir()
+    {
         $id_categoria_produto = trim($_REQUEST['id_categoria_produto']);
 
-        if(!$id_categoria_produto || !is_numeric($id_categoria_produto) || $id_categoria_produto < 1){
+        if (!$id_categoria_produto || !is_numeric($id_categoria_produto) || $id_categoria_produto < 1) {
             http_response_code(400);
             exit('O id de uma categoria deve ser um inteiro maior ou igual a 1.');
         }
 
         try {
-            $categoriaDAO=new CategoriaDAO();
+            $categoriaDAO = new CategoriaDAO();
             $categoriaDAO->excluir($id_categoria_produto);
-            header('Location: '. WWW .'html/matPat/listar_categoria.php');
+            header('Location: ' . WWW . 'html/matPat/listar_categoria.php');
         } catch (PDOException $e) {
             echo "Não foi possível excluir essa categoria, pois já deve existir um produto cadastrado com essa categoria";
         }
