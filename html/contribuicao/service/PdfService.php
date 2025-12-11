@@ -72,8 +72,8 @@ class PdfService
             require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'EnderecoDAO.php';
             $enderecoDao = new EnderecoDAO();
             $retorno = $enderecoDao->listarInstituicao();         // recebe o JSON
-            $array = json_decode($retorno, true);         // vira array PHP
-            $nomeInstituicao = $array[0]['nome'] ?? null; // pega o nome do primeiro registro
+            $endereco = json_decode($retorno, true)[0];         // vira array PHP
+            $nomeInstituicao = $endereco['nome'] ?? null; // pega o nome do primeiro registro
 
             if (!isset($nomeInstituicao) || empty($nomeInstituicao) || strlen($nomeInstituicao) === 0) {
                 $nomeInstituicao = 'nossa instituição';
@@ -114,12 +114,47 @@ class PdfService
 
             //CNPJ
             $cnpj = SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Cnpj);
-            $nomeInstituicao .= " (CNPJ: $cnpj)";
+
+            if (isset($cnpj))
+                $nomeInstituicao .= " (CNPJ: $cnpj";
+
+            //Endereço
+            if (isset($endereco['cep']) && strlen($endereco['cep']) != 0) {
+                if (isset($cnpj))
+                    $nomeInstituicao .= " | CEP: {$endereco['cep']}";
+                else
+                    $nomeInstituicao .= " (CEP: {$endereco['cep']}";
+
+                if (isset($endereco['numero_endereco']) && strlen($endereco['numero_endereco']) != 0 && (trim(strtolower($endereco['numero_endereco'])) != 'sem número'))
+                    $nomeInstituicao .= ", n°: {$endereco['numero_endereco']}";
+            } else {
+                if (isset($endereco['cidade']) && strlen($endereco['cidade']) != 0) {
+                    if (isset($cnpj))
+                        $nomeInstituicao .= " | Endereço: {$endereco['cidade']}";
+                    else
+                        $nomeInstituicao .= "(Endereço: {$endereco['cidade']}";
+
+                    if (isset($endereco['bairro']) && strlen($endereco['bairro']) != 0)
+                        $nomeInstituicao .= ", {$endereco['bairro']}";
+
+                    if (isset($endereco['logradouro']) && strlen($endereco['logradouro']) != 0)
+                        $nomeInstituicao .= ", {$endereco['logradouro']}";
+
+                    if ((isset($endereco['numero_endereco']) && strlen($endereco['numero_endereco']) != 0) && (trim(strtolower($endereco['numero_endereco'])) != 'sem número'))
+                        $nomeInstituicao .= ", n°: {$endereco['numero_endereco']}";
+
+                    if (isset($endereco['estado']) && strlen($endereco['estado']) != 0)
+                        $nomeInstituicao .= ", {$endereco['estado']}";
+                }
+            }
+
+            if (preg_match('/\([^)]*$/', $nomeInstituicao))
+                $nomeInstituicao .= ')';
 
             //mensagem de agradecimento ao doador.
             $agradecimento = SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Agradecimento);
 
-            if(is_null($agradecimento))
+            if (is_null($agradecimento))
                 $agradecimento = 'Sua contribuição é fundamental para a nossa organização!';
 
             $mensagem = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', sprintf(
