@@ -366,19 +366,30 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                 type: "POST",
                 url: url,
                 data: data,
+                dataType: 'json',
+
                 success: function(response) {
-                    gerarOcorrencia();
+                    gerarOcorrencia(); // fluxo normal
                 },
-                dataType: 'text'
-            })
+
+                error: function(xhr) {
+                    // Se o PHP retornou na faixa 400
+                    if (xhr.status >= 400 && xhr.status < 500) {
+                        try {
+                            let erro = JSON.parse(xhr.responseText);
+                            alert(erro.erro);
+                        } catch (e) {
+                            alert("Ocorreu um erro na requisição.");
+                        }
+                        return;
+                    }
+
+                    // Outros erros (500 etc.)
+                    alert("Erro inesperado ao cadastrar ocorrência.");
+                }
+            });
         }
-
-        //function alertaBemSucedido() {
-        //    alert("Cadastro de ocorrência bem sucedido")
-        //}
     </script>
-
-
 
     <style type="text/css">
         .select {
