@@ -15,20 +15,25 @@ require_once ROOT . '/classes/Util.php';
 class FuncionarioControle
 {
 
-    public function formatoDataYMD($data)
+    /**
+     * Recebe uma data no formato dd/mm/yyyy e retorna no formato yyyy/mm/dd
+     */
+    public function formatoDataYMD($data):string // <-- Deveria estar em uma classe modelo de data, ou mesmo usar as funções nativas do PHP para essa funcionalidade
     {
-        $data_arr = explode("/", $data);
+        $dataArray = explode("/", $data);
 
-        $datac = $data_arr[2] . '-' . $data_arr[1] . '-' . $data_arr[0];
+        $dataAmericana = $dataArray[2] . '-' . $dataArray[1] . '-' . $dataArray[0];
 
-        return $datac;
+        return $dataAmericana;
     }
 
+    /**
+     * Recebe dois parâmetros no formato HH:mm e retorna a soma deles de acordo com o sistema sexagesimal.
+     */
     function somarHoras($subtotal1, $subtotal2)
     {
         $hora1 = explode(":", $subtotal1);
         $hora2 = explode(":", $subtotal2);
-
 
         if (sizeof($hora1) > 1 && sizeof($hora2) > 1) {
             $tempoTotal = (intval($hora1[0]) * 60) + (intval($hora2[0]) * 60) + intval($hora1[1]) + intval($hora2[1]);
@@ -46,13 +51,14 @@ class FuncionarioControle
 
             $final = $horaTotal . ":" . $minutoTotal;
 
-
-
             return $final;
         }
         return '';
     }
 
+    /**
+     * Recebe como parâmetros as horas de entrada e saida do expediente no formato HH:mm e retorna o total de tempo entre elas.
+     */
     function calcularHora($entrada, $saida)
     {
         $hora1 = explode(":", $entrada);
@@ -74,12 +80,6 @@ class FuncionarioControle
             $final = $horaTotall . ":" . $minutoTotal;
             return $final;
         }
-
-        return '';
-    }
-
-    function geraChave()
-    {
 
         return '';
     }
@@ -215,120 +215,167 @@ class FuncionarioControle
         return $horario;
     }
 
+    /**Extrai os dados de uma requisição e retorna um objeto do tipo Funcionario*/
     public function verificarFuncionario()
     {
         extract($_REQUEST);
 
         if ((!isset($nome)) || (empty($nome))) {
-            $msg = "Nome do funcionario não informado. Por favor, informe um nome!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Nome do funcionario não informado. Por favor, informe um nome!');
+            exit();
         }
+
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
-            $msg = "Sobrenome do funcionario não informado. Por favor, informe um sobrenome!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Sobrenome do funcionario não informado. Por favor, informe um sobrenome!');
+            exit();
+        
         }
         if ((!isset($gender)) || (empty($gender))) {
-            $msg .= "Sexo do funcionario não informado. Por favor, informe um sexo!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Sexo do funcionario não informado. Por favor, informe um sexo!');
+            exit();
         }
+
         if ((!isset($cargo)) || (empty($cargo))) {
-            $msg .= "Cargo do funcionario não informado. Por favor, informe um cargo!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Cargo do funcionario não informado. Por favor, informe um cargo!');
+            exit();
         }
+
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
         }
+
         if ((!isset($nascimento)) || (empty($nascimento))) {
-            $msg .= "Data de nascimento do funcionario não informado. Por favor, informe uma data de nascimento!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Data de nascimento do funcionario não informado. Por favor, informe uma data de nascimento!');
+            exit();
         }
+
         if ((!isset($nome_pai)) || (empty($nome_pai))) {
             $nome_pai = '';
         }
+
         if ((!isset($nome_mae)) || (empty($nome_mae))) {
             $nome_mae = '';
         }
+
         if ((!isset($sangue)) || (empty($sangue))) {
             $sangue = '';
         }
+
         if ((!isset($cep)) || empty(($cep))) {
             $cep = '';
         }
+
         if ((!isset($uf)) || empty(($uf))) {
             $uf = '';
         }
+
         if ((!isset($cidade)) || empty(($cidade))) {
             $cidade = '';
         }
+
         if ((!isset($bairro)) || empty(($bairro))) {
             $bairro = '';
         }
+
         if ((!isset($rua)) || empty(($rua))) {
             $rua = '';
         }
+
         if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
             $numero_residencia = "";
         }
+
         if ((!isset($complemento)) || (empty($complemento))) {
             $complemento = '';
         }
+
         if ((!isset($ibge)) || (empty($ibge))) {
             $ibge = '';
         }
+
         if ((!isset($rg)) || empty(($rg))) {
-            $msg .= "RG do funcionario não informado. Por favor, informe um rg!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=RG do funcionario não informado. Por favor, informe um rg!');
+            exit();
         }
+
         if ((!isset($orgao_emissor)) || empty(($orgao_emissor))) {
-            $msg .= "Órgão emissor do funcionario não informado. Por favor, informe o órgão emissor!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Órgão emissor do funcionario não informado. Por favor, informe o órgão emissor!');
+            exit();
         }
+
         if ((!isset($data_expedicao)) || (empty($data_expedicao))) {
-            $msg .= "Data de expedição do rg do funcionario não informado. Por favor, informe um data de expedição!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Data de expedição do rg do funcionario não informado. Por favor, informe um data de expedição!');
+            exit();
         }
+
         if ((!isset($cpf)) || (empty($cpf))) {
-            $msg .= "CPF do funcionario não informado. Por favor, informe um CPF!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=CPF do funcionario não informado. Por favor, informe um CPF!');
+            exit();
         }
+
         if ((!isset($pis)) || (empty($pis))) {
             $pis = '';
         }
+
         if ((!isset($ctps)) || (empty($ctps))) {
             $ctps = '';
         }
+
         if ((!isset($uf_ctps)) || (empty($uf_ctps))) {
             $uf_ctps = '';
         }
+
         if ((!isset($titulo_eleitor)) || (empty($titulo_eleitor))) {
             $titulo_eleitor = '';
         }
+
         if ((!isset($zona_eleitoral)) || (empty($zona_eleitoral))) {
             $zona_eleitoral = '';
         }
+
         if ((!isset($secao_titulo_eleitor)) || (empty($secao_titulo_eleitor))) {
             $secao_titulo_eleitor = '';
         }
 
         if ((!isset($data_admissao)) || (empty($data_admissao))) {
-            $msg .= "Data de Admissão do funcionario não informada. Por favor, informe a data de admissao!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Data de Admissão do funcionario não informada. Por favor, informe a data de admissao!');
+            exit();
         }
+
         if ((!isset($situacao)) || (empty($situacao))) {
-            $msg .= "Situação do funcionario não informada. Por favor, informe a situação!";
-            header('Location: ../html/funcionario.html?msg=' . $msg);
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=Situação do funcionario não informada. Por favor, informe a situação!');
+            exit();
         }
 
         if ((!isset($certificado_reservista_numero)) || (empty($certificado_reservista_numero))) {
             $certificado_reservista_numero = '';
         }
+        
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
 
+        if(!Util::validarCPF($cpf)){
+            http_response_code(412);
+            header('Location: ../html/funcionario.html?msg=O CPF informado é inválido.');
+            exit();
+        }
+
         if (strtotime($data_expedicao) < strtotime(($nascimento))) {
-            $_SESSION['erro'] = 'A data de expedição é anterior à do nascimento. Por favor, informa uma data válida!';
-            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . $cpf);
+            http_response_code(412);
+            $_SESSION['erro'] = 'A data de expedição é anterior ao nascimento. Por favor, informa uma data válida!';
+            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
             exit;
         }
 
@@ -340,7 +387,7 @@ class FuncionarioControle
             unset($_SESSION['imagem']);
         }
 
-        $senha = $this->geraChave($cpf);
+        $senha = '';
         $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
         $funcionario->setData_admissao($data_admissao);
         $funcionario->setPis($pis);
@@ -469,7 +516,7 @@ class FuncionarioControle
             unset($_SESSION['imagem']);
         }
 
-        $senha = $this->geraChave($cpf);
+        $senha = '';
         $funcionario = $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
         $funcionario->setData_admissao($data_admissao);
         $funcionario->setPis($pis);
