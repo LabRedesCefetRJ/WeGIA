@@ -34,7 +34,8 @@
             $dataHora = $dados['dataHora'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
             $limite = new DateTime('1929-01-01');
-            $aplicacao = null; 
+            $aplicacao = null;
+            $agora = $agora = new DateTime();
 
             if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
                 http_response_code(400);
@@ -54,6 +55,11 @@
             if($aplicacao < $limite){
                 http_response_code(400); 
                 echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser anterior a 1929-01-01."]);
+                exit;
+            }
+            if($aplicacao > $agora){
+                http_response_code(400);
+                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser futura a data atual ".$agora]);
                 exit;
             }
             
