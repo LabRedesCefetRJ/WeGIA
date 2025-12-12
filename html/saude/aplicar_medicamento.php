@@ -255,9 +255,11 @@
       dataHora.value = "";
     }
 
-    function carregarMedicamentosParaAplicar() {
+    function carregarMedicamentosParaAplicar(modoSelecionar = false) {
       const exibimedparaenfermeiro = <?= $exibimedparaenfermeiro ?>;
       const tabela = document.getElementById("tabela");
+      
+      tabela.innerHTML = "";
 
       exibimedparaenfermeiro.forEach(function(item) {
         const tr = document.createElement("tr");
@@ -283,24 +285,38 @@
         td5.style.textAlign = "center";
         td5.style.verticalAlign = "middle";
 
-        const a = document.createElement("a");
-        a.title = "Aplicar medicamento";
+        if (modoSelecionar) {
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = true; 
+            checkbox.className = "chk-med-bulk"; 
+            
+            checkbox.setAttribute("data-idMedicacao", item.id_medicacao);
+            checkbox.setAttribute("data-idPessoa", item.id_pessoa);
+            checkbox.setAttribute("data-idFuncionario", item.id_funcionario);
+            
+            td5.appendChild(checkbox);
 
-        const button = document.createElement("button");
-        button.className = "btn btn-primary";
-        button.type = "button";
-        button.setAttribute("data-toggle", "modal");
-        button.setAttribute("data-target", "#modalHorarioAplicacao");
-        button.setAttribute("data-idMedicacao", item.id_medicacao);
-        button.setAttribute("data-idPessoa", item.id_pessoa);
-        button.setAttribute("data-idFuncionario", item.id_funcionario);
-        button.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i>";
-        button.addEventListener("click", function() {
-          enviarInformacoesParaModal(this);
-        });
+        } else {
+            const a = document.createElement("a");
+            a.title = "Aplicar medicamento";
 
-        a.appendChild(button);
-        td5.appendChild(a);
+            const button = document.createElement("button");
+            button.className = "btn btn-primary";
+            button.type = "button";
+            button.setAttribute("data-toggle", "modal");
+            button.setAttribute("data-target", "#modalHorarioAplicacao");
+            button.setAttribute("data-idMedicacao", item.id_medicacao);
+            button.setAttribute("data-idPessoa", item.id_pessoa);
+            button.setAttribute("data-idFuncionario", item.id_funcionario);
+            button.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i>";
+            button.addEventListener("click", function() {
+              enviarInformacoesParaModal(this);
+            });
+
+            a.appendChild(button);
+            td5.appendChild(a);
+        }
 
         tr.append(td1, td2, td3, td4, td5);
         tabela.appendChild(tr);
@@ -439,32 +455,67 @@
           return;
       }
       let idPessoaFuncionario = <?= $idPessoa ?>;
+      let arrayPromessas = [];
 
-      const form = event.target;
-      const formData = new FormData(form);
+      const isModoSelecao = $('#chkSelecionar').is(':checked');
 
-      const dados = {
-        nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
-        metodo: encodeURIComponent("inserirAplicacao"),
-        id_medicacao: formData.get('id_medicacao'),
-        id_pessoa: formData.get('id_pessoa'),
-        id_pessoa_funcionario: idPessoaFuncionario,
-        dataHora: formData.get('dataHora')
-      };
+      if (isModoSelecao) {
+        const checkboxesMarcados = document.querySelectorAll('.chk-med-bulk:checked');
+        
+        if (checkboxesMarcados.length === 0) {
+             mostrarErro("Nenhum medicamento selecionado.");
+             return;
+        }
 
-      limparInputDataTime();
+        checkboxesMarcados.forEach(function(chk) {
+            const dados = {
+                nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
+                metodo: encodeURIComponent("inserirAplicacao"),
+                id_medicacao: chk.getAttribute('data-idMedicacao'),
+                id_pessoa: chk.getAttribute('data-idPessoa'),
+                id_pessoa_funcionario: idPessoaFuncionario,
+                dataHora: dataHoraInput.value
+            };
+            const dadosJson = JSON.stringify(dados);
+            
+            // Adiciona a requisição ao array de promessas
+            arrayPromessas.push(
+                fetch(`../../controle/control.php?`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: dadosJson
+                }).then(res => res.json())
+            );
+        });
 
-      const dadosJson = JSON.stringify(dados);
+      } else {
+        // Lógica ORIGINAL (Individual)
+        const form = event.target;
+        const formData = new FormData(form);
 
-      fetch(`../../controle/control.php?`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: dadosJson
-        })
-        .then(res => res.json())
-        .then(data => {
+        const dados = {
+            nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
+            metodo: encodeURIComponent("inserirAplicacao"),
+            id_medicacao: formData.get('id_medicacao'),
+            id_pessoa: formData.get('id_pessoa'),
+            id_pessoa_funcionario: idPessoaFuncionario,
+            dataHora: formData.get('dataHora')
+        };
+        const dadosJson = JSON.stringify(dados);
+        
+        arrayPromessas.push(
+            fetch(`../../controle/control.php?`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: dadosJson
+            }).then(res => res.json())
+        );
+      }
+
+      // Executa todas as requisições (seja 1 ou várias)
+      Promise.all(arrayPromessas)
+        .then(resultados => {
+          limparInputDataTime();
           const id_fichamedica = document.getElementById("id_fichamedica").value;
           carregarAplicacoes(id_fichamedica);
 
@@ -804,6 +855,9 @@
 
                         </tbody>
                       </table>
+                      
+                      <div id="div-botao-aplicar-global" style="text-align: right; margin-top: 10px; margin-bottom: 20px;"></div>
+
                       <div class="modal fade" id="modalHorarioAplicacao" tabindex="-1" role="dialog" aria-labelledby="tituloModal">
                         <div class="modal-dialog">
                           <div class="modal-content">
@@ -953,12 +1007,54 @@
         localStorage.setItem("currentTab", "2");
         alert("Medicamento aplicado com sucesso!");
       }
-      carregarMedicamentosParaAplicar();
+      carregarMedicamentosParaAplicar(false);
       const id_fichamedica = document.getElementById("id_fichamedica").value;
       carregarAplicacoes(id_fichamedica);
-    </script>
 
-    <!-- Vendor -->
+      $(document).ready(function() {
+        
+        let htmlCheckbox = `
+                <div style="clear: both; text-align: right; margin-top: 5px; margin-bottom: 10px;">
+                    <div class="checkbox" style="display: inline-block; margin-top: 10px">
+                        <label>
+                            <input type="checkbox" id="chkSelecionar"> 
+                            <span style="font-weight: normal;">Selecionar</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+
+        $('#datatable-default_filter').after(htmlCheckbox);
+
+        $('#chkSelecionar').on('click', function() {
+            let estaMarcado = $(this).is(':checked');
+
+            carregarMedicamentosParaAplicar(estaMarcado);
+
+            let divBotao = $('#div-botao-aplicar-global');
+            
+            if(estaMarcado) {
+                var btnHtml = document.createElement("button");
+                btnHtml.className = "btn btn-primary";
+                btnHtml.type = "button";
+                btnHtml.setAttribute("data-toggle", "modal");
+                btnHtml.setAttribute("data-target", "#modalHorarioAplicacao");
+                btnHtml.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i> Aplicar";
+                
+                btnHtml.addEventListener("click", function() {
+                   enviarInformacoesParaModal(this); 
+                });
+                
+                divBotao.empty().append(btnHtml);
+            } else {
+                divBotao.empty();
+            }
+        });
+        
+      });
+
+    </script>
+    
     <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
