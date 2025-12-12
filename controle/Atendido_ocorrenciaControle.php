@@ -86,25 +86,58 @@ class Atendido_ocorrenciaControle
 
 	//Incluir despachos  
 	public function incluir()
-	{
-		extract($_REQUEST);
-		$ocorrencia = $this->verificarDespacho();
-		$ocorrenciaDAO = new Atendido_ocorrenciaDAO();
-		try {
-			$ocorrenciaDAO->incluir($ocorrencia);
+{
+    extract($_REQUEST);
+    try {
+        // **VALIDAÇÃO NOVA: Data ocorrência vs Data nascimento**
+        if (!empty($data) && is_numeric($atendido_idatendido) && $atendido_idatendido >= 1) {
+            $pdo = Conexao::connect();
+            $sql_nascimento = "SELECT p.data_nascimento FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
+            $stmt_nascimento = $pdo->prepare($sql_nascimento);
+            $stmt_nascimento->bindParam(':idatendido', $atendido_idatendido);
+            $stmt_nascimento->execute();
+            $atendido_nasc = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
+            
+            // **MENSAGEM PARA USUÁRIO SEM DATA NASCIMENTO**
+            if (!$atendido_nasc || empty($atendido_nasc['data_nascimento'])) {
+                $_SESSION['msg'] = "Atenção: Atendido sem data de nascimento cadastrada. Cadastre primeiro para validar datas de ocorrência.";
+                $_SESSION['tipo'] = "warning";
+                header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($atendido_idatendido));
+                exit;
+            }
+            
+            $data_nascimento_obj = new DateTime($atendido_nasc['data_nascimento']);
+            $data_ocorrencia_obj = new DateTime($data);
+            
+            if ($data_ocorrencia_obj < $data_nascimento_obj) {
+                $_SESSION['msg'] = "Erro: A data da ocorrência não pode ser anterior à data de nascimento do atendido!";
+                $_SESSION['tipo'] = "error";
+                header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . htmlspecialchars($atendido_idatendido));
+                exit;
+            }
+        }
 
-			$arquivos = $_FILES["arquivos"];
+        $ocorrencia = $this->verificarDespacho();
+        $ocorrenciaDAO = new Atendido_ocorrenciaDAO();
+        $ocorrenciaDAO->incluir($ocorrencia);
 
-			$ocorrenciaDAO->incluirArquivos($arquivos);
+        $arquivos = $_FILES["arquivos"];
+        $ocorrenciaDAO->incluirArquivos($arquivos);
 
-			$msg = "success";
-			$sccd = "Ocorrencia enviada com sucesso";
-			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?msg=" . $msg . "&sccd=" . $sccd);
-		} catch (PDOException $e) {
-			$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
-			echo $msg;
-		}
-	}
+        $_SESSION['msg'] = "Ocorrência cadastrada com sucesso!";
+        $_SESSION['tipo'] = "success";
+        header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($atendido_idatendido));
+        exit;
+
+    } catch (Exception $e) {
+        $_SESSION['msg'] = "Erro ao cadastrar ocorrência: " . $e->getMessage();
+        $_SESSION['tipo'] = "error";
+        header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . htmlspecialchars($atendido_idatendido ?? 0));
+        exit;
+    }
+}
+
+
 
 	public function verificar()
 	{
