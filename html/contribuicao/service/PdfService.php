@@ -324,6 +324,24 @@ class PdfService
             // Reposicionar para continuar a linha
             $pdf->SetXY($xIni + $larguras[0], $yIni);
 
+            // Adaptar descrição do meio de pagamento
+            switch ($meio) {
+                case 'Carne':
+                    $meio = 'Carnê';
+                    break;
+
+                case 'Recorrencia':
+                    $meio = 'Recorrência';
+                    break;
+
+                case 'CartaoCredito':
+                    $meio = 'Cartão de crédito';
+                    break;
+
+                default:
+                    break;
+            }
+
             /* --------------- Demais colunas (altura fixa) ---------------- */
             $pdf->Cell($larguras[1], $alturaLinha, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $meio), 1, 0, 'L', true);
             $pdf->Cell($larguras[2], $alturaLinha, $dataGeracao, 1, 0, 'C', true);
