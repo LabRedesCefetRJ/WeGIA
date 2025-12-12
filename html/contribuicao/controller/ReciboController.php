@@ -116,7 +116,8 @@ class ReciboController
                 ->setDataInicio($dtInicio)
                 ->setDataFim($dtFim)
                 ->setValorTotal($valorTotal)
-                ->setTotalContribuicoes(count($contribuicoes));
+                ->setTotalContribuicoes(count($contribuicoes))
+                ->setContribuicoes($contribuicoes);
 
             // Gerar PDF
             $pdfService = new PdfService();

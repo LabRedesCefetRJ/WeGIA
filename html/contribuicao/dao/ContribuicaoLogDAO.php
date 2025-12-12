@@ -360,7 +360,7 @@ class ContribuicaoLogDAO
     }
 
     public function getContribuicoesPorSocioEPeriodo($idSocio, $dataInicio, $dataFim) {
-        $sql = "SELECT * FROM contribuicao_log 
+        $sql = "SELECT cl.codigo, cl.data_geracao, cl.data_pagamento, cl.valor, cmp.meio FROM contribuicao_log cl JOIN contribuicao_meioPagamento cmp ON (cl.id_meio_pagamento=cmp.id)
                 WHERE id_socio = :idSocio 
                 AND status_pagamento = 1 
                 AND data_pagamento BETWEEN :dataInicio AND :dataFim";
