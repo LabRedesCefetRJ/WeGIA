@@ -123,164 +123,132 @@ class FuncionarioDAO
 
     public function incluir($funcionario, $cpf)
     {
-        try {
+        $sql = 'call cadfuncionario(:nome,:sobrenome,:cpf,:senha,:sexo,:telefone,:data_nascimento,:imagem,:cep,:estado,:cidade,:bairro,:logradouro,:numero_endereco,:complemento,:ibge,:registro_geral,:orgao_emissor,:data_expedicao,:nome_pai,:nome_mae,:tipo_sangue,:data_admissao,:pis,:ctps,:uf_ctps,:numero_titulo,:zona,:secao,:certificado_reservista_numero,:certificado_reservista_serie,:id_situacao,:id_cargo)';
 
-            $sql = 'call cadfuncionario(:nome,:sobrenome,:cpf,:senha,:sexo,:telefone,:data_nascimento,:imagem,:cep,:estado,:cidade,:bairro,:logradouro,:numero_endereco,:complemento,:ibge,:registro_geral,:orgao_emissor,:data_expedicao,:nome_pai,:nome_mae,:tipo_sangue,:data_admissao,:pis,:ctps,:uf_ctps,:numero_titulo,:zona,:secao,:certificado_reservista_numero,:certificado_reservista_serie,:id_situacao,:id_cargo)';
+        $sql = str_replace("'", "\'", $sql);
 
-            $sql = str_replace("'", "\'", $sql);
+        $stmt = $this->pdo->prepare($sql);
+        $nome = $funcionario->getNome();
+        $sobrenome = $funcionario->getSobrenome();
+        // $cpf=$funcionario->getCpf();
+        $senha = $funcionario->getSenha();
+        $sexo = $funcionario->getSexo();
+        $telefone = $funcionario->getTelefone();
+        $nascimento = $funcionario->getDataNascimento();
+        $imagem = $funcionario->getImagem();
+        $cep = $funcionario->getCep();
+        $estado = $funcionario->getEstado();
+        $cidade = $funcionario->getCidade();
+        $bairro = $funcionario->getBairro();
+        $logradouro = $funcionario->getLogradouro();
+        $numeroEndereco = $funcionario->getNumeroEndereco();
+        $complemento = $funcionario->getComplemento();
+        $ibge = $funcionario->getIbge();
+        $rg = $funcionario->getRegistroGeral();
+        $orgaoEmissor = $funcionario->getOrgaoEmissor();
+        $dataExpedicao = $funcionario->getDataExpedicao();
+        $nomePai = $funcionario->getNomePai();
+        $nomeMae = $funcionario->getNomeMae();
+        $sangue = $funcionario->getTipoSanguineo();
+        //$valeTransporte=$funcionario->getVale_transporte();
+        $dataAdmissao = $funcionario->getData_admissao();
+        $pis = $funcionario->getPis();
+        $ctps = $funcionario->getCtps();
+        $ufCtps = $funcionario->getUf_ctps();
+        $numeroTitulo = $funcionario->getNumero_titulo();
+        $zona = $funcionario->getZona();
+        $secao = $funcionario->getSecao();
+        $certificadoReservistaNumero = $funcionario->getCertificado_reservista_numero();
+        $certificadoReservistaSerie = $funcionario->getCertificado_reservista_serie();
+        $situacao = $funcionario->getId_situacao();
+        $cargo = $funcionario->getId_cargo();
 
-            $stmt = $this->pdo->prepare($sql);
-            $nome = $funcionario->getNome();
-            $sobrenome = $funcionario->getSobrenome();
-            // $cpf=$funcionario->getCpf();
-            $senha = $funcionario->getSenha();
-            $sexo = $funcionario->getSexo();
-            $telefone = $funcionario->getTelefone();
-            $nascimento = $funcionario->getDataNascimento();
-            $imagem = $funcionario->getImagem();
-            $cep = $funcionario->getCep();
-            $estado = $funcionario->getEstado();
-            $cidade = $funcionario->getCidade();
-            $bairro = $funcionario->getBairro();
-            $logradouro = $funcionario->getLogradouro();
-            $numeroEndereco = $funcionario->getNumeroEndereco();
-            $complemento = $funcionario->getComplemento();
-            $ibge = $funcionario->getIbge();
-            $rg = $funcionario->getRegistroGeral();
-            $orgaoEmissor = $funcionario->getOrgaoEmissor();
-            $dataExpedicao = $funcionario->getDataExpedicao();
-            $nomePai = $funcionario->getNomePai();
-            $nomeMae = $funcionario->getNomeMae();
-            $sangue = $funcionario->getTipoSanguineo();
-            //$valeTransporte=$funcionario->getVale_transporte();
-            $dataAdmissao = $funcionario->getData_admissao();
-            $pis = $funcionario->getPis();
-            $ctps = $funcionario->getCtps();
-            $ufCtps = $funcionario->getUf_ctps();
-            $numeroTitulo = $funcionario->getNumero_titulo();
-            $zona = $funcionario->getZona();
-            $secao = $funcionario->getSecao();
-            $certificadoReservistaNumero = $funcionario->getCertificado_reservista_numero();
-            $certificadoReservistaSerie = $funcionario->getCertificado_reservista_serie();
-            $situacao = $funcionario->getId_situacao();
-            $cargo = $funcionario->getId_cargo();
-
-
-            $stmt->bindParam(':nome', $nome);
-            $stmt->bindParam(':sobrenome', $sobrenome);
-            $stmt->bindParam(':id_cargo', $cargo);
-            $stmt->bindParam(':cpf', $cpf);
-            $stmt->bindParam(':senha', $senha);
-            $stmt->bindParam(':sexo', $sexo);
-            $stmt->bindParam(':telefone', $telefone);
-            $stmt->bindParam(':data_nascimento', $nascimento);
-            $stmt->bindParam(':imagem', $imagem);
-            $stmt->bindParam(':cep', $cep);
-            $stmt->bindParam(':estado', $estado);
-            $stmt->bindParam(':cidade', $cidade);
-            $stmt->bindParam(':bairro', $bairro);
-            $stmt->bindParam(':logradouro', $logradouro);
-            $stmt->bindParam(':numero_endereco', $numeroEndereco);
-            $stmt->bindParam(':complemento', $complemento);
-            $stmt->bindParam(':ibge', $ibge);
-            $stmt->bindParam(':registro_geral', $rg);
-            $stmt->bindParam(':orgao_emissor', $orgaoEmissor);
-            $stmt->bindParam(':nome_pai', $nomePai);
-            $stmt->bindParam(':nome_mae', $nomeMae);
-            $stmt->bindParam(':tipo_sangue', $sangue);
-            //$stmt->bindParam(':vale_transporte', $valeTransporte);
-            $stmt->bindParam(':data_admissao', $dataAdmissao);
-            $stmt->bindParam(':pis', $pis);
-            $stmt->bindParam(':ctps', $ctps);
-            $stmt->bindParam(':uf_ctps', $ufCtps);
-            $stmt->bindParam(':numero_titulo', $numeroTitulo);
-            $stmt->bindParam(':zona', $zona);
-            $stmt->bindParam(':secao', $secao);
-            $stmt->bindParam(':certificado_reservista_numero', $certificadoReservistaNumero);
-            $stmt->bindParam(':certificado_reservista_serie', $certificadoReservistaSerie);
-            $stmt->bindParam(':id_situacao', $situacao);
-            $stmt->bindParam(':data_expedicao', $dataExpedicao);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas1 = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        $stmt->bindParam(':nome', $nome);
+        $stmt->bindParam(':sobrenome', $sobrenome);
+        $stmt->bindParam(':id_cargo', $cargo);
+        $stmt->bindParam(':cpf', $cpf);
+        $stmt->bindParam(':senha', $senha);
+        $stmt->bindParam(':sexo', $sexo);
+        $stmt->bindParam(':telefone', $telefone);
+        $stmt->bindParam(':data_nascimento', $nascimento);
+        $stmt->bindParam(':imagem', $imagem);
+        $stmt->bindParam(':cep', $cep);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->bindParam(':cidade', $cidade);
+        $stmt->bindParam(':bairro', $bairro);
+        $stmt->bindParam(':logradouro', $logradouro);
+        $stmt->bindParam(':numero_endereco', $numeroEndereco);
+        $stmt->bindParam(':complemento', $complemento);
+        $stmt->bindParam(':ibge', $ibge);
+        $stmt->bindParam(':registro_geral', $rg);
+        $stmt->bindParam(':orgao_emissor', $orgaoEmissor);
+        $stmt->bindParam(':nome_pai', $nomePai);
+        $stmt->bindParam(':nome_mae', $nomeMae);
+        $stmt->bindParam(':tipo_sangue', $sangue);
+        //$stmt->bindParam(':vale_transporte', $valeTransporte);
+        $stmt->bindParam(':data_admissao', $dataAdmissao);
+        $stmt->bindParam(':pis', $pis);
+        $stmt->bindParam(':ctps', $ctps);
+        $stmt->bindParam(':uf_ctps', $ufCtps);
+        $stmt->bindParam(':numero_titulo', $numeroTitulo);
+        $stmt->bindParam(':zona', $zona);
+        $stmt->bindParam(':secao', $secao);
+        $stmt->bindParam(':certificado_reservista_numero', $certificadoReservistaNumero);
+        $stmt->bindParam(':certificado_reservista_serie', $certificadoReservistaSerie);
+        $stmt->bindParam(':id_situacao', $situacao);
+        $stmt->bindParam(':data_expedicao', $dataExpedicao);
+        $stmt->execute();
     }
 
     // incluirExistente
 
     public function incluirExistente($funcionario, $idPessoa, $sobrenome)
     {
-        try {
-            $sql = "UPDATE pessoa set sobrenome=:sobrenome, sexo=:sexo,orgao_emissor=:orgao_emissor,registro_geral=:registro_geral,data_expedicao=:data_expedicao WHERE id_pessoa=:id_pessoa;";
+        $sql = "UPDATE pessoa set sobrenome=:sobrenome, sexo=:sexo,orgao_emissor=:orgao_emissor,registro_geral=:registro_geral,data_expedicao=:data_expedicao WHERE id_pessoa=:id_pessoa;";
 
-            $sql2 = "INSERT INTO funcionario(id_pessoa,id_cargo,id_situacao,data_admissao,certificado_reservista_numero,certificado_reservista_serie, ctps)
+        $sql2 = "INSERT INTO funcionario(id_pessoa,id_cargo,id_situacao,data_admissao,certificado_reservista_numero,certificado_reservista_serie, ctps)
             values(:id_pessoa,:id_cargo,:id_situacao,:data_admissao,:certificado_reservista_numero,:certificado_reservista_serie, 'NULL')";
 
+        $this->pdo->beginTransaction();
+        $stmt = $this->pdo->prepare($sql);
+        $stmt2 = $this->pdo->prepare($sql2);
 
-            $this->pdo->beginTransaction();
-            $stmt = $this->pdo->prepare($sql);
-            $stmt2 = $this->pdo->prepare($sql2);
+        $nome = $funcionario->getNome();
+        $sobrenome = $funcionario->getSobrenome();
+        $cpf = $funcionario->getCpf();
+        $sexo = $funcionario->getSexo();
+        $telefone = $funcionario->getTelefone();
+        $nascimento = $funcionario->getDataNascimento();
+        $imagem = $funcionario->getImagem();
+        $rg = $funcionario->getRegistroGeral();
+        $orgao_emissor = $funcionario->getOrgaoEmissor();
+        $data_expedicao = $funcionario->getDataExpedicao();
+        $dataAdmissao = $funcionario->getData_admissao();
+        $certificadoReservistaNumero = $funcionario->getCertificado_reservista_numero();
+        $certificadoReservistaSerie = $funcionario->getCertificado_reservista_serie();
+        $situacao = $funcionario->getId_situacao();
+        $cargo = $funcionario->getId_cargo();
 
-            $nome = $funcionario->getNome();
-            $sobrenome = $funcionario->getSobrenome();
-            $cpf = $funcionario->getCpf();
-            $sexo = $funcionario->getSexo();
-            $telefone = $funcionario->getTelefone();
-            $nascimento = $funcionario->getDataNascimento();
-            $imagem = $funcionario->getImagem();
-            $rg = $funcionario->getRegistroGeral();
-            $orgao_emissor = $funcionario->getOrgaoEmissor();
-            $data_expedicao = $funcionario->getDataExpedicao();
-            $dataAdmissao = $funcionario->getData_admissao();
-            $certificadoReservistaNumero = $funcionario->getCertificado_reservista_numero();
-            $certificadoReservistaSerie = $funcionario->getCertificado_reservista_serie();
-            $situacao = $funcionario->getId_situacao();
-            $cargo = $funcionario->getId_cargo();
-            // $ctps=$funcionario->getCtps();
-            // $escala=$funcionario->getEscala();
-            // $tipo=$funcionario->gettTipo();
+        $stmt->bindParam(':id_pessoa', $idPessoa);
+        $stmt->bindParam(':registro_geral', $rg);
+        $stmt->bindParam(':orgao_emissor', $orgao_emissor);
+        $stmt->bindParam(':data_expedicao', $data_expedicao);
+        $stmt->bindParam(':sobrenome', $sobrenome);
+        $stmt->bindParam(':sexo', $sexo);
 
-            $stmt->bindParam(':id_pessoa', $idPessoa);
-            $stmt->bindParam(':registro_geral', $rg);
-            $stmt->bindParam(':orgao_emissor', $orgao_emissor);
-            $stmt->bindParam(':data_expedicao', $data_expedicao);
-            $stmt->bindParam(':sobrenome', $sobrenome);
-            $stmt->bindParam(':sexo', $sexo);
+        $stmt2->bindParam(':id_pessoa', $idPessoa);
+        $stmt2->bindParam(':id_cargo', $cargo);
+        $stmt2->bindParam(':id_situacao', $situacao);
+        $stmt2->bindParam(':data_admissao', $dataAdmissao);
+        $stmt2->bindParam(':certificado_reservista_numero', $certificadoReservistaNumero);
+        $stmt2->bindParam(':certificado_reservista_serie', $certificadoReservistaSerie);
 
-            $stmt2->bindParam(':id_pessoa', $idPessoa);
-            $stmt2->bindParam(':id_cargo', $cargo);
-            $stmt2->bindParam(':id_situacao', $situacao);
-            $stmt2->bindParam(':data_admissao', $dataAdmissao);
-            $stmt2->bindParam(':certificado_reservista_numero', $certificadoReservistaNumero);
-            $stmt2->bindParam(':certificado_reservista_serie', $certificadoReservistaSerie);
-            // $stmt2->bindParam(':ctps', $ctps);
-
-            // $stmt->bindParam(':nome',$nome);
-            // $stmt->bindParam(':sobrenome',$sobrenome);
-            // $stmt->bindParam(':id_cargo',$cargo);
-            // $stmt->bindParam(':cpf',$cpf);
-            // $stmt->bindParam(':sexo',$sexo);
-            // $stmt->bindParam(':telefone',$telefone);
-            // $stmt->bindParam(':data_nascimento',$nascimento);
-            // $stmt->bindParam(':imagem',$imagem);
-
-            // $stmt->bindParam(':data_admissao', $dataAdmissao);
-            // $stmt->bindParam(':certificado_reservista_numero', $certificadoReservistaNumero);
-            // $stmt->bindParam(':certificado_reservista_serie', $certificadoReservistaSerie);
-            // $stmt->bindParam(':id_situacao', $situacao);
-            // $stmt->bindParam(':tipo',$tipo);
-            // $stmt->bindParam(':escala',$escala);
-
-            $stmt->execute();
-            if ($stmt2->execute()) {
-                $this->pdo->commit();
-            } else {
-                $this->pdo->rollBack();
-                http_response_code(500);
-                exit('Erro, não foi possível concluir a operação de cadastro.');
-            }
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas1 = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+        $stmt->execute();
+        if ($stmt2->execute()) {
+            $this->pdo->commit();
+        } else {
+            $this->pdo->rollBack();
+            throw new LogicException('Erro, não foi possível concluir a operação de cadastro.', 500);
         }
     }
 
@@ -307,37 +275,33 @@ class FuncionarioDAO
     // Editar
     public function alterarInfPessoal($funcionario)
     {
-        try {
-            $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set nome=:nome,sobrenome=:sobrenome,sexo=:sexo,telefone=:telefone,data_nascimento=:data_nascimento,nome_pai=:nome_pai,nome_mae=:nome_mae,tipo_sanguineo=:tipo_sanguineo where id_funcionario=:id_funcionario';
+        $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set nome=:nome,sobrenome=:sobrenome,sexo=:sexo,telefone=:telefone,data_nascimento=:data_nascimento,nome_pai=:nome_pai,nome_mae=:nome_mae,tipo_sanguineo=:tipo_sanguineo where id_funcionario=:id_funcionario';
 
-            $sql = str_replace("'", "\'", $sql);
+        $sql = str_replace("'", "\'", $sql);
 
-            $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
-            $stmt = $this->pdo->prepare($sql);
-            $nome = $funcionario->getNome();
-            $sobrenome = $funcionario->getSobrenome();
-            $id_funcionario = $funcionario->getId_funcionario();
-            $sexo = $funcionario->getSexo();
-            $telefone = $funcionario->getTelefone();
-            $nascimento = $funcionario->getDataNascimento();
-            $nomePai = $funcionario->getNomePai();
-            $nomeMae = $funcionario->getNomeMae();
-            $sangue = $funcionario->getTipoSanguineo();
+        $stmt = $this->pdo->prepare($sql);
+        $nome = $funcionario->getNome();
+        $sobrenome = $funcionario->getSobrenome();
+        $id_funcionario = $funcionario->getId_funcionario();
+        $sexo = $funcionario->getSexo();
+        $telefone = $funcionario->getTelefone();
+        $nascimento = $funcionario->getDataNascimento();
+        $nomePai = $funcionario->getNomePai();
+        $nomeMae = $funcionario->getNomeMae();
+        $sangue = $funcionario->getTipoSanguineo();
 
-            $stmt->bindParam(':nome', $nome);
-            $stmt->bindParam(':sobrenome', $sobrenome);
-            $stmt->bindParam(':id_funcionario', $id_funcionario);
-            $stmt->bindParam(':sexo', $sexo);
-            $stmt->bindParam(':telefone', $telefone);
-            $stmt->bindParam(':data_nascimento', $nascimento);
-            $stmt->bindParam(':nome_pai', $nomePai);
-            $stmt->bindParam(':nome_mae', $nomeMae);
-            $stmt->bindParam(':tipo_sanguineo', $sangue);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        $stmt->bindParam(':nome', $nome);
+        $stmt->bindParam(':sobrenome', $sobrenome);
+        $stmt->bindParam(':id_funcionario', $id_funcionario);
+        $stmt->bindParam(':sexo', $sexo);
+        $stmt->bindParam(':telefone', $telefone);
+        $stmt->bindParam(':data_nascimento', $nascimento);
+        $stmt->bindParam(':nome_pai', $nomePai);
+        $stmt->bindParam(':nome_mae', $nomeMae);
+        $stmt->bindParam(':tipo_sanguineo', $sangue);
+        $stmt->execute();
     }
 
     public function alterarImagem($id_funcionario, $imagem)

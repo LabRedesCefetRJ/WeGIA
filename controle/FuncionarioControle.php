@@ -741,79 +741,69 @@ class FuncionarioControle
 
     public function incluir()
     {
-        $funcionario = $this->verificarFuncionario();
-        $horario = $this->verificarHorario();
-        $cpf = $_GET['cpf'];
-        $validador = new Util();
-
-        if (!$validador->validarCPF($cpf)) {
-            http_response_code(400);
-            exit('Erro, o CPF informado não é válido');
-        }
-
-        if ($funcionario->getDataNascimento() > Funcionario::getDataNascimentoMaxima() || $funcionario->getDataNascimento() < Funcionario::getDataNascimentoMinima()) {
-            http_response_code(400);
-            exit('Erro, a data de nascimento de um funcionário não está dentro dos limites permitidos.');
-        }
-
-        $funcionarioDAO = new FuncionarioDAO();
-        $horarioDAO = new QuadroHorarioDAO();
-
         try {
+            $funcionario = $this->verificarFuncionario();
+            $horario = $this->verificarHorario();
+            $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
+            if (!Util::validarCPF($cpf))
+                throw new InvalidArgumentException('O CPF informado não é válido', 412);
+
+            if ($funcionario->getDataNascimento() > Funcionario::getDataNascimentoMaxima() || $funcionario->getDataNascimento() < Funcionario::getDataNascimentoMinima())
+                throw new InvalidArgumentException('A data de nascimento de um funcionário não está dentro dos limites permitidos.', 412);
+
+            $funcionarioDAO = new FuncionarioDAO();
+            $horarioDAO = new QuadroHorarioDAO();
+
             $funcionarioDAO->incluir($funcionario, $cpf);
             $horarioDAO->incluir($horario);
             $_SESSION['proxima'] = "Cadastrar outro funcionario";
             $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
             header("Location: ../html/funcionario/informacao_funcionario.php");
-        } catch (PDOException $e) {
-            $msg = "Não foi possível registrar o funcionário" . "<br>" . $e->getMessage();
-            echo $msg;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function incluirExistente()
     {
-        $funcionario = $this->verificarExistente();
-        $idPessoa = $_GET['id_pessoa'];
-        $sobrenome = $_GET['sobrenome'];
-
-        $funcionarioDAO = new FuncionarioDAO();
-
         try {
+            $funcionario = $this->verificarExistente();
+            $idPessoa = filter_input(INPUT_GET, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+            $sobrenome = filter_input(INPUT_GET, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
+
+            $funcionarioDAO = new FuncionarioDAO();
+
             $funcionarioDAO->incluirExistente($funcionario, $idPessoa, $sobrenome);
             $_SESSION['proxima'] = "Cadastrar outro funcionario";
             $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
             header("Location: ../html/funcionario/informacao_funcionario.php");
-        } catch (PDOException $e) {
-            $msg = "Não foi possível registrar o funcionário" . "<br>" . $e->getMessage();
-            echo $msg;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarInfPessoal()
     {
-        extract($_REQUEST);
-
-        $id_funcionario = filter_var($id_funcionario, FILTER_VALIDATE_INT);
-
-        if (!$id_funcionario || $id_funcionario < 1) {
-            http_response_code(400);
-            exit('Erro, o id do funcionário não está dentro dos limites permitidos.');
-        }
-
-        if ($nascimento > Funcionario::getDataNascimentoMaxima() || $nascimento < Funcionario::getDataNascimentoMinima()) {
-            http_response_code(400);
-            exit('Erro, a data de nascimento de um funcionário não está dentro dos limites permitidos.');
-        }
-
-        $funcionario = new Funcionario('', $nome, $sobrenome, $gender, $nascimento, '', '', '', $nome_mae, $nome_pai, $sangue, '', $telefone, '', '', '', '', '', '', '', '', '');
-        $funcionario->setId_funcionario($id_funcionario);
-        $funcionarioDAO = new FuncionarioDAO();
         try {
+            extract($_REQUEST);
+
+            $id_funcionario = filter_var($id_funcionario, FILTER_VALIDATE_INT);
+
+            if (!$id_funcionario || $id_funcionario < 1)
+                throw new InvalidArgumentException('O id do funcionário não está dentro dos limites permitidos.', 412);
+
+            if ($nascimento > Funcionario::getDataNascimentoMaxima() || $nascimento < Funcionario::getDataNascimentoMinima())
+                throw new InvalidArgumentException('A data de nascimento de um funcionário não está dentro dos limites permitidos.', 412);
+
+            $funcionario = new Funcionario('', $nome, $sobrenome, $gender, $nascimento, '', '', '', $nome_mae, $nome_pai, $sangue, '', $telefone, '', '', '', '', '', '', '', '', '');
+            $funcionario->setId_funcionario($id_funcionario);
+            $funcionarioDAO = new FuncionarioDAO();
+
             $funcionarioDAO->alterarInfPessoal($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($id_funcionario));
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -827,30 +817,22 @@ class FuncionarioControle
         $redir = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
-            if (!Csrf::validateToken($_POST['csrf_token'])) {
+            if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
-            }
 
-            if (!$id_pessoa || $id_pessoa < 1) {
+            if (!$id_pessoa || $id_pessoa < 1) 
                 throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
-            }
 
             $funcionarioDAO = new FuncionarioDAO();
 
-            if ($id_pessoa != $_SESSION['id_pessoa']) {
-
-                if (!$funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
-                    http_response_code(401);
-                    exit('Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha');
-                }
-            }
+            if ($id_pessoa != $_SESSION['id_pessoa'] && !$funcionarioDAO->verificaAdm($_SESSION['id_pessoa']))
+                throw new LogicException('Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha', 401);
 
             $minLength = 8;
             $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
 
-            if (!preg_match($regex, $nova_senha)) {
+            if (!preg_match($regex, $nova_senha)) 
                 throw new InvalidArgumentException('A senha informada não atende aos requisitos mínimos estabelecidos.', 412);
-            }
 
             $nova_senha = hash('sha256', $nova_senha);
             if (isset($redir)) {
