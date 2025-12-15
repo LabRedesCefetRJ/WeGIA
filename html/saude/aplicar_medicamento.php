@@ -1094,6 +1094,7 @@
     <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
     <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
+    <!-- importante para a aba de exames -->
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
 
