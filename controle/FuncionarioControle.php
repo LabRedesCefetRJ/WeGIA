@@ -710,16 +710,33 @@ class FuncionarioControle
 
     public function selecionarCadastro()
     {
-        $cpf = $_GET['cpf'];
-        $validador = new Util();
+        try {
+            $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
-        if (!$validador->validarCPF($cpf)) {
-            http_response_code(400);
-            exit('Erro, o CPF informado não é válido');
+            if (!Util::validarCPF($cpf))
+                throw new InvalidArgumentException("O CPF informado não é válido.", 412);
+
+            $funcionario = new FuncionarioDAO();
+            $resultado = $funcionario->selecionarCadastro($cpf);
+
+            // CPF não existe na tabela pessoa
+            if (!$resultado) {
+                header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . urlencode($cpf));
+                exit;
+            }
+
+            // CPF existe, mas ainda não é funcionário
+            if ($resultado['funcionario_id'] === null) {
+                header('Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=' . urlencode($cpf));
+                exit;
+            }
+
+            // Já é funcionário
+            header('Location: ../html/funcionario/pre_cadastro_funcionario.php?msg_e=' . urlencode('Erro, Funcionário já cadastrado no sistema.'));
+            exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-
-        $funcionario = new FuncionarioDAO();
-        $funcionario->selecionarCadastro($cpf);
     }
 
     public function incluir()

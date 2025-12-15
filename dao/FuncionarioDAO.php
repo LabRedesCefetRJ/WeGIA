@@ -99,33 +99,27 @@ class FuncionarioDAO
         return "Sem informação";
     }
 
-    public function selecionarCadastro($cpf)
+    public function selecionarCadastro(string $cpf)
     {
-        $cpf = filter_var($cpf, FILTER_SANITIZE_SPECIAL_CHARS);
+        $sql = "
+        SELECT 
+            p.id_pessoa,
+            f.id_pessoa AS funcionario_id
+        FROM pessoa p
+        LEFT JOIN funcionario f ON f.id_pessoa = p.id_pessoa
+        WHERE p.cpf = :cpf
+        LIMIT 1
+        ";
 
-        $valor = 0;
-
-        $stmt = $this->pdo->prepare("SELECT id_pessoa FROM funcionario WHERE id_pessoa = (SELECT id_pessoa FROM pessoa WHERE cpf =:cpf)");
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':cpf', $cpf, PDO::PARAM_STR);
         $stmt->execute();
 
-        $consultaFunc = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if ($consultaFunc == null) {
-            $consultaCPF = $this->pdo->query("SELECT cpf,id_pessoa FROM pessoa")->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($consultaCPF as $key => $value) {
-                if ($cpf == $value['cpf']) {
-                    $valor++;
-                }
-            }
-            if ($valor == 0) {
-                header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
-            } else {
-                header('Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=' . htmlspecialchars($cpf));
-            }
-        } else {
-            header("Location: ../html/funcionario/pre_cadastro_funcionario.php?msg_e=Erro, Funcionário já cadastrado no sistema.");
-        }
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado;
     }
+
 
     public function incluir($funcionario, $cpf)
     {
