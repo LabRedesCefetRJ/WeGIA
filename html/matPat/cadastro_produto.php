@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
 	header("Location: " . WWW . "html/index.php");
 	exit();
-}else{
+} else {
 	session_regenerate_id();
 }
 
@@ -108,8 +108,8 @@ header("X-Content-Type-Options: nosniff");
 	<script>
 		$(function() {
 			const categoria = <?php
-							echo $categoria;
-							?>;
+								echo $categoria;
+								?>;
 			const unidade = <?php
 							echo $unidade;
 							?>;
@@ -255,9 +255,9 @@ header("X-Content-Type-Options: nosniff");
 													<div class="col-md-9 col-md-offset-3">
 														<button type="submit" class="btn btn-primary" onclick="limparSessionStorage()">Enviar</button>
 														<input type="reset" class="btn btn-default" onclick="limparSessionStorage()">
-														<a href="<?= WWW ?>html/matPat/cadastro_entrada.php" style="color: white; text-decoration: none;">
-															<button class="btn btn-info" type="button">Voltar</button>
-														</a>
+														<button class="btn btn-info" type="button" onclick="history.back()">
+															Voltar
+														</button>
 														<a href="<?= WWW ?>html/matPat/listar_produto.php" style="color: white; text-decoration:none;"> <button class="btn btn-success" type="button">Listar Produto</button></a>
 													</div>
 												</div>
