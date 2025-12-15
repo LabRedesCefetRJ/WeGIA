@@ -261,6 +261,10 @@
       const exibimedparaenfermeiro = <?= $exibimedparaenfermeiro ?>;
       const tabela = document.getElementById("tabela");
       
+      if ($.fn.DataTable.isDataTable('#datatable-default')) {
+          $('#datatable-default').DataTable().destroy();
+      }
+      
       tabela.innerHTML = "";
 
       exibimedparaenfermeiro.forEach(function(item) {
@@ -323,6 +327,22 @@
         tr.append(td1, td2, td3, td4, td5);
         tabela.appendChild(tr);
       });
+
+      $('#datatable-default').DataTable();
+
+      if (!modoSelecionar) {
+        if ($('#btnSelecionarMultiplos').length === 0) {
+            let htmlButton = `
+                <div style="clear: both; text-align: right; margin-top: 50px; margin-bottom: 10px;" id="containerBtnMultiplos">
+                    <button id="btnSelecionarMultiplos" title="Seleciona múltiplos medicamentos para aplicar de uma vez só" class="btn btn-primary">Selecionar Múltiplos</button>
+                </div>
+            `;
+            $('#datatable-default_filter').after(htmlButton);
+        } else {
+            $('#containerBtnMultiplos').show();
+            $('#btnSelecionarMultiplos').show();
+        }
+      }
     }
 
     function formatarDataHoraBr(data) {
@@ -462,25 +482,39 @@
       const isModoSelecao = document.querySelectorAll('.chk-med-bulk').length > 0;
 
       if (isModoSelecao) {
-        const checkboxesMarcados = document.querySelectorAll('.chk-med-bulk:checked');
         
-        if (checkboxesMarcados.length === 0) {
+        let listaCheckboxes = [];
+
+        if ($.fn.DataTable.isDataTable('#datatable-default')) {
+            var table = $('#datatable-default').DataTable();
+            // table.$() acessa elementos em TODAS as páginas da paginação
+            table.$('.chk-med-bulk:checked').each(function() {
+                listaCheckboxes.push(this);
+            });
+        } else {
+            var els = document.querySelectorAll('.chk-med-bulk:checked');
+            for(var i=0; i < els.length; i++){
+                listaCheckboxes.push(els[i]);
+            }
+        }
+
+        if (listaCheckboxes.length === 0) {
              mostrarErro("Nenhum medicamento selecionado.");
              return;
         }
 
-        checkboxesMarcados.forEach(function(chk) {
+        listaCheckboxes.forEach(function(chk) {
+            var $chk = $(chk);
             const dados = {
                 nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
                 metodo: encodeURIComponent("inserirAplicacao"),
-                id_medicacao: chk.getAttribute('data-idMedicacao'),
-                id_pessoa: chk.getAttribute('data-idPessoa'),
+                id_medicacao: $chk.attr('data-idMedicacao'),
+                id_pessoa: $chk.attr('data-idPessoa'),
                 id_pessoa_funcionario: idPessoaFuncionario,
                 dataHora: dataHoraInput.value
             };
             const dadosJson = JSON.stringify(dados);
             
-            // Adiciona a requisição ao array de promessas
             arrayPromessas.push(
                 fetch(`../../controle/control.php?`, {
                   method: 'POST',
@@ -1013,45 +1047,34 @@
       carregarAplicacoes(id_fichamedica);
 
   $(document).ready(function() {
+      $(document).on('click', '#btnSelecionarMultiplos', function() {
+          $(this).hide();
+          $('#containerBtnMultiplos').hide(); // Esconde o container também
 
-    // Injetar botão "Selecionar Múltiplos"
-    let htmlButton = `
-        <div style="clear: both; text-align: right; margin-top: 50px; margin-bottom: 10px;">
-            <button id="btnSelecionarMultiplos" title="Seleciona múltiplos medicamentos para aplicar de uma vez só" class="btn btn-primary">Selecionar Múltiplos</button>
-        </div>
-    `;
+          carregarMedicamentosParaAplicar(true);
 
-    $('#datatable-default_filter').after(htmlButton);
+          $('#div-botao-aplicar-global').remove();
 
-    $(document).on('click', '#btnSelecionarMultiplos', function() {
-        $(this).hide();
+          let divBotao = $('<div id="div-botao-aplicar-global" style="text-align: right; margin-top: 20px; display: flex; flex-direction: row; justify-content: flex-end; margin-bottom: 10px; clear: both;"></div>');
 
-        carregarMedicamentosParaAplicar(true);
+          let btnApply = $('<button class="btn btn-primary" style="margin-right: 5px;" data-toggle="modal" data-target="#modalHorarioAplicacao"><i class="glyphicon glyphicon-hand-up"></i> Aplicar Selecionados</button>');
+          btnApply.click(function() {
+              enviarInformacoesParaModal(this);
+          });
 
-        $('#div-botao-aplicar-global').remove();
+          let btnCancel = $('<button class="btn btn-danger" style="height: 35px;" title="Cancelar Seleção"><i class="bi bi-x-lg"></i></button>');
 
-        let divBotao = $('<div id="div-botao-aplicar-global" style="text-align: right; margin-top: 20px; display: flex; flex-direction: row; justify-content: flex-end; margin-bottom: 10px; clear: both;"></div>');
+          btnCancel.click(function() {
+              divBotao.remove();
+              carregarMedicamentosParaAplicar(false);
+          });
 
-        let btnApply = $('<button class="btn btn-primary" style="margin-right: 5px;" data-toggle="modal" data-target="#modalHorarioAplicacao"><i class="glyphicon glyphicon-hand-up"></i> Aplicar Selecionados</button>');
-        btnApply.click(function() {
-            enviarInformacoesParaModal(this);
-        });
+          divBotao.append(btnApply);
+          divBotao.append(btnCancel);
 
-        let btnCancel = $('<button class="btn btn-danger" style="height: 35px;" title="Cancelar Seleção"><i class="bi bi-x-lg"></i></button>');
-
-        btnCancel.click(function() {
-            $('#btnSelecionarMultiplos').show();
-            divBotao.remove();
-            carregarMedicamentosParaAplicar(false);
-        });
-
-        divBotao.append(btnApply);
-        divBotao.append(btnCancel);
-
-        // Insere depois da div responsiva da tabela (ficando antes do footer)
-        $('.table-responsive').after(divBotao);
+          $('.table-responsive').after(divBotao);
       });
-    });
+  });
 
     </script>
     
@@ -1071,7 +1094,6 @@
     <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
     <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
-    <!-- importante para a aba de exames -->
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
 
