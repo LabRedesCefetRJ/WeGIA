@@ -32,38 +32,17 @@ class FuncionarioDAO
 
     public function getIdFuncionarioComIdPessoa($idPessoa)
     {
-        try {
-            $stmt = $this->pdo->prepare("
+        $stmt = $this->pdo->prepare("
                 SELECT id_funcionario 
                 FROM pessoa p 
                 JOIN funcionario f ON (p.id_pessoa = f.id_pessoa) 
                 WHERE f.id_pessoa = :id_pessoa
             ");
-            $stmt->bindParam(":id_pessoa", $idPessoa);
-            $stmt->execute();
-            $func = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt->bindParam(":id_pessoa", $idPessoa);
+        $stmt->execute();
+        $func = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            return $func["id_funcionario"];
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
-        }
-    }
-
-    public function retornarIdPessoa($id_funcionario)
-    {
-        try {
-            $pessoa = array();
-
-            $consulta = $this->pdo->query("SELECT f.id_funcionario FROM pessoa p INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario='$id_funcionario'");
-            $x = 0;
-            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $pessoa[$x] = $linha['id_funcionario'];
-                $x++;
-            }
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
-        }
-        return $pessoa;
+        return $func["id_funcionario"];
     }
 
     public function listarIdPessoa($cpf)
@@ -104,7 +83,7 @@ class FuncionarioDAO
         } catch (PDOException $e) {
             Util::tratarException($e);
         }
-        
+
         return $linha['situacao'];
     }
 
@@ -125,9 +104,9 @@ class FuncionarioDAO
         $cpf = filter_var($cpf, FILTER_SANITIZE_SPECIAL_CHARS);
 
         $valor = 0;
-    
+
         $stmt = $this->pdo->prepare("SELECT id_pessoa FROM funcionario WHERE id_pessoa = (SELECT id_pessoa FROM pessoa WHERE cpf =:cpf)");
-        $stmt->bindValue(':cpf',$cpf, PDO::PARAM_STR);
+        $stmt->bindValue(':cpf', $cpf, PDO::PARAM_STR);
         $stmt->execute();
 
         $consultaFunc = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -139,9 +118,9 @@ class FuncionarioDAO
                 }
             }
             if ($valor == 0) {
-                header('Location: ../html/funcionario/cadastro_funcionario.php?cpf='.htmlspecialchars($cpf));
+                header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
             } else {
-                header('Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf='.htmlspecialchars($cpf));
+                header('Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=' . htmlspecialchars($cpf));
             }
         } else {
             header("Location: ../html/funcionario/pre_cadastro_funcionario.php?msg_e=Erro, Funcionário já cadastrado no sistema.");
@@ -513,70 +492,61 @@ class FuncionarioDAO
 
     public function listarTodos($situacao)
     {
-        try {
-            $funcionarios = array();
+        $funcionarios = array();
 
-            $consulta = $this->pdo->prepare("SELECT f.id_funcionario, p.nome, p.sobrenome,p.cpf, c.cargo, s.situacoes FROM pessoa p 
+        $consulta = $this->pdo->prepare("SELECT f.id_funcionario, p.nome, p.sobrenome,p.cpf, c.cargo, s.situacoes FROM pessoa p 
             JOIN funcionario f ON p.id_pessoa = f.id_pessoa JOIN cargo c ON c.id_cargo=f.id_cargo JOIN situacao s 
             ON f.id_situacao=s.id_situacao where s.id_situacao =:situacao");
-            $consulta->bindParam(':situacao', $situacao);
-            $consulta->execute();
+        $consulta->bindParam(':situacao', $situacao);
+        $consulta->execute();
 
-            $x = 0;
-            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $funcionarios[$x] = array('id_funcionario' => $linha['id_funcionario'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'situacao' => $linha['situacoes'], 'cargo' => $linha['cargo']);
-                $x++;
-            }
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+        $x = 0;
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $funcionarios[$x] = array('id_funcionario' => htmlspecialchars($linha['id_funcionario']), 'cpf' => htmlspecialchars($linha['cpf']), 'nome' => htmlspecialchars($linha['nome']), 'sobrenome' => htmlspecialchars($linha['sobrenome']), 'situacao' => htmlspecialchars($linha['situacoes']), 'cargo' => htmlspecialchars($linha['cargo']));
+            $x++;
         }
-        return json_encode($funcionarios);
+
+        return $funcionarios;
     }
 
     public function listarTodos2()
     {
-        try {
-            require_once ROOT . "/dao/memorando/UsuarioDAO.php";
-            $usuario = new UsuarioDAO();
-            $id_usuario = $usuario->obterUsuario($_SESSION['usuario'])[0]["id_pessoa"];
-            $funcionarios = array();
+        require_once ROOT . "/dao/memorando/UsuarioDAO.php";
+        $usuario = new UsuarioDAO();
+        $id_usuario = $usuario->obterUsuario($_SESSION['usuario'])[0]["id_pessoa"];
+        $funcionarios = array();
 
-            $consulta = $this->pdo->query("SELECT p.id_pessoa, p.nome, p.sobrenome FROM funcionario f INNER JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE p.id_pessoa!='$id_usuario'");
-            $produtos = array();
-            $x = 0;
-            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $funcionarios[$x] = array('id_pessoa' => $linha['id_pessoa'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome']);
-                $x++;
-            }
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+        $consulta = $this->pdo->prepare("SELECT p.id_pessoa, p.nome, p.sobrenome FROM funcionario f INNER JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE p.id_pessoa!=:idUsuario");
+        $consulta->bindValue(':idUsuario', $id_usuario);
+        $consulta->execute();
+
+        $x = 0;
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $funcionarios[$x] = array('id_pessoa' => htmlspecialchars($linha['id_pessoa']), 'nome' => htmlspecialchars($linha['nome']), 'sobrenome' => htmlspecialchars($linha['sobrenome']));
+            $x++;
         }
-        return json_encode($funcionarios);
+
+        return $funcionarios;
     }
 
     public function listarCPF()
     {
-        try {
-            $cpfs = array();
+        $cpfs = array();
 
-            $consulta = $this->pdo->query("SELECT f.id_funcionario, p.cpf from pessoa p INNER JOIN funcionario f ON(p.id_pessoa=f.id_pessoa)");
-            $x = 0;
-            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $cpfs[$x] = array('cpf' => $linha['cpf'], 'id' => $linha['id_funcionario']);
-                $x++;
-            }
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+        $consulta = $this->pdo->query("SELECT f.id_funcionario, p.cpf from pessoa p INNER JOIN funcionario f ON(p.id_pessoa=f.id_pessoa)");
+        $x = 0;
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $cpfs[$x] = array('cpf' => $linha['cpf'], 'id' => $linha['id_funcionario']);
+            $x++;
         }
-        return json_encode($cpfs);
+
+        return $cpfs;
     }
 
     //Consultar um utilizando o id
     public function listar($id_funcionario)
     {
-        try {
-
-            $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf,p.senha,p.sexo,p.telefone,p.data_nascimento,p.cep,p.ibge,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,f.id_funcionario,f.data_admissao,f.pis,f.ctps,f.uf_ctps,f.numero_titulo,f.zona,f.secao,f.certificado_reservista_numero,f.certificado_reservista_serie,s.id_situacao,s.situacoes,c.id_cargo,c.cargo,qh.escala,qh.tipo,qh.carga_horaria,qh.entrada1,qh.saida1,qh.entrada2,qh.saida2,qh.total,qh.dias_trabalhados,qh.folga 
+        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf,p.senha,p.sexo,p.telefone,p.data_nascimento,p.cep,p.ibge,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,f.id_funcionario,f.data_admissao,f.pis,f.ctps,f.uf_ctps,f.numero_titulo,f.zona,f.secao,f.certificado_reservista_numero,f.certificado_reservista_serie,s.id_situacao,s.situacoes,c.id_cargo,c.cargo,qh.escala,qh.tipo,qh.carga_horaria,qh.entrada1,qh.saida1,qh.entrada2,qh.saida2,qh.total,qh.dias_trabalhados,qh.folga 
             FROM pessoa p 
             INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa 
             LEFT JOIN quadro_horario_funcionario qh ON qh.id_funcionario = f.id_funcionario 
@@ -584,19 +554,17 @@ class FuncionarioDAO
             LEFT JOIN cargo c ON c.id_cargo = f.id_cargo 
             WHERE f.id_funcionario = :id_funcionario";
 
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindParam(':id_funcionario', $id_funcionario);
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id_funcionario', $id_funcionario);
 
-            $stmt->execute();
-            $funcionario = array();
+        $stmt->execute();
+        $funcionario = array();
 
-            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $funcionario[] = array('imagem' => $linha['imagem'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $this->formatoDataDMY($linha['data_expedicao']), 'nome_mae' => $linha['nome_mae'], 'nome_pai' => $linha['nome_pai'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'senha' => $linha['senha'], 'telefone' => $linha['telefone'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'ibge' => $linha['ibge'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'id_funcionario' => $linha['id_funcionario'], 'data_admissao' => $this->formatoDataDMY($linha['data_admissao']), 'pis' => $linha['pis'], 'ctps' => $linha['ctps'], 'uf_ctps' => $linha['uf_ctps'], 'numero_titulo' => $linha['numero_titulo'], 'zona' => $linha['zona'], 'secao' => $linha['secao'], 'certificado_reservista_numero' => $linha['certificado_reservista_numero'], 'certificado_reservista_serie' => $linha['certificado_reservista_serie'], 'id_situacao' => $linha['id_situacao'], 'situacao' => $linha['situacao'], 'escala' => $linha['escala'], 'tipo' => $linha['tipo'], 'carga_horaria' => $linha['carga_horaria'], 'entrada1' => $linha['entrada1'], 'saida1' => $linha['saida1'], 'entrada2' => $linha['entrada2'], 'saida2' => $linha['saida2'], 'total' => $linha['total'], 'dias_trabalhados' => $linha['dias_trabalhados'], 'folga' => $linha['folga'], 'id_cargo' => $linha['id_cargo'], 'cargo' => $linha['cargo']);
-            }
-        } catch (PDOException $e) {
-            echo 'Error: ' .  $e->getMessage();
+        while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $funcionario[] = array('imagem' => $linha['imagem'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $this->formatoDataDMY($linha['data_expedicao']), 'nome_mae' => $linha['nome_mae'], 'nome_pai' => $linha['nome_pai'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'senha' => $linha['senha'], 'telefone' => $linha['telefone'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'ibge' => $linha['ibge'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'id_funcionario' => $linha['id_funcionario'], 'data_admissao' => $this->formatoDataDMY($linha['data_admissao']), 'pis' => $linha['pis'], 'ctps' => $linha['ctps'], 'uf_ctps' => $linha['uf_ctps'], 'numero_titulo' => $linha['numero_titulo'], 'zona' => $linha['zona'], 'secao' => $linha['secao'], 'certificado_reservista_numero' => $linha['certificado_reservista_numero'], 'certificado_reservista_serie' => $linha['certificado_reservista_serie'], 'id_situacao' => $linha['id_situacao'], 'situacao' => $linha['situacao'], 'escala' => $linha['escala'], 'tipo' => $linha['tipo'], 'carga_horaria' => $linha['carga_horaria'], 'entrada1' => $linha['entrada1'], 'saida1' => $linha['saida1'], 'entrada2' => $linha['entrada2'], 'saida2' => $linha['saida2'], 'total' => $linha['total'], 'dias_trabalhados' => $linha['dias_trabalhados'], 'folga' => $linha['folga'], 'id_cargo' => $linha['id_cargo'], 'cargo' => $linha['cargo']);
         }
-        return json_encode($funcionario);
+
+        return $funcionario;
     }
 
     public function listarPessoaExistente($cpf)
@@ -634,5 +602,14 @@ class FuncionarioDAO
         }
 
         return $idFuncionario;
+    }
+
+    public function getSenhaByIdPessoa(int $idPessoa)
+    {
+        $stmt = $$this->pdo->prepare("SELECT senha FROM pessoa where id_pessoa=:idPessoa");
+        $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC)['senha'];
     }
 }

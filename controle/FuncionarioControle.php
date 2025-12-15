@@ -18,7 +18,7 @@ class FuncionarioControle
     /**
      * Recebe uma data no formato dd/mm/yyyy e retorna no formato yyyy/mm/dd
      */
-    public function formatoDataYMD($data):string // <-- Deveria estar em uma classe modelo de data, ou mesmo usar as funções nativas do PHP para essa funcionalidade
+    public function formatoDataYMD($data): string // <-- Deveria estar em uma classe modelo de data, ou mesmo usar as funções nativas do PHP para essa funcionalidade
     {
         $dataArray = explode("/", $data);
 
@@ -230,7 +230,6 @@ class FuncionarioControle
             http_response_code(412);
             header('Location: ../html/funcionario.html?msg=Sobrenome do funcionario não informado. Por favor, informe um sobrenome!');
             exit();
-        
         }
         if ((!isset($gender)) || (empty($gender))) {
             http_response_code(412);
@@ -361,12 +360,12 @@ class FuncionarioControle
         if ((!isset($certificado_reservista_numero)) || (empty($certificado_reservista_numero))) {
             $certificado_reservista_numero = '';
         }
-        
+
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
 
-        if(!Util::validarCPF($cpf)){
+        if (!Util::validarCPF($cpf)) {
             http_response_code(412);
             header('Location: ../html/funcionario.html?msg=O CPF informado é inválido.');
             exit();
@@ -533,32 +532,28 @@ class FuncionarioControle
         return $funcionario;
     }
 
-    public function retornarIdPessoa($id_funcionario)
-    {
-        /*Avaliar se este método está sendo utilizado em alguma parte do sistema, do contrário considerar sua remoção, tal como do método retornarIdPessoa da classe FuncionarioDAO */
-        $funcionariosDAO = new FuncionarioDAO();
-        $pessoa = $funcionariosDAO->retornarIdPessoa($id_funcionario);
-        $_SESSION['id_pessoaa'] = $pessoa;
-    }
-
     public function verificarSenha()
     {
-        extract($_REQUEST);
-        $nova_senha = hash('sha256', $nova_senha);
-        $confirmar_senha = hash('sha256', $confirmar_senha);
-        $senha_antiga = hash('sha256', $senha_antiga);
-        if ($nova_senha != $confirmar_senha) {
-            return 1;
-        } else {
-            $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-            $senha = $mysqli->query("SELECT senha FROM pessoa where id_pessoa=" . $id_pessoa);
-            while ($row = $senha->fetch_array(MYSQLI_NUM)) {
-                if ($row[0] != $senha_antiga) {
+        try {
+            extract($_REQUEST);
+            $nova_senha = hash('sha256', $nova_senha);
+            $confirmar_senha = hash('sha256', $confirmar_senha);
+            $senha_antiga = hash('sha256', $senha_antiga);
+            if ($nova_senha != $confirmar_senha) {
+                return 1;
+            } else {
+                $pdo = Conexao::connect();
+                $funcionarioDAO = new FuncionarioDAO();
+                $senha = $funcionarioDAO->getSenhaByIdPessoa($id_pessoa);
+
+                if ($senha != $senha_antiga) {
                     return 2;
                 }
             }
+            return 3;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-        return 3;
     }
     public function verificarSenhaConfig()
     {
@@ -574,39 +569,49 @@ class FuncionarioControle
 
     public function listarTodos()
     {
-        extract($_REQUEST);
+        try {
+            extract($_REQUEST);
 
-        isset($_GET['select_situacao']) === false ? $situacao_selecionada = 1 : $situacao_selecionada = $_GET['select_situacao'];
+            isset($_GET['select_situacao']) === false ? $situacao_selecionada = 1 : $situacao_selecionada = $_GET['select_situacao'];
 
-        $funcionariosDAO = new FuncionarioDAO();
-        $funcionarios = $funcionariosDAO->listarTodos($situacao_selecionada);
+            $funcionariosDAO = new FuncionarioDAO();
+            $funcionarios = $funcionariosDAO->listarTodos($situacao_selecionada);
 
-        $whitePages =
-            [
-                '../html/funcionario/informacao_funcionario.php',
-                WWW . "html/funcionario/informacao_funcionario.php",
-                '../html/geral/editar_permissoes.php',
-            ];
+            $whitePages =
+                [
+                    '../html/funcionario/informacao_funcionario.php',
+                    WWW . "html/funcionario/informacao_funcionario.php",
+                    '../html/geral/editar_permissoes.php',
+                ];
 
-        $_SESSION['funcionarios'] = $funcionarios;
+            $_SESSION['funcionarios'] = json_encode($funcionarios);
 
-        isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
+            isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 
     public function listarTodos2()
     {
-        extract($_REQUEST);
-        $funcionariosDAO = new FuncionarioDAO();
-        $funcionarios = $funcionariosDAO->listarTodos2();
-        $_SESSION['funcionarios2'] = $funcionarios;
+        try {
+            $funcionariosDAO = new FuncionarioDAO();
+            $funcionarios = $funcionariosDAO->listarTodos2();
+            $_SESSION['funcionarios2'] = json_encode($funcionarios);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 
     public function listarCpf()
     {
-        extract($_REQUEST);
-        $funcionariosDAO = new FuncionarioDAO();
-        $funcionarioscpf = $funcionariosDAO->listarCPF();
-        $_SESSION['cpf_funcionario'] = $funcionarioscpf;
+        try {
+            $funcionariosDAO = new FuncionarioDAO();
+            $funcionarioscpf = $funcionariosDAO->listarCPF();
+            $_SESSION['cpf_funcionario'] = json_encode($funcionarioscpf);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 
     public function listarUm()
@@ -621,7 +626,7 @@ class FuncionarioControle
             $funcionarioDAO = new FuncionarioDAO();
             $funcionario = $funcionarioDAO->listar($idFuncionario);
 
-            $_SESSION['funcionario'] = $funcionario;
+            $_SESSION['funcionario'] = json_encode($funcionario);
 
             header('Location:' . WWW . "/html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($idFuncionario));
         } catch (Exception $e) {
@@ -631,17 +636,18 @@ class FuncionarioControle
 
     public function getIdFuncionarioComIdPessoa()
     {
-        $id_pessoa = $_GET["id_pessoa"];
-
-        header('Content-Type: application/json');
-
         try {
+            header('Content-Type: application/json');
+            $id_pessoa = filter_input(INPUT_GET, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_pessoa || $id_pessoa < 1)
+                throw new InvalidArgumentException('O id de uma pessoa não pode ser menor que 1.', 412);
 
             $funcionarioDAO = new FuncionarioDAO;
             $id_funcionario = $funcionarioDAO->getIdFuncionarioComIdPessoa($id_pessoa);
             echo json_encode($id_funcionario);
         } catch (Exception $e) {
-            echo 'Error:' . $e->getMessage();
+            Util::tratarException($e);
         }
     }
 
@@ -698,17 +704,9 @@ class FuncionarioControle
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-
-            error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-            http_response_code($e->getCode());
-            if ($e instanceof PDOException) {
-                echo json_encode(['erro' => 'Erro no servidor ao adicionar a permissão do funcionário.']);
-            } else {
-                echo json_encode(['erro' => $e->getMessage()]);
-            }
+            Util::tratarException($e);
         }
     }
-
 
     public function selecionarCadastro()
     {
@@ -781,7 +779,7 @@ class FuncionarioControle
 
         $id_funcionario = filter_var($id_funcionario, FILTER_VALIDATE_INT);
 
-        if(!$id_funcionario || $id_funcionario < 1){
+        if (!$id_funcionario || $id_funcionario < 1) {
             http_response_code(400);
             exit('Erro, o id do funcionário não está dentro dos limites permitidos.');
         }
@@ -812,7 +810,7 @@ class FuncionarioControle
         $redir = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
-            if(!Csrf::validateToken($_POST['csrf_token'])){
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
             }
 
