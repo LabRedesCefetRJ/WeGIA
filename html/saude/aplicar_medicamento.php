@@ -187,6 +187,8 @@
   <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 
   <link rel="stylesheet" type="text/css" href="../../css/profile-theme.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
   </script>
   <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
   <script src="../../assets/vendor/nanoscroller/nanoscroller.js"></script>
@@ -457,7 +459,7 @@
       let idPessoaFuncionario = <?= $idPessoa ?>;
       let arrayPromessas = [];
 
-      const isModoSelecao = $('#chkSelecionar').is(':checked');
+      const isModoSelecao = document.querySelectorAll('.chk-med-bulk').length > 0;
 
       if (isModoSelecao) {
         const checkboxesMarcados = document.querySelectorAll('.chk-med-bulk:checked');
@@ -489,7 +491,6 @@
         });
 
       } else {
-        // Lógica ORIGINAL (Individual)
         const form = event.target;
         const formData = new FormData(form);
 
@@ -1011,47 +1012,46 @@
       const id_fichamedica = document.getElementById("id_fichamedica").value;
       carregarAplicacoes(id_fichamedica);
 
-      $(document).ready(function() {
-        
-        let htmlCheckbox = `
-                <div style="clear: both; text-align: right; margin-top: 5px; margin-bottom: 10px;">
-                    <div class="checkbox" style="display: inline-block; margin-top: 10px">
-                        <label>
-                            <input type="checkbox" id="chkSelecionar"> 
-                            <span style="font-weight: normal;">Selecionar</span>
-                        </label>
-                    </div>
-                </div>
-            `;
+  $(document).ready(function() {
 
-        $('#datatable-default_filter').after(htmlCheckbox);
+    // Injetar botão "Selecionar Múltiplos"
+    let htmlButton = `
+        <div style="clear: both; text-align: right; margin-top: 50px; margin-bottom: 10px;">
+            <button id="btnSelecionarMultiplos" title="Seleciona múltiplos medicamentos para aplicar de uma vez só" class="btn btn-primary">Selecionar Múltiplos</button>
+        </div>
+    `;
 
-        $('#chkSelecionar').on('click', function() {
-            let estaMarcado = $(this).is(':checked');
+    $('#datatable-default_filter').after(htmlButton);
 
-            carregarMedicamentosParaAplicar(estaMarcado);
+    $(document).on('click', '#btnSelecionarMultiplos', function() {
+        $(this).hide();
 
-            let divBotao = $('#div-botao-aplicar-global');
-            
-            if(estaMarcado) {
-                var btnHtml = document.createElement("button");
-                btnHtml.className = "btn btn-primary";
-                btnHtml.type = "button";
-                btnHtml.setAttribute("data-toggle", "modal");
-                btnHtml.setAttribute("data-target", "#modalHorarioAplicacao");
-                btnHtml.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i> Aplicar";
-                
-                btnHtml.addEventListener("click", function() {
-                   enviarInformacoesParaModal(this); 
-                });
-                
-                divBotao.empty().append(btnHtml);
-            } else {
-                divBotao.empty();
-            }
+        carregarMedicamentosParaAplicar(true);
+
+        $('#div-botao-aplicar-global').remove();
+
+        let divBotao = $('<div id="div-botao-aplicar-global" style="text-align: right; margin-top: 20px; display: flex; flex-direction: row; justify-content: flex-end; margin-bottom: 10px; clear: both;"></div>');
+
+        let btnApply = $('<button class="btn btn-primary" style="margin-right: 5px;" data-toggle="modal" data-target="#modalHorarioAplicacao"><i class="glyphicon glyphicon-hand-up"></i> Aplicar Selecionados</button>');
+        btnApply.click(function() {
+            enviarInformacoesParaModal(this);
         });
-        
+
+        let btnCancel = $('<button class="btn btn-danger" style="height: 35px;" title="Cancelar Seleção"><i class="bi bi-x-lg"></i></button>');
+
+        btnCancel.click(function() {
+            $('#btnSelecionarMultiplos').show();
+            divBotao.remove();
+            carregarMedicamentosParaAplicar(false);
+        });
+
+        divBotao.append(btnApply);
+        divBotao.append(btnCancel);
+
+        // Insere depois da div responsiva da tabela (ficando antes do footer)
+        $('.table-responsive').after(divBotao);
       });
+    });
 
     </script>
     
