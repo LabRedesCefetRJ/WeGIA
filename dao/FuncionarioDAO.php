@@ -377,31 +377,24 @@ class FuncionarioDAO
 
     public function alterarDocumentacao($funcionario)
     {
-        try {
+        $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set registro_geral=:registro_geral,orgao_emissor=:orgao_emissor,data_expedicao=:data_expedicao where id_funcionario=:id_funcionario';
 
-            $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set registro_geral=:registro_geral,orgao_emissor=:orgao_emissor,data_expedicao=:data_expedicao where id_funcionario=:id_funcionario';
+        $sql = str_replace("'", "\'", $sql);
+        $stmt = $this->pdo->prepare($sql);
 
-            $sql = str_replace("'", "\'", $sql);
+        //$cpf=$funcionario->getCpf();
+        $id_funcionario = $funcionario->getId_funcionario();
+        $registro_geral = $funcionario->getRegistroGeral();
+        $orgao_emissor = $funcionario->getOrgaoEmissor();
+        $data_expedicao = $funcionario->getDataExpedicao();
+        $data_admissao = $funcionario->getData_admissao();
 
-
-            $stmt = $this->pdo->prepare($sql);
-
-            //$cpf=$funcionario->getCpf();
-            $id_funcionario = $funcionario->getId_funcionario();
-            $registro_geral = $funcionario->getRegistroGeral();
-            $orgao_emissor = $funcionario->getOrgaoEmissor();
-            $data_expedicao = $funcionario->getDataExpedicao();
-            $data_admissao = $funcionario->getData_admissao();
-
-            //$stmt->bindParam(':cpf',$cpf);
-            $stmt->bindParam(':id_funcionario', $id_funcionario);
-            $stmt->bindParam(':registro_geral', $registro_geral);
-            $stmt->bindParam(':orgao_emissor', $orgao_emissor);
-            $stmt->bindParam(':data_expedicao', $data_expedicao);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        //$stmt->bindParam(':cpf',$cpf);
+        $stmt->bindParam(':id_funcionario', $id_funcionario);
+        $stmt->bindParam(':registro_geral', $registro_geral);
+        $stmt->bindParam(':orgao_emissor', $orgao_emissor);
+        $stmt->bindParam(':data_expedicao', $data_expedicao);
+        $stmt->execute();
     }
 
     public function alterarOutros($funcionario)

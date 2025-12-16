@@ -820,7 +820,7 @@ class FuncionarioControle
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
-            if (!$id_pessoa || $id_pessoa < 1) 
+            if (!$id_pessoa || $id_pessoa < 1)
                 throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
 
             $funcionarioDAO = new FuncionarioDAO();
@@ -831,7 +831,7 @@ class FuncionarioControle
             $minLength = 8;
             $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
 
-            if (!preg_match($regex, $nova_senha)) 
+            if (!preg_match($regex, $nova_senha))
                 throw new InvalidArgumentException('A senha informada não atende aos requisitos mínimos estabelecidos.', 412);
 
             $nova_senha = hash('sha256', $nova_senha);
@@ -862,84 +862,135 @@ class FuncionarioControle
 
     public function alterarOutros()
     {
-        extract($_REQUEST);
-        $cpf = str_replace(".", '', $cpf);
-        $cpf = str_replace("-", "", $cpf);
-
-        $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
-        $pdo = Conexao::connect();
-        $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=' . $_SESSION['id_pessoa']);
-        $stmt->execute();
-        $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
-
-        $stmt = $pdo->prepare('SELECT id_cargo FROM funcionario WHERE id_funcionario=' . $id_funcionario);
-        $stmt->execute();
-        $cargo_anterior_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_cargo'];
-        if (!$adm_configurado && $cargo_anterior_funcionario == 1) {
-            echo (json_encode(["erro" => "O usuário, mesmo como administrador, não pode alterar esse funcionário"]));
-            die();
-        }
-
-
-        $funcionario->setId_funcionario($id_funcionario);
-        $funcionario->setId_cargo($cargo);
-        $funcionario->setPis($pis);
-        $funcionario->setCtps($ctps);
-        $funcionario->setUf_ctps($uf_ctps);
-        $funcionario->setNumero_titulo($titulo_eleitor);
-        $funcionario->setZona($zona_eleitoral);
-        $funcionario->setSecao($secao_titulo_eleitor);
-        $funcionario->setCertificado_reservista_numero($certificado_reservista_numero);
-        $funcionario->setCertificado_reservista_serie($certificado_reservista_serie);
-        $funcionario->setId_situacao($situacao);
-        $funcionarioDAO = new FuncionarioDAO();
         try {
+            extract($_REQUEST);
+
+            $idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+            $idFuncionario = filter_var($id_funcionario, FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$idPessoa || $idPessoa < 1)
+                throw new InvalidArgumentException('O id do usuário fornecido não é válido.', 412);
+
+            if (!$idFuncionario || $idFuncionario < 1)
+                throw new InvalidArgumentException('O id do funcionário fornecido é inválido.', 412);
+
+            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $pdo = Conexao::connect();
+            $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
+            $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+
+            $stmt = $pdo->prepare('SELECT id_cargo FROM funcionario WHERE id_funcionario=:idFuncionario');
+            $stmt->bindValue(':idFuncionario', $idFuncionario);
+            $stmt->execute();
+
+            $cargo_anterior_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_cargo'];
+
+            if (!$adm_configurado && $cargo_anterior_funcionario == 1)
+                throw new InvalidArgumentException("O usuário, mesmo como administrador, não pode alterar esse funcionário", 403);
+
+            $funcionario->setId_funcionario($id_funcionario);
+            $funcionario->setId_cargo($cargo);
+            $funcionario->setPis($pis);
+            $funcionario->setCtps($ctps);
+            $funcionario->setUf_ctps($uf_ctps);
+            $funcionario->setNumero_titulo($titulo_eleitor);
+            $funcionario->setZona($zona_eleitoral);
+            $funcionario->setSecao($secao_titulo_eleitor);
+            $funcionario->setCertificado_reservista_numero($certificado_reservista_numero);
+            $funcionario->setCertificado_reservista_serie($certificado_reservista_serie);
+            $funcionario->setId_situacao($situacao);
+            $funcionarioDAO = new FuncionarioDAO();
+
             $funcionarioDAO->alterarOutros($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarImagem()
     {
-        extract($_REQUEST);
-        $img = file_get_contents($_FILES['imgperfil']['tmp_name']);
-        $funcionarioDAO = new FuncionarioDAO();
         try {
-            $funcionarioDAO->alterarImagem($id_funcionario, $img);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            $idFuncionario = filter_var($_REQUEST['id_funcionario'], FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$idFuncionario || $idFuncionario < 1)
+                throw new InvalidArgumentException('O id do funcionário fornecido é inválido.', 412);
+
+            $img = file_get_contents($_FILES['imgperfil']['tmp_name']);
+            $funcionarioDAO = new FuncionarioDAO();
+
+            $funcionarioDAO->alterarImagem($idFuncionario, $img);
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarDocumentacao()
     {
-        extract($_REQUEST);
-
-        $formatar = new Util();
-
-        if ($_SESSION['data_nasc']) {
-            if (strtotime($data_expedicao) < strtotime($formatar->formatoDataYMD($_SESSION['data_nasc']))) {
-                echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
-                header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . $id_funcionario);
-                exit;
-            }
-            unset($_SESSION['data_nasc']);
-        }
-
-        $funcionario = new Funcionario($cpf, '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
-
-        $funcionario->setData_admissao($data_admissao);
-        $funcionario->setId_funcionario($id_funcionario);
-
-        $funcionarioDAO = new FuncionarioDAO();
         try {
+            $data_expedicao = filter_var($_REQUEST['data_expedicao'], FILTER_UNSAFE_RAW);
+            $data_admissao = filter_var($_REQUEST['data_admissao'], FILTER_UNSAFE_RAW);
+            $id_funcionario = filter_var($_REQUEST['id_funcionario'], FILTER_SANITIZE_NUMBER_INT);
+            $cpf = filter_var($_REQUEST['cpf'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $rg = filter_var($_REQUEST['rg'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $orgao_emissor = filter_var($_REQUEST['orgao_emissor'], FILTER_SANITIZE_SPECIAL_CHARS);
+
+            //validar datas
+            $dateFormatYMD = '\d{4}-\d{2}-\d{2}';
+
+            if (!preg_match($dateFormatYMD, $data_expedicao))
+                throw new InvalidArgumentException('A data de expedição informada não está no formato correto.', 412);
+
+            $dataExpedicaoArray = explode('-', $data_expedicao);
+            if (!checkdate($dataExpedicaoArray[1], $dataExpedicaoArray[2], $dataExpedicaoArray[0]))
+                throw new InvalidArgumentException('A data de expedição informada não é válida.', 412);
+
+
+            if (!preg_match($dateFormatYMD, $data_admissao))
+                throw new InvalidArgumentException('A data de admissão informada não está no formato correto.', 412);
+
+            $dataAdmissaoArray = explode('-', $data_admissao);
+            if (!checkdate($dataAdmissaoArray[1], $dataAdmissaoArray[2], $dataAdmissaoArray[0]))
+                throw new InvalidArgumentException('A data de expedição informada não é válida.', 412);
+
+            if (!$id_funcionario || $id_funcionario < 1)
+                throw new InvalidArgumentException('O id do funcionário informado não é válido.', 412);
+
+            if (!Util::validarCPF($cpf))
+                throw new InvalidArgumentException('O CPF informado não é válido.', 412);
+
+            if (!$rg || strlen(preg_replace('/[^\d]/g', '', $rg)) != 9) //Posteriormente, incrementar essa validação na classe Util, tal como CPF e CNPJ
+                throw new InvalidArgumentException('O RG informado não é válido.', 412);
+
+            if (!$orgao_emissor || strlen($orgao_emissor) > 255)
+                throw new InvalidArgumentException('O tamanho do orgão emissor fornecido não é válido.', 412);
+
+            $formatar = new Util();
+
+            if ($_SESSION['data_nasc']) {
+                if (strtotime($data_expedicao) < strtotime($formatar->formatoDataYMD($_SESSION['data_nasc']))) {
+                    echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
+                    header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . urlencode($id_funcionario));
+                    exit;
+                }
+                unset($_SESSION['data_nasc']);
+            }
+
+            $funcionario = new Funcionario($cpf, '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+
+            $funcionario->setData_admissao($data_admissao);
+            $funcionario->setId_funcionario($id_funcionario);
+
+            $funcionarioDAO = new FuncionarioDAO();
+
             $funcionarioDAO->alterarDocumentacao($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
