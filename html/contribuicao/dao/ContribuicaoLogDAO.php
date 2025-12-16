@@ -12,13 +12,9 @@ class ContribuicaoLogDAO
 {
     private $pdo;
 
-    public function __construct(PDO $pdo = null)
+    public function __construct(?PDO $pdo = null)
     {
-        if (is_null($pdo)) {
-            $this->pdo = ConexaoDAO::conectar();
-        } else {
-            $this->pdo = $pdo;
-        }
+        is_null($pdo) ? $this->pdo = ConexaoDAO::conectar() : $this->pdo = $pdo;
     }
 
     public function criar(ContribuicaoLog $contribuicaoLog)
