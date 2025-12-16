@@ -328,7 +328,16 @@
         tabela.appendChild(tr);
       });
 
-      $('#datatable-default').DataTable();
+      $('#datatable-default').DataTable({
+        "dom": '<"row"<"col-sm-6"l><"col-sm-6"f>><"table-responsive"t>p',
+        "language": {
+            "search": "", 
+            "searchPlaceholder": "Search" 
+        },
+        "initComplete": function() {
+            $('#datatable-default_filter input').addClass('form-control');
+        }
+      });
 
       if (!modoSelecionar) {
         if ($('#btnSelecionarMultiplos').length === 0) {
