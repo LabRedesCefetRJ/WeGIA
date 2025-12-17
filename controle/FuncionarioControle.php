@@ -625,6 +625,9 @@ class FuncionarioControle
             $recursosBd = $permissoesBd ? array_column($permissoesBd, 'id_recurso') : [];
 
             // normalizar para int
+            if(!isset($recursos))
+                $recursos = [];
+
             $recursos = array_map('intval', $recursos);
 
             // calcular diferenças
