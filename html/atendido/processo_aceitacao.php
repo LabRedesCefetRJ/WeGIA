@@ -83,7 +83,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
                 
                 <div class="mb-4">
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalNovoProcesso">
+                    <button type="button" class="btn btn-primary" style="margin-bottom: 15px;"    data-toggle="modal" data-target="#modalNovoProcesso">
                         <i class="fa fa-plus"></i> Cadastrar Novo Processo
                     </button>
                 </div>

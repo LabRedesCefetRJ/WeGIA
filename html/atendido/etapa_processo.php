@@ -64,6 +64,20 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
     <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css" />
 
     <script src="../../assets/vendor/modernizr/modernizr.js"></script>
+      <style>
+    .btn-gray-dark {
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+        color: #fff !important;
+    }
+    .btn-gray-dark:hover {
+        background-color: #5a6268 !important;
+        border-color: #545b62 !important;
+    }
+    </style>
+
+
+
 </head>
 
 <body>
@@ -105,8 +119,8 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                 <?php endif; ?>
 
 
-                <div class="mb-4 d-flex align-items-center">
-                    <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modalStatusProcesso">
+                <div class="d-flex align-items-center" style="margin-bottom: 15px;">
+                    <button type="button" class="btn btn-secondary btn-gray-dark" data-toggle="modal" data-target="#modalStatusProcesso">
                         Alterar Status do Processo
                     </button>
 
@@ -298,7 +312,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 </div>
                             </div>
                             <div class="modal-footer">
-                               
+
                                 <button type="submit"
                                     name="metodo"
                                     value="excluir"
@@ -309,7 +323,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
 
-                                
+
                                 <button type="submit"
                                     name="metodo"
                                     value="atualizar"
