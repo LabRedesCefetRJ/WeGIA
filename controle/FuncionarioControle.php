@@ -933,37 +933,24 @@ class FuncionarioControle
     {
         try {
             $data_expedicao = filter_var($_REQUEST['data_expedicao'], FILTER_UNSAFE_RAW);
-            $data_admissao = filter_var($_REQUEST['data_admissao'], FILTER_UNSAFE_RAW);
             $id_funcionario = filter_var($_REQUEST['id_funcionario'], FILTER_SANITIZE_NUMBER_INT);
-            $cpf = filter_var($_REQUEST['cpf'], FILTER_SANITIZE_SPECIAL_CHARS);
             $rg = filter_var($_REQUEST['rg'], FILTER_SANITIZE_SPECIAL_CHARS);
             $orgao_emissor = filter_var($_REQUEST['orgao_emissor'], FILTER_SANITIZE_SPECIAL_CHARS);
 
             //validar datas
-            $dateFormatYMD = '\d{4}-\d{2}-\d{2}';
+            $dateFormatYMD = '/^\d{4}-\d{2}-\d{2}$/';
 
             if (!preg_match($dateFormatYMD, $data_expedicao))
-                throw new InvalidArgumentException('A data de expedição informada não está no formato correto.', 412);
+                throw new InvalidArgumentException("A data de expedição informada não está no formato correto: $data_expedicao", 412);
 
             $dataExpedicaoArray = explode('-', $data_expedicao);
             if (!checkdate($dataExpedicaoArray[1], $dataExpedicaoArray[2], $dataExpedicaoArray[0]))
                 throw new InvalidArgumentException('A data de expedição informada não é válida.', 412);
 
-
-            if (!preg_match($dateFormatYMD, $data_admissao))
-                throw new InvalidArgumentException('A data de admissão informada não está no formato correto.', 412);
-
-            $dataAdmissaoArray = explode('-', $data_admissao);
-            if (!checkdate($dataAdmissaoArray[1], $dataAdmissaoArray[2], $dataAdmissaoArray[0]))
-                throw new InvalidArgumentException('A data de expedição informada não é válida.', 412);
-
             if (!$id_funcionario || $id_funcionario < 1)
                 throw new InvalidArgumentException('O id do funcionário informado não é válido.', 412);
 
-            if (!Util::validarCPF($cpf))
-                throw new InvalidArgumentException('O CPF informado não é válido.', 412);
-
-            if (!$rg || strlen(preg_replace('/[^\d]/g', '', $rg)) != 9) //Posteriormente, incrementar essa validação na classe Util, tal como CPF e CNPJ
+            if (!$rg || strlen(preg_replace('/\D/', '', $rg)) != 9) //Posteriormente, incrementar essa validação na classe Util, tal como CPF e CNPJ
                 throw new InvalidArgumentException('O RG informado não é válido.', 412);
 
             if (!$orgao_emissor || strlen($orgao_emissor) > 255)
@@ -980,9 +967,8 @@ class FuncionarioControle
                 unset($_SESSION['data_nasc']);
             }
 
-            $funcionario = new Funcionario($cpf, '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $funcionario = new Funcionario('', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
-            $funcionario->setData_admissao($data_admissao);
             $funcionario->setId_funcionario($id_funcionario);
 
             $funcionarioDAO = new FuncionarioDAO();
@@ -996,35 +982,77 @@ class FuncionarioControle
 
     public function alterarEndereco()
     {
-        extract($_REQUEST);
-        if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
-            $numero_residencia = "null";
-        }
-        $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
-        $funcionario->setId_funcionario($id_funcionario);
-        $funcionarioDAO = new FuncionarioDAO();
         try {
+            $cep = filter_var($_REQUEST['cep'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $uf = filter_var($_REQUEST['uf'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $cidade = filter_var($_REQUEST['cidade'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $bairro = filter_var($_REQUEST['bairro'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $rua = filter_var($_REQUEST['rua'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $numero_residencia = filter_var($_REQUEST['numero_residencia'], FILTER_SANITIZE_NUMBER_INT);
+            $complemento = filter_var($_REQUEST['complemento'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $ibge = filter_var($_REQUEST['ibge'], FILTER_SANITIZE_NUMBER_INT);
+            $id_funcionario = filter_var($_REQUEST['id_funcionario'], FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_funcionario || $id_funcionario < 1)
+                throw new InvalidArgumentException('O id do funcionário informado não é válido.', 412);
+
+            if (strlen($cep) != 0 && strlen(preg_replace('/\D/', '', $cep)) != 8)
+                throw new InvalidArgumentException('O tamanho do CEP informado não está correto.', 412);
+
+            if (strlen($uf) > 5)
+                throw new InvalidArgumentException('O tamanho do texto da unidade federativa ultrapassou o limite de 5 caracteres.', 412);
+
+            if (strlen($cidade) > 40)
+                throw new InvalidArgumentException('O tamanho do texto da cidade ultrapassou o limite de 40 caracteres.', 412);
+
+            if (strlen($bairro) > 40)
+                throw new InvalidArgumentException('O tamanho do texto do bairro ultrapassou o limite de 40 caracteres.', 412);
+
+            if (strlen($rua) > 100)
+                throw new InvalidArgumentException('O tamanho do texto do logradouro ultrapassou o limite de 100 caracteres.', 412);
+
+            if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
+                $numero_residencia = null;
+            } elseif ($numero_residencia < 0) {
+                throw new InvalidArgumentException('O número da residência não pode ser negativo.', 412);
+            }
+
+            if (strlen($complemento) > 50)
+                throw new InvalidArgumentException('O tamanho do texto do complemento ultrapassou o limite de 50 caracteres.', 412);
+
+            if (strlen($ibge) != 0 && strlen(preg_replace('/\D/', '', $ibge)) != 7)
+                throw new InvalidArgumentException('O tamanho do código do IBGE informado não está correto.', 412);
+
+            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+            $funcionario->setId_funcionario($id_funcionario);
+            $funcionarioDAO = new FuncionarioDAO();
+
             $funcionarioDAO->alterarEndereco($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
     public function alterarCargaHoraria()
     {
-        extract($_REQUEST);
-        $carga_horaria = $this->verificarHorario();
-        $quadroHorarioDAO = new QuadroHorarioDAO();
         try {
+            $id_funcionario = filter_var($_REQUEST['id_funcionario'], FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_funcionario || $id_funcionario < 1)
+                throw new InvalidArgumentException('O id do funcionário informado não é válido.', 412);
+
+            $carga_horaria = $this->verificarHorario();
+            $quadroHorarioDAO = new QuadroHorarioDAO();
+
             $quadroHorarioDAO->alterar($carga_horaria, $id_funcionario);
 
             $_SESSION['msg'] = "Informações do funcionário alteradas com sucesso!";
             $_SESSION['proxima'] = "Ver lista de funcionario";
             $_SESSION['link'] = "../html/funcionario/informacao_funcionario.php";
             header("Location: ../html/sucesso.php");
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 

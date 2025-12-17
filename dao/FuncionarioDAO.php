@@ -255,21 +255,16 @@ class FuncionarioDAO
     // excluir
     public function excluir($id_funcionario)
     {
-        try {
-            // $sql = 'call excluirfuncionario(:id_funcionario)';
-            $sql = 'UPDATE funcionario set id_situacao = 2 where id_funcionario = :id_funcionario';
-            $sql = str_replace("'", "\'", $sql);
+        $sql = 'UPDATE funcionario set id_situacao = 2 where id_funcionario = :id_funcionario';
+        $sql = str_replace("'", "\'", $sql);
 
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-            $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
 
-            $stmt->bindParam(':id_funcionario', $id_funcionario);
+        $stmt->bindParam(':id_funcionario', $id_funcionario, PDO::PARAM_INT);
 
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        $stmt->execute();
     }
 
     // Editar
@@ -342,37 +337,32 @@ class FuncionarioDAO
 
     public function alterarEndereco($funcionario)
     {
-        try {
-            $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set cep=:cep,estado=:estado,cidade=:cidade,bairro=:bairro,logradouro=:logradouro,numero_endereco=:numero_endereco,complemento=:complemento,ibge=:ibge where id_funcionario=:id_funcionario';
+        $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set cep=:cep,estado=:estado,cidade=:cidade,bairro=:bairro,logradouro=:logradouro,numero_endereco=:numero_endereco,complemento=:complemento,ibge=:ibge where id_funcionario=:id_funcionario';
 
-            $sql = str_replace("'", "\'", $sql);
+        $sql = str_replace("'", "\'", $sql);
 
+        $stmt = $this->pdo->prepare($sql);
 
-            $stmt = $this->pdo->prepare($sql);
+        $id_funcionario = $funcionario->getId_funcionario();
+        $cep = $funcionario->getCep();
+        $estado = $funcionario->getEstado();
+        $cidade = $funcionario->getCidade();
+        $bairro = $funcionario->getBairro();
+        $logradouro = $funcionario->getLogradouro();
+        $numero_endereco = $funcionario->getNumeroEndereco();
+        $complemento = $funcionario->getComplemento();
+        $ibge = $funcionario->getIbge();
 
-            $id_funcionario = $funcionario->getId_funcionario();
-            $cep = $funcionario->getCep();
-            $estado = $funcionario->getEstado();
-            $cidade = $funcionario->getCidade();
-            $bairro = $funcionario->getBairro();
-            $logradouro = $funcionario->getLogradouro();
-            $numero_endereco = $funcionario->getNumeroEndereco();
-            $complemento = $funcionario->getComplemento();
-            $ibge = $funcionario->getIbge();
-
-            $stmt->bindParam(':id_funcionario', $id_funcionario);
-            $stmt->bindParam(':cep', $cep);
-            $stmt->bindParam(':estado', $estado);
-            $stmt->bindParam(':cidade', $cidade);
-            $stmt->bindParam(':bairro', $bairro);
-            $stmt->bindParam(':logradouro', $logradouro);
-            $stmt->bindParam(':numero_endereco', $numero_endereco);
-            $stmt->bindParam(':complemento', $complemento);
-            $stmt->bindParam(':ibge', $ibge);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        $stmt->bindParam(':id_funcionario', $id_funcionario);
+        $stmt->bindParam(':cep', $cep);
+        $stmt->bindParam(':estado', $estado);
+        $stmt->bindParam(':cidade', $cidade);
+        $stmt->bindParam(':bairro', $bairro);
+        $stmt->bindParam(':logradouro', $logradouro);
+        $stmt->bindParam(':numero_endereco', $numero_endereco);
+        $stmt->bindParam(':complemento', $complemento);
+        $stmt->bindParam(':ibge', $ibge);
+        $stmt->execute();
     }
 
     public function alterarDocumentacao($funcionario)
