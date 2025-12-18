@@ -881,6 +881,9 @@ class FuncionarioControle
             $idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
             $idFuncionario = filter_var($id_funcionario, FILTER_SANITIZE_NUMBER_INT);
 
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
             if (!$idPessoa || $idPessoa < 1)
                 throw new InvalidArgumentException('O id do usuário fornecido não é válido.', 412);
 

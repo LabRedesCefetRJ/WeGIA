@@ -1013,6 +1013,7 @@ try {
                       <form class="form-horizontal" method="POST" action="../../controle/control.php">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarOutros">
+                        <?= Csrf::inputField() ?>
                         <div class="form-group">
                           <label for="pis" class="col-md-3 control-label">PIS (Número de Identificação do Trabalhador)</label>
                           <div class="col-md-6">
