@@ -654,12 +654,16 @@ class FuncionarioControle
     public function adicionarPermissao()
     {
         try {
+            //adicionar csrf
             $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
             $acao = filter_input(INPUT_POST, 'acao', FILTER_SANITIZE_NUMBER_INT);
             $recursos = filter_input(INPUT_POST, 'recurso', FILTER_VALIDATE_INT, [
                 'flags' => FILTER_REQUIRE_ARRAY,
                 'options' => ['min_range' => 1]
             ]);
+
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             if (!$cargo || $cargo < 1) {
                 throw new InvalidArgumentException('O valor do id do cargo informado não é válido.', 400);
@@ -701,7 +705,7 @@ class FuncionarioControle
 
             header('Location:' . '../html/geral/editar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
         } catch (Exception $e) {
-            if ($pdo->inTransaction()) {
+            if (isset($pdo) && $pdo->inTransaction()) {
                 $pdo->rollBack();
             }
             Util::tratarException($e);
