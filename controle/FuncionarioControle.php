@@ -932,7 +932,7 @@ class FuncionarioControle
         try {
             $idFuncionario = filter_var($_REQUEST['id_funcionario'], FILTER_SANITIZE_NUMBER_INT);
 
-             if (!Csrf::validateToken($_POST['csrf_token']))
+            if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             if (!$idFuncionario || $idFuncionario < 1)
@@ -956,11 +956,14 @@ class FuncionarioControle
             $rg = filter_var($_REQUEST['rg'], FILTER_SANITIZE_SPECIAL_CHARS);
             $orgao_emissor = filter_var($_REQUEST['orgao_emissor'], FILTER_SANITIZE_SPECIAL_CHARS);
 
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
             //validar datas
             $dateFormatYMD = '/^\d{4}-\d{2}-\d{2}$/';
 
             if (!preg_match($dateFormatYMD, $data_expedicao))
-                throw new InvalidArgumentException("A data de expedição informada não está no formato correto: $data_expedicao", 412);
+                throw new InvalidArgumentException('A data de expedição informada não está no formato correto.', 412);
 
             $dataExpedicaoArray = explode('-', $data_expedicao);
             if (!checkdate($dataExpedicaoArray[1], $dataExpedicaoArray[2], $dataExpedicaoArray[0]))

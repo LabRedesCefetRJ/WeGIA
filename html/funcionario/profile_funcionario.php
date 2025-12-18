@@ -1524,6 +1524,7 @@ try {
                       <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarDocumentacao">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarDocumentacao">
+                        <?= Csrf::inputField() ?>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
                           <div class="col-md-6">
