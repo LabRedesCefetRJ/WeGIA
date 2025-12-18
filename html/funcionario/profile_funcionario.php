@@ -732,6 +732,7 @@ try {
                             <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
                               <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                               <input type="hidden" name="metodo" value="alterarImagem">
+                              <?= Csrf::inputField() ?>
                               <div class="form-group">
                                 <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
                                 <div class="col-md-8">
