@@ -1499,6 +1499,7 @@ try {
                         <hr class="dotted short">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarCargaHoraria">
+                        <?= Csrf::inputField() ?>
                         <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <div class="form-group center">
                           <button type="button" class="btn btn-primary" id="botaoEditar_editar_cargaHoraria" onclick="switchForm('editar_cargaHoraria')">Editar</button>
