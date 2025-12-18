@@ -1829,6 +1829,7 @@ try {
                       <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarEndereco">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarEndereco">
+                        <?= Csrf::inputField() ?>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="cep">CEP</label>
                           <div class="col-md-8">
