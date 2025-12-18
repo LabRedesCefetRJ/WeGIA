@@ -10,6 +10,8 @@ include_once ROOT . '/dao/FuncionarioDAO.php';
 include_once ROOT . '/dao/QuadroHorarioDAO.php';
 include_once ROOT . '/dao/PermissaoDAO.php';
 require_once ROOT . '/classes/Util.php';
+require_once dirname(__FILE__, 2) . '/html/geral/msg.php'; 
+
 
 class FuncionarioControle
 {
@@ -730,61 +732,82 @@ class FuncionarioControle
         }
     }
 
-   public function alterarInfPessoal()
-{
-    extract($_REQUEST);
 
-    $erros = [];
+    public function alterarInfPessoal()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-    if (!isset($nome) || trim($nome) === '') {
-        $erros[] = "Nome do funcionário não pode ser vazio.";
-    }
-    if (!isset($sobrenome) || trim($sobrenome) === '') {
-        $erros[] = "Sobrenome do funcionário não pode ser vazio.";
-    }
-    if (!isset($gender) || ($gender !== 'm' && $gender !== 'f')) {
-        $erros[] = "Sexo do funcionário é obrigatório.";
-    }
-    if (!isset($nascimento) || trim($nascimento) === '') {
-        $erros[] = "Data de nascimento é obrigatória.";
-    }
-    if (!isset($telefone) || trim($telefone) === '') {
-        $erros[] = "Telefone do funcionário é obrigatório.";
-    }
+        extract($_REQUEST);
 
-    if (!empty($erros)) {
-        $_SESSION['msg']  = implode(' ', $erros);
-        $_SESSION['tipo'] = 'error';
-        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($id_funcionario));
-        exit(); 
-    }
+        $erros = [];
 
-    if ($nascimento === '') {
-        $nascimento = null;
-    }
+        if (!isset($nome) || trim($nome) === '') {
+            $erros[] = "Nome do funcionário não pode ser vazio.";
+        }
+        if (!isset($sobrenome) || trim($sobrenome) === '') {
+            $erros[] = "Sobrenome do funcionário não pode ser vazio.";
+        }
+        if (!isset($gender) || ($gender !== 'm' && $gender !== 'f')) {
+            $erros[] = "Sexo do funcionário é obrigatório.";
+        }
+        if (!isset($nascimento) || trim($nascimento) === '') {
+            $erros[] = "Data de nascimento é obrigatória.";
+        }
+        if (!isset($telefone) || trim($telefone) === '') {
+            $erros[] = "Telefone do funcionário é obrigatório.";
+        }
 
-    $funcionario = new Funcionario(
-        '', $nome, $sobrenome, $gender, $nascimento,
-        '', '', '', $nome_mae, $nome_pai,
-        $sangue, '', $telefone,
-        '', '', '', '', '', '', '', '', ''
-    );
-    $funcionario->setId_funcionario($id_funcionario);
+        if (!empty($erros)) {
+            setSessionMsg(implode(' ', $erros), 'err');
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
+        }
 
-    $funcionarioDAO = new FuncionarioDAO();
-    try {
-        $funcionarioDAO->alterarInfPessoal($funcionario);
-        $_SESSION['msg']  = "Informações pessoais atualizadas com sucesso!";
-        $_SESSION['tipo'] = 'success';
-        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($id_funcionario));
-        exit();
-    } catch (PDOException $e) {
-        $_SESSION['msg']  = "Erro ao atualizar informações do funcionário.";
-        $_SESSION['tipo'] = 'error';
-        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($id_funcionario));
-        exit();
+        if ($nascimento === '') {
+            $nascimento = null;
+        }
+
+        $funcionario = new Funcionario(
+            '',
+            $nome,
+            $sobrenome,
+            $gender,
+            $nascimento,
+            '',
+            '',
+            '',
+            $nome_mae,
+            $nome_pai,
+            $sangue,
+            '',
+            $telefone,
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        );
+        $funcionario->setId_funcionario($id_funcionario);
+
+        $funcionarioDAO = new FuncionarioDAO();
+
+        try {
+            $funcionarioDAO->alterarInfPessoal($funcionario);
+            setSessionMsg("Informações pessoais atualizadas com sucesso!", "sccs");
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
+        } catch (PDOException $e) {
+            setSessionMsg("Erro ao atualizar informações do funcionário.", "err", $e->getMessage());
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
+        }
     }
-}
 
 
 

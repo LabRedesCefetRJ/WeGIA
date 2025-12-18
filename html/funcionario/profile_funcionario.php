@@ -691,7 +691,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
         </header>
         <!-- start: page -->
         <!-- Mensagem -->
-        <?php getMsgSession("msg", "tipo"); ?>
+        <?php sessionMsg(); ?>
         <div class="row">
           <div class="col-md-4 col-lg-3">
             <section class="panel">
@@ -802,13 +802,13 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)" required>
+                          <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)" >
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Sobrenome</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)" required>
+                          <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)" >
                         </div>
                       </div>
                       <div class="form-group">
@@ -819,7 +819,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileCompany" >Telefone</label>
+                        <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
                         </div>
@@ -2050,7 +2050,6 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
       }
 
       if (apoio == 0) {
-        alert("Editado com sucesso!");
         return true;
       }
       return false;
