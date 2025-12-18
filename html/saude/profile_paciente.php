@@ -815,7 +815,6 @@ try {
                           endif;
                           ?>
 
-                          <!--Botão para baixar plano de saúde-->
                           <?php
                           if (isset($documentosDownload[5])):
                           ?>
@@ -1934,7 +1933,7 @@ try {
           return;
         }
       let url = `../../controle/control.php?id_exame=${id}&metodo=${encodeURIComponent("removerExame")}&nomeClasse=${encodeURIComponent("ExameControle")}`;
-    
+
       let options = {
         method: "GET"//usei GET pois aparentemente o delete ta desabilitado
       }
@@ -2303,7 +2302,44 @@ try {
         await gerarExames();
         await gerarEnfermidadesDoPaciente();
         const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
-        btnCadastrarEnfermidade.addEventListener('click', cadastrarEnfermidade);
+        
+        // Adiciona validação ao clique do botão
+        btnCadastrarEnfermidade.addEventListener('click', function(event) {
+          const dataInput = document.getElementById("data_diagnostico");
+          const dataValue = dataInput.value;
+
+          if (!dataValue) {
+            alert("Por favor, preencha a data do diagnóstico.");
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+          }
+
+          const anoDigitado = parseInt(dataValue.substring(0, 4));
+          const anoMinimo = 1929;
+
+          if (anoDigitado < anoMinimo) {
+            alert("Data inválida: O ano não pode ser anterior a 1929.");
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+          }
+
+          // Verifica se a data é futura
+          const partesData = dataValue.split('-');
+          const dataSelecionada = new Date(partesData[0], partesData[1] - 1, partesData[2]);
+          const hoje = new Date();
+          hoje.setHours(0, 0, 0, 0); 
+
+          if (dataSelecionada > hoje) {
+            alert("A data do diagnóstico não pode ser no futuro.");
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+          }
+
+          cadastrarEnfermidade(event);
+        });
       })
 
       
