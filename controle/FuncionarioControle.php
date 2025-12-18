@@ -748,7 +748,10 @@ class FuncionarioControle
         try {
             $funcionario = $this->verificarFuncionario();
             $horario = $this->verificarHorario();
-            $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             if (!Util::validarCPF($cpf))
                 throw new InvalidArgumentException('O CPF informado não é válido', 412);
