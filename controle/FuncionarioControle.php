@@ -800,6 +800,9 @@ class FuncionarioControle
 
             $id_funcionario = filter_var($id_funcionario, FILTER_VALIDATE_INT);
 
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
             if (!$id_funcionario || $id_funcionario < 1)
                 throw new InvalidArgumentException('O id do funcionário não está dentro dos limites permitidos.', 412);
 

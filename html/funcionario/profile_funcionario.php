@@ -10,6 +10,17 @@ if (!isset($_SESSION['usuario'])) {
   session_regenerate_id();
 }
 
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+  http_response_code(400);
+  echo json_encode(['erro' => 'O id da pessoa informado não é válido.']);
+  exit();
+}
+
+require_once "../permissao/permissao.php";
+permissao($_SESSION['id_pessoa'], 11, 7);
+
 extract($_REQUEST);
 
 //Sanitizar entrada do id_funcionario
@@ -21,12 +32,13 @@ if (!$idFuncionario || $idFuncionario < 1) {
   exit(400);
 }
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 try {
   require_once "../../dao/Conexao.php";
   $pdo = Conexao::connect();
 
   if (!isset($_SESSION['funcionario'])) {
-    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&id_funcionario=' . $idFuncionario);
+    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&id_funcionario=' . urlencode($idFuncionario));
   } else {
     $func = $_SESSION['funcionario'];
     unset($_SESSION['funcionario']);
@@ -53,21 +65,7 @@ try {
       $func = json_encode([$func]);
     }
   }
-
-  $config_path = "config.php";
-  if (file_exists($config_path)) {
-    require_once($config_path);
-  } else {
-    while (true) {
-      $config_path = "../" . $config_path;
-      if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-  }
-
   require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
-  require_once "../permissao/permissao.php";
-  permissao($_SESSION['id_pessoa'], 11, 7);
 
   $situacao = $pdo->query("SELECT * FROM situacao")->fetchAll();
   $cargo = $pdo->query("SELECT * FROM cargo")->fetchAll();
@@ -94,7 +92,7 @@ try {
   $docfuncional = $docfuncional->fetchAll(PDO::FETCH_ASSOC);
   foreach ($docfuncional as $key => $value) {
     $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
-
+    // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
     //formatar data
     $data = new DateTime($value['data']);
     $docfuncional[$key]['data'] = $data->format('d/m/Y h:i:s');
@@ -112,17 +110,18 @@ try {
 
   $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
   $dependente = json_encode($dependente);
+
+  // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
+  $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
+  $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+  $stmt->execute();
+  $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+
+  $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
 } catch (Exception $e) {
-  echo json_encode(['erro' => $e->getMessage()]);
-  exit($e->getCode());
+  Util::tratarException($e);
+  exit();
 }
-
-// Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
-$stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=' . $_SESSION['id_pessoa']);
-$stmt->execute();
-$adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
-
-$dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
 ?>
 <!doctype html>
 <html class="fixed">
@@ -793,6 +792,7 @@ $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
                 <!--Aba de Informações Pessoais-->
                 <div id="overview" class="tab-pane active">
                   <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarInformacoesPessoais">
+                    <?= Csrf::inputField() ?>
                     <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                     <input type="hidden" name="metodo" value="alterarInfPessoal">
                     <h4 class="mb-xlg">Informações Pessoais</h4>
