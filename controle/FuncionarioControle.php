@@ -1085,13 +1085,16 @@ class FuncionarioControle
     }
 
     /**
-     * Pega o parâmetro id_funcionario da requisição e remove do sistema o funcionário de id equivalente.
+     * Pega o parâmetro id_funcionario da requisição e altera o status para inativo do funcionário de id equivalente.
      */
     public function excluir()
     {
-        $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+        $idFuncionario = filter_input(INPUT_POST, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
             if (!$idFuncionario || $idFuncionario < 1) {
                 throw new InvalidArgumentException('O id do funcionário fornecido é inválido.', 400);
             }
