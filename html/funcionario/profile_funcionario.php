@@ -101,7 +101,7 @@ try {
 
     //formatar data
     $data = new DateTime($value['data']);
-    $docfuncional[$key]['data'] = $data->format('d/m/Y h:i:s');
+    $docfuncional[$key]['data'] = $data->format('d/m/Y H:i:s');
   }
   $docfuncional = json_encode($docfuncional);
   //SQL Injection abaixo
@@ -445,6 +445,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
     $(function() {
       var docfuncional = <?= $docfuncional ?>;
       $.each(docfuncional, function(i, item) {
+        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -460,6 +461,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
     function listarFunDocs(docfuncional) {
       $("#doc-tab").empty();
       $.each(docfuncional, function(i, item) {
+        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
