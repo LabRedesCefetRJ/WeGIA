@@ -802,13 +802,13 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)" >
+                          <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Sobrenome</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)" >
+                          <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
@@ -1838,7 +1838,17 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="cep">CEP</label>
                           <div class="col-md-8">
-                            <input type="text" name="cep" value="" size="10" onblur="pesquisacep(this.value);" class="form-control" id="cep" maxlength="9" placeholder="Ex: 22222-222" onkeydown="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)">
+                            <input type="text"
+                              name="cep"
+                              value=""
+                              size="10"
+                              class="form-control"
+                              id="cep"
+                              maxlength="9"
+                              placeholder="Ex: 22222-222"
+                              inputmode="numeric"
+                              onblur="pesquisacep(this.value)"
+                              oninput="formatarCep(this)">
                           </div>
                         </div>
                         <div class="form-group">

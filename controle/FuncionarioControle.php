@@ -1,5 +1,5 @@
 <?php
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
     session_start();
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
@@ -10,7 +10,7 @@ include_once ROOT . '/dao/FuncionarioDAO.php';
 include_once ROOT . '/dao/QuadroHorarioDAO.php';
 include_once ROOT . '/dao/PermissaoDAO.php';
 require_once ROOT . '/classes/Util.php';
-require_once dirname(__FILE__, 2) . '/html/geral/msg.php'; 
+require_once dirname(__FILE__, 2) . '/html/geral/msg.php';
 
 
 class FuncionarioControle
@@ -333,7 +333,7 @@ class FuncionarioControle
             exit;
         }
 
-        
+
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -462,7 +462,7 @@ class FuncionarioControle
         if ((!isset($certificado_reservista_serie)) || (empty($certificado_reservista_serie))) {
             $certificado_reservista_serie = '';
         }
-        
+
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
         } else {
@@ -541,7 +541,7 @@ class FuncionarioControle
                 WWW . "html/funcionario/informacao_funcionario.php",
                 '../html/geral/editar_permissoes.php',
             ];
-        
+
         $_SESSION['funcionarios'] = $funcionarios;
 
         isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
@@ -627,7 +627,7 @@ class FuncionarioControle
             $recursosBd = $permissoesBd ? array_column($permissoesBd, 'id_recurso') : [];
 
             // normalizar para int
-            if(!isset($recursos))
+            if (!isset($recursos))
                 $recursos = [];
 
             $recursos = array_map('intval', $recursos);
@@ -946,20 +946,79 @@ class FuncionarioControle
 
     public function alterarEndereco()
     {
-        extract($_REQUEST);
-        if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
-            $numero_residencia = "null";
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
-        $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+
+        extract($_REQUEST);
+
+        $erros = [];
+
+
+        $cepLimpo = preg_replace('/\D/', '', $cep ?? '');
+        if (strlen($cepLimpo) !== 8) {
+            $erros[] = "CEP deve conter 8 dígitos.";
+        }
+
+
+        if (!isset($uf) || trim($uf) === '') {
+            $erros[] = "Estado é obrigatório.";
+        }
+        if (!isset($cidade) || trim($cidade) === '') {
+            $erros[] = "Cidade é obrigatória.";
+        }
+
+        if (!empty($erros)) {
+            setSessionMsg(implode(' ', $erros), 'err');
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
+        }
+
+
+        if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
+            $numero_residencia = null;
+        }
+
+        $funcionario = new Funcionario(
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            $cepLimpo,
+            $uf,
+            $cidade,
+            $bairro,
+            $rua,
+            $numero_residencia,
+            $complemento,
+            $ibge
+        );
         $funcionario->setId_funcionario($id_funcionario);
+
         $funcionarioDAO = new FuncionarioDAO();
+
         try {
             $funcionarioDAO->alterarEndereco($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . $id_funcionario);
+            setSessionMsg("Endereço atualizado com sucesso!", "sccs");
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
         } catch (PDOException $e) {
-            echo $e->getMessage();
+            setSessionMsg("Erro ao atualizar endereço.", "err", $e->getMessage());
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
         }
     }
+
 
     public function alterarCargaHoraria()
     {
@@ -968,7 +1027,7 @@ class FuncionarioControle
         $quadroHorarioDAO = new QuadroHorarioDAO();
         try {
             $quadroHorarioDAO->alterar($carga_horaria, $id_funcionario);
-            
+
             $_SESSION['msg'] = "Informações do funcionário alteradas com sucesso!";
             $_SESSION['proxima'] = "Ver lista de funcionario";
             $_SESSION['link'] = "../html/funcionario/informacao_funcionario.php";
