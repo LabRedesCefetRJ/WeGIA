@@ -945,79 +945,61 @@ class FuncionarioControle
     }
 
     public function alterarEndereco()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        extract($_REQUEST);
-
-        $erros = [];
-
-
-        $cepLimpo = preg_replace('/\D/', '', $cep ?? '');
-        if (strlen($cepLimpo) !== 8) {
-            $erros[] = "CEP deve conter 8 dígitos.";
-        }
-
-
-        if (!isset($uf) || trim($uf) === '') {
-            $erros[] = "Estado é obrigatório.";
-        }
-        if (!isset($cidade) || trim($cidade) === '') {
-            $erros[] = "Cidade é obrigatória.";
-        }
-
-        if (!empty($erros)) {
-            setSessionMsg(implode(' ', $erros), 'err');
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
-            exit();
-        }
-
-
-        if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
-            $numero_residencia = null;
-        }
-
-        $funcionario = new Funcionario(
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            $cepLimpo,
-            $uf,
-            $cidade,
-            $bairro,
-            $rua,
-            $numero_residencia,
-            $complemento,
-            $ibge
-        );
-        $funcionario->setId_funcionario($id_funcionario);
-
-        $funcionarioDAO = new FuncionarioDAO();
-
-        try {
-            $funcionarioDAO->alterarEndereco($funcionario);
-            setSessionMsg("Endereço atualizado com sucesso!", "sccs");
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
-            exit();
-        } catch (PDOException $e) {
-            setSessionMsg("Erro ao atualizar endereço.", "err", $e->getMessage());
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
-            exit();
-        }
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
     }
+
+    extract($_REQUEST);
+
+    $erros = [];
+
+    
+    $cepLimpo = preg_replace('/\D/', '', $cep ?? '');
+    if (strlen($cepLimpo) !== 8) {
+        $erros[] = "CEP deve conter exatamente 8 dígitos.";
+    } else {
+        $cepFormatado = substr($cepLimpo, 0, 5) . '-' . substr($cepLimpo, 5, 3);
+    }
+
+    
+    if (!isset($uf) || trim($uf) === '') {
+        $erros[] = "Estado é obrigatório.";
+    }
+    if (!isset($cidade) || trim($cidade) === '') {
+        $erros[] = "Cidade é obrigatória.";
+    }
+
+    if (!empty($erros)) {
+        setSessionMsg(implode(' ', $erros), 'err');
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+        exit();
+    }
+
+    if ((!isset($numero_residencia)) || empty($numero_residencia)) {
+        $numero_residencia = null;
+    }
+
+    $funcionario = new Funcionario(
+        '', '', '', '', '', '', '', '', '', '', '', '', '', '',
+        $cepFormatado,  
+        $uf, $cidade, $rua, $bairro, $numero_residencia, $complemento, $ibge
+    );
+    $funcionario->setId_funcionario($id_funcionario);
+
+    $funcionarioDAO = new FuncionarioDAO();
+
+    try {
+        $funcionarioDAO->alterarEndereco($funcionario);
+        setSessionMsg("Endereço atualizado com sucesso!", "sccs");
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+        exit();
+    } catch (PDOException $e) {
+        setSessionMsg("Erro ao atualizar endereço.", "err", $e->getMessage());
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+        exit();
+    }
+}
 
 
     public function alterarCargaHoraria()
