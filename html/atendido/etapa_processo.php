@@ -1,12 +1,22 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Remove display de erros em produção
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../index.php");
+    exit();
+}
+
+// ✅ VERIFICAÇÃO DE PERMISSÃO
+if (empty($_SESSION['permissoes']) || !in_array('GERENCIAR_ETAPAS_PROCESSO', $_SESSION['permissoes'])) {
+    http_response_code(403);
+    echo 'Acesso negado. Permissão insuficiente.';
     exit();
 }
 
@@ -41,6 +51,7 @@ $msg   = $_SESSION['msg'] ?? '';
 $error = $_SESSION['mensagem_erro'] ?? '';
 unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 ?>
+
 <!DOCTYPE html>
 <html>
 

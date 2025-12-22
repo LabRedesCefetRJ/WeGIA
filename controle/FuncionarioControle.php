@@ -733,81 +733,77 @@ class FuncionarioControle
     }
 
 
-    public function alterarInfPessoal()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+   public function alterarInfPessoal()
+{
+    extract($_REQUEST);
 
-        extract($_REQUEST);
+    $erros = [];
 
-        $erros = [];
-
-        if (!isset($nome) || trim($nome) === '') {
-            $erros[] = "Nome do funcionário não pode ser vazio.";
-        }
-        if (!isset($sobrenome) || trim($sobrenome) === '') {
-            $erros[] = "Sobrenome do funcionário não pode ser vazio.";
-        }
-        if (!isset($gender) || ($gender !== 'm' && $gender !== 'f')) {
-            $erros[] = "Sexo do funcionário é obrigatório.";
-        }
-        if (!isset($nascimento) || trim($nascimento) === '') {
-            $erros[] = "Data de nascimento é obrigatória.";
-        }
-        if (!isset($telefone) || trim($telefone) === '') {
-            $erros[] = "Telefone do funcionário é obrigatório.";
-        }
-
-        if (!empty($erros)) {
-            setSessionMsg(implode(' ', $erros), 'err');
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
-            exit();
-        }
-
-        if ($nascimento === '') {
-            $nascimento = null;
-        }
-
-        $funcionario = new Funcionario(
-            '',
-            $nome,
-            $sobrenome,
-            $gender,
-            $nascimento,
-            '',
-            '',
-            '',
-            $nome_mae,
-            $nome_pai,
-            $sangue,
-            '',
-            $telefone,
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            ''
-        );
-        $funcionario->setId_funcionario($id_funcionario);
-
-        $funcionarioDAO = new FuncionarioDAO();
-
-        try {
-            $funcionarioDAO->alterarInfPessoal($funcionario);
-            setSessionMsg("Informações pessoais atualizadas com sucesso!", "sccs");
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
-            exit();
-        } catch (PDOException $e) {
-            setSessionMsg("Erro ao atualizar informações do funcionário.", "err", $e->getMessage());
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
-            exit();
-        }
+    if (!isset($nome) || trim($nome) === '') {
+        $erros[] = "Nome do funcionário não pode ser vazio.";
     }
+    if (!isset($sobrenome) || trim($sobrenome) === '') {
+        $erros[] = "Sobrenome do funcionário não pode ser vazio.";
+    }
+    if (!isset($gender) || ($gender !== 'm' && $gender !== 'f')) {
+        $erros[] = "Sexo do funcionário é obrigatório.";
+    }
+    if (!isset($nascimento) || trim($nascimento) === '') {
+        $erros[] = "Data de nascimento é obrigatória.";
+    }
+    if (!isset($telefone) || trim($telefone) === '') {
+        $erros[] = "Telefone do funcionário é obrigatório.";
+    }
+
+    if (!empty($erros)) {
+        setSessionMsg(implode(' ', $erros), 'err');
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+        exit();
+    }
+
+    if ($nascimento === '') {
+        $nascimento = null;
+    }
+
+    $funcionario = new Funcionario(
+        '',
+        $nome,
+        $sobrenome,
+        $gender,
+        $nascimento,
+        '',
+        '',
+        '',
+        $nome_mae,
+        $nome_pai,
+        $sangue,
+        '',
+        $telefone,
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        ''
+    );
+    $funcionario->setId_funcionario($id_funcionario);
+
+    $funcionarioDAO = new FuncionarioDAO();
+
+    try {
+        $funcionarioDAO->alterarInfPessoal($funcionario);
+        setSessionMsg("Informações pessoais atualizadas com sucesso!", "sccs");
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+        exit();
+    } catch (PDOException $e) {
+        setSessionMsg("Erro ao atualizar informações do funcionário.", "err");
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+        exit();
+    }
+}
 
 
 
@@ -946,15 +942,10 @@ class FuncionarioControle
 
     public function alterarEndereco()
 {
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-
     extract($_REQUEST);
 
     $erros = [];
 
-    
     $cepLimpo = preg_replace('/\D/', '', $cep ?? '');
     if (strlen($cepLimpo) !== 8) {
         $erros[] = "CEP deve conter exatamente 8 dígitos.";
@@ -962,7 +953,6 @@ class FuncionarioControle
         $cepFormatado = substr($cepLimpo, 0, 5) . '-' . substr($cepLimpo, 5, 3);
     }
 
-    
     if (!isset($uf) || trim($uf) === '') {
         $erros[] = "Estado é obrigatório.";
     }
@@ -995,7 +985,7 @@ class FuncionarioControle
         header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
         exit();
     } catch (PDOException $e) {
-        setSessionMsg("Erro ao atualizar endereço.", "err", $e->getMessage());
+        setSessionMsg("Erro ao atualizar endereço.", "err");
         header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
         exit();
     }

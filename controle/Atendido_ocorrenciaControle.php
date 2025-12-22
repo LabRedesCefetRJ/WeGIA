@@ -86,56 +86,60 @@ class Atendido_ocorrenciaControle
 
 	//Incluir despachos  
 	public function incluir()
-{
-    extract($_REQUEST);
-    try {
-        // **VALIDAÇÃO NOVA: Data ocorrência vs Data nascimento**
-        if (!empty($data) && is_numeric($atendido_idatendido) && $atendido_idatendido >= 1) {
-            $pdo = Conexao::connect();
-            $sql_nascimento = "SELECT p.data_nascimento FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
-            $stmt_nascimento = $pdo->prepare($sql_nascimento);
-            $stmt_nascimento->bindParam(':idatendido', $atendido_idatendido);
-            $stmt_nascimento->execute();
-            $atendido_nasc = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
-            
-            // **MENSAGEM PARA USUÁRIO SEM DATA NASCIMENTO**
-            if (!$atendido_nasc || empty($atendido_nasc['data_nascimento'])) {
-                $_SESSION['msg'] = "Atenção: Atendido sem data de nascimento cadastrada. Cadastre primeiro para validar datas de ocorrência.";
-                $_SESSION['tipo'] = "warning";
-                header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($atendido_idatendido));
-                exit;
-            }
-            
-            $data_nascimento_obj = new DateTime($atendido_nasc['data_nascimento']);
-            $data_ocorrencia_obj = new DateTime($data);
-            
-            if ($data_ocorrencia_obj < $data_nascimento_obj) {
-                $_SESSION['msg'] = "Erro: A data da ocorrência não pode ser anterior à data de nascimento do atendido!";
-                $_SESSION['tipo'] = "error";
-                header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . htmlspecialchars($atendido_idatendido));
-                exit;
-            }
-        }
+	{
+		if (session_status() === PHP_SESSION_NONE) {
+			session_start();
+		}
 
-        $ocorrencia = $this->verificarDespacho();
-        $ocorrenciaDAO = new Atendido_ocorrenciaDAO();
-        $ocorrenciaDAO->incluir($ocorrencia);
+		extract($_REQUEST);
+		try {
+			if (!empty($data) && is_numeric($atendido_idatendido) && $atendido_idatendido >= 1) {
+				$pdo = Conexao::connect();
+				$sql_nascimento = "SELECT p.data_nascimento FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
+				$stmt_nascimento = $pdo->prepare($sql_nascimento);
+				$stmt_nascimento->bindParam(':idatendido', $atendido_idatendido, PDO::PARAM_INT);
+				$stmt_nascimento->execute();
+				$atendido_nasc = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
 
-        $arquivos = $_FILES["arquivos"];
-        $ocorrenciaDAO->incluirArquivos($arquivos);
+				if (!$atendido_nasc || empty($atendido_nasc['data_nascimento'])) {
+					$_SESSION['msg'] = "Atenção: Atendido sem data de nascimento cadastrada. Cadastre primeiro para validar datas de ocorrência.";
+					$_SESSION['tipo'] = "warning";
+					header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . (int)$atendido_idatendido);
+					exit;
+				}
 
-        $_SESSION['msg'] = "Ocorrência cadastrada com sucesso!";
-        $_SESSION['tipo'] = "success";
-        header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($atendido_idatendido));
-        exit;
+				$data_nascimento_obj = new DateTime($atendido_nasc['data_nascimento']);
+				$data_ocorrencia_obj = new DateTime($data);
 
-    } catch (Exception $e) {
-        $_SESSION['msg'] = "Erro ao cadastrar ocorrência: " . $e->getMessage();
-        $_SESSION['tipo'] = "error";
-        header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . htmlspecialchars($atendido_idatendido ?? 0));
-        exit;
-    }
-}
+				if ($data_ocorrencia_obj < $data_nascimento_obj) {
+					$_SESSION['msg'] = "Erro: A data da ocorrência não pode ser anterior à data de nascimento do atendido!";
+					$_SESSION['tipo'] = "error";
+
+					header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido);
+					exit;
+				}
+			}
+
+			$ocorrencia = $this->verificarDespacho();
+			$ocorrenciaDAO = new Atendido_ocorrenciaDAO();
+			$ocorrenciaDAO->incluir($ocorrencia);
+
+			$arquivos = $_FILES["arquivos"] ?? null;
+			if ($arquivos) {
+				$ocorrenciaDAO->incluirArquivos($arquivos);
+			}
+
+			$_SESSION['msg'] = "Ocorrência cadastrada com sucesso!";
+			$_SESSION['tipo'] = "success";
+
+			header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . (int)$atendido_idatendido);
+			exit;
+		} catch (Exception $e) {
+
+			Util::tratarException($e);
+		}
+	}
+
 
 
 

@@ -84,7 +84,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
         require_once($pathRequire);
 
 		if (!class_exists($nomeClasse))
-			throw new InvalidArgumentException("A classe informada não existe no sistema. $nomeClasse", 400);
+			throw new InvalidArgumentException('A classe informada não existe no sistema.', 400);
 
         $objeto = new $nomeClasse();
 

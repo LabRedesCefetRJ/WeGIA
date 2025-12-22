@@ -20,7 +20,7 @@ class PaStatusControle
             header('Location: ../html/lista_pa_status.php');
             exit();
         } catch (Exception $e) {
-            $_SESSION['mensagem_erro'] = $e->getMessage();
+            $_SESSION['mensagem_erro'] = 'Erro ao cadastrar status.';
             header('Location: ../html/cadastro_pa_status.php');
             exit();
         }
@@ -42,8 +42,8 @@ class PaStatusControle
             header('Location: ../html/lista_pa_status.php');
             exit();
         } catch (Exception $e) {
-            $_SESSION['mensagem_erro'] = $e->getMessage();
-            header("Location: ../html/editar_pa_status.php?id=$id");
+            $_SESSION['mensagem_erro'] = 'Erro ao atualizar status.';
+            header('Location: ../html/lista_pa_status.php');
             exit();
         }
     }
@@ -63,7 +63,7 @@ class PaStatusControle
             header('Location: ../html/lista_pa_status.php');
             exit();
         } catch (Exception $e) {
-            $_SESSION['mensagem_erro'] = $e->getMessage();
+            $_SESSION['mensagem_erro'] = 'Erro ao excluir status.';
             header('Location: ../html/lista_pa_status.php');
             exit();
         }

@@ -1,18 +1,20 @@
 <?php
-class PaArquivoControle {
+
+require_once __DIR__ . '/../dao/Conexao.php';
+require_once __DIR__ . '/../dao/PaArquivoDAO.php';
+
+class PaArquivoControle
+{
     private $dao;
 
-    public function __construct() {
-        require_once __DIR__ . '/../dao/Conexao.php';
-        require_once __DIR__ . '/../dao/PaArquivoDAO.php';
-
+    public function __construct()
+    {
         $pdo = Conexao::connect();
         $this->dao = new PaArquivoDAO($pdo);
     }
 
-    public function upload() {
-        
-
+    public function upload()
+    {
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
 
         if ($idProcesso <= 0) {
@@ -29,7 +31,7 @@ class PaArquivoControle {
 
         $arquivo    = $_FILES['arquivo'];
         $ext        = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
-        $permitidas = ['png','jpg','jpeg','pdf','doc','docx','odp'];
+        $permitidas = ['png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx', 'odp'];
 
         if (!in_array($ext, $permitidas)) {
             $_SESSION['mensagem_erro'] = 'Extensão não permitida.';
@@ -39,7 +41,6 @@ class PaArquivoControle {
 
         $blob = file_get_contents($arquivo['tmp_name']);
 
-        
         $ok = $this->dao->inserir($idProcesso, null, $arquivo['name'], $ext, $blob);
 
         if ($ok) {
