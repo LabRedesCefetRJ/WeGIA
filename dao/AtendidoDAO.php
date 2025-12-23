@@ -183,7 +183,7 @@ class AtendidoDAO
             $stmt->bindValue(':imagem', $imagem);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoa = ' . $sql . '</b> <br /><br />' . Util::tratarException($e);
+          Util::tratarException($e);
         }
     }
 
@@ -360,7 +360,7 @@ class AtendidoDAO
             $stmt->bindParam(':data_expedicao', $data_expedicao);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . Util::tratarException($e);
+            Util::tratarException($e);
         }
     }
     public function alterarEndereco($atendido)
@@ -394,7 +394,7 @@ class AtendidoDAO
             $stmt->bindParam(':ibge', $ibge);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . Util::tratarException($e);
+            Util::tratarException($e);
         }
     }
 
@@ -456,7 +456,7 @@ class AtendidoDAO
                 $funcionario[] = array('id_pessoa' => $linha['id_pessoa'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'telefone' => $linha['telefone']);
             }
         } catch (PDOException $e) {
-            echo 'Error: ' .  Util::tratarException($e);
+            Util::tratarException($e);
         }
         return json_encode($funcionario);
     }

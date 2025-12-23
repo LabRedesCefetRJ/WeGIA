@@ -106,7 +106,7 @@ class Atendido_ocorrenciaControle
 			$sccd = "Ocorrencia enviada com sucesso";
 			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?msg=" . $msg . "&sccd=" . $sccd);
 		} catch (PDOException $e) {
-			echo "Não foi possível criar o despacho" . "<br>" . Util::tratarException($e);
+			Util::tratarException($e);
 			
 		}
 	}
@@ -227,14 +227,14 @@ class Atendido_ocorrenciaControle
 				$anexo->setNome($nome);
 				$anexo->setExtensao($extensao);
 			} catch (InvalidArgumentException $e) {
-				echo 'Erro ao tentar incluir documentação: ' . Util::tratarException($e);
+				Util::tratarException($e);
 			}
 
 			try {
 				$anexoDAO = new AnexoDAO();
 				$anexoDAO->incluir($anexo);
 			} catch (PDOException $e) {
-				echo "Não foi possível criar o despacho" . "<br>" . Util::tratarException($e);
+				Util::tratarException($e);
 				
 			}
 		}
