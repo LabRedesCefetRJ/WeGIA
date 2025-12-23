@@ -60,7 +60,7 @@ class Util
     {
         //Armazena exceção em um arquivo de log
         error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-        http_response_code($e->getCode());
+        http_response_code($e->getCode()); // <-- Aumentar a robustez do código, não necessariamente toda excessão retorna um inteiro para ser usado como código http
         //Adicionar futuramente verificação para outras exceções que precisem de uma mensagem personalizada
         if ($e instanceof PDOException) {
             echo json_encode(['erro' => 'Erro no servidor ao manipular o banco de dados']);

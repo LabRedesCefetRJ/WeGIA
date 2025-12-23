@@ -1773,28 +1773,24 @@ try {
         }
         let url = "alergia_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
-        post(url, data, listarAlergias);
+        $.post(url, data, listarAlergias);
       }
 
       function editarStatusMedico(id_medicacao) {
         $("#testemed").modal('show');
-        // $(".statusDoenca").append("<input type='hidden' value="+id_medicacao+">");
+        
         $(".statusDoenca").val(id_medicacao);
-
       }
 
       function aplicarMedicacao(id_doc) {
         if (!window.confirm("Tem certeza que deseja aplicar essa medicação?")) {
           return false;
         }
-        //document.querySelector(".bot click").style.background = 'Red';
+        
         let url = "mudarcor.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
-        post(url, data);
-
-
+        $.post(url, data);
       }
-
 
       //Adicionar alergias
       $(document).ready(function() {
