@@ -1,11 +1,11 @@
 <?php
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
   session_start();
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
   exit();
-}else{
+} else {
   session_regenerate_id();
 }
 
@@ -34,13 +34,15 @@ require_once "../personalizacao_display.php";
 
 $erro = null;
 if (isset($_SESSION['erro'])) {
-    $erro = $_SESSION['erro'];
-    unset($_SESSION['erro']);
+  $erro = $_SESSION['erro'];
+  unset($_SESSION['erro']);
 }
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
 $cargo = $mysqli->query("SELECT * FROM cargo");
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -103,9 +105,9 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
       <!-- start: page -->
       <div class="row" id="formulario">
         <?php if ($erro): ?>
-            <div style="color: red; font-weight: bold; text-align:center">
-                <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
-            </div>
+          <div style="color: red; font-weight: bold; text-align:center">
+            <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
+          </div>
         <?php endif; ?>
         <form action="#" method="POST" id="formsubmit" enctype="multipart/form-data" target="frame">
           <div class="col-md-4 col-lg-3">
@@ -142,7 +144,7 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
             </ul>
             <div class="tab-content">
               <div id="overview" class="tab-pane active">
-                <form class="form-horizontal" method="GET" action="../../controle/control.php">
+                <form class="form-horizontal" method="POST" action="../../controle/control.php">
                   <h4 class="mb-xlg">Informações Pessoais</h4>
                   <h5 class="obrig">Campos Obrigatórios(*)</h5>
                   <div class="form-group">
@@ -173,7 +175,7 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" min="<?= $dataNascimentoMinima?>" max=<?= $dataNascimentoMaxima?> required>
+                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" min="<?= $dataNascimentoMinima ?>" max=<?= $dataNascimentoMaxima ?> required>
                     </div>
                   </div>
                   <hr class="dotted short">
@@ -281,8 +283,8 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
                   <div class="form-group" id="reservista1" style="display: none">
                     <label class="col-md-3 control-label">Número do certificado reservista</label>
                     <div class="col-md-6">
-                      <input type="text" name="certificado_reservista_numero" class="form-control num_reservista" 
-                            pattern="\d*" inputmode="numeric" maxlength="9" placeholder="123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                      <input type="text" name="certificado_reservista_numero" class="form-control num_reservista"
+                        pattern="\d*" inputmode="numeric" maxlength="9" placeholder="123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                       <small>Formato: 123456789</small>
                     </div>
                   </div>
@@ -290,8 +292,8 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
                   <div class="form-group" id="reservista2" style="display: none">
                     <label class="col-md-3 control-label">Série do certificado reservista</label>
                     <div class="col-md-6">
-                      <input type="text" name="certificado_reservista_serie" class="form-control serie_reservista" 
-                            pattern="\d*" inputmode="numeric" maxlength="3" placeholder="001" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                      <input type="text" name="certificado_reservista_serie" class="form-control serie_reservista"
+                        pattern="\d*" inputmode="numeric" maxlength="3" placeholder="001" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                       <small>Formato: 001</small>
                     </div>
                   </div>
@@ -299,6 +301,7 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
                   <div class="panel-footer">
                     <div class="row">
                       <div class="col-md-9 col-md-offset-3">
+                        <?= Csrf::inputField() ?>
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="incluir">
                         <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="validarFuncionario()">
@@ -427,7 +430,7 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
 
     function validarFuncionario() {
       var btn = $("#enviar");
-      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo isset($_SESSION['cpf_interno'])?$_SESSION['cpf_interno']:''; ?>);
+      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo isset($_SESSION['cpf_interno']) ? $_SESSION['cpf_interno'] : ''; ?>);
       var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>);
       var cpf = (($("#cpf").val()).replaceAll(".", "")).replaceAll("-", "");
       console.log(this);
@@ -449,19 +452,19 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
 
       var dt_nasc = document.getElementById('nascimento').value;
 
-      let dataNascimentoMaxima = "<?=$dataNascimentoMaxima?>";
+      let dataNascimentoMaxima = "<?= $dataNascimentoMaxima ?>";
       dataNascimentoMaxima = dataNascimentoMaxima.replaceAll('-', '');
 
-      let dataNascimentoMinima = "<?=$dataNascimentoMinima?>";
+      let dataNascimentoMinima = "<?= $dataNascimentoMinima ?>";
       dataNascimentoMinima = dataNascimentoMinima.replaceAll('-', '');
 
       dt_nasc = dt_nasc.replaceAll('-', '');
 
-      if(dt_nasc > dataNascimentoMaxima){
+      if (dt_nasc > dataNascimentoMaxima) {
         return false;
       }
 
-      if(dt_nasc < dataNascimentoMinima){
+      if (dt_nasc < dataNascimentoMinima) {
         return false;
       }
 
@@ -486,7 +489,7 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
       var tipo = d.options[d.selectedIndex].text;
 
       const data_nascimento = document.querySelector("#nascimento").value;
-      if(dt_expedicao < data_nascimento){
+      if (dt_expedicao < data_nascimento) {
         return false;
       }
       if (nome && sobrenome && sexo && telefone && dt_nasc && rg && orgao_emissor && dt_expedicao && dt_admissao && situacao && cargo && escala && tipo) {
@@ -649,17 +652,16 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
     }
 
     // Delimitando a data mínima para a data de expedição da identidade por meio da data de nascimento
-    $("#nascimento").on('change', function () {
-      if($(this).val()){
+    $("#nascimento").on('change', function() {
+      if ($(this).val()) {
         $('#data_expedicao').prop('disabled', false);
         $('#dataNascInvalida').hide();
-        const nascimento = new  Date( $(this).val() );
+        const nascimento = new Date($(this).val());
         const dataMinimaExpedicao = new Date(nascimento);
         dataMinimaExpedicao.setDate(dataMinimaExpedicao.getDate() + 1);
 
         $('#data_expedicao').attr('min', dataMinimaExpedicao.toISOString().split('T')[0]);
-      }
-      else{
+      } else {
         $('#data_expedicao').prop('disabled', true).val('');
         $('#dataNascInvalida').show();
       }

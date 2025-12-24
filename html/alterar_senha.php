@@ -14,6 +14,7 @@ if (!isset($_SESSION['usuario'])) {
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "personalizacao_display.php";
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!doctype html>
 <html class="fixed">
@@ -36,6 +37,7 @@ require_once "personalizacao_display.php";
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="../css/error.css"/>
 	<?php if(function_exists('display_campo')):?>
 		<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 	<?php endif;?>
@@ -46,6 +48,7 @@ require_once "personalizacao_display.php";
 	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	
 	<!-- Theme CSS -->
 	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
 	<!-- Skin CSS -->
@@ -138,7 +141,7 @@ require_once "personalizacao_display.php";
 									<div>
 										<h3 id="erro"></h3>
 									</div>
-									<form class="form-horizontal" method="post" action="../controle/control.php">
+									<form class="form-horizontal" id="password-form" method="post" action="../controle/control.php">
 										<fieldset>
 											<div class="form-group">
 												<label class="col-md-3 control-label">Senha antiga:
@@ -153,9 +156,9 @@ require_once "personalizacao_display.php";
 												<label class="col-md-3 control-label">Nova senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" name="nova_senha" class="form-control" required><br />
+													<input type="password" id="nova_senha" name="nova_senha" class="form-control" required><br />
 													</label>
-
+													<div id="password-div"></div>
 												</div>
 											</div>
 											<div class="form-group">
@@ -168,6 +171,8 @@ require_once "personalizacao_display.php";
 												</div>
 											</div>
 										</fieldset>
+										<!-- Csrf -->
+										 <?= Csrf::inputField() ?>
 										<input type="hidden" name="nomeClasse" value="FuncionarioControle">
 										<input type="hidden" name="metodo" value="alterarSenha">
 										<input type="hidden" name="redir" value="logout.php">
@@ -204,6 +209,8 @@ require_once "personalizacao_display.php";
 	<script src="../assets/javascripts/tables/examples.datatables.default.js"></script>
 	<script src="../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 	<script src="../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
+	<script src="../Functions/password_policy.js"></script>
 </body>
 
 </html>

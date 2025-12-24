@@ -1289,7 +1289,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`atendido_ocorrencia_tipos` (
   `idatendido_ocorrencia_tipos` INT NOT NULL AUTO_INCREMENT,
-  `descricao` VARCHAR(255) NULL,
+  `descricao` VARCHAR(255) UNIQUE NOT NULL,
   PRIMARY KEY (`idatendido_ocorrencia_tipos`))
 ENGINE = InnoDB;
 

@@ -27,7 +27,7 @@ require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 require_once ROOT . "/html/personalizacao_display.php";
 
 $pdo = Conexao::connect();
-$nome = $pdo->query("SELECT a.idatendido, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) ORDER BY p.nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+$nome = $pdo->query("SELECT a.idatendido, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) ORDER BY p.nome ASC, p.sobrenome ASC")->fetchAll(PDO::FETCH_ASSOC);
 $tipo = $pdo->query("SELECT * FROM atendido_ocorrencia_tipos")->fetchAll(PDO::FETCH_ASSOC);
 $recupera_id_funcionario = $pdo->query("SELECT id_funcionario FROM funcionario WHERE id_pessoa=" . $id_pessoa . ";")->fetchAll(PDO::FETCH_ASSOC);
 $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
@@ -366,19 +366,30 @@ $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
                 type: "POST",
                 url: url,
                 data: data,
+                dataType: 'json',
+
                 success: function(response) {
-                    gerarOcorrencia();
+                    gerarOcorrencia(); // fluxo normal
                 },
-                dataType: 'text'
-            })
+
+                error: function(xhr) {
+                    // Se o PHP retornou na faixa 400
+                    if (xhr.status >= 400 && xhr.status < 500) {
+                        try {
+                            let erro = JSON.parse(xhr.responseText);
+                            alert(erro.erro);
+                        } catch (e) {
+                            alert("Ocorreu um erro na requisição.");
+                        }
+                        return;
+                    }
+
+                    // Outros erros (500 etc.)
+                    alert("Erro inesperado ao cadastrar ocorrência.");
+                }
+            });
         }
-
-        //function alertaBemSucedido() {
-        //    alert("Cadastro de ocorrência bem sucedido")
-        //}
     </script>
-
-
 
     <style type="text/css">
         .select {

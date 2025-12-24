@@ -1,58 +1,31 @@
 <?php
-include_once("conexao.php");
-session_start();
+if (session_status() === PHP_SESSION_NONE)
+  session_start();
+
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
+  exit();
+} else {
+  session_regenerate_id();
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+  http_response_code(412);
+  header("Location: ../index.php");
+  exit();
 }
 
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$situacao = $mysqli->query("SELECT * FROM situacao");
-$cargo = $mysqli->query("SELECT * FROM cargo");
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=11");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    if ($permissao['id_acao'] < 3) {
-      $msg = "Você não tem as permissões necessárias para essa página.";
-      header("Location: ../home.php?msg_c=$msg");
-    }
-    $permissao = $permissao['id_acao'];
-  } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../home.php?msg_c=$msg");
-  }
-} else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: ../home.php?msg_c=$msg");
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($id_pessoa, 11, 3);
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once ROOT . "/controle/FuncionarioControle.php";
-$listaCPF = new FuncionarioControle;
-$listaCPF->listarCpf();
-
 require_once ROOT . "/controle/AtendidoControle.php";
-$listaCPF2 = new AtendidoControle;
-$listaCPF2->listarCpf();
 
 // Inclui display de Campos
 require_once "../personalizacao_display.php";
@@ -68,11 +41,22 @@ if (!$cpf || $cpf < 1) {
   exit();
 }
 
-//SQL Injection está em algum dos métodos abaixo
-$funcionario = new FuncionarioDAO;
-$informacoesFunc = $funcionario->listarPessoaExistente($cpf);
-$id_pessoaForm = $funcionario->listarIdPessoa($cpf);
-$sobrenome = $funcionario->listarSobrenome($cpf);
+try {
+  $funcionario = new FuncionarioDAO;
+  $informacoesFunc = $funcionario->listarPessoaExistente($cpf);
+  $id_pessoaForm = $funcionario->listarIdPessoa($cpf);
+  $sobrenome = $funcionario->listarSobrenome($cpf);
+
+  $funcionarioControle = new FuncionarioControle();
+  $funcionarioControle->listarCpf();
+
+  $situacoes = $pdo->query("SELECT * FROM situacao")->fetchAll(PDO::FETCH_ASSOC);
+  $cargos = $pdo->query("SELECT * FROM cargo")->fetchAll(PDO::FETCH_ASSOC);
+  $tipos = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
+  $escala = $pdo->query("SELECT * FROM escala_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+  Util::tratarException($e);
+}
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -181,7 +165,7 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
           </ul>
           <div class="tab-content">
             <div id="overview" class="tab-pane active">
-              <form class="form-horizontal" method="GET" action="../../controle/control.php">
+              <form class="form-horizontal" method="POST" action="../../controle/control.php">
                 <h4 class="mb-xlg">Informações Pessoais</h4>
                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                 <div class="form-group">
@@ -260,9 +244,10 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
                     <select class="form-control input-lg mb-md" name="situacao" id="situacao" required>
                       <option selected disabled>Selecionar</option>
                       <?php
-                      while ($row = $situacao->fetch_array(MYSQLI_NUM)) {
-                        echo "<option value=" . $row[0] . ">" . $row[1] . "</option>";
-                      }                            ?>
+                      foreach ($situacoes as $situacao) {
+                        echo "<option value=" . htmlspecialchars($situacao['id_situacao']) . ">" . htmlspecialchars($situacao['situacoes']) . "</option>";
+                      }
+                      ?>
                     </select>
                   </div>
                 </div>
@@ -273,8 +258,8 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
                     <select class="form-control input-lg mb-md" name="cargo" id="cargo" required>
                       <option selected disabled>Selecionar</option>
                       <?php
-                      while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
-                        echo "<option value=" . $row[0] . ">" . $row[1] . "</option>";
+                      foreach ($cargos as $cargo) {
+                        echo "<option value=" . htmlspecialchars($cargo['id_cargo']) . ">" . htmlspecialchars($cargo['cargo']) . "</option>";
                       }
                       ?>
                     </select>
@@ -287,10 +272,8 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
                     <select class="form-control input-lg mb-md" name="escala" id="escala_input" required>
                       <option selected disabled value="">Selecionar</option>
                       <?php
-                      $pdo = Conexao::connect();
-                      $escala = $pdo->query("SELECT * FROM escala_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
                       foreach ($escala as $key => $value) {
-                        echo ("<option value=" . $value["id_escala"] . ">" . $value["descricao"] . "</option>");
+                        echo ("<option value=" . htmlspecialchars($value["id_escala"]) . ">" . htmlspecialchars($value["descricao"]) . "</option>");
                       }
                       ?>
                     </select>
@@ -303,10 +286,8 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
                     <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input" required>
                       <option selected disabled value="">Selecionar</option>
                       <?php
-                      $pdo = Conexao::connect();
-                      $tipo = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
-                      foreach ($tipo as $key => $value) {
-                        echo ("<option value=" . $value["id_tipo"] . ">" . $value["descricao"] . "</option>");
+                      foreach ($tipos as $tipo) {
+                        echo "<option value=" . htmlspecialchars($tipo['id_tipo']) . ">" . htmlspecialchars($tipo['descricao']) . "</option>";
                       }
                       ?>
                     </select>
@@ -330,6 +311,7 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
                   <div class="row">
                     <div class="col-md-9 col-md-offset-3">
                       <input type="hidden" name="nomeClasse" value="FuncionarioControle">
+                      <?= Csrf::inputField() ?>
                       <input type="hidden" name="id_pessoa" value="<?php echo $id_pessoaForm ?>">
                       <input type="hidden" name="sobrenome" value="<?php echo $sobrenome ?>">
                       <input type="hidden" name="metodo" value="incluirExistente">
@@ -365,29 +347,6 @@ $sobrenome = $funcionario->listarSobrenome($cpf);
     }
   </style>
   <script type="text/javascript">
-    function funcao1() {
-      var send = $("#enviar");
-      var cpfs = <?php echo $_SESSION['cpf_funcionario']; ?>;
-      var cpf_funcionario = $("#cpf").val();
-      var cpf_funcionario_correto = cpf_funcionario.replace(".", "");
-      var cpf_funcionario_correto1 = cpf_funcionario_correto.replace(".", "");
-      var cpf_funcionario_correto2 = cpf_funcionario_correto1.replace(".", "");
-      var cpf_funcionario_correto3 = cpf_funcionario_correto2.replace("-", "");
-      var apoio = 0;
-
-      $.each(cpfs, function(i, item) {
-        if (item.cpf == cpf_funcionario_correto3) {
-          alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
-          apoio = 1;
-          send.attr('disabled', 'disabled');
-        }
-      });
-
-      if (apoio == 0) {
-        alert("Cadastrado com sucesso!");
-      }
-    }
-
     function validarFuncionario() {
       var btn = $("#enviar");
       var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>);

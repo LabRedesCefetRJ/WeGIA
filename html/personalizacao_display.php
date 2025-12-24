@@ -11,8 +11,7 @@ if (file_exists("classes/Personalizacao_display.php")){
 }elseif (file_exists("../../classes/Personalizacao_display.php")){
      require_once "../../classes/Personalizacao_display.php";
 }
-function display_campo($campo, $tipo){
-    /*
+/*
 
     Esta função recebe como parametro:
         o nome do campo (Título, Subtítulo, Rodapé, etc);
@@ -24,6 +23,7 @@ function display_campo($campo, $tipo){
             file: exibe apenas o nome do arquivo de imagem, que está contido em ./img/database_images/
 
     */
+function display_campo($campo, $tipo){
     $display = new Display_campo($campo, $tipo);
     $display->display();
 }
