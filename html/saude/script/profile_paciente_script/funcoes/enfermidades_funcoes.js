@@ -187,8 +187,8 @@ async function gerarEnfermidadesDoPaciente() {
 
         // Ações
         const tdAcoes = document.createElement("td");
-        tdAcoes.style.display = "flex";
-        tdAcoes.style.justifyContent = "space-evenly";
+        tdAcoes.style.verticalAlign = "middle";
+        tdAcoes.style.textAlign = "center";
 
         const linkRemover = document.createElement("a");
         linkRemover.href = "#";

@@ -13,6 +13,7 @@ if (file_exists($config_path)) {
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Atendido.php";
 require_once ROOT . "/Functions/funcoes.php";
+require_once ROOT . "/classes/Util.php";
 
 class AtendidoDAO
 {
@@ -182,7 +183,7 @@ class AtendidoDAO
             $stmt->bindValue(':imagem', $imagem);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoa = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+          Util::tratarException($e);
         }
     }
 
@@ -359,7 +360,7 @@ class AtendidoDAO
             $stmt->bindParam(':data_expedicao', $data_expedicao);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            Util::tratarException($e);
         }
     }
     public function alterarEndereco($atendido)
@@ -393,7 +394,7 @@ class AtendidoDAO
             $stmt->bindParam(':ibge', $ibge);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            Util::tratarException($e);
         }
     }
 
@@ -410,7 +411,7 @@ class AtendidoDAO
             //     $x++;
             // }
         } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+            Util::tratarException($e);
         }
         // return $pessoa;
         return $linha['sobrenome'];
@@ -430,7 +431,7 @@ class AtendidoDAO
             //     $x++;
             // }
         } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+            Util::tratarException($e);
         }
         // return $pessoa;
         return $linha['id_pessoa'];
@@ -455,7 +456,7 @@ class AtendidoDAO
                 $funcionario[] = array('id_pessoa' => $linha['id_pessoa'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'telefone' => $linha['telefone']);
             }
         } catch (PDOException $e) {
-            echo 'Error: ' .  $e->getMessage();
+            Util::tratarException($e);
         }
         return json_encode($funcionario);
     }

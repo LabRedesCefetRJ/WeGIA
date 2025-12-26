@@ -1,6 +1,8 @@
 <?php
 include_once '../classes/Situacao.php';
 include_once '../dao/SituacaoDAO.php';
+include_once '../classes/util.php';
+
 class SituacaoControle
 {
     public function verificar(){
@@ -28,12 +30,16 @@ class SituacaoControle
             http_response_code(400);
             exit('Erro, a URL informada para a próxima página não é válida.');
         }
+        try{
+            $situacaoDAO= new SituacaoDAO();
+            $situacaos = $situacaoDAO->listarTodos();
+            session_start();
+            $_SESSION['situacao']=$situacaos;
+            header('Location: '.$nextPage);
+        }catch(PDOException $e){
+            Util::tratarException($e);
+        }
 
-        $situacaoDAO= new SituacaoDAO();
-        $situacaos = $situacaoDAO->listarTodos();
-        session_start();
-        $_SESSION['situacao']=$situacaos;
-        header('Location: '.$nextPage);
     }
     public function incluir(){
         $situacao = $this->verificar();
@@ -46,7 +52,7 @@ class SituacaoControle
             $_SESSION['link']="../html/adicionar_situacao.php";
             header("Location: ../html/adicionar_situacao.php");
         } catch (PDOException $e){
-            $msg= "Não foi possível registrar a situacao"."<br>".$e->getMessage();
+            $msg= "Não foi possível registrar a situacao"."<br>" . Util::tratarException($e);
             echo $msg;
         }
     }
@@ -63,7 +69,7 @@ class SituacaoControle
             $situacaoDAO->excluir($id_situacao);
             header('Location:../html/listar_calca.php');
         } catch (PDOException $e) {
-            echo "ERROR: ".$e->getMessage();
+            Util::tratarException($e);
         }
     }
     
