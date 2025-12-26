@@ -322,12 +322,16 @@ class AtendidoControle
 
     public function incluir()
     {
-        try {
-            $atendido = $this->verificar();
-            $cpf = $_GET['cpf'];
-            $validador = new Util();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-            $pdo = Conexao::connect();
+        try {
+            $atendido  = $this->verificar();
+            $cpf       = $_GET['cpf'] ?? '';
+            $cpf       = trim($cpf);
+            $validador = new Util();
+            $pdo       = Conexao::connect();
 
             if (!empty($cpf)) {
                 $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
@@ -337,48 +341,62 @@ class AtendidoControle
                 if ($count > 0) {
                     throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
                 }
-            }
 
-            if (!$validador->validarCPF($cpf)) {
-                throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+                if (!$validador->validarCPF($cpf)) {
+                    throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+                }
             }
 
             $dataNascimento = $atendido->getDataNascimento();
             if (!empty($dataNascimento)) {
-                if ($dataNascimento > Atendido::getDataNascimentoMaxima() || $dataNascimento < Atendido::getDataNascimentoMinima()) {
-                    throw new InvalidArgumentException('Erro, a data de nascimento informada está fora dos limites permitidos.', 400);
+                if (
+                    $dataNascimento > Atendido::getDataNascimentoMaxima() ||
+                    $dataNascimento < Atendido::getDataNascimentoMinima()
+                ) {
+                    throw new InvalidArgumentException(
+                        'Erro, a data de nascimento informada está fora dos limites permitidos.',
+                        400
+                    );
                 }
             }
 
-            $intDAO = new AtendidoDAO();
+            $intDAO     = new AtendidoDAO();
+            $idAtendido = $intDAO->incluir($atendido, $cpf);
 
-            $intDAO->incluir($atendido, $cpf);
-            $_SESSION['msg'] = "Atendido cadastrado com sucesso";
-            $_SESSION['proxima'] = "Cadastrar outro atendido";
-            $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
-            header("Location: ../html/atendido/Informacao_Atendido.php");
+            $_SESSION['msg']  = "Atendido cadastrado com sucesso";
+            $_SESSION['tipo'] = "success";
+
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . (int)$idAtendido);
+            exit;
         } catch (PDOException $e) {
             Util::tratarException($e);
         }
     }
 
+
     public function incluirSemCpf()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         try {
-            $atendido = $this->verificar();  // Extrai dados do formulário
-            // Passa o CPF vazio ou NULL
-            $cpf = null;
+            $atendido = $this->verificar();  
+            $cpf      = null;                
 
-            $intDAO = new AtendidoDAO();
+            $intDAO     = new AtendidoDAO();
+            $idAtendido = $intDAO->incluir($atendido, $cpf);  
 
-            $intDAO->incluir($atendido, $cpf);
-            $_SESSION['msg'] = "Atendido cadastrado sem CPF com sucesso";
-            header('Location: ../html/atendido/Informacao_Atendido.php');
+            $_SESSION['msg']  = "Atendido cadastrado sem CPF com sucesso";
+            $_SESSION['tipo'] = "success";
+
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . (int)$idAtendido);
             exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
+
 
 
 
