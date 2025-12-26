@@ -147,6 +147,7 @@ INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 11),
 (1, 7, 12),
 (1, 7, 13),
+(1, 7, 14),
 (1, 7, 21),
 (1, 7, 22),
 (1, 7, 23),

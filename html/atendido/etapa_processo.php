@@ -1,5 +1,4 @@
 <?php
-// Remove display de erros em produção
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
@@ -11,14 +10,21 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../index.php");
     exit();
+} else {
+    session_regenerate_id(); 
 }
 
-// ✅ VERIFICAÇÃO DE PERMISSÃO
-if (empty($_SESSION['permissoes']) || !in_array('GERENCIAR_ETAPAS_PROCESSO', $_SESSION['permissoes'])) {
-    http_response_code(403);
-    echo 'Acesso negado. Permissão insuficiente.';
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'O id do usuário é inválido.']);
     exit();
 }
+
+
+require_once '../html/permissao/permissao.php';
+permissao($id_pessoa, 14, 3);  
 
 if (!isset($_GET['id'])) {
     header("Location: processo_aceitacao.php");

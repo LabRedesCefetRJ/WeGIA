@@ -455,7 +455,6 @@ if ($atendido_id !== null && $atendido_id !== false) {
                         <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
                     </div>
                 </header>
-                <!-- Nao sei dizer oq mudou, mas nada está igual -->
 
                 <div class="row">
                     <div class="col-md-8 col-lg-12">
@@ -487,14 +486,13 @@ if ($atendido_id !== null && $atendido_id !== false) {
                                                 unset($_SESSION['mensagem_erro']);
                                             }
                                             ?>
-                                            <form class="form-horizontal" method="post" onsubmit="alertaBemSucedido()" action="../../controle/control.php" enctype="multipart/form-data">
+                                            <form class="form-horizontal" method="post" action="../../controle/control.php" enctype="multipart/form-data">
                                                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                                                 <br>
                                                 <div class="form-group">
                                                     <label class="col-md-3 control-label" for="profileLastName">Atendido:<sup class="obrig">*</sup></label>
                                                     <div class="col-md-6">
                                                         <?php if ($atendido_id) :
-                                                            // Encontra nome do atendido do id passado
                                                             $atendido_nome = '';
                                                             foreach ($nome as $item) {
                                                                 if ($item['idatendido'] == $atendido_id) {
