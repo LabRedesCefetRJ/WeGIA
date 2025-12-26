@@ -31,7 +31,7 @@ class AtendidoControle
     public function verificar()
     {
         extract($_REQUEST);
-        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf = '0' )) {
+        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf = '0')) {
             $msg .= "cpf do atendido não informado. Por favor, informe o cpf!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -47,7 +47,7 @@ class AtendidoControle
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
         }
-        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf = '0' )) {
+        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf = '0')) {
             $msg .= "Nascimento do atendido não informado. Por favor, informe a data!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -322,12 +322,16 @@ class AtendidoControle
 
     public function incluir()
     {
-        try {
-            $atendido = $this->verificar();
-            $cpf = $_GET['cpf'];
-            $validador = new Util();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-            $pdo = Conexao::connect();
+        try {
+            $atendido  = $this->verificar();
+            $cpf       = $_GET['cpf'] ?? '';
+            $cpf       = trim($cpf);
+            $validador = new Util();
+            $pdo       = Conexao::connect();
 
             if (!empty($cpf)) {
                 $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
@@ -337,48 +341,62 @@ class AtendidoControle
                 if ($count > 0) {
                     throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
                 }
-            }
 
-            if (!$validador->validarCPF($cpf)) {
-                throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+                if (!$validador->validarCPF($cpf)) {
+                    throw new InvalidArgumentException('Erro, o CPF informado não é válido', 400);
+                }
             }
 
             $dataNascimento = $atendido->getDataNascimento();
             if (!empty($dataNascimento)) {
-                if ($dataNascimento > Atendido::getDataNascimentoMaxima() || $dataNascimento < Atendido::getDataNascimentoMinima()) {
-                    throw new InvalidArgumentException('Erro, a data de nascimento informada está fora dos limites permitidos.', 400);
+                if (
+                    $dataNascimento > Atendido::getDataNascimentoMaxima() ||
+                    $dataNascimento < Atendido::getDataNascimentoMinima()
+                ) {
+                    throw new InvalidArgumentException(
+                        'Erro, a data de nascimento informada está fora dos limites permitidos.',
+                        400
+                    );
                 }
             }
 
-            $intDAO = new AtendidoDAO();
+            $intDAO     = new AtendidoDAO();
+            $idAtendido = $intDAO->incluir($atendido, $cpf);
 
-            $intDAO->incluir($atendido, $cpf);
-            $_SESSION['msg'] = "Atendido cadastrado com sucesso";
-            $_SESSION['proxima'] = "Cadastrar outro atendido";
-            $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
-            header("Location: ../html/atendido/Informacao_Atendido.php");
+            $_SESSION['msg']  = "Atendido cadastrado com sucesso";
+            $_SESSION['tipo'] = "success";
+
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . (int)$idAtendido);
+            exit;
         } catch (PDOException $e) {
             Util::tratarException($e);
         }
     }
 
+
     public function incluirSemCpf()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         try {
-            $atendido = $this->verificar();  // Extrai dados do formulário
-            // Passa o CPF vazio ou NULL
-            $cpf = null;
+            $atendido = $this->verificar();  
+            $cpf      = null;                
 
-            $intDAO = new AtendidoDAO();
+            $intDAO     = new AtendidoDAO();
+            $idAtendido = $intDAO->incluir($atendido, $cpf);  
 
-            $intDAO->incluir($atendido, $cpf);
-            $_SESSION['msg'] = "Atendido cadastrado sem CPF com sucesso";
-            header('Location: ../html/atendido/Informacao_Atendido.php');
+            $_SESSION['msg']  = "Atendido cadastrado sem CPF com sucesso";
+            $_SESSION['tipo'] = "success";
+
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . (int)$idAtendido);
             exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
+
 
 
 
@@ -434,59 +452,122 @@ class AtendidoControle
     public function alterarInfPessoal()
     {
         extract($_REQUEST);
-        try {
-            if ($nascimento && is_numeric($idatendido) && $idatendido >= 1) {
-                $pdo = Conexao::connect();
 
-                // Buscar data de expedição atual do atendido
-                $sql_expedicao = "SELECT p.data_expedicao 
-                                FROM atendido a 
-                                JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa 
-                                WHERE a.idatendido = :idatendido";
+        $idatendido = filter_var($idatendido ?? 0, FILTER_VALIDATE_INT);
+        if (!$idatendido || $idatendido < 1) {
+            $_SESSION['msg'] = "ID do atendido inválido!";
+            $_SESSION['tipo'] = "error";
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=0");
+            exit;
+        }
+
+        try {
+            $pdo = Conexao::connect();
+
+            if (!empty($nascimento)) {
+                $sql_expedicao = "SELECT p.data_expedicao FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
                 $stmt_expedicao = $pdo->prepare($sql_expedicao);
-                $stmt_expedicao->bindParam(':idatendido', $idatendido);
+                $stmt_expedicao->bindParam(':idatendido', $idatendido, PDO::PARAM_INT);
                 $stmt_expedicao->execute();
                 $atendido_doc = $stmt_expedicao->fetch(PDO::FETCH_ASSOC);
 
-                if ($atendido_doc && $atendido_doc['data_expedicao']) {
-                    $data_nascimento_obj = new DateTime($nascimento);
-                    $data_expedicao_obj = new DateTime($atendido_doc['data_expedicao']);
+                if ($atendido_doc && !empty($atendido_doc['data_expedicao'])) {
+                    try {
+                        $data_nascimento_obj = new DateTime($nascimento);
+                        $data_expedicao_obj = new DateTime($atendido_doc['data_expedicao']);
 
-                    if ($data_nascimento_obj > $data_expedicao_obj) {
-                        $_SESSION['msg'] = "Erro: A data de nascimento não pode ser posterior à data de expedição do documento!";
+                        if ($data_nascimento_obj > $data_expedicao_obj) {
+                            $_SESSION['msg'] = "Erro: Data de nascimento posterior à expedição do documento!";
+                            $_SESSION['tipo'] = "error";
+                            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+                            exit;
+                        }
+                    } catch (Exception $e) {
+                        error_log("Erro DateTime validação: " . $e->getMessage());
+                        $_SESSION['msg'] = "Formato de data inválido!";
                         $_SESSION['tipo'] = "error";
-                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
+                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
                         exit;
                     }
                 }
             }
 
-            $atendido = new Atendido('', $nome, $sobrenome, $sexo, $nascimento, '', '', '', '', '', $tipoSanguineo, '', $telefone, '', '', '', '', '', '', '', '', '');
-            $atendido->setIdatendido($idatendido);
+            $cpf = trim($_POST['cpf'] ?? '');
+            if (!empty($cpf)) {
+                $sql_cpf_atual = "SELECT p.cpf FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
+                $stmt_cpf = $pdo->prepare($sql_cpf_atual);
+                $stmt_cpf->bindParam(':idatendido', $idatendido, PDO::PARAM_INT);
+                $stmt_cpf->execute();
+                $cpfAtual = $stmt_cpf->fetchColumn();
 
-            $atendidoDAO = new AtendidoDAO();
+                if ($cpfAtual !== null && $cpfAtual !== '') {
+                    $_POST['cpf'] = '';
+                } else {
+                    $validador = new Util();
+                    if (!$validador->validarCPF($cpf)) {
+                        throw new InvalidArgumentException('CPF inválido', 400);
+                    }
 
-            $atendidoDAO->alterarInfPessoal($atendido);
+                    $stmt_unico = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ? AND id_pessoa != (SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = ?)");
+                    $stmt_unico->execute([$cpf, $idatendido]);
+                    if ($stmt_unico->fetchColumn() > 0) {
+                        throw new InvalidArgumentException('CPF já cadastrado em outro atendido', 400);
+                    }
+                }
+            }
 
-            header("Location: ../html/atendido/Informacao_Atendido.php");
+            $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'telefone', 'nome_mae', 'nome_pai', 'tipo_sanguineo'];
+            $setClause = [];
+            $params = [':idatendido' => $idatendido];
+
+            foreach ($campos as $campo) {
+                if (isset($_POST[$campo]) && $_POST[$campo] !== '') {
+                    $setClause[] = "p.`$campo` = :" . $campo;
+                    $params[":$campo"] = $_POST[$campo];
+                }
+            }
+
+            if (empty($setClause)) {
+                $_SESSION['msg'] = "Nenhum dado para atualizar!";
+                header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+                exit;
+            }
+
+            $sql_update = "
+            UPDATE pessoa p 
+            JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa 
+            SET " . implode(', ', $setClause) . " 
+            WHERE a.idatendido = :idatendido
+        ";
+
+            $stmt = $pdo->prepare($sql_update);
+            $stmt->execute($params);
+
+            $_SESSION['msg'] = "Informações pessoais atualizadas com sucesso!";
+            $_SESSION['tipo'] = "success";
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+            exit;
+        } catch (PDOException $e) {
+            error_log("Erro DAO alterarInfPessoal: " . $e->getMessage());
+            $_SESSION['msg'] = "Erro no banco de dados: " . $e->getMessage();
+            $_SESSION['tipo'] = "error";
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
+
+
+
 
     public function alterarDocumentacao()
     {
         extract($_REQUEST);
         try {
             if ($dataExpedicao && $idatendido) {
-
                 $pdo = Conexao::connect();
-
-                // Buscar data de nascimento atual do atendido
-                $sql_nascimento = "SELECT p.data_nascimento 
-                                FROM atendido a 
-                                JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa 
-                                WHERE a.idatendido = :idatendido";
+                $sql_nascimento = "SELECT p.data_nascimento FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
                 $stmt_nascimento = $pdo->prepare($sql_nascimento);
                 $stmt_nascimento->bindParam(':idatendido', $idatendido);
                 $stmt_nascimento->execute();
@@ -495,24 +576,63 @@ class AtendidoControle
                 if ($atendido_data && $atendido_data['data_nascimento']) {
                     $data_nascimento = new DateTime($atendido_data['data_nascimento']);
                     $data_expedicao_obj = new DateTime($dataExpedicao);
-
                     if ($data_expedicao_obj <= $data_nascimento)
                         throw new InvalidArgumentException('A data de expedição do documento não pode ser anterior ou igual à data de nascimento!', 400);
                 }
             }
 
-            $atendido = new Atendido($cpf, '', '', '', '', $registroGeral, $orgaoEmissor, $dataExpedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $pdo = Conexao::connect();
+            $sql_atual = "SELECT cpf, sexo, registro_geral, orgao_emissor, data_expedicao, telefone 
+                      FROM pessoa p 
+                      JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa 
+                      WHERE a.idatendido = :idatendido";
+            $stmt_atual = $pdo->prepare($sql_atual);
+            $stmt_atual->bindParam(':idatendido', $idatendido);
+            $stmt_atual->execute();
+            $dados_atuais = $stmt_atual->fetch(PDO::FETCH_ASSOC);
+
+            $cpf_final = !empty($cpf) ? $cpf : $dados_atuais['cpf'];
+            $sexo_final = $dados_atuais['sexo'];
+            $telefone = $dados_atuais['telefone'] ?? '';
+
+            $atendido = new Atendido(
+                $cpf_final,
+                '',
+                '',
+                $sexo_final,
+                '',
+                $registroGeral ?: $dados_atuais['registro_geral'],
+                $orgaoEmissor ?: $dados_atuais['orgao_emissor'],
+                $dataExpedicao ?: $dados_atuais['data_expedicao'],
+                '',
+                '',
+                '',
+                'null',
+                $telefone,
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                ''
+            );
 
             $atendido->setIdatendido($idatendido);
-
-            $atendidoDAO = new atendidoDAO();
-
+            $atendidoDAO = new AtendidoDAO();
             $atendidoDAO->alterarDocumentacao($atendido);
+
+            $_SESSION['msg'] = "Documentação atualizada com sucesso!";
+            $_SESSION['tipo'] = "success";
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
         } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
+
+
 
     public function alterarImagem()
     {

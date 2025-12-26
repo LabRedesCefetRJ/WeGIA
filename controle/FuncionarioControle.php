@@ -1,5 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
     session_start();
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
@@ -11,6 +12,8 @@ include_once ROOT . '/dao/FuncionarioDAO.php';
 include_once ROOT . '/dao/QuadroHorarioDAO.php';
 include_once ROOT . '/dao/PermissaoDAO.php';
 require_once ROOT . '/classes/Util.php';
+require_once dirname(__FILE__, 2) . '/html/geral/msg.php';
+
 
 class FuncionarioControle
 {
@@ -683,6 +686,9 @@ class FuncionarioControle
             $recursosBd = $permissoesBd ? array_column($permissoesBd, 'id_recurso') : [];
 
             // normalizar para int
+            if (!isset($recursos))
+                $recursos = [];
+
             $recursos = array_map('intval', $recursos);
 
             // calcular diferenças
@@ -764,13 +770,18 @@ class FuncionarioControle
 
             $funcionarioDAO->incluir($funcionario, $cpf);
             $horarioDAO->incluir($horario);
-            $_SESSION['proxima'] = "Cadastrar outro funcionario";
-            $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
-            header("Location: ../html/funcionario/informacao_funcionario.php");
-        } catch (Exception $e) {
-            Util::tratarException($e);
+
+            $_SESSION['msg']  = "Funcionário cadastrado com sucesso";
+            $_SESSION['tipo'] = "success";
+
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$idFuncionario);
+            exit;
+        } catch (PDOException $e) {
+            $msg = "Não foi possível registrar o funcionário<br>" . $e->getMessage();
+            echo $msg;
         }
     }
+
 
     public function incluirExistente()
     {
@@ -793,6 +804,7 @@ class FuncionarioControle
         }
     }
 
+
     public function alterarInfPessoal()
     {
         try {
@@ -809,9 +821,63 @@ class FuncionarioControle
             if ($nascimento > Funcionario::getDataNascimentoMaxima() || $nascimento < Funcionario::getDataNascimentoMinima())
                 throw new InvalidArgumentException('A data de nascimento de um funcionário não está dentro dos limites permitidos.', 412);
 
-            $funcionario = new Funcionario('', $nome, $sobrenome, $gender, $nascimento, '', '', '', $nome_mae, $nome_pai, $sangue, '', $telefone, '', '', '', '', '', '', '', '', '');
+    
+        $erros = [];
+
+        if (!isset($nome) || trim($nome) === '') {
+            $erros[] = "Nome do funcionário não pode ser vazio.";
+        }
+        if (!isset($sobrenome) || trim($sobrenome) === '') {
+            $erros[] = "Sobrenome do funcionário não pode ser vazio.";
+        }
+        if (!isset($gender) || ($gender !== 'm' && $gender !== 'f')) {
+            $erros[] = "Sexo do funcionário é obrigatório.";
+        }
+        if (!isset($nascimento) || trim($nascimento) === '') {
+            $erros[] = "Data de nascimento é obrigatória.";
+        }
+        if (!isset($telefone) || trim($telefone) === '') {
+            $erros[] = "Telefone do funcionário é obrigatório.";
+        }
+
+        if (!empty($erros)) {
+            setSessionMsg(implode(' ', $erros), 'err');
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
+        }
+
+        if ($nascimento === '') {
+            $nascimento = null;
+        }
+
+        $funcionario = new Funcionario(
+            '',
+            $nome,
+            $sobrenome,
+            $gender,
+            $nascimento,
+            '',
+            '',
+            '',
+            $nome_mae,
+            $nome_pai,
+            $sangue,
+            '',
+            $telefone,
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ''
+        );
             $funcionario->setId_funcionario($id_funcionario);
-            $funcionarioDAO = new FuncionarioDAO();
+    
+        $funcionarioDAO = new FuncionarioDAO();
+
 
             $funcionarioDAO->alterarInfPessoal($funcionario);
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
@@ -819,6 +885,8 @@ class FuncionarioControle
             Util::tratarException($e);
         }
     }
+
+
 
     /**
      * Altera a chave de acesso ao sistema de determinado usuário, permite que administradores configurados possam alterar a senha de outras pessoas
@@ -1004,60 +1072,25 @@ class FuncionarioControle
 
     public function alterarEndereco()
     {
+        extract($_REQUEST);
+        if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
+            $numero_residencia = "null";
+        }
+        $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+        $funcionario->setId_funcionario($id_funcionario);
+        $funcionarioDAO = new FuncionarioDAO();
         try {
-            $cep = filter_var($_REQUEST['cep'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $uf = filter_var($_REQUEST['uf'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $cidade = filter_var($_REQUEST['cidade'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $bairro = filter_var($_REQUEST['bairro'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $rua = filter_var($_REQUEST['rua'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $numero_residencia = filter_var($_REQUEST['numero_residencia'], FILTER_SANITIZE_NUMBER_INT);
-            $complemento = filter_var($_REQUEST['complemento'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $ibge = filter_var($_REQUEST['ibge'], FILTER_SANITIZE_NUMBER_INT);
-            $id_funcionario = filter_var($_REQUEST['id_funcionario'], FILTER_SANITIZE_NUMBER_INT);
-
-            if (!Csrf::validateToken($_POST['csrf_token']))
-                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
-
-            if (!$id_funcionario || $id_funcionario < 1)
-                throw new InvalidArgumentException('O id do funcionário informado não é válido.', 412);
-
-            if (strlen($cep) != 0 && strlen(preg_replace('/\D/', '', $cep)) != 8)
-                throw new InvalidArgumentException('O tamanho do CEP informado não está correto.', 412);
-
-            if (strlen($uf) > 5)
-                throw new InvalidArgumentException('O tamanho do texto da unidade federativa ultrapassou o limite de 5 caracteres.', 412);
-
-            if (strlen($cidade) > 40)
-                throw new InvalidArgumentException('O tamanho do texto da cidade ultrapassou o limite de 40 caracteres.', 412);
-
-            if (strlen($bairro) > 40)
-                throw new InvalidArgumentException('O tamanho do texto do bairro ultrapassou o limite de 40 caracteres.', 412);
-
-            if (strlen($rua) > 100)
-                throw new InvalidArgumentException('O tamanho do texto do logradouro ultrapassou o limite de 100 caracteres.', 412);
-
-            if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
-                $numero_residencia = null;
-            } elseif ($numero_residencia < 0) {
-                throw new InvalidArgumentException('O número da residência não pode ser negativo.', 412);
-            }
-
-            if (strlen($complemento) > 50)
-                throw new InvalidArgumentException('O tamanho do texto do complemento ultrapassou o limite de 50 caracteres.', 412);
-
-            if (strlen($ibge) != 0 && strlen(preg_replace('/\D/', '', $ibge)) != 7)
-                throw new InvalidArgumentException('O tamanho do código do IBGE informado não está correto.', 412);
-
-            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
-            $funcionario->setId_funcionario($id_funcionario);
-            $funcionarioDAO = new FuncionarioDAO();
-
             $funcionarioDAO->alterarEndereco($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
-        } catch (Exception $e) {
-            Util::tratarException($e);
+            setSessionMsg("Endereço atualizado com sucesso!", "sccs");
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
+        } catch (PDOException $e) {
+            setSessionMsg("Erro ao atualizar endereço.", "err");
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
         }
     }
+
 
     public function alterarCargaHoraria()
     {

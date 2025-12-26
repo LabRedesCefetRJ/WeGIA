@@ -54,47 +54,53 @@ class AtendidoDAO
     {
         $pdo = Conexao::connect();
 
-        // Inserção na tabela pessoa
+
+        $pdo->beginTransaction();
+
         $sqlPessoa = "INSERT INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento) 
                   VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :dataNascimento)";
         $stmtPessoa = $pdo->prepare($sqlPessoa);
 
-        $nome = $atendido->getNome();
-        $sobrenome = $atendido->getSobrenome();
-        //$cpf = $atendido->getCpf();
-        $sexo = $atendido->getSexo();
-        $telefone = $atendido->getTelefone();
+        $nome           = $atendido->getNome();
+        $sobrenome      = $atendido->getSobrenome();
+        $sexo           = $atendido->getSexo();
+        $telefone       = $atendido->getTelefone();
         $dataNascimento = $atendido->getDataNascimento();
         if (empty($dataNascimento)) {
-            $dataNascimento = null; // permite nulo
+            $dataNascimento = null;
         }
 
-        $stmtPessoa->bindParam(':cpf', $cpf);
-        $stmtPessoa->bindParam(':nome', $nome);
-        $stmtPessoa->bindParam(':sobrenome', $sobrenome);
-        $stmtPessoa->bindParam(':sexo', $sexo);
-        $stmtPessoa->bindParam(':telefone', $telefone);
+        $stmtPessoa->bindParam(':cpf',            $cpf);
+        $stmtPessoa->bindParam(':nome',           $nome);
+        $stmtPessoa->bindParam(':sobrenome',      $sobrenome);
+        $stmtPessoa->bindParam(':sexo',           $sexo);
+        $stmtPessoa->bindParam(':telefone',       $telefone);
         $stmtPessoa->bindParam(':dataNascimento', $dataNascimento);
 
         $stmtPessoa->execute();
 
-        // Obtém o último id inserido em pessoa
         $idPessoa = $pdo->lastInsertId();
 
-        // Inserção na tabela atendido
         $sqlAtendido = "INSERT INTO atendido (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
                     VALUES (:pessoaId, :tipo, :status)";
         $stmtAtendido = $pdo->prepare($sqlAtendido);
 
-        $intTipo = $atendido->getIntTipo();
+        $intTipo   = $atendido->getIntTipo();
         $intStatus = $atendido->getIntStatus();
 
         $stmtAtendido->bindParam(':pessoaId', $idPessoa);
-        $stmtAtendido->bindParam(':tipo', $intTipo);
-        $stmtAtendido->bindParam(':status', $intStatus);
+        $stmtAtendido->bindParam(':tipo',     $intTipo);
+        $stmtAtendido->bindParam(':status',   $intStatus);
 
         $stmtAtendido->execute();
+
+        $idAtendido = $pdo->lastInsertId();
+
+        $pdo->commit();
+
+        return $idAtendido;
     }
+
     // incluirExistente
 
     public function incluirExistente($atendido, $idPessoa, $sobrenome)
@@ -297,34 +303,61 @@ class AtendidoDAO
 
     public function alterarInfPessoal($atendido)
     {
-        $sql = 'update pessoa as p inner join atendido as a on p.id_pessoa=a.pessoa_id_pessoa set nome=:nome,sobrenome=:sobrenome,sexo=:sexo,telefone=:telefone,data_nascimento=:data_nascimento,nome_pai=:nome_pai,nome_mae=:nome_mae,tipo_sanguineo=:tipo_sanguineo where idatendido=:idatendido';
-
-        $sql = str_replace("'", "\'", $sql);
         $pdo = Conexao::connect();
-        $stmt = $pdo->prepare($sql);
+
+        $sql_id_pessoa = "SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = :idatendido";
+        $stmt_id = $pdo->prepare($sql_id_pessoa);
+        $stmt_id->bindParam(':idatendido', $atendido->getIdatendido());
+        $stmt_id->execute();
+        $id_pessoa = $stmt_id->fetchColumn();
+
+        if (!$id_pessoa) {
+            throw new Exception("Atendido não encontrado");
+        }
+
+        $sql_cpf_atual = "SELECT cpf FROM pessoa WHERE id_pessoa = :id_pessoa";
+        $stmt_cpf = $pdo->prepare($sql_cpf_atual);
+        $stmt_cpf->bindParam(':id_pessoa', $id_pessoa);
+        $stmt_cpf->execute();
+        $cpfAtual = $stmt_cpf->fetchColumn();
+
+        $sql = "UPDATE pessoa SET 
+            nome = :nome,
+            sobrenome = :sobrenome,
+            sexo = :sexo,
+            telefone = :telefone,
+            data_nascimento = :data_nascimento,
+            nome_pai = :nome_pai,
+            nome_mae = :nome_mae,
+            tipo_sanguineo = :tipo_sanguineo";
+
+        $params = [
+            ':nome' => $atendido->getNome(),
+            ':sobrenome' => $atendido->getSobrenome(),
+            ':sexo' => $atendido->getSexo(),
+            ':telefone' => $atendido->getTelefone(),
+            ':data_nascimento' => $atendido->getDataNascimento(),
+            ':nome_pai' => $atendido->getNomePai(),
+            ':nome_mae' => $atendido->getNomeMae(),
+            ':tipo_sanguineo' => $atendido->getTipoSanguineo()
+        ];
+
+        if ($cpfAtual === null || $cpfAtual === '') {
+            $sql .= ", cpf = :cpf";
+            $params[':cpf'] = $_POST['cpf'] ?? '';
+        }
+
+        $sql .= " WHERE id_pessoa = :id_pessoa";
+        $params[':id_pessoa'] = $id_pessoa;
 
         $stmt = $pdo->prepare($sql);
-        $nome = $atendido->getNome();
-        $sobrenome = $atendido->getSobrenome();
-        $id = $atendido->getIdatendido();
-        $sexo = $atendido->getSexo();
-        $telefone = $atendido->getTelefone();
-        $nascimento = $atendido->getDataNascimento();
-        $nomePai = $atendido->getNomePai();
-        $nomeMae = $atendido->getNomeMae();
-        $sangue = $atendido->getTipoSanguineo();
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
 
-        $stmt->bindParam(':nome', $nome);
-        $stmt->bindParam(':sobrenome', $sobrenome);
-        $stmt->bindParam(':idatendido', $id);
-        $stmt->bindParam(':sexo', $sexo);
-        $stmt->bindParam(':telefone', $telefone);
-        $stmt->bindParam(':data_nascimento', $nascimento);
-        $stmt->bindParam(':nome_pai', $nomePai);
-        $stmt->bindParam(':nome_mae', $nomeMae);
-        $stmt->bindParam(':tipo_sanguineo', $sangue);
         $stmt->execute();
     }
+
 
     public function alterarDocumentacao($atendido)
     {

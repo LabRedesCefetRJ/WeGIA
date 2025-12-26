@@ -84,6 +84,10 @@ try {
 
   $docfuncional->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
 
+  require_once "../../classes/Funcionario.php";
+  $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
+  $dataNascimentoMinima = Funcionario::getDataNascimentoMinima();
+
   if (!$docfuncional->execute()) {
     echo json_encode(['erro' => 'Falha ao executar consulta da documentação do funcionário']);
     exit(500);
@@ -95,7 +99,7 @@ try {
     // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
     //formatar data
     $data = new DateTime($value['data']);
-    $docfuncional[$key]['data'] = $data->format('d/m/Y h:i:s');
+    $docfuncional[$key]['data'] = $data->format('d/m/Y H:i:s');
   }
   $docfuncional = json_encode($docfuncional);
   //SQL Injection abaixo
@@ -111,6 +115,7 @@ try {
   $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
   $dependente = json_encode($dependente);
 
+<<<<<<< HEAD
   // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
   $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
   $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
@@ -122,6 +127,12 @@ try {
   Util::tratarException($e);
   exit();
 }
+=======
+// Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
+$stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=' . $_SESSION['id_pessoa']);
+$stmt->execute();
+$adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+>>>>>>> raphael-251111
 ?>
 <!doctype html>
 <html class="fixed">
@@ -442,6 +453,7 @@ try {
     $(function() {
       var docfuncional = <?= $docfuncional ?>;
       $.each(docfuncional, function(i, item) {
+        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -457,6 +469,7 @@ try {
     function listarFunDocs(docfuncional) {
       $("#doc-tab").empty();
       $.each(docfuncional, function(i, item) {
+        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -688,7 +701,7 @@ try {
         </header>
         <!-- start: page -->
         <!-- Mensagem -->
-        <?php getMsgSession("msg", "tipo"); ?>
+        <?php sessionMsg(); ?>
         <div class="row">
           <div class="col-md-4 col-lg-3">
             <section class="panel">
@@ -820,13 +833,24 @@ try {
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                          <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                         <div class="col-md-8">
+<<<<<<< HEAD
                           <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?= $dataNascimentoMaxima ?>>
+=======
+                          <input type="date"
+                            placeholder="dd/mm/aaaa"
+                            maxlength="10"
+                            class="form-control"
+                            name="nascimento"
+                            id="nascimento"
+                            min="<?= $dataNascimentoMinima ?>"
+                            max="<?= $dataNascimentoMaxima ?>" required>
+>>>>>>> raphael-251111
                         </div>
                       </div>
                       <div class="form-group">
@@ -1535,25 +1559,25 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)">
+                            <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
+                            <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                           <div class="col-md-6">
-                            <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?>>
+                            <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                           </div>
                         </div>
                         <div class="form-group">
@@ -1840,7 +1864,17 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="cep">CEP</label>
                           <div class="col-md-8">
-                            <input type="text" name="cep" value="" size="10" onblur="pesquisacep(this.value);" class="form-control" id="cep" maxlength="9" placeholder="Ex: 22222-222" onkeydown="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)">
+                            <input type="text"
+                              name="cep"
+                              value=""
+                              size="10"
+                              class="form-control"
+                              id="cep"
+                              maxlength="8"
+                              placeholder="Ex: 22222222"
+                              inputmode="numeric"
+                              onblur="pesquisacep(this.value)"
+                              oninput="formatarCep(this)">
                           </div>
                         </div>
                         <div class="form-group">
@@ -2022,8 +2056,11 @@ try {
     })
 
     function funcao3() {
+<<<<<<< HEAD
       //refazer validação do frontend
 
+=======
+>>>>>>> raphael-251111
       var idfunc = <?= $idFuncionario ?>;
       var cpfs = <?php echo $_SESSION['cpf_funcionario']; ?>;
       var cpf_funcionario = $("#cpf").val();
@@ -2058,8 +2095,12 @@ try {
         return false;
       }
 
+<<<<<<< HEAD
       /*if (apoio == 0) {
         alert("Editado com sucesso!");
+=======
+      if (apoio == 0) {
+>>>>>>> raphael-251111
         return true;
       }*/
 

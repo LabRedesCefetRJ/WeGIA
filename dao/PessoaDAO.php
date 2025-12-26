@@ -61,4 +61,23 @@ class PessoaDAO{
 
         return $pessoa;
     }
+
+
+    public function inserirPessoa(string $cpf, string $nome, string $sobrenome): int
+{
+    $sql = "INSERT INTO pessoa (cpf, nome, sobrenome) VALUES (:cpf, :nome, :sobrenome)";
+    $stmt = $this->pdo->prepare($sql);
+
+    $stmt->bindParam(':cpf', $cpf);
+    $stmt->bindParam(':nome', $nome);
+    $stmt->bindParam(':sobrenome', $sobrenome);
+
+    if (!$stmt->execute()) {
+        throw new PDOException("Erro ao inserir pessoa no banco.");
+    }
+
+    return (int)$this->pdo->lastInsertId();
+}
+
+
 }

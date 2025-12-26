@@ -88,6 +88,11 @@
 								</a>
 								<ul class="nav nav-children">
 									<li>
+										<a href="<?= WWW ?>html/atendido/processo_aceitacao.php">
+											<span>Processo de Aceitação</span>
+										</a>
+									</li>	
+									<li>
 										<a href="<?= WWW ?>html/atendido/pre_cadastro_atendido.php">
 											<span>Cadastrar Atendido</span>
 										</a>
