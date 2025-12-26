@@ -23,7 +23,7 @@ if (!$id_pessoa || $id_pessoa < 1) {
 }
 
 
-require_once '../html/permissao/permissao.php';
+require_once '../permissao/permissao.php';
 permissao($id_pessoa, 14, 3);  
 
 if (!isset($_GET['id'])) {
