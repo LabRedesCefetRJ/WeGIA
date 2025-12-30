@@ -1859,8 +1859,8 @@ try {
                               size="10"
                               class="form-control"
                               id="cep"
-                              maxlength="8"
-                              placeholder="Ex: 22222222"
+                              maxlength="9"
+                              placeholder="Ex: 22222-222"
                               inputmode="numeric"
                               onblur="pesquisacep(this.value)"
                               oninput="formatarCep(this)">
