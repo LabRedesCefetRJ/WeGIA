@@ -115,7 +115,6 @@ try {
   $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
   $dependente = json_encode($dependente);
 
-<<<<<<< HEAD
   // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
   $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
   $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
@@ -127,12 +126,6 @@ try {
   Util::tratarException($e);
   exit();
 }
-=======
-// Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
-$stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=' . $_SESSION['id_pessoa']);
-$stmt->execute();
-$adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
->>>>>>> raphael-251111
 ?>
 <!doctype html>
 <html class="fixed">
@@ -839,9 +832,6 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                         <div class="col-md-8">
-<<<<<<< HEAD
-                          <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?= $dataNascimentoMaxima ?>>
-=======
                           <input type="date"
                             placeholder="dd/mm/aaaa"
                             maxlength="10"
@@ -850,7 +840,6 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                             id="nascimento"
                             min="<?= $dataNascimentoMinima ?>"
                             max="<?= $dataNascimentoMaxima ?>" required>
->>>>>>> raphael-251111
                         </div>
                       </div>
                       <div class="form-group">
@@ -2056,11 +2045,8 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
     })
 
     function funcao3() {
-<<<<<<< HEAD
       //refazer validação do frontend
 
-=======
->>>>>>> raphael-251111
       var idfunc = <?= $idFuncionario ?>;
       var cpfs = <?php echo $_SESSION['cpf_funcionario']; ?>;
       var cpf_funcionario = $("#cpf").val();
@@ -2095,12 +2081,8 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
         return false;
       }
 
-<<<<<<< HEAD
       /*if (apoio == 0) {
         alert("Editado com sucesso!");
-=======
-      if (apoio == 0) {
->>>>>>> raphael-251111
         return true;
       }*/
 

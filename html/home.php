@@ -385,7 +385,6 @@ require_once ROOT . "/html/geral/msg.php";
 
 				<div class="row category-row-third">
 					<div id="ocorrencias" class="removeIn collapse">
-						<<<<<<< HEAD
 							<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=.<?= WWW ?>html/atendido/cadastro_ocorrencia.php">
 							<div class="col-lg-2 col-md-8 i">
 								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
@@ -402,9 +401,6 @@ require_once ROOT . "/html/geral/msg.php";
 									</form>
 								</div>
 							</a>
-							=======
-
-							>>>>>>> origin/pre-master-250514
 					</div>
 				</div>
 				<!--fim da parte interna de #pessoas-->

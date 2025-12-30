@@ -136,7 +136,6 @@ class FuncionarioDAO
         $stmt = $this->pdo->prepare($sql);
         $nome = $funcionario->getNome();
         $sobrenome = $funcionario->getSobrenome();
-        // $cpf=$funcionario->getCpf();
         $senha = $funcionario->getSenha();
         $sexo = $funcionario->getSexo();
         $telefone = $funcionario->getTelefone();
@@ -156,7 +155,6 @@ class FuncionarioDAO
         $nomePai = $funcionario->getNomePai();
         $nomeMae = $funcionario->getNomeMae();
         $sangue = $funcionario->getTipoSanguineo();
-        //$valeTransporte=$funcionario->getVale_transporte();
         $dataAdmissao = $funcionario->getData_admissao();
         $pis = $funcionario->getPis();
         $ctps = $funcionario->getCtps();
@@ -191,7 +189,6 @@ class FuncionarioDAO
         $stmt->bindParam(':nome_pai', $nomePai);
         $stmt->bindParam(':nome_mae', $nomeMae);
         $stmt->bindParam(':tipo_sangue', $sangue);
-        //$stmt->bindParam(':vale_transporte', $valeTransporte);
         $stmt->bindParam(':data_admissao', $dataAdmissao);
         $stmt->bindParam(':pis', $pis);
         $stmt->bindParam(':ctps', $ctps);
@@ -203,12 +200,22 @@ class FuncionarioDAO
         $stmt->bindParam(':certificado_reservista_serie', $certificadoReservistaSerie);
         $stmt->bindParam(':id_situacao', $situacao);
         $stmt->bindParam(':data_expedicao', $dataExpedicao);
-        $stmt->execute();
+
+        if ($stmt->execute()) {
+            $busca = $this->pdo->prepare("SELECT f.id_funcionario FROM funcionario f JOIN pessoa p ON p.id_pessoa = f.id_pessoa WHERE p.cpf = :cpf ORDER BY f.id_funcionario DESC LIMIT 1");
+
+            $busca->bindParam(':cpf', $cpf);
+            $busca->execute();
+
+            $idFuncionario = (int)$busca->fetchColumn();
+            return $idFuncionario;
+        }
+
+        return null;
     }
 
 
     // incluirExistente
-
     public function incluirExistente($funcionario, $idPessoa, $sobrenome)
     {
         $sql = "UPDATE pessoa set sobrenome=:sobrenome, sexo=:sexo,orgao_emissor=:orgao_emissor,registro_geral=:registro_geral,data_expedicao=:data_expedicao WHERE id_pessoa=:id_pessoa;";
@@ -309,18 +316,18 @@ class FuncionarioDAO
     public function alterarImagem($id_funcionario, $imagem)
     {
         $imagem = base64_encode($imagem);
-        try {
 
-            $id_pessoa = (($this->pdo->query("SELECT id_pessoa FROM funcionario WHERE id_funcionario=$id_funcionario"))->fetch(PDO::FETCH_ASSOC))["id_pessoa"];
+        $sql = "
+            UPDATE pessoa p
+            INNER JOIN funcionario f ON f.id_pessoa = p.id_pessoa
+            SET p.imagem = :imagem
+            WHERE f.id_funcionario = :id_funcionario
+        ";
 
-            $sql = "UPDATE pessoa SET imagem = :imagem WHERE id_pessoa = :id_pessoa;";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':id_pessoa', $id_pessoa);
-            $stmt->bindValue(':imagem', $imagem);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoa = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':imagem', $imagem, PDO::PARAM_STR);
+        $stmt->bindValue(':id_funcionario', $id_funcionario, PDO::PARAM_INT);
+        $stmt->execute();
     }
 
     public function alterarSenha($id_pessoa, $nova_senha)
