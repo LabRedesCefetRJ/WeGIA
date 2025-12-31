@@ -18,7 +18,6 @@ if (!$id_pessoa || $id_pessoa < 1) {
     exit();
 }
 
-//consertar permissão para acesso da página
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 12, 3);
 
@@ -32,17 +31,16 @@ $tipo = $pdo->query("SELECT * FROM atendido_ocorrencia_tipos")->fetchAll(PDO::FE
 $recupera_id_funcionario = $pdo->query("SELECT id_funcionario FROM funcionario WHERE id_pessoa=" . $id_pessoa . ";")->fetchAll(PDO::FETCH_ASSOC);
 $id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
 
-
 $atendido_id = filter_input(INPUT_GET, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
 
-// Se parâmetro existe e é inválido, erro
+$ocorrencia_msg = filter_input(INPUT_GET, 'ocorrencia_msg', FILTER_SANITIZE_STRING);
+
 if ($atendido_id !== null && $atendido_id !== false) {
     if ($atendido_id < 1) {
         echo "O id do paciente informado não é válido";
         exit();
     }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -488,15 +486,32 @@ if ($atendido_id !== null && $atendido_id !== false) {
                                             <h2 class="panel-title">Informações </h2>
                                         </header>
                                         <div class="panel-body">
-                                            <?php
-                                            if (isset($_SESSION['mensagem_erro'])) {
-                                                echo '<div class="alert alert-danger" style="position:relative; padding-right:25px;">';
-                                                echo $_SESSION['mensagem_erro'];
-                                                echo ' <a href="#" class="close" data-dismiss="alert" aria-label="close" style="position:absolute; top:5px; right:10px; font-size:20px; text-decoration:none;">×</a>';
-                                                echo '</div>';
-                                                unset($_SESSION['mensagem_erro']);
-                                            }
-                                            ?>
+                                            <?php if ($ocorrencia_msg == 'cadastro-sucesso'): ?>
+                                                <div class="alert alert-success text-center alert-dismissible" role="alert">
+                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                    Ocorrência cadastrada com sucesso!
+                                                </div>
+                                            <?php elseif ($ocorrencia_msg == 'cadastro-falha'): ?>
+                                                <div class="alert alert-danger text-center alert-dismissible" role="alert">
+                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                    Falha ao cadastrar ocorrência.
+                                                </div>
+                                            <?php elseif ($ocorrencia_msg == 'data-anterior-nascimento'): ?>
+                                                <div class="alert alert-danger text-center alert-dismissible" role="alert">
+                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                    Erro: A data da ocorrência não pode ser anterior à data de nascimento!
+                                                </div>
+                                            <?php elseif ($ocorrencia_msg == 'data-formato-invalido'): ?>
+                                                <div class="alert alert-danger text-center alert-dismissible" role="alert">
+                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                    Erro no formato da data. Verifique a data da ocorrência.
+                                                </div>
+                                            <?php elseif ($ocorrencia_msg == 'id-invalido'): ?>
+                                                <div class="alert alert-danger text-center alert-dismissible" role="alert">
+                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                    ID do atendido inválido!
+                                                </div>
+                                            <?php endif; ?>
                                             <form class="form-horizontal" method="post" action="../../controle/control.php" enctype="multipart/form-data">
                                                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                                                 <br>
