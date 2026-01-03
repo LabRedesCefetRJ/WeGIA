@@ -187,6 +187,8 @@
   <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 
   <link rel="stylesheet" type="text/css" href="../../css/profile-theme.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
   </script>
   <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
   <script src="../../assets/vendor/nanoscroller/nanoscroller.js"></script>
@@ -255,9 +257,15 @@
       dataHora.value = "";
     }
 
-    function carregarMedicamentosParaAplicar() {
+    function carregarMedicamentosParaAplicar(modoSelecionar = false) {
       const exibimedparaenfermeiro = <?= $exibimedparaenfermeiro ?>;
       const tabela = document.getElementById("tabela");
+      
+      if ($.fn.DataTable.isDataTable('#datatable-default')) {
+          $('#datatable-default').DataTable().destroy();
+      }
+      
+      tabela.innerHTML = "";
 
       exibimedparaenfermeiro.forEach(function(item) {
         const tr = document.createElement("tr");
@@ -283,28 +291,67 @@
         td5.style.textAlign = "center";
         td5.style.verticalAlign = "middle";
 
-        const a = document.createElement("a");
-        a.title = "Aplicar medicamento";
+        if (modoSelecionar) {
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.checked = true; 
+            checkbox.className = "chk-med-bulk"; 
+            
+            checkbox.setAttribute("data-idMedicacao", item.id_medicacao);
+            checkbox.setAttribute("data-idPessoa", item.id_pessoa);
+            checkbox.setAttribute("data-idFuncionario", item.id_funcionario);
+            
+            td5.appendChild(checkbox);
 
-        const button = document.createElement("button");
-        button.className = "btn btn-primary";
-        button.type = "button";
-        button.setAttribute("data-toggle", "modal");
-        button.setAttribute("data-target", "#modalHorarioAplicacao");
-        button.setAttribute("data-idMedicacao", item.id_medicacao);
-        button.setAttribute("data-idPessoa", item.id_pessoa);
-        button.setAttribute("data-idFuncionario", item.id_funcionario);
-        button.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i>";
-        button.addEventListener("click", function() {
-          enviarInformacoesParaModal(this);
-        });
+        } else {
+            const a = document.createElement("a");
+            a.title = "Aplicar medicamento";
 
-        a.appendChild(button);
-        td5.appendChild(a);
+            const button = document.createElement("button");
+            button.className = "btn btn-primary";
+            button.type = "button";
+            button.setAttribute("data-toggle", "modal");
+            button.setAttribute("data-target", "#modalHorarioAplicacao");
+            button.setAttribute("data-idMedicacao", item.id_medicacao);
+            button.setAttribute("data-idPessoa", item.id_pessoa);
+            button.setAttribute("data-idFuncionario", item.id_funcionario);
+            button.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i>";
+            button.addEventListener("click", function() {
+              enviarInformacoesParaModal(this);
+            });
+
+            a.appendChild(button);
+            td5.appendChild(a);
+        }
 
         tr.append(td1, td2, td3, td4, td5);
         tabela.appendChild(tr);
       });
+
+      $('#datatable-default').DataTable({
+        "dom": '<"row"<"col-sm-6"l><"col-sm-6"f>><"table-responsive"t>p',
+        "language": {
+            "search": "", 
+            "searchPlaceholder": "Search" 
+        },
+        "initComplete": function() {
+            $('#datatable-default_filter input').addClass('form-control');
+        }
+      });
+
+      if (!modoSelecionar) {
+        if ($('#btnSelecionarMultiplos').length === 0) {
+            let htmlButton = `
+                <div style="clear: both; text-align: right; margin-top: 50px; margin-bottom: 10px;" id="containerBtnMultiplos">
+                    <button id="btnSelecionarMultiplos" title="Seleciona múltiplos medicamentos para aplicar de uma vez só" class="btn btn-primary">Selecionar Múltiplos</button>
+                </div>
+            `;
+            $('#datatable-default_filter').after(htmlButton);
+        } else {
+            $('#containerBtnMultiplos').show();
+            $('#btnSelecionarMultiplos').show();
+        }
+      }
     }
 
     function formatarDataHoraBr(data) {
@@ -398,36 +445,121 @@
       input_id_funcionario.value = id_funcionario;
     }
 
+    function mostrarErro(mensagem) {
+        const divErro = document.getElementById("msg_erro_modal");
+        if (divErro) {
+            divErro.innerText = mensagem;
+            divErro.style.display = "block";
+        } else {
+            alert(mensagem);
+        }
+    }
     async function enviarDataHoraAplicacaoMedicamento(event) {
       event.preventDefault();
 
+      const dataHoraInput = document.getElementById("dataHora");
+      const divErro = document.getElementById("msg_erro_modal");
+      
+      if (divErro) {
+          divErro.style.display = "none"; 
+          divErro.innerText = "";
+      }
+      if (!dataHoraInput.value) {
+          mostrarErro("Por favor, preencha a data e hora.");
+          return;
+      }
+      
+      const anoDigitado = parseInt(dataHoraInput.value.substring(0, 4));
+      const anoMinimo = 1929;
+
+      if (anoDigitado < anoMinimo) {
+          mostrarErro("Data inválida: O ano não pode ser anterior a 1929.");
+          return; 
+      }
+
+      const agoraString = getDataLocalAtual();
+      const dataSelecionada = new Date(dataHoraInput.value);
+      const dataLimite = new Date(agoraString);
+
+      if (dataSelecionada > dataLimite) {
+          mostrarErro("A data e hora da aplicação não pode ser no futuro. Ajuste para o momento atual.");
+          return;
+      }
       let idPessoaFuncionario = <?= $idPessoa ?>;
+      let arrayPromessas = [];
 
-      const form = event.target;
-      const formData = new FormData(form);
+      const isModoSelecao = document.querySelectorAll('.chk-med-bulk').length > 0;
 
-      const dados = {
-        nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
-        metodo: encodeURIComponent("inserirAplicacao"),
-        id_medicacao: formData.get('id_medicacao'),
-        id_pessoa: formData.get('id_pessoa'),
-        id_pessoa_funcionario: idPessoaFuncionario,
-        dataHora: formData.get('dataHora')
-      };
+      if (isModoSelecao) {
+        
+        let listaCheckboxes = [];
 
-      limparInputDataTime();
+        if ($.fn.DataTable.isDataTable('#datatable-default')) {
+            var table = $('#datatable-default').DataTable();
+            // table.$() acessa elementos em TODAS as páginas da paginação
+            table.$('.chk-med-bulk:checked').each(function() {
+                listaCheckboxes.push(this);
+            });
+        } else {
+            var els = document.querySelectorAll('.chk-med-bulk:checked');
+            for(var i=0; i < els.length; i++){
+                listaCheckboxes.push(els[i]);
+            }
+        }
 
-      const dadosJson = JSON.stringify(dados);
+        if (listaCheckboxes.length === 0) {
+             mostrarErro("Nenhum medicamento selecionado.");
+             return;
+        }
 
-      fetch(`../../controle/control.php?`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: dadosJson
-        })
-        .then(res => res.json())
-        .then(data => {
+        listaCheckboxes.forEach(function(chk) {
+            var $chk = $(chk);
+            const dados = {
+                nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
+                metodo: encodeURIComponent("inserirAplicacao"),
+                id_medicacao: $chk.attr('data-idMedicacao'),
+                id_pessoa: $chk.attr('data-idPessoa'),
+                id_pessoa_funcionario: idPessoaFuncionario,
+                dataHora: dataHoraInput.value
+            };
+            const dadosJson = JSON.stringify(dados);
+            
+            arrayPromessas.push(
+                fetch(`../../controle/control.php?`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: dadosJson
+                }).then(res => res.json())
+            );
+        });
+
+      } else {
+        const form = event.target;
+        const formData = new FormData(form);
+
+        const dados = {
+            nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
+            metodo: encodeURIComponent("inserirAplicacao"),
+            id_medicacao: formData.get('id_medicacao'),
+            id_pessoa: formData.get('id_pessoa'),
+            id_pessoa_funcionario: idPessoaFuncionario,
+            dataHora: formData.get('dataHora')
+        };
+        const dadosJson = JSON.stringify(dados);
+        
+        arrayPromessas.push(
+            fetch(`../../controle/control.php?`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: dadosJson
+            }).then(res => res.json())
+        );
+      }
+
+      // Executa todas as requisições (seja 1 ou várias)
+      Promise.all(arrayPromessas)
+        .then(resultados => {
+          limparInputDataTime();
           const id_fichamedica = document.getElementById("id_fichamedica").value;
           carregarAplicacoes(id_fichamedica);
 
@@ -438,25 +570,38 @@
         })
         .catch(erro => {
           console.error('Erro ao enviar:', erro);
+          alert('Erro ao conectar com o servidor.');
         });
     }
 
+
+    function getDataLocalAtual() {
+      const agora = new Date();
+      const adicionarZero = numero => numero.toString().padStart(2, '0');
+
+      const ano = agora.getFullYear();
+      const mes = adicionarZero(agora.getMonth() + 1);
+      const dia = adicionarZero(agora.getDate());
+      const horas = adicionarZero(agora.getHours());
+      const minutos = adicionarZero(agora.getMinutes());
+
+      return `${ano}-${mes}-${dia}T${horas}:${minutos}`;
+    }
+
     function definirDataHoraAtualSeVazio(campo) {
+      const nowString = getDataLocalAtual();
+      
       if (!campo.value) {
-        const agora = new Date();
-        const adicionarZero = numero => numero.toString().padStart(2, '0');
-
-        const ano = agora.getFullYear();
-        const mes = adicionarZero(agora.getMonth() + 1); // Janeiro = 0
-        const dia = adicionarZero(agora.getDate());
-        const horas = adicionarZero(agora.getHours());
-        const minutos = adicionarZero(agora.getMinutes());
-
-        campo.value = `${ano}-${mes}-${dia}T${horas}:${minutos}`;
+        campo.value = nowString;
       }
     }
 
- 
+    function usuarioAlterouDataHora() {
+      const divErro = document.getElementById('msg_erro_modal');
+      if (divErro) {
+        divErro.style.display = 'none';
+      }
+    }
     async function enviarMedicacaoSOS(event) {
       event.preventDefault(); 
 
@@ -515,6 +660,26 @@
       if (botaoSOS) {
         botaoSOS.addEventListener('click', enviarMedicacaoSOS);
       }
+      
+      $('#modalHorarioAplicacao').on('show.bs.modal', function(e) {
+        const dataHoraInput = document.getElementById("dataHora");
+        const nowString = getDataLocalAtual();
+        
+        if (!dataHoraInput.value) {
+          dataHoraInput.value = nowString;
+        }
+
+        // Limpa a mensagem de erro ao abrir
+        const divErro = document.getElementById("msg_erro_modal");
+        if (divErro) {
+          divErro.style.display = "none";
+        }
+      });
+
+      $('#modalHorarioAplicacao').on('hidden.bs.modal', function(e) {
+        // Garante que o campo esteja limpo ao fechar
+        limparInputDataTime();
+      });
     });
 
   </script>
@@ -564,7 +729,6 @@
             <a class="sidebar-right-toggle" data-open="sidebar-right"><i class="fa fa-chevron-left"></i></a>
           </div>
         </header>
-        <!-- start: page -->
         <div class="row">
           <div class="col-md-4 col-lg-3">
             <section class="panel">
@@ -735,6 +899,9 @@
 
                         </tbody>
                       </table>
+                      
+                      <div id="div-botao-aplicar-global" style="text-align: right; margin-top: 10px; margin-bottom: 20px;"></div>
+
                       <div class="modal fade" id="modalHorarioAplicacao" tabindex="-1" role="dialog" aria-labelledby="tituloModal">
                         <div class="modal-dialog">
                           <div class="modal-content">
@@ -748,14 +915,24 @@
                               </div>
 
                               <div class="modal-body">
-                                <input type="datetime-local" id="dataHora" name="dataHora" onfocus="definirDataHoraAtualSeVazio(this)" required class="form-control" max="<?= $dataAtual->format('Y-m-d\TH:i') ?>">
+                                <input type="datetime-local" 
+                                       id="dataHora" 
+                                       name="dataHora" 
+                                       onfocus="definirDataHoraAtualSeVazio(this)" 
+                                       onclick="definirDataHoraAtualSeVazio(this)"
+                                       oninput="usuarioAlterouDataHora()" 
+                                       required 
+                                       class="form-control">
+
+                                <div id="msg_erro_modal" style="color: #d9534f; font-family: 'Open Sans', sans-serif; font-weight: bold; margin-top: 10px; display: none;"></div>
+
                                 <input type="hidden" id="id_funcionario" name="id_funcionario">
                                 <input type="hidden" id="id_medicacao" name="id_medicacao">
                                 <input type="hidden" id="id_pessoa" name="id_pessoa">
                               </div>
 
                               <div class="modal-footer">
-                                <button type="submit" class="btn btn-primary">Enviar</button>
+                                <button type="submit" class="btn btn-primary" id="enviar_medicação" formnovalidate>Enviar</button>
                                 <button type="button" class="btn btn-default" data-dismiss="modal" onclick="limparInputDataTime()">Cancelar</button>
                               </div>
                             </form>
@@ -797,6 +974,7 @@
       <script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
       <script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
       <script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
       <div class="modal fade" id="excluirimg" role="dialog">
         <div class="modal-dialog">
           <!-- Modal content-->
@@ -819,7 +997,7 @@
           </div>
         </div>
       </div>
-      <iv class="modal fade" id="editimg" role="dialog">
+      <div class="modal fade" id="editimg" role="dialog">
         <div class="modal-dialog">
           <!-- Modal content-->
           <div class="modal-content">
@@ -873,12 +1051,42 @@
         localStorage.setItem("currentTab", "2");
         alert("Medicamento aplicado com sucesso!");
       }
-      carregarMedicamentosParaAplicar();
+      carregarMedicamentosParaAplicar(false);
       const id_fichamedica = document.getElementById("id_fichamedica").value;
       carregarAplicacoes(id_fichamedica);
-    </script>
 
-    <!-- Vendor -->
+  $(document).ready(function() {
+      $(document).on('click', '#btnSelecionarMultiplos', function() {
+          $(this).hide();
+          $('#containerBtnMultiplos').hide(); // Esconde o container também
+
+          carregarMedicamentosParaAplicar(true);
+
+          $('#div-botao-aplicar-global').remove();
+
+          let divBotao = $('<div id="div-botao-aplicar-global" style="text-align: right; margin-top: 20px; display: flex; flex-direction: row; justify-content: flex-end; margin-bottom: 10px; clear: both;"></div>');
+
+          let btnApply = $('<button class="btn btn-primary" style="margin-right: 5px;" data-toggle="modal" data-target="#modalHorarioAplicacao"><i class="glyphicon glyphicon-hand-up"></i> Aplicar Selecionados</button>');
+          btnApply.click(function() {
+              enviarInformacoesParaModal(this);
+          });
+
+          let btnCancel = $('<button class="btn btn-danger" style="height: 35px;" title="Cancelar Seleção"><i class="bi bi-x-lg"></i></button>');
+
+          btnCancel.click(function() {
+              divBotao.remove();
+              carregarMedicamentosParaAplicar(false);
+          });
+
+          divBotao.append(btnApply);
+          divBotao.append(btnCancel);
+
+          $('.table-responsive').after(divBotao);
+      });
+  });
+
+    </script>
+    
     <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>

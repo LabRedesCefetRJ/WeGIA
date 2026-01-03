@@ -101,74 +101,60 @@ class SaudeDAO
 
     public function listar($id)
     {
-        try {
-            echo $id;
-            $pdo = Conexao::connect();
+        echo $id;
+        $pdo = Conexao::connect();
 
-            $sql = "SELECT p.nome,p.sobrenome,p.imagem,p.sexo,p.data_nascimento,p.tipo_sanguineo FROM pessoa p 
-            JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa 
-            WHERE sf.id_fichamedica=:id";
+        $sql = "SELECT p.nome,p.sobrenome,p.imagem,p.sexo,p.data_nascimento,p.tipo_sanguineo FROM pessoa p 
+        JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa 
+        WHERE sf.id_fichamedica=:id";
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':id', $id);
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':id', $id);
 
-            $stmt->execute();
-            $paciente = array();
-            while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-                $paciente[] = array('nome' => $linha['nome'], 'imagem' => $linha['imagem'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $linha['data_nascimento'], 'tipo_sanguineo' => $linha['tipo_sanguineo']);
-
-            }
-        } catch (PDOException $e) {
-            echo 'Error: ' .  $e->getMessage();
+        $stmt->execute();
+        $paciente = array();
+        while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $paciente[] = array('nome' => $linha['nome'], 'imagem' => $linha['imagem'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $linha['data_nascimento'], 'tipo_sanguineo' => $linha['tipo_sanguineo']);
         }
         return json_encode($paciente);
     }
 
     public function alterarInfPessoal($paciente)
     {
-        try {
-            $sql = 'update pessoa as p inner join saude_fichamedica as s on p.id_pessoa=s.id_pessoa set tipo_sanguineo=:tipo_sanguineo where id_fichamedica=:id_fichamedica';
+        $sql = 'update pessoa as p inner join saude_fichamedica as s on p.id_pessoa=s.id_pessoa set tipo_sanguineo=:tipo_sanguineo where id_fichamedica=:id_fichamedica';
 
-            $sql = str_replace("'", "\'", $sql);
-            $pdo = Conexao::connect();
-            $stmt = $pdo->prepare($sql);
-            $stmt = $pdo->prepare($sql);
-            $id_fichamedica = $paciente->getId_pessoa();
-            $tipoSanguineo = $paciente->getTipoSanguineo();
-            $stmt->bindParam(':id_fichamedica', $id_fichamedica);
-            $stmt->bindParam(':tipo_sanguineo', $tipoSanguineo);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        $sql = str_replace("'", "\'", $sql);
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql);
+        $id_fichamedica = $paciente->getId_pessoa();
+        $tipoSanguineo = $paciente->getTipoSanguineo();
+        $stmt->bindParam(':id_fichamedica', $id_fichamedica);
+        $stmt->bindParam(':tipo_sanguineo', $tipoSanguineo);
+        $stmt->execute();
     }
 
     public function adicionarProntuarioAoHistorico($idFicha, $idPaciente)
     {
         $sql2 = "INSERT INTO saude_fichamedica_historico (id_pessoa, data) VALUES (:idPessoa, :data)";
 
-        try {
-            $pdo = Conexao::connect();
+        $pdo = Conexao::connect();
 
-            date_default_timezone_set('America/Sao_Paulo');
-            $data = date('Y-m-d H:i:s');
+        date_default_timezone_set('America/Sao_Paulo');
+        $data = date('Y-m-d H:i:s');
 
-            $pdo->beginTransaction();
-            $stmt2 = $pdo->prepare($sql2);
-            $stmt2->bindParam(':idPessoa', $idPaciente);
-            $stmt2->bindParam(':data', $data);
-            $stmt2->execute();
+        $pdo->beginTransaction();
+        $stmt2 = $pdo->prepare($sql2);
+        $stmt2->bindParam(':idPessoa', $idPaciente);
+        $stmt2->bindParam(':data', $data);
+        $stmt2->execute();
 
-            $ultimoID = $pdo->lastInsertId();
+        $ultimoID = $pdo->lastInsertId();
 
-            if ($this->insercaoDescricaoHistoricoEmCadeia($idFicha, $pdo, $ultimoID)) {
-                $pdo->commit();
-            } else {
-                $pdo->rollBack();
-            }
-        } catch (PDOException $e) {
-            echo $e->getMessage();
+        if ($this->insercaoDescricaoHistoricoEmCadeia($idFicha, $pdo, $ultimoID)) {
+            $pdo->commit();
+        } else {
+            $pdo->rollBack();
         }
     }
 
@@ -200,36 +186,26 @@ class SaudeDAO
     public function listarProntuariosDoHistorico($idPaciente)
     {
         $sql = 'SELECT id_fichamedica_historico as idHistorico, data FROM saude_fichamedica_historico WHERE id_pessoa=:idPaciente';
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':idPaciente', $idPaciente);
+        $stmt->execute();
 
-        try {
-            $pdo = Conexao::connect();
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':idPaciente', $idPaciente);
-            $stmt->execute();
-
-            $prontuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return $prontuarios;
-        } catch (PDOException $e) {
-            echo $e->getMessage();
-        }
+        $prontuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $prontuarios;
     }
 
     public function listarDescricoesHistoricoPorId($idHistorico)
     {
         $sql = 'SELECT descricao FROM saude_fichamedica_historico_descricoes WHERE id_fichamedica_historico=:idHistorico';
 
-        try {
-            $pdo = Conexao::connect();
+        $pdo = Conexao::connect();
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':idHistorico', $idHistorico);
-            $stmt->execute();
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':idHistorico', $idHistorico);
+        $stmt->execute();
 
-            $descricoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            return $descricoes;
-        } catch (PDOException $e) {
-            echo $e->getMessage();
-        }
+        $descricoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $descricoes;
     }
 }

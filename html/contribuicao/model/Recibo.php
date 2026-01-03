@@ -12,6 +12,7 @@ class Recibo
     private $expirado;
     private $email;
     private $totalContribuicoes;
+    private array $contribuicoes;
 
     /**
      * Get the value of id
@@ -234,6 +235,25 @@ class Recibo
     public function setTotalContribuicoes($totalContribuicoes)
     {
         $this->totalContribuicoes = $totalContribuicoes;
+        return $this;
+    }
+
+    /**
+     * Get the value of id
+     */
+    public function getContribuicoes()
+    {
+        return $this->contribuicoes;
+    }
+
+    /**
+     * Set the value of id
+     *
+     * @return  self
+     */
+    public function setContribuicoes(array $contribuicoes)
+    {
+        $this->contribuicoes = $contribuicoes;
         return $this;
     }
 }

@@ -36,7 +36,7 @@ try {
 	$pdo = Conexao::connect();
 	$sql = 'SELECT * FROM categoria_produto WHERE id_categoria_produto =:idCategoria';
 	$stmt = $pdo->prepare($sql);
-	$stmt->bindValue(':idCategoria', $id_categoria, FILTER_SANITIZE_NUMBER_INT);
+	$stmt->bindValue(':idCategoria', $id_categoria, PDO::PARAM_INT);
 	$stmt->execute();
 
 	if ($stmt->rowCount() < 1) {
@@ -54,6 +54,7 @@ try {
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 
 <!doctype html>
@@ -70,12 +71,12 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Web Fonts  -->
-	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
 
 	<!-- Vendor CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
-	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
@@ -117,11 +118,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<script src="<?= WWW ?>Functions/onlyNumbers.js"></script>
 	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
 	<script src="<?= WWW ?>Functions/mascara.js"></script>
-
-	<!-- jquery functions -->
-	<script>
-		document.write('<a href="' + document.referrer + '"></a>');
-	</script>
 
 	<script type="text/javascript">
 		$(function() {
@@ -181,10 +177,11 @@ require_once ROOT . "/html/personalizacao_display.php";
 											<div class="form-group"><br>
 												<label class="col-md-3 control-label">Categoria</label>
 												<div class="col-md-8">
-													<input type="text" class="form-control" value="<?= htmlspecialchars($cat['descricao_categoria']) ?>" name="descricao_categoria" id="categoria" required>
-													<input type="hidden" value="<?= htmlspecialchars($cat['id_categoria_produto']) ?>" name="id_categoria_produto" required>
+													<input type="text" class="form-control" value="<?= htmlspecialchars($cat['descricao_categoria'], ENT_QUOTES, 'UTF-8') ?>" name="descricao_categoria" id="categoria" required>
+													<!-- CSRF -->
+													<?php Csrf::inputField();?>
+													<input type="hidden" value="<?= htmlspecialchars($cat['id_categoria_produto'], ENT_QUOTES, 'UTF-8') ?>" name="id_categoria_produto" required>
 													<input type="hidden" name="nomeClasse" value="CategoriaControle">
-
 													<input type="hidden" name="metodo" value="editar">
 
 												</div>

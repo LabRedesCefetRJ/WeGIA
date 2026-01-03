@@ -1,5 +1,5 @@
 <?php
-$title = 'Gerar Recibo de Doação';
+$title = 'Gerar Comprovante de Doação';
 $publicsFiles = [
     'css' => ['recibo.css']
 ];
@@ -22,7 +22,7 @@ $brand = $brandController->getBrand();
             }
             ?>
         </span>
-        <h2 class="text-center">Gerar Recibo de Doação</h2>
+        <h2 class="text-center">Gerar Comprovante de Doação</h2>
         <form id="form-recibo" autocomplete="off">
             
             <div class="wrap-input100">
@@ -43,7 +43,7 @@ $brand = $brandController->getBrand();
             
             <div class="container-contact100-form-btn">
                 <button type="submit" class="contact100-form-btn">
-                    Gerar Recibo
+                    Gerar Comprovante
                 </button>
             </div>
         </form>

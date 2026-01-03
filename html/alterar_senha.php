@@ -14,6 +14,7 @@ if (!isset($_SESSION['usuario'])) {
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "personalizacao_display.php";
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!doctype html>
 <html class="fixed">
@@ -170,6 +171,8 @@ require_once "personalizacao_display.php";
 												</div>
 											</div>
 										</fieldset>
+										<!-- Csrf -->
+										 <?= Csrf::inputField() ?>
 										<input type="hidden" name="nomeClasse" value="FuncionarioControle">
 										<input type="hidden" name="metodo" value="alterarSenha">
 										<input type="hidden" name="redir" value="logout.php">

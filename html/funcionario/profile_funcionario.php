@@ -6,9 +6,20 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
   exit();
-}else{
+} else {
   session_regenerate_id();
 }
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+  http_response_code(400);
+  echo json_encode(['erro' => 'O id da pessoa informado não é válido.']);
+  exit();
+}
+
+require_once "../permissao/permissao.php";
+permissao($_SESSION['id_pessoa'], 11, 7);
 
 extract($_REQUEST);
 
@@ -21,12 +32,13 @@ if (!$idFuncionario || $idFuncionario < 1) {
   exit(400);
 }
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 try {
   require_once "../../dao/Conexao.php";
   $pdo = Conexao::connect();
 
   if (!isset($_SESSION['funcionario'])) {
-    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&id_funcionario=' . $idFuncionario);
+    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&id_funcionario=' . urlencode($idFuncionario));
   } else {
     $func = $_SESSION['funcionario'];
     unset($_SESSION['funcionario']);
@@ -53,21 +65,7 @@ try {
       $func = json_encode([$func]);
     }
   }
-
-  $config_path = "config.php";
-  if (file_exists($config_path)) {
-    require_once($config_path);
-  } else {
-    while (true) {
-      $config_path = "../" . $config_path;
-      if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-  }
-
   require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
-  require_once "../permissao/permissao.php";
-  permissao($_SESSION['id_pessoa'], 11, 7);
 
   $situacao = $pdo->query("SELECT * FROM situacao")->fetchAll();
   $cargo = $pdo->query("SELECT * FROM cargo")->fetchAll();
@@ -86,6 +84,10 @@ try {
 
   $docfuncional->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
 
+  require_once "../../classes/Funcionario.php";
+  $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
+  $dataNascimentoMinima = Funcionario::getDataNascimentoMinima();
+
   if (!$docfuncional->execute()) {
     echo json_encode(['erro' => 'Falha ao executar consulta da documentação do funcionário']);
     exit(500);
@@ -94,10 +96,10 @@ try {
   $docfuncional = $docfuncional->fetchAll(PDO::FETCH_ASSOC);
   foreach ($docfuncional as $key => $value) {
     $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
-
+    // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
     //formatar data
     $data = new DateTime($value['data']);
-    $docfuncional[$key]['data'] = $data->format('d/m/Y h:i:s');
+    $docfuncional[$key]['data'] = $data->format('d/m/Y H:i:s');
   }
   $docfuncional = json_encode($docfuncional);
   //SQL Injection abaixo
@@ -112,15 +114,18 @@ try {
 
   $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
   $dependente = json_encode($dependente);
-} catch (Exception $e) {
-  echo json_encode(['erro' => $e->getMessage()]);
-  exit($e->getCode());
-}
 
-// Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
-$stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa='. $_SESSION['id_pessoa']);
-$stmt->execute();
-$adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+  // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
+  $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
+  $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+  $stmt->execute();
+  $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+
+  $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
+} catch (Exception $e) {
+  Util::tratarException($e);
+  exit();
+}
 ?>
 <!doctype html>
 <html class="fixed">
@@ -308,7 +313,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 
     function editar_outros() {
       let adm_configurado = <?php echo $adm_configurado; ?>;
-      
+
       $("#pis").prop('disabled', false);
       $("#ctps").prop('disabled', false);
       $("#uf_ctps").prop('disabled', false);
@@ -318,7 +323,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      if(adm_configurado){
+      if (adm_configurado) {
         $("#cargo").prop('disabled', false);
       }
       $("#botaoEditarOutros").html('Cancelar');
@@ -441,6 +446,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
     $(function() {
       var docfuncional = <?= $docfuncional ?>;
       $.each(docfuncional, function(i, item) {
+        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -456,6 +462,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
     function listarFunDocs(docfuncional) {
       $("#doc-tab").empty();
       $.each(docfuncional, function(i, item) {
+        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -687,7 +694,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
         </header>
         <!-- start: page -->
         <!-- Mensagem -->
-        <?php getMsgSession("msg", "tipo"); ?>
+        <?php sessionMsg(); ?>
         <div class="row">
           <div class="col-md-4 col-lg-3">
             <section class="panel">
@@ -731,6 +738,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                             <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
                               <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                               <input type="hidden" name="metodo" value="alterarImagem">
+                              <?= Csrf::inputField() ?>
                               <div class="form-group">
                                 <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
                                 <div class="col-md-8">
@@ -791,6 +799,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                 <!--Aba de Informações Pessoais-->
                 <div id="overview" class="tab-pane active">
                   <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarInformacoesPessoais">
+                    <?= Csrf::inputField() ?>
                     <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                     <input type="hidden" name="metodo" value="alterarInfPessoal">
                     <h4 class="mb-xlg">Informações Pessoais</h4>
@@ -817,13 +826,20 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                          <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                         <div class="col-md-8">
-                          <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?>>
+                          <input type="date"
+                            placeholder="dd/mm/aaaa"
+                            maxlength="10"
+                            class="form-control"
+                            name="nascimento"
+                            id="nascimento"
+                            min="<?= $dataNascimentoMinima ?>"
+                            max="<?= $dataNascimentoMaxima ?>" required>
                         </div>
                       </div>
                       <div class="form-group">
@@ -863,29 +879,29 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 
                   <!-- MODAL QUE SERÁ UTILIZADO CASO A DATA DE NASCIMENTO SEJA ANTERIOR A DATA DE EXPEDIÇÃO -->
                   <div id="customModal" class="custom-modal-overlay">
-                      <div class="custom-modal-container">
-                          <div class="custom-modal-header">
-                              <h3 class="custom-modal-title">Informe a Data</h3>
-                              <button class="custom-modal-close">&times;</button>
-                          </div>
-                          <div class="custom-modal-body">
-                              <div class="custom-form-group">
-                                  <label for="customDataInput" class="custom-form-label">Data de expedição:</label>
-                                  <input type="date" class="custom-form-input" id="customDataInput" placeholder="dd/mm/aaaa" maxlength="10">
-                                  <div class="custom-text-error" id="customErrorData">Data inválida! Ela deve ser posterior a data de nascimento</div>
-                              </div>
-                          </div>
-                          <div class="custom-modal-footer">
-                              <button class="custom-btn custom-btn-primary" id="customBtnConfirmar">Confirmar</button>
-                          </div>
+                    <div class="custom-modal-container">
+                      <div class="custom-modal-header">
+                        <h3 class="custom-modal-title">Informe a Data</h3>
+                        <button class="custom-modal-close">&times;</button>
                       </div>
+                      <div class="custom-modal-body">
+                        <div class="custom-form-group">
+                          <label for="customDataInput" class="custom-form-label">Data de expedição:</label>
+                          <input type="date" class="custom-form-input" id="customDataInput" placeholder="dd/mm/aaaa" maxlength="10">
+                          <div class="custom-text-error" id="customErrorData">Data inválida! Ela deve ser posterior a data de nascimento</div>
+                        </div>
+                      </div>
+                      <div class="custom-modal-footer">
+                        <button class="custom-btn custom-btn-primary" id="customBtnConfirmar">Confirmar</button>
+                      </div>
+                    </div>
                   </div>
 
 
                   <div class="panel-footer">
                     <div class="row">
                       <div class="col-md-9 col-md-offset-3">
-                        <!-- <button id="excluir" type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Demitir</button> -->
+                        <button id="excluir" type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Demitir</button>
                       </div>
                     </div>
                   </div>
@@ -900,8 +916,14 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         <div class="modal-body">
                           <p> Tem certeza que deseja demitir esse funcionário? Essa ação não poderá ser desfeita e todas as informações referentes a esse funcionário serão perdidas!</p>
                           <!-- Pegar id funcionário de variável sanitizada -->
-                          <a href="../../controle/control.php?metodo=excluir&nomeClasse=FuncionarioControle&id_funcionario=<?= $idFuncionario ?>"><button button type="button" class="btn btn-success">Confirmar</button></a>
-                          <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                          <form action="../../controle/control.php" method="POST">
+                            <input type="hidden" name="metodo" value="excluir">
+                            <input type="hidden" name="nomeClasse" value="FuncionarioControle">
+                            <input type="hidden" name="id_funcionario" value="<?= htmlspecialchars($idFuncionario) ?>">
+                            <?= Csrf::inputField() ?>
+                            <input type="submit" class="btn btn-success" value="Confirmar">
+                            <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                          </form>
                         </div>
                       </div>
                     </div>
@@ -1011,6 +1033,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <form class="form-horizontal" method="POST" action="../../controle/control.php">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarOutros">
+                        <?= Csrf::inputField() ?>
                         <div class="form-group">
                           <label for="pis" class="col-md-3 control-label">PIS (Número de Identificação do Trabalhador)</label>
                           <div class="col-md-6">
@@ -1495,6 +1518,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         <hr class="dotted short">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarCargaHoraria">
+                        <?= Csrf::inputField() ?>
                         <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <div class="form-group center">
                           <button type="button" class="btn btn-primary" id="botaoEditar_editar_cargaHoraria" onclick="switchForm('editar_cargaHoraria')">Editar</button>
@@ -1520,28 +1544,29 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarDocumentacao">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarDocumentacao">
+                        <?= Csrf::inputField() ?>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)">
+                            <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
+                            <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                           <div class="col-md-6">
-                            <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?>>
+                            <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                           </div>
                         </div>
                         <div class="form-group">
@@ -1552,7 +1577,7 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                         </div>
                         <input type="hidden" id="id_funcionario" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao" onclick="return editar_documentacao()">Editar</button>
-                        <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar" >
+                        <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
                       </form>
                     </div>
                   </section>
@@ -1824,10 +1849,21 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
                       <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarEndereco">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarEndereco">
+                        <?= Csrf::inputField() ?>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="cep">CEP</label>
                           <div class="col-md-8">
-                            <input type="text" name="cep" value="" size="10" onblur="pesquisacep(this.value);" class="form-control" id="cep" maxlength="9" placeholder="Ex: 22222-222" onkeydown="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)">
+                            <input type="text"
+                              name="cep"
+                              value=""
+                              size="10"
+                              class="form-control"
+                              id="cep"
+                              maxlength="9"
+                              placeholder="Ex: 22222-222"
+                              inputmode="numeric"
+                              onblur="pesquisacep(this.value)"
+                              oninput="formatarCep(this)">
                           </div>
                         </div>
                         <div class="form-group">
@@ -2008,7 +2044,9 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
       post("remuneracao.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_remuneracao);
     })
 
-    function funcao3(){
+    function funcao3() {
+      //refazer validação do frontend
+
       var idfunc = <?= $idFuncionario ?>;
       var cpfs = <?php echo $_SESSION['cpf_funcionario']; ?>;
       var cpf_funcionario = $("#cpf").val();
@@ -2018,73 +2056,79 @@ $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
       var cpf_funcionario_correto3 = cpf_funcionario_correto2.replace("-", "");
       var apoio = 0;
       var cpfs1 = <?php echo $_SESSION['cpf_atendido']; ?>;
+
       $.each(cpfs, function(i, item) {
         if (item.cpf == cpf_funcionario_correto3 && item.id != idfunc) {
           alert("Alteração não realizada! O CPF informado já está cadastrado no sistema");
           apoio = 1;
+          return false;
         }
       });
+
       $.each(cpfs1, function(i, item) {
         if (item.cpf == cpf_funcionario_correto3) {
           alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
           apoio = 1;
+          return false;
         }
       });
 
       const data_nasc = new Date($('#nascimento').val());
       const data_exp = new Date($('#data_expedicao').val());
-      if(data_exp <= data_nasc){
+      if (data_exp <= data_nasc) {
         alert("Edição não efetuada. A data de expedição não pode ser anterior ou igual à de nascimento");
         apoio = 1;
+        return false;
       }
-      
-      if (apoio == 0) {
+
+      /*if (apoio == 0) {
         alert("Editado com sucesso!");
         return true;
-      }
-      return false;
+      }*/
+
+      return true;
     }
 
-    $('#formAlterarDocumentacao').on('submit', function(e){
-      if(!funcao3()){
+    $('#formAlterarDocumentacao').on('submit', function(e) {
+      if (!funcao3()) {
         e.preventDefault();
       }
     });
-    $('#formAlterarEndereco').on('submit', function(e){
-      if(!funcao3()){
+    $('#formAlterarEndereco').on('submit', function(e) {
+      if (!funcao3()) {
         e.preventDefault();
       }
     });
-    
+
     $('#customBtnConfirmar').on('click', function() {
       const data_nasc = new Date($('#nascimento').val());
       const data = $('#nascimento').val();
       const data_exp = new Date($('#customDataInput').val());
-        if (data_exp > data_nasc) {
-          
-          let funcionario = <?= $func ?>;
-          const cpf = funcionario[0].cpf;
-          
-          $("#data_expedicao").val( $(customDataInput).val() ).prop('disabled', false);
-          $("#rg").val(funcionario[0].registro_geral).prop('disabled', false);
-          $("#orgao_emissor").val(funcionario[0].orgao_emissor).prop('disabled', false);
-          $("#cpf").val(cpf).prop('disabled', false);
-          $("#data_admissao").val(alterardate(funcionario[0].data_admissao)).prop('disabled', false);
+      if (data_exp > data_nasc) {
 
-          $('#formAlterarDocumentacao').submit()
-          alert("Agora é possível alterar a data de nascimento para a data desejada!")
-        } else {
-            customErrorData.style.display = 'block';
-            customDataInput.focus();
-        }
+        let funcionario = <?= $func ?>;
+        const cpf = funcionario[0].cpf;
+
+        $("#data_expedicao").val($(customDataInput).val()).prop('disabled', false);
+        $("#rg").val(funcionario[0].registro_geral).prop('disabled', false);
+        $("#orgao_emissor").val(funcionario[0].orgao_emissor).prop('disabled', false);
+        $("#cpf").val(cpf).prop('disabled', false);
+        $("#data_admissao").val(alterardate(funcionario[0].data_admissao)).prop('disabled', false);
+
+        $('#formAlterarDocumentacao').submit()
+        alert("Agora é possível alterar a data de nascimento para a data desejada!")
+      } else {
+        customErrorData.style.display = 'block';
+        customDataInput.focus();
+      }
     });
     // Evento de submit do formulário
-      $('#formAlterarInformacoesPessoais').on('submit', function(e) {
-          if(!funcao3()) {
-              e.preventDefault();
-              showCustomModal();
-          }
-      });
+    $('#formAlterarInformacoesPessoais').on('submit', function(e) {
+      if (!funcao3()) {
+        e.preventDefault();
+        showCustomModal();
+      }
+    });
 
     function gerarDocFuncional() {
       url = 'documento_listar.php';

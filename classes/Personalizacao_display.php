@@ -109,12 +109,21 @@ class Display_campo{
     public function display_file(){
         // Procura o arquivo baseado no nome do campo (não funcionar com carrossel)
         $nome_campo = $this->getCampo();
-        $result = $this->getQuery("
+
+        $pdo = Conexao::connect();
+
+        $stmt = $pdo->prepare("
         select i.imagem as arquivo
         from campo_imagem c
         inner join tabela_imagem_campo ic on c.id_campo = ic.id_campo
         inner join imagem i on ic.id_imagem = i.id_imagem
-        where c.nome_campo='$nome_campo';");
+        where c.nome_campo=:nomeCampo");
+
+        $stmt->bindValue(':nomeCampo', $nome_campo);
+        $stmt->execute();
+
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         if (count($result) == 1){
             $this->setConteudo(gzuncompress($result[0]['arquivo']));
             echo('data:image;base64,'.$this->getConteudo());

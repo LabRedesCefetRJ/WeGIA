@@ -1,68 +1,36 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Atendido_ocorrencia.php";
 require_once ROOT . "/dao/Atendido_ocorrenciaDAO.php";
-require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 require_once ROOT . "/classes/Atendido_ocorrenciaDoc.php";
 require_once ROOT . "/classes/Cache.php";
-
+require_once ROOT . "/classes/Util.php";
 
 class Atendido_ocorrenciaControle
 {
 	//Listar despachos
 	public function listarTodos()
 	{
-		extract($_REQUEST);
-		$atendido_ocorrenciaDAO = new atendido_ocorrenciaDAO();
-		$ocorrencias = $atendido_ocorrenciaDAO->listarTodos();
-		session_start();
-		$_SESSION['ocorrencia'] = $ocorrencias;
-		header('Location: ' . $nextPage);
+		try {
+			$atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
+			$ocorrencias = $atendido_ocorrenciaDAO->listarTodos();
+			session_start();
+			$_SESSION['ocorrencia'] = $ocorrencias;
+		} catch (Exception $e) {
+			Util::tratarException($e);
+		}
 	}
-
-
-
-	// $MemorandoDAO = new MemorandoDAO();
-	// $dadosMemorando = $MemorandoDAO->listarTodosId($id_memorando);
-
-	// $ultimoDespacho =  new MemorandoControle;
-	// $ultimoDespacho->buscarUltimoDespacho($id_memorando);
-
-	// if(!empty($_SESSION['ultimo_despacho']))
-	// {
-	// if($dadosMemorando[0]['id_status_memorando'] == 3 AND $_SESSION['ultimo_despacho'][0]['id_destinatarioo']==$_SESSION['id_pessoa'])
-	// {
-	// 	$memorando = new Memorando('','',$dadosMemorando[0]['id_status_memorando'],'','');
-	// 	$memorando->setId_memorando($id_memorando);
-	// 	$memorando->setId_status_memorando(2);
-	// 	$MemorandoDAO2 = new MemorandoDAO();
-	// 	$id_status_memorando = 2;
-	// 	$MemorandoDAO2->alterarIdStatusMemorando($memorando);
-	// }
-	//}
-
 
 	//Listar Despachos com anexo
 	public function listarTodosComAnexo()
 	{
 		extract($_REQUEST);
-		$despachoComAnexoDAO = new atendido_ocorrenciaDAO();
+		$despachoComAnexoDAO = new Atendido_ocorrenciaDAO();
 		$despachosComAnexo = $despachoComAnexoDAO->listarTodosComAnexo($id_memorando);
 		$_SESSION['despachoComAnexo'] = $despachosComAnexo;
 	}
@@ -71,9 +39,7 @@ class Atendido_ocorrenciaControle
 	{
 		$Atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
 		$anexos = $Atendido_ocorrenciaDAO->listarAnexo($id_ocorrencia);
-		if (session_status() !== PHP_SESSION_ACTIVE) {
-			session_start();
-		}
+
 		$_SESSION['arq'] = $anexos;
 	}
 
@@ -84,174 +50,167 @@ class Atendido_ocorrenciaControle
 	}
 
 
-	//Incluir despachos  
-	public function incluir()
-	{
-		extract($_REQUEST);
-		$ocorrencia = $this->verificarDespacho();
-		$ocorrenciaDAO = new Atendido_ocorrenciaDAO();
-		try {
-			$ocorrenciaDAO->incluir($ocorrencia);
+public function incluir()
+{
+    extract($_REQUEST);
 
-			$arquivos = $_FILES["arquivos"];
+    $atendido_idatendido = filter_var($atendido_idatendido ?? null, FILTER_VALIDATE_INT) ?: 0;
+    if ($atendido_idatendido < 1) {
+        header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=0&ocorrencia_msg=id-invalido");
+        exit;
+    }
 
-			$ocorrenciaDAO->incluirArquivos($arquivos);
+    try {
 
-			$msg = "success";
-			$sccd = "Ocorrencia enviada com sucesso";
-			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?msg=" . $msg . "&sccd=" . $sccd);
-		} catch (PDOException $e) {
-			$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
-			echo $msg;
-		}
-	}
+        if (!empty($data)) {
+            $pdo = Conexao::connect();
+            $sql_nascimento = "
+                SELECT p.data_nascimento 
+                FROM atendido a 
+                JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa 
+                WHERE a.idatendido = :id
+            ";
+            $stmt_nascimento = $pdo->prepare($sql_nascimento);
+            $stmt_nascimento->bindValue(':id', $atendido_idatendido, PDO::PARAM_INT);
+            $stmt_nascimento->execute();
+            $atendido_nasc = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
+
+            if (
+                $atendido_nasc &&
+                !empty($atendido_nasc['data_nascimento']) &&
+                $atendido_nasc['data_nascimento'] !== '0000-00-00'
+            ) {
+
+                try {
+                    $data_nascimento_obj = new DateTime($atendido_nasc['data_nascimento']);
+                    $data_ocorrencia_obj = new DateTime($data);
+                } catch (Exception $e) {
+                    error_log("Erro DateTime em ocorrência: " . $e->getMessage());
+                    header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-formato-invalido");
+                    exit;
+                }
+
+                if ($data_ocorrencia_obj < $data_nascimento_obj) {
+                    header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-anterior-nascimento");
+                    exit;
+                }
+            }
+        }
+
+        $ocorrencia    = $this->verificarDespacho();
+        $ocorrenciaDAO = new Atendido_ocorrenciaDAO();
+        $ocorrenciaDAO->incluir($ocorrencia);
+
+        $arquivos = $_FILES["arquivos"];
+        $ocorrenciaDAO->incluirArquivos($arquivos);
+
+        header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-sucesso");
+    } catch (PDOException $e) {
+        Util::tratarException($e);
+        header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-falha");
+        exit;
+    }
+}
+
 
 	public function verificar()
 	{
 		extract($_REQUEST);
-		// se não estiver definida ou vazia//
-		if ((!isset($descricao)) || (empty($descricao))) {
-			$msg .= "Descricao do atendido não informado. Por favor, informe a descricao!";
-			header('Location: ../html/atendido/cadastro_ocorrencia.php?msg=' . $msg);
-		}
-		if ((!isset($atendido_idatendido)) || (empty($atendido_idatendido))) {
-			$atendido_idatendido = "";
-		}
-		if ((!isset($id_funcionario)) || (empty($id_funcionario))) {
-			$id_funcionario = "";
+		$msg = "";
+
+		if (!isset($descricao) || empty($descricao)) {
+			$msg = "Descrição da ocorrência não informada!";
+			header('Location: ../html/atendido/cadastro_ocorrencia.php?msg=' . urlencode($msg));
+			exit;
 		}
 
-		if ((!isset($id_tipos_ocorrencia)) || (empty($id_tipos_ocorrencia))) {
-			$id_tipos_ocorrencia = "";
+		if (!isset($data) || empty($data)) {
+			$msg = "Data da ocorrência não informada!";
+			header('Location: ../html/atendido/cadastro_ocorrencia.php?msg=' . urlencode($msg));
+			exit;
 		}
-		// if((!isset($idatendido_ocorrencias)) || (empty($idatendido_ocorrencias))){
-		// 	$idatendido_ocorrencias="";
-		// }
-		if ((!isset($data)) || (empty($data))) {
-			$msg .= "Data da ocorrencia não informada. Por favor, informe a data!";
-			header('Location: ../html/atendido/cadastro_ocorrencia.php?msg=' . $msg);
-		}
-		// if((!isset($nome)) || (empty($nome))){
-		// 	$msg .= "Data da ocorrencia não informada. Por favor, informe a data!";
-		// 	header('Location: ../html/atendido/cadastro_ocorrencia.php?msg='.$msg); 
-		// }
 
 		$ocorrencia = new Ocorrencia($descricao);
-		$ocorrencia->setAtendido_idatendido($atendido_idatendido);
-		// $ocorrencia->setNome($nome);  
-		$ocorrencia->setFuncionario_idfuncionario($id_funcionario);
-		$ocorrencia->setId_tipos_ocorrencia($id_tipos_ocorrencia);
-		// $ocorrencia->setIdatendido_ocorrencias($idatendido_ocorrencias);
+		$ocorrencia->setAtendido_idatendido($atendido_idatendido ?? '');
+		$ocorrencia->setFuncionario_idfuncionario($id_funcionario ?? '');
+		$ocorrencia->setId_tipos_ocorrencia($id_tipos_ocorrencia ?? '');
 		$ocorrencia->setData($data);
 		return $ocorrencia;
 	}
-	//Verificar despachos
+
 	public function verificarDespacho()
 	{
-		session_start();
-		$cpf_usuario = $_SESSION["usuario"];
-		extract($_REQUEST);
-		if (!isset($descricao) || (empty($descricao))) {
-			$msg = "Ocorrência não informada. Por favor informe um texto.";
+		if (session_status() === PHP_SESSION_NONE) {
+			session_start();
 		}
-		// $pessoa = new Atendido_ocorrenciaDoc();
-		// $id_pessoa = $pessoa->obterUsuario($cpf_usuario);
-		// $id_pessoa = $id_pessoa['0']['id_pessoa'];
+
+		extract($_REQUEST);
+
+		if (!isset($descricao) || empty($descricao)) {
+			throw new InvalidArgumentException("Descrição da ocorrência obrigatória!");
+		}
+
 		$ocorrencia = new Ocorrencia($descricao);
-		$ocorrencia->setAtendido_idatendido($atendido_idatendido);
-		$ocorrencia->setFuncionario_idfuncionario($id_funcionario);
-		$ocorrencia->setId_tipos_ocorrencia($id_tipos_ocorrencia);
-		$ocorrencia->setData($data);
-		// $ocorrencia->setIdatendido_ocorrencias($idatendido_ocorrencias);
-		// $ocorrencia->setExtensao($extensao); 
-		// $ocorrencia->setNome($nome);  
+		$ocorrencia->setAtendido_idatendido($atendido_idatendido ?? 0);
+		$ocorrencia->setFuncionario_idfuncionario($id_funcionario ?? 0);
+		$ocorrencia->setId_tipos_ocorrencia($id_tipos_ocorrencia ?? 0);
+		$ocorrencia->setData($data ?? date('Y-m-d'));
 		return $ocorrencia;
 	}
 
 	public function incluirdoc($anexo, $lastId)
 	{
 		extract($_REQUEST);
-		$total = count($anexo['name']);
 		$arq = $_FILES['anexo'];
 
-		$arq['name'] =  array_unique($arq['name']);
-		$arq['type'] =  array_unique($arq['type']);
-		$arq['tmp_name'] =  array_unique($arq['tmp_name']);
-		$arq['error'] =  array_unique($arq['error']);
-		$arq['size'] =  array_unique($arq['size']);
-
-		$anexo['name'] =  array_unique($anexo['name']);
-		$anexo['type'] =  array_unique($anexo['type']);
-		$anexo['tmp_name'] =  array_unique($anexo['tmp_name']);
-		$anexo['error'] =  array_unique($anexo['error']);
-		$anexo['size'] =  array_unique($anexo['size']);
+		$arq['name'] = array_unique(array_filter($arq['name']));
+		$arq['type'] = array_unique(array_filter($arq['type']));
+		$arq['tmp_name'] = array_unique(array_filter($arq['tmp_name']));
+		$arq['error'] = array_unique(array_filter($arq['error']));
+		$arq['size'] = array_unique(array_filter($arq['size']));
 
 		$novo_total = count($arq['name']);
 
 		for ($i = 0; $i < $novo_total; $i++) {
-			/*$zip = new ZipArchive();
-			if($zip->open('anexo_zip.zip', ZIPARCHIVE::CREATE) == TRUE)
-			{
-				$zip->addFile($arq['tmp_name'][$i], $nome.".".$extensao);
-			}
-			var_dump($zip);
-			$caminho=$zip->filename;
-			$zip->close();
-			$arquivo_zip = file_get_contents($caminho);
-			unlink('anexo_zip.zip');*/
-			/*$fp = fopen($_FILES['anexo']['tmp_name'][$i], "rb");
-			$conteudo = fread($fp, $tamanho_arquivo);
-			$conteudo = addslashes($conteudo);
-			fclose($fp);*/
+			if ($arq['error'][$i] !== UPLOAD_ERR_OK) continue;
 
-			$anexo_tmpName = $arq['tmp_name'];
-			$arquivo = file_get_contents($anexo_tmpName[$i]);
+			$arquivo = file_get_contents($arq['tmp_name'][$i]);
 			$arquivo1 = $arq['name'][$i];
-			$tamanho = strlen($arquivo1);
-			$pos = strpos($arquivo1, ".") + 1;
-			$extensao = substr($arquivo1, $pos, strlen($arquivo1) + 1);
-			$nome = substr($arquivo1, 0, $pos - 1);
+			$pos = strrpos($arquivo1, ".");
+			if ($pos === false) continue;
+
+			$extensao = substr($arquivo1, $pos + 1);
+			$nome = substr($arquivo1, 0, $pos);
 
 			$AnexoControle = new AnexoControle;
 			$arquivo_zip = $AnexoControle->comprimir($arquivo);
 
 			try {
-				$anexo = new Anexo();
-				$anexo->setId_despacho($lastId);
-				$anexo->setAnexo($arquivo_zip);
-				$anexo->setNome($nome);
-				$anexo->setExtensao($extensao);
-			} catch (InvalidArgumentException $e) {
-				echo 'Erro ao tentar incluir documentação: ' . $e->getMessage();
-			}
+				$anexo_obj = new Anexo();
+				$anexo_obj->setId_despacho($lastId);
+				$anexo_obj->setAnexo($arquivo_zip);
+				$anexo_obj->setNome($nome);
+				$anexo_obj->setExtensao($extensao);
 
-			try {
 				$anexoDAO = new AnexoDAO();
-				$anexoDAO->incluir($anexo);
-			} catch (PDOException $e) {
-				$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
-				echo $msg;
+				$anexoDAO->incluir($anexo_obj);
+			} catch (Exception $e) {
+				Util::tratarException($e);
 			}
 		}
 	}
+
 	public function listarUm()
 	{
 		extract($_REQUEST);
 		$cache = new Cache();
 		$inf = $cache->read($id);
-		if (!$inf) {
-			try {
-				$atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
-				$inf = $atendido_ocorrenciaDAO->listar($id);
-				session_start();
-				$_SESSION['atendido_ocorrencia'] = $inf;
-				$cache->save($id, $inf, '15 seconds');
-				header('Location:' . $nextPage);
-			} catch (PDOException $e) {
-				echo $e->getMessage();
-			}
-		} else {
-			header('Location:' . $nextPage);
-		}
+
+		$atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
+		$inf = $atendido_ocorrenciaDAO->listar($id);
+
+		$_SESSION['atendido_ocorrencia'] = $inf;
+		$cache->save($id, $inf, '15 seconds');
+		exit;
 	}
 }

@@ -2,6 +2,7 @@
 require_once '../vendor/autoload.php';
 require_once dirname(__DIR__) . '/dao/ImagemDAO.php';
 require_once dirname(__DIR__) . '/dao/ConexaoDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SelecaoParagrafoDAO.php';
 
 use setasign\Fpdi\Fpdi;
 
@@ -44,7 +45,7 @@ class PdfService
                     file_put_contents($logoPath, base64_decode($logoData));
                     $pdf->Image($logoPath, 85, 20, 40, 0, strtoupper($ext)); // Centraliza logo no topo
                     unlink($logoPath);
-                    $pdf->Ln(40);
+                    $pdf->Ln(60);
                 }
             } else {
                 $pdf->Ln(30); // Espaço caso não tenha logo
@@ -54,7 +55,7 @@ class PdfService
             $corAzul = [0, 70, 160]; // Azul MSF
             $pdf->SetTextColor(...$corAzul);
             $pdf->SetFont('Arial', 'B', 22);
-            $pdf->Cell(0, 18, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'RECIBO DE DOAÇÕES'), 0, 1, 'C');
+            $pdf->Cell(0, 18, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'COMPROVANTE DE DOAÇÕES'), 0, 1, 'C');
             $pdf->Ln(2);
 
             // Divisor azul
@@ -71,8 +72,8 @@ class PdfService
             require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'EnderecoDAO.php';
             $enderecoDao = new EnderecoDAO();
             $retorno = $enderecoDao->listarInstituicao();         // recebe o JSON
-            $array = json_decode($retorno, true);         // vira array PHP
-            $nomeInstituicao = $array[0]['nome'] ?? null; // pega o nome do primeiro registro
+            $endereco = json_decode($retorno, true)[0];         // vira array PHP
+            $nomeInstituicao = $endereco['nome'] ?? null; // pega o nome do primeiro registro
 
             if (!isset($nomeInstituicao) || empty($nomeInstituicao) || strlen($nomeInstituicao) === 0) {
                 $nomeInstituicao = 'nossa instituição';
@@ -111,12 +112,49 @@ class PdfService
                 }
             }
 
-            //mensagem de agradecimento ao doador.
-            require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SelecaoParagrafoDAO.php';
-            $selecaoParagrafo = new SelecaoParagrafoDAO();
-            $agradecimento = $selecaoParagrafo->getAgradecimentoDoador();
+            //CNPJ
+            $cnpj = SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Cnpj);
 
-            if(is_null($agradecimento))
+            if (isset($cnpj))
+                $nomeInstituicao .= " (CNPJ: $cnpj";
+
+            //Endereço
+            if (isset($endereco['cep']) && strlen($endereco['cep']) != 0) {
+                if (isset($cnpj))
+                    $nomeInstituicao .= " | CEP: {$endereco['cep']}";
+                else
+                    $nomeInstituicao .= " (CEP: {$endereco['cep']}";
+
+                if (isset($endereco['numero_endereco']) && strlen($endereco['numero_endereco']) != 0 && (trim(strtolower($endereco['numero_endereco'])) != 'sem número'))
+                    $nomeInstituicao .= ", n°: {$endereco['numero_endereco']}";
+            } else {
+                if (isset($endereco['cidade']) && strlen($endereco['cidade']) != 0) {
+                    if (isset($cnpj))
+                        $nomeInstituicao .= " | Endereço: {$endereco['cidade']}";
+                    else
+                        $nomeInstituicao .= "(Endereço: {$endereco['cidade']}";
+
+                    if (isset($endereco['bairro']) && strlen($endereco['bairro']) != 0)
+                        $nomeInstituicao .= ", {$endereco['bairro']}";
+
+                    if (isset($endereco['logradouro']) && strlen($endereco['logradouro']) != 0)
+                        $nomeInstituicao .= ", {$endereco['logradouro']}";
+
+                    if ((isset($endereco['numero_endereco']) && strlen($endereco['numero_endereco']) != 0) && (trim(strtolower($endereco['numero_endereco'])) != 'sem número'))
+                        $nomeInstituicao .= ", n°: {$endereco['numero_endereco']}";
+
+                    if (isset($endereco['estado']) && strlen($endereco['estado']) != 0)
+                        $nomeInstituicao .= ", {$endereco['estado']}";
+                }
+            }
+
+            if (preg_match('/\([^)]*$/', $nomeInstituicao))
+                $nomeInstituicao .= ')';
+
+            //mensagem de agradecimento ao doador.
+            $agradecimento = SelecaoParagrafoDAO::getSelecao(SelecaoParagrafo::Agradecimento);
+
+            if (is_null($agradecimento))
                 $agradecimento = 'Sua contribuição é fundamental para a nossa organização!';
 
             $mensagem = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', sprintf(
@@ -141,12 +179,14 @@ class PdfService
             // Informações adicionais
             $pdf->SetFont('Arial', '', 12);
             $pdf->SetTextColor(0, 0, 0);
-            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Código do Recibo: ' . $recibo->getCodigo()), 0, 1, 'L');
+            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Código do Comprovante: ' . $recibo->getCodigo()), 0, 1, 'L');
             $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Data de Emissão: ' . date('d/m/Y H:i:s')), 0, 1, 'L');
             $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Período: ' . $recibo->getDataInicio()->format('d/m/Y') . ' a ' . $recibo->getDataFim()->format('d/m/Y')), 0, 1, 'L');
             $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'CPF: ' . $this->formatarCPF($socio->getDocumento())), 0, 1, 'L');
             $pdf->Ln(10);
-            // ...não há campo de assinatura...
+
+            //Lista de doações
+            $this->renderTabelaContribuicoes($pdf, $recibo->getContribuicoes());
 
             if (isset($diretorio)) {
                 $nomeArquivo = 'recibo_' . $recibo->getCodigo() . '.pdf';
@@ -187,5 +227,128 @@ class PdfService
         }
 
         return $cpf;
+    }
+
+    /**
+     * Utiliza a biblioteca do Fpdi para criar um nova página no PDF com uma tabela de detalhamento das contribuições passadas como parâmetro.
+     */
+    private function renderTabelaContribuicoes(Fpdi $pdf, array $contribuicoes)
+    {
+        // Estilo título
+        $corAzul = [0, 70, 160];
+        $pdf->AddPage();
+        $pdf->SetTextColor(...$corAzul);
+        $pdf->SetFont('Arial', 'B', 22);
+        $pdf->Ln(5);
+        $pdf->Cell(0, 10, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Detalhamento das Doações'), 0, 1, 'C');
+        $pdf->Ln(5);
+
+        // Larguras
+        $larguras = [35, 35, 28, 28, 30];
+
+        $headers = ['Código', 'M. Pagamento', 'D. Emissão', 'D. Pagamento', 'Valor'];
+
+        // Cabeçalho
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFillColor(...$corAzul);
+        $pdf->SetTextColor(255, 255, 255);
+
+        foreach ($headers as $i => $header) {
+            $pdf->Cell(
+                $larguras[$i],
+                10,
+                iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $header),
+                1,
+                0,
+                'C',
+                true
+            );
+        }
+        $pdf->Ln();
+
+        // Corpo
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->SetTextColor(0, 0, 0);
+
+        $fill = false;
+
+        foreach ($contribuicoes as $c) {
+
+            $codigo         = $c['codigo'];
+            $meio           = $c['meio'];
+            $dataGeracao    = $c['data_geracao'] ? date('d/m/Y', strtotime($c['data_geracao'])) : '-';
+            $dataPagamento  = $c['data_pagamento'] ? date('d/m/Y', strtotime($c['data_pagamento'])) : '-';
+            $valorFormatado = "R$ " . number_format($c['valor'], 2, ',', '.');
+
+            // MultiCell apenas para o código
+            $textoCodigo = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $codigo);
+            $numLinhasCodigo = ceil($pdf->GetStringWidth($textoCodigo) / ($larguras[0] - 2));
+            $alturaLinha = max(8, $numLinhasCodigo * 6);
+
+            // Quebra de página
+            if ($pdf->GetY() + $alturaLinha > 270) {
+                $pdf->AddPage();
+
+                // Cabeçalho novamente
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->SetFillColor(...$corAzul);
+                $pdf->SetTextColor(255, 255, 255);
+
+                foreach ($headers as $i => $header) {
+                    $pdf->Cell(
+                        $larguras[$i],
+                        10,
+                        iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $header),
+                        1,
+                        0,
+                        'C',
+                        true
+                    );
+                }
+                $pdf->Ln();
+
+                $pdf->SetFont('Arial', '', 10);
+                $pdf->SetTextColor(0, 0, 0);
+            }
+
+            // Fundo zebra
+            $pdf->SetFillColor($fill ? 240 : 255, $fill ? 240 : 255, $fill ? 240 : 255);
+            $fill = !$fill;
+
+            /* --------------- Celula 1: Código (MultiCell) ---------------- */
+            $xIni = $pdf->GetX();
+            $yIni = $pdf->GetY();
+
+            $pdf->MultiCell($larguras[0], 6, $textoCodigo, 1, 'L', true);
+
+            // Reposicionar para continuar a linha
+            $pdf->SetXY($xIni + $larguras[0], $yIni);
+
+            // Adaptar descrição do meio de pagamento
+            switch ($meio) {
+                case 'Carne':
+                    $meio = 'Carnê';
+                    break;
+
+                case 'Recorrencia':
+                    $meio = 'Recorrência';
+                    break;
+
+                case 'CartaoCredito':
+                    $meio = 'Cartão de crédito';
+                    break;
+
+                default:
+                    break;
+            }
+
+            /* --------------- Demais colunas (altura fixa) ---------------- */
+            $pdf->Cell($larguras[1], $alturaLinha, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $meio), 1, 0, 'L', true);
+            $pdf->Cell($larguras[2], $alturaLinha, $dataGeracao, 1, 0, 'C', true);
+            $pdf->Cell($larguras[3], $alturaLinha, $dataPagamento, 1, 0, 'C', true);
+            $pdf->Cell($larguras[4], $alturaLinha, $valorFormatado, 1, 1, 'R', true);
+        }
+
+        $pdf->Ln(5);
     }
 }

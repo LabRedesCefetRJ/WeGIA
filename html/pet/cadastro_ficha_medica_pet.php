@@ -517,20 +517,3 @@ btnEditar.addEventListener("click", () => {
         <!--fim-->
     </body>
 </html>
-<?php
-//Pedro
-/*if(isset($_GET['id_pet'])){
-    echo <<<HTML
-        <script>
-            let opcao = document.querySelectorAll("option");
-            let id = $_GET[id_pet];
-            opcao.forEach(valor=>{
-                if(valor.value == id){
-                    valor.selected = true;
-                }
-            })
-        </script>
-    HTML;
-}*/
-//===========================
-?>
