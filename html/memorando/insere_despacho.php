@@ -32,7 +32,7 @@ $funcionarios->listarTodos2();
 $listarInativos = new MemorandoControle;
 $listarInativos->listarIdTodosInativos();
 
-$idMemorando = filter_input(INPUT_GET, 'id_memorando', FILTER_SANITIZE_NUMBER_INT);
+$idMemorando = filter_input(INPUT_GET, 'id_memorando', FILTER_VALIDATE_INT);
 
 if(!$idMemorando || $idMemorando < 1){
     http_response_code(400);
@@ -41,7 +41,7 @@ if(!$idMemorando || $idMemorando < 1){
 }
 
 $issetMemorando = new MemorandoControle;
-$issetMemorando->issetMemorando($_GET['id_memorando']);
+$issetMemorando->issetMemorando($idMemorando); //tomar cuidado com XSS
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -125,7 +125,7 @@ require_once ROOT . "/html/personalizacao_display.php";
             $("#header").load("<?php echo WWW; ?>html/header.php");
             $(".menuu").load("<?php echo WWW; ?>html/menu.php");
 
-            var id_memorando = <?php echo $_GET['id_memorando'] ?>;
+            var id_memorando = <?= $idMemorando?>; //XSS
             $("#id_memorando").val(id_memorando);
 
             CKEDITOR.replace('despacho');
@@ -381,7 +381,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                 <section class="panel">
                     <?php
-                    if (in_array($_GET['id_memorando'], $_SESSION['memorandoIdInativo']) || $_SESSION['isset_memorando'] == 1) {
+                    if (in_array($idMemorando, $_SESSION['memorandoIdInativo']) || $_SESSION['isset_memorando'] == 1) { //Tomar cuidado com XSS
                     ?>
                         <script>
                             $(".panel").html("<p>Desculpe, você não tem acesso à essa página</p>");
