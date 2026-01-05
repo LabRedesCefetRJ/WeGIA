@@ -1,12 +1,3 @@
-<!-- BEGIN 
-		declare ido int;
-        INSERT INTO atendido_ocorrencia(atendido_idatendido, atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos, funcionario_id_funcionario, data, descricao)
-        values (idatendido, id_ocorrencia, id_funcionario, data, descricao);
-	
-        SELECT max(id_ocorrencia) into ido from atendido_ocorrencia;
-        
-END
-INSERT INTO `atendido_ocorrencia` (`idatendido_ocorrencias`, `atendido_idatendido`, `atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos`, `funcionario_id_funcionario`, `data`, `descricao`) VALUES ('1', '4', '1', '1', '2021-11-11', 'lalallalala'); -->
 <?php
 
 $config_path = "config.php";
@@ -51,81 +42,74 @@ class Atendido_ocorrenciaDAO
     }
 
 
-    public function listarTodosComAnexo($id_ocorrencia)
+    public function listarTodosComAnexo(int $idOcorrencia)
     {
-        /*Função não está sendo utilizada em nenhum local da aplicação. */
-        try {
-            $Despachos = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT arquivo FROM atendido_ocorrencia_doc  WHERE idatendido_ocorrencia_doc = $id_ocorrencia");
-            $x = 0;
+        $pdo = Conexao::connect();
 
-            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $Despachos[$x] = array('idatendido_ocorrencia_doc' => $linha['idatendido_ocorrencia_doc']);
-                $x++;
-            }
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
-        }
-        return json_encode($Despachos);
+        $stmt = $pdo->prepare("SELECT arquivo FROM atendido_ocorrencia_doc  WHERE idatendido_ocorrencia_doc =:idOcorrencia");
+        $stmt->bindParam(':idOcorrencia', $idOcorrencia, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $despachos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return json_encode($despachos);
     }
 
 
     public function incluir($ocorrencia)
-{
-    try {
-        $pdo = Conexao::connect();
+    {
+        try {
+            $pdo = Conexao::connect();
 
-        $atendido_idatendido = $ocorrencia->getAtendido_idatendido();
-        $id_tipos_ocorrencia = $ocorrencia->getId_tipos_ocorrencia();
+            $atendido_idatendido = $ocorrencia->getAtendido_idatendido();
+            $id_tipos_ocorrencia = $ocorrencia->getId_tipos_ocorrencia();
 
-        // Verifica se já existe falecimento para este atendido
-        if ($id_tipos_ocorrencia == 2) {
-            $stmtVerifica = $pdo->prepare("SELECT COUNT(*) FROM atendido_ocorrencia WHERE atendido_idatendido = :idAtendido AND atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = 2");
-            $stmtVerifica->execute([':idAtendido' => $atendido_idatendido]);
-            $count = $stmtVerifica->fetchColumn();
+            // Verifica se já existe falecimento para este atendido
+            if ($id_tipos_ocorrencia == 2) {
+                $stmtVerifica = $pdo->prepare("SELECT COUNT(*) FROM atendido_ocorrencia WHERE atendido_idatendido = :idAtendido AND atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = 2");
+                $stmtVerifica->execute([':idAtendido' => $atendido_idatendido]);
+                $count = $stmtVerifica->fetchColumn();
 
-            if ($count > 0) {
-                header('Location: ../html/atendido/cadastro_ocorrencia.php');
-                $_SESSION['mensagem_erro'] = "Já existe uma ocorrência de falecimento registrada para este atendido.";
-                exit;
+                if ($count > 0) {
+                    header('Location: ../html/atendido/cadastro_ocorrencia.php');
+                    $_SESSION['mensagem_erro'] = "Já existe uma ocorrência de falecimento registrada para este atendido.";
+                    exit;
+                }
             }
-        }
 
-        // Continuação da inserção
-        $sql = "INSERT INTO atendido_ocorrencia 
+            // Continuação da inserção
+            $sql = "INSERT INTO atendido_ocorrencia 
                 (atendido_idatendido, atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos, funcionario_id_funcionario, data, descricao) 
                 VALUES (:atendido_idatendido, :id_tipos_ocorrencia, :funcionario_idfuncionario, :datao, :descricao)";
 
-        $stmt = $pdo->prepare($sql);
+            $stmt = $pdo->prepare($sql);
 
-        $funcionario_idfuncionario = $ocorrencia->getFuncionario_idfuncionario();
-        $datao = $ocorrencia->getData();
-        $descricao = $ocorrencia->getDescricao();
+            $funcionario_idfuncionario = $ocorrencia->getFuncionario_idfuncionario();
+            $datao = $ocorrencia->getData();
+            $descricao = $ocorrencia->getDescricao();
 
-        $stmt->bindParam(':descricao', $descricao);
-        $stmt->bindParam(':atendido_idatendido', $atendido_idatendido);
-        $stmt->bindParam(':funcionario_idfuncionario', $funcionario_idfuncionario);
-        $stmt->bindParam(':id_tipos_ocorrencia', $id_tipos_ocorrencia);
-        $stmt->bindParam(':datao', $datao);
+            $stmt->bindParam(':descricao', $descricao);
+            $stmt->bindParam(':atendido_idatendido', $atendido_idatendido);
+            $stmt->bindParam(':funcionario_idfuncionario', $funcionario_idfuncionario);
+            $stmt->bindParam(':id_tipos_ocorrencia', $id_tipos_ocorrencia);
+            $stmt->bindParam(':datao', $datao);
 
-        $stmt->execute();
-
-    } catch (PDOException $e) {
-        header('Location: formulario_ocorrencia.php');
-        $_SESSION['mensagem_erro'] = 'Erro no banco de dados: ' . $e->getMessage();
-        exit;
-    } catch (Exception $e) {
-        $_SESSION['mensagem_erro'] = 'Erro: ' . $e->getMessage();
-        header('Location: formulario_ocorrencia.php');
-        exit;
+            $stmt->execute();
+        } catch (PDOException $e) {
+            header('Location: formulario_ocorrencia.php');
+            $_SESSION['mensagem_erro'] = 'Erro no banco de dados: ' . $e->getMessage();
+            exit;
+        } catch (Exception $e) {
+            $_SESSION['mensagem_erro'] = 'Erro: ' . $e->getMessage();
+            header('Location: formulario_ocorrencia.php');
+            exit;
+        }
     }
 
-}
+    public function incluirArquivos($arquivos)
+    {
 
-    public function incluirArquivos($arquivos){
-
-        for($i = 1; $i < count($arquivos["name"]); $i = $i + 1){
+        for ($i = 1; $i < count($arquivos["name"]); $i = $i + 1) {
 
             $anexo2 = $arquivos["tmp_name"][$i];
 
@@ -136,10 +120,10 @@ class Atendido_ocorrenciaDAO
 
                 $extensao_nome = strtolower(pathinfo($arquivos["name"][$i], PATHINFO_EXTENSION));
                 $arquivo_nome = str_replace("." . $extensao_nome, "", $arquivos["name"][$i]);
-                $arquivo_b64 = base64_encode(file_get_contents($arquivos['tmp_name'][$i]));	
-            
+                $arquivo_b64 = base64_encode(file_get_contents($arquivos['tmp_name'][$i]));
+
                 $tipos_permitidos = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'];
-        
+
                 if (in_array($extensao_nome, $tipos_permitidos)) {
                     $pdo = Conexao::connect();
                     $consulta = $pdo->query("SELECT max(idatendido_ocorrencias) from atendido_ocorrencia;")->fetch(PDO::FETCH_ASSOC);
@@ -152,32 +136,33 @@ class Atendido_ocorrenciaDAO
                     $prep->bindValue(":arquivo_nome", $arquivo_nome);
                     $prep->bindValue(":arquivo_extensao", $extensao_nome);
                     $prep->bindParam(":arquivo", gzcompress($arquivo_b64), PDO::PARAM_LOB);
-        
+
                     $dataDocumento = date('Y/m/d');
                     $prep->bindValue(":data", $dataDocumento);
-        
+
                     $prep->execute();
                 }
             }
         }
     }
 
-    public function listarAnexo($id_ocorrencia)
+    public function listarAnexo(int $idOcorrencia)
     {
-        try {
-            $Anexo = array();
-            $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT arquivo, arquivo_nome, idatendido_ocorrencia_doc FROM atendido_ocorrencia_doc WHERE atentido_ocorrencia_idatentido_ocorrencias=$id_ocorrencia");
-            $linha = $consulta->fetchAll(PDO::FETCH_ASSOC);
+        $anexo = array();
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare("SELECT arquivo, arquivo_nome, idatendido_ocorrencia_doc FROM atendido_ocorrencia_doc WHERE atentido_ocorrencia_idatentido_ocorrencias=:idOcorrencia");
 
-            foreach($linha as $arquivo){
-                $decode = base64_decode(gzuncompress($arquivo['arquivo']));
-                $Anexo[$arquivo['idatendido_ocorrencia_doc']] = $decode;
-            }
-        } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+        $stmt->bindParam(':idOcorrencia', $idOcorrencia, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $linha = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($linha as $arquivo) {
+            $decode = base64_decode(gzuncompress($arquivo['arquivo']));
+            $anexo[$arquivo['idatendido_ocorrencia_doc']] = $decode;
         }
-        return $Anexo;
+
+        return $anexo;
     }
 
     public function listar($id)
@@ -205,7 +190,7 @@ class Atendido_ocorrenciaDAO
                 join atendido_ocorrencia_tipos aot on (ao.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = aot.idatendido_ocorrencia_tipos) 
                 join funcionario f on (ao.funcionario_id_funcionario = f.id_funcionario)
                 join pessoa pp on (f.id_pessoa = pp.id_pessoa)
-                where ao.idatendido_ocorrencias = :id";// <-- Aproveitar a query nova para buscar os dados quando a ocorrência não possuir um documento 
+                where ao.idatendido_ocorrencias = :id"; // <-- Aproveitar a query nova para buscar os dados quando a ocorrência não possuir um documento 
             }
 
             $stmt = $pdo->prepare($sql);
@@ -214,8 +199,17 @@ class Atendido_ocorrenciaDAO
             $paciente = array();
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 $paciente[] = array(
-                    'nome_atendido' => $linha['nome_atendido'], 'arquivo_nome' => isset($linha['arquivo_nome'])?$linha['arquivo_nome']:null, 'arquivo_extensao' => isset($linha['arquivo_extensao'])?$linha['arquivo_extensao']:null, 'idatendido_ocorrencias' => $linha['idatendido_ocorrencias'], 'sobrenome_atendido' => $linha['sobrenome_atendido'], 'atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos' => $linha['descricao_tipo'], 'funcionario_id_funcionario' => $linha['func'],
-                    'data' => $linha['data'], 'descricao' => $linha['descricao_ocorrencia'], 'idatendido_ocorrencia_doc' => isset($linha['idatendido_ocorrencia_doc'])?$linha['idatendido_ocorrencia_doc']:null);
+                    'nome_atendido' => $linha['nome_atendido'],
+                    'arquivo_nome' => isset($linha['arquivo_nome']) ? $linha['arquivo_nome'] : null,
+                    'arquivo_extensao' => isset($linha['arquivo_extensao']) ? $linha['arquivo_extensao'] : null,
+                    'idatendido_ocorrencias' => $linha['idatendido_ocorrencias'],
+                    'sobrenome_atendido' => $linha['sobrenome_atendido'],
+                    'atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos' => $linha['descricao_tipo'],
+                    'funcionario_id_funcionario' => $linha['func'],
+                    'data' => $linha['data'],
+                    'descricao' => $linha['descricao_ocorrencia'],
+                    'idatendido_ocorrencia_doc' => isset($linha['idatendido_ocorrencia_doc']) ? $linha['idatendido_ocorrencia_doc'] : null
+                );
             }
         } catch (Exception $e) {
             require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -224,4 +218,3 @@ class Atendido_ocorrenciaDAO
         return json_encode($paciente);
     }
 }
-?>
