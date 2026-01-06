@@ -1,5 +1,7 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'CaptchaDTO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'CaptchaDAO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'CaptchaMySQL.php';
 
 class Captcha
 {
@@ -8,13 +10,30 @@ class Captcha
     private string $descriptionApi;
     private string $publicKey;
     private string $privateKey;
+    private CaptchaDAO $dao;
 
-    public function __construct(CaptchaDTO $dto)
+    public function __construct(CaptchaDTO $dto, ?CaptchaDAO $dao = null)
     {
         $this->setDescriptionApi($dto->descriptionApi)->setPublicKey($dto->publicKey)->setPrivateKey($dto->privateKey);
 
         if (!is_null($dto->id))
             $this->setId($dto->id);
+
+        isset($dao) ? $this->dao = $dao : $this->dao = new CaptchaMySQL();
+    }
+
+    //Behavior methods
+
+    public static function getInfoById(int $id, ?CaptchaDAO $dao = null):?CaptchaDTO{
+        if(is_null($dao))
+            $dao = new CaptchaMySQL();
+
+        $captchaArray = $dao->getInfoById($id);
+
+        if(!$captchaArray)
+            return null;
+
+        return new CaptchaDTO($captchaArray);
     }
 
     //access methods
