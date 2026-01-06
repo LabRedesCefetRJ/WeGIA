@@ -48,8 +48,11 @@ class Captcha
         return $this->descriptionApi;
     }
 
-    public function getPublicKey(): string
+    public function getPublicKey($protected = true): string
     {
+        if($protected === true)
+            return htmlspecialchars($this->publicKey);
+
         return $this->publicKey;
     }
 
