@@ -5,6 +5,8 @@ INSERT INTO `pessoa` (`id_pessoa`, `cpf`, `senha`, `nome`, `adm_configurado`) VA
 INSERT INTO `cargo`(`id_cargo`, `cargo`) VALUES (1,'Administrador');
 INSERT INTO `cargo`(`id_cargo`, `cargo`) VALUES (2,'Sem cargo definido');
 
+INSERT INTO `captcha` (`description_api`) VALUES ('Google reCaptcha v2');
+
 INSERT INTO `situacao` (`situacoes`) VALUES ('Ativo'), ('Inativo');
 
 INSERT INTO `funcionario` (`id_pessoa`, `id_cargo`, `id_situacao`, `data_admissao`, `pis`, `ctps`, `uf_ctps`, `numero_titulo`, `zona`, `secao`, `certificado_reservista_numero`, `certificado_reservista_serie`) VALUES ('1', '1', '1', '2020-06-03', NULL, '', NULL, NULL, NULL, NULL, NULL, NULL);
