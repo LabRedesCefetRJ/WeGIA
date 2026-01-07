@@ -337,14 +337,12 @@ async function cadastrarSocio() {
             body: formData
         });
 
-        if (!response.ok) {
-            throw new Error("Erro na requisição: " + response.status);
-        }
-
         const resposta = await response.json(); // Converte a resposta para JSON
 
         if (resposta.mensagem) {
             console.log(resposta.mensagem);
+        } else if (resposta.erro) {
+            alert("Erro: " + resposta.erro);
         } else {
             alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
         }
@@ -374,14 +372,12 @@ async function atualizarSocio() {
             body: formData
         });
 
-        if (!response.ok) {
-            throw new Error("Erro na requisição: " + response.status);
-        }
-
         const resposta = await response.json(); // Converte a resposta para JSON
 
         if (resposta.mensagem) {
             console.log(resposta.mensagem);
+        } else if (resposta.erro) {
+            alert("Erro: " + resposta.erro);
         } else {
             alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
         }

@@ -37,9 +37,6 @@ function processarCartaoCredito() {
         body: formData,
     })
         .then((response) => {
-            if (!response.ok) {
-                throw new Error("Erro na requisição: " + response.status);
-            }
             return response.json();
         })
         .then((resposta) => {
