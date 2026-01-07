@@ -240,10 +240,19 @@ function configurarAvancaEndereco(funcao) {
     });
 }
 
-function configurarAvancaTerminar(funcao) {
+function configurarAvancaTerminar(funcao) { //<-- Adicionar verificação de captcha aqui
     const btnAvancaTerminar = document.getElementById('avanca-terminar');
     btnAvancaTerminar.addEventListener('click', (ev) => {
         ev.preventDefault();
+
+        //Verificação do reCAPTCHA
+        const captchaResponse = grecaptcha.getResponse();
+
+        if (!captchaResponse) {
+            alert('Por favor, confirme que você não é um robô.');
+            return;
+        }
+
         btnAvancaTerminar.disabled = true;
         btnAvancaTerminar.classList.add('disabled');
         setLoader(btnAvancaTerminar);
@@ -535,9 +544,9 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
     //Atribuir valor aos campos
     nomeObject.value = nome;
 
-    if(dataNascimento != null && dataNascimento.length === 10)
+    if (dataNascimento != null && dataNascimento.length === 10)
         dataNascimentoObject.value = converterDataParaBR(dataNascimento);
-    
+
     emailObject.value = email;
     telefoneObject.value = telefone;
     cepObject.value = cep;

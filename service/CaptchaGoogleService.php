@@ -32,7 +32,7 @@ class CaptchaGoogleService implements CaptchaService
      */
     public function getWidget(): string
     {
-        return "<div class='g-recaptcha' data-sitekey='{$this->captcha->getPublicKey()}'></div>";
+        return "<div class='g-recaptcha' data-sitekey='{$this->captcha->getPublicKey()}' style='margin-top:15px;'></div>";
     }
 
     public function validate(): bool
