@@ -30,6 +30,8 @@ class SocioController
                 $captchaGoogle = new CaptchaGoogleService();
                 if (!$captchaGoogle->validate())
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time()+30];
             }
 
             $pessoaDao = new PessoaDAO($this->pdo);
@@ -95,6 +97,8 @@ class SocioController
                 $captchaGoogle = new CaptchaGoogleService();
                 if (!$captchaGoogle->validate())
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time()+30];
             }
 
             $dados = $this->extrairPost();

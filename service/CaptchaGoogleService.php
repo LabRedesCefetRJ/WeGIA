@@ -1,4 +1,7 @@
 <?php
+if(session_status() === PHP_SESSION_NONE)
+    session_start();
+
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'CaptchaService.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Captcha.php';
 
@@ -37,6 +40,11 @@ class CaptchaGoogleService implements CaptchaService
 
     public function validate(): bool
     {
+        if(isset($_SESSION['captcha']) && $_SESSION['captcha']['timeout'] > time() && $_SESSION['captcha']['validated'] === true){
+            unset($_SESSION['captcha']);
+            return true;
+        }
+
         if (!isset($_POST['g-recaptcha-response']))
             throw new Exception('reCAPTCHA não enviado', 412);
 

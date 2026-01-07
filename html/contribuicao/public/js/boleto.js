@@ -11,8 +11,8 @@ async function configurarRegrasDePagamento() {
 async function decidirAcao() {
     switch (acao) {
         case 'boleto': gerarBoleto(); break;
-        case 'cadastrar': await cadastrarSocio(); gerarBoleto(); break;//colocar chamada para função de cadastrar sócio
-        case 'atualizar': await atualizarSocio(); gerarBoleto(); break;//colocar chamada para função de atualizar sócio
+        case 'cadastrar': await cadastrarSocio(); gerarBoleto(); break;
+        case 'atualizar': await atualizarSocio(); gerarBoleto(); break;
         default: console.log('Ação indefinida');
     }
 }
