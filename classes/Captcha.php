@@ -36,6 +36,13 @@ class Captcha
         return new CaptchaDTO($captchaArray);
     }
 
+    public function updateKeys():bool{
+        if(!$this->dao->updateKeys($this))
+            return false;
+
+        return true;
+    }
+
     //access methods
 
     public function getId(): int
