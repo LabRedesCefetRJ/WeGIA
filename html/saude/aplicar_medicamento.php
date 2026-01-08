@@ -72,7 +72,7 @@
   $medicamentoenfermeiro = $pdo->query("SELECT * FROM saude_medicacao");
   $medstatus = $pdo->query("SELECT * FROM saude_medicacao_status");
 
-  $stmtPessoa = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa ");
+  $stmtPessoa = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa");
 
   $stmtPessoa->bindValue(':idPessoa', $idPessoa);
 
@@ -86,6 +86,13 @@
   $stmtProntuarioPublico->execute();
 
   $prontuariopublico = json_encode($stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC));
+
+  $stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+  $stmtAtendido->bindValue('idPessoa', $idPessoaPaciente, PDO::PARAM_INT);
+  $stmtAtendido->execute();
+
+  $dadosAtendido = $stmtAtendido->fetch(PDO::FETCH_ASSOC);
+  $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
   $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 ?>
@@ -470,13 +477,14 @@
       }
       
       const anoDigitado = parseInt(dataHoraInput.value.substring(0, 4));
-      const anoMinimo = 1929;
+      const dataPaciente = "<?= $data_nasc_atendido ?>";
+      const anoPaciente = parseInt(dataPaciente.substring(0,4));
 
-      if (anoDigitado < anoMinimo) {
-          mostrarErro("Data inválida: O ano não pode ser anterior a 1929.");
+      if (anoDigitado < anoPaciente) {
+          mostrarErro("Data inválida: O ano não pode ser anterior ao ano de nascimento, " + anoPaciente + ".");
           return; 
       }
-
+      
       const agoraString = getDataLocalAtual();
       const dataSelecionada = new Date(dataHoraInput.value);
       const dataLimite = new Date(agoraString);
