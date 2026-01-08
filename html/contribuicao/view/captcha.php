@@ -204,22 +204,22 @@ function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3
                                                     <h4 class="modal-title">Editar Captcha</h4>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <form id="editForm" method="POST" action="../controller/control.php">
+                                                    <form id="editForm" method="POST" action="../../../controle/control.php">
                                                         <div class="form-group">
                                                             <label for="editNome">Descrição API:</label>
                                                             <input type="text" class="form-control" id="editNome" name="nome" required disabled>
                                                         </div>
                                                         <div class="form-group">
-                                                            <label for="editEndpoint">Chave pública:</label>
-                                                            <input type="text" class="form-control" id="editEndpoint" name="endpoint" required>
+                                                            <label for="editPublicKey">Chave pública:</label>
+                                                            <input type="text" class="form-control" id="editPublicKey" name="public-key" required>
                                                         </div>
                                                         <div class="form-group">
-                                                            <label for="editToken">Chave Privada:</label>
-                                                            <input type="text" class="form-control" id="editToken" name="token" required>
+                                                            <label for="editPrivateKey">Chave Privada:</label>
+                                                            <input type="text" class="form-control" id="editPrivateKey" name="private-key" required>
                                                         </div>
                                                         <input type="hidden" name="nomeClasse" value="CaptchaController">
                                                         <input type="hidden" name="metodo" value="updateKeys">
-                                                        <input type="hidden" id="editId" name="id">
+                                                        <input type="hidden" id="editId" name="captcha-id">
                                                         <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                                                     </form>
                                                 </div>
@@ -240,7 +240,7 @@ function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3
         </div>
     </section>
     <script src="../public/js/configuracoesGerais.js"></script>
-    <script src="../public/js/gatewayPagamento.js"></script>
+    <script src="../public/js/captcha.js"></script>
     <div align="right">
         <iframe src="https://www.wegia.org/software/footer/contribuicao.html" width="200" height="60" style="border:none;"></iframe>
     </div>
