@@ -33,4 +33,12 @@ class CaptchaMySQL implements CaptchaDAO
 
         return $stmt->execute();
     }
+
+    public function getAll()
+    {
+        $search = 'SELECT * FROM captcha';
+        $query = $this->pdo->query($search);
+
+        return $query->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

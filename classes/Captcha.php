@@ -24,23 +24,43 @@ class Captcha
 
     //Behavior methods
 
-    public static function getInfoById(int $id, ?CaptchaDAO $dao = null):?CaptchaDTO{
-        if(is_null($dao))
+    public static function getInfoById(int $id, ?CaptchaDAO $dao = null): ?CaptchaDTO
+    {
+        if (is_null($dao))
             $dao = new CaptchaMySQL();
 
         $captchaArray = $dao->getInfoById($id);
 
-        if(!$captchaArray)
+        if (!$captchaArray)
             return null;
 
         return new CaptchaDTO($captchaArray);
     }
 
-    public function updateKeys():bool{
-        if(!$this->dao->updateKeys($this))
+    public function updateKeys(): bool
+    {
+        if (!$this->dao->updateKeys($this))
             return false;
 
         return true;
+    }
+
+    public static function getAll(?CaptchaDAO $dao = null)
+    {
+        if (is_null($dao))
+            $dao = new CaptchaMySQL();
+
+        $captchasArray = $dao->getAll();
+
+        if (!$captchasArray || empty($captchasArray))
+            return null;
+
+        $captchas = [];
+        foreach ($captchasArray as $captcha) {
+            $captchas[] = new CaptchaDTO($captcha);
+        }
+
+        return $captchas;
     }
 
     //access methods
@@ -57,7 +77,7 @@ class Captcha
 
     public function getPublicKey($protected = true): string
     {
-        if($protected === true)
+        if ($protected === true)
             return htmlspecialchars($this->publicKey);
 
         return $this->publicKey;
@@ -115,7 +135,7 @@ class Captcha
      */
     public function setPrivateKey(string $privateKey)
     {
-         if (strlen($privateKey) > 255)
+        if (strlen($privateKey) > 255)
             throw new InvalidArgumentException('A chave privada excede o tamanho máximo de armazenamento.', 412);
 
         $this->privateKey = $privateKey;
