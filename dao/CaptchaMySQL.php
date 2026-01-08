@@ -22,17 +22,34 @@ class CaptchaMySQL implements CaptchaDAO
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function updateKeys(Captcha $captcha): bool
+    public function updateKeys(Captcha $captcha, bool $updatePrivateKey = true): bool
     {
-        $query = 'UPDATE captcha SET public_key = :publicKey, private_key = :privateKey WHERE id = :id';
+        $fields = ['public_key = :publicKey'];
+        $params = [
+            ':publicKey' => $captcha->getPublicKey(false),
+            ':id'        => $captcha->getId()
+        ];
+
+        if ($updatePrivateKey) {
+            $fields[] = 'private_key = :privateKey';
+            $params[':privateKey'] = $captcha->getPrivateKey();
+        }
+
+        $query = '
+            UPDATE captcha
+            SET ' . implode(', ', $fields) . '
+            WHERE id = :id
+        ';
 
         $stmt = $this->pdo->prepare($query);
-        $stmt->bindValue(':publicKey', $captcha->getPublicKey(false));
-        $stmt->bindValue(':privateKey', $captcha->getPrivateKey());
-        $stmt->bindValue(':id', $captcha->getId(), PDO::PARAM_INT);
+
+        foreach ($params as $param => $value) {
+            $stmt->bindValue($param, $value);
+        }
 
         return $stmt->execute();
     }
+
 
     public function getAll()
     {

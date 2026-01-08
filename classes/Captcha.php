@@ -39,10 +39,12 @@ class Captcha
 
     public function updateKeys(): bool
     {
-        if (!$this->dao->updateKeys($this))
-            return false;
+        // Verifica se o token informado está ofuscado (possui apenas asteriscos ou é parcialmente ofuscado)
+        if (strpos($this->privateKey, '*') !== false)
+            return $this->dao->updateKeys($this, false); // Não atualiza o token se ele estiver ofuscado
 
-        return true;
+        // Token foi alterado, então atualiza normalmente
+        return $this->dao->updateKeys($this);
     }
 
     public static function getAll(?CaptchaDAO $dao = null)
