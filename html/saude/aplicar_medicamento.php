@@ -478,7 +478,7 @@
       
       const anoDigitado = parseInt(dataHoraInput.value.substring(0, 4));
       const dataPaciente = "<?= $data_nasc_atendido ?>";
-      const anoPaciente = parseInt(dataPaciente.substring(0,4));
+      const anoPaciente = parseInt(dataPaciente.substring(0,4)) ?? 1900;
 
       if (anoDigitado < anoPaciente) {
           mostrarErro("Data inválida: O ano não pode ser anterior ao ano de nascimento, " + anoPaciente + ".");
@@ -528,7 +528,8 @@
                 id_medicacao: $chk.attr('data-idMedicacao'),
                 id_pessoa: $chk.attr('data-idPessoa'),
                 id_pessoa_funcionario: idPessoaFuncionario,
-                dataHora: dataHoraInput.value
+                dataHora: dataHoraInput.value,
+                ano_nascimento: anoPaciente
             };
             const dadosJson = JSON.stringify(dados);
             
@@ -551,7 +552,8 @@
             id_medicacao: formData.get('id_medicacao'),
             id_pessoa: formData.get('id_pessoa'),
             id_pessoa_funcionario: idPessoaFuncionario,
-            dataHora: formData.get('dataHora')
+            dataHora: formData.get('dataHora'),
+            ano_nascimento: anoPaciente
         };
         const dadosJson = JSON.stringify(dados);
         
@@ -944,7 +946,6 @@
                                 <button type="button" class="btn btn-default" data-dismiss="modal" onclick="limparInputDataTime()">Cancelar</button>
                               </div>
                             </form>
-
                           </div>
                         </div>
                       </div>

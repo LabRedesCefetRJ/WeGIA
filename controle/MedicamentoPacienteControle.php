@@ -33,9 +33,9 @@
             $id_pessoa = $dados['id_pessoa'] ?? null;
             $dataHora = $dados['dataHora'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
-            $limite = new DateTime('1929-01-01');
             $aplicacao = null;
-            $agora = $agora = new DateTime();
+            $agora = new DateTime();
+            $ano_nasc_paciente = $dados['ano_nascimento'] ?? null;
 
             if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
                 http_response_code(400);
@@ -45,21 +45,21 @@
             
             try {
                 
-                $aplicacao = new DateTime($dataHora);
+            $aplicacao = new DateTime($dataHora);
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Formato de dataHora inválido."]);
                 exit;
             }
-            if($aplicacao < $limite){
+            if($aplicacao < $ano_nasc_paciente){
                 http_response_code(400); 
-                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser anterior a 1929-01-01."]);
+                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser anterior ao ano de nascimento " + $ano_nasc_paciente ]);
                 exit;
             }
             if($aplicacao > $agora){
                 http_response_code(400);
-                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser futura a data atual ".$agora]);
+                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser futura a data atual "]);
                 exit;
             }
             
