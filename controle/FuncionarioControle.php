@@ -750,143 +750,144 @@ class FuncionarioControle
     }
 
     public function incluir()
-    {
-        try {
-            $funcionario = $this->verificarFuncionario();
-            $horario = $this->verificarHorario();
-            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+{
+    try {
+        $funcionario = $this->verificarFuncionario();
+        $horario = $this->verificarHorario();
+        $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
-            if (!Csrf::validateToken($_POST['csrf_token']))
-                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+        if (!Csrf::validateToken($_POST['csrf_token']))
+            throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
-            if (!Util::validarCPF($cpf))
-                throw new InvalidArgumentException('O CPF informado não é válido', 412);
+        if (!Util::validarCPF($cpf))
+            throw new InvalidArgumentException('O CPF informado não é válido', 412);
 
-            if ($funcionario->getDataNascimento() > Funcionario::getDataNascimentoMaxima() || $funcionario->getDataNascimento() < Funcionario::getDataNascimentoMinima())
-                throw new InvalidArgumentException('A data de nascimento de um funcionário não está dentro dos limites permitidos.', 412);
+        if ($funcionario->getDataNascimento() > Funcionario::getDataNascimentoMaxima() || 
+            $funcionario->getDataNascimento() < Funcionario::getDataNascimentoMinima())
+            throw new InvalidArgumentException('A data de nascimento de um funcionário não está dentro dos limites permitidos.', 412);
 
-            $funcionarioDAO = new FuncionarioDAO();
-            $horarioDAO = new QuadroHorarioDAO();
-
-            $idFuncionario = $funcionarioDAO->incluir($funcionario, $cpf);
-
-            if (!isset($idFuncionario))
-                throw new PDOException('Erro ao buscar o id do funcionário recém cadastrado.', 500);
-
-            $horarioDAO->incluir($horario);
-
-            $_SESSION['msg']  = "Funcionário cadastrado com sucesso";
-            $_SESSION['tipo'] = "success";
-
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
-        } catch (Exception $e) {
-            Util::tratarException($e);
+        $dataAdmissao = filter_input(INPUT_POST, 'data_admissao', FILTER_SANITIZE_SPECIAL_CHARS);
+        $dataNascimento = $funcionario->getDataNascimento();
+        
+        if (!empty($dataAdmissao) && !empty($dataNascimento)) {
+            $nascimento = new DateTime($dataNascimento);
+            $admissao   = new DateTime($dataAdmissao);
+            if ($admissao <= $nascimento) {
+                throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
+            }
         }
+
+        $funcionarioDAO = new FuncionarioDAO();
+        $horarioDAO = new QuadroHorarioDAO();
+
+        $idFuncionario = $funcionarioDAO->incluir($funcionario, $cpf);
+
+        if (!isset($idFuncionario))
+            throw new PDOException('Erro ao buscar o id do funcionário recém cadastrado.', 500);
+
+        $horarioDAO->incluir($horario);
+
+        $_SESSION['msg']  = "Funcionário cadastrado com sucesso";
+        $_SESSION['tipo'] = "success";
+
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
+    } catch (Exception $e) {
+        Util::tratarException($e);
     }
+}
 
 
-    public function incluirExistente()
-    {
-        try {
-            if (!Csrf::validateToken($_POST['csrf_token']))
-                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
-            $funcionario = $this->verificarExistente();
-            $idPessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
-            $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
 
-            $funcionarioDAO = new FuncionarioDAO();
+  public function incluirExistente()
+{
+    try {
+        if (!Csrf::validateToken($_POST['csrf_token']))
+            throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
-            $funcionarioDAO->incluirExistente($funcionario, $idPessoa, $sobrenome);
-            $_SESSION['proxima'] = "Cadastrar outro funcionario";
-            $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
-            header("Location: ../html/funcionario/informacao_funcionario.php");
-        } catch (Exception $e) {
-            Util::tratarException($e);
+        $funcionario = $this->verificarExistente();
+        $idPessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+        $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
+
+        $dataAdmissao = filter_input(INPUT_POST, 'data_admissao', FILTER_SANITIZE_SPECIAL_CHARS);
+        $dataNascimento = $funcionario->getDataNascimento();
+        
+        if (!empty($dataAdmissao) && !empty($dataNascimento)) {
+            $nascimento = new DateTime($dataNascimento);
+            $admissao   = new DateTime($dataAdmissao);
+            if ($admissao <= $nascimento) {
+                throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
+            }
         }
+
+        $funcionarioDAO = new FuncionarioDAO();
+        $funcionarioDAO->incluirExistente($funcionario, $idPessoa, $sobrenome);
+        
+        $_SESSION['proxima'] = "Cadastrar outro funcionario";
+        $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
+        header("Location: ../html/funcionario/informacao_funcionario.php");
+    } catch (Exception $e) {
+        Util::tratarException($e);
     }
+}
 
 
     public function alterarInfPessoal()
-    {
-        try {
-            extract($_REQUEST);
+{
+    try {
+        extract($_REQUEST);
+        $id_funcionario = filter_var($id_funcionario, FILTER_VALIDATE_INT);
 
-            $id_funcionario = filter_var($id_funcionario, FILTER_VALIDATE_INT);
+        if (!Csrf::validateToken($_POST['csrf_token']))
+            throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
-            if (!Csrf::validateToken($_POST['csrf_token']))
-                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+        if (!$id_funcionario || $id_funcionario < 1)
+            throw new InvalidArgumentException('O id do funcionário não está dentro dos limites permitidos.', 412);
 
-            if (!$id_funcionario || $id_funcionario < 1)
-                throw new InvalidArgumentException('O id do funcionário não está dentro dos limites permitidos.', 412);
+        if (!empty($nascimento) && ($nascimento > Funcionario::getDataNascimentoMaxima() || $nascimento < Funcionario::getDataNascimentoMinima()))
+            throw new InvalidArgumentException('A data de nascimento de um funcionário não está dentro dos limites permitidos.', 412);
 
-            if ($nascimento > Funcionario::getDataNascimentoMaxima() || $nascimento < Funcionario::getDataNascimentoMinima())
-                throw new InvalidArgumentException('A data de nascimento de um funcionário não está dentro dos limites permitidos.', 412);
-
-
-            $erros = [];
-
-            if (!isset($nome) || trim($nome) === '') {
-                $erros[] = "Nome do funcionário não pode ser vazio.";
+        $dataAdmissao = $_POST['data_admissao'] ?? '';
+        if (!empty($dataAdmissao) && !empty($nascimento)) {
+            $nascimentoObj = new DateTime($nascimento);
+            $admissaoObj   = new DateTime($dataAdmissao);
+            if ($admissaoObj <= $nascimentoObj) {
+                throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
             }
-            if (!isset($sobrenome) || trim($sobrenome) === '') {
-                $erros[] = "Sobrenome do funcionário não pode ser vazio.";
-            }
-            if (!isset($gender) || ($gender !== 'm' && $gender !== 'f')) {
-                $erros[] = "Sexo do funcionário é obrigatório.";
-            }
-            if (!isset($nascimento) || trim($nascimento) === '') {
-                $erros[] = "Data de nascimento é obrigatória.";
-            }
-            if (!isset($telefone) || trim($telefone) === '') {
-                $erros[] = "Telefone do funcionário é obrigatório.";
-            }
-
-            if (!empty($erros)) {
-                setSessionMsg(implode(' ', $erros), 'err');
-                header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
-                exit();
-            }
-
-            if ($nascimento === '') {
-                $nascimento = null;
-            }
-
-            $funcionario = new Funcionario(
-                '',
-                $nome,
-                $sobrenome,
-                $gender,
-                $nascimento,
-                '',
-                '',
-                '',
-                $nome_mae,
-                $nome_pai,
-                $sangue,
-                '',
-                $telefone,
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                '',
-                ''
-            );
-            $funcionario->setId_funcionario($id_funcionario);
-
-            $funcionarioDAO = new FuncionarioDAO();
-
-
-            $funcionarioDAO->alterarInfPessoal($funcionario);
-            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
-        } catch (Exception $e) {
-            Util::tratarException($e);
         }
+
+        $erros = [];
+        if (!isset($nome) || trim($nome) === '') $erros[] = "Nome do funcionário não pode ser vazio.";
+        if (!isset($sobrenome) || trim($sobrenome) === '') $erros[] = "Sobrenome do funcionário não pode ser vazio.";
+        if (!isset($gender) || ($gender !== 'm' && $gender !== 'f')) $erros[] = "Sexo do funcionário é obrigatório.";
+        if (!isset($nascimento) || trim($nascimento) === '') $erros[] = "Data de nascimento é obrigatória.";
+        if (!isset($telefone) || trim($telefone) === '') $erros[] = "Telefone do funcionário é obrigatório.";
+
+        if (!empty($erros)) {
+            setSessionMsg(implode(' ', $erros), 'err');
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+            exit();
+        }
+
+        $nascimentoFinal = ($nascimento === '') ? null : $nascimento;
+
+        $funcionario = new Funcionario(
+            '', $nome, $sobrenome, $gender, $nascimentoFinal, '', '', '',
+            $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', '',
+            $telefone, '', '', '', '', '', '', '', '', '', ''
+        );
+        $funcionario->setId_funcionario($id_funcionario);
+
+        $funcionarioDAO = new FuncionarioDAO();
+        $funcionarioDAO->alterarInfPessoal($funcionario);
+        
+        header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+    } catch (Exception $e) {
+        Util::tratarException($e);
     }
+}
+
+   
 
 
 
