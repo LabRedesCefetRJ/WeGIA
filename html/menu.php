@@ -443,7 +443,7 @@
 							<span>Contribuição</span>
 						</a>
 						<ul class="nav nav-children">
-						<li >
+							<li >
 								<a href="<?= WWW ?>html/contribuicao/view/gateway_pagamento.php">
 									<i class="fa-solid fa-building"></i>
 									Gateway de pagamento
@@ -459,6 +459,12 @@
 								<a href="<?= WWW ?>html/contribuicao/view/regra_pagamento.php">
 									<i class="fa-solid fa-circle-exclamation"></i>
 									Regras de pagamento
+								</a>
+							</li>
+							<li >
+								<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
+									<i class="fa-solid fa-user-check"></i>
+									Captcha
 								</a>
 							</li>
 						</ul>

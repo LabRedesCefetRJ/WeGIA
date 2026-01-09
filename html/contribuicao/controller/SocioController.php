@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
 require_once '../model/Socio.php';
 require_once '../model/ContribuicaoLogCollection.php';
 require_once '../dao/SocioDAO.php';
@@ -6,6 +9,7 @@ require_once '../dao/ContribuicaoLogDAO.php';
 require_once '../helper/Util.php';
 require_once '../dao/ConexaoDAO.php';
 require_once '../../../dao/PessoaDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
 
 class SocioController
 {
@@ -21,6 +25,14 @@ class SocioController
         $dados = $this->extrairPost();
 
         try {
+            //captcha
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time()+30];
+            }
 
             $pessoaDao = new PessoaDAO($this->pdo);
 
@@ -79,25 +91,34 @@ class SocioController
 
     public function atualizarSocio()
     {
-        $dados = $this->extrairPost();
-        $socio = new Socio();
-        $socio
-            ->setNome($dados['nome'])
-            ->setDataNascimento($dados['dataNascimento'])
-            ->setTelefone($dados['telefone'])
-            ->setEmail($dados['email'])
-            ->setEstado($dados['uf'])
-            ->setCidade($dados['cidade'])
-            ->setBairro($dados['bairro'])
-            ->setComplemento($dados['complemento'])
-            ->setCep($dados['cep'])
-            ->setNumeroEndereco($dados['numero'])
-            ->setLogradouro($dados['rua'])
-            ->setDocumento($dados['cpf'])
-            ->setIbge($dados['ibge'])
-            ->setValor($dados['valor']);
-
         try {
+            //captcha
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time()+30];
+            }
+
+            $dados = $this->extrairPost();
+            $socio = new Socio();
+            $socio
+                ->setNome($dados['nome'])
+                ->setDataNascimento($dados['dataNascimento'])
+                ->setTelefone($dados['telefone'])
+                ->setEmail($dados['email'])
+                ->setEstado($dados['uf'])
+                ->setCidade($dados['cidade'])
+                ->setBairro($dados['bairro'])
+                ->setComplemento($dados['complemento'])
+                ->setCep($dados['cep'])
+                ->setNumeroEndereco($dados['numero'])
+                ->setLogradouro($dados['rua'])
+                ->setDocumento($dados['cpf'])
+                ->setIbge($dados['ibge'])
+                ->setValor($dados['valor']);
+
             $socioDao = new SocioDAO($this->pdo);
 
             //Verifica se o sócio é um funcionário ou atendido
@@ -266,7 +287,6 @@ class SocioController
      */
     public function exibirBoletosPorCpf()
     {
-
         // Extrair dados da requisição
         $doc = trim($_GET['documento']);
         $docLimpo = preg_replace('/\D/', '', $doc);

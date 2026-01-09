@@ -385,22 +385,22 @@ require_once ROOT . "/html/geral/msg.php";
 
 				<div class="row category-row-third">
 					<div id="ocorrencias" class="removeIn collapse">
-							<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=.<?= WWW ?>html/atendido/cadastro_ocorrencia.php">
+						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=.<?= WWW ?>html/atendido/cadastro_ocorrencia.php">
 							<div class="col-lg-2 col-md-8 i">
 								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
 									<i class="fa fa-address-book" id="listarAtendido"></i>
 									<h4>Cadastrar Ocorrência</h4>
 								</form>
 							</div>
-							</a>
-							<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=<?= WWW ?>html/atendido/listar_ocorrencias_ativas.php">
-								<div class="col-lg-2 col-md-8 i">
-									<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
-										<i class="far fa-address-card" id="listarAtendido"></i>
-										<h4>Ocorrências Ativas</h4>
-									</form>
-								</div>
-							</a>
+						</a>
+						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=<?= WWW ?>html/atendido/listar_ocorrencias_ativas.php">
+							<div class="col-lg-2 col-md-8 i">
+								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
+									<i class="far fa-address-card" id="listarAtendido"></i>
+									<h4>Ocorrências Ativas</h4>
+								</form>
+							</div>
+						</a>
 					</div>
 				</div>
 				<!--fim da parte interna de #pessoas-->
@@ -782,6 +782,13 @@ require_once ROOT . "/html/geral/msg.php";
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa-solid fa-circle-exclamation"></i>
 								<h4>Regras de pagamento</h4>
+							</div>
+						</a>
+
+						<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-user-check"></i>
+								<h4>Captcha</h4>
 							</div>
 						</a>
 					</div>
