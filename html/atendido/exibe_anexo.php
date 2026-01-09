@@ -46,13 +46,22 @@ $mime_types = [
     'txt' => 'text/plain',
     'zip' => 'application/zip',
     'rar' => 'application/vnd.rar',
-    // Adicione mais conforme necessário
 ];
 
 $content_type = $mime_types[$extensao] ?? 'application/octet-stream';
 
+if (ob_get_level()) {
+    ob_end_clean();
+}
+
+header('Content-Description: File Transfer');
 header('Content-Type: ' . $content_type);
 header('Content-Disposition: attachment; filename="' . $nome . '.' . $extensao . '"');
+header('Content-Transfer-Encoding: binary');
+header('Expires: 0');
+header('Cache-Control: must-revalidate');
+header('Pragma: public');
+header('Content-Length: ' . strlen($_SESSION['arq'][$id_anexo]));
 
 if (!isset($_SESSION['arq'][$id_anexo])) {
     http_response_code(404);
@@ -60,3 +69,6 @@ if (!isset($_SESSION['arq'][$id_anexo])) {
 }
 
 echo $_SESSION['arq'][$id_anexo];
+
+exit;
+?>
