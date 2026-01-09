@@ -35,7 +35,7 @@
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
             $aplicacao = null;
             $agora = new DateTime();
-            $ano_nasc_paciente = $dados['ano_nascimento'] ?? null;
+            $data_nasc_paciente = $dados['data_nascimento'] ?? null;
 
             if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
                 http_response_code(400);
@@ -46,15 +46,16 @@
             try {
                 
             $aplicacao = new DateTime($dataHora);
+            $data_nascimento = new dateTime($data_nasc_paciente);
 
             } catch (Exception $e) {
                 http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Formato de dataHora inválido."]);
                 exit;
             }
-            if($aplicacao < $ano_nasc_paciente){
+            if($aplicacao < $data_nascimento){
                 http_response_code(400); 
-                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser anterior ao ano de nascimento " + $ano_nasc_paciente ]);
+                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser anterior ao ano de nascimento " ,$data_nascimento]);
                 exit;
             }
             if($aplicacao > $agora){

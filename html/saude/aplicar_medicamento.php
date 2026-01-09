@@ -475,24 +475,26 @@
           mostrarErro("Por favor, preencha a data e hora.");
           return;
       }
-      
-      const anoDigitado = parseInt(dataHoraInput.value.substring(0, 4));
-      const dataPaciente = "<?= $data_nasc_atendido ?>";
-      const anoPaciente = parseInt(dataPaciente.substring(0,4)) ?? 1900;
 
-      if (anoDigitado < anoPaciente) {
-          mostrarErro("Data inválida: O ano não pode ser anterior ao ano de nascimento, " + anoPaciente + ".");
+      const dataDigitada = new Date(dataHoraInput.value);
+      const dataPaciente = new Date("<?= $data_nasc_atendido ?>T00:00:00");
+
+      const agoraString = getDataLocalAtual();
+      const dataLimite = new Date(agoraString); 
+
+      const formatador = new Intl.DateTimeFormat('pt-BR');
+
+      if (dataDigitada < dataPaciente) {
+          const nascFormatado = formatador.format(dataPaciente);
+          mostrarErro("Data inválida: Não pode ser anterior à data de nascimento (" + nascFormatado + ").");
           return; 
       }
-      
-      const agoraString = getDataLocalAtual();
-      const dataSelecionada = new Date(dataHoraInput.value);
-      const dataLimite = new Date(agoraString);
 
-      if (dataSelecionada > dataLimite) {
-          mostrarErro("A data e hora da aplicação não pode ser no futuro. Ajuste para o momento atual.");
+      if (dataDigitada > dataLimite) {
+          mostrarErro("A data e hora da aplicação não pode ser no futuro, ajuste para o momento atual.");
           return;
       }
+
       let idPessoaFuncionario = <?= $idPessoa ?>;
       let arrayPromessas = [];
 
@@ -529,7 +531,7 @@
                 id_pessoa: $chk.attr('data-idPessoa'),
                 id_pessoa_funcionario: idPessoaFuncionario,
                 dataHora: dataHoraInput.value,
-                ano_nascimento: anoPaciente
+                data_nascimento: dataPaciente
             };
             const dadosJson = JSON.stringify(dados);
             
@@ -553,7 +555,7 @@
             id_pessoa: formData.get('id_pessoa'),
             id_pessoa_funcionario: idPessoaFuncionario,
             dataHora: formData.get('dataHora'),
-            ano_nascimento: anoPaciente
+            data_nascimento: dataPaciente
         };
         const dadosJson = JSON.stringify(dados);
         
