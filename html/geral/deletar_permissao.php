@@ -30,8 +30,6 @@ $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
 $sql = "DELETE FROM `permissao` WHERE id_cargo=? and id_acao = ? and id_recurso = ?";
 
-//$resultado = mysqli_query($conexao, "DELETE FROM `permissao` WHERE id_cargo=$c and id_acao = $a and id_recurso = $r");
-
 $stmt = mysqli_prepare($conexao, $sql);
 
 if (!$stmt) {
