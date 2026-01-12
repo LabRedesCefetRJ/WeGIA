@@ -1,6 +1,6 @@
 <?php
-//realizar alteraçoes sugeridas pela issue #344
-if(session_status() === PHP_SESSION_NONE){
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
@@ -246,9 +246,9 @@ require_once ROOT . "/html/personalizacao_display.php";
             }
         }
         const url = '<?php echo WWW; ?>html/atendido/Cadastro_Atendido.php?semCpf=1';
-    document.getElementById('btnSemCpf').addEventListener('click', function() {
-        window.location.href = url;
-    });
+        document.getElementById('btnSemCpf').addEventListener('click', function() {
+            window.location.href = url;
+        });
     </script>
     <!-- end: page -->
     <!-- Vendor -->
@@ -275,7 +275,7 @@ require_once ROOT . "/html/personalizacao_display.php";
     <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
     <div align="right">
-		<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
     </div>
 </body>
 

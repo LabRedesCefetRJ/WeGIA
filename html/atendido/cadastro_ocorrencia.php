@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -43,7 +44,6 @@ try {
 
     if ($atendido_id !== null && $atendido_id !== false && $atendido_id < 1)
         throw new InvalidArgumentException('O id do paciente não é válido.', 412);
-
 } catch (Exception $e) {
     Util::tratarException($e);
     exit();
