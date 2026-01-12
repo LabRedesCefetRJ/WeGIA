@@ -1,4 +1,3 @@
-
 <?php
 
 session_start();
@@ -26,4 +25,3 @@ try {
     http_response_code(500);
     echo json_encode(['erro' => 'Erro ao buscar os tipos de documentos']);
 }
-?>

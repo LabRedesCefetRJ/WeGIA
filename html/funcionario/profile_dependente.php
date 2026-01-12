@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -6,6 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
     header('Location: ../../index.php');
     exit();
+} else {
+    session_regenerate_id();
 }
 
 require_once "../permissao/permissao.php";
@@ -212,11 +215,11 @@ try {
         function validarDatasNascimentoExpedicao() {
             const dataNascimento = document.getElementById('nascimento').value;
             const dataExpedicao = document.getElementById('data_expedicao').value;
-            
+
             if (dataNascimento && dataExpedicao) {
                 const nascimento = new Date(dataNascimento);
                 const expedicao = new Date(dataExpedicao);
-                
+
                 if (expedicao < nascimento) {
                     alert('Erro: A data de expedição do documento não pode ser anterior à data de nascimento!');
                     document.getElementById('data_expedicao').value = '';
@@ -224,7 +227,7 @@ try {
                     return false;
                 }
             }
-            
+
             document.getElementById('botaoSalvar_formDocumentacao').disabled = false;
             return true;
         }
@@ -232,11 +235,11 @@ try {
         function validarDataNascimentoContraExpedicao() {
             const dataNascimento = document.getElementById('nascimento').value;
             const dataExpedicao = document.getElementById('data_expedicao').value;
-            
+
             if (dataNascimento && dataExpedicao) {
                 const nascimento = new Date(dataNascimento);
                 const expedicao = new Date(dataExpedicao);
-                
+
                 if (nascimento > expedicao) {
                     alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
                     document.getElementById('nascimento').value = '';
@@ -244,7 +247,7 @@ try {
                     return false;
                 }
             }
-            
+
             document.getElementById('botaoSalvar_formInfoPessoal').disabled = false;
             return true;
         }
@@ -259,7 +262,7 @@ try {
                     return false;
                 }
             }
-            
+
             if (idForm === "formInfoPessoal") {
                 if (!validarDataNascimentoContraExpedicao()) {
                     return false;
@@ -437,7 +440,7 @@ try {
                 return false;
             }
 
-            const url = `dependente_docdependente.php?action=excluir&id_doc=${id_doc}&id_dependente=${dependente.id_dependente}`; 
+            const url = `dependente_docdependente.php?action=excluir&id_doc=${id_doc}&id_dependente=${dependente.id_dependente}`;
             post(url, '', listarDocDependente);
         }
 

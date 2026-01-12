@@ -1,55 +1,29 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-include_once("conexao.php");
-session_start();
+if (session_status() === PHP_SESSION_NONE)
+  session_start();
+
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
-}
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
 } else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
+  session_regenerate_id();
 }
 
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 11, 3);
+
+include_once("conexao.php");
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
 $cargo = $mysqli->query("SELECT * FROM cargo");
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=11");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    if ($permissao['id_acao'] < 3) {
-      $msg = "Você não tem as permissões necessárias para essa página.";
-      header("Location: ../home.php?msg_c=$msg");
-    }
-    $permissao = $permissao['id_acao'];
-  } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../home.php?msg_c=$msg");
-  }
-} else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: ../home.php?msg_c=$msg");
-}
 
 $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_VALIDATE_INT);
-if(!$idFuncionario){
+if (!$idFuncionario) {
   echo json_encode(['erro' => 'O id do funcionário informado não é válido']);
   exit(400);
 }
@@ -77,7 +51,7 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
 <html class="fixed">
 
 <head>
-  
+
   <!-- Basic -->
   <meta charset="UTF-8">
   <title>Cadastro de Funcionário</title>
@@ -157,11 +131,11 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                   </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
-                        <label><input type="radio" name="sexo" id="radio" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                        <label><input type="radio" name="sexo" id="radio" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
-                    </div>
+                  <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                  <div class="col-md-8">
+                    <label><input type="radio" name="sexo" id="radio" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                    <label><input type="radio" name="sexo" id="radio" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="telefone">Telefone<sup class="obrig">*</sup></label>
@@ -176,22 +150,21 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                   </div>
                 </div>
                 <div class="form-group">
-                    <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
-                    <div class="col-md-6">
-                        <select name="id_parentesco" id="parentesco">
-                            <?php
-                                foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                    if($item["id_parentesco"] == $parentescoPrevio) {
-                                        echo("<option value='" . $item["id_parentesco"] . "' selected>" . htmlspecialchars($item["descricao"]) . "</option>");
-                                    }
-                                    else {
-                                        echo("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
-                                    }
-                                }
-                            ?>
-                        </select>
-                        <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                    </div>
+                  <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
+                  <div class="col-md-6">
+                    <select name="id_parentesco" id="parentesco">
+                      <?php
+                      foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                        if ($item["id_parentesco"] == $parentescoPrevio) {
+                          echo ("<option value='" . $item["id_parentesco"] . "' selected>" . htmlspecialchars($item["descricao"]) . "</option>");
+                        } else {
+                          echo ("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
+                        }
+                      }
+                      ?>
+                    </select>
+                    <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                  </div>
                 </div>
                 <hr class="dotted short">
                 <h4 class="mb-xlg doch4">Documentação</h4>
@@ -218,26 +191,26 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                   <div class="col-md-6">
                     <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required disabled>
                     <p id="dataNascInvalida" style="display: block; color: #b30000">Selecione a data de nascimento primeiro!</p>
-                    </div>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany"></label>
-                  <div class="col-md-6">
-                    <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
-                  </div>
-                </div>
-                <input type="hidden" name="id_funcionario" value=<?= $idFuncionario?> readonly>
-                
-                <div class="modal-footer">
-                    <input type="reset" class="btn btn-default">
-                    <input type="submit" value="Enviar" class="btn btn-primary">
-                </div>
-
-              </form>
             </div>
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="profileCompany"></label>
+              <div class="col-md-6">
+                <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+              </div>
+            </div>
+            <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?> readonly>
+
+            <div class="modal-footer">
+              <input type="reset" class="btn btn-default">
+              <input type="submit" value="Enviar" class="btn btn-primary">
+            </div>
+
+            </form>
           </div>
-              <!-- end: page -->
+        </div>
+        <!-- end: page -->
     </section>
   </div>
   </section>
@@ -322,7 +295,7 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
       var tipo = d.options[d.selectedIndex].text;
 
       const data_nascimento = document.querySelector("#nascimento").value;
-      if(dt_expedicao < data_nascimento){
+      if (dt_expedicao < data_nascimento) {
         return 0;
       }
 
@@ -464,17 +437,16 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
     }
 
     // Delimitando a data mínima para a data de expedição da identidade por meio da data de nascimento
-    $("#nascimento").on('change', function () {
-      if($(this).val()){
+    $("#nascimento").on('change', function() {
+      if ($(this).val()) {
         $('#data_expedicao').prop('disabled', false);
         $('#dataNascInvalida').hide();
-        const nascimento = new  Date( $(this).val() );
+        const nascimento = new Date($(this).val());
         const dataMinimaExpedicao = new Date(nascimento);
         dataMinimaExpedicao.setDate(dataMinimaExpedicao.getDate() + 1);
 
         $('#data_expedicao').attr('min', dataMinimaExpedicao.toISOString().split('T')[0]);
-      }
-      else{
+      } else {
         $('#data_expedicao').prop('disabled', true).val('');
         $('#dataNascInvalida').show();
       }
