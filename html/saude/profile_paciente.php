@@ -170,6 +170,15 @@ try {
   echo $e->getMessage();
 }
 
+  $stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+  $stmtAtendido->bindValue('idPessoa', $idPaciente, PDO::PARAM_INT);
+  $stmtAtendido->execute();
+
+  $dadosAtendido = $stmtAtendido->fetch(PDO::FETCH_ASSOC);
+  $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
+
+  $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -2301,40 +2310,56 @@ try {
         
         // Adiciona validação ao clique do botão
         btnCadastrarEnfermidade.addEventListener('click', function(event) {
+          event.preventDefault();
+
+          let veriDataPassada = true;
+          let veriDataFutura = true;
+
           const dataInput = document.getElementById("data_diagnostico");
           const dataValue = dataInput.value;
 
           if (!dataValue) {
-            alert("Por favor, preencha a data do diagnóstico.");
             event.preventDefault();
             event.stopImmediatePropagation();
+            alert("Por favor, preencha a data do diagnóstico.");
             return;
           }
 
-          const anoDigitado = parseInt(dataValue.substring(0, 4));
-          const anoMinimo = 1929;
+          const dataDigitada = new Date(dataValue);
+          const dataPaciente = new Date("<?= $data_nasc_atendido ?>T00:00:00");
+          console.log(dataPaciente)
 
-          if (anoDigitado < anoMinimo) {
-            alert("Data inválida: O ano não pode ser anterior a 1929.");
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return;
+          const formatador = new Intl.DateTimeFormat('pt-BR');
+
+          if (dataDigitada < dataPaciente) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              const nascFormatado = formatador.format(dataPaciente);
+              alert("Data inválida: Não pode ser anterior à data de nascimento (" + nascFormatado + ").");
+              veriDataPassada = false;
+              return; 
           }
 
           // Verifica se a data é futura
           const partesData = dataValue.split('-');
           const dataSelecionada = new Date(partesData[0], partesData[1] - 1, partesData[2]);
-          const hoje = new Date();
-          hoje.setHours(0, 0, 0, 0); 
+          const dataAgora = new Date();
+          dataAgora.setHours(0, 0, 0, 0); 
 
-          if (dataSelecionada > hoje) {
-            alert("A data do diagnóstico não pode ser no futuro.");
+          if (dataSelecionada > dataAgora) {
             event.preventDefault();
             event.stopImmediatePropagation();
+            alert("A data do diagnóstico não pode ser no futuro, ajuste para a data atual: " + formatador.format(dataAgora));
+            veriDataFutura = false;
             return;
           }
 
-          cadastrarEnfermidade(event);
+          if(veriDataPassada && veriDataFutura){
+              cadastrarEnfermidade(event);
+          }else{
+            return;
+          }
+
         });
       })
 
