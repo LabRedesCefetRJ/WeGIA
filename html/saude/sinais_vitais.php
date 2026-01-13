@@ -1,30 +1,23 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
+if (session_status() === PHP_SESSION_NONE)
+  session_start();
+
 extract($_REQUEST);
-session_start();
-
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
+  exit();
+}else{
+  session_regenerate_id();
 }
 
 if (!isset($_SESSION['id_fichamedica'])) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/sinais_vitais.php');
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once "./verifica_permissao_saude.php";
 
@@ -33,7 +26,7 @@ require_once "../personalizacao_display.php";
 
 require_once ROOT . "/controle/SaudeControle.php";
 
-if(!is_numeric($_GET['id_fichamedica']) || $_GET['id_fichamedica'] < 1){
+if (!is_numeric($_GET['id_fichamedica']) || $_GET['id_fichamedica'] < 1) {
   header("Location: ../home.php?msg_c=O parâmetro informado é incorreto, informe um inteiro positivo maior ou igual a 1.");
   exit();
 }
@@ -161,7 +154,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
     width: 10%;
   }
 
-  #sin-vit-tab tr > td:last-child {
+  #sin-vit-tab tr>td:last-child {
     display: flex;
     padding: 0;
     justify-content: center;
@@ -172,13 +165,14 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   #sin-vit-tab tr {
     height: 100%;
   }
+
   .celula-observacao {
     white-space: pre-wrap;
   }
+
   .dataTables_empty {
     display: none !important;
-  } 
-
+  }
 </style>
 
 
@@ -333,18 +327,19 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         campo.value = campo.value * -1;
       }
     }
-    function limitarTemperatura(campo){
+
+    function limitarTemperatura(campo) {
       let numeroDividido = campo.value.toString().split('.');
       let numeroInteiro = numeroDividido[0];
       let numeroDecimal = numeroDividido[1] || '';
-      if(parseInt(numeroInteiro) > 45){
+      if (parseInt(numeroInteiro) > 45) {
         campo.value = 45;
-      }else if( numeroDecimal && numeroDecimal.length > 1){
+      } else if (numeroDecimal && numeroDecimal.length > 1) {
         campo.value = numeroInteiro + '.' + numeroDecimal[0];
       }
     }
 
-    function validarObservacao(campo){
+    function validarObservacao(campo) {
       campo.value = campo.value.replace(/<|>/g, '');
 
       const maxLength = campo.maxLength;
@@ -360,7 +355,6 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         contadorElemento.textContent = currentLength;
       }
     }
-
   </script>
   <style type="text/css">
     .obrig {
@@ -385,18 +379,18 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
       transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
       transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
       transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
-  }
+    }
 
-  .custom-input:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-  }
+    .custom-input:focus {
+      border-color: #86b7fe;
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
 
-  .contador-container{
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
-  }
+    .contador-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+    }
   </style>
 
 </head>
@@ -472,8 +466,8 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Data da aferição<sup class="obrig">*</sup></label>
                         <div class="col-md-6">
-                        <input type="datetime-local" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_afericao" id="data_afericao" max=<?php echo date('Y-m-d\TH:i'); ?> 
-                        onfocus="definirDataHoraAtualSeVazio(this)" required>
+                          <input type="datetime-local" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_afericao" id="data_afericao" max=<?php echo date('Y-m-d\TH:i'); ?>
+                            onfocus="definirDataHoraAtualSeVazio(this)" required>
                         </div>
                       </div>
 

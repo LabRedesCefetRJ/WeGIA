@@ -1,106 +1,25 @@
 <?php
-/*
-    ini_set('display_errors', 1);
-    ini_set('display_startup_erros', 1);
-    error_reporting(E_ALL);
-*/
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-session_start();
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
 	exit();
+} else {
+	session_regenerate_id();
 }
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($_SESSION['id_pessoa'], 5, 7);
 
 if (!isset($_SESSION['saude'])) {
 	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/informacao_saude.php');
 	exit();
 }
-
-$config_path = __DIR__ . "/../../config.php";
-
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	die("Erro crítico: Arquivo de configuração não encontrado.");
-}
-
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-
-if (mysqli_connect_errno()) {
-	die("Falha na conexão com o banco de dados: " . mysqli_connect_error());
-}
-
-if (!isset($_SESSION['id_pessoa']) || !is_numeric($_SESSION['id_pessoa'])) {
-	$msg = "Sessão inválida ou ID de pessoa não encontrado.";
-	header("Location: ../home.php?msg_c=$msg");
-	exit();
-}
-$id_pessoa = (int) $_SESSION['id_pessoa'];
-
-$id_cargo = null;
-$permissao = 1;
-
-$sql1 = "SELECT id_cargo FROM funcionario WHERE id_pessoa = ?";
-$stmt1 = mysqli_prepare($conexao, $sql1);
-
-if ($stmt1) {
-	mysqli_stmt_bind_param($stmt1, "i", $id_pessoa);
-	mysqli_stmt_execute($stmt1);
-	$resultado1 = mysqli_stmt_get_result($stmt1);
-
-	if ($resultado1 && mysqli_num_rows($resultado1) > 0) {
-		$row = mysqli_fetch_assoc($resultado1);
-		$id_cargo = (int) $row['id_cargo'];
-	}
-	mysqli_stmt_close($stmt1);
-}
-
-if (!is_null($id_cargo)) {
-
-	$sql2 = "SELECT p.id_acao 
-                 FROM permissao p 
-                 JOIN acao a ON (p.id_acao = a.id_acao) 
-                 JOIN recurso r ON (p.id_recurso = r.id_recurso) 
-                 WHERE p.id_cargo = ? 
-                   AND a.descricao = 'LER, GRAVAR E EXECUTAR' 
-                   AND r.descricao = 'Módulo Saúde'";
-
-	$stmt2 = mysqli_prepare($conexao, $sql2);
-
-	if ($stmt2) {
-		mysqli_stmt_bind_param($stmt2, "i", $id_cargo);
-		mysqli_stmt_execute($stmt2);
-		$resultado2 = mysqli_stmt_get_result($stmt2);
-
-		if ($resultado2 && mysqli_num_rows($resultado2) > 0) {
-			$permissao_row = mysqli_fetch_assoc($resultado2);
-
-			if ($permissao_row['id_acao'] < 5) {
-				$msg = "Você não tem as permissões necessárias para essa página.";
-				header("Location: ../home.php?msg_c=$msg");
-				exit();
-			} else {
-				$permissao = (int) $permissao_row['id_acao'];
-			}
-		} else {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ../home.php?msg_c=$msg");
-			exit();
-		}
-		mysqli_stmt_close($stmt2);
-	} else {
-		$msg = "Erro ao verificar permissões.";
-		header("Location: ../home.php?msg_c=$msg");
-		exit();
-	}
-} else {
-	$msg = "Funcionário não encontrado ou sem cargo associado.";
-	header("Location: ../../home.php?msg_c=$msg");
-	exit();
-}
-
-mysqli_close($conexao);
 
 require_once __DIR__ . "/../personalizacao_display.php";
 

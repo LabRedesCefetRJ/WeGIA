@@ -1,25 +1,17 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-session_start();
+if(session_status() === PHP_SESSION_NONE)
+    session_start();
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../index.php");
     exit();
+}else{
+    session_regenerate_id();
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
@@ -394,15 +386,6 @@ require_once ROOT."/html/personalizacao_display.php";
                 $("#nome").append($("<option value="+item.id_pessoa +">").text(item.nome + " " + item.sobrenome));
             })
             $("#clicado").show();
-
-            // var aparecer_funcionario = document.getElementById("clicado2");
-            // var bolinha_funcionario = document.getElementById("bolinha_funcionario");
-            // if(aparecer_funcionario.style.display === "none"){
-            //     aparecer_funcionario.style.display = "block";
-            // }
-            // else{
-            //     aparecer_funcionario.style.display = "none";
-            // }
         }
 
     </script>
