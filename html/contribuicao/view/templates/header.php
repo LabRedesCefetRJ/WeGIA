@@ -70,6 +70,10 @@ function loadPublicFiles(array $publicsFile): void
         }
     }
 }
+
+//Proteção contra robôs
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
+$captchaGoogle = new CaptchaGoogleService();
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -122,6 +126,8 @@ function loadPublicFiles(array $publicsFile): void
     ?>
     <!-- Função para validar CPF -->
     <script src="../../../Functions/testaCPF.js"></script>
+
+    <script src="<?= $captchaGoogle->getApi() ?>" async defer></script>
 
     <style>
         #logo_img {

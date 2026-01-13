@@ -463,6 +463,12 @@ session_start();
 							Regras de pagamento
 						</a>
 					</li>
+          <li >
+						<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
+							<i class="fa-solid fa-user-check"></i>
+							Captcha
+						</a>
+					</li>
 				</ul>
 			</li>
 			<!--fim contribuiçao-->

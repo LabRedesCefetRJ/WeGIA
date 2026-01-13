@@ -71,6 +71,17 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`captcha`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`captcha` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `description_api` VARCHAR(255) NOT NULL,
+  `public_key` VARCHAR(255) NULL DEFAULT NULL,
+  `private_key` VARCHAR(255) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`cargo`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`cargo` (

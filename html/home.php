@@ -790,6 +790,13 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Regras de pagamento</h4>
 							</div>
 						</a>
+
+						<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-user-check"></i>
+								<h4>Captcha</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 				<!--fim da parte interna de #contribuicao-->
