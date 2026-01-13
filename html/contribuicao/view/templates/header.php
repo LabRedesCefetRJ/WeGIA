@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php' ;
 require_once "../../../config.php";
 require_once "../../../dao/Conexao.php";
 require_once "../../../classes/Personalizacao_display.php";
