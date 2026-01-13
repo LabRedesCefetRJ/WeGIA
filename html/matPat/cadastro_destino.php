@@ -1,12 +1,16 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) 
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ". WWW ."html/index.php");
+	header("Location: " . WWW . "html/index.php");
 	exit;
+}else{
+	session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
@@ -14,9 +18,6 @@ permissao($_SESSION['id_pessoa'], 23, 3);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
-
-header("X-Frame-Options: SAMEORIGIN");
-header("X-Content-Type-Options: nosniff");
 ?>
 
 <!doctype html>
@@ -75,23 +76,23 @@ header("X-Content-Type-Options: nosniff");
 		}
 
 		function FormataCnpj(campo, teclapres) {
-var tecla = teclapres.keyCode;
-var vr = campo.value.replace(/\D/g, ''); // Remove todos os caracteres não numéricos
-var tam = vr.length;
+			var tecla = teclapres.keyCode;
+			var vr = campo.value.replace(/\D/g, ''); // Remove todos os caracteres não numéricos
+			var tam = vr.length;
 
-if (tecla != 8) { // Ignora o backspace
-    if (tam <= 2) {
-        campo.value = vr; // Ex: 12
-    } else if (tam <= 5) {
-        campo.value = vr.substr(0, 2) + '.' + vr.substr(2); // Ex: 12.345
-    } else if (tam <= 8) {
-        campo.value = vr.substr(0, 2) + '.' + vr.substr(2, 3) + '.' + vr.substr(5); // Ex: 12.345.678
-    } else if (tam <= 12) {
-        campo.value = vr.substr(0, 2) + '.' + vr.substr(2, 3) + '.' + vr.substr(5, 3) + '/' + vr.substr(8); // Ex: 12.345.678/9012
-    } else {
-        campo.value = vr.substr(0, 2) + '.' + vr.substr(2, 3) + '.' + vr.substr(5, 3) + '/' + vr.substr(8, 4) + '-' + vr.substr(12, 2); // Ex: 12.345.678/9012-34
-    }
-}
+			if (tecla != 8) { // Ignora o backspace
+				if (tam <= 2) {
+					campo.value = vr; // Ex: 12
+				} else if (tam <= 5) {
+					campo.value = vr.substr(0, 2) + '.' + vr.substr(2); // Ex: 12.345
+				} else if (tam <= 8) {
+					campo.value = vr.substr(0, 2) + '.' + vr.substr(2, 3) + '.' + vr.substr(5); // Ex: 12.345.678
+				} else if (tam <= 12) {
+					campo.value = vr.substr(0, 2) + '.' + vr.substr(2, 3) + '.' + vr.substr(5, 3) + '/' + vr.substr(8); // Ex: 12.345.678/9012
+				} else {
+					campo.value = vr.substr(0, 2) + '.' + vr.substr(2, 3) + '.' + vr.substr(5, 3) + '/' + vr.substr(8, 4) + '-' + vr.substr(12, 2); // Ex: 12.345.678/9012-34
+				}
+			}
 		}
 
 		function validarCNPJ(cnpj) {
@@ -154,20 +155,19 @@ if (tecla != 8) { // Ignora o backspace
 				document.getElementById("enviar").disabled = false;
 			}
 		}
+
 		function permitirSomenteCNPJ(e) {
 			var tecla = e.key;
 
-		// Permite números (0-9), "/", "-", ".", e teclas de controle como Backspace, Delete, Tab, etc.
+			// Permite números (0-9), "/", "-", ".", e teclas de controle como Backspace, Delete, Tab, etc.
 			var regex = /^[0-9\/\.\-]$/;
 
-		// Se a tecla não for permitida, cancela o evento
+			// Se a tecla não for permitida, cancela o evento
 			if (!regex.test(tecla) && !['Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete'].includes(tecla)) {
-   			 e.preventDefault();
-	
+				e.preventDefault();
+
 			}
-}
-
-
+		}
 	</script>
 	<script type="text/javascript">
 		function validar() {
@@ -240,7 +240,7 @@ if (tecla != 8) { // Ignora o backspace
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="profileCompany">Número do CNPJ</label>
 												<div class="col-md-6">
-												<input type="text" name="cnpj" id="cnpj" onkeyup="FormataCnpj(this,event)" onkeydown="permitirSomenteCNPJ(event)" onblur="validarCNPJ(this.value)" maxlength="18" class="form-control input-md" ng-model="cadastro.cnpj" placeholder="Ex: 77.777.777/7777-77">
+													<input type="text" name="cnpj" id="cnpj" onkeyup="FormataCnpj(this,event)" onkeydown="permitirSomenteCNPJ(event)" onblur="validarCNPJ(this.value)" maxlength="18" class="form-control input-md" ng-model="cadastro.cnpj" placeholder="Ex: 77.777.777/7777-77">
 												</div>
 											</div>
 

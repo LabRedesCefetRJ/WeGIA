@@ -1,38 +1,38 @@
 <?php
-	if (session_status() === PHP_SESSION_NONE) 
-		session_start();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
-	if (!isset($_SESSION['usuario'])) {
-		header("Location: ". WWW ."html/index.php");
-		exit;
-	}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
-	require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
-	permissao($_SESSION['id_pessoa'], 24, 3);
+if (!isset($_SESSION['usuario'])) {
+	header("Location: " . WWW . "html/index.php");
+	exit;
+}
 
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once ROOT . "/html/personalizacao_display.php";
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 24, 3);
 
-	header("X-Frame-Options: SAMEORIGIN");
-	header("X-Content-Type-Options: nosniff");
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . "/html/personalizacao_display.php";
 ?>
 
 <!doctype html>
 <html class="fixed">
+
 <head>
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
 	<title>Adicionar Tipo</title>
-	
+
 	<!-- Mobile Metas -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="icon" href="<?php htmlspecialchars(display_campo("Logo",'file'), ENT_QUOTES, 'UTF-8') ?>" type="image/x-icon" id="logo-icon">
+	<link rel="icon" href="<?php display_campo("Logo", 'file')?>" type="image/x-icon" id="logo-icon">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 
 	<!-- Theme CSS -->
@@ -51,16 +51,17 @@
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-  	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  	<link type="text/css" rel="stylesheet" charset="UTF-8" href="https://translate.googleapis.com/translate_static/css/translateelement.css">
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<link type="text/css" rel="stylesheet" charset="UTF-8" href="https://translate.googleapis.com/translate_static/css/translateelement.css">
 
 </head>
+
 <body>
 	<section class="body">
 
 		<!-- start: header -->
 		<div id="header"></div>
-			
+
 		<!-- end: header -->
 		<div class="inner-wrapper">
 			<!-- start: sidebar -->
@@ -80,7 +81,7 @@
 							<li><span>Páginas</span></li>
 							<li><span>Adicionar Tipo</span></li>
 						</ol>
-					
+
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 					</div>
 				</header>
@@ -88,7 +89,7 @@
 				<!-- start: page -->
 				<div class="row">
 					<div class="col-md-4 col-lg-2" style="visibility: hidden;"></div>
-					<div class="col-md-8 col-lg-8" >
+					<div class="col-md-8 col-lg-8">
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li class="active">
@@ -104,46 +105,46 @@
 												<div class="col-md-8">
 													<input type="text" class="form-control" name="descricao" id="tiposaida" required>
 												</div>
-											</div><br/>
-											
+											</div><br />
+
 											<input type="hidden" name="nomeClasse" value="TipoSaidaControle">
-											
+
 											<input type="hidden" name="metodo" value="incluir">
-											
+
 											<div class="row">
 												<div class="col-md-9 col-md-offset-3">
 													<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
-													
+
 													<input type="reset" class="btn btn-default">
-													
+
 													<a href="<?= WWW ?>html/matPat/cadastro_saida.php" style="color: white; text-decoration: none;">
 														<button class="btn btn-info" type="button">Voltar</button>
 													</a>
-													
+
 													<a href="<?= WWW ?>html/matPat/listar_tipoSaida.php" style="color: white; text-decoration:none;">
 														<button class="btn btn-success" type="button">Listar Saida</button>
 													</a>
 												</div>
 											</div>
 										</form>
-									</fieldset>	
+									</fieldset>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
-			<!-- end: page -->
-		</section>
-			
-		<aside id="sidebar-right" class="sidebar-right">
-			<div class="nano">
-				<div class="nano-content">
-					<a href="#" class="mobile-close visible-xs">
-						Collapse <i class="fa fa-chevron-right"></i>
-					</a>
+				<!-- end: page -->
+			</section>
+
+			<aside id="sidebar-right" class="sidebar-right">
+				<div class="nano">
+					<div class="nano-content">
+						<a href="#" class="mobile-close visible-xs">
+							Collapse <i class="fa fa-chevron-right"></i>
+						</a>
+					</div>
 				</div>
-			</div>
-		</aside>
+			</aside>
 	</section>
 
 	<div align="right">
@@ -158,32 +159,33 @@
 	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-		
+
 	<!-- Specific Page Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-		
+
 	<!-- Theme Base, Components and Settings -->
 	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
-		
+
 	<!-- Theme Custom -->
 	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
-		
+
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 
-	<!-- javascript functions --> 
-	<script src="<?= WWW ?>Functions/onlyNumbers.js"></script> 
-	<script	src="<?= WWW ?>Functions/onlyChars.js"></script> 
-	<script	src="<?= WWW ?>Functions/mascara.js"></script>
+	<!-- javascript functions -->
+	<script src="<?= WWW ?>Functions/onlyNumbers.js"></script>
+	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
+	<script src="<?= WWW ?>Functions/mascara.js"></script>
 
 	<!-- jquery functions -->
 	<script>
-    	document.write('<a href="' + document.referrer + '"></a>');
-    	$(function () {
-            $("#header").load("<?= WWW ?>html/header.php");
-            $(".menuu").load("<?= WWW ?>html/menu.php");
-        });
+		document.write('<a href="' + document.referrer + '"></a>');
+		$(function() {
+			$("#header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
+		});
 	</script>
 </body>
+
 </html>
