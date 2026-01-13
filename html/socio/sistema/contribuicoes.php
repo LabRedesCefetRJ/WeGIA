@@ -1,55 +1,19 @@
 <?php
-require("../conexao.php");
-// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-require_once ROOT . "/html/personalizacao_display.php";
-session_start();
-if (!isset($_SESSION['usuario'])) header("Location: ../erros/login_erro/");
-$id = $_SESSION['usuario'];
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT `imagem`, `nome` FROM `pessoa` WHERE id_pessoa=$id_pessoa");
-$pessoa = mysqli_fetch_array($resultado);
-$nome = $pessoa['nome'];
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
+if (session_status() === PHP_SESSION_NONE)
+  session_start();
 
 if (!isset($_SESSION['usuario'])) {
-  header("Location: " . WWW . "index.php");
-}
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=4");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    if ($permissao['id_acao'] < 7) {
-      $msg = "Você não tem as permissões necessárias para essa página.";
-      header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-    }
-    $permissao = $permissao['id_acao'];
-  } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-  }
+  header("Location: ../erros/login_erro/");
+  exit();
 } else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+  session_regenerate_id();
 }
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'config.php';
+
+require("../conexao.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
@@ -278,14 +242,14 @@ try {
         <?php
         // Exibir mensagens de sucesso ou erro
         if (isset($_GET['msg_s'])) {
-            echo '<div class="alert alert-success alert-dismissible">
+          echo '<div class="alert alert-success alert-dismissible">
                     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
                     <h4><i class="icon fa fa-check"></i> Sucesso!</h4>
                     ' . htmlspecialchars($_GET['msg_s']) . '
                   </div>';
         }
         if (isset($_GET['msg_c'])) {
-            echo '<div class="alert alert-danger alert-dismissible">
+          echo '<div class="alert alert-danger alert-dismissible">
                     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
                     <h4><i class="icon fa fa-ban"></i> Erro!</h4>
                     ' . htmlspecialchars($_GET['msg_c']) . '
@@ -443,20 +407,5 @@ try {
 
 </body>
 <script src="./controller/script/relatorios_contribuicao.js"></script>
-
-<script>
-  /*function printBy(selector) {
-    var $print = $(selector)
-      .clone()
-      .addClass('printable')
-      .prependTo('body');
-
-    // Stop JS execution
-    window.print();
-
-    // Remove div once printed
-    $print.remove();
-  }*/
-</script>
 
 </html>

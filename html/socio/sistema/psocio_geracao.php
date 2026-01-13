@@ -1,17 +1,18 @@
 <?php
-if(session_status() === PHP_SESSION_NONE)
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
   session_start();
 
-if (!isset($_SESSION['usuario'])){
+if (!isset($_SESSION['usuario'])) {
   header("Location: ../erros/login_erro/");
   exit(403);
-}else{
+} else {
   session_regenerate_id();
 }
 
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 
-if(!$id_pessoa || $id_pessoa < 1){
+if (!$id_pessoa || $id_pessoa < 1) {
   http_response_code(412);
   echo json_encode(['erro' => 'O id do funcionário não é válido.']);
   exit();
@@ -20,7 +21,7 @@ if(!$id_pessoa || $id_pessoa < 1){
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($id_pessoa, 4, 7);
 
-require_once ("../conexao.php");
+require_once("../conexao.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 ?>
