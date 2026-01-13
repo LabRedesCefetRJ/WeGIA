@@ -1064,7 +1064,6 @@ $dependente = json_encode($dependente);
                         </div>
                     </section>
                   </div>
-
                   <div id="ocorrencias" class="tab-pane">
                     <section class="panel">
                       <header class="panel-heading">
@@ -1079,33 +1078,118 @@ $dependente = json_encode($dependente);
                             <tr>
                               <th>Data</th>
                               <th>Informações</th>
+                              <th style="width: 120px;">Ações</th>
                             </tr>
                           </thead>
                           <tbody id="doc-tabl">
                             <?php
                             $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
-                            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+                            $stmt->bindValue(':id', $id, PDO::PARAM_INT);  
                             $stmt->execute();
-
                             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                            foreach ($resultados as $item) {
-                              echo "<tr style='cursor: pointer;' onclick='clicar($item[idatendido_ocorrencias])'>";
-                              $data = explode('-', $item["data"]);
-                              echo "<td>" . $data[2] . "/" . $data[1] . "/" . $data[0] . "</td>";
-                              echo "<td>" . $item["descricao"] . "</td>";
-                              echo "<tr>";
+                            if (empty($resultados)) {
+                              echo '<tr><td colspan="3" class="text-center text-muted">Nenhuma ocorrência cadastrada</td></tr>';
                             }
 
+                            foreach ($resultados as $item) {
+                              $data = explode('-', $item["data"]);
                             ?>
+                              <tr style="cursor: pointer;" onclick="clicar(<?= (int)$item['idatendido_ocorrencias'] ?>)">
+                                <td><?= $data[2] . "/" . $data[1] . "/" . $data[0] ?></td>
+                                <td><?= htmlspecialchars(strip_tags($item["descricao"])) ?></td> 
+                                <td>
+                                  <button class="btn btn-xs btn-primary editar-ocorrencia"
+                                    type="button"
+                                    title="Editar"
+                                    data-id="<?= (int)$item['idatendido_ocorrencias'] ?>"
+                                    data-descricao="<?= htmlspecialchars(strip_tags($item["descricao"])) ?>"
+                                    data-data="<?= htmlspecialchars($item["data"]) ?>">
+                                    <i class="fa fa-edit"></i>
+                                  </button>
+                                  <button class="btn btn-xs btn-danger excluir-ocorrencia"
+                                    type="button"
+                                    title="Excluir"
+                                    data-id="<?= (int)$item['idatendido_ocorrencias'] ?>"
+                                    data-descricao="<?= htmlspecialchars(strip_tags($item["descricao"])) ?>">
+                                    <i class="fa fa-trash"></i>
+                                  </button>
+                                </td>
+                              </tr>
+                            <?php } ?>
                           </tbody>
                         </table>
                         <br>
                         <div>
-                          <a href="cadastro_ocorrencia.php?atendido_id=<?= $id ?>" class="btn btn-primary">Cadastrar Ocorrência</a>
+                          <a href="cadastro_ocorrencia.php?atendido_id=<?= (int)$id ?>" class="btn btn-primary">Cadastrar Ocorrência</a>
                         </div>
-
+                      </div>
                     </section>
+                  </div>
+
+                  <div class="modal fade" id="modalEditarOcorrencia" tabindex="-1">
+                    <div class="modal-dialog">
+                      <form method="POST" action="../../controle/control.php">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5>Editar Ocorrência</h5>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                          </div>
+                          <div class="modal-body">
+                            <input type="hidden" name="nomeClasse" value="Atendido_ocorrenciaControle">
+                            <input type="hidden" name="metodo" value="atualizar">
+                            <input type="hidden" name="id_ocorrencia" id="edit_id_ocorrencia">
+                            <input type="hidden" name="id_atendido" value="<?= (int)$id ?>">
+
+                            <div class="form-group">
+                              <label>Data:</label>
+                              <input type="date" name="data_ocorrencia" id="edit_data_ocorrencia" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                              <label>Descrição:</label>
+                              <textarea name="descricao" id="edit_descricao" class="form-control" rows="4" required></textarea>
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+
+                  <div class="modal fade" id="modalEditarOcorrencia" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog">
+                      <form method="POST" action="../../controle/control.php" class="modal-content">
+                        <div class="modal-header">
+                          <h5 class="modal-title">Editar Ocorrência</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <div class="modal-body">
+                          <input type="hidden" name="nomeClasse" value="Atendido_ocorrenciaControle">
+                          <input type="hidden" name="metodo" value="atualizar">
+                          <input type="hidden" name="id_ocorrencia" id="edit_id_ocorrencia">
+                          <input type="hidden" name="id_atendido" value="<?= (int)$id ?>">
+
+                          <div class="form-group">
+                            <label>Data da ocorrência</label>
+                            <input type="date" name="data_ocorrencia" id="edit_data_ocorrencia" class="form-control" required>
+                          </div>
+                          <div class="form-group">
+                            <label>Descrição</label>
+                            <textarea name="descricao" id="edit_descricao" class="form-control" rows="4" required></textarea>
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                          <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                      </form>
+                    </div>
                   </div>
 
                   <!-- end: page -->
@@ -1373,6 +1457,52 @@ $dependente = json_encode($dependente);
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
     <script src="../../Functions/atendido_parentesco.js"></script>
+    <script>
+      $(document).ready(function() {
+        $('.editar-ocorrencia').on('click', function(e) {
+          e.stopPropagation(); // não dispara o onclick da linha
+          var btn = $(this);
+          $('#edit_id_ocorrencia').val(btn.data('id'));
+          $('#edit_descricao').val(btn.data('descricao'));
+          $('#edit_data_ocorrencia').val(btn.data('data'));
+          $('#modalEditarOcorrencia').modal('show');
+        });
+
+        $('.excluir-ocorrencia').on('click', function(e) {
+          e.stopPropagation();
+          var id = $(this).data('id');
+          var desc = $(this).data('descricao');
+
+          if (!confirm('Excluir esta ocorrência?\n\n' + desc)) {
+            return;
+          }
+
+          var form = $('<form>', {
+            method: 'POST',
+            action: '../../controle/control.php'
+          });
+
+          form.append($('<input>', {
+            type: 'hidden',
+            name: 'nomeClasse',
+            value: 'Atendido_ocorrenciaControle'
+          }));
+          form.append($('<input>', {
+            type: 'hidden',
+            name: 'metodo',
+            value: 'excluir'
+          }));
+          form.append($('<input>', {
+            type: 'hidden',
+            name: 'id_ocorrencia',
+            value: id
+          }));
+
+          $('body').append(form);
+          form.submit();
+        });
+      });
+    </script>
 
 </body>
 

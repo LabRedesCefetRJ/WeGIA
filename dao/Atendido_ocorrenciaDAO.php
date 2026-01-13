@@ -29,6 +29,59 @@ require_once ROOT . "/dao/Atendido_ocorrenciaDAO.php";
 
 class Atendido_ocorrenciaDAO
 {
+    
+    public function atualizarOcorrencia(int $idOcorrencia, int $idAtendido, string $data, string $descricao): bool
+{
+    $pdo = Conexao::connect();
+
+    $sql = "UPDATE atendido_ocorrencia
+            SET data = :data,
+                descricao = :descricao
+            WHERE idatendido_ocorrencias = :id
+              AND atendido_idatendido = :id_atendido";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':data', $data);
+    $stmt->bindValue(':descricao', $descricao);
+    $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
+    $stmt->bindValue(':id_atendido', $idAtendido, PDO::PARAM_INT);
+
+    return $stmt->execute();
+}
+
+public function excluirOcorrencia(int $idOcorrencia): bool
+{
+    $pdo = Conexao::connect();
+
+    // se tiver anexos, apaga primeiro
+    $sqlArq = "DELETE FROM atendido_ocorrencia_doc 
+               WHERE atentido_ocorrencia_idatentido_ocorrencias = :id";
+    $stmtArq = $pdo->prepare($sqlArq);
+    $stmtArq->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
+    $stmtArq->execute();
+
+    $sql = "DELETE FROM atendido_ocorrencia 
+            WHERE idatendido_ocorrencias = :id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
+
+    return $stmt->execute();
+}
+
+public function buscarIdAtendidoPorOcorrencia(int $idOcorrencia): ?int
+{
+    $pdo = Conexao::connect();
+
+    $sql = "SELECT atendido_idatendido 
+            FROM atendido_ocorrencia 
+            WHERE idatendido_ocorrencias = :id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $id = $stmt->fetchColumn();
+    return $id !== false ? (int)$id : null;
+}
+
     public function listarTodos()
     {
 
@@ -225,3 +278,5 @@ class Atendido_ocorrenciaDAO
     }
 }
 ?>
+
+
