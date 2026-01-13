@@ -7,13 +7,13 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
     header("Location: " . WWW . "index.php");
     exit();
-}else{
+} else {
     session_regenerate_id();
 }
 
 $idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
 
-if(!$idPessoa || $idPessoa < 1){
+if (!$idPessoa || $idPessoa < 1) {
     http_response_code(400);
     echo json_encode(['erro' => 'O id fornecido do usuário na sessão não é válido.']);
     exit();
@@ -29,15 +29,15 @@ $id_anexo = filter_input(INPUT_GET, 'id_anexo', FILTER_VALIDATE_INT);
 $extensao = filter_input(INPUT_GET, 'extensao', FILTER_SANITIZE_SPECIAL_CHARS);
 $nome = filter_input(INPUT_GET, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
 
-if(!$id_anexo || $id_anexo < 1){
+if (!$id_anexo || $id_anexo < 1) {
     throw new InvalidArgumentException('O id do anexo fornecido não é válido.', 400);
 }
 
-if(!$extensao){
+if (!$extensao) {
     throw new InvalidArgumentException('O nome da extensão informado não é válido.', 400);
 }
 
-if(!$nome || strlen($nome) < 1){
+if (!$nome || strlen($nome) < 1) {
     throw new InvalidArgumentException('O nome do anexo não é válido.', 400);
 }
 
