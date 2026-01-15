@@ -12,6 +12,8 @@ require_once '../model/ContribuicaoLogCollection.php';
 require_once '../model/StatusPagamento.php';
 require_once '../../../config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+
 class ContribuicaoLogController
 {
 
@@ -34,6 +36,9 @@ class ContribuicaoLogController
 
         //Verificar se existe um sócio que possua de fato o documento
         try {
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+
             $socioDao = new SocioDAO($this->pdo);
             $socio = $socioDao->buscarPorDocumento($documento);
 
@@ -154,6 +159,9 @@ class ContribuicaoLogController
 
         //Verificar se existe um sócio que possua de fato o documento
         try {
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+
             $socioDao = new SocioDAO($this->pdo);
             $socio = $socioDao->buscarPorDocumento($documento);
 
@@ -371,6 +379,9 @@ class ContribuicaoLogController
 
         //Verificar se existe um sócio que possua de fato o documento
         try {
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+
             $socioDao = new SocioDAO();
             $socio = $socioDao->buscarPorDocumento($documento);
 
@@ -478,6 +489,9 @@ class ContribuicaoLogController
         $formaPagamento = 'CartaoCredito';
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+            
             $this->pdo->beginTransaction();
 
             // Buscar sócio
