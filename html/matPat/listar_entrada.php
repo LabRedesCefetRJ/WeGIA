@@ -1,5 +1,7 @@
 <?php
-session_start();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
 $config_path = "config.php";
 if (file_exists($config_path)) {
@@ -12,39 +14,17 @@ if (file_exists($config_path)) {
 	require_once($config_path);
 }
 
-if(!isset($_SESSION['usuario'])){
-	header ("Location:  ". WWW ."html/index.php");
+if (!isset($_SESSION['usuario'])) {
+	header("Location:  " . WWW . "html/index.php");
+	exit();
+}else{
+	session_regenerate_id();
 }
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$stmt = $conexao->prepare("SELECT * FROM funcionario WHERE id_pessoa=?");
-$stmt->bind_param("i", $id_pessoa);
-$stmt->execute();
-$resultado = $stmt->get_result();
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=23");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 5) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location:" . WWW ."html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW ."html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW ."html/home.php?msg_c=$msg");
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($_SESSION['id_pessoa'], 23, 5);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -58,7 +38,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	include_once ROOT . '/dao/EntradaDAO.php';
 
 	if (!isset($_SESSION['entrada'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodosComProdutos&nomeClasse=EntradaControle&nextPage='. WWW . 'html/listar_entrada.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodosComProdutos&nomeClasse=EntradaControle&nextPage=' . WWW . 'html/listar_entrada.php');
 	}
 	if (isset($_SESSION['entrada'])) {
 		$entrada = $_SESSION['entrada'];

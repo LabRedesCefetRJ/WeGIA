@@ -1,24 +1,21 @@
-<pre>
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
-ini_set('display_errors',1);
-ini_set('display_startup_erros',1);
-error_reporting(E_ALL);
-
-session_start();
 $id_CID_alergia = $_POST["id_CID_alergia"];
 $id_fichamedica = $_POST["id_fichamedica"];
-if (!isset($_SESSION["usuario"])){
+if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit();
 }
 
 // Verifica Permissão do Usuário
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 53, 7);
 
-if ($_POST){
-    require_once "../../dao/Conexao.php";	 
-    
+if ($_POST) {
+    require_once "../../dao/Conexao.php";
+
     try {
         $pdo = Conexao::connect();
         $prep = $pdo->prepare("INSERT INTO saude_enfermidades(id_fichamedica, id_CID, data_diagnostico, status) VALUES (:id_fichamedica, :id_CID_alergia, :data_diagnostico, :status)");
@@ -30,12 +27,8 @@ if ($_POST){
 
         $prep->execute();
     } catch (PDOException $e) {
-        echo("Houve um erro ao realizar o cadastro da enfermidade:<br><br>$e");
+        echo ("Houve um erro ao realizar o cadastro da enfermidade:<br><br>$e");
     }
-
-
-}else {
+} else {
     header("Location: profile_paciente.php");
 }
-
-

@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // não joga warnings no navegador
 ini_set('log_errors', 1);

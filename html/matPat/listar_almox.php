@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_start() === PHP_SESSION_NONE) {
 	session_start();
 }
@@ -6,7 +7,7 @@ if (session_start() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
 	exit();
-}else{
+} else {
 	session_regenerate_id();
 }
 

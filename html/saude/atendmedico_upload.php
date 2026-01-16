@@ -1,14 +1,14 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
-session_start();
 extract($_REQUEST);
 
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
     exit();
+}else{
+    session_regenerate_id();
 }
 
 require_once '../permissao/permissao.php';

@@ -1,7 +1,11 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 require_once "../personalizacao_display.php";
 require_once "../../classes/Atendido.php";
-session_start();
+
+if(session_status() === PHP_SESSION_NONE)
+	session_start();
+
 $semCpf = isset($_GET['semCpf']) && $_GET['semCpf'] == '1';
 $cpf = isset($_GET['cpf']) ? $_GET['cpf'] : '';
 $statusInativoId = 1; // Ajuste para o ID correto do status "Inativo" no seu banco

@@ -179,10 +179,6 @@
 				}
 			}
 
-			// Debug
-			// var_dump($somaEntrada, $somaSaida, $somaTotal);
-
-
 			$changed = 0;
 			$added = 0;
 			$warns = 0;
@@ -233,44 +229,11 @@
 					}else{
 						// Caso o produto e o almoxarifado não estejam cadastrados
 						$warns ++;
-						// $warns += intval(!$desc) + intval(!$almoxarifado);
+						
 						if (AVISO){
 							$log .= "AVISO: Existem $qtd itens (".$somaEntrada[$id][$almox]." entradas, ".$somaSaida[$id][$almox]." saidas)".(!$desc ? " associados a um produto não cadastrado de ID $id" : '').(!$almoxarifado ? " armazenados em um almoxarifado não cadastrado de ID $almox" : '')."\n";
 						}
 					}
-
-
-
-
-
-
-					// if ($qtd < 0) {
-					// 	// Caso a quantidade seja negativa
-					// 	$prod = $pdo->query("SELECT qtd FROM estoque WHERE id_produto=$id AND id_almoxarifado=$almox;")->fetch(PDO::FETCH_ASSOC);
-					// 	$desc = $pdo->query("SELECT descricao, codigo, oculto FROM produto WHERE id_produto=$id;")->fetch(PDO::FETCH_ASSOC);
-					// 	extract($desc);
-					// 	if ($prod["qtd"] == $qtd){
-					// 		// Caso A quantidade já esteja certa
-					// 		$log .= "ATENÇÃO: $descricao | $codigo ".($oculto ? "[Oculto] " : "" )."possui ".$somaSaida[$id][$almox]." saídas e ".$somaEntrada[$id][$almox]." entradas. O estoque está negativo ($qtd).\n";
-					// 		$result = "warning";
-					// 		$warns++;
-					// 		continue;
-					// 	}
-					// 	// Caso a quantidade
-					// 	$pdo->exec("UPDATE estoque SET qtd=$qtd WHERE id_produto=$id AND id_almoxarifado=$almox");
-					// 	$log .= "$descricao | $codigo ".($oculto ? "[Oculto] " : "" )."possui ".$somaSaida[$id][$almox]." saídas e ".$somaEntrada[$id][$almox]." entradas. O estoque está negativo ($qtd).\n";
-					// 	$changed++;
-					// 	continue;
-					// }
-					// if ($estoque){
-					// 	if ($qtd != $estoque['qtd']){
-					// 		$pdo->exec("UPDATE estoque SET qtd=$qtd WHERE id_produto=$id AND id_almoxarifado=$almox");
-					// 		$changed++;
-					// 	}
-					// }else{
-					// 	$pdo->exec("INSERT INTO estoque (id_produto, id_almoxarifado, qtd) VALUES ( $id , $almox , $qtd );");
-					// 	$added++;
-					// }
 				}
 			}
 			$estoque = $pdo->query("SELECT * FROM estoque;")->fetchAll(PDO::FETCH_ASSOC);
@@ -322,11 +285,7 @@
 			$result = "error";
 			$log = "Erro: \n{$e->getMessage()}";
 		}
-		// echo("<div style='display: flex;'>");
-		// echoMatrix($somaEntrada);
-		// echoMatrix($somaSaida);
-		// echoMatrix($somaTotal);
-		// echo("</div>");
+		
 		return [$result, $log];
 	}
 

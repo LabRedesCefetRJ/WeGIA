@@ -19,7 +19,7 @@ class Atendido_ocorrenciaControle
 		try {
 			$atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
 			$ocorrencias = $atendido_ocorrenciaDAO->listarTodos();
-			session_start();
+
 			$_SESSION['ocorrencia'] = $ocorrencias;
 		} catch (Exception $e) {
 			Util::tratarException($e);
@@ -29,18 +29,34 @@ class Atendido_ocorrenciaControle
 	//Listar Despachos com anexo
 	public function listarTodosComAnexo()
 	{
-		extract($_REQUEST);
-		$despachoComAnexoDAO = new Atendido_ocorrenciaDAO();
-		$despachosComAnexo = $despachoComAnexoDAO->listarTodosComAnexo($id_memorando);
-		$_SESSION['despachoComAnexo'] = $despachosComAnexo;
+		try {
+			$idMemorando = filter_var($_REQUEST['id_memorando'], FILTER_VALIDATE_INT);
+
+			if (!$idMemorando || $idMemorando < 1)
+				throw new InvalidArgumentException('O id do memorando informado é inválido.', 412);
+
+			$despachoComAnexoDAO = new Atendido_ocorrenciaDAO();
+			$despachosComAnexo = $despachoComAnexoDAO->listarTodosComAnexo($idMemorando);
+
+			$_SESSION['despachoComAnexo'] = json_encode($despachosComAnexo);
+		} catch (Exception $e) {
+			Util::tratarException($e);
+		}
 	}
 
-	public function listarAnexo($id_ocorrencia)
+	public function listarAnexo(int $idOcorrencia)
 	{
-		$Atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
-		$anexos = $Atendido_ocorrenciaDAO->listarAnexo($id_ocorrencia);
+		try {
+			if (!$idOcorrencia || $idOcorrencia < 1)
+				throw new InvalidArgumentException('O id da ocorrência informado é inválido.', 412);
 
-		$_SESSION['arq'] = $anexos;
+			$Atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
+			$anexos = $Atendido_ocorrenciaDAO->listarAnexo($idOcorrencia);
+
+			$_SESSION['arq'] = $anexos;
+		} catch (Exception $e) {
+			Util::tratarException($e);
+		}
 	}
 
 	public function comprimir($anexoParaCompressao)
@@ -50,67 +66,67 @@ class Atendido_ocorrenciaControle
 	}
 
 
-public function incluir()
-{
-    extract($_REQUEST);
+	public function incluir()
+	{
+		extract($_REQUEST);
 
-    $atendido_idatendido = filter_var($atendido_idatendido ?? null, FILTER_VALIDATE_INT) ?: 0;
-    if ($atendido_idatendido < 1) {
-        header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=0&ocorrencia_msg=id-invalido");
-        exit;
-    }
+		$atendido_idatendido = filter_var($atendido_idatendido ?? null, FILTER_VALIDATE_INT) ?: 0;
+		if ($atendido_idatendido < 1) {
+			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=0&ocorrencia_msg=id-invalido");
+			exit;
+		}
 
-    try {
+		try {
 
-        if (!empty($data)) {
-            $pdo = Conexao::connect();
-            $sql_nascimento = "
+			if (!empty($data)) {
+				$pdo = Conexao::connect();
+				$sql_nascimento = "
                 SELECT p.data_nascimento 
                 FROM atendido a 
                 JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa 
                 WHERE a.idatendido = :id
             ";
-            $stmt_nascimento = $pdo->prepare($sql_nascimento);
-            $stmt_nascimento->bindValue(':id', $atendido_idatendido, PDO::PARAM_INT);
-            $stmt_nascimento->execute();
-            $atendido_nasc = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
+				$stmt_nascimento = $pdo->prepare($sql_nascimento);
+				$stmt_nascimento->bindValue(':id', $atendido_idatendido, PDO::PARAM_INT);
+				$stmt_nascimento->execute();
+				$atendido_nasc = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
 
-            if (
-                $atendido_nasc &&
-                !empty($atendido_nasc['data_nascimento']) &&
-                $atendido_nasc['data_nascimento'] !== '0000-00-00'
-            ) {
+				if (
+					$atendido_nasc &&
+					!empty($atendido_nasc['data_nascimento']) &&
+					$atendido_nasc['data_nascimento'] !== '0000-00-00'
+				) {
 
-                try {
-                    $data_nascimento_obj = new DateTime($atendido_nasc['data_nascimento']);
-                    $data_ocorrencia_obj = new DateTime($data);
-                } catch (Exception $e) {
-                    error_log("Erro DateTime em ocorrência: " . $e->getMessage());
-                    header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-formato-invalido");
-                    exit;
-                }
+					try {
+						$data_nascimento_obj = new DateTime($atendido_nasc['data_nascimento']);
+						$data_ocorrencia_obj = new DateTime($data);
+					} catch (Exception $e) {
+						error_log("Erro DateTime em ocorrência: " . $e->getMessage());
+						header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-formato-invalido");
+						exit;
+					}
 
-                if ($data_ocorrencia_obj < $data_nascimento_obj) {
-                    header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-anterior-nascimento");
-                    exit;
-                }
-            }
-        }
+					if ($data_ocorrencia_obj < $data_nascimento_obj) {
+						header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-anterior-nascimento");
+						exit;
+					}
+				}
+			}
 
-        $ocorrencia    = $this->verificarDespacho();
-        $ocorrenciaDAO = new Atendido_ocorrenciaDAO();
-        $ocorrenciaDAO->incluir($ocorrencia);
+			$ocorrencia    = $this->verificarDespacho();
+			$ocorrenciaDAO = new Atendido_ocorrenciaDAO();
+			$ocorrenciaDAO->incluir($ocorrencia);
 
-        $arquivos = $_FILES["arquivos"];
-        $ocorrenciaDAO->incluirArquivos($arquivos);
+			$arquivos = $_FILES["arquivos"];
+			$ocorrenciaDAO->incluirArquivos($arquivos);
 
-        header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-sucesso");
-    } catch (PDOException $e) {
-        Util::tratarException($e);
-        header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-falha");
-        exit;
-    }
-}
+			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-sucesso");
+		} catch (PDOException $e) {
+			Util::tratarException($e);
+			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-falha");
+			exit;
+		}
+	}
 
 
 	public function verificar()
@@ -140,10 +156,6 @@ public function incluir()
 
 	public function verificarDespacho()
 	{
-		if (session_status() === PHP_SESSION_NONE) {
-			session_start();
-		}
-
 		extract($_REQUEST);
 
 		if (!isset($descricao) || empty($descricao)) {

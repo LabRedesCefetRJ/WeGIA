@@ -1,8 +1,12 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
-session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+} else {
+    session_regenerate_id();
 }
 
 // Verifica Permissão do Usuário
@@ -14,12 +18,12 @@ require_once "../../dao/Conexao.php";
 $id_dependente = trim($_POST["id_dependente"]);
 $id_atendido = trim($_POST['idatendido']);
 
-if(!$id_dependente || !is_numeric($id_dependente)){
+if (!$id_dependente || !is_numeric($id_dependente)) {
     http_response_code(400);
     exit('Erro, o valor do id do familiar informado não é válido.');
 }
 
-if(!$id_atendido || !is_numeric($id_atendido)){
+if (!$id_atendido || !is_numeric($id_atendido)) {
     http_response_code(400);
     exit('Erro, o valor do id do paciente informado não é válido.');
 }

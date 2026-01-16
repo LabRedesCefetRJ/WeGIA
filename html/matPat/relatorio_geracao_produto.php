@@ -1,54 +1,20 @@
 <?php
-session_start();
-ini_set('display_errors', false);
-error_reporting(E_ALL);
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
+   session_start();
 
-define("DEBUG", false);
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
+if (!isset($_SESSION['usuario'])) {
+   header("Location: ../index.php");
+   exit();
 } else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
+   session_regenerate_id();
 }
 
-if(!isset($_SESSION['usuario'])){
-	header ("Location:  ". WWW ."html/index.php");
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$stmt = mysqli_prepare($conexao, "SELECT id_cargo FROM funcionario WHERE id_pessoa = ?");
-mysqli_stmt_bind_param($stmt, 'i', $id_pessoa);
-mysqli_stmt_execute($stmt);
-$resultado = mysqli_stmt_get_result($stmt);
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=25");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 5) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: " . WWW ."html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW ."html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW ."html/home.php?msg_c=$msg");
-}
+permissao($_SESSION['id_pessoa'], 25, 5);
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
@@ -193,7 +159,7 @@ function quickQuery($query, $column)
 					<div class="descricao">
 						<p>
 							<li>
-                                <h2>Geração de Produto</h2>		
+								<h2>Geração de Produto</h2>
 							</li>
 						</p>
 						<button style="float: right;" class="mb-xs mt-xs mr-xs btn btn-default print-button" onclick="window.print();">Imprimir</button>
@@ -202,19 +168,19 @@ function quickQuery($query, $column)
 					<?php
 					$pdo = Conexao::connect();
 
-					if($_SERVER["REQUEST_METHOD"] == "POST"){
+					if ($_SERVER["REQUEST_METHOD"] == "POST") {
 						$idAlmoxarifado = isset($_POST['almoxarifado']) ? $_POST['almoxarifado'] : null;
 						$idProduto = isset($_POST['produto']) ? $_POST['produto'] : null;
 						$dataInicio = isset($_POST['data_inicio']) ? $_POST['data_inicio'] : null;
 						$dataFim = isset($_POST['data_fim']) ? $_POST['data_fim'] : null;
 
 						$modeloBrasileiro = 'd/m/Y';
-						if(!empty($dataInicio))
+						if (!empty($dataInicio))
 							$dataInicioFormatada = date_format(date_create($dataInicio), $modeloBrasileiro);
 						else
 							$dataInicioFormatada = null;
 
-						if(!empty($dataFim))
+						if (!empty($dataFim))
 							$dataFimFormatada = date_format(date_create($dataFim), $modeloBrasileiro);
 						else
 							$dataFimFormatada = null;
@@ -227,7 +193,7 @@ function quickQuery($query, $column)
 							WHERE p.id_produto = :id_produto
 							AND e.id_almoxarifado = :id_almoxarifado
 						";
-						
+
 						if ($dataInicio && $dataFim) {
 							$query .= " AND e.data BETWEEN :data_inicio AND :data_fim";
 						} elseif ($dataInicio) {
@@ -235,25 +201,25 @@ function quickQuery($query, $column)
 						} elseif ($dataFim) {
 							$query .= " AND e.data <= :data_fim";
 						}
-						
+
 						$stmtDatas = $pdo->prepare($query);
-						
+
 						$stmtDatas->bindParam(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
 						$stmtDatas->bindParam(':id_produto', $idProduto, PDO::PARAM_INT);
-						
+
 						if ($dataInicio) {
 							$stmtDatas->bindParam(':data_inicio', $dataInicio, PDO::PARAM_STR);
 						}
 						if ($dataFim) {
 							$stmtDatas->bindParam(':data_fim', $dataFim, PDO::PARAM_STR);
 						}
-						
-						$stmtDatas->execute();						
+
+						$stmtDatas->execute();
 						$resultadoDatas = $stmtDatas->fetchAll(PDO::FETCH_ASSOC);
 
 						$datasArray = [];
 						foreach ($resultadoDatas as $linha) {
-							$datasArray[] = $linha['data']; 
+							$datasArray[] = $linha['data'];
 						}
 
 						if ($idProduto && $idAlmoxarifado) {
@@ -305,18 +271,18 @@ function quickQuery($query, $column)
 						");
 							$stmt->bindParam(':idProduto', $idProduto, PDO::PARAM_INT);
 							$stmt->bindParam(':idAlmoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
-	
+
 							$stmt->execute();
-	
+
 							$resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 						}
 					}
 					?>
 
 					<?php
-						try {
-							if ($idProduto && $idAlmoxarifado) {
-								$query = "
+					try {
+						if ($idProduto && $idAlmoxarifado) {
+							$query = "
 									SELECT 
 										entrada.data AS data_entrada,
 										entrada.hora AS hora_entrada,
@@ -347,39 +313,39 @@ function quickQuery($query, $column)
 									WHERE 
 										almoxarifado.id_almoxarifado = :idAlmoxarifado
 										AND produto.id_produto = :idProduto";
-						
-								if (!empty($datasArray)) {
-									$placeholders = implode(', ', array_map(function ($index) {
-										return ":data_entrada_$index";
-									}, array_keys($datasArray)));
-									$query .= " AND entrada.data IN ($placeholders)";
-								}
-						
-								$stmtEntradas = $pdo->prepare($query);
-								$stmtEntradas->bindParam(':idProduto', $idProduto, PDO::PARAM_INT);
-								$stmtEntradas->bindParam(':idAlmoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
-						
-								if (!empty($datasArray)) {
-									foreach ($datasArray as $index => $data) {
-										$stmtEntradas->bindValue(":data_entrada_$index", $data, PDO::PARAM_STR);
-									}
-								}
-						
-								$stmtEntradas->execute();
-						
-								if ($stmtEntradas->rowCount() > 0) {
-									$entradas = $stmtEntradas->fetchAll(PDO::FETCH_ASSOC);
-								} else {
-									$entradas = [];
+
+							if (!empty($datasArray)) {
+								$placeholders = implode(', ', array_map(function ($index) {
+									return ":data_entrada_$index";
+								}, array_keys($datasArray)));
+								$query .= " AND entrada.data IN ($placeholders)";
+							}
+
+							$stmtEntradas = $pdo->prepare($query);
+							$stmtEntradas->bindParam(':idProduto', $idProduto, PDO::PARAM_INT);
+							$stmtEntradas->bindParam(':idAlmoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+
+							if (!empty($datasArray)) {
+								foreach ($datasArray as $index => $data) {
+									$stmtEntradas->bindValue(":data_entrada_$index", $data, PDO::PARAM_STR);
 								}
 							}
-						} catch (PDOException $e) {
-							echo "Não registrado" . $e->getMessage();
+
+							$stmtEntradas->execute();
+
+							if ($stmtEntradas->rowCount() > 0) {
+								$entradas = $stmtEntradas->fetchAll(PDO::FETCH_ASSOC);
+							} else {
+								$entradas = [];
+							}
 						}
-						
-						
-						try {
-							$query = "
+					} catch (PDOException $e) {
+						echo "Não registrado" . $e->getMessage();
+					}
+
+
+					try {
+						$query = "
 								SELECT 
 									saida.data AS data_saida,
 									saida.hora AS hora_saida,
@@ -406,46 +372,46 @@ function quickQuery($query, $column)
 								WHERE 
 									almoxarifado.id_almoxarifado = :idAlmoxarifado
 									AND produto.id_produto = :idProduto";
-						
-							if (!empty($datasArray)) {
-								$placeholders = implode(', ', array_map(function ($index) {
-									return ":data_saida_$index";
-								}, array_keys($datasArray)));
-								$query .= " AND saida.data IN ($placeholders)";
-							}
-						
-							$stmtSaidas = $pdo->prepare($query);
-							$stmtSaidas->bindParam(':idProduto', $idProduto, PDO::PARAM_INT);
-							$stmtSaidas->bindParam(':idAlmoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
-						
-							if (!empty($datasArray)) {
-								foreach ($datasArray as $index => $data) {
-									$stmtSaidas->bindValue(":data_saida_$index", $data, PDO::PARAM_STR);
-								}
-							}
-						
-							$stmtSaidas->execute();
-						
-							if ($stmtSaidas->rowCount() > 0) {
-								$saidas = $stmtSaidas->fetchAll(PDO::FETCH_ASSOC);
-							} else {
-								$saidas = [];
-							}
-						} catch (PDOException $e) {
-							echo "Não registrado" . $e->getMessage();
+
+						if (!empty($datasArray)) {
+							$placeholders = implode(', ', array_map(function ($index) {
+								return ":data_saida_$index";
+							}, array_keys($datasArray)));
+							$query .= " AND saida.data IN ($placeholders)";
 						}
-						
+
+						$stmtSaidas = $pdo->prepare($query);
+						$stmtSaidas->bindParam(':idProduto', $idProduto, PDO::PARAM_INT);
+						$stmtSaidas->bindParam(':idAlmoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+
+						if (!empty($datasArray)) {
+							foreach ($datasArray as $index => $data) {
+								$stmtSaidas->bindValue(":data_saida_$index", $data, PDO::PARAM_STR);
+							}
+						}
+
+						$stmtSaidas->execute();
+
+						if ($stmtSaidas->rowCount() > 0) {
+							$saidas = $stmtSaidas->fetchAll(PDO::FETCH_ASSOC);
+						} else {
+							$saidas = [];
+						}
+					} catch (PDOException $e) {
+						echo "Não registrado" . $e->getMessage();
+					}
+
 					?>
 
 					<table class="table table-striped">
 						<thead class="thead-dark">
 							<tr>
-								<th scope="col" colspan="4" style="font-size: large;">INFORMAÇÕES DO PRODUTO</th>        
+								<th scope="col" colspan="4" style="font-size: large;">INFORMAÇÕES DO PRODUTO</th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr>
-								<td>PRODUTO: <?php echo !empty($entradas[0]['descricao']) ? htmlspecialchars($entradas[0]['descricao']) : 'Não registrado'; ?></td>        
+								<td>PRODUTO: <?php echo !empty($entradas[0]['descricao']) ? htmlspecialchars($entradas[0]['descricao']) : 'Não registrado'; ?></td>
 							</tr>
 							<tr>
 								<td>ALMOXARIFADO: <?php echo !empty($entradas[0]['descricao_almoxarifado']) ? htmlspecialchars($entradas[0]['descricao_almoxarifado']) : 'Não registrado'; ?></td>
@@ -455,10 +421,10 @@ function quickQuery($query, $column)
 							</tr>
 							<tr>
 								<td>UNIDADE: <?php echo !empty($entradas[0]['unidade']) ? htmlspecialchars($entradas[0]['unidade']) : 'Não registrado'; ?></td>
-							</tr>    
+							</tr>
 							<tr>
 								<td>ESTOQUE ATUAL: <?php echo !empty($entradas[0]['estoque_atual']) ? htmlspecialchars($entradas[0]['estoque_atual']) : 'Não registrado'; ?></td>
-							</tr>    
+							</tr>
 							<tr>
 								<td>PERÍODO DO RELATÓRIO:
 									<?php
@@ -491,7 +457,7 @@ function quickQuery($query, $column)
 							</tr>
 						</thead>
 						<tbody>
-							<?php 
+							<?php
 							foreach ($entradas as $entrada) {
 								$dataEntrada = !empty($entrada['data_entrada']) && !empty($entrada['hora_entrada']) ? date('d/m/Y H:i', strtotime($entrada['data_entrada'] . ' ' . $entrada['hora_entrada'])) : "Não registrado.";
 							?>
@@ -516,18 +482,18 @@ function quickQuery($query, $column)
 							</tr>
 						</thead>
 						<tbody>
-							<?php 
-								foreach ($saidas as $saida) {
-									$dataSaida = (!empty($saida['data_saida']) && !empty($saida['hora_saida'])) ? date('d/m/Y H:i', strtotime($saida['data_saida'] . ' ' . $saida['hora_saida'])) : "Não registrado.";
-									$descricaoTipoSaida = !empty($saida['descricao_tipo_saida']) ? htmlspecialchars(trim($saida['descricao_tipo_saida'])) : "Não registrado.";
-									$quantidadeSaida = !empty($saida['quantidade_saida']) ? htmlspecialchars(trim($saida['quantidade_saida'])) : "Não registrado.";
-								?>
-									<tr>
-										<td><?php echo $dataSaida; ?></td>
-										<td><?php echo $descricaoTipoSaida; ?></td>
-										<td><?php echo $quantidadeSaida; ?></td>
-									</tr>
-								<?php } ?>
+							<?php
+							foreach ($saidas as $saida) {
+								$dataSaida = (!empty($saida['data_saida']) && !empty($saida['hora_saida'])) ? date('d/m/Y H:i', strtotime($saida['data_saida'] . ' ' . $saida['hora_saida'])) : "Não registrado.";
+								$descricaoTipoSaida = !empty($saida['descricao_tipo_saida']) ? htmlspecialchars(trim($saida['descricao_tipo_saida'])) : "Não registrado.";
+								$quantidadeSaida = !empty($saida['quantidade_saida']) ? htmlspecialchars(trim($saida['quantidade_saida'])) : "Não registrado.";
+							?>
+								<tr>
+									<td><?php echo $dataSaida; ?></td>
+									<td><?php echo $descricaoTipoSaida; ?></td>
+									<td><?php echo $quantidadeSaida; ?></td>
+								</tr>
+							<?php } ?>
 						</tbody>
 					</table>
 

@@ -1,5 +1,4 @@
 <?php
-//realizar as sugestões de alteração da issue #311
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

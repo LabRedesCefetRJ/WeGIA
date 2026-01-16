@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+
 if (session_status() === PHP_SESSION_NONE) 
 	session_start();
 
@@ -7,6 +9,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 if (!isset($_SESSION['usuario'])) {
     header("Location: ". WWW ."html/index.php");
 	exit;
+}else{
+	session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
@@ -14,10 +18,6 @@ permissao($_SESSION['id_pessoa'], 23, 3);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
-
-// Headers de segurança (contra XSS, Clickjacking, etc.)
-header("X-Frame-Options: SAMEORIGIN");
-header("X-Content-Type-Options: nosniff");
 ?>
 
 <!doctype html>

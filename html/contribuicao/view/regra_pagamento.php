@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 //verificação de autenticação
 ini_set('display_errors', 0);
 ini_set('display_startup_erros', 0);

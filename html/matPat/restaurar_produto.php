@@ -1,85 +1,60 @@
 <?php
-
-$config_path = "config.php";
-if(file_exists($config_path)){
-	require_once($config_path);
-}else{
-	while(true){
-		$config_path = "../" . $config_path;
-		if(file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE) {
 	session_start();
-	if(!isset($_SESSION['usuario'])){
-		header ("Location: ". WWW ."html/index.php");
-	}
+}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
-	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-	$id_pessoa = $_SESSION['id_pessoa'];
-	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-	if(!is_null($resultado)){
-		$id_cargo = mysqli_fetch_array($resultado);
-		if(!is_null($id_cargo)){
-			$id_cargo = $id_cargo['id_cargo'];
-		}
-		$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=22");
-		if(!is_bool($resultado) and mysqli_num_rows($resultado)){
-			$permissao = mysqli_fetch_array($resultado);
-			if($permissao['id_acao'] < 7){
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: ". WWW ."html/home.php?msg_c=$msg");
-			}
-			$permissao = $permissao['id_acao'];
-		}else{
-        	$permissao = 1;
-          $msg = "Você não tem as permissões necessárias para essa página.";
-          header("Location: ". WWW ."html/home.php?msg_c=$msg");
-		}	
-	}else{
-		$permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ". WWW ."html/home.php?msg_c=$msg");
-	}	
-	if (!isset($_GET['id_produto'])){
-        header("Location: ". WWW ."html/matPat/listar_produto.php");
-    }
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once ROOT . "/html/personalizacao_display.php";
+if (!isset($_SESSION['usuario'])) {
+	header("Location: " . WWW . "html/index.php");
+	exit();
+} else {
+	session_regenerate_id();
+}
 
-    include_once ROOT . "/html/geral/msg.php";
-    
-    $pdo = Conexao::connect();
-    $idProduto = $_GET['id_produto'];
-    $query = $pdo->query("SELECT p.id_produto, p.preco, p.descricao,p.codigo, p.id_categoria_produto, c.descricao_categoria, p.id_unidade, u.descricao_unidade 
+require_once ROOT . '/html/permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 22, 7);
+
+if (!isset($_GET['id_produto'])) {
+	header("Location: " . WWW . "html/matPat/listar_produto.php");
+}
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . "/html/personalizacao_display.php";
+
+include_once ROOT . "/html/geral/msg.php";
+
+$pdo = Conexao::connect();
+$idProduto = $_GET['id_produto'];
+$query = $pdo->query("SELECT p.id_produto, p.preco, p.descricao,p.codigo, p.id_categoria_produto, c.descricao_categoria, p.id_unidade, u.descricao_unidade 
     FROM produto p 
     INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto 
     INNER JOIN unidade u ON p.id_unidade = u.id_unidade 
     WHERE p.id_produto = $idProduto;");
-    $item = $query->fetch(PDO::FETCH_ASSOC);
-    $query = $pdo->query("SELECT qtd FROM estoque WHERE id_produto=$idProduto;");
-    $item['qtd'] = ($query->fetch(PDO::FETCH_ASSOC))['qtd'];
+$item = $query->fetch(PDO::FETCH_ASSOC);
+$query = $pdo->query("SELECT qtd FROM estoque WHERE id_produto=$idProduto;");
+$item['qtd'] = ($query->fetch(PDO::FETCH_ASSOC))['qtd'];
 ?>
 <!doctype html>
 <html class="fixed">
-<head>
-<?php 
-  include_once ROOT . '/dao/Conexao.php';
-  include_once ROOT . '/dao/ProdutoDAO.php';
 
-  if (!isset($_GET['id_produto'])){
-	  header("Location: ". WWW ."html/matPat/listar_produto.php");
-  }
-  if(!isset($_SESSION['produtos'])){
-    header('Location: '. WWW .'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage='. WWW .'html/matPat/remover_produto.php?id_produto='.$_GET['id_produto']);
-  }
-  extract($_REQUEST);
-?>
+<head>
+	<?php
+	include_once ROOT . '/dao/Conexao.php';
+	include_once ROOT . '/dao/ProdutoDAO.php';
+
+	if (!isset($_GET['id_produto'])) {
+		header("Location: " . WWW . "html/matPat/listar_produto.php");
+	}
+	if (!isset($_SESSION['produtos'])) {
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto=' . $_GET['id_produto']);
+	}
+	extract($_REQUEST);
+	?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
 	<title>Restaurar Produto</title>
-		
+
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
@@ -91,7 +66,7 @@ if(file_exists($config_path)){
 	<!-- Specific Page Vendor CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/select2/select2.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
-	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
+	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 
 	<!-- Theme CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
@@ -100,15 +75,15 @@ if(file_exists($config_path)){
 	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/skins/default.css" />
 
 	<!-- Theme Custom CSS -->
-    <link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
-    
+	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme-custom.css">
+
 	<!-- Atualizacao CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>css/atualizacao.css" />
 
 	<!-- Head Libs -->
 	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
-		
+
 	<!-- Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -116,17 +91,17 @@ if(file_exists($config_path)){
 	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
 	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
-    <script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-		
+	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+
 	<!-- Specific Page Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-		
+
 	<!-- Theme Base, Components and Settings -->
 	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
-		
+
 	<!-- Theme Custom -->
 	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
-		
+
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
@@ -135,42 +110,43 @@ if(file_exists($config_path)){
 	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
 	<script src="<?= WWW ?>Functions/enviar_dados.js"></script>
 	<script src="<?= WWW ?>Functions/mascara.js"></script>
-		
+
 	<!-- jquery functions -->
 	<script>
-        const id_produto = <?= $id_produto?>;
-        $(function(){
+		const id_produto = <?= $id_produto ?>;
+		$(function() {
 
-        })
+		})
 
-        function cancelar(){
-            window.location.replace('<?= WWW ?>html/matPat/cadastrar_produto.php');
-        }
+		function cancelar() {
+			window.location.replace('<?= WWW ?>html/matPat/cadastrar_produto.php');
+		}
 
-        function submitForm(){
-            $('#form').append($(`<input name="id_produto" value="${id_produto}" readonly hidden />`)).submit();
-        }
+		function submitForm() {
+			$('#form').append($(`<input name="id_produto" value="${id_produto}" readonly hidden />`)).submit();
+		}
 	</script>
 	<script>
-        $(function () {
-            $("#header").load("<?= WWW ?>html/header.php");
-            $(".menuu").load("<?= WWW ?>html/menu.php");
-	    });
+		$(function() {
+			$("#header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
+		});
 	</script>
 
 </head>
+
 <body>
 	<div id="header"></div>
-    <!-- end: header -->
-    <div class="inner-wrapper">
-      	<!-- start: sidebar -->
-      	<aside id="sidebar-left" class="sidebar-left menuu"></aside>
-		
+	<!-- end: header -->
+	<div class="inner-wrapper">
+		<!-- start: sidebar -->
+		<aside id="sidebar-left" class="sidebar-left menuu"></aside>
+
 		<!-- end: sidebar -->
 		<section role="main" class="content-body">
 			<header class="page-header">
 				<h2>Restaurar Produto</h2>
-			
+
 				<div class="right-wrapper pull-right">
 					<ol class="breadcrumbs">
 						<li>
@@ -180,47 +156,47 @@ if(file_exists($config_path)){
 						</li>
 						<li><span>Restaurar Produto</span></li>
 					</ol>
-			
+
 					<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 				</div>
 			</header>
 
 			<!-- start: page -->
-		
+
 			<section class="panel">
-				<?php getMsg();?>
+				<?php getMsg(); ?>
 				<header class="panel-heading">
 					<div class="panel-actions">
 						<a href="#" class="fa fa-caret-down"></a>
 					</div>
-			
+
 					<h2 class="panel-title">Restaurar Produto</h2>
 				</header>
 				<div class="panel-body">
 					<div>
-                        <p class="text-justify">A descrição inserida já existe como produto oculto, deseja restaurá-lo?</p>
-                        <div class="panel-body" style="display: flex;">
-                                <ul class="nav nav-children" id="info" style="padding-right: 20px;">
-                                    <li>Nome: </li>
-                                    <li>Categoria: </li>
-                                    <li>Unidade: </li>
-                                    <li>Codigo: </li>
-                                    <li>Valor: </li>
-                                    <li>Quantidade: </li>
-                                </ul>
-                                <ul class="nav nav-children" id="info">
-                                    <?php
-                                        echo("<li id='nome'>".$item['descricao']."</li>
-                                        <li id='Categoria'>".$item['descricao_categoria']."</li>
-                                        <li id='Unidade'>".$item['descricao_unidade']."</li>
-                                        <li id='Codigo'>".$item['codigo']."</li>
-                                        <li id='Valor'>R$ ".$item['preco']."</li>
-                                        <li id='Quantidade'>".($item['qtd'] ? $item['qtd'] : 0 )."</li>");
-                                    ?>
-                                    
-                                </ul>
-                            </div>
-                        <br>
+						<p class="text-justify">A descrição inserida já existe como produto oculto, deseja restaurá-lo?</p>
+						<div class="panel-body" style="display: flex;">
+							<ul class="nav nav-children" id="info" style="padding-right: 20px;">
+								<li>Nome: </li>
+								<li>Categoria: </li>
+								<li>Unidade: </li>
+								<li>Codigo: </li>
+								<li>Valor: </li>
+								<li>Quantidade: </li>
+							</ul>
+							<ul class="nav nav-children" id="info">
+								<?php
+								echo ("<li id='nome'>" . $item['descricao'] . "</li>
+                                        <li id='Categoria'>" . $item['descricao_categoria'] . "</li>
+                                        <li id='Unidade'>" . $item['descricao_unidade'] . "</li>
+                                        <li id='Codigo'>" . $item['codigo'] . "</li>
+                                        <li id='Valor'>R$ " . $item['preco'] . "</li>
+                                        <li id='Quantidade'>" . ($item['qtd'] ? $item['qtd'] : 0) . "</li>");
+								?>
+
+							</ul>
+						</div>
+						<br>
 						<form action="<?= WWW ?>html/matPat/restaurar_produto_desocultar.php" method="post" id="form">
 							<div id="replace">
 							</div>
@@ -229,31 +205,32 @@ if(file_exists($config_path)){
 						<div class="center-content">
 							<button class="btn btn-primary sm-rm" onclick="submitForm()">Restaurar</button><button class="btn btn-danger" onclick="cancelar()">Cancelar</button>
 						</div>
-                    </div>
+					</div>
 				</div>
-                <br>
+				<br>
 			</section>
-            
-			<!-- end: page -->
-	
-		<!-- Specific Page Vendor -->
-		<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
-		<script src="<?= WWW ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-		<script src="<?= WWW ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-		<script src="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
-		
-		<!-- Theme Base, Components and Settings -->
-		<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
-		
-		<!-- Theme Custom -->
-		<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
-		
-		<!-- Theme Initialization Files -->
-		<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
-		<!-- Examples -->
-		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
-		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-		<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
-	</body>
+			<!-- end: page -->
+
+			<!-- Specific Page Vendor -->
+			<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
+			<script src="<?= WWW ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+			<script src="<?= WWW ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+			<script src="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+
+			<!-- Theme Base, Components and Settings -->
+			<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
+
+			<!-- Theme Custom -->
+			<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
+
+			<!-- Theme Initialization Files -->
+			<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
+
+			<!-- Examples -->
+			<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
+			<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+			<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+</body>
+
 </html>

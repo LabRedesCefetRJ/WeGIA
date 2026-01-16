@@ -1,17 +1,17 @@
 <?php
-  
-	
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once "personalizacao_display.php";
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once "personalizacao_display.php";
 ?>
 <!doctype html>
 <html class="fixed">
+
 <head>
   <!-- Basic -->
   <meta charset="UTF-8">
 
   <title>Estoque</title>
-    
+
   <!-- Mobile Metas -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
   <link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
   <link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-  <link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
+  <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 
   <!-- Specific Page Vendor CSS -->
   <link rel="stylesheet" href="../assets/vendor/select2/select2.css" />
@@ -38,7 +38,7 @@
 
   <!-- Head Libs -->
   <script src="../assets/vendor/modernizr/modernizr.js"></script>
-    
+
   <!-- Vendor -->
   <script src="../assets/vendor/jquery/jquery.min.js"></script>
   <script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -53,16 +53,15 @@
   <script src="../Functions/onlyChars.js"></script>
   <script src="../Functions/enviar_dados.js"></script>
   <script src="../Functions/mascara.js"></script>
-    
-  <!-- jquery functions -->
-    <script>
 
-  $(function () {
-        $("#header").load("header.php");
-        $(".menuu").load("menu.php");
+  <!-- jquery functions -->
+  <script>
+    $(function() {
+      $("#header").load("header.php");
+      $(".menuu").load("menu.php");
     });
   </script>
-  
+
   <style type="text/css">
     /*.table{
       z-index: 0;
@@ -70,32 +69,34 @@
     .text-right{
       z-index: 1;
     }*/
-    .select{
+    .select {
       /*z-index: 2;*/
       /*float: left;*/
       position: absolute;
       width: 235px;
-    }*/
-    .select-table-filter{
+    }
+
+    */ .select-table-filter {
       width: 140px;
       float: left;
     }
   </style>
 </head>
+
 <body>
   <section class="body">
 
     <div id="header"></div>
-        <!-- end: header -->
-        <div class="inner-wrapper">
-          <!-- start: sidebar -->
-          <aside id="sidebar-left" class="sidebar-left menuu"></aside>
-        <!-- end: sidebar -->
+    <!-- end: header -->
+    <div class="inner-wrapper">
+      <!-- start: sidebar -->
+      <aside id="sidebar-left" class="sidebar-left menuu"></aside>
+      <!-- end: sidebar -->
       <section role="main" class="content-body">
-    
+
         <header class="page-header">
           <h2>ERRO!</h2>
-        
+
           <div class="right-wrapper pull-right">
             <ol class="breadcrumbs">
               <li>
@@ -105,7 +106,7 @@
               </li>
               <li><span>ERRO</span></li>
             </ol>
-        
+
             <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
           </div>
         </header>
@@ -129,14 +130,15 @@
   </section>
   <!-- end: page -->
   <!-- Vendor -->
-    <script src="../assets/vendor/select2/select2.js"></script>
-    <script src="../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-    <script src="../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-    <script src="../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+  <script src="../assets/vendor/select2/select2.js"></script>
+  <script src="../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+  <script src="../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+  <script src="../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 
-    <!-- Examples -->
-    <script src="../assets/javascripts/tables/examples.datatables.default.js"></script>
-    <script src="../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-    <script src="../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
-  </body>
+  <!-- Examples -->
+  <script src="../assets/javascripts/tables/examples.datatables.default.js"></script>
+  <script src="../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+  <script src="../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+</body>
+
 </html>

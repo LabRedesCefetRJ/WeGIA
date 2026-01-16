@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -274,12 +275,12 @@ if ($id_dependente) {
         function validarDataExpedicao() {
             const dataNascimento = document.getElementById('nascimentoForm').value;
             const dataExpedicao = document.getElementById('data_expedicao').value;
-            
+
             // Só valida se AMBOS os campos estão preenchidos
             if (dataExpedicao && dataNascimento) {
                 const nascimento = new Date(dataNascimento);
                 const expedicao = new Date(dataExpedicao);
-                
+
                 if (expedicao <= nascimento) {
                     alert('A data de expedição do documento não pode ser anterior ou igual à data de nascimento!');
                     document.getElementById('data_expedicao').value = '';
@@ -287,7 +288,7 @@ if ($id_dependente) {
                     return false;
                 }
             }
-            
+
             // Se um dos campos estiver vazio, permite a edição
             document.getElementById('botaoSalvar_formDocumentacao').disabled = false;
             return true;
@@ -296,12 +297,12 @@ if ($id_dependente) {
         function validarDataNascimento() {
             const dataNascimento = document.getElementById('nascimentoForm').value;
             const dataExpedicao = document.getElementById('data_expedicao').value;
-            
+
             // Só valida se AMBOS os campos estão preenchidos
             if (dataNascimento && dataExpedicao) {
                 const nascimento = new Date(dataNascimento);
                 const expedicao = new Date(dataExpedicao);
-                
+
                 if (nascimento >= expedicao) {
                     alert('A data de nascimento não pode ser posterior ou igual à data de expedição do documento!');
                     document.getElementById('nascimentoForm').value = '';
@@ -309,7 +310,7 @@ if ($id_dependente) {
                     return false;
                 }
             }
-            
+
             // Se um dos campos estiver vazio, permite a edição
             document.getElementById('botaoSalvar_formInfoPessoal').disabled = false;
             return true;
