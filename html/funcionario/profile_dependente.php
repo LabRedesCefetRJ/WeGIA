@@ -187,36 +187,31 @@ try {
             switchButton(idForm);
         }
 
-        function getInfoDependente(id = null) {
+        function getInfoDependente(id) {
             if (!id) {
-                post(url, data, function(response) {
-                    form.set(id, response);
-                    disableForm("formInfoPessoal");
-                    disableForm("formEndereco");
-                    disableForm("formDocumentacao");
-                    $.each(formState, function(i, item) {
-                        formState[i] = false;
-                        switchButton(i);
-                    })
-                })
-            } else {
-                post(url, data, function(response) {
-                    form.set(id, response);
-                    disableForm(id);
-                    formState[id] = false;
-                    switchButton(id);
-                })
+                id = dependente.iddependente;
             }
+
+            var url = "../../controle/control.php";
+            var data = "nomeClasse=DependenteControle&metodo=listarUm&id_dependente=" + id;
+
+            $.post(url, data, function(response) {
+                dependente = JSON.parse(response);
+                form.set(id, dependente);
+                disableForm(id);
+                formState[id] = false;
+                switchButton(id);
+            });
         }
 
         function validarDatasNascimentoExpedicao() {
             const dataNascimento = document.getElementById('nascimento').value;
             const dataExpedicao = document.getElementById('data_expedicao').value;
-            
+
             if (dataNascimento && dataExpedicao) {
                 const nascimento = new Date(dataNascimento);
                 const expedicao = new Date(dataExpedicao);
-                
+
                 if (expedicao < nascimento) {
                     alert('Erro: A data de expedição do documento não pode ser anterior à data de nascimento!');
                     document.getElementById('data_expedicao').value = '';
@@ -224,7 +219,7 @@ try {
                     return false;
                 }
             }
-            
+
             document.getElementById('botaoSalvar_formDocumentacao').disabled = false;
             return true;
         }
@@ -232,11 +227,11 @@ try {
         function validarDataNascimentoContraExpedicao() {
             const dataNascimento = document.getElementById('nascimento').value;
             const dataExpedicao = document.getElementById('data_expedicao').value;
-            
+
             if (dataNascimento && dataExpedicao) {
                 const nascimento = new Date(dataNascimento);
                 const expedicao = new Date(dataExpedicao);
-                
+
                 if (nascimento > expedicao) {
                     alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
                     document.getElementById('nascimento').value = '';
@@ -244,14 +239,13 @@ try {
                     return false;
                 }
             }
-            
+
             document.getElementById('botaoSalvar_formInfoPessoal').disabled = false;
             return true;
         }
 
         function submitForm(idForm) {
             var data = getFormPostParams(idForm);
-            var url;
 
             // Validações cruzadas entre os formulários
             if (idForm === "formDocumentacao") {
@@ -259,17 +253,23 @@ try {
                     return false;
                 }
             }
-            
+
             if (idForm === "formInfoPessoal") {
                 if (!validarDataNascimentoContraExpedicao()) {
                     return false;
                 }
             }
 
+            if (idForm === "formInfoPessoal") {
+                data += "&nomeClasse=DependenteControle&metodo=editarInfoPessoal&id_dependente=" + dependente.iddependente;
+                $.post("../../controle/control.php", data, function() {
+                    getInfoDependente(idForm);
+                });
+                return true;
+            }
+
+            var url;
             switch (idForm) {
-                case "formInfoPessoal":
-                    url = "../pessoa/editar_info_pessoal.php";
-                    break;
                 case "formEndereco":
                     url = "../pessoa/editar_endereco.php";
                     break;
@@ -277,14 +277,15 @@ try {
                     url = "../pessoa/editar_documentacao.php";
                     break;
                 default:
-                    console.warn("Não existe nenhuma URL registrada para o formulário com o seguinte id: " + idForm);
+                    console.warn("Não existe nenhuma URL para: " + idForm);
                     return false;
-                    break;
             }
+
             if (!data) {
-                window.alert("Preencha todos os campos obrigatórios antes de prosseguir!");
+                window.alert("Preencha todos os campos obrigatórios!");
                 return false;
             }
+
             post(url, "id_pessoa=" + dependente.id_pessoa + "&" + data);
             getInfoDependente(idForm);
         }
@@ -437,7 +438,7 @@ try {
                 return false;
             }
 
-            const url = `dependente_docdependente.php?action=excluir&id_doc=${id_doc}&id_dependente=${dependente.id_dependente}`; 
+            const url = `dependente_docdependente.php?action=excluir&id_doc=${id_doc}&id_dependente=${dependente.id_dependente}`;
             post(url, '', listarDocDependente);
         }
 
@@ -545,64 +546,97 @@ try {
                                 <!-- Aba de visão geral -->
                                 <div id="overview" class="tab-pane active" role="tabpanel">
                                     <h4>Informações Pessoais</h4><br>
-                                    <form action="dependente_editarInfoPessoal.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $id_dependente ?>" method='POST'>
+                                    <form action="../../controle/control.php" method="POST" id="formInfoPessoal">
+                                        <input type="hidden" name="nomeClasse" value="DependenteControle">
+                                        <input type="hidden" name="metodo" value="editarInfoPessoal">
+                                        <input type="hidden" name="id_dependente" value="<?= (int)$id_dependente ?>">
+                                        <input type="hidden" name="id_pessoa" value="<?= (int)$id_pessoa ?>">
+
                                         <fieldset id="formInfoPessoal">
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="nomeForm">Nome</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)" required>
+                                                    <input type="text" class="form-control"
+                                                        name="nome" id="nomeForm"
+                                                        onkeypress="return Onlychars(event)"
+                                                        required minlength="2">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="sobrenomeForm">Sobrenome</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="sobrenomeForm" id="sobrenomeForm">
+                                                    <input type="text" class="form-control"
+                                                        name="sobrenome" id="sobrenomeForm"
+                                                        required minlength="2">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                                                 <div class="col-md-8">
-                                                    <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"> Masculino</i></label>
-                                                    <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"> Feminino</i> </label>
+                                                    <label><input type="radio" name="sexo" id="radioM" value="m"
+                                                            style="margin-top: 10px; margin-left: 15px;"
+                                                            onclick="return exibir_reservista()">
+                                                        <i class="fa fa-male" style="font-size: 20px;"> Masculino</i></label>
+                                                    <label><input type="radio" name="sexo" id="radioF" value="f"
+                                                            style="margin-top: 10px; margin-left: 15px;"
+                                                            onclick="return esconder_reservista()">
+                                                        <i class="fa fa-female" style="font-size: 20px;"> Feminino</i></label>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="telefone">Telefone</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeydown="mascara('(##)#####-####',this,event)">
+                                                    <input type="text" class="form-control" maxlength="14" minlength="14"
+                                                        name="telefone" id="telefone"
+                                                        placeholder="Ex: (22)99999-9999"
+                                                        onkeypress="return Onlynumbers(event)"
+                                                        onkeydown="mascara('(##)#####-####',this,event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="nascimento">Nascimento</label>
                                                 <div class="col-md-8">
-                                                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimentoContraExpedicao()">
+                                                    <input type="date" class="form-control"
+                                                        name="nascimento" id="nascimento"
+                                                        max="<?= date('Y-m-d') ?>"
+                                                        onchange="validarDataNascimentoContraExpedicao()">
                                                 </div>
                                             </div>
                                             <script>
                                                 function Onlychars(e) {
                                                     var input = e.target;
                                                     input.value = input.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
-                                                    console.log("Filtered Input:", input.value);
                                                 }
                                             </script>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="pai">Nome do pai</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="nome_pai" id="pai" onkeypress="return Onlychars(event)">
+                                                    <input type="text" class="form-control"
+                                                        name="nome_pai" id="pai"
+                                                        onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="mae">Nome da mãe</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="nome_mae" id="mae" onkeypress="return Onlychars(event)">
+                                                    <input type="text" class="form-control"
+                                                        name="nome_mae" id="mae"
+                                                        onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>
                                             <div class="form-group center">
-                                                <button type="button" class="btn btn-primary" id="botaoEditar_formInfoPessoal" onclick="switchForm('formInfoPessoal')">Editar</button>
-                                                <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvar_formInfoPessoal" onclick="submitForm('formInfoPessoal')">
+                                                <button type="button" class="btn btn-primary"
+                                                    id="botaoEditar_formInfoPessoal"
+                                                    onclick="switchForm('formInfoPessoal')">Editar</button>
+                                                <button type="submit" class="btn btn-primary"
+                                                    disabled="true"
+                                                    id="botaoSalvar_formInfoPessoal">
+                                                    Salvar
+                                                </button>
                                             </div>
                                         </fieldset>
                                     </form>
+
                                     <hr>
                                 </div>
                                 <!-- Aba de arquivos do dependente -->
