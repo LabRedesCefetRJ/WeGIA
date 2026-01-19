@@ -1,4 +1,7 @@
 <?php
+if(session_status())
+    session_start();
+
 require_once "../../../config.php";
 require_once "../../../dao/Conexao.php";
 require_once "../../../classes/Personalizacao_display.php";
