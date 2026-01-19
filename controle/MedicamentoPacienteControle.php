@@ -43,7 +43,7 @@
             try {
                 $aplicacao = new DateTime($dataHora);
                 $data_nascimento = new DateTime($data_nasc_paciente);
-                $agora = new DateTime(); // Data atual do servidor
+                $agora = new DateTime();
 
             } catch (Exception $e) {
                 http_response_code(400);
@@ -55,7 +55,6 @@
 
             if($aplicacao < $data_nascimento){
                 http_response_code(400); 
-                // 3. CORREÇÃO CRÍTICA AQUI: Concatenação com ponto (.) e formatação da data
                 echo json_encode([
                     "status" => "erro", 
                     "mensagem" => "A data da aplicação não pode ser anterior ao nascimento (" . $data_nascimento->format('d/m/Y') . ")"
