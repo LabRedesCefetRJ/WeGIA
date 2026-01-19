@@ -2363,10 +2363,6 @@ try {
         });
       })
 
-      
-
-      
-
       carregarIntercorrencias();
     </script>
 

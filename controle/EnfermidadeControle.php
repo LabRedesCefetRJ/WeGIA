@@ -19,20 +19,59 @@ class EnfermidadeControle{
 
         $dados = json_decode(file_get_contents('php://input'), true);
 
+        if(empty($dados["id_fichamedica"]) || empty($dados["id_CID"]) || empty($dados["data_diagnostico"]) || !isset($dados["intStatus"])){
+            http_response_code(400);
+            echo json_encode(["erro" => "Campos invalidos ou ausentes"]);
+            exit();
+        }
+
         $id_fichamedica = trim($dados["id_fichamedica"]);
         $id_CID = trim($dados["id_CID"]);
         $data_diagnostico = trim($dados["data_diagnostico"]);
         $intStatus = trim($dados["intStatus"]);
 
-        if(!$id_CID || !isset($id_CID) || !$id_fichamedica || !isset($id_fichamedica) || !$data_diagnostico || !isset($data_diagnostico) || !$intStatus || !isset($intStatus)){
+        $sql = "SELECT p.data_nascimento 
+        FROM pessoa p 
+        INNER JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa 
+        WHERE sf.id_fichamedica = :idFichaMedica";
+
+        $stmt_data_nasc = $this->pdo->prepare($sql);
+        $stmt_data_nasc->bindParam(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+
+        $stmt_data_nasc->execute();
+
+        $resultado_banco = $stmt_data_nasc->fetchColumn();
+        
+        if($resultado_banco === false){
+            http_response_code(404);
+            echo json_encode(["erro" => "Ficha médica não encontrada"]);
+            exit();
+        }
+
+        $data_nascimento = new DateTime($resultado_banco);
+        $data_diagnostico_obj = new DateTime($data_diagnostico);
+        $data_agora_obj = new DateTime();
+
+        $data_nascimento->setTime(0, 0, 0);
+        $data_diagnostico_obj->setTime(0, 0, 0);
+        $data_agora_obj->setTime(0, 0, 0);
+
+        if($data_diagnostico_obj > $data_agora_obj) {
             http_response_code(400);
-            echo json_encode(["erro" => "Campos invalidos"]);
+            echo json_encode(["erro" => "A data de diagnóstico não pode ser futura."]);
+            exit();
+        }
+
+        if($data_diagnostico_obj < $data_nascimento) {
+            http_response_code(400);
+            echo json_encode(["erro" => "A data de diagnóstico não pode ser anterior à data de nascimento do paciente (" . $data_nascimento->format('d/m/Y') . ")."]);
             exit();
         }
 
         try{
             $enfermidadeDao = new EnfermidadeDAO($this->pdo);
             $resultado = $enfermidadeDao->cadastrarEnfermidadeNaFichaMedica($id_CID, $id_fichamedica, $data_diagnostico, $intStatus);
+            
             if($resultado){
                 http_response_code(200);
                 echo json_encode(["ok" => "Enfermidade adicionada com sucesso à ficha do paciente"]);
