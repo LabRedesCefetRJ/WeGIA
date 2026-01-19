@@ -67,6 +67,7 @@ function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3
     return $inicio . $meio . $fim;
 }
 
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 
 <!DOCTYPE html>
@@ -164,7 +165,7 @@ function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3
                                 </div>
 
                                 <form method="POST" action="../controller/control.php">
-
+                                    <?= Csrf::inputField() ?>
                                     <div class="form-group">
                                         <div class="col-md-10 col-md-offset-1">
                                             Os campos com <span class="text-danger">*</span> devem ser preenchidos antes de prosseguir.
@@ -267,6 +268,7 @@ function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3
                                                     <td class="vertical-center">
                                                         <button type="button" class="btn btn-default" title="Editar" data-id="<?= $gateway['id'] ?>"><i class="fa fa-edit"></i></button>
                                                         <form action="../controller/control.php" method="post" style="display: inline-block; margin: 0;" onsubmit="return confirmarExclusao();">
+                                                            <?= Csrf::inputField() ?>
                                                             <input type="hidden" name="nomeClasse" value="GatewayPagamentoController">
                                                             <input type="hidden" name="metodo" value="excluirPorId">
                                                             <input type="hidden" name="gateway-id" value="<?= $gateway['id'] ?>">
@@ -288,6 +290,7 @@ function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3
                                                 </div>
                                                 <div class="modal-body">
                                                     <form id="editForm" method="POST" action="../controller/control.php">
+                                                        <?= Csrf::inputField() ?>
                                                         <div class="form-group">
                                                             <label for="editNome">Nome da plataforma:</label>
                                                             <input type="text" class="form-control" id="editNome" name="nome" required>
