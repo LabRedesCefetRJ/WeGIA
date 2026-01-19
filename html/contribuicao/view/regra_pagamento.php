@@ -41,7 +41,8 @@ $regrasContribuicao = $regraPagamentoController->buscaRegrasContribuicao();
 
 //carrega conjunto de regras de pagamento
 $conjuntoRegrasPagamento = $regraPagamentoController->buscaConjuntoRegrasPagamento();
- 
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 
 <!DOCTYPE html>
@@ -99,10 +100,9 @@ $conjuntoRegrasPagamento = $regraPagamentoController->buscaConjuntoRegrasPagamen
                     </div>
                 </header>
 
-
                 <div class="row">
                     <div class="col-md-10 col-md-offset-1">
-                    <h2><a href="forma_contribuicao.php">Clique aqui para acessar a página de Pagamento</a></h2>
+                        <h2><a href="forma_contribuicao.php">Clique aqui para acessar a página de Pagamento</a></h2>
                         <div class="panel panel-primary">
                             <div class="panel-heading">
                                 <h3 class="panel-title text-center">Cadastro de uma nova regra de pagamento</h3>
@@ -126,7 +126,7 @@ $conjuntoRegrasPagamento = $regraPagamentoController->buscaConjuntoRegrasPagamen
                                 </div>
 
                                 <form method="POST" action="../controller/control.php">
-
+                                    <?= Csrf::inputField() ?>
                                     <div class="form-group">
                                         <div class="col-md-10 col-md-offset-1">
                                             Os campos com <span class="text-danger">*</span> devem ser preenchidos antes de prosseguir.
@@ -245,6 +245,7 @@ $conjuntoRegrasPagamento = $regraPagamentoController->buscaConjuntoRegrasPagamen
                                                     <td class="vertical-center">
                                                         <button type="button" class="btn btn-default" title="Editar" data-id="<?= $regraPagamento['id'] ?>"><i class="fa fa-edit"></i></button>
                                                         <form action="../controller/control.php" method="post" style="display: inline-block; margin: 0;" onsubmit="return confirmarExclusao();">
+                                                            <?= Csrf::inputField() ?>
                                                             <input type="hidden" name="nomeClasse" value="RegraPagamentoController">
                                                             <input type="hidden" name="metodo" value="excluirPorId">
                                                             <input type="hidden" name="regra-pagamento-id" value="<?= $regraPagamento['id'] ?>">
@@ -266,6 +267,7 @@ $conjuntoRegrasPagamento = $regraPagamentoController->buscaConjuntoRegrasPagamen
                                                 </div>
                                                 <div class="modal-body">
                                                     <form id="editForm" method="POST" action="../controller/control.php">
+                                                        <?= Csrf::inputField() ?>
                                                         <div class="form-group">
                                                             <label for="editValor">Valor:</label>
                                                             <input type="number" class="form-control" id="editValor" name="valor" required>

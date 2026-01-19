@@ -5,6 +5,7 @@ if(session_status() === PHP_SESSION_NONE)
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'RegraPagamento.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'RegraPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'SistemaLog.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -91,6 +92,9 @@ class RegraPagamentoController
         $regraContribuicaoId = $_POST['regra-pagamento'];
         $valor = $_POST['valor'];
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
             $this->pdo->beginTransaction();
             $regraPagamento = new RegraPagamento($this->pdo);
             $regraPagamento
@@ -129,6 +133,9 @@ class RegraPagamentoController
         $regraPagamentoId = filter_input(INPUT_POST, 'regra-pagamento-id', FILTER_SANITIZE_NUMBER_INT);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
             if (!$regraPagamentoId || empty($regraPagamentoId) || $regraPagamentoId < 1) {
                 throw new InvalidArgumentException('O id informado não é válido.', 400);
             }
@@ -168,6 +175,9 @@ class RegraPagamentoController
         $regraPagamentoId = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
             $this->pdo->beginTransaction();
             $regraPagamento = new RegraPagamento($this->pdo);
             $regraPagamento
@@ -206,6 +216,9 @@ class RegraPagamentoController
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+            
             if (!$regraPagamentoId || empty($regraPagamentoId)) {
                 throw new InvalidArgumentException('O id deve ser maior ou igual a 1.', 400);
             }
