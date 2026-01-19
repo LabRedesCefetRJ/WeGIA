@@ -9,6 +9,7 @@ require_once '../service/PdfService.php';
 require_once dirname(__DIR__, 3) . '/controle/EmailControle.php';
 require_once dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'ContatoInstituicao.php';
+require_once dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 date_default_timezone_set('America/Sao_Paulo');
 
 class ReciboController
@@ -26,6 +27,9 @@ class ReciboController
     public function gerarRecibo()
     {
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
             // Sanitizar entrada
             $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
             $dataInicio = filter_input(INPUT_POST, 'data_inicio', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -167,26 +171,33 @@ class ReciboController
      */
     public function download()
     {
-        $codigo = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_STRING);
+        try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
 
-        if (empty($codigo)) {
-            http_response_code(400);
-            exit('Código não fornecido');
+            $codigo = filter_input(INPUT_GET, 'codigo', FILTER_SANITIZE_SPECIAL_CHARS);
+
+            if (empty($codigo)) {
+                http_response_code(400);
+                exit('Código não fornecido');
+            }
+
+            $reciboDAO = new ReciboDAO($this->pdo);
+            $recibo = $reciboDAO->buscarPorCodigo($codigo);
+
+            if (!$recibo || !file_exists($recibo['caminho_pdf'])) {
+                http_response_code(404);
+                exit('Comprovante não encontrado');
+            }
+
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: attachment; filename="recibo_' . $codigo . '.pdf"');
+            header('Content-Length: ' . filesize($recibo['caminho_pdf']));
+            readfile($recibo['caminho_pdf']);
+            exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-
-        $reciboDAO = new ReciboDAO($this->pdo);
-        $recibo = $reciboDAO->buscarPorCodigo($codigo);
-
-        if (!$recibo || !file_exists($recibo['caminho_pdf'])) {
-            http_response_code(404);
-            exit('Comprovante não encontrado');
-        }
-
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="recibo_' . $codigo . '.pdf"');
-        header('Content-Length: ' . filesize($recibo['caminho_pdf']));
-        readfile($recibo['caminho_pdf']);
-        exit;
     }
 
     /**
