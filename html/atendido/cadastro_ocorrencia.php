@@ -21,25 +21,34 @@ if (!$id_pessoa || $id_pessoa < 1) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 12, 3);
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 require_once ROOT . "/html/personalizacao_display.php";
 
-$pdo = Conexao::connect();
-$nome = $pdo->query("SELECT a.idatendido, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) ORDER BY p.nome ASC, p.sobrenome ASC")->fetchAll(PDO::FETCH_ASSOC);
-$tipo = $pdo->query("SELECT * FROM atendido_ocorrencia_tipos")->fetchAll(PDO::FETCH_ASSOC);
-$recupera_id_funcionario = $pdo->query("SELECT id_funcionario FROM funcionario WHERE id_pessoa=" . $id_pessoa . ";")->fetchAll(PDO::FETCH_ASSOC);
-$id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
+try {
+    $pdo = Conexao::connect();
+    $nome = $pdo->query("SELECT a.idatendido, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) ORDER BY p.nome ASC, p.sobrenome ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $tipo = $pdo->query("SELECT * FROM atendido_ocorrencia_tipos")->fetchAll(PDO::FETCH_ASSOC);
 
-$atendido_id = filter_input(INPUT_GET, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
+    $stmt = $pdo->prepare("SELECT id_funcionario FROM funcionario WHERE id_pessoa=:idPessoa");
+    $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+    $stmt->execute();
 
-$ocorrencia_msg = filter_input(INPUT_GET, 'ocorrencia_msg', FILTER_SANITIZE_STRING);
+    $id_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_funcionario'];
 
-if ($atendido_id !== null && $atendido_id !== false) {
-    if ($atendido_id < 1) {
-        echo "O id do paciente informado não é válido";
-        exit();
+    $atendido_id = filter_input(INPUT_GET, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
+
+    $ocorrencia_msg = filter_input(INPUT_GET, 'ocorrencia_msg', FILTER_SANITIZE_SPECIAL_CHARS);
+
+    if ($atendido_id !== null && $atendido_id !== false) {
+        if ($atendido_id < 1) {
+            echo "O id do paciente informado não é válido";
+            exit();
+        }
     }
+} catch (Exception $e) {
+    Util::tratarException($e);
 }
 ?>
 
