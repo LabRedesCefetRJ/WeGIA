@@ -72,4 +72,30 @@ class ArquivoEtapaControle
         header('Location: ' . $urlRetorno);
         return;
     }
+
+    public function excluir()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $idArquivo  = filter_input(INPUT_POST, 'id_arquivo', FILTER_VALIDATE_INT);
+        $idEtapa    = filter_input(INPUT_POST, 'id_etapa', FILTER_VALIDATE_INT);
+        $idProcesso = filter_input(INPUT_POST, 'id_processo', FILTER_VALIDATE_INT) ?: 0;  
+
+        if (!$idArquivo || !$idEtapa) {
+            $_SESSION['mensagem_erro'] = 'Dados inválidos para exclusão.';
+            header('Location: ../html/atendido/etapa_processo.php?id=' . max($idProcesso, 1));  
+            return;
+        }
+
+        if ($this->daoEtapa->excluir($idArquivo)) {
+            $_SESSION['msg'] = 'Arquivo da etapa removido com sucesso.';
+        } else {
+            $_SESSION['mensagem_erro'] = 'Erro ao remover arquivo.';
+        }
+
+        header('Location: ../html/atendido/etapa_processo.php?id=' . max($idProcesso, 1));
+        return;
+    }
 }

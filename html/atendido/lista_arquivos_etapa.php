@@ -33,18 +33,29 @@ if (empty($arquivos)) {
 }
 ?>
 
-<table class="table table-striped table-bordered">
+<table class="table table-striped table-bordered table-hover">
     <thead>
         <tr>
             <th>Arquivo</th>
             <th>Data upload</th>
-            <th>Ação</th>
+            <th>Ações</th>
         </tr>
     </thead>
     <tbody>
-    <?php foreach ($arquivos as $arq): ?>
+    <?php foreach ($arquivos as $arq): 
+        $ext = strtolower($arq['arquivo_extensao'] ?? pathinfo($arq['arquivo_nome'], PATHINFO_EXTENSION));
+        $icone = match($ext) {
+            'pdf' => 'file-pdf-o',
+            'doc', 'docx' => 'file-word-o',
+            'jpg', 'jpeg', 'png' => 'file-image-o',
+            default => 'file-o'
+        };
+    ?>
         <tr>
-            <td><?= htmlspecialchars($arq['arquivo_nome']) ?></td>
+            <td>
+                <i class="fa fa-<?= $icone ?> mr-2 text-muted"></i>
+                <?= htmlspecialchars($arq['arquivo_nome']) ?>
+            </td>
             <td><?= date('d/m/Y H:i', strtotime($arq['data_upload'])) ?></td>
             <td class="text-center">
                 <a class="btn btn-xs btn-success"
@@ -52,6 +63,18 @@ if (empty($arquivos)) {
                    title="Baixar arquivo">
                     <i class="fa fa-download" aria-hidden="true"></i>
                 </a>
+                &nbsp;
+                <form method="post" action="../../controle/control.php" style="display:inline;" 
+                      onsubmit="return confirm('Remover <?= htmlspecialchars($arq['arquivo_nome']) ?>?\nEsta ação não pode ser desfeita.');">
+                    <input type="hidden" name="nomeClasse" value="ArquivoEtapaControle">
+                    <input type="hidden" name="metodo" value="excluir">
+                    <input type="hidden" name="id_arquivo" value="<?= (int)$arq['id'] ?>">
+                    <input type="hidden" name="id_etapa" value="<?= $idEtapa ?>">
+                    <input type="hidden" name="id_processo" value="<?= $_GET['id_processo'] ?? 0 ?>">
+                    <button type="submit" class="btn btn-xs btn-danger" title="Excluir arquivo">
+                        <i class="fa fa-trash" aria-hidden="true"></i>
+                    </button>
+                </form>
             </td>
         </tr>
     <?php endforeach; ?>
