@@ -213,4 +213,95 @@ public function incluir()
 		$cache->save($id, $inf, '15 seconds');
 		exit;
 	}
+
+
+
+	public function atualizar()
+{
+    try {
+        $idOcorrencia = (int)($_POST['id_ocorrencia'] ?? 0);
+        $idAtendido   = (int)($_POST['id_atendido'] ?? 0);
+        $data         = $_POST['data_ocorrencia'] ?? '';
+        $descricao    = trim($_POST['descricao'] ?? '');
+
+        if ($idOcorrencia <= 0 || $idAtendido <= 0 || empty($data) || empty($descricao)) {
+            $_SESSION['mensagem_erro'] = 'Dados inválidos para editar a ocorrência.';
+            header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido . "#ocorrencias");
+            exit;
+        }
+
+        // valida: data da ocorrência não antes do nascimento (mesma regra do incluir)
+        $pdo = Conexao::connect();
+        $sql_nascimento = "
+            SELECT p.data_nascimento 
+            FROM atendido a 
+            JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa 
+            WHERE a.idatendido = :id
+        ";
+        $stmt_nascimento = $pdo->prepare($sql_nascimento);
+        $stmt_nascimento->bindValue(':id', $idAtendido, PDO::PARAM_INT);
+        $stmt_nascimento->execute();
+        $atendido_nasc = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
+
+        if ($atendido_nasc && !empty($atendido_nasc['data_nascimento']) && $atendido_nasc['data_nascimento'] !== '0000-00-00') {
+            $data_nascimento_obj = new DateTime($atendido_nasc['data_nascimento']);
+            $data_ocorrencia_obj = new DateTime($data);
+            if ($data_ocorrencia_obj < $data_nascimento_obj) {
+                $_SESSION['mensagem_erro'] = 'A data da ocorrência não pode ser anterior à data de nascimento.';
+                header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido . "#ocorrencias");
+                exit;
+            }
+        }
+
+        $dao = new Atendido_ocorrenciaDAO();
+        $ok  = $dao->atualizarOcorrencia($idOcorrencia, $idAtendido, $data, $descricao);
+
+        if ($ok) {
+            $_SESSION['msg']  = 'Ocorrência atualizada com sucesso.';
+            $_SESSION['tipo'] = 'success';
+        } else {
+            $_SESSION['mensagem_erro'] = 'Erro ao atualizar a ocorrência.';
+        }
+
+        header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido . "#ocorrencias");
+        exit;
+    } catch (Exception $e) {
+        Util::tratarException($e);
+    }
+}
+
+public function excluir()
+{
+    try {
+        $idOcorrencia = (int)($_POST['id_ocorrencia'] ?? 0);
+
+        if ($idOcorrencia <= 0) {
+            $_SESSION['mensagem_erro'] = 'Dados inválidos para exclusão da ocorrência.';
+            header("Location: " . WWW . "html/atendido/Profile_Atendido.php");
+            exit;
+        }
+
+        $dao = new Atendido_ocorrenciaDAO();
+        $idAtendido = $dao->buscarIdAtendidoPorOcorrencia($idOcorrencia);
+
+        if (!$idAtendido) {
+            $_SESSION['mensagem_erro'] = 'Ocorrência não encontrada.';
+            header("Location: " . WWW . "html/atendido/Profile_Atendido.php");
+            exit;
+        }
+
+        if ($dao->excluirOcorrencia($idOcorrencia)) {
+            $_SESSION['msg']  = 'Ocorrência excluída com sucesso.';
+            $_SESSION['tipo'] = 'success';
+        } else {
+            $_SESSION['mensagem_erro'] = 'Erro ao excluir a ocorrência.';
+        }
+
+        header("Location: " . WWW . "html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido . "#ocorrencias");
+        exit;
+    } catch (Exception $e) {
+        Util::tratarException($e);
+    }
+}
+
 }
