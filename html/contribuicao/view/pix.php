@@ -51,7 +51,7 @@ $tipoContribuicao = 'QRCode';
             </div>
 
             <div id="pag5" class="wrap-input100 hidden">
-                <!--Adiciona a página para agradecimento e confirmação da geração do boleto-->
+                <!--Adiciona a página para agradecimento e confirmação da geração do pix-->
                 <?php include('./components/contribuicao_confirmacao.php'); ?>
             </div>
 

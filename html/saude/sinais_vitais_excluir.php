@@ -3,6 +3,9 @@
 session_start();
 if (!isset($_SESSION["usuario"])){
     header("Location: ../../index.php");
+    exit();
+}else{
+    session_regenerate_id();
 }
 
 // Verifica Permissão do Usuário

@@ -1,8 +1,12 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
-session_start();
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+} else {
+	session_regenerate_id();
 }
 
 $config_path = "config.php";
@@ -70,7 +74,7 @@ $util = new Util();
 
 $cpf = trim($_GET['cpf']);
 
-if(!$util->validarCPF($cpf)){
+if (!$util->validarCPF($cpf)) {
 	http_response_code(400);
 	header("Location: " . WWW . "html/home.php?msg_c=CPF Inválido");
 	exit();

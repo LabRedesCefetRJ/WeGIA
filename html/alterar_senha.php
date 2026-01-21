@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
@@ -6,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (!isset($_SESSION['usuario'])) {
-	header("Location: ".WWW."index.php");
+	header("Location: " . WWW . "index.php");
 	exit();
 } else {
 	session_regenerate_id();
@@ -37,10 +38,10 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 	<link rel="stylesheet" href="../assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="stylesheet" href="../css/error.css"/>
-	<?php if(function_exists('display_campo')):?>
+	<link rel="stylesheet" href="../css/error.css" />
+	<?php if (function_exists('display_campo')): ?>
 		<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
-	<?php endif;?>
+	<?php endif; ?>
 	<script src="../assets/vendor/jquery/jquery.min.js"></script>
 	<script src="../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
 	<script src="../assets/vendor/bootstrap/js/bootstrap.js"></script>
@@ -48,7 +49,7 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<script src="../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="../assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-	
+
 	<!-- Theme CSS -->
 	<link rel="stylesheet" href="../assets/stylesheets/theme.css" />
 	<!-- Skin CSS -->
@@ -172,7 +173,7 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 											</div>
 										</fieldset>
 										<!-- Csrf -->
-										 <?= Csrf::inputField() ?>
+										<?= Csrf::inputField() ?>
 										<input type="hidden" name="nomeClasse" value="FuncionarioControle">
 										<input type="hidden" name="metodo" value="alterarSenha">
 										<input type="hidden" name="redir" value="logout.php">

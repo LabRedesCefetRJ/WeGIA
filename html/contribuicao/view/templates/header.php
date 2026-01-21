@@ -1,7 +1,8 @@
 <?php
-if(session_status())
+if(session_status() === PHP_SESSION_NONE)
     session_start();
 
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php' ;
 require_once "../../../config.php";
 require_once "../../../dao/Conexao.php";
 require_once "../../../classes/Personalizacao_display.php";
@@ -73,6 +74,10 @@ function loadPublicFiles(array $publicsFile): void
         }
     }
 }
+
+//Proteção contra robôs
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
+$captchaGoogle = new CaptchaGoogleService();
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -125,6 +130,8 @@ function loadPublicFiles(array $publicsFile): void
     ?>
     <!-- Função para validar CPF -->
     <script src="../../../Functions/testaCPF.js"></script>
+
+    <script src="<?= $captchaGoogle->getApi() ?>" async defer></script>
 
     <style>
         #logo_img {

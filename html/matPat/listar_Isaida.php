@@ -1,40 +1,49 @@
 <?php
-	session_start();
-	
-	$config_path = '../../config.php';
-	require_once $config_path;
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-	if(!isset($_SESSION['usuario'])){
-		header ("Location:  ". WWW ."html/index.php");
-	}
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once ROOT . "/html/personalizacao_display.php";
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
+
+if (!isset($_SESSION['usuario'])) {
+	header("Location:  " . WWW . "html/index.php");
+	exit();
+} else {
+	session_regenerate_id();
+}
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($_SESSION['id_pessoa'], 24, 5);
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . "/html/personalizacao_display.php";
 ?>
 <!doctype html>
 <html class="fixed">
-<head>
-<?php
-	include_once ROOT . '/dao/Conexao.php';
-  	include_once ROOT . '/dao/SaidaDAO.php';
 
-	if(!isset($_SESSION['isaida'])){
+<head>
+	<?php
+	include_once ROOT . '/dao/Conexao.php';
+	include_once ROOT . '/dao/SaidaDAO.php';
+
+	if (!isset($_SESSION['isaida'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=' . WWW . 'html/matPat/listar_Isaida.php');
 	}
-  	if(isset($_SESSION['isaida'])){
+	if (isset($_SESSION['isaida'])) {
 		$isaida = $_SESSION['isaida'];
 	}
-	if(!isset($_SESSION['saidaUnica'])){
-    header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage='. WWW . 'html/matPat/listar_Isaida.php');
-  }
-  if(isset($_SESSION['saidaUnica'])){
+	if (!isset($_SESSION['saidaUnica'])) {
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=' . WWW . 'html/matPat/listar_Isaida.php');
+	}
+	if (isset($_SESSION['saidaUnica'])) {
 		$saida = $_SESSION['saidaUnica'];
 	}
-?>
+	?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
 	<title>Informações Detalhadas De Saída</title>
-		
+
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
@@ -47,8 +56,8 @@
 	<!-- Specific Page Vendor CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/select2/select2.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
-	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
- 	
+	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+
 
 	<!-- Theme CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
@@ -62,7 +71,7 @@
 	<!-- Head Libs -->
 	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
-		
+
 	<!-- Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -71,16 +80,16 @@
 	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-		
+
 	<!-- Specific Page Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-		
+
 	<!-- Theme Base, Components and Settings -->
 	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
-		
+
 	<!-- Theme Custom -->
 	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
-		
+
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
@@ -89,28 +98,48 @@
 	<script src="<?= WWW ?>Functions/onlyChars.js"></script>
 	<script src="<?= WWW ?>Functions/enviar_dados.js"></script>
 	<script src="<?= WWW ?>Functions/mascara.js"></script>
-		
+
 	<!-- jquery functions -->
 	<script>
-		async function getSaida(){
+		async function getSaida() {
 			let saida = await <?php echo json_encode($saida); ?>;
 			return await JSON.parse(saida);
 		}
-		
+
 
 		document.addEventListener("DOMContentLoaded", async () => {
 			const container = document.getElementById("containerInformacoesDeSaida");
 
 			let saida = await getSaida();
 
-			const campos = [
-				{ label: "Almoxarifado", valor: saida.descricao_almoxarifado },
-				{ label: "Destino", valor: saida.nome_destino },
-				{ label: "Tipo", valor: saida.descricao },
-				{ label: "Responsável", valor: saida.nome},
-				{ label: "Valor Total", valor: saida.valor_total },
-				{ label: "Data", valor: saida.data },
-				{ label: "Hora", valor: saida.hora }
+			const campos = [{
+					label: "Almoxarifado",
+					valor: saida.descricao_almoxarifado
+				},
+				{
+					label: "Destino",
+					valor: saida.nome_destino
+				},
+				{
+					label: "Tipo",
+					valor: saida.descricao
+				},
+				{
+					label: "Responsável",
+					valor: saida.nome
+				},
+				{
+					label: "Valor Total",
+					valor: saida.valor_total
+				},
+				{
+					label: "Data",
+					valor: saida.data
+				},
+				{
+					label: "Hora",
+					valor: saida.hora
+				}
 			];
 
 			campos.forEach(campo => {
@@ -129,14 +158,14 @@
 				container.appendChild(div);
 			});
 		});
-		
 
-		$(function(){
-			var isaida= <?php 
-				echo $isaida; 
-				?>;
 
-			$.each(isaida, function(i,item){
+		$(function() {
+			var isaida = <?php
+							echo $isaida;
+							?>;
+
+			$.each(isaida, function(i, item) {
 
 				$('#tabela')
 					.append($('<tr />')
@@ -149,21 +178,21 @@
 						.append($('<td />')
 							.text(item.unidade))
 						.append($('<td />')
-							.text(item.valor_unitario*item.qtd)))
-					});
+							.text(item.valor_unitario * item.qtd)))
+			});
 		});
-		$(function () {
-	      $("#header").load("<?= WWW ?>html/header.php");
-	      $(".menuu").load("<?= WWW ?>html/menu.php");
-	    });
+		$(function() {
+			$("#header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
+		});
 
 		$(document).ready(function() {
 			$('#datatable-default').DataTable({
-				paging: false,          
-				searching: false,       
-				info: false,         
-				lengthChange: false,    
-				ordering: false         
+				paging: false,
+				searching: false,
+				info: false,
+				lengthChange: false,
+				ordering: false
 			});
 		});
 	</script>
@@ -186,27 +215,29 @@
 		}
 
 		@media (max-width: 768px) {
+
 			.linha-informacao span,
 			.linha-informacao p {
-			display: block;
-			font-size: 14px;
+				display: block;
+				font-size: 14px;
 			}
 		}
 	</style>
 </head>
+
 <body>
 	<section class="body">
 		<div id="header"></div>
-        <!-- end: header -->
-        <div class="inner-wrapper">
-          <!-- start: sidebar -->
-          <aside id="sidebar-left" class="sidebar-left menuu"></aside>
-				
+		<!-- end: header -->
+		<div class="inner-wrapper">
+			<!-- start: sidebar -->
+			<aside id="sidebar-left" class="sidebar-left menuu"></aside>
+
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
 					<h2>Informações Detalhadas De Saída</h2>
-				
+
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li>
@@ -221,7 +252,7 @@
 				</header>
 
 				<!-- start: page -->
-			
+
 				<section class="panel">
 					<header class="panel-heading">
 						<div class="panel-actions">
@@ -241,7 +272,7 @@
 									<th>Valor Total</th>
 								</tr>
 							</thead>
-							<tbody id="tabela">	
+							<tbody id="tabela">
 							</tbody>
 						</table>
 					</div><br>
@@ -250,19 +281,19 @@
 		</div>
 	</section>
 	<!-- end: page -->
-			
+
 	<!-- Specific Page Vendor -->
 	<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
-		
+
 	<!-- Theme Base, Components and Settings -->
 	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
-		
+
 	<!-- Theme Custom -->
 	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
-		
+
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
@@ -271,4 +302,5 @@
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 </body>
-</html>				
+
+</html>

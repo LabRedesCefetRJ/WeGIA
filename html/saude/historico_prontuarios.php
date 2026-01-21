@@ -1,50 +1,21 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
+  session_start();
 
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-
-session_start();
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
+  exit();
+}else{
+  session_regenerate_id();
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($_SESSION['id_pessoa'], 5, 5);
 
 require_once '../../controle/SaudeControle.php';
-
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-  $id_cargo = mysqli_fetch_array($resultado);
-  if (!is_null($id_cargo)) {
-    $id_cargo = $id_cargo['id_cargo'];
-  }
-  //Alterar essa busca pelo resultado
-  $resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN acao a ON(p.id_acao=a.id_acao) JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND p.id_acao >=5  AND p.id_recurso=5");
-  if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-    $permissao = mysqli_fetch_array($resultado);
-    $permissao = $permissao['id_acao'];
-  } else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../home.php?msg_c=$msg");
-  }
-} else {
-  $permissao = 1;
-  $msg = "Você não tem as permissões necessárias para essa página.";
-  header("Location: ../../home.php?msg_c=$msg");
-}
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
@@ -62,7 +33,6 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
 <head>
 
   <style>
-
     #historicoOpcao {
       width: 60%;
     }
@@ -76,7 +46,7 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
       display: none;
     }
 
-    #conteudo-pagina{
+    #conteudo-pagina {
       margin-left: 10%;
     }
 
@@ -93,7 +63,6 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
         max-width: 80%;
       }
     }*/
-
   </style>
 
   <!-- Basic -->
@@ -255,7 +224,6 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
   </section>
 
   <script>
-
     function formatarDataBr(data) {
       let hour = null;
 
@@ -295,7 +263,7 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
       return dataFinal;
     }
 
-    function gerarOptions(dados, idSelect){
+    function gerarOptions(dados, idSelect) {
       const select = document.getElementById(idSelect);
       dados.forEach((obj) => {
         const option = document.createElement("option");
@@ -304,8 +272,8 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
         select.appendChild(option);
       })
     }
-    
-    const prontuarios = <?=json_encode($prontuariosDoHistorico);?>;
+
+    const prontuarios = <?= json_encode($prontuariosDoHistorico); ?>;
 
     document.addEventListener("DOMContentLoaded", gerarOptions(prontuarios, "historicoOpcao"))
 
@@ -313,7 +281,7 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
 
       const opcao = document.getElementById('historicoOpcao').value;
 
-      if(!opcao || opcao.trim() === ""){
+      if (!opcao || opcao.trim() === "") {
         alert("Escolha uma opção de data válida antes de clicar em visualizar.");
         return;
       }

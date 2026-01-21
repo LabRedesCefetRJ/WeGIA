@@ -1,53 +1,20 @@
 <?php
-session_start();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
-define("DEBUG", false);
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
+if (!isset($_SESSION['usuario'])) {
+	header("Location: ../index.php");
+	exit();
 } else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
+	session_regenerate_id();
 }
 
-if(!isset($_SESSION['usuario'])){
-	header ("Location:  ". WWW ."html/index.php");
-	exit;
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$stmt = mysqli_prepare($conexao, "SELECT id_cargo FROM funcionario WHERE id_pessoa = ?");
-mysqli_stmt_bind_param($stmt, 'i', $id_pessoa);
-mysqli_stmt_execute($stmt);
-$resultado = mysqli_stmt_get_result($stmt);
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=25");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] < 5) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: " . WWW ."html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW ."html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW ."html/home.php?msg_c=$msg");
-}
+permissao($_SESSION['id_pessoa'], 25, 5);
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
@@ -94,7 +61,7 @@ function quickQuery($query, $parametro, $column)
 	$chave = array_key_first($parametro);
 	$valor = $parametro[$chave];
 	$stmt->bindValue($chave, $valor);
-    $stmt->execute();
+	$stmt->execute();
 	$res = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	return $res[0][$column];
 }
@@ -243,13 +210,13 @@ function quickQuery($query, $parametro, $column)
 
 									if ($post[0] == 'entrada') {
 										if (isset($post[1])) {
-											$origem = quickQuery("select nome_origem from origem where id_origem =  :id_origem;", [':id_origem' => $post[1]] , "nome_origem");
+											$origem = quickQuery("select nome_origem from origem where id_origem =  :id_origem;", [':id_origem' => $post[1]], "nome_origem");
 											echo ("<ul>Origem: " . htmlspecialchars($origem) . "</ul>");
 										} else {
 											echo ("<ul>Origem: Todas</ul>");
 										}
 										if (isset($post[2])) {
-											$tipo = quickQuery("select descricao from tipo_entrada where id_tipo = :id_tipo;", [':id_tipo' => $post[2]] , "descricao", );
+											$tipo = quickQuery("select descricao from tipo_entrada where id_tipo = :id_tipo;", [':id_tipo' => $post[2]], "descricao",);
 											echo ("<ul>Tipo: " . htmlspecialchars($tipo) . "</ul>");
 										} else {
 											echo ("<ul>Tipo: Todos</ul>");
@@ -264,19 +231,19 @@ function quickQuery($query, $parametro, $column)
 
 									if ($post[0] == 'saida') {
 										if (isset($post[1])) {
-											$destino = quickQuery("select nome_destino from destino where id_destino =  :id_destino;", [':id_destino' => $post[1]] , "nome_destino");
+											$destino = quickQuery("select nome_destino from destino where id_destino =  :id_destino;", [':id_destino' => $post[1]], "nome_destino");
 											echo ("<ul>Destino: " . htmlspecialchars($destino) . "</ul>");
 										} else {
 											echo ("<ul>Destino: Todos</ul>");
 										}
 										if (isset($post[2])) {
-											$tipo = quickQuery("select descricao from tipo_saida where id_tipo = :id_tipo;", [':id_tipo' => $post[2]] , "descricao");
+											$tipo = quickQuery("select descricao from tipo_saida where id_tipo = :id_tipo;", [':id_tipo' => $post[2]], "descricao");
 											echo ("<ul>Tipo: " . htmlspecialchars($tipo) . "</ul>");
 										} else {
 											echo ("<ul>Tipo: Todos</ul>");
 										}
 										if (isset($post[3])) {
-											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;", [':id_pessoa' => $post[3]] , "nome");
+											$responsavel = quickQuery("select nome from pessoa where id_pessoa = :id_pessoa;", [':id_pessoa' => $post[3]], "nome");
 											echo ("<ul>Responsável: " . htmlspecialchars($responsavel) . "</ul>");
 										} else {
 											echo ("<ul>Responsável: Todos</ul>");
@@ -298,7 +265,7 @@ function quickQuery($query, $parametro, $column)
 
 									if (isset($post[5])) {
 										$almoxarifado = quickQuery("select descricao_almoxarifado from almoxarifado where id_almoxarifado = :id_almoxarifado;", [':id_almoxarifado' => $post[5]], "descricao_almoxarifado");
-										echo ("<ul>Almoxarifado: " . htmlspecialchars($almoxarifado) . "</ul>"); // <- alterar aqui 
+										echo ("<ul>Almoxarifado: " . htmlspecialchars($almoxarifado) . "</ul>"); 
 									} else {
 										echo ("<ul>Almoxarifado: Todos</ul>");
 									}
@@ -333,7 +300,7 @@ function quickQuery($query, $parametro, $column)
 						</thead>
 						<tbody>
 							<?php
-								$item->display();
+							$item->display();
 							?>
 						</tbody>
 					</table>

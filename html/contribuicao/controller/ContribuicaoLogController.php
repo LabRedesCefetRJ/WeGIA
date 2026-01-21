@@ -1,4 +1,6 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 //Requisições necessárias
 require_once '../model/ContribuicaoLog.php';
 require_once '../dao/ContribuicaoLogDAO.php';
@@ -13,6 +15,7 @@ require_once '../model/StatusPagamento.php';
 require_once '../../../config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
 
 class ContribuicaoLogController
 {
@@ -38,6 +41,13 @@ class ContribuicaoLogController
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+          
+            //captcha
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+            }
 
             $socioDao = new SocioDAO($this->pdo);
             $socio = $socioDao->buscarPorDocumento($documento);
@@ -96,8 +106,6 @@ class ContribuicaoLogController
 
             if (isset($_POST['dia']) && !empty($_POST['dia'])) {
                 require_once '../../permissao/permissao.php';
-
-                session_start();
                 permissao($_SESSION['id_pessoa'], 4);
 
                 $dataGeracao = date('Y-m-d');
@@ -161,6 +169,13 @@ class ContribuicaoLogController
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+          
+            //captcha
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+            }
 
             $socioDao = new SocioDAO($this->pdo);
             $socio = $socioDao->buscarPorDocumento($documento);
@@ -381,6 +396,13 @@ class ContribuicaoLogController
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+          
+            //captcha
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+            }
 
             $socioDao = new SocioDAO();
             $socio = $socioDao->buscarPorDocumento($documento);
@@ -491,6 +513,13 @@ class ContribuicaoLogController
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+          
+            //captcha
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+            }
             
             $this->pdo->beginTransaction();
 

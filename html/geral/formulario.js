@@ -58,8 +58,7 @@ function getFormPostParams(idForm){
             }
         }
     });
-    // console.log(array);
-    // return string;
+    
     return array;
 
 }

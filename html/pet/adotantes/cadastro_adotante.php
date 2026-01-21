@@ -89,7 +89,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     'complemento' => !empty($_POST['complemento']) ? trim($_POST['complemento']) : null
 ];
 
-
   // Validação dos campos obrigatórios (sem 'imgperfil')
 
   if (
@@ -113,9 +112,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   exit;
    
 }
-
-
-
   try {
       $stmt = $pdo->prepare("
           INSERT INTO pessoa (
@@ -157,8 +153,6 @@ if (!isset($cpf)) {
   header("Location: pre_cadastro_adotante.php");
   exit();
 }
-
-
 
 // Verifica no banco
 $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
@@ -579,9 +573,6 @@ if ($existe > 0) {
     logradouro.readOnly = false;
   }
 }
-
-
-
 
 </script>                                                                          
 

@@ -1,29 +1,37 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+
+if(session_status() === PHP_SESSION_NONE)
 	session_start();
-	if(!isset($_SESSION['usuario'])){
-		header ("Location: ../../index.php");
-	}
-	
-	// Verifica Permissão do Usuário
-	require_once '../permissao/permissao.php';
-	permissao($_SESSION['id_pessoa'], 9);
-	
-	// Inclui display de Campos
-	require_once "../personalizacao_display.php";
 
-	// Adiciona o Sistema de Mensagem
-	require_once "../geral/msg.php";
+if (!isset($_SESSION['usuario'])) {
+	header("Location: ../../index.php");
+	exit();
+}else{
+	session_regenerate_id();
+}
 
-	// Ultima release disponível
-	$last_release = intval(file_get_contents("https://www.wegia.org/software/release"));
-	// Release instalada
-	$local_release = intval(file_get_contents("../../.release"));
+// Verifica Permissão do Usuário
+require_once '../permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 9);
 
-	define("SYSTEM_UP_TO_DATE", $local_release >= $last_release);
+// Inclui display de Campos
+require_once "../personalizacao_display.php";
+
+// Adiciona o Sistema de Mensagem
+require_once "../geral/msg.php";
+
+// Ultima release disponível
+$last_release = intval(file_get_contents("https://www.wegia.org/software/release"));
+// Release instalada
+$local_release = intval(file_get_contents("../../.release"));
+
+define("SYSTEM_UP_TO_DATE", $local_release >= $last_release);
 
 ?>
 <!doctype html>
 <html class="fixed">
+
 <head>
 	<!-- Basic -->
 	<meta charset="UTF-8">
@@ -42,23 +50,23 @@
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 	<link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon">
-	
+	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon">
+
 	<!-- Theme CSS -->
 	<link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
-	
+
 	<!-- Skin CSS -->
 	<link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
-	
+
 	<!-- Theme Custom CSS -->
 	<link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
-	
+
 	<!-- Head Libs -->
 	<script src="../../assets/vendor/modernizr/modernizr.js"></script>
 
 	<!-- Configuração CSS -->
 	<link rel="stylesheet" href="../../css/configuracao.css" />
-	
+
 	<!-- Vendor -->
 	<script src="../../assets/vendor/jquery/jquery.min.js"></script>
 	<script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -67,49 +75,53 @@
 	<script src="../../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="../../assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-		
+
 	<!-- Specific Page Vendor -->
 	<script src="../../assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-		
+
 	<!-- Theme Base, Components and Settings -->
 	<script src="../../assets/javascripts/theme.js"></script>
-		
+
 	<!-- Theme Custom -->
 	<script src="../../assets/javascripts/theme.custom.js"></script>
-		
+
 	<!-- Theme Initialization Files -->
 	<script src="../../assets/javascripts/theme.init.js"></script>
 
-	<!-- javascript functions --> <script
-	src="../../Functions/onlyNumbers.js"></script> <script
-	src="../../Functions/onlyChars.js"></script> <script
-	src="../../Functions/mascara.js"></script>
+	<!-- javascript functions -->
+	<script
+		src="../../Functions/onlyNumbers.js"></script>
+	<script
+		src="../../Functions/onlyChars.js"></script>
+	<script
+		src="../../Functions/mascara.js"></script>
 
 	<!-- jquery functions -->
 	<script>
-   		document.write('<a href="' + document.referrer + '"></a>');
+		document.write('<a href="' + document.referrer + '"></a>');
 	</script>
 
 	<script type="text/javascript">
-		$(function () {
-	      $("#header").load("../header.php");
-	      $(".menuu").load("../menu.php");
-	    });	
-    </script>
-    
-    <!-- javascript tab management script -->
+		$(function() {
+			$("#header").load("../header.php");
+			$(".menuu").load("../menu.php");
+		});
+	</script>
 
-    <style>
-		.btn{
+	<!-- javascript tab management script -->
+
+	<style>
+		.btn {
 			width: 10%;
 		}
 	</style>
 
 </head>
+
 <body>
 	<section class="body">
 		<div id="header"></div>
-	        <!-- end: header -->
+		<!-- end: header -->
 		<div class="inner-wrapper">
 			<!-- start: sidebar -->
 			<aside id="sidebar-left" class="sidebar-left menuu"></aside>
@@ -130,10 +142,11 @@
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 					</div>
 				</header>
-                <!--start: page-->
-				
-                <!-- Caso haja uma mensagem do sistema -->
-				<?php displayMsg(); getMsgSession("mensagem","tipo");?>
+				<!--start: page-->
+
+				<!-- Caso haja uma mensagem do sistema -->
+				<?php displayMsg();
+				getMsgSession("mensagem", "tipo"); ?>
 
 				<session class="panel">
 					<header class="panel-heading">
@@ -145,11 +158,11 @@
 					<div class="panel-body" style="display: none;">
 						<div class="ls-container">
 							<!-- Conteúdo -->
-							<div class="config-item" <?= SYSTEM_UP_TO_DATE ? "style='display: none;'" : "" ;?>>
+							<div class="config-item" <?= SYSTEM_UP_TO_DATE ? "style='display: none;'" : ""; ?>>
 								<div>Atualizar sistema:</div>
 								<button id="btn2" class="btn btn-primary" onClick="setLoader(this)"><a href="./atualizacao.php"><i class="fas fa-download" aria-hidden="true"></i></a></button>
 							</div>
-							<div class="config-item" <?= SYSTEM_UP_TO_DATE ? "" : "style='display: none;'" ;?>>
+							<div class="config-item" <?= SYSTEM_UP_TO_DATE ? "" : "style='display: none;'"; ?>>
 								<div>Atualizar sistema:</div>
 								<div>
 									<button disabled="disabled" class="btn btn-info"><i class="fas fa-download" aria-hidden="true"></i></button>
@@ -216,25 +229,25 @@
 
 </body>
 <script>
-    function setLoader(btn) {
-        btn.firstElementChild.style.display = "none";
-        if (btn.childElementCount == 1) {
-            loader = document.createElement("DIV");
-            loader.className = "loader";
-            btn.appendChild(loader);
-        }
-        window.location.href = btn.firstElementChild.href;
+	function setLoader(btn) {
+		btn.firstElementChild.style.display = "none";
+		if (btn.childElementCount == 1) {
+			loader = document.createElement("DIV");
+			loader.className = "loader";
+			btn.appendChild(loader);
+		}
+		window.location.href = btn.firstElementChild.href;
 	}
 
 	var selectionState = {};
 
-	function openItem(id, sectionId){
+	function openItem(id, sectionId) {
 		let btn = document.getElementById(id);
 		let section = document.getElementById(sectionId);
-		let open = selectionState[id] ? selectionState[id] : false ;
+		let open = selectionState[id] ? selectionState[id] : false;
 		let icon = document.querySelector("#" + id + " a i");
 
-		if (open){
+		if (open) {
 			$("#" + sectionId).hide();
 			selectionState[id] = false;
 			icon.className = "fa fa-download";
@@ -249,17 +262,17 @@
 		}
 	}
 
-	function submitForm(id){
-		if (!!$("#" + id + " input").val()){
+	function submitForm(id) {
+		if (!!$("#" + id + " input").val()) {
 			if (window.confirm("ATENÇÃO! Backups podem alterar o seu Banco de Dados quando restaurados. Ao importar esse arquivo, você aceita que ele estará disponível na lista de Backups e poderá alterar por completo o Banco de Dados. Tem certeza que deseja importar esse arquivo?"))
-			$("#" + id).submit();
+				$("#" + id).submit();
 		} else {
 			window.alert("Preencha todos os campos antes de enviar o formulário!")
 		}
 	}
-
 </script>
 
 <!-- Adiciona função de fechar mensagem e tirá-la da url -->
 <script src="../geral/msg.js"></script>
+
 </html>
