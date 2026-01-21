@@ -29,7 +29,7 @@ $brand = $brandController->getBrand();
 
             <div id="cpf" class="wrap-input100 validate-input bg1" data-validate="Digite um documento válido!">
                 <span class="label-input100">Digite um documento CPF*</span>
-                <input class="input100" type="text" name="dcpf" id="dcpf" class="text required" placeholder="Ex: 222.222.222-22" onkeyup="return Onlynumbers(event)" onkeypress="mascara('###.###.###-##',this,event)" maxlength="14" required><span id="avisa_cpf"></span>
+                <input class="input100" type="text" name="dcpf" id="dcpf" class="text required" placeholder="Ex: 222.222.222-22" oninput="mascaraCPF(this)" inputmode="numeric" maxlength="14" required><span id="avisa_cpf"></span>
             </div>
 
             <div id="cnpj" class="wrap-input100 validate-input bg1 hidden" data-validate="Digite um documento válido!">
@@ -59,6 +59,7 @@ $brand = $brandController->getBrand();
     <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
     <script src="../vendor/select2/select2.min.js"></script>
+    <script src="../public/js/mascaraCPF.js"></script>
     <script src="../public/js/mascara.js"></script>
     <script src="../public/js/segundaVia.js"></script>
     <?php
