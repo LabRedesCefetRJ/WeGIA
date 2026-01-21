@@ -128,11 +128,6 @@ try {
     <!-- jquery functions -->
     <script>
         $(function() {
-            var funcionario = [];
-            $.each(funcionario, function(i, item) {
-                $("#destinatario")
-                    .append($("<option id=" + item.id_pessoa + " value=" + item.id_pessoa + " name=" + item.id_pessoa + ">" + item.nome + " " + item.sobrenome + "</option>"));
-            });
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
 
@@ -142,7 +137,7 @@ try {
     <script>
         (function($) {
             $.fn.uploader = function(options) {
-                var settings = $.extend({
+                let settings = $.extend({
                         // MessageAreaText: "No files selected.",
                         // MessageAreaTextWithFiles: "File List:",
                         // DefaultErrorMessage: "Unable to open this file.",
@@ -174,27 +169,27 @@ try {
                     options
                 );
 
-                var uploadId = 1;
+                let uploadId = 1;
                 //atualiza a mensagem
                 $(".file-uploader__message-area p").text(
                     options.MessageAreaText || settings.MessageAreaText
                 );
 
                 // cria e adiciona a lista de arquivos e a lista de entrada oculta
-                var fileList = $('<ul class="file-list"></ul>');
-                var hiddenInputs = $('<div class="hidden-inputs hidden"></div>');
+                let fileList = $('<ul class="file-list"></ul>');
+                let hiddenInputs = $('<div class="hidden-inputs hidden"></div>');
                 $(".file-uploader__message-area").after(fileList);
                 $(".file-list").after(hiddenInputs);
 
                 //ao escolher um arquivo, adicione o nome à lista e copie a entrada do arquivo para as entradas ocultas
                 $(".file-chooser__input").on("change", function() {
-                    var files = document.querySelector(".file-chooser__input").files;
+                    let files = document.querySelector(".file-chooser__input").files;
 
-                    for (var i = 0; i < files.length; i++) {
+                    for (let i = 0; i < files.length; i++) {
                         console.log(files[i]);
 
-                        var file = files[i];
-                        var fileName = file.name.match(/([^\\\/]+)$/)[0];
+                        let file = files[i];
+                        let fileName = file.name.match(/([^\\\/]+)$/)[0];
 
                         //limpe qualquer condição de erro
                         $(".file-chooser").removeClass("error");
@@ -203,7 +198,7 @@ try {
                         //validate the file
                         //valide o arquivo
 
-                        var check = checkFile(fileName);
+                        let check = checkFile(fileName);
                         if (check === "valid") {
 
                             //mova o 'real' para a lista oculta
@@ -239,7 +234,7 @@ try {
                         } else {
                             //indica que o arquivo não está ok
                             $(".file-chooser").addClass("error");
-                            var errorText =
+                            let errorText =
                                 options.DefaultErrorMessage || settings.DefaultErrorMessage;
 
                             if (check === "badFileName") {
@@ -255,13 +250,13 @@ try {
                 });
 
 
-                var checkFile = function(fileName) {
-                    var accepted = "invalid",
+                let checkFile = function(fileName) {
+                    let accepted = "invalid",
                         acceptedFileTypes =
                         this.acceptedFileTypes || settings.acceptedFileTypes,
                         regex;
 
-                    for (var i = 0; i < acceptedFileTypes.length; i++) {
+                    for (let i = 0; i < acceptedFileTypes.length; i++) {
                         regex = new RegExp("\\." + acceptedFileTypes[i] + "$", "i");
 
                         if (regex.test(fileName)) {
@@ -282,7 +277,6 @@ try {
 
         //init
         $(document).ready(function() {
-            console.log("hi");
             $(".fileUploader").uploader({
                 MessageAreaText: "No files selected. Please select a file."
             });
@@ -296,7 +290,7 @@ try {
                 url: url,
                 async: true,
                 success: function(response) {
-                    var ocorrencias = response;
+                    let ocorrencias = response;
                     $('#id_tipos_ocorrencia').empty();
                     $('#id_tipos_ocorrencia').append('<option selected disabled>Selecionar</option>');
                     $.each(ocorrencias, function(i, item) {
@@ -309,7 +303,7 @@ try {
 
         function adicionar_ocorrencia() {
             url = '../../dao/adicionar_ocorrencia.php';
-            var ocorrencia = window.prompt("Cadastre uma Nova Ocorrência:");
+            let ocorrencia = window.prompt("Cadastre uma Nova Ocorrência:");
             if (!ocorrencia) {
                 return
             }
@@ -536,7 +530,7 @@ try {
                                                 <div class="panel-footer">
                                                     <div class='row'>
                                                         <div class="col-md-9 col-md-offset-3">
-                                                            <input type="hidden" name="id_funcionario" value="<?= $id_funcionario; ?>">
+                                                            <input type="hidden" name="id_funcionario" value="<?= htmlspecialchars_decode($id_funcionario); ?>">
                                                             <input type="hidden" name="nomeClasse" value="Atendido_ocorrenciaControle">
                                                             <input type="hidden" name="metodo" value="incluir">
                                                             <input id="enviar" type="submit" class="btn btn-primary" value="Enviar">
