@@ -119,7 +119,7 @@ async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
     const selectStatus = document.getElementById("intStatus")
     const selectEnfermidades = document.getElementById("id_CID");
     const inputData = document.getElementById("data_diagnostico");
-    const inputIdFichaMedica = document.getElementById("id_fichamedica_enfermidade")
+    const inputIdFichaMedica = document.getElementById("id_fichamedica_enfermidade");
     const formEnfermidade = document.getElementById('form-enfermidade');
     
     if (!inputData.value || !selectEnfermidades.value || !selectStatus.value) {

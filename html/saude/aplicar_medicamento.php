@@ -73,7 +73,7 @@ $exibimedparaenfermeiro = json_encode($stmtExibirMedicamento->fetchAll(PDO::FETC
 $medicamentoenfermeiro = $pdo->query("SELECT * FROM saude_medicacao");
 $medstatus = $pdo->query("SELECT * FROM saude_medicacao_status");
 
-$stmtPessoa = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa ");
+$stmtPessoa = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa");
 
 $stmtPessoa->bindValue(':idPessoa', $idPessoa);
 
@@ -87,6 +87,13 @@ $stmtProntuarioPublico->bindValue('idFichaMedica', $id);
 $stmtProntuarioPublico->execute();
 
 $prontuariopublico = json_encode($stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC));
+
+$stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+$stmtAtendido->bindValue('idPessoa', $idPessoaPaciente, PDO::PARAM_INT);
+$stmtAtendido->execute();
+
+$dadosAtendido = $stmtAtendido->fetch(PDO::FETCH_ASSOC);
+$data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
 $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 ?>
@@ -470,22 +477,25 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
         return;
       }
 
-      const anoDigitado = parseInt(dataHoraInput.value.substring(0, 4));
-      const anoMinimo = 1929;
-
-      if (anoDigitado < anoMinimo) {
-        mostrarErro("Data inválida: O ano não pode ser anterior a 1929.");
-        return;
-      }
+      const dataDigitada = new Date(dataHoraInput.value);
+      const dataPaciente = new Date("<?= $data_nasc_atendido ?>T00:00:00");
 
       const agoraString = getDataLocalAtual();
-      const dataSelecionada = new Date(dataHoraInput.value);
-      const dataLimite = new Date(agoraString);
+      const dataLimite = new Date(agoraString); 
 
-      if (dataSelecionada > dataLimite) {
-        mostrarErro("A data e hora da aplicação não pode ser no futuro. Ajuste para o momento atual.");
-        return;
+      const formatador = new Intl.DateTimeFormat('pt-BR');
+
+      if (dataDigitada < dataPaciente) {
+          const nascFormatado = formatador.format(dataPaciente);
+          mostrarErro("Data inválida: Não pode ser anterior à data de nascimento (" + nascFormatado + ").");
+          return; 
       }
+
+      if (dataDigitada > dataLimite) {
+          mostrarErro("A data e hora da aplicação não pode ser no futuro, ajuste para o momento atual.");
+          return;
+      }
+
       let idPessoaFuncionario = <?= $idPessoa ?>;
       let arrayPromessas = [];
 
@@ -514,26 +524,25 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
         }
 
         listaCheckboxes.forEach(function(chk) {
-          var $chk = $(chk);
-          const dados = {
-            nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
-            metodo: encodeURIComponent("inserirAplicacao"),
-            id_medicacao: $chk.attr('data-idMedicacao'),
-            id_pessoa: $chk.attr('data-idPessoa'),
-            id_pessoa_funcionario: idPessoaFuncionario,
-            dataHora: dataHoraInput.value
-          };
-          const dadosJson = JSON.stringify(dados);
-
-          arrayPromessas.push(
-            fetch(`../../controle/control.php?`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: dadosJson
-            }).then(res => res.json())
-          );
+            var $chk = $(chk);
+            const dados = {
+                nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
+                metodo: encodeURIComponent("inserirAplicacao"),
+                id_medicacao: $chk.attr('data-idMedicacao'),
+                id_pessoa: $chk.attr('data-idPessoa'),
+                id_pessoa_funcionario: idPessoaFuncionario,
+                dataHora: dataHoraInput.value,
+                data_nascimento: dataPaciente
+            };
+            const dadosJson = JSON.stringify(dados);
+            
+            arrayPromessas.push(
+                fetch(`../../controle/control.php?`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: dadosJson
+                }).then(res => res.json())
+            );
         });
 
       } else {
@@ -541,12 +550,13 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
         const formData = new FormData(form);
 
         const dados = {
-          nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
-          metodo: encodeURIComponent("inserirAplicacao"),
-          id_medicacao: formData.get('id_medicacao'),
-          id_pessoa: formData.get('id_pessoa'),
-          id_pessoa_funcionario: idPessoaFuncionario,
-          dataHora: formData.get('dataHora')
+            nomeClasse: encodeURIComponent("MedicamentoPacienteControle"),
+            metodo: encodeURIComponent("inserirAplicacao"),
+            id_medicacao: formData.get('id_medicacao'),
+            id_pessoa: formData.get('id_pessoa'),
+            id_pessoa_funcionario: idPessoaFuncionario,
+            dataHora: formData.get('dataHora'),
+            data_nascimento: dataPaciente
         };
         const dadosJson = JSON.stringify(dados);
 
@@ -944,7 +954,6 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
                                 <button type="button" class="btn btn-default" data-dismiss="modal" onclick="limparInputDataTime()">Cancelar</button>
                               </div>
                             </form>
-
                           </div>
                         </div>
                       </div>

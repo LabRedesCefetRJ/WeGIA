@@ -19,7 +19,6 @@
     class MedicamentoPacienteControle
     {
         public function inserirAplicacao(){
-
             header('Content-Type: application/json');
             $dados = json_decode(file_get_contents('php://input'), true);
 
@@ -33,33 +32,39 @@
             $id_pessoa = $dados['id_pessoa'] ?? null;
             $dataHora = $dados['dataHora'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
-            $limite = new DateTime('1929-01-01');
-            $aplicacao = null;
-            $agora = $agora = new DateTime();
+            $data_nasc_paciente = $dados['data_nascimento'] ?? null; 
 
-            if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
+            if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario || !$data_nasc_paciente) {
                 http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Campos obrigatórios ausentes"]);
                 exit;
             }
             
             try {
-                
                 $aplicacao = new DateTime($dataHora);
+                $data_nascimento = new DateTime($data_nasc_paciente);
+                $agora = new DateTime();
 
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Formato de dataHora inválido."]);
                 exit;
             }
-            if($aplicacao < $limite){
+
+            $data_nascimento->setTime(0, 0, 0);
+
+            if($aplicacao < $data_nascimento){
                 http_response_code(400); 
-                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser anterior a 1929-01-01."]);
+                echo json_encode([
+                    "status" => "erro", 
+                    "mensagem" => "A data da aplicação não pode ser anterior ao nascimento (" . $data_nascimento->format('d/m/Y') . ")"
+                ]);
                 exit;
             }
+
             if($aplicacao > $agora){
                 http_response_code(400);
-                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser futura a data atual ".$agora]);
+                echo json_encode(["status" => "erro", "mensagem" => "A data da aplicação não pode ser futura."]);
                 exit;
             }
             
