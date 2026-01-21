@@ -34,7 +34,7 @@ $brand = $brandController->getBrand();
 
             <div id="cnpj" class="wrap-input100 validate-input bg1 hidden" data-validate="Digite um documento válido!">
                 <span class="label-input100"> Digite um documento CNPJ *</span>
-                <input class="input100" type="text" name="dcpf" id="dcnpj" maxlength="18" class="form-control input-md" ng-m placeholder="Ex: 22.222.222/2222-22" onkeypress="mascara('##.###.###/####-##',this,event)"><span id="avisa_cnpj"></span>
+                <input class="input100" type="text" name="dcpf" id="dcnpj" maxlength="18" class="form-control input-md" ng-m placeholder="Ex: 22.222.222/2222-22" oninput="mascaraCNPJ(this)" inputmode="numeric"><span id="avisa_cnpj"></span>
             </div>
             <div class="container-contact100-form-btn">
                 <button class="contact100-form-btn" id="consultar-btn">
@@ -59,8 +59,6 @@ $brand = $brandController->getBrand();
     <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
     <script src="../vendor/select2/select2.min.js"></script>
-    <script src="../public/js/mascaraCPF.js"></script>
-    <script src="../public/js/mascara.js"></script>
     <script src="../public/js/segundaVia.js"></script>
     <?php
     require_once './templates/footer.php';

@@ -130,7 +130,7 @@ $captchaGoogle = new CaptchaGoogleService();
     ?>
     <!-- Função para validar CPF -->
     <script src="../../../Functions/testaCPF.js"></script>
-    <script src="../public/js/mascaraCPF.js"></script>
+    <script src="../public/js/mascaras.js"></script>
 
     <script src="<?= $captchaGoogle->getApi() ?>" async defer></script>
 

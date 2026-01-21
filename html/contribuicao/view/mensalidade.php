@@ -65,7 +65,6 @@ $tipoContribuicao = 'MENSALIDADE';
     <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
     <script src="../vendor/select2/select2.min.js"></script>
-    <script src="../public/js/mascara.js"></script>
     <script src="../public/js/util.js"></script>
     <script src="../public/js/mensalidade.js"></script>
     <!--Busca cep-->
