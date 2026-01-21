@@ -32,9 +32,6 @@ function gerarQRCode() {
         body: formData
     })
         .then(response => {
-            if (!response.ok) {
-                throw new Error("Erro na requisição: " + response.status);
-            }
             return response.json(); // Converte a resposta para JSON
         })
         .then(resposta => {

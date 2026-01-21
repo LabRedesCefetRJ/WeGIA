@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
@@ -11,7 +12,7 @@ if (!isset($_SESSION['usuario'])) {
     header("Location: ../index.php");
     exit();
 } else {
-    session_regenerate_id(); 
+    session_regenerate_id();
 }
 
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
@@ -24,7 +25,7 @@ if (!$id_pessoa || $id_pessoa < 1) {
 
 
 require_once '../permissao/permissao.php';
-permissao($id_pessoa, 14, 3);  
+permissao($id_pessoa, 14, 3);
 
 if (!isset($_GET['id'])) {
     header("Location: processo_aceitacao.php");
@@ -81,16 +82,17 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
     <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css" />
 
     <script src="../../assets/vendor/modernizr/modernizr.js"></script>
-      <style>
-    .btn-gray-dark {
-        background-color: #6c757d !important;
-        border-color: #6c757d !important;
-        color: #fff !important;
-    }
-    .btn-gray-dark:hover {
-        background-color: #5a6268 !important;
-        border-color: #545b62 !important;
-    }
+    <style>
+        .btn-gray-dark {
+            background-color: #6c757d !important;
+            border-color: #6c757d !important;
+            color: #fff !important;
+        }
+
+        .btn-gray-dark:hover {
+            background-color: #5a6268 !important;
+            border-color: #545b62 !important;
+        }
     </style>
 
 

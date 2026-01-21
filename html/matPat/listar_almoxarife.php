@@ -1,5 +1,9 @@
 <?php
-session_start();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+
+if(session_status() === PHP_SESSION_NONE)
+	session_start();
+
 $config_path = '../../config.php';
 require_once $config_path;
 require_once ROOT . '/html/permissao/permissao.php';

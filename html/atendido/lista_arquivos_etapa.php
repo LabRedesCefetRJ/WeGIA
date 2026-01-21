@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -42,18 +43,18 @@ if (empty($arquivos)) {
         </tr>
     </thead>
     <tbody>
-    <?php foreach ($arquivos as $arq): ?>
-        <tr>
-            <td><?= htmlspecialchars($arq['arquivo_nome']) ?></td>
-            <td><?= date('d/m/Y H:i', strtotime($arq['data_upload'])) ?></td>
-            <td class="text-center">
-                <a class="btn btn-xs btn-success"
-                   href="download_arquivo_etapa.php?id=<?= (int)$arq['id'] ?>"
-                   title="Baixar arquivo">
-                    <i class="fa fa-download" aria-hidden="true"></i>
-                </a>
-            </td>
-        </tr>
-    <?php endforeach; ?>
+        <?php foreach ($arquivos as $arq): ?>
+            <tr>
+                <td><?= htmlspecialchars($arq['arquivo_nome']) ?></td>
+                <td><?= date('d/m/Y H:i', strtotime($arq['data_upload'])) ?></td>
+                <td class="text-center">
+                    <a class="btn btn-xs btn-success"
+                        href="download_arquivo_etapa.php?id=<?= (int)$arq['id'] ?>"
+                        title="Baixar arquivo">
+                        <i class="fa fa-download" aria-hidden="true"></i>
+                    </a>
+                </td>
+            </tr>
+        <?php endforeach; ?>
     </tbody>
 </table>

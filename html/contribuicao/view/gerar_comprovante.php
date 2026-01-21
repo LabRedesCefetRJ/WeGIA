@@ -9,8 +9,6 @@ require_once '../controller/BrandController.php';
 
 $brandController = new BrandController();
 $brand = $brandController->getBrand();
-
-
 ?>
 
 <div class="container-contact100">
@@ -24,30 +22,30 @@ $brand = $brandController->getBrand();
         </span>
         <h2 class="text-center">Gerar Comprovante de Doação</h2>
         <form id="form-recibo" autocomplete="off">
-            
+            <?= Csrf::inputField() ?>
             <div class="wrap-input100">
                 <span class="label-input100">CPF do Doador</span>
-                <input class="input100" type="text" name="cpf" id="cpf" 
+                <input class="input100" type="text" name="cpf" id="cpf"
                     placeholder="000.000.000-00" onkeyup="return Onlynumbers(event)" onkeypress="mascara('###.###.###-##',this,event)" maxlength="14" required>
             </div>
-            
+
             <div class="wrap-input100">
                 <span class="label-input100">Data Inicial</span>
                 <input class="input100" type="date" name="data_inicio" required>
             </div>
-            
+
             <div class="wrap-input100">
                 <span class="label-input100">Data Final</span>
                 <input class="input100" type="date" name="data_fim" required>
             </div>
-            
+
             <div class="container-contact100-form-btn">
                 <button type="submit" class="contact100-form-btn">
                     Gerar Comprovante
                 </button>
             </div>
         </form>
-        
+
         <div id="resultado"></div>
     </div>
 </div>

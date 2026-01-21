@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE)
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'MeioPagamento.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR .  'MeioPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'SistemaLog.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -23,6 +24,9 @@ class MeioPagamentoController
         $descricao = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $gatewayId = filter_input(INPUT_POST, 'meio-pagamento-plataforma', FILTER_SANITIZE_NUMBER_INT);
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
             $this->pdo->beginTransaction();
             $meioPagamento = new MeioPagamento($descricao, $gatewayId);
             $meioPagamento->cadastrar();
@@ -72,7 +76,7 @@ class MeioPagamentoController
             $this->pdo->commit();
 
             return $meiosPagamento;
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
@@ -105,15 +109,18 @@ class MeioPagamentoController
      */
     public function excluirPorId()
     {
-        $meioPagamentoId = filter_input(INPUT_POST, 'meio-pagamento-id', FILTER_SANITIZE_NUMBER_INT); //trim($_POST['meio-pagamento-id']);
-
-        if (!$meioPagamentoId || empty($meioPagamentoId) || $meioPagamentoId < 1) {
-            //parar operação
-            header("Location: ../view/meio_pagamento.php?msg=excluir-falha#mensagem-tabela");
-            exit();
-        }
+        $meioPagamentoId = filter_input(INPUT_POST, 'meio-pagamento-id', FILTER_SANITIZE_NUMBER_INT);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
+            if (!$meioPagamentoId || empty($meioPagamentoId) || $meioPagamentoId < 1) {
+                //parar operação
+                header("Location: ../view/meio_pagamento.php?msg=excluir-falha#mensagem-tabela");
+                exit();
+            }
+
             $this->pdo->beginTransaction();
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamentoDao->excluirPorId($meioPagamentoId);
@@ -150,6 +157,9 @@ class MeioPagamentoController
         $meioPagamentoId = filter_input(INPUT_POST, 'id');
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
             $this->pdo->beginTransaction();
             $meioPagamento = new MeioPagamento($descricao, $gatewayId);
             $meioPagamento->setId($meioPagamentoId);
@@ -185,6 +195,9 @@ class MeioPagamentoController
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+            
             if (!$meioPagamentoId || empty($meioPagamentoId)) {
                 throw new InvalidArgumentException('O id deve ser maior ou igual a 1.', 400);
             }

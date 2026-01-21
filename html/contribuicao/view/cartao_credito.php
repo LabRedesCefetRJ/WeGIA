@@ -24,6 +24,7 @@ $tipoContribuicao = 'Cartão de Crédito';
 
         <form id="formulario" autocomplete="off">
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
+            <?= Csrf::inputField() ?>
 
             <div id="pag1" class="wrap-input100">
                 <!--Adiciona a página de valor de contribuição-->

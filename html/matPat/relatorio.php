@@ -1,68 +1,22 @@
 <?php
-session_start();
-
-// Verificação de sessão segura
-
-// Carregando configuração com segurança
-$config_path = "config.php";
-while (!file_exists($config_path)) {
-	$config_path = "../" . $config_path;
-}
-require_once($config_path);
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
-	exit(); // Sempre utilize exit() após redirecionar para evitar execução continuada
+	exit();
+} else {
+	session_regenerate_id();
 }
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($_SESSION['id_pessoa'], 25, 5);
 
 // Carregando o arquivo Conexao.php após o carregamento das configuração
 require_once ROOT . "/dao/Conexao.php";
-
-// Estabelecendo conexão segura
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-if (!$conexao) {
-	die("Erro ao conectar ao banco de dados: " . mysqli_connect_error());
-}
-
-// Prevenindo injeção de SQL com prepared statements
-$id_pessoa = $_SESSION['id_pessoa'];
-$stmt = $conexao->prepare("SELECT * FROM funcionario WHERE id_pessoa = ?");
-$stmt->bind_param("i", $id_pessoa); // O 'i' indica que $id_pessoa é um inteiro
-$stmt->execute();
-$resultado = $stmt->get_result();
-
-if ($resultado && $resultado->num_rows > 0) {
-	$funcionario = $resultado->fetch_assoc();
-	$id_cargo = $funcionario['id_cargo'];
-
-	// Prevenindo injeção de SQL para a verificação de permissões
-	$stmt_permissao = $conexao->prepare("SELECT * FROM permissao WHERE id_cargo = ? AND id_recurso = 25");
-	$stmt_permissao->bind_param("i", $id_cargo);
-	$stmt_permissao->execute();
-	$resultado_permissao = $stmt_permissao->get_result();
-
-	if ($resultado_permissao && $resultado_permissao->num_rows > 0) {
-		$permissao = $resultado_permissao->fetch_assoc();
-
-		// Verificando permissões
-		if ($permissao['id_acao'] < 5) {
-			// Prevenindo XSS com htmlentities
-			$msg = htmlentities("Você não tem as permissões necessárias para essa página.");
-			header("Location: " . WWW ."html/home.php?msg_c=" . urlencode($msg));
-			exit();
-		}
-	} else {
-		// Caso não tenha permissão
-		$msg = htmlentities("Você não tem as permissões necessárias para essa página.");
-		header("Location: " . WWW ."html/home.php?msg_c=" . urlencode($msg));
-		exit();
-	}
-} else {
-	// Caso o funcionário não seja encontrado
-	$msg = htmlentities("Você não tem as permissões necessárias para essa página.");
-	header("Location: " . WWW ."html/home.php?msg_c=" . urlencode($msg));
-	exit();
-}
 
 // Incluindo arquivo de personalização de display
 require_once ROOT . "/html/personalizacao_display.php";
@@ -193,7 +147,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							</div>
 
 							<h4 class="mb-xlg" id="param-relat">Parâmetros do relatório</h4>
-							
+
 							<div class="form-group" id="per" style="text-align: center;">
 								<button type="button" id="btn-7dias" class="btn btn-primary" style="width: fit-content;" onclick="botao7Dias()">Últimos 7 dias</button>
 								<button type="button" id="btn-30dias" class="btn btn-primary" style="width: fit-content;" onclick="botao30Dias()">Últimos 30 dias</button>
@@ -337,13 +291,13 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 							<div class="form-group">
 								<div class="center-content">
-									<input type="submit" value="Gerar" id="gerar" class="btn btn-primary" style="width: fit-content;">									
+									<input type="submit" value="Gerar" id="gerar" class="btn btn-primary" style="width: fit-content;">
 								</div>
 							</div>
 
 							<div class="form-group">
 								<div class="center-content">
-									<input type="submit" value="Gerar" id="gerar3" class="btn btn-primary" style="width: fit-content;">									
+									<input type="submit" value="Gerar" id="gerar3" class="btn btn-primary" style="width: fit-content;">
 								</div>
 							</div>
 
@@ -402,7 +356,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 							<div class="form-group">
 								<div class="center-content">
-									<input type="submit" value="Gerar" id="gerar2" class="btn btn-primary" style="width: fit-content;">									
+									<input type="submit" value="Gerar" id="gerar2" class="btn btn-primary" style="width: fit-content;">
 								</div>
 							</div>
 
@@ -432,19 +386,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
 
-		dataFim.forEach(function(dataFim){
+		dataFim.forEach(function(dataFim) {
 			dataFim.value = dataAtualFormatada;
 		})
 
 		// Calcula a data de 7 dias atrás
-		dataAtual.setDate(dataAtual.getDate() - 7); 
+		dataAtual.setDate(dataAtual.getDate() - 7);
 		ano = dataAtual.getFullYear();
 		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
 		dia = String(dataAtual.getDate()).padStart(2, '0');
 
 		const data7DiasAtras = `${ano}-${mes}-${dia}`;
 
-		dataInicio.forEach(function(dataInicio){
+		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = data7DiasAtras;
 		})
 	}
@@ -462,19 +416,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
 
-		dataFim.forEach(function(dataFim){
+		dataFim.forEach(function(dataFim) {
 			dataFim.value = dataAtualFormatada;
 		});
 
 		// Calcula a data de 30 dias atrás
-		dataAtual.setDate(dataAtual.getDate() - 30); 
+		dataAtual.setDate(dataAtual.getDate() - 30);
 		ano = dataAtual.getFullYear();
 		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
 		dia = String(dataAtual.getDate()).padStart(2, '0');
 
 		const data30DiasAtras = `${ano}-${mes}-${dia}`;
 
-		dataInicio.forEach(function(dataInicio){
+		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = data30DiasAtras;
 		});
 	}
@@ -492,19 +446,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
 
-		dataFim.forEach(function(dataFim){
+		dataFim.forEach(function(dataFim) {
 			dataFim.value = dataAtualFormatada;
 		});
 
 		// Calcula a data de 180 dias atrás
-		dataAtual.setDate(dataAtual.getDate() - 180); 
+		dataAtual.setDate(dataAtual.getDate() - 180);
 		ano = dataAtual.getFullYear();
 		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
 		dia = String(dataAtual.getDate()).padStart(2, '0');
 
 		const data180DiasAtras = `${ano}-${mes}-${dia}`;
 
-		dataInicio.forEach(function(dataInicio){
+		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = data180DiasAtras;
 		})
 	}
@@ -527,7 +481,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		});
 
 		// Calcula a data de 365 dias atrás
-		dataAtual.setDate(dataAtual.getDate() - 365); 
+		dataAtual.setDate(dataAtual.getDate() - 365);
 		ano = dataAtual.getFullYear();
 		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
 		dia = String(dataAtual.getDate()).padStart(2, '0');
@@ -548,7 +502,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		var dataAtual = new Date();
 		var diaSemana = dataAtual.getDay();
 
-		var diasParaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana; 
+		var diasParaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
 		dataAtual.setDate(dataAtual.getDate() + diasParaSegunda);
 
 		// Formata a data de início (segunda-feira)
@@ -557,11 +511,11 @@ require_once ROOT . "/html/personalizacao_display.php";
 		var dia = String(dataAtual.getDate()).padStart(2, '0');
 		const dataDaSemana = `${ano}-${mes}-${dia}`;
 
-		dataInicio.forEach(function(dataInicio){
+		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = dataDaSemana;
 		});
 
-		dataAtual.setDate(dataAtual.getDate() + 6); 
+		dataAtual.setDate(dataAtual.getDate() + 6);
 
 		// Formata a data de fim (domingo)
 		ano = dataAtual.getFullYear();
@@ -569,7 +523,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		dia = String(dataAtual.getDate()).padStart(2, '0');
 		const dataFimSemana = `${ano}-${mes}-${dia}`;
 
-		dataFim.forEach(function(dataFim){
+		dataFim.forEach(function(dataFim) {
 			dataFim.value = dataFimSemana;
 		});
 	}
@@ -582,11 +536,11 @@ require_once ROOT . "/html/personalizacao_display.php";
 		var dataAtual = new Date();
 
 		var ano = dataAtual.getFullYear();
-		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0'); 
-		var dia = '01'; 
+		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		var dia = '01';
 		const inicioMes = `${ano}-${mes}-${dia}`;
 
-		dataInicio.forEach(function(dataInicio){
+		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = inicioMes;
 		});
 
@@ -596,7 +550,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		var fimMesDia = String(proximoMes.getDate()).padStart(2, '0');
 		const fimMes = `${fimMesAno}-${fimMesMes}-${fimMesDia}`;
 
-		dataFim.forEach(function(dataFim){
+		dataFim.forEach(function(dataFim) {
 			dataFim.value = fimMes;
 		})
 	}
@@ -608,32 +562,32 @@ require_once ROOT . "/html/personalizacao_display.php";
 		var dataAtual = new Date();
 
 		var ano = dataAtual.getFullYear();
-		var inicioAno = `${ano}-01-01`; 
+		var inicioAno = `${ano}-01-01`;
 
-		dataInicio.forEach(function(dataInicio){
+		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = inicioAno;
 		});
 
-		var fimAno = `${ano}-12-31`; 
+		var fimAno = `${ano}-12-31`;
 
-		dataFim.forEach(function(dataFim){
+		dataFim.forEach(function(dataFim) {
 			dataFim.value = fimAno;
 		});
 	}
 
 	const selectAlmoxarifado = document.getElementById("almoxarifadoSelect");
-	selectAlmoxarifado.addEventListener("click", function(){
+	selectAlmoxarifado.addEventListener("click", function() {
 		removerPrimeiraOpcaoAlmoxarifado();
 	})
 
 	const selectProduto = document.getElementById("produtoSelect");
-	selectProduto.addEventListener("click", function(){
+	selectProduto.addEventListener("click", function() {
 		removerPrimeiraOpcaoProduto();
 	})
 
 	function removerPrimeiraOpcaoProduto() {
 		const select = document.getElementById('produtoSelect');
-		
+
 		if (select.options[0].value === "") {
 			select.remove(0);
 		}
@@ -641,7 +595,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	function removerPrimeiraOpcaoAlmoxarifado() {
 		const select = document.getElementById('almoxarifadoSelect');
-		
+
 		if (select.options[0].value === "") {
 			select.remove(0);
 		}
@@ -656,11 +610,11 @@ require_once ROOT . "/html/personalizacao_display.php";
 			xhr.open('GET', 'get_produtos.php?id_almoxarifado=' + idAlmoxarifado, true);
 			xhr.onload = function() {
 				if (xhr.status === 200) {
-					console.log(xhr.responseText);  
+					console.log(xhr.responseText);
 					var produtos = JSON.parse(xhr.responseText);
 					var selectProduto = document.getElementById('produtoSelect');
 					selectProduto.innerHTML = '<option value="">Selecione um Produto</option>';
-					
+
 					produtos.forEach(function(produto) {
 						var option = document.createElement('option');
 						option.value = produto.id_produto;
@@ -676,7 +630,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 			document.getElementById('produtoSelect').innerHTML = '<option value="">Selecione um Produto</option>';
 		}
 	});
-
 </script>
 <script src="<?= WWW ?>html/relatorios/relatorio.js" defer></script>
+
 </html>

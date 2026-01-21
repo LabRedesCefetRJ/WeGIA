@@ -7,6 +7,7 @@ require_once  ROOT . "/dao/Conexao.php";
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: ". WWW ."html/index.php");
+    exit();
 }
 
 if (!isset($_SESSION['id_pessoa'])) {

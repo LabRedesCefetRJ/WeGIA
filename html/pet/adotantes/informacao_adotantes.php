@@ -192,18 +192,18 @@ try {
 										!empty($linha['logradouro']) && !empty($linha['numero_endereco']) ) {
 					
 										echo '<tr>';
-										echo '<td>' . $linha['nome'] . '</td>';
-										echo '<td>' . $linha['sobrenome'] . '</td>';
-										echo '<td>' . $linha['telefone'] . '</td>';
+										echo '<td>' . htmlspecialchars($linha['nome']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['sobrenome']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['telefone']) . '</td>';
 										echo '<td>' . date('d/m/Y', strtotime($linha['data_nascimento'])) . '</td>'; // Formatar a data
-										echo '<td>' . $linha['cpf'] . '</td>';
-										echo '<td>' . $linha['cep'] . '</td>';
-										echo '<td>' . $linha['estado'] . '</td>';
-										echo '<td>' . $linha['cidade'] . '</td>';
-										echo '<td>' . $linha['bairro'] . '</td>';
-										echo '<td>' . $linha['logradouro'] . '</td>';
-										echo '<td>' . $linha['numero_endereco'] . '</td>';
-										echo '<td>' . $linha['complemento'] . '</td>';
+										echo '<td>' . htmlspecialchars($linha['cpf']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['cep']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['estado']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['cidade']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['bairro']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['logradouro']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['numero_endereco']) . '</td>';
+										echo '<td>' . htmlspecialchars($linha['complemento']) . '</td>';
 										echo '</tr>';
 									}
 								}

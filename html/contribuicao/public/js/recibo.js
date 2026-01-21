@@ -24,9 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: formData
             })
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
                     return response.json();
                 })
                 .then(data => {

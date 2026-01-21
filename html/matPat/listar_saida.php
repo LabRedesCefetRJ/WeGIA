@@ -1,85 +1,39 @@
 <?php
-session_start();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-// Carregando configuração com segurança
-$config_path = "config.php";
-while (!file_exists($config_path)) {
-	$config_path = "../" . $config_path;
-}
-require_once($config_path);
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
 if (!isset($_SESSION['usuario'])) {
-	header("Location: ". WWW ."html/index.php");
+	header("Location: " . WWW . "html/index.php");
 	exit();
-}
-
-// Estabelecendo conexão segura
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-if (!$conexao) {
-	die("Erro ao conectar ao banco de dados: " . mysqli_connect_error());
-}
-
-// Prevenindo injeção de SQL utilizando prepared statements
-$id_pessoa = $_SESSION['id_pessoa'];
-$stmt = $conexao->prepare("SELECT * FROM funcionario WHERE id_pessoa = ?");
-$stmt->bind_param("i", $id_pessoa);
-$stmt->execute();
-$resultado = $stmt->get_result();
-
-if ($resultado && $resultado->num_rows > 0) {
-	$id_cargo = $resultado->fetch_assoc()['id_cargo'];
-
-	// Prevenindo injeção de SQL em permissões
-	$stmt_permissao = $conexao->prepare("SELECT * FROM permissao WHERE id_cargo = ? AND id_recurso = 24");
-	$stmt_permissao->bind_param("i", $id_cargo);
-	$stmt_permissao->execute();
-	$resultado_permissao = $stmt_permissao->get_result();
-
-	if ($resultado_permissao && $resultado_permissao->num_rows > 0) {
-		$permissao = $resultado_permissao->fetch_assoc();
-
-		// Verificando permissões
-		if ($permissao['id_acao'] < 5) {
-			// Prevenindo XSS com htmlentities
-			$msg = htmlentities("Você não tem as permissões necessárias para essa página.");
-			header("Location: " . WWW ."html/home.php?msg_c=" . urlencode($msg));
-			exit();
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		// Caso não tenha permissão
-		$msg = htmlentities("Você não tem as permissões necessárias para essa página.");
-		header("Location: " . WWW ."html/home.php?msg_c=" . urlencode($msg));
-		exit();
-	}
 } else {
-	// Caso o funcionário não seja encontrado
-	$msg = htmlentities("Você não tem as permissões necessárias para essa página.");
-	header("Location: " . WWW ."html/home.php?msg_c=" . urlencode($msg));
-	exit();
+	session_regenerate_id();
 }
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($_SESSION['id_pessoa'], 24, 5);
 
 // Incluindo arquivo de personalização de display
 require_once ROOT . "/html/personalizacao_display.php";
+
+include_once ROOT . '/dao/Conexao.php';
+include_once ROOT . '/dao/SaidaDAO.php';
+
+// Validando sessão de saída
+if (!isset($_SESSION['saida'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=SaidaControle&nextPage=' . WWW . 'html/matPat/listar_saida.php');
+} else {
+	$saida = $_SESSION['saida'];
+	unset($_SESSION['saida']);
+}
 ?>
 <!doctype html>
 <html class="fixed">
 
 <head>
-	<?php
-	include_once ROOT . '/dao/Conexao.php';
-	include_once ROOT . '/dao/SaidaDAO.php';
-
-	// Validando sessão de saída
-	if (!isset($_SESSION['saida'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=SaidaControle&nextPage='. WWW . 'html/matPat/listar_saida.php');
-		exit();
-	}
-	if (isset($_SESSION['saida'])) {
-		$saida = $_SESSION['saida'];
-		unset($_SESSION['saida']);
-	}
-	?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
@@ -167,6 +121,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		});
 	</script>
 </head>
+
 <body>
 	<section class="body">
 		<div id="header"></div>
@@ -202,32 +157,32 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<a href="#" class="fa fa-caret-down"></a>
 						</div>
 						<h2 class="panel-title">Saídas</h2>
-						
+
 						<span style="color:red">Para mais informações, clique em uma saída(*)</span>
 					</header>
 					<!-- start: page -->
-					
-						<div class="panel-body">
-							<table class="table table-bordered table-striped mb-none" id="datatable-default">
-								<thead>
-									<tr>
-										<th>Almoxarifado</th>
-										<th>Destino</th>
-										<th>Tipo</th>
-										<th>Responsável</th>
-										<th>Valor Total</th>
-										<th>Data</th>
-										<th>Hora</th>
-									</tr>
-								</thead>
-								<tbody id="tabela">	
-								</tbody>
-							</table>
-						</div><br>
-				
-<!-- verificar -->
+
+					<div class="panel-body">
+						<table class="table table-bordered table-striped mb-none" id="datatable-default">
+							<thead>
+								<tr>
+									<th>Almoxarifado</th>
+									<th>Destino</th>
+									<th>Tipo</th>
+									<th>Responsável</th>
+									<th>Valor Total</th>
+									<th>Data</th>
+									<th>Hora</th>
+								</tr>
+							</thead>
+							<tbody id="tabela">
+							</tbody>
+						</table>
+					</div><br>
+
+					<!-- verificar -->
 				</section>
-<!-- verificar -->
+				<!-- verificar -->
 			</section>
 		</div>
 	</section>

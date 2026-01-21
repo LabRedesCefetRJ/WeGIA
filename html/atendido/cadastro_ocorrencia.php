@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -21,25 +22,32 @@ if (!$id_pessoa || $id_pessoa < 1) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 12, 3);
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . '/classes/Util.php';
 
-$pdo = Conexao::connect();
-$nome = $pdo->query("SELECT a.idatendido, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) ORDER BY p.nome ASC, p.sobrenome ASC")->fetchAll(PDO::FETCH_ASSOC);
-$tipo = $pdo->query("SELECT * FROM atendido_ocorrencia_tipos")->fetchAll(PDO::FETCH_ASSOC);
-$recupera_id_funcionario = $pdo->query("SELECT id_funcionario FROM funcionario WHERE id_pessoa=" . $id_pessoa . ";")->fetchAll(PDO::FETCH_ASSOC);
-$id_funcionario = $recupera_id_funcionario[0]['id_funcionario'];
+try {
+    $pdo = Conexao::connect();
+    $nome = $pdo->query("SELECT a.idatendido, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) ORDER BY p.nome ASC, p.sobrenome ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $tipo = $pdo->query("SELECT * FROM atendido_ocorrencia_tipos")->fetchAll(PDO::FETCH_ASSOC);
 
-$atendido_id = filter_input(INPUT_GET, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
+    $stmt = $pdo->prepare("SELECT id_funcionario FROM funcionario WHERE id_pessoa=:idPessoa");
+    $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+    $stmt->execute();
 
-$ocorrencia_msg = filter_input(INPUT_GET, 'ocorrencia_msg', FILTER_SANITIZE_STRING);
+    $id_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_funcionario'];
 
-if ($atendido_id !== null && $atendido_id !== false) {
-    if ($atendido_id < 1) {
-        echo "O id do paciente informado não é válido";
-        exit();
-    }
+    $atendido_id = filter_input(INPUT_GET, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
+
+    $ocorrencia_msg = filter_input(INPUT_GET, 'ocorrencia_msg', FILTER_SANITIZE_SPECIAL_CHARS);
+
+    if ($atendido_id !== null && $atendido_id !== false && $atendido_id < 1)
+        throw new InvalidArgumentException('O id do paciente não é válido.', 412);
+} catch (Exception $e) {
+    Util::tratarException($e);
+    exit();
 }
 ?>
 
@@ -128,9 +136,6 @@ if ($atendido_id !== null && $atendido_id !== false) {
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
 
-            //var id_memorando = 1;
-            //$("#id_memorando").val(id_memorando);
-
             CKEDITOR.replace('despacho');
         });
     </script>
@@ -170,20 +175,17 @@ if ($atendido_id !== null && $atendido_id !== false) {
                 );
 
                 var uploadId = 1;
-                //update the messaging
                 //atualiza a mensagem
                 $(".file-uploader__message-area p").text(
                     options.MessageAreaText || settings.MessageAreaText
                 );
 
-                //create and add the file list and the hidden input list
                 // cria e adiciona a lista de arquivos e a lista de entrada oculta
                 var fileList = $('<ul class="file-list"></ul>');
                 var hiddenInputs = $('<div class="hidden-inputs hidden"></div>');
                 $(".file-uploader__message-area").after(fileList);
                 $(".file-list").after(hiddenInputs);
 
-                //when choosing a file, add the name to the list and copy the file input into the hidden inputs
                 //ao escolher um arquivo, adicione o nome à lista e copie a entrada do arquivo para as entradas ocultas
                 $(".file-chooser__input").on("change", function() {
                     var files = document.querySelector(".file-chooser__input").files;
@@ -192,10 +194,8 @@ if ($atendido_id !== null && $atendido_id !== false) {
                         console.log(files[i]);
 
                         var file = files[i];
-                        // console.log(file);
                         var fileName = file.name.match(/([^\\\/]+)$/)[0];
 
-                        //clear any error condition
                         //limpe qualquer condição de erro
                         $(".file-chooser").removeClass("error");
                         $(".error-message").remove();
@@ -205,16 +205,10 @@ if ($atendido_id !== null && $atendido_id !== false) {
 
                         var check = checkFile(fileName);
                         if (check === "valid") {
-                            // move the 'real' one to hidden list
+
                             //mova o 'real' para a lista oculta
-
-
                             $(".hidden-inputs").append($(".file-chooser__input"));
 
-                            //importante
-
-
-                            //insert a clone after the hiddens (copy the event handlers too)
                             //insira um clone após os hiddens (copie os manipuladores de eventos também)
 
                             $(".file-chooser").append(
@@ -223,7 +217,6 @@ if ($atendido_id !== null && $atendido_id !== false) {
                                 })
                             );
 
-                            //add the name and a remove button to the file-list
                             //adicione o nome e um botão de remoção à lista de arquivos
                             $(".file-list").append(
                                 '<li style="list-style-type: none;"><span class="file-list__name">' +
@@ -232,48 +225,10 @@ if ($atendido_id !== null && $atendido_id !== false) {
                             );
                             $(".file-list").find("li:last").show(800);
 
-                            //removal button handler
-                            //manipulador de botão de remoção
-                            // $(".removal-button").on("click", function (e) {
-                            //     e.preventDefault();
-
-                            //     //remove the corresponding hidden input
-                            //     //remove a entrada oculta correspondente
-                            //     $(
-                            //     '.hidden-inputs input[data-uploadid="' +
-                            //         $(this).data("uploadid") +
-                            //         '"]'
-                            //     ).remove();
-
-                            //     //remove the name from file-list that corresponds to the button clicked
-                            //     //remova o nome da lista de arquivos que corresponde ao botão clicado
-                            //     $(this)
-                            //     .parent()
-                            //     .hide("puff")
-                            //     .delay(10)
-                            //     .queue(function () {
-                            //         $(this).remove();
-                            //     });
-
-                            //     //if the list is now empty, change the text back
-                            //     //se a lista estiver vazia, mude o texto de volta
-                            //     if ($(".file-list li").length === 0) {
-                            //     $(".file-uploader__message-area").text(
-                            //         options.MessageAreaText || settings.MessageAreaText
-                            //     );
-                            //     }
-
-
-                            // });
-
-                            //so the event handler works on the new "real" one
-                            //então o manipulador de eventos funciona no novo "real"
                             $(".hidden-inputs .file-chooser__input")
                                 .removeClass("file-chooser__input")
                                 .attr("data-uploadId", uploadId);
 
-
-                            //update the message area
                             //atualize a área de mensagem
                             $(".file-uploader__message-area").text(
                                 options.MessageAreaTextWithFiles ||
@@ -282,7 +237,6 @@ if ($atendido_id !== null && $atendido_id !== false) {
                             uploadId++;
 
                         } else {
-                            //indicate that the file is not ok
                             //indica que o arquivo não está ok
                             $(".file-chooser").addClass("error");
                             var errorText =
@@ -298,9 +252,6 @@ if ($atendido_id !== null && $atendido_id !== false) {
                             );
                         }
                     }
-
-                    // $(".file-chooser__input").val("");
-
                 });
 
 
@@ -475,8 +426,6 @@ if ($atendido_id !== null && $atendido_id !== false) {
                             </ul>
                             <div class="tab-content">
                                 <div id="overview" class="tab-pane active">
-                                    <!-- <form class="form-horizontal" method="GET" action="../../controle/control.php"> -->
-
 
                                     <section class="panel">
                                         <header class="panel-heading">
@@ -527,14 +476,14 @@ if ($atendido_id !== null && $atendido_id !== false) {
                                                                 }
                                                             }
                                                         ?>
-                                                            <input type="hidden" name="atendido_idatendido" value="<?= $atendido_id ?>">
+                                                            <input type="hidden" name="atendido_idatendido" value="<?= htmlspecialchars($atendido_id) ?>">
                                                             <input type="text" class="form-control input-lg mb-md" value="<?= htmlspecialchars($atendido_nome) ?>" disabled>
                                                         <?php else : ?>
                                                             <select class="form-control input-lg mb-md" name="atendido_idatendido" id="atendido_idatendido" required>
                                                                 <option selected disabled>Selecionar</option>
                                                                 <?php
                                                                 foreach ($nome as $key => $value) {
-                                                                    echo "<option value=\"" . $nome[$key]['idatendido'] . "\">" . $nome[$key]['nome'] . " " . $nome[$key]['sobrenome'] . "</option>";
+                                                                    echo "<option value=\"" . htmlspecialchars($nome[$key]['idatendido']) . "\">" . htmlspecialchars($nome[$key]['nome']) . " " . htmlspecialchars($nome[$key]['sobrenome']) . "</option>";
                                                                 }
                                                                 ?>
                                                             </select>
@@ -549,7 +498,7 @@ if ($atendido_id !== null && $atendido_id !== false) {
                                                             <option selected disabled>Selecionar</option>
                                                             <?php
                                                             foreach ($tipo as $key => $value) {
-                                                                echo "<option value=" . $tipo[$key]['idatendido_ocorrencia_tipos'] . ">" . $tipo[$key]['descricao'] .  "</option>";
+                                                                echo "<option value=" . htmlspecialchars($tipo[$key]['idatendido_ocorrencia_tipos']) . ">" . htmlspecialchars($tipo[$key]['descricao']) .  "</option>";
                                                             }
                                                             ?>
                                                         </select>
@@ -564,10 +513,6 @@ if ($atendido_id !== null && $atendido_id !== false) {
                                                 </div>
                                                 <div class="form-group">
                                                     <label for=arquivo id=etiqueta_arquivo class='col-md-3 control-label'>Arquivo </label>
-                                                    <!-- <div class="file-uploader__message-area"></div>
-                                <div class='col-md-6' class="file-chooser">
-                                    <input type="file" multiple name="anexo[]" class="file-chooser__input" id="anexo">
-                                </div> -->
 
                                                     <div class="file-chooser">
                                                         <input type="file" multiple name='arquivos[]' class="file-chooser__input">
@@ -583,28 +528,10 @@ if ($atendido_id !== null && $atendido_id !== false) {
 
                                                         <label for="texto" id="descricao" style="padding-left: 15px;">Descrição ocorrência<sup class="obrig">*</sup></label>
                                                         <textarea cols='30' rows='5' id='despacho' name='descricao' class='form-control' onkeypress="return Onlychars(event)" required></textarea>
-                                                        <!-- eh o id despacho que atrapalha a descricao-->
-                                                        <!-- pegar o lugar que tem todos esses campos obrigatorios -->
-                                                        <!-- porque o only chars não funciona com o CKEDITOR.replace -->
-
-                                                        <!-- <input type="text" class="form-control" name="nome" id="nome" id="profileFirstName" onkeypress="return Onlychars(event)"required> -->
 
                                                     </div>
                                                 </div>
 
-
-                                                <!--<div class='col-md-9 col-md-offset-8'>
-                                    <input type='hidden' value='DespachoControle' name='nomeClasse' class='mb-xs mt-xs mr-xs btn btn-default'>
-                                </div>
-                                <div class='col-md-9 col-md-offset-8'>
-                                    <input type='hidden' value='incluir' name='metodo' class='mb-xs mt-xs mr-xs btn btn-default'>
-                                </div>
-                                <div class='col-md-9 col-md-offset-8'>
-                                    <input type='hidden' name='id_memorando' id='id_memorando' class='mb-xs mt-xs mr-xs btn btn-default'>
-                                </div>
-                                <div class='col-md-9 col-md-offset-8'>
-                                    <input type='hidden' name='modulo' value="memorando" class='mb-xs mt-xs mr-xs btn btn-default'>
-                                </div>-->
                                                 <br>
                                                 <div class="panel-footer">
                                                     <div class='row'>

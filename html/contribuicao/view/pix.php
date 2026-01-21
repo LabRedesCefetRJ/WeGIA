@@ -24,6 +24,7 @@ $tipoContribuicao = 'QRCode';
         <p id="instrucao" class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
 
         <form id="formulario" autocomplete="off">
+            <?= Csrf::inputField() ?>
 
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
 
@@ -50,7 +51,7 @@ $tipoContribuicao = 'QRCode';
             </div>
 
             <div id="pag5" class="wrap-input100 hidden">
-                <!--Adiciona a página para agradecimento e confirmação da geração do boleto-->
+                <!--Adiciona a página para agradecimento e confirmação da geração do pix-->
                 <?php include('./components/contribuicao_confirmacao.php'); ?>
             </div>
 

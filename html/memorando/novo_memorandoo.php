@@ -1,21 +1,18 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
-//Inicia a sessão e redireciona o usuário para a página inical
-session_start();
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
 if (!isset($_SESSION['usuario'])) {
-    header("Location: " . WWW . "html/index.php");
+    header("Location: ../index.php");
+    exit;
 }
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 3, 1);
 
 require_once ROOT . "/controle/memorando/MemorandoControle.php";
 require_once ROOT . "/controle/FuncionarioControle.php";
@@ -28,37 +25,6 @@ $memorando->listarTodos();
 
 $memorando = $_POST['dados'];
 
-//Faz a conexão com o banco de dados
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-
-//Lista todos os funcionarios
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-    $id_cargo = mysqli_fetch_array($resultado);
-    if (!is_null($id_cargo)) {
-        $id_cargo = $id_cargo['id_cargo'];
-    }
-
-    //Lista as permissões
-    $resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=3");
-    if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-        $permissao = mysqli_fetch_array($resultado);
-        if ($permissao['id_acao'] == 1) {
-            $msg = "Você não tem as permissões necessárias para essa página.";
-            header("Location: " . WWW . "html/home.php?msg_c=$msg");
-        }
-        $permissao = $permissao['id_acao'];
-    } else {
-        $permissao = 1;
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: " . WWW . "html/home.php?msg_c=$msg");
-    }
-} else {
-    $permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: " . WWW . "html/home.php?msg_c=$msg");
-}
 require_once ROOT . "/controle/FuncionarioControle.php";
 require_once ROOT . "/controle/memorando/MemorandoControle.php";
 
@@ -70,6 +36,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 <!DOCTYPE html>
 
 <html class="fixed">
+
 <head>
     <!-- Basic -->
     <meta charset="UTF-8">

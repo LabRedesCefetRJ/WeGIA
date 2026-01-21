@@ -6,6 +6,7 @@ require_once $config_path;
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: ". WWW ."html/index.php");
+    exit();
 }
 
 require_once ROOT . "/dao/Conexao.php";

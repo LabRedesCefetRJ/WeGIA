@@ -35,6 +35,7 @@ try {
           </div>
           <div class="box-body">
             <form id="frm_novo_socio" action="./cadastro_socio.php" method="POST">
+              <?= Csrf::inputField() ?>
               <div class="row">
                 <div class="form-group mb-2 col-xs-5">
                   <label for="nome_cliente">Nome sócio *</label>

@@ -1,4 +1,6 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 //requisições necessárias
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'RecorrenciaDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SocioDAO.php';
@@ -8,6 +10,9 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPA
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'Recorrencia.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
+
 class RecorrenciaController
 {
     private PDO $pdo;
@@ -21,13 +26,23 @@ class RecorrenciaController
      * Cria um objeto do tipo ContribuicaoLog, chama o serviço de cartão de crédito recorrente registrado no banco de dados
      * e insere a operação na tabela de contribuicao_log caso o serviço seja executado com sucesso.
      */
-    public function criarAssinatura() //<-- Considerar mover para uma nova controladora de recorrências 
+    public function criarAssinatura() 
     {
         $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
         $documento = filter_input(INPUT_POST, 'documento_socio');
         $formaPagamento = 'Recorrencia';
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado não é válido.', 412);
+          
+            //captcha
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+            }
+
             $this->pdo->beginTransaction();
 
             // Buscar sócio
@@ -135,7 +150,7 @@ class RecorrenciaController
         } catch (Exception $e) {
             if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
-            
+
             Util::tratarException($e);
         }
     }

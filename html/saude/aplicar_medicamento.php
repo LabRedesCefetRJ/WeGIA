@@ -1,100 +1,101 @@
 <?php
-  if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-  }
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 
-  //Mudar para session
-  if (!isset($_SESSION['usuario'])) {
-    header("Location: ../index.php");
-    exit();
-  }
+//Mudar para session
+if (!isset($_SESSION['usuario'])) {
+  header("Location: ../index.php");
+  exit();
+}
 
-  $idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+$idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
 
-  if (!$idPessoa || $idPessoa < 1) {
-    http_response_code(400);
-    echo json_encode(['erro' => 'O id do usuário não está dentro dos limites permitidos.']);
-    exit();
-  }
+if (!$idPessoa || $idPessoa < 1) {
+  http_response_code(400);
+  echo json_encode(['erro' => 'O id do usuário não está dentro dos limites permitidos.']);
+  exit();
+}
 
-  if (!isset($_SESSION['id_fichamedica'])) {
-    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php');
-  }
+if (!isset($_SESSION['id_fichamedica'])) {
+  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php');
+}
 
-  //verificar se o usuário possui as permissões necessárias para acessar a página
-  require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
-  permissao($_SESSION['id_pessoa'], 5);
+//verificar se o usuário possui as permissões necessárias para acessar a página
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 5);
 
-  include_once '../../classes/Cache.php';
-  require_once "../personalizacao_display.php";
+include_once '../../classes/Cache.php';
+require_once "../personalizacao_display.php";
 
-  require_once ROOT . "/controle/SaudeControle.php";
+require_once ROOT . "/controle/SaudeControle.php";
 
-  $id = filter_input(INPUT_GET, 'id_fichamedica', FILTER_VALIDATE_INT);
+$id = filter_input(INPUT_GET, 'id_fichamedica', FILTER_VALIDATE_INT);
 
-  if (!$id || $id < 1) {
-    http_response_code(400);
-    echo json_encode(['erro' => 'O id da ficha médica informado não está dentro dos limites permitidos.']);
-    exit();
-  }
-  
-  require_once "../../dao/Conexao.php";
-  $pdo = Conexao::connect();
-  
-  $stmtPessoaPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :id_fichamedica");
-  $stmtPessoaPaciente->bindValue(':id_fichamedica', $id, PDO::PARAM_INT);
-  $stmtPessoaPaciente->execute();
-  $paciente = $stmtPessoaPaciente->fetch(PDO::FETCH_ASSOC);
+if (!$id || $id < 1) {
+  http_response_code(400);
+  echo json_encode(['erro' => 'O id da ficha médica informado não está dentro dos limites permitidos.']);
+  exit();
+}
 
-  if (!$paciente || !isset($paciente['id_pessoa'])) {
-      http_response_code(404);
-      echo 'Ficha médica não encontrada ou não associada a uma pessoa.';
-      exit();
-  }
-  $idPessoaPaciente = $paciente['id_pessoa']; 
+require_once "../../dao/Conexao.php";
+$pdo = Conexao::connect();
+
+$stmtPessoaPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :id_fichamedica");
+$stmtPessoaPaciente->bindValue(':id_fichamedica', $id, PDO::PARAM_INT);
+$stmtPessoaPaciente->execute();
+$paciente = $stmtPessoaPaciente->fetch(PDO::FETCH_ASSOC);
+
+if (!$paciente || !isset($paciente['id_pessoa'])) {
+  http_response_code(404);
+  echo 'Ficha médica não encontrada ou não associada a uma pessoa.';
+  exit();
+}
+$idPessoaPaciente = $paciente['id_pessoa'];
 
 
-  $cache = new Cache();
-  $teste = $cache->read($id);
-  $_SESSION['id_upload_med'] = $id;
+$cache = new Cache();
+$teste = $cache->read($id);
+$_SESSION['id_upload_med'] = $id;
 
-  if (!isset($teste)) {
-    header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php?id_fichamedica=' . $id . '&id=' . $id);
-  }
+if (!isset($teste)) {
+  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php?id_fichamedica=' . $id . '&id=' . $id);
+}
 
-  $stmtExibirMedicamento = $pdo->prepare("SELECT * FROM saude_medicacao sm JOIN saude_atendimento sa ON(sm.id_atendimento=sa.id_atendimento) JOIN saude_fichamedica sf ON(sa.id_fichamedica=sf.id_fichamedica) WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1 and sf.id_fichamedica=:idFichaMedica");
+$stmtExibirMedicamento = $pdo->prepare("SELECT * FROM saude_medicacao sm JOIN saude_atendimento sa ON(sm.id_atendimento=sa.id_atendimento) JOIN saude_fichamedica sf ON(sa.id_fichamedica=sf.id_fichamedica) WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1 and sf.id_fichamedica=:idFichaMedica");
 
-  $stmtExibirMedicamento->bindValue(':idFichaMedica', $id, PDO::PARAM_INT);
-  $stmtExibirMedicamento->execute();
+$stmtExibirMedicamento->bindValue(':idFichaMedica', $id, PDO::PARAM_INT);
+$stmtExibirMedicamento->execute();
 
-  $exibimedparaenfermeiro = json_encode($stmtExibirMedicamento->fetchAll(PDO::FETCH_ASSOC));
+$exibimedparaenfermeiro = json_encode($stmtExibirMedicamento->fetchAll(PDO::FETCH_ASSOC));
 
-  $medicamentoenfermeiro = $pdo->query("SELECT * FROM saude_medicacao");
-  $medstatus = $pdo->query("SELECT * FROM saude_medicacao_status");
+$medicamentoenfermeiro = $pdo->query("SELECT * FROM saude_medicacao");
+$medstatus = $pdo->query("SELECT * FROM saude_medicacao_status");
 
-  $stmtPessoa = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa");
+$stmtPessoa = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa");
 
-  $stmtPessoa->bindValue(':idPessoa', $idPessoa);
+$stmtPessoa->bindValue(':idPessoa', $idPessoa);
 
-  $stmtPessoa->execute();
+$stmtPessoa->execute();
 
-  $id_funcionario = $stmtPessoa->fetch(PDO::FETCH_ASSOC)['nome'];
+$id_funcionario = $stmtPessoa->fetch(PDO::FETCH_ASSOC)['nome'];
 
-  $stmtProntuarioPublico = $pdo->prepare("SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica=:idFichaMedica");
+$stmtProntuarioPublico = $pdo->prepare("SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica=:idFichaMedica");
 
-  $stmtProntuarioPublico->bindValue('idFichaMedica', $id);
-  $stmtProntuarioPublico->execute();
+$stmtProntuarioPublico->bindValue('idFichaMedica', $id);
+$stmtProntuarioPublico->execute();
 
-  $prontuariopublico = json_encode($stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC));
+$prontuariopublico = json_encode($stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC));
 
-  $stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
-  $stmtAtendido->bindValue('idPessoa', $idPessoaPaciente, PDO::PARAM_INT);
-  $stmtAtendido->execute();
+$stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+$stmtAtendido->bindValue('idPessoa', $idPessoaPaciente, PDO::PARAM_INT);
+$stmtAtendido->execute();
 
-  $dadosAtendido = $stmtAtendido->fetch(PDO::FETCH_ASSOC);
-  $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
+$dadosAtendido = $stmtAtendido->fetch(PDO::FETCH_ASSOC);
+$data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
-  $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+$dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -267,11 +268,11 @@
     function carregarMedicamentosParaAplicar(modoSelecionar = false) {
       const exibimedparaenfermeiro = <?= $exibimedparaenfermeiro ?>;
       const tabela = document.getElementById("tabela");
-      
+
       if ($.fn.DataTable.isDataTable('#datatable-default')) {
-          $('#datatable-default').DataTable().destroy();
+        $('#datatable-default').DataTable().destroy();
       }
-      
+
       tabela.innerHTML = "";
 
       exibimedparaenfermeiro.forEach(function(item) {
@@ -299,36 +300,36 @@
         td5.style.verticalAlign = "middle";
 
         if (modoSelecionar) {
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.checked = true; 
-            checkbox.className = "chk-med-bulk"; 
-            
-            checkbox.setAttribute("data-idMedicacao", item.id_medicacao);
-            checkbox.setAttribute("data-idPessoa", item.id_pessoa);
-            checkbox.setAttribute("data-idFuncionario", item.id_funcionario);
-            
-            td5.appendChild(checkbox);
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = true;
+          checkbox.className = "chk-med-bulk";
+
+          checkbox.setAttribute("data-idMedicacao", item.id_medicacao);
+          checkbox.setAttribute("data-idPessoa", item.id_pessoa);
+          checkbox.setAttribute("data-idFuncionario", item.id_funcionario);
+
+          td5.appendChild(checkbox);
 
         } else {
-            const a = document.createElement("a");
-            a.title = "Aplicar medicamento";
+          const a = document.createElement("a");
+          a.title = "Aplicar medicamento";
 
-            const button = document.createElement("button");
-            button.className = "btn btn-primary";
-            button.type = "button";
-            button.setAttribute("data-toggle", "modal");
-            button.setAttribute("data-target", "#modalHorarioAplicacao");
-            button.setAttribute("data-idMedicacao", item.id_medicacao);
-            button.setAttribute("data-idPessoa", item.id_pessoa);
-            button.setAttribute("data-idFuncionario", item.id_funcionario);
-            button.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i>";
-            button.addEventListener("click", function() {
-              enviarInformacoesParaModal(this);
-            });
+          const button = document.createElement("button");
+          button.className = "btn btn-primary";
+          button.type = "button";
+          button.setAttribute("data-toggle", "modal");
+          button.setAttribute("data-target", "#modalHorarioAplicacao");
+          button.setAttribute("data-idMedicacao", item.id_medicacao);
+          button.setAttribute("data-idPessoa", item.id_pessoa);
+          button.setAttribute("data-idFuncionario", item.id_funcionario);
+          button.innerHTML = "<i class='glyphicon glyphicon-hand-up'></i>";
+          button.addEventListener("click", function() {
+            enviarInformacoesParaModal(this);
+          });
 
-            a.appendChild(button);
-            td5.appendChild(a);
+          a.appendChild(button);
+          td5.appendChild(a);
         }
 
         tr.append(td1, td2, td3, td4, td5);
@@ -338,25 +339,25 @@
       $('#datatable-default').DataTable({
         "dom": '<"row"<"col-sm-6"l><"col-sm-6"f>><"table-responsive"t>p',
         "language": {
-            "search": "", 
-            "searchPlaceholder": "Search" 
+          "search": "",
+          "searchPlaceholder": "Search"
         },
         "initComplete": function() {
-            $('#datatable-default_filter input').addClass('form-control');
+          $('#datatable-default_filter input').addClass('form-control');
         }
       });
 
       if (!modoSelecionar) {
         if ($('#btnSelecionarMultiplos').length === 0) {
-            let htmlButton = `
+          let htmlButton = `
                 <div style="clear: both; text-align: right; margin-top: 50px; margin-bottom: 10px;" id="containerBtnMultiplos">
                     <button id="btnSelecionarMultiplos" title="Seleciona múltiplos medicamentos para aplicar de uma vez só" class="btn btn-primary">Selecionar Múltiplos</button>
                 </div>
             `;
-            $('#datatable-default_filter').after(htmlButton);
+          $('#datatable-default_filter').after(htmlButton);
         } else {
-            $('#containerBtnMultiplos').show();
-            $('#btnSelecionarMultiplos').show();
+          $('#containerBtnMultiplos').show();
+          $('#btnSelecionarMultiplos').show();
         }
       }
     }
@@ -453,27 +454,27 @@
     }
 
     function mostrarErro(mensagem) {
-        const divErro = document.getElementById("msg_erro_modal");
-        if (divErro) {
-            divErro.innerText = mensagem;
-            divErro.style.display = "block";
-        } else {
-            alert(mensagem);
-        }
+      const divErro = document.getElementById("msg_erro_modal");
+      if (divErro) {
+        divErro.innerText = mensagem;
+        divErro.style.display = "block";
+      } else {
+        alert(mensagem);
+      }
     }
     async function enviarDataHoraAplicacaoMedicamento(event) {
       event.preventDefault();
 
       const dataHoraInput = document.getElementById("dataHora");
       const divErro = document.getElementById("msg_erro_modal");
-      
+
       if (divErro) {
-          divErro.style.display = "none"; 
-          divErro.innerText = "";
+        divErro.style.display = "none";
+        divErro.innerText = "";
       }
       if (!dataHoraInput.value) {
-          mostrarErro("Por favor, preencha a data e hora.");
-          return;
+        mostrarErro("Por favor, preencha a data e hora.");
+        return;
       }
 
       const dataDigitada = new Date(dataHoraInput.value);
@@ -501,25 +502,25 @@
       const isModoSelecao = document.querySelectorAll('.chk-med-bulk').length > 0;
 
       if (isModoSelecao) {
-        
+
         let listaCheckboxes = [];
 
         if ($.fn.DataTable.isDataTable('#datatable-default')) {
-            var table = $('#datatable-default').DataTable();
-            // table.$() acessa elementos em TODAS as páginas da paginação
-            table.$('.chk-med-bulk:checked').each(function() {
-                listaCheckboxes.push(this);
-            });
+          var table = $('#datatable-default').DataTable();
+          // table.$() acessa elementos em TODAS as páginas da paginação
+          table.$('.chk-med-bulk:checked').each(function() {
+            listaCheckboxes.push(this);
+          });
         } else {
-            var els = document.querySelectorAll('.chk-med-bulk:checked');
-            for(var i=0; i < els.length; i++){
-                listaCheckboxes.push(els[i]);
-            }
+          var els = document.querySelectorAll('.chk-med-bulk:checked');
+          for (var i = 0; i < els.length; i++) {
+            listaCheckboxes.push(els[i]);
+          }
         }
 
         if (listaCheckboxes.length === 0) {
-             mostrarErro("Nenhum medicamento selecionado.");
-             return;
+          mostrarErro("Nenhum medicamento selecionado.");
+          return;
         }
 
         listaCheckboxes.forEach(function(chk) {
@@ -558,13 +559,15 @@
             data_nascimento: dataPaciente
         };
         const dadosJson = JSON.stringify(dados);
-        
+
         arrayPromessas.push(
-            fetch(`../../controle/control.php?`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: dadosJson
-            }).then(res => res.json())
+          fetch(`../../controle/control.php?`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: dadosJson
+          }).then(res => res.json())
         );
       }
 
@@ -602,7 +605,7 @@
 
     function definirDataHoraAtualSeVazio(campo) {
       const nowString = getDataLocalAtual();
-      
+
       if (!campo.value) {
         campo.value = nowString;
       }
@@ -615,7 +618,7 @@
       }
     }
     async function enviarMedicacaoSOS(event) {
-      event.preventDefault(); 
+      event.preventDefault();
 
       const dadosForm = {
         medicamento: document.getElementById('nome_medicacao').value,
@@ -626,8 +629,8 @@
       };
 
       const id_pessoa_paciente = <?= $idPessoaPaciente; ?>;
-      const id_pessoa_funcionario = <?= $idPessoa; ?>; 
-      
+      const id_pessoa_funcionario = <?= $idPessoa; ?>;
+
 
       if (!dadosForm.medicamento || !dadosForm.dosagem || !dadosForm.horario || !dadosForm.duracao) {
         alert('Por favor, preencha todos os campos do Medicamento SOS.');
@@ -649,7 +652,9 @@
       try {
         const response = await fetch(`../../controle/control.php`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify(payload)
         });
 
@@ -672,11 +677,11 @@
       if (botaoSOS) {
         botaoSOS.addEventListener('click', enviarMedicacaoSOS);
       }
-      
+
       $('#modalHorarioAplicacao').on('show.bs.modal', function(e) {
         const dataHoraInput = document.getElementById("dataHora");
         const nowString = getDataLocalAtual();
-        
+
         if (!dataHoraInput.value) {
           dataHoraInput.value = nowString;
         }
@@ -693,7 +698,6 @@
         limparInputDataTime();
       });
     });
-
   </script>
   <style type="text/css">
     .obrig {
@@ -704,9 +708,11 @@
       padding: 5px 10px 5px 10px;
       word-wrap: break-word;
     }
-    #form_medicacao_sos{
+
+    #form_medicacao_sos {
       padding: 10px;
     }
+
     @media(max-width:768px) {
       #prontuario_publico tr p {
         max-width: 250px;
@@ -911,7 +917,7 @@
 
                         </tbody>
                       </table>
-                      
+
                       <div id="div-botao-aplicar-global" style="text-align: right; margin-top: 10px; margin-bottom: 20px;"></div>
 
                       <div class="modal fade" id="modalHorarioAplicacao" tabindex="-1" role="dialog" aria-labelledby="tituloModal">
@@ -927,14 +933,14 @@
                               </div>
 
                               <div class="modal-body">
-                                <input type="datetime-local" 
-                                       id="dataHora" 
-                                       name="dataHora" 
-                                       onfocus="definirDataHoraAtualSeVazio(this)" 
-                                       onclick="definirDataHoraAtualSeVazio(this)"
-                                       oninput="usuarioAlterouDataHora()" 
-                                       required 
-                                       class="form-control">
+                                <input type="datetime-local"
+                                  id="dataHora"
+                                  name="dataHora"
+                                  onfocus="definirDataHoraAtualSeVazio(this)"
+                                  onclick="definirDataHoraAtualSeVazio(this)"
+                                  oninput="usuarioAlterouDataHora()"
+                                  required
+                                  class="form-control">
 
                                 <div id="msg_erro_modal" style="color: #d9534f; font-family: 'Open Sans', sans-serif; font-weight: bold; margin-top: 10px; display: none;"></div>
 
@@ -1049,78 +1055,77 @@
             </div>
           </div>
         </div>
-    </div>
+      </div>
 
-    <script>
-      function aplicarMedicacao() {
-        if (!window.confirm("Tem certeza que deseja aplicar essa medicação?")) {
-          return false;
+      <script>
+        function aplicarMedicacao() {
+          if (!window.confirm("Tem certeza que deseja aplicar essa medicação?")) {
+            return false;
+          }
         }
-      }
 
-      function variosMed() {
-        localStorage.setItem("currentTab", "2");
-        alert("Medicamento aplicado com sucesso!");
-      }
-      carregarMedicamentosParaAplicar(false);
-      const id_fichamedica = document.getElementById("id_fichamedica").value;
-      carregarAplicacoes(id_fichamedica);
+        function variosMed() {
+          localStorage.setItem("currentTab", "2");
+          alert("Medicamento aplicado com sucesso!");
+        }
+        carregarMedicamentosParaAplicar(false);
+        const id_fichamedica = document.getElementById("id_fichamedica").value;
+        carregarAplicacoes(id_fichamedica);
 
-  $(document).ready(function() {
-      $(document).on('click', '#btnSelecionarMultiplos', function() {
-          $(this).hide();
-          $('#containerBtnMultiplos').hide(); // Esconde o container também
+        $(document).ready(function() {
+          $(document).on('click', '#btnSelecionarMultiplos', function() {
+            $(this).hide();
+            $('#containerBtnMultiplos').hide(); // Esconde o container também
 
-          carregarMedicamentosParaAplicar(true);
+            carregarMedicamentosParaAplicar(true);
 
-          $('#div-botao-aplicar-global').remove();
+            $('#div-botao-aplicar-global').remove();
 
-          let divBotao = $('<div id="div-botao-aplicar-global" style="text-align: right; margin-top: 20px; display: flex; flex-direction: row; justify-content: flex-end; margin-bottom: 10px; clear: both;"></div>');
+            let divBotao = $('<div id="div-botao-aplicar-global" style="text-align: right; margin-top: 20px; display: flex; flex-direction: row; justify-content: flex-end; margin-bottom: 10px; clear: both;"></div>');
 
-          let btnApply = $('<button class="btn btn-primary" style="margin-right: 5px;" data-toggle="modal" data-target="#modalHorarioAplicacao"><i class="glyphicon glyphicon-hand-up"></i> Aplicar Selecionados</button>');
-          btnApply.click(function() {
+            let btnApply = $('<button class="btn btn-primary" style="margin-right: 5px;" data-toggle="modal" data-target="#modalHorarioAplicacao"><i class="glyphicon glyphicon-hand-up"></i> Aplicar Selecionados</button>');
+            btnApply.click(function() {
               enviarInformacoesParaModal(this);
-          });
+            });
 
-          let btnCancel = $('<button class="btn btn-danger" style="height: 35px;" title="Cancelar Seleção"><i class="bi bi-x-lg"></i></button>');
+            let btnCancel = $('<button class="btn btn-danger" style="height: 35px;" title="Cancelar Seleção"><i class="bi bi-x-lg"></i></button>');
 
-          btnCancel.click(function() {
+            btnCancel.click(function() {
               divBotao.remove();
               carregarMedicamentosParaAplicar(false);
+            });
+
+            divBotao.append(btnApply);
+            divBotao.append(btnCancel);
+
+            $('.table-responsive').after(divBotao);
           });
+        });
+      </script>
 
-          divBotao.append(btnApply);
-          divBotao.append(btnCancel);
+      <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
+      <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+      <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+      <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 
-          $('.table-responsive').after(divBotao);
-      });
-  });
+      <!-- Theme Custom -->
+      <script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
 
-    </script>
-    
-    <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
-    <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-    <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-    <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+      <script src="<?php echo WWW; ?>assets/javascripts/theme.js"></script>
 
-    <!-- Theme Custom -->
-    <script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
+      <!-- Theme Initialization Files -->
+      <!-- Examples -->
+      <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.default.js"></script>
+      <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+      <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
-    <script src="<?php echo WWW; ?>assets/javascripts/theme.js"></script>
+      <!-- importante para a aba de exames -->
+      <script src="../geral/post.js"></script>
+      <script src="../geral/formulario.js"></script>
 
-    <!-- Theme Initialization Files -->
-    <!-- Examples -->
-    <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.default.js"></script>
-    <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-    <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
-
-    <!-- importante para a aba de exames -->
-    <script src="../geral/post.js"></script>
-    <script src="../geral/formulario.js"></script>
-
-    <div align="right">
-      <iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>
-    </div>
+      <div align="right">
+        <iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>
+      </div>
 </body>
 
 </html>

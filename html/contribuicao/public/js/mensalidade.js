@@ -32,9 +32,6 @@ function gerarMensalidade() {
         body: formData
     })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(response.statusText + ' ' + response.status);
-            }
             return response.json(); // Converte a resposta para JSON
         })
         .then(resposta => {
@@ -42,9 +39,9 @@ function gerarMensalidade() {
                 console.log(resposta.link);
                 // Redirecionar o usuário para o link do boleto em uma nova aba
                 window.open(resposta.link, '_blank');
-            } else if (resposta.erro){
-                alert('Erro: '+ resposta.erro);
-            }else {
+            } else if (resposta.erro) {
+                alert('Erro: ' + resposta.erro);
+            } else {
                 alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
             }
 
