@@ -10,7 +10,6 @@ if (!isset($_SESSION['usuario'])) {
     session_regenerate_id();
 }
 
-//verificação da permissão do usuário
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 14);
 
@@ -89,14 +88,12 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                     </div>
                 <?php endif; ?>
 
-                
                 <div class="mb-4">
-                    <button type="button" class="btn btn-primary" style="margin-bottom: 15px;"    data-toggle="modal" data-target="#modalNovoProcesso">
+                    <button type="button" class="btn btn-primary" style="margin-bottom: 15px;" data-toggle="modal" data-target="#modalNovoProcesso">
                         <i class="fa fa-plus"></i> Cadastrar Novo Processo
                     </button>
                 </div>
 
-                
                 <section class="panel panel-primary">
                     <header class="panel-heading">
                         <h2 class="panel-title">Lista de Processos</h2>
@@ -148,7 +145,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                     </div>
                 </section>
 
-                
                 <div class="modal fade" id="modalNovoProcesso" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                         <form method="post" action="../../controle/control.php" class="modal-content">
@@ -174,11 +170,15 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                     <label>CPF <span class="text-danger">*</span></label>
                                     <input type="text"
                                         name="cpf"
+                                        id="cpf"
                                         maxlength="14"
                                         placeholder="000.000.000-00"
-                                        onkeypress="return onlyNumbers(event);"
+                                        onkeypress="return Onlynumbers(event)"
+                                        onkeyup="mascara('###.###.###-##',this,event)"
+                                        onblur="validarCPF(this.value)"
                                         class="form-control"
                                         required />
+                                    <p id="cpfInvalido" style="display: none; color: #b30000; font-size: 12px;">CPF INVÁLIDO!</p>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -189,7 +189,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                     </div>
                 </div>
 
-               
                 <div class="modal fade" id="modalArquivosProcesso" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog modal-lg" role="document">
                         <div class="modal-content">
@@ -234,6 +233,9 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
     <script src="../../assets/javascripts/theme.custom.js"></script>
     <script src="../../assets/javascripts/theme.init.js"></script>
 
+    <script src="<?php echo WWW; ?>Functions/onlyNumbers.js"></script>
+    <script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
+    <script src="<?php echo WWW; ?>Functions/mascara.js"></script>
     <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
 
     <style type="text/css">
@@ -261,14 +263,14 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
         function validarCPF(strCPF) {
             if (!testaCPF(strCPF)) {
                 $('#cpfInvalido').show();
-                document.getElementById("enviar").disabled = true;
+                $('#enviar').prop('disabled', true);
             } else {
                 $('#cpfInvalido').hide();
-                document.getElementById("enviar").disabled = false;
+                $('#enviar').prop('disabled', false);
             }
         }
 
-        function onlyNumbers(evt) {
+        function Onlynumbers(evt) {
             var charCode = (evt.which) ? evt.which : evt.keyCode;
             if (charCode > 31 && (charCode < 48 || charCode > 57)) {
                 return false;
