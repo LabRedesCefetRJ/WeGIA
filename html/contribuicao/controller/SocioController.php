@@ -9,6 +9,7 @@ require_once '../dao/ContribuicaoLogDAO.php';
 require_once '../helper/Util.php';
 require_once '../dao/ConexaoDAO.php';
 require_once '../../../dao/PessoaDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
 
 class SocioController
@@ -287,45 +288,52 @@ class SocioController
      */
     public function exibirBoletosPorCpf()
     {
-        // Extrair dados da requisição
-        $doc = trim($_GET['documento']);
-        $docLimpo = preg_replace('/\D/', '', $doc);
+        try {
+            if (!Csrf::validateToken($_GET['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
 
-        // Caminho para o diretório de PDFs
-        $path = '../pdfs/';
+            // Extrair dados da requisição
+            $doc = trim($_GET['documento']);
+            $docLimpo = preg_replace('/\D/', '', $doc);
 
-        // Listar arquivos no diretório
-        $arrayBoletos = Util::listarArquivos($path);
+            // Caminho para o diretório de PDFs
+            $path = '../pdfs/';
 
-        if (!$arrayBoletos) {
-            $mensagemErro = json_encode(['erro' => 'O diretório de armazenamento de PDFs não existe']);
-            echo $mensagemErro;
-            exit();
-        }
+            // Listar arquivos no diretório
+            $arrayBoletos = Util::listarArquivos($path);
 
-        $boletosEncontrados = [];
+            if (!$arrayBoletos) {
+                $mensagemErro = json_encode(['erro' => 'O diretório de armazenamento de PDFs não existe']);
+                echo $mensagemErro;
+                exit();
+            }
 
-        //Pegar coleção de contribuição log
-        $contribuicaoLogDao = new ContribuicaoLogDAO();
-        $contribuicaoLogCollection = $contribuicaoLogDao->listarPorDocumento($doc);
+            $boletosEncontrados = [];
 
-        foreach ($arrayBoletos as $boleto) {
-            // Extrair o documento do nome do arquivo
-            $documentoArquivo = explode('_', $boleto)[1];
-            if ($documentoArquivo == $docLimpo) {
-                $boletosEncontrados[] = $boleto;
-            } else if ($contribuicaoLogCollection) {
-                $partes = explode('_', $boleto)[0];
-                $documentoArquivo = str_replace('-', '_', $partes);
-                foreach ($contribuicaoLogCollection as $contribuicaoLog) {
-                    if ($documentoArquivo == $contribuicaoLog->getCodigo()) {
-                        $boletosEncontrados[] = $boleto;
+            //Pegar coleção de contribuição log
+            $contribuicaoLogDao = new ContribuicaoLogDAO();
+            $contribuicaoLogCollection = $contribuicaoLogDao->listarPorDocumento($doc);
+
+            foreach ($arrayBoletos as $boleto) {
+                // Extrair o documento do nome do arquivo
+                $documentoArquivo = explode('_', $boleto)[1];
+                if ($documentoArquivo == $docLimpo) {
+                    $boletosEncontrados[] = $boleto;
+                } else if ($contribuicaoLogCollection) {
+                    $partes = explode('_', $boleto)[0];
+                    $documentoArquivo = str_replace('-', '_', $partes);
+                    foreach ($contribuicaoLogCollection as $contribuicaoLog) {
+                        if ($documentoArquivo == $contribuicaoLog->getCodigo()) {
+                            $boletosEncontrados[] = $boleto;
+                        }
                     }
                 }
             }
-        }
 
-        // Retornar JSON com os boletos encontrados
-        echo json_encode($boletosEncontrados);
+            // Retornar JSON com os boletos encontrados
+            echo json_encode($boletosEncontrados);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 }

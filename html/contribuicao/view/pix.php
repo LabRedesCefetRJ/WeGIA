@@ -24,6 +24,7 @@ $tipoContribuicao = 'QRCode';
         <p id="instrucao" class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
 
         <form id="formulario" autocomplete="off">
+            <?= Csrf::inputField() ?>
 
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
 

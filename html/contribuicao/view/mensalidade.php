@@ -2,7 +2,7 @@
 //verificar se o meio de pagamento está ativo
 require_once '../controller/MeioPagamentoController.php';
 $meioPagamentoController = new MeioPagamentoController();
-if(!$meioPagamentoController->verificarStatus('Carne', true)){
+if (!$meioPagamentoController->verificarStatus('Carne', true)) {
     header("Location: ./forma_contribuicao.php");
     exit();
 }
@@ -23,6 +23,7 @@ $tipoContribuicao = 'MENSALIDADE';
         <p class="text-center">Campos obrigatórios <span class="obrigatorio">*</span></p>
 
         <form id="formulario" autocomplete="off">
+            <?= Csrf::inputField() ?>
 
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
 
@@ -32,7 +33,8 @@ $tipoContribuicao = 'MENSALIDADE';
                 <?php include('./components/contribuicao_parcelas.php'); ?>
                 <?php include('./components/contribuicao_dia_vencimento.php'); ?>
 
-                <?php $tipoAvanca = 'valor'; include('./components/btn_avanca.php'); ?>
+                <?php $tipoAvanca = 'valor';
+                include('./components/btn_avanca.php'); ?>
             </div>
 
             <div id="pag2" class="wrap-input100 hidden">

@@ -22,6 +22,7 @@ if (!$id_pessoa || $id_pessoa < 1) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 12, 3);
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 require_once ROOT . "/html/personalizacao_display.php";
@@ -36,7 +37,7 @@ try {
     $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
     $stmt->execute();
 
-    $id_funcionario = $stmt->fetchAll(PDO::FETCH_ASSOC)[0]['id_funcionario'];
+    $id_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_funcionario'];
 
     $atendido_id = filter_input(INPUT_GET, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
 
