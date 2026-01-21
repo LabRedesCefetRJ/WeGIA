@@ -52,4 +52,25 @@ class PaArquivoControle
         header('Location: ../html/atendido/processo_aceitacao.php');
         return;
     }
+
+    public function excluir()
+    {
+        $idArquivo = filter_input(INPUT_POST, 'id_arquivo', FILTER_VALIDATE_INT);
+        $idProcesso = filter_input(INPUT_POST, 'id_processo', FILTER_VALIDATE_INT);
+
+        if (!$idArquivo || !$idProcesso) {
+            $_SESSION['mensagem_erro'] = 'Dados inválidos para exclusão.';
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            return;
+        }
+
+        if ($this->dao->excluir($idArquivo)) {
+            $_SESSION['msg'] = 'Arquivo removido com sucesso.';
+        } else {
+            $_SESSION['mensagem_erro'] = 'Erro ao remover arquivo.';
+        }
+
+        header('Location: ../html/atendido/processo_aceitacao.php');
+        return;
+    }
 }

@@ -176,7 +176,9 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" min="<?= $dataNascimentoMinima ?>" max=<?= $dataNascimentoMaxima ?> required>
+                      <input type="date" name="nascimento" id="nascimento"
+                        min="<?= $dataNascimentoMinima ?>"
+                        max="<?= $dataNascimentoMaxima ?>" required>
                     </div>
                   </div>
                   <hr class="dotted short">
@@ -218,7 +220,11 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_admissao" id="data_admissao" id="profileCompany" max=<?php echo date('Y-m-d'); ?> required>
+                      <input type="date" class="form-control"
+                        name="data_admissao"
+                        id="data_admissao"
+                        max="<?php echo date('Y-m-d'); ?>"
+                        required>
                     </div>
                   </div>
                   <div class="form-group">
@@ -425,7 +431,6 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       });
 
       if (apoio == 0) {
-        alert("Cadastrado com sucesso!");
       }
     }
 
@@ -494,7 +499,6 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
         return false;
       }
       if (nome && sobrenome && sexo && telefone && dt_nasc && rg && orgao_emissor && dt_expedicao && dt_admissao && situacao && cargo && escala && tipo) {
-        alert("Cadastrado com sucesso!");
       }
     }
 
@@ -737,6 +741,43 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       reader.readAsDataURL(this.files[0]);
     });
   </script>
+  <script>
+    $(document).ready(function() {
+      $('#nascimento').on('change', function() {
+        var dataNasc = $(this).val();
+        var dataAdmInput = $('#data_admissao');
+
+        if (dataNasc) {
+          var minAdm = new Date(dataNasc);
+          minAdm.setDate(minAdm.getDate() + 1);
+          var minAdmStr = minAdm.toISOString().split('T')[0];
+
+          dataAdmInput.attr('min', minAdmStr);
+
+          if (dataAdmInput.val() && new Date(dataAdmInput.val()) < minAdm) {
+            dataAdmInput.val('');
+            alert('Data de admissão ajustada: deve ser posterior à data de nascimento.');
+          }
+        } else {
+          dataAdmInput.removeAttr('min');
+        }
+      });
+
+      $('#formsubmit').on('submit', function(e) {
+        var dataNasc = new Date($('#nascimento').val());
+        var dataAdm = new Date($('#data_admissao').val());
+
+        if (dataNasc && dataAdm && dataAdm <= dataNasc) {
+          e.preventDefault();
+          alert('Data de admissão deve ser posterior à data de nascimento!');
+          return false;
+        }
+      });
+    });
+  </script>
+
+
+
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
   </div>

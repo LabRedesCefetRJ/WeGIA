@@ -24,6 +24,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'ContatoInstituicaoControle' => [9],
             'controleSaudePet' => [6, 61, 62, 63],
             'DestinoControle' => [21, 2],
+            'DependenteControle' => [1, 11],
             'DocumentoControle' => [5],
             'EnderecoControle' => [9, 12],
             'EnfermidadeControle' => [5, 54],
