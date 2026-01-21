@@ -1,8 +1,6 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
 extract($_REQUEST);
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -12,6 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
   exit(401);
+} else {
+  session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
@@ -170,6 +170,15 @@ try {
   echo $e->getMessage();
 }
 
+  $stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+  $stmtAtendido->bindValue('idPessoa', $idPaciente, PDO::PARAM_INT);
+  $stmtAtendido->execute();
+
+  $dadosAtendido = $stmtAtendido->fetch(PDO::FETCH_ASSOC);
+  $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
+
+  $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -236,14 +245,14 @@ try {
   #div_texto {
     width: 100%;
   }
-  
+
 
   #cke_despacho {
     height: 500px;
   }
 
-  #cke_5_contents{
-    height: 87%!important;
+  #cke_5_contents {
+    height: 87% !important;
   }
 
   .cke_inner {
@@ -288,6 +297,7 @@ try {
   .small-text {
     font-size: small;
   }
+
   .celula-observacao {
     white-space: pre-wrap;
   }
@@ -333,7 +343,7 @@ try {
   <script src="../../Functions/mascara.js"></script>
   <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
   <script src="script/profile_paciente_script/funcoes/enfermidades_funcoes.js" defer></script>
-  <script> 
+  <script>
     function excluirimg(id) {
       $("#excluirimg").modal('show');
       $('input[name="id_documento"]').val(id);
@@ -384,12 +394,12 @@ try {
     });
 
     // exame //
-   async function gerarExames() {
-      const docfuncional = await listarExamesPorId(<?php echo $_GET["id_fichamedica"];?>); 
+    async function gerarExames() {
+      const docfuncional = await listarExamesPorId(<?php echo $_GET["id_fichamedica"]; ?>);
 
       const depTab = document.getElementById("dep-tab");
 
-      while(depTab.firstChild){
+      while (depTab.firstChild) {
         depTab.removeChild(depTab.firstChild);
       }
       docfuncional.forEach(item => {
@@ -463,7 +473,7 @@ try {
       });
     });
 
-    
+
 
     function listarAlergias(alergias) {
       $("#doc-tab-alergias").empty();
@@ -1352,12 +1362,12 @@ try {
                         <hr class="dotted short">
                         <table class="table table-bordered table-striped mb-none datatable-docfuncional" ">
                           <thead>
-                            <tr style="font-size:15px;">
-                              <th>Data do atendimento</th>
-                              <th>Medicações</th>
-                              <th>Status</th>
-                              <th>Ação</th>
-                            </tr>
+                            <tr style=" font-size:15px;">
+                          <th>Data do atendimento</th>
+                          <th>Medicações</th>
+                          <th>Status</th>
+                          <th>Ação</th>
+                          </tr>
                           </thead>
                           <tbody id="exibimed" style="font-size:15px">
 
@@ -1764,8 +1774,7 @@ try {
         </div>
     </div>
 
-    <script defer> 
-
+    <script defer>
       function removerAlergia(id_doc) {
         if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
           return false;
@@ -1777,7 +1786,7 @@ try {
 
       function editarStatusMedico(id_medicacao) {
         $("#testemed").modal('show');
-        
+
         $(".statusDoenca").val(id_medicacao);
       }
 
@@ -1785,7 +1794,7 @@ try {
         if (!window.confirm("Tem certeza que deseja aplicar essa medicação?")) {
           return false;
         }
-        
+
         let url = "mudarcor.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
         $.post(url, data);
@@ -1838,142 +1847,148 @@ try {
         }
       }
 
-      function adicionar_tipo_exame() { 
-        const url = '../../controle/control.php'; 
-        let exame = window.prompt("Cadastre um novo exame: "); 
-        if (!exame) { 
-          return; 
-        } 
-        const data = { 
-          exame: exame, 
-          nomeClasse: "ExameControle", 
-          metodo: "inserirTipoExame" 
-        } 
-        fetch(url, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json'},
-          body: JSON.stringify(data) 
-        }).then(response => { if (!response.ok) { 
-          throw new Error('Erro na requisição'); 
-        } return response.json(); 
-      }) .then(result => { 
-        gerar_tipo_exame(); 
-      }) 
-      .catch(error => { console.error('Erro ao enviar dados:', error); }); 
-    }
-
-    async function adicionar_exame(){
-      const formData = new FormData();
-      const documentos = document.getElementById("documentoExame");
-      const idFichaMedica = document.getElementById("exame_id_fichamedica");
-      const tipoDocumento = document.getElementById("tipoDocumentoExame");
-
-      if(!documentos.files[0]){
-        window.alert("É necessário inserir um documento");
-        return;
-      }
-
-      if(!tipoDocumento){
-        window.alert("É necessário escolher um tipo de exame");
-        return;
-      }
-
-      formData.append("arquivo", documentos.files[0]);
-      formData.append("tipoDocumento", tipoDocumento.value);
-      formData.append("id_fichamedica", idFichaMedica.value);
-      formData.append("nomeClasse", "ExameControle");
-      formData.append("metodo", "inserirExame");
-
-      let mensagem = "";
-      
-      try{
-        const requisicao = await fetch("../../controle/control.php", {
-          method: "POST",
-          body: formData
-        })
-        if(requisicao.ok){
-          mensagem = "Exame adicionado com sucesso";
-          gerarExames();
-        }
-      }catch(e){
-        mensagem = "Erro ao adicionar exame";
-      }finally{
-        documentos.value = '';
-        tipoDocumento.value = "";
-        $('#docFormModal').modal('hide');
-        window.alert(mensagem);
-      }
-    }
-
-    async function listarExamesPorId(id){
-      const url = `../../controle/control.php?id_fichamedica=${id}&nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("listarExamesPorId")}`;
-
-      try {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error('Erro na requisição');
-        }
-
-        const dados = await response.json();
-
-        return dados;
-
-      } catch (error) {
-        console.error('Erro ao carregar exames:', error);
-      }
-    }
-
-    async function deletar_exame(id){
-      if (!window.confirm("Tem certeza que deseja remover esse exame?")) {
+      function adicionar_tipo_exame() {
+        const url = '../../controle/control.php';
+        let exame = window.prompt("Cadastre um novo exame: ");
+        if (!exame) {
           return;
         }
-      let url = `../../controle/control.php?id_exame=${id}&metodo=${encodeURIComponent("removerExame")}&nomeClasse=${encodeURIComponent("ExameControle")}`;
-
-      let options = {
-        method: "GET"//usei GET pois aparentemente o delete ta desabilitado
-      }
-      let mensagem = "";
-
-      try{
-        let response = await fetch(url, options);
-        if(response.ok){
-          mensagem = "Exame deletado com sucesso";
-        }else{
-          throw new Error("Erro HTTP: " + response.status);
+        const data = {
+          exame: exame,
+          nomeClasse: "ExameControle",
+          metodo: "inserirTipoExame"
         }
-      }catch(e){
-        mensagem = "Erro ao deletar exame";
-      }finally{
-        window.alert(mensagem);
-        gerarExames();
-      }  
-    }
-    async function baixarArquivo(id) {
-      try{
-        const response = await fetch(`../../controle/control.php?nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("retornaArquivoPorId")}&id_exame=${id}`);
-        if(response.ok){
-          const blob = await response.blob();
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "exame_"+id;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          window.URL.revokeObjectURL(url);
-        }
-      }catch(e){
-        window.alert("Erro ao Baixar arquivo");
+        fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          }).then(response => {
+            if (!response.ok) {
+              throw new Error('Erro na requisição');
+            }
+            return response.json();
+          }).then(result => {
+            gerar_tipo_exame();
+          })
+          .catch(error => {
+            console.error('Erro ao enviar dados:', error);
+          });
       }
-    }
 
-    const formExames = document.getElementById("ExameDocForm");
+      async function adicionar_exame() {
+        const formData = new FormData();
+        const documentos = document.getElementById("documentoExame");
+        const idFichaMedica = document.getElementById("exame_id_fichamedica");
+        const tipoDocumento = document.getElementById("tipoDocumentoExame");
 
-    formExames.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      adicionar_exame();
-    })
+        if (!documentos.files[0]) {
+          window.alert("É necessário inserir um documento");
+          return;
+        }
+
+        if (!tipoDocumento) {
+          window.alert("É necessário escolher um tipo de exame");
+          return;
+        }
+
+        formData.append("arquivo", documentos.files[0]);
+        formData.append("tipoDocumento", tipoDocumento.value);
+        formData.append("id_fichamedica", idFichaMedica.value);
+        formData.append("nomeClasse", "ExameControle");
+        formData.append("metodo", "inserirExame");
+
+        let mensagem = "";
+
+        try {
+          const requisicao = await fetch("../../controle/control.php", {
+            method: "POST",
+            body: formData
+          })
+          if (requisicao.ok) {
+            mensagem = "Exame adicionado com sucesso";
+            gerarExames();
+          }
+        } catch (e) {
+          mensagem = "Erro ao adicionar exame";
+        } finally {
+          documentos.value = '';
+          tipoDocumento.value = "";
+          $('#docFormModal').modal('hide');
+          window.alert(mensagem);
+        }
+      }
+
+      async function listarExamesPorId(id) {
+        const url = `../../controle/control.php?id_fichamedica=${id}&nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("listarExamesPorId")}`;
+
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error('Erro na requisição');
+          }
+
+          const dados = await response.json();
+
+          return dados;
+
+        } catch (error) {
+          console.error('Erro ao carregar exames:', error);
+        }
+      }
+
+      async function deletar_exame(id) {
+        if (!window.confirm("Tem certeza que deseja remover esse exame?")) {
+          return;
+        }
+        let url = `../../controle/control.php?id_exame=${id}&metodo=${encodeURIComponent("removerExame")}&nomeClasse=${encodeURIComponent("ExameControle")}`;
+
+        let options = {
+          method: "GET" //usei GET pois aparentemente o delete ta desabilitado
+        }
+        let mensagem = "";
+
+        try {
+          let response = await fetch(url, options);
+          if (response.ok) {
+            mensagem = "Exame deletado com sucesso";
+          } else {
+            throw new Error("Erro HTTP: " + response.status);
+          }
+        } catch (e) {
+          mensagem = "Erro ao deletar exame";
+        } finally {
+          window.alert(mensagem);
+          gerarExames();
+        }
+      }
+      async function baixarArquivo(id) {
+        try {
+          const response = await fetch(`../../controle/control.php?nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("retornaArquivoPorId")}&id_exame=${id}`);
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "exame_" + id;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          }
+        } catch (e) {
+          window.alert("Erro ao Baixar arquivo");
+        }
+      }
+
+      const formExames = document.getElementById("ExameDocForm");
+
+      formExames.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        adicionar_exame();
+      })
 
       async function gerarMedicos() {
         medicos = await listarTodosOsMedicos()
@@ -2013,7 +2028,7 @@ try {
         }
 
         fetch(url, {
-            method:"POST",
+            method: "POST",
             headers: {
               'Content-Type': 'application/json',
             },
@@ -2073,7 +2088,7 @@ try {
             gerar_alergia();
           },
           error: function(response) {
-           // console.log(response);
+            // console.log(response);
           },
         })
       }
@@ -2298,49 +2313,61 @@ try {
         await gerarExames();
         await gerarEnfermidadesDoPaciente();
         const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
-        
+
         // Adiciona validação ao clique do botão
         btnCadastrarEnfermidade.addEventListener('click', function(event) {
+          event.preventDefault();
+
+          let veriDataPassada = true;
+          let veriDataFutura = true;
+
           const dataInput = document.getElementById("data_diagnostico");
           const dataValue = dataInput.value;
 
           if (!dataValue) {
-            alert("Por favor, preencha a data do diagnóstico.");
             event.preventDefault();
             event.stopImmediatePropagation();
+            alert("Por favor, preencha a data do diagnóstico.");
             return;
           }
 
-          const anoDigitado = parseInt(dataValue.substring(0, 4));
-          const anoMinimo = 1929;
+          const dataDigitada = new Date(dataValue);
+          const dataPaciente = new Date("<?= $data_nasc_atendido ?>T00:00:00");
+          console.log(dataPaciente)
 
-          if (anoDigitado < anoMinimo) {
-            alert("Data inválida: O ano não pode ser anterior a 1929.");
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return;
+          const formatador = new Intl.DateTimeFormat('pt-BR');
+
+          if (dataDigitada < dataPaciente) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              const nascFormatado = formatador.format(dataPaciente);
+              alert("Data inválida: Não pode ser anterior à data de nascimento (" + nascFormatado + ").");
+              veriDataPassada = false;
+              return; 
           }
 
           // Verifica se a data é futura
           const partesData = dataValue.split('-');
           const dataSelecionada = new Date(partesData[0], partesData[1] - 1, partesData[2]);
-          const hoje = new Date();
-          hoje.setHours(0, 0, 0, 0); 
+          const dataAgora = new Date();
+          dataAgora.setHours(0, 0, 0, 0); 
 
-          if (dataSelecionada > hoje) {
-            alert("A data do diagnóstico não pode ser no futuro.");
+          if (dataSelecionada > dataAgora) {
             event.preventDefault();
             event.stopImmediatePropagation();
+            alert("A data do diagnóstico não pode ser no futuro, ajuste para a data atual: " + formatador.format(dataAgora));
+            veriDataFutura = false;
             return;
           }
 
-          cadastrarEnfermidade(event);
+          if(veriDataPassada && veriDataFutura){
+              cadastrarEnfermidade(event);
+          }else{
+            return;
+          }
+
         });
       })
-
-      
-
-      
 
       carregarIntercorrencias();
     </script>

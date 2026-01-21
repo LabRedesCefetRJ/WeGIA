@@ -1,27 +1,17 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-
-// if(!isset($_SESSION['saude_id'])){
-//     header ("Location: profile_paciente.php?idsaude=$id");
-// }
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../index.php");
     exit();
+}else{
+    session_regenerate_id();
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-    }
-    require_once($config_path);
-}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 

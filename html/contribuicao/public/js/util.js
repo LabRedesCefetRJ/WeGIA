@@ -240,10 +240,19 @@ function configurarAvancaEndereco(funcao) {
     });
 }
 
-function configurarAvancaTerminar(funcao) {
+function configurarAvancaTerminar(funcao) { //<-- Adicionar verificação de captcha aqui
     const btnAvancaTerminar = document.getElementById('avanca-terminar');
     btnAvancaTerminar.addEventListener('click', (ev) => {
         ev.preventDefault();
+
+        //Verificação do reCAPTCHA
+        const captchaResponse = grecaptcha.getResponse();
+
+        if (!captchaResponse) {
+            alert('Por favor, confirme que você não é um robô.');
+            return;
+        }
+
         btnAvancaTerminar.disabled = true;
         btnAvancaTerminar.classList.add('disabled');
         setLoader(btnAvancaTerminar);
@@ -328,14 +337,12 @@ async function cadastrarSocio() {
             body: formData
         });
 
-        if (!response.ok) {
-            throw new Error("Erro na requisição: " + response.status);
-        }
-
         const resposta = await response.json(); // Converte a resposta para JSON
 
         if (resposta.mensagem) {
             console.log(resposta.mensagem);
+        } else if (resposta.erro) {
+            alert("Erro: " + resposta.erro);
         } else {
             alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
         }
@@ -365,14 +372,12 @@ async function atualizarSocio() {
             body: formData
         });
 
-        if (!response.ok) {
-            throw new Error("Erro na requisição: " + response.status);
-        }
-
         const resposta = await response.json(); // Converte a resposta para JSON
 
         if (resposta.mensagem) {
             console.log(resposta.mensagem);
+        } else if (resposta.erro) {
+            alert("Erro: " + resposta.erro);
         } else {
             alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
         }
@@ -535,9 +540,9 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
     //Atribuir valor aos campos
     nomeObject.value = nome;
 
-    if(dataNascimento != null && dataNascimento.length === 10)
+    if (dataNascimento != null && dataNascimento.length === 10)
         dataNascimentoObject.value = converterDataParaBR(dataNascimento);
-    
+
     emailObject.value = email;
     telefoneObject.value = telefone;
     cepObject.value = cep;

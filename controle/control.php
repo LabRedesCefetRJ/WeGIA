@@ -1,5 +1,4 @@
 <?php
-
 header('Content-Type: text/html; charset=utf-8'); 
 
 if (session_status() === PHP_SESSION_NONE)
@@ -19,6 +18,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'AtendidoControle' => [12],
             'AvisoControle' => [5],
             'AvisoNotificacaoControle' => [5],
+            'CaptchaController' => [7, 9],
             'CargoControle' => [11],
             'CategoriaControle' => [21, 2],
             'ContatoInstituicaoControle' => [9],
@@ -98,7 +98,6 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
         throw new InvalidArgumentException('O método e a controladora não podem ser vazios', 400);
     }
 }
-
 
 $is_json_request = false;
 

@@ -21,6 +21,7 @@ $brand = $brandController->getBrand();
 
         <div id="pag1" class="wrap-input100">
 
+            <?= Csrf::inputField() ?>
             <div class="centralizar">
                 <input class="radio" type="radio" id="op_cpf" value="fisica" name="opcao" checked><label class="label" for="op_cpf">PESSOA FÍSICA</label>
                 <input class="radio" type="radio" id="op_cnpj" value="juridica" name="opcao"><label class="label" for="op_cnpj">PESSOA JURÍDICA</label><br><br>

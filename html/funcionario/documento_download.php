@@ -1,7 +1,7 @@
 <?php
 
 session_start();
-if (!isset($_SESSION["usuario"])){
+if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
     exit;
 }
@@ -27,14 +27,14 @@ $id_doc = filter_var($_GET["id_doc"], FILTER_VALIDATE_INT);
 if ($id_doc !== false && $id_doc > 0) {
     $arquivo = new DocumentoFuncionario($id_doc);
 
-    
+
     if (!$arquivo->getException()) {
         header("Content-Type: " . TYPEOF_EXTENSION[$arquivo->getExtensao()]);
         header("Content-Disposition: attachment; filename=" . $arquivo->getNome());
-        
+
         ob_clean();
         flush();
-    
+
         echo $arquivo->getDocumento();
     } else {
         echo $arquivo->getException();
@@ -44,4 +44,3 @@ if ($id_doc !== false && $id_doc > 0) {
 }
 
 die();
-?>

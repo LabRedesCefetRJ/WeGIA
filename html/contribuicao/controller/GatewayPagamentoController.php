@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE)
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'GatewayPagamento.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'SistemaLog.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -26,6 +27,9 @@ class GatewayPagamentoController
         $token = filter_input(INPUT_POST, 'token', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
             $this->pdo->beginTransaction();
             $gatewayPagamento = new GatewayPagamento($nome, $endpoint, $token);
             $gatewayPagamento->cadastrar();
@@ -71,7 +75,7 @@ class GatewayPagamentoController
 
             $this->pdo->commit();
             return $gateways;
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
@@ -88,13 +92,16 @@ class GatewayPagamentoController
     {
         $gatewayId = filter_input(INPUT_POST, 'gateway-id', FILTER_SANITIZE_NUMBER_INT);
 
-        if (!$gatewayId || empty($gatewayId) || $gatewayId < 1) {
-            //parar operação
-            header("Location: ../view/gateway_pagamento.php?msg=excluir-falha#mensagem-tabela");
-            exit();
-        }
-
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
+            if (!$gatewayId || empty($gatewayId) || $gatewayId < 1) {
+                //parar operação
+                header("Location: ../view/gateway_pagamento.php?msg=excluir-falha#mensagem-tabela");
+                exit();
+            }
+
             $this->pdo->beginTransaction();
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamentoDao->excluirPorId($gatewayId);
@@ -134,6 +141,9 @@ class GatewayPagamentoController
         $gatewayToken = filter_input(INPUT_POST, 'token', FILTER_UNSAFE_RAW); // Não sanitiza (token pode ter símbolos)
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+
             // Validação básica adicional
             if (!$gatewayId || !$gatewayNome || !$gatewayEndepoint) {
                 throw new InvalidArgumentException('Falha na validação dos campos', 400);
@@ -174,6 +184,9 @@ class GatewayPagamentoController
         $status = filter_input(INPUT_POST, 'status', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+            
             if (!$gatewayId || empty($gatewayId)) {
                 throw new InvalidArgumentException('O id do gateway informado não é válido.', 400);
             }

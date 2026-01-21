@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
 include_once ROOT . '/classes/Categoria.php';
 include_once ROOT . '/dao/CategoriaDAO.php';
 include_once ROOT . '/classes/Unidade.php';
@@ -48,61 +51,81 @@ class ProdutoControle
 
     public function listarTodos()
     {
-        extract($_REQUEST);
-        $produtoDAO = new ProdutoDAO();
-        $produtos = $produtoDAO->listarTodos();
-        session_start();
-        $_SESSION['produtos'] = $produtos;
-        header('Location: ' . $nextPage);
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(listar_produto|remover_produto)\.php(\?id_produto=\d+)?)$#';
+
+        try {
+            if (!filter_var($nextPage, FILTER_VALIDATE_URL))
+                throw new InvalidArgumentException('Erro, a URL informada para a próxima página não é válida.', 412);
+
+            $produtoDAO = new ProdutoDAO();
+            $produtos = $produtoDAO->listarTodos();
+
+            $_SESSION['produtos'] = $produtos;
+
+            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 
     public function listarporCodigo($codigo)
     {
-        session_start();
-        //$codigo = $_REQUEST['codigo'];
         try {
             $produtoDao = new ProdutoDAO();
             $produto = $produtoDao->listarUm($codigo);
             $_SESSION['produto'] = $produto;
+
+            $catDao = new CategoriaDAO();
+            $categorias = $catDao->listarTodos();
+            $_SESSION['categorias'] = $categorias;
+
+            header('Location: ' . $_REQUEST['nextPage']);
         } catch (Exception $e) {
+            Util::tratarException($e);
             $msg = "Não foi possível listar o produto!";
             header('Location: caminho.php?msg=' . $msg);
         }
-
-        $catDao = new CategoriaDAO();
-        $categorias = $catDao->listarTodos();
-        $_SESSION['categorias'] = $categorias;
-
-        header('Location: ' . $_REQUEST['nextPage']);
     }
 
     public function listarporNome($descricao)
     {
-        session_start();
-        //$descricao = $_REQUEST['descricao'];
         try {
             $produtoDao = new ProdutoDAO();
             $produto = $produtoDao->listarUm($descricao);
             $_SESSION['produto'] = $produto;
+
+
+            $catDao = new CategoriaDAO();
+            $categorias = $catDao->listarTodos();
+            $_SESSION['categorias'] = $categorias;
+
+            header('Location: ' . $_REQUEST['nextPage']);
         } catch (Exception $e) {
+            Util::tratarException($e);
             $msg = "Não foi possível listar o produto!";
             header('Location: ' . WWW . 'html/geral/msg.php?msg=' . $msg);
         }
-
-        $catDao = new CategoriaDAO();
-        $categorias = $catDao->listarTodos();
-        $_SESSION['categorias'] = $categorias;
-
-        header('Location: ' . $_REQUEST['nextPage']);
     }
 
     public function listarDescricao()
     {
-        $produtoDAO = new ProdutoDAO();
-        $produtos = $produtoDAO->listarDescricao();
-        session_start();
-        $_SESSION['autocomplete'] = $produtos;
-        header('Location: ' . $_REQUEST['nextPage']);
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(cadastro_entrada|cadastro_saida)\.php)$#';
+
+        try {
+            if (!filter_var($nextPage, FILTER_VALIDATE_URL))
+                throw new InvalidArgumentException('Erro, a URL informada para a próxima página não é válida.', 412);
+
+            $produtoDAO = new ProdutoDAO();
+            $produtos = $produtoDAO->listarDescricao();
+
+            $_SESSION['autocomplete'] = $produtos;
+
+            preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 
     public function incluir()
@@ -181,8 +204,8 @@ class ProdutoControle
             session_start();
             $_SESSION['produto'] = $produto;
             header('Location: ' . $nextPage);
-        } catch (PDOException $e) {
-            echo "ERROR: " . $e->getMessage();
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
     }
 
@@ -204,7 +227,7 @@ class ProdutoControle
             $produtoDAO->alterarProduto($produto);
             header('Location: ' . $nextPage);
         } catch (Exception $e) {
-            echo 'ERROR: ' . $e->getMessage();
+            Util::tratarException($e);
         }
     }
 
@@ -242,8 +265,7 @@ class ProdutoControle
 
             echo json_encode($produtosDTO);
         } catch (Exception $e) {
-            http_response_code($e->getCode());
-            echo json_encode(['erro' => $e->getMessage()]);
+            Util::tratarException($e);
         }
     }
 }

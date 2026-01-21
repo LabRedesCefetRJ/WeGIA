@@ -1,25 +1,25 @@
 <?php
-	if (session_status() === PHP_SESSION_NONE) 
-		session_start();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+if (session_status() === PHP_SESSION_NONE)
+	session_start();
 
-	if (!isset($_SESSION['usuario'])) {
-		header("Location: ". WWW ."html/index.php");
-		exit;
-	}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
-	require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
-	permissao($_SESSION['id_pessoa'], 23, 3);
+if (!isset($_SESSION['usuario'])) {
+	header("Location: " . WWW . "html/index.php");
+	exit;
+}
 
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once ROOT . "/html/personalizacao_display.php";
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 23, 3);
 
-	header("X-Frame-Options: SAMEORIGIN");
-	header("X-Content-Type-Options: nosniff");
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . "/html/personalizacao_display.php";
 ?>
 <!doctype html>
 <html class="fixed">
+
 <head>
 	<!-- Basic -->
 	<meta charset="UTF-8">
@@ -33,7 +33,7 @@
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="icon" href="<?php htmlspecialchars(display_campo("Logo",'file'), ENT_QUOTES, 'UTF-8') ?>" type="image/x-icon" id="logo-icon">
+	<link rel="icon" href="<?php display_campo("Logo", 'file')?>" type="image/x-icon" id="logo-icon">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 
 	<!-- Theme CSS -->
@@ -52,20 +52,21 @@
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-  	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-  	<link type="text/css" rel="stylesheet" charset="UTF-8" href="https://translate.googleapis.com/translate_static/css/translateelement.css">
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+	<link type="text/css" rel="stylesheet" charset="UTF-8" href="https://translate.googleapis.com/translate_static/css/translateelement.css">
 
 </head>
+
 <body>
 	<section class="body">
 		<!-- start: header -->
 		<div id="header"></div>
 		<!-- end: header -->
-		
+
 		<div class="inner-wrapper">
 			<!-- start: sidebar -->
 			<aside id="sidebar-left" class="sidebar-left menuu"></aside>
-			
+
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
 				<header class="page-header">
@@ -84,44 +85,44 @@
 					</div>
 				</header>
 				<!-- start: page -->
-					<div class="row">
-						<div class="col-md-4 col-lg-2" style="visibility: hidden;"></div>
-						<div class="col-md-8 col-lg-8" >
-							<div class="tabs">
-								<ul class="nav nav-tabs tabs-primary">
-									<li class="active">
-										<a href="#overview" data-toggle="tab">Adicionar tipo</a>
-									</li>
-								</ul>
-								<div class="tab-content">
-									<div id="overview" class="tab-pane active">
-										<fieldset>
-											<form method="post" id="formulario" action="<?= WWW ?>controle/control.php">
-												<div class="form-group"><br>
-													<label class="col-md-3 control-label">Insira o novo tipo:</label>
-													<div class="col-md-8">
-														<input type="text" class="form-control" name="descricao" id="tipoentrada" required>
-													</div>
-												</div><br/>
-												<input type="hidden" name="nomeClasse" value="TipoEntradaControle">
-												<input type="hidden" name="metodo" value="incluir">
-												<div class="col-md-9 col-md-offset-3">
-													<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
-													<input type="reset" class="btn btn-default">
-														<a href="<?= WWW ?>html/matPat/cadastro_entrada.php" style="color: white; text-decoration: none;"><button class="btn btn-info" type="button">Voltar</button></a>
-														<a href="<?= WWW ?>html/matPat/listar_tipoEntrada.php" style="color: white; text-decoration:none;"><button class="btn btn-success" type="button">Listar tipo entrada</button></a>
-												
-													</div>
-											</form>
-										</fieldset>	
-									</div>
+				<div class="row">
+					<div class="col-md-4 col-lg-2" style="visibility: hidden;"></div>
+					<div class="col-md-8 col-lg-8">
+						<div class="tabs">
+							<ul class="nav nav-tabs tabs-primary">
+								<li class="active">
+									<a href="#overview" data-toggle="tab">Adicionar tipo</a>
+								</li>
+							</ul>
+							<div class="tab-content">
+								<div id="overview" class="tab-pane active">
+									<fieldset>
+										<form method="post" id="formulario" action="<?= WWW ?>controle/control.php">
+											<div class="form-group"><br>
+												<label class="col-md-3 control-label">Insira o novo tipo:</label>
+												<div class="col-md-8">
+													<input type="text" class="form-control" name="descricao" id="tipoentrada" required>
+												</div>
+											</div><br />
+											<input type="hidden" name="nomeClasse" value="TipoEntradaControle">
+											<input type="hidden" name="metodo" value="incluir">
+											<div class="col-md-9 col-md-offset-3">
+												<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
+												<input type="reset" class="btn btn-default">
+												<a href="<?= WWW ?>html/matPat/cadastro_entrada.php" style="color: white; text-decoration: none;"><button class="btn btn-info" type="button">Voltar</button></a>
+												<a href="<?= WWW ?>html/matPat/listar_tipoEntrada.php" style="color: white; text-decoration:none;"><button class="btn btn-success" type="button">Listar tipo entrada</button></a>
+
+											</div>
+										</form>
+									</fieldset>
 								</div>
 							</div>
 						</div>
 					</div>
-					<!-- end: page -->
+				</div>
+				<!-- end: page -->
 			</section>
-			
+
 			<aside id="sidebar-right" class="sidebar-right">
 				<div class="nano">
 					<div class="nano-content">
@@ -134,21 +135,22 @@
 		</div>
 	</section>
 	<script>
-		$(function () {
-        $("#header").load("<?= WWW ?>html/header.php");
-        $(".menuu").load("<?= WWW ?>html/menu.php");
-      });
+		$(function() {
+			$("#header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
+		});
 	</script>
 	<!-- Vendor -->
-    <script src="<?= WWW ?>assets/vendor/jquery/jquery.js"></script>
-    <script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-    <script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
-    <script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
-    <script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-    <script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
-    <script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery/jquery.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?= WWW ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 	<div align="right">
 		<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 	</div>
 </body>
+
 </html>

@@ -92,12 +92,14 @@ function pegarDocumento() {
  */
 function realizarConsulta() {
     const documento = pegarDocumento();
+    const csrf = document.querySelector('input[name="csrf_token"]').value;
+
     if (!validarDocumento(documento)) {
         alert("O documento deve ser preenchido");//Alterar forma de exibição do alerta posteriormente
         return;
     }
 
-    const url = `../controller/control.php?nomeClasse=SocioController&metodo=exibirBoletosPorCpf&documento=${encodeURIComponent(documento)}`;
+    const url = `../controller/control.php?nomeClasse=SocioController&metodo=exibirBoletosPorCpf&documento=${encodeURIComponent(documento)}&csrf_token=${encodeURIComponent(csrf)}`;
 
     fetch(url)
         .then(response => {

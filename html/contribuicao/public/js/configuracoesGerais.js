@@ -18,6 +18,9 @@ function alterarStatus(ev, URL, controller) {
 
     // Usando expressão regular para extrair o número
     const idNumber = toggleId.match(/\d+/)[0]; // Extrai o número após 'toggle'
+
+    //Pegando token csrf
+    const csrf = document.querySelector('input[name="csrf_token"]').value;
     // Montar os dados para enviar no POST
 
     data = new URLSearchParams();
@@ -25,6 +28,7 @@ function alterarStatus(ev, URL, controller) {
     data.append('status', isChecked);
     data.append('nomeClasse', controller);
     data.append('metodo', 'alterarStatus');
+    data.append('csrf_token', csrf);
 
     // Enviar dados via fetch (POST)
     fetch(URL, {

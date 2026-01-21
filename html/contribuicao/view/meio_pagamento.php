@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 //verificação de autenticação
 ini_set('display_errors', 0);
 ini_set('display_startup_erros', 0);
@@ -38,6 +39,8 @@ require_once('../controller/MeioPagamentoController.php');
 
 $meioPagamentoController = new MeioPagamentoController();
 $meiosPagamento = $meioPagamentoController->buscaTodos();
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 
 <!DOCTYPE html>
@@ -121,7 +124,7 @@ $meiosPagamento = $meioPagamentoController->buscaTodos();
                                 </div>
 
                                 <form method="POST" action="../controller/control.php">
-
+                                    <?= Csrf::inputField() ?>
                                     <div class="form-group">
                                         <div class="col-md-10 col-md-offset-1">
                                             Os campos com <span class="text-danger">*</span> devem ser preenchidos antes de prosseguir.
@@ -221,6 +224,7 @@ $meiosPagamento = $meioPagamentoController->buscaTodos();
                                                     <td class="vertical-center">
                                                         <button type="button" class="btn btn-default" title="Editar" data-id="<?= $meioPagamento['id'] ?>" data-plataforma-id="<?= $meioPagamento['id_plataforma'] ?>"><i class="fa fa-edit"></i></button>
                                                         <form action="../controller/control.php" method="post" style="display: inline-block; margin: 0;" onsubmit="return confirmarExclusao();">
+                                                            <?= Csrf::inputField() ?>
                                                             <input type="hidden" name="nomeClasse" value="MeioPagamentoController">
                                                             <input type="hidden" name="metodo" value="excluirPorId">
                                                             <input type="hidden" name="meio-pagamento-id" value="<?= $meioPagamento['id'] ?>">
@@ -242,6 +246,7 @@ $meiosPagamento = $meioPagamentoController->buscaTodos();
                                                 </div>
                                                 <div class="modal-body">
                                                     <form id="editForm" method="POST" action="../controller/control.php">
+                                                        <?= Csrf::inputField() ?>
                                                         <div class="form-group">
                                                             <label for="editNome">Descrição:</label>
                                                             <input type="text" class="form-control" id="editNome" name="nome" required>

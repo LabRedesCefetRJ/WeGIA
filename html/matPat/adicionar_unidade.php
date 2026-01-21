@@ -1,60 +1,35 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+
+if(session_status() === PHP_SESSION_NONE)
 	session_start();
 
-	$config_path = "config.php";
-	if(file_exists($config_path)){
-		require_once($config_path);
-	}else{
-		while(true){
-			$config_path = "../" . $config_path;
-			if(file_exists($config_path)) break;
-		}
-		require_once($config_path);
-	}
-	
-	if (!isset($_SESSION['usuario'])) {
-		header("Location: ". WWW ."html/index.php");
-	}
+if (!isset($_SESSION['usuario'])) {
+	header("Location: " . WWW . "html/index.php");
+	exit();
+}else{
+	session_regenerate_id();
+}
 
-	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-	$id_pessoa = $_SESSION['id_pessoa'];
-	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-	if(!is_null($resultado)){
-		$id_cargo = mysqli_fetch_array($resultado);
-		if(!is_null($id_cargo)){
-			$id_cargo = $id_cargo['id_cargo'];
-		}
-		$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=22");
-		if(!is_bool($resultado) and mysqli_num_rows($resultado)){
-			$permissao = mysqli_fetch_array($resultado);
-			if($permissao['id_acao'] < 3){
-				$msg = "Você não tem as permissões necessárias para essa página.";
-				header("Location: ". WWW ."html/home.php?msg_c=$msg");
-			}
-			$permissao = $permissao['id_acao'];
-		}else{
-        	$permissao = 1;
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: ". WWW ."html/home.php?msg_c=$msg");
-		}	
-	}else{
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: ". WWW ."html/home.php?msg_c=$msg");
-	}	
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once ROOT . "/html/personalizacao_display.php";
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($_SESSION['id_pessoa'], 22, 3);
+
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . "/html/personalizacao_display.php";
 ?>
 
 <!doctype html>
 <html class="fixed">
+
 <head>
 
 	<!-- Basic -->
 	<meta charset="UTF-8">
 
 	<title>Adicionar Unidade</title>
-	
+
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
@@ -67,7 +42,7 @@
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
+	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 
 	<!-- Theme CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/theme.css" />
@@ -89,48 +64,52 @@
 	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-		
+
 	<!-- Specific Page Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-		
+
 	<!-- Theme Base, Components and Settings -->
 	<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
-		
+
 	<!-- Theme Custom -->
 	<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
-		
+
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
-	<!-- javascript functions --> <script
-	src="<?= WWW ?>Functions/onlyNumbers.js"></script> <script
-	src="<?= WWW ?>Functions/onlyChars.js"></script> <script
-	src="<?= WWW ?>Functions/mascara.js"></script>
+	<!-- javascript functions -->
+	<script
+		src="<?= WWW ?>Functions/onlyNumbers.js"></script>
+	<script
+		src="<?= WWW ?>Functions/onlyChars.js"></script>
+	<script
+		src="<?= WWW ?>Functions/mascara.js"></script>
 
 	<!-- jquery functions -->
 	<script>
-   		document.write('<a href="' + document.referrer + '"></a>');
+		document.write('<a href="' + document.referrer + '"></a>');
 	</script>
 
-<script type="text/javascript">
-		$(function () {
-	      $(".header").load("<?= WWW ?>html/header.php");
-	      $(".menuu").load("<?= WWW ?>html/menu.php");
-	    });	
+	<script type="text/javascript">
+		$(function() {
+			$(".header").load("<?= WWW ?>html/header.php");
+			$(".menuu").load("<?= WWW ?>html/menu.php");
+		});
 	</script>
 </head>
+
 <body>
 	<section class="body">
 		<!-- start: header -->
 		<header class="header">
-			
+
 		</header>
 		<!-- end: header -->
 
 		<div class="inner-wrapper">
 			<!-- start: sidebar -->
 			<aside id="sidebar-left" class="sidebar-left menuu">
-				
+
 			</aside>
 			<!-- end: sidebar -->
 
@@ -154,7 +133,7 @@
 
 				<div class="row">
 					<div class="col-md-4 col-lg-2" style="visibility: hidden;"></div>
-					<div class="col-md-8 col-lg-8" >
+					<div class="col-md-8 col-lg-8">
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li class="active">
@@ -167,33 +146,33 @@
 										<form method="post" id="formulario" action="<?= WWW ?>controle/control.php">
 											<div class="form-group"><br>
 												<label class="col-md-3 control-label">Insira a nova unidade:</label>
-												
+
 												<div class="col-md-8">
 													<input type="text" class="form-control" name="descricao_unidade" id="unidade" required>
 												</div>
-											</div><br/>
-											
+											</div><br />
+
 											<input type="hidden" name="nomeClasse" value="UnidadeControle">
-											
+
 											<input type="hidden" name="metodo" value="incluir">
-											
+
 											<div class="row">
 												<div class="col-md-9 col-md-offset-3">
 													<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
-													
+
 													<input type="reset" class="btn btn-default">
-													
+
 													<a href="<?= WWW ?>html/matPat/cadastro_produto.php" style="color: white; text-decoration: none;">
 														<button class="btn btn-info" type="button">Voltar</button>
 													</a>
-													
+
 													<a href="<?= WWW ?>html/matPat/listar_unidade.php" style="color: white; text-decoration:none;">
 														<button class="btn btn-success" type="button">Listar Unidade</button>
 													</a>
 												</div>
 											</div>
 										</form>
-									</fieldset>	
+									</fieldset>
 								</div>
 							</div>
 						</div>
@@ -202,7 +181,7 @@
 
 				<!-- end: page -->
 			</section>
-			
+
 			<aside id="sidebar-right" class="sidebar-right">
 				<div class="nano">
 					<div class="nano-content">
@@ -215,4 +194,5 @@
 		</div>
 	</section>
 </body>
+
 </html>

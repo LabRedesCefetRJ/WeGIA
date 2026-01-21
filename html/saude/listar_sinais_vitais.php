@@ -1,62 +1,33 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-	ini_set('display_errors',1);
-	ini_set('display_startup_erros',1);
-	error_reporting(E_ALL);
-
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
-	if(!isset($_SESSION['usuario'])){
-		header ("Location: ../index.php");
-	}
 
-	if(!isset($_SESSION['saude']))	{
-		header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/listar_sinais_vitais.php');
-	}
-	$config_path = "config.php";
-	if(file_exists($config_path)){
-		require_once($config_path);
-	}else{
-		while(true){
-			$config_path = "../" . $config_path;
-			if(file_exists($config_path)) break;
-		}
-		require_once($config_path);
-	}
-	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-	$id_pessoa = mysqli_real_escape_string($conexao, $_SESSION['id_pessoa']);
-	$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
+if (!isset($_SESSION['usuario'])) {
+	header("Location: ../index.php");
+	exit();
+}else{
+	session_regenerate_id();
+}
 
-	if(!is_null($resultado)){
-		$id_cargo = mysqli_fetch_array($resultado);
-		if(!is_null($id_cargo)){
-			$id_cargo = $id_cargo['id_cargo'];
-		} 
-		$resultado = mysqli_query($conexao, "SELECT * FROM permissao p JOIN recurso r ON(p.id_recurso=r.id_recurso) WHERE id_cargo=$id_cargo AND r.descricao='Módulo Saúde'");
-		if(!is_bool($resultado) and mysqli_num_rows($resultado)){
-			$permissao = mysqli_fetch_array($resultado);
-			if($permissao['id_acao'] < 5){
-        $msg = "Você não tem as permissões necessárias para essa página.";
-        header("Location: ../home.php?msg_c=$msg");
-			}
-			$permissao = $permissao['id_acao'];
-		}else{
-        	$permissao = 1;
-          $msg = "Você não tem as permissões necessárias para essa página.";
-          header("Location: ../home.php?msg_c=$msg");
-		}	
-	}else{
-		$permissao = 1;
-    $msg = "Você não tem as permissões necessárias para essa página.";
-    header("Location: ../../home.php?msg_c=$msg");
-	}	
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
-	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-	require_once "../personalizacao_display.php";
+permissao($_SESSION['id_pessoa'], 5, 5);
+
+if (!isset($_SESSION['saude'])) {
+	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=SaudeControle&nextPage=../html/saude/listar_sinais_vitais.php');
+}
+
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once "../personalizacao_display.php";
 ?>
 
 
 <!doctype html>
 <html class="fixed">
+
 <head>
 
 	<!-- Basic -->
@@ -72,7 +43,7 @@
 	<link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-	<link rel="icon" href="<?php display_campo("Logo",'file');?>" type="image/x-icon" id="logo-icon">
+	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 
 	<!-- Specific Page Vendor CSS -->
 	<link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
@@ -90,7 +61,7 @@
 	<!-- Head Libs -->
 	<script src="../../assets/vendor/modernizr/modernizr.js"></script>
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
-		
+
 	<!-- Vendor -->
 	<script src="../../assets/vendor/jquery/jquery.min.js"></script>
 	<script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -99,16 +70,16 @@
 	<script src="../../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="../../assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-		
+
 	<!-- Specific Page Vendor -->
 	<script src="../../assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-		
+
 	<!-- Theme Base, Components and Settings -->
 	<script src="../../assets/javascripts/theme.js"></script>
-		
+
 	<!-- Theme Custom -->
 	<script src="../../assets/javascripts/theme.custom.js"></script>
-		
+
 	<!-- Theme Initialization Files -->
 	<script src="../../assets/javascripts/theme.init.js"></script>
 
@@ -120,42 +91,43 @@
 	<!-- jquery functions -->
 	<script>
 		function clicar(id) {
-			window.location.href = "sinais_vitais.php?id_fichamedica="+id;
+			window.location.href = "sinais_vitais.php?id_fichamedica=" + id;
 		}
 		$(function() {
 
-			localStorage.setItem("currentTab","null");
-			var pacientes = <?php echo $_SESSION['saude'];?> ;
+			localStorage.setItem("currentTab", "null");
+			var pacientes = <?php echo $_SESSION['saude']; ?>;
 			console.log(pacientes);
 			<?php unset($_SESSION['saude']); ?>;
 			$.each(pacientes, function(i, item) {
 				$("#tabela")
-				.append($("<tr>")
-					.attr("onclick", "clicar('" + item.id_fichamedica + "')")
-					.attr("class", "teste")
-					.append($("<td>")
-						.text(item.nome+' '+item.sobrenome))
-					.append($("<td />")
-						.attr('onclick','clicar("'+item.id_fichamedica+'")')
-					.html('<i class="glyphicon glyphicon-pencil"></i>')));
-				});
+					.append($("<tr>")
+						.attr("onclick", "clicar('" + item.id_fichamedica + "')")
+						.attr("class", "teste")
+						.append($("<td>")
+							.text(item.nome + ' ' + item.sobrenome))
+						.append($("<td />")
+							.attr('onclick', 'clicar("' + item.id_fichamedica + '")')
+							.html('<i class="glyphicon glyphicon-pencil"></i>')));
 			});
+		});
 
 
-		$(function () {
-	      $("#header").load("../header.php");
-	      $(".menuu").load("../menu.php");
-	    });
+		$(function() {
+			$("#header").load("../header.php");
+			$(".menuu").load("../menu.php");
+		});
 	</script>
 </head>
+
 <body>
 	<section class="body">
 		<!-- start: header -->
 		<div id="header"></div>
-        <!-- end: header -->
-        <div class="inner-wrapper">
-          <!-- start: sidebar -->
-          <aside id="sidebar-left" class="sidebar-left menuu"></aside>
+		<!-- end: header -->
+		<div class="inner-wrapper">
+			<!-- start: sidebar -->
+			<aside id="sidebar-left" class="sidebar-left menuu"></aside>
 
 			<!-- end: sidebar -->
 			<section role="main" class="content-body">
@@ -165,7 +137,7 @@
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li><a href="../index.php"> <i class="fa fa-home"></i>
-							</a></li>
+								</a></li>
 							<li><span>Sinais Vitais</span></li>
 						</ol>
 
@@ -199,31 +171,31 @@
 					</div>
 					<br>
 				</section>
-		<!-- end: page -->
+				<!-- end: page -->
 
-		<!-- Vendor -->
-		<script src="../../assets/vendor/select2/select2.js"></script>
-		<script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-		<script src="../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-		<script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
-		
-		<!-- Theme Base, Components and Settings -->
-		<script src="../../assets/javascripts/theme.js"></script>
-		
-		<!-- Theme Custom -->
-		<script src="../../assets/javascripts/theme.custom.js"></script>
-		
-		<!-- Theme Initialization Files -->
-		<script src="../../assets/javascripts/theme.init.js"></script>
+				<!-- Vendor -->
+				<script src="../../assets/vendor/select2/select2.js"></script>
+				<script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+				<script src="../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+				<script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 
-		<!-- Examples -->
-		<script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
-		<script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-		<script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
-		
-	<div align="right">
-	<iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>
-	</div>
-	</body>
+				<!-- Theme Base, Components and Settings -->
+				<script src="../../assets/javascripts/theme.js"></script>
+
+				<!-- Theme Custom -->
+				<script src="../../assets/javascripts/theme.custom.js"></script>
+
+				<!-- Theme Initialization Files -->
+				<script src="../../assets/javascripts/theme.init.js"></script>
+
+				<!-- Examples -->
+				<script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
+				<script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+				<script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
+				<div align="right">
+					<iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>
+				</div>
+</body>
+
 </html>
-
