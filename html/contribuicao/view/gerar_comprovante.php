@@ -26,8 +26,10 @@ $brand = $brandController->getBrand();
             <div class="wrap-input100">
                 <span class="label-input100">CPF do Doador</span>
                 <input class="input100" type="text" name="cpf" id="cpf"
-                    placeholder="000.000.000-00" onkeyup="return Onlynumbers(event)" onkeypress="mascara('###.###.###-##',this,event)" maxlength="14" required>
+                    placeholder="000.000.000-00" onkeyup="return Onlynumbers(event)" oninput="mascaraCPF(this)" maxlength="14" inputmode="numeric" required>
             </div>
+
+            <!--Adicionar suporte para pesquisar por CNPJ-->
 
             <div class="wrap-input100">
                 <span class="label-input100">Data Inicial</span>
@@ -55,7 +57,6 @@ $brand = $brandController->getBrand();
 <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
 <script src="../vendor/select2/select2.min.js"></script>
-<script src="../public/js/mascara.js"></script>
 <script src="../public/js/util.js"></script>
 <script src="../public/js/recibo.js"></script>
 <!--Busca cep-->

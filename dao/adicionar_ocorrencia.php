@@ -1,12 +1,20 @@
 <?php
-//Requisições necessárias
-require_once 'Conexao.php';
-require_once '../html/permissao/permissao.php';
-require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+if(session_status() === PHP_SESSION_NONE)
+	session_start();
 
 //Verifica se um usuário está logado e possui as permissões necessárias
-session_start();
+if(!isset($_SESSION['usuario'])){
+	header('Location: ../index.php');
+	exit();
+}
+
+session_regenerate_id();
+
+require_once '../html/permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 11, 3);
+
+require_once 'Conexao.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 //Sanitiza a entrada.
 try {

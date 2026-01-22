@@ -34,17 +34,9 @@ function chamaModal(tr) {
             <a target="_blank" href="${dadosCobranca[0].link_boleto}" id="btn_importar_xlsx_cobranca" class="btn btn-app">
             <i class="fas fa-file-alt"></i> Link do boleto
             </a>
-
-            <a href="./deletar_cobranca.php?cobranca=${dadosCobranca[0].codigo}" id="btn_importar_xlsx_cobranca" class="btn btn-app">
-            <i class="fas fa-trash-alt"></i> Deletar cobrança
-            </a>
-
-            
-
-           
     
-                      </div>
-                      <div class="modal-footer">
+        </div>
+                    <div class="modal-footer">
                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
                       </div>
                    </form>
@@ -57,11 +49,7 @@ function chamaModal(tr) {
        </div>
     </div>
         `;
-        // inputs = $(modal_detalhes_html).find("input");
-        // console.log(inputs);
-        // for(input of inputs){
-        //   console.log(input);
-        // }
+
         $(".boxCodigo").prepend(
             '<div class="overlay"> <i class="fa fa-refresh fa-spin"></i> </div>'
         );

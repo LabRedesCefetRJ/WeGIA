@@ -5,12 +5,12 @@
 
 <div id="cpf" class="wrap-input100 validate-input bg1" data-validate="Digite um documento válido!">
     <span class="label-input100">Digite um documento CPF <span class="obrigatorio">*</span></span>
-    <input class="input100" type="text" name="dcpf" id="dcpf" class="text required" placeholder="Ex: 222.222.222-22" onkeyup="return Onlynumbers(event)" onkeypress="mascara('###.###.###-##',this,event)" maxlength="14" required><span id="avisa_cpf"></span>
+    <input class="input100" type="text" name="dcpf" id="dcpf" class="text required" placeholder="Ex: 222.222.222-22" oninput="mascaraCPF(this)" maxlength="14" required inputmode="numeric"><span id="avisa_cpf"></span>
 </div>
 
 <div id="cnpj" class="wrap-input100 validate-input bg1 hidden" data-validate="Digite um documento válido!">
     <span class="label-input100"> Digite um documento CNPJ <span class="obrigatorio">*</span></span>
-    <input class="input100" type="text" name="dcpf" id="dcnpj" maxlength="18" class="form-control input-md" ng-m placeholder="Ex: 22.222.222/2222-22" onkeypress="mascara('##.###.###/####-##',this,event)"><span id="avisa_cnpj"></span>
+    <input class="input100" type="text" name="dcpf" id="dcnpj" maxlength="18" class="form-control input-md" ng-m placeholder="Ex: 22.222.222/2222-22" oninput="mascaraCNPJ(this)"><span id="avisa_cnpj" inputmode="numeric"></span>
 </div>
 <div class="container-contact100-form-btn">
     <button class="contact100-form-btn" id="consultar-btn">
