@@ -27,6 +27,7 @@ $tipoContribuicao = 'Apoio Mensal';
 
         <form id="formulario">
             <input type="hidden" name="forma-contribuicao" id="forma-contribuicao" value="boleto">
+            <?= Csrf::inputField() ?>
 
             <div id="pag1" class="wrap-input100">
                 <!--Adiciona a página de valor de contribuição-->
@@ -96,7 +97,6 @@ $tipoContribuicao = 'Apoio Mensal';
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 <script src="../vendor/select2/select2.min.js"></script>
-<script src="../public/js/mascara.js"></script>
 <script src="../public/js/util.js"></script>
 <script src="../public/js/recorrencia.js"></script>
 <!--Busca cep-->

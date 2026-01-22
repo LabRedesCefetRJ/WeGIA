@@ -24,6 +24,7 @@ permissao($id_pessoa, 4, 7);
 require_once("../conexao.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!DOCTYPE html>
 <html class="fixed">

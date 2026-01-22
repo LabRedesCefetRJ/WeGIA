@@ -1,4 +1,20 @@
 <?php
+//redirecionar o fluxo para uma controladora e apagar o arquivo
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
+if (!isset($_SESSION['usuario'])) {
+    http_response_code(401);
+    header("Location: ../../../index.php");
+} else {
+    session_regenerate_id();
+}
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 3);
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+
 require("../conexao.php");
 if (!isset($_POST) or empty($_POST)) {
     $data = file_get_contents("php://input");
@@ -7,9 +23,13 @@ if (!isset($_POST) or empty($_POST)) {
 } else if (is_string($_POST)) {
     $_POST = json_decode($_POST, true);
 }
-$cadastrado =  false;
 
-// extract($_REQUEST);
+if(!Csrf::validateToken($_POST['csrf_token'])){
+    http_response_code(401);
+    exit('Token CSRF inválido ou ausente.');
+}
+
+$cadastrado =  false;
 
 $socio_nome = trim($_REQUEST['socio_nome']);
 $pessoa = trim($_REQUEST['pessoa']);
@@ -46,11 +66,6 @@ if (!$contribuinte || empty($contribuinte)) {
     exit('O tipo do contribuinte não pode ser vazio.');
 }
 
-/*if(!$status || !is_numeric($status) || $status < 0){
-        http_response_code(400);
-        exit('O id de um status deve ser um inteiro maior ou igual a 0.');
-    } */ //Desativado temporariamente
-
 if (!$tag || !is_numeric($tag) || $tag < 1) {
     http_response_code(400);
     exit('O id de uma tag deve ser um inteiro maior ou igual a 1.');
@@ -62,7 +77,7 @@ if (!$cpf_cnpj || empty($cpf_cnpj)) { //posteriormente adicionar validações de
 }
 
 if (!$data_nasc || empty($data_nasc)) { //posteiormente adicionar validações de formato
-   $data_nasc = null;
+    $data_nasc = null;
 }
 
 if (!$data_referencia || empty($data_referencia)) { //Posteriormente adicionar validações de formato
@@ -85,14 +100,14 @@ if (!$tipo_contribuicao || !is_numeric($tipo_contribuicao) || $tipo_contribuicao
 $stmtBuscaSocio = $conexao->prepare("SELECT p.id_pessoa FROM pessoa p JOIN socio s ON(s.id_pessoa=p.id_pessoa) WHERE cpf=?");
 $stmtBuscaSocio->bind_param('s', $cpf_cnpj);
 
-if($stmtBuscaSocio->execute()){
+if ($stmtBuscaSocio->execute()) {
     $resultado = $stmtBuscaSocio->get_result();
-    if($stmtBuscaSocio->affected_rows > 0){
+    if ($stmtBuscaSocio->affected_rows > 0) {
         http_response_code(400);
         echo json_encode(['erro' => 'já existe um sócio com esse CPF']);
         exit();
     }
-}else{
+} else {
     http_response_code(500);
     echo json_encode(['erro' => 'erro ao buscar o sócio no banco de dados']);
     exit();
@@ -204,8 +219,6 @@ if ($stmt->execute()) {
             }
             break;
     }
-
-    // $resultado = mysqli_query($conexao, "INSERT INTO `socio`(`id_pessoa`, `id_sociostatus`, `id_sociotipo`, `email`, `valor_periodo`, `data_referencia`, `id_sociotag`) VALUES ('$id_pessoa', '$status', '$id_sociotipo', '$email', '$valor_periodo', '$data_referencia', $tag)");
 
     $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia, id_sociotag) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmt2->bind_param('iiisdss', $id_pessoa, $status, $id_sociotipo, $email, $valor_periodo, $data_referencia, $tag);

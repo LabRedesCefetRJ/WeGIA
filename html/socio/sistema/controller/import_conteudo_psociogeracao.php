@@ -59,6 +59,7 @@
 					</div>
 					<div class="box-body">
 						<form action="gerar_contribuicao.php" method="POST">
+							<?= Csrf::inputField() ?>
 							<h1>Pesquise o sócio</h1>
 							<input type="text" id="id_pesquisa" name="id_pesquisa" placeholder="Digite o nome do sócio ou o cpf/cnpj" autocomplete="off" size="20" class="form-control">
 							<div style="display: none" class="row mt-2 configs_unico">

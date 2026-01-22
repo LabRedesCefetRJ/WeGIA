@@ -183,6 +183,7 @@ $(document).ready(function () {
                         const valor = document.getElementById('valor_u').value;
                         const socio = document.getElementById('id_pesquisa').value;
                         const dia = document.getElementById('data_vencimento').value;
+                        const csrfToken = document.getElementsByName('csrf_token').item(0).value;
                         let parcela = document.getElementById('num_parcelas').value;
 
                         //verificar se fim-ano está selecionado, caso esteja, o número de parcelas deve ser calculado automaticamente
@@ -200,7 +201,8 @@ $(document).ready(function () {
                             "valor": valor,
                             "dia": dia,
                             "parcelas": parcela,
-                            "tipoGeracao": tipoGeracao
+                            "tipoGeracao": tipoGeracao,
+                            "csrf_token": csrfToken
                         }).done(function (r) {
                             const resposta = JSON.parse(r);
                             if (resposta.link) {

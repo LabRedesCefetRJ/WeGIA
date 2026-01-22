@@ -256,9 +256,9 @@ $smtp_enabled = ($smtpConfig && $smtpConfig['smtp_ativo'] == 1);
 										<h4><i class="fa fa-user"></i> Autenticação</h4>
 
 										<div class="form-group">
-											<label class="control-label">Usuário/Email</label>
-											<input type="email" class="form-control" name="smtp_username" value="<?= htmlspecialchars($smtp_username) ?>" placeholder="seu-email@gmail.com">
-											<p class="help-block">Email usado para autenticação no servidor SMTP</p>
+											<label class="control-label">Usuário/E-mail</label>
+											<input type="text" class="form-control" name="smtp_username" value="<?= htmlspecialchars($smtp_username) ?>" placeholder="seu-email@gmail.com">
+											<p class="help-block">Usuário/e-mail usado para autenticação no servidor SMTP</p>
 										</div>
 
 										<div class="form-group">

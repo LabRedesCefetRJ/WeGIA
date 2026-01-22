@@ -21,6 +21,7 @@ $brand = $brandController->getBrand();
 
         <div id="pag1" class="wrap-input100">
 
+            <?= Csrf::inputField() ?>
             <div class="centralizar">
                 <input class="radio" type="radio" id="op_cpf" value="fisica" name="opcao" checked><label class="label" for="op_cpf">PESSOA FÍSICA</label>
                 <input class="radio" type="radio" id="op_cnpj" value="juridica" name="opcao"><label class="label" for="op_cnpj">PESSOA JURÍDICA</label><br><br>
@@ -28,12 +29,12 @@ $brand = $brandController->getBrand();
 
             <div id="cpf" class="wrap-input100 validate-input bg1" data-validate="Digite um documento válido!">
                 <span class="label-input100">Digite um documento CPF*</span>
-                <input class="input100" type="text" name="dcpf" id="dcpf" class="text required" placeholder="Ex: 222.222.222-22" onkeyup="return Onlynumbers(event)" onkeypress="mascara('###.###.###-##',this,event)" maxlength="14" required><span id="avisa_cpf"></span>
+                <input class="input100" type="text" name="dcpf" id="dcpf" class="text required" placeholder="Ex: 222.222.222-22" oninput="mascaraCPF(this)" inputmode="numeric" maxlength="14" required><span id="avisa_cpf"></span>
             </div>
 
             <div id="cnpj" class="wrap-input100 validate-input bg1 hidden" data-validate="Digite um documento válido!">
                 <span class="label-input100"> Digite um documento CNPJ *</span>
-                <input class="input100" type="text" name="dcpf" id="dcnpj" maxlength="18" class="form-control input-md" ng-m placeholder="Ex: 22.222.222/2222-22" onkeypress="mascara('##.###.###/####-##',this,event)"><span id="avisa_cnpj"></span>
+                <input class="input100" type="text" name="dcpf" id="dcnpj" maxlength="18" class="form-control input-md" ng-m placeholder="Ex: 22.222.222/2222-22" oninput="mascaraCNPJ(this)" inputmode="numeric"><span id="avisa_cnpj"></span>
             </div>
             <div class="container-contact100-form-btn">
                 <button class="contact100-form-btn" id="consultar-btn">
@@ -58,7 +59,6 @@ $brand = $brandController->getBrand();
     <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 
     <script src="../vendor/select2/select2.min.js"></script>
-    <script src="../public/js/mascara.js"></script>
     <script src="../public/js/segundaVia.js"></script>
     <?php
     require_once './templates/footer.php';

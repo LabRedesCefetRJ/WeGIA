@@ -1,4 +1,5 @@
 <?php
+//refatorar para POO
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -70,11 +71,11 @@ if ($tipo_pessoa === 'j') $tipoPessoaLen = 18;
 
 // tipo_socio -> ids
 $tipoSocioMap = [
-    'c' => [0,1],
-    'b' => [6,7],
-    't' => [8,9],
-    's' => [10,11],
-    'm' => [2,3]
+    'c' => [0,1, 20, 21, 40, 41],
+    'b' => [6,7, 24, 25, 44, 45],
+    't' => [8,9, 26, 27, 46, 47],
+    's' => [10,11, 28, 29, 48, 49],
+    'm' => [2,3, 22, 23, 42, 43]
 ];
 $tipoSocioIds = $tipoSocioMap[$tipo_socio] ?? null;
 
@@ -84,7 +85,7 @@ FROM pessoa p
 JOIN socio s ON (p.id_pessoa = s.id_pessoa)
 JOIN socio_tipo st ON (s.id_sociotipo = st.id_sociotipo)
 JOIN socio_status ss ON (ss.id_sociostatus = s.id_sociostatus)
-JOIN socio_tag stag ON (stag.id_sociotag = s.id_sociotag)";
+LEFT JOIN socio_tag stag ON stag.id_sociotag = s.id_sociotag";
 
 $whereClauses = [];
 $params = []; // valores para bind (posicionais)

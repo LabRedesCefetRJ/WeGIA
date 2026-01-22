@@ -93,9 +93,9 @@ class EmailControle {
                 $erros[] = 'Porta deve ser um número válido entre 1 e 65535';
             }
             
-            $username = trim($dados['smtp_username'] ?? '');
-            if (empty($username) || !filter_var($username, FILTER_VALIDATE_EMAIL)) {
-                $erros[] = 'Email de usuário deve ser um email válido';
+            $username = trim(filter_var($dados['smtp_username'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
+            if (empty($username)) {
+                $erros[] = 'Nome de usuário inválido.';
             }
             
             if (empty(trim($dados['smtp_password'] ?? ''))) {

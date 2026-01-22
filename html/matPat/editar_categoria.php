@@ -181,7 +181,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<div class="col-md-8">
 													<input type="text" class="form-control" value="<?= htmlspecialchars($cat['descricao_categoria'], ENT_QUOTES, 'UTF-8') ?>" name="descricao_categoria" id="categoria" required>
 													<!-- CSRF -->
-													<?php Csrf::inputField();?>
+													<?= Csrf::inputField() ?>
 													<input type="hidden" value="<?= htmlspecialchars($cat['id_categoria_produto'], ENT_QUOTES, 'UTF-8') ?>" name="id_categoria_produto" required>
 													<input type="hidden" name="nomeClasse" value="CategoriaControle">
 													<input type="hidden" name="metodo" value="editar">
