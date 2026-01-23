@@ -76,7 +76,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `wegia`.`pessoa_arquivo` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `id_pessoa` INT NOT NULL,
-  `data` TIMESTAMP NOT NULL,
+  `data` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `arquivo_nome` VARCHAR(255) NOT NULL,
   `arquivo_extensao` VARCHAR(10) NOT NULL,
   `arquivo` LONGBLOB NOT NULL,
