@@ -1,5 +1,7 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Arquivo.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PessoaArquivoDTO.php';
+
 class PessoaArquivo{
     //properities
     private int $id;
