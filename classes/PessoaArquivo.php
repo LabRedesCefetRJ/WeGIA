@@ -9,6 +9,7 @@ class PessoaArquivo{
     private Arquivo $arquivo;
     private PessoaArquivoDAO $dao;
 
+    //behavior
     public function __construct(PessoaArquivoDTO $dto, ?PessoaArquivoDAO $dao = null)
     {
         $this->setId($dto->id)->setIdPessoa($dto->idPessoa)->setArquivo($dto->arquivo);
@@ -16,6 +17,11 @@ class PessoaArquivo{
         isset($dao) ? $this->dao = $dao : $this->dao = new PessoaArquivoMySQL(Conexao::connect());
     }
 
+    public function create():int|false{
+        return $this->dao->create($this);
+    }
+
+    //access
     public function getId(){
         return $this->id;
     }
