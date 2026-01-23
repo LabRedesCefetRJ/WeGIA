@@ -81,4 +81,49 @@ class ProcessoAceitacaoControle
             exit();
         }
     }
+
+    public function criarAtendidoProcesso()
+{
+    $idProcesso = (int)($_GET['id_processo'] ?? 0);
+
+    if ($idProcesso <= 0) {
+        $_SESSION['mensagem_erro'] = 'Processo inválido.';
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+    }
+
+    $pdo = Conexao::connect();
+    $dao = new ProcessoAceitacaoDAO($pdo);
+
+    $procConcluido = $dao->buscarPorIdConcluido($idProcesso);
+    if (!$procConcluido) {
+        $_SESSION['mensagem_erro'] = 'Não é possível criar atendido: processo ainda não está CONCLUÍDO.';
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+    }
+
+    $resumo = $dao->buscarResumoPorId($idProcesso);
+    if (!$resumo || empty($resumo['id_pessoa']) || empty($resumo['sobrenome'])) {
+        $_SESSION['mensagem_erro'] = 'Não foi possível identificar a pessoa vinculada ao processo.';
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+    }
+
+    $idPessoa  = (int)$resumo['id_pessoa'];
+    $sobrenome = $resumo['sobrenome'];
+
+    header(
+        "Location: ../controle/control.php?nomeClasse=AtendidoControle&metodo=incluirExistente"
+        . "&id_pessoa=" . $idPessoa
+        . "&sobrenome=" . urlencode($sobrenome)
+        . "&intTipo=1&intStatus=1"
+    );
+    exit;
+}
+
+
+
+
+
+
 }

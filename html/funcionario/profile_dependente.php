@@ -277,7 +277,11 @@ try {
                     url = "../pessoa/editar_endereco.php";
                     break;
                 case "formDocumentacao":
-                    url = "../pessoa/editar_documentacao.php";
+                    data += "&nomeClasse=DependenteControle&metodo=editarDocumentacao&id_dependente=" + dependente.id_dependente;
+                    $.post("../../controle/control.php", data, function() {
+                        getInfoDependente(idForm);
+                    });
+                    return true;
                     break;
                 default:
                     console.warn("Não existe nenhuma URL para: " + idForm);
@@ -713,7 +717,7 @@ try {
                                 <!-- Aba de documentação do dependente -->
                                 <div id="documentacao" class="tab-pane" role="tabpanel">
                                     <h4>Documentação</h4>
-                                    <form action="dependente_editarDoc.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $id_dependente ?>" method='POST'>
+                                    <form method='POST' id="formDocumentacao">
                                         <fieldset id="formDocumentacao">
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
