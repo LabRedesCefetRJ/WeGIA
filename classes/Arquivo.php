@@ -37,13 +37,11 @@ final class Arquivo
 
     private function validarUpload(array $file): void
     {
-        if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK) {
-            throw new InvalidArgumentException('Erro no upload do arquivo.');
-        }
+        if (!isset($file['error']) || $file['error'] !== UPLOAD_ERR_OK)
+            throw new InvalidArgumentException('Erro no upload do arquivo.', 412);
 
-        if (!is_uploaded_file($file['tmp_name'])) {
-            throw new InvalidArgumentException('Arquivo inválido.');
-        }
+        if (!is_uploaded_file($file['tmp_name']))
+            throw new InvalidArgumentException('Arquivo inválido.', 412);
     }
 
     private function carregarFromUpload(array $file): void
@@ -51,11 +49,10 @@ final class Arquivo
         $this->nome = basename($file['name']);
         $this->extensao = strtolower(pathinfo($this->nome, PATHINFO_EXTENSION));
 
-        $permitidas = ['pdf', 'jpg', 'jpeg', 'png'];
+        $permitidas = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'];
 
-        if (!in_array($this->extensao, $permitidas, true)) {
+        if (!in_array($this->extensao, $permitidas, true)) 
             throw new InvalidArgumentException('Extensão não permitida.');
-        }
 
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $this->mime = $finfo->file($file['tmp_name']);
@@ -65,13 +62,14 @@ final class Arquivo
             'jpg'  => 'image/jpeg',
             'jpeg' => 'image/jpeg',
             'png'  => 'image/png',
+            'doc'  => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         ];
 
-        if ($this->mime !== ($mimes[$this->extensao] ?? null)) {
+        if ($this->mime !== ($mimes[$this->extensao] ?? null))
             throw new InvalidArgumentException('MIME inválido.');
-        }
 
-        $this->conteudo = file_get_contents($file['tmp_name']);
+        $this->conteudo = base64_encode(file_get_contents($file['tmp_name']));
     }
 
 

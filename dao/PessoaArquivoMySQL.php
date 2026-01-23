@@ -23,7 +23,7 @@ class PessoaArquivoMySQL implements PessoaArquivoDAO
         $stmt->bindValue(':idPessoa', $pessoaArquivo->getIdPessoa(), PDO::PARAM_INT);
         $stmt->bindValue(':arquivoNome', $pessoaArquivo->getArquivo()->getNome(), PDO::PARAM_STR);
         $stmt->bindValue(':arquivoExtensao', $pessoaArquivo->getArquivo()->getExtensao(), PDO::PARAM_STR);
-        $stmt->bindValue(':arquivo', $pessoaArquivo->getArquivo()->getConteudo(), PDO::PARAM_LOB);
+        $stmt->bindValue(':arquivo', gzcompress($pessoaArquivo->getArquivo()->getConteudo()), PDO::PARAM_LOB);
 
         if(!$stmt->execute())
             return false;
