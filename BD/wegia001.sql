@@ -71,6 +71,25 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`pessoa_arquivo`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`pessoa_arquivo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_pessoa` INT NOT NULL,
+  `data` TIMESTAMP NOT NULL,
+  `arquivo_nome` VARCHAR(255) NOT NULL,
+  `arquivo_extensao` VARCHAR(10) NOT NULL,
+  `arquivo` LONGBLOB NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_pessoa_arquivo_pessoa_id_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`captcha`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`captcha` (
