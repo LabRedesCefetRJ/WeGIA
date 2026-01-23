@@ -113,6 +113,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                             <th>Status</th>
                                             <th>Etapas</th>
                                             <th>Arquivos</th>
+                                            <th>Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -121,11 +122,13 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                 <td><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></td>
                                                 <td><?= htmlspecialchars($processo['cpf']) ?></td>
                                                 <td><?= htmlspecialchars($processo['status']) ?></td>
+
                                                 <td>
                                                     <a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" class="btn btn-xs btn-primary">
                                                         <i class="fa fa-edit"></i>
                                                     </a>
                                                 </td>
+
                                                 <td>
                                                     <button type="button"
                                                         class="btn btn-xs btn-info btn-arquivos-processo"
@@ -136,6 +139,14 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                         <i class="fa fa-paperclip"></i>
                                                     </button>
                                                 </td>
+
+                                                <td>
+                                                    <a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$processo['id'] ?>"
+                                                        class="btn btn-xs btn-success"
+                                                        onclick="return confirm('Confirmar criação de atendido para este processo?');">
+                                                        <i class="fa fa-user-plus"></i> Criar Atendido
+                                                    </a>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -144,6 +155,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                         <?php endif; ?>
                     </div>
                 </section>
+
 
                 <div class="modal fade" id="modalNovoProcesso" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog" role="document">
