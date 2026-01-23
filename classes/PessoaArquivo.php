@@ -12,7 +12,10 @@ class PessoaArquivo{
     //behavior
     public function __construct(PessoaArquivoDTO $dto, ?PessoaArquivoDAO $dao = null)
     {
-        $this->setId($dto->id)->setIdPessoa($dto->idPessoa)->setArquivo($dto->arquivo);
+        $this->setIdPessoa($dto->idPessoa)->setArquivo($dto->arquivo);
+
+        if(isset($dto->id))
+            $this->setId($dto->id);
 
         isset($dao) ? $this->dao = $dao : $this->dao = new PessoaArquivoMySQL(Conexao::connect());
     }
