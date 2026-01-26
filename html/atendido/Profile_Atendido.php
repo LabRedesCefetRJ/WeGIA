@@ -1030,12 +1030,15 @@ $dependente = json_encode($dependente);
                                   <span aria-hidden="true">&times;</span>
                                 </button>
                               </div>
-                              <form action='documento_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                              <form action='../../controle/control.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                                <input type="hidden" name="nomeClasse" value="AtendidoDocumentacaoControle">
+                                <input type="hidden" name="metodo" value="create">
+                                <input type="hidden" name="id_atendido" value="<?= (int)$id ?>">
                                 <div class="modal-body" style="padding: 15px 40px">
                                   <div class="form-group" style="display: grid;">
                                     <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
                                     <div style="display: flex;">
-                                      <select name="id_docfuncional" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
+                                      <select name="id_tipo_documentacao" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
                                         <option selected disabled>Selecionar...</option>
                                         <?php
                                         foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
