@@ -60,8 +60,8 @@ class AtendidoDocumentacaoControle
 
             $this->pdo->commit();
 
-            //retornar resposta
-            echo json_encode($resultado);
+            //retornar para página
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido={$atendidoDocumentacao->getIdAtendido()}");
         } catch (Exception $e) {
             if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
