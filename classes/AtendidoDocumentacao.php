@@ -21,6 +21,10 @@ class AtendidoDocumentacao
         isset($dao) ? $this->dao = $dao : $this->dao = new AtendidoDocumentacaoMySql();
     }
 
+    public function create():int|false{
+        return $this->dao->create($this);
+    }
+
     public function getId()
     {
         return $this->id;
