@@ -3,7 +3,7 @@ final class Arquivo
 {
     private string $nome;
     private string $extensao;
-    private string $mime;
+    private ?string $mime = null;
     private string $conteudo;
 
     private function __construct() {}
@@ -20,14 +20,17 @@ final class Arquivo
 
     public static function fromDatabase(
         string $conteudo,
-        string $mime,
         string $nome,
-        string $extensao
+        string $extensao,
+        ?string $mime = null,
     ): self {
         $obj = new self();
 
         $obj->conteudo = $conteudo;
-        $obj->mime = $mime;
+
+        if(isset($mime))
+            $obj->mime = $mime;
+        
         $obj->nome = $nome;
         $obj->extensao = $extensao;
 

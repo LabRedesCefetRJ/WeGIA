@@ -5,6 +5,6 @@ interface PessoaArquivoDAO{
     public function __construct(?PDO $pdo = null);
     public function create(PessoaArquivo $pessoaArquivo):int|false;
     public function delete(int $id):bool;
-    public function getById(int $id):PessoaArquivoDTO;
+    public function getById(int $id):PessoaArquivoDTO|null;
     public function getAll():array;
 }

@@ -36,9 +36,22 @@ class PessoaArquivoMySQL implements PessoaArquivoDAO
         throw new \Exception('Not implemented');
     }
 
-    public function getById(int $id): PessoaArquivoDTO
+    public function getById(int $id): PessoaArquivoDTO|null
     {
-        throw new \Exception('Not implemented');
+        $query = 'SELECT * FROM pessoa_arquivo WHERE id=:id';
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        if($stmt->rowCount() != 1)
+            return null;
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        $pessoaArquivoDto = new PessoaArquivoDTO($resultado);
+        $pessoaArquivoDto->arquivo = Arquivo::fromDatabase($resultado['arquivo'], $resultado['arquivo_nome'], $resultado['arquivo_extensao']);
+
+        return $pessoaArquivoDto;
     }
 
     public function getAll(): array

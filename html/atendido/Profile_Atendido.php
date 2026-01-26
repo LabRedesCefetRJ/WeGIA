@@ -33,7 +33,7 @@ $teste = $cache->read($id);
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
-$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos WHERE atendido_idatendido =:idAtendido");
+$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos JOIN pessoa_arquivo pa ON a.id_pessoa_arquivo=pa.id WHERE atendido_idatendido =:idAtendido");
 
 $stmtDocFuncional->bindParam(':idAtendido', $id);
 $stmtDocFuncional->execute();
@@ -533,7 +533,7 @@ $dependente = json_encode($dependente);
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.idatendido_documentacao + "' target='_tab' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + "' target='_tab' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
               .append($("<a onclick='removerFuncionarioDocs(" + item.idatendido_documentacao + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )

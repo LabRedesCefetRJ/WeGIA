@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Arquivo.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PessoaArquivoDTO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'PessoaArquivoMySQL.php';
 
 class PessoaArquivo{
     //properities
@@ -22,6 +23,13 @@ class PessoaArquivo{
 
     public function create():int|false{
         return $this->dao->create($this);
+    }
+
+    public static function getById(int $id, ?PessoaArquivoDAO $dao = null):PessoaArquivoDTO|null{
+        if(!isset($dao))
+            $dao = new PessoaArquivoMySQL(Conexao::connect());
+
+        return $dao->getById($id);
     }
 
     //access
