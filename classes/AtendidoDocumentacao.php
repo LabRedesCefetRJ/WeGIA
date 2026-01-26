@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'AtendidoDocumentacaoDTO.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AtendidoDocumentacaoDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AtendidoDocumentacaoMySql.php';
 
 class AtendidoDocumentacao
