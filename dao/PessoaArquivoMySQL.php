@@ -33,7 +33,12 @@ class PessoaArquivoMySQL implements PessoaArquivoDAO
 
     public function delete(int $id): bool
     {
-        throw new \Exception('Not implemented');
+        $query = 'DELETE FROM pessoa_arquivo WHERE id=:id';
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        
+        return $stmt->execute();
     }
 
     public function getById(int $id): PessoaArquivoDTO|null

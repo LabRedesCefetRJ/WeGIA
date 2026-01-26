@@ -1399,7 +1399,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido_documentacao` (
   CONSTRAINT `fk_atendido_documentacao_pessoa_arquivo`
     FOREIGN KEY (`id_pessoa_arquivo`)
     REFERENCES `wegia`.`pessoa_arquivo` (`id`)
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     ON UPDATE NO ACTION
 )
 ENGINE = InnoDB;

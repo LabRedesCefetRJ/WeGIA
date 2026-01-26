@@ -1,5 +1,5 @@
 <?php 
-
+//substituir pela nova
 class DocumentoAtendido {
     private $id_fundocs;
     private $documento;
