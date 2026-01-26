@@ -17,6 +17,13 @@ require_once ROOT . "/classes/Util.php";
 
 class AtendidoDAO
 {
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo=null)
+    {
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
+    }
+
     public function formatoDataDMY($data)
     {
         $data_arr = explode("-", $data);
@@ -263,6 +270,16 @@ class AtendidoDAO
         }
 
         return $pessoas;
+    }
+
+    public function getIdPessoaByIdAtendido(int $idAtendido):int{
+        $query = 'SELECT pessoa_id_pessoa FROM atendido WHERE idatendido=:idAtendido';
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':idAtendido', $idAtendido, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC)['pessoa_id_pessoa'];
     }
 
     public function listar($id)

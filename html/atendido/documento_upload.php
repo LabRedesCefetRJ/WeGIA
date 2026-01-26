@@ -1,4 +1,5 @@
 <?php
+//redirecionar fluxo para controladora de arquivos
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
