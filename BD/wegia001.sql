@@ -1376,25 +1376,33 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido_documentacao` (
   `idatendido_documentacao` INT NOT NULL AUTO_INCREMENT,
   `atendido_idatendido` INT NOT NULL,
   `atendido_docs_atendidos_idatendido_docs_atendidos` INT NOT NULL,
-  `data` TIMESTAMP NOT NULL,
-  `arquivo_nome` VARCHAR(255) NOT NULL,
-  `arquivo_extensao` VARCHAR(10) NOT NULL,
-  `arquivo` LONGBLOB NOT NULL,
+  `id_pessoa_arquivo` INT NOT NULL,
+
   PRIMARY KEY (`idatendido_documentacao`),
-  INDEX `fk_atendido_documentacao_atendido1_idx` (`atendido_idatendido` ASC),
-  INDEX `fk_atendido_documentacao_atendido_docs_atendidos1_idx` (`atendido_docs_atendidos_idatendido_docs_atendidos` ASC),
-  CONSTRAINT `fk_atendido_documentacao_atendido1`
+
+  INDEX `idx_atendido_documentacao_atendido` (`atendido_idatendido`),
+  INDEX `idx_atendido_documentacao_docs` (`atendido_docs_atendidos_idatendido_docs_atendidos`),
+  INDEX `idx_atendido_documentacao_arquivo` (`id_pessoa_arquivo`),
+
+  CONSTRAINT `fk_atendido_documentacao_atendido`
     FOREIGN KEY (`atendido_idatendido`)
     REFERENCES `wegia`.`atendido` (`idatendido`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT `fk_atendido_documentacao_atendido_docs_atendidos1`
+
+  CONSTRAINT `fk_atendido_documentacao_docs`
     FOREIGN KEY (`atendido_docs_atendidos_idatendido_docs_atendidos`)
     REFERENCES `wegia`.`atendido_docs_atendidos` (`idatendido_docs_atendidos`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+    ON UPDATE NO ACTION,
 
+  CONSTRAINT `fk_atendido_documentacao_pessoa_arquivo`
+    FOREIGN KEY (`id_pessoa_arquivo`)
+    REFERENCES `wegia`.`pessoa_arquivo` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+)
+ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`atendido_contato`
