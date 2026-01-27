@@ -12,6 +12,10 @@ class PessoaArquivoControle
         isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
     }
 
+    /**
+     * Recebe a requisição POST e realiza os procedimentos necessários para salvar uma persistência de PessoaArquivo no banco de dados do sistema.
+     * Retorna JSON como resposta para o cliente da aplicação.
+     */
     public function create()
     {
         try {

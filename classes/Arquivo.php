@@ -8,6 +8,9 @@ final class Arquivo
 
     private function __construct() {}
 
+    /**
+     * Instancia um Arquivo através dos dados enviados pela interface do usuário.
+     */
     public static function fromUpload(array $file): self
     {
         $obj = new self();
@@ -18,6 +21,9 @@ final class Arquivo
         return $obj;
     }
 
+    /**
+     * Instancia um Arquivo através dos dados salvos no banco de dados do sistema.
+     */
     public static function fromDatabase(
         string $conteudo,
         string $nome,
