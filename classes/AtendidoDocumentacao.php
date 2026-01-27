@@ -21,6 +21,9 @@ class AtendidoDocumentacao
         isset($dao) ? $this->dao = $dao : $this->dao = new AtendidoDocumentacaoMySql();
     }
 
+    /**
+     * Cria a persistência do objeto no banco de dados do sistema.
+     */
     public function create():int|false{
         return $this->dao->create($this);
     }

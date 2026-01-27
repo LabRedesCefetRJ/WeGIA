@@ -16,6 +16,10 @@ class AtendidoDocumentacaoControle
         isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
     }
 
+    /**
+     * Recebe a requisição POST e realiza os procedimentos necessários para salvar uma persistência de AtendidoDocumentacao no banco de dados do sistema.
+     * Redireciona o usuário para a página Profile_Atendido do paciente selecionado.
+     */
     public function create()
     {
         try {

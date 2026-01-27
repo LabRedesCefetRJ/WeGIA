@@ -22,11 +22,18 @@ class PessoaArquivo
         isset($dao) ? $this->dao = $dao : $this->dao = new PessoaArquivoMySQL(Conexao::connect());
     }
 
+    /**
+     * Cria a persistência do objeto no banco de dados do sistema.
+     */
     public function create(): int|false
     {
         return $this->dao->create($this);
     }
 
+    /**
+     * Procura a persistência no banco de dados do sistema através do seu id.
+     * Retorna um objeto do tipo PessoaArquivoDTO em caso de sucesso na busca
+     */
     public static function getById(int $id, ?PessoaArquivoDAO $dao = null): PessoaArquivoDTO|null
     {
         if (!isset($dao))
@@ -35,6 +42,9 @@ class PessoaArquivo
         return $dao->getById($id);
     }
 
+    /**
+     * Apaga a persistência do banco de dados do sistema que possui id equivalente ao informado.
+     */
     public static function deleteById(int $id, ?PessoaArquivoDAO $dao = null)
     {
         if (!isset($dao))
