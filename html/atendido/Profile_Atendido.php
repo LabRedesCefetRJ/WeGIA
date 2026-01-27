@@ -33,7 +33,7 @@ $teste = $cache->read($id);
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
-$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos WHERE atendido_idatendido =:idAtendido");
+$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos JOIN pessoa_arquivo pa ON a.id_pessoa_arquivo=pa.id WHERE atendido_idatendido =:idAtendido");
 
 $stmtDocFuncional->bindParam(':idAtendido', $id);
 $stmtDocFuncional->execute();
@@ -533,8 +533,8 @@ $dependente = json_encode($dependente);
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.idatendido_documentacao + "' target='_tab' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.idatendido_documentacao + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + "' target='_tab' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a onclick='removerFuncionarioDocs(" + item.id_pessoa_arquivo + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
       });
@@ -548,8 +548,8 @@ $dependente = json_encode($dependente);
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.idatendido_documentacao + " '  target='_' title='Visualizar ou Baixar' ><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.idatendido_documentacao + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + " '  target='_' title='Visualizar ou Baixar' ><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a onclick='removerFuncionarioDocs(" + item.id_pessoa_arquivo + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
       });
@@ -1030,12 +1030,15 @@ $dependente = json_encode($dependente);
                                   <span aria-hidden="true">&times;</span>
                                 </button>
                               </div>
-                              <form action='documento_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                              <form action='../../controle/control.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                                <input type="hidden" name="nomeClasse" value="AtendidoDocumentacaoControle">
+                                <input type="hidden" name="metodo" value="create">
+                                <input type="hidden" name="id_atendido" value="<?= (int)$id ?>">
                                 <div class="modal-body" style="padding: 15px 40px">
                                   <div class="form-group" style="display: grid;">
                                     <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
                                     <div style="display: flex;">
-                                      <select name="id_docfuncional" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
+                                      <select name="id_tipo_documentacao" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
                                         <option selected disabled>Selecionar...</option>
                                         <?php
                                         foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
