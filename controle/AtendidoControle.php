@@ -381,11 +381,11 @@ class AtendidoControle
         }
 
         try {
-            $atendido = $this->verificar();  
-            $cpf      = null;                
+            $atendido = $this->verificar();
+            $cpf      = null;
 
             $intDAO     = new AtendidoDAO();
-            $idAtendido = $intDAO->incluir($atendido, $cpf);  
+            $idAtendido = $intDAO->incluir($atendido, $cpf);
 
             $_SESSION['msg']  = "Atendido cadastrado sem CPF com sucesso";
             $_SESSION['tipo'] = "success";
@@ -409,17 +409,27 @@ class AtendidoControle
 
         try {
             $atendidoDAO = new AtendidoDAO();
-
             $atendidoDAO->incluirExistente($atendido, $idPessoa, $sobrenome);
+
             $_SESSION['msg'] = "Atendido cadastrado com sucesso";
             $_SESSION['proxima'] = "Cadastrar outro atendido";
             $_SESSION['link'] = "../html/atendido/cadastro_atendido.php";
 
             header("Location: ../html/atendido/Informacao_Atendido.php");
+            exit;
+        } catch (RuntimeException $e) {
+            $_SESSION['mensagem_erro'] = $e->getMessage();
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
+        } catch (PDOException $e) {
+            Util::tratarException($e);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
+            exit;
         }
     }
+
 
     public function alterar()
     {

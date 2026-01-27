@@ -67,8 +67,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `tipo_sanguineo` VARCHAR(5) NULL DEFAULT NULL,
   `nivel_acesso` TINYINT(4) NULL DEFAULT '0',
   `adm_configurado` TINYINT(4) NULL DEFAULT '0',
-  PRIMARY KEY (`id_pessoa`))
-ENGINE = InnoDB;
+  PRIMARY KEY (`id_pessoa`),
+  UNIQUE KEY `uq_pessoa_cpf` (`cpf`)
+) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`pessoa_arquivo`
@@ -1299,9 +1300,13 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido` (
   `atendido_tipo_idatendido_tipo` INT NOT NULL,
   `atendido_status_idatendido_status` INT NOT NULL,
   PRIMARY KEY (`idatendido`),
+
+  UNIQUE KEY `uq_atendido_pessoa` (`pessoa_id_pessoa`),
+
   INDEX `fk_atendido_pessoa1_idx` (`pessoa_id_pessoa` ASC),
   INDEX `fk_atendido_atendido_tipo1_idx` (`atendido_tipo_idatendido_tipo` ASC),
   INDEX `fk_atendido_atentido_status1_idx` (`atendido_status_idatendido_status` ASC),
+
   CONSTRAINT `fk_atendido_pessoa1`
     FOREIGN KEY (`pessoa_id_pessoa`)
     REFERENCES `wegia`.`pessoa` (`id_pessoa`)
@@ -1316,8 +1321,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido` (
     FOREIGN KEY (`atendido_status_idatendido_status`)
     REFERENCES `wegia`.`atendido_status` (`idatendido_status`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
 
 -- -----------------------------------------------------
 -- Table `wegia`.`atendido_parentesco`
@@ -2303,17 +2309,39 @@ DELIMITER ;
 -- -----------------------------------------------------
 
 DELIMITER $$
-USE `wegia`$$
-CREATE PROCEDURE `cadatendido`(IN `strNome` VARCHAR(100), IN `strSobrenome` VARCHAR(100), IN `strCpf` VARCHAR(40), IN `strSexo` CHAR(1), IN `strTelefone` VARCHAR(25), IN `dateNascimento` DATE, IN `intStatus` INT, IN `intTipo` INT)
-begin
-declare idP int;
-INSERT INTO pessoa(cpf,nome,sobrenome,sexo,telefone,data_nascimento) VALUES (strCpf,strNome,strSobrenome,strSexo,strTelefone,dateNascimento);
-select max(id_pessoa) into idP FROM pessoa;
-INSERT INTO atendido(pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status) VALUES (idP,intTipo,intStatus); 
 
+USE `wegia`$$
+
+DROP PROCEDURE IF EXISTS `cadatendido`$$
+CREATE PROCEDURE `cadatendido`(
+  IN `strNome` VARCHAR(100),
+  IN `strSobrenome` VARCHAR(100),
+  IN `strCpf` VARCHAR(40),
+  IN `strSexo` CHAR(1),
+  IN `strTelefone` VARCHAR(25),
+  IN `dateNascimento` DATE,
+  IN `intStatus` INT,
+  IN `intTipo` INT
+)
+BEGIN
+  DECLARE idP INT;
+
+  INSERT INTO pessoa(cpf,nome,sobrenome,sexo,telefone,data_nascimento)
+  VALUES (strCpf,strNome,strSobrenome,strSexo,strTelefone,dateNascimento);
+
+  SET idP = LAST_INSERT_ID();
+
+  IF EXISTS (SELECT 1 FROM atendido WHERE pessoa_id_pessoa = idP) THEN
+    SIGNAL SQLSTATE '45000'
+      SET MESSAGE_TEXT = 'Já existe atendido para esta pessoa.';
+  END IF;
+
+  INSERT INTO atendido(pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
+  VALUES (idP,intTipo,intStatus);
 END$$
 
 DELIMITER ;
+
 
 
 -- -----------------------------------------------------

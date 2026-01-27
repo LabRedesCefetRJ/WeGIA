@@ -19,7 +19,7 @@ class AtendidoDAO
 {
     private PDO $pdo;
 
-    public function __construct(?PDO $pdo=null)
+    public function __construct(?PDO $pdo = null)
     {
         isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
     }
@@ -112,36 +112,55 @@ class AtendidoDAO
 
     public function incluirExistente($atendido, $idPessoa, $sobrenome)
     {
-        $sql = "UPDATE pessoa set sobrenome=:sobrenome, sexo=:sexo WHERE id_pessoa=:id_pessoa;";
-
-        $sql2 = "INSERT INTO atendido(pessoa_id_pessoa,atendido_tipo_idatendido_tipo,atendido_status_idatendido_status)
-             values(:id_pessoa,:intTipo,:intStatus)";
+        $sql = "UPDATE pessoa SET sobrenome = :sobrenome, sexo = :sexo WHERE id_pessoa = :id_pessoa;";
+        $sql2 = "INSERT INTO atendido(pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
+             VALUES(:id_pessoa, :intTipo, :intStatus)";
 
         $pdo = Conexao::connect();
         $stmt = $pdo->prepare($sql);
         $stmt2 = $pdo->prepare($sql2);
 
-        $nome = $atendido->getNome();
         $sobrenome = $atendido->getSobrenome();
-        $cpf = $atendido->getCpf();
         $sexo = $atendido->getSexo();
-        $telefone = $atendido->getTelefone();
-        $nascimento = $atendido->getDataNascimento();
         $tipo = $atendido->getIntTipo();
         $status = $atendido->getIntStatus();
 
-        $stmt->bindParam(':id_pessoa', $idPessoa);
+        $stmt->bindParam(':id_pessoa', $idPessoa, PDO::PARAM_INT);
         $stmt->bindParam(':sobrenome', $sobrenome);
         $stmt->bindParam(':sexo', $sexo);
 
-        $stmt2->bindParam(':id_pessoa', $idPessoa);
-        $stmt2->bindParam(':intStatus', $status);
-        $stmt2->bindParam(':intTipo', $tipo);
+        $stmt2->bindParam(':id_pessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt2->bindParam(':intStatus', $status, PDO::PARAM_INT);
+        $stmt2->bindParam(':intTipo', $tipo, PDO::PARAM_INT);
 
+        try {
+            $pdo->beginTransaction();
 
-        $stmt->execute();
-        $stmt2->execute();
+            $stmt->execute();
+
+            try {
+                $stmt2->execute();
+            } catch (PDOException $e) {
+                $sqlState = $e->getCode();
+                $driverCode = $e->errorInfo[1] ?? null;
+
+                if ($sqlState === '23000' && (int)$driverCode === 1062) {
+                    $pdo->rollBack();
+                    throw new RuntimeException('Já existe atendido cadastrado para esta pessoa.');
+                }
+
+                throw $e;
+            }
+
+            $pdo->commit();
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }
+
 
     //reformular o método, não deve ser possível deletar um atendido da base de dados.
     public function excluir($id)
@@ -196,7 +215,7 @@ class AtendidoDAO
             $stmt->bindValue(':imagem', $imagem);
             $stmt->execute();
         } catch (PDOException $e) {
-          Util::tratarException($e);
+            Util::tratarException($e);
         }
     }
 
@@ -272,7 +291,8 @@ class AtendidoDAO
         return $pessoas;
     }
 
-    public function getIdPessoaByIdAtendido(int $idAtendido):int{
+    public function getIdPessoaByIdAtendido(int $idAtendido): int
+    {
         $query = 'SELECT pessoa_id_pessoa FROM atendido WHERE idatendido=:idAtendido';
 
         $stmt = $this->pdo->prepare($query);
