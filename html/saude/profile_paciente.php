@@ -1444,7 +1444,7 @@ try {
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany" id="data_atendimento">Data do atendimento:<sup class="obrig">*</sup></label>
                             <div class="col-md-6">
-                              <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_atendimento" id="data_atendimento" max=<?php echo date('Y-m-d'); ?> required>
+                              <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_atendimento" id="data_atendimento" max=<?php echo date('Y-m-d');?> min=<?= htmlspecialchars($data_nasc_atendido) ?> required>
                             </div>
 
                           </div>
