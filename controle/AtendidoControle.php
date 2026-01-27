@@ -464,7 +464,7 @@ class AtendidoControle
         try {
             $pdo = Conexao::connect();
 
-            if (!empty($nascimento)) {
+            if (!empty($data_nascimento)) {
                 $sql_expedicao = "SELECT p.data_expedicao FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
                 $stmt_expedicao = $pdo->prepare($sql_expedicao);
                 $stmt_expedicao->bindParam(':idatendido', $idatendido, PDO::PARAM_INT);
@@ -473,7 +473,7 @@ class AtendidoControle
 
                 if ($atendido_doc && !empty($atendido_doc['data_expedicao'])) {
                     try {
-                        $data_nascimento_obj = new DateTime($nascimento);
+                        $data_nascimento_obj = new DateTime($data_nascimento);
                         $data_expedicao_obj = new DateTime($atendido_doc['data_expedicao']);
 
                         if ($data_nascimento_obj > $data_expedicao_obj) {
