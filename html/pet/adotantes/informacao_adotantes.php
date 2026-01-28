@@ -1,155 +1,104 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
-	if(!isset($_SESSION['usuario']))
-	{
-		header ("Location: ../index.php");
-	}
 
-	$config_path = "config.php";
-	if(file_exists($config_path))
-	{
-		require_once($config_path);
-	}
-	else
-	{
-		while(true)
-		{
-			$config_path = "../" . $config_path;
-			if(file_exists($config_path)) break;
-		}
-		require_once($config_path);
-	}
-	
-	// Conexão única com PDO
-
-
-try {
-	$conexao = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASSWORD);
-	$conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-	$id_pessoa = $_SESSION['id_pessoa'];
-
-	$stmt = $conexao->prepare("SELECT * FROM funcionario WHERE id_pessoa = :id_pessoa");
-	$stmt->bindParam(':id_pessoa', $id_pessoa, PDO::PARAM_INT);
-	$stmt->execute();
-	$funcionario = $stmt->fetch(PDO::FETCH_ASSOC);
-
-	if ($funcionario) {
-		$id_cargo = $funcionario['id_cargo'];
-
-		$stmt = $conexao->prepare("
-			SELECT * FROM permissao p 
-			JOIN acao a ON p.id_acao = a.id_acao 
-			JOIN recurso r ON p.id_recurso = r.id_recurso 
-			WHERE p.id_cargo = :id_cargo 
-			  AND a.descricao = :desc_acao 
-			  AND r.descricao = :desc_recurso
-		");
-
-		$descricao_acao = 'LER, GRAVAR E EXECUTAR';
-		$descricao_recurso = 'Cadastrar Pet';
-
-		$stmt->bindParam(':id_cargo', $id_cargo, PDO::PARAM_INT);
-		$stmt->bindParam(':desc_acao', $descricao_acao, PDO::PARAM_STR);
-		$stmt->bindParam(':desc_recurso', $descricao_recurso, PDO::PARAM_STR);
-
-		$stmt->execute();
-		$permissao = $stmt->fetch(PDO::FETCH_ASSOC);
-
-		if (!$permissao || $permissao['id_acao'] < 5) {
-			header("Location: ../../home.php?msg_c=" . urlencode("Você não tem as permissões necessárias para essa página."));
-			exit;
-		}
-	} else {
-		header("Location: ../../home.php?msg_c=" . urlencode("Você não tem as permissões necessárias para essa página."));
-		exit;
-	}
-} catch (PDOException $e) {
-	// Opcional: salvar log do erro
-	error_log("Erro ao listar adotantes: " . $e->getMessage());
-
-	// Redireciona ou exibe mensagem genérica
-	header("Location: ../../home.php?msg_c=" . urlencode("Erro ao carregar os dados. Tente novamente mais tarde."));
-	exit;
+if (!isset($_SESSION['usuario'])) {
+	header("Location: ../index.php");
+	exit();
+}else{
+	session_regenerate_id();
 }
 
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 
+if(!$id_pessoa || $id_pessoa < 1){
+	http_response_code(400);
+	header("Location: ../index.php");
+	exit();
+}
 
-	// Lógica para listar os adotantes
-	try {		
-		$conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-	
-		$sqlListarAdotantes = "SELECT cpf, nome, sobrenome, sexo, telefone, data_nascimento, imagem, cep, 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+permissao($id_pessoa, 61, 7);
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'config.php';
+
+// Lógica para listar os adotantes
+try {
+	$conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+	$sqlListarAdotantes = "SELECT cpf, nome, sobrenome, sexo, telefone, data_nascimento, imagem, cep, 
 										estado, cidade, bairro, logradouro, numero_endereco, complemento
 								FROM pessoa;";
-		
-		$stmt = $conexao->prepare($sqlListarAdotantes);
-		$stmt->execute();
-	
-		$resultadosListarAdotantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-	} catch (PDOException $e) {
-		echo 'Erro ao conectar ao banco de dados: ' . $e->getMessage();
-	}
-?>	
+	$stmt = $conexao->prepare($sqlListarAdotantes);
+	$stmt->execute();
+
+	$resultadosListarAdotantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+	echo 'Erro ao conectar ao banco de dados';
+	exit();
+}
+?>
 
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>Informações dos Adotantes</title>
 
 	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href="<?php echo WWW;?>assets/vendor/bootstrap/css/bootstrap.css" />
-    <link rel="stylesheet" href="<?php echo WWW;?>assets/vendor/font-awesome/css/font-awesome.css" />
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
-    <link rel="stylesheet" href="<?php echo WWW;?>assets/vendor/magnific-popup/magnific-popup.css" />
-    <link rel="stylesheet" href="<?php echo WWW;?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-    <link rel="stylesheet" href="<?php echo WWW;?>assets/vendor/select2/select2.css" />
-    <link rel="stylesheet" href="<?php echo WWW;?>assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
-    <link rel="stylesheet" href="<?php echo WWW;?>assets/stylesheets/theme.css" />
-    <link rel="stylesheet" href="<?php echo WWW;?>/assets/stylesheets/skins/default.css" />
-    <link rel="stylesheet" href="<?php echo WWW;?>assets/stylesheets/theme-custom.css">
+	<link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/bootstrap/css/bootstrap.css" />
+	<link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/font-awesome/css/font-awesome.css" />
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+	<link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/magnific-popup/magnific-popup.css" />
+	<link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/select2/select2.css" />
+	<link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+	<link rel="stylesheet" href="<?php echo WWW; ?>assets/stylesheets/theme.css" />
+	<link rel="stylesheet" href="<?php echo WWW; ?>/assets/stylesheets/skins/default.css" />
+	<link rel="stylesheet" href="<?php echo WWW; ?>assets/stylesheets/theme-custom.css">
 
-    <script src="<?php echo WWW;?>assets/vendor/modernizr/modernizr.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/jquery/jquery.min.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/bootstrap/js/bootstrap.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/nanoscroller/nanoscroller.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/magnific-popup/magnific-popup.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
-    <script src="<?php echo WWW;?>assets/javascripts/theme.js"></script>
-    <script src="<?php echo WWW;?>assets/javascripts/theme.custom.js"></script>
-    <script src="<?php echo WWW;?>assets/javascripts/theme.init.js"></script>
-    <script src="<?php echo WWW;?>Functions/onlyNumbers.js"></script>
-    <script src="<?php echo WWW;?>Functions/onlyChars.js"></script>
-    <script src="<?php echo WWW;?>Functions/mascara.js"></script>
-    <script src="<?php echo WWW;?>Functions/testaCPF.js"></script>
-    <script src="<?php echo WWW;?>assets/vendor/jasonday-printThis-f73ca19/printThis.js"></script>
- 
-    <script>
-      $(function(){
-          $("#header").load("<?php echo WWW;?>html/header.php");
-          $(".menuu").load("<?php echo WWW;?>html/menu.php");
-      });
-    </script>
-	</head>
+	<script src="<?php echo WWW; ?>assets/vendor/modernizr/modernizr.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
+	<script src="<?php echo WWW; ?>assets/javascripts/theme.js"></script>
+	<script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
+	<script src="<?php echo WWW; ?>assets/javascripts/theme.init.js"></script>
+	<script src="<?php echo WWW; ?>Functions/onlyNumbers.js"></script>
+	<script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
+	<script src="<?php echo WWW; ?>Functions/mascara.js"></script>
+	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<script src="<?php echo WWW; ?>assets/vendor/jasonday-printThis-f73ca19/printThis.js"></script>
+
+	<script>
+		$(function() {
+			$("#header").load("<?php echo WWW; ?>html/header.php");
+			$(".menuu").load("<?php echo WWW; ?>html/menu.php");
+		});
+	</script>
+</head>
 
 <body>
 	<section class="body">
 		<div id="header"></div>
-        <div class="inner-wrapper">
-          <aside id="sidebar-left" class="sidebar-left menuu"></aside>
+		<div class="inner-wrapper">
+			<aside id="sidebar-left" class="sidebar-left menuu"></aside>
 			<section role="main" class="content-body">
 				<header class="page-header">
 					<h2>Informações</h2>
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li><a href="../../index.php"> <i class="fa fa-home"></i>
-							</a></li>
+								</a></li>
 							<li><span>Informações dos Adotantes</span></li>
 						</ol>
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -176,21 +125,23 @@ try {
 									<th>UF</th>
 									<th>Cidade</th>
 									<th>Bairro</th>
-									<th>Logradouro</th>									
+									<th>Logradouro</th>
 									<th>Número Residencial</th>
 									<th>Complemento</th>
 								</tr>
 							</thead>
 							<tbody id="tabela">
-	  						<?php
+								<?php
 								// Listagem de todos os adotantes
 								foreach ($resultadosListarAdotantes as $linha) {
 
-									if (!empty($linha['cpf']) && !empty($linha['nome']) && !empty($linha['sobrenome']) && 
-										!empty($linha['telefone']) && !empty($linha['data_nascimento']) && !empty($linha['cep']) && 
-										!empty($linha['estado']) && !empty($linha['cidade']) && !empty($linha['bairro']) && 
-										!empty($linha['logradouro']) && !empty($linha['numero_endereco']) ) {
-					
+									if (
+										!empty($linha['cpf']) && !empty($linha['nome']) && !empty($linha['sobrenome']) &&
+										!empty($linha['telefone']) && !empty($linha['data_nascimento']) && !empty($linha['cep']) &&
+										!empty($linha['estado']) && !empty($linha['cidade']) && !empty($linha['bairro']) &&
+										!empty($linha['logradouro']) && !empty($linha['numero_endereco'])
+									) {
+
 										echo '<tr>';
 										echo '<td>' . htmlspecialchars($linha['nome']) . '</td>';
 										echo '<td>' . htmlspecialchars($linha['sobrenome']) . '</td>';
@@ -213,38 +164,38 @@ try {
 					</div>
 					<br>
 				</section>
-		
-		<div align="right">
-	  		<iframe src="https://www.wegia.org/software/footer/pet.html" width="200" height="60" style="border:none;"></iframe>
-  		</div>
-	</body>
 
-    <!-- SCRIPTS IMPORTANTES -->
-    <script src="../../../assets/vendor/modernizr/modernizr.js"></script>
-	<script src="../../../assets/vendor/jquery/jquery.min.js"></script>
-	<script src="../../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
-	<script src="../../../assets/vendor/bootstrap/js/bootstrap.js"></script>
-	<script src="../../../assets/vendor/nanoscroller/nanoscroller.js"></script>
-	<script src="../../../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-	<script src="../../../assets/vendor/magnific-popup/magnific-popup.js"></script>
-	<script src="../../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
-	<script src="../../../assets/vendor/jquery-autosize/jquery.autosize.js"></script>	
-	<script src="../../../assets/javascripts/theme.js"></script>	
-	<script src="../../../assets/javascripts/theme.custom.js"></script>
-	<script src="../../../assets/javascripts/theme.init.js"></script>
-	<script src="../../../Functions/onlyNumbers.js"></script>
-	<script src="../../../Functions/onlyChars.js"></script>
-	<script src="../../../Functions/enviar_dados.js"></script>
-	<script src="../../../Functions/mascara.js"></script>
-	<script src="../../../assets/vendor/select2/select2.js"></script>
-	<script src="../../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-	<script src="../../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-	<script src="../../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
-	<script src="../../../assets/javascripts/theme.js"></script>
-	<script src="../../../assets/javascripts/theme.custom.js"></script>
-	<script src="../../../assets/javascripts/theme.init.js"></script>
-	<script src="../../../assets/javascripts/tables/examples.datatables.default.js"></script>
-	<script src="../../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-	<script src="../../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+				<div align="right">
+					<iframe src="https://www.wegia.org/software/footer/pet.html" width="200" height="60" style="border:none;"></iframe>
+				</div>
+</body>
+
+<!-- SCRIPTS IMPORTANTES -->
+<script src="../../../assets/vendor/modernizr/modernizr.js"></script>
+<script src="../../../assets/vendor/jquery/jquery.min.js"></script>
+<script src="../../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+<script src="../../../assets/vendor/bootstrap/js/bootstrap.js"></script>
+<script src="../../../assets/vendor/nanoscroller/nanoscroller.js"></script>
+<script src="../../../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+<script src="../../../assets/vendor/magnific-popup/magnific-popup.js"></script>
+<script src="../../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+<script src="../../../assets/vendor/jquery-autosize/jquery.autosize.js"></script>
+<script src="../../../assets/javascripts/theme.js"></script>
+<script src="../../../assets/javascripts/theme.custom.js"></script>
+<script src="../../../assets/javascripts/theme.init.js"></script>
+<script src="../../../Functions/onlyNumbers.js"></script>
+<script src="../../../Functions/onlyChars.js"></script>
+<script src="../../../Functions/enviar_dados.js"></script>
+<script src="../../../Functions/mascara.js"></script>
+<script src="../../../assets/vendor/select2/select2.js"></script>
+<script src="../../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+<script src="../../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+<script src="../../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+<script src="../../../assets/javascripts/theme.js"></script>
+<script src="../../../assets/javascripts/theme.custom.js"></script>
+<script src="../../../assets/javascripts/theme.init.js"></script>
+<script src="../../../assets/javascripts/tables/examples.datatables.default.js"></script>
+<script src="../../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+<script src="../../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
 </html>
