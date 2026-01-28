@@ -1031,4 +1031,32 @@ class Util
         // Qualquer outra combinação é inválida
         return false;
     }
+
+    /**
+     * Pega o IP da requisição do usuário.
+     */
+    public static function getUserIp(): ?string
+    {
+        $headers = [
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR'
+        ];
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                $ips = explode(',', $_SERVER[$header]);
+
+                foreach ($ips as $ip) {
+                    $ip = trim($ip);
+
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6))
+                        return $ip;
+                }
+            }
+        }
+
+        return null;
+    }
 }

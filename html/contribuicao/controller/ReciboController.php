@@ -151,7 +151,7 @@ class ReciboController
 
             // Registrar log do sócio
             $mensagem = "Comprovante gerado - Código: " . $recibo->getCodigo();
-            $socioDAO->registrarLog($socio, $mensagem);
+            $socioDAO->registrarLog($socio, $mensagem, Util::getUserIp());
 
             $this->pdo->commit();
 

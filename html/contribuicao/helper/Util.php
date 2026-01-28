@@ -1,4 +1,6 @@
 <?php
+/**futuramente essa classe deverá ser depreciada, a classe `/classes/Util.php` deve ser usada no seu lugar*/
+//Transferir eventuais métodos exclusivos para a classe Util central do projeto.
 class Util
 {
 
@@ -194,8 +196,9 @@ class Util
     /**
      * Valida se a ESTRUTURA de um CNPJ é válido
      */
-    public static function validaEstruturaCnpj($cnpj) {
-        if(strlen($cnpj) === 18 && strpos($cnpj, ".") === 2 && strpos($cnpj, ".", 3) === 6 && strpos($cnpj, "/") === 10 && strpos($cnpj, "-") === 15) {
+    public static function validaEstruturaCnpj($cnpj)
+    {
+        if (strlen($cnpj) === 18 && strpos($cnpj, ".") === 2 && strpos($cnpj, ".", 3) === 6 && strpos($cnpj, "/") === 10 && strpos($cnpj, "-") === 15) {
             return true;
         }
         return false;
@@ -204,7 +207,8 @@ class Util
     /**
      * Valida se um CNPJ é válido
      */
-    public static function validaCNPJ($cnpj) {
+    public static function validaCNPJ($cnpj)
+    {
         // Remove caracteres não numéricos
         $cnpjLimpo = preg_replace('/[^0-9]/', '', $cnpj);
 
@@ -238,5 +242,33 @@ class Util
 
         // Verifica se os dígitos calculados conferem com os do CNPJ informado
         return ($cnpjLimpo[12] == $digito1 && $cnpjLimpo[13] == $digito2);
+    }
+
+    /**
+     * Pega o IP da requisição do usuário.
+     */
+    public static function getUserIp(): ?string
+    {
+        $headers = [
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR'
+        ];
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                $ips = explode(',', $_SERVER[$header]);
+
+                foreach ($ips as $ip) {
+                    $ip = trim($ip);
+
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6))
+                        return $ip;
+                }
+            }
+        }
+
+        return null;
     }
 }
