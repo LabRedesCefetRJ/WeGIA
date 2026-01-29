@@ -137,7 +137,7 @@ class ContribuicaoLogController
 
             //Registrar na tabela de socio_log
             $mensagem = "Boleto gerado recentemente";
-            $socioDao->registrarLog($contribuicaoLog->getSocio(), $mensagem, Util::getUserIp());
+            $socioDao->registrarLog($contribuicaoLog->getSocio(), $mensagem, Util::getUserIp(), Util::getUserAgent());
 
             $codigoApi = $servicoPagamento->gerarBoleto($contribuicaoLog);
 
@@ -359,7 +359,7 @@ class ContribuicaoLogController
 
             //Registrar na tabela de socio_log
             $mensagem = "Carnê gerado recentemente";
-            $socioDao->registrarLog($contribuicaoLog->getSocio(), $mensagem, Util::getUserIp());
+            $socioDao->registrarLog($contribuicaoLog->getSocio(), $mensagem, Util::getUserIp(), Util::getUserAgent());
 
             //Chamada do método de serviço de pagamento requisitado
 
@@ -483,7 +483,7 @@ class ContribuicaoLogController
 
             //Registrar na tabela de socio_log
             $mensagem = "Pix gerado recentemente";
-            $socioDao->registrarLog($contribuicaoLog->getSocio(), $mensagem, Util::getUserIp());
+            $socioDao->registrarLog($contribuicaoLog->getSocio(), $mensagem, Util::getUserIp(), Util::getUserAgent());
 
             //Chamada do método de serviço de pagamento requisitado
 
@@ -607,7 +607,7 @@ class ContribuicaoLogController
 
             // Registrar log do sócio
             $mensagem = 'Pagamento com cartão processado - ID: ' . htmlspecialchars($codigoTransacao);
-            $socioDao->registrarLog($socio, $mensagem, Util::getUserIp());
+            $socioDao->registrarLog($socio, $mensagem, Util::getUserIp(), Util::getUserAgent());
 
             $this->pdo->commit();
 

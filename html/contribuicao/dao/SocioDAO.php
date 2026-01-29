@@ -93,7 +93,7 @@ class SocioDAO
         $idSocio = $this->pdo->lastInsertId();
         $socio->setId($idSocio);
 
-        if ($this->registrarLog($socio, 'Inscrição recente', Util::getUserIp())) {
+        if ($this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
             $this->pdo->commit();
         } else {
             $this->pdo->rollBack();
@@ -136,7 +136,7 @@ class SocioDAO
         $idSocio = $this->pdo->lastInsertId();
         $socio->setId($idSocio);
 
-        if ($this->registrarLog($socio, 'Inscrição recente', Util::getUserIp())) {
+        if ($this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
             $this->pdo->commit();
         } else {
             $this->pdo->rollBack();
@@ -308,7 +308,8 @@ class SocioDAO
         return $socio;
     }
 
-    public function registrarLog(Socio $socio, string $mensagem, ?string $ip = null)
+    //refatorar para receber parâmetros via objeto
+    public function registrarLog(Socio $socio, string $mensagem, ?string $ip = null, ?string $userAgent = null)
     {
         $campos = ['id_socio', 'descricao'];
         $valores = [':idSocio', ':mensagem'];
@@ -316,6 +317,11 @@ class SocioDAO
         if ($ip !== null) {
             $campos[]  = 'ip';
             $valores[] = ':ip';
+        }
+
+        if ($userAgent !== null) {
+            $campos[]  = 'user_agent';
+            $valores[] = ':userAgent';
         }
 
         $sql = sprintf(
@@ -332,10 +338,15 @@ class SocioDAO
             $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
         }
 
+        if ($userAgent !== null) {
+            $stmt->bindValue(':userAgent', $userAgent, PDO::PARAM_STR);
+        }
+
         return $stmt->execute();
     }
 
-    public function registrarLogPorDocumento(string $documento, string $mensagem, ?string $ip = null)
+    //refatorar para receber parâmetros via objeto
+    public function registrarLogPorDocumento(string $documento, string $mensagem, ?string $ip = null, ?string $userAgent = null)
     {
         $campos  = ['id_socio', 'descricao'];
         $valores = [
@@ -351,6 +362,11 @@ class SocioDAO
             $valores[] = ':ip';
         }
 
+        if ($userAgent !== null) {
+            $campos[]  = 'user_agent';
+            $valores[] = ':userAgent';
+        }
+
         $sql = sprintf(
             "INSERT INTO socio_log (%s) VALUES (%s)",
             implode(', ', $campos),
@@ -363,6 +379,10 @@ class SocioDAO
 
         if ($ip !== null) {
             $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
+        }
+
+        if ($userAgent !== null) {
+            $stmt->bindValue(':userAgent', $userAgent, PDO::PARAM_STR);
         }
 
         return $stmt->execute();
