@@ -1059,4 +1059,23 @@ class Util
 
         return null;
     }
+
+    /**
+     * Pega o user agent da requisição do usuário
+     */
+    public static function getUserAgent(): ?string
+    {
+        if (!isset($_SERVER['HTTP_USER_AGENT'])) {
+            return null;
+        }
+
+        $userAgent = trim($_SERVER['HTTP_USER_AGENT']);
+
+        // Evita strings vazias ou absurdamente longas
+        if ($userAgent === '' || strlen($userAgent) > 512) {
+            return null;
+        }
+
+        return $userAgent;
+    }
 }
