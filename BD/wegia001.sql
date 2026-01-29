@@ -167,28 +167,48 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pa_etapa`(
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------------------------
--- Table `wegia`.`pa_arquivo`
+-- Table `wegia`.`pa_arquivo` 
 -- -----------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`pa_arquivo`(
-    `id` INT NOT NULL AUTO_INCREMENT,
-    `id_processo` INT NULL,
-    `id_etapa` INT NULL,
-    `arquivo_nome` VARCHAR(255) NOT NULL,
-    `arquivo_extensao` VARCHAR(10) NOT NULL,
-    `arquivo` LONGBLOB NOT NULL,
-    `data_upload` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (`id`),
-    CONSTRAINT `fk_pa_arquivo_processo`
-     FOREIGN KEY (`id_processo`)
-     REFERENCES `wegia`.`processo_de_aceitacao` (`id`)
-     ON DELETE NO ACTION
-     ON UPDATE NO ACTION,
-    CONSTRAINT `fk_pa_arquivo_etapa`
-     FOREIGN KEY (`id_etapa`)
-     REFERENCES `wegia`.`pa_etapa` (`id`)
-     ON DELETE NO ACTION
-     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS `wegia`.`pa_arquivo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_processo` INT NULL,
+  `id_etapa` INT NULL,
+  `id_tipo_documentacao` INT NULL,  
+  `id_pessoa_arquivo` INT NOT NULL,
+
+  PRIMARY KEY (`id`),
+
+  INDEX `idx_pa_arquivo_processo` (`id_processo` ASC),
+  INDEX `idx_pa_arquivo_etapa` (`id_etapa` ASC),
+  INDEX `idx_pa_arquivo_tipo_doc` (`id_tipo_documentacao` ASC),  
+  INDEX `idx_pa_arquivo_pessoa_arquivo` (`id_pessoa_arquivo` ASC),
+
+  CONSTRAINT `fk_pa_arquivo_processo`
+    FOREIGN KEY (`id_processo`)
+    REFERENCES `wegia`.`processo_de_aceitacao` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+
+  CONSTRAINT `fk_pa_arquivo_etapa`
+    FOREIGN KEY (`id_etapa`)
+    REFERENCES `wegia`.`pa_etapa` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+
+  CONSTRAINT `fk_pa_arquivo_tipo_doc`  
+    FOREIGN KEY (`id_tipo_documentacao`)
+    REFERENCES `wegia`.`atendido_docs_atendidos` (`idatendido_docs_atendidos`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+
+  CONSTRAINT `fk_pa_arquivo_pessoa_arquivo`
+    FOREIGN KEY (`id_pessoa_arquivo`)
+    REFERENCES `wegia`.`pessoa_arquivo` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
 
 -- -----------------------------------------------------------------------
 -- Table `wegia`.`etapa_arquivo`

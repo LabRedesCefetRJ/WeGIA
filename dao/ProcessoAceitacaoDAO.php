@@ -110,4 +110,24 @@ class ProcessoAceitacaoDAO
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
+
+    public function getIdPessoaByProcesso(int $idProcesso): int
+    {
+        $sql = "SELECT id_pessoa
+            FROM processo_de_aceitacao
+            WHERE id = :id
+            LIMIT 1";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $idProcesso, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $idPessoa = $stmt->fetchColumn();
+
+        if (!$idPessoa) {
+            throw new RuntimeException('Processo não encontrado ou sem pessoa vinculada.');
+        }
+
+        return (int)$idPessoa;
+    }
 }

@@ -13,6 +13,12 @@ include_once ROOT . '/classes/Cache.php';
 require_once ROOT . '/classes/Util.php';
 include_once ROOT . "/dao/Conexao.php";
 
+require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
+require_once ROOT . '/dao/PaArquivoDAO.php';
+require_once ROOT . '/dao/AtendidoDocumentacaoMySql.php';
+require_once ROOT . '/classes/AtendidoDocumentacao.php';
+
+
 class AtendidoControle
 {
 
@@ -398,14 +404,80 @@ class AtendidoControle
     }
 
 
+   public function incluirExistenteDoProcesso()
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $idProcesso = (int)($_GET['id_processo'] ?? 0);
+    $tipo   = (int)($_GET['intTipo'] ?? 1);
+    $status = (int)($_GET['intStatus'] ?? 1);
+
+    if ($idProcesso <= 0) {
+        $_SESSION['mensagem_erro'] = 'Processo inválido.';
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+    }
+
+    $pdo = Conexao::connect();
+
+    try {
+        $pdo->beginTransaction();
+
+        $processoDao = new ProcessoAceitacaoDAO($pdo);
+
+        if (!$processoDao->buscarPorIdConcluido($idProcesso)) {
+            throw new RuntimeException('Não é possível criar atendido: processo ainda não está CONCLUÍDO.');
+        }
+
+        $idPessoa = $processoDao->getIdPessoaByProcesso($idProcesso);
+
+        $atendidoDao = new AtendidoDAO($pdo);
+        $idAtendido = $atendidoDao->criarPorPessoa($idPessoa, $tipo, $status);
+
+        $paDao = new PaArquivoDAO($pdo);
+        $idsPessoaArquivo = $paDao->listarIdsPessoaArquivoPorProcesso($idProcesso);
+
+        $atDocDao = new AtendidoDocumentacaoMySql($pdo);
+
+        foreach ($idsPessoaArquivo as $idPessoaArquivo) {
+            $dto = new AtendidoDocumentacaoDTO([
+                'id_atendido' => $idAtendido,
+                'id_tipo_documentacao' => 1,
+                'id_pessoa_arquivo' => (int)$idPessoaArquivo
+            ]);
+
+            $obj = new AtendidoDocumentacao($dto, $atDocDao);
+            if ($obj->create() === false) {
+                throw new RuntimeException('Falha ao vincular documentação ao atendido.');
+            }
+        }
+
+        $pdo->commit();
+
+        $_SESSION['msg'] = 'Atendido criado e documentos reaproveitados com sucesso.';
+        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido);
+        exit;
+
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        $_SESSION['mensagem_erro'] = $e->getMessage();
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+    }
+}
 
 
+   
 
     public function incluirExistente()
     {
         $atendido = $this->verificarExistente();
-        $idPessoa = $_GET['id_pessoa'];
-        $sobrenome = $_GET['sobrenome'];
+        $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
+        $sobrenome = $_GET['sobrenome'] ?? '';
 
         try {
             $atendidoDAO = new AtendidoDAO();

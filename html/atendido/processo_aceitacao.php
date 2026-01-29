@@ -217,14 +217,37 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 <div id="lista-arquivos-processo"></div>
 
                                 <hr>
-                                <form method="post" action="../../controle/control.php" enctype="multipart/form-data" class="form-inline">
+                                <form id="formUploadDocProcesso" method="post" action="../../controle/control.php" enctype="multipart/form-data">
                                     <input type="hidden" name="nomeClasse" value="PaArquivoControle">
                                     <input type="hidden" name="metodo" value="upload">
                                     <input type="hidden" name="id_processo" id="upload_id_processo">
 
-                                    <input type="file" name="arquivo" class="form-control-file mr-2"
-                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odp" required>
-                                    <button type="submit" class="btn btn-primary">Anexar arquivo</button>
+                                    <div class="form-group">
+                                        <label class="my-1 mr-2" for="tipoDocumentoProcesso">Tipo de Documento <span class="text-danger">*</span></label>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <select name="id_tipo_documentacao" class="form-control" id="tipoDocumentoProcesso" required style="flex: 1;">
+                                                <option selected disabled value="">Selecionar...</option>
+                                                <?php
+                                                foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                                    echo "<option value='" . $item["idatendido_docs_atendidos"] . "'>" . htmlspecialchars($item["descricao"]) . "</option>";
+                                                }
+                                                ?>
+                                            </select>
+                                            <a href="javascript:void(0)" onclick="adicionarTipoProcesso()">
+                                                <i class="fas fa-plus" style="font-size: 20px;"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="arquivoProcesso">Arquivo <span class="text-danger">*</span></label>
+                                        <input type="file" name="arquivo" class="form-control-file" id="arquivoProcesso"
+                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odp" required>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)">
+                                        <i class="fa fa-upload"></i> Anexar arquivo
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -290,7 +313,76 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
             }
             return true;
         }
+
+        // ========== NOVAS FUNÇÕES PARA TIPO DE DOCUMENTO ==========
+
+        /**
+         * Valida se um tipo de documento foi selecionado antes de submeter
+         */
+        function verificaTipoProcesso(ev) {
+            const tipo = document.getElementById('tipoDocumentoProcesso');
+
+            if (!tipo.value || isNaN(tipo.value) || tipo.value < 1) {
+                alert('Erro: selecione um tipo de documento adequado antes de prosseguir.');
+                ev.preventDefault();
+                return false;
+            }
+
+            return true;
+        }
+
+        /**
+         * Adiciona um novo tipo de documento via prompt
+         */
+        function adicionarTipoProcesso() {
+            var tipo = window.prompt("Cadastre um Novo Tipo de Documento:");
+
+            if (!tipo) {
+                return;
+            }
+
+            tipo = tipo.trim();
+
+            if (tipo === '') {
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: '../../dao/adicionar_tipo_docs_atendido.php',
+                data: 'tipo=' + tipo,
+                success: function(response) {
+                    gerarTipoProcesso();
+                },
+                dataType: 'text'
+            });
+        }
+
+        /**
+         * Recarrega o select de tipos de documento
+         */
+        function gerarTipoProcesso() {
+            $.ajax({
+                type: "POST",
+                url: '../../dao/exibir_tipo_docs_atendido.php',
+                data: '',
+                success: function(response) {
+                    $('#tipoDocumentoProcesso').empty();
+                    $('#tipoDocumentoProcesso').append('<option selected disabled value="">Selecionar...</option>');
+
+                    $.each(response, function(i, item) {
+                        $('#tipoDocumentoProcesso').append(
+                            '<option value="' + item.idatendido_docs_atendidos + '">' +
+                            item.descricao +
+                            '</option>'
+                        );
+                    });
+                },
+                dataType: 'json'
+            });
+        }
     </script>
+
 </body>
 
 </html>
