@@ -404,7 +404,7 @@ class AtendidoControle
     }
 
 
-   public function incluirExistenteDoProcesso()
+  public function incluirExistenteDoProcesso()
 {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -437,15 +437,23 @@ class AtendidoControle
         $idAtendido = $atendidoDao->criarPorPessoa($idPessoa, $tipo, $status);
 
         $paDao = new PaArquivoDAO($pdo);
-        $idsPessoaArquivo = $paDao->listarIdsPessoaArquivoPorProcesso($idProcesso);
+        
+        $arquivosProcesso = $paDao->listarComTipoPorProcesso($idProcesso);
 
         $atDocDao = new AtendidoDocumentacaoMySql($pdo);
 
-        foreach ($idsPessoaArquivo as $idPessoaArquivo) {
+        foreach ($arquivosProcesso as $arquivo) {
+            $idPessoaArquivo = (int)$arquivo['id_pessoa_arquivo'];
+            $idTipoDoc = (int)($arquivo['id_tipo_documentacao'] ?? null);
+
+            if ($idTipoDoc <= 0) {
+                $idTipoDoc = 1; 
+            }
+
             $dto = new AtendidoDocumentacaoDTO([
                 'id_atendido' => $idAtendido,
-                'id_tipo_documentacao' => 1,
-                'id_pessoa_arquivo' => (int)$idPessoaArquivo
+                'id_tipo_documentacao' => $idTipoDoc, 
+                'id_pessoa_arquivo' => $idPessoaArquivo
             ]);
 
             $obj = new AtendidoDocumentacao($dto, $atDocDao);
@@ -460,6 +468,20 @@ class AtendidoControle
         header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido);
         exit;
 
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        if ($e->getCode() == 23000 && strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            $_SESSION['mensagem_erro'] = 'Já existe um atendido cadastrado para esta pessoa. Não é possível criar um segundo atendido com o mesmo CPF.';
+        } else {
+            $_SESSION['mensagem_erro'] = 'Erro ao processar: ' . $e->getMessage();
+        }
+        
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+
     } catch (Exception $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
@@ -469,9 +491,6 @@ class AtendidoControle
         exit;
     }
 }
-
-
-   
 
     public function incluirExistente()
     {

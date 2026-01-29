@@ -10,7 +10,6 @@ if (!isset($_SESSION['usuario'])) {
     session_regenerate_id();
 }
 
-//verificação da permissão do usuário
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 14);
 
@@ -50,9 +49,16 @@ $tipos = [
 
 $mime = $tipos[$ext] ?? 'application/octet-stream';
 
+
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
 header('Content-Type: ' . $mime);
 header('Content-Disposition: attachment; filename="' . basename($nome) . '"');
 header('Content-Length: ' . strlen($blob));
+header('Cache-Control: no-cache, must-revalidate'); 
+header('Pragma: no-cache'); 
 
 echo $blob;
 exit;

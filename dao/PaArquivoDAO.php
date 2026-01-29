@@ -9,10 +9,10 @@ class PaArquivoDAO
         $this->pdo = $pdo;
     }
 
-    public function inserir(int $idProcesso, ?int $idEtapa, int $idPessoaArquivo): bool
+    public function inserir(int $idProcesso, ?int $idEtapa, int $idPessoaArquivo, ?int $idTipoDocumentacao = null): bool
     {
-        $sql = "INSERT INTO pa_arquivo (id_processo, id_etapa, id_pessoa_arquivo)
-                VALUES (:id_processo, :id_etapa, :id_pessoa_arquivo)";
+        $sql = "INSERT INTO pa_arquivo (id_processo, id_etapa, id_pessoa_arquivo, id_tipo_documentacao)
+                VALUES (:id_processo, :id_etapa, :id_pessoa_arquivo, :id_tipo_documentacao)";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_processo', $idProcesso, PDO::PARAM_INT);
@@ -24,6 +24,13 @@ class PaArquivoDAO
         }
 
         $stmt->bindValue(':id_pessoa_arquivo', $idPessoaArquivo, PDO::PARAM_INT);
+        
+        if ($idTipoDocumentacao === null) {
+            $stmt->bindValue(':id_tipo_documentacao', null, PDO::PARAM_NULL);
+        } else {
+            $stmt->bindValue(':id_tipo_documentacao', $idTipoDocumentacao, PDO::PARAM_INT);
+        }
+
         return $stmt->execute();
     }
 
@@ -32,11 +39,14 @@ class PaArquivoDAO
         $sql = "SELECT pa.id,
                        pa.id_etapa,
                        pa.id_pessoa_arquivo,
+                       pa.id_tipo_documentacao,
                        p.arquivo_nome,
                        p.arquivo_extensao,
-                       p.data
+                       p.data,
+                       COALESCE(doc.descricao, 'Não especificado') AS tipo_documento
                 FROM pa_arquivo pa
                 JOIN pessoa_arquivo p ON p.id = pa.id_pessoa_arquivo
+                LEFT JOIN atendido_docs_atendidos doc ON doc.idatendido_docs_atendidos = pa.id_tipo_documentacao
                 WHERE pa.id_processo = :id_processo
                 ORDER BY p.data DESC";
 
@@ -100,5 +110,19 @@ class PaArquivoDAO
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_processo', $idProcesso, PDO::PARAM_INT);
         return $stmt->execute();
+    }
+
+    public function listarComTipoPorProcesso(int $idProcesso): array
+    {
+        $sql = "SELECT pa.id_pessoa_arquivo,
+                       pa.id_tipo_documentacao
+                FROM pa_arquivo pa
+                WHERE pa.id_processo = :id_processo";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_processo', $idProcesso, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

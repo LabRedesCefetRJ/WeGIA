@@ -27,9 +27,16 @@ class PaArquivoControle
     public function upload()
     {
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
+        $idTipoDoc  = (int)($_POST['id_tipo_documentacao'] ?? 0); 
 
         if ($idProcesso <= 0) {
             $_SESSION['mensagem_erro'] = 'Processo não informado.';
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            exit;
+        }
+
+        if ($idTipoDoc <= 0) {
+            $_SESSION['mensagem_erro'] = 'Tipo de documento não informado.';
             header('Location: ../html/atendido/processo_aceitacao.php');
             exit;
         }
@@ -64,7 +71,7 @@ class PaArquivoControle
                 throw new RuntimeException('Erro ao salvar arquivo da pessoa.');
             }
 
-            $ok = $this->dao->inserir($idProcesso, null, (int)$idPessoaArquivo);
+            $ok = $this->dao->inserir($idProcesso, null, (int)$idPessoaArquivo, $idTipoDoc);
 
             if (!$ok) {
                 throw new RuntimeException('Erro ao vincular arquivo ao processo.');
@@ -95,7 +102,6 @@ class PaArquivoControle
         }
 
         try {
-          
             if ($this->dao->excluir((int)$idArquivo)) {
                 $_SESSION['msg'] = 'Arquivo removido com sucesso.';
             } else {
