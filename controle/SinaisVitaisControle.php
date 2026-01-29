@@ -116,6 +116,52 @@ class SinaisVitaisControle
         }
 
         $sinaisvitais = $this->verificar();
+        $data_afericao = $sinaisvitais->getData();
+        if (empty($data_afericao)) {
+            http_response_code(400);
+            exit('A data da aferição não pode ser vazia');
+        }
+
+        $pdo = Conexao::connect();
+        $stmtPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :idFichaMedica");
+        $stmtPaciente->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+        $stmtPaciente->execute();
+        $idPaciente = $stmtPaciente->fetchColumn();
+
+        if (!$idPaciente) {
+            http_response_code(400);
+            exit('Paciente não encontrado para a ficha médica informada');
+        }
+
+        $stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+        $stmtAtendido->bindValue(':idPessoa', $idPaciente, PDO::PARAM_INT);
+        $stmtAtendido->execute();
+        $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
+
+        $timezone = new DateTimeZone('America/Sao_Paulo');
+        $dataAfericao = DateTime::createFromFormat('Y-m-d\TH:i', $data_afericao, $timezone);
+        if (!$dataAfericao) {
+            http_response_code(400);
+            exit('Data de aferição inválida');
+        }
+
+        $dataNascimento = DateTime::createFromFormat('Y-m-d', $data_nasc_atendido, $timezone);
+        if (!$dataNascimento) {
+            $dataNascimento = new DateTime('1900-01-01', $timezone);
+        }
+        $dataNascimento->setTime(0, 0, 0);
+
+        if ($dataAfericao < $dataNascimento) {
+            http_response_code(400);
+            exit('Data inválida: não pode ser anterior à data de nascimento.');
+        }
+
+        $dataAgora = new DateTime('now', $timezone);
+        if ($dataAfericao > $dataAgora) {
+            http_response_code(400);
+            exit('A data da aferição não pode ser no futuro.');
+        }
+
         $sinVitDAO = new SinaisVitaisDAO();
         
         try{
