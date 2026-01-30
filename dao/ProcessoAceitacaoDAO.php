@@ -42,7 +42,6 @@ class ProcessoAceitacaoDAO
         return (int)$this->pdo->lastInsertId();
     }
 
-
     public function listarProcessosAtivos(): array
     {
         $sql = "
@@ -52,7 +51,8 @@ class ProcessoAceitacaoDAO
             p.sobrenome,
             p.cpf,
             s.descricao AS status,
-            pa.id
+            pa.id,
+            pa.id_status 
         FROM processo_de_aceitacao pa
         JOIN pessoa p ON pa.id_pessoa = p.id_pessoa
         JOIN pa_status s ON pa.id_status = s.id
@@ -82,7 +82,6 @@ class ProcessoAceitacaoDAO
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
     }
-
 
     public function atualizarStatus(int $idProcesso, int $idStatus): bool
     {

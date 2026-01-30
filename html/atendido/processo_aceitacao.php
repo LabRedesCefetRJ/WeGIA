@@ -22,6 +22,15 @@ $pdo             = Conexao::connect();
 $processoDAO     = new ProcessoAceitacaoDAO($pdo);
 $processosAtivos = $processoDAO->listarProcessosAtivos();
 
+define('ID_STATUS_CONCLUIDO', 2);
+
+$processosConcluidos = [];
+foreach ($processosAtivos as $proc) {
+    if (isset($proc['id_status']) && (int)$proc['id_status'] === ID_STATUS_CONCLUIDO) {
+        $processosConcluidos[] = (int)$proc['id'];
+    }
+}
+
 $msg   = $_SESSION['msg'] ?? '';
 $error = $_SESSION['mensagem_erro'] ?? '';
 unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
@@ -142,11 +151,21 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                 </td>
 
                                                 <td>
-                                                    <a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$processo['id'] ?>"
-                                                        class="btn btn-xs btn-success"
-                                                        onclick="return confirm('Confirmar criação de atendido para este processo?');">
-                                                        <i class="fa fa-user-plus"></i> Criar Atendido
-                                                    </a>
+                                                    <?php if (in_array((int)$processo['id'], $processosConcluidos)): ?>
+                                                        <a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$processo['id'] ?>"
+                                                            class="btn btn-xs btn-success"
+                                                            onclick="return confirm('Confirmar criação de atendido para este processo?');">
+                                                            <i class="fa fa-user-plus"></i> Criar Atendido
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <button type="button" 
+                                                                class="btn btn-xs btn-secondary" 
+                                                                disabled 
+                                                                title="O processo precisa estar com status CONCLUÍDO para criar o atendido"
+                                                                style="cursor: not-allowed;">
+                                                            <i class="fa fa-user-plus"></i> Criar Atendido
+                                                        </button>
+                                                    <?php endif; ?>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -156,7 +175,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                         <?php endif; ?>
                     </div>
                 </section>
-
 
                 <div class="modal fade" id="modalNovoProcesso" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog" role="document">
@@ -314,11 +332,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
             return true;
         }
 
-        // ========== NOVAS FUNÇÕES PARA TIPO DE DOCUMENTO ==========
 
-        /**
-         * Valida se um tipo de documento foi selecionado antes de submeter
-         */
         function verificaTipoProcesso(ev) {
             const tipo = document.getElementById('tipoDocumentoProcesso');
 
@@ -331,9 +345,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
             return true;
         }
 
-        /**
-         * Adiciona um novo tipo de documento via prompt
-         */
         function adicionarTipoProcesso() {
             var tipo = window.prompt("Cadastre um Novo Tipo de Documento:");
 
@@ -358,9 +369,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
             });
         }
 
-        /**
-         * Recarrega o select de tipos de documento
-         */
         function gerarTipoProcesso() {
             $.ajax({
                 type: "POST",
