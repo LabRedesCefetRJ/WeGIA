@@ -16,6 +16,7 @@ permissao($_SESSION['id_pessoa'], 5, 7);
 
 if ($_POST) {
     require_once "../../dao/Conexao.php";
+    require_once "../../dao/AtendidoDAO.php";
     $pdo = Conexao::connect();
 
     try {
@@ -34,20 +35,14 @@ if ($_POST) {
         $data_registro = date('Y-m-d');
 
         // Validar data de atendimento com base na data de nascimento do paciente
-        $stmtProcuraIdPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :idFicha");
-        $stmtProcuraIdPaciente->bindValue(':idFicha', $id_fichamedica, PDO::PARAM_INT);
-        $stmtProcuraIdPaciente->execute();
-        $idPaciente = $stmtProcuraIdPaciente->fetchColumn();
+        $atendidoDAO = new AtendidoDAO();
+        $idPaciente = $atendidoDAO->obterPessoaIdPorFichaMedica((int)$id_fichamedica);
 
         if (!$idPaciente) {
             throw new Exception("Paciente não encontrado.");
         }
 
-        $stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
-        $stmtAtendido->bindValue(':idPessoa', $idPaciente, PDO::PARAM_INT);
-        $stmtAtendido->execute();
-
-        $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
+        $data_nasc_atendido = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$idPaciente) ?: '1900-01-01';
 
         $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
         $dataAtual->setTime(0, 0, 0);

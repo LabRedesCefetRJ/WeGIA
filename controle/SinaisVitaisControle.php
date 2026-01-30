@@ -12,8 +12,8 @@ if(file_exists($config_path)){
 
 require_once ROOT.'/classes/SinaisVitais.php';
 require_once ROOT.'/dao/SinaisVitaisDAO.php';
+require_once ROOT.'/dao/AtendidoDAO.php';
 include_once ROOT.'/classes/Cache.php';
-include_once ROOT."/dao/Conexao.php";
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -122,21 +122,15 @@ class SinaisVitaisControle
             exit('A data da aferição não pode ser vazia');
         }
 
-        $pdo = Conexao::connect();
-        $stmtPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :idFichaMedica");
-        $stmtPaciente->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
-        $stmtPaciente->execute();
-        $idPaciente = $stmtPaciente->fetchColumn();
+        $atendidoDAO = new AtendidoDAO();
+        $idPaciente = $atendidoDAO->obterPessoaIdPorFichaMedica((int)$id_fichamedica);
 
         if (!$idPaciente) {
             http_response_code(400);
             exit('Paciente não encontrado para a ficha médica informada');
         }
 
-        $stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
-        $stmtAtendido->bindValue(':idPessoa', $idPaciente, PDO::PARAM_INT);
-        $stmtAtendido->execute();
-        $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
+        $data_nasc_atendido = $atendidoDAO->obterDataNascimentoPorPessoaId($idPaciente) ?: '1900-01-01';
 
         $timezone = new DateTimeZone('America/Sao_Paulo');
         $dataAfericao = DateTime::createFromFormat('Y-m-d\TH:i', $data_afericao, $timezone);

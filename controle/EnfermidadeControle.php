@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__DIR__) . '/dao/Conexao.php';
 require_once dirname(__DIR__) . '/dao/EnfermidadeDAO.php';
+require_once dirname(__DIR__) . '/dao/AtendidoDAO.php';
 
 class EnfermidadeControle{
     private PDO $pdo;
@@ -30,19 +31,10 @@ class EnfermidadeControle{
         $data_diagnostico = trim($dados["data_diagnostico"]);
         $intStatus = trim($dados["intStatus"]);
 
-        $sql = "SELECT p.data_nascimento 
-        FROM pessoa p 
-        INNER JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa 
-        WHERE sf.id_fichamedica = :idFichaMedica";
-
-        $stmt_data_nasc = $this->pdo->prepare($sql);
-        $stmt_data_nasc->bindParam(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
-
-        $stmt_data_nasc->execute();
-
-        $resultado_banco = $stmt_data_nasc->fetchColumn();
+        $atendidoDAO = new AtendidoDAO();
+        $resultado_banco = $atendidoDAO->obterDataNascimentoPorFichaMedica((int)$id_fichamedica);
         
-        if($resultado_banco === false){
+        if($resultado_banco === null){
             http_response_code(404);
             echo json_encode(["erro" => "Ficha médica não encontrada"]);
             exit();
