@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pa_etapa`(
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------------------------
--- Table `wegia`.`pa_arquivo` 
+-- Table `wegia`.`pa_arquivo`
 -- -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`pa_arquivo` (
   `id` INT NOT NULL AUTO_INCREMENT,
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pa_arquivo` (
   CONSTRAINT `fk_pa_arquivo_pessoa_arquivo`
     FOREIGN KEY (`id_pessoa_arquivo`)
     REFERENCES `wegia`.`pessoa_arquivo` (`id`)
-    ON DELETE NO ACTION
+    ON DELETE CASCADE  
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
 
