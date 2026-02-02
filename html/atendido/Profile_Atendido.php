@@ -216,8 +216,8 @@ $dependente = json_encode($dependente);
           $("#tipoSanguineoSelecionado").text(item.tipo_sanguineo);
           $("#tipoSanguineoSelecionado").val(item.tipo_sanguineo);
 
-          $("#nascimento").text("Data de nascimento: " + alterardate(item.data_nascimento));
-          $("#nascimento").val(item.data_nascimento);
+          $("#data_nascimento").text("Data de nascimento: " + alterardate(item.data_nascimento));
+          $("#data_nascimento").val(item.data_nascimento);
 
           $("#registroGeral").text("Registro geral: " + item.registro_geral);
           $("#registroGeral").val(item.registro_geral);
@@ -279,10 +279,10 @@ $dependente = json_encode($dependente);
       $("#radioM").prop('disabled', false);
       $("#radioF").prop('disabled', false);
       $("#telefone").prop('disabled', false);
-      $("#nascimento").prop('disabled', false);
+      $("#data_nascimento").prop('disabled', false);
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
-      $("#tipoSanguineo").prop('disabled', false);
+      $("#tipo_sanguineo").prop('disabled', false);
       $("#botaoEditarIP").html('Cancelar');
       $("#botaoSalvarIP").prop('disabled', false);
       $("#botaoEditarIP").removeAttr('onclick');
@@ -296,10 +296,10 @@ $dependente = json_encode($dependente);
       $("#radioM").prop('disabled', true);
       $("#radioF").prop('disabled', true);
       $("#telefone").prop('disabled', true);
-      $("#nascimento").prop('disabled', true);
+      $("#data_nascimento").prop('disabled', true);
       $("#pai").prop('disabled', true);
       $("#mae").prop('disabled', true);
-      $("#tipoSanguineo").prop('disabled', true);
+      $("#tipo_sanguineo").prop('disabled', true);
 
       $("#botaoEditarIP").html('Editar');
       $("#botaoSalvarIP").prop('disabled', true);
@@ -564,7 +564,7 @@ $dependente = json_encode($dependente);
     });
 
     function validarDataExpedicao() {
-      const dataNascimento = document.getElementById('nascimento').value;
+      const dataNascimento = document.getElementById('data_nascimento').value;
       const dataExpedicao = document.getElementById('dataExpedicao').value;
 
       if (dataExpedicao && dataNascimento) {
@@ -584,7 +584,7 @@ $dependente = json_encode($dependente);
     }
 
     function validarDataNascimento() {
-      const dataNascimento = document.getElementById('nascimento').value;
+      const dataNascimento = document.getElementById('data_nascimento').value;
       const dataExpedicao = document.getElementById('dataExpedicao').value;
 
       if (dataNascimento && dataExpedicao) {
@@ -593,7 +593,7 @@ $dependente = json_encode($dependente);
 
         if (nascimento > expedicao) {
           alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
-          document.getElementById('nascimento').value = '';
+          document.getElementById('data_nascimento').value = '';
           document.getElementById('botaoSalvarIP').disabled = true;
           return false;
         }
@@ -748,13 +748,13 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                           <div class="col-md-8">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" disabled id="nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()">
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_nascimento" disabled id="data_nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()">
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="tipoSanguineo" id="tipoSanguineo" disabled>
+                            <select class="form-control input-lg mb-md" name="tipo_sanguineo" id="tipo_sanguineo" disabled>
                               <option selected id="tipoSanguineoSelecionado">Selecionar</option>
                               <option value="A+">A+</option>
                               <option value="A-">A-</option>
@@ -1442,8 +1442,8 @@ $dependente = json_encode($dependente);
         document.getElementById('nome').disabled = false;
         document.getElementById('sobrenome').disabled = false;
         document.getElementById('telefone').disabled = false;
-        document.getElementById('nascimento').disabled = false;
-        document.getElementById('tipoSanguineo').disabled = false;
+        document.getElementById('data_nascimento').disabled = false;
+        document.getElementById('tipo_sanguineo').disabled = false;
 
         var cpfField = document.getElementById('cpf');
         var cpfValue = cpfField.value.replace(/\D/g, '');

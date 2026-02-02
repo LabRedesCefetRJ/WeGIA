@@ -1111,6 +1111,8 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio_log` (
   `id_socio` INT,
   `data` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `descricao` VARCHAR(255) NOT NULL,
+  `ip` VARCHAR(39),
+  `user_agent` VARCHAR(512),
   FOREIGN KEY (`id_socio`) REFERENCES `socio`(`id_socio`)
 )ENGINE = InnoDB;
 

@@ -762,7 +762,7 @@ try {
 
                         <div class="row">
                           <?php
-                          $sqlDocumentosDownload = "SELECT ad.idatendido_documentacao as id, ad.atendido_docs_atendidos_idatendido_docs_atendidos as tipo_doc FROM atendido_documentacao ad JOIN atendido_docs_atendidos ada ON (ad.atendido_docs_atendidos_idatendido_docs_atendidos=ada.idatendido_docs_atendidos) JOIN atendido a ON (ad.atendido_idatendido=a.idatendido) JOIN pessoa p ON (a.pessoa_id_pessoa=p.id_pessoa) JOIN saude_fichamedica sf ON(p.id_pessoa=sf.id_pessoa) WHERE sf.id_fichamedica=:idFichaMedica AND ad.atendido_docs_atendidos_idatendido_docs_atendidos IN (1,2,3,5) ORDER BY tipo_doc ASC";
+                          $sqlDocumentosDownload = "SELECT ad.id_pessoa_arquivo as id, ad.atendido_docs_atendidos_idatendido_docs_atendidos as tipo_doc FROM atendido_documentacao ad JOIN atendido_docs_atendidos ada ON (ad.atendido_docs_atendidos_idatendido_docs_atendidos=ada.idatendido_docs_atendidos) JOIN atendido a ON (ad.atendido_idatendido=a.idatendido) JOIN pessoa p ON (a.pessoa_id_pessoa=p.id_pessoa) JOIN saude_fichamedica sf ON(p.id_pessoa=sf.id_pessoa) WHERE sf.id_fichamedica=:idFichaMedica AND ad.atendido_docs_atendidos_idatendido_docs_atendidos IN (1,2,3,5) ORDER BY tipo_doc ASC";
 
                           try {
                             $stmt = $pdo->prepare($sqlDocumentosDownload);
@@ -776,8 +776,6 @@ try {
                             foreach ($resultados as $documento) {
                               $documentosDownload[$documento['tipo_doc']] =  $documento['id'];
                             }
-
-                            //var_dump($documentosDownload);exit;
 
                           } catch (PDOException $e) {
                             http_response_code(500);

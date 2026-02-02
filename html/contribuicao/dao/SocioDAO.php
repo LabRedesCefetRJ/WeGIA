@@ -1,9 +1,9 @@
 <?php
 //requisitar arquivo de conexão
-require_once dirname(__FILE__).DIRECTORY_SEPARATOR.'ConexaoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 
 //requisitar model
-require_once dirname(__FILE__, 2).DIRECTORY_SEPARATOR.'model/Socio.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model/Socio.php';
 class SocioDAO
 {
     private $pdo;
@@ -91,14 +91,9 @@ class SocioDAO
 
         //registrar no socio_log
         $idSocio = $this->pdo->lastInsertId();
+        $socio->setId($idSocio);
 
-        $sqlRegistrarSocioLog = "INSERT INTO socio_log (id_socio, descricao)
-            VALUES (:idSocio,'Inscrição recente')";
-
-        $stmtSocioLog = $this->pdo->prepare($sqlRegistrarSocioLog);
-        $stmtSocioLog->bindParam(':idSocio', $idSocio);
-
-        if ($stmtSocioLog->execute()) {
+        if ($this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
             $this->pdo->commit();
         } else {
             $this->pdo->rollBack();
@@ -108,7 +103,8 @@ class SocioDAO
         }
     }
 
-    public function criarSocioPessoaPreExistente(socio $socio, int $idPessoa){
+    public function criarSocioPessoaPreExistente(socio $socio, int $idPessoa)
+    {
         $this->pdo->beginTransaction();
 
         //criar socio
@@ -138,14 +134,9 @@ class SocioDAO
 
         //registrar no socio_log
         $idSocio = $this->pdo->lastInsertId();
+        $socio->setId($idSocio);
 
-        $sqlRegistrarSocioLog = "INSERT INTO socio_log (id_socio, descricao)
-            VALUES (:idSocio,'Inscrição recente')";
-
-        $stmtSocioLog = $this->pdo->prepare($sqlRegistrarSocioLog);
-        $stmtSocioLog->bindParam(':idSocio', $idSocio);
-
-        if ($stmtSocioLog->execute()) {
+        if ($this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
             $this->pdo->commit();
         } else {
             $this->pdo->rollBack();
@@ -155,7 +146,8 @@ class SocioDAO
         }
     }
 
-    public function atualizarSocio(Socio $socio){
+    public function atualizarSocio(Socio $socio)
+    {
         //atualizar os dados de pessoa
         $sqlAtualizarPessoa =
             'UPDATE pessoa 
@@ -223,7 +215,6 @@ class SocioDAO
         $stmtSocio->bindParam(':tag', $idSocioTag);
 
         return $stmtSocio->execute();
-    
     }
 
     public function verificarInternoPorDocumento($documento)
@@ -317,37 +308,89 @@ class SocioDAO
         return $socio;
     }
 
-    public function registrarLog(Socio $socio, string $mensagem)
+    //refatorar para receber parâmetros via objeto
+    public function registrarLog(Socio $socio, string $mensagem, ?string $ip = null, ?string $userAgent = null)
     {
-        $sqlRegistrarSocioLog = "INSERT INTO socio_log (id_socio, descricao)
-        VALUES (:idSocio, :mensagem)";
+        $campos = ['id_socio', 'descricao'];
+        $valores = [':idSocio', ':mensagem'];
 
-        $stmt = $this->pdo->prepare($sqlRegistrarSocioLog);
-        $stmt->bindValue(':idSocio', $socio->getId());
-        $stmt->bindParam(':mensagem', $mensagem);
+        if ($ip !== null) {
+            $campos[]  = 'ip';
+            $valores[] = ':ip';
+        }
+
+        if ($userAgent !== null) {
+            $campos[]  = 'user_agent';
+            $valores[] = ':userAgent';
+        }
+
+        $sql = sprintf(
+            "INSERT INTO socio_log (%s) VALUES (%s)",
+            implode(', ', $campos),
+            implode(', ', $valores)
+        );
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':idSocio', $socio->getId(), PDO::PARAM_INT);
+        $stmt->bindValue(':mensagem', $mensagem, PDO::PARAM_STR);
+
+        if ($ip !== null) {
+            $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
+        }
+
+        if ($userAgent !== null) {
+            $stmt->bindValue(':userAgent', $userAgent, PDO::PARAM_STR);
+        }
 
         return $stmt->execute();
     }
 
-    public function registrarLogPorDocumento(string $documento, string $mensagem)
+    //refatorar para receber parâmetros via objeto
+    public function registrarLogPorDocumento(string $documento, string $mensagem, ?string $ip = null, ?string $userAgent = null)
     {
-        $sqlRegistrarSocioLog = "INSERT INTO socio_log (id_socio, descricao)
-        VALUES (
-            (SELECT s.id_socio
-             FROM socio s
-             JOIN pessoa p ON s.id_pessoa = p.id_pessoa
-             WHERE p.cpf =:cpf),
-            :mensagem
-        )";
+        $campos  = ['id_socio', 'descricao'];
+        $valores = [
+            '(SELECT s.id_socio
+          FROM socio s
+          JOIN pessoa p ON s.id_pessoa = p.id_pessoa
+          WHERE p.cpf = :cpf)',
+            ':mensagem'
+        ];
 
-        $stmtSocioLog = $this->pdo->prepare($sqlRegistrarSocioLog);
-        $stmtSocioLog->bindParam(':cpf', $documento);
-        $stmtSocioLog->bindParam(':mensagem', $mensagem);
-        $stmtSocioLog->execute();
+        if ($ip !== null) {
+            $campos[]  = 'ip';
+            $valores[] = ':ip';
+        }
+
+        if ($userAgent !== null) {
+            $campos[]  = 'user_agent';
+            $valores[] = ':userAgent';
+        }
+
+        $sql = sprintf(
+            "INSERT INTO socio_log (%s) VALUES (%s)",
+            implode(', ', $campos),
+            implode(', ', $valores)
+        );
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':cpf', $documento, PDO::PARAM_STR);
+        $stmt->bindValue(':mensagem', $mensagem, PDO::PARAM_STR);
+
+        if ($ip !== null) {
+            $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
+        }
+
+        if ($userAgent !== null) {
+            $stmt->bindValue(':userAgent', $userAgent, PDO::PARAM_STR);
+        }
+
+        return $stmt->execute();
     }
 
     /**Retorna todos os sócios do sistema*/
-    public function getSocios(){
+    public function getSocios()
+    {
         $socios = [];
 
         $sql = "
@@ -358,12 +401,12 @@ class SocioDAO
 
         $sociosArray = $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
-        if(count($sociosArray) < 1){
+        if (count($sociosArray) < 1) {
             return null;
         }
 
-        foreach($sociosArray as $socioArray){
-            $socios []= $this->montarSocio($socioArray);
+        foreach ($sociosArray as $socioArray) {
+            $socios[] = $this->montarSocio($socioArray);
         }
 
         return $socios;
