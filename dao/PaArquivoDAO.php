@@ -11,7 +11,7 @@ class PaArquivoDAO
 
     public function inserir(int $idProcesso, ?int $idEtapa, int $idPessoaArquivo, ?int $idTipoDocumentacao = null): bool
     {
-        $sql = "INSERT INTO pa_arquivo (id_processo, id_etapa, id_pessoa_arquivo, id_tipo_documentacao)
+        $sql = "INSERT INTO pa_arquivo (id_processo_aceitacao, id_etapa, id_pessoa_arquivo, id_tipo_documentacao)
                 VALUES (:id_processo, :id_etapa, :id_pessoa_arquivo, :id_tipo_documentacao)";
 
         $stmt = $this->pdo->prepare($sql);
@@ -47,7 +47,7 @@ class PaArquivoDAO
                 FROM pa_arquivo pa
                 JOIN pessoa_arquivo p ON p.id = pa.id_pessoa_arquivo
                 LEFT JOIN atendido_docs_atendidos doc ON doc.idatendido_docs_atendidos = pa.id_tipo_documentacao
-                WHERE pa.id_processo = :id_processo
+                WHERE pa.id_processo_aceitacao = :id_processo
                 ORDER BY p.data DESC";
 
         $stmt = $this->pdo->prepare($sql);
@@ -76,7 +76,7 @@ class PaArquivoDAO
     {
         $sql = "SELECT id_pessoa_arquivo
                 FROM pa_arquivo
-                WHERE id_processo = :id_processo";
+                WHERE id_processo_aceitacao = :id_processo";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_processo', $idProcesso, PDO::PARAM_INT);
@@ -106,7 +106,7 @@ class PaArquivoDAO
 
     public function excluirPorProcesso(int $idProcesso): bool
     {
-        $sql = "DELETE FROM pa_arquivo WHERE id_processo = :id_processo";
+        $sql = "DELETE FROM pa_arquivo WHERE id_processo_aceitacao = :id_processo";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_processo', $idProcesso, PDO::PARAM_INT);
         return $stmt->execute();
@@ -117,7 +117,7 @@ class PaArquivoDAO
         $sql = "SELECT pa.id_pessoa_arquivo,
                        pa.id_tipo_documentacao
                 FROM pa_arquivo pa
-                WHERE pa.id_processo = :id_processo";
+                WHERE pa.id_processo_aceitacao = :id_processo";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_processo', $idProcesso, PDO::PARAM_INT);

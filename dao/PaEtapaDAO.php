@@ -22,7 +22,7 @@ class PaEtapaDAO
                     s.descricao AS status_nome
                 FROM pa_etapa e
                 JOIN pa_status s ON e.id_status = s.id
-                WHERE e.id_processo = :id_processo
+                WHERE e.id_processo_aceitacao = :id_processo
                 ORDER BY e.data_inicio ASC";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':id_processo', $idProcesso, PDO::PARAM_INT);
@@ -37,7 +37,7 @@ class PaEtapaDAO
         ?string $dataInicio,
         ?string $dataFim
     ): int {
-        $sql = "INSERT INTO pa_etapa (data_inicio, data_fim, descricao, id_processo, id_status)
+        $sql = "INSERT INTO pa_etapa (data_inicio, data_fim, descricao, id_processo_aceitacao, id_status)
                 VALUES (:data_inicio, :data_fim, :descricao, :id_processo, :id_status)";
         $stmt = $this->pdo->prepare($sql);
 
@@ -86,7 +86,7 @@ class PaEtapaDAO
 
     public function buscarPorId(int $idEtapa): ?array
     {
-        $sql = "SELECT id, id_processo, data_inicio, data_fim FROM pa_etapa WHERE id = :id LIMIT 1";
+        $sql = "SELECT id, id_processo_aceitacao, data_inicio, data_fim FROM pa_etapa WHERE id = :id LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id', $idEtapa, PDO::PARAM_INT);
         $stmt->execute();

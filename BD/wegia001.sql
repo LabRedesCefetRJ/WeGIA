@@ -121,9 +121,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pa_status`(
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------------------------
--- Table `wegia`.`processo_de_aceitacao`
+-- Table `wegia`.`processo_aceitacao`
 -- -----------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`processo_de_aceitacao`(
+CREATE TABLE IF NOT EXISTS `wegia`.`processo_aceitacao`(
     `id` INT NOT NULL AUTO_INCREMENT,
     `data_inicio` DATETIME NOT NULL,
     `data_fim` DATETIME NULL,
@@ -151,12 +151,12 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pa_etapa`(
     `data_inicio` DATETIME NOT NULL,
     `data_fim` DATETIME NULL,
     `descricao` VARCHAR(512) NOT NULL,
-    `id_processo` INT NOT NULL,
+    `id_processo_aceitacao` INT NOT NULL,
     `id_status` INT NOT NULL,
     PRIMARY KEY (`id`),
     CONSTRAINT `fk_etapa_processo`
-     FOREIGN KEY (`id_processo`)
-     REFERENCES `wegia`.`processo_de_aceitacao` (`id`)
+     FOREIGN KEY (`id_processo_aceitacao`)
+     REFERENCES `wegia`.`processo_aceitacao` (`id`)
      ON DELETE NO ACTION
      ON UPDATE NO ACTION,
     CONSTRAINT `fk_etapa_status`
@@ -171,21 +171,21 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`pa_arquivo` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `id_processo` INT NULL,
+  `id_processo_aceitacao` INT NULL,
   `id_etapa` INT NULL,
   `id_tipo_documentacao` INT NULL,  
   `id_pessoa_arquivo` INT NOT NULL,
 
   PRIMARY KEY (`id`),
 
-  INDEX `idx_pa_arquivo_processo` (`id_processo` ASC),
+  INDEX `idx_pa_arquivo_processo` (`id_processo_aceitacao` ASC),
   INDEX `idx_pa_arquivo_etapa` (`id_etapa` ASC),
   INDEX `idx_pa_arquivo_tipo_doc` (`id_tipo_documentacao` ASC),  
   INDEX `idx_pa_arquivo_pessoa_arquivo` (`id_pessoa_arquivo` ASC),
 
   CONSTRAINT `fk_pa_arquivo_processo`
-    FOREIGN KEY (`id_processo`)
-    REFERENCES `wegia`.`processo_de_aceitacao` (`id`)
+    FOREIGN KEY (`id_processo_aceitacao`)
+    REFERENCES `wegia`.`processo_aceitacao` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
 

@@ -24,7 +24,7 @@ class ProcessoAceitacaoDAO
         $data_fim = null; // processo em andamento
 
         $sql = "
-            INSERT INTO processo_de_aceitacao (data_inicio, data_fim, descricao, id_status, id_pessoa)
+            INSERT INTO processo_aceitacao (data_inicio, data_fim, descricao, id_status, id_pessoa)
             VALUES (:data_inicio, :data_fim, :descricao, :id_status, :id_pessoa)
         ";
 
@@ -53,7 +53,7 @@ class ProcessoAceitacaoDAO
             s.descricao AS status,
             pa.id,
             pa.id_status 
-        FROM processo_de_aceitacao pa
+        FROM processo_aceitacao pa
         JOIN pessoa p ON pa.id_pessoa = p.id_pessoa
         JOIN pa_status s ON pa.id_status = s.id
         WHERE pa.data_fim IS NULL
@@ -72,7 +72,7 @@ class ProcessoAceitacaoDAO
             pa.id_status,
             p.nome,
             p.sobrenome
-        FROM processo_de_aceitacao pa
+        FROM processo_aceitacao pa
         JOIN pessoa p ON pa.id_pessoa = p.id_pessoa
         WHERE pa.id = :id
     ";
@@ -85,7 +85,7 @@ class ProcessoAceitacaoDAO
 
     public function atualizarStatus(int $idProcesso, int $idStatus): bool
     {
-        $sql = "UPDATE processo_de_aceitacao
+        $sql = "UPDATE processo_aceitacao
             SET id_status = :id_status
             WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
@@ -98,7 +98,7 @@ class ProcessoAceitacaoDAO
     {
         $sql = "
         SELECT pa.*, s.descricao AS status
-        FROM processo_de_aceitacao pa
+        FROM processo_aceitacao pa
         JOIN pa_status s ON pa.id_status = s.id
         WHERE pa.id = :id
           AND UPPER(TRIM(s.descricao)) = 'CONCLUÍDO'
@@ -113,7 +113,7 @@ class ProcessoAceitacaoDAO
     public function getIdPessoaByProcesso(int $idProcesso): int
     {
         $sql = "SELECT id_pessoa
-            FROM processo_de_aceitacao
+            FROM processo_aceitacao
             WHERE id = :id
             LIMIT 1";
 
