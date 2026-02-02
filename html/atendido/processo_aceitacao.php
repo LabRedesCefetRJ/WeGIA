@@ -16,11 +16,22 @@ permissao($_SESSION['id_pessoa'], 14);
 
 require_once '../../dao/Conexao.php';
 require_once '../../dao/ProcessoAceitacaoDAO.php';
+require_once '../../dao/PaStatusDAO.php';
 require_once "../personalizacao_display.php";
 
 $pdo             = Conexao::connect();
 $processoDAO     = new ProcessoAceitacaoDAO($pdo);
 $processosAtivos = $processoDAO->listarProcessosAtivos();
+
+//buscar status do processo
+$paStatusDao = new PaStatusDAO($pdo);
+$statusProcesso =  $paStatusDao->listarTodos();
+
+//pegar status da requisição
+$idStatusGet = isset($_GET['status-processo']) ? filter_input(INPUT_GET, 'status-processo', FILTER_SANITIZE_NUMBER_INT) : 1;
+
+if($idStatusGet === false)
+    $idStatusGet = 1;
 
 define('ID_STATUS_CONCLUIDO', 2);
 
@@ -107,6 +118,18 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                 <section class="panel panel-primary">
                     <header class="panel-heading">
                         <h2 class="panel-title">Lista de Processos</h2>
+                        <div class="form-inline" style="margin-top: 10px;">
+                            <label for="status-processo">Status: </label>
+                            <select class="form-control" name="status-processo" id="status-processo">
+                                <?php foreach ($statusProcesso as $status): ?>
+                                    <option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <button type="button" class="btn btn-default" id="listar-processo">
+                                Listar
+                            </button>
+                        </div>
                     </header>
                     <div class="panel-body">
                         <?php if (empty($processosAtivos)): ?>
@@ -158,11 +181,11 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                             <i class="fa fa-user-plus"></i> Criar Atendido
                                                         </a>
                                                     <?php else: ?>
-                                                        <button type="button" 
-                                                                class="btn btn-xs btn-secondary" 
-                                                                disabled 
-                                                                title="O processo precisa estar com status CONCLUÍDO para criar o atendido"
-                                                                style="cursor: not-allowed;">
+                                                        <button type="button"
+                                                            class="btn btn-xs btn-secondary"
+                                                            disabled
+                                                            title="O processo precisa estar com status CONCLUÍDO para criar o atendido"
+                                                            style="cursor: not-allowed;">
                                                             <i class="fa fa-user-plus"></i> Criar Atendido
                                                         </button>
                                                     <?php endif; ?>
@@ -389,6 +412,13 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                 dataType: 'json'
             });
         }
+    </script>
+
+    <script>
+        // Seleciona o status adequado
+        const selectElement = document.getElementById('status-processo');
+
+        selectElement.value = '<?= $idStatusGet ?>';
     </script>
 
 </body>
