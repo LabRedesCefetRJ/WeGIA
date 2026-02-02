@@ -129,4 +129,26 @@ class ProcessoAceitacaoDAO
 
         return (int)$idPessoa;
     }
+
+    public function getByStatus(int $status){
+        $query = 'SELECT 
+            p.id_pessoa,
+            p.nome,
+            p.sobrenome,
+            p.cpf,
+            s.descricao AS status,
+            pa.id,
+            pa.id_status 
+        FROM processo_aceitacao pa
+        JOIN pessoa p ON pa.id_pessoa = p.id_pessoa
+        JOIN pa_status s ON pa.id_status = s.id
+        WHERE pa.id_status = :idStatus
+        ORDER BY p.nome ASC';
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':idStatus', $status);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

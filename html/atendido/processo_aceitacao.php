@@ -18,33 +18,41 @@ require_once '../../dao/Conexao.php';
 require_once '../../dao/ProcessoAceitacaoDAO.php';
 require_once '../../dao/PaStatusDAO.php';
 require_once "../personalizacao_display.php";
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
-$pdo             = Conexao::connect();
-$processoDAO     = new ProcessoAceitacaoDAO($pdo);
-$processosAtivos = $processoDAO->listarProcessosAtivos();
+try {
+    $pdo             = Conexao::connect();
 
-//buscar status do processo
-$paStatusDao = new PaStatusDAO($pdo);
-$statusProcesso =  $paStatusDao->listarTodos();
+    //buscar status do processo
+    $paStatusDao = new PaStatusDAO($pdo);
+    $statusProcesso =  $paStatusDao->listarTodos();
 
-//pegar status da requisição
-$idStatusGet = isset($_GET['status-processo']) ? filter_input(INPUT_GET, 'status-processo', FILTER_SANITIZE_NUMBER_INT) : 1;
+    //pegar status da requisição
+    $idStatusGet = isset($_GET['status-processo']) ? filter_input(INPUT_GET, 'status-processo', FILTER_SANITIZE_NUMBER_INT) : 1;
 
-if($idStatusGet === false)
-    $idStatusGet = 1;
+    if ($idStatusGet === false)
+        $idStatusGet = 1;
 
-define('ID_STATUS_CONCLUIDO', 2);
+    $processoDAO     = new ProcessoAceitacaoDAO($pdo);
+    $processosAceitacao = $processoDAO->getByStatus($idStatusGet);
 
-$processosConcluidos = [];
-foreach ($processosAtivos as $proc) {
-    if (isset($proc['id_status']) && (int)$proc['id_status'] === ID_STATUS_CONCLUIDO) {
-        $processosConcluidos[] = (int)$proc['id'];
+    define('ID_STATUS_CONCLUIDO', 2);
+
+    $processosConcluidos = [];
+    foreach ($processosAceitacao as $proc) {
+        if (isset($proc['id_status']) && (int)$proc['id_status'] === ID_STATUS_CONCLUIDO) {
+            $processosConcluidos[] = (int)$proc['id'];
+        }
     }
-}
 
-$msg   = $_SESSION['msg'] ?? '';
-$error = $_SESSION['mensagem_erro'] ?? '';
-unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
+    $msg   = $_SESSION['msg'] ?? '';
+    $error = $_SESSION['mensagem_erro'] ?? '';
+    unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
+} catch (Exception $e) {
+    Util::tratarException($e);
+    header("Location: ../home.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -132,9 +140,9 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                         </div>
                     </header>
                     <div class="panel-body">
-                        <?php if (empty($processosAtivos)): ?>
+                        <?php if (empty($processosAceitacao)): ?>
                             <div class="alert alert-warning">
-                                Nenhum processo ativo encontrado.
+                                Nenhum processo encontrado.
                             </div>
                         <?php else: ?>
                             <div class="table-responsive">
@@ -150,7 +158,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($processosAtivos as $processo): ?>
+                                        <?php foreach ($processosAceitacao as $processo): ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></td>
                                                 <td><?= htmlspecialchars($processo['cpf']) ?></td>
@@ -417,8 +425,16 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
     <script>
         // Seleciona o status adequado
         const selectElement = document.getElementById('status-processo');
-
         selectElement.value = '<?= $idStatusGet ?>';
+
+        const btnListar = document.getElementById('listar-processo');
+
+        btnListar.addEventListener('click', function() {
+            const valorStatus = selectElement.value;
+
+            window.location.href =
+                './processo_aceitacao.php?status-processo=' + encodeURIComponent(valorStatus);
+        });
     </script>
 
 </body>
