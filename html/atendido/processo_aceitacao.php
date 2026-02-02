@@ -22,6 +22,15 @@ $pdo             = Conexao::connect();
 $processoDAO     = new ProcessoAceitacaoDAO($pdo);
 $processosAtivos = $processoDAO->listarProcessosAtivos();
 
+define('ID_STATUS_CONCLUIDO', 2);
+
+$processosConcluidos = [];
+foreach ($processosAtivos as $proc) {
+    if (isset($proc['id_status']) && (int)$proc['id_status'] === ID_STATUS_CONCLUIDO) {
+        $processosConcluidos[] = (int)$proc['id'];
+    }
+}
+
 $msg   = $_SESSION['msg'] ?? '';
 $error = $_SESSION['mensagem_erro'] ?? '';
 unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
@@ -114,6 +123,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                             <th>Status</th>
                                             <th>Etapas</th>
                                             <th>Arquivos</th>
+                                            <th>Ações</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -122,11 +132,13 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                 <td><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></td>
                                                 <td><?= htmlspecialchars($processo['cpf']) ?></td>
                                                 <td><?= htmlspecialchars($processo['status']) ?></td>
+
                                                 <td>
                                                     <a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" class="btn btn-xs btn-primary">
                                                         <i class="fa fa-edit"></i>
                                                     </a>
                                                 </td>
+
                                                 <td>
                                                     <button type="button"
                                                         class="btn btn-xs btn-info btn-arquivos-processo"
@@ -136,6 +148,24 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                         data-nome="<?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome'], ENT_QUOTES) ?>">
                                                         <i class="fa fa-paperclip"></i>
                                                     </button>
+                                                </td>
+
+                                                <td>
+                                                    <?php if (in_array((int)$processo['id'], $processosConcluidos)): ?>
+                                                        <a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$processo['id'] ?>"
+                                                            class="btn btn-xs btn-success"
+                                                            onclick="return confirm('Confirmar criação de atendido para este processo?');">
+                                                            <i class="fa fa-user-plus"></i> Criar Atendido
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <button type="button" 
+                                                                class="btn btn-xs btn-secondary" 
+                                                                disabled 
+                                                                title="O processo precisa estar com status CONCLUÍDO para criar o atendido"
+                                                                style="cursor: not-allowed;">
+                                                            <i class="fa fa-user-plus"></i> Criar Atendido
+                                                        </button>
+                                                    <?php endif; ?>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -205,14 +235,37 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 <div id="lista-arquivos-processo"></div>
 
                                 <hr>
-                                <form method="post" action="../../controle/control.php" enctype="multipart/form-data" class="form-inline">
+                                <form id="formUploadDocProcesso" method="post" action="../../controle/control.php" enctype="multipart/form-data">
                                     <input type="hidden" name="nomeClasse" value="PaArquivoControle">
                                     <input type="hidden" name="metodo" value="upload">
                                     <input type="hidden" name="id_processo" id="upload_id_processo">
 
-                                    <input type="file" name="arquivo" class="form-control-file mr-2"
-                                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odp" required>
-                                    <button type="submit" class="btn btn-primary">Anexar arquivo</button>
+                                    <div class="form-group">
+                                        <label class="my-1 mr-2" for="tipoDocumentoProcesso">Tipo de Documento <span class="text-danger">*</span></label>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <select name="id_tipo_documentacao" class="form-control" id="tipoDocumentoProcesso" required style="flex: 1;">
+                                                <option selected disabled value="">Selecionar...</option>
+                                                <?php
+                                                foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                                    echo "<option value='" . $item["idatendido_docs_atendidos"] . "'>" . htmlspecialchars($item["descricao"]) . "</option>";
+                                                }
+                                                ?>
+                                            </select>
+                                            <a href="javascript:void(0)" onclick="adicionarTipoProcesso()">
+                                                <i class="fas fa-plus" style="font-size: 20px;"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="arquivoProcesso">Arquivo <span class="text-danger">*</span></label>
+                                        <input type="file" name="arquivo" class="form-control-file" id="arquivoProcesso"
+                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odp" required>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)">
+                                        <i class="fa fa-upload"></i> Anexar arquivo
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -278,7 +331,66 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
             }
             return true;
         }
+
+
+        function verificaTipoProcesso(ev) {
+            const tipo = document.getElementById('tipoDocumentoProcesso');
+
+            if (!tipo.value || isNaN(tipo.value) || tipo.value < 1) {
+                alert('Erro: selecione um tipo de documento adequado antes de prosseguir.');
+                ev.preventDefault();
+                return false;
+            }
+
+            return true;
+        }
+
+        function adicionarTipoProcesso() {
+            var tipo = window.prompt("Cadastre um Novo Tipo de Documento:");
+
+            if (!tipo) {
+                return;
+            }
+
+            tipo = tipo.trim();
+
+            if (tipo === '') {
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: '../../dao/adicionar_tipo_docs_atendido.php',
+                data: 'tipo=' + tipo,
+                success: function(response) {
+                    gerarTipoProcesso();
+                },
+                dataType: 'text'
+            });
+        }
+
+        function gerarTipoProcesso() {
+            $.ajax({
+                type: "POST",
+                url: '../../dao/exibir_tipo_docs_atendido.php',
+                data: '',
+                success: function(response) {
+                    $('#tipoDocumentoProcesso').empty();
+                    $('#tipoDocumentoProcesso').append('<option selected disabled value="">Selecionar...</option>');
+
+                    $.each(response, function(i, item) {
+                        $('#tipoDocumentoProcesso').append(
+                            '<option value="' + item.idatendido_docs_atendidos + '">' +
+                            item.descricao +
+                            '</option>'
+                        );
+                    });
+                },
+                dataType: 'json'
+            });
+        }
     </script>
+
 </body>
 
 </html>

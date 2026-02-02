@@ -83,4 +83,14 @@ class PaEtapaDAO
         $stmt->bindValue(':id', $idEtapa, PDO::PARAM_INT);
         return $stmt->execute();
     }
+
+    public function buscarPorId(int $idEtapa): ?array
+    {
+        $sql = "SELECT id, id_processo, data_inicio, data_fim FROM pa_etapa WHERE id = :id LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $idEtapa, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
 }

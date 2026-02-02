@@ -28,10 +28,10 @@ class ProcessoAceitacaoControle
         $dao->atualizarStatus($idProcesso, $idStatus);
 
         $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
-        header("Location: ../html/atendido/etapa_processo.php?id=".$idProcesso);
+        header("Location: ../html/atendido/etapa_processo.php?id=" . $idProcesso);
         exit();
     }
-    
+
     public function incluir()
     {
         try {
@@ -41,37 +41,29 @@ class ProcessoAceitacaoControle
 
             $pdo = Conexao::connect();
 
-            // Verifica se CPF já existe
             $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
             $stmt->execute([$cpf]);
-            $count = $stmt->fetchColumn();
-            if ($count > 0) {
+            if ((int)$stmt->fetchColumn() > 0) {
                 throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
             }
 
-            // Valida CPF
             if (!Util::validarCPF($cpf)) {
                 throw new InvalidArgumentException('Erro: o CPF informado não é válido.', 400);
             }
 
-            // Valida campos obrigatórios
             if (empty($nome) || empty($sobrenome)) {
                 throw new InvalidArgumentException('Erro: Nome e Sobrenome são obrigatórios.', 400);
             }
 
-            // Usa DAO para inserir pessoa
             $pessoaDAO = new PessoaDAO($pdo);
             $id_pessoa = $pessoaDAO->inserirPessoa($cpf, $nome, $sobrenome);
 
-            // Cria processo aceitação para a pessoa criada
             $processoDAO = new ProcessoAceitacaoDAO($pdo);
             $processoDAO->criarProcessoInicial($id_pessoa);
 
             $_SESSION['msg'] = "Processo cadastrado com sucesso!";
-            // VOLTA para a própria página do processo de aceitação
             header("Location: ../html/atendido/processo_aceitacao.php");
-            exit();
-
+            exit;
         } catch (InvalidArgumentException $e) {
             $_SESSION['mensagem_erro'] = $e->getMessage();
             header("Location: ../html/atendido/processo_aceitacao.php");
@@ -80,5 +72,33 @@ class ProcessoAceitacaoControle
             Util::tratarException($e);
             exit();
         }
+    }
+
+    public function criarAtendidoProcesso()
+    {
+        $idProcesso = (int)($_GET['id_processo'] ?? 0);
+
+        if ($idProcesso <= 0) {
+            $_SESSION['mensagem_erro'] = 'Processo inválido.';
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
+        }
+
+        $pdo = Conexao::connect();
+        $dao = new ProcessoAceitacaoDAO($pdo);
+
+        $procConcluido = $dao->buscarPorIdConcluido($idProcesso);
+        if (!$procConcluido) {
+            $_SESSION['mensagem_erro'] = 'Não é possível criar atendido: processo ainda não está CONCLUÍDO.';
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
+        }
+
+        header(
+            "Location: ../controle/control.php?nomeClasse=AtendidoControle&metodo=incluirExistenteDoProcesso"
+            . "&id_processo=" . $idProcesso
+            . "&intTipo=1&intStatus=1"
+        );
+        exit;
     }
 }

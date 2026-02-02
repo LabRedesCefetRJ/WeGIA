@@ -13,6 +13,12 @@ include_once ROOT . '/classes/Cache.php';
 require_once ROOT . '/classes/Util.php';
 include_once ROOT . "/dao/Conexao.php";
 
+require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
+require_once ROOT . '/dao/PaArquivoDAO.php';
+require_once ROOT . '/dao/AtendidoDocumentacaoMySql.php';
+require_once ROOT . '/classes/AtendidoDocumentacao.php';
+
+
 class AtendidoControle
 {
 
@@ -381,11 +387,11 @@ class AtendidoControle
         }
 
         try {
-            $atendido = $this->verificar();  
-            $cpf      = null;                
+            $atendido = $this->verificar();
+            $cpf      = null;
 
             $intDAO     = new AtendidoDAO();
-            $idAtendido = $intDAO->incluir($atendido, $cpf);  
+            $idAtendido = $intDAO->incluir($atendido, $cpf);
 
             $_SESSION['msg']  = "Atendido cadastrado sem CPF com sucesso";
             $_SESSION['tipo'] = "success";
@@ -398,28 +404,123 @@ class AtendidoControle
     }
 
 
+  public function incluirExistenteDoProcesso()
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
 
+    $idProcesso = (int)($_GET['id_processo'] ?? 0);
+    $tipo   = (int)($_GET['intTipo'] ?? 1);
+    $status = (int)($_GET['intStatus'] ?? 1);
 
+    if ($idProcesso <= 0) {
+        $_SESSION['mensagem_erro'] = 'Processo inválido.';
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+    }
+
+    $pdo = Conexao::connect();
+
+    try {
+        $pdo->beginTransaction();
+
+        $processoDao = new ProcessoAceitacaoDAO($pdo);
+
+        if (!$processoDao->buscarPorIdConcluido($idProcesso)) {
+            throw new RuntimeException('Não é possível criar atendido: processo ainda não está CONCLUÍDO.');
+        }
+
+        $idPessoa = $processoDao->getIdPessoaByProcesso($idProcesso);
+
+        $atendidoDao = new AtendidoDAO($pdo);
+        $idAtendido = $atendidoDao->criarPorPessoa($idPessoa, $tipo, $status);
+
+        $paDao = new PaArquivoDAO($pdo);
+        
+        $arquivosProcesso = $paDao->listarComTipoPorProcesso($idProcesso);
+
+        $atDocDao = new AtendidoDocumentacaoMySql($pdo);
+
+        foreach ($arquivosProcesso as $arquivo) {
+            $idPessoaArquivo = (int)$arquivo['id_pessoa_arquivo'];
+            $idTipoDoc = (int)($arquivo['id_tipo_documentacao'] ?? null);
+
+            if ($idTipoDoc <= 0) {
+                $idTipoDoc = 1; 
+            }
+
+            $dto = new AtendidoDocumentacaoDTO([
+                'id_atendido' => $idAtendido,
+                'id_tipo_documentacao' => $idTipoDoc, 
+                'id_pessoa_arquivo' => $idPessoaArquivo
+            ]);
+
+            $obj = new AtendidoDocumentacao($dto, $atDocDao);
+            if ($obj->create() === false) {
+                throw new RuntimeException('Falha ao vincular documentação ao atendido.');
+            }
+        }
+
+        $pdo->commit();
+
+        $_SESSION['msg'] = 'Atendido criado e documentos reaproveitados com sucesso.';
+        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido);
+        exit;
+
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        if ($e->getCode() == 23000 && strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            $_SESSION['mensagem_erro'] = 'Já existe um atendido cadastrado para esta pessoa. Não é possível criar um segundo atendido com o mesmo CPF.';
+        } else {
+            $_SESSION['mensagem_erro'] = 'Erro ao processar: ' . $e->getMessage();
+        }
+        
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        $_SESSION['mensagem_erro'] = $e->getMessage();
+        header("Location: ../html/atendido/processo_aceitacao.php");
+        exit;
+    }
+}
 
     public function incluirExistente()
     {
         $atendido = $this->verificarExistente();
-        $idPessoa = $_GET['id_pessoa'];
-        $sobrenome = $_GET['sobrenome'];
+        $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
+        $sobrenome = $_GET['sobrenome'] ?? '';
 
         try {
             $atendidoDAO = new AtendidoDAO();
-
             $atendidoDAO->incluirExistente($atendido, $idPessoa, $sobrenome);
+
             $_SESSION['msg'] = "Atendido cadastrado com sucesso";
             $_SESSION['proxima'] = "Cadastrar outro atendido";
             $_SESSION['link'] = "../html/atendido/cadastro_atendido.php";
 
             header("Location: ../html/atendido/Informacao_Atendido.php");
+            exit;
+        } catch (RuntimeException $e) {
+            $_SESSION['mensagem_erro'] = $e->getMessage();
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
+        } catch (PDOException $e) {
+            Util::tratarException($e);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
+            exit;
         }
     }
+
 
     public function alterar()
     {

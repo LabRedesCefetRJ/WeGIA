@@ -1,56 +1,93 @@
 <?php
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/../dao/Conexao.php';
 require_once __DIR__ . '/../dao/PaArquivoDAO.php';
+require_once __DIR__ . '/../dao/ProcessoAceitacaoDAO.php';
+
+require_once __DIR__ . '/../classes/Arquivo.php';
+require_once __DIR__ . '/../classes/PessoaArquivoDTO.php';
+require_once __DIR__ . '/../classes/PessoaArquivo.php';
+require_once __DIR__ . '/../dao/PessoaArquivoMySQL.php';
 
 class PaArquivoControle
 {
-    private $dao;
+    private PDO $pdo;
+    private PaArquivoDAO $dao;
 
     public function __construct()
     {
-        $pdo = Conexao::connect();
-        $this->dao = new PaArquivoDAO($pdo);
+        $this->pdo = Conexao::connect();
+        $this->dao = new PaArquivoDAO($this->pdo);
     }
 
     public function upload()
     {
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
+        $idTipoDoc  = (int)($_POST['id_tipo_documentacao'] ?? 0); 
 
         if ($idProcesso <= 0) {
             $_SESSION['mensagem_erro'] = 'Processo não informado.';
             header('Location: ../html/atendido/processo_aceitacao.php');
-            return;
+            exit;
+        }
+
+        if ($idTipoDoc <= 0) {
+            $_SESSION['mensagem_erro'] = 'Tipo de documento não informado.';
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            exit;
         }
 
         if (empty($_FILES['arquivo']['name'])) {
             $_SESSION['mensagem_erro'] = 'Arquivo não informado.';
             header('Location: ../html/atendido/processo_aceitacao.php');
-            return;
+            exit;
         }
 
-        $arquivo    = $_FILES['arquivo'];
-        $ext        = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
-        $permitidas = ['png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx', 'odp'];
+        try {
+            $this->pdo->beginTransaction();
 
-        if (!in_array($ext, $permitidas)) {
-            $_SESSION['mensagem_erro'] = 'Extensão não permitida.';
-            header('Location: ../html/atendido/processo_aceitacao.php');
-            return;
-        }
+            $processoDao = new ProcessoAceitacaoDAO($this->pdo);
+            $idPessoa = $processoDao->getIdPessoaByProcesso($idProcesso);
 
-        $blob = file_get_contents($arquivo['tmp_name']);
+            $arquivo = Arquivo::fromUpload($_FILES['arquivo']);
 
-        $ok = $this->dao->inserir($idProcesso, null, $arquivo['name'], $ext, $blob);
+            $pessoaArquivoDto = new PessoaArquivoDTO([
+                'id_pessoa' => $idPessoa,
+                'arquivo' => $arquivo
+            ]);
 
-        if ($ok) {
+            $pessoaArquivo = new PessoaArquivo(
+                $pessoaArquivoDto,
+                new PessoaArquivoMySQL($this->pdo)
+            );
+
+            $idPessoaArquivo = $pessoaArquivo->create();
+
+            if ($idPessoaArquivo === false || $idPessoaArquivo < 1) {
+                throw new RuntimeException('Erro ao salvar arquivo da pessoa.');
+            }
+
+            $ok = $this->dao->inserir($idProcesso, null, (int)$idPessoaArquivo, $idTipoDoc);
+
+            if (!$ok) {
+                throw new RuntimeException('Erro ao vincular arquivo ao processo.');
+            }
+
+            $this->pdo->commit();
             $_SESSION['msg'] = 'Arquivo do processo anexado com sucesso.';
-        } else {
-            $_SESSION['mensagem_erro'] = 'Erro ao salvar arquivo do processo.';
+        } catch (Exception $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            $_SESSION['mensagem_erro'] = $e->getMessage();
         }
 
         header('Location: ../html/atendido/processo_aceitacao.php');
-        return;
+        exit;
     }
 
     public function excluir()
@@ -61,16 +98,20 @@ class PaArquivoControle
         if (!$idArquivo || !$idProcesso) {
             $_SESSION['mensagem_erro'] = 'Dados inválidos para exclusão.';
             header('Location: ../html/atendido/processo_aceitacao.php');
-            return;
+            exit;
         }
 
-        if ($this->dao->excluir($idArquivo)) {
-            $_SESSION['msg'] = 'Arquivo removido com sucesso.';
-        } else {
-            $_SESSION['mensagem_erro'] = 'Erro ao remover arquivo.';
+        try {
+            if ($this->dao->excluir((int)$idArquivo)) {
+                $_SESSION['msg'] = 'Arquivo removido com sucesso.';
+            } else {
+                $_SESSION['mensagem_erro'] = 'Erro ao remover arquivo.';
+            }
+        } catch (Exception $e) {
+            $_SESSION['mensagem_erro'] = $e->getMessage();
         }
 
         header('Location: ../html/atendido/processo_aceitacao.php');
-        return;
+        exit;
     }
 }
