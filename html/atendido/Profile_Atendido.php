@@ -139,12 +139,6 @@ $dependente = json_encode($dependente);
   <script src="../../Functions/onlyNumbers.js"></script>
   <script src="../../Functions/onlyChars.js"></script>
   <script>
-    function exibir_reservista() {
-
-      $("#reservista1").show();
-      $("#reservista2").show();
-    }
-
     function listarDependentes(dependente) {
       $("#dep-tab").empty();
       $.each(dependente, function(i, dependente) {
@@ -216,7 +210,7 @@ $dependente = json_encode($dependente);
           $("#tipoSanguineoSelecionado").text(item.tipo_sanguineo);
           $("#tipoSanguineoSelecionado").val(item.tipo_sanguineo);
 
-          $("#data_nascimento").text("Data de nascimento: " + alterardate(item.data_nascimento));
+          //$("#data_nascimento").text("Data de nascimento: " + alterardate(item.data_nascimento));
           $("#data_nascimento").val(item.data_nascimento);
 
           $("#registroGeral").text("Registro geral: " + item.registro_geral);
@@ -274,6 +268,7 @@ $dependente = json_encode($dependente);
 
   <script type="text/javascript">
     function editar_informacoes_pessoais() {
+      console.log("Edição liberada");
       $("#nome").prop('disabled', false);
       $("#sobrenome").prop('disabled', false);
       $("#radioM").prop('disabled', false);
@@ -283,6 +278,15 @@ $dependente = json_encode($dependente);
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
       $("#tipo_sanguineo").prop('disabled', false);
+
+      let cpfField = document.getElementById('cpf');
+      let cpfValue = cpfField.value.replace(/\D/g, '');
+
+      if (cpfValue === '' || cpfValue.length === 0) {
+        cpfField.disabled = false;
+        cpfField.focus();
+      }
+
       $("#botaoEditarIP").html('Cancelar');
       $("#botaoSalvarIP").prop('disabled', false);
       $("#botaoEditarIP").removeAttr('onclick');
@@ -735,8 +739,8 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                           <div class="col-md-8">
-                            <label><input type="radio" name="sexo" id="radioM" id="M" disabled value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"> </i></label>
-                            <label><input type="radio" name="sexo" id="radioF" disabled id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
+                            <label><input type="radio" name="sexo" id="radioM" disabled value="m" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-male" style="font-size: 20px;"> </i></label>
+                            <label><input type="radio" name="sexo" id="radioF" disabled value="f" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
                           </div>
                         </div>
                         <div class="form-group">
@@ -779,7 +783,7 @@ $dependente = json_encode($dependente);
                           </div>
                         </div>
                         <input type="hidden" name="idatendido" value=<?= $id ?>>
-                        <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes_pessoais()">Editar</button>
+                        <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="editar_informacoes_pessoais()">Editar</button>
                         <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
                     </form>
 
@@ -1088,7 +1092,7 @@ $dependente = json_encode($dependente);
                           <tbody id="doc-tabl">
                             <?php
                             $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
-                            $stmt->bindValue(':id', $id, PDO::PARAM_INT);  
+                            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                             $stmt->execute();
                             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1101,7 +1105,7 @@ $dependente = json_encode($dependente);
                             ?>
                               <tr style="cursor: pointer;" onclick="clicar(<?= (int)$item['idatendido_ocorrencias'] ?>)">
                                 <td><?= $data[2] . "/" . $data[1] . "/" . $data[0] ?></td>
-                                <td><?= htmlspecialchars(strip_tags($item["descricao"])) ?></td> 
+                                <td><?= htmlspecialchars(strip_tags($item["descricao"])) ?></td>
                                 <td>
                                   <button class="btn btn-xs btn-primary editar-ocorrencia"
                                     type="button"
@@ -1435,27 +1439,6 @@ $dependente = json_encode($dependente);
 
         // retorno true permite o envio normal do formulário
         return true;
-      }
-    </script>
-    <script>
-      function editar_informacoes_pessoais() {
-        document.getElementById('nome').disabled = false;
-        document.getElementById('sobrenome').disabled = false;
-        document.getElementById('telefone').disabled = false;
-        document.getElementById('data_nascimento').disabled = false;
-        document.getElementById('tipo_sanguineo').disabled = false;
-
-        var cpfField = document.getElementById('cpf');
-        var cpfValue = cpfField.value.replace(/\D/g, '');
-
-        if (cpfValue === '' || cpfValue.length === 0) {
-          cpfField.disabled = false;
-          cpfField.focus();
-        }
-
-
-        document.getElementById('botaoEditarIP').style.display = 'none';
-        document.getElementById('botaoSalvarIP').disabled = false;
       }
     </script>
     <script src="../geral/post.js"></script>
