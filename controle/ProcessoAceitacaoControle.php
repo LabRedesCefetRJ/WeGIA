@@ -28,7 +28,7 @@ class ProcessoAceitacaoControle
         $dao->atualizarStatus($idProcesso, $idStatus);
 
         $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
-        header("Location: ../html/atendido/etapa_processo.php?id=" . $idProcesso);
+        header("Location: ../html/atendido/processo_aceitacao.php?status-processo=" . htmlspecialchars($idStatus));
         exit();
     }
 
@@ -96,9 +96,38 @@ class ProcessoAceitacaoControle
 
         header(
             "Location: ../controle/control.php?nomeClasse=AtendidoControle&metodo=incluirExistenteDoProcesso"
-            . "&id_processo=" . $idProcesso
-            . "&intTipo=1&intStatus=1"
+                . "&id_processo=" . $idProcesso
+                . "&intTipo=1&intStatus=1"
         );
         exit;
+    }
+
+    public function getStatusDoProcesso()
+    {
+        $idProcesso = filter_input(INPUT_GET, 'id_processo', FILTER_SANITIZE_NUMBER_INT);
+
+        try {
+            if (!$idProcesso || $idProcesso < 1)
+                throw new InvalidArgumentException('O id de um processo não pode ser menor que 1.', 412);
+
+            $pdo = Conexao::connect();
+            $processoDao = new ProcessoAceitacaoDAO($pdo);
+
+            $idStatus = $processoDao->getStatusDoProcesso($idProcesso);
+
+            if ($idStatus === false) {
+                echo json_encode([
+                    "success" =>  false
+                ]);
+                exit();
+            }
+
+            echo json_encode([
+                "success" =>  true,
+                "id_status" => $idStatus
+            ]);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 }

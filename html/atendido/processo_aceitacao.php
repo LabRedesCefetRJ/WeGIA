@@ -181,7 +181,7 @@ try {
                                                     </button>
                                                 </td>
 
-                                                <td>
+                                                <td style="max-width:150px; white-space: normal;">
                                                     <?php if (in_array((int)$processo['id'], $processosConcluidos)): ?>
                                                         <a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$processo['id'] ?>"
                                                             class="btn btn-xs btn-success"
@@ -192,11 +192,15 @@ try {
                                                         <button type="button"
                                                             class="btn btn-xs btn-secondary"
                                                             disabled
-                                                            title="O processo precisa estar com status CONCLUÍDO para criar o atendido"
+                                                            title="O processo precisa ser concluído antes de criar o atendido"
                                                             style="cursor: not-allowed;">
                                                             <i class="fa fa-user-plus"></i> Criar Atendido
                                                         </button>
                                                     <?php endif; ?>
+
+                                                    <button type="button" class="btn btn-xs btn-primary btn-alter-status" data-toggle="modal" data-id_processo="<?= htmlspecialchars($processo['id']) ?>" data-target="#modalStatusProcesso">
+                                                        Alterar Status do Processo
+                                                    </button>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -206,6 +210,37 @@ try {
                         <?php endif; ?>
                     </div>
                 </section>
+
+                <div class="modal fade" id="modalStatusProcesso" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                        <form method="post" action="../../controle/control.php" class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Alterar Status do Processo</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
+                                <input type="hidden" name="metodo" value="atualizarStatus">
+                                <input type="hidden" name="id_processo" id="modal-id-processo">
+
+                                <div class="form-group">
+                                    <label>Status do Processo:</label>
+                                    <select name="id_status" class="form-control" style="min-width: 200px;">
+                                        <?php foreach ($statusProcesso as $status): ?>
+                                            <option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
 
                 <div class="modal fade" id="modalNovoProcesso" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog" role="document">
@@ -294,7 +329,7 @@ try {
                                             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odp" required>
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)">
+                                    <button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)" style="margin-top: 10px;">
                                         <i class="fa fa-upload"></i> Anexar arquivo
                                     </button>
                                 </form>
@@ -434,6 +469,47 @@ try {
 
             window.location.href =
                 './processo_aceitacao.php?status-processo=' + encodeURIComponent(valorStatus);
+        });
+    </script>
+
+    <script>
+        $(document).on('click', '.btn-alter-status', function() {
+
+            const idProcesso = $(this).data('id_processo');
+
+            // Preenche o hidden do modal
+            $('#modal-id-processo').val(idProcesso);
+
+            // Limpa seleção anterior (opcional)
+            $('#modalStatusProcesso select[name="id_status"]').val('');
+
+            // Chamada à API
+            $.ajax({
+                url: '../../controle/control.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    id_processo: idProcesso,
+                    nomeClasse: 'ProcessoAceitacaoControle',
+                    metodo: 'getStatusDoProcesso'
+                },
+                success: function(response) {
+
+                    if (response.success) {
+                        const idStatus = response.id_status;
+
+                        // Seleciona o option correspondente
+                        $('#modalStatusProcesso select[name="id_status"]').val(idStatus);
+                    } else if(response.erro){
+                        alert('Não foi possível obter o status do processo: ', erro);
+                    }else{
+                        alert('Não foi possível obter o status do processo.');
+                    }
+                },
+                error: function() {
+                    alert('Erro ao consultar o servidor.');
+                }
+            });
         });
     </script>
 

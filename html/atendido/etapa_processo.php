@@ -139,10 +139,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
 
                 <div class="d-flex align-items-center" style="margin-bottom: 15px;">
-                    <button type="button" class="btn btn-secondary btn-gray-dark" data-toggle="modal" data-target="#modalStatusProcesso">
-                        Alterar Status do Processo
-                    </button>
-
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalNovaEtapa">
                         Cadastrar Etapas
                     </button>
@@ -215,40 +211,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                         <?php endif; ?>
                     </div>
                 </section>
-
-                <div class="modal fade" id="modalStatusProcesso" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <form method="post" action="../../controle/control.php" class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Alterar Status do Processo</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
-                                <input type="hidden" name="metodo" value="atualizarStatus">
-                                <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
-
-                                <div class="form-group">
-                                    <label>Status do Processo:</label>
-                                    <select name="id_status" class="form-control" style="min-width: 200px;">
-                                        <?php foreach ($statuses as $st): ?>
-                                            <option value="<?= (int)$st['id'] ?>"
-                                                <?= ($processoStatusId !== null && $processoStatusId === (int)$st['id']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($st['descricao']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">Salvar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
 
                 <div class="modal fade" id="modalNovaEtapa" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog" role="document">
