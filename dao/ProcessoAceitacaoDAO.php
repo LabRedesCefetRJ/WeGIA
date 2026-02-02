@@ -20,6 +20,7 @@ class ProcessoAceitacaoDAO
      */
     public function criarProcessoInicial(int $id_pessoa, int $id_status = 1, string $descricao = 'Processo de aceitação inicial'): int
     {
+        date_default_timezone_set("America/Sao_Paulo");
         $data_inicio = date('Y-m-d H:i:s');
         $data_fim = null; // processo em andamento
 
@@ -85,12 +86,19 @@ class ProcessoAceitacaoDAO
 
     public function atualizarStatus(int $idProcesso, int $idStatus): bool
     {
-        $sql = "UPDATE processo_aceitacao
-            SET id_status = :id_status
-            WHERE id = :id";
+        $sql = "UPDATE processo_aceitacao 
+            SET id_status = :id_status";
+
+        if ($idStatus === 2 || $idStatus === 3) {
+            $sql .= ", data_fim = NOW()";
+        }
+
+        $sql .= " WHERE id = :id";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':id_status', $idStatus, PDO::PARAM_INT);
-        $stmt->bindParam(':id',        $idProcesso, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $idProcesso, PDO::PARAM_INT);
+
         return $stmt->execute();
     }
 
@@ -130,7 +138,8 @@ class ProcessoAceitacaoDAO
         return (int)$idPessoa;
     }
 
-    public function getByStatus(int $status){
+    public function getByStatus(int $status)
+    {
         $query = 'SELECT 
             p.id_pessoa,
             p.nome,
@@ -152,7 +161,8 @@ class ProcessoAceitacaoDAO
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getStatusDoProcesso(int $idProcesso){
+    public function getStatusDoProcesso(int $idProcesso)
+    {
         $query = 'SELECT id_status FROM processo_aceitacao WHERE id=:id';
 
         $stmt = $this->pdo->prepare($query);

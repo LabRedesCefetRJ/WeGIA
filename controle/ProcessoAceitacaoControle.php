@@ -12,6 +12,12 @@ require_once ROOT . '/dao/Conexao.php';
 
 class ProcessoAceitacaoControle
 {
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
+    }
     public function atualizarStatus()
     {
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
@@ -23,13 +29,16 @@ class ProcessoAceitacaoControle
             exit();
         }
 
-        $pdo = Conexao::connect();
-        $dao = new ProcessoAceitacaoDAO($pdo);
-        $dao->atualizarStatus($idProcesso, $idStatus);
+        try {
+            $dao = new ProcessoAceitacaoDAO($this->pdo);
+            $dao->atualizarStatus($idProcesso, $idStatus);
 
-        $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
-        header("Location: ../html/atendido/processo_aceitacao.php?status-processo=" . htmlspecialchars($idStatus));
-        exit();
+            $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
+            header("Location: ../html/atendido/processo_aceitacao.php?status-processo=" . htmlspecialchars($idStatus));
+            exit();
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 
     public function incluir()
@@ -39,10 +48,10 @@ class ProcessoAceitacaoControle
             $sobrenome = trim($_POST['sobrenome']);
             $cpf = trim($_POST['cpf']);
 
-            $pdo = Conexao::connect();
-
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
             $stmt->execute([$cpf]);
+
+            //futuramente caso um CPF já esteja cadastrado, o sistema deve pegar os dados da pessoa existente no sistema e usar para criar o processo
             if ((int)$stmt->fetchColumn() > 0) {
                 throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
             }
@@ -55,10 +64,10 @@ class ProcessoAceitacaoControle
                 throw new InvalidArgumentException('Erro: Nome e Sobrenome são obrigatórios.', 400);
             }
 
-            $pessoaDAO = new PessoaDAO($pdo);
+            $pessoaDAO = new PessoaDAO($this->pdo);
             $id_pessoa = $pessoaDAO->inserirPessoa($cpf, $nome, $sobrenome);
 
-            $processoDAO = new ProcessoAceitacaoDAO($pdo);
+            $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
             $processoDAO->criarProcessoInicial($id_pessoa);
 
             $_SESSION['msg'] = "Processo cadastrado com sucesso!";
@@ -84,22 +93,25 @@ class ProcessoAceitacaoControle
             exit;
         }
 
-        $pdo = Conexao::connect();
-        $dao = new ProcessoAceitacaoDAO($pdo);
+        try {
+            $dao = new ProcessoAceitacaoDAO($this->pdo);
 
-        $procConcluido = $dao->buscarPorIdConcluido($idProcesso);
-        if (!$procConcluido) {
-            $_SESSION['mensagem_erro'] = 'Não é possível criar atendido: processo ainda não está CONCLUÍDO.';
-            header("Location: ../html/atendido/processo_aceitacao.php");
+            $procConcluido = $dao->buscarPorIdConcluido($idProcesso);
+            if (!$procConcluido) {
+                $_SESSION['mensagem_erro'] = 'Não é possível criar atendido: Processo ainda não foi concluído.';
+                header("Location: ../html/atendido/processo_aceitacao.php");
+                exit;
+            }
+
+            header(
+                "Location: ../controle/control.php?nomeClasse=AtendidoControle&metodo=incluirExistenteDoProcesso"
+                    . "&id_processo=" . $idProcesso
+                    . "&intTipo=1&intStatus=1"
+            );
             exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-
-        header(
-            "Location: ../controle/control.php?nomeClasse=AtendidoControle&metodo=incluirExistenteDoProcesso"
-                . "&id_processo=" . $idProcesso
-                . "&intTipo=1&intStatus=1"
-        );
-        exit;
     }
 
     public function getStatusDoProcesso()
@@ -110,8 +122,7 @@ class ProcessoAceitacaoControle
             if (!$idProcesso || $idProcesso < 1)
                 throw new InvalidArgumentException('O id de um processo não pode ser menor que 1.', 412);
 
-            $pdo = Conexao::connect();
-            $processoDao = new ProcessoAceitacaoDAO($pdo);
+            $processoDao = new ProcessoAceitacaoDAO($this->pdo);
 
             $idStatus = $processoDao->getStatusDoProcesso($idProcesso);
 
