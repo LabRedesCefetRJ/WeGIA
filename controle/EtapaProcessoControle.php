@@ -9,12 +9,12 @@ class EtapaProcessoControle
     public function salvar()
     {
         $idProcesso  = (int)($_POST['id_processo'] ?? 0);
-        $descricao   = trim($_POST['descricao'] ?? '');
+        $titulo   = trim($_POST['titulo'] ?? '');
         $dataInicio  = $_POST['data_inicio'] ?? null;
         $dataFim     = $_POST['data_fim'] ?? null;
         $statusId    = (int)($_POST['id_status'] ?? 1);
 
-        if ($idProcesso <= 0 || empty($descricao)) {
+        if ($idProcesso <= 0 || empty($titulo)) {
             $_SESSION['mensagem_erro'] = 'Processo e descrição são obrigatórios.';
             header("Location: ../html/atendido/processo_aceitacao.php");
             exit();
@@ -36,7 +36,7 @@ class EtapaProcessoControle
 
         $pdo = Conexao::connect();
         $etapaDAO = new PaEtapaDAO($pdo);
-        $etapaDAO->inserirEtapa($idProcesso, $statusId, $descricao, $dataInicioFinal, $dataFimFinal);
+        $etapaDAO->inserirEtapa($idProcesso, $statusId, $titulo, $dataInicioFinal, $dataFimFinal);
 
         $_SESSION['msg'] = 'Etapa cadastrada com sucesso.';
         header("Location: ../html/atendido/etapa_processo.php?id={$idProcesso}");
@@ -48,10 +48,10 @@ class EtapaProcessoControle
         $idEtapa    = (int)($_POST['id_etapa'] ?? 0);
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
         $dataFim    = ($_POST['data_fim'] ?? '');
-        $descricao  = trim($_POST['descricao'] ?? '');
+        $titulo  = trim($_POST['titulo'] ?? '');
         $statusId   = (int)($_POST['id_status'] ?? 1);
 
-        if ($idEtapa <= 0 || $idProcesso <= 0 || empty($descricao)) {
+        if ($idEtapa <= 0 || $idProcesso <= 0 || empty($titulo)) {
             $_SESSION['mensagem_erro'] = 'Dados inválidos para edição.';
             header("Location: ../html/atendido/processo_aceitacao.php");
             exit();
@@ -81,7 +81,7 @@ class EtapaProcessoControle
             }
         }
 
-        $etapaDAO->atualizar($idEtapa, $statusId, $dataFimFinal, $descricao);
+        $etapaDAO->atualizar($idEtapa, $statusId, $dataFimFinal, $titulo);
 
         $_SESSION['msg'] = 'Etapa atualizada com sucesso.';
         header("Location: ../html/atendido/etapa_processo.php?id={$idProcesso}");

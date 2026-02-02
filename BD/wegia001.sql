@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pa_etapa`(
     `id` INT NOT NULL AUTO_INCREMENT,
     `data_inicio` DATETIME NOT NULL,
     `data_fim` DATETIME NULL,
-    `descricao` VARCHAR(512) NOT NULL,
+    `titulo` VARCHAR(128) NOT NULL,
     `id_processo_aceitacao` INT NOT NULL,
     `id_status` INT NOT NULL,
     PRIMARY KEY (`id`),

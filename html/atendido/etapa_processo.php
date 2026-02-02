@@ -165,7 +165,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                             <th>Data de Início</th>
                                             <th>Data de Conclusão</th>
                                             <th>Status</th>
-                                            <th>Descrição</th>
+                                            <th>Titulo</th>
                                             <th>Arquivos</th>
                                             <th>Ações</th>
                                         </tr>
@@ -184,7 +184,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                     ?>
                                                 </td>
                                                 <td><?= htmlspecialchars($etapa['status_nome']) ?></td>
-                                                <td><?= htmlspecialchars($etapa['descricao']) ?></td>
+                                                <td><?= htmlspecialchars($etapa['titulo']) ?></td>
                                                 <td>
                                                     <button type="button"
                                                         class="btn btn-xs btn-info btn-arquivos-etapa"
@@ -201,7 +201,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                         data-toggle="modal"
                                                         data-target="#modalEditarEtapa"
                                                         data-id="<?= (int)$etapa['id'] ?>"
-                                                        data-descricao="<?= htmlspecialchars($etapa['descricao'], ENT_QUOTES) ?>"
+                                                        data-titulo="<?= htmlspecialchars($etapa['titulo'], ENT_QUOTES) ?>"
                                                         data-datafim="<?= htmlspecialchars($etapa['data_fim'] ?? '', ENT_QUOTES) ?>"
                                                         data-status="<?= (int)$etapa['id_status'] ?>">
                                                         <i class="fa fa-edit"></i> Editar
@@ -260,13 +260,20 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 </button>
                             </div>
                             <div class="modal-body">
+                                <p>Campos marcados com <span class="obrig">*</span> são obrigatórios.</p>
+
                                 <input type="hidden" name="nomeClasse" value="EtapaProcessoControle">
                                 <input type="hidden" name="metodo" value="salvar">
                                 <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
 
+                                 <div class="form-group">
+                                    <label>Título<span class="obrig">*</span></label>
+                                    <input type="text" name="titulo" required class="form-control" placeholder="Insira aqui o título da sua etapa...">
+                                </div>
+
                                 <div class="form-group">
-                                    <label>Status</label>
-                                    <select name="id_status" class="form-control">
+                                    <label>Status <span class="obrig">*</span></label>
+                                    <select name="id_status" class="form-control" required>
                                         <?php foreach ($statuses as $st): ?>
                                             <option value="<?= (int)$st['id'] ?>"><?= htmlspecialchars($st['descricao']) ?></option>
                                         <?php endforeach; ?>
@@ -274,8 +281,8 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 </div>
 
                                 <div class="form-group">
-                                    <label>Data de Início</label>
-                                    <input type="date" name="data_inicio" class="form-control">
+                                    <label>Data de Início <span class="obrig">*</span></label>
+                                    <input type="date" name="data_inicio" class="form-control" required value="<?= date('Y-m-d') ?>">
                                 </div>
 
                                 <div class="form-group">
@@ -283,10 +290,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                     <input type="date" name="data_fim" class="form-control">
                                 </div>
 
-                                <div class="form-group">
-                                    <label>Descrição da Etapa <span class="obrig">*</span></label>
-                                    <textarea name="descricao" class="form-control" rows="3" required></textarea>
-                                </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -312,6 +315,11 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 <input type="hidden" name="id_etapa" id="edit_id_etapa">
 
                                 <div class="form-group">
+                                    <label>Título</label>
+                                    <input type="text" name="titulo" id="edit_titulo" required class="form-control" placeholder="Insira aqui o título da sua etapa...">
+                                </div>
+
+                                <div class="form-group">
                                     <label>Status</label>
                                     <select name="id_status" id="edit_id_status" class="form-control">
                                         <?php foreach ($statuses as $st): ?>
@@ -323,11 +331,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 <div class="form-group">
                                     <label>Data de Conclusão</label>
                                     <input type="date" name="data_fim" id="edit_data_fim" class="form-control">
-                                </div>
-
-                                <div class="form-group">
-                                    <label>Descrição</label>
-                                    <textarea name="descricao" id="edit_descricao" class="form-control" rows="3" required></textarea>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -416,6 +419,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                 $('#edit_descricao').val(btn.data('descricao'));
                 $('#edit_data_fim').val(btn.data('datafim'));
                 $('#edit_id_status').val(btn.data('status'));
+                $('#edit_titulo').val(btn.data('titulo'));
             });
 
             $('.btn-arquivos-etapa').on('click', function() {
