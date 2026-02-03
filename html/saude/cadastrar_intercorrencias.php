@@ -331,7 +331,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
 
                         <div class="form-group">
                           <label for="descricao_emergencia">Descrição da Intercorrência</label>
-                          <textarea class="form-control" name="descricao_emergencia" cols="30" rows="10" placeholder="Insira aqui a descrição do ocorrido..." required></textarea>
+                          <textarea class="form-control" id="descricao_emergencia" name="descricao_emergencia" cols="30" rows="10" placeholder="Insira aqui a descrição do ocorrido..." required></textarea>
                         </div>
 
                         <input type="submit" id="btn-cadastrar-emergencia" class="btn btn-primary" value="Cadastrar">
@@ -369,6 +369,97 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
 
   <script>
     carregarIntercorrencias();
+  </script>
+  <script>
+    (function() {
+      const idFichaMedica = <?php echo (int)$id; ?>;
+      const textarea = document.getElementById('descricao_emergencia');
+      const urlBase = '../../controle/control.php';
+      const nomeClasse = 'IntercorrenciaRascunhoControle';
+      let autosaveTimer = null;
+      let lastSavedValue = '';
+
+      async function carregarRascunho() {
+        try {
+          const url = `${urlBase}?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=obterRascunho&id_fichamedica=${encodeURIComponent(idFichaMedica)}`;
+          const response = await fetch(url);
+          if (!response.ok) {
+            return;
+          }
+          const data = await response.json();
+          if (data && typeof data.descricao === 'string') {
+            textarea.value = data.descricao;
+            lastSavedValue = data.descricao.trim();
+          }
+        } catch (err) {
+          console.error('Erro ao carregar rascunho:', err);
+        }
+      }
+
+      async function salvarOuLimparRascunho() {
+        const descricao = textarea.value.trim();
+        if (descricao === lastSavedValue) {
+          return;
+        }
+
+        const metodo = descricao === '' ? 'limparRascunho' : 'salvarRascunho';
+        try {
+          await fetch(urlBase, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              nomeClasse: nomeClasse,
+              metodo: metodo,
+              id_fichamedica: idFichaMedica,
+              descricao: descricao
+            }),
+            keepalive: true
+          });
+          lastSavedValue = descricao;
+        } catch (err) {
+          console.error('Erro ao salvar rascunho:', err);
+        }
+      }
+
+      function agendarAutosave() {
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(salvarOuLimparRascunho, 5000);
+      }
+
+      if (textarea) {
+        textarea.addEventListener('input', agendarAutosave);
+
+        const form = textarea.closest('form');
+        if (form) {
+          form.addEventListener('submit', function() {
+            const payload = JSON.stringify({
+              nomeClasse: nomeClasse,
+              metodo: 'limparRascunho',
+              id_fichamedica: idFichaMedica
+            });
+            const url = urlBase;
+
+            if (navigator.sendBeacon) {
+              const blob = new Blob([payload], { type: 'application/json' });
+              navigator.sendBeacon(url, blob);
+            } else {
+              fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: payload,
+                keepalive: true
+              });
+            }
+          });
+        }
+
+        carregarRascunho();
+      }
+    })();
   </script>
   <!-- Scripts únicos e organizados -->
   <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>

@@ -28,6 +28,5 @@ class AlergiaControle
         } catch (Exception $e) {
             Util::tratarException($e);
         }
-        exit();
     }
 }

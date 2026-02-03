@@ -10,7 +10,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
         //Controladoras permitidas
         $controladorasRecursos = [
             'AdocaoControle' => [6, 64],
-            'AlergiaControle' => [5],
+            'AlergiaControle' => [5, 53],
             'AlmoxarifadoControle' => [2, 21, 22, 23, 24, 91],
             'AlmoxarifeControle' => [91],
             'ArquivoEtapaControle' => [1, 12, 14],
@@ -53,6 +53,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'SaidaControle' => [22, 24],
             'SaudeControle' => [5, 12],
             'SinaisVitaisControle' => [5],
+            'IntercorrenciaRascunhoControle' => [5],
             'TipoEntradaControle' => [23],
             'TipoSaidaControle' => [22, 24],
             'UnidadeControle' => [22],

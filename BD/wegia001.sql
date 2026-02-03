@@ -2142,6 +2142,27 @@ CREATE TABLE IF NOT EXISTS `wegia`.`aviso`(
 ENGINE = InnoDB;
 
 -- ------------------------------------------------------
+-- Table `wegia`.`intercorrencia_rascunho`
+-- ------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`intercorrencia_rascunho`(
+  `id_intercorrencia_rascunho` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_fichamedica` INT(11) NOT NULL,
+  `id_funcionario` INT(11) NOT NULL,
+  `descricao` TEXT NOT NULL,
+  `data_atualizacao` DATETIME NOT NULL,
+  PRIMARY KEY(`id_intercorrencia_rascunho`),
+  UNIQUE KEY `uk_intercorrencia_rascunho` (`id_fichamedica`, `id_funcionario`),
+  FOREIGN KEY (`id_fichamedica`)
+    REFERENCES `wegia`.`saude_fichamedica` (`id_fichamedica`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  FOREIGN KEY (`id_funcionario`)
+    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+-- ------------------------------------------------------
 -- Table `wegia` . `aviso_notificacao`
 -- ------------------------------------------------------
 
