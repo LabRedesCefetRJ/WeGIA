@@ -2049,9 +2049,12 @@ try {
       }
 
       function gerar_alergia() {
-        url = 'exibir_alergia.php';
+        const url = '../../controle/control.php';
         $.ajax({
-          data: '',
+          data: {
+            nomeClasse: "AlergiaControle",
+            metodo: "listarTodasAsAlergias"
+          },
           type: "POST",
           url: url,
           async: true,
