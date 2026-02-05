@@ -18,6 +18,7 @@ class PaEtapaDAO
                     e.data_inicio,
                     e.data_fim,
                     e.titulo,
+                    e.descricao,
                     e.id_status,
                     s.descricao AS status_nome
                 FROM pa_etapa e
@@ -34,19 +35,23 @@ class PaEtapaDAO
         int $idProcesso,
         int $statusId,
         string $titulo,
+        string $descricao,
         ?string $dataInicio,
         ?string $dataFim
     ): int {
-        $sql = "INSERT INTO pa_etapa (data_inicio, data_fim, titulo, id_processo_aceitacao, id_status)
-                VALUES (:data_inicio, :data_fim, :titulo, :id_processo, :id_status)";
+        $sql = "INSERT INTO pa_etapa (data_inicio, data_fim, titulo, descricao, id_processo_aceitacao, id_status)
+                VALUES (:data_inicio, :data_fim, :titulo, :descricao, :id_processo, :id_status)";
         $stmt = $this->pdo->prepare($sql);
 
         $data_inicio = $dataInicio ?: date('Y-m-d');
         $data_fim    = $dataFim ?: null;
 
+        $descricao = $descricao ?: null;
+
         $stmt->bindParam(':data_inicio',  $data_inicio);
         $stmt->bindParam(':data_fim',     $data_fim);
         $stmt->bindParam(':titulo',    $titulo);
+        $stmt->bindParam(':descricao',    $descricao);
         $stmt->bindParam(':id_processo',  $idProcesso, PDO::PARAM_INT);
         $stmt->bindParam(':id_status',    $statusId,   PDO::PARAM_INT);
 
@@ -54,17 +59,21 @@ class PaEtapaDAO
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function atualizar(int $idEtapa, int $statusId, ?string $dataFim, string $titulo): bool
+    public function atualizar(int $idEtapa, int $statusId, ?string $dataFim, string $titulo, ?string $descricao): bool
     {
+        $descricao = $descricao ?: null;
+
         $sql = "UPDATE pa_etapa
                 SET id_status = :status_id,
                     data_fim  = :data_fim,
-                    titulo = :titulo
+                    titulo = :titulo,
+                    descricao = :descricao
                 WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':status_id', $statusId, PDO::PARAM_INT);
         $stmt->bindParam(':data_fim',  $dataFim);
         $stmt->bindParam(':titulo', $titulo);
+        $stmt->bindParam(':descricao', $descricao);
         $stmt->bindParam(':id',        $idEtapa, PDO::PARAM_INT);
         return $stmt->execute();
     }

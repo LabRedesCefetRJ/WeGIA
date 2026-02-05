@@ -13,6 +13,7 @@ class EtapaProcessoControle
         $dataInicio  = $_POST['data_inicio'] ?? null;
         $dataFim     = $_POST['data_fim'] ?? null;
         $statusId    = (int)($_POST['id_status'] ?? 1);
+        $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
 
         if ($idProcesso <= 0 || empty($titulo)) {
             $_SESSION['mensagem_erro'] = 'Processo e descrição são obrigatórios.';
@@ -36,7 +37,7 @@ class EtapaProcessoControle
 
         $pdo = Conexao::connect();
         $etapaDAO = new PaEtapaDAO($pdo);
-        $etapaDAO->inserirEtapa($idProcesso, $statusId, $titulo, $dataInicioFinal, $dataFimFinal);
+        $etapaDAO->inserirEtapa($idProcesso, $statusId, $titulo, $descricao, $dataInicioFinal, $dataFimFinal);
 
         $_SESSION['msg'] = 'Etapa cadastrada com sucesso.';
         header("Location: ../html/atendido/etapa_processo.php?id={$idProcesso}");
@@ -49,6 +50,7 @@ class EtapaProcessoControle
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
         $dataFim    = ($_POST['data_fim'] ?? '');
         $titulo  = trim($_POST['titulo'] ?? '');
+        $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
         $statusId   = (int)($_POST['id_status'] ?? 1);
 
         if ($idEtapa <= 0 || $idProcesso <= 0 || empty($titulo)) {
@@ -81,7 +83,7 @@ class EtapaProcessoControle
             }
         }
 
-        $etapaDAO->atualizar($idEtapa, $statusId, $dataFimFinal, $titulo);
+        $etapaDAO->atualizar($idEtapa, $statusId, $dataFimFinal, $titulo, $descricao);
 
         $_SESSION['msg'] = 'Etapa atualizada com sucesso.';
         header("Location: ../html/atendido/etapa_processo.php?id={$idProcesso}");

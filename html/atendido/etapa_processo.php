@@ -162,6 +162,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                             <th>Data de Conclusão</th>
                                             <th>Status</th>
                                             <th>Titulo</th>
+                                            <th>Descrição</th>
                                             <th>Arquivos</th>
                                             <th>Ações</th>
                                         </tr>
@@ -181,6 +182,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                 </td>
                                                 <td><?= htmlspecialchars($etapa['status_nome']) ?></td>
                                                 <td><?= htmlspecialchars($etapa['titulo']) ?></td>
+                                                <td style="max-width: 150px;"><?= htmlspecialchars($etapa['descricao']) ?></td>
                                                 <td>
                                                     <button type="button"
                                                         class="btn btn-xs btn-info btn-arquivos-etapa"
@@ -198,6 +200,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                         data-target="#modalEditarEtapa"
                                                         data-id="<?= (int)$etapa['id'] ?>"
                                                         data-titulo="<?= htmlspecialchars($etapa['titulo'], ENT_QUOTES) ?>"
+                                                        data-descricao="<?= htmlspecialchars($etapa['descricao'], ENT_QUOTES) ?>"
                                                         data-datafim="<?= htmlspecialchars($etapa['data_fim'] ?? '', ENT_QUOTES) ?>"
                                                         data-status="<?= (int)$etapa['id_status'] ?>">
                                                         <i class="fa fa-edit"></i> Editar
@@ -252,6 +255,11 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                     <input type="date" name="data_fim" class="form-control">
                                 </div>
 
+                                <div class="form-group">
+                                    <label>Descrição</label>
+                                    <textarea class="form-control" rows="5" name="descricao"></textarea>
+                                </div>
+
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -293,6 +301,11 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 <div class="form-group">
                                     <label>Data de Conclusão</label>
                                     <input type="date" name="data_fim" id="edit_data_fim" class="form-control">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Descrição</label>
+                                    <textarea class="form-control" rows="5" name="descricao" id="edit_descricao"></textarea>
                                 </div>
                             </div>
                             <div class="modal-footer">
