@@ -151,7 +151,6 @@ try {
                                         <tr>
                                             <th>Nome</th>
                                             <th>CPF</th>
-                                            <th>Status</th>
                                             <th>Etapas</th>
                                             <th>Arquivos</th>
                                             <th>Ações</th>
@@ -162,7 +161,6 @@ try {
                                             <tr>
                                                 <td><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></td>
                                                 <td><?= htmlspecialchars($processo['cpf']) ?></td>
-                                                <td><?= htmlspecialchars($processo['status']) ?></td>
 
                                                 <td>
                                                     <a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" class="btn btn-xs btn-primary">
