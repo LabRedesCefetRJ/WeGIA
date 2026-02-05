@@ -122,6 +122,21 @@ class SinaisVitaisControle
             exit('A data da aferição não pode ser vazia');
         }
 
+        $temAlgumDado = !(
+            $sinaisvitais->getSaturacao() === '' &&
+            $sinaisvitais->getPressaoArterial() === '' &&
+            $sinaisvitais->getFrequenciaCardiaca() === '' &&
+            $sinaisvitais->getFrequenciaRespiratoria() === '' &&
+            $sinaisvitais->getTemperatura() === '' &&
+            $sinaisvitais->getHgt() === '' &&
+            $sinaisvitais->getObservacao() === ''
+        );
+
+        if (!$temAlgumDado) {
+            http_response_code(400);
+            exit('Informe ao menos um sinal vital ou observação.');
+        }
+
         $atendidoDAO = new AtendidoDAO();
         $idPaciente = $atendidoDAO->obterPessoaIdPorFichaMedica((int)$id_fichamedica);
 

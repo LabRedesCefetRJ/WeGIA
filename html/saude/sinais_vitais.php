@@ -369,6 +369,15 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
     document.addEventListener("DOMContentLoaded", () => {
       const form = document.querySelector("form");
       const dataInput = document.getElementById("data_afericao");
+      const camposSinais = [
+        document.getElementById("saturacao"),
+        document.getElementById("pressao"),
+        document.getElementById("freq_card"),
+        document.getElementById("freq_resp"),
+        document.querySelector("[name='temperatura']"),
+        document.getElementById("hgt"),
+        document.getElementById("observacao")
+      ];
       if (!form || !dataInput) {
         return;
       }
@@ -389,6 +398,20 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
           event.preventDefault();
           event.stopImmediatePropagation();
           alert("Por favor, preencha a data da aferição.");
+          return;
+        }
+
+        const temAlgumSinal = camposSinais.some((campo) => {
+          if (!campo) {
+            return false;
+          }
+          return campo.value.trim() !== "";
+        });
+
+        if (!temAlgumSinal) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          alert("Informe ao menos um sinal vital ou observação.");
           return;
         }
 
