@@ -228,7 +228,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 <input type="hidden" name="metodo" value="salvar">
                                 <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
 
-                                 <div class="form-group">
+                                <div class="form-group">
                                     <label>Título<span class="obrig">*</span></label>
                                     <input type="text" name="titulo" required class="form-control" placeholder="Insira aqui o título da sua etapa...">
                                 </div>
@@ -334,14 +334,16 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
                                 <hr>
                                 <form method="post" action="../../controle/control.php"
-                                    enctype="multipart/form-data" class="form-inline">
+                                    enctype="multipart/form-data">
                                     <input type="hidden" name="nomeClasse" value="ArquivoEtapaControle">
                                     <input type="hidden" name="metodo" value="upload">
                                     <input type="hidden" name="alvo" value="etapa">
                                     <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
                                     <input type="hidden" id="upload_id_etapa" name="id_etapa" value="">
-                                    <input type="file" name="arquivo" class="form-control input-sm" />
-                                    <button type="submit" class="btn btn-sm btn-default mt-1">Anexar</button>
+                                    <input type="file" name="arquivo" class="form-control-file" />
+                                    <button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)" style="margin-top: 10px;">
+                                        <i class="fa fa-upload"></i> Anexar arquivo
+                                    </button>
                                 </form>
                             </div>
                         </div>

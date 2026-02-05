@@ -1,4 +1,6 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
 
 require_once __DIR__ . '/../dao/Conexao.php';
 require_once __DIR__ . '/../dao/EtapaArquivoDAO.php';
@@ -19,13 +21,9 @@ class ArquivoEtapaControle
 
     public function upload()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         $idProcesso = (int) filter_input(INPUT_POST, 'id_processo', FILTER_SANITIZE_NUMBER_INT);
         $idEtapa    = (int) filter_input(INPUT_POST, 'id_etapa', FILTER_SANITIZE_NUMBER_INT);
-        $alvo       = filter_input(INPUT_POST, 'alvo', FILTER_SANITIZE_STRING) ?: 'etapa';
+        $alvo       = filter_input(INPUT_POST, 'alvo', FILTER_SANITIZE_SPECIAL_CHARS) ?: 'etapa';
 
         $urlRetorno = ($alvo === 'etapa')
             ? '../html/atendido/etapa_processo.php?id=' . $idProcesso
@@ -47,10 +45,29 @@ class ArquivoEtapaControle
 
         $arquivo    = $_FILES['arquivo'];
         $ext        = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
-        $permitidas = ['png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx', 'odp'];
+        $permitidas = ['png', 'jpg', 'jpeg', 'pdf', 'doc', 'docx', 'odt',];
 
         if (!in_array($ext, $permitidas, true)) {
             $_SESSION['mensagem_erro'] = 'Extensão não permitida.';
+            header('Location: ' . $urlRetorno);
+            return;
+        }
+
+        $finfo = new finfo(FILEINFO_MIME_TYPE);
+        $mime = $finfo->file($arquivo['tmp_name']);
+
+        $mimes = [
+            'pdf'  => 'application/pdf',
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png'  => 'image/png',
+            'doc'  => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'odt' => 'application/vnd.oasis.opendocument.text',
+        ];
+
+        if ($mime !== ($mimes[$ext] ?? null)) {
+            $_SESSION['mensagem_erro'] = 'MIME inválido.';
             header('Location: ' . $urlRetorno);
             return;
         }
@@ -75,17 +92,13 @@ class ArquivoEtapaControle
 
     public function excluir()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         $idArquivo  = filter_input(INPUT_POST, 'id_arquivo', FILTER_VALIDATE_INT);
         $idEtapa    = filter_input(INPUT_POST, 'id_etapa', FILTER_VALIDATE_INT);
-        $idProcesso = filter_input(INPUT_POST, 'id_processo', FILTER_VALIDATE_INT) ?: 0;  
+        $idProcesso = filter_input(INPUT_POST, 'id_processo', FILTER_VALIDATE_INT) ?: 0;
 
         if (!$idArquivo || !$idEtapa) {
             $_SESSION['mensagem_erro'] = 'Dados inválidos para exclusão.';
-            header('Location: ../html/atendido/etapa_processo.php?id=' . max($idProcesso, 1));  
+            header('Location: ../html/atendido/etapa_processo.php?id=' . max($idProcesso, 1));
             return;
         }
 

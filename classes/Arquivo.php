@@ -58,7 +58,7 @@ final class Arquivo
         $this->nome = basename($file['name']);
         $this->extensao = strtolower(pathinfo($this->nome, PATHINFO_EXTENSION));
 
-        $permitidas = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'];
+        $permitidas = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx', 'odt',];
 
         if (!in_array($this->extensao, $permitidas, true)) 
             throw new InvalidArgumentException('Extensão não permitida.');
@@ -73,6 +73,7 @@ final class Arquivo
             'png'  => 'image/png',
             'doc'  => 'application/msword',
             'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'odt'  => 'application/vnd.oasis.opendocument.text',
         ];
 
         if ($this->mime !== ($mimes[$this->extensao] ?? null))
