@@ -44,42 +44,47 @@ class ProcessoAceitacaoControle
     public function incluir()
     {
         try {
-            $nome = trim($_POST['nome']);
-            $sobrenome = trim($_POST['sobrenome']);
-            $cpf = trim($_POST['cpf']);
+            $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+            $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
+            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
-            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
+            if (empty($nome) || empty($sobrenome))
+                throw new InvalidArgumentException('Erro: Nome e Sobrenome são obrigatórios.', 400);
+
+            if (strlen($cpf) != 0 && !Util::validarCPF($cpf))
+                throw new InvalidArgumentException('Erro: o CPF informado não é válido.', 400);
+
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?"); //Isso deve virar responsabilidade da classe de Pessoa
             $stmt->execute([$cpf]);
 
             //futuramente caso um CPF já esteja cadastrado, o sistema deve pegar os dados da pessoa existente no sistema e usar para criar o processo
-            if ((int)$stmt->fetchColumn() > 0) {
+            if ((int)$stmt->fetchColumn() > 0)
                 throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
-            }
-
-            if (!Util::validarCPF($cpf)) {
-                throw new InvalidArgumentException('Erro: o CPF informado não é válido.', 400);
-            }
-
-            if (empty($nome) || empty($sobrenome)) {
-                throw new InvalidArgumentException('Erro: Nome e Sobrenome são obrigatórios.', 400);
-            }
 
             $pessoaDAO = new PessoaDAO($this->pdo);
-            $id_pessoa = $pessoaDAO->inserirPessoa($cpf, $nome, $sobrenome);
-
             $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
-            $processoDAO->criarProcessoInicial($id_pessoa);
 
+            $this->pdo->beginTransaction();
+
+            $id_pessoa = isset($cpf) && !empty($cpf) ? $pessoaDAO->inserirPessoa($cpf, $nome, $sobrenome): $pessoaDAO->inserirPessoa(null, $nome, $sobrenome);
+
+            $resultado = $processoDAO->criarProcessoInicial($id_pessoa); 
+            if(!$resultado || $resultado <= 0)
+                throw new Exception('Erro ao cadastrar processo de aceitação no servidor.', 500);
+
+            $this->pdo->commit();
+            
             $_SESSION['msg'] = "Processo cadastrado com sucesso!";
             header("Location: ../html/atendido/processo_aceitacao.php");
-            exit;
-        } catch (InvalidArgumentException $e) {
-            $_SESSION['mensagem_erro'] = $e->getMessage();
+        } catch (Exception $e) {
+            if($this->pdo->inTransaction())
+                $this->pdo->rollBack();
+
+            $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação' : $e->getMessage();
+            $_SESSION['mensagem_erro'] = $mensagem;
+
             header("Location: ../html/atendido/processo_aceitacao.php");
-            exit();
-        } catch (PDOException $e) {
             Util::tratarException($e);
-            exit();
         }
     }
 

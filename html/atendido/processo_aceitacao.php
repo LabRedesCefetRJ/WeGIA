@@ -160,7 +160,7 @@ try {
                                         <?php foreach ($processosAceitacao as $processo): ?>
                                             <tr>
                                                 <td><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></td>
-                                                <td><?= htmlspecialchars($processo['cpf']) ?></td>
+                                                <td><?= isset($processo['cpf']) && !empty($processo['cpf']) ? htmlspecialchars($processo['cpf']) : 'Não informado.' ?></td>
 
                                                 <td>
                                                     <a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" class="btn btn-xs btn-primary">
@@ -262,7 +262,7 @@ try {
                                     <input type="text" name="sobrenome" class="form-control" required />
                                 </div>
                                 <div class="form-group">
-                                    <label>CPF <span class="text-danger">*</span></label>
+                                    <label>CPF</label>
                                     <input type="text"
                                         name="cpf"
                                         id="cpf"
@@ -272,7 +272,7 @@ try {
                                         onkeyup="mascara('###.###.###-##',this,event)"
                                         onblur="validarCPF(this.value)"
                                         class="form-control"
-                                        required />
+                                         />
                                     <p id="cpfInvalido" style="display: none; color: #b30000; font-size: 12px;">CPF INVÁLIDO!</p>
                                 </div>
                             </div>
@@ -379,7 +379,7 @@ try {
         });
 
         function validarCPF(strCPF) {
-            if (!testaCPF(strCPF)) {
+            if (strCPF.length != 0 && !testaCPF(strCPF)) {
                 $('#cpfInvalido').show();
                 $('#enviar').prop('disabled', true);
             } else {
