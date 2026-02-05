@@ -340,6 +340,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                     <input type="hidden" name="alvo" value="etapa">
                                     <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
                                     <input type="hidden" id="upload_id_etapa" name="id_etapa" value="">
+                                    <p>Permitido envio de até <?= ini_get('upload_max_filesize') ?> de tamanho por documento.</p>
                                     <input type="file" name="arquivo" class="form-control-file" />
                                     <button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)" style="margin-top: 10px;">
                                         <i class="fa fa-upload"></i> Anexar arquivo

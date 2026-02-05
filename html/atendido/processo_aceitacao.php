@@ -322,7 +322,8 @@ try {
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="arquivoProcesso">Arquivo <span class="text-danger">*</span></label>
+                                        <label for="arquivoProcesso">Arquivo<span class="text-danger">*</span></label>
+                                        <p>Permitido envio de até <?= ini_get('upload_max_filesize') ?> de tamanho por documento.</p>
                                         <input type="file" name="arquivo" class="form-control-file" id="arquivoProcesso"
                                             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odp" required>
                                     </div>
