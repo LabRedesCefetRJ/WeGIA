@@ -18,11 +18,13 @@ class ProcessoAceitacaoDAO
      * @return int ID do processo criado.
      * @throws PDOException Em caso de erro no banco.
      */
-    public function criarProcessoInicial(int $id_pessoa, int $id_status = 1, string $descricao = 'Processo de aceitação inicial'): int
+    public function criarProcessoInicial(int $id_pessoa, int $id_status = 1, ?string $descricao): int
     {
         date_default_timezone_set("America/Sao_Paulo");
         $data_inicio = date('Y-m-d H:i:s');
         $data_fim = null; // processo em andamento
+
+        $descricao = $descricao ?: null;
 
         $sql = "
             INSERT INTO processo_aceitacao (data_inicio, data_fim, descricao, id_status, id_pessoa)
@@ -102,6 +104,28 @@ class ProcessoAceitacaoDAO
         return $stmt->execute();
     }
 
+    public function alterar(int $idProcesso, int $idStatus, ?string $descricao): bool
+    {
+        $descricao = $descricao ?: null;
+        
+        $sql = "UPDATE processo_aceitacao 
+            SET id_status = :id_status, descricao = :descricao";
+
+        if ($idStatus === 2 || $idStatus === 3) {
+            $sql .= ", data_fim = NOW()";
+        }
+
+        $sql .= " WHERE id = :id";
+
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindParam(':descricao', $descricao);
+        $stmt->bindParam(':id_status', $idStatus, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $idProcesso, PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
     public function buscarPorIdConcluido(int $idProcesso): ?array
     {
         $sql = "
@@ -147,7 +171,8 @@ class ProcessoAceitacaoDAO
             p.cpf,
             s.descricao AS status,
             pa.id,
-            pa.id_status 
+            pa.id_status,
+            pa.descricao 
         FROM processo_aceitacao pa
         JOIN pessoa p ON pa.id_pessoa = p.id_pessoa
         JOIN pa_status s ON pa.id_status = s.id

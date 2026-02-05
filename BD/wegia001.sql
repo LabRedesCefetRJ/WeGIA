@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`processo_aceitacao`(
     `id` INT NOT NULL AUTO_INCREMENT,
     `data_inicio` DATETIME NOT NULL,
     `data_fim` DATETIME NULL,
-    `descricao` VARCHAR(512) NOT NULL,
+    `descricao` TEXT NULL,
     `id_status` INT NOT NULL,
     `id_pessoa` INT NOT NULL,
     PRIMARY KEY (`id`),

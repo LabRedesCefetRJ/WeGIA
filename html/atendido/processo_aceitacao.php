@@ -151,6 +151,7 @@ try {
                                         <tr>
                                             <th>Nome</th>
                                             <th>CPF</th>
+                                            <th>Descrição</th>
                                             <th>Etapas</th>
                                             <th>Arquivos</th>
                                             <th>Ações</th>
@@ -161,7 +162,7 @@ try {
                                             <tr>
                                                 <td><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></td>
                                                 <td><?= isset($processo['cpf']) && !empty($processo['cpf']) ? htmlspecialchars($processo['cpf']) : 'Não informado.' ?></td>
-
+                                                <td style="max-width: 150px;"><?= isset($processo['descricao']) && !empty($processo['descricao']) ? htmlspecialchars($processo['descricao']) : '' ?></td>
                                                 <td>
                                                     <a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" class="btn btn-xs btn-primary">
                                                         <i class="fa fa-edit"></i>
@@ -196,8 +197,8 @@ try {
                                                         </button>
                                                     <?php endif; ?>
 
-                                                    <button type="button" class="btn btn-xs btn-primary btn-alter-status" data-toggle="modal" data-id_processo="<?= htmlspecialchars($processo['id']) ?>" data-target="#modalStatusProcesso">
-                                                        Alterar Status do Processo
+                                                    <button type="button" class="btn btn-xs btn-primary btn-alter-status" data-toggle="modal" data-id_processo="<?= htmlspecialchars($processo['id']) ?> " data-descricao="<?=  isset($processo['descricao']) && !empty($processo['descricao']) ? htmlspecialchars($processo['descricao']) : '' ?>" data-target="#modalStatusProcesso">
+                                                        Alterar Processo
                                                     </button>
                                                 </td>
                                             </tr>
@@ -213,7 +214,7 @@ try {
                     <div class="modal-dialog" role="document">
                         <form method="post" action="../../controle/control.php" class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Alterar Status do Processo</h5>
+                                <h5 class="modal-title">Alterar Processo</h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
@@ -230,6 +231,11 @@ try {
                                             <option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
                                         <?php endforeach; ?>
                                     </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Descrição</label>
+                                    <textarea class="form-control" rows="5" name="descricao" id="edit_descricao"></textarea>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -271,9 +277,13 @@ try {
                                         onkeypress="return Onlynumbers(event)"
                                         onkeyup="mascara('###.###.###-##',this,event)"
                                         onblur="validarCPF(this.value)"
-                                        class="form-control"
-                                         />
+                                        class="form-control" />
                                     <p id="cpfInvalido" style="display: none; color: #b30000; font-size: 12px;">CPF INVÁLIDO!</p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Descrição</label>
+                                    <textarea class="form-control" rows="5" name="descricao"></textarea>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -475,9 +485,11 @@ try {
         $(document).on('click', '.btn-alter-status', function() {
 
             const idProcesso = $(this).data('id_processo');
+            const btn = $(this);
 
             // Preenche o hidden do modal
             $('#modal-id-processo').val(idProcesso);
+            $('#edit_descricao').val(btn.data('descricao'));
 
             // Limpa seleção anterior (opcional)
             $('#modalStatusProcesso select[name="id_status"]').val('');
@@ -499,9 +511,9 @@ try {
 
                         // Seleciona o option correspondente
                         $('#modalStatusProcesso select[name="id_status"]').val(idStatus);
-                    } else if(response.erro){
+                    } else if (response.erro) {
                         alert('Não foi possível obter o status do processo: ', erro);
-                    }else{
+                    } else {
                         alert('Não foi possível obter o status do processo.');
                     }
                 },

@@ -22,6 +22,7 @@ class ProcessoAceitacaoControle
     {
         $idProcesso = (int)($_POST['id_processo'] ?? 0);
         $idStatus   = (int)($_POST['id_status'] ?? 0);
+        $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
 
         if ($idProcesso <= 0 || $idStatus <= 0) {
             $_SESSION['mensagem_erro'] = 'Processo ou status inválido.';
@@ -31,7 +32,7 @@ class ProcessoAceitacaoControle
 
         try {
             $dao = new ProcessoAceitacaoDAO($this->pdo);
-            $dao->atualizarStatus($idProcesso, $idStatus);
+            $dao->alterar($idProcesso, $idStatus, $descricao);
 
             $_SESSION['msg'] = 'Status do processo atualizado com sucesso.';
             header("Location: ../html/atendido/processo_aceitacao.php?status-processo=" . htmlspecialchars($idStatus));
@@ -47,6 +48,7 @@ class ProcessoAceitacaoControle
             $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
             $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
             $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
 
             if (empty($nome) || empty($sobrenome))
                 throw new InvalidArgumentException('Erro: Nome e Sobrenome são obrigatórios.', 400);
@@ -68,12 +70,12 @@ class ProcessoAceitacaoControle
 
             $id_pessoa = isset($cpf) && !empty($cpf) ? $pessoaDAO->inserirPessoa($cpf, $nome, $sobrenome): $pessoaDAO->inserirPessoa(null, $nome, $sobrenome);
 
-            $resultado = $processoDAO->criarProcessoInicial($id_pessoa); 
+            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao); 
             if(!$resultado || $resultado <= 0)
                 throw new Exception('Erro ao cadastrar processo de aceitação no servidor.', 500);
 
             $this->pdo->commit();
-            
+
             $_SESSION['msg'] = "Processo cadastrado com sucesso!";
             header("Location: ../html/atendido/processo_aceitacao.php");
         } catch (Exception $e) {
