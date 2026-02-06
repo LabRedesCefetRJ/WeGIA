@@ -14,6 +14,7 @@ require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Atendido.php";
 require_once ROOT . "/Functions/funcoes.php";
 require_once ROOT . "/classes/Util.php";
+require_once ROOT . "/dao/PaArquivoDAO.php";
 
 class AtendidoDAO
 {
@@ -49,8 +50,6 @@ class AtendidoDAO
                 header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=$cpf");
             } else {
                 header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=$cpf");
-                // header("Location: ../controle/control.php?metodo=listarPessoaExistente($cpf)&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=$cpf");
-
             }
         } else {
             header("Location: ../html/atendido/pre_cadastro_atendido.php?msg_e=Erro, Atendido já cadastrado no sistema.");
@@ -176,6 +175,44 @@ class AtendidoDAO
             }
 
             $idAtendido = (int)$pdo->lastInsertId();
+
+            //verificar se a pessoa possui processo de aceitação concluído
+            $processoConcluidoSql = "SELECT id, id_status FROM processo_aceitacao WHERE id_pessoa=:idPessoa AND id_status=2";
+
+            $stmtProcesso = $pdo->prepare($processoConcluidoSql);
+
+            $stmtProcesso->execute([':idPessoa' => $idPessoa]);
+
+            if ($stmtProcesso->rowCount() > 0) {
+                //Inserir documentações
+                $idProcesso = $stmtProcesso->fetch(PDO::FETCH_ASSOC)['id'];
+
+                $paDao = new PaArquivoDAO($pdo);
+
+                $arquivosProcesso = $paDao->listarComTipoPorProcesso($idProcesso);
+
+                $atDocDao = new AtendidoDocumentacaoMySql($pdo);
+
+                foreach ($arquivosProcesso as $arquivo) {
+                    $idPessoaArquivo = (int)$arquivo['id_pessoa_arquivo'];
+                    $idTipoDoc = (int)($arquivo['id_tipo_documentacao'] ?? null);
+
+                    if ($idTipoDoc <= 0) {
+                        $idTipoDoc = 1;
+                    }
+
+                    $dto = new AtendidoDocumentacaoDTO([
+                        'id_atendido' => $idAtendido,
+                        'id_tipo_documentacao' => $idTipoDoc,
+                        'id_pessoa_arquivo' => $idPessoaArquivo
+                    ]);
+
+                    $obj = new AtendidoDocumentacao($dto, $atDocDao);
+                    if ($obj->create() === false) {
+                        throw new RuntimeException('Falha ao vincular documentação ao atendido.');
+                    }
+                }
+            }
 
             $pdo->commit();
 
