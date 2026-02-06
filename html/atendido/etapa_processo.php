@@ -189,8 +189,29 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                         data-toggle="modal"
                                                         data-target="#modalArquivosEtapa"
                                                         data-id_etapa="<?= (int)$etapa['id'] ?>">
-                                                        <i class="fa fa-paperclip"></i> Arquivos
+                                                        <i class="fa fa-paperclip"></i> Gerenciar Arquivos
                                                     </button>
+
+                                                    <?php
+                                                    try {
+                                                        $arquivosEtapa = $etapaDAO->getNomeArquivos($etapa['id']);
+                                                        $nomes = [];
+
+                                                        foreach ($arquivosEtapa as $arquivo) {
+                                                            $nomes[] = $arquivo['arquivo_nome'];
+                                                        }
+
+                                                        $listaArquivos = implode(', ', $nomes);
+
+                                                        $quantidade = is_array($arquivosEtapa) ? count($arquivosEtapa) : 0;
+
+                                                        $quantidadeTexto = $quantidade === 1 ? "$quantidade Item" : "$quantidade Itens";
+
+                                                        echo "<span class=\"badge\" title=\"$listaArquivos\">$quantidadeTexto</span>";
+                                                    } catch (Exception $e) {
+                                                        echo '<span class="badge">Falha ao buscar informações</span>';
+                                                    }
+                                                    ?>
                                                 </td>
                                                 <td>
                                                     <button

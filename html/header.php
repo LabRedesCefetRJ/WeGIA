@@ -61,7 +61,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 			color: #3498db;
 		}
 
-		.badge {
+		.notify-intercorrencia {
 			font-size: 1rem;
 			position: absolute;
 			top: 5px;
@@ -112,7 +112,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 					$quantidadeNotificações = $avisoNotificacaoControle->quantidadeRecentes($id_pessoa);
 					$paginaIntercorrencia = WWW . 'html/saude/intercorrencia_visualizar.php';
 					if ($quantidadeNotificações > 0) {
-						echo '<a href="' . $paginaIntercorrencia . '">Intercorrências <i class="fa fa-bell" aria-hidden="true"></i><span class="badge">' . $quantidadeNotificações . '</span></a>'; //Corrigir endereço
+						echo '<a href="' . $paginaIntercorrencia . '">Intercorrências <i class="fa fa-bell" aria-hidden="true"></i><span class="badge notify-intercorrencia">' . $quantidadeNotificações . '</span></a>'; //Corrigir endereço
 					} else {
 						echo '<a href="' . $paginaIntercorrencia . '">Intercorrências <i class="fa fa-bell" aria-hidden="true"></i></a>';
 					}

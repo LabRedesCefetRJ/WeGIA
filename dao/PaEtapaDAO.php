@@ -102,4 +102,18 @@ class PaEtapaDAO
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ?: null;
     }
+
+    public function getNomeArquivos(int $idEtapa){
+        $sql = "SELECT 
+                    ea.arquivo_nome
+                FROM etapa_arquivo ea
+                WHERE ea.etapa_id = :idEtapa;
+            ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':idEtapa', $idEtapa, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
