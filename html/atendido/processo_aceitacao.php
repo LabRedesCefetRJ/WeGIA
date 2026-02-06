@@ -160,7 +160,7 @@ try {
                                     <tbody>
                                         <?php foreach ($processosAceitacao as $processo): ?>
                                             <tr>
-                                                <td><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></td>
+                                                <td onclick="window.location.href = './etapa_processo.php?id=<?= (int)$processo['id'] ?>'"><a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" style="color: inherit"><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></a></td>
                                                 <td><?= isset($processo['cpf']) && !empty($processo['cpf']) ? htmlspecialchars($processo['cpf']) : 'Não informado.' ?></td>
                                                 <td style="max-width: 150px;"><?= isset($processo['descricao']) && !empty($processo['descricao']) ? htmlspecialchars($processo['descricao']) : '' ?></td>
                                                 <td>
