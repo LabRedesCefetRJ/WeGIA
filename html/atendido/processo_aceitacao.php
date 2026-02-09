@@ -181,23 +181,33 @@ try {
                                                 </td>
 
                                                 <td style="max-width:150px; white-space: normal;">
-                                                    <?php if (in_array((int)$processo['id'], $processosConcluidos)): ?>
+                                                    <?php
+                                                    $atendidoId = $processoDAO->getIdAtendido($processo['id']);
+
+                                                    if ($atendidoId != false && $atendidoId >= 1):
+                                                    ?>
+                                                        <a href="Profile_Atendido.php?idatendido=<?= htmlspecialchars($atendidoId) ?>"
+                                                            class="btn btn-xs btn-success">
+                                                            <i class="fa-solid fa-eye"></i> Ver Perfil
+                                                        </a>
+
+                                                    <?php elseif (in_array((int)$processo['id'], $processosConcluidos)): ?>
                                                         <a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$processo['id'] ?>"
                                                             class="btn btn-xs btn-success"
                                                             onclick="return confirm('Confirmar criação de atendido para este processo?');">
-                                                            <i class="fa fa-user-plus"></i> Criar Atendido
+                                                            <i class="fa fa-user-plus"></i> Cadastrar Atendido
                                                         </a>
                                                     <?php else: ?>
                                                         <button type="button"
-                                                            class="btn btn-xs btn-secondary"
+                                                            class="btn btn-xs btn-success"
                                                             disabled
                                                             title="O processo precisa ser concluído antes de criar o atendido"
                                                             style="cursor: not-allowed;">
-                                                            <i class="fa fa-user-plus"></i> Criar Atendido
+                                                            <i class="fa fa-user-plus"></i> Cadastrar Atendido
                                                         </button>
                                                     <?php endif; ?>
 
-                                                    <button type="button" class="btn btn-xs btn-primary btn-alter-status" data-toggle="modal" data-id_processo="<?= htmlspecialchars($processo['id']) ?> " data-descricao="<?=  isset($processo['descricao']) && !empty($processo['descricao']) ? htmlspecialchars($processo['descricao']) : '' ?>" data-target="#modalStatusProcesso">
+                                                    <button type="button" class="btn btn-xs btn-primary btn-alter-status" data-toggle="modal" data-id_processo="<?= htmlspecialchars($processo['id']) ?> " data-descricao="<?= isset($processo['descricao']) && !empty($processo['descricao']) ? htmlspecialchars($processo['descricao']) : '' ?>" data-target="#modalStatusProcesso">
                                                         Alterar Processo
                                                     </button>
                                                 </td>

@@ -196,4 +196,21 @@ class ProcessoAceitacaoDAO
 
         return $stmt->fetch(PDO::FETCH_ASSOC)['id_status'];
     }
+
+    /**
+     * Retorna o id do atendido cujo o id da pessoa é equivalente ao id da pessoa do processo informado como parâmetro.
+     * Em caso de não encontrar retorna false.
+     */
+    public function getIdAtendido(int $idProcesso){
+        $query = 'SELECT a.idatendido FROM atendido a JOIN processo_aceitacao pa ON (a.pessoa_id_pessoa=pa.id_pessoa) WHERE pa.id=:id';
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':id', $idProcesso, PDO::PARAM_INT);
+        $stmt->execute();
+
+        if($stmt->rowCount() != 1)
+            return false;
+
+        return (int) $stmt->fetch(PDO::FETCH_ASSOC)['idatendido'];
+    }
 }
