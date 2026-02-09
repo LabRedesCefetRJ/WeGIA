@@ -188,7 +188,8 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                         class="btn btn-xs btn-info btn-arquivos-etapa"
                                                         data-toggle="modal"
                                                         data-target="#modalArquivosEtapa"
-                                                        data-id_etapa="<?= (int)$etapa['id'] ?>">
+                                                        data-id_etapa="<?= (int)$etapa['id'] ?>"
+                                                        data-id_processo="<?= (int)$idProcesso?>">
                                                         <i class="fa fa-paperclip"></i> Gerenciar Arquivos
                                                     </button>
 
@@ -433,8 +434,9 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
             $('.btn-arquivos-etapa').on('click', function() {
                 var idEtapa = $(this).data('id_etapa');
+                var idProcesso = $(this).data('id_processo');
                 $('#upload_id_etapa').val(idEtapa);
-                $('#lista-arquivos-etapa').load('lista_arquivos_etapa.php?id_etapa=' + idEtapa);
+                $('#lista-arquivos-etapa').load('lista_arquivos_etapa.php?id_etapa=' + idEtapa + '&id_processo=' + idProcesso);
             });
         });
 

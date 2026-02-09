@@ -194,7 +194,7 @@ try {
                                                     <?php elseif (in_array((int)$processo['id'], $processosConcluidos)): ?>
                                                         <a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$processo['id'] ?>"
                                                             class="btn btn-xs btn-success"
-                                                            onclick="return confirm('Confirmar criação de atendido para este processo?');">
+                                                            onclick="return confirm('Confirmar cadastro de atendido para este processo?');">
                                                             <i class="fa fa-user-plus"></i> Cadastrar Atendido
                                                         </a>
                                                     <?php else: ?>
