@@ -236,7 +236,11 @@ try {
 
                                 <div class="form-group">
                                     <label>Status do Processo:</label>
-                                    <select name="id_status" class="form-control" style="min-width: 200px;">
+                                    <button type="button" onclick="adicionar_status()" class="btn btn-link p-0">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+
+                                    <select name="id_status" id="selectStatusProcesso" class="form-control select-status-processo" style="min-width: 200px;">
                                         <?php foreach ($statusProcesso as $status): ?>
                                             <option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
                                         <?php endforeach; ?>
@@ -534,6 +538,7 @@ try {
         });
     </script>
 
+<script src="../../Functions/pa_status.js"></script>
 </body>
 
 </html>

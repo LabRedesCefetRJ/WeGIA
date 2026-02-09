@@ -259,7 +259,12 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
                                 <div class="form-group">
                                     <label>Status <span class="obrig">*</span></label>
-                                    <select name="id_status" class="form-control" required>
+
+                                    <button type="button" onclick="adicionar_status()" class="btn btn-link p-0">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+
+                                    <select name="id_status" class="form-control select-status-processo" required>
                                         <?php foreach ($statuses as $st): ?>
                                             <option value="<?= (int)$st['id'] ?>"><?= htmlspecialchars($st['descricao']) ?></option>
                                         <?php endforeach; ?>
@@ -312,7 +317,12 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
                                 <div class="form-group">
                                     <label>Status</label>
-                                    <select name="id_status" id="edit_id_status" class="form-control">
+
+                                    <button type="button" onclick="adicionar_status()" class="btn btn-link p-0">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+
+                                    <select name="id_status" id="edit_id_status" class="form-control select-status-processo">
                                         <?php foreach ($statuses as $st): ?>
                                             <option value="<?= (int)$st['id'] ?>"><?= htmlspecialchars($st['descricao']) ?></option>
                                         <?php endforeach; ?>
@@ -436,6 +446,8 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
             return true;
         }
     </script>
+
+    <script src="../../Functions/pa_status.js"></script>
 </body>
 
 </html>
