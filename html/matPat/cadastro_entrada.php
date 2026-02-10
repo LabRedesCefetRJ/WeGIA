@@ -393,7 +393,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			$("#origem").blur(function() {
 				var val = $("#origem").val();
 				var obj = $("#origens").find("option[value='" + val + "']");
-				if (obj != null && obj.length > 0) {
+				if (val.length >= 0) {
 					return true;
 				} else {
 					alert("Origem inválida, por favor insira uma origem válida");

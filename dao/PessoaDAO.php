@@ -1,15 +1,19 @@
 <?php
-require_once dirname(__FILE__).'/Conexao.php';
-require_once dirname(__FILE__, 2).'/classes/PessoaDTOSocio.php';
 
-class PessoaDAO{
+use function PHPSTORM_META\type;
+
+require_once dirname(__FILE__) . '/Conexao.php';
+require_once dirname(__FILE__, 2) . '/classes/PessoaDTOSocio.php';
+
+class PessoaDAO
+{
     private PDO $pdo;
 
     public function __construct(PDO $pdo = null)
     {
-        if(is_null($pdo)){
+        if (is_null($pdo)) {
             $this->pdo = Conexao::connect();
-        }else{
+        } else {
             $this->pdo = $pdo;
         }
     }
@@ -19,15 +23,16 @@ class PessoaDAO{
      * @return Pessoa em caso positivo
      * @return null em caso negativo
      */
-    public function verificarExistencia(string $cpf):PessoaDTOSocio|null{
-        
+    public function verificarExistencia(string $cpf): PessoaDTOSocio|null
+    {
+
         $sql = "SELECT * FROM pessoa WHERE cpf=:cpf";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':cpf', $cpf);
         $stmt->execute();
 
-        if($stmt->rowCount() < 1){
+        if ($stmt->rowCount() < 1) {
             return null;
         }
 
@@ -63,21 +68,19 @@ class PessoaDAO{
     }
 
 
-    public function inserirPessoa(string $cpf, string $nome, string $sobrenome): int
-{
-    $sql = "INSERT INTO pessoa (cpf, nome, sobrenome) VALUES (:cpf, :nome, :sobrenome)";
-    $stmt = $this->pdo->prepare($sql);
+    public function inserirPessoa(?string $cpf, string $nome, string $sobrenome): int
+    {
+        $sql = "INSERT INTO pessoa (cpf, nome, sobrenome) VALUES (:cpf, :nome, :sobrenome)";
+        $stmt = $this->pdo->prepare($sql);
 
-    $stmt->bindParam(':cpf', $cpf);
-    $stmt->bindParam(':nome', $nome);
-    $stmt->bindParam(':sobrenome', $sobrenome);
+        $stmt->bindParam(':cpf', $cpf);
+        $stmt->bindParam(':nome', $nome);
+        $stmt->bindParam(':sobrenome', $sobrenome);
 
-    if (!$stmt->execute()) {
-        throw new PDOException("Erro ao inserir pessoa no banco.");
+        if (!$stmt->execute()) {
+            throw new PDOException("Erro ao inserir pessoa no banco.");
+        }
+
+        return (int)$this->pdo->lastInsertId();
     }
-
-    return (int)$this->pdo->lastInsertId();
-}
-
-
 }

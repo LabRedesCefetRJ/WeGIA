@@ -139,10 +139,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
 
                 <div class="d-flex align-items-center" style="margin-bottom: 15px;">
-                    <button type="button" class="btn btn-secondary btn-gray-dark" data-toggle="modal" data-target="#modalStatusProcesso">
-                        Alterar Status do Processo
-                    </button>
-
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalNovaEtapa">
                         Cadastrar Etapas
                     </button>
@@ -165,6 +161,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                             <th>Data de Início</th>
                                             <th>Data de Conclusão</th>
                                             <th>Status</th>
+                                            <th>Titulo</th>
                                             <th>Descrição</th>
                                             <th>Arquivos</th>
                                             <th>Ações</th>
@@ -184,15 +181,38 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                     ?>
                                                 </td>
                                                 <td><?= htmlspecialchars($etapa['status_nome']) ?></td>
-                                                <td><?= htmlspecialchars($etapa['descricao']) ?></td>
+                                                <td><?= htmlspecialchars($etapa['titulo']) ?></td>
+                                                <td style="max-width: 150px;"><?= htmlspecialchars($etapa['descricao']) ?></td>
                                                 <td>
                                                     <button type="button"
                                                         class="btn btn-xs btn-info btn-arquivos-etapa"
                                                         data-toggle="modal"
                                                         data-target="#modalArquivosEtapa"
-                                                        data-id_etapa="<?= (int)$etapa['id'] ?>">
-                                                        <i class="fa fa-paperclip"></i> Arquivos
+                                                        data-id_etapa="<?= (int)$etapa['id'] ?>"
+                                                        data-id_processo="<?= (int)$idProcesso?>">
+                                                        <i class="fa fa-paperclip"></i> Gerenciar Arquivos
                                                     </button>
+
+                                                    <?php
+                                                    try {
+                                                        $arquivosEtapa = $etapaDAO->getNomeArquivos($etapa['id']);
+                                                        $nomes = [];
+
+                                                        foreach ($arquivosEtapa as $arquivo) {
+                                                            $nomes[] = $arquivo['arquivo_nome'];
+                                                        }
+
+                                                        $listaArquivos = implode(', ', $nomes);
+
+                                                        $quantidade = is_array($arquivosEtapa) ? count($arquivosEtapa) : 0;
+
+                                                        $quantidadeTexto = $quantidade === 1 ? "$quantidade Item" : "$quantidade Itens";
+
+                                                        echo "<span class=\"badge\" title=\"$listaArquivos\">$quantidadeTexto</span>";
+                                                    } catch (Exception $e) {
+                                                        echo '<span class="badge">Falha ao buscar informações</span>';
+                                                    }
+                                                    ?>
                                                 </td>
                                                 <td>
                                                     <button
@@ -201,6 +221,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                         data-toggle="modal"
                                                         data-target="#modalEditarEtapa"
                                                         data-id="<?= (int)$etapa['id'] ?>"
+                                                        data-titulo="<?= htmlspecialchars($etapa['titulo'], ENT_QUOTES) ?>"
                                                         data-descricao="<?= htmlspecialchars($etapa['descricao'], ENT_QUOTES) ?>"
                                                         data-datafim="<?= htmlspecialchars($etapa['data_fim'] ?? '', ENT_QUOTES) ?>"
                                                         data-status="<?= (int)$etapa['id_status'] ?>">
@@ -216,40 +237,6 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                     </div>
                 </section>
 
-                <div class="modal fade" id="modalStatusProcesso" tabindex="-1" role="dialog" aria-hidden="true">
-                    <div class="modal-dialog" role="document">
-                        <form method="post" action="../../controle/control.php" class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Alterar Status do Processo</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            <div class="modal-body">
-                                <input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
-                                <input type="hidden" name="metodo" value="atualizarStatus">
-                                <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
-
-                                <div class="form-group">
-                                    <label>Status do Processo:</label>
-                                    <select name="id_status" class="form-control" style="min-width: 200px;">
-                                        <?php foreach ($statuses as $st): ?>
-                                            <option value="<?= (int)$st['id'] ?>"
-                                                <?= ($processoStatusId !== null && $processoStatusId === (int)$st['id']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($st['descricao']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">Salvar</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
                 <div class="modal fade" id="modalNovaEtapa" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                         <form method="post" action="../../controle/control.php" enctype="multipart/form-data" class="modal-content">
@@ -260,13 +247,25 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 </button>
                             </div>
                             <div class="modal-body">
+                                <p>Campos marcados com <span class="obrig">*</span> são obrigatórios.</p>
+
                                 <input type="hidden" name="nomeClasse" value="EtapaProcessoControle">
                                 <input type="hidden" name="metodo" value="salvar">
                                 <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
 
                                 <div class="form-group">
-                                    <label>Status</label>
-                                    <select name="id_status" class="form-control">
+                                    <label>Título<span class="obrig">*</span></label>
+                                    <input type="text" name="titulo" required class="form-control" placeholder="Insira aqui o título da sua etapa...">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Status <span class="obrig">*</span></label>
+
+                                    <button type="button" onclick="adicionar_status()" class="btn btn-link p-0">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+
+                                    <select name="id_status" class="form-control select-status-processo" required>
                                         <?php foreach ($statuses as $st): ?>
                                             <option value="<?= (int)$st['id'] ?>"><?= htmlspecialchars($st['descricao']) ?></option>
                                         <?php endforeach; ?>
@@ -274,8 +273,8 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 </div>
 
                                 <div class="form-group">
-                                    <label>Data de Início</label>
-                                    <input type="date" name="data_inicio" class="form-control">
+                                    <label>Data de Início <span class="obrig">*</span></label>
+                                    <input type="date" name="data_inicio" class="form-control" required value="<?= date('Y-m-d') ?>">
                                 </div>
 
                                 <div class="form-group">
@@ -284,9 +283,10 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 </div>
 
                                 <div class="form-group">
-                                    <label>Descrição da Etapa <span class="obrig">*</span></label>
-                                    <textarea name="descricao" class="form-control" rows="3" required></textarea>
+                                    <label>Descrição</label>
+                                    <textarea class="form-control" rows="5" name="descricao"></textarea>
                                 </div>
+
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -312,8 +312,18 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                 <input type="hidden" name="id_etapa" id="edit_id_etapa">
 
                                 <div class="form-group">
+                                    <label>Título</label>
+                                    <input type="text" name="titulo" id="edit_titulo" required class="form-control" placeholder="Insira aqui o título da sua etapa...">
+                                </div>
+
+                                <div class="form-group">
                                     <label>Status</label>
-                                    <select name="id_status" id="edit_id_status" class="form-control">
+
+                                    <button type="button" onclick="adicionar_status()" class="btn btn-link p-0">
+                                        <i class="fa fa-plus"></i>
+                                    </button>
+
+                                    <select name="id_status" id="edit_id_status" class="form-control select-status-processo">
                                         <?php foreach ($statuses as $st): ?>
                                             <option value="<?= (int)$st['id'] ?>"><?= htmlspecialchars($st['descricao']) ?></option>
                                         <?php endforeach; ?>
@@ -327,7 +337,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
                                 <div class="form-group">
                                     <label>Descrição</label>
-                                    <textarea name="descricao" id="edit_descricao" class="form-control" rows="3" required></textarea>
+                                    <textarea class="form-control" rows="5" name="descricao" id="edit_descricao"></textarea>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -369,14 +379,17 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
                                 <hr>
                                 <form method="post" action="../../controle/control.php"
-                                    enctype="multipart/form-data" class="form-inline">
+                                    enctype="multipart/form-data">
                                     <input type="hidden" name="nomeClasse" value="ArquivoEtapaControle">
                                     <input type="hidden" name="metodo" value="upload">
                                     <input type="hidden" name="alvo" value="etapa">
                                     <input type="hidden" name="id_processo" value="<?= (int)$idProcesso ?>">
                                     <input type="hidden" id="upload_id_etapa" name="id_etapa" value="">
-                                    <input type="file" name="arquivo" class="form-control input-sm" />
-                                    <button type="submit" class="btn btn-sm btn-default mt-1">Anexar</button>
+                                    <p>Permitido envio de até <?= ini_get('upload_max_filesize') ?> de tamanho por documento.</p>
+                                    <input type="file" name="arquivo" class="form-control-file" />
+                                    <button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)" style="margin-top: 10px;">
+                                        <i class="fa fa-upload"></i> Anexar arquivo
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -416,12 +429,14 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                 $('#edit_descricao').val(btn.data('descricao'));
                 $('#edit_data_fim').val(btn.data('datafim'));
                 $('#edit_id_status').val(btn.data('status'));
+                $('#edit_titulo').val(btn.data('titulo'));
             });
 
             $('.btn-arquivos-etapa').on('click', function() {
                 var idEtapa = $(this).data('id_etapa');
+                var idProcesso = $(this).data('id_processo');
                 $('#upload_id_etapa').val(idEtapa);
-                $('#lista-arquivos-etapa').load('lista_arquivos_etapa.php?id_etapa=' + idEtapa);
+                $('#lista-arquivos-etapa').load('lista_arquivos_etapa.php?id_etapa=' + idEtapa + '&id_processo=' + idProcesso);
             });
         });
 
@@ -433,6 +448,8 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
             return true;
         }
     </script>
+
+    <script src="../../Functions/pa_status.js"></script>
 </body>
 
 </html>

@@ -30,34 +30,43 @@ if (!$access) {
     exit();
 }
 
-require_once "../../dao/Conexao.php";
-require_once "documento.php";
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'PessoaArquivo.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Arquivo.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
-define("TYPEOF_EXTENSION", [
-    'jpg' => 'image/jpg',
-    'png' => 'image/png',
-    'jpeg' => 'image/jpeg',
-    'pdf' => 'application/pdf',
-    'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'doc' => 'application/doc',
-    'odp' => 'application/odp',
-]);
+try {
+    define("TYPEOF_EXTENSION", [
+        'jpg' => 'image/jpg',
+        'png' => 'image/png',
+        'jpeg' => 'image/jpeg',
+        'pdf' => 'application/pdf',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'doc' => 'application/doc',
+        'odp' => 'application/odp',
+    ]);
 
-$idDoc = $_GET['id_doc'];
-if (!is_numeric($idDoc) || $idDoc < 1) {
-    http_response_code(400);
-    exit('Não foi possível baixar o documento solicitado.');
-}
+    $idDoc = $_GET['id_doc'];
+    if (!is_numeric($idDoc) || $idDoc < 1) {
+        http_response_code(400);
+        exit('Não foi possível baixar o documento solicitado.');
+    }
 
-$arquivo = new DocumentoAtendido($idDoc);
+    //chamar método para baixar arquivo.
+    $pessoaArquivoDto = PessoaArquivo::getById($idDoc);
 
-if (!$arquivo->getException()) {
+    if (is_null($pessoaArquivoDto)) {
+        http_response_code(404);
+        exit('Arquivo não encontrado.');
+    }
+
+    $arquivo = $pessoaArquivoDto->arquivo;
+
     header("Content-type: " . TYPEOF_EXTENSION[$arquivo->getExtensao()]);
     header("Content-Disposition: attachment; filename=" . $arquivo->getNome());
     ob_clean();
     flush();
 
-    echo $arquivo->getDocumento();
-} else {
-    echo $arquivo->getException();
+    echo base64_decode(gzuncompress($arquivo->getConteudo()));
+} catch (Exception $e) {
+    Util::tratarException($e);
 }

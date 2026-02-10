@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../index.php");
     exit();
-}else{
+} else {
     session_regenerate_id();
 }
 
@@ -25,21 +25,25 @@ if (!$id_doc || !$idAtendido || $id_doc < 1 || $idAtendido < 1) {
     exit("Erro ao tentar remover o arquivo selecionado, os id's fornecidos não são válidos");
 }
 
-$arquivo = new DocumentoAtendido($id_doc);
-if (!$arquivo->getException()) {
-    $arquivo->delete();
-    try {
-        $sql = "SELECT a.idatendido_documentacao, a.`data`, ada.descricao FROM atendido_documentacao a JOIN atendido_docs_atendidos ada ON a.atendido_docs_atendidos_idatendido_docs_atendidos = ada.idatendido_docs_atendidos WHERE atendido_idatendido =:idAtendido";
-        $pdo = Conexao::connect();
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':idAtendido', $idAtendido);
-        $stmt->execute();
-        $docfuncional = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $docfuncional = json_encode($docfuncional);
-        echo $docfuncional;
-    } catch (PDOException $e) {
-        echo 'Erro ao tentar remover o arquivo selecionado: ' . $e->getMessage();
-    }
-} else {
-    echo $arquivo->getException();
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'PessoaArquivo.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'PessoaArquivoMySQL.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+
+try {
+    $pdo = Conexao::connect();
+
+    if (!PessoaArquivo::deleteById($id_doc, new PessoaArquivoMySQL($pdo)))
+        throw new RuntimeException('Erro ao excluir arquivo.', 500);
+
+    $sql = "SELECT a.idatendido_documentacao, pa.`data`, ada.descricao, a.id_pessoa_arquivo FROM atendido_documentacao a JOIN atendido_docs_atendidos ada ON a.atendido_docs_atendidos_idatendido_docs_atendidos = ada.idatendido_docs_atendidos JOIN pessoa_arquivo pa ON a.id_pessoa_arquivo=pa.id WHERE a.atendido_idatendido=:idAtendido";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':idAtendido', $idAtendido);
+    $stmt->execute();
+    $docfuncional = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $docfuncional = json_encode($docfuncional);
+
+    echo $docfuncional;
+} catch (Exception $e) {
+    Util::tratarException($e);
 }

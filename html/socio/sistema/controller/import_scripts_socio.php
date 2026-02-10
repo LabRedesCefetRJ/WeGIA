@@ -4,7 +4,9 @@
 <script src="./controller/script/jquery.inputmask.js"></script>
 <script type="text/javascript">
     var ctx1 = document.getElementById('grafico1');
+    console.log("gráficos");
     if (ctx1 != null && ctx1 != "") {
+        
         ctx1 = ctx1.getContext('2d');
         var grafico1 = new Chart(ctx1, {
             type: 'pie',

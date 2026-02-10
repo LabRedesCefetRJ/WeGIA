@@ -119,7 +119,6 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
     <?php require_once("./controller/import_conteudo_socios.php"); ?>
     <?php require_once("./controller/import_modais.php"); ?>
     <?php require_once("./controller/import_scripts.php"); ?>
-    <?php require_once("./controller/import_scripts_socio.php"); ?>
 
     <div align="right">
         <iframe src="https://www.wegia.org/software/footer/socio.html" width="200" height="60" style="border:none;"></iframe>

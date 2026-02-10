@@ -127,7 +127,7 @@ class SocioController
                 throw new LogicException('Você não possui permissão para alterar os dados desse CPF', 403);
 
             $this->pdo->beginTransaction();
-            $socioDao->registrarLogPorDocumento($socio->getDocumento(), 'Atualização recente');
+            $socioDao->registrarLogPorDocumento($socio->getDocumento(), 'Atualização recente', Util::getUserIp(), Util::getUserAgent());
 
             if (!$socioDao->atualizarSocio($socio)) {
                 $this->pdo->rollBack();
