@@ -16,9 +16,12 @@ permissao($_SESSION['id_pessoa'], 5, 7);
 
 if ($_POST) {
     require_once "../../dao/Conexao.php";
+    require_once "../../dao/AtendidoDAO.php";
     $pdo = Conexao::connect();
 
     try {
+        date_default_timezone_set('America/Sao_Paulo');
+
         // Obter ID do funcionário
         $stmt = $pdo->prepare("SELECT id_funcionario FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_pessoa = :id_pessoa");
         $stmt->bindValue(':id_pessoa', $_SESSION['id_pessoa']);
@@ -29,8 +32,40 @@ if ($_POST) {
             throw new Exception("Funcionário não encontrado.");
         }
 
-        date_default_timezone_set('America/Sao_Paulo');
         $data_registro = date('Y-m-d');
+
+        // Validar data de atendimento com base na data de nascimento do paciente
+        $atendidoDAO = new AtendidoDAO();
+        $idPaciente = $atendidoDAO->obterPessoaIdPorFichaMedica((int)$id_fichamedica);
+
+        if (!$idPaciente) {
+            throw new Exception("Paciente não encontrado.");
+        }
+
+        $data_nasc_atendido = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$idPaciente) ?: '1900-01-01';
+
+        $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+        $dataAtual->setTime(0, 0, 0);
+
+        $dataAtendimento = DateTime::createFromFormat('Y-m-d', $data_atendimento, new DateTimeZone('America/Sao_Paulo'));
+        if (!$dataAtendimento) {
+            throw new Exception("Data de atendimento inválida.");
+        }
+        $dataAtendimento->setTime(0, 0, 0);
+
+        $dataNascimento = DateTime::createFromFormat('Y-m-d', $data_nasc_atendido, new DateTimeZone('America/Sao_Paulo'));
+        if (!$dataNascimento) {
+            $dataNascimento = new DateTime('1900-01-01', new DateTimeZone('America/Sao_Paulo'));
+        }
+        $dataNascimento->setTime(0, 0, 0);
+
+        if ($dataAtendimento < $dataNascimento) {
+            throw new Exception("Data inválida: não pode ser anterior à data de nascimento.");
+        }
+
+        if ($dataAtendimento > $dataAtual) {
+            throw new Exception("A data do atendimento não pode ser no futuro.");
+        }
 
         // Buscar dados completos do funcionário
         $stmt = $pdo->prepare("SELECT * FROM funcionario WHERE id_funcionario = :id_funcionario");

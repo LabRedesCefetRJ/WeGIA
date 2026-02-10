@@ -18,11 +18,43 @@ require_once ROOT . "/dao/PaArquivoDAO.php";
 
 class AtendidoDAO
 {
-    private PDO $pdo;
+   private PDO $pdo;
 
     public function __construct(?PDO $pdo = null)
     {
         isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
+    }
+  
+    public function obterPessoaIdPorFichaMedica(int $idFichaMedica): ?int
+    {
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :idFichaMedica");
+        $stmt->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $idPessoa = $stmt->fetchColumn();
+        return $idPessoa ? (int)$idPessoa : null;
+    }
+
+    public function obterDataNascimentoPorPessoaId(int $idPessoa): ?string
+    {
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+        $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $dataNascimento = $stmt->fetchColumn();
+        return $dataNascimento ?: null;
+    }
+
+    public function obterDataNascimentoPorFichaMedica(int $idFichaMedica): ?string
+    {
+        $idPessoa = $this->obterPessoaIdPorFichaMedica($idFichaMedica);
+        if (!$idPessoa) {
+            return null;
+        }
+
+        return $this->obterDataNascimentoPorPessoaId($idPessoa);
     }
 
     public function formatoDataDMY($data)

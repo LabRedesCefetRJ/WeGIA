@@ -13,6 +13,7 @@
 
     require_once ROOT . '/dao/MedicamentoPacienteDAO.php';
     require_once ROOT . '/dao/FuncionarioDAO.php';
+    require_once ROOT . '/dao/AtendidoDAO.php';
     require_once ROOT . '/classes/Util.php';
 
 
@@ -32,11 +33,18 @@
             $id_pessoa = $dados['id_pessoa'] ?? null;
             $dataHora = $dados['dataHora'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
-            $data_nasc_paciente = $dados['data_nascimento'] ?? null; 
 
-            if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario || !$data_nasc_paciente) {
+            if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
                 http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Campos obrigatórios ausentes"]);
+                exit;
+            }
+
+            $atendidoDAO = new AtendidoDAO();
+            $data_nasc_paciente = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$id_pessoa);
+            if (!$data_nasc_paciente) {
+                http_response_code(404);
+                echo json_encode(["status" => "erro", "mensagem" => "Paciente não encontrado para o ID informado."]);
                 exit;
             }
             
