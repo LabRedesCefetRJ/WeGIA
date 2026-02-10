@@ -14,9 +14,17 @@ require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Atendido.php";
 require_once ROOT . "/Functions/funcoes.php";
 require_once ROOT . "/classes/Util.php";
+require_once ROOT . "/dao/PaArquivoDAO.php";
 
 class AtendidoDAO
 {
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        isset($pdo) ? $this->pdo = $pdo : $this->pdo = Conexao::connect();
+    }
+
     public function formatoDataDMY($data)
     {
         $data_arr = explode("-", $data);
@@ -42,8 +50,6 @@ class AtendidoDAO
                 header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=$cpf");
             } else {
                 header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=$cpf");
-                // header("Location: ../controle/control.php?metodo=listarPessoaExistente($cpf)&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=$cpf");
-
             }
         } else {
             header("Location: ../html/atendido/pre_cadastro_atendido.php?msg_e=Erro, Atendido já cadastrado no sistema.");
@@ -101,39 +107,122 @@ class AtendidoDAO
         return $idAtendido;
     }
 
+    public function criarPorPessoa(int $idPessoa, int $tipo, int $status): int
+    {
+        $pdo = $this->pdo;
+
+        $sql = "INSERT INTO atendido
+              (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
+            VALUES
+              (:idPessoa, :tipo, :status)";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt->bindValue(':tipo', $tipo, PDO::PARAM_INT);
+        $stmt->bindValue(':status', $status, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (int)$pdo->lastInsertId();
+    }
+
+
     // incluirExistente
 
-    public function incluirExistente($atendido, $idPessoa, $sobrenome)
+    public function incluirExistente($atendido, int $idPessoa, string $sobrenome): int
     {
-        $sql = "UPDATE pessoa set sobrenome=:sobrenome, sexo=:sexo WHERE id_pessoa=:id_pessoa;";
+        $sql = "UPDATE pessoa
+            SET sobrenome = :sobrenome, sexo = :sexo
+            WHERE id_pessoa = :id_pessoa;";
 
-        $sql2 = "INSERT INTO atendido(pessoa_id_pessoa,atendido_tipo_idatendido_tipo,atendido_status_idatendido_status)
-             values(:id_pessoa,:intTipo,:intStatus)";
+        $sql2 = "INSERT INTO atendido(pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
+             VALUES(:id_pessoa, :intTipo, :intStatus)";
 
-        $pdo = Conexao::connect();
-        $stmt = $pdo->prepare($sql);
+        $pdo = $this->pdo;
+
+        $stmt  = $pdo->prepare($sql);
         $stmt2 = $pdo->prepare($sql2);
 
-        $nome = $atendido->getNome();
         $sobrenome = $atendido->getSobrenome();
-        $cpf = $atendido->getCpf();
-        $sexo = $atendido->getSexo();
-        $telefone = $atendido->getTelefone();
-        $nascimento = $atendido->getDataNascimento();
-        $tipo = $atendido->getIntTipo();
-        $status = $atendido->getIntStatus();
+        $sexo      = $atendido->getSexo();
+        $tipo      = $atendido->getIntTipo();
+        $status    = $atendido->getIntStatus();
 
-        $stmt->bindParam(':id_pessoa', $idPessoa);
-        $stmt->bindParam(':sobrenome', $sobrenome);
-        $stmt->bindParam(':sexo', $sexo);
+        $stmt->bindValue(':id_pessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt->bindValue(':sobrenome', $sobrenome);
+        $stmt->bindValue(':sexo', $sexo);
 
-        $stmt2->bindParam(':id_pessoa', $idPessoa);
-        $stmt2->bindParam(':intStatus', $status);
-        $stmt2->bindParam(':intTipo', $tipo);
+        $stmt2->bindValue(':id_pessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt2->bindValue(':intTipo', $tipo, PDO::PARAM_INT);
+        $stmt2->bindValue(':intStatus', $status, PDO::PARAM_INT);
 
+        try {
+            $pdo->beginTransaction();
 
-        $stmt->execute();
-        $stmt2->execute();
+            $stmt->execute();
+
+            try {
+                $stmt2->execute();
+            } catch (PDOException $e) {
+                $sqlState   = $e->getCode();
+                $driverCode = $e->errorInfo[1] ?? null;
+
+                if ($sqlState === '23000' && (int)$driverCode === 1062) {
+                    $pdo->rollBack();
+                    throw new RuntimeException('Já existe atendido cadastrado para esta pessoa.');
+                }
+
+                throw $e;
+            }
+
+            $idAtendido = (int)$pdo->lastInsertId();
+
+            //verificar se a pessoa possui processo de aceitação concluído
+            $processoConcluidoSql = "SELECT id, id_status FROM processo_aceitacao WHERE id_pessoa=:idPessoa AND id_status=2";
+
+            $stmtProcesso = $pdo->prepare($processoConcluidoSql);
+
+            $stmtProcesso->execute([':idPessoa' => $idPessoa]);
+
+            if ($stmtProcesso->rowCount() > 0) {
+                //Inserir documentações
+                $idProcesso = $stmtProcesso->fetch(PDO::FETCH_ASSOC)['id'];
+
+                $paDao = new PaArquivoDAO($pdo);
+
+                $arquivosProcesso = $paDao->listarComTipoPorProcesso($idProcesso);
+
+                $atDocDao = new AtendidoDocumentacaoMySql($pdo);
+
+                foreach ($arquivosProcesso as $arquivo) {
+                    $idPessoaArquivo = (int)$arquivo['id_pessoa_arquivo'];
+                    $idTipoDoc = (int)($arquivo['id_tipo_documentacao'] ?? null);
+
+                    if ($idTipoDoc <= 0) {
+                        $idTipoDoc = 1;
+                    }
+
+                    $dto = new AtendidoDocumentacaoDTO([
+                        'id_atendido' => $idAtendido,
+                        'id_tipo_documentacao' => $idTipoDoc,
+                        'id_pessoa_arquivo' => $idPessoaArquivo
+                    ]);
+
+                    $obj = new AtendidoDocumentacao($dto, $atDocDao);
+                    if ($obj->create() === false) {
+                        throw new RuntimeException('Falha ao vincular documentação ao atendido.');
+                    }
+                }
+            }
+
+            $pdo->commit();
+
+            return $idAtendido;
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        }
     }
 
     //reformular o método, não deve ser possível deletar um atendido da base de dados.
@@ -189,7 +278,7 @@ class AtendidoDAO
             $stmt->bindValue(':imagem', $imagem);
             $stmt->execute();
         } catch (PDOException $e) {
-          Util::tratarException($e);
+            Util::tratarException($e);
         }
     }
 
@@ -263,6 +352,17 @@ class AtendidoDAO
         }
 
         return $pessoas;
+    }
+
+    public function getIdPessoaByIdAtendido(int $idAtendido): int
+    {
+        $query = 'SELECT pessoa_id_pessoa FROM atendido WHERE idatendido=:idAtendido';
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':idAtendido', $idAtendido, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC)['pessoa_id_pessoa'];
     }
 
     public function listar($id)

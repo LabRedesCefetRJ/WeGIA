@@ -37,6 +37,7 @@ if (empty($arquivos)) {
 <table class="table table-striped table-bordered table-hover">
     <thead>
         <tr>
+            <th>Tipo</th>
             <th>Arquivo</th>
             <th>Data upload</th>
             <th>Ações</th>
@@ -51,13 +52,16 @@ if (empty($arquivos)) {
             'jpg', 'jpeg', 'png' => 'file-image-o',
             default => 'file-o'
         };
+        
+        $tipoDoc = htmlspecialchars($arq['tipo_documento'] ?? 'Não especificado');
     ?>
         <tr>
+            <td><?= $tipoDoc ?></td> 
             <td>
                 <i class="fa fa-<?= $icone ?> mr-2 text-muted"></i>
                 <?= htmlspecialchars($arq['arquivo_nome']) ?>
             </td>
-            <td><?= date('d/m/Y H:i', strtotime($arq['data_upload'])) ?></td>
+            <td><?= date('d/m/Y H:i', strtotime($arq['data'])) ?></td> 
             <td class="text-center">
                 <a class="btn btn-xs btn-success"
                    href="download_arquivo_processo.php?id=<?= (int)$arq['id'] ?>"

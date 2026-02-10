@@ -33,7 +33,7 @@ $teste = $cache->read($id);
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
-$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos WHERE atendido_idatendido =:idAtendido");
+$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos JOIN pessoa_arquivo pa ON a.id_pessoa_arquivo=pa.id WHERE atendido_idatendido =:idAtendido");
 
 $stmtDocFuncional->bindParam(':idAtendido', $id);
 $stmtDocFuncional->execute();
@@ -139,12 +139,6 @@ $dependente = json_encode($dependente);
   <script src="../../Functions/onlyNumbers.js"></script>
   <script src="../../Functions/onlyChars.js"></script>
   <script>
-    function exibir_reservista() {
-
-      $("#reservista1").show();
-      $("#reservista2").show();
-    }
-
     function listarDependentes(dependente) {
       $("#dep-tab").empty();
       $.each(dependente, function(i, dependente) {
@@ -216,8 +210,8 @@ $dependente = json_encode($dependente);
           $("#tipoSanguineoSelecionado").text(item.tipo_sanguineo);
           $("#tipoSanguineoSelecionado").val(item.tipo_sanguineo);
 
-          $("#nascimento").text("Data de nascimento: " + alterardate(item.data_nascimento));
-          $("#nascimento").val(item.data_nascimento);
+          //$("#data_nascimento").text("Data de nascimento: " + alterardate(item.data_nascimento));
+          $("#data_nascimento").val(item.data_nascimento);
 
           $("#registroGeral").text("Registro geral: " + item.registro_geral);
           $("#registroGeral").val(item.registro_geral);
@@ -274,15 +268,25 @@ $dependente = json_encode($dependente);
 
   <script type="text/javascript">
     function editar_informacoes_pessoais() {
+      console.log("Edição liberada");
       $("#nome").prop('disabled', false);
       $("#sobrenome").prop('disabled', false);
       $("#radioM").prop('disabled', false);
       $("#radioF").prop('disabled', false);
       $("#telefone").prop('disabled', false);
-      $("#nascimento").prop('disabled', false);
+      $("#data_nascimento").prop('disabled', false);
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
-      $("#tipoSanguineo").prop('disabled', false);
+      $("#tipo_sanguineo").prop('disabled', false);
+
+      let cpfField = document.getElementById('cpf');
+      let cpfValue = cpfField.value.replace(/\D/g, '');
+
+      if (cpfValue === '' || cpfValue.length === 0) {
+        cpfField.disabled = false;
+        cpfField.focus();
+      }
+
       $("#botaoEditarIP").html('Cancelar');
       $("#botaoSalvarIP").prop('disabled', false);
       $("#botaoEditarIP").removeAttr('onclick');
@@ -296,10 +300,10 @@ $dependente = json_encode($dependente);
       $("#radioM").prop('disabled', true);
       $("#radioF").prop('disabled', true);
       $("#telefone").prop('disabled', true);
-      $("#nascimento").prop('disabled', true);
+      $("#data_nascimento").prop('disabled', true);
       $("#pai").prop('disabled', true);
       $("#mae").prop('disabled', true);
-      $("#tipoSanguineo").prop('disabled', true);
+      $("#tipo_sanguineo").prop('disabled', true);
 
       $("#botaoEditarIP").html('Editar');
       $("#botaoSalvarIP").prop('disabled', true);
@@ -533,8 +537,8 @@ $dependente = json_encode($dependente);
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.idatendido_documentacao + "' target='_tab' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.idatendido_documentacao + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + "' target='_tab' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a onclick='removerFuncionarioDocs(" + item.id_pessoa_arquivo + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
       });
@@ -548,8 +552,8 @@ $dependente = json_encode($dependente);
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.idatendido_documentacao + " '  target='_' title='Visualizar ou Baixar' ><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.idatendido_documentacao + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + " '  target='_' title='Visualizar ou Baixar' ><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a onclick='removerFuncionarioDocs(" + item.id_pessoa_arquivo + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
       });
@@ -564,7 +568,7 @@ $dependente = json_encode($dependente);
     });
 
     function validarDataExpedicao() {
-      const dataNascimento = document.getElementById('nascimento').value;
+      const dataNascimento = document.getElementById('data_nascimento').value;
       const dataExpedicao = document.getElementById('dataExpedicao').value;
 
       if (dataExpedicao && dataNascimento) {
@@ -584,7 +588,7 @@ $dependente = json_encode($dependente);
     }
 
     function validarDataNascimento() {
-      const dataNascimento = document.getElementById('nascimento').value;
+      const dataNascimento = document.getElementById('data_nascimento').value;
       const dataExpedicao = document.getElementById('dataExpedicao').value;
 
       if (dataNascimento && dataExpedicao) {
@@ -593,7 +597,7 @@ $dependente = json_encode($dependente);
 
         if (nascimento > expedicao) {
           alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
-          document.getElementById('nascimento').value = '';
+          document.getElementById('data_nascimento').value = '';
           document.getElementById('botaoSalvarIP').disabled = true;
           return false;
         }
@@ -735,8 +739,8 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                           <div class="col-md-8">
-                            <label><input type="radio" name="sexo" id="radioM" id="M" disabled value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"> </i></label>
-                            <label><input type="radio" name="sexo" id="radioF" disabled id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
+                            <label><input type="radio" name="sexo" id="radioM" disabled value="m" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-male" style="font-size: 20px;"> </i></label>
+                            <label><input type="radio" name="sexo" id="radioF" disabled value="f" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
                           </div>
                         </div>
                         <div class="form-group">
@@ -748,13 +752,13 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                           <div class="col-md-8">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" disabled id="nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()">
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_nascimento" disabled id="data_nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()">
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="tipoSanguineo" id="tipoSanguineo" disabled>
+                            <select class="form-control input-lg mb-md" name="tipo_sanguineo" id="tipo_sanguineo" disabled>
                               <option selected id="tipoSanguineoSelecionado">Selecionar</option>
                               <option value="A+">A+</option>
                               <option value="A-">A-</option>
@@ -779,7 +783,7 @@ $dependente = json_encode($dependente);
                           </div>
                         </div>
                         <input type="hidden" name="idatendido" value=<?= $id ?>>
-                        <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes_pessoais()">Editar</button>
+                        <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="editar_informacoes_pessoais()">Editar</button>
                         <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
                     </form>
 
@@ -1030,12 +1034,15 @@ $dependente = json_encode($dependente);
                                   <span aria-hidden="true">&times;</span>
                                 </button>
                               </div>
-                              <form action='documento_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                              <form action='../../controle/control.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                                <input type="hidden" name="nomeClasse" value="AtendidoDocumentacaoControle">
+                                <input type="hidden" name="metodo" value="create">
+                                <input type="hidden" name="id_atendido" value="<?= (int)$id ?>">
                                 <div class="modal-body" style="padding: 15px 40px">
                                   <div class="form-group" style="display: grid;">
                                     <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
                                     <div style="display: flex;">
-                                      <select name="id_docfuncional" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
+                                      <select name="id_tipo_documentacao" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
                                         <option selected disabled>Selecionar...</option>
                                         <?php
                                         foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
@@ -1085,7 +1092,7 @@ $dependente = json_encode($dependente);
                           <tbody id="doc-tabl">
                             <?php
                             $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
-                            $stmt->bindValue(':id', $id, PDO::PARAM_INT);  
+                            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                             $stmt->execute();
                             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -1098,7 +1105,7 @@ $dependente = json_encode($dependente);
                             ?>
                               <tr style="cursor: pointer;" onclick="clicar(<?= (int)$item['idatendido_ocorrencias'] ?>)">
                                 <td><?= $data[2] . "/" . $data[1] . "/" . $data[0] ?></td>
-                                <td><?= htmlspecialchars(strip_tags($item["descricao"])) ?></td> 
+                                <td><?= htmlspecialchars(strip_tags($item["descricao"])) ?></td>
                                 <td>
                                   <button class="btn btn-xs btn-primary editar-ocorrencia"
                                     type="button"
@@ -1432,27 +1439,6 @@ $dependente = json_encode($dependente);
 
         // retorno true permite o envio normal do formulário
         return true;
-      }
-    </script>
-    <script>
-      function editar_informacoes_pessoais() {
-        document.getElementById('nome').disabled = false;
-        document.getElementById('sobrenome').disabled = false;
-        document.getElementById('telefone').disabled = false;
-        document.getElementById('nascimento').disabled = false;
-        document.getElementById('tipoSanguineo').disabled = false;
-
-        var cpfField = document.getElementById('cpf');
-        var cpfValue = cpfField.value.replace(/\D/g, '');
-
-        if (cpfValue === '' || cpfValue.length === 0) {
-          cpfField.disabled = false;
-          cpfField.focus();
-        }
-
-
-        document.getElementById('botaoEditarIP').style.display = 'none';
-        document.getElementById('botaoSalvarIP').disabled = false;
       }
     </script>
     <script src="../geral/post.js"></script>

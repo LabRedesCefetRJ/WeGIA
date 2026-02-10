@@ -10,7 +10,6 @@ if (!isset($_SESSION['usuario'])) {
     session_regenerate_id();
 }
 
-//verificação da permissão do usuário
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 14);
 
@@ -20,8 +19,7 @@ require_once '../../dao/PaArquivoDAO.php';
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) {
     http_response_code(400);
-    echo 'ID inválido.';
-    exit;
+    exit('ID inválido.');
 }
 
 $pdo = Conexao::connect();
@@ -30,13 +28,18 @@ $arquivo = $dao->buscarArquivo($id);
 
 if (!$arquivo) {
     http_response_code(404);
-    echo 'Arquivo não encontrado.';
-    exit;
+    exit('Arquivo não encontrado.');
 }
 
 $nome = $arquivo['arquivo_nome'];
 $ext  = strtolower($arquivo['arquivo_extensao']);
 $blob = $arquivo['arquivo'];
+
+$decompressed = @gzuncompress($blob);
+if ($decompressed !== false) {
+    $blob = base64_decode($decompressed);
+}
+
 
 $tipos = [
     'pdf'  => 'application/pdf',
@@ -50,9 +53,15 @@ $tipos = [
 
 $mime = $tipos[$ext] ?? 'application/octet-stream';
 
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
 header('Content-Type: ' . $mime);
 header('Content-Disposition: attachment; filename="' . basename($nome) . '"');
 header('Content-Length: ' . strlen($blob));
+header('Cache-Control: no-cache, must-revalidate');
+header('Pragma: no-cache');
 
 echo $blob;
 exit;

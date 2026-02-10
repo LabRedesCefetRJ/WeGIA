@@ -8,21 +8,30 @@ class PaStatusControle
     public function incluir()
     {
         try {
-            $descricao = trim($_POST['descricao'] ?? '');
-            if (empty($descricao)) {
-                throw new InvalidArgumentException('Descrição é obrigatória.');
+            // Lê o corpo da requisição (JSON)
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true);
+
+            if (!is_array($data)) {
+                throw new InvalidArgumentException('JSON inválido.', 400);
             }
 
-            $dao = new PaStatusDAO();
-            $dao->inserir($descricao);
+            $descricao = $data['descricao'] ?? null;
+            $descricao = trim($descricao);
 
-            $_SESSION['msg'] = 'Status cadastrado com sucesso!';
-            header('Location: ../html/lista_pa_status.php');
-            exit();
+            if (!$descricao || empty($descricao) || strlen($descricao) > 512)
+                throw new InvalidArgumentException('Informe uma descrição válida.' . $descricao, 400);
+
+            $dao = new PaStatusDAO();
+
+            if (!$dao->inserir($descricao))
+                throw new Exception('Erro ao inserir nova descrição', 500);
+
+            // Retorna a lista completa
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($dao->listarTodos());
         } catch (Exception $e) {
-            $_SESSION['mensagem_erro'] = 'Erro ao cadastrar status.';
-            header('Location: ../html/cadastro_pa_status.php');
-            exit();
+            Util::tratarException($e);
         }
     }
 
