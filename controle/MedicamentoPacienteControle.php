@@ -41,12 +41,7 @@
             }
 
             $atendidoDAO = new AtendidoDAO();
-            $data_nasc_paciente = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$id_pessoa);
-            if (!$data_nasc_paciente) {
-                http_response_code(404);
-                echo json_encode(["status" => "erro", "mensagem" => "Paciente não encontrado para o ID informado."]);
-                exit;
-            }
+            $data_nasc_paciente = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$id_pessoa) ?: '1900-01-01';
             
             try {
                 $aplicacao = new DateTime($dataHora);

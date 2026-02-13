@@ -32,13 +32,14 @@ class EnfermidadeControle{
         $intStatus = trim($dados["intStatus"]);
 
         $atendidoDAO = new AtendidoDAO();
-        $resultado_banco = $atendidoDAO->obterDataNascimentoPorFichaMedica((int)$id_fichamedica);
-        
-        if($resultado_banco === null){
+        $idPessoa = $atendidoDAO->obterPessoaIdPorFichaMedica((int)$id_fichamedica);
+        if(!$idPessoa){
             http_response_code(404);
             echo json_encode(["erro" => "Ficha médica não encontrada"]);
             exit();
         }
+
+        $resultado_banco = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$idPessoa) ?: '1900-01-01';
 
         $data_nascimento = new DateTime($resultado_banco);
         $data_diagnostico_obj = new DateTime($data_diagnostico);

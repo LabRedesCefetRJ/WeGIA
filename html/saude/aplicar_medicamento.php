@@ -531,8 +531,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
                 id_medicacao: $chk.attr('data-idMedicacao'),
                 id_pessoa: $chk.attr('data-idPessoa'),
                 id_pessoa_funcionario: idPessoaFuncionario,
-                dataHora: dataHoraInput.value,
-                data_nascimento: dataPaciente
+                dataHora: dataHoraInput.value
             };
             const dadosJson = JSON.stringify(dados);
             
@@ -555,8 +554,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
             id_medicacao: formData.get('id_medicacao'),
             id_pessoa: formData.get('id_pessoa'),
             id_pessoa_funcionario: idPessoaFuncionario,
-            dataHora: formData.get('dataHora'),
-            data_nascimento: dataPaciente
+            dataHora: formData.get('dataHora')
         };
         const dadosJson = JSON.stringify(dados);
 
@@ -574,6 +572,12 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
       // Executa todas as requisições (seja 1 ou várias)
       Promise.all(arrayPromessas)
         .then(resultados => {
+          const respostaErro = resultados.find(resultado => resultado && resultado.status === "erro");
+          if (respostaErro) {
+            mostrarErro(respostaErro.mensagem || "Nao foi possivel aplicar o medicamento.");
+            return;
+          }
+
           limparInputDataTime();
           const id_fichamedica = document.getElementById("id_fichamedica").value;
           carregarAplicacoes(id_fichamedica);
