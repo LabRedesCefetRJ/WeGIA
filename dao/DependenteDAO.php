@@ -58,15 +58,15 @@ class DependenteDAO
         $pdo = Conexao::connect();
 
         $sql = "SELECT fdep.*, 
-                   p.nome, p.sobrenome, p.data_nascimento,
+                   p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.nome_pai, p.nome_mae, 
                    par.descricao AS parentesco,
                    f2.nome AS nomefuncionario, f2.sobrenome AS sobrenomefuncionario
             FROM funcionario_dependentes fdep
             LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-            LEFT JOIN funcionario_dependentes_parentesco par ON par.idparentesco = fdep.id_parentesco
+            LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
             JOIN funcionario f ON fdep.id_funcionario = f.id_funcionario
             JOIN pessoa f2 ON f.id_pessoa = f2.id_pessoa
-            WHERE fdep.id_dependente = :id_dependente";
+            WHERE fdep.id_dependente = :id_dependente"; //pegar restante das informações
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id_dependente', $id_dependente, PDO::PARAM_INT);

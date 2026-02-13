@@ -93,8 +93,7 @@ class DependenteControle
             header('Content-Type: application/json');
             echo json_encode($dependente ?: []);
         } catch (Exception $e) {
-            http_response_code(500);
-            echo json_encode(['erro' => $e->getMessage()]);
+            Util::tratarException($e);
         }
     }
 

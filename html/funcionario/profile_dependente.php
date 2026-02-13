@@ -116,18 +116,10 @@ try {
             data = "id_dependente=<?= $id_dependente ?>";
         var formState = [],
             form = {
-                set: function(id, dep) {
-                    if (id) {
-                        if (this[id]) {
-                            this[id](dep);
-                        } else {
-                            console.warn("Id de formulário inválido: " + id);
-                        }
-                    } else {
-                        this.formInfoPessoal(dep);
-                        this.formEndereco(dep);
-                        this.formDocumentacao(dep);
-                    }
+                set: function(dep) {
+                    this.formInfoPessoal(dep);
+                    this.formEndereco(dep);
+                    this.formDocumentacao(dep);
                 },
                 formInfoPessoal: function(dep) {
                     $("#nomeForm").val(dep.nome);
@@ -198,12 +190,8 @@ try {
             var url = "../../controle/control.php";
             var data = "nomeClasse=DependenteControle&metodo=listarUm&id_dependente=" + id;
 
-            $.post(url, data, function(response) {
-                dependente = JSON.parse(response);
-                form.set(id, dependente);
-                disableForm(id);
-                formState[id] = false;
-                switchButton(id);
+            $.post(url, data, function(dependente) {
+                form.set(dependente);
             });
         }
 
@@ -301,7 +289,7 @@ try {
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
             if (id_dependente) {
-                getInfoDependente();
+                getInfoDependente(id_dependente);
             }
             post("./dependente_documento.php", "id_dependente=" + dependente.id_dependente, function(response) {
                 listarDocDependente(response)
@@ -581,12 +569,10 @@ try {
                                                 <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                                                 <div class="col-md-8">
                                                     <label><input type="radio" name="sexo" id="radioM" value="m"
-                                                            style="margin-top: 10px; margin-left: 15px;"
-                                                            onclick="return exibir_reservista()">
+                                                            style="margin-top: 10px; margin-left: 15px;">
                                                         <i class="fa fa-male" style="font-size: 20px;"> Masculino</i></label>
                                                     <label><input type="radio" name="sexo" id="radioF" value="f"
-                                                            style="margin-top: 10px; margin-left: 15px;"
-                                                            onclick="return esconder_reservista()">
+                                                            style="margin-top: 10px; margin-left: 15px;">
                                                         <i class="fa fa-female" style="font-size: 20px;"> Feminino</i></label>
                                                 </div>
                                             </div>
@@ -871,7 +857,7 @@ try {
             }
         };
     </script>
-    !-- Vendor -->
+    <!-- Vendor -->
     <script src="../../assets/vendor/select2/select2.js"></script>
     <script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
     <script src="../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
