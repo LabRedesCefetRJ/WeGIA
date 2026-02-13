@@ -1105,13 +1105,28 @@ $dependente = json_encode($dependente);
                             ?>
                               <tr style="cursor: pointer;" onclick="clicar(<?= (int)$item['idatendido_ocorrencias'] ?>)">
                                 <td><?= $data[2] . "/" . $data[1] . "/" . $data[0] ?></td>
-                                <td><?= htmlspecialchars(strip_tags($item["descricao"])) ?></td>
+                                <td>
+                                  <?= htmlspecialchars(
+                                    strip_tags(
+                                      html_entity_decode($item["descricao"], ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                  ) ?>
+                                </td>
+
                                 <td>
                                   <button class="btn btn-xs btn-primary editar-ocorrencia"
                                     type="button"
                                     title="Editar"
                                     data-id="<?= (int)$item['idatendido_ocorrencias'] ?>"
-                                    data-descricao="<?= htmlspecialchars(strip_tags($item["descricao"])) ?>"
+                                    data-descricao="<?= htmlspecialchars(
+                                                      strip_tags(
+                                                        html_entity_decode($item["descricao"], ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                                                      ),
+                                                      ENT_QUOTES,
+                                                      'UTF-8'
+                                                    ) ?>"
                                     data-data="<?= htmlspecialchars($item["data"]) ?>">
                                     <i class="fa fa-edit"></i>
                                   </button>
