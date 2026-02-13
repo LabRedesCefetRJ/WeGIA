@@ -82,8 +82,22 @@ class Util
     // esta função formata para exibir no view
     public function formatoDataDMY($data)
     {
-        $data_arr = explode("-", $data);
+        if (empty($data) || !is_string($data)) {
+            return '';
+        }
 
+        $data = trim($data);
+        if ($data === '0000-00-00') {
+            return '';
+        }
+
+        $dataBase = explode(' ', $data)[0] ?? '';
+        $data_arr = explode("-", $dataBase);
+        if (count($data_arr) !== 3 || empty($data_arr[0]) || empty($data_arr[1]) || empty($data_arr[2])) {
+            return '';
+        }
+
+        
         $datad = explode(' ', $data_arr[2])[0] . '/' . $data_arr[1] . '/' . $data_arr[0];
 
         return $datad;
