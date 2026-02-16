@@ -44,8 +44,7 @@ class SinaisVitaisControle
         if((!isset($data_afericao)) || (empty($data_afericao))){
             $data_afericao = "";
         }else{
-            $timestamp = strtotime($data_afericao);
-            $data_afericao = date('Y-m-d\TH:i', $timestamp);
+            $data_afericao = trim($data_afericao);
         } 
 
         if((!isset($saturacao)) || (empty($saturacao))){
@@ -148,7 +147,9 @@ class SinaisVitaisControle
         $data_nasc_atendido = $atendidoDAO->obterDataNascimentoPorPessoaId($idPaciente) ?: '1900-01-01';
 
         $timezone = new DateTimeZone('America/Sao_Paulo');
-        $dataAfericao = DateTime::createFromFormat('Y-m-d\TH:i', $data_afericao, $timezone);
+        $dataAfericao = DateTime::createFromFormat('Y-m-d\TH:i', $data_afericao, $timezone)
+            ?: DateTime::createFromFormat('Y-m-d H:i:s', $data_afericao, $timezone)
+            ?: DateTime::createFromFormat('Y-m-d H:i', $data_afericao, $timezone);
         if (!$dataAfericao) {
             http_response_code(400);
             exit('Data de aferição inválida');
@@ -170,6 +171,7 @@ class SinaisVitaisControle
             http_response_code(400);
             exit('A data da aferição não pode ser no futuro.');
         }
+        $sinaisvitais->setData($dataAfericao->format('Y-m-d H:i:s'));
 
         $sinVitDAO = new SinaisVitaisDAO();
         

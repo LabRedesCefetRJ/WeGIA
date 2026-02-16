@@ -44,6 +44,9 @@ class AtendidoDAO
         $stmt->execute();
 
         $dataNascimento = $stmt->fetchColumn();
+        if ($dataNascimento === '0000-00-00') {
+            return null;
+        }
         return $dataNascimento ?: null;
     }
 

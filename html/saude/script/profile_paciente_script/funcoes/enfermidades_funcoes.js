@@ -29,7 +29,7 @@ async function adicionar_enfermidade() {
             return;
         }else{
             const data = await resposta.json();
-            const mensagemErro = Object.hasOwn(data, "erro") ? data.erro : `Algum erro ocorreu ao tentar adicionar uma nova enfermidade`;
+            const mensagemErro = Object.prototype.hasOwnProperty.call(data, "erro") ? data.erro : `Algum erro ocorreu ao tentar adicionar uma nova enfermidade`;
             throw new Error(mensagemErro);
         }
    }catch(e){
@@ -145,14 +145,20 @@ async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
         });
 
         const data = await response.json();
-    
         
+        if (!response.ok) {
+            const mensagemErro = Object.prototype.hasOwnProperty.call(data, "erro") ? data.erro : "Nao foi possivel cadastrar a comorbidade.";
+            window.alert(mensagemErro);
+            return;
+        }
+
         formEnfermidade.reset();
         selectEnfermidades.selectedIndex = 0;
         await gerarEnfermidadesDoPaciente();
 
     } catch (error) {
         console.error('Erro:', error);
+        window.alert("Aconteceu algum problema ao cadastrar a comorbidade.");
     }
 }
 

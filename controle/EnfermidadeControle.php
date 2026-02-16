@@ -2,6 +2,7 @@
 require_once dirname(__DIR__) . '/dao/Conexao.php';
 require_once dirname(__DIR__) . '/dao/EnfermidadeDAO.php';
 require_once dirname(__DIR__) . '/dao/AtendidoDAO.php';
+require_once dirname(__DIR__) . '/classes/Util.php';
 
 class EnfermidadeControle{
     private PDO $pdo;
@@ -33,11 +34,14 @@ class EnfermidadeControle{
 
         $atendidoDAO = new AtendidoDAO();
         $resultado_banco = $atendidoDAO->obterDataNascimentoPorFichaMedica((int)$id_fichamedica);
-        
-        if($resultado_banco === null){
+        $idPessoa = $atendidoDAO->obterPessoaIdPorFichaMedica((int)$id_fichamedica);
+        if(!$idPessoa){
             http_response_code(404);
             echo json_encode(["erro" => "Ficha médica não encontrada"]);
             exit();
+        }
+        if ($resultado_banco === null) {
+            $resultado_banco = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$idPessoa) ?: '1900-01-01';
         }
 
         $data_nascimento = new DateTime($resultado_banco);
@@ -72,11 +76,10 @@ class EnfermidadeControle{
                 throw new Exception("Enfermidade não adicionada à ficha do paciente", 500);
             }
         }catch(PDOException $e){
-            http_response_code(500);
-            echo json_encode(['erro' => 'Erro interno de Banco de Dados ao adicionar uma nova enfermidade na ficha do paciente']);
+            Util::tratarException(new Exception('Erro interno de Banco de Dados ao adicionar uma nova enfermidade na ficha do paciente', 500, $e));
         }catch(Exception $e){
-            http_response_code(500);
-            echo json_encode(['erro' => 'Erro interno de Servidor ao adicionar uma nova enfermidade na ficha do paciente']);
+            $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? (int)$e->getCode() : 500;
+            Util::tratarException(new Exception('Erro interno de Servidor ao adicionar uma nova enfermidade na ficha do paciente', $codigo, $e));
         }
         exit();
     }

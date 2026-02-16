@@ -41,12 +41,7 @@
             }
 
             $atendidoDAO = new AtendidoDAO();
-            $data_nasc_paciente = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$id_pessoa);
-            if (!$data_nasc_paciente) {
-                http_response_code(404);
-                echo json_encode(["status" => "erro", "mensagem" => "Paciente não encontrado para o ID informado."]);
-                exit;
-            }
+            $data_nasc_paciente = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$id_pessoa) ?: '1900-01-01';
             
             try {
                 $aplicacao = new DateTime($dataHora);
@@ -101,20 +96,10 @@
                 http_response_code(400);
                 echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
             } catch (PDOException $e){
-                // Erro de Banco de Dados
-                http_response_code(500); 
-                echo json_encode([
-                    'status' => 'erro',
-                    'mensagem' => "Erro ao registrar aplicação (BD): " . $e->getMessage()
-                ]);
+                Util::tratarException(new Exception('Erro ao registrar aplicação (BD).', 500, $e));
             } catch (Exception $e){
-                // Erro de lógica ou outro tipo de exceção
-                $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-                http_response_code($codigo);
-                echo json_encode([
-                    'status' => 'erro',
-                    'mensagem' => $e->getMessage()
-                ]);
+                $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? (int)$e->getCode() : 500;
+                Util::tratarException(new Exception($e->getMessage(), $codigo, $e));
             }
             exit;
         }

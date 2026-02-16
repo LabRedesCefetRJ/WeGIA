@@ -743,17 +743,26 @@ try {
                         </div>
                         <div class="row">
                           <div class="col-md-3" style="padding-left: 0px;">
-                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?></p>
+                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?: 'Nao informada' ?></p>
                           </div>
                           <div class="col-md-3">
                             <p><span class="text-bold">Idade:</span>
                               <?php
-                              $dataNascimento = new DateTime($pacienteOverview['data_nascimento']);
-                              $hoje = new DateTime(); // Data atual
-                              $idade = $dataNascimento->diff($hoje)->y; // Calcula a diferença em anos
-                              echo $idade;
+                              $dataNascimentoRaw = $pacienteOverview['data_nascimento'] ?? null;
+                              if (!empty($dataNascimentoRaw) && $dataNascimentoRaw !== '0000-00-00') {
+                                try {
+                                  $dataNascimento = new DateTime($dataNascimentoRaw);
+                                  $hoje = new DateTime();
+                                  $idade = $dataNascimento->diff($hoje)->y;
+                                  echo $idade . ' anos';
+                                } catch (Exception $e) {
+                                  echo 'Nao informada';
+                                }
+                              } else {
+                                echo 'Nao informada';
+                              }
                               ?>
-                              anos </p>
+                            </p>
                           </div>
                         </div>
                         <div class="row">

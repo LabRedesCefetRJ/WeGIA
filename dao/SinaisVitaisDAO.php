@@ -21,6 +21,16 @@ class SinaisVitaisDAO
         $id_fichamedica = $sinaisvitais->getIdFichamedica();
         $id_funcionario = $sinaisvitais->getIdFuncionario();
         $data = $sinaisvitais->getData();
+        if (is_string($data)) {
+            $data = trim($data);
+            if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $data)) {
+                $data = str_replace('T', ' ', $data) . ':00';
+            } elseif (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $data)) {
+                $data = str_replace('T', ' ', $data);
+            } elseif (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $data)) {
+                $data .= ':00';
+            }
+        }
         $saturacao = $sinaisvitais->getSaturacao();
         $pres_art = $sinaisvitais->getPressaoArterial();
         $freq_card = $sinaisvitais->getFrequenciaCardiaca();
@@ -66,4 +76,3 @@ class SinaisVitaisDAO
         $stmt->execute();
     }
 }
-
