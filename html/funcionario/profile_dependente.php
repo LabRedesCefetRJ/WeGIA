@@ -174,7 +174,13 @@ try {
             if (formState[idForm]) {
                 formState[idForm] = false;
                 disableForm(idForm);
-                form.set(idForm, dependente);
+
+                const dependenteSession = sessionStorage.getItem('dependente');
+
+                if (dependenteSession) {
+                    form.set(JSON.parse(dependenteSession));
+                }
+
             } else {
                 formState[idForm] = true;
                 enableForm(idForm);
@@ -192,6 +198,7 @@ try {
 
             $.post(url, data, function(dependente) {
                 form.set(dependente);
+                sessionStorage.setItem('dependente', JSON.stringify(dependente));
             });
         }
 
