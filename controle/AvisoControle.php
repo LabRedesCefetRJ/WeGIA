@@ -2,7 +2,6 @@
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Aviso.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'AvisoNotificacaoControle.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AvisoDAO.php';
-require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'IntercorrenciaRascunhoDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class AvisoControle
@@ -46,12 +45,6 @@ class AvisoControle
             } else {
                 $aviso->setIdAviso($ultimaInsercao);
                 $avisoNotificacaoControle->incluir($aviso);
-                try {
-                    $rascunhoDAO = new IntercorrenciaRascunhoDAO();
-                    $rascunhoDAO->limpar($idfichamedica, $idFuncionario);
-                } catch (Exception $e) {
-                    // Evita falha no fluxo principal caso o rascunho não seja limpo.
-                }
                 header("Location: ../html/saude/cadastrar_intercorrencias.php?id_fichamedica=$idfichamedica");
             }
         } catch (Exception $e) {

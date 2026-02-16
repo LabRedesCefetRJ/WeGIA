@@ -373,53 +373,42 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
   <script>
     (function() {
       const idFichaMedica = <?php echo (int)$id; ?>;
+      const idFuncionario = <?php echo (int)$funcionario_id; ?>;
+      const idPaciente = <?php echo isset($idPaciente['id_pessoa']) ? (int)$idPaciente['id_pessoa'] : 0; ?>;
       const textarea = document.getElementById('descricao_emergencia');
-      const urlBase = '../../controle/control.php';
-      const nomeClasse = 'IntercorrenciaRascunhoControle';
+      const storageKey = `intercorrencia_rascunho:${idFuncionario}:${idPaciente}:${idFichaMedica}`;
       let autosaveTimer = null;
       let lastSavedValue = '';
 
-      async function carregarRascunho() {
+      function carregarRascunho() {
         try {
-          const url = `${urlBase}?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=obterRascunho&id_fichamedica=${encodeURIComponent(idFichaMedica)}`;
-          const response = await fetch(url);
-          if (!response.ok) {
-            return;
-          }
-          const data = await response.json();
-          if (data && typeof data.descricao === 'string') {
-            textarea.value = data.descricao;
-            lastSavedValue = data.descricao.trim();
+          const descricao = localStorage.getItem(storageKey);
+          if (typeof descricao === 'string') {
+            textarea.value = descricao;
+            lastSavedValue = descricao;
           }
         } catch (err) {
-          console.error('Erro ao carregar rascunho:', err);
+          console.error('Erro ao carregar rascunho do localStorage:', err);
         }
       }
 
-      async function salvarOuLimparRascunho() {
-        const descricao = textarea.value.trim();
+      function salvarOuLimparRascunho() {
+        const descricao = textarea.value;
         if (descricao === lastSavedValue) {
           return;
         }
 
-        const metodo = descricao === '' ? 'limparRascunho' : 'salvarRascunho';
         try {
-          await fetch(urlBase, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              nomeClasse: nomeClasse,
-              metodo: metodo,
-              id_fichamedica: idFichaMedica,
-              descricao: descricao
-            }),
-            keepalive: true
-          });
+          if (descricao.trim() === '') {
+            localStorage.removeItem(storageKey);
+            lastSavedValue = '';
+            return;
+          }
+
+          localStorage.setItem(storageKey, descricao);
           lastSavedValue = descricao;
         } catch (err) {
-          console.error('Erro ao salvar rascunho:', err);
+          console.error('Erro ao salvar rascunho no localStorage:', err);
         }
       }
 
@@ -434,28 +423,22 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         const form = textarea.closest('form');
         if (form) {
           form.addEventListener('submit', function() {
-            const payload = JSON.stringify({
-              nomeClasse: nomeClasse,
-              metodo: 'limparRascunho',
-              id_fichamedica: idFichaMedica
-            });
-            const url = urlBase;
-
-            if (navigator.sendBeacon) {
-              const blob = new Blob([payload], { type: 'application/json' });
-              navigator.sendBeacon(url, blob);
-            } else {
-              fetch(url, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: payload,
-                keepalive: true
-              });
+            clearTimeout(autosaveTimer);
+            try {
+              localStorage.removeItem(storageKey);
+            } catch (err) {
+              console.error('Erro ao limpar rascunho do localStorage no submit:', err);
             }
           });
         }
+
+        document.addEventListener('visibilitychange', function() {
+          if (document.visibilityState === 'hidden') {
+            salvarOuLimparRascunho();
+          }
+        });
+        window.addEventListener('pagehide', salvarOuLimparRascunho);
+        window.addEventListener('beforeunload', salvarOuLimparRascunho);
 
         carregarRascunho();
       }
