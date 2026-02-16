@@ -129,7 +129,7 @@ try {
                     $("#pai").val(dep.nome_pai);
                     $("#mae").val(dep.nome_mae);
                     if (dep.sexo) {
-                        let radio = $("input:radio[name=gender]");
+                        let radio = $("input:radio[name=sexo]");
                         radio.filter('[value=' + dep.sexo + ']').prop('checked', true);
                     }
                 },
@@ -372,47 +372,6 @@ try {
             }
         }
 
-        function gerarSituacao() {
-            url = '../../dao/exibir_situacao.php';
-            $.ajax({
-                data: '',
-                type: "POST",
-                url: url,
-                async: true,
-                success: function(response) {
-                    var situacoes = response;
-                    $('#situacao').empty();
-                    $('#situacao').append('<option selected disabled>Selecionar</option>');
-                    $.each(situacoes, function(i, item) {
-                        $('#situacao').append('<option value="' + item.id_situacao + '">' + item.situacoes + '</option>');
-                    });
-                },
-                dataType: 'json'
-            });
-        }
-
-        function adicionar_situacao() {
-            url = '../../dao/adicionar_situacao.php';
-            var situacao = window.prompt("Cadastre uma Nova Situação:");
-            if (!situacao) {
-                return
-            }
-            situacao = situacao.trim();
-            if (situacao == '') {
-                return
-            }
-            data = 'situacao=' + situacao;
-            $.ajax({
-                type: "POST",
-                url: url,
-                data: data,
-                success: function(response) {
-                    gerarSituacao();
-                },
-                dataType: 'text'
-            })
-        }
-
         function listarDocDependente(docdependentes) {
             $("#doc-tab").empty();
             $.each(docdependentes, function(i, item) {
@@ -551,48 +510,34 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="nomeForm">Nome</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control"
-                                                        name="nome" id="nomeForm"
-                                                        onkeypress="return Onlychars(event)"
-                                                        required minlength="2">
+                                                    <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)" required minlength="2" disabled>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="sobrenomeForm">Sobrenome</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control"
-                                                        name="sobrenome" id="sobrenomeForm"
-                                                        required minlength="2">
+                                                    <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" required minlength="2" disabled>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                                                 <div class="col-md-8">
-                                                    <label><input type="radio" name="sexo" id="radioM" value="m"
-                                                            style="margin-top: 10px; margin-left: 15px;">
-                                                        <i class="fa fa-male" style="font-size: 20px;"> Masculino</i></label>
-                                                    <label><input type="radio" name="sexo" id="radioF" value="f"
-                                                            style="margin-top: 10px; margin-left: 15px;">
-                                                        <i class="fa fa-female" style="font-size: 20px;"> Feminino</i></label>
+                                                    <label><i class="fa fa-male" style="font-size: 20px;"> Masculino</i></label>
+                                                    <input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-right: 15px;" disabled>
+                                                    <label><i class="fa fa-female" style="font-size: 20px;"> Feminino</i></label>
+                                                    <input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-right: 15px;" disabled>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="telefone">Telefone</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" maxlength="14" minlength="14"
-                                                        name="telefone" id="telefone"
-                                                        placeholder="Ex: (22)99999-9999"
-                                                        onkeypress="return Onlynumbers(event)"
-                                                        onkeydown="mascara('(##)#####-####',this,event)">
+                                                    <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeydown="mascara('(##)#####-####',this,event)" disabled>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="nascimento">Nascimento</label>
                                                 <div class="col-md-8">
-                                                    <input type="date" class="form-control"
-                                                        name="nascimento" id="nascimento"
-                                                        max="<?= date('Y-m-d') ?>"
-                                                        onchange="validarDataNascimentoContraExpedicao()">
+                                                    <input type="date" class="form-control" name="nascimento" id="nascimento" max="<?= date('Y-m-d') ?>" onchange="validarDataNascimentoContraExpedicao()" disabled>
                                                 </div>
                                             </div>
                                             <script>
@@ -606,7 +551,9 @@ try {
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control"
                                                         name="nome_pai" id="pai"
-                                                        onkeypress="return Onlychars(event)">
+                                                        onkeypress="return Onlychars(event)"
+                                                        disabled>
+
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -614,18 +561,21 @@ try {
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control"
                                                         name="nome_mae" id="mae"
-                                                        onkeypress="return Onlychars(event)">
+                                                        onkeypress="return Onlychars(event)"
+                                                        disabled>
+
                                                 </div>
                                             </div>
                                             <div class="form-group center">
                                                 <button type="button" class="btn btn-primary"
                                                     id="botaoEditar_formInfoPessoal"
                                                     onclick="switchForm('formInfoPessoal')">Editar</button>
-                                                <button type="submit" class="btn btn-primary"
-                                                    disabled="true"
-                                                    id="botaoSalvar_formInfoPessoal">
-                                                    Salvar
                                                 </button>
+                                                <input type="submit" class="btn btn-primary"
+                                                    disabled="true"
+                                                    id="botaoSalvar_formInfoPessoal"
+                                                    value="Salvar">
+
                                             </div>
                                         </fieldset>
                                     </form>
@@ -822,41 +772,7 @@ try {
             </section>
         </div>
     </section>
-    <script>
-        function pesquisacep(valor) {
-            //Nova variável "cep" somente com dígitos.
-            var cep = valor.replace(/\D/g, '');
-            //Verifica se campo cep possui valor informado.
-            if (cep != "") {
-                //Expressão regular para validar o CEP.
-                var validacep = /^[0-9]{8}$/;
-                //Valida o formato do CEP.
-                if (validacep.test(cep)) {
-                    //Preenche os campos com "..." enquanto consulta webservice.
-                    document.getElementById('rua').value = "...";
-                    document.getElementById('bairro').value = "...";
-                    document.getElementById('cidade').value = "...";
-                    document.getElementById('uf').value = "...";
-                    document.getElementById('ibge').value = "...";
-                    //Cria um elemento javascript.
-                    var script = document.createElement('script');
-                    //Sincroniza com o callback.
-                    script.src = 'https://viacep.com.br/ws/' + cep + '/json/?callback=meu_callback';
-                    //Insere script no documento e carrega o conteúdo.
-                    document.body.appendChild(script);
-                } //end if.
-                else {
-                    //cep é inválido.
-                    limpa_formulário_cep();
-                    alert("Formato de CEP inválido.");
-                }
-            } //end if.
-            else {
-                //cep sem valor, limpa formulário.
-                limpa_formulário_cep();
-            }
-        };
-    </script>
+
     <!-- Vendor -->
     <script src="../../assets/vendor/select2/select2.js"></script>
     <script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
