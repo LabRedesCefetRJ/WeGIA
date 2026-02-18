@@ -1,14 +1,14 @@
 <?php
 class DependenteDTO
 {
-    public int $id;
-    public string $nome;
-    public string $sobrenome;
-    public string $sexo;
-    public DateTime $nascimento;
-    public string $telefone;
-    public string $nomePai;
-    public string $nomeMae;
+    public ?int $id = null;
+    public ?string $nome = null;
+    public ?string $sobrenome = null;
+    public ?string $sexo = null;
+    public ?DateTime $nascimento = null;
+    public ?string $telefone = null;
+    public ?string $nomePai = null;
+    public ?string $nomeMae = null;
 
     public function __construct(array $data)
     {

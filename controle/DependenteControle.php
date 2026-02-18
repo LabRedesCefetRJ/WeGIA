@@ -1,12 +1,10 @@
 <?php
 
-
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Dependente.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'DependenteDTO.php';
 require_once ROOT . '/dao/Conexao.php';
 require_once ROOT . '/dao/DependenteDAO.php';
 require_once ROOT . '/classes/Util.php';
-
-
-
 
 class DependenteControle
 {
@@ -15,43 +13,10 @@ class DependenteControle
     public function editarInfoPessoal()
     {
         try {
-            $id_dependente = (int)($_POST['id_dependente'] ?? $_POST['iddependente'] ?? 0);
-            $nome = trim($_POST['nome'] ?? '');
-            $sobrenome = trim($_POST['sobrenome'] ?? '');
-            $sexo = $_POST['sexo'] ?? $_POST['gender'] ?? '';
-            $nascimento = $_POST['nascimento'] ?? null;
-            $telefone = trim($_POST['telefone'] ?? '');
-            $nome_pai = trim($_POST['nome_pai'] ?? '');
-            $nome_mae = trim($_POST['nome_mae'] ?? '');
-
-
-
-            error_log("DependenteControle::editarInfoPessoal - id=$id_dependente");
-
-
-            if ($id_dependente < 1) {
-                throw new InvalidArgumentException('ID do dependente inválido.');
-            }
-            if (strlen($nome) < 2) {
-                throw new InvalidArgumentException('Nome deve ter pelo menos 2 caracteres.');
-            }
-            if (strlen($sobrenome) < 2) {
-                throw new InvalidArgumentException('Sobrenome deve ter pelo menos 2 caracteres.');
-            }
-
+            $dependente = new Dependente(new DependenteDTO($_POST));
 
             $dao = new DependenteDAO();
-            $sucesso = $dao->alterarInfoPessoal(
-                $id_dependente,
-                $nome,
-                $sobrenome,
-                $sexo,
-                $nascimento,
-                $telefone,
-                $nome_pai,
-                $nome_mae
-            );
-
+            $sucesso = $dao->alterarInfoPessoal($dependente);
 
             if ($sucesso) {
                 $_SESSION['msg'] = 'Informações pessoais atualizadas!';
@@ -60,18 +25,15 @@ class DependenteControle
                 throw new Exception('Falha ao atualizar dados (nenhuma linha alterada).');
             }
 
-
-            header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $id_dependente . "#overview");
+            header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $dependente->getId() . "#overview");
             exit;
         } catch (Exception $e) {
-            error_log("ERRO editarInfoPessoal: " . $e->getMessage());
-            $_SESSION['mensagem_erro'] = $e->getMessage();
-            $redirect_id = $_POST['id_dependente'] ?? $id_dependente ?? 0;
-            header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $redirect_id);
+            $_SESSION['mensagem_erro'] = 'Erro ao editar as informações pessoais do dependente';
+            Util::tratarException($e);
+            header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $dependente->getId());
             exit;
         }
     }
-
 
     public function listarUm()
     {

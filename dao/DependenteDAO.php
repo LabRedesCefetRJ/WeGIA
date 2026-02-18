@@ -1,57 +1,36 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Dependente.php';
 
 class DependenteDAO
 {
-    public function alterarInfoPessoal(
-        int $id_dependente,
-        string $nome,
-        string $sobrenome,
-        string $sexo,
-        ?string $nascimento,
-        ?string $telefone,
-        ?string $nome_pai,
-        ?string $nome_mae
-    ) {
+    public function alterarInfoPessoal(Dependente $dependente)
+    {
         $pdo = Conexao::connect();
 
-        $stmt = $pdo->prepare("SELECT id_pessoa FROM funcionario_dependentes WHERE id_dependente = :id");
-        $stmt->bindValue(':id', $id_dependente, PDO::PARAM_INT);
-        $stmt->execute();
-        $id_pessoa = $stmt->fetchColumn();
+        $stmt = $pdo->prepare("UPDATE pessoa p
+            JOIN funcionario_dependentes fd 
+                ON p.id_pessoa = fd.id_pessoa
+            SET p.nome = :nome,
+                p.sobrenome = :sobrenome,
+                p.sexo = :sexo,
+                p.data_nascimento = :nascimento,
+                p.telefone = :telefone,
+                p.nome_pai = :nome_pai,
+                p.nome_mae = :nome_mae
+            WHERE fd.id_dependente = :id_dependente;
+        ");
 
-        if (!$id_pessoa) {
-            throw new PDOException("Dependente não encontrado");
-        }
+        $stmt->bindValue(':nome', $dependente->getNome(), PDO::PARAM_STR);
+        $stmt->bindValue(':sobrenome', $dependente->getSobrenome(), PDO::PARAM_STR);
+        $stmt->bindValue(':sexo', $dependente->getSexo(), PDO::PARAM_STR_CHAR);
+        $stmt->bindValue(':nascimento', $dependente->getDataNascimento()->format('Y-m-d'), PDO::PARAM_STR);
+        $stmt->bindValue(':telefone', $dependente->getTelefone());
+        $stmt->bindValue(':nome_pai', $dependente->getNomePai());
+        $stmt->bindValue(':nome_mae', $dependente->getNomeMae());
+        $stmt->bindValue(':id_dependente', $dependente->getId(), PDO::PARAM_INT);
 
-        $stmt = $pdo->prepare("UPDATE pessoa SET 
-        nome = :nome, 
-        sobrenome = :sobrenome, 
-        sexo = :sexo, 
-        data_nascimento = :nascimento 
-        WHERE id_pessoa = :id_pessoa");
-        $stmt->bindValue(':nome', trim($nome));
-        $stmt->bindValue(':sobrenome', trim($sobrenome));
-        $stmt->bindValue(':sexo', $sexo);
-        $stmt->bindValue(':nascimento', $nascimento);
-        $stmt->bindValue(':id_pessoa', $id_pessoa, PDO::PARAM_INT);
-
-        $pessoa_ok = $stmt->execute();
-
-        $stmt = $pdo->prepare("UPDATE funcionario_dependentes SET 
-        telefone = :telefone, 
-        nome_pai = :nome_pai, 
-        nome_mae = :nome_mae 
-        WHERE id_dependente = :id_dependente");
-        $stmt->bindValue(':telefone', $telefone);
-        $stmt->bindValue(':nome_pai', trim($nome_pai));
-        $stmt->bindValue(':nome_mae', trim($nome_mae));
-        $stmt->bindValue(':id_dependente', $id_dependente, PDO::PARAM_INT);
-
-        $dependente_ok = $stmt->execute();
-
-        return $pessoa_ok && $dependente_ok;
+        return $stmt->execute();
     }
-
 
     public function buscarPorId(int $id_dependente): ?array
     {
