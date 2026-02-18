@@ -3,11 +3,16 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
 class DependenteDAO
 {
+    private $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        $this->pdo = $pdo ?: Conexao::connect();
+    }
+
     public function alterarInfoPessoal(Dependente $dependente)
     {
-        $pdo = Conexao::connect();
-
-        $stmt = $pdo->prepare("UPDATE pessoa p
+        $stmt = $this->pdo->prepare("UPDATE pessoa p
             JOIN funcionario_dependentes fd 
                 ON p.id_pessoa = fd.id_pessoa
             SET p.nome = :nome,
@@ -34,8 +39,6 @@ class DependenteDAO
 
     public function buscarPorId(int $id_dependente): ?array
     {
-        $pdo = Conexao::connect();
-
         $sql = "SELECT fdep.*, 
                    p.cpf, p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.nome_pai, p.nome_mae, 
                    par.descricao AS parentesco,
@@ -47,7 +50,7 @@ class DependenteDAO
             JOIN pessoa f2 ON f.id_pessoa = f2.id_pessoa
             WHERE fdep.id_dependente = :id_dependente"; //pegar restante das informações
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_dependente', $id_dependente, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -56,8 +59,6 @@ class DependenteDAO
 
     public function alterarDocumentacao(int $id_dependente, string $rg, string $orgao_emissor, ?string $data_expedicao, string $cpf): bool
     {
-        $pdo = Conexao::connect();
-
         $sql = "UPDATE pessoa p 
             JOIN funcionario_dependentes fd 
                 ON p.id_pessoa = fd.id_pessoa
@@ -69,7 +70,7 @@ class DependenteDAO
             WHERE fd.id_dependente = :id_dependente;
         ";
 
-        $stmt = $pdo->prepare($sql);
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':rg', $rg);
         $stmt->bindParam(':orgao_emissor', $orgao_emissor);
         $stmt->bindParam(':data_expedicao', $data_expedicao);
@@ -77,5 +78,38 @@ class DependenteDAO
         $stmt->bindParam(':id_dependente', $id_dependente);
 
         return $stmt->execute();
+    }
+
+    //adaptar para receber DTO
+    public function editarEndereco(int $id_dependente, string $cep, string $uf, string $cidade, string $bairro, string $rua, string $complemento, int $ibge, ?int $numero_residencia)
+    {
+        $query = 'UPDATE pessoa p 
+            JOIN funcionario_dependentes fd 
+                ON p.id_pessoa = fd.id_pessoa 
+            SET 
+                p.cep=:cep, 
+                p.estado=:uf, 
+                p.cidade=:cidade, 
+                p.bairro=:bairro, 
+                p.logradouro=:rua, 
+                p.complemento=:complemento, 
+                p.ibge=:ibge, 
+                p.numero_endereco=:numero_residencia 
+            WHERE fd.id_dependente=:id_dependente
+        ';
+
+        $stmt = $this->pdo->prepare($query);
+
+        $stmt->bindParam(':cep', $cep);
+        $stmt->bindParam(':uf', $uf);
+        $stmt->bindParam(':cidade', $cidade);
+        $stmt->bindParam(':bairro', $bairro);
+        $stmt->bindParam(':rua', $rua);
+        $stmt->bindParam(':complemento', $complemento);
+        $stmt->bindParam(':ibge', $ibge);
+        $stmt->bindParam(':numero_residencia', $numero_residencia);
+        $stmt->bindParam(':id_dependente', $id_dependente);
+
+        $stmt->execute();
     }
 }

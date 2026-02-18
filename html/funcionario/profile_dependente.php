@@ -268,8 +268,15 @@ try {
             var url;
             switch (idForm) {
                 case "formEndereco":
-                    url = "../pessoa/editar_endereco.php";
-                    break;
+                    var data = $("#" + idForm).serialize();
+                    data += "&nomeClasse=DependenteControle";
+                    data += "&metodo=editarEndereco";
+                    data += "&id_dependente=" + dependente.id_dependente;
+
+                    $.post("../../controle/control.php", data, function() {
+                        getInfoDependente(idForm);
+                    });
+                    return true;
                 case "formDocumentacao":
                     var data = $("#" + idForm).serialize();
                     data += "&nomeClasse=DependenteControle";
