@@ -37,7 +37,7 @@ class DependenteDAO
         $pdo = Conexao::connect();
 
         $sql = "SELECT fdep.*, 
-                   p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.nome_pai, p.nome_mae, 
+                   p.cpf, p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.nome_pai, p.nome_mae, 
                    par.descricao AS parentesco,
                    f2.nome AS nomefuncionario, f2.sobrenome AS sobrenomefuncionario
             FROM funcionario_dependentes fdep
@@ -54,23 +54,27 @@ class DependenteDAO
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function alterarDocumentacao(int $id_pessoa, string $rg, string $orgao_emissor, ?string $data_expedicao, string $cpf): bool
+    public function alterarDocumentacao(int $id_dependente, string $rg, string $orgao_emissor, ?string $data_expedicao, string $cpf): bool
     {
         $pdo = Conexao::connect();
 
-        $sql = "UPDATE pessoa SET 
-        registro_geral = :rg, 
-        orgao_emissor = :orgao_emissor, 
-        data_expedicao = :data_expedicao, 
-        cpf = :cpf 
-        WHERE id_pessoa = :id_pessoa";
+        $sql = "UPDATE pessoa p 
+            JOIN funcionario_dependentes fd 
+                ON p.id_pessoa = fd.id_pessoa
+            SET 
+                p.registro_geral = :rg, 
+                p.orgao_emissor = :orgao_emissor, 
+                p.data_expedicao = :data_expedicao,
+                p.cpf = :cpf
+            WHERE fd.id_dependente = :id_dependente;
+        ";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':rg', $rg);
         $stmt->bindParam(':orgao_emissor', $orgao_emissor);
         $stmt->bindParam(':data_expedicao', $data_expedicao);
         $stmt->bindParam(':cpf', $cpf);
-        $stmt->bindParam(':id_pessoa', $id_pessoa);
+        $stmt->bindParam(':id_dependente', $id_dependente);
 
         return $stmt->execute();
     }

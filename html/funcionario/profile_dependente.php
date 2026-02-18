@@ -154,8 +154,7 @@ try {
                     $("#rg").val(dep.registro_geral).prop('disabled', true);
                     $("#orgao_emissor").val(dep.orgao_emissor).prop('disabled', true);
                     $("#data_expedicao").val(dep.data_expedicao).prop('disabled', true);
-                    // $("#cpf").val(dep.cpf.substr(0, 3) + "." + dep.cpf.substr(3, 3) + "." + dep.cpf.substr(6, 3) + "-" + dep.cpf.substr(9, 2)).prop('disabled', true);
-                    $("#cpf").val(dep.cpf);
+                    $("#cpf").val(dep.cpf).prop('disabled', true);
                 },
             };
 
@@ -272,12 +271,15 @@ try {
                     url = "../pessoa/editar_endereco.php";
                     break;
                 case "formDocumentacao":
-                    data += "&nomeClasse=DependenteControle&metodo=editarDocumentacao&id_dependente=" + dependente.id_dependente;
+                    var data = $("#" + idForm).serialize();
+                    data += "&nomeClasse=DependenteControle";
+                    data += "&metodo=editarDocumentacao";
+                    data += "&id_dependente=" + dependente.id_dependente;
+
                     $.post("../../controle/control.php", data, function() {
                         getInfoDependente(idForm);
                     });
                     return true;
-                    break;
                 default:
                     console.warn("Não existe nenhuma URL para: " + idForm);
                     return false;

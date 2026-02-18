@@ -62,39 +62,34 @@ class DependenteControle
     public function editarDocumentacao()
     {
         try {
-            $id_dependente = (int)($_POST['id_dependente'] ?? 0);
-            $id_pessoa = (int)($_POST['id_pessoa'] ?? 0);
-            $rg = trim($_POST['rg'] ?? '');
-            $orgao_emissor = trim($_POST['orgao_emissor'] ?? '');
-            $data_expedicao = $_POST['data_expedicao'] ?? null;
-            $cpf = preg_replace('/\D/', '', $_POST['cpf'] ?? '');
+            $id_dependente = filter_input(INPUT_POST, 'id_dependente', FILTER_SANITIZE_NUMBER_INT);
+            $rg = filter_input(INPUT_POST, 'rg', FILTER_SANITIZE_SPECIAL_CHARS);
+            $orgao_emissor = filter_input(INPUT_POST, 'orgao_emissor', FILTER_SANITIZE_SPECIAL_CHARS);
+            $data_expedicao = filter_input(INPUT_POST, 'data_expedicao', FILTER_UNSAFE_RAW);
+            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
-            error_log("DependenteControle::editarDocumentacao - id_dependente=$id_dependente, id_pessoa=$id_pessoa");
-
-            if ($id_dependente < 1) {
-                throw new InvalidArgumentException('ID do dependente inválido.');
-            }
-            if ($cpf && strlen($cpf) !== 11) {
-                throw new InvalidArgumentException('CPF inválido.');
-            }
+            if ($id_dependente < 1)
+                throw new InvalidArgumentException('ID do dependente inválido.', 412);
+        
+            if (!Util::validarCPF($cpf))
+                throw new InvalidArgumentException('CPF inválido.', 412);
 
             $dao = new DependenteDAO();
-            $sucesso = $dao->alterarDocumentacao($id_pessoa, $rg, $orgao_emissor, $data_expedicao, $cpf);
+            $sucesso = $dao->alterarDocumentacao($id_dependente, $rg, $orgao_emissor, $data_expedicao, $cpf);
 
             if ($sucesso) {
                 $_SESSION['msg'] = 'Documentação atualizada!';
                 $_SESSION['tipo'] = 'success';
             } else {
-                throw new Exception('Falha ao atualizar documentação.');
+                throw new Exception('Falha ao atualizar documentação.', 500);
             }
 
             header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $id_dependente . "#documentacao");
             exit;
         } catch (Exception $e) {
-            error_log("ERRO editarDocumentacao: " . $e->getMessage());
-            $_SESSION['mensagem_erro'] = $e->getMessage();
-            $redirect_id = $_POST['id_dependente'] ?? 0;
-            header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $redirect_id . "#documentacao");
+            $_SESSION['mensagem_erro'] = 'Erro ao editar a documentação de um dependente';
+            Util::tratarException($e);
+            header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $id_dependente . "#documentacao");
             exit;
         }
     }
