@@ -102,7 +102,26 @@ foreach ($sinaisvitais as $key => $value) {
 
 $sinaisvitais = json_encode($sinaisvitais);
 
-$stmtDescricaoMedica = $pdo->prepare("SELECT a.descricao AS descricao, a.data_atendimento AS data_atendimento, m.nome AS medicoNome, p.nome AS enfermeiraNome, p.sobrenome AS enfermeiraSobrenome FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON (p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON (a.id_medico = m.id_medico) WHERE id_fichamedica=:idFichaMedica");
+$sqlDescricaoMedica = "SELECT
+    a.id_atendimento AS id_atendimento,
+    a.descricao AS descricao,
+    a.data_atendimento AS data_atendimento,
+    m.nome AS medicoNome,
+    p.nome AS enfermeiraNome,
+    p.sobrenome AS enfermeiraSobrenome,
+    a.anulado AS anulado,
+    a.data_anulacao AS data_anulacao,
+    a.motivo_anulacao AS motivo_anulacao,
+    TRIM(CONCAT(COALESCE(pAnulador.nome, ''), ' ', COALESCE(pAnulador.sobrenome, ''))) AS anulado_por
+  FROM saude_atendimento a
+  JOIN funcionario f ON (a.id_funcionario = f.id_funcionario)
+  JOIN pessoa p ON (p.id_pessoa = f.id_pessoa)
+  JOIN saude_medicos m ON (a.id_medico = m.id_medico)
+  LEFT JOIN funcionario fAnulador ON (a.id_funcionario_anulacao = fAnulador.id_funcionario)
+  LEFT JOIN pessoa pAnulador ON (pAnulador.id_pessoa = fAnulador.id_pessoa)
+  WHERE a.id_fichamedica = :idFichaMedica";
+
+$stmtDescricaoMedica = $pdo->prepare($sqlDescricaoMedica);
 
 $stmtDescricaoMedica->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtDescricaoMedica->execute();
@@ -110,9 +129,25 @@ $stmtDescricaoMedica->execute();
 $descricao_medica = $stmtDescricaoMedica->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($descricao_medica as $key => $value) {
-  //formata data
-  $data = new DateTime($value['data_atendimento']);
-  $descricao_medica[$key]['data_atendimento'] = $data->format('d/m/Y');
+  $descricao_medica[$key]['id_atendimento'] = (int)($value['id_atendimento'] ?? 0);
+  $descricao_medica[$key]['anulado'] = (int)($value['anulado'] ?? 0);
+
+  if (!empty($value['data_atendimento'])) {
+    $data = new DateTime($value['data_atendimento']);
+    $descricao_medica[$key]['data_atendimento'] = $data->format('d/m/Y');
+  } else {
+    $descricao_medica[$key]['data_atendimento'] = '';
+  }
+
+  if (!empty($value['data_anulacao'])) {
+    $dataAnulacao = new DateTime($value['data_anulacao']);
+    $descricao_medica[$key]['data_anulacao'] = $dataAnulacao->format('d/m/Y H:i:s');
+  } else {
+    $descricao_medica[$key]['data_anulacao'] = '';
+  }
+
+  $descricao_medica[$key]['motivo_anulacao'] = isset($value['motivo_anulacao']) ? trim((string)$value['motivo_anulacao']) : '';
+  $descricao_medica[$key]['anulado_por'] = isset($value['anulado_por']) ? trim((string)$value['anulado_por']) : '';
 }
 
 $descricao_medica = json_encode($descricao_medica);
@@ -301,6 +336,7 @@ try {
   .celula-observacao {
     white-space: pre-wrap;
   }
+
 </style>
 
 
@@ -492,14 +528,161 @@ try {
     $(function() {
       var descricao_medica = <?= $descricao_medica ?>;
       $.each(descricao_medica, function(i, item) {
-        $("#de-tab")
-          .append($("<tr>")
-            .append($("<td>").text(item.medicoNome))
-            .append($("<td>").text(item.enfermeiraNome + ' ' + item.enfermeiraSobrenome))
-            .append($("<td>").html(item.descricao))
-            .append($("<td>").text(item.data_atendimento))
-          )
+        const atendimentoAnulado = Number(item.anulado) === 1;
+        const statusTexto = atendimentoAnulado ?
+          `Anulado${item.data_anulacao ? ' em ' + item.data_anulacao : ''}` :
+          'Ativo';
+        const motivoAnulacao = atendimentoAnulado && item.motivo_anulacao ? item.motivo_anulacao : 'Não informado';
+        const anuladoPor = atendimentoAnulado && item.anulado_por ? item.anulado_por : 'Não informado';
+
+        const tr = $("<tr>");
+        tr.attr("data-status", atendimentoAnulado ? "anulado" : "ativo");
+
+        tr.append($("<td>").text(item.medicoNome));
+        tr.append($("<td>").text(item.enfermeiraNome + ' ' + item.enfermeiraSobrenome));
+        tr.append($("<td>").html(item.descricao));
+        tr.append($("<td>").text(item.data_atendimento));
+        tr.append(
+          $("<td class='coluna-status'>")
+            .text(statusTexto)
+            .attr("title", atendimentoAnulado && item.motivo_anulacao ? ("Motivo: " + item.motivo_anulacao) : "")
+        );
+        tr.append($("<td class='coluna-anulacao hidden coluna-motivo-anulacao'>").text(motivoAnulacao));
+        tr.append($("<td class='coluna-anulacao hidden coluna-anulado-por'>").text(anuladoPor));
+
+        const tdAcao = $("<td class='coluna-acao' style='text-align: center; vertical-align: middle;'>");
+        if (!atendimentoAnulado) {
+          tdAcao.append(
+            $("<a href='#' title='Anular atendimento'>")
+              .on("click", function(e) {
+                e.preventDefault();
+                anularAtendimento(item.id_atendimento);
+              })
+              .append($("<button class='btn btn-warning'>").append($("<i class='glyphicon glyphicon-ban-circle'></i>")))
+          );
+        } else {
+          tdAcao.text("Sem ações");
+        }
+
+        tr.append(tdAcao);
+        $("#de-tab").append(tr);
       });
+
+      aplicarFiltroHistoricoAtendimento();
+    });
+
+    function aplicarFiltroHistoricoAtendimento() {
+      const filtro = document.getElementById("filtro-historico-atendimento");
+      const valorFiltro = filtro ? filtro.value : "ativo";
+      const mostrarDetalhesAnulacao = valorFiltro === "anulado";
+      const linhas = document.querySelectorAll("#de-tab tr");
+      const colunasAnulacao = document.querySelectorAll(".coluna-anulacao");
+      let totalVisivel = 0;
+
+      colunasAnulacao.forEach(function(coluna) {
+        coluna.classList.toggle("hidden", !mostrarDetalhesAnulacao);
+      });
+
+      linhas.forEach(function(linha) {
+        const status = linha.getAttribute("data-status");
+        const mostrar = valorFiltro === "todos" || status === valorFiltro;
+        linha.style.display = mostrar ? "" : "none";
+        if (mostrar) {
+          totalVisivel++;
+        }
+      });
+
+      const avisoSemResultados = document.getElementById("historico-sem-resultados");
+      if (avisoSemResultados) {
+        avisoSemResultados.classList.toggle("hidden", totalVisivel > 0);
+      }
+    }
+
+    $(function() {
+      $("#filtro-historico-atendimento").on("change", function() {
+        aplicarFiltroHistoricoAtendimento();
+      });
+    });
+
+    function limitarTextoComContador(campo, contadorId) {
+      campo.value = campo.value.replace(/<|>/g, '');
+
+      if (campo.maxLength > 0 && campo.value.length > campo.maxLength) {
+        campo.value = campo.value.slice(0, campo.maxLength);
+      }
+
+      const contadorElemento = document.getElementById(contadorId);
+      if (contadorElemento) {
+        contadorElemento.textContent = campo.value.length;
+      }
+    }
+
+    function anularAtendimento(idAtendimento) {
+      const id = parseInt(idAtendimento, 10);
+      if (!id || id < 1) {
+        window.alert("Não foi possível identificar o atendimento.");
+        return;
+      }
+
+      const inputAtendimento = document.getElementById("id_atendimento_anular");
+      const motivoInput = document.getElementById("motivo_anulacao");
+      const erroMotivo = document.getElementById("erro_motivo_anulacao");
+
+      if (!inputAtendimento || !motivoInput) {
+        window.alert("Não foi possível processar a anulação.");
+        return;
+      }
+
+      inputAtendimento.value = String(id);
+      motivoInput.value = "";
+      limitarTextoComContador(motivoInput, "contador-caracteres-motivo-anulacao");
+      if (erroMotivo) {
+        erroMotivo.classList.add("hidden");
+      }
+
+      $("#modal-anular-atendimento").modal("show");
+    }
+
+    function confirmarAnulacaoAtendimento() {
+      const formAnulacao = document.getElementById("form-anular-atendimento");
+      const motivoInput = document.getElementById("motivo_anulacao");
+      const erroMotivo = document.getElementById("erro_motivo_anulacao");
+
+      if (!formAnulacao || !motivoInput) {
+        window.alert("Não foi possível processar a anulação.");
+        return;
+      }
+
+      const motivo = motivoInput.value.trim();
+
+      if (!motivo) {
+        if (erroMotivo) {
+          erroMotivo.textContent = "Informe o motivo da anulação.";
+          erroMotivo.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (motivo.length > 255) {
+        if (erroMotivo) {
+          erroMotivo.textContent = "O motivo deve ter no máximo 255 caracteres.";
+          erroMotivo.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (erroMotivo) {
+        erroMotivo.classList.add("hidden");
+      }
+
+      formAnulacao.submit();
+    }
+
+    $(function() {
+      const motivoInput = document.getElementById("motivo_anulacao");
+      if (motivoInput) {
+        limitarTextoComContador(motivoInput, "contador-caracteres-motivo-anulacao");
+      }
     });
 
     $(function() {
@@ -1350,19 +1533,67 @@ try {
                     <div class="panel-body">
                       <hr class="dotted short">
                       <div class="form-group">
-                        <table class="table table-bordered table-striped mb-none">
-                          <thead>
-                            <tr style="font-size:15px;">
-                              <th>Médico</th>
-                              <th>Registro</th>
-                              <th>Descrições</th>
-                              <th>Data do atendimento</th>
-                            </tr>
-                          </thead>
-                          <tbody id="de-tab" style="font-size:15px">
+                        <div class="row" style="margin-bottom: 15px;">
+                          <div class="col-sm-12 col-md-4">
+                            <label for="filtro-historico-atendimento">Filtrar histórico</label>
+                            <select id="filtro-historico-atendimento" class="form-control">
+                              <option value="todos">Todos</option>
+                              <option value="ativo" selected>Ativos</option>
+                              <option value="anulado">Anulados</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="table-responsive" style="overflow-x: auto;">
+                          <table class="table table-bordered table-striped mb-none">
+                            <thead>
+                              <tr style="font-size:15px;">
+                                <th>Médico</th>
+                                <th>Registro</th>
+                                <th>Descrições</th>
+                                <th>Data do atendimento</th>
+                                <th>Status</th>
+                                <th class="coluna-anulacao hidden">Motivo</th>
+                                <th class="coluna-anulacao hidden">Anulador</th>
+                                <th>Ação</th>
+                              </tr>
+                            </thead>
+                            <tbody id="de-tab" style="font-size:15px">
 
-                          </tbody>
-                        </table>
+                            </tbody>
+                          </table>
+                        </div>
+                        <p id="historico-sem-resultados" class="text-muted hidden" style="margin-top: 10px;">Nenhum atendimento encontrado para o filtro selecionado.</p>
+                        <div class="modal fade" id="modal-anular-atendimento" tabindex="-1" role="dialog" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header" style="display: flex; justify-content: space-between;">
+                                <h5 class="modal-title">Anular atendimento</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                              <form method="post" action="anular_atendimento.php" id="form-anular-atendimento">
+                                <div class="modal-body">
+                                  <p>Essa ação não exclui o registro e ficará marcada como anulada.</p>
+                                  <div class="form-group">
+                                    <label for="motivo_anulacao">Motivo da anulação <sup class="obrig">*</sup></label>
+                                    <textarea class="form-control" id="motivo_anulacao" name="motivo_anulacao" rows="4" maxlength="255" oninput="limitarTextoComContador(this, 'contador-caracteres-motivo-anulacao')" required></textarea>
+                                    <div style="margin-top: 8px; text-align: right;">
+                                      <small class="text-muted"><span id="contador-caracteres-motivo-anulacao">0</span> / 255</small>
+                                    </div>
+                                    <p id="erro_motivo_anulacao" class="text-danger hidden" style="margin-top: 8px;"></p>
+                                  </div>
+                                  <input type="hidden" name="id_fichamedica" value="<?php echo (int)$id_fichamedica; ?>">
+                                  <input type="hidden" name="id_atendimento" id="id_atendimento_anular" value="">
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                  <button type="button" class="btn btn-warning" onclick="confirmarAnulacaoAtendimento()">Confirmar anulação</button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       <div class="form-group">
