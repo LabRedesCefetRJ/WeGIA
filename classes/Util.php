@@ -85,7 +85,7 @@ class Util
             ]);
         } else {
             echo json_encode([
-                'erro' => 'Erro interno do servidor'
+                'erro' => $e->getMessage()
             ]);
         }
 
