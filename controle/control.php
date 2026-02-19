@@ -51,6 +51,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'PetControle' => [6, 61, 62, 63],
             'AtendimentoControle' => [6, 61, 62, 63],
             'QuadroHorarioControle' => [11],
+            'ReleaseControle' => [],
             'SaidaControle' => [22, 24],
             'SaudeControle' => [5, 12],
             'SinaisVitaisControle' => [5],
