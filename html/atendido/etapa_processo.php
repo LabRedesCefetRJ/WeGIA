@@ -182,7 +182,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                                                 </td>
                                                 <td><?= htmlspecialchars($etapa['status_nome']) ?></td>
                                                 <td><?= htmlspecialchars($etapa['titulo']) ?></td>
-                                                <td style="max-width: 150px;"><?= htmlspecialchars($etapa['descricao']) ?></td>
+                                                <td style="max-width: 150px;"><?= nl2br(html_entity_decode($etapa['descricao'], ENT_QUOTES, 'UTF-8')) ?></td>
                                                 <td>
                                                     <button type="button"
                                                         class="btn btn-xs btn-info btn-arquivos-etapa"
