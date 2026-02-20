@@ -147,7 +147,7 @@ try {
 						<ol class="breadcrumbs">
 							<li><a href="../index.php"> <i class="fa fa-home"></i>
 								</a></li>
-							<li><span>Informações Atendidos</span></li>
+							<li><span>Processo de Aceitação</span></li>
 						</ol>
 
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -561,6 +561,10 @@ try {
 	</script>
 
 	<script>
+		function decodeHtml(html) {
+			return $('<textarea/>').html(html).text();
+		}
+
 		$(document).on('click', '.btn-alter-status', function() {
 
 			const idProcesso = $(this).data('id_processo');
@@ -568,7 +572,8 @@ try {
 
 			// Preenche o hidden do modal
 			$('#modal-id-processo').val(idProcesso);
-			$('#edit_descricao').val(btn.data('descricao'));
+
+			$('#edit_descricao').val(decodeHtml(btn.data('descricao')));
 
 			// Limpa seleção anterior (opcional)
 			$('#modalStatusProcesso select[name="id_status"]').val('');

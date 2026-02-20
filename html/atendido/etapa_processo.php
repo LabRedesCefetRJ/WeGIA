@@ -68,7 +68,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
     <!-- Basic -->
     <meta charset="UTF-8">
 
-    <title>Informações</title>
+    <title>Etapas do Processo</title>
 
     <!-- Mobile Metas -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -163,7 +163,7 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
                         <ol class="breadcrumbs">
                             <li><a href="../index.php"> <i class="fa fa-home"></i>
                                 </a></li>
-                            <li><span>Informações Atendidos</span></li>
+                            <li><span>Etapas do processo</span></li>
                         </ol>
 
                         <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -482,10 +482,14 @@ unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
 
     <script>
         $(function() {
+            function decodeHtml(html) {
+                return $('<textarea/>').html(html).text();
+            }
+
             $('.btn-editar-etapa').on('click', function() {
                 var btn = $(this);
                 $('#edit_id_etapa').val(btn.data('id'));
-                $('#edit_descricao').val(btn.data('descricao'));
+                $('#edit_descricao').val(decodeHtml(btn.data('descricao')));
                 $('#edit_data_fim').val(btn.data('datafim'));
                 $('#edit_id_status').val(btn.data('status'));
                 $('#edit_titulo').val(btn.data('titulo'));
