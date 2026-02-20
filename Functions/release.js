@@ -61,6 +61,11 @@ function showAlertMessage({
     container.appendChild(alert);
 }
 
+function removeAlert(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+}
+
 function getUserFriendlyError(error) {
     if (!(error instanceof Error)) {
         return "Erro inesperado ao comunicar com o servidor.";
@@ -116,16 +121,24 @@ function formatReleaseDate(timestamp) {
 
 async function main() {
     const STORAGE_KEY = "release_check_timestamp";
-    const ONE_HOUR = 60 * 60 * 1000;
+    const FOUR_HOURS = 4 * 60 * 60 * 1000;
     const now = Date.now();
 
     // 1. Verificar se já checou na última hora
     const lastCheck = sessionStorage.getItem(STORAGE_KEY);
 
-    if (lastCheck && (now - parseInt(lastCheck, 10)) < ONE_HOUR) {
-        console.log("Verificação de release já feita na última hora.");
+    if (lastCheck && (now - parseInt(lastCheck, 10)) < FOUR_HOURS) {
+        console.log("Verificação de release já realizada.");
         return;
     }
+
+    //Mensagem de loading
+    showAlertMessage({
+        id: "release-loading-alert",
+        type: "info",
+        icon: "🔄",
+        message: "Buscando por novas atualizações..."
+    });
 
     try {
         // 2. Buscar releases
@@ -134,7 +147,8 @@ async function main() {
             getReleaseAvaible()
         ]);
 
-        //antes de continuar com a lógica precisa verificar se a resposta da promise foi ok
+        // Remove o loading
+        removeAlert("release-loading-alert");
 
         let message = `Release instalada: \n${formatReleaseDate(installed)}`;
 
@@ -142,6 +156,14 @@ async function main() {
         if (installed < available) {
             message += ' (Desatualizado)';
             newReleaseMessage();
+        }else {
+            //Sistema atualizado
+            showAlertMessage({
+                id: "release-success-alert",
+                type: "success",
+                icon: "✅",
+                message: "Sistema atualizado"
+            });
         }
 
         // 5. Marcar verificação em sessão
@@ -150,6 +172,9 @@ async function main() {
 
     } catch (error) {
         console.error("Erro ao verificar release:", error.message);
+
+        // Remove o loading
+        removeAlert("release-loading-alert");
 
         showAlertMessage({
             id: "release-error-alert",
