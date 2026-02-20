@@ -1671,7 +1671,9 @@ try {
                     <div class="panel-body">
                       <div class="form-group" id="escondermedicacao">
 
-                        <form action='atendmedico_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                        <form action='../../controle/control.php' method='post' enctype='multipart/form-data' id='form-atendimento-paciente'>
+                          <input type="hidden" name="nomeClasse" value="AtendimentoPacienteControle">
+                          <input type="hidden" name="metodo" value="cadastrarAtendimentoPaciente">
                           <hr class="dotted short">
                           <div class="form-group">
                             <div class="col-md-6">
@@ -2232,19 +2234,31 @@ try {
         medicos = await listarTodosOsMedicos()
         let length = medicos.length - 1;
         let select = document.getElementById("medicos");
+        let possuiSemMedicoDefinido = false;
         while (select.firstChild) {
           select.removeChild(select.firstChild)
         }
         let selecionar = document.createElement("option");
+        selecionar.value = "";
         selecionar.textContent = "Selecionar"
         selecionar.selected = true;
         selecionar.disabled = true;
         select.appendChild(selecionar)
         for (let i = 0; i <= length; i = i + 1) {
+          if (Number(medicos[i].id_medico) === 0) {
+            possuiSemMedicoDefinido = true;
+          }
           let option = document.createElement("option");
           option.value = medicos[i].id_medico;
           option.textContent = medicos[i].nome;
           select.appendChild(option);
+        }
+
+        if (!possuiSemMedicoDefinido) {
+          let optionSemMedico = document.createElement("option");
+          optionSemMedico.value = "0";
+          optionSemMedico.textContent = "Sem médico definido";
+          select.appendChild(optionSemMedico);
         }
       }
 
@@ -2353,65 +2367,117 @@ try {
 
       // codigo para inserir medicacao na tabela do medico
       $(function() {
+        function lerCamposMedicacao() {
+          return {
+            nome_medicacao: ($("#nome_medicacao").val() || "").trim(),
+            dosagem: ($("#dosagem").val() || "").trim(),
+            horario: ($("#horario_medicacao").val() || "").trim(),
+            tempo: ($("#duracao_medicacao").val() || "").trim()
+          };
+        }
 
-        let tabela_medicacao = new Array();
-        $("#botao").click(function() {
+        function limparCamposMedicacao() {
+          $("#nome_medicacao").val("");
+          $("#dosagem").val("");
+          $("#horario_medicacao").val("");
+          $("#duracao_medicacao").val("");
+        }
 
-          let medicamento = $("#nome_medicacao").val();
-          let dose = $("#dosagem").val();
-          let horario = $("#horario_medicacao").val();
-          let duracao = $("#duracao_medicacao").val();
+        function todosCamposMedicacaoPreenchidos(medicacao) {
+          return (
+            medicacao.nome_medicacao !== "" &&
+            medicacao.dosagem !== "" &&
+            medicacao.horario !== "" &&
+            medicacao.tempo !== ""
+          );
+        }
 
-          if (medicamento == "" || medicamento == null || dose == "" || horario == "" || duracao == "") {
-            alert("Por favor, informe a medicação corretamente!");
+        function algumCampoMedicacaoPreenchido(medicacao) {
+          return (
+            medicacao.nome_medicacao !== "" ||
+            medicacao.dosagem !== "" ||
+            medicacao.horario !== "" ||
+            medicacao.tempo !== ""
+          );
+        }
 
-          } else {
-            $("#tabmed").find(".dataTables_empty").hide();
+        function adicionarLinhaMedicacao(medicacao) {
+          $("#tabmed").find(".dataTables_empty").hide();
+          $("#tabmed tbody").append(
+            $("<tr>")
+              .addClass("tabmed")
+              .append($("<td>").text(medicacao.nome_medicacao))
+              .append($("<td>").text(medicacao.dosagem))
+              .append($("<td>").text(medicacao.horario))
+              .append($("<td>").text(medicacao.tempo))
+              .append(
+                $("<td style='display: flex; justify-content: space-evenly;'>").append(
+                  $("<button type='button' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>")
+                )
+              )
+          );
+        }
 
-            $("#tabmed").append($("<tr>").addClass("tabmed")
-              .append($("<td>").text(medicamento))
-              .append($("<td>").text(dose))
-              .append($("<td>").text(horario))
-              .append($("<td>").text(duracao))
-              .append($("<td style='display: flex; justify-content: space-evenly;'>")
-                .append($("<button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>"))));
+        function atualizarAcervoInputPelaTabela() {
+          const tabelaMedicacao = [];
 
-            let tabela = {
-              "nome_medicacao": medicamento,
-              "dosagem": dose,
-              "horario": horario,
-              "tempo": duracao
-            };
-            tabela_medicacao.push(tabela);
-            $("#nome_medicacao").val("");
-            $("#dosagem").val("");
-            $("#horario_medicacao").val("");
-            $("#duracao_medicacao").val("");
-          }
-        })
-        $("#tabmed").on("click", "button", function() {
-
-          let tamanho = tabela_medicacao.length;
-
-          let dados = tabela_medicacao[0].medicamento + tabela_medicacao[0].dose + tabela_medicacao[0].horario + tabela_medicacao[0].duracao;
-          let dados_existentes = $(this).parents("#tabmed tr").text();
-          if (dados == dados_existentes) {
-            tabela_medicacao.splice(0, 1);
-          } else {
-            let i;
-            for (i = 1; i < tamanho; i++) {
-              let dd = tabela_medicacao[i].medicamento + tabela_medicacao[i].dose + tabela_medicacao[i].horario + tabela_medicacao[i].duracao;
-              if (dd == dados_existentes) {
-                tabela_medicacao.splice(i, 1);
-              }
+          $("#tabmed tbody tr.tabmed").each(function() {
+            const colunas = $(this).find("td");
+            if (colunas.length < 4) {
+              return;
             }
-          }
-          $(this).parents("#tabmed tr").remove();
-        })
 
-        $("#salvar_bd").click(function() {
-          $("input[name=acervo]").val(JSON.stringify(tabela_medicacao)).val();
-        })
+            tabelaMedicacao.push({
+              nome_medicacao: ($(colunas[0]).text() || "").trim(),
+              dosagem: ($(colunas[1]).text() || "").trim(),
+              horario: ($(colunas[2]).text() || "").trim(),
+              tempo: ($(colunas[3]).text() || "").trim()
+            });
+          });
+
+          $("input[name=acervo]").val(JSON.stringify(tabelaMedicacao));
+          return tabelaMedicacao;
+        }
+
+        $("#botao").on("click", function() {
+          const medicacao = lerCamposMedicacao();
+
+          if (!todosCamposMedicacaoPreenchidos(medicacao)) {
+            alert("Por favor, informe a medicação corretamente!");
+            return;
+          }
+
+          adicionarLinhaMedicacao(medicacao);
+          limparCamposMedicacao();
+          atualizarAcervoInputPelaTabela();
+        });
+
+        $("#tabmed").on("click", "button", function(e) {
+          e.preventDefault();
+          $(this).closest("tr").remove();
+          atualizarAcervoInputPelaTabela();
+        });
+
+        const formAtendimento = $("#form-atendimento-paciente");
+        formAtendimento.on("submit", function(e) {
+          const medicoSelecionado = $("#medicos").val();
+          if (!medicoSelecionado) {
+            e.preventDefault();
+            alert('Selecione um médico. Se necessário, escolha "Sem médico definido".');
+            return;
+          }
+
+          // Só considera medicações já adicionadas na tabela via botão
+          // "Cadastrar medicação".
+          const medicacaoDigitada = lerCamposMedicacao();
+          if (algumCampoMedicacaoPreenchido(medicacaoDigitada)) {
+            e.preventDefault();
+            alert('Para incluir esta medicação, clique em "Cadastrar medicação" antes de salvar o atendimento.');
+            return;
+          }
+
+          atualizarAcervoInputPelaTabela();
+        });
 
       });
 

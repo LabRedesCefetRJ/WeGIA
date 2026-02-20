@@ -18,6 +18,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'Atendido_ocorrenciaDocControle' => [12],
             'AtendidoControle' => [12],
             'AtendidoDocumentacaoControle' => [12],
+            'AtendimentoPacienteControle' => [5],
             'AvisoControle' => [5],
             'AvisoNotificacaoControle' => [5],
             'CaptchaController' => [7, 9],
