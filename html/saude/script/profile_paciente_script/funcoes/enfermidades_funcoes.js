@@ -113,7 +113,85 @@ async function buscarEnfermidadesPorIDFichaMedica() {
     }
 }
 
+let timeoutMensagemCadastroEnfermidade = null;
+let timeoutFecharAnimacaoEnfermidade = null;
+let scrollInicialCadastroComorbidade = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+window.addEventListener("load", () => {
+    scrollInicialCadastroComorbidade = window.pageYOffset || document.documentElement.scrollTop || 0;
+});
+
+function voltarParaScrollInicialComorbidade() {
+    window.scrollTo({
+        top: Math.max(scrollInicialCadastroComorbidade, 0),
+        behavior: "smooth"
+    });
+}
+
 //Essa função serve para o cadastro de uma nova enfermidade na ficha do paciente
+function mostrarMensagemCadastroEnfermidade(mensagem, tipo = "success") {
+    const alerta = document.getElementById("mensagem-cadastro-enfermidade");
+    const texto = document.getElementById("mensagem-cadastro-enfermidade-texto");
+
+    if (!alerta || !texto) {
+        return;
+    }
+
+    alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+    if (tipo === "danger") {
+        alerta.classList.add("alert-danger");
+    } else if (tipo === "warning") {
+        alerta.classList.add("alert-warning");
+    } else {
+        alerta.classList.add("alert-success");
+    }
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
+    requestAnimationFrame(() => {
+        voltarParaScrollInicialComorbidade();
+    });
+
+    if (timeoutMensagemCadastroEnfermidade) {
+        clearTimeout(timeoutMensagemCadastroEnfermidade);
+    }
+
+    if (timeoutFecharAnimacaoEnfermidade) {
+        clearTimeout(timeoutFecharAnimacaoEnfermidade);
+        timeoutFecharAnimacaoEnfermidade = null;
+    }
+
+    timeoutMensagemCadastroEnfermidade = setTimeout(() => {
+        ocultarMensagemCadastroEnfermidade();
+    }, 10000);
+}
+
+function ocultarMensagemCadastroEnfermidade() {
+    const alerta = document.getElementById("mensagem-cadastro-enfermidade");
+
+    if (!alerta) {
+        return;
+    }
+
+    alerta.classList.remove("is-visible");
+
+    if (timeoutMensagemCadastroEnfermidade) {
+        clearTimeout(timeoutMensagemCadastroEnfermidade);
+        timeoutMensagemCadastroEnfermidade = null;
+    }
+
+    if (timeoutFecharAnimacaoEnfermidade) {
+        clearTimeout(timeoutFecharAnimacaoEnfermidade);
+    }
+
+    timeoutFecharAnimacaoEnfermidade = setTimeout(() => {
+        alerta.style.display = "none";
+        timeoutFecharAnimacaoEnfermidade = null;
+    }, 350);
+}
+
 async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
     ev.preventDefault();
     const selectStatus = document.getElementById("intStatus")
@@ -123,8 +201,11 @@ async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
     const formEnfermidade = document.getElementById('form-enfermidade');
     
     if (!inputData.value || !selectEnfermidades.value || !selectStatus.value) {
+        voltarParaScrollInicialComorbidade();
         return;
     }
+
+    ocultarMensagemCadastroEnfermidade();
 
     const dados = {
         intStatus: selectStatus.value,
@@ -148,17 +229,18 @@ async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
         
         if (!response.ok) {
             const mensagemErro = Object.prototype.hasOwnProperty.call(data, "erro") ? data.erro : "Nao foi possivel cadastrar a comorbidade.";
-            window.alert(mensagemErro);
+            mostrarMensagemCadastroEnfermidade(mensagemErro, "danger");
             return;
         }
 
         formEnfermidade.reset();
         selectEnfermidades.selectedIndex = 0;
         await gerarEnfermidadesDoPaciente();
+        mostrarMensagemCadastroEnfermidade("Comorbidade cadastrada com sucesso!");
 
     } catch (error) {
         console.error('Erro:', error);
-        window.alert("Aconteceu algum problema ao cadastrar a comorbidade.");
+        mostrarMensagemCadastroEnfermidade("Aconteceu algum problema ao cadastrar a comorbidade.", "danger");
     }
 }
 

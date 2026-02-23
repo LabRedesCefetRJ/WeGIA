@@ -458,13 +458,21 @@ try {
 
         // coluna ações
         const tdAcoes = document.createElement("td");
-        tdAcoes.style.display = "flex";
-        tdAcoes.style.justifyContent = "space-evenly";
+        tdAcoes.style.verticalAlign = "middle";
+        tdAcoes.style.paddingLeft = "8px";
+        tdAcoes.style.paddingRight = "8px";
+        const divAcoes = document.createElement("div");
+        divAcoes.style.display = "flex";
+        divAcoes.style.width = "100%";
+        divAcoes.style.justifyContent = "flex-start";
+        divAcoes.style.alignItems = "center";
+        divAcoes.style.gap = "10px";
+        divAcoes.style.whiteSpace = "nowrap";
 
         // botão download
         const linkDownload = document.createElement("a");
         linkDownload.onclick = (e) => {
-          e.preventDefault;
+          e.preventDefault();
           baixarArquivo(item.id_exame);
         }
         linkDownload.title = "Visualizar ou Baixar";
@@ -486,8 +494,9 @@ try {
         btnExcluir.innerHTML = "<i class='fas fa-trash-alt'></i>";
         linkExcluir.appendChild(btnExcluir);
 
-        tdAcoes.appendChild(linkDownload);
-        tdAcoes.appendChild(linkExcluir);
+        divAcoes.appendChild(linkDownload);
+        divAcoes.appendChild(linkExcluir);
+        tdAcoes.appendChild(divAcoes);
         tr.appendChild(tdAcoes);
 
         depTab.appendChild(tr);
@@ -792,6 +801,52 @@ try {
 
     .hidden {
       display: none;
+    }
+
+    #mensagem-cadastro-enfermidade,
+    #mensagem-cadastro-exame {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+
+    #mensagem-cadastro-enfermidade.is-visible,
+    #mensagem-cadastro-exame.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #docFormModal .modal-title,
+    #modal-anular-atendimento .modal-title {
+      font-weight: 500;
+    }
+
+    #docFormModal .modal-body {
+      padding: 20px 25px 10px;
+    }
+
+    #docFormModal .form-group {
+      text-align: left;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    #docFormModal .control-label {
+      display: block;
+      text-align: left;
+      margin-bottom: 6px;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    #docFormModal .input-group {
+      width: 100%;
+    }
+
+    #docFormModal .help-block {
+      margin-bottom: 0;
     }
   </style>
 
@@ -1377,6 +1432,12 @@ try {
                       <h2 class="panel-title">Cadastro de comorbidades</h2>
                     </header>
                     <div class="panel-body">
+                      <div id="mensagem-cadastro-enfermidade" class="alert alert-success" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Close" onclick="if (typeof ocultarMensagemCadastroEnfermidade === 'function') { ocultarMensagemCadastroEnfermidade(); } else { this.parentElement.style.display='none'; } return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="mensagem-cadastro-enfermidade-texto"></span>
+                      </div>
                       <hr class="dotted short">
 
                       <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
@@ -1395,7 +1456,7 @@ try {
                       <br>
                       <form id='form-enfermidade'>
                         <div class="form-group">
-                          <div class="col-md-6">
+                          <div class="col-md-6" style="padding-right: 0;">
                             <h5 class="obrig">Campos Obrigatórios(*)</h5>
                           </div>
                         </div>
@@ -1454,6 +1515,12 @@ try {
                       <h2 class="panel-title">Exames</h2>
                     </header>
                     <div class="panel-body">
+                      <div id="mensagem-cadastro-exame" class="alert alert-success" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Close" onclick="if (typeof ocultarMensagemCadastroExame === 'function') { ocultarMensagemCadastroExame(); } else { this.parentElement.style.display='none'; } return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="mensagem-cadastro-exame-texto"></span>
+                      </div>
                       <hr class="dotted short">
                       <table class="table table-bordered table-striped mb-none">
                         <thead>
@@ -1473,45 +1540,43 @@ try {
                       <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal" onclick="gerar_tipo_exame()">
                         Adicionar
                       </button>
-                      <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
+                      <div class="modal" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">
                           <div class="modal-content">
-
-                            <div class="modal-header" style="display: flex;justify-content: space-between;">
-                              <h5 class="modal-title" id="exampleModalLabel">Adicionar exame</h5>
+                            <div class="modal-header">
                               <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                               </button>
+                              <h4 class="modal-title" id="docFormModalLabel">Adicionar exame</h4>
                             </div>
 
-                            <form id='ExameDocForm'>
-                              <div class="modal-body" style="padding: 15px 40px">
-                                <div class="form-group" style="display: grid;">
-
-                                  <div class="form-group">
-                                    <label for="arquivoDocumento">Exame</label>
-                                    <input name="arquivo" type="file" class="form-control-file" id="documentoExame" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
+                            <form id="ExameDocForm">
+                              <div class="modal-body">
+                                <div class="form-group">
+                                  <label class="control-label" for="tipoDocumentoExame">Tipo de exame <sup class="obrig">*</sup></label>
+                                  <div class="input-group">
+                                    <select class="form-control" name="id_docfuncional" id="tipoDocumentoExame" required>
+                                    </select>
+                                    <span class="input-group-btn">
+                                      <button type="button" class="btn btn-default" onclick="adicionar_tipo_exame()" title="Adicionar tipo de exame">
+                                        <i class="fa fa-plus text-primary"></i>
+                                      </button>
+                                    </span>
                                   </div>
-
-                                  <div class="form-group">
-
-                                    <label for="arquivoDocumento">Tipo de exame</label>
-
-                                    <div style="display: flex;">
-
-                                      <select class="form-control input-lg mb-md" name="id_docfuncional" id="tipoDocumentoExame" style="width:170px;" required>
-                                      </select>
-                                      <a onclick="adicionar_tipo_exame()"><i class="fas fa-plus w3-xlarge" style="margin: 15px 15px 15px 15px;"></i></a>
-                                    </div>
-
-                                  </div>
-
-                                  <input type="number" id="exame_id_fichamedica" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
                                 </div>
-                                <div class="modal-footer">
-                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                  <input type="submit" value="Enviar" class="btn btn-primary">
+
+                                <div class="form-group">
+                                  <label class="control-label" for="documentoExame">Arquivo <sup class="obrig">*</sup></label>
+                                  <input name="arquivo" type="file" class="form-control" id="documentoExame" accept=".png,.jpeg,.jpg,.pdf,.docx,.doc,.odp" required>
+                                  <p class="help-block"><span class="text-danger">Formatos aceitos:</span> PNG, JPG, PDF, DOC, DOCX, ODP.</p>
                                 </div>
+
+                                <input type="hidden" id="exame_id_fichamedica" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>">
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Enviar</button>
+                              </div>
                             </form>
                           </div>
                         </div>
@@ -1563,14 +1628,14 @@ try {
                           </table>
                         </div>
                         <p id="historico-sem-resultados" class="text-muted hidden" style="margin-top: 10px;">Nenhum atendimento encontrado para o filtro selecionado.</p>
-                        <div class="modal fade" id="modal-anular-atendimento" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal fade" id="modal-anular-atendimento" tabindex="-1" role="dialog" aria-labelledby="modalAnularAtendimentoLabel" aria-hidden="true">
                           <div class="modal-dialog" role="document">
                             <div class="modal-content">
-                              <div class="modal-header" style="display: flex; justify-content: space-between;">
-                                <h5 class="modal-title">Anular atendimento</h5>
+                              <div class="modal-header">
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                   <span aria-hidden="true">&times;</span>
                                 </button>
+                                <h4 class="modal-title" id="modalAnularAtendimentoLabel">Anular atendimento</h4>
                               </div>
                               <form method="post" action="anular_atendimento.php" id="form-anular-atendimento">
                                 <div class="modal-body">
@@ -2117,21 +2182,102 @@ try {
           });
       }
 
+      let timeoutMensagemCadastroExame = null;
+      let timeoutFecharAnimacaoExame = null;
+
+      function mostrarMensagemCadastroExame(mensagem, tipo = "success") {
+        const alerta = document.getElementById("mensagem-cadastro-exame");
+        const texto = document.getElementById("mensagem-cadastro-exame-texto");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+        if (tipo === "danger") {
+          alerta.classList.add("alert-danger");
+        } else if (tipo === "warning") {
+          alerta.classList.add("alert-warning");
+        } else {
+          alerta.classList.add("alert-success");
+        }
+        texto.textContent = mensagem;
+        alerta.style.display = "block";
+        alerta.classList.remove("is-visible");
+        void alerta.offsetWidth;
+        alerta.classList.add("is-visible");
+
+        if (timeoutMensagemCadastroExame) {
+          clearTimeout(timeoutMensagemCadastroExame);
+        }
+
+        if (timeoutFecharAnimacaoExame) {
+          clearTimeout(timeoutFecharAnimacaoExame);
+          timeoutFecharAnimacaoExame = null;
+        }
+
+        timeoutMensagemCadastroExame = setTimeout(() => {
+          ocultarMensagemCadastroExame();
+        }, 10000);
+      }
+
+      function ocultarMensagemCadastroExame() {
+        const alerta = document.getElementById("mensagem-cadastro-exame");
+
+        if (!alerta) {
+          return;
+        }
+
+        alerta.classList.remove("is-visible");
+
+        if (timeoutMensagemCadastroExame) {
+          clearTimeout(timeoutMensagemCadastroExame);
+          timeoutMensagemCadastroExame = null;
+        }
+
+        if (timeoutFecharAnimacaoExame) {
+          clearTimeout(timeoutFecharAnimacaoExame);
+        }
+
+        timeoutFecharAnimacaoExame = setTimeout(() => {
+          alerta.style.display = "none";
+          timeoutFecharAnimacaoExame = null;
+        }, 350);
+      }
+
+      function fecharModalExameEMostrarMensagem(mensagem, tipo = "success") {
+        const modalExame = $('#docFormModal');
+
+        if (!modalExame.length) {
+          mostrarMensagemCadastroExame(mensagem, tipo);
+          return;
+        }
+
+        if (modalExame.hasClass('in')) {
+          mostrarMensagemCadastroExame(mensagem, tipo);
+          modalExame.modal('hide');
+        } else {
+          mostrarMensagemCadastroExame(mensagem, tipo);
+        }
+      }
+
       async function adicionar_exame() {
         const formData = new FormData();
         const documentos = document.getElementById("documentoExame");
         const idFichaMedica = document.getElementById("exame_id_fichamedica");
         const tipoDocumento = document.getElementById("tipoDocumentoExame");
 
-        if (!documentos.files[0]) {
-          window.alert("É necessário inserir um documento");
+        if (!tipoDocumento || !tipoDocumento.value) {
+          mostrarMensagemCadastroExame("É necessário escolher um tipo de exame.", "danger");
           return;
         }
 
-        if (!tipoDocumento) {
-          window.alert("É necessário escolher um tipo de exame");
+        if (!documentos.files[0]) {
+          mostrarMensagemCadastroExame("É necessário inserir um documento.", "danger");
           return;
         }
+
+        ocultarMensagemCadastroExame();
 
         formData.append("arquivo", documentos.files[0]);
         formData.append("tipoDocumento", tipoDocumento.value);
@@ -2139,24 +2285,22 @@ try {
         formData.append("nomeClasse", "ExameControle");
         formData.append("metodo", "inserirExame");
 
-        let mensagem = "";
-
         try {
           const requisicao = await fetch("../../controle/control.php", {
             method: "POST",
             body: formData
-          })
-          if (requisicao.ok) {
-            mensagem = "Exame adicionado com sucesso";
-            gerarExames();
+          });
+
+          if (!requisicao.ok) {
+            throw new Error("Erro na requisição");
           }
-        } catch (e) {
-          mensagem = "Erro ao adicionar exame";
-        } finally {
+
           documentos.value = '';
           tipoDocumento.value = "";
-          $('#docFormModal').modal('hide');
-          window.alert(mensagem);
+          fecharModalExameEMostrarMensagem("Exame adicionado com sucesso!");
+          gerarExames();
+        } catch (e) {
+          fecharModalExameEMostrarMensagem("Erro ao adicionar exame.", "danger");
         }
       }
 
@@ -2620,6 +2764,13 @@ try {
         await gerarExames();
         await gerarEnfermidadesDoPaciente();
         const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
+        const exibirAvisoDataComorbidade = (mensagem) => {
+          if (typeof mostrarMensagemCadastroEnfermidade === 'function') {
+            mostrarMensagemCadastroEnfermidade(mensagem, "warning");
+          } else {
+            alert(mensagem);
+          }
+        };
 
         // Adiciona validação ao clique do botão
         btnCadastrarEnfermidade.addEventListener('click', function(event) {
@@ -2634,7 +2785,7 @@ try {
           if (!dataValue) {
             event.preventDefault();
             event.stopImmediatePropagation();
-            alert("Por favor, preencha a data do diagnóstico.");
+            exibirAvisoDataComorbidade("Por favor, preencha a data do diagnóstico.");
             return;
           }
 
@@ -2648,7 +2799,7 @@ try {
               event.preventDefault();
               event.stopImmediatePropagation();
               const nascFormatado = formatador.format(dataPaciente);
-              alert("Data inválida: Não pode ser anterior à data de nascimento (" + nascFormatado + ").");
+              exibirAvisoDataComorbidade("Data inválida: Não pode ser anterior à data de nascimento (" + nascFormatado + ").");
               veriDataPassada = false;
               return; 
           }
@@ -2662,7 +2813,7 @@ try {
           if (dataSelecionada > dataAgora) {
             event.preventDefault();
             event.stopImmediatePropagation();
-            alert("A data do diagnóstico não pode ser no futuro, ajuste para a data atual: " + formatador.format(dataAgora));
+            exibirAvisoDataComorbidade("A data do diagnóstico não pode ser no futuro, ajuste para a data atual: " + formatador.format(dataAgora));
             veriDataFutura = false;
             return;
           }
