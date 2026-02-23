@@ -39,9 +39,18 @@ try {
 	define('ID_STATUS_CONCLUIDO', 2);
 
 	$processosConcluidos = [];
-	foreach ($processosAceitacao as $proc) {
-		if (isset($proc['id_status']) && (int)$proc['id_status'] === ID_STATUS_CONCLUIDO) {
-			$processosConcluidos[] = (int)$proc['id'];
+	foreach ($processosAceitacao as $processo) {
+		if (isset($processo['id_status']) && (int)$processo['id_status'] === ID_STATUS_CONCLUIDO) {
+			$processosConcluidos[] = (int)$processo['id'];
+		}
+	}
+
+	$showCpfColumn = false;
+
+	foreach($processosAceitacao as $processo){
+		if(!empty($processo['cpf'])){
+			$showCpfColumn = true;
+			break;
 		}
 	}
 
@@ -203,7 +212,7 @@ try {
 									<thead>
 										<tr>
 											<th>Nome</th>
-											<th>CPF</th>
+											<th <?php if(!$showCpfColumn) echo 'style="display:none"' ?>>CPF</th> <!-- display:none caso todos os cpfs sejam nulos -->
 											<th>Descrição</th>
 											<th>Etapas</th>
 											<th>Arquivos</th>
