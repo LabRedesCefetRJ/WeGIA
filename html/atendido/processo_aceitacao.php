@@ -223,7 +223,7 @@ try {
 										<?php foreach ($processosAceitacao as $processo): ?>
 											<tr>
 												<td onclick="window.location.href = './etapa_processo.php?id=<?= (int)$processo['id'] ?>'"><a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" style="color: inherit"><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></a></td>
-												<td><?= isset($processo['cpf']) && !empty($processo['cpf']) ? htmlspecialchars($processo['cpf']) : 'Não informado.' ?></td>
+												<td <?php if(!$showCpfColumn) echo 'style="display:none"' ?>><?= isset($processo['cpf']) && !empty($processo['cpf']) ? htmlspecialchars($processo['cpf']) : 'Não informado.' ?></td>
 												<td style="max-width: 150px;"><?= isset($processo['descricao']) && !empty($processo['descricao']) ? nl2br(html_entity_decode($processo['descricao'], ENT_QUOTES, 'UTF-8')) : '' ?></td>
 												<td>
 													<a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" class="btn btn-xs btn-primary">
