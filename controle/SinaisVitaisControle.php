@@ -147,10 +147,27 @@ class SinaisVitaisControle
         $data_nasc_atendido = $atendidoDAO->obterDataNascimentoPorPessoaId($idPaciente) ?: '1900-01-01';
 
         $timezone = new DateTimeZone('America/Sao_Paulo');
-        $dataAfericao = DateTime::createFromFormat('Y-m-d\TH:i', $data_afericao, $timezone)
-            ?: DateTime::createFromFormat('Y-m-d H:i:s', $data_afericao, $timezone)
-            ?: DateTime::createFromFormat('Y-m-d H:i', $data_afericao, $timezone);
-        if (!$dataAfericao) {
+        $formatoDataAfericaoValido = preg_match('/^\d{4}-\d{2}-\d{2}(T|\s)\d{2}:\d{2}(:\d{2})?$/', $data_afericao) === 1;
+        if (!$formatoDataAfericaoValido) {
+            http_response_code(400);
+            exit('Data de aferição inválida');
+        }
+        $data_afericao = str_replace('T', ' ', $data_afericao);
+        if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $data_afericao) === 1) {
+            $data_afericao .= ':00';
+        }
+        $dataAfericao = DateTime::createFromFormat('Y-m-d H:i:s', $data_afericao, $timezone);
+        $errosDataAfericao = DateTime::getLastErrors();
+        if (
+            !$dataAfericao
+            || (
+                $errosDataAfericao !== false
+                && (
+                    ($errosDataAfericao['warning_count'] ?? 0) > 0
+                    || ($errosDataAfericao['error_count'] ?? 0) > 0
+                )
+            )
+        ) {
             http_response_code(400);
             exit('Data de aferição inválida');
         }
@@ -172,6 +189,7 @@ class SinaisVitaisControle
             exit('A data da aferição não pode ser no futuro.');
         }
         $sinaisvitais->setData($dataAfericao->format('Y-m-d H:i:s'));
+        $sinaisvitais->normalizarParaPersistencia();
 
         $sinVitDAO = new SinaisVitaisDAO();
         

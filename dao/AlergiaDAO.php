@@ -15,7 +15,9 @@ class AlergiaDAO
         $stmt->execute();
 
         $resultado = array();
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($rows as $row) {
             $resultado[] = array(
                 'id_CID' => $row['id_CID'],
                 'CID' => $row['CID'],

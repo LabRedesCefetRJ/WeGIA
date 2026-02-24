@@ -90,5 +90,23 @@
         public function setObservacao($observacao){
             $this->observacao = $observacao;
         }
+
+        private function normalizarCampoOpcional($valor){
+            if (is_string($valor)) {
+                $valor = trim($valor);
+            }
+
+            return $valor === '' ? null : $valor;
+        }
+
+        public function normalizarParaPersistencia(){
+            $this->saturacao = $this->normalizarCampoOpcional($this->saturacao);
+            $this->pressao_arterial = $this->normalizarCampoOpcional($this->pressao_arterial);
+            $this->frequencia_cardiaca = $this->normalizarCampoOpcional($this->frequencia_cardiaca);
+            $this->frequencia_respiratoria = $this->normalizarCampoOpcional($this->frequencia_respiratoria);
+            $this->temperatura = $this->normalizarCampoOpcional($this->temperatura);
+            $this->hgt = $this->normalizarCampoOpcional($this->hgt);
+            $this->observacao = $this->normalizarCampoOpcional($this->observacao);
+        }
     }
 ?>

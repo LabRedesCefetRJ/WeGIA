@@ -1571,7 +1571,7 @@ try {
                                   <p class="help-block"><span class="text-danger">Formatos aceitos:</span> PNG, JPG, PDF, DOC, DOCX, ODP.</p>
                                 </div>
 
-                                <input type="hidden" id="exame_id_fichamedica" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>">
+                                <input type="hidden" id="exame_id_fichamedica" name="id_fichamedica" value="<?= $id_fichamedica; ?>">
                               </div>
                               <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>

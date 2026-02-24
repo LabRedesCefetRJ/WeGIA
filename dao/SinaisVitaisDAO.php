@@ -21,16 +21,6 @@ class SinaisVitaisDAO
         $id_fichamedica = $sinaisvitais->getIdFichamedica();
         $id_funcionario = $sinaisvitais->getIdFuncionario();
         $data = $sinaisvitais->getData();
-        if (is_string($data)) {
-            $data = trim($data);
-            if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/', $data)) {
-                $data = str_replace('T', ' ', $data) . ':00';
-            } elseif (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/', $data)) {
-                $data = str_replace('T', ' ', $data);
-            } elseif (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $data)) {
-                $data .= ':00';
-            }
-        }
         $saturacao = $sinaisvitais->getSaturacao();
         $pres_art = $sinaisvitais->getPressaoArterial();
         $freq_card = $sinaisvitais->getFrequenciaCardiaca();
@@ -38,28 +28,7 @@ class SinaisVitaisDAO
         $temperatura = $sinaisvitais->getTemperatura();
         $hgt = $sinaisvitais->getHgt();
         $observacao = $sinaisvitais->getObservacao();
-        if ($saturacao === '') {
-            $saturacao = null;
-        }
-        if ($pres_art === '') {
-            $pres_art = null;
-        }
-        if ($freq_card === '') {
-            $freq_card = null;
-        }
-        if ($freq_resp === '') {
-            $freq_resp = null;
-        }
-        if ($temperatura === '') {
-            $temperatura = null;
-        }
-        if ($hgt === '') {
-            $hgt = null;
-        }
-        if ($observacao === '') {
-            $observacao = null;
-        }
-        
+
         $sql = "INSERT INTO saude_sinais_vitais (id_fichamedica, id_funcionario, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao) VALUES (:id_fichamedica, :id_funcionario, :data, :saturacao, :pressao_arterial, :frequencia_cardiaca, :frequencia_respiratoria, :temperatura, :hgt, :observacao)";
         $pdo = Conexao::connect();
         $stmt = $pdo->prepare($sql);

@@ -16,6 +16,7 @@ require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 52, 7);
 
 require_once "../../dao/Conexao.php";
+require_once "../../classes/Util.php";
 
 $idFichamedica = filter_input(INPUT_POST, 'id_fichamedica', FILTER_VALIDATE_INT);
 $idAtendimento = filter_input(INPUT_POST, 'id_atendimento', FILTER_VALIDATE_INT);
@@ -116,6 +117,10 @@ try {
     if ($pdo instanceof PDO && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
+
+    ob_start();
+    Util::tratarException($e);
+    ob_end_clean();
 
     $_SESSION['msg_e'] = "Não foi possível anular o atendimento. Tente novamente.";
     header("Location: profile_paciente.php?id_fichamedica=" . urlencode((string)$idFichamedica));

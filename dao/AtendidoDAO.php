@@ -29,7 +29,7 @@ class AtendidoDAO
     {
         $pdo = Conexao::connect();
         $stmt = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :idFichaMedica");
-        $stmt->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->bindParam(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
         $stmt->execute();
 
         $idPessoa = $stmt->fetchColumn();
@@ -40,7 +40,7 @@ class AtendidoDAO
     {
         $pdo = Conexao::connect();
         $stmt = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
-        $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt->bindParam(':idPessoa', $idPessoa, PDO::PARAM_INT);
         $stmt->execute();
 
         $dataNascimento = $stmt->fetchColumn();
@@ -73,7 +73,11 @@ class AtendidoDAO
     {
         $pdo = Conexao::connect();
         $valor = 0;
-        $consultaFunc = $pdo->query("select pessoa_id_pessoa from atendido where pessoa_id_pessoa = (SELECT id_pessoa from pessoa where cpf = '$cpf')")->fetchAll(PDO::FETCH_ASSOC);
+        $sqlConsultaFunc = "select pessoa_id_pessoa from atendido where pessoa_id_pessoa = (SELECT id_pessoa from pessoa where cpf = :cpf)";
+        $stmtConsultaFunc = $pdo->prepare($sqlConsultaFunc);
+        $stmtConsultaFunc->bindParam(':cpf', $cpf);
+        $stmtConsultaFunc->execute();
+        $consultaFunc = $stmtConsultaFunc->fetchAll(PDO::FETCH_ASSOC);
         if ($consultaFunc == null) {
             $consultaCPF = $pdo->query("select cpf,id_pessoa from pessoa;")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($consultaCPF as $key => $value) {
@@ -112,11 +116,11 @@ class AtendidoDAO
         }
 
         $stmtPessoa->bindParam(':cpf',            $cpf);
-        $stmtPessoa->bindParam(':nome',           $nome);
-        $stmtPessoa->bindParam(':sobrenome',      $sobrenome);
-        $stmtPessoa->bindParam(':sexo',           $sexo);
-        $stmtPessoa->bindParam(':telefone',       $telefone);
-        $stmtPessoa->bindParam(':dataNascimento', $dataNascimento);
+        $stmtPessoa->bindValue(':nome',           $nome);
+        $stmtPessoa->bindValue(':sobrenome',      $sobrenome);
+        $stmtPessoa->bindValue(':sexo',           $sexo);
+        $stmtPessoa->bindValue(':telefone',       $telefone);
+        $stmtPessoa->bindValue(':dataNascimento', $dataNascimento);
 
         $stmtPessoa->execute();
 
@@ -129,9 +133,9 @@ class AtendidoDAO
         $intTipo   = $atendido->getIntTipo();
         $intStatus = $atendido->getIntStatus();
 
-        $stmtAtendido->bindParam(':pessoaId', $idPessoa);
-        $stmtAtendido->bindParam(':tipo',     $intTipo);
-        $stmtAtendido->bindParam(':status',   $intStatus);
+        $stmtAtendido->bindValue(':pessoaId', $idPessoa, PDO::PARAM_INT);
+        $stmtAtendido->bindValue(':tipo',     $intTipo, PDO::PARAM_INT);
+        $stmtAtendido->bindValue(':status',   $intStatus, PDO::PARAM_INT);
 
         $stmtAtendido->execute();
 
@@ -152,9 +156,9 @@ class AtendidoDAO
               (:idPessoa, :tipo, :status)";
 
         $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
-        $stmt->bindValue(':tipo', $tipo, PDO::PARAM_INT);
-        $stmt->bindValue(':status', $status, PDO::PARAM_INT);
+        $stmt->bindParam(':idPessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt->bindParam(':tipo', $tipo, PDO::PARAM_INT);
+        $stmt->bindParam(':status', $status, PDO::PARAM_INT);
         $stmt->execute();
 
         return (int)$pdo->lastInsertId();
@@ -177,16 +181,16 @@ class AtendidoDAO
         $stmt  = $pdo->prepare($sql);
         $stmt2 = $pdo->prepare($sql2);
 
-        $sobrenome = $atendido->getSobrenome();
+        $sobrenomeAtendido = $atendido->getSobrenome();
         $sexo      = $atendido->getSexo();
         $tipo      = $atendido->getIntTipo();
         $status    = $atendido->getIntStatus();
 
-        $stmt->bindValue(':id_pessoa', $idPessoa, PDO::PARAM_INT);
-        $stmt->bindValue(':sobrenome', $sobrenome);
+        $stmt->bindParam(':id_pessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt->bindValue(':sobrenome', $sobrenomeAtendido);
         $stmt->bindValue(':sexo', $sexo);
 
-        $stmt2->bindValue(':id_pessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt2->bindParam(':id_pessoa', $idPessoa, PDO::PARAM_INT);
         $stmt2->bindValue(':intTipo', $tipo, PDO::PARAM_INT);
         $stmt2->bindValue(':intStatus', $status, PDO::PARAM_INT);
 
@@ -215,8 +219,8 @@ class AtendidoDAO
             $processoConcluidoSql = "SELECT id, id_status FROM processo_aceitacao WHERE id_pessoa=:idPessoa AND id_status=2";
 
             $stmtProcesso = $pdo->prepare($processoConcluidoSql);
-
-            $stmtProcesso->execute([':idPessoa' => $idPessoa]);
+            $stmtProcesso->bindParam(':idPessoa', $idPessoa, PDO::PARAM_INT);
+            $stmtProcesso->execute();
 
             if ($stmtProcesso->rowCount() > 0) {
                 //Inserir documentações
@@ -305,12 +309,17 @@ class AtendidoDAO
         $imagem = base64_encode($imagem);
         try {
             $pdo = Conexao::connect();
-            $id_pessoa = (($pdo->query("SELECT pessoa_id_pessoa FROM atendido WHERE idatendido=$idatendido"))->fetch(PDO::FETCH_ASSOC))["pessoa_id_pessoa"];
+
+            $sqlPessoa = "SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = :idatendido";
+            $stmtPessoa = $pdo->prepare($sqlPessoa);
+            $stmtPessoa->bindParam(':idatendido', $idatendido, PDO::PARAM_INT);
+            $stmtPessoa->execute();
+            $id_pessoa = $stmtPessoa->fetch(PDO::FETCH_ASSOC)["pessoa_id_pessoa"] ?? null;
 
             $sql = "UPDATE pessoa SET imagem = :imagem WHERE id_pessoa = :pessoa_id_pessoa;";
             $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':pessoa_id_pessoa', $id_pessoa);
-            $stmt->bindValue(':imagem', $imagem);
+            $stmt->bindValue(':pessoa_id_pessoa', $id_pessoa, PDO::PARAM_INT);
+            $stmt->bindParam(':imagem', $imagem);
             $stmt->execute();
         } catch (PDOException $e) {
             Util::tratarException($e);
@@ -335,17 +344,19 @@ class AtendidoDAO
 
         $stmt = $pdo->prepare($sql);
 
-        $stmt->bindParam('nome', $nome);
-        $stmt->bindParam('sobrenome', $sobrenome);
-        $stmt->bindParam(':cpf', $cpf);
-        $stmt->bindParam(':sexo', $sexo);
-        $stmt->bindParam(':telefone', $telefone);
-        $stmt->bindParam(':data_nascimento', $nascimento);
+        $stmt->bindValue(':nome', $nome);
+        $stmt->bindValue(':sobrenome', $sobrenome);
+        $stmt->bindValue(':cpf', $cpf);
+        $stmt->bindValue(':sexo', $sexo);
+        $stmt->bindValue(':telefone', $telefone);
+        $stmt->bindValue(':data_nascimento', $nascimento);
         $stmt->execute();
     }
     public function listarTodos($status)
     {
-        isset($status) === false ? $status_selecionado = 1 : $status_selecionado = $status;
+        if (!isset($status)) {
+            $status = 1;
+        }
 
         $atendidos = array();
         $pdo = Conexao::connect();
@@ -353,7 +364,7 @@ class AtendidoDAO
         $consulta = $pdo->prepare("SELECT p.nome,p.sobrenome,p.cpf,a.idatendido FROM pessoa p INNER JOIN atendido a 
             ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.atendido_status_idatendido_status = ?");
 
-        $consulta->bindParam(1, $status_selecionado);
+        $consulta->bindParam(1, $status, PDO::PARAM_INT);
         $consulta->execute();
 
         $x = 0;
@@ -442,7 +453,8 @@ class AtendidoDAO
 
         $sql_id_pessoa = "SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = :idatendido";
         $stmt_id = $pdo->prepare($sql_id_pessoa);
-        $stmt_id->bindParam(':idatendido', $atendido->getIdatendido());
+        $idAtendido = $atendido->getIdatendido();
+        $stmt_id->bindValue(':idatendido', $idAtendido, PDO::PARAM_INT);
         $stmt_id->execute();
         $id_pessoa = $stmt_id->fetchColumn();
 
@@ -452,7 +464,7 @@ class AtendidoDAO
 
         $sql_cpf_atual = "SELECT cpf FROM pessoa WHERE id_pessoa = :id_pessoa";
         $stmt_cpf = $pdo->prepare($sql_cpf_atual);
-        $stmt_cpf->bindParam(':id_pessoa', $id_pessoa);
+        $stmt_cpf->bindValue(':id_pessoa', $id_pessoa, PDO::PARAM_INT);
         $stmt_cpf->execute();
         $cpfAtual = $stmt_cpf->fetchColumn();
 
@@ -521,11 +533,11 @@ class AtendidoDAO
             $orgao_emissor='detram';
             $data_expedicao='2003-11-28';*/
 
-            $stmt->bindParam(':cpf', $cpf);
-            $stmt->bindParam(':idatendido', $idatendido);
-            $stmt->bindParam(':registro_geral', $registro_geral);
-            $stmt->bindParam(':orgao_emissor', $orgao_emissor);
-            $stmt->bindParam(':data_expedicao', $data_expedicao);
+            $stmt->bindValue(':cpf', $cpf);
+            $stmt->bindValue(':idatendido', $idatendido, PDO::PARAM_INT);
+            $stmt->bindValue(':registro_geral', $registro_geral);
+            $stmt->bindValue(':orgao_emissor', $orgao_emissor);
+            $stmt->bindValue(':data_expedicao', $data_expedicao);
             $stmt->execute();
         } catch (PDOException $e) {
             Util::tratarException($e);
@@ -551,15 +563,15 @@ class AtendidoDAO
             $complemento = $atendido->getComplemento();
             $ibge = $atendido->getIbge();
 
-            $stmt->bindParam(':idatendido', $idatendido);
-            $stmt->bindParam(':cep', $cep);
-            $stmt->bindParam(':estado', $estado);
-            $stmt->bindParam(':cidade', $cidade);
-            $stmt->bindParam(':bairro', $bairro);
-            $stmt->bindParam(':logradouro', $logradouro);
-            $stmt->bindParam(':numero_endereco', $numero_endereco);
-            $stmt->bindParam(':complemento', $complemento);
-            $stmt->bindParam(':ibge', $ibge);
+            $stmt->bindValue(':idatendido', $idatendido, PDO::PARAM_INT);
+            $stmt->bindValue(':cep', $cep);
+            $stmt->bindValue(':estado', $estado);
+            $stmt->bindValue(':cidade', $cidade);
+            $stmt->bindValue(':bairro', $bairro);
+            $stmt->bindValue(':logradouro', $logradouro);
+            $stmt->bindValue(':numero_endereco', $numero_endereco);
+            $stmt->bindValue(':complemento', $complemento);
+            $stmt->bindValue(':ibge', $ibge);
             $stmt->execute();
         } catch (PDOException $e) {
             Util::tratarException($e);
@@ -571,8 +583,11 @@ class AtendidoDAO
         try {
             $pessoa = array();
             $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT sobrenome from pessoa WHERE cpf='$cpf'");
-            $linha = $consulta->fetch(PDO::FETCH_ASSOC);
+            $sql = "SELECT sobrenome from pessoa WHERE cpf = :cpf";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':cpf', $cpf);
+            $stmt->execute();
+            $linha = $stmt->fetch(PDO::FETCH_ASSOC);
             // $x=0;
             // while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
             //     $pessoa[$x]=$linha['id_pessoa'];
@@ -591,8 +606,11 @@ class AtendidoDAO
         try {
             $pessoa = array();
             $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT id_pessoa from pessoa WHERE cpf='$cpf'");
-            $linha = $consulta->fetch(PDO::FETCH_ASSOC);
+            $sql = "SELECT id_pessoa from pessoa WHERE cpf = :cpf";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':cpf', $cpf);
+            $stmt->execute();
+            $linha = $stmt->fetch(PDO::FETCH_ASSOC);
             // $x=0;
             // while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
             //     $pessoa[$x]=$linha['id_pessoa'];
