@@ -13,6 +13,7 @@
 
     require_once ROOT . '/dao/MedicamentoPacienteDAO.php';
     require_once ROOT . '/dao/FuncionarioDAO.php';
+    require_once ROOT . '/dao/AtendidoDAO.php';
     require_once ROOT . '/classes/Util.php';
 
 
@@ -32,13 +33,15 @@
             $id_pessoa = $dados['id_pessoa'] ?? null;
             $dataHora = $dados['dataHora'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
-            $data_nasc_paciente = $dados['data_nascimento'] ?? null; 
 
-            if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario || !$data_nasc_paciente) {
+            if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
                 http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Campos obrigatórios ausentes"]);
                 exit;
             }
+
+            $atendidoDAO = new AtendidoDAO();
+            $data_nasc_paciente = $atendidoDAO->obterDataNascimentoPorPessoaId((int)$id_pessoa) ?: '1900-01-01';
             
             try {
                 $aplicacao = new DateTime($dataHora);
@@ -93,20 +96,10 @@
                 http_response_code(400);
                 echo json_encode(['status' => 'erro', 'mensagem' => $e->getMessage()]);
             } catch (PDOException $e){
-                // Erro de Banco de Dados
-                http_response_code(500); 
-                echo json_encode([
-                    'status' => 'erro',
-                    'mensagem' => "Erro ao registrar aplicação (BD): " . $e->getMessage()
-                ]);
+                Util::tratarException(new Exception('Erro ao registrar aplicação (BD).', 500, $e));
             } catch (Exception $e){
-                // Erro de lógica ou outro tipo de exceção
-                $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-                http_response_code($codigo);
-                echo json_encode([
-                    'status' => 'erro',
-                    'mensagem' => $e->getMessage()
-                ]);
+                $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? (int)$e->getCode() : 500;
+                Util::tratarException(new Exception($e->getMessage(), $codigo, $e));
             }
             exit;
         }
