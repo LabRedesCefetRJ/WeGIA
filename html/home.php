@@ -66,6 +66,9 @@ require_once ROOT . "/html/geral/msg.php";
 	<!-- Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 
+	<!--Release check-->
+	<script src="../Functions/release.js" defer></script>
+
 	<style>
 		div#category-row>a:not(.visivel) {
 			/* Faz com que apenas os selecionados por verificar_modulos se tornem visíveis*/
@@ -233,17 +236,20 @@ require_once ROOT . "/html/geral/msg.php";
 				<div class="row" id="category-row">
 
 					<!-- Recebe mensagem se houver -->
-					<?php displayMsg();
-					sessionMsg(); ?>
+					<div id="message-container">
+						<?php displayMsg();
+						sessionMsg(); ?>
 
-					<?php
-					if (isset($_GET['msg_c'])) {
-						$msg = $_GET['msg_c'];
-						echo ('<div class="alert alert-danger alerta_c" role="alert">
+						<?php
+						if (isset($_GET['msg_c'])) {
+							$msg = $_GET['msg_c'];
+							echo ('<div class="alert alert-danger alerta_c" role="alert">
 						' . htmlspecialchars($msg) . '
 					  </div>');
-					}
-					?>
+						}
+						?>
+					</div>
+
 					<a id="home1" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#pessoas">
 							<i class="far fa-address-book"></i>

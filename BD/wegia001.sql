@@ -1476,7 +1476,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido_ocorrencia` (
   `atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos` INT NOT NULL,
   `funcionario_id_funcionario` INT(11) NOT NULL,
   `data` DATE NOT NULL,
-  `descricao` VARCHAR(255) NULL,
+  `descricao` TEXT NOT NULL,
   PRIMARY KEY (`idatendido_ocorrencias`),
   INDEX `fk_atentido_ocorrencias_atendido1_idx` (`atendido_idatendido` ASC),
   INDEX `fk_atentido_ocorrencias_atendido_ocorrencia_tipos1_idx` (`atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos` ASC),

@@ -56,17 +56,40 @@ class Util
     /**
      * Registra o log de erro e emite um JSON para o cliente
      */
-    public static function tratarException(Exception $e): void
+    public static function tratarException(Throwable $e): void
     {
-        //Armazena exceção em um arquivo de log
-        error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-        http_response_code($e->getCode()); // <-- Aumentar a robustez do código, não necessariamente toda excessão retorna um inteiro para ser usado como código http
-        //Adicionar futuramente verificação para outras exceções que precisem de uma mensagem personalizada
-        if ($e instanceof PDOException) {
-            echo json_encode(['erro' => 'Erro no servidor ao manipular o banco de dados']);
-        } else { //mensagem padrão
-            echo json_encode(['erro' => $e->getMessage()]);
+        // Log interno
+        error_log(sprintf(
+            "[ERRO] %s em %s:%d",
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine()
+        ));
+
+        // Garante JSON SEMPRE
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
         }
+
+        // Código HTTP seguro
+        $httpCode = $e->getCode();
+        if ($httpCode < 400 || $httpCode > 599) {
+            $httpCode = 500;
+        }
+        http_response_code($httpCode);
+
+        // Mensagem para o cliente
+        if ($e instanceof PDOException) {
+            echo json_encode([
+                'erro' => 'Erro interno ao acessar o banco de dados'
+            ]);
+        } else {
+            echo json_encode([
+                'erro' => $e->getMessage()
+            ]);
+        }
+
+        exit;
     }
 
     // esta função formata para o bd
