@@ -66,24 +66,34 @@ async function listarTodasAsEnfermidades() {
 
 //Essa função serve para gerar as opçoes de enfermidades no select de tipos de enfermidade
 async function gerarEnfermidade() {
-    situacoes = await listarTodasAsEnfermidades()
-    let length = situacoes.length - 1;
+    const situacoes = await listarTodasAsEnfermidades();
+    const enfermidadesDoPaciente = await buscarEnfermidadesPorIDFichaMedica();
+    const listaSituacoes = Array.isArray(situacoes) ? situacoes : [];
+    const listaEnfermidadesPaciente = Array.isArray(enfermidadesDoPaciente) ? enfermidadesDoPaciente : [];
+    const idsEnfermidadesDoPaciente = new Set(
+        listaEnfermidadesPaciente.map((item) => String(item.id_CID))
+    );
+
     let select = document.getElementById("id_CID");
     while (select.firstChild) {
         select.removeChild(select.firstChild)
     }
-    for (let i = 0; i <= length; i = i + 1) {
-        if (i == 0) {
-        let selecionar = document.createElement("option");
-        selecionar.textContent = "Selecionar"
-        selecionar.value = "";
-        selecionar.selected = true;
-        selecionar.disabled = true;
-        select.appendChild(selecionar)
+
+    let selecionar = document.createElement("option");
+    selecionar.textContent = "Selecionar";
+    selecionar.value = "";
+    selecionar.selected = true;
+    selecionar.disabled = true;
+    select.appendChild(selecionar);
+
+    for (const item of listaSituacoes) {
+        if (idsEnfermidadesDoPaciente.has(String(item.id_CID))) {
+            continue;
         }
+
         let option = document.createElement("option");
-        option.value = situacoes[i].id_CID;
-        option.textContent = situacoes[i].descricao;
+        option.value = item.id_CID;
+        option.textContent = item.descricao;
         select.appendChild(option);
     }
 }
@@ -299,6 +309,8 @@ async function gerarEnfermidadesDoPaciente() {
 
         tabela.appendChild(tr);
     }
+
+    await gerarEnfermidade();
 }
 
 //Essa função serve para remover uma enfermidade da ficha de um paciente
@@ -310,7 +322,7 @@ async function removerEnfermidade(id_enfermidade) {
     try{
         const resposta = await fetch(url);
 
-        if(resposta){
+        if(resposta.ok){
             await gerarEnfermidadesDoPaciente();
         }else{
             window.alert("Aconteceu algum problema ao remover uma enfermidade");
