@@ -569,8 +569,6 @@ try {
               })
               .append($("<button class='btn btn-warning'>").append($("<i class='glyphicon glyphicon-ban-circle'></i>")))
           );
-        } else {
-          tdAcao.text("Sem ações");
         }
 
         tr.append(tdAcao);
@@ -586,10 +584,14 @@ try {
       const mostrarDetalhesAnulacao = valorFiltro === "anulado";
       const linhas = document.querySelectorAll("#de-tab tr");
       const colunasAnulacao = document.querySelectorAll(".coluna-anulacao");
+      const colunasAcao = document.querySelectorAll(".coluna-acao");
       let totalVisivel = 0;
 
       colunasAnulacao.forEach(function(coluna) {
         coluna.classList.toggle("hidden", !mostrarDetalhesAnulacao);
+      });
+      colunasAcao.forEach(function(coluna) {
+        coluna.classList.toggle("hidden", valorFiltro === "anulado");
       });
 
       linhas.forEach(function(linha) {
@@ -1603,7 +1605,7 @@ try {
                                 <th>Status</th>
                                 <th class="coluna-anulacao hidden">Motivo</th>
                                 <th class="coluna-anulacao hidden">Anulador</th>
-                                <th>Ação</th>
+                                <th class="coluna-acao">Ação</th>
                               </tr>
                             </thead>
                             <tbody id="de-tab" style="font-size:15px">
