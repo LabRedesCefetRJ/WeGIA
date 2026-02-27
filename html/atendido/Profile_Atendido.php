@@ -792,7 +792,7 @@ $dependente = json_encode($dependente);
 
                     <div class="panel-footer">
                       <div class="row">
-                        <div class="col-md-9 col-md-offset-3">
+                        <div class="col-md-9">
                           <?php
                           $atend = json_decode($atend)[0];
                           if ($atend->status == 1):
@@ -825,8 +825,8 @@ $dependente = json_encode($dependente);
                             <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post" class="d-flex">
                               <input type="hidden" name="idatendido" value=<?= $id ?>>
                               <input type="hidden" name="operacao" value='desativar'>
-                              <button class="btn btn-primary me-2" type="submit">Desativar</button>
                               <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                              <button class="btn btn-primary me-2" type="submit">Confirmar</button>
                             </form>
                           </div>
 
