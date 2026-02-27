@@ -29,7 +29,7 @@ async function adicionar_enfermidade() {
             return;
         }else{
             const data = await resposta.json();
-            const mensagemErro = Object.hasOwn(data, "erro") ? data.erro : `Algum erro ocorreu ao tentar adicionar uma nova enfermidade`;
+            const mensagemErro = Object.prototype.hasOwnProperty.call(data, "erro") ? data.erro : `Algum erro ocorreu ao tentar adicionar uma nova enfermidade`;
             throw new Error(mensagemErro);
         }
    }catch(e){
@@ -66,24 +66,34 @@ async function listarTodasAsEnfermidades() {
 
 //Essa função serve para gerar as opçoes de enfermidades no select de tipos de enfermidade
 async function gerarEnfermidade() {
-    situacoes = await listarTodasAsEnfermidades()
-    let length = situacoes.length - 1;
+    const situacoes = await listarTodasAsEnfermidades();
+    const enfermidadesDoPaciente = await buscarEnfermidadesPorIDFichaMedica();
+    const listaSituacoes = Array.isArray(situacoes) ? situacoes : [];
+    const listaEnfermidadesPaciente = Array.isArray(enfermidadesDoPaciente) ? enfermidadesDoPaciente : [];
+    const idsEnfermidadesDoPaciente = new Set(
+        listaEnfermidadesPaciente.map((item) => String(item.id_CID))
+    );
+
     let select = document.getElementById("id_CID");
     while (select.firstChild) {
         select.removeChild(select.firstChild)
     }
-    for (let i = 0; i <= length; i = i + 1) {
-        if (i == 0) {
-        let selecionar = document.createElement("option");
-        selecionar.textContent = "Selecionar"
-        selecionar.value = "";
-        selecionar.selected = true;
-        selecionar.disabled = true;
-        select.appendChild(selecionar)
+
+    let selecionar = document.createElement("option");
+    selecionar.textContent = "Selecionar";
+    selecionar.value = "";
+    selecionar.selected = true;
+    selecionar.disabled = true;
+    select.appendChild(selecionar);
+
+    for (const item of listaSituacoes) {
+        if (idsEnfermidadesDoPaciente.has(String(item.id_CID))) {
+            continue;
         }
+
         let option = document.createElement("option");
-        option.value = situacoes[i].id_CID;
-        option.textContent = situacoes[i].descricao;
+        option.value = item.id_CID;
+        option.textContent = item.descricao;
         select.appendChild(option);
     }
 }
@@ -113,7 +123,85 @@ async function buscarEnfermidadesPorIDFichaMedica() {
     }
 }
 
+let timeoutMensagemCadastroEnfermidade = null;
+let timeoutFecharAnimacaoEnfermidade = null;
+let scrollInicialCadastroComorbidade = window.pageYOffset || document.documentElement.scrollTop || 0;
+
+window.addEventListener("load", () => {
+    scrollInicialCadastroComorbidade = window.pageYOffset || document.documentElement.scrollTop || 0;
+});
+
+function voltarParaScrollInicialComorbidade() {
+    window.scrollTo({
+        top: Math.max(scrollInicialCadastroComorbidade, 0),
+        behavior: "smooth"
+    });
+}
+
 //Essa função serve para o cadastro de uma nova enfermidade na ficha do paciente
+function mostrarMensagemCadastroEnfermidade(mensagem, tipo = "success") {
+    const alerta = document.getElementById("mensagem-cadastro-enfermidade");
+    const texto = document.getElementById("mensagem-cadastro-enfermidade-texto");
+
+    if (!alerta || !texto) {
+        return;
+    }
+
+    alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+    if (tipo === "danger") {
+        alerta.classList.add("alert-danger");
+    } else if (tipo === "warning") {
+        alerta.classList.add("alert-warning");
+    } else {
+        alerta.classList.add("alert-success");
+    }
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
+    requestAnimationFrame(() => {
+        voltarParaScrollInicialComorbidade();
+    });
+
+    if (timeoutMensagemCadastroEnfermidade) {
+        clearTimeout(timeoutMensagemCadastroEnfermidade);
+    }
+
+    if (timeoutFecharAnimacaoEnfermidade) {
+        clearTimeout(timeoutFecharAnimacaoEnfermidade);
+        timeoutFecharAnimacaoEnfermidade = null;
+    }
+
+    timeoutMensagemCadastroEnfermidade = setTimeout(() => {
+        ocultarMensagemCadastroEnfermidade();
+    }, 10000);
+}
+
+function ocultarMensagemCadastroEnfermidade() {
+    const alerta = document.getElementById("mensagem-cadastro-enfermidade");
+
+    if (!alerta) {
+        return;
+    }
+
+    alerta.classList.remove("is-visible");
+
+    if (timeoutMensagemCadastroEnfermidade) {
+        clearTimeout(timeoutMensagemCadastroEnfermidade);
+        timeoutMensagemCadastroEnfermidade = null;
+    }
+
+    if (timeoutFecharAnimacaoEnfermidade) {
+        clearTimeout(timeoutFecharAnimacaoEnfermidade);
+    }
+
+    timeoutFecharAnimacaoEnfermidade = setTimeout(() => {
+        alerta.style.display = "none";
+        timeoutFecharAnimacaoEnfermidade = null;
+    }, 350);
+}
+
 async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
     ev.preventDefault();
     const selectStatus = document.getElementById("intStatus")
@@ -123,8 +211,11 @@ async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
     const formEnfermidade = document.getElementById('form-enfermidade');
     
     if (!inputData.value || !selectEnfermidades.value || !selectStatus.value) {
+        voltarParaScrollInicialComorbidade();
         return;
     }
+
+    ocultarMensagemCadastroEnfermidade();
 
     const dados = {
         intStatus: selectStatus.value,
@@ -145,14 +236,21 @@ async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
         });
 
         const data = await response.json();
-    
         
+        if (!response.ok) {
+            const mensagemErro = Object.prototype.hasOwnProperty.call(data, "erro") ? data.erro : "Nao foi possivel cadastrar a comorbidade.";
+            mostrarMensagemCadastroEnfermidade(mensagemErro, "danger");
+            return;
+        }
+
         formEnfermidade.reset();
         selectEnfermidades.selectedIndex = 0;
         await gerarEnfermidadesDoPaciente();
+        mostrarMensagemCadastroEnfermidade("Comorbidade cadastrada com sucesso!");
 
     } catch (error) {
         console.error('Erro:', error);
+        mostrarMensagemCadastroEnfermidade("Aconteceu algum problema ao cadastrar a comorbidade.", "danger");
     }
 }
 
@@ -211,6 +309,8 @@ async function gerarEnfermidadesDoPaciente() {
 
         tabela.appendChild(tr);
     }
+
+    await gerarEnfermidade();
 }
 
 //Essa função serve para remover uma enfermidade da ficha de um paciente
@@ -222,7 +322,7 @@ async function removerEnfermidade(id_enfermidade) {
     try{
         const resposta = await fetch(url);
 
-        if(resposta){
+        if(resposta.ok){
             await gerarEnfermidadesDoPaciente();
         }else{
             window.alert("Aconteceu algum problema ao remover uma enfermidade");

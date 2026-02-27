@@ -17,25 +17,32 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPA
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'EnfermidadeSaude.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
-extract($_GET);
-$id_fichamedica = isset($_GET['id_fichamedica']) ? $_GET['id_fichamedica'] : null;
-
-$enfermidade = new EnfermidadeSaude($id_doc);
+$idEnfermidade = filter_input(INPUT_GET, 'id_enfermidade', FILTER_VALIDATE_INT);
+$idFichaMedica = filter_input(INPUT_GET, 'id_fichamedica', FILTER_VALIDATE_INT);
 
 try {
-    if($enfermidade->delete($id_fichamedica) === false)
+    if (!$idEnfermidade || !$idFichaMedica) {
+        throw new InvalidArgumentException('Parâmetros inválidos para exclusão de alergia.', 400);
+    }
+
+    $enfermidade = new EnfermidadeSaude($idEnfermidade);
+
+    if($enfermidade->delete($idFichaMedica) === false)
         throw new LogicException('Erro na operação de remoção de uma enfermidade de um paciente.', 500);
 
-    $sql = "SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica";
+    $sql = "SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao
+            FROM saude_enfermidades sf
+            JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID
+            WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND sf.id_fichamedica = :idFichaMedica";
 
     $pdo = Conexao::connect();
     $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+    $stmt->bindParam(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
     $stmt->execute();
 
     $alergias = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    $alergias = json_encode($alergias);
-    echo $alergias;
+    header('Content-Type: application/json');
+    echo json_encode($alergias);
 } catch (Exception $e) {
     Util::tratarException($e);
 }

@@ -42,12 +42,14 @@ if (PHP_OS != 'Linux') {
             if ($log && AUTOSAVE_ERROR_FATAL) {
                 header("Location: ./listar_backup.php?msg=error&err=A ação não pode ser realizada devido a um erro no backup automático!&log=" . base64_encode($log));
             }
-            $log = loadBackupDB($file);
-            if ($log) {
-                header("Location: ./listar_backup.php?msg=error&err=Houve um erro ao restaurar a Base de Dados!&log=" . base64_encode($log));
+            $log = loadBackupDB($file); //refazer log depois
+            if (!$log) {
+                header("Location: ./listar_backup.php?msg=error&err=Houve um erro ao restaurar a Base de Dados!");
+                exit();
             } else {
                 session_destroy();
                 header("Location: ../../index.php");
+                exit();
             }
         } else {
             header("Location: ./listar_backup.php?msg=warning&warn=Nenhuma ação válida foi selecionada!");

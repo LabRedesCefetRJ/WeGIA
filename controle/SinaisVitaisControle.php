@@ -12,8 +12,8 @@ if(file_exists($config_path)){
 
 require_once ROOT.'/classes/SinaisVitais.php';
 require_once ROOT.'/dao/SinaisVitaisDAO.php';
+require_once ROOT.'/dao/AtendidoDAO.php';
 include_once ROOT.'/classes/Cache.php';
-include_once ROOT."/dao/Conexao.php";
 
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
@@ -44,8 +44,7 @@ class SinaisVitaisControle
         if((!isset($data_afericao)) || (empty($data_afericao))){
             $data_afericao = "";
         }else{
-            $timestamp = strtotime($data_afericao);
-            $data_afericao = date('Y-m-d\TH:i', $timestamp);
+            $data_afericao = trim($data_afericao);
         } 
 
         if((!isset($saturacao)) || (empty($saturacao))){
@@ -116,6 +115,82 @@ class SinaisVitaisControle
         }
 
         $sinaisvitais = $this->verificar();
+        $data_afericao = $sinaisvitais->getData();
+        if (empty($data_afericao)) {
+            http_response_code(400);
+            exit('A data da aferição não pode ser vazia');
+        }
+
+        $temAlgumDado = !(
+            $sinaisvitais->getSaturacao() === '' &&
+            $sinaisvitais->getPressaoArterial() === '' &&
+            $sinaisvitais->getFrequenciaCardiaca() === '' &&
+            $sinaisvitais->getFrequenciaRespiratoria() === '' &&
+            $sinaisvitais->getTemperatura() === '' &&
+            $sinaisvitais->getHgt() === '' &&
+            $sinaisvitais->getObservacao() === ''
+        );
+
+        if (!$temAlgumDado) {
+            http_response_code(400);
+            exit('Informe ao menos um sinal vital ou observação.');
+        }
+
+        $atendidoDAO = new AtendidoDAO();
+        $idPaciente = $atendidoDAO->obterPessoaIdPorFichaMedica((int)$id_fichamedica);
+
+        if (!$idPaciente) {
+            http_response_code(400);
+            exit('Paciente não encontrado para a ficha médica informada');
+        }
+
+        $data_nasc_atendido = $atendidoDAO->obterDataNascimentoPorPessoaId($idPaciente) ?: '1900-01-01';
+
+        $timezone = new DateTimeZone('America/Sao_Paulo');
+        $formatoDataAfericaoValido = preg_match('/^\d{4}-\d{2}-\d{2}(T|\s)\d{2}:\d{2}(:\d{2})?$/', $data_afericao) === 1;
+        if (!$formatoDataAfericaoValido) {
+            http_response_code(400);
+            exit('Data de aferição inválida');
+        }
+        $data_afericao = str_replace('T', ' ', $data_afericao);
+        if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $data_afericao) === 1) {
+            $data_afericao .= ':00';
+        }
+        $dataAfericao = DateTime::createFromFormat('Y-m-d H:i:s', $data_afericao, $timezone);
+        $errosDataAfericao = DateTime::getLastErrors();
+        if (
+            !$dataAfericao
+            || (
+                $errosDataAfericao !== false
+                && (
+                    ($errosDataAfericao['warning_count'] ?? 0) > 0
+                    || ($errosDataAfericao['error_count'] ?? 0) > 0
+                )
+            )
+        ) {
+            http_response_code(400);
+            exit('Data de aferição inválida');
+        }
+
+        $dataNascimento = DateTime::createFromFormat('Y-m-d', $data_nasc_atendido, $timezone);
+        if (!$dataNascimento) {
+            $dataNascimento = new DateTime('1900-01-01', $timezone);
+        }
+        $dataNascimento->setTime(0, 0, 0);
+
+        if ($dataAfericao < $dataNascimento) {
+            http_response_code(400);
+            exit('Data inválida: não pode ser anterior à data de nascimento.');
+        }
+
+        $dataAgora = new DateTime('now', $timezone);
+        if ($dataAfericao > $dataAgora) {
+            http_response_code(400);
+            exit('A data da aferição não pode ser no futuro.');
+        }
+        $sinaisvitais->setData($dataAfericao->format('Y-m-d H:i:s'));
+        $sinaisvitais->normalizarParaPersistencia();
+
         $sinVitDAO = new SinaisVitaisDAO();
         
         try{

@@ -20,58 +20,58 @@ require_once ROOT . "/dao/Atendido_ocorrenciaDAO.php";
 
 class Atendido_ocorrenciaDAO
 {
-    
-    public function atualizarOcorrencia(int $idOcorrencia, int $idAtendido, string $data, string $descricao): bool
-{
-    $pdo = Conexao::connect();
 
-    $sql = "UPDATE atendido_ocorrencia
+    public function atualizarOcorrencia(int $idOcorrencia, int $idAtendido, string $data, string $descricao): bool
+    {
+        $pdo = Conexao::connect();
+
+        $sql = "UPDATE atendido_ocorrencia
             SET data = :data,
                 descricao = :descricao
             WHERE idatendido_ocorrencias = :id
               AND atendido_idatendido = :id_atendido";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':data', $data);
-    $stmt->bindValue(':descricao', $descricao);
-    $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
-    $stmt->bindValue(':id_atendido', $idAtendido, PDO::PARAM_INT);
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':data', $data);
+        $stmt->bindValue(':descricao', $descricao);
+        $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
+        $stmt->bindValue(':id_atendido', $idAtendido, PDO::PARAM_INT);
 
-    return $stmt->execute();
-}
+        return $stmt->execute();
+    }
 
-public function excluirOcorrencia(int $idOcorrencia): bool
-{
-    $pdo = Conexao::connect();
+    public function excluirOcorrencia(int $idOcorrencia): bool
+    {
+        $pdo = Conexao::connect();
 
-    // se tiver anexos, apaga primeiro
-    $sqlArq = "DELETE FROM atendido_ocorrencia_doc 
+        // se tiver anexos, apaga primeiro
+        $sqlArq = "DELETE FROM atendido_ocorrencia_doc 
                WHERE atentido_ocorrencia_idatentido_ocorrencias = :id";
-    $stmtArq = $pdo->prepare($sqlArq);
-    $stmtArq->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
-    $stmtArq->execute();
+        $stmtArq = $pdo->prepare($sqlArq);
+        $stmtArq->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
+        $stmtArq->execute();
 
-    $sql = "DELETE FROM atendido_ocorrencia 
+        $sql = "DELETE FROM atendido_ocorrencia 
             WHERE idatendido_ocorrencias = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
 
-    return $stmt->execute();
-}
+        return $stmt->execute();
+    }
 
-public function buscarIdAtendidoPorOcorrencia(int $idOcorrencia): ?int
-{
-    $pdo = Conexao::connect();
+    public function buscarIdAtendidoPorOcorrencia(int $idOcorrencia): ?int
+    {
+        $pdo = Conexao::connect();
 
-    $sql = "SELECT atendido_idatendido 
+        $sql = "SELECT atendido_idatendido 
             FROM atendido_ocorrencia 
             WHERE idatendido_ocorrencias = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
-    $stmt->execute();
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $idOcorrencia, PDO::PARAM_INT);
+        $stmt->execute();
 
-    $id = $stmt->fetchColumn();
-    return $id !== false ? (int)$id : null;
-}
+        $id = $stmt->fetchColumn();
+        return $id !== false ? (int)$id : null;
+    }
 
     public function listarTodos()
     {
@@ -111,52 +111,42 @@ public function buscarIdAtendidoPorOcorrencia(int $idOcorrencia): ?int
 
     public function incluir($ocorrencia)
     {
-        try {
-            $pdo = Conexao::connect();
+        $pdo = Conexao::connect();
 
-            $atendido_idatendido = $ocorrencia->getAtendido_idatendido();
-            $id_tipos_ocorrencia = $ocorrencia->getId_tipos_ocorrencia();
+        $atendido_idatendido = $ocorrencia->getAtendido_idatendido();
+        $id_tipos_ocorrencia = $ocorrencia->getId_tipos_ocorrencia();
 
-            // Verifica se já existe falecimento para este atendido
-            if ($id_tipos_ocorrencia == 2) {
-                $stmtVerifica = $pdo->prepare("SELECT COUNT(*) FROM atendido_ocorrencia WHERE atendido_idatendido = :idAtendido AND atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = 2");
-                $stmtVerifica->execute([':idAtendido' => $atendido_idatendido]);
-                $count = $stmtVerifica->fetchColumn();
+        // Verifica se já existe falecimento para este atendido
+        if ($id_tipos_ocorrencia == 2) {
+            $stmtVerifica = $pdo->prepare("SELECT COUNT(*) FROM atendido_ocorrencia WHERE atendido_idatendido = :idAtendido AND atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = 2");
+            $stmtVerifica->execute([':idAtendido' => $atendido_idatendido]);
+            $count = $stmtVerifica->fetchColumn();
 
-                if ($count > 0) {
-                    header('Location: ../html/atendido/cadastro_ocorrencia.php');
-                    $_SESSION['mensagem_erro'] = "Já existe uma ocorrência de falecimento registrada para este atendido.";
-                    exit;
-                }
+            if ($count > 0) {
+                header('Location: ../html/atendido/cadastro_ocorrencia.php');
+                $_SESSION['mensagem_erro'] = "Já existe uma ocorrência de falecimento registrada para este atendido.";
+                exit;
             }
+        }
 
-            // Continuação da inserção
-            $sql = "INSERT INTO atendido_ocorrencia 
+        // Continuação da inserção
+        $sql = "INSERT INTO atendido_ocorrencia 
                 (atendido_idatendido, atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos, funcionario_id_funcionario, data, descricao) 
                 VALUES (:atendido_idatendido, :id_tipos_ocorrencia, :funcionario_idfuncionario, :datao, :descricao)";
 
-            $stmt = $pdo->prepare($sql);
+        $stmt = $pdo->prepare($sql);
 
-            $funcionario_idfuncionario = $ocorrencia->getFuncionario_idfuncionario();
-            $datao = $ocorrencia->getData();
-            $descricao = $ocorrencia->getDescricao();
+        $funcionario_idfuncionario = $ocorrencia->getFuncionario_idfuncionario();
+        $datao = $ocorrencia->getData();
+        $descricao = $ocorrencia->getDescricao();
 
-            $stmt->bindParam(':descricao', $descricao);
-            $stmt->bindParam(':atendido_idatendido', $atendido_idatendido);
-            $stmt->bindParam(':funcionario_idfuncionario', $funcionario_idfuncionario);
-            $stmt->bindParam(':id_tipos_ocorrencia', $id_tipos_ocorrencia);
-            $stmt->bindParam(':datao', $datao);
+        $stmt->bindParam(':descricao', $descricao);
+        $stmt->bindParam(':atendido_idatendido', $atendido_idatendido);
+        $stmt->bindParam(':funcionario_idfuncionario', $funcionario_idfuncionario);
+        $stmt->bindParam(':id_tipos_ocorrencia', $id_tipos_ocorrencia);
+        $stmt->bindParam(':datao', $datao);
 
-            $stmt->execute();
-        } catch (PDOException $e) {
-            header('Location: formulario_ocorrencia.php');
-            $_SESSION['mensagem_erro'] = 'Erro no banco de dados: ' . $e->getMessage();
-            exit;
-        } catch (Exception $e) {
-            $_SESSION['mensagem_erro'] = 'Erro: ' . $e->getMessage();
-            header('Location: formulario_ocorrencia.php');
-            exit;
-        }
+        $stmt->execute();
     }
 
     public function incluirArquivos($arquivos)

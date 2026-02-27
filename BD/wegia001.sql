@@ -1476,7 +1476,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido_ocorrencia` (
   `atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos` INT NOT NULL,
   `funcionario_id_funcionario` INT(11) NOT NULL,
   `data` DATE NOT NULL,
-  `descricao` VARCHAR(255) NULL,
+  `descricao` TEXT NOT NULL,
   PRIMARY KEY (`idatendido_ocorrencias`),
   INDEX `fk_atentido_ocorrencias_atendido1_idx` (`atendido_idatendido` ASC),
   INDEX `fk_atentido_ocorrencias_atendido_ocorrencia_tipos1_idx` (`atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos` ASC),
@@ -1736,11 +1736,16 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_atendimento` (
   `id_medico` INT NOT NULL,
   `data_registro` DATE NULL,
   `data_atendimento` DATE NULL,
-  `descricao` BLOB NULL,
+  `descricao` TEXT NULL,
+  `anulado` TINYINT(1) NOT NULL DEFAULT 0,
+  `data_anulacao` DATETIME NULL DEFAULT NULL,
+  `motivo_anulacao` VARCHAR(255) NULL DEFAULT NULL,
+  `id_funcionario_anulacao` INT(11) NULL DEFAULT NULL,
   PRIMARY KEY (`id_atendimento`),
   INDEX `fk_saude_atendimento_saude_fichamedica1_idx` (`id_fichamedica` ASC),
   INDEX `fk_saude_atendimento_funcionario1_idx` (`id_funcionario` ASC),
   INDEX `fk_saude_atendimento_medico1_idx` (`id_medico` ASC),
+  INDEX `fk_saude_atendimento_funcionario_anulacao_idx` (`id_funcionario_anulacao` ASC),
   CONSTRAINT `fk_saude_atendimento_saude_fichamedica1`
     FOREIGN KEY (`id_fichamedica`)
     REFERENCES `wegia`.`saude_fichamedica` (`id_fichamedica`)
@@ -1753,6 +1758,11 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_atendimento` (
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_saude_atendimento_funcionario1`
     FOREIGN KEY (`id_funcionario`)
+    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_saude_atendimento_funcionario_anulacao`
+    FOREIGN KEY (`id_funcionario_anulacao`)
     REFERENCES `wegia`.`funcionario` (`id_funcionario`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
