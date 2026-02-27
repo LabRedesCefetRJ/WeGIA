@@ -74,7 +74,7 @@ foreach ($enfermidades as $index => $enfermidade) {
 
 $enfermidades = json_encode($enfermidades);
 
-$stmtAlergias = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
+$stmtAlergias = $pdo->prepare("SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
 $stmtAlergias->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtAlergias->execute();
 
@@ -178,8 +178,6 @@ $prontuariopublico = json_encode($prontuariopublico);
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $tabelacid_enfermidades = $mysqli->query("SELECT * FROM saude_tabelacid WHERE CID NOT LIKE 'T78.4%'");
-$tabelacid_alergias = $mysqli->query("SELECT * FROM saude_tabelacid WHERE CID LIKE 'T78.4%'");
-$ultima_alergia = $mysqli->query("SELECT * FROM saude_tabelacid WHERE CID LIKE 'T78.4%' ORDER BY CID DESC LIMIT 1");
 $cargoMedico = $mysqli->query("SELECT * FROM pessoa p JOIN funcionario f ON (p.id_pessoa=f.id_pessoa) WHERE f.id_cargo = 3");
 $cargoEnfermeiro = $mysqli->query("SELECT * FROM pessoa p JOIN funcionario f ON (p.id_pessoa=f.id_pessoa) WHERE f.id_cargo = 4");
 
@@ -504,33 +502,35 @@ try {
     };
 
     // enfermidade //
+    let alergiasPaciente = <?= $alergias ?>;
     $(function() {
-      let alergias = <?= $alergias ?>;
-      $.each(alergias, function(i, item) {
-        $("#doc-tab-alergias")
-          .append($("<tr>")
-            .append($("<td>").text(item.descricao))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a onclick='removerAlergia(" + item.id_CID + ")' href='#' title='Inativar'><button class='btn btn-dark'><i class='glyphicon glyphicon-remove'></i></button></a>"))
-
-            )
-          )
-      });
+      listarAlergias(alergiasPaciente);
     });
 
 
 
     function listarAlergias(alergias) {
+      if (typeof alergias === 'string') {
+        try {
+          alergias = JSON.parse(alergias);
+        } catch (error) {
+          alergias = [];
+        }
+      }
+
+      alergiasPaciente = Array.isArray(alergias) ? alergias : [];
       $("#doc-tab-alergias").empty();
-      $.each(alergias, function(i, item) {
+      $.each(alergiasPaciente, function(i, item) {
         $("#doc-tab-alergias")
           .append($("<tr>")
             .append($("<td>").text(item.descricao))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a onclick='removerAlergia(" + item.id_CID + ")' href='#' title='Inativar'><button class='btn btn-dark'><i class='glyphicon glyphicon-remove'></i></button></a>"))
+              .append($("<a onclick='removerAlergia(" + item.id_enfermidade + ")' href='#' title='Inativar'><button class='btn btn-dark'><i class='glyphicon glyphicon-remove'></i></button></a>"))
             )
           )
       });
+
+      gerar_alergia();
     }
 
     //descricao medica 
@@ -569,8 +569,6 @@ try {
               })
               .append($("<button class='btn btn-warning'>").append($("<i class='glyphicon glyphicon-ban-circle'></i>")))
           );
-        } else {
-          tdAcao.text("Sem ações");
         }
 
         tr.append(tdAcao);
@@ -586,10 +584,14 @@ try {
       const mostrarDetalhesAnulacao = valorFiltro === "anulado";
       const linhas = document.querySelectorAll("#de-tab tr");
       const colunasAnulacao = document.querySelectorAll(".coluna-anulacao");
+      const colunasAcao = document.querySelectorAll(".coluna-acao");
       let totalVisivel = 0;
 
       colunasAnulacao.forEach(function(coluna) {
         coluna.classList.toggle("hidden", !mostrarDetalhesAnulacao);
+      });
+      colunasAcao.forEach(function(coluna) {
+        coluna.classList.toggle("hidden", valorFiltro === "anulado");
       });
 
       linhas.forEach(function(linha) {
@@ -1392,22 +1394,6 @@ try {
                               <div class="col-md-6">
                                 <select class="form-control input-lg mb-md" name="id_CID_alergia" id="id_CID_alergia">
                                   <option selected disabled>Selecionar</option>
-                                  <?php
-                                  $alergias_decoded = json_decode($alergias, true);
-                                  while ($row = $tabelacid_alergias->fetch_array(MYSQLI_NUM)) {
-                                    $rowIdCID = $row[0];
-                                    $found = false;
-                                    foreach ($alergias_decoded as $alergia) {
-                                      var_dump($alergia['id_CID']);
-                                      if (isset($alergia['id_CID']) && $alergia['id_CID'] == $rowIdCID) {
-                                        $found = true;
-                                        break;
-                                      }
-                                    }
-                                    if (!$found) {
-                                      echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
-                                    }
-                                  } ?>
                                 </select>
                               </div>
                               <a onclick="adicionar_alergia()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
@@ -1619,7 +1605,7 @@ try {
                                 <th>Status</th>
                                 <th class="coluna-anulacao hidden">Motivo</th>
                                 <th class="coluna-anulacao hidden">Anulador</th>
-                                <th>Ação</th>
+                                <th class="coluna-acao">Ação</th>
                               </tr>
                             </thead>
                             <tbody id="de-tab" style="font-size:15px">
@@ -2080,13 +2066,15 @@ try {
     </div>
 
     <script defer>
-      function removerAlergia(id_doc) {
+      function removerAlergia(id_enfermidade) {
         if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
           return false;
         }
-        let url = "alergia_excluir.php?id_doc=" + id_doc + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
+        let url = "alergia_excluir.php?id_enfermidade=" + id_enfermidade + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
         let data = "";
-        $.post(url, data, listarAlergias);
+        $.post(url, data, function(response) {
+          listarAlergias(response);
+        }, 'json');
       }
 
       function editarStatusMedico(id_medicacao) {
@@ -2112,6 +2100,7 @@ try {
           $("#addAlergia").hide();
           $("#div_alergia").css("display", "block");
           $("#salvarAlergia").css("display", "block");
+          gerar_alergia();
         })
       });
 
@@ -2456,11 +2445,13 @@ try {
           async: true,
           success: function(response) {
             var situacoes_alergia = response;
-            let alergias = <?= $alergias; ?>;
+            const idsAlergiasPaciente = new Set(alergiasPaciente.map(function(alergia) {
+              return String(alergia.id_CID);
+            }));
             $('#id_CID_alergia').empty();
             $('#id_CID_alergia').append('<option selected disabled>Selecionar</option>');
             $.each(situacoes_alergia, function(i, item) {
-              if (!(alergias.includes(item))) {
+              if (!idsAlergiasPaciente.has(String(item.id_CID))) {
                 $('#id_CID_alergia').append('<option value="' + item.id_CID + '">' + item.descricao + '</option>');
               }
             });

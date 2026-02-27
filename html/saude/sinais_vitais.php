@@ -613,7 +613,9 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
                       <input type="hidden" name="metodo" value="incluir">
 
                       <div class="form-group">
-                        <input type="submit" value="Enviar" class="btn btn-primary">
+                        <div class="col-md-offset-3 col-md-6 text-right">
+                          <input type="submit" value="Registrar" class="btn btn-primary">
+                        </div>
                       </div>
                     </form>
 

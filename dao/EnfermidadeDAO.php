@@ -27,7 +27,7 @@ class EnfermidadeDAO
 
     public function getEnfermidadesAtivasPorFichaMedica($idFichaMedica)
     {
-        $sql = "SELECT sf.id_enfermidade, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica";
+        $sql = "SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':idFichaMedica', $idFichaMedica);
@@ -84,13 +84,16 @@ class EnfermidadeDAO
         return false;
     }
 
-    public function inativarByIdCid(int $idCid, $idFichaMedica)
+    public function inativarByIdCid(int $idEnfermidade, int $idFichaMedica): bool
     {
-        $sql = "UPDATE saude_enfermidades SET status = 0 WHERE id_CID = :idCid AND id_fichamedica = :idFichaMedica";
+        $sql = "UPDATE saude_enfermidades
+                SET status = 0
+                WHERE id_enfermidade = :idEnfermidade
+                  AND id_fichamedica = :idFichaMedica";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':idCid', $idCid);
-        $stmt->bindParam(':idFichaMedica', $idFichaMedica);
+        $stmt->bindParam(':idEnfermidade', $idEnfermidade, PDO::PARAM_INT);
+        $stmt->bindParam(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
 
         $stmt->execute();
 
