@@ -60,7 +60,8 @@ class Util
     {
         // Log interno
         error_log(sprintf(
-            "[ERRO] %s em %s:%d",
+            "[ERRO: %d] %s em %s:%d",
+            $e->getCode(),
             $e->getMessage(),
             $e->getFile(),
             $e->getLine()
