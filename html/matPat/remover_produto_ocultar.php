@@ -18,107 +18,151 @@ if (!isset($_SESSION['id_pessoa'])) {
 require_once ROOT . '/html/permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 22, 3);
 
-extract($_REQUEST);
-if (isset($total_total)) {
-    $qtd = intval($total_total);
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header("Location: " . WWW . "html/matPat/listar_produto.php?flag=error&msg=" . urlencode("Método de requisição inválido"));
+    exit();
 }
 
-function saida()
+function redirecionarRemocaoProduto($id_produto, $flag, $mensagem)
 {
-    extract($_REQUEST);
-    if ($total_total < 1) {
-        deleteEstoque();
-        return false;
-    }
+    header("Location: " . WWW . "html/matPat/remover_produto.php?id_produto=" . (int)$id_produto . "&flag=$flag&msg=" . urlencode($mensagem));
+    exit();
+}
+
+function redirecionarListaProdutos($flag, $mensagem)
+{
+    header("Location: " . WWW . "html/matPat/listar_produto.php?flag=$flag&msg=" . urlencode($mensagem));
+    exit();
+}
+
+function registrarSaida($id_produto, $total_total, $destino, $almoxarifado, $tipo_saida, $id_pessoa)
+{
     $pdo = Conexao::connect();
-    $estoque = $pdo->query("SELECT * FROM estoque WHERE id_produto=$id_produto AND id_almoxarifado=$almoxarifado;");
-    $estoque = $estoque->fetch(PDO::FETCH_ASSOC);
-    if (!$estoque) {
-        header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=danger&msg=Não há nenhum produto do tipo no almoxarifado selecionado");
+    try {
+        $stmtEstoque = $pdo->prepare("SELECT id_produto FROM estoque WHERE id_produto = :id_produto AND id_almoxarifado = :id_almoxarifado LIMIT 1");
+        $stmtEstoque->bindValue(':id_produto', $id_produto, PDO::PARAM_INT);
+        $stmtEstoque->bindValue(':id_almoxarifado', $almoxarifado, PDO::PARAM_INT);
+        $stmtEstoque->execute();
+
+        if (!$stmtEstoque->fetch(PDO::FETCH_ASSOC)) {
+            redirecionarRemocaoProduto($id_produto, 'danger', 'Não há nenhum produto do tipo no almoxarifado selecionado');
+        }
+
+        $pdo->beginTransaction();
+
+        $id_saida = getSaida($pdo, $destino, $almoxarifado, $tipo_saida, $id_pessoa);
+        if ($id_saida < 1) {
+            $id_saida = addSaida($pdo, $destino, $almoxarifado, $tipo_saida, $id_pessoa);
+        }
+
+        addISaida($pdo, $id_saida, $id_produto, $total_total);
+        deleteEstoque($pdo, $id_produto);
+
+        $pdo->commit();
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        redirecionarRemocaoProduto($id_produto, 'error', 'Houve um erro ao registrar a saída do item');
     }
-    $saida = getSaida();
+}
+
+function getSaida($pdo, $destino, $almoxarifado, $tipo_saida, $id_pessoa)
+{
+    $stmt = $pdo->prepare("SELECT id_saida FROM saida WHERE id_destino = :id_destino AND id_almoxarifado = :id_almoxarifado AND id_tipo = :id_tipo AND id_responsavel = :id_responsavel LIMIT 1");
+    $stmt->bindValue(':id_destino', $destino, PDO::PARAM_INT);
+    $stmt->bindValue(':id_almoxarifado', $almoxarifado, PDO::PARAM_INT);
+    $stmt->bindValue(':id_tipo', $tipo_saida, PDO::PARAM_INT);
+    $stmt->bindValue(':id_responsavel', $id_pessoa, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $saida = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$saida) {
-        $saida = addSaida();
-    }
-    addISaida($saida);
-    deleteEstoque();
-}
-
-function getSaida()
-{
-    extract($_REQUEST);
-    $id_pessoa = $_SESSION['id_pessoa'];
-    $pdo = Conexao::connect();
-    $saida = $pdo->query("SELECT * FROM saida WHERE id_destino=$destino AND id_almoxarifado=$almoxarifado AND id_tipo=$tipo_saida AND id_responsavel=$id_pessoa;");
-    $saida = $saida->fetch(PDO::FETCH_ASSOC);
-    return $saida;
-}
-
-function addSaida()
-{
-    extract($_REQUEST);
-    $id_pessoa = $_SESSION['id_pessoa'];
-    $pdo = Conexao::connect();
-    $saida = $pdo->prepare("INSERT INTO saida (id_saida, id_destino, id_almoxarifado, id_tipo, id_responsavel, `data`, hora) VALUES (default, :d, :a, :t, :i, CURDATE(), CURRENT_TIME());") or header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao registrar a saída do item");
-    $saida->bindValue(':d', $destino);
-    $saida->bindValue(':a', $almoxarifado);
-    $saida->bindValue(':t', $tipo_saida);
-    $saida->bindValue(':i', $id_pessoa);
-    $saida = $saida->execute();
-    return $saida;
-}
-
-function addISaida($saida)
-{
-    extract($_REQUEST);
-    $id_pessoa = $_SESSION['id_pessoa'];
-    $id_saida = $saida['id_saida'];
-    $pdo = Conexao::connect();
-    $pdo->exec("INSERT INTO isaida (id_isaida, id_saida, id_produto, qtd) VALUES ( default , $id_saida , $id_produto , $total_total );") or header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao registrar a saída do item");
-}
-
-function deleteEstoque()
-{
-    extract($_REQUEST);
-    $pdo = Conexao::connect();
-    $pdo->exec("DELETE FROM estoque WHERE id_produto=$id_produto;") or header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=error&msg=Houve um erro ao apagar registros de estoque do produto");
-}
-
-function ocultarProduto()
-{
-    $id_produto = trim(filter_input(INPUT_POST, 'id_produto', FILTER_SANITIZE_NUMBER_INT));
-
-    if(!$id_produto || $id_produto < 1){
-        http_response_code(400);
-        header("Location: ". WWW ."html/matPat/listar_produto.php?flag=error&msg=Erro ao ocultar produto, o id informado não é válido");
-        exit();
+        return 0;
     }
 
+    return (int) $saida['id_saida'];
+}
+
+function addSaida($pdo, $destino, $almoxarifado, $tipo_saida, $id_pessoa)
+{
+    $stmt = $pdo->prepare("INSERT INTO saida (id_saida, id_destino, id_almoxarifado, id_tipo, id_responsavel, `data`, hora) VALUES (default, :id_destino, :id_almoxarifado, :id_tipo, :id_responsavel, CURDATE(), CURRENT_TIME());");
+    $stmt->bindValue(':id_destino', $destino, PDO::PARAM_INT);
+    $stmt->bindValue(':id_almoxarifado', $almoxarifado, PDO::PARAM_INT);
+    $stmt->bindValue(':id_tipo', $tipo_saida, PDO::PARAM_INT);
+    $stmt->bindValue(':id_responsavel', $id_pessoa, PDO::PARAM_INT);
+    $stmt->execute();
+
+    return (int) $pdo->lastInsertId();
+}
+
+function addISaida($pdo, $id_saida, $id_produto, $total_total)
+{
+    $stmt = $pdo->prepare("INSERT INTO isaida (id_isaida, id_saida, id_produto, qtd) VALUES (default, :id_saida, :id_produto, :qtd)");
+    $stmt->bindValue(':id_saida', $id_saida, PDO::PARAM_INT);
+    $stmt->bindValue(':id_produto', $id_produto, PDO::PARAM_INT);
+    $stmt->bindValue(':qtd', $total_total, PDO::PARAM_INT);
+    $stmt->execute();
+}
+
+function deleteEstoque($pdo, $id_produto)
+{
+    $stmt = $pdo->prepare("DELETE FROM estoque WHERE id_produto = :id_produto");
+    $stmt->bindValue(':id_produto', $id_produto, PDO::PARAM_INT);
+    $stmt->execute();
+}
+
+function ocultarProduto($id_produto)
+{
     try {
         $pdo = Conexao::connect();
 
         $stmt = $pdo->prepare("UPDATE produto SET oculto=true WHERE id_produto = :id_produto");
-        $stmt->execute(['id_produto' => $id_produto]);
+        $stmt->bindValue(':id_produto', $id_produto, PDO::PARAM_INT);
+        $stmt->execute();
 
         $stmt = $pdo->prepare("UPDATE ientrada SET oculto=true WHERE id_produto = :id_produto");
-        $stmt->execute(['id_produto' => $id_produto]);
+        $stmt->bindValue(':id_produto', $id_produto, PDO::PARAM_INT);
+        $stmt->execute();
 
         $stmt = $pdo->prepare("UPDATE isaida SET oculto=true WHERE id_produto = :id_produto");
-        $stmt->execute(['id_produto' => $id_produto]);
+        $stmt->bindValue(':id_produto', $id_produto, PDO::PARAM_INT);
+        $stmt->execute();
 
-        header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=success&msg=Produto ocultado com sucesso");
-        exit();
+        redirecionarRemocaoProduto($id_produto, 'success', 'Produto ocultado com sucesso');
     } catch (PDOException $e) {
-        header("Location: ". WWW ."html/matPat/remover_produto.php?id_produto=$id_produto&flag=error&msg=Erro ao ocultar produto: " . $e->getMessage());
-        exit();
+        redirecionarRemocaoProduto($id_produto, 'error', 'Erro ao ocultar produto.');
     }
 }
 
-if ($qtd) {
-    // Tem no estoque
-    saida();
+$id_produto = filter_input(INPUT_POST, 'id_produto', FILTER_VALIDATE_INT);
+
+if (!$id_produto || $id_produto < 1) {
+    http_response_code(400);
+    redirecionarListaProdutos('error', 'Erro ao ocultar produto, o id informado não é válido');
 }
 
-ocultarProduto();
+$total_total = filter_input(INPUT_POST, 'total_total', FILTER_VALIDATE_INT);
+if ($total_total === false || $total_total === null) {
+    $total_total = 0;
+}
 
-header("Location: ". WWW ."html/matPat/listar_produto.php");
+if ($total_total < 0) {
+    http_response_code(400);
+    redirecionarRemocaoProduto($id_produto, 'error', 'Erro ao ocultar produto, a quantidade informada não é válida');
+}
+
+if ($total_total > 0) {
+    $destino = filter_input(INPUT_POST, 'destino', FILTER_VALIDATE_INT);
+    $almoxarifado = filter_input(INPUT_POST, 'almoxarifado', FILTER_VALIDATE_INT);
+    $tipo_saida = filter_input(INPUT_POST, 'tipo_saida', FILTER_VALIDATE_INT);
+
+    if (!$destino || !$almoxarifado || !$tipo_saida) {
+        http_response_code(400);
+        redirecionarRemocaoProduto($id_produto, 'error', 'Preencha tipo de saída, destino e almoxarifado para registrar a saída');
+    }
+
+    registrarSaida($id_produto, $total_total, $destino, $almoxarifado, $tipo_saida, (int) $_SESSION['id_pessoa']);
+}
+
+ocultarProduto($id_produto);
