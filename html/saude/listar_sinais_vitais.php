@@ -110,6 +110,11 @@ require_once "../personalizacao_display.php";
 							.attr('onclick', 'clicar("' + item.id_fichamedica + '")')
 							.html('<i class="glyphicon glyphicon-pencil"></i>')));
 			});
+			
+			// Inicializar DataTable 
+			if (!$.fn.DataTable.isDataTable('#datatable-default')) {
+				$('#datatable-default').DataTable();
+			}
 		});
 
 

@@ -120,6 +120,11 @@ require_once __DIR__ . "/../personalizacao_display.php";
 						.append($("<td />")
 							.html('<i class="glyphicon glyphicon-pencil"></i>')));
 			});
+			
+			// Inicializar DataTable 
+			if (!$.fn.DataTable.isDataTable('#datatable-default')) {
+				$('#datatable-default').DataTable();
+			}
 		});
 
 
