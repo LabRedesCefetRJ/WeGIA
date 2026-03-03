@@ -185,7 +185,7 @@ class SaudeDAO
 
     public function listarProntuariosDoHistorico($idPaciente)
     {
-        $sql = 'SELECT id_fichamedica_historico as idHistorico, data FROM saude_fichamedica_historico WHERE id_pessoa=:idPaciente';
+        $sql = 'SELECT id_fichamedica_historico as idHistorico, data FROM saude_fichamedica_historico WHERE id_pessoa=:idPaciente ORDER BY data DESC, id_fichamedica_historico DESC';
         $pdo = Conexao::connect();
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':idPaciente', $idPaciente);

@@ -63,7 +63,7 @@ if (!isset($teste)) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php?id_fichamedica=' . $id . '&id=' . $id);
 }
 
-$stmtExibirMedicamento = $pdo->prepare("SELECT * FROM saude_medicacao sm JOIN saude_atendimento sa ON(sm.id_atendimento=sa.id_atendimento) JOIN saude_fichamedica sf ON(sa.id_fichamedica=sf.id_fichamedica) WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1 and sf.id_fichamedica=:idFichaMedica");
+$stmtExibirMedicamento = $pdo->prepare("SELECT * FROM saude_medicacao sm JOIN saude_atendimento sa ON(sm.id_atendimento=sa.id_atendimento) JOIN saude_fichamedica sf ON(sa.id_fichamedica=sf.id_fichamedica) WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1 and sf.id_fichamedica=:idFichaMedica ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC");
 
 $stmtExibirMedicamento->bindValue(':idFichaMedica', $id, PDO::PARAM_INT);
 $stmtExibirMedicamento->execute();
@@ -338,6 +338,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 
       $('#datatable-default').DataTable({
         "dom": '<"row"<"col-sm-6"l><"col-sm-6"f>><"table-responsive"t>p',
+        "order": [],
         "language": {
           "search": "",
           "searchPlaceholder": "Search"
@@ -398,7 +399,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
           limparContainer(tabela);
 
           medaplicadas.forEach(item => {
-
+            const aplicacaoOrdem = item.aplicacao || "";
             item.aplicacao = formatarDataHoraBr(item.aplicacao);
             const tr = document.createElement("tr");
 
@@ -409,6 +410,7 @@ $dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
             td2.textContent = item.medicamento;
 
             const td3 = document.createElement("td");
+            td3.setAttribute("data-order", aplicacaoOrdem);
             td3.textContent = item.aplicacao;
 
             tr.append(td1, td2, td3);

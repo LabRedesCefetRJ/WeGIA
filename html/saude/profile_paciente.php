@@ -55,7 +55,7 @@ if (!isset($teste)) {
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
-$stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
+$stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica ORDER BY sf.data_diagnostico DESC, sf.id_enfermidade DESC");
 
 $stmtEnfermidades->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 
@@ -74,7 +74,7 @@ foreach ($enfermidades as $index => $enfermidade) {
 
 $enfermidades = json_encode($enfermidades);
 
-$stmtAlergias = $pdo->prepare("SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
+$stmtAlergias = $pdo->prepare("SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica ORDER BY sf.data_diagnostico DESC, sf.id_enfermidade DESC");
 $stmtAlergias->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtAlergias->execute();
 
@@ -86,7 +86,7 @@ foreach ($alergias as $index => $alergia) {
 
 $alergias = json_encode($alergias);
 
-$stmtSinaisVitais = $pdo->prepare("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
+$stmtSinaisVitais = $pdo->prepare("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica ORDER BY sv.data DESC, sv.id_sinais_vitais DESC");
 
 $stmtSinaisVitais->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtSinaisVitais->execute();
@@ -96,6 +96,7 @@ $sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
 foreach ($sinaisvitais as $key => $value) {
   //formata data e observacao
   $data = new DateTime($value['data']);
+  $sinaisvitais[$key]['data_ordem'] = $data->format('Y-m-d H:i:s');
   $sinaisvitais[$key]['data'] = $data->format('d/m/Y h:i:s');
   $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
 }
@@ -119,7 +120,8 @@ $sqlDescricaoMedica = "SELECT
   JOIN saude_medicos m ON (a.id_medico = m.id_medico)
   LEFT JOIN funcionario fAnulador ON (a.id_funcionario_anulacao = fAnulador.id_funcionario)
   LEFT JOIN pessoa pAnulador ON (pAnulador.id_pessoa = fAnulador.id_pessoa)
-  WHERE a.id_fichamedica = :idFichaMedica";
+  WHERE a.id_fichamedica = :idFichaMedica
+  ORDER BY a.data_atendimento DESC, a.id_atendimento DESC";
 
 $stmtDescricaoMedica = $pdo->prepare($sqlDescricaoMedica);
 
@@ -134,8 +136,10 @@ foreach ($descricao_medica as $key => $value) {
 
   if (!empty($value['data_atendimento'])) {
     $data = new DateTime($value['data_atendimento']);
+    $descricao_medica[$key]['data_atendimento_ordem'] = $data->format('Y-m-d H:i:s');
     $descricao_medica[$key]['data_atendimento'] = $data->format('d/m/Y');
   } else {
+    $descricao_medica[$key]['data_atendimento_ordem'] = '';
     $descricao_medica[$key]['data_atendimento'] = '';
   }
 
@@ -152,7 +156,7 @@ foreach ($descricao_medica as $key => $value) {
 
 $descricao_medica = json_encode($descricao_medica);
 
-$stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica");
+$stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC");
 
 $stmtMedicacoes->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtMedicacoes->execute();
@@ -162,6 +166,7 @@ $exibimed = $stmtMedicacoes->fetchAll(PDO::FETCH_ASSOC);
 foreach ($exibimed as $key => $value) {
   //formata data
   $data = new DateTime($value['data_atendimento']);
+  $exibimed[$key]['data_atendimento_ordem'] = $data->format('Y-m-d H:i:s');
   $exibimed[$key]['data_atendimento'] = $data->format('d/m/Y');
 }
 
@@ -550,7 +555,7 @@ try {
         tr.append($("<td>").text(item.medicoNome));
         tr.append($("<td>").text(item.enfermeiraNome + ' ' + item.enfermeiraSobrenome));
         tr.append($("<td>").html(item.descricao));
-        tr.append($("<td>").text(item.data_atendimento));
+        tr.append($("<td>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento));
         tr.append(
           $("<td class='coluna-status'>")
             .text(statusTexto)
@@ -701,7 +706,7 @@ try {
       $.each(exibimed, function(i, item) {
         $("#exibimed")
           .append($("<tr>")
-            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.data_atendimento))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento))
             .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + item.horario + ", " + item.duracao + "."))
             .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
             .append($("<td style='text-align: center; vertical-align: middle;'>")
@@ -721,7 +726,7 @@ try {
           const tabela = document.getElementById("exibiaplicacao");
 
           medaplicadas.forEach(item => {
-
+            const aplicacaoOrdem = item.aplicacao || "";
             item.aplicacao = formatarDataBr(item.aplicacao)
 
             const tr = document.createElement("tr");
@@ -733,6 +738,7 @@ try {
             td2.textContent = item.medicamento;
 
             const td3 = document.createElement("td");
+            td3.setAttribute("data-order", aplicacaoOrdem);
             td3.textContent = item.aplicacao;
 
             tr.append(td1, td2, td3);
@@ -747,14 +753,10 @@ try {
 
     $(function() {
       $('#datatable-docfuncional').DataTable({
-        "order": [
-          [0, "asc"]
-        ]
+        "order": []
       });
       $('.datatable-docfuncional').DataTable({
-        "order": [
-          [0, "asc"]
-        ]
+        "order": []
       });
     });
 
@@ -2624,7 +2626,7 @@ try {
         $.each(sinaisvitais, function(i, item) {
           $("#exibe-sinais-vitais")
             .append($("<tr>")
-              .append($("<td>").text(item.data))
+              .append($("<td>").attr("data-order", item.data_ordem || "").text(item.data))
               .append($("<td>").text(item.nome + " " + (item.sobrenome !== null ? item.sobrenome : "")))
               .append($("<td>").text(item.saturacao))
               .append($("<td>").text(item.pressao_arterial))
@@ -2638,9 +2640,7 @@ try {
       });
       $(document).ready(function() {
         $('#tab-sin-vit').DataTable({
-          "order": [
-            [0, "desc"]
-          ]
+          "order": []
         });
       });
 
