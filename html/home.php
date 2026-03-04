@@ -828,7 +828,7 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Configurações Gerais</h4>
 							</div>
 						</a>
-						<a href="<?= WWW ?>html/geral/editar_permissoes.php">
+						<a href="<?= WWW ?>html/geral/cadastrar_permissoes.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa fa-key"></i>
 								<h4>Permissões</h4>

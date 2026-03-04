@@ -16,7 +16,7 @@ class AlmoxarifadoControle
     {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
-        $regex = '#^((\.\./|' . WWW . ')html/(matPat|geral)/(editar_permissoes|cadastro_entrada|cadastro_saida|listar_almox|remover_produto)\.php(\?id_produto=\d+)?)$#';
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat|geral)/(cadastrar_permissoes|cadastro_entrada|cadastro_saida|listar_almox|remover_produto)\.php(\?id_produto=\d+)?)$#';
 
         try {
             if (!filter_var($nextPage, FILTER_VALIDATE_URL))

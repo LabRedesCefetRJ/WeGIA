@@ -13,6 +13,31 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+
+$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+
+$acoesResult = mysqli_query($conexao, "SELECT id_acao, descricao FROM acao ORDER BY descricao");
+$acoes = [];
+while ($acao = $acoesResult->fetch_array(MYSQLI_ASSOC)) {
+	$acoes[] = $acao;
+}
+
+$cargosResult = mysqli_query($conexao, "SELECT DISTINCT c.id_cargo, c.cargo FROM cargo c JOIN permissao p ON p.id_cargo = c.id_cargo WHERE c.id_cargo <> 2 ORDER BY c.cargo");
+$cargos = [];
+while ($cargo = $cargosResult->fetch_array(MYSQLI_ASSOC)) {
+	$cargos[] = $cargo;
+}
+
+$permissoesPorCargo = [];
+$permissoesResult = mysqli_query($conexao, "SELECT p.id_cargo, p.id_recurso, p.id_acao, r.descricao AS recurso FROM permissao p JOIN recurso r ON p.id_recurso = r.id_recurso ORDER BY p.id_cargo, r.descricao");
+while ($permissaoCargo = $permissoesResult->fetch_array(MYSQLI_ASSOC)) {
+	$idCargo = (int)$permissaoCargo['id_cargo'];
+	if (!isset($permissoesPorCargo[$idCargo])) {
+		$permissoesPorCargo[$idCargo] = [];
+	}
+	$permissoesPorCargo[$idCargo][] = $permissaoCargo;
+}
 
 permissao($_SESSION['id_pessoa'], 91, 1);
 
@@ -148,25 +173,80 @@ require_once ROOT . "/html/personalizacao_display.php";
 								<thead>
 									<tr>
 										<th>Cargo</th>
-										<th>Recurso</th>
+										<th>Recurso disponível</th>
 										<th>Tipo permissão</th>
-										<th>Deletar permissão</th>
+										<th>Ações</th>
 									</tr>
 								</thead>
 								<tbody id="tabela">
 									<?php
-									$permissoes = mysqli_query($conexao, "SELECT c.cargo as cargo, c.id_cargo as cargo_id, r.descricao as recurso, r.id_recurso as recurso_id, a.descricao as acao, a.id_acao as acao_id FROM permissao p join cargo c on p.id_cargo = c.id_cargo join recurso r on p.id_recurso = r.id_recurso join acao a on a.id_acao = p.id_acao");
-									while ($row = $permissoes->fetch_array(MYSQLI_ASSOC)) {
-										$c = $row['cargo_id'];
-										$r = $row['recurso_id'];
-										$a = $row['acao_id'];
-										echo "<tr> <td>" . $row['cargo'] . "</td> <td>" . $row['recurso'] . "</td> <td>" . $row['acao'] . "</td> <td><a href='deletar_permissao.php?c=$c&r=$r&a=$a' class='btn btn-danger'>Deletar</button></td> </tr>";
+									foreach ($cargos as $cargo) {
+										$cargoId = (int)$cargo['id_cargo'];
+										$rowId = 'cargo_' . $cargoId;
+										$permissoesCargo = $permissoesPorCargo[$cargoId] ?? [];
+										$temPermissao = !empty($permissoesCargo);
+
+										echo "<tr>";
+										echo "<td>" . htmlspecialchars($cargo['cargo']) . "</td>";
+
+										echo "<td>";
+										echo "<select id='recurso_" . $rowId . "' class='form-control recurso-select' style='min-width:220px;' " . ($temPermissao ? '' : 'disabled') . ">";
+
+										if (!$temPermissao) {
+											echo "<option value=''>Sem recurso para este cargo</option>";
+										} else {
+											foreach ($permissoesCargo as $index => $permissaoCargo) {
+												$recursoId = (int)$permissaoCargo['id_recurso'];
+												$acaoId = (int)$permissaoCargo['id_acao'];
+												$selected = $index === 0 ? ' selected' : '';
+												echo "<option value='" . $recursoId . "' data-acao='" . $acaoId . "'" . $selected . ">" . htmlspecialchars($permissaoCargo['recurso']) . "</option>";
+											}
+										}
+
+										echo "</select>";
+										echo "</td>";
+
+										echo "<td>";
+										echo "<select id='acao_" . $rowId . "' class='form-control acao-select' style='min-width:180px;' " . ($temPermissao ? '' : 'disabled') . ">";
+										foreach ($acoes as $acao) {
+											$acaoId = (int)$acao['id_acao'];
+											$selectedAcao = ($temPermissao && isset($permissoesCargo[0]) && (int)$permissoesCargo[0]['id_acao'] === $acaoId) ? ' selected' : '';
+											echo "<option value='" . $acaoId . "'" . $selectedAcao . ">" . htmlspecialchars($acao['descricao']) . "</option>";
+										}
+										echo "</select>";
+										echo "<div id='atual_" . $rowId . "' style='color:#d2322d; font-size:11px; margin-top:4px;'></div>";
+										echo "</td>";
+
+										echo "<td>";
+										echo "<div style='display:inline-flex; align-items:center; gap:6px; white-space:nowrap;'>";
+										echo "<form method='post' action='" . WWW . "controle/control.php' class='form-acao' style='display:inline-block; margin:0;'>";
+										echo Csrf::inputField();
+										echo "<input type='hidden' name='nomeClasse' value='FuncionarioControle'>";
+										echo "<input type='hidden' name='metodo' value='alterarPermissao'>";
+										echo "<input type='hidden' name='cargo' value='" . $cargoId . "'>";
+										echo "<input type='hidden' name='recurso' class='recurso-hidden'>";
+										echo "<input type='hidden' name='acao' class='acao-hidden'>";
+										echo "<button type='submit' class='btn btn-primary btn-alterar' data-row='" . $rowId . "' " . ($temPermissao ? '' : 'disabled') . ">Alterar</button>";
+										echo "</form> ";
+
+										echo "<form method='post' action='" . WWW . "controle/control.php' class='form-acao' style='display:inline-block; margin:0;'>";
+										echo Csrf::inputField();
+										echo "<input type='hidden' name='nomeClasse' value='FuncionarioControle'>";
+										echo "<input type='hidden' name='metodo' value='excluirPermissao'>";
+										echo "<input type='hidden' name='cargo' value='" . $cargoId . "'>";
+										echo "<input type='hidden' name='recurso' class='recurso-hidden'>";
+										echo "<input type='hidden' name='acao' class='acao-hidden'>";
+										echo "<button type='submit' class='btn btn-danger btn-excluir' data-row='" . $rowId . "' " . ($temPermissao ? '' : 'disabled') . ">Excluir</button>";
+										echo "</form>";
+										echo "</div>";
+										echo "</td>";
+										echo "</tr>";
 									}
 									?>
 								</tbody>
 							</table>
 						</div><br>
-						<a href="editar_permissoes.php" class="btn btn-danger">Voltar</a>
+						<a href="cadastrar_permissoes.php" class="btn btn-danger">Voltar</a>
 					</section>
 			</section>
 		</div>
@@ -185,6 +265,56 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- Vendor -->
 	<script>
 		$(document).ready(function() {
+			function atualizarIndicadorAtual(rowId) {
+				const recursoSelect = $('#recurso_' + rowId);
+				const acaoSelect = $('#acao_' + rowId);
+				const acaoAtualId = String(recursoSelect.find('option:selected').data('acao') || '');
+				const acaoSelecionada = String(acaoSelect.val() || '');
+
+				if (acaoAtualId && acaoSelecionada === acaoAtualId) {
+					$('#atual_' + rowId).text('*Atual');
+				} else {
+					$('#atual_' + rowId).text('');
+				}
+			}
+
+			$('.recurso-select').each(function() {
+				const recursoSelect = $(this);
+				const rowId = recursoSelect.attr('id').replace('recurso_', '');
+				const acaoAtualId = recursoSelect.find('option:selected').data('acao');
+				if (acaoAtualId) {
+					$('#acao_' + rowId).val(String(acaoAtualId));
+				}
+				atualizarIndicadorAtual(rowId);
+			});
+
+			$('.recurso-select').on('change', function() {
+				const recursoSelect = $(this);
+				const rowId = recursoSelect.attr('id').replace('recurso_', '');
+				const acaoAtualId = recursoSelect.find('option:selected').data('acao');
+				if (acaoAtualId) {
+					$('#acao_' + rowId).val(String(acaoAtualId));
+				}
+				atualizarIndicadorAtual(rowId);
+			});
+
+			$('.acao-select').on('change', function() {
+				const acaoSelect = $(this);
+				const rowId = acaoSelect.attr('id').replace('acao_', '');
+				atualizarIndicadorAtual(rowId);
+			});
+
+			$('.btn-alterar, .btn-excluir').on('click', function() {
+				const button = $(this);
+				const rowId = button.data('row');
+				const recurso = $('#recurso_' + rowId).val();
+				const acao = $('#acao_' + rowId).val();
+				const form = button.closest('form');
+
+				form.find('.recurso-hidden').val(recurso);
+				form.find('.acao-hidden').val(acao);
+			});
+
 			setTimeout(function() {
 				$(".alert").fadeOut();
 				window.history.replaceState({}, document.title, window.location.pathname);
