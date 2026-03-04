@@ -368,6 +368,11 @@ extract($_SESSION);
 	}
 
 	function verificar_recursos_cargo(cargo_id) {
+		if (!cargo_id) {
+			atualizarEstadoPermissoes([]);
+			return;
+		}
+
 		atualizarEstadoPermissoes([]);
 
 		url = `../../controle/control.php?nomeClasse=CargoControle&metodo=listarRecursos&cargo=${encodeURIComponent(cargo_id)}&_=${Date.now()}`;
@@ -397,6 +402,15 @@ extract($_SESSION);
 		})
 	}
 
+	function revalidarCargoSelecionado() {
+		const cargoSelecionado = $("#cargo").val();
+		if (cargoSelecionado) {
+			verificar_recursos_cargo(cargoSelecionado);
+		} else {
+			atualizarEstadoPermissoes([]);
+		}
+	}
+
 	$(document).ready(function() {
 		$("#formulario").on("submit", function(e) {
 			const todasPermissoesCadastradas = $("#enviar").data("todas-permissoes") === true;
@@ -420,6 +434,12 @@ extract($_SESSION);
 		$("#cargo").change(function() {
 			verificar_recursos_cargo($(this).val());
 		});
+
+		revalidarCargoSelecionado();
+	});
+
+	window.addEventListener("pageshow", function() {
+		revalidarCargoSelecionado();
 	});
 </script>
 <script src="../geral/msg.js"></script>
