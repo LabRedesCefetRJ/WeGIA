@@ -250,16 +250,54 @@ try {
 
 
 <script>
+  function ajustarLarguraEditores() {
+    ['despacho', 'prontuario'].forEach(function(id) {
+      const instancia = CKEDITOR.instances[id];
+      if (instancia && instancia.container) {
+        instancia.container.setStyle('width', '100%');
+      }
+    });
+  }
+
+  function ajustarEspacamentoConteudoEditor(editorInstance) {
+    if (!editorInstance || !editorInstance.document) {
+      return;
+    }
+
+    const body = editorInstance.document.getBody();
+    if (!body) {
+      return;
+    }
+
+    body.setStyle('padding-bottom', '12px');
+    body.setStyle('box-sizing', 'border-box');
+  }
+
   $(function() {
     localStorage.setItem("id_ficha_medica", 'null')
 
     $("#header").load("../header.php");
     $(".menuu").load("../menu.php");
 
-    var editor = CKEDITOR.replace('despacho');
+    var editor = CKEDITOR.replace('despacho', {
+      width: '100%'
+    });
     editor.on('required', function(e) {
       alert("Por favor, informe a descrição!");
       e.cancel();
+    });
+
+    editor.on('instanceReady', function() {
+      ajustarLarguraEditores();
+      ajustarEspacamentoConteudoEditor(editor);
+    });
+
+    $(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function() {
+      ajustarLarguraEditores();
+    });
+
+    $(window).on('resize', function() {
+      ajustarLarguraEditores();
     });
 
   });
@@ -280,25 +318,27 @@ try {
     margin-bottom: 15px;
   }
 
+  .table,
+  .table-responsive {
+    width: 100%;
+  }
+
   #div_texto {
     width: 100%;
   }
 
-
-  #cke_despacho {
-    height: 500px;
+  #div_texto .cke {
+    width: 100% !important;
+    margin-bottom: 15px;
   }
 
-  #cke_5_contents {
-    height: 87% !important;
+  #div_texto .cke_contents,
+  #cke_prontuario .cke_contents {
+    min-height: 320px;
   }
 
-  .cke_inner {
-    height: 500px;
-  }
-
-  #cke_1_contents {
-    height: 455px !important;
+  #cke_prontuario {
+    margin-bottom: 15px;
   }
 
   .col-md-3 {
@@ -703,6 +743,7 @@ try {
 
     $(function() {
       var exibimed = <?= $exibimed ?>;
+      $("#exibimed").empty();
       $.each(exibimed, function(i, item) {
         $("#exibimed")
           .append($("<tr>")
@@ -752,12 +793,8 @@ try {
 
 
     $(function() {
-      $('#datatable-docfuncional').DataTable({
-        "order": []
-      });
-      $('.datatable-docfuncional').DataTable({
-        "order": []
-      });
+      // DataTables removido dessas tabelas dinâmicas para evitar conflito
+      // de largura/renderização quando a aba ainda está oculta.
     });
 
     function escrevermed() {
@@ -1651,7 +1688,7 @@ try {
 
                       <div class="form-group">
                         <hr class="dotted short">
-                        <table class="table table-bordered table-striped mb-none datatable-docfuncional" ">
+                        <table class="table table-bordered table-striped mb-none">
                           <thead>
                             <tr style=" font-size:15px;">
                           <th>Data do atendimento</th>
@@ -1765,7 +1802,7 @@ try {
 
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany" for="texto">Descrição:<sup class="obrig">*</sup></label>
-                            <div class='col-md-6' id='div_texto' style="height: 499px;">
+                            <div class='col-md-6' id='div_texto'>
                               <textarea cols='30' rows='3' id='despacho' name='texto' class='form-control' value="teste" placeholder="teste" required></textarea>
                             </div>
                           </div>
@@ -1808,7 +1845,7 @@ try {
 
                       <br>
                       <hr class="dotted short">
-                      <table class="table table-bordered table-striped mb-none datatable-docfuncional" id="tabmed">
+                      <table class="table table-bordered table-striped mb-none" id="tabmed">
                         <thead>
                           <tr style="font-size:15px;">
                             <th>Medicação</th>
@@ -2539,7 +2576,6 @@ try {
         }
 
         function adicionarLinhaMedicacao(medicacao) {
-          $("#tabmed").find(".dataTables_empty").hide();
           $("#tabmed tbody").append(
             $("<tr>")
               .addClass("tabmed")
@@ -2647,12 +2683,18 @@ try {
 
 
       var editor2 = CKEDITOR.replace('prontuario', {
-        readOnly: true
+        readOnly: true,
+        width: '100%'
       });
 
       editor2.on('required', function(e) {
         alert("Por favor, informe a descrição!");
         e.cancel();
+      });
+
+      editor2.on('instanceReady', function() {
+        ajustarLarguraEditores();
+        ajustarEspacamentoConteudoEditor(editor2);
       });
 
 
