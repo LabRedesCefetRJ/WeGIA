@@ -32,12 +32,27 @@
 			$saida = $pdo->query("SELECT isa.id_produto as id, isa.qtd, sa.id_almoxarifado as almox from isaida isa inner join saida sa on sa.id_saida = isa.id_saida")->fetchAll(PDO::FETCH_ASSOC);
 			foreach ($entrada as $item){
 				extract($item);
-				$prod = $pdo->query("SELECT * from estoque WHERE id_produto=$id AND id_almoxarifado=$almox;")->fetch(PDO::FETCH_ASSOC);
+				$stmt = $pdo->prepare("SELECT * from estoque WHERE id_produto = :id AND id_almoxarifado = :almox;");
+				$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+				$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+				$stmt->execute();
+				$prod = $stmt->fetch(PDO::FETCH_ASSOC);
 				if (!$prod){
 					// Cria um registro de estoque caso não tenha
-					$pdo->exec("INSERT INTO estoque (id_produto, id_almoxarifado, qtd) VALUES ($id , $almox , 0)");
-					$desc = $pdo->query("SELECT descricao, codigo, oculto FROM produto WHERE id_produto=$id;")->fetch(PDO::FETCH_ASSOC);
-					$almoxarifado = $pdo->query("SELECT descricao_almoxarifado as descr FROM almoxarifado WHERE id_almoxarifado=$almox;")->fetch(PDO::FETCH_ASSOC);
+					$stmt = $pdo->prepare("INSERT INTO estoque (id_produto, id_almoxarifado, qtd) VALUES (:id, :almox, 0)");
+					$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+					$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+					$stmt->execute();
+
+					$stmt = $pdo->prepare("SELECT descricao, codigo, oculto FROM produto WHERE id_produto = :id;");
+					$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+					$stmt->execute();
+					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+					$stmt = $pdo->prepare("SELECT descricao_almoxarifado as descr FROM almoxarifado WHERE id_almoxarifado = :almox;");
+					$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+					$stmt->execute();
+					$almoxarifado = $stmt->fetch(PDO::FETCH_ASSOC);
 					extract($desc);
 					$log .= "Registro de estoque criado para $descricao | $codigo ".($oculto ? "[Oculto] " : "")."no almoxarifado ".$almoxarifado["descr"]."\n";
 					$added++;
@@ -45,12 +60,27 @@
 			}
 			foreach ($saida as $item){
 				extract($item);
-				$prod = $pdo->query("SELECT * from estoque WHERE id_produto=$id AND id_almoxarifado=$almox;")->fetch(PDO::FETCH_ASSOC);
+				$stmt = $pdo->prepare("SELECT * from estoque WHERE id_produto = :id AND id_almoxarifado = :almox;");
+				$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+				$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+				$stmt->execute();
+				$prod = $stmt->fetch(PDO::FETCH_ASSOC);
 				if (!$prod){
 					// Cria um registro de estoque caso não tenha
-					$pdo->exec("INSERT INTO estoque (id_produto, id_almoxarifado, qtd) VALUES ($id , $almox , 0)");
-					$desc = $pdo->query("SELECT descricao, codigo, oculto FROM produto WHERE id_produto=$id;")->fetch(PDO::FETCH_ASSOC);
-					$almoxarifado = $pdo->query("SELECT descricao_almoxarifado as descr FROM almoxarifado WHERE id_almoxarifado=$almox;")->fetch(PDO::FETCH_ASSOC);
+					$stmt = $pdo->prepare("INSERT INTO estoque (id_produto, id_almoxarifado, qtd) VALUES (:id, :almox, 0)");
+					$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+					$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+					$stmt->execute();
+
+					$stmt = $pdo->prepare("SELECT descricao, codigo, oculto FROM produto WHERE id_produto = :id;");
+					$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+					$stmt->execute();
+					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+					$stmt = $pdo->prepare("SELECT descricao_almoxarifado as descr FROM almoxarifado WHERE id_almoxarifado = :almox;");
+					$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+					$stmt->execute();
+					$almoxarifado = $stmt->fetch(PDO::FETCH_ASSOC);
 					extract($desc);
 					$log .= "Registro de estoque criado para $descricao | $codigo ".($oculto ? "[Oculto]" : "")." no almoxarifado ".$almoxarifado["descr"]."\n";
 					$added++;
@@ -60,8 +90,17 @@
 			foreach ($estoque as $key => $item){
 				// Percorre cada registro no estoque
 				extract($item);
-				$entrada = $pdo->query("SELECT ientrada.qtd from ientrada inner join entrada on entrada.id_entrada = ientrada.id_entrada where ientrada.id_produto=$id_produto and entrada.id_almoxarifado=$id_almoxarifado")->fetchAll(PDO::FETCH_ASSOC);
-				$saida = $pdo->query("SELECT isaida.qtd from isaida inner join saida on saida.id_saida = isaida.id_saida where isaida.id_produto=$id_produto and saida.id_almoxarifado=$id_almoxarifado")->fetchAll(PDO::FETCH_ASSOC);
+				$stmt = $pdo->prepare("SELECT ientrada.qtd from ientrada inner join entrada on entrada.id_entrada = ientrada.id_entrada where ientrada.id_produto = :id_produto and entrada.id_almoxarifado = :id_almoxarifado");
+				$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
+				$stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
+				$stmt->execute();
+				$entrada = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+				$stmt = $pdo->prepare("SELECT isaida.qtd from isaida inner join saida on saida.id_saida = isaida.id_saida where isaida.id_produto = :id_produto and saida.id_almoxarifado = :id_almoxarifado");
+				$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
+				$stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
+				$stmt->execute();
+				$saida = $stmt->fetchAll(PDO::FETCH_ASSOC);
 				$qtd_total = 0;
 				foreach ($entrada as $item){
 					// Adiciona o total de entradas
@@ -75,16 +114,26 @@
 					echo("ID: $id_produto ALMOX: $id_almoxarifado QTD: $qtd => $qtd_total<br/>");
 				if ($qtd != $qtd_total){
 					// Se a quantidade em estoque for diferente de entrada - saída
-					$desc = $pdo->query("SELECT descricao, codigo, oculto FROM produto WHERE id_produto=".$id_produto)->fetch(PDO::FETCH_ASSOC);
+					$stmt = $pdo->prepare("SELECT descricao, codigo, oculto FROM produto WHERE id_produto = :id_produto");
+					$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
+					$stmt->execute();
+					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
 					extract($desc);
-					$pdo->exec("UPDATE estoque SET qtd=$qtd_total WHERE id_produto=$id_produto AND id_almoxarifado=$id_almoxarifado;");
+					$stmt = $pdo->prepare("UPDATE estoque SET qtd = :qtd_total WHERE id_produto = :id_produto AND id_almoxarifado = :id_almoxarifado;");
+					$stmt->bindValue(':qtd_total', (int) $qtd_total, PDO::PARAM_INT);
+					$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
+					$stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
+					$stmt->execute();
 					$changed++;
 					$log .= "Estoque de $descricao | $codigo ".($oculto ? "[Oculto] " : "" )." alterado de $qtd para $qtd_total\n";
 					continue;
 				}
 				if ($qtd_total < 0 && AVISO){
 					// Se houverem registros em estoque com quantidade negativa
-					$desc = $pdo->query("SELECT descricao, codigo, oculto FROM produto WHERE id_produto=".$id_produto)->fetch(PDO::FETCH_ASSOC);
+					$stmt = $pdo->prepare("SELECT descricao, codigo, oculto FROM produto WHERE id_produto = :id_produto");
+					$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
+					$stmt->execute();
+					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
 					extract($desc);
 					$log .= "AVISO: $descricao | $codigo ".($oculto ? "[Oculto] " : "" )." possui estoque negativo ($qtd_total)\n";
 					$warns++;
@@ -188,9 +237,21 @@
 				foreach ($val as $almox => $qtd){
 					// Percorre as colunas
 
-					$estoque = $pdo->query("SELECT qtd FROM estoque WHERE id_produto=$id AND id_almoxarifado=$almox")->fetch(PDO::FETCH_ASSOC);
-					$desc = $pdo->query("SELECT descricao, codigo, oculto FROM produto WHERE id_produto=$id;")->fetch(PDO::FETCH_ASSOC);
-					$almoxarifado = $pdo->query("SELECT descricao_almoxarifado FROM almoxarifado WHERE id_almoxarifado=$almox;")->fetch(PDO::FETCH_ASSOC);
+					$stmt = $pdo->prepare("SELECT qtd FROM estoque WHERE id_produto = :id AND id_almoxarifado = :almox");
+					$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+					$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+					$stmt->execute();
+					$estoque = $stmt->fetch(PDO::FETCH_ASSOC);
+
+					$stmt = $pdo->prepare("SELECT descricao, codigo, oculto FROM produto WHERE id_produto = :id;");
+					$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+					$stmt->execute();
+					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+					$stmt = $pdo->prepare("SELECT descricao_almoxarifado FROM almoxarifado WHERE id_almoxarifado = :almox;");
+					$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+					$stmt->execute();
+					$almoxarifado = $stmt->fetch(PDO::FETCH_ASSOC);
 
 					if ($desc && $almoxarifado){
 						// Caso o produto e o almoxarifado estejam cadastrados
@@ -203,11 +264,20 @@
 							if ($qtd_atual != $qtd){
 								// Se a quantidade em estoque não bater com a entrada e a saida
 								$dif = $qtd - $qtd_atual;
-								$changed += $pdo->exec("UPDATE estoque SET qtd=$qtd WHERE id_produto=$id AND id_almoxarifado=$almox;");
+								$stmt = $pdo->prepare("UPDATE estoque SET qtd = :qtd WHERE id_produto = :id AND id_almoxarifado = :almox;");
+								$stmt->bindValue(':qtd', (int) $qtd, PDO::PARAM_INT);
+								$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+								$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+								$stmt->execute();
+								$changed += $stmt->rowCount();
 								$log .= abs($dif)." itens ($descricao | $codigo ".($oculto ? "[Oculto]" : "" ).") ".($dif > 0 ? "adicionados no" : "retirados do")." almoxarifado $descricao_almoxarifado.\n";
 							}else{
 								// Caso a quantidade dos registros existentes esteja certa
-								$pdo->exec("UPDATE estoque SET qtd=$qtd WHERE id_produto=$id AND id_almoxarifado=$almox;");
+								$stmt = $pdo->prepare("UPDATE estoque SET qtd = :qtd WHERE id_produto = :id AND id_almoxarifado = :almox;");
+								$stmt->bindValue(':qtd', (int) $qtd, PDO::PARAM_INT);
+								$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+								$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+								$stmt->execute();
 								$updates++;
 								if ($qtd < 0 && AVISO){
 									// Caso a quantidade dos registros existentes esteja certa e seja negativa
@@ -217,7 +287,12 @@
 							}
 						}else{
 							// Caso o produto não esteja em estoque
-							$added += $pdo->exec("INSERT INTO estoque (id_produto, id_almoxarifado, qtd) VALUES ( $id , $almox , $qtd );");
+							$stmt = $pdo->prepare("INSERT INTO estoque (id_produto, id_almoxarifado, qtd) VALUES (:id, :almox, :qtd);");
+							$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+							$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
+							$stmt->bindValue(':qtd', (int) $qtd, PDO::PARAM_INT);
+							$stmt->execute();
+							$added += $stmt->rowCount();
 							if ($qtd < 0){
 								// Caso a quantidade seja negativa
 								$log .= "Registro criado: $descricao | $codigo ".($oculto ? "[Oculto]" : "" )." possui ".$somaSaida[$id][$almox]." saídas e ".$somaEntrada[$id][$almox]." entradas. O estoque está negativo ($qtd).\n";
@@ -239,8 +314,17 @@
 			$estoque = $pdo->query("SELECT * FROM estoque;")->fetchAll(PDO::FETCH_ASSOC);
 			foreach ($estoque as $key => $item){
 				extract($item);
-				$entrada = $pdo->query("SELECT ientrada.qtd from ientrada inner join entrada on entrada.id_entrada = ientrada.id_entrada where ientrada.id_produto=$id_produto and entrada.id_almoxarifado=$id_almoxarifado")->fetchAll(PDO::FETCH_ASSOC);
-				$saida = $pdo->query("SELECT isaida.qtd from isaida inner join saida on saida.id_saida = isaida.id_saida where isaida.id_produto=$id_produto and saida.id_almoxarifado=$id_almoxarifado")->fetchAll(PDO::FETCH_ASSOC);
+				$stmt = $pdo->prepare("SELECT ientrada.qtd from ientrada inner join entrada on entrada.id_entrada = ientrada.id_entrada where ientrada.id_produto = :id_produto and entrada.id_almoxarifado = :id_almoxarifado");
+				$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
+				$stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
+				$stmt->execute();
+				$entrada = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+				$stmt = $pdo->prepare("SELECT isaida.qtd from isaida inner join saida on saida.id_saida = isaida.id_saida where isaida.id_produto = :id_produto and saida.id_almoxarifado = :id_almoxarifado");
+				$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
+				$stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
+				$stmt->execute();
+				$saida = $stmt->fetchAll(PDO::FETCH_ASSOC);
 				$qtd_total = 0;
 				foreach ($entrada as $item){
 					$qtd_total += $item['qtd'];
@@ -253,13 +337,19 @@
 				continue;
 				if (!isset($somaEntrada[$item['id_produto']][$item['id_almoxarifado']]) && !isset($somaEntrada[$item['id_produto']][$item['id_almoxarifado']]) && $item['qtd'] != 0){
 					// Verifica se há registros de entrada nem saida para o produto e zera caso não esteja
-					$desc = $pdo->query("SELECT descricao, codigo, oculto FROM produto WHERE id_produto=".$item['id_produto'])->fetch(PDO::FETCH_ASSOC);
+					$stmt = $pdo->prepare("SELECT descricao, codigo, oculto FROM produto WHERE id_produto = :id_produto");
+					$stmt->bindValue(':id_produto', (int) $item['id_produto'], PDO::PARAM_INT);
+					$stmt->execute();
+					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
 					extract($desc);
 					if (AVISO){
 						$log .= "AVISO: ".$item['id_produto']." | $descricao | $codigo ".($oculto ? "[Oculto] " : "" )."continha ".$item['qtd']." itens sem registro de entrada e saida e seu estoque foi zerado.\n";
 					}
 					$warns++;
-					$pdo->exec("UPDATE estoque SET qtd=0 WHERE id_produto=".$item['id_produto']." AND id_almoxarifado=".$item['id_almoxarifado']);
+					$stmt = $pdo->prepare("UPDATE estoque SET qtd = 0 WHERE id_produto = :id_produto AND id_almoxarifado = :id_almoxarifado");
+					$stmt->bindValue(':id_produto', (int) $item['id_produto'], PDO::PARAM_INT);
+					$stmt->bindValue(':id_almoxarifado', (int) $item['id_almoxarifado'], PDO::PARAM_INT);
+					$stmt->execute();
 					$changed++;
 				}
 			}
