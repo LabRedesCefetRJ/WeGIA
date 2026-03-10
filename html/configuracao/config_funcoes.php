@@ -154,6 +154,11 @@ function loadBackupDB(string $file): bool
         throw new RuntimeException('Falha ao criar diretório temporário.');
     }
 
+    $tmpDirReal = realpath($tmpDir);
+    if ($tmpDirReal === false) {
+        throw new RuntimeException('Falha ao resolver diretório temporário.');
+    }
+
     try {
         // 4. Copia backup para /tmp
         $tmpGz = $tmpDir . '/backup.tar.gz';
@@ -174,6 +179,29 @@ function loadBackupDB(string $file): bool
             throw new RuntimeException('Falha ao extrair o backup.');
         }
 
+        // 6.1 Bloqueia links simbólicos e paths fora do diretório temporário
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($tmpDirReal, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $entry) {
+            $entryPath = $entry->getPathname();
+
+            if (is_link($entryPath)) {
+                throw new RuntimeException('Backup inválido: contém link simbólico.');
+            }
+
+            $resolvedPath = realpath($entryPath);
+            if ($resolvedPath === false) {
+                throw new RuntimeException('Backup inválido: contém caminho não resolvível.');
+            }
+
+            if (!str_starts_with($resolvedPath, $tmpDirReal . DIRECTORY_SEPARATOR)) {
+                throw new RuntimeException('Backup inválido: contém caminho fora do diretório permitido.');
+            }
+        }
+
         // 6. Procura o SQL
         $sqlFiles = glob($tmpDir . '/*.sql');
         if (!$sqlFiles || count($sqlFiles) !== 1) {
@@ -181,6 +209,14 @@ function loadBackupDB(string $file): bool
         }
 
         $sqlFile = $sqlFiles[0];
+        if (!is_file($sqlFile) || is_link($sqlFile)) {
+            throw new RuntimeException('Backup inválido: arquivo SQL não é um arquivo regular.');
+        }
+
+        $sqlFileReal = realpath($sqlFile);
+        if ($sqlFileReal === false || !str_starts_with($sqlFileReal, $tmpDirReal . DIRECTORY_SEPARATOR)) {
+            throw new RuntimeException('Backup inválido: arquivo SQL fora do diretório temporário.');
+        }
 
         // 7. Importa SQL com proc_open (seguro)
         $process = proc_open(
@@ -201,7 +237,7 @@ function loadBackupDB(string $file): bool
             throw new RuntimeException('Falha ao iniciar o mysql.');
         }
 
-        fwrite($pipes[0], file_get_contents($sqlFile));
+        fwrite($pipes[0], file_get_contents($sqlFileReal));
         fclose($pipes[0]);
 
         $error = stream_get_contents($pipes[2]);
@@ -213,9 +249,21 @@ function loadBackupDB(string $file): bool
             throw new RuntimeException('Erro ao importar banco: ' . $error);
         }
     } finally {
-        // 8. Limpeza do /tmp
-        foreach (glob($tmpDir . '/*') as $f) {
-            @unlink($f);
+        // 8. Limpeza recursiva do /tmp
+        if (is_dir($tmpDir)) {
+            $cleanupIterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($tmpDir, FilesystemIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+
+            foreach ($cleanupIterator as $entry) {
+                $entryPath = $entry->getPathname();
+                if ($entry->isDir() && !$entry->isLink()) {
+                    @rmdir($entryPath);
+                } else {
+                    @unlink($entryPath);
+                }
+            }
         }
         @rmdir($tmpDir);
     }
