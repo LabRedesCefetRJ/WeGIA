@@ -18,21 +18,33 @@ permissao($_SESSION['id_pessoa'], 22, 7);
 if (!isset($_GET['id_produto'])) {
 	header("Location: " . WWW . "html/matPat/listar_produto.php");
 }
+
+$idProduto = filter_input(INPUT_GET, 'id_produto', FILTER_VALIDATE_INT);
+if (!$idProduto || $idProduto < 1) {
+	header("Location: " . WWW . "html/matPat/listar_produto.php");
+	exit();
+}
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
 include_once ROOT . "/html/geral/msg.php";
 
 $pdo = Conexao::connect();
-$idProduto = $_GET['id_produto'];
-$query = $pdo->query("SELECT p.id_produto, p.preco, p.descricao,p.codigo, p.id_categoria_produto, c.descricao_categoria, p.id_unidade, u.descricao_unidade 
+$stmt = $pdo->prepare("SELECT p.id_produto, p.preco, p.descricao,p.codigo, p.id_categoria_produto, c.descricao_categoria, p.id_unidade, u.descricao_unidade 
     FROM produto p 
     INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto 
     INNER JOIN unidade u ON p.id_unidade = u.id_unidade 
-    WHERE p.id_produto = $idProduto;");
-$item = $query->fetch(PDO::FETCH_ASSOC);
-$query = $pdo->query("SELECT qtd FROM estoque WHERE id_produto=$idProduto;");
-$item['qtd'] = ($query->fetch(PDO::FETCH_ASSOC))['qtd'];
+	WHERE p.id_produto = :id_produto;");
+$stmt->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+$stmt->execute();
+$item = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$stmt = $pdo->prepare("SELECT qtd FROM estoque WHERE id_produto = :id_produto;");
+$stmt->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+$stmt->execute();
+$estoque = $stmt->fetch(PDO::FETCH_ASSOC);
+$item['qtd'] = $estoque ? $estoque['qtd'] : 0;
 ?>
 <!doctype html>
 <html class="fixed">
@@ -46,9 +58,8 @@ $item['qtd'] = ($query->fetch(PDO::FETCH_ASSOC))['qtd'];
 		header("Location: " . WWW . "html/matPat/listar_produto.php");
 	}
 	if (!isset($_SESSION['produtos'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto=' . $_GET['id_produto']);
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto=' . $idProduto);
 	}
-	extract($_REQUEST);
 	?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
@@ -113,7 +124,7 @@ $item['qtd'] = ($query->fetch(PDO::FETCH_ASSOC))['qtd'];
 
 	<!-- jquery functions -->
 	<script>
-		const id_produto = <?= $id_produto ?>;
+		const id_produto = <?= (int) $idProduto ?>;
 		$(function() {
 
 		})

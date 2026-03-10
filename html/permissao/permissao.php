@@ -47,14 +47,15 @@ function permissao($id_pessoa, $id_recurso, $id_acao = 1): void
 		switch ($e) {
 			case $e instanceof LogicException:
 				header("Location: " . WWW . "html/home.php?msg_c=" . urlencode("Você não tem as permissões necessárias para essa página." . (DEBUG ? " Não há permissão!" : "")));
-				break;
+				exit();
 
 			case $e instanceof PDOException:
 				echo json_encode(['erro' => 'Erro no servidor ao manipular o banco de dados']);
-				break;
+				exit();
 
 			default:
 				echo json_encode(['erro' => $e->getMessage()]);
+				exit();
 		}
 	}
 }
