@@ -31,7 +31,8 @@
 			$entrada = $pdo->query("SELECT ie.id_produto as id, ie.qtd, e.id_almoxarifado as almox from ientrada ie inner join entrada e on e.id_entrada = ie.id_entrada")->fetchAll(PDO::FETCH_ASSOC);
 			$saida = $pdo->query("SELECT isa.id_produto as id, isa.qtd, sa.id_almoxarifado as almox from isaida isa inner join saida sa on sa.id_saida = isa.id_saida")->fetchAll(PDO::FETCH_ASSOC);
 			foreach ($entrada as $item){
-				extract($item);
+				$id = isset($item['id']) ? (int) $item['id'] : 0;
+				$almox = isset($item['almox']) ? (int) $item['almox'] : 0;
 				$stmt = $pdo->prepare("SELECT * from estoque WHERE id_produto = :id AND id_almoxarifado = :almox;");
 				$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
 				$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
@@ -53,13 +54,16 @@
 					$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
 					$stmt->execute();
 					$almoxarifado = $stmt->fetch(PDO::FETCH_ASSOC);
-					extract($desc);
+					$descricao = isset($desc['descricao']) ? $desc['descricao'] : '';
+					$codigo = isset($desc['codigo']) ? $desc['codigo'] : '';
+					$oculto = !empty($desc['oculto']);
 					$log .= "Registro de estoque criado para $descricao | $codigo ".($oculto ? "[Oculto] " : "")."no almoxarifado ".$almoxarifado["descr"]."\n";
 					$added++;
 				}
 			}
 			foreach ($saida as $item){
-				extract($item);
+				$id = isset($item['id']) ? (int) $item['id'] : 0;
+				$almox = isset($item['almox']) ? (int) $item['almox'] : 0;
 				$stmt = $pdo->prepare("SELECT * from estoque WHERE id_produto = :id AND id_almoxarifado = :almox;");
 				$stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
 				$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
@@ -81,7 +85,9 @@
 					$stmt->bindValue(':almox', (int) $almox, PDO::PARAM_INT);
 					$stmt->execute();
 					$almoxarifado = $stmt->fetch(PDO::FETCH_ASSOC);
-					extract($desc);
+					$descricao = isset($desc['descricao']) ? $desc['descricao'] : '';
+					$codigo = isset($desc['codigo']) ? $desc['codigo'] : '';
+					$oculto = !empty($desc['oculto']);
 					$log .= "Registro de estoque criado para $descricao | $codigo ".($oculto ? "[Oculto]" : "")." no almoxarifado ".$almoxarifado["descr"]."\n";
 					$added++;
 				}
@@ -89,7 +95,9 @@
 			$estoque = $pdo->query("SELECT * FROM estoque;")->fetchAll(PDO::FETCH_ASSOC);
 			foreach ($estoque as $key => $item){
 				// Percorre cada registro no estoque
-				extract($item);
+				$id_produto = isset($item['id_produto']) ? (int) $item['id_produto'] : 0;
+				$id_almoxarifado = isset($item['id_almoxarifado']) ? (int) $item['id_almoxarifado'] : 0;
+				$qtd = isset($item['qtd']) ? (int) $item['qtd'] : 0;
 				$stmt = $pdo->prepare("SELECT ientrada.qtd from ientrada inner join entrada on entrada.id_entrada = ientrada.id_entrada where ientrada.id_produto = :id_produto and entrada.id_almoxarifado = :id_almoxarifado");
 				$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
 				$stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
@@ -118,7 +126,9 @@
 					$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
 					$stmt->execute();
 					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
-					extract($desc);
+					$descricao = isset($desc['descricao']) ? $desc['descricao'] : '';
+					$codigo = isset($desc['codigo']) ? $desc['codigo'] : '';
+					$oculto = !empty($desc['oculto']);
 					$stmt = $pdo->prepare("UPDATE estoque SET qtd = :qtd_total WHERE id_produto = :id_produto AND id_almoxarifado = :id_almoxarifado;");
 					$stmt->bindValue(':qtd_total', (int) $qtd_total, PDO::PARAM_INT);
 					$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
@@ -134,7 +144,9 @@
 					$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
 					$stmt->execute();
 					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
-					extract($desc);
+					$descricao = isset($desc['descricao']) ? $desc['descricao'] : '';
+					$codigo = isset($desc['codigo']) ? $desc['codigo'] : '';
+					$oculto = !empty($desc['oculto']);
 					$log .= "AVISO: $descricao | $codigo ".($oculto ? "[Oculto] " : "" )." possui estoque negativo ($qtd_total)\n";
 					$warns++;
 				}
@@ -188,7 +200,9 @@
 			ORDER BY ie.id_produto;
 			")->fetchAll(PDO::FETCH_ASSOC);
 			foreach ($ientrada as $key => $item){
-				extract($item);
+				$id_produto = isset($item['id_produto']) ? (int) $item['id_produto'] : 0;
+				$id_almoxarifado = isset($item['id_almoxarifado']) ? (int) $item['id_almoxarifado'] : 0;
+				$qtd = isset($item['qtd']) ? (float) $item['qtd'] : 0.0;
 				if (isset($somaEntrada[$id_produto][$id_almoxarifado])){
 					$somaEntrada[$id_produto][$id_almoxarifado] += floatval($qtd);
 				}else{
@@ -204,7 +218,9 @@
 			ORDER BY isa.id_produto;
 			")->fetchAll(PDO::FETCH_ASSOC);
 			foreach ($isaida as $key => $item){
-				extract($item);
+				$id_produto = isset($item['id_produto']) ? (int) $item['id_produto'] : 0;
+				$id_almoxarifado = isset($item['id_almoxarifado']) ? (int) $item['id_almoxarifado'] : 0;
+				$qtd = isset($item['qtd']) ? (float) $item['qtd'] : 0.0;
 				if (isset($somaSaida[$id_produto][$id_almoxarifado])){
 					$somaSaida[$id_produto][$id_almoxarifado] += floatval($qtd);
 				}else{
@@ -255,8 +271,10 @@
 
 					if ($desc && $almoxarifado){
 						// Caso o produto e o almoxarifado estejam cadastrados
-						extract($desc);
-						extract($almoxarifado);
+						$descricao = isset($desc['descricao']) ? $desc['descricao'] : '';
+						$codigo = isset($desc['codigo']) ? $desc['codigo'] : '';
+						$oculto = !empty($desc['oculto']);
+						$descricao_almoxarifado = isset($almoxarifado['descricao_almoxarifado']) ? $almoxarifado['descricao_almoxarifado'] : '';
 						echo("ID: $id ALMOXARIFADO: $almox | ".(isset($estoque['qtd']) ? $estoque['qtd'] : 0)." => $qtd (".(isset($somaEntrada[$id][$almox]) ? $somaEntrada[$id][$almox] : 0 )." - ".(isset($somaSaida[$id][$almox]) ? $somaSaida[$id][$almox] : 0 ).")<br/>");
 						if ($estoque){
 							// Caso o produto esteja em estoque
@@ -313,7 +331,9 @@
 			}
 			$estoque = $pdo->query("SELECT * FROM estoque;")->fetchAll(PDO::FETCH_ASSOC);
 			foreach ($estoque as $key => $item){
-				extract($item);
+				$id_produto = isset($item['id_produto']) ? (int) $item['id_produto'] : 0;
+				$id_almoxarifado = isset($item['id_almoxarifado']) ? (int) $item['id_almoxarifado'] : 0;
+				$qtd = isset($item['qtd']) ? (int) $item['qtd'] : 0;
 				$stmt = $pdo->prepare("SELECT ientrada.qtd from ientrada inner join entrada on entrada.id_entrada = ientrada.id_entrada where ientrada.id_produto = :id_produto and entrada.id_almoxarifado = :id_almoxarifado");
 				$stmt->bindValue(':id_produto', (int) $id_produto, PDO::PARAM_INT);
 				$stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
@@ -341,7 +361,9 @@
 					$stmt->bindValue(':id_produto', (int) $item['id_produto'], PDO::PARAM_INT);
 					$stmt->execute();
 					$desc = $stmt->fetch(PDO::FETCH_ASSOC);
-					extract($desc);
+					$descricao = isset($desc['descricao']) ? $desc['descricao'] : '';
+					$codigo = isset($desc['codigo']) ? $desc['codigo'] : '';
+					$oculto = !empty($desc['oculto']);
 					if (AVISO){
 						$log .= "AVISO: ".$item['id_produto']." | $descricao | $codigo ".($oculto ? "[Oculto] " : "" )."continha ".$item['qtd']." itens sem registro de entrada e saida e seu estoque foi zerado.\n";
 					}
