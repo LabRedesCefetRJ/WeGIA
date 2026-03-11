@@ -17,7 +17,7 @@ require_once "../../config.php";
 
 
 $filename = basename($_POST['file']);
-$fullname = BKP_DIR . $filename;
+$fullname = rtrim(BKP_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
 
 $realPath = realpath($fullname);
 

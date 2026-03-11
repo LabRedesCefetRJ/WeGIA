@@ -39,18 +39,26 @@ if (PHP_OS != 'Linux') {
             }
         } else if ($action == "restore") {
             $logAS = autosaveBD();
-            if ($log && AUTOSAVE_ERROR_FATAL) {
-                header("Location: ./listar_backup.php?msg=error&err=A ação não pode ser realizada devido a um erro no backup automático!&log=" . base64_encode($log));
+            if ($logAS && defined('AUTOSAVE_ERROR_FATAL') && AUTOSAVE_ERROR_FATAL) {
+                header("Location: ./listar_backup.php?msg=error&err=A ação não pode ser realizada devido a um erro no backup automático!&log=" . base64_encode($logAS));
+                exit();
             }
-            $log = loadBackupDB($file); //refazer log depois
+
+            try {
+                $log = loadBackupDB($file); //refazer log depois
+            } catch (Throwable $e) {
+                header("Location: ./listar_backup.php?msg=error&err=Houve um erro ao restaurar a Base de Dados!&log=" . base64_encode($e->getMessage()));
+                exit();
+            }
+
             if (!$log) {
                 header("Location: ./listar_backup.php?msg=error&err=Houve um erro ao restaurar a Base de Dados!");
                 exit();
-            } else {
-                session_destroy();
-                header("Location: ../../index.php");
-                exit();
             }
+
+            session_destroy();
+            header("Location: ../../index.php");
+            exit();
         } else {
             header("Location: ./listar_backup.php?msg=warning&warn=Nenhuma ação válida foi selecionada!");
         }
