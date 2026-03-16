@@ -27,25 +27,7 @@ function getBackupSigningPrivateKey()
     $keyFile = getBackupSigningKeyFilePath();
 
     if (!is_file($keyFile)) {
-        $keyResource = openssl_pkey_new([
-            'private_key_bits' => 2048,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
-
-        if ($keyResource === false) {
-            throw new RuntimeException('Falha ao gerar chave de assinatura OpenSSL.');
-        }
-
-        $privateKeyPem = '';
-        if (!openssl_pkey_export($keyResource, $privateKeyPem) || $privateKeyPem === '') {
-            throw new RuntimeException('Falha ao exportar chave privada de assinatura.');
-        }
-
-        if (file_put_contents($keyFile, $privateKeyPem, LOCK_EX) === false) {
-            throw new RuntimeException('Falha ao persistir chave privada de assinatura.');
-        }
-
-        @chmod($keyFile, 0600);
+        throw new RuntimeException('Chave privada de assinatura não encontrada. Gere a chave manualmente e coloque em: ' . $keyFile);
     }
 
     $privateKeyPem = file_get_contents($keyFile);
