@@ -2,7 +2,7 @@
 # Script para gerar chave privada de assinatura de backup conforme padrão do sistema WeGIA
 # Caminho padrão conforme BACKUP_SIGNING_KEY_FILE
 
-BKP_DIR="$HOME/public_html/bkpWeGIA"
+BKP_DIR="/var/www/public_html/bkpWeGIA"
 KEY_FILE="$BKP_DIR/.backup_signing_private.pem"
 
 # Cria diretório se não existir
