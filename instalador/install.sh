@@ -45,6 +45,9 @@ download_wegia(){
 
     mkdir -p /var/www/bkpWeGIA
     chown www-data:www-data /var/www/bkpWeGIA -R
+    openssl genpkey -algorithm RSA -out /var/www/bkpWeGIA/backup_signing_private.pem -pkeyopt rsa_keygen_bits:2048
+    chown root:www-data /var/www/bkpWeGIA/backup_signing_private.pem
+    chmod 750 /var/www/bkpWeGIA/backup_signing_private.pem
 }
 
 conf_wegia_internet(){
