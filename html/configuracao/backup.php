@@ -2,7 +2,7 @@
 <?php
     session_start();
     if (!isset($_SESSION['usuario'])) {
-        header("Locatiion ../../index.php");
+        header("Location: ../../index.php");
     }
 
     // Verifica Permissão do Usuário
@@ -37,8 +37,9 @@
     if (PHP_OS != 'Linux'){
         header("Location: ./configuracao_geral.php?msg=error&err=Função de backup compatível apenas com Linux. Seu Sistema Operacional: ".PHP_OS."");
     }else{
-        $dblog = "";
-        $filelog = "";
+        $dbBackupFile = null;
+        $siteLog = "";
+        $errors = [];
 
         /*
         Identifica o tipo de ação:
@@ -50,35 +51,53 @@
         $action = $_GET['action'] ?? false;
         if(!$action){
             $redirect = REDIRECT_URLS[0];
-        
-            // Executa os comandos
-            $dblog = backupBD();
+
+            try {
+                $dbBackupFile = backupBD();
+            } catch (Throwable $e) {
+                $errors[] = "Houve um erro ao realizar o Backup do Banco de Dados:\n" . $e->getMessage();
+            }
     
             // Executando Backup do Diretório do site
-            $filelog = backupSite();
+            $siteLog = backupSite();
+            if ($siteLog) {
+                $errors[] = "Houve um erro ao realizar o Backup do Sistema:\n" . $siteLog;
+            }
 
         }else{
             if ($action == "bd"){
                 $redirect = REDIRECT_URLS[1];
-        
-                // Executa os comandos
-                $dblog = backupBD();
+
+                try {
+                    $dbBackupFile = backupBD();
+                } catch (Throwable $e) {
+                    $errors[] = "Houve um erro ao realizar o Backup do Banco de Dados:\n" . $e->getMessage();
+                }
 
             }else if ($action == "site"){
                 $redirect = REDIRECT_URLS[0];
     
                 // Executando Backup do Diretório do site
-                $filelog = backupSite();
+                $siteLog = backupSite();
+                if ($siteLog) {
+                    $errors[] = "Houve um erro ao realizar o Backup do Sistema:\n" . $siteLog;
+                }
 
             }
             else {
                 $redirect = REDIRECT_URLS[0];
-        
-                // Executa os comandos
-                $dblog = backupBD();
+
+                try {
+                    $dbBackupFile = backupBD();
+                } catch (Throwable $e) {
+                    $errors[] = "Houve um erro ao realizar o Backup do Banco de Dados:\n" . $e->getMessage();
+                }
     
                 // Executando Backup do Diretório do site
-                $filelog = backupSite();
+                $siteLog = backupSite();
+                if ($siteLog) {
+                    $errors[] = "Houve um erro ao realizar o Backup do Sistema:\n" . $siteLog;
+                }
 
             }
         }
@@ -86,24 +105,13 @@
         // Caso exista um redirect definido, ele terá prioridade sobre o padrão
         $redirect = $_GET['redirect'] ?? $redirect;
     
-        $log = "";
-        
-        if ($dblog || $filelog){
-            if ($dblog){
-                $log .= "Houve um erro ao realizar o Backup do Banco de Dados:\n" . $dblog;
-                // foreach ($dblog as $value){
-                //     $log .= $value . "\n";
-                // }
-            }
-            if ($filelog){
-                $log .= "Houve um erro ao realizar o Backup do Sistema:\n" . $filelog;
-                // foreach ($filelog as $value){
-                //     $log .= $value . "\n";
-                // }
-            }
+        if (!empty($errors)){
+            $log = implode("\n", $errors);
             header("Location: $redirect?msg=error&err=Houve um erro no processo de execução dos Backups&log=".base64_encode($log));
+            exit();
         }
 
         header("Location: $redirect?msg=success&sccs=Backup realizado com sucesso!");
+        exit();
     }
 ?>

@@ -279,10 +279,9 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                     <?php
 
-                    if (isset($_GET['msg'])) {
-                        if ($_GET['msg'] == 'success') {
-                            echo ('<div class="alert alert-success"><i class="fas fa-check mr-md"></i><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' . $_GET["sccs"] . "</div>");
-                        }
+                    if (isset($_GET['msg']) && $_GET['msg'] === 'success') {
+                        $successMessage = htmlspecialchars($_GET['sccs'] ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                        echo '<div class="alert alert-success"><i class="fas fa-check mr-md"></i><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>' . $successMessage . '</div>';
                     }
                     ?>
 
