@@ -1120,7 +1120,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   CONSTRAINT `fk_socio_socio_tag1`
     FOREIGN KEY (`id_sociotag`)
     REFERENCES `wegia`.`socio_tag` (`id_sociotag`)
-    ON DELETE NO ACTION
+    ON DELETE SET NULL
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
