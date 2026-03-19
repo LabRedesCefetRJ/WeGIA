@@ -15,6 +15,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
+permissao($_SESSION['id_pessoa'], 91, 1);
+
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
 $acoesResult = mysqli_query($conexao, "SELECT id_acao, descricao FROM acao ORDER BY descricao");
@@ -39,7 +41,6 @@ while ($permissaoCargo = $permissoesResult->fetch_array(MYSQLI_ASSOC)) {
 	$permissoesPorCargo[$idCargo][] = $permissaoCargo;
 }
 
-permissao($_SESSION['id_pessoa'], 91, 1);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
