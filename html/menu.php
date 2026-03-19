@@ -500,7 +500,7 @@ session_start();
 						</a>
 					</li>
 					<li>
-						<a href="<?= WWW ?>html/geral/editar_permissoes.php">
+						<a href="<?= WWW ?>html/geral/cadastrar_permissoes.php">
 							Permissões
 						</a>
 					</li>

@@ -37,10 +37,10 @@ $recurso = mysqli_query($conexao, "SELECT * FROM recurso");
 require_once '../geral/msg.php';
 
 if (!isset($_SESSION['almoxarifado'])) {
-	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/geral/editar_permissoes.php');
+	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/geral/cadastrar_permissoes.php');
 }
 if (!isset($_SESSION['funcionarios'])) {
-	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/geral/editar_permissoes.php');
+	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/geral/cadastrar_permissoes.php');
 }
 extract($_SESSION);
 
@@ -52,7 +52,7 @@ extract($_SESSION);
 	<!-- Basic -->
 	<meta charset="utf-8">
 
-	<title>Editar permissões</title>
+	<title>Cadastrar permissões</title>
 
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -168,7 +168,7 @@ extract($_SESSION);
 								</a>
 							</li>
 							<li><span>Páginas</span></li>
-							<li><span>Editar permissões</span></li>
+							<li><span>Cadastrar permissões</span></li>
 						</ol>
 
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -186,7 +186,7 @@ extract($_SESSION);
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li class="active">
-									<a href="#overview" data-toggle="tab">Editar permissões
+									<a href="#overview" data-toggle="tab">Cadastrar permissões
 									</a>
 								</li>
 								<li class="nav-item">
@@ -218,8 +218,9 @@ extract($_SESSION);
 															<option selected disabled>Selecionar</option>
 															<?php
 															while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
-																if ($row[0] != 2)
+																if ($row[0] != 2) {
 																	echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+																}
 															}
 															?>
 														</select>
@@ -233,6 +234,7 @@ extract($_SESSION);
 															echo "<div class='checkbox'> <label><input id='recurso_" . $row[0] . "' class='recurso' name='recurso[]' type='checkbox' value=" . $row[0] . ">" . $row[1] . "</label> </div>";
 														}
 														?>
+														<small id="msg-permissoes-existentes" class="text-danger" style="display:none;">Os cargos desabilitados já possuem permissões cadastradas. Para alterar/excluir, use a tela Listar permissões.</small>
 													</div>
 												</div>
 												<div class="form-group">
@@ -252,7 +254,8 @@ extract($_SESSION);
 												<?= Csrf::inputField() ?>
 												<input type="hidden" name="nomeClasse" value="FuncionarioControle">
 												<input type="hidden" name="metodo" value="adicionarPermissao">
-												<input type="hidden" name="nextPage" value="../html/geral/editar_permissoes.php">
+														<input type="hidden" name="somenteAdicionar" value="1">
+														<input type="hidden" name="nextPage" value="../html/geral/cadastrar_permissoes.php">
 												<div class="row">
 													<div class="col-md-9 col-md-offset-3">
 														<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
@@ -339,29 +342,104 @@ extract($_SESSION);
 		setTimeout(function() {
 			$(".alert").fadeOut();
 		}, 3000);
+
+		if (window.location.search) {
+			window.history.replaceState({}, document.title, window.location.pathname);
+		}
 	});
 
+	function atualizarEstadoPermissoes(recursosExistentes) {
+		$(".recurso").prop("disabled", false).prop("checked", false);
+
+		for (const recursoId of recursosExistentes) {
+			$("#recurso_" + recursoId).prop("checked", true).prop("disabled", true);
+		}
+
+		const totalRecursos = $(".recurso").length;
+		const todasPermissoesCadastradas = totalRecursos > 0 && recursosExistentes.length >= totalRecursos;
+
+		$("#id_acao").prop("disabled", todasPermissoesCadastradas);
+		$("#enviar").data("todas-permissoes", todasPermissoesCadastradas);
+		$("#msg-permissoes-existentes").toggle(recursosExistentes.length > 0);
+
+		if (!todasPermissoesCadastradas) {
+			$("#alert-permissoes-cadastradas").remove();
+		}
+	}
+
 	function verificar_recursos_cargo(cargo_id) {
-		url = `../../controle/control.php?nomeClasse=CargoControle&metodo=listarRecursos&cargo=${encodeURIComponent(cargo_id)}`;
+		if (!cargo_id) {
+			atualizarEstadoPermissoes([]);
+			return;
+		}
+
+		atualizarEstadoPermissoes([]);
+
+		url = `../../controle/control.php?nomeClasse=CargoControle&metodo=listarRecursos&cargo=${encodeURIComponent(cargo_id)}&_=${Date.now()}`;
 		$.ajax({
 			type: "GET",
 			url: url,
+			cache: false,
 			success: function(response) {
-				var recursos = JSON.parse(response);
-				console.log(response);
-				$(".recurso").prop("checked", false).attr("disabled", false);
-				for (recurso of recursos) {
-					$("#recurso_" + recurso).prop("checked", true);
+				var recursos = [];
+				try {
+					recursos = JSON.parse(response);
+				} catch (e) {
+					recursos = [];
 				}
+
+				if (!Array.isArray(recursos)) {
+					recursos = [];
+				}
+
+				console.log(response);
+				atualizarEstadoPermissoes(recursos);
+			},
+			error: function() {
+				atualizarEstadoPermissoes([]);
 			},
 			dataType: 'text'
 		})
 	}
 
+	function revalidarCargoSelecionado() {
+		const cargoSelecionado = $("#cargo").val();
+		if (cargoSelecionado) {
+			verificar_recursos_cargo(cargoSelecionado);
+		} else {
+			atualizarEstadoPermissoes([]);
+		}
+	}
+
 	$(document).ready(function() {
+		$("#formulario").on("submit", function(e) {
+			const todasPermissoesCadastradas = $("#enviar").data("todas-permissoes") === true;
+
+			if (todasPermissoesCadastradas) {
+				e.preventDefault();
+
+				$("#alert-permissoes-cadastradas").remove();
+				$(this).prepend("<div id='alert-permissoes-cadastradas' class='alert alert-warning' role='alert'>Todas as permissões já estão cadastradas para este cargo.</div>");
+
+				setTimeout(function() {
+					$("#alert-permissoes-cadastradas").fadeOut(function() {
+						$(this).remove();
+					});
+				}, 3000);
+
+				return false;
+			}
+		});
+
 		$("#cargo").change(function() {
 			verificar_recursos_cargo($(this).val());
 		});
+
+		revalidarCargoSelecionado();
+	});
+
+	window.addEventListener("pageshow", function() {
+		revalidarCargoSelecionado();
 	});
 </script>
 <script src="../geral/msg.js"></script>

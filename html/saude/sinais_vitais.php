@@ -46,7 +46,7 @@ $teste = $pdo->query("SELECT nome, f.id_funcionario FROM pessoa p JOIN funcionar
 $id_funcionario = $teste[0]['nome'];
 $funcionario_id = $teste[0]['id_funcionario'];
 
-$stmtSinaisVitais = $pdo->prepare("SELECT id_sinais_vitais, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
+$stmtSinaisVitais = $pdo->prepare("SELECT id_sinais_vitais, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica ORDER BY sv.data DESC, sv.id_sinais_vitais DESC");
 
 $stmtSinaisVitais->bindParam(':idFichaMedica', $id);
 $stmtSinaisVitais->execute();
@@ -56,6 +56,7 @@ $sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
 //formatar data
 foreach ($sinaisvitais as $key => $value) {
   $data = new DateTime($value['data']);
+  $sinaisvitais[$key]['data_ordem'] = $data->format('Y-m-d H:i:s');
   $sinaisvitais[$key]['data'] = $data->format('d/m/Y H:i');
   $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
 }
@@ -246,7 +247,7 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
       $.each(sinaisvitais, function(i, item) {
         $("#sin-vit-tab")
           .append($("<tr id=l_" + i + ">")
-            .append($("<td>").text(item.data))
+            .append($("<td>").attr("data-order", item.data_ordem).text(item.data))
             .append($("<td>").text(item.nome + " " + (item.sobrenome !== null ? item.sobrenome : "")))
             .append($("<td>").text(item.saturacao))
             .append($("<td>").text(item.pressao_arterial))
