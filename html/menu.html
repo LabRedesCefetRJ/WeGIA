@@ -48,6 +48,22 @@
 							<li>
 								<a>
 								   <i class="far fa-address-book"></i>
+								   <span>Voluntários</span>
+								</a>
+							</li>
+							<li id="15">
+								<a href="voluntario/cadastro_voluntario.php">
+									 Cadastrar Voluntário
+								</a>
+							</li>
+							<li id="16">
+								<a href="../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php">
+									 Informações Voluntário
+								</a>
+							</li>
+							<li>
+								<a>
+								   <i class="far fa-address-book"></i>
 								   <span>Atendidos</span>
 
 								</a>
@@ -210,6 +226,12 @@
 		<input type="hidden" name="nomeClasse" value="InternoControle">
 		<input type="hidden" name="metodo" value="listartodos">
 		<input type="hidden" name="nextPage" value="../html/informacao_interno.php">
+	</form>
+	
+	<form id="listarVoluntario" method="POST" action="../controle/control.php">
+		<input type="hidden" name="nomeClasse" value="VoluntarioControle">
+		<input type="hidden" name="metodo" value="listarTodos">
+		<input type="hidden" name="nextPage" value="../html/voluntario/informacao_voluntario.php">
 	</form>
 		
 	<!-- Theme Base, Components and Settings -->
