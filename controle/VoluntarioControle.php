@@ -97,4 +97,15 @@ class VoluntarioControle
             Util::tratarException($e);
         }
     }
+
+    public function listarCpf()
+    {
+        try {
+            $voluntarioDAO = new VoluntarioDAO();
+            $cpfs = $voluntarioDAO->listarCPF();
+            $_SESSION['cpf_voluntario'] = json_encode($cpfs ?: []);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
 }

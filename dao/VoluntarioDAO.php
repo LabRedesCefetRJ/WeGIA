@@ -201,4 +201,18 @@ class VoluntarioDAO
             Util::tratarException($e);
         }
     }
+
+    public function listarCPF()
+    {
+        $cpfs = array();
+        try {
+            $consulta = $this->pdo->query("SELECT v.id_voluntario, p.cpf from pessoa p INNER JOIN voluntario v ON p.id_pessoa=v.id_pessoa");
+            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+                $cpfs[] = array('cpf' => $linha['cpf'], 'id' => $linha['id_voluntario']);
+            }
+        } catch (PDOException $e) {
+            Util::tratarException($e);
+        }
+        return $cpfs;
+    }
 }

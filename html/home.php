@@ -331,6 +331,28 @@ require_once ROOT . "/html/geral/msg.php";
 							</div>
 						</a>
 						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#voluntarios">
+								<i class="fa fa-hands-helping"></i>
+								<h4>Voluntários</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<div class="row category-row-third">
+					<div id="voluntarios" class="removeIn collapse">
+						<a href="<?= WWW ?>html/voluntario/cadastro_voluntario.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa fa-address-book"></i>
+								<h4>Cadastrar Voluntário</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=<?= WWW ?>html/voluntario/informacao_voluntario.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="far fa-address-card"></i>
+								<h4>Informações Voluntários</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 

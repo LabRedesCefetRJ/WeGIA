@@ -111,6 +111,24 @@ session_start();
 								</li>
 							</ul>
 						</li>
+						<li class="nav-parent nav-active">
+							<a>
+								<i class="fa fa-hands-helping" aria-hidden="true"></i>
+								<span>Voluntários</span>
+							</a>
+							<ul class="nav nav-children">
+								<li>
+									<a href="<?= WWW ?>html/voluntario/cadastro_voluntario.php">
+										<span>Cadastrar Voluntário</span>
+									</a>
+								</li>
+								<li>
+									<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=<?= WWW ?>html/voluntario/informacao_voluntario.php">
+										<span>Informações Voluntários</span>
+									</a>
+								</li>
+							</ul>
+						</li>
 					</ul>
 				</li>
 
@@ -541,6 +559,12 @@ session_start();
 	<input type="hidden" name="nomeClasse" value="AtendidoControle">
 	<input type="hidden" name="metodo" value="listartodos">
 	<input type="hidden" name="nextPage" value="<?= WWW ?>html/Informacao_Atendido.php">
+</form>
+
+<form id="listarVoluntario" method="POST" action="<?= WWW ?>controle/control.php">
+	<input type="hidden" name="nomeClasse" value="VoluntarioControle">
+	<input type="hidden" name="metodo" value="listartodos">
+	<input type="hidden" name="nextPage" value="<?= WWW ?>html/voluntario/informacao_voluntario.php">
 </form>
 
 <!-- Theme Base, Components and Settings -->
