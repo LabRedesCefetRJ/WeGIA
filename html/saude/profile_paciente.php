@@ -55,7 +55,7 @@ if (!isset($teste)) {
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
-$stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
+$stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica ORDER BY sf.data_diagnostico DESC, sf.id_enfermidade DESC");
 
 $stmtEnfermidades->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 
@@ -74,7 +74,7 @@ foreach ($enfermidades as $index => $enfermidade) {
 
 $enfermidades = json_encode($enfermidades);
 
-$stmtAlergias = $pdo->prepare("SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica");
+$stmtAlergias = $pdo->prepare("SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica ORDER BY sf.data_diagnostico DESC, sf.id_enfermidade DESC");
 $stmtAlergias->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtAlergias->execute();
 
@@ -86,7 +86,7 @@ foreach ($alergias as $index => $alergia) {
 
 $alergias = json_encode($alergias);
 
-$stmtSinaisVitais = $pdo->prepare("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
+$stmtSinaisVitais = $pdo->prepare("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica ORDER BY sv.data DESC, sv.id_sinais_vitais DESC");
 
 $stmtSinaisVitais->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtSinaisVitais->execute();
@@ -96,6 +96,7 @@ $sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
 foreach ($sinaisvitais as $key => $value) {
   //formata data e observacao
   $data = new DateTime($value['data']);
+  $sinaisvitais[$key]['data_ordem'] = $data->format('Y-m-d H:i:s');
   $sinaisvitais[$key]['data'] = $data->format('d/m/Y h:i:s');
   $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
 }
@@ -119,7 +120,8 @@ $sqlDescricaoMedica = "SELECT
   JOIN saude_medicos m ON (a.id_medico = m.id_medico)
   LEFT JOIN funcionario fAnulador ON (a.id_funcionario_anulacao = fAnulador.id_funcionario)
   LEFT JOIN pessoa pAnulador ON (pAnulador.id_pessoa = fAnulador.id_pessoa)
-  WHERE a.id_fichamedica = :idFichaMedica";
+  WHERE a.id_fichamedica = :idFichaMedica
+  ORDER BY a.data_atendimento DESC, a.id_atendimento DESC";
 
 $stmtDescricaoMedica = $pdo->prepare($sqlDescricaoMedica);
 
@@ -134,8 +136,10 @@ foreach ($descricao_medica as $key => $value) {
 
   if (!empty($value['data_atendimento'])) {
     $data = new DateTime($value['data_atendimento']);
+    $descricao_medica[$key]['data_atendimento_ordem'] = $data->format('Y-m-d H:i:s');
     $descricao_medica[$key]['data_atendimento'] = $data->format('d/m/Y');
   } else {
+    $descricao_medica[$key]['data_atendimento_ordem'] = '';
     $descricao_medica[$key]['data_atendimento'] = '';
   }
 
@@ -152,7 +156,7 @@ foreach ($descricao_medica as $key => $value) {
 
 $descricao_medica = json_encode($descricao_medica);
 
-$stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica");
+$stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC");
 
 $stmtMedicacoes->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtMedicacoes->execute();
@@ -162,6 +166,7 @@ $exibimed = $stmtMedicacoes->fetchAll(PDO::FETCH_ASSOC);
 foreach ($exibimed as $key => $value) {
   //formata data
   $data = new DateTime($value['data_atendimento']);
+  $exibimed[$key]['data_atendimento_ordem'] = $data->format('Y-m-d H:i:s');
   $exibimed[$key]['data_atendimento'] = $data->format('d/m/Y');
 }
 
@@ -245,16 +250,54 @@ try {
 
 
 <script>
+  function ajustarLarguraEditores() {
+    ['despacho', 'prontuario'].forEach(function(id) {
+      const instancia = CKEDITOR.instances[id];
+      if (instancia && instancia.container) {
+        instancia.container.setStyle('width', '100%');
+      }
+    });
+  }
+
+  function ajustarEspacamentoConteudoEditor(editorInstance) {
+    if (!editorInstance || !editorInstance.document) {
+      return;
+    }
+
+    const body = editorInstance.document.getBody();
+    if (!body) {
+      return;
+    }
+
+    body.setStyle('padding-bottom', '12px');
+    body.setStyle('box-sizing', 'border-box');
+  }
+
   $(function() {
     localStorage.setItem("id_ficha_medica", 'null')
 
     $("#header").load("../header.php");
     $(".menuu").load("../menu.php");
 
-    var editor = CKEDITOR.replace('despacho');
+    var editor = CKEDITOR.replace('despacho', {
+      width: '100%'
+    });
     editor.on('required', function(e) {
       alert("Por favor, informe a descrição!");
       e.cancel();
+    });
+
+    editor.on('instanceReady', function() {
+      ajustarLarguraEditores();
+      ajustarEspacamentoConteudoEditor(editor);
+    });
+
+    $(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function() {
+      ajustarLarguraEditores();
+    });
+
+    $(window).on('resize', function() {
+      ajustarLarguraEditores();
     });
 
   });
@@ -275,25 +318,27 @@ try {
     margin-bottom: 15px;
   }
 
+  .table,
+  .table-responsive {
+    width: 100%;
+  }
+
   #div_texto {
     width: 100%;
   }
 
-
-  #cke_despacho {
-    height: 500px;
+  #div_texto .cke {
+    width: 100% !important;
+    margin-bottom: 15px;
   }
 
-  #cke_5_contents {
-    height: 87% !important;
+  #div_texto .cke_contents,
+  #cke_prontuario .cke_contents {
+    min-height: 320px;
   }
 
-  .cke_inner {
-    height: 500px;
-  }
-
-  #cke_1_contents {
-    height: 455px !important;
+  #cke_prontuario {
+    margin-bottom: 15px;
   }
 
   .col-md-3 {
@@ -550,7 +595,7 @@ try {
         tr.append($("<td>").text(item.medicoNome));
         tr.append($("<td>").text(item.enfermeiraNome + ' ' + item.enfermeiraSobrenome));
         tr.append($("<td>").html(item.descricao));
-        tr.append($("<td>").text(item.data_atendimento));
+        tr.append($("<td>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento));
         tr.append(
           $("<td class='coluna-status'>")
             .text(statusTexto)
@@ -698,10 +743,11 @@ try {
 
     $(function() {
       var exibimed = <?= $exibimed ?>;
+      $("#exibimed").empty();
       $.each(exibimed, function(i, item) {
         $("#exibimed")
           .append($("<tr>")
-            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.data_atendimento))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento))
             .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + item.horario + ", " + item.duracao + "."))
             .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
             .append($("<td style='text-align: center; vertical-align: middle;'>")
@@ -721,7 +767,7 @@ try {
           const tabela = document.getElementById("exibiaplicacao");
 
           medaplicadas.forEach(item => {
-
+            const aplicacaoOrdem = item.aplicacao || "";
             item.aplicacao = formatarDataBr(item.aplicacao)
 
             const tr = document.createElement("tr");
@@ -733,6 +779,7 @@ try {
             td2.textContent = item.medicamento;
 
             const td3 = document.createElement("td");
+            td3.setAttribute("data-order", aplicacaoOrdem);
             td3.textContent = item.aplicacao;
 
             tr.append(td1, td2, td3);
@@ -746,16 +793,8 @@ try {
 
 
     $(function() {
-      $('#datatable-docfuncional').DataTable({
-        "order": [
-          [0, "asc"]
-        ]
-      });
-      $('.datatable-docfuncional').DataTable({
-        "order": [
-          [0, "asc"]
-        ]
-      });
+      // DataTables removido dessas tabelas dinâmicas para evitar conflito
+      // de largura/renderização quando a aba ainda está oculta.
     });
 
     function escrevermed() {
@@ -1649,7 +1688,7 @@ try {
 
                       <div class="form-group">
                         <hr class="dotted short">
-                        <table class="table table-bordered table-striped mb-none datatable-docfuncional" ">
+                        <table class="table table-bordered table-striped mb-none">
                           <thead>
                             <tr style=" font-size:15px;">
                           <th>Data do atendimento</th>
@@ -1763,7 +1802,7 @@ try {
 
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany" for="texto">Descrição:<sup class="obrig">*</sup></label>
-                            <div class='col-md-6' id='div_texto' style="height: 499px;">
+                            <div class='col-md-6' id='div_texto'>
                               <textarea cols='30' rows='3' id='despacho' name='texto' class='form-control' value="teste" placeholder="teste" required></textarea>
                             </div>
                           </div>
@@ -1806,7 +1845,7 @@ try {
 
                       <br>
                       <hr class="dotted short">
-                      <table class="table table-bordered table-striped mb-none datatable-docfuncional" id="tabmed">
+                      <table class="table table-bordered table-striped mb-none" id="tabmed">
                         <thead>
                           <tr style="font-size:15px;">
                             <th>Medicação</th>
@@ -2537,7 +2576,6 @@ try {
         }
 
         function adicionarLinhaMedicacao(medicacao) {
-          $("#tabmed").find(".dataTables_empty").hide();
           $("#tabmed tbody").append(
             $("<tr>")
               .addClass("tabmed")
@@ -2624,7 +2662,7 @@ try {
         $.each(sinaisvitais, function(i, item) {
           $("#exibe-sinais-vitais")
             .append($("<tr>")
-              .append($("<td>").text(item.data))
+              .append($("<td>").attr("data-order", item.data_ordem || "").text(item.data))
               .append($("<td>").text(item.nome + " " + (item.sobrenome !== null ? item.sobrenome : "")))
               .append($("<td>").text(item.saturacao))
               .append($("<td>").text(item.pressao_arterial))
@@ -2638,21 +2676,25 @@ try {
       });
       $(document).ready(function() {
         $('#tab-sin-vit').DataTable({
-          "order": [
-            [0, "desc"]
-          ]
+          "order": []
         });
       });
 
 
 
       var editor2 = CKEDITOR.replace('prontuario', {
-        readOnly: true
+        readOnly: true,
+        width: '100%'
       });
 
       editor2.on('required', function(e) {
         alert("Por favor, informe a descrição!");
         e.cancel();
+      });
+
+      editor2.on('instanceReady', function() {
+        ajustarLarguraEditores();
+        ajustarEspacamentoConteudoEditor(editor2);
       });
 
 

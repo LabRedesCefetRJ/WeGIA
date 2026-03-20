@@ -223,7 +223,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 										<input type="hidden" name="nomeClasse" value="FuncionarioControle">
 										<input type="hidden" name="metodo" value="alterarSenha">
 										<input type="hidden" name="redir" value="geral/configurar_senhas.php">
-										<a href="editar_permissoes.php" class="btn btn-danger">Voltar</a>
+										<a href="cadastrar_permissoes.php" class="btn btn-danger">Voltar</a>
 										<input type="submit" name="alterar" value="Alterar" class="btn btn-primary">
 									</form>
 								</div>

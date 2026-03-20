@@ -584,7 +584,7 @@ class FuncionarioControle
                 [
                     '../html/funcionario/informacao_funcionario.php',
                     WWW . "html/funcionario/informacao_funcionario.php",
-                    '../html/geral/editar_permissoes.php',
+                    '../html/geral/cadastrar_permissoes.php',
                 ];
 
             $_SESSION['funcionarios'] = json_encode($funcionarios);
@@ -660,6 +660,7 @@ class FuncionarioControle
             //adicionar csrf
             $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
             $acao = filter_input(INPUT_POST, 'acao', FILTER_SANITIZE_NUMBER_INT);
+            $somenteAdicionar = filter_input(INPUT_POST, 'somenteAdicionar', FILTER_SANITIZE_NUMBER_INT);
             $recursos = filter_input(INPUT_POST, 'recurso', FILTER_VALIDATE_INT, [
                 'flags' => FILTER_REQUIRE_ARRAY,
                 'options' => ['min_range' => 1]
@@ -683,37 +684,126 @@ class FuncionarioControle
 
             // permissões atuais no banco
             $permissoesBd = $permissao->getPermissoesByCargo($cargo);
-            $recursosBd = $permissoesBd ? array_column($permissoesBd, 'id_recurso') : [];
+            $recursosBd = $permissoesBd ? array_map('intval', array_column($permissoesBd, 'id_recurso')) : [];
+            $acoesPorRecursoBd = [];
+
+            if (!empty($permissoesBd)) {
+                foreach ($permissoesBd as $permissaoBd) {
+                    $acoesPorRecursoBd[(int)$permissaoBd['id_recurso']] = (int)$permissaoBd['id_acao'];
+                }
+            }
 
             // normalizar para int
             if (!isset($recursos))
                 $recursos = [];
 
             $recursos = array_map('intval', $recursos);
+            $recursos = array_values(array_unique($recursos));
 
             // calcular diferenças
             $inserirPermissoes = array_diff($recursos, $recursosBd);
             $removerPermissoes = array_diff($recursosBd, $recursos);
+            $atualizarPermissoes = [];
+
+            if ((int)$somenteAdicionar === 1) {
+                if (!empty($inserirPermissoes)) {
+                    $permissao->adicionarPermissao($cargo, $acao, $inserirPermissoes);
+                }
+
+                $pdo->commit();
+                header('Location:' . '../html/geral/cadastrar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
+                exit;
+            }
+
+            foreach ($recursos as $recursoSelecionado) {
+                if (isset($acoesPorRecursoBd[$recursoSelecionado]) && $acoesPorRecursoBd[$recursoSelecionado] !== (int)$acao) {
+                    $atualizarPermissoes[] = $recursoSelecionado;
+                }
+            }
 
             // remove permissões desmarcadas
             if (!empty($removerPermissoes)) {
                 $permissao->removePermissoesByCargo($cargo, $removerPermissoes);
             }
 
+            // atualiza ação das permissões já existentes
+            if (!empty($atualizarPermissoes)) {
+                $permissao->atualizarAcaoPermissoesByCargo($cargo, $acao, $atualizarPermissoes);
+            }
+
             // adiciona novas permissões
             if (!empty($inserirPermissoes)) {
-                if (!$permissao->adicionarPermissao($cargo, $acao, $inserirPermissoes)) {
-                    throw new Exception('Falha no controle de transação', 500);
-                }
+                $permissao->adicionarPermissao($cargo, $acao, $inserirPermissoes);
             }
 
             $pdo->commit();
 
-            header('Location:' . '../html/geral/editar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
+            header('Location:' . '../html/geral/cadastrar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
         } catch (Exception $e) {
             if (isset($pdo) && $pdo->inTransaction()) {
                 $pdo->rollBack();
             }
+            Util::tratarException($e);
+        }
+    }
+
+    public function excluirPermissao()
+    {
+        try {
+            $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
+            $recurso = filter_input(INPUT_POST, 'recurso', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
+
+            if (!$cargo || $cargo < 1) {
+                throw new InvalidArgumentException('O valor do id do cargo informado não é válido.', 400);
+            }
+
+            if (!$recurso || $recurso < 1) {
+                throw new InvalidArgumentException('O valor do id do recurso informado não é válido.', 400);
+            }
+
+            $permissao = new PermissaoDAO();
+            $permissao->removePermissoesByCargo($cargo, [$recurso]);
+
+            header('Location:' . '../html/geral/listar_permissoes.php?msg_c=' . urlencode('Permissão deletada com sucesso.'));
+            exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function alterarPermissao()
+    {
+        try {
+            $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
+            $acao = filter_input(INPUT_POST, 'acao', FILTER_SANITIZE_NUMBER_INT);
+            $recurso = filter_input(INPUT_POST, 'recurso', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
+
+            if (!$cargo || $cargo < 1) {
+                throw new InvalidArgumentException('O valor do id do cargo informado não é válido.', 400);
+            }
+
+            if (!$acao || $acao < 1) {
+                throw new InvalidArgumentException('O valor do id da ação informado não é válido.', 400);
+            }
+
+            if (!$recurso || $recurso < 1) {
+                throw new InvalidArgumentException('O valor do id do recurso informado não é válido.', 400);
+            }
+
+            $permissao = new PermissaoDAO();
+            $permissao->atualizarAcaoPermissoesByCargo($cargo, $acao, [$recurso]);
+
+            header('Location:' . '../html/geral/listar_permissoes.php?msg_c=' . urlencode('Permissão alterada com sucesso.'));
+            exit;
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
