@@ -36,7 +36,7 @@ $pdo = Conexao::connect();
 
 $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
-if (!$cpf || $cpf < 1) {
+if (!$cpf || strlen($cpf) < 1) {
   http_response_code(400);
   echo json_encode(['erro' => 'O CPF informado não é válido.']);
   exit();
