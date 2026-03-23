@@ -1,3 +1,4 @@
+//modificar
 $(document).ready(function () {
     $(document).on("submit", "#form_relatorio", function (e) {
         e.preventDefault();
@@ -119,4 +120,53 @@ $(document).ready(function () {
                 $(".resultado").html("<p>Erro ao carregar relatório.</p>");
             });
     });
+
+    const dataSelect = document.getElementById('data-contribuicao');
+    const dataInicio = document.getElementById('data_inicio');
+    const dataFim = document.getElementById('data_fim');
+
+    // Criar e inserir labels para facilitar o uso
+    const labelInicio = document.createElement('label');
+    labelInicio.textContent = 'Início:';
+    labelInicio.style.marginRight = '5px';
+    labelInicio.style.marginLeft = '10px';
+    labelInicio.style.display = 'none';
+
+    const labelFim = document.createElement('label');
+    labelFim.textContent = 'Fim:';
+    labelFim.style.marginRight = '5px';
+    labelFim.style.marginLeft = '10px';
+    labelFim.style.display = 'none';
+
+    dataInicio.parentNode.insertBefore(labelInicio, dataInicio);
+    dataFim.parentNode.insertBefore(labelFim, dataFim);
+
+    function updateDateFields() {
+        const value = dataSelect.value;
+
+        if (value === 'qualquer') {
+            labelInicio.style.display = 'none';
+            dataInicio.style.display = 'none';
+            labelFim.style.display = 'none';
+            dataFim.style.display = 'none';
+        } else if (value === 'partir') {
+            labelInicio.style.display = 'none';
+            dataInicio.style.display = 'inline-block';
+            labelFim.style.display = 'none';
+            dataFim.style.display = 'none';
+        } else if (value === 'ate') {
+            labelInicio.style.display = 'none';
+            dataInicio.style.display = 'none';
+            labelFim.style.display = 'none';
+            dataFim.style.display = 'inline-block';
+        } else if (value === 'entre') {
+            labelInicio.style.display = 'inline-block';
+            dataInicio.style.display = 'inline-block';
+            labelFim.style.display = 'inline-block';
+            dataFim.style.display = 'inline-block';
+        }
+    }
+
+    dataSelect.addEventListener('change', updateDateFields);
+    updateDateFields();
 });
