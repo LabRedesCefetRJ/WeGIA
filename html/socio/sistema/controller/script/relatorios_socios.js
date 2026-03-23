@@ -12,14 +12,19 @@ $(document).ready(function () {
             valor: $("#valor").val(),
             tag: $("#tag").val(),
             status: $("#status").val(),
-            suposicao: $("#sup").val()
+            suposicao: $("#sup").val(),
+
+            // adicionar filtro de data no payload
+            "data-contribuicao": $("#data-contribuicao").val(),
+            "data_inicio": $("#data_inicio").val(),
+            "data_fim": $("#data_fim").val()
         };
 
         $.ajax({
             url: "get_relatorios_socios.php",
             method: "GET",
             data: payload,
-            dataType: "json" // garante que retorno já vem como objeto JS
+            dataType: "json"
         })
             .done(function (socios) {
                 if (!socios) {

@@ -30,6 +30,33 @@ $operador    = isset($input['operador']) ? trim($input['operador']) : null;
 $tipo_pessoa = isset($input['tipo_pessoa']) ? trim($input['tipo_pessoa']) : null;
 $tipo_socio  = isset($input['tipo_socio']) ? trim($input['tipo_socio']) : 'x';
 
+//pegar informações de data de contribuição, data inicio e data fim
+$data_contribuicao = isset($input['data-contribuicao']) ? trim($input['data-contribuicao']) : null;
+$data_inicio = isset($input['data_inicio']) ? trim($input['data_inicio']) : null;
+$data_fim = isset($input['data_fim']) ? trim($input['data_fim']) : null;
+
+// validar datas no formato ISO (YYYY-MM-DD)
+function validarData($d) {
+    if (empty($d)) return false;
+    $dt = DateTime::createFromFormat('Y-m-d', $d);
+    return $dt && $dt->format('Y-m-d') === $d;
+}
+
+$dataInicioValido = validarData($data_inicio);
+$dataFimValido   = validarData($data_fim);
+
+if ($data_contribuicao === 'partir' && !$dataInicioValido) {
+    $data_inicio = null;
+}
+if ($data_contribuicao === 'ate' && !$dataFimValido) {
+    $data_fim = null;
+}
+if ($data_contribuicao === 'entre') {
+    if (!$dataInicioValido || !$dataFimValido) {
+        $data_contribuicao = 'qualquer';
+    }
+}
+
 // validação básica
 if ($status !== 'x') {
     $status = filter_var($status, FILTER_VALIDATE_INT);
@@ -120,6 +147,22 @@ if (!empty($tipoSocioIds)) {
         $params[] = (int)$id;
         $types .= 'i';
     }
+}
+
+// filtro de data_referencia em socio conforme data_contribuicao
+if ($data_contribuicao === 'partir' && $dataInicioValido) {
+    $whereClauses[] = "s.data_referencia >= ?";
+    $params[] = $data_inicio;
+    $types .= 's';
+} elseif ($data_contribuicao === 'ate' && $dataFimValido) {
+    $whereClauses[] = "s.data_referencia <= ?";
+    $params[] = $data_fim;
+    $types .= 's';
+} elseif ($data_contribuicao === 'entre' && $dataInicioValido && $dataFimValido) {
+    $whereClauses[] = "s.data_referencia BETWEEN ? AND ?";
+    $params[] = $data_inicio;
+    $params[] = $data_fim;
+    $types .= 'ss';
 }
 
 // montar SQL final
