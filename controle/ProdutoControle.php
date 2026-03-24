@@ -177,7 +177,11 @@ class ProdutoControle
                     $produtoDAO->excluir($idProduto);
                     header('Location:' . WWW . 'html/matPat/listar_produto.php');
                 } else {
-                    header('Location: ' . WWW . 'html/matPat/remover_produto.php?id_produto=' . htmlspecialchars($idProduto));
+                    //header('Location: ' . WWW . 'html/matPat/remover_produto.php?id_produto=' . htmlspecialchars($idProduto));
+                    echo "<script>
+                    alert('Não foi possível excluir o produto, pois existem registros de entrada/saída.');
+                    window.location.href = '" . WWW . "html/matPat/remover_produto.php?id_produto=" . htmlspecialchars($idProduto) . "';
+                    </script>";
                 }
             } else {
                 if (!$registros) {
@@ -186,7 +190,11 @@ class ProdutoControle
                     $produtoDAO->excluir($idProduto);
                     header('Location: ' . WWW . 'html/matPat/listar_produto.php');
                 } else {
-                    header('Location: ' . WWW . 'html/matPat/remover_produto.php?id_produto=' . htmlspecialchars($idProduto));
+                    //header('Location: ' . WWW . 'html/matPat/remover_produto.php?id_produto=' . htmlspecialchars($idProduto));
+                    echo "<script>
+                    alert('Não foi possível excluir o produto, pois existem registros de entrada/saída');
+                    window.location.href = '" . WWW . "html/matPat/remover_produto.php?id_produto=" . htmlspecialchars($idProduto) . "';
+                    </script>";
                 }
             }
         } catch (Exception $e) {
