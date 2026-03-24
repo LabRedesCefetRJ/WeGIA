@@ -41,19 +41,6 @@ function getBackupSigningPrivateKey()
     return $privateKey;
 }
 
-//remover
-function signSqlContent(string $sqlContent): string
-{
-    $privateKey = getBackupSigningPrivateKey();
-    $signature = '';
-
-    if (!openssl_sign($sqlContent, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
-        throw new RuntimeException('Falha ao assinar conteúdo do backup.');
-    }
-
-    return base64_encode($signature);
-}
-
 function signSqlFile(string $filePath): string
 {
     $privateKey = getBackupSigningPrivateKey();
@@ -106,7 +93,7 @@ function verifySqlSignatureFromFile(string $filePath, string $signatureBase64): 
         throw new RuntimeException('Falha ao carregar chave pública.');
     }
 
-    // 🔥 HASH STREAMING (igual ao backup)
+    //hash streaming
     $context = hash_init('sha256');
 
     $handle = fopen($filePath, 'rb');
@@ -127,35 +114,9 @@ function verifySqlSignatureFromFile(string $filePath, string $signatureBase64): 
 
     $hash = hash_final($context, true);
 
-    // 🔐 Verifica assinatura do HASH
+    //Verifica assinatura do hash
     $result = openssl_verify($hash, $signature, $publicKey, OPENSSL_ALGO_SHA256);
 
-    if ($result !== 1) {
-        throw new RuntimeException('Assinatura do backup não confere.');
-    }
-}
-
-//remover
-function verifySqlSignature(string $sqlContent, string $signatureBase64): void
-{
-    $signature = base64_decode(trim($signatureBase64), true);
-    if ($signature === false || $signature === '') {
-        throw new RuntimeException('Assinatura do backup inválida.');
-    }
-
-    $privateKey = getBackupSigningPrivateKey();
-    $details = openssl_pkey_get_details($privateKey);
-
-    if (!is_array($details) || empty($details['key'])) {
-        throw new RuntimeException('Falha ao obter chave pública para validação.');
-    }
-
-    $publicKey = openssl_pkey_get_public($details['key']);
-    if ($publicKey === false) {
-        throw new RuntimeException('Falha ao carregar chave pública para validação.');
-    }
-
-    $result = openssl_verify($sqlContent, $signature, $publicKey, OPENSSL_ALGO_SHA256);
     if ($result !== 1) {
         throw new RuntimeException('Assinatura do backup não confere.');
     }
@@ -195,32 +156,6 @@ function validateRestoreSqlFile(string $filePath): void
     }
 
     fclose($handle);
-}
-
-//remover
-function validateRestoreSqlContent(string $sqlContent): void
-{
-    if (trim($sqlContent) === '') {
-        throw new RuntimeException('Arquivo SQL vazio.');
-    }
-
-    // Bloqueia instruções administrativas que não fazem parte do dump esperado.
-    $forbiddenPatterns = [
-        '/\\bCREATE\\s+USER\\b/i',
-        '/\\bALTER\\s+USER\\b/i',
-        '/\\bDROP\\s+USER\\b/i',
-        '/\\bGRANT\\b/i',
-        '/\\bREVOKE\\b/i',
-        '/\\bSET\\s+PASSWORD\\b/i',
-        '/\\bCREATE\\s+DATABASE\\b/i',
-        '/\\bDROP\\s+DATABASE\\b/i',
-    ];
-
-    foreach ($forbiddenPatterns as $pattern) {
-        if (preg_match($pattern, $sqlContent) === 1) {
-            throw new RuntimeException('SQL de backup contém instruções não permitidas.');
-        }
-    }
 }
 
 function backupBD(): string
