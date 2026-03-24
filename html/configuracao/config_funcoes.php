@@ -1,6 +1,4 @@
 <?php
-
-
 define("DEBUG", false);
 require "../../config.php";
 
@@ -43,6 +41,7 @@ function getBackupSigningPrivateKey()
     return $privateKey;
 }
 
+//remover
 function signSqlContent(string $sqlContent): string
 {
     $privateKey = getBackupSigningPrivateKey();
@@ -55,6 +54,88 @@ function signSqlContent(string $sqlContent): string
     return base64_encode($signature);
 }
 
+function signSqlFile(string $filePath): string
+{
+    $privateKey = getBackupSigningPrivateKey();
+
+    $context = hash_init('sha256');
+
+    $handle = fopen($filePath, 'rb');
+    if (!$handle) {
+        throw new RuntimeException('Falha ao abrir SQL para assinatura.');
+    }
+
+    while (!feof($handle)) {
+        $chunk = fread($handle, 1024 * 1024); // 1MB
+        if ($chunk === false) {
+            fclose($handle);
+            throw new RuntimeException('Erro ao ler SQL.');
+        }
+        hash_update($context, $chunk);
+    }
+
+    fclose($handle);
+
+    // hash final (binário!)
+    $hash = hash_final($context, true);
+
+    $signature = '';
+    if (!openssl_sign($hash, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+        throw new RuntimeException('Falha ao assinar hash do backup.');
+    }
+
+    return base64_encode($signature);
+}
+
+function verifySqlSignatureFromFile(string $filePath, string $signatureBase64): void
+{
+    $signature = base64_decode(trim($signatureBase64), true);
+    if ($signature === false || $signature === '') {
+        throw new RuntimeException('Assinatura do backup inválida.');
+    }
+
+    $privateKey = getBackupSigningPrivateKey();
+    $details = openssl_pkey_get_details($privateKey);
+
+    if (!is_array($details) || empty($details['key'])) {
+        throw new RuntimeException('Falha ao obter chave pública.');
+    }
+
+    $publicKey = openssl_pkey_get_public($details['key']);
+    if ($publicKey === false) {
+        throw new RuntimeException('Falha ao carregar chave pública.');
+    }
+
+    // 🔥 HASH STREAMING (igual ao backup)
+    $context = hash_init('sha256');
+
+    $handle = fopen($filePath, 'rb');
+    if (!$handle) {
+        throw new RuntimeException('Falha ao abrir SQL para verificação.');
+    }
+
+    while (!feof($handle)) {
+        $chunk = fread($handle, 1024 * 1024);
+        if ($chunk === false) {
+            fclose($handle);
+            throw new RuntimeException('Erro ao ler SQL.');
+        }
+        hash_update($context, $chunk);
+    }
+
+    fclose($handle);
+
+    $hash = hash_final($context, true);
+
+    // 🔐 Verifica assinatura do HASH
+    $result = openssl_verify($hash, $signature, $publicKey, OPENSSL_ALGO_SHA256);
+
+    if ($result !== 1) {
+        throw new RuntimeException('Assinatura do backup não confere.');
+    }
+}
+
+//remover
 function verifySqlSignature(string $sqlContent, string $signatureBase64): void
 {
     $signature = base64_decode(trim($signatureBase64), true);
@@ -80,6 +161,43 @@ function verifySqlSignature(string $sqlContent, string $signatureBase64): void
     }
 }
 
+function validateRestoreSqlFile(string $filePath): void
+{
+    $handle = fopen($filePath, 'rb');
+    if (!$handle) {
+        throw new RuntimeException('Falha ao abrir SQL para validação.');
+    }
+
+    $forbiddenPatterns = [
+        '/\\bCREATE\\s+USER\\b/i',
+        '/\\bALTER\\s+USER\\b/i',
+        '/\\bDROP\\s+USER\\b/i',
+        '/\\bGRANT\\b/i',
+        '/\\bREVOKE\\b/i',
+        '/\\bSET\\s+PASSWORD\\b/i',
+        '/\\bCREATE\\s+DATABASE\\b/i',
+        '/\\bDROP\\s+DATABASE\\b/i',
+    ];
+
+    while (!feof($handle)) {
+        $chunk = fread($handle, 1024 * 1024);
+        if ($chunk === false) {
+            fclose($handle);
+            throw new RuntimeException('Erro ao ler SQL.');
+        }
+
+        foreach ($forbiddenPatterns as $pattern) {
+            if (preg_match($pattern, $chunk)) {
+                fclose($handle);
+                throw new RuntimeException('SQL contém instruções não permitidas.');
+            }
+        }
+    }
+
+    fclose($handle);
+}
+
+//remover
 function validateRestoreSqlContent(string $sqlContent): void
 {
     if (trim($sqlContent) === '') {
@@ -159,12 +277,8 @@ function backupBD(): string
             throw new RuntimeException('Dump SQL vazio.');
         }
 
-        $sqlContent = file_get_contents($sqlFile);
-        if ($sqlContent === false) {
-            throw new RuntimeException('Falha ao ler SQL para assinatura.');
-        }
+        $signature = signSqlFile($sqlFile);
 
-        $signature = signSqlContent($sqlContent);
         if (file_put_contents($sigFile, $signature, LOCK_EX) === false) {
             throw new RuntimeException('Falha ao salvar assinatura do backup.');
         }
@@ -206,7 +320,7 @@ function rmBackupBD($file)
     return shell_exec($rmDump);
 }
 
-function autosaveBD()//está com erro, providenciar um conserto.
+function autosaveBD() //está com erro, providenciar um conserto.
 {
     // Executando Backup do Banco de Dados
 
@@ -248,12 +362,10 @@ function backupSite()
 
 function loadBackupDB(string $file): bool
 {
-    // 1. Validação extremamente restrita
     if (!preg_match('/^[a-zA-Z0-9_-]+\.dump\.tar\.gz$/', $file)) {
         throw new RuntimeException('Nome de arquivo inválido.');
     }
 
-    // 2. Resolve caminho real
     $backupDir  = realpath(BKP_DIR);
     $backupPath = realpath(BKP_DIR . DIRECTORY_SEPARATOR . $file);
 
@@ -261,7 +373,6 @@ function loadBackupDB(string $file): bool
         throw new RuntimeException('Arquivo fora do diretório permitido.');
     }
 
-    // 3. Diretório temporário
     $tmpDir = sys_get_temp_dir() . '/db_restore_' . bin2hex(random_bytes(8));
     if (!mkdir($tmpDir, 0700, true)) {
         throw new RuntimeException('Falha ao criar diretório temporário.');
@@ -273,13 +384,13 @@ function loadBackupDB(string $file): bool
     }
 
     try {
-        // 4. Copia backup para /tmp
+        // Copia backup
         $tmpGz = $tmpDir . '/backup.tar.gz';
         if (!copy($backupPath, $tmpGz)) {
             throw new RuntimeException('Falha ao copiar backup.');
         }
 
-        // 5. Extrai diretamente (SEM PharData)
+        // Extrai
         $cmd = sprintf(
             'tar -xzf %s -C %s --no-same-owner --no-same-permissions',
             escapeshellarg($tmpGz),
@@ -292,7 +403,7 @@ function loadBackupDB(string $file): bool
             throw new RuntimeException('Falha ao extrair o backup.');
         }
 
-        // 6.1 Bloqueia links simbólicos e paths fora do diretório temporário
+        // Validação de paths e symlinks
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($tmpDirReal, FilesystemIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST
@@ -311,55 +422,50 @@ function loadBackupDB(string $file): bool
             }
 
             if (!str_starts_with($resolvedPath, $tmpDirReal . DIRECTORY_SEPARATOR)) {
-                throw new RuntimeException('Backup inválido: contém caminho fora do diretório permitido.');
+                throw new RuntimeException('Backup inválido: contém path fora do diretório.');
             }
         }
 
-        // 6. Procura SQL e assinatura
+        // Localiza arquivos
         $sqlFiles = glob($tmpDir . '/*.sql');
         if (!$sqlFiles || count($sqlFiles) !== 1) {
-            throw new RuntimeException('Backup deve conter exatamente um arquivo .sql.');
+            throw new RuntimeException('Backup deve conter exatamente um .sql.');
         }
 
         $sigFiles = glob($tmpDir . '/*.sig');
         if (!$sigFiles || count($sigFiles) !== 1) {
-            throw new RuntimeException('Backup deve conter exatamente um arquivo de assinatura .sig.');
+            throw new RuntimeException('Backup deve conter exatamente um .sig.');
         }
 
-        $sqlFile = $sqlFiles[0];
-        if (!is_file($sqlFile) || is_link($sqlFile)) {
-            throw new RuntimeException('Backup inválido: arquivo SQL não é um arquivo regular.');
+        $sqlFileReal = realpath($sqlFiles[0]);
+        $sigFileReal = realpath($sigFiles[0]);
+
+        if (
+            $sqlFileReal === false ||
+            $sigFileReal === false ||
+            !str_starts_with($sqlFileReal, $tmpDirReal . DIRECTORY_SEPARATOR) ||
+            !str_starts_with($sigFileReal, $tmpDirReal . DIRECTORY_SEPARATOR)
+        ) {
+            throw new RuntimeException('Arquivos do backup inválidos.');
         }
 
-        $sqlFileReal = realpath($sqlFile);
-        if ($sqlFileReal === false || !str_starts_with($sqlFileReal, $tmpDirReal . DIRECTORY_SEPARATOR)) {
-            throw new RuntimeException('Backup inválido: arquivo SQL fora do diretório temporário.');
+        if (is_link($sqlFileReal) || is_link($sigFileReal)) {
+            throw new RuntimeException('Backup contém links simbólicos inválidos.');
         }
 
-        $sigFile = $sigFiles[0];
-        if (!is_file($sigFile) || is_link($sigFile)) {
-            throw new RuntimeException('Backup inválido: assinatura não é um arquivo regular.');
-        }
-
-        $sigFileReal = realpath($sigFile);
-        if ($sigFileReal === false || !str_starts_with($sigFileReal, $tmpDirReal . DIRECTORY_SEPARATOR)) {
-            throw new RuntimeException('Backup inválido: assinatura fora do diretório temporário.');
-        }
-
-        $sqlContent = file_get_contents($sqlFileReal);
-        if ($sqlContent === false) {
-            throw new RuntimeException('Falha ao ler conteúdo SQL do backup.');
-        }
-
+        // Lê apenas a assinatura (pequena)
         $signatureBase64 = file_get_contents($sigFileReal);
         if ($signatureBase64 === false) {
-            throw new RuntimeException('Falha ao ler assinatura do backup.');
+            throw new RuntimeException('Falha ao ler assinatura.');
         }
 
-        verifySqlSignature($sqlContent, $signatureBase64);
-        validateRestoreSqlContent($sqlContent);
+        // Verificação por streaming
+        verifySqlSignatureFromFile($sqlFileReal, $signatureBase64);
 
-        // 7. Importa SQL com proc_open (seguro)
+        // Validação por streaming
+        validateRestoreSqlFile($sqlFileReal);
+
+        // Importação via stream
         $process = proc_open(
             ['mysql', '-u', DB_USER, DB_NAME],
             [
@@ -369,16 +475,29 @@ function loadBackupDB(string $file): bool
             ],
             $pipes,
             null,
-            [
-                'MYSQL_PWD' => DB_PASSWORD
-            ]
+            ['MYSQL_PWD' => DB_PASSWORD]
         );
 
         if (!is_resource($process)) {
-            throw new RuntimeException('Falha ao iniciar o mysql.');
+            throw new RuntimeException('Falha ao iniciar mysql.');
         }
 
-        fwrite($pipes[0], $sqlContent);
+        $handle = fopen($sqlFileReal, 'rb');
+        if (!$handle) {
+            throw new RuntimeException('Falha ao abrir SQL.');
+        }
+
+        while (!feof($handle)) {
+            $chunk = fread($handle, 1024 * 1024); // 1MB
+            if ($chunk === false) {
+                fclose($handle);
+                throw new RuntimeException('Erro ao ler SQL.');
+            }
+
+            fwrite($pipes[0], $chunk);
+        }
+
+        fclose($handle);
         fclose($pipes[0]);
 
         $error = stream_get_contents($pipes[2]);
@@ -390,7 +509,6 @@ function loadBackupDB(string $file): bool
             throw new RuntimeException('Erro ao importar banco: ' . $error);
         }
     } finally {
-        // 8. Limpeza recursiva do /tmp
         if (is_dir($tmpDir)) {
             $cleanupIterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($tmpDir, FilesystemIterator::SKIP_DOTS),
@@ -406,6 +524,7 @@ function loadBackupDB(string $file): bool
                 }
             }
         }
+
         @rmdir($tmpDir);
     }
 
