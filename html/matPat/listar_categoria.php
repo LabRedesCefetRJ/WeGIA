@@ -101,7 +101,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		function excluir(id) {
-			window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=CategoriaControle&id_categoria_produto=' + id);
+			if(window.confirm("Deseja excluir essa categoria?"))
+				window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=CategoriaControle&id_categoria_produto=' + id);
 		}
 
 		function editar(id) {
