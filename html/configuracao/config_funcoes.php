@@ -1,6 +1,11 @@
 <?php
 define("DEBUG", false);
-require "../../config.php";
+require_once "../../config.php";
+
+function getBackupTimestamp(): string
+{
+    return (new DateTimeImmutable())->format('YmdHis');
+}
 
 function getBackupSigningKeyFilePath(): string
 {
@@ -160,7 +165,7 @@ function validateRestoreSqlFile(string $filePath): void
 
 function backupBD(): string
 {
-    $timestamp = date('YmdHis');
+    $timestamp = getBackupTimestamp();
     $baseName  = $timestamp . '.dump';
 
     $tmpDir = sys_get_temp_dir() . '/db_backup_' . bin2hex(random_bytes(8));
@@ -260,7 +265,7 @@ function autosaveBD() //está com erro, providenciar um conserto.
     // Executando Backup do Banco de Dados
 
     // Define nome do arquivo (sem o path)
-    define("AUTOSAVE_DUMP_NAME", date("YmdHis") . "-autosave");
+    define("AUTOSAVE_DUMP_NAME", getBackupTimestamp() . "-autosave");
     define("AUTOSAVE_ERROR_FATAL", true);
 
     // Define o comando para exportar o banco de dados para a pasta de backup com o nome definido acima
@@ -292,7 +297,7 @@ function backupSite()
 {
     // Executando Backup do Diretório do site
 
-    return shell_exec("tar -czf " . BKP_DIR . date("YmdHis") . ".site.tar.gz " . ROOT);
+    return shell_exec("tar -czf " . BKP_DIR . getBackupTimestamp() . ".site.tar.gz " . ROOT);
 }
 
 function loadBackupDB(string $file): bool
