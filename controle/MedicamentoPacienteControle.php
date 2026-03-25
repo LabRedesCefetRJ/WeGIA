@@ -72,7 +72,7 @@
             }
             
             $aplicacao= $aplicacao->format('Y-m-d H:i:s'); 
-            date_default_timezone_set('America/Sao_Paulo');
+            Util::definirFusoHorario();
             $registro = date('Y-m-d H:i:s');
 
             try{

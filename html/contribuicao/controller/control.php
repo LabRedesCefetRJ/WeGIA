@@ -1,4 +1,9 @@
 <?php
+require_once dirname(__DIR__, 3) . '/config.php';
+require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
+
+Util::definirFusoHorario();
+
 // Tenta decodificar o JSON do corpo da requisição
 $inputJson = json_decode(file_get_contents('php://input'), true);
 
