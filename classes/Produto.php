@@ -72,6 +72,8 @@ class Produto
 
     public function setPreco($preco)
     {
+        $preco = str_replace(',', '.', $preco);
+
         if (!$preco || !is_numeric($preco) || $preco < 0) {
             throw new InvalidArgumentException('O preço de um produto deve ser um número positivo.');
         }
