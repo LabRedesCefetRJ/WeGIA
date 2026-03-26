@@ -41,7 +41,7 @@ foreach ($bkpFiles as $key => $file) {
 			'hora' => substr($bkpFiles[$key][0], 8, 2),
 			'min' => substr($bkpFiles[$key][0], 10, 2),
 			'seg' => substr($bkpFiles[$key][0], 12, 2),
-			'tamanho' => filesize(BKP_DIR . implode(".", $bkpFiles[$key]))
+			'tamanho' => filesize(BKP_DIR . '/' . implode(".", $bkpFiles[$key]))
 		];
 	}
 }
@@ -297,9 +297,25 @@ $bkpFiles = array_values($bkpFiles);
 
 	function confirmDelete(file) {
 		if (window.confirm("ATENÇÃO! Você tem certeza que deseja deletar esse arquivo de backup do sistema?")) {
-			form = $("<form method='post' action='./gerenciar_backup.php' />")
-				.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"))
-				.append($("<input type='text' name='action' value='remove' readonly hidden />"));
+			$('.panel form').remove();
+
+			let form = $("<form>", {
+				method: "post",
+				action: "./gerenciar_backup.php"
+			});
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "file",
+				value: file
+			}));
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "action",
+				value: "remove"
+			}));
+
 			$('.panel').append(form);
 			form.submit();
 		}
@@ -307,17 +323,44 @@ $bkpFiles = array_values($bkpFiles);
 
 	function confirmRestore(file) {
 		if (window.confirm("ATENÇÃO! Você tem certeza que deseja sobrescrever a Base de Dados atual pela selecionada?")) {
-			form = $("<form method='post' action='./gerenciar_backup.php' />")
-				.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"))
-				.append($("<input type='text' name='action' value='restore' readonly hidden />"));
+			$('.panel form').remove();
+
+			let form = $("<form>", {
+				method: "post",
+				action: "./gerenciar_backup.php"
+			});
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "file",
+				value: file
+			}));
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "action",
+				value: "restore"
+			}));
+
 			$('.panel').append(form);
 			form.submit();
 		}
 	}
 
 	function confirmDownload(file) {
-		form = $("<form method='post' action='./exportar_dump.php' />")
-			.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"));
+		$('.panel form').remove();
+
+		let form = $("<form>", {
+			method: "post",
+			action: "./exportar_dump.php"
+		});
+
+		form.append($("<input>", {
+			type: "hidden",
+			name: "file",
+			value: file
+		}));
+
 		$('.panel').append(form);
 		form.submit();
 	}
