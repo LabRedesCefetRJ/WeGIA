@@ -67,6 +67,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	include_once ROOT .'/dao/AlmoxarifadoDAO.php';
 	include_once ROOT .'/dao/TipoEntradaDAO.php';
 	include_once ROOT .'/dao/ProdutoDAO.php';
+	include_once ROOT .'/dao/DestinoDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
 		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
@@ -132,6 +133,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		$(function() {
 			var prods = [];
 			var almoxarifado = <?= filtrarAlmoxarifado($_SESSION['id_pessoa'], $almoxarifado) ?>;
+			console.log(almoxarifado)
 
 			var tipo_saida = <?php
 								echo $tipo_saida;
@@ -145,10 +147,21 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 							echo $destino;
 							?>;
 
+
+			function ordenarArray(array, campo){
+				return array.sort(function(a, b) {
+					let aVal = (a[campo] ?? '').toString();
+					let bVal = (b[campo] ?? '').toString();
+    				return aVal.localeCompare(bVal, 'pt-BR', { sensitivity: 'base' });
+				});	
+			}
+
+			ordenarArray(almoxarifado, 'descricao_almoxarifado');
 			$.each(almoxarifado, function(i, item) {
 				$('#almoxarifado').append('<option value="' + item.id_almoxarifado + '">' + item.descricao_almoxarifado + '</option>');
 			})
 
+			ordenarArray(tipo_saida, 'descricao');
 			$.each(tipo_saida, function(i, item) {
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
 			})
@@ -156,6 +169,11 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			$.each(produtos_autocomplete, function(i, item) {
 				//$('#produtos_autocomplete').append('<option value="' + item.id_produto + '|' + item.descricao + '">');
 				prods[i] = item.id_produto + '|' + item.descricao + '|' + item.codigo; //alterar aqui
+			})
+
+			ordenarArray(destino, 'nome_destino');
+			$.each(destino, function(i, item) {
+				$('#origens').append('<option value="' + item.id_destino + '">' + item.nome_destino + '</option>');
 			})
 
 			$("#input_produtos").autocomplete({
@@ -168,10 +186,6 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					}
 				}
 			});
-
-			$.each(destino, function(i, item) {
-				$('#origens').append('<option value="' + item.id_destino + '-' + item.nome_destino + '">');
-			})
 
 			$('#input_produtos').on('change', function() {
 				var teste = this.value.split('|');
@@ -258,10 +272,16 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	<!-- Script para validar formulário -->
 	<script>
 		function validar() {
+			var desti = document.getElementById("origens")
 			var almox = document.getElementById("almoxarifado");
 			var tipo = document.getElementById("tipo_entrada");
 			var verificar = document.getElementById("verifica");
-			if (almox.value == "blank") {
+			if (desti.value == "blank") {
+				alert("Selecione um destino");
+				desti.focus();
+				return false;
+			}
+			else if (almox.value == "blank") {
 				alert("Selecione um almoxarifado");
 				almox.focus();
 				return false;
@@ -342,12 +362,12 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="origem">Destino</label>
+													<label class="col-md-3 control-label" for="origens">Destino</label>
 													<a href="cadastro_destino.php"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
-														<input type="search" list="origens" id="origem" name="destino" class="form-control" autocomplete="off" required>
-														<datalist id="origens">
-														</datalist>
+														<select class="form-control " name="destino" id="origens">
+															<option selected disabled value="blank">Selecionar</option>
+														</select>
 													</div>
 												</div>
 

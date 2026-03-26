@@ -30,6 +30,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	include_once ROOT . '/dao/AlmoxarifadoDAO.php';
 	include_once ROOT . '/dao/TipoEntradaDAO.php';
 	include_once ROOT . '/dao/ProdutoDAO.php';
+	include_once ROOT .'/dao/OrigemDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
@@ -150,12 +151,12 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="origem">Origem</label>
+													<label class="col-md-3 control-label" for="origens">Origem</label>
 													<a href="<?= WWW ?>html/matPat/cadastro_doador.php"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
-														<input type="search" list="origens" id="origem" name="origem" class="form-control" autocomplete="off" required>
-														<datalist id="origens">
-														</datalist>
+														<select class="form-control " name="origem" id="origens">
+															<option selected disabled value="blank">Selecionar</option>
+														</select>
 													</div>
 												</div>
 
@@ -275,12 +276,27 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 							echo $origem;
 							?>;
 
+			function ordenarArray(array, campo){
+				return array.sort(function(a, b) {
+					let aVal = (a[campo] ?? '').toString();
+					let bVal = (b[campo] ?? '').toString();
+    				return aVal.localeCompare(bVal, 'pt-BR', { sensitivity: 'base' });
+				});	
+			}
+
+			ordenarArray(almoxarifado, 'descricao_almoxarifado')
 			$.each(almoxarifado, function(i, item) {
 				$('#almoxarifado').append('<option value="' + item.id_almoxarifado + '">' + item.descricao_almoxarifado + '</option>');
 			})
 
+			ordenarArray(tipo_entrada, 'descricao')
 			$.each(tipo_entrada, function(i, item) {
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
+			})
+
+			ordenarArray(origem, 'nome_origem')
+			$.each(origem, function(i, item) {
+				$('#origens').append('<option value="' + item.id_origem + '">' + item.nome_origem + '</option>');
 			})
 
 			let produtos_autocomplete = [];
@@ -316,10 +332,6 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					}
 				});
 			});
-
-			$.each(origem, function(i, item) {
-				$('#origens').append('<option value="' + item.id_origem + '-' + item.nome_origem + '">');
-			})
 
 			$('#input_produtos').on('change', function() {
 				var teste = this.value.split('|');
