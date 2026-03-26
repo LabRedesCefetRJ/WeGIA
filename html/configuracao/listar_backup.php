@@ -144,40 +144,60 @@ $bkpFiles = array_values($bkpFiles);
 				} else {
 					fSize = (item.tamanho / 1000).toFixed(1) + " KB";
 				}
-				$("#tabela")
-					.append($("<tr class='item " + item.nome + "'>")
-						.append($("<td class='txt-center'>")
-							.text(item.nome)
-						)
-						.append($("<td class='txt-center'>")
-							.text(fSize)
-						)
-						.append($("<td class='txt-center'>")
-							.text((!isNaN(Number(item.dia, 10)) && !isNaN(Number(item.mes, 10)) && !isNaN(Number(item.ano))) ? item.dia + "/" + item.mes + "/" + item.ano : "Indefinido")
-						)
-						.append($("<td class='txt-center'>")
-							.text((!isNaN(Number(item.hora, 10)) && !isNaN(Number(item.dia, 10)) && !isNaN(Number(item.seg))) ? item.hora + ":" + item.min + (item.seg ? ":" + item.seg : "") : "N/A")
-						)
-						.append($("<td class='txt-center'>")
-							.append($("<div class='btn-container'>")
-								.append($("<a href='#' onclick='confirmRestore(`" + item.nome + "`)'/>")
-									.append($("<button class='btn btn-primary'/>")
-										.html('<i class="fa fa-refresh" aria-hidden="true"></i>')
-									)
-								)
-								.append($("<a href='#' onclick='confirmDelete(`" + item.nome + "`)'/>")
-									.append($("<button class='btn btn-danger' />")
-										.html('<i class="fa fa-trash-o" aria-hidden="true" style="font-family: FontAwesome;" />')
-									)
-								)
-								.append($("<a href='#' onclick='confirmDownload(`" + item.nome + "`)'/>")
-									.append($("<button class='btn btn-success' />")
-										.html('<i class="fa fa-download" aria-hidden="true" style="font-family: FontAwesome;" />')
-									)
+				$("#tabela").append(
+					$("<tr>").addClass("item").attr("data-file", item.nome)
+					.append($("<td>").addClass("txt-center").text(item.nome))
+					.append($("<td>").addClass("txt-center").text(fSize))
+					.append($("<td>").addClass("txt-center")
+						.text((!isNaN(Number(item.dia)) && !isNaN(Number(item.mes)) && !isNaN(Number(item.ano))) ?
+							item.dia + "/" + item.mes + "/" + item.ano :
+							"Indefinido"))
+					.append($("<td>").addClass("txt-center")
+						.text((!isNaN(Number(item.hora)) && !isNaN(Number(item.min)) && !isNaN(Number(item.seg))) ?
+							item.hora + ":" + item.min + (item.seg ? ":" + item.seg : "") :
+							"N/A"))
+					.append($("<td>").addClass("txt-center")
+						.append($("<div>").addClass("btn-container")
+
+							.append(
+								$("<a>", {
+									href: "#"
+								}).on("click", function(e) {
+									e.preventDefault();
+									confirmRestore(item.nome);
+								}).append(
+									$("<button>").addClass("btn btn-primary")
+									.html('<i class="fa fa-refresh"></i>')
 								)
 							)
+
+							.append(
+								$("<a>", {
+									href: "#"
+								}).on("click", function(e) {
+									e.preventDefault();
+									confirmDelete(item.nome);
+								}).append(
+									$("<button>").addClass("btn btn-danger")
+									.html('<i class="fa fa-trash-o"></i>')
+								)
+							)
+
+							.append(
+								$("<a>", {
+									href: "#"
+								}).on("click", function(e) {
+									e.preventDefault();
+									confirmDownload(item.nome);
+								}).append(
+									$("<button>").addClass("btn btn-success")
+									.html('<i class="fa fa-download"></i>')
+								)
+							)
+
 						)
 					)
+				);
 			});
 		});
 
