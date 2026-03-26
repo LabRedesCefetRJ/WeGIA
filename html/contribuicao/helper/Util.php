@@ -6,7 +6,7 @@ class Util
 {
     public static function definirFusoHorario(?string $fusoHorario = null): string
     {
-        require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
+        require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
 
         return FusoHorarioSistema::definir($fusoHorario);
     }
