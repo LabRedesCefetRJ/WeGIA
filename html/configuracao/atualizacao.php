@@ -27,7 +27,7 @@
         "./debug_info.php"
     ]);
 
-    $redirect = $_GET["redirect"] ?? REDIRECT[1];
+    $redirect = REDIRECT[1];
 
     function tempBackup() {
         if (PHP_OS != 'Linux'){
