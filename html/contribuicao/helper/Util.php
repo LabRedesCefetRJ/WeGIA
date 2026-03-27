@@ -4,6 +4,12 @@
 //Transferir eventuais métodos exclusivos para a classe Util central do projeto.
 class Util
 {
+    public static function definirFusoHorario(?string $fusoHorario = null): string
+    {
+        require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
+
+        return FusoHorarioSistema::definir($fusoHorario);
+    }
 
     /**
      * Registra o log de erro e emite um JSON para o cliente

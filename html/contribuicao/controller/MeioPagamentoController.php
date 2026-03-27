@@ -31,7 +31,7 @@ class MeioPagamentoController
             $meioPagamento = new MeioPagamento($descricao, $gatewayId);
             $meioPagamento->cadastrar();
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Cadastro de meio de pagamento.');
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Cadastro de meio de pagamento.');
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -64,7 +64,7 @@ class MeioPagamentoController
             $meiosPagamento = $meioPagamentoDao->buscaTodos();
 
             if (isset($_SESSION['id_pessoa'])) {
-                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de meios de pagamento.');
+                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 5, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Pesquisa de meios de pagamento.');
 
                 $sistemaLogDao = new SistemaLogDAO($this->pdo);
                 if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -125,7 +125,7 @@ class MeioPagamentoController
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamentoDao->excluirPorId($meioPagamentoId);
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão do meio de pagamento de id $meioPagamentoId.");
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "Exclusão do meio de pagamento de id $meioPagamentoId.");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -165,7 +165,7 @@ class MeioPagamentoController
             $meioPagamento->setId($meioPagamentoId);
             $meioPagamento->editar();
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração do meio de pagamento de id {$meioPagamento->getId()}.");
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "Alteração do meio de pagamento de id {$meioPagamento->getId()}.");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -220,7 +220,7 @@ class MeioPagamentoController
             $meioPagamentoDao = new MeioPagamentoDAO($this->pdo);
             $meioPagamentoDao->alterarStatusPorId($status, $meioPagamentoId);
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "$descricao");
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 73, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "$descricao");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {

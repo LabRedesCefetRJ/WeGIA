@@ -1,5 +1,7 @@
 <?php
-    session_start();
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
+session_start();
     if (!isset($_SESSION['usuario'])) {
         header("Location ../../index.php");
     }
@@ -78,7 +80,6 @@
                     $outdated = " (desatualizado)";
                 }
                 setlocale(LC_TIME, 'pt_BR', 'pt_BR.utf-8', 'pt_BR.utf-8', 'portuguese');
-                date_default_timezone_set('America/Sao_Paulo');
                 $_SESSION['local_release'] = strftime('%A, %d de %B de %Y, às %H:%M', intval(file_get_contents("../.release"))) . $outdated;
 
                 
