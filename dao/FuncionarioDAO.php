@@ -99,31 +99,34 @@ class FuncionarioDAO
         return "Sem informação";
     }
 
+    //refatorar, muitas responsabilidades em um mesmo método.
     public function selecionarCadastro(string $cpf)
     {
-        $cpf = filter_var($cpf, FILTER_SANITIZE_SPECIAL_CHARS);
+        $cpf = trim($cpf);
 
-        $valor = 0;
-
-        $stmt = $this->pdo->prepare("SELECT id_pessoa FROM funcionario WHERE id_pessoa = (SELECT id_pessoa FROM pessoa WHERE cpf =:cpf)");
+        $stmt = $this->pdo->prepare("SELECT f.id_pessoa FROM funcionario f JOIN pessoa p ON(p.id_pessoa=f.id_pessoa) WHERE p.cpf =:cpf"); //<-- dados estão sendo puxados da tabela errada, puxar da tabela pessoa 
         $stmt->bindValue(':cpf', $cpf, PDO::PARAM_STR);
         $stmt->execute();
 
-        $consultaFunc = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if ($consultaFunc == null) {
-            $consultaCPF = $this->pdo->query("SELECT cpf,id_pessoa FROM pessoa")->fetchAll(PDO::FETCH_ASSOC);
-            foreach ($consultaCPF as $key => $value) {
-                if ($cpf == $value['cpf']) {
-                    $valor++;
-                }
-            }
-            if ($valor == 0) {
+        $consultaFuncionario = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$consultaFuncionario) {
+            $stmtConsultaCPF = $this->pdo->prepare("SELECT cpf,id_pessoa FROM pessoa WHERE cpf =:cpf");
+            $stmtConsultaCPF->bindValue(':cpf', $cpf, PDO::PARAM_STR);
+            $stmtConsultaCPF->execute();
+
+            $consultaCPF = $stmtConsultaCPF->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$consultaCPF) {
                 header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
+                exit();
             } else {
                 header('Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=' . htmlspecialchars($cpf));
+                exit();
             }
         } else {
             header("Location: ../html/funcionario/pre_cadastro_funcionario.php?msg_e=Erro, Funcionário já cadastrado no sistema.");
+            exit();
         }
     }
 
