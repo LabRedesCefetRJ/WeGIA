@@ -1,50 +1,16 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
+if (session_status() == PHP_SESSION_NONE)
+	session_start();
 
-session_start();
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'config.php';
+
 if (!isset($_SESSION['usuario'])) {
 	header("Location: " . WWW . "index.php");
-}
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
-$resultado = mysqli_query($conexao, "SELECT * FROM funcionario WHERE id_pessoa=$id_pessoa");
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$resultado = mysqli_query($conexao, "SELECT * FROM permissao WHERE id_cargo=$id_cargo and id_recurso=91");
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] == 1) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW . "/html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+	exit();
 }
 
-// Adiciona a Função display_campo($nome_campo, $tipo_campo)
-$cargo = mysqli_query($conexao, "SELECT * FROM cargo");
-$acao = mysqli_query($conexao, "SELECT * FROM acao");
-$recurso = mysqli_query($conexao, "SELECT * FROM recurso");
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
 ?>
 <!doctype html>
 <html class="fixed" lang="pt-br">
@@ -186,11 +152,21 @@ $recurso = mysqli_query($conexao, "SELECT * FROM recurso");
 								</thead>
 								<tbody id="tagsT">
 									<?php
-									$tags = mysqli_query($conexao, "SELECT * FROM `socio_tag`");
-									while ($row = $tags->fetch_array(MYSQLI_ASSOC)) {
-										$id_tag = $row['id_sociotag'];
-										$tag = $row['tag'];
-										echo "<tr><td>$id_tag</td><td><input id='$id_tag' type='text' value='$tag'></td><td><a id='a_$id_tag' class='btn btn-primary' href='salvar_tag.php?id_tag=$id_tag&value={htmlspecialchars($tag)}' disabled>Salvar</a><td><button class='btn btn-danger delete-tag' data-id='$id_tag'>Deletar</button></td></tr>"; //Substituir link href por form post
+									try {
+										require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
+										$conexao = Conexao::connect();
+										$resultado = $conexao->query("SELECT * FROM `socio_tag`");
+
+										$tags = $resultado->fetchAll(PDO::FETCH_ASSOC);
+
+										foreach ($tags as $row) {
+											$id_tag = htmlspecialchars($row['id_sociotag']);
+											$tag = htmlspecialchars($row['tag']);
+											echo "<tr><td>$id_tag</td><td><input id='$id_tag' type='text' value='$tag'></td><td><a id='a_$id_tag' class='btn btn-primary' href='salvar_tag.php?id_tag=$id_tag&value={htmlspecialchars($tag)}' disabled>Salvar</a><td><button class='btn btn-danger delete-tag' data-id='$id_tag'>Deletar</button></td></tr>";
+										}
+									} catch (PDOException $e) {
+										error_log("Erro ao listar tags: " . $e->getMessage());
+										echo '<div class="alert alert-danger" role="alert">Erro ao listar tags. Tente novamente mais tarde.</div>';
 									}
 									?>
 								</tbody>
