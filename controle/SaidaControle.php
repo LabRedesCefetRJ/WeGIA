@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 include_once ROOT .'/classes/Saida.php';
 include_once ROOT .'/dao/SaidaDAO.php';
 include_once ROOT .'/classes/Destino.php';
@@ -16,7 +17,7 @@ class SaidaControle
     public function verificar(){
         session_start();
         extract($_REQUEST);
-        date_default_timezone_set('America/Sao_Paulo');
+        Util::definirFusoHorario();
         $horadata = date('Y-m-d H:i');
         $horadata = explode(" ", $horadata);
         $data = $horadata[0];

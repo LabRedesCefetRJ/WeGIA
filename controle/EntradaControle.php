@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 include_once '../classes/Entrada.php';
 include_once '../dao/EntradaDAO.php';
 include_once '../classes/Origem.php';
@@ -21,7 +22,7 @@ class EntradaControle
         $total_total = isset($_REQUEST['total_total']) ? floatval($_REQUEST['total_total']) : 0;
         //extract($_REQUEST);
 
-        date_default_timezone_set('America/Sao_Paulo');
+        Util::definirFusoHorario();
         $horadata = explode(" ", date('Y-m-d H:i'));
         $data = $horadata[0];
         $hora = $horadata[1];

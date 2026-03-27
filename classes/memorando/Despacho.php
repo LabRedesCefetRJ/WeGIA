@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'Util.php';
+
 class Despacho
 {
 	//Atributos
@@ -134,7 +136,7 @@ class Despacho
 
 			$this->data = $data;
 		} else {
-			date_default_timezone_set('America/Sao_Paulo');
+			Util::definirFusoHorario();
 			$data = date('Y-m-d H:i:s');
 			$this->data = $data;
 		}

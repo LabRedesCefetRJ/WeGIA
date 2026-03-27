@@ -40,7 +40,7 @@ class RegraPagamentoController
             $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamento();
 
             if (isset($_SESSION['id_pessoa'])) {
-                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de regras de pagamento.');
+                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 5, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Pesquisa de regras de pagamento.');
 
                 $sistemaLogDao = new SistemaLogDAO($this->pdo);
                 if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -104,7 +104,7 @@ class RegraPagamentoController
                 ->setStatus(0)
                 ->cadastrar();
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Cadastro de regras de pagamento.');
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Cadastro de regras de pagamento.');
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -144,7 +144,7 @@ class RegraPagamentoController
             $regraPagamentoDao = new RegraPagamentoDAO($this->pdo);
             $regraPagamentoDao->excluirPorId($regraPagamentoId);
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão da regra de pagamento de id $regraPagamentoId.");
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "Exclusão da regra de pagamento de id $regraPagamentoId.");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -185,7 +185,7 @@ class RegraPagamentoController
                 ->setValor($valor)
                 ->editar();
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração da regra de pagamento de id {$regraPagamento->getId()}.");
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "Alteração da regra de pagamento de id {$regraPagamento->getId()}.");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -241,7 +241,7 @@ class RegraPagamentoController
             $regraPagamentoDao = new RegraPagamentoDAO($this->pdo);
             $regraPagamentoDao->alterarStatusPorId($status, $regraPagamentoId, $status);
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "$descricao");
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 74, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "$descricao");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {

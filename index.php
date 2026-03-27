@@ -1,5 +1,4 @@
 <?php
-date_default_timezone_set("America/Sao_Paulo");
 require_once "./html/seguranca/security_headers.php";
 require_once "./html/seguranca/sessionStart.php";
 session_start();

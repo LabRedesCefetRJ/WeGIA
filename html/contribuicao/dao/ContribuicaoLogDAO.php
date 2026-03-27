@@ -232,7 +232,7 @@ class ContribuicaoLogDAO
         if ($configuracao->getPeriodo() != 1) {
             $dataInicio = null;
             $dataFim = null;
-            $agora = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+            $agora = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 
             switch ($configuracao->getPeriodo()) {
                 case 2: // Mês atual
@@ -253,7 +253,7 @@ class ContribuicaoLogDAO
                         $mesInicio += 12;
                         $anoAtual -= 1;
                     }
-                    $dataInicio = new DateTime("$anoAtual-$mesInicio-01", new DateTimeZone('America/Sao_Paulo'));
+                    $dataInicio = new DateTime("$anoAtual-$mesInicio-01", new DateTimeZone(date_default_timezone_get()));
                     $dataFim    = (clone $dataInicio)->modify('+1 month')->modify('last day of this month')->setTime(23, 59, 59);
                     break;
 
@@ -265,7 +265,7 @@ class ContribuicaoLogDAO
                         $mesInicio += 12;
                         $anoAtual -= 1;
                     }
-                    $dataInicio = new DateTime("$anoAtual-$mesInicio-01", new DateTimeZone('America/Sao_Paulo'));
+                    $dataInicio = new DateTime("$anoAtual-$mesInicio-01", new DateTimeZone(date_default_timezone_get()));
                     $dataFim    = (clone $dataInicio)->modify('+2 months')->modify('last day of this month')->setTime(23, 59, 59);
                     break;
 
@@ -273,24 +273,24 @@ class ContribuicaoLogDAO
                     $anoAtual = (int) $agora->format('Y');
                     $mesAtual = (int) $agora->format('n');
                     if ($mesAtual <= 6) {
-                        $dataInicio = new DateTime(($anoAtual - 1) . '-07-01', new DateTimeZone('America/Sao_Paulo'));
-                        $dataFim    = new DateTime(($anoAtual - 1) . '-12-31 23:59:59', new DateTimeZone('America/Sao_Paulo'));
+                        $dataInicio = new DateTime(($anoAtual - 1) . '-07-01', new DateTimeZone(date_default_timezone_get()));
+                        $dataFim    = new DateTime(($anoAtual - 1) . '-12-31 23:59:59', new DateTimeZone(date_default_timezone_get()));
                     } else {
-                        $dataInicio = new DateTime("$anoAtual-01-01", new DateTimeZone('America/Sao_Paulo'));
-                        $dataFim    = new DateTime("$anoAtual-06-30 23:59:59", new DateTimeZone('America/Sao_Paulo'));
+                        $dataInicio = new DateTime("$anoAtual-01-01", new DateTimeZone(date_default_timezone_get()));
+                        $dataFim    = new DateTime("$anoAtual-06-30 23:59:59", new DateTimeZone(date_default_timezone_get()));
                     }
                     break;
 
                 case 7: // Ano atual
                     $anoAtual = (int) $agora->format('Y');
-                    $dataInicio = new DateTime("$anoAtual-01-01", new DateTimeZone('America/Sao_Paulo'));
-                    $dataFim    = new DateTime("$anoAtual-12-31 23:59:59", new DateTimeZone('America/Sao_Paulo'));
+                    $dataInicio = new DateTime("$anoAtual-01-01", new DateTimeZone(date_default_timezone_get()));
+                    $dataFim    = new DateTime("$anoAtual-12-31 23:59:59", new DateTimeZone(date_default_timezone_get()));
                     break;
 
                 case 8: // Ano passado
                     $anoPassado = ((int) $agora->format('Y')) - 1;
-                    $dataInicio = new DateTime("$anoPassado-01-01", new DateTimeZone('America/Sao_Paulo'));
-                    $dataFim    = new DateTime("$anoPassado-12-31 23:59:59", new DateTimeZone('America/Sao_Paulo'));
+                    $dataInicio = new DateTime("$anoPassado-01-01", new DateTimeZone(date_default_timezone_get()));
+                    $dataFim    = new DateTime("$anoPassado-12-31 23:59:59", new DateTimeZone(date_default_timezone_get()));
                     break;
             }
         }

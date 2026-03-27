@@ -2,6 +2,7 @@
 
 require_once 'Conexao.php';
 require_once '../classes/Aviso.php';
+require_once '../classes/Util.php';
 
 class AvisoDAO
 {
@@ -32,7 +33,7 @@ class AvisoDAO
             $stmt->bindParam(':idPessoaAtendida', $idPessoaAtendida);
             $stmt->bindParam(':descricao', $descricao);
 
-            date_default_timezone_set('America/Sao_Paulo');
+            Util::definirFusoHorario();
             $data = date('Y-m-d H:i:s');
             $stmt->bindParam(':data', $data);
 
