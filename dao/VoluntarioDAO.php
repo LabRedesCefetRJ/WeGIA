@@ -26,9 +26,9 @@ class VoluntarioDAO
 
             if (!$idPessoa) {
                 $sqlPessoa = "INSERT INTO pessoa (nome, sobrenome, cpf, sexo, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge, registro_geral, orgao_emissor, data_expedicao, nome_pai, nome_mae, tipo_sanguineo) VALUES (:nome, :sobrenome, :cpf, :sexo, :telefone, :data_nascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento, :ibge, :registro_geral, :orgao_emissor, :data_expedicao, :nome_pai, :nome_mae, :tipo_sanguineo)";
-                
+
                 $stmtPessoa = $this->pdo->prepare($sqlPessoa);
-                
+
                 $nome = $voluntario->getNome();
                 $sobrenome = $voluntario->getSobrenome();
                 $sexo = $voluntario->getSexo();
@@ -69,16 +69,17 @@ class VoluntarioDAO
                 $stmtPessoa->bindParam(':nome_pai', $nomePai);
                 $stmtPessoa->bindParam(':nome_mae', $nomeMae);
                 $stmtPessoa->bindParam(':tipo_sanguineo', $sangue);
-                
+
                 $stmtPessoa->execute();
-                
+
                 $idPessoa = $this->pdo->lastInsertId();
-            } else {
+            }
+            else {
                 // Atualiza pessoa existente
                 $sqlPessoa = "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, telefone=:telefone, data_nascimento=:data_nascimento, cep=:cep, estado=:estado, cidade=:cidade, bairro=:bairro, logradouro=:logradouro, numero_endereco=:numero_endereco, complemento=:complemento, ibge=:ibge, registro_geral=:registro_geral, orgao_emissor=:orgao_emissor, data_expedicao=:data_expedicao, nome_pai=:nome_pai, nome_mae=:nome_mae, tipo_sanguineo=:tipo_sanguineo WHERE id_pessoa=:id_pessoa";
-                
+
                 $stmtPessoa = $this->pdo->prepare($sqlPessoa);
-                
+
                 $nome = $voluntario->getNome();
                 $sobrenome = $voluntario->getSobrenome();
                 $sexo = $voluntario->getSexo();
@@ -119,39 +120,39 @@ class VoluntarioDAO
                 $stmtPessoa->bindParam(':nome_mae', $nomeMae);
                 $stmtPessoa->bindParam(':tipo_sanguineo', $sangue);
                 $stmtPessoa->bindParam(':id_pessoa', $idPessoa);
-                
+
                 $stmtPessoa->execute();
             }
 
             $sqlVoluntario = "INSERT INTO voluntario (id_pessoa, id_situacao, data_admissao) VALUES (:id_pessoa, :id_situacao, :data_admissao)";
             $stmtVoluntario = $this->pdo->prepare($sqlVoluntario);
-            
+
             $situacao = $voluntario->getId_situacao();
             $dataAdmissao = $voluntario->getData_admissao();
-            
+
             $stmtVoluntario->bindParam(':id_pessoa', $idPessoa);
             $stmtVoluntario->bindParam(':id_situacao', $situacao);
             $stmtVoluntario->bindParam(':data_admissao', $dataAdmissao);
-            
+
             $stmtVoluntario->execute();
             $idVoluntario = $this->pdo->lastInsertId();
 
             $this->pdo->commit();
             return $idVoluntario;
 
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             $this->pdo->rollBack();
             Util::tratarException($e);
             return null;
         }
     }
 
-    public function listarTodos($situacao_selecionada = 1)
+    public function listarTodos()
     {
         $voluntarios = array();
         try {
-            $consulta = $this->pdo->prepare("SELECT v.id_voluntario, p.nome, p.sobrenome, p.cpf, s.situacoes FROM pessoa p JOIN voluntario v ON p.id_pessoa = v.id_pessoa JOIN situacao s ON v.id_situacao=s.id_situacao WHERE s.id_situacao = :situacao");
-            $consulta->bindParam(':situacao', $situacao_selecionada);
+            $consulta = $this->pdo->prepare("SELECT v.id_voluntario, p.nome, p.sobrenome, p.cpf, s.situacoes FROM pessoa p JOIN voluntario v ON p.id_pessoa = v.id_pessoa JOIN situacao s ON v.id_situacao=s.id_situacao");
             $consulta->execute();
 
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
@@ -163,7 +164,8 @@ class VoluntarioDAO
                     'situacao' => htmlspecialchars($linha['situacoes'])
                 );
             }
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             Util::tratarException($e);
         }
         return $voluntarios;
@@ -178,7 +180,7 @@ class VoluntarioDAO
             $stmt->execute();
 
             $consultaVoluntario = $stmt->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$consultaVoluntario) {
                 // Not a voluntario yet, check if exists as person
                 $stmtCheckPessoa = $this->pdo->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = :cpf");
@@ -189,15 +191,18 @@ class VoluntarioDAO
                 if ($pessoa) {
                     header('Location: ../html/voluntario/cadastro_voluntario_pessoa_existente.php?cpf=' . htmlspecialchars($cpf));
                     exit;
-                } else {
+                }
+                else {
                     header('Location: ../html/voluntario/cadastro_voluntario.php?cpf=' . htmlspecialchars($cpf));
                     exit;
                 }
-            } else {
+            }
+            else {
                 header("Location: ../html/voluntario/pre_cadastro_voluntario.php?msg_e=Erro, Voluntário já cadastrado no sistema.");
                 exit;
             }
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             Util::tratarException($e);
         }
     }
@@ -210,7 +215,8 @@ class VoluntarioDAO
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
                 $cpfs[] = array('cpf' => $linha['cpf'], 'id' => $linha['id_voluntario']);
             }
-        } catch (PDOException $e) {
+        }
+        catch (PDOException $e) {
             Util::tratarException($e);
         }
         return $cpfs;
