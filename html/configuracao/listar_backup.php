@@ -158,6 +158,66 @@ $bkpFiles = loadDatabaseBackups(BKP_DIR);
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
 		});
+		$(function() {
+			let estoque = <?= JSON_encode($bkpFiles) ?>;
+
+			$.each(estoque, function(i, item) {
+				$("#tabela").append(
+					$("<tr>").addClass("item").attr("data-file", item.nome)
+					.append($("<td>").addClass("txt-center").text(item.nome))
+					.append($("<td>").addClass("txt-center").text(item.tamanho))
+					.append($("<td>").addClass("txt-center")
+						.text((!isNaN(Number(item.dia)) && !isNaN(Number(item.mes)) && !isNaN(Number(item.ano))) ?
+							item.dia + "/" + item.mes + "/" + item.ano :
+							"Indefinido"))
+					.append($("<td>").addClass("txt-center")
+						.text((!isNaN(Number(item.hora)) && !isNaN(Number(item.min)) && !isNaN(Number(item.seg))) ?
+							item.hora + ":" + item.min + (item.seg ? ":" + item.seg : "") :
+							"N/A"))
+					.append($("<td>").addClass("txt-center")
+						.append($("<div>").addClass("btn-container")
+
+							.append(
+								$("<a>", {
+									href: "#"
+								}).on("click", function(e) {
+									e.preventDefault();
+									confirmRestore(item.nome);
+								}).append(
+									$("<button>").addClass("btn btn-primary")
+									.html('<i class="fa fa-refresh"></i>')
+								)
+							)
+
+							.append(
+								$("<a>", {
+									href: "#"
+								}).on("click", function(e) {
+									e.preventDefault();
+									confirmDelete(item.nome);
+								}).append(
+									$("<button>").addClass("btn btn-danger")
+									.html('<i class="fa fa-trash-o"></i>')
+								)
+							)
+
+							.append(
+								$("<a>", {
+									href: "#"
+								}).on("click", function(e) {
+									e.preventDefault();
+									confirmDownload(item.nome);
+								}).append(
+									$("<button>").addClass("btn btn-success")
+									.html('<i class="fa fa-download"></i>')
+								)
+							)
+
+						)
+					)
+				);
+			});
+		});
 
 		$(function() {
 			$('#datatable-default').DataTable({
@@ -299,9 +359,25 @@ $bkpFiles = loadDatabaseBackups(BKP_DIR);
 
 	function confirmDelete(file) {
 		if (window.confirm("ATENÇÃO! Você tem certeza que deseja deletar esse arquivo de backup do sistema?")) {
-			form = $("<form method='post' action='./gerenciar_backup.php' />")
-				.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"))
-				.append($("<input type='text' name='action' value='remove' readonly hidden />"));
+			$('.panel form').remove();
+
+			let form = $("<form>", {
+				method: "post",
+				action: "./gerenciar_backup.php"
+			});
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "file",
+				value: file
+			}));
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "action",
+				value: "remove"
+			}));
+
 			$('.panel').append(form);
 			form.submit();
 		}
@@ -309,17 +385,44 @@ $bkpFiles = loadDatabaseBackups(BKP_DIR);
 
 	function confirmRestore(file) {
 		if (window.confirm("ATENÇÃO! Você tem certeza que deseja sobrescrever a Base de Dados atual pela selecionada?")) {
-			form = $("<form method='post' action='./gerenciar_backup.php' />")
-				.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"))
-				.append($("<input type='text' name='action' value='restore' readonly hidden />"));
+			$('.panel form').remove();
+
+			let form = $("<form>", {
+				method: "post",
+				action: "./gerenciar_backup.php"
+			});
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "file",
+				value: file
+			}));
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "action",
+				value: "restore"
+			}));
+
 			$('.panel').append(form);
 			form.submit();
 		}
 	}
 
 	function confirmDownload(file) {
-		form = $("<form method='post' action='./exportar_dump.php' />")
-			.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"));
+		$('.panel form').remove();
+
+		let form = $("<form>", {
+			method: "post",
+			action: "./exportar_dump.php"
+		});
+
+		form.append($("<input>", {
+			type: "hidden",
+			name: "file",
+			value: file
+		}));
+
 		$('.panel').append(form);
 		form.submit();
 	}
