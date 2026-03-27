@@ -1,8 +1,8 @@
 <?php
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
     session_start();
 
-require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php' ;
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 require_once "../../../config.php";
 require_once "../../../dao/Conexao.php";
 require_once "../../../classes/Personalizacao_display.php";
@@ -205,6 +205,14 @@ $captchaGoogle = new CaptchaGoogleService();
 
             100% {
                 transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 576px) {
+            #valor::placeholder {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         }
     </style>

@@ -1,7 +1,7 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
 if (!isset($_SESSION['usuario'])) {
@@ -28,10 +28,7 @@ $cargo = mysqli_query($conexao, "SELECT * FROM cargo");
 
 	<!-- Basic -->
 	<meta charset="UTF-8">
-	<title>Listar permissões</title>
-	<meta name="keywords" content="HTML5 Admin Template" />
-	<meta name="description" content="Porto Admin - Responsive HTML5 Template">
-	<meta name="author" content="okler.net">
+	<title>Listar Cargos</title>
 	<!-- Mobile Metas -->
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -219,6 +216,34 @@ $cargo = mysqli_query($conexao, "SELECT * FROM cargo");
 				window.history.replaceState({}, document.title, window.location.pathname);
 			}, 3000);
 		});
+
+		function adicionar_cargo() {
+			url = '../../controle/control.php';
+			var cargo = window.prompt("Cadastre um Novo Cargo:");
+			if (!cargo) {
+				return
+			}
+			situacao = cargo.trim();
+			if (cargo == '') {
+				return
+			}
+			data = {
+				nomeClasse: 'CargoControle',
+				metodo: 'incluir',
+				cargo: cargo
+			};
+
+			$.ajax({
+				type: "POST",
+				url: url,
+				data: JSON.stringify(data),
+				contentType: "application/json",
+				success: function(response) {
+					window.location.reload();
+				},
+				dataType: 'text'
+			});
+		}
 	</script>
 	<script src="../../assets/vendor/select2/select2.js"></script>
 	<script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>

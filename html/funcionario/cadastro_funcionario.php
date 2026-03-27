@@ -150,35 +150,33 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   <h5 class="obrig">Campos Obrigatórios(*)</h5>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                       <input type="text" class="form-control" name="nome" id="profileFirstName" id="nome" onkeypress="return Onlychars(event)" required>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                       <input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                       <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
                       <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="telefone">Telefone<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                       <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
-                    <div class="col-md-8">
-                      <input type="date" name="nascimento" id="nascimento"
-                        min="<?= $dataNascimentoMinima ?>"
-                        max="<?= $dataNascimentoMaxima ?>" required>
+                    <div class="col-md-6">
+                      <input type="date" name="nascimento" id="nascimento" class="form-control" min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>" required>
                     </div>
                   </div>
                   <hr class="dotted short">
@@ -192,13 +190,13 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" id="profileCompany" onkeypress="return Onlychars(event)" required>
+                      <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileCompany">Data de expedição<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_expedicao" id="data_expedicao" id="profileCompany" max=<?php echo date('Y-m-d'); ?> required disabled>
+                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required disabled>
                       <p id="dataNascInvalida" style="display: block; color: #b30000">Selecione a data de nascimento primeiro!</p>
                     </div>
                   </div>
@@ -430,8 +428,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
         }
       });
 
-      if (apoio == 0) {
-      }
+      if (apoio == 0) {}
     }
 
     function validarFuncionario() {
@@ -498,8 +495,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       if (dt_expedicao < data_nascimento) {
         return false;
       }
-      if (nome && sobrenome && sexo && telefone && dt_nasc && rg && orgao_emissor && dt_expedicao && dt_admissao && situacao && cargo && escala && tipo) {
-      }
+      if (nome && sobrenome && sexo && telefone && dt_nasc && rg && orgao_emissor && dt_expedicao && dt_admissao && situacao && cargo && escala && tipo) {}
     }
 
     function numero_residencial() {
@@ -775,8 +771,6 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       });
     });
   </script>
-
-
 
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>

@@ -46,7 +46,7 @@ $teste = $pdo->query("SELECT nome, f.id_funcionario FROM pessoa p JOIN funcionar
 $id_funcionario = $teste[0]['nome'];
 $funcionario_id = $teste[0]['id_funcionario'];
 
-$stmtSinaisVitais = $pdo->prepare("SELECT id_sinais_vitais, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica");
+$stmtSinaisVitais = $pdo->prepare("SELECT id_sinais_vitais, data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica ORDER BY sv.data DESC, sv.id_sinais_vitais DESC");
 
 $stmtSinaisVitais->bindParam(':idFichaMedica', $id);
 $stmtSinaisVitais->execute();
@@ -56,6 +56,7 @@ $sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
 //formatar data
 foreach ($sinaisvitais as $key => $value) {
   $data = new DateTime($value['data']);
+  $sinaisvitais[$key]['data_ordem'] = $data->format('Y-m-d H:i:s');
   $sinaisvitais[$key]['data'] = $data->format('d/m/Y H:i');
   $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
 }
@@ -74,7 +75,17 @@ if (!$stmtPaciente->execute()) {
   exit();
 }
 
-$idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
+$idPaciente = $stmtPaciente->fetchColumn();
+if (!$idPaciente) {
+	http_response_code(500);
+	echo json_encode(['erro' => 'Paciente não encontrado']);
+	exit();
+}
+
+$stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+$stmtAtendido->bindValue(':idPessoa', $idPaciente, PDO::PARAM_INT);
+$stmtAtendido->execute();
+$data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
 
 ?>
 <!-- Vendor -->
@@ -236,7 +247,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
       $.each(sinaisvitais, function(i, item) {
         $("#sin-vit-tab")
           .append($("<tr id=l_" + i + ">")
-            .append($("<td>").text(item.data))
+            .append($("<td>").attr("data-order", item.data_ordem).text(item.data))
             .append($("<td>").text(item.nome + " " + (item.sobrenome !== null ? item.sobrenome : "")))
             .append($("<td>").text(item.saturacao))
             .append($("<td>").text(item.pressao_arterial))
@@ -355,6 +366,74 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
         contadorElemento.textContent = currentLength;
       }
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.querySelector("form");
+      const dataInput = document.getElementById("data_afericao");
+      const camposSinais = [
+        document.getElementById("saturacao"),
+        document.getElementById("pressao"),
+        document.getElementById("freq_card"),
+        document.getElementById("freq_resp"),
+        document.querySelector("[name='temperatura']"),
+        document.getElementById("hgt"),
+        document.getElementById("observacao")
+      ];
+      if (!form || !dataInput) {
+        return;
+      }
+
+      const dataNascimento = new Date("<?= $data_nasc_atendido ?>T00:00:00");
+      const formatador = new Intl.DateTimeFormat('pt-BR');
+      const formatadorDataHora = new Intl.DateTimeFormat('pt-BR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      form.addEventListener('submit', function(event) {
+        const dataValue = dataInput.value;
+        if (!dataValue) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          alert("Por favor, preencha a data da aferição.");
+          return;
+        }
+
+        const temAlgumSinal = camposSinais.some((campo) => {
+          if (!campo) {
+            return false;
+          }
+          return campo.value.trim() !== "";
+        });
+
+        if (!temAlgumSinal) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          alert("Informe ao menos um sinal vital ou observação.");
+          return;
+        }
+
+        const dataDigitada = new Date(dataValue);
+        const dataInformada = formatadorDataHora.format(dataDigitada);
+
+        if (dataDigitada < dataNascimento) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          alert("Data inválida: não pode ser anterior à data de nascimento (" + formatador.format(dataNascimento) + "). Data informada: " + dataInformada + ".");
+          return;
+        }
+
+        const dataAgora = new Date();
+        if (dataDigitada > dataAgora) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          alert("A data da aferição não pode ser no futuro. Ajuste para a data atual: " + formatadorDataHora.format(dataAgora) + ".");
+        }
+      });
+    });
   </script>
   <style type="text/css">
     .obrig {
@@ -466,7 +545,7 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Data da aferição<sup class="obrig">*</sup></label>
                         <div class="col-md-6">
-                          <input type="datetime-local" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_afericao" id="data_afericao" max=<?php echo date('Y-m-d\TH:i'); ?>
+                          <input type="datetime-local" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_afericao" id="data_afericao" max="<?= date('Y-m-d\TH:i'); ?>" min="<?= htmlspecialchars($data_nasc_atendido) ?>T00:00"
                             onfocus="definirDataHoraAtualSeVazio(this)" required>
                         </div>
                       </div>
@@ -535,7 +614,9 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                       <input type="hidden" name="metodo" value="incluir">
 
                       <div class="form-group">
-                        <input type="submit" value="Enviar" class="btn btn-primary">
+                        <div class="col-md-offset-3 col-md-6 text-right">
+                          <input type="submit" value="Registrar" class="btn btn-primary">
+                        </div>
                       </div>
                     </form>
 

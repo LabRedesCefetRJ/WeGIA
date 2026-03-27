@@ -102,7 +102,7 @@
     }
     
     p{
-            text-align: justify;
+        text-align: justify;
         align-content: center;
     }
     
@@ -149,7 +149,7 @@
         justify-content: center;
         align-items: center;
         text-align: center;
-        margin-top: 40px !important;
+        margin-top: 0 !important;
     }
 
     .text {
@@ -172,5 +172,176 @@
     .entrar{
         margin-left: -10px;
         margin-top: 20px;
+    }
+}
+
+@media only screen and (max-width: 711px) {
+    .cabecalho {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 8px;
+    }
+
+    .cabecalho > .main-menu-logo,
+    .cabecalho > .descricao,
+    .cabecalho > .formulario,
+    .cabecalho > .pass-form,
+    .cabecalho > .col-md-1 {
+        width: 100%;
+        float: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .cabecalho > .descricao > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cabecalho .form-group-login {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cabecalho .mb-lg {
+        width: min(320px, calc(100vw - 48px));
+        max-width: 100%;
+    }
+
+    .cabecalho .entrar {
+        margin-left: 0;
+        margin-top: 8px;
+        width: min(320px, calc(100vw - 48px));
+        max-width: 100%;
+    }
+
+    .cabecalho .entrar.hidden-xs {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+@media only screen and (min-width: 712px) and (max-width: 1100px) {
+    .cabecalho {
+        display: grid;
+        grid-template-columns: repeat(3, max-content);
+        justify-content: center;
+        align-items: center;
+        column-gap: 6px;
+        row-gap: 12px;
+        text-align: center;
+        margin-top: 0 !important;
+        padding: 14px 16px;
+    }
+
+    .cabecalho > .main-menu-logo,
+    .cabecalho > .descricao {
+        grid-column: 1 / -1;
+        width: 100%;
+        float: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .cabecalho > .descricao > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .cabecalho > .formulario,
+    .cabecalho > .pass-form,
+    .cabecalho > .col-md-1 {
+        width: auto;
+        float: none;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0;
+        min-width: 0;
+        padding-left: 0;
+        padding-right: 0;
+        justify-self: center;
+    }
+
+    .cabecalho .form-group-login {
+        width: 100%;
+        margin-bottom: 0;
+    }
+
+    .cabecalho .mb-lg {
+        width: clamp(240px, 31vw, 300px);
+        max-width: 100%;
+        margin-bottom: 0;
+    }
+
+    .cabecalho .entrar.hidden-xs {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        width: clamp(110px, 13vw, 128px);
+    }
+}
+
+@media only screen and (min-width: 1101px) and (max-width: 1270px) {
+    .cabecalho {
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: nowrap;
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .cabecalho > .formulario,
+    .cabecalho > .pass-form,
+    .cabecalho > .col-md-1 {
+        width: auto;
+        float: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-left: 4px;
+        padding-right: 4px;
+        margin-top: 0;
+    }
+
+    .cabecalho .form-group-login {
+        margin-bottom: 0;
+    }
+
+    .cabecalho .mb-lg {
+        width: 240px;
+        max-width: 240px;
+        margin-bottom: 0;
+    }
+
+    .cabecalho .entrar.hidden-xs {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 112px;
+        margin: 0;
     }
 }

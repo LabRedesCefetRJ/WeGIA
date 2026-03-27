@@ -11,6 +11,9 @@ if (!isset($_SESSION['usuario'])) {
   session_regenerate_id();
 }
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
+
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'config.php';
 
 require("../conexao.php");

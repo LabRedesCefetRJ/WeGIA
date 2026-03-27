@@ -792,7 +792,7 @@ $dependente = json_encode($dependente);
 
                     <div class="panel-footer">
                       <div class="row">
-                        <div class="col-md-9 col-md-offset-3">
+                        <div class="col-md-9">
                           <?php
                           $atend = json_decode($atend)[0];
                           if ($atend->status == 1):
@@ -825,8 +825,8 @@ $dependente = json_encode($dependente);
                             <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post" class="d-flex">
                               <input type="hidden" name="idatendido" value=<?= $id ?>>
                               <input type="hidden" name="operacao" value='desativar'>
-                              <button class="btn btn-primary me-2" type="submit">Desativar</button>
                               <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                              <button class="btn btn-primary me-2" type="submit">Confirmar</button>
                             </form>
                           </div>
 
@@ -1105,13 +1105,28 @@ $dependente = json_encode($dependente);
                             ?>
                               <tr style="cursor: pointer;" onclick="clicar(<?= (int)$item['idatendido_ocorrencias'] ?>)">
                                 <td><?= $data[2] . "/" . $data[1] . "/" . $data[0] ?></td>
-                                <td><?= htmlspecialchars(strip_tags($item["descricao"])) ?></td>
+                                <td>
+                                  <?= htmlspecialchars(
+                                    strip_tags(
+                                      html_entity_decode($item["descricao"], ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                  ) ?>
+                                </td>
+
                                 <td>
                                   <button class="btn btn-xs btn-primary editar-ocorrencia"
                                     type="button"
                                     title="Editar"
                                     data-id="<?= (int)$item['idatendido_ocorrencias'] ?>"
-                                    data-descricao="<?= htmlspecialchars(strip_tags($item["descricao"])) ?>"
+                                    data-descricao="<?= htmlspecialchars(
+                                                      strip_tags(
+                                                        html_entity_decode($item["descricao"], ENT_QUOTES | ENT_HTML5, 'UTF-8')
+                                                      ),
+                                                      ENT_QUOTES,
+                                                      'UTF-8'
+                                                    ) ?>"
                                     data-data="<?= htmlspecialchars($item["data"]) ?>">
                                     <i class="fa fa-edit"></i>
                                   </button>

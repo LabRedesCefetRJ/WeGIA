@@ -88,6 +88,7 @@ define( 'DB_HOST', '$local');
 define( 'DB_CHARSET', 'utf8');
 define( 'ROOT',dirname(__FILE__));
 define( 'BKP_DIR', '$backup');
+define( 'BACKUP_SIGNING_KEY_FILE', BKP_DIR . '/.backup_signing_private.pem');
 define( 'WWW', '$www');");
 
 

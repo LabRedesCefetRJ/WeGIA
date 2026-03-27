@@ -53,9 +53,9 @@ if ($id_cargo !== false) {
       
 
 // caso paciente ser atendido //
-$nome = $pdo->query("SELECT p.id_pessoa, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa)")->fetchAll(PDO::FETCH_ASSOC);
+$nome = $pdo->query("SELECT p.id_pessoa, p.nome, p.sobrenome FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) WHERE a.atendido_status_idatendido_status = 1")->fetchAll(PDO::FETCH_ASSOC);
 
-$idsPessoas = $pdo->query("SELECT p.id_pessoa FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa)")->fetchAll(PDO::FETCH_ASSOC);
+$idsPessoas = $pdo->query("SELECT p.id_pessoa FROM pessoa p JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) WHERE a.atendido_status_idatendido_status = 1")->fetchAll(PDO::FETCH_ASSOC);
 
 $idsPessoasFichasMedicas = $pdo->query("SELECT id_pessoa FROM saude_fichamedica")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -93,9 +93,9 @@ foreach($nome as $va)
 }
 
 // caso o paciente seja funcionario //
-$nome_funcionario = $pdo->query("SELECT p.id_pessoa, p.nome, p.sobrenome FROM pessoa p JOIN funcionario f ON(p.id_pessoa=f.id_pessoa) where p.id_pessoa != 1")->fetchAll(PDO::FETCH_ASSOC);
+$nome_funcionario = $pdo->query("SELECT p.id_pessoa, p.nome, p.sobrenome FROM pessoa p JOIN funcionario f ON(p.id_pessoa=f.id_pessoa) WHERE p.id_pessoa != 1 AND f.id_situacao = 1")->fetchAll(PDO::FETCH_ASSOC);
 
-$idsPessoas2 = $pdo->query("SELECT p.id_pessoa FROM pessoa p JOIN funcionario f ON(p.id_pessoa=f.id_pessoa)")->fetchAll(PDO::FETCH_ASSOC);
+$idsPessoas2 = $pdo->query("SELECT p.id_pessoa FROM pessoa p JOIN funcionario f ON(p.id_pessoa=f.id_pessoa) WHERE p.id_pessoa != 1 AND f.id_situacao = 1")->fetchAll(PDO::FETCH_ASSOC);
 
 $idsPessoasFichasMedicas2 = $pdo->query("SELECT id_pessoa FROM saude_fichamedica")->fetchAll(PDO::FETCH_ASSOC);
 

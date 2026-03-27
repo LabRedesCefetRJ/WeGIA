@@ -518,7 +518,7 @@ session_start();
 						</a>
 					</li>
 					<li>
-						<a href="<?= WWW ?>html/geral/editar_permissoes.php">
+						<a href="<?= WWW ?>html/geral/cadastrar_permissoes.php">
 							Permissões
 						</a>
 					</li>
@@ -546,7 +546,7 @@ session_start();
 			</li>
 			</ul>
 		</nav>
-		<p style="text-align: center;"><?= "Release instalada:<br> " . $_SESSION['local_release'] ?></p>
+		<p id="release-install" style="text-align: center;"></p>
 	</div>
 </div>
 <form id="listarFuncionario" method="POST" action="<?= WWW ?>controle/control.php">
@@ -575,3 +575,9 @@ session_start();
 
 <!-- Theme Initialization Files -->
 <script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
+
+<script>
+	const releaseElement = document.getElementById('release-install');
+
+	releaseElement.innerText = localStorage.getItem('RELEASE_MESSAGE');
+</script>

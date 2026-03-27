@@ -131,7 +131,11 @@ try {
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
 
-            CKEDITOR.replace('despacho');
+            var editor = CKEDITOR.replace('despacho');
+            editor.on('required', function(e){
+                alert("Por favor, informe a descrição da ocorrência!");
+                e.cancel();
+            });
         });
     </script>
     <script>
@@ -474,7 +478,7 @@ try {
                                                             <input type="text" class="form-control input-lg mb-md" value="<?= htmlspecialchars($atendido_nome) ?>" disabled>
                                                         <?php else : ?>
                                                             <select class="form-control input-lg mb-md" name="atendido_idatendido" id="atendido_idatendido" required>
-                                                                <option selected disabled>Selecionar</option>
+                                                                <option value="" selected disabled>Selecionar</option>
                                                                 <?php
                                                                 foreach ($nome as $key => $value) {
                                                                     echo "<option value=\"" . htmlspecialchars($nome[$key]['idatendido']) . "\">" . htmlspecialchars($nome[$key]['nome']) . " " . htmlspecialchars($nome[$key]['sobrenome']) . "</option>";
@@ -489,7 +493,7 @@ try {
                                                     <label class="col-md-3 control-label" for="profileLastName">Tipo de ocorrência:<sup class="obrig">*</sup></label>
                                                     <div class="col-md-6">
                                                         <select class="form-control input-lg mb-md" name="id_tipos_ocorrencia" id="id_tipos_ocorrencia" required>
-                                                            <option selected disabled>Selecionar</option>
+                                                            <option value="" selected disabled>Selecionar</option>
                                                             <?php
                                                             foreach ($tipo as $key => $value) {
                                                                 echo "<option value=" . htmlspecialchars($tipo[$key]['idatendido_ocorrencia_tipos']) . ">" . htmlspecialchars($tipo[$key]['descricao']) .  "</option>";
@@ -519,7 +523,7 @@ try {
 
                                                 <div class="form-group">
                                                     <div class='col-md-6' id='div_texto' style="height: 499px;">
-
+                                                        <!-- Alterar aqui-->
                                                         <label for="texto" id="descricao" style="padding-left: 15px;">Descrição ocorrência<sup class="obrig">*</sup></label>
                                                         <textarea cols='30' rows='5' id='despacho' name='descricao' class='form-control' onkeypress="return Onlychars(event)" required></textarea>
 

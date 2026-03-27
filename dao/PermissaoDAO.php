@@ -66,6 +66,24 @@ class PermissaoDAO
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function atualizarAcaoPermissoesByCargo(int $idCargo, int $idAcao, array $recursos): void
+    {
+        if (empty($recursos)) {
+            return;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($recursos), '?'));
+
+        $sql = "UPDATE permissao
+            SET id_acao = ?
+            WHERE id_cargo = ?
+            AND id_recurso IN ($placeholders)";
+
+        $stmt = $this->pdo->prepare($sql);
+        $params = array_merge([$idAcao, $idCargo], $recursos);
+        $stmt->execute($params);
+    }
+
     public function removePermissoesByCargo(int $idCargo, array $recursos)
     {
         if (empty($recursos)) {
@@ -85,5 +103,17 @@ class PermissaoDAO
         $params = array_merge([$idCargo], $recursos);
 
         $stmt->execute($params);
+    }
+
+    public function removerPermissao(int $idCargo, int $idAcao, int $idRecurso): bool
+    {
+        $sql = 'DELETE FROM permissao WHERE id_cargo = :idCargo AND id_acao = :idAcao AND id_recurso = :idRecurso';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':idCargo', $idCargo, PDO::PARAM_INT);
+        $stmt->bindParam(':idAcao', $idAcao, PDO::PARAM_INT);
+        $stmt->bindParam(':idRecurso', $idRecurso, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->rowCount() > 0;
     }
 }

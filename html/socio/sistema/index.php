@@ -130,9 +130,11 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
     <script src="../../../Functions/mascara.js"></script>
     <script src="../../contribuicao/js/geraboleto.js"></script>
     <script src="./controller/script/relatorios_socios.js"></script>
+    <script src="./controller/script/socio.js"></script>
 
     <!-- Adicionar verificação da existência de um sócio no formulário -->
     <script src="../js/verifica_socio.js"></script>
+
 </body>
 
 </html>
