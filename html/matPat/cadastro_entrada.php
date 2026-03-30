@@ -276,25 +276,14 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 							echo $origem;
 							?>;
 
-			function ordenarArray(array, campo){
-				return array.sort(function(a, b) {
-					let aVal = (a[campo] ?? '').toString();
-					let bVal = (b[campo] ?? '').toString();
-    				return aVal.localeCompare(bVal, 'pt-BR', { sensitivity: 'base' });
-				});	
-			}
-
-			ordenarArray(almoxarifado, 'descricao_almoxarifado')
 			$.each(almoxarifado, function(i, item) {
 				$('#almoxarifado').append('<option value="' + item.id_almoxarifado + '">' + item.descricao_almoxarifado + '</option>');
 			})
 
-			ordenarArray(tipo_entrada, 'descricao')
 			$.each(tipo_entrada, function(i, item) {
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
 			})
 
-			ordenarArray(origem, 'nome_origem')
 			$.each(origem, function(i, item) {
 				$('#origens').append('<option value="' + item.id_origem + '">' + item.nome_origem + '</option>');
 			})

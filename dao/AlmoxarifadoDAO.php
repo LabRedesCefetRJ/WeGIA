@@ -62,13 +62,13 @@ class AlmoxarifadoDAO
     {
         $almoxarifados = array();
         $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado");
+        $consulta = $pdo->query("SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado ORDER BY descricao_almoxarifado");
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
             $almoxarifados[$x] = array('id_almoxarifado' => htmlspecialchars($linha['id_almoxarifado']), 'descricao_almoxarifado' => htmlspecialchars($linha['descricao_almoxarifado']));
             $x++;
         }
-
+        var_dump($almoxarifados);
         return json_encode($almoxarifados);
     }
 }

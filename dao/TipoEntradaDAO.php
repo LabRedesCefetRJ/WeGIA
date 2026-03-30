@@ -60,7 +60,7 @@ class TipoEntradaDAO
 
         $tipoentradas = array();
         $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT id_tipo, descricao FROM tipo_entrada");
+        $consulta = $pdo->query("SELECT id_tipo, descricao FROM tipo_entrada ORDER BY descricao");
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
             $tipoentradas[$x] = array('id_tipo' => $linha['id_tipo'], 'descricao' => $linha['descricao']);

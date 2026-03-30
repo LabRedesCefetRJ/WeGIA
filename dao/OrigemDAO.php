@@ -67,7 +67,7 @@ class OrigemDAO
         try{
             $origens=array();
             $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT id_origem,nome_origem,cnpj,cpf,telefone FROM origem");
+            $consulta = $pdo->query("SELECT id_origem,nome_origem,cnpj,cpf,telefone FROM origem ORDER BY nome_origem");
             $x=0;
             while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
                 $origens[$x]=array('id_origem'=>$linha['id_origem'],'nome_origem'=>$linha['nome_origem'],'cnpj'=>$linha['cnpj'],'cpf'=>$linha['cpf'],'telefone'=>$linha['telefone']);
@@ -84,7 +84,7 @@ class OrigemDAO
             try{
             $origens=array();
             $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT id_origem,nome_origem FROM origem");
+            $consulta = $pdo->query("SELECT id_origem,nome_origem FROM origem ORDER BY nome_origem");
             $x=0;
             while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
                 $origens[$x]=array('id_origem'=>$linha['id_origem'],'nome_origem'=>$linha['nome_origem']);

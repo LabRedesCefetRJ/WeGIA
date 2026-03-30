@@ -147,21 +147,10 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 							echo $destino;
 							?>;
 
-
-			function ordenarArray(array, campo){
-				return array.sort(function(a, b) {
-					let aVal = (a[campo] ?? '').toString();
-					let bVal = (b[campo] ?? '').toString();
-    				return aVal.localeCompare(bVal, 'pt-BR', { sensitivity: 'base' });
-				});	
-			}
-
-			ordenarArray(almoxarifado, 'descricao_almoxarifado');
 			$.each(almoxarifado, function(i, item) {
 				$('#almoxarifado').append('<option value="' + item.id_almoxarifado + '">' + item.descricao_almoxarifado + '</option>');
 			})
 
-			ordenarArray(tipo_saida, 'descricao');
 			$.each(tipo_saida, function(i, item) {
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
 			})
@@ -171,7 +160,6 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				prods[i] = item.id_produto + '|' + item.descricao + '|' + item.codigo; //alterar aqui
 			})
 
-			ordenarArray(destino, 'nome_destino');
 			$.each(destino, function(i, item) {
 				$('#origens').append('<option value="' + item.id_destino + '">' + item.nome_destino + '</option>');
 			})
