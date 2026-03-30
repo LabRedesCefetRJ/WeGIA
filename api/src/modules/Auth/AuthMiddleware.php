@@ -1,19 +1,18 @@
 <?php
 
-namespace api\middleware;
+namespace api\modules\Auth;
 
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+use api\modules\Auth\AuthService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 class AuthMiddleware
 {
-    private string $secret;
+    private AuthService $authService;
 
-    public function __construct(string $secret)
+    public function __construct()
     {
-        $this->secret = $secret;
+        $this->authService = new AuthService();
     }
 
     public function __invoke(Request $request, $handler): Response
@@ -27,9 +26,8 @@ class AuthMiddleware
         $token = str_replace('Bearer ', '', $authHeader);
 
         try {
-            $decoded = JWT::decode($token, new Key($this->secret, 'HS256'));
+            $decoded = $this->authService->validateToken($token);
 
-            // injeta dados no request
             $request = $request->withAttribute('token', $decoded);
 
         } catch (\Exception $e) {
@@ -42,6 +40,7 @@ class AuthMiddleware
     private function unauthorized(string $msg = 'Token inválido'): Response
     {
         $response = new \Slim\Psr7\Response();
+
         $response->getBody()->write(json_encode([
             'error' => $msg
         ]));
