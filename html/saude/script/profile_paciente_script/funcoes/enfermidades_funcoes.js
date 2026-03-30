@@ -322,7 +322,7 @@ async function gerarEnfermidadesDoPaciente() {
 
         // Status
         const tdStatus = document.createElement("td");
-        tdStatus.textContent = enfermidadeAtiva ? "Ativo" : "Inativo";
+        tdStatus.textContent = enfermidadeAtiva ? "Ativa" : "Inativa";
         tr.appendChild(tdStatus);
 
         // Ações

@@ -1495,9 +1495,9 @@ try {
                           <div class="col-sm-12 col-md-4">
                             <label for="filtro-comorbidades">Filtrar comorbidades</label>
                             <select id="filtro-comorbidades" class="form-control">
-                              <option value="todos">Todos</option>
-                              <option value="ativo" selected>Ativos</option>
-                              <option value="inativo">Inativos</option>
+                              <option value="todos">Todas</option>
+                              <option value="ativo" selected>Ativas</option>
+                              <option value="inativo">Inativas</option>
                             </select>
                           </div>
                         </div>
