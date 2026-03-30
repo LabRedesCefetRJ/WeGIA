@@ -88,6 +88,7 @@ $dependente = json_encode($dependente);
   <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
   <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
   <link rel="stylesheet" type="text/css" href="../../css/profile-theme.css">
+  <link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
   <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
   <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
@@ -536,7 +537,7 @@ $dependente = json_encode($dependente);
           .append($("<tr>")
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
+            .append($("<td style='display: flex; justify-content: center; align-items: center; gap: 8px; white-space: nowrap;'>")
               .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + "' target='_tab' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
               .append($("<a onclick='removerFuncionarioDocs(" + item.id_pessoa_arquivo + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
@@ -551,7 +552,7 @@ $dependente = json_encode($dependente);
           .append($("<tr>")
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
+            .append($("<td style='display: flex; justify-content: center; align-items: center; gap: 8px; white-space: nowrap;'>")
               .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + " '  target='_' title='Visualizar ou Baixar' ><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
               .append($("<a onclick='removerFuncionarioDocs(" + item.id_pessoa_arquivo + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
@@ -1020,56 +1021,52 @@ $dependente = json_encode($dependente);
                           </tbody>
                         </table>
                         <br>
-                        <!-- Button trigger modal -->
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal">
-                          Adicionar
-                        </button>
-                        <!-- Modal Form Documentos -->
-                        <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
-                          <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                              <div class="modal-header" style="display: flex;justify-content: space-between;">
-                                <h5 class="modal-title" id="exampleModalLabel">Adicionar Arquivo</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <form action='../../controle/control.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
-                                <input type="hidden" name="nomeClasse" value="AtendidoDocumentacaoControle">
-                                <input type="hidden" name="metodo" value="create">
-                                <input type="hidden" name="id_atendido" value="<?= (int)$id ?>">
-                                <div class="modal-body" style="padding: 15px 40px">
-                                  <div class="form-group" style="display: grid;">
-                                    <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
-                                    <div style="display: flex;">
-                                      <select name="id_tipo_documentacao" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
-                                        <option selected disabled>Selecionar...</option>
-                                        <?php
-                                        foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                          echo ("
-                                          <option value='" . $item["idatendido_docs_atendidos"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
-                                        }
-                                        ?>
-
-                                      </select>
-
-                                      <a onclick="adicionar_tipo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label for="arquivoDocumento">Arquivo</label>
-                                    <input name="arquivo" type="file" class="form-control-file" id="id_documento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
-                                  </div>
-                                  <input type="number" name="idatendido" value="<?= $id ?>" style='display: none;'>
-                                </div>
-                                <div class="modal-footer">
-                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                  <input type="submit" value="Enviar" class="btn btn-primary" id="btn-atendido" onclick="verificaTipo(event)">
-                                </div>
-                              </form>
-                            </div>
-                          </div>
-                        </div>
+                        <?php
+                        $tiposDocumentoAtendido = $pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC);
+                        $modalUploadConfig = [
+                          'button' => [
+                            'label' => 'Adicionar',
+                            'onclick' => 'gerarTipo()'
+                          ],
+                          'modal' => [
+                            'id' => 'docFormModal',
+                            'label_id' => 'docFormModalLabel',
+                            'title' => 'Adicionar arquivo'
+                          ],
+                          'form' => [
+                            'id' => 'atendidoDocForm',
+                            'action' => '../../controle/control.php',
+                            'method' => 'post',
+                            'enctype' => 'multipart/form-data',
+                            'onsubmit' => 'return verificaTipo(event)',
+                            'hidden_fields' => [
+                              'nomeClasse' => 'AtendidoDocumentacaoControle',
+                              'metodo' => 'create',
+                              'id_atendido' => (int)$id
+                            ]
+                          ],
+                          'select' => [
+                            'id' => 'tipoDocumento',
+                            'name' => 'id_tipo_documentacao',
+                            'label' => 'Tipo de arquivo',
+                            'placeholder' => 'Selecionar',
+                            'options' => $tiposDocumentoAtendido,
+                            'value_key' => 'idatendido_docs_atendidos',
+                            'label_key' => 'descricao',
+                            'add_button_onclick' => 'adicionar_tipo()',
+                            'add_button_title' => 'Adicionar tipo de arquivo'
+                          ],
+                          'file' => [
+                            'id' => 'arquivoDocumentoAtendido',
+                            'name' => 'arquivo',
+                            'label' => 'Arquivo',
+                            'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
+                            'help' => 'PNG, JPG, PDF, DOC, DOCX e ODP.'
+                          ]
+                        ];
+                        require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
+                        unset($modalUploadConfig, $tiposDocumentoAtendido);
+                        ?>
                     </section>
                   </div>
                   <div id="ocorrencias" class="tab-pane">

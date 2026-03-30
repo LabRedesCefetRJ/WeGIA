@@ -159,6 +159,7 @@ try {
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
   <link rel="stylesheet" href="../../css/profile-theme.css" />
   <link rel="stylesheet" href="../../css/modalInfoFuncionario.css" />
+  <link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
   <script src="../../Functions/onlyNumbers.js"></script>
@@ -1603,50 +1604,49 @@ try {
                         </thead>
                         <tbody id="doc-tab"></tbody>
                       </table><br>
-                      <!-- Button trigger modal -->
-                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal">
-                        Adicionar
-                      </button>
-                      <!-- Modal Form Documentos -->
-                      <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                          <div class="modal-content">
-                            <div class="modal-header" style="display: flex;justify-content: space-between;">
-                              <h5 class="modal-title" id="exampleModalLabel">Adicionar Arquivo</h5>
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                            </div>
-                            <form action='documento_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
-                              <div class="modal-body" style="padding: 15px 40px">
-                                <div class="form-group" style="display: grid;">
-                                  <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
-                                  <div style="display: flex;">
-                                    <select name="id_docfuncional" id="id_docfuncional" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
-                                      <option value="" selected disabled>Selecionar...</option>
-                                      <?php
-                                      foreach ($pdo->query("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                        echo ("<option value='" . htmlspecialchars($item["id_docfuncional"]) . "' >" . htmlspecialchars($item["nome_docfuncional"]) . "</option>");
-                                      }
-                                      ?>
-                                    </select>
-                                    <a onclick="adicionarDocFuncional()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                                  </div>
-                                </div>
-                                <div class="form-group">
-                                  <label for="arquivoDocumento">Arquivo</label>
-                                  <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
-                                </div>
-                                <input type="number" name="id_funcionario" value="<?= $idFuncionario ?>" style='display: none;'>
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                <input type="submit" value="Enviar" class="btn btn-primary">
-                              </div>
-                            </form>
-                          </div>
-                        </div>
-                      </div>
+                      <?php
+                      $tiposDocumentoFuncionario = $pdo->query("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC;")->fetchAll(PDO::FETCH_ASSOC);
+                      $modalUploadConfig = [
+                        'button' => [
+                          'label' => 'Adicionar',
+                          'onclick' => 'gerarDocFuncional()'
+                        ],
+                        'modal' => [
+                          'id' => 'docFormModal',
+                          'label_id' => 'docFormModalLabel',
+                          'title' => 'Adicionar arquivo'
+                        ],
+                        'form' => [
+                          'id' => 'funcionarioDocForm',
+                          'action' => 'documento_upload.php',
+                          'method' => 'post',
+                          'enctype' => 'multipart/form-data',
+                          'hidden_fields' => [
+                            'id_funcionario' => (int)$idFuncionario
+                          ]
+                        ],
+                        'select' => [
+                          'id' => 'id_docfuncional',
+                          'name' => 'id_docfuncional',
+                          'label' => 'Tipo de arquivo',
+                          'placeholder' => 'Selecionar',
+                          'options' => $tiposDocumentoFuncionario,
+                          'value_key' => 'id_docfuncional',
+                          'label_key' => 'nome_docfuncional',
+                          'add_button_onclick' => 'adicionarDocFuncional()',
+                          'add_button_title' => 'Adicionar tipo de arquivo'
+                        ],
+                        'file' => [
+                          'id' => 'arquivoDocumentoFuncionario',
+                          'name' => 'arquivo',
+                          'label' => 'Arquivo',
+                          'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
+                          'help' => 'PNG, JPG, PDF, DOC, DOCX e ODP.'
+                        ]
+                      ];
+                      require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
+                      unset($modalUploadConfig, $tiposDocumentoFuncionario);
+                      ?>
                     </div>
                   </section>
                 </div>

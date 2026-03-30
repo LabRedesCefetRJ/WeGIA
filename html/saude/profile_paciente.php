@@ -247,6 +247,7 @@ try {
 <!-- Specific Page Vendor CSS -->
 <link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
 <link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+<link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
 
 
 <script>
@@ -859,35 +860,59 @@ try {
       pointer-events: auto;
     }
 
-    #docFormModal .modal-title,
     #modal-anular-atendimento .modal-title {
       font-weight: 500;
+      color: #fff;
     }
 
-    #docFormModal .modal-body {
-      padding: 20px 25px 10px;
+    #modal-anular-atendimento .modal-header {
+      background-color: #337ab7;
+      border-bottom-color: #2e6da4;
     }
 
-    #docFormModal .form-group {
-      text-align: left;
-      margin-left: 0;
-      margin-right: 0;
+    #modal-anular-atendimento .modal-header .close,
+    #modal-anular-atendimento .modal-header .close span {
+      color: #fff;
+      opacity: 1;
+      text-shadow: none;
     }
 
-    #docFormModal .control-label {
-      display: block;
-      text-align: left;
-      margin-bottom: 6px;
-      padding-left: 0;
-      padding-right: 0;
+    #modal-anular-atendimento .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background-color: transparent;
+      filter: brightness(1);
+      transition: background-color 0.18s ease, filter 0.18s ease;
     }
 
-    #docFormModal .input-group {
-      width: 100%;
+    #modal-anular-atendimento .modal-header .close:hover,
+    #modal-anular-atendimento .modal-header .close:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      filter: brightness(1.08);
+      outline: none;
     }
 
-    #docFormModal .help-block {
-      margin-bottom: 0;
+    #modal-anular-atendimento .modal-header .close:hover span,
+    #modal-anular-atendimento .modal-header .close:focus span {
+      filter: brightness(1.08);
+    }
+
+    #arquivo .table tbody td:first-child,
+    #arquivo .table thead th:first-child {
+      max-width: 240px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+
+    #arquivo .table tbody td {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
   </style>
 
@@ -1578,51 +1603,51 @@ try {
                         </tbody>
                       </table>
                       <br>
-                      <!-- Button trigger modal -->
-                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal" onclick="gerar_tipo_exame()">
-                        Adicionar
-                      </button>
-                      <div class="modal" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                              <h4 class="modal-title" id="docFormModalLabel">Adicionar exame</h4>
-                            </div>
-
-                            <form id="ExameDocForm">
-                              <div class="modal-body">
-                                <div class="form-group">
-                                  <label class="control-label" for="tipoDocumentoExame">Tipo de exame <sup class="obrig">*</sup></label>
-                                  <div class="input-group">
-                                    <select class="form-control" name="id_docfuncional" id="tipoDocumentoExame" required>
-                                    </select>
-                                    <span class="input-group-btn">
-                                      <button type="button" class="btn btn-default" onclick="adicionar_tipo_exame()" title="Adicionar tipo de exame">
-                                        <i class="fa fa-plus text-primary"></i>
-                                      </button>
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div class="form-group">
-                                  <label class="control-label" for="documentoExame">Arquivo <sup class="obrig">*</sup></label>
-                                  <input name="arquivo" type="file" class="form-control" id="documentoExame" accept=".png,.jpeg,.jpg,.pdf,.docx,.doc,.odp" required>
-                                  <p class="help-block"><span class="text-danger">Formatos aceitos:</span> PNG, JPG, PDF, DOC, DOCX, ODP.</p>
-                                </div>
-
-                                <input type="hidden" id="exame_id_fichamedica" name="id_fichamedica" value="<?= $id_fichamedica; ?>">
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">Enviar</button>
-                              </div>
-                            </form>
-                          </div>
-                        </div>
-                      </div>
+                      <?php
+                      $modalUploadConfig = [
+                        'button' => [
+                          'label' => 'Adicionar',
+                          'onclick' => 'gerar_tipo_exame()'
+                        ],
+                        'modal' => [
+                          'id' => 'docFormModal',
+                          'label_id' => 'docFormModalLabel',
+                          'title' => 'Adicionar exame'
+                        ],
+                        'form' => [
+                          'id' => 'ExameDocForm',
+                          'action' => '',
+                          'method' => 'post',
+                          'enctype' => 'multipart/form-data',
+                          'hidden_fields' => [
+                            'id_fichamedica' => [
+                              'value' => (int)$id_fichamedica,
+                              'id' => 'exame_id_fichamedica'
+                            ]
+                          ]
+                        ],
+                        'select' => [
+                          'id' => 'tipoDocumentoExame',
+                          'name' => 'id_docfuncional',
+                          'label' => 'Tipo de exame',
+                          'placeholder' => 'Selecionar',
+                          'options' => $tipoexame,
+                          'value_key' => 'id_exame_tipo',
+                          'label_key' => 'descricao',
+                          'add_button_onclick' => 'adicionar_tipo_exame()',
+                          'add_button_title' => 'Adicionar tipo de exame'
+                        ],
+                        'file' => [
+                          'id' => 'documentoExame',
+                          'name' => 'arquivo',
+                          'label' => 'Arquivo',
+                          'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
+                          'help' => 'PNG, JPG, PDF, DOC, DOCX, ODP.'
+                        ]
+                      ];
+                      require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
+                      unset($modalUploadConfig);
+                      ?>
                       <br />
                   </section>
                 </div>
