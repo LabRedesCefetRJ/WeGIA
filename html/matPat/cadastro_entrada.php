@@ -22,7 +22,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 ?>
 
 <!doctype html>
-<html lass="fixed">
+<html class="fixed">
 
 <head>
 	<?php
@@ -199,8 +199,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 																	<!-- <datalist id="produtos_autocomplete">
 															</datalist> -->
 																</td>
-																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade"></td>
-																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0"></td>
+																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">incluir</button>
 																</td>
@@ -214,7 +214,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 														<thead>
 															<tr>
 
-																<th style="width: 160px;">Produto
+																<th style="width: 160px;">Produto</th>
 																<th style="width: 85px;">Quantidade</th>
 																<th>Preço</th>
 																<th>Total</th>
@@ -227,7 +227,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 															<tr>
 																<td>Valor total:</td>
 																<td id="valor-total">
-																	<input type="number" id="total_total" name="total_total" readonly="readonly" required>
+																	<input type="number" id="total_total" name="total_total" class="form-control" readonly="readonly" required>
 																	<input type="hidden" id="conta" name="conta" readonly="readonly">
 																	<input type="hidden" id="verifica" disabled>
 																</td>
