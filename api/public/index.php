@@ -1,5 +1,6 @@
 <?php
 
+use api\middleware\AuthMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -30,5 +31,10 @@ $app->get('/wegia', function (Request $request, Response $response, $args) {
     $response->getBody()->write("Hello, API Wegia!");
     return $response;
 });
+
+$app->get('/protected', function (Request $request, Response $response, $args) {
+    $response->getBody()->write("This is a protected route!");
+    return $response;
+})->add(new AuthMiddleware(JWT_SECRET));
 
 $app->run();
