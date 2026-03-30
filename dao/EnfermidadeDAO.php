@@ -27,10 +27,30 @@ class EnfermidadeDAO
 
     public function getEnfermidadesAtivasPorFichaMedica($idFichaMedica)
     {
-        $sql = "SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica";
+        return $this->getEnfermidadesPorFichaMedica($idFichaMedica, 1);
+    }
+
+    public function getEnfermidadesPorFichaMedica($idFichaMedica, ?int $status = null)
+    {
+        $sql = "SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao
+                FROM saude_enfermidades sf
+                JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID
+                WHERE stc.CID NOT LIKE 'T78.4%'
+                  AND sf.id_fichamedica = :idFichaMedica";
+
+        if ($status !== null) {
+            $sql .= " AND sf.status = :status";
+        }
+
+        $sql .= " ORDER BY sf.data_diagnostico DESC, sf.id_enfermidade DESC";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':idFichaMedica', $idFichaMedica);
+        $stmt->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+
+        if ($status !== null) {
+            $stmt->bindValue(':status', $status, PDO::PARAM_INT);
+        }
+
         $stmt->execute();
 
         $resultado = $stmt->fetchAll(PDO::FETCH_ASSOC);

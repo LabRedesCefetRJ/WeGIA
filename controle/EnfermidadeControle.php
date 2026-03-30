@@ -106,6 +106,45 @@ class EnfermidadeControle{
         exit();
     }
 
+    public function getEnfermidadesPorFichaMedica(){
+        $idFichaMedica = trim(filter_input(INPUT_GET, 'id_fichamedica', FILTER_SANITIZE_NUMBER_INT));
+        $status = trim((string) filter_input(INPUT_GET, 'status', FILTER_UNSAFE_RAW));
+
+        if(!$idFichaMedica || $idFichaMedica < 1){
+            http_response_code(400);
+            echo json_encode(['erro' => 'O parâmetro informado não possuí valor válido.']);
+            exit();
+        }
+
+        if ($status === '') {
+            $status = 'todos';
+        }
+
+        $statusNormalizado = match ($status) {
+            'ativo' => 1,
+            'inativo' => 0,
+            'todos' => null,
+            default => false
+        };
+
+        if ($statusNormalizado === false) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Filtro de status inválido.']);
+            exit();
+        }
+
+        try{
+            $enfermidadeDao = new EnfermidadeDAO($this->pdo);
+            $enfermidades = $enfermidadeDao->getEnfermidadesPorFichaMedica((int) $idFichaMedica, $statusNormalizado);
+
+            echo json_encode($enfermidades);
+        }catch(Exception $e){
+            http_response_code(500);
+            echo json_encode(['erro' => 'Problema no servidor ao buscar as enfermidades ligadas ao paciente']);
+        }
+        exit();
+    }
+
     public function adicionarEnfermidade(){
         header('Content-Type: application/json');
 

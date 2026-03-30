@@ -1465,18 +1465,35 @@ try {
                       </div>
                       <hr class="dotted short">
 
-                      <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
-                        <thead>
-                          <tr style="font-size:15px;">
-                            <th>Comorbidades</th>
-                            <th>Data</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody id="doc-tab">
+                      <div class="form-group">
+                        <div class="row" style="margin-bottom: 15px;">
+                          <div class="col-sm-12 col-md-4">
+                            <label for="filtro-comorbidades">Filtrar comorbidades</label>
+                            <select id="filtro-comorbidades" class="form-control">
+                              <option value="todos">Todos</option>
+                              <option value="ativo" selected>Ativos</option>
+                              <option value="inativo">Inativos</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
 
-                        </tbody>
-                      </table>
+                      <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Comorbidades</th>
+                              <th>Data</th>
+                              <th>Status</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="doc-tab">
+
+                          </tbody>
+                        </table>
+                      </div>
+                      <p id="comorbidades-sem-resultados" class="text-muted hidden" style="margin-top: 10px;">Nenhuma comorbidade encontrada para o filtro selecionado.</p>
 
                       <br>
                       <form id='form-enfermidade'>

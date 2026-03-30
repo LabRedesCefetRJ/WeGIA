@@ -64,10 +64,12 @@ async function listarTodasAsEnfermidades() {
     }
 }
 
+const FILTRO_COMORBIDADES_PADRAO = "ativo";
+
 //Essa função serve para gerar as opçoes de enfermidades no select de tipos de enfermidade
 async function gerarEnfermidade() {
     const situacoes = await listarTodasAsEnfermidades();
-    const enfermidadesDoPaciente = await buscarEnfermidadesPorIDFichaMedica();
+    const enfermidadesDoPaciente = await buscarEnfermidadesAtivasPorIDFichaMedica();
     const listaSituacoes = Array.isArray(situacoes) ? situacoes : [];
     const listaEnfermidadesPaciente = Array.isArray(enfermidadesDoPaciente) ? enfermidadesDoPaciente : [];
     const idsEnfermidadesDoPaciente = new Set(
@@ -98,14 +100,14 @@ async function gerarEnfermidade() {
     }
 }
 
-//Essa função serve para buscar e retornar todas as enfermidades ativas ligadas a uma ficha médica determinada pelo id_fichamedica
-async function buscarEnfermidadesPorIDFichaMedica() {
+//Essa função serve para buscar e retornar as enfermidades ligadas a uma ficha médica determinada pelo id_fichamedica
+async function buscarEnfermidadesPorIDFichaMedica(status = "todos") {
     const params = new URLSearchParams(window.location.search);
-    const id_fichamedica = params.get("id_fichamedica")
+    const id_fichamedica = params.get("id_fichamedica");
     const nomeClasse = 'EnfermidadeControle';
-    const metodo = 'getEnfermidadesAtivasPorFichaMedica';
+    const metodo = 'getEnfermidadesPorFichaMedica';
 
-    const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
+    const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}&id_fichamedica=${encodeURIComponent(id_fichamedica)}&status=${encodeURIComponent(status)}`;
 
     try {
         const response = await fetch(url);
@@ -121,6 +123,11 @@ async function buscarEnfermidadesPorIDFichaMedica() {
         console.error('Erro ao buscar enfermidades:', error);
         return [];
     }
+}
+
+//Essa função serve para buscar e retornar as enfermidades ativas ligadas a uma ficha médica determinada pelo id_fichamedica
+async function buscarEnfermidadesAtivasPorIDFichaMedica() {
+    return buscarEnfermidadesPorIDFichaMedica("ativo");
 }
 
 let timeoutMensagemCadastroEnfermidade = null;
@@ -202,6 +209,34 @@ function ocultarMensagemCadastroEnfermidade() {
     }, 350);
 }
 
+function aplicarFiltroComorbidades() {
+    const filtro = document.getElementById("filtro-comorbidades");
+    const valorFiltro = filtro ? filtro.value : FILTRO_COMORBIDADES_PADRAO;
+    const linhas = document.querySelectorAll("#doc-tab tr");
+    let totalVisivel = 0;
+
+    linhas.forEach((linha) => {
+        const status = linha.getAttribute("data-status");
+        const mostrar = valorFiltro === "todos" || status === valorFiltro;
+        linha.style.display = mostrar ? "" : "none";
+
+        if (mostrar) {
+            totalVisivel++;
+        }
+    });
+
+    const avisoSemResultados = document.getElementById("comorbidades-sem-resultados");
+    if (avisoSemResultados) {
+        avisoSemResultados.classList.toggle("hidden", totalVisivel > 0);
+    }
+}
+
+$(function() {
+    $("#filtro-comorbidades").on("change", function() {
+        aplicarFiltroComorbidades();
+    });
+});
+
 async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
     ev.preventDefault();
     const selectStatus = document.getElementById("intStatus")
@@ -263,7 +298,7 @@ async function gerarEnfermidadesDoPaciente() {
         tabela.removeChild(tabela.firstChild);
     }
 
-    const enfermidades = await buscarEnfermidadesPorIDFichaMedica();
+    const enfermidades = await buscarEnfermidadesPorIDFichaMedica("todos");
 
     for (const item of enfermidades) {
         if (!item.descricao || !item.data_diagnostico) {
@@ -272,6 +307,8 @@ async function gerarEnfermidadesDoPaciente() {
         }
 
         const tr = document.createElement("tr");
+        const enfermidadeAtiva = Number(item.status) === 1;
+        tr.setAttribute("data-status", enfermidadeAtiva ? "ativo" : "inativo");
 
         // Descrição
         const tdDescricao = document.createElement("td");
@@ -283,33 +320,44 @@ async function gerarEnfermidadesDoPaciente() {
         tdData.textContent = formatarDataBr(item.data_diagnostico);
         tr.appendChild(tdData);
 
+        // Status
+        const tdStatus = document.createElement("td");
+        tdStatus.textContent = enfermidadeAtiva ? "Ativo" : "Inativo";
+        tr.appendChild(tdStatus);
+
         // Ações
         const tdAcoes = document.createElement("td");
         tdAcoes.style.verticalAlign = "middle";
         tdAcoes.style.textAlign = "center";
 
-        const linkRemover = document.createElement("a");
-        linkRemover.href = "#";
-        linkRemover.title = "Inativar";
-        linkRemover.addEventListener("click", (e) => {
-            e.preventDefault();
-            removerEnfermidade(item.id_enfermidade);
-        });
+        if (enfermidadeAtiva) {
+            const linkRemover = document.createElement("a");
+            linkRemover.href = "#";
+            linkRemover.title = "Inativar";
+            linkRemover.addEventListener("click", (e) => {
+                e.preventDefault();
+                removerEnfermidade(item.id_enfermidade);
+            });
 
-        const botao = document.createElement("button");
-        botao.className = "btn btn-dark";
+            const botao = document.createElement("button");
+            botao.className = "btn btn-dark";
 
-        const icone = document.createElement("i");
-        icone.className = "glyphicon glyphicon-remove";
+            const icone = document.createElement("i");
+            icone.className = "glyphicon glyphicon-remove";
 
-        botao.appendChild(icone);
-        linkRemover.appendChild(botao);
-        tdAcoes.appendChild(linkRemover);
+            botao.appendChild(icone);
+            linkRemover.appendChild(botao);
+            tdAcoes.appendChild(linkRemover);
+        } else {
+            tdAcoes.textContent = "-";
+        }
+
         tr.appendChild(tdAcoes);
 
         tabela.appendChild(tr);
     }
 
+    aplicarFiltroComorbidades();
     await gerarEnfermidade();
 }
 
