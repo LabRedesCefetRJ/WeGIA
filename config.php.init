@@ -12,3 +12,4 @@ define( 'BKP_DIR', '/var/www/bkpWeGIA');
 define( 'BACKUP_SIGNING_KEY_FILE', BKP_DIR . '/.backup_signing_private.pem');
 define( 'WWW', 'https://demo.wegia.org/');
 define('JWT_SECRET', 'your_jwt_secret_key_here');
+define('ENV_APP', 'production');
