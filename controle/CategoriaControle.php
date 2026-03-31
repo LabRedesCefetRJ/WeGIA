@@ -75,19 +75,35 @@ class CategoriaControle
     }
     public function excluir()
     {
+        header('Content-Type: application/json');
+
         $id_categoria_produto = trim($_REQUEST['id_categoria_produto']);
 
         if (!$id_categoria_produto || !is_numeric($id_categoria_produto) || $id_categoria_produto < 1) {
             http_response_code(400);
-            exit('O id de uma categoria deve ser um inteiro maior ou igual a 1.');
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "O id de uma categoria deve ser um inteiro maior ou igual a 1."
+            ]);
+
+            exit;
         }
 
         try {
             $categoriaDAO = new CategoriaDAO();
             $categoriaDAO->excluir($id_categoria_produto);
-            header('Location: ' . WWW . 'html/matPat/listar_categoria.php');
+            
+            echo json_encode([
+                "sucesso" => true,
+                "mensagem" => "Categoria excluída com sucesso"
+            ]);
         } catch (PDOException $e) {
-            echo "Não foi possível excluir essa categoria, pois já deve existir um produto cadastrado com essa categoria";
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Não foi possível excluir essa categoria, pois já existe produto vinculado"
+            ]);
         }
+
+        exit;
     }
 }

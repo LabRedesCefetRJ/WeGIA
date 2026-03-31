@@ -101,8 +101,26 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		function excluir(id) {
-			if(window.confirm("Deseja excluir essa categoria?"))
-				window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=CategoriaControle&id_categoria_produto=' + id);
+			if(!window.confirm("Deseja excluir essa categoria?")) return;
+
+			fetch('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=CategoriaControle', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				},
+				body: 'id_categoria_produto=' + id
+			})
+			.then(res => res.json())
+			.then(data => {
+				alert(data.mensagem);
+
+				if(data.sucesso) {
+					document.getElementById('linha-' + id).remove()
+				}
+			})
+			.catch(() => {
+				alert("Erro ao excluir categoria");
+			})
 		}
 
 		function editar(id) {
@@ -118,7 +136,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 			$.each(categoria, function(i, item) {
 
 				$('#tabela')
-					.append($('<tr />')
+					.append($('<tr />').attr('id', 'linha-' + item.id_categoria_produto)
 						.append($('<td />')
 							.text(item.descricao_categoria))
 						.append($('<td />')
