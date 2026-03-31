@@ -10,9 +10,9 @@ class AuthMiddleware
 {
     private AuthService $authService;
 
-    public function __construct()
+    public function __construct(AuthService $authService)
     {
-        $this->authService = new AuthService();
+        $this->authService = $authService;
     }
 
     public function __invoke(Request $request, $handler): Response

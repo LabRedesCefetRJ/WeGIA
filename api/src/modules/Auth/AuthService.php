@@ -9,23 +9,37 @@ use Firebase\JWT\SignatureInvalidException;
 
 class AuthService
 {
+    private UserRepository $userRepository;
     private string $secret;
 
-    public function __construct()
+    public function __construct(UserRepository $userRepository)
     {
+        $this->userRepository = $userRepository;
         $this->secret = JWT_SECRET;
+    }
+
+    public function register(string $login, string $senha): array
+    {
+        $existingUser = $this->userRepository->findByLogin($login);
+        if ($existingUser) {
+            throw new \Exception('Usuário já existe');
+        }
+
+        return $this->userRepository->save([
+            'login' => $login,
+            'senha' => password_hash($senha, PASSWORD_DEFAULT)
+        ]);
+
     }
 
     public function login(string $login, string $senha): array
     {
-        // MOCK (trocar por banco depois)
-        $usuarioFake = [
-            'id' => 1,
-            'login' => 'admin',
-            'senha' => password_hash('123456', PASSWORD_DEFAULT)
-        ];
+        $user = $this->userRepository->findByLogin($login);
+        if (!$user) {
+            throw new \Exception('Credenciais inválidas');
+        }
 
-        if ($login !== $usuarioFake['login'] || !password_verify($senha, $usuarioFake['senha'])) {
+        if (!password_verify($senha, $user['senha'])) {
             throw new \Exception('Credenciais inválidas');
         }
 
@@ -34,7 +48,7 @@ class AuthService
             'aud' => 'wegia-users',
             'iat' => time(),
             'exp' => time() + 3600,
-            'sub' => $usuarioFake['id']
+            'sub' => $user['id']
         ];
 
         $token = JWT::encode($payload, $this->secret, 'HS256');
