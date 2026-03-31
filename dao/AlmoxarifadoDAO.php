@@ -68,7 +68,7 @@ class AlmoxarifadoDAO
             $almoxarifados[$x] = array('id_almoxarifado' => htmlspecialchars($linha['id_almoxarifado']), 'descricao_almoxarifado' => htmlspecialchars($linha['descricao_almoxarifado']));
             $x++;
         }
-        var_dump($almoxarifados);
+        
         return json_encode($almoxarifados);
     }
 }

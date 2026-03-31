@@ -175,26 +175,48 @@ class ProdutoControle
                 if (intval($produto['qtd']) < 0 && !$registros) {
                     $produtoDAO = new ProdutoDAO();
                     $produtoDAO->excluir($idProduto);
-                    header('Location:' . WWW . 'html/matPat/listar_produto.php');
+                    header('Content-Type: application/json');
+
+                    echo json_encode([
+                        "sucesso" => true,
+                        "mensagem" => "Produto excluído com sucesso"
+                    ]);
+
+                    exit;
                 } else {
-                    //header('Location: ' . WWW . 'html/matPat/remover_produto.php?id_produto=' . htmlspecialchars($idProduto));
-                    echo "<script>
-                    alert('Não foi possível excluir o produto, pois existem registros de entrada/saída.');
-                    window.location.href = '" . WWW . "html/matPat/remover_produto.php?id_produto=" . htmlspecialchars($idProduto) . "';
-                    </script>";
+                    header('Content-Type: application/json');
+
+                    echo json_encode([
+                        "sucesso" => false,
+                        "mensagem" => "Não foi possível excluir o produto, pois existem registros de entrada/saída.",
+                        "redirect" => WWW . "html/matPat/remover_produto.php?id_produto=" . $idProduto
+                    ]);
+
+                    exit;
                 }
             } else {
                 if (!$registros) {
 
                     $produtoDAO = new ProdutoDAO();
                     $produtoDAO->excluir($idProduto);
-                    header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+                    header('Content-Type: application/json');
+
+                    echo json_encode([
+                        "sucesso" => true,
+                        "mensagem" => "Produto excluído com sucesso"
+                    ]);
+
+                    exit;
                 } else {
-                    //header('Location: ' . WWW . 'html/matPat/remover_produto.php?id_produto=' . htmlspecialchars($idProduto));
-                    echo "<script>
-                    alert('Não foi possível excluir o produto, pois existem registros de entrada/saída');
-                    window.location.href = '" . WWW . "html/matPat/remover_produto.php?id_produto=" . htmlspecialchars($idProduto) . "';
-                    </script>";
+                    header('Content-Type: application/json');
+
+                    echo json_encode([
+                        "sucesso" => false,
+                        "mensagem" => "Não foi possível excluir o produto, pois existem registros de entrada/saída.",
+                        "redirect" => WWW . "html/matPat/remover_produto.php?id_produto=" . $idProduto
+                    ]);
+
+                    exit;
                 }
             }
         } catch (Exception $e) {

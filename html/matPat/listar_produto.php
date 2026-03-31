@@ -4,6 +4,8 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTOR
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
 if (!isset($_SESSION['usuario'])) {
 	header("Location: " . WWW . "html/index.php");
 	exit();
@@ -11,7 +13,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 22, 5);
@@ -95,7 +96,20 @@ if (!isset($_SESSION['produtos'])) {
 	<!-- jquery functions -->
 	<script>
 		function excluir(id) {
-			window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=ProdutoControle&id_produto=' + id);
+			if(!window.confirm("Deseja excluir produto?")) return;
+
+			fetch('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=ProdutoControle&id_produto=' + id)
+			.then(res => res.json())
+			.then(data => {
+				alert(data.mensagem);
+
+				if(data.sucesso) {
+					document.getElementById('linha-' + id).remove();
+				}
+			})
+			.catch(() => {
+				alert("Erro ao excluir produto");
+			});
 		}
 
 		function clicar(id) {
@@ -111,7 +125,7 @@ if (!isset($_SESSION['produtos'])) {
 			$.each(produtos, function(i, item) {
 
 				$('#tabela')
-					.append($('<tr />')
+					.append($('<tr />').attr('id', 'linha-' + item.id_produto)
 						.append($('<td />')
 							.text(item.codigo))
 						.append($('<td />')
