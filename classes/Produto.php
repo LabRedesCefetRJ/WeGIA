@@ -90,9 +90,15 @@ class Produto
 
     public function setCodigo($codigo)
     {
-        if (!$codigo || empty($codigo)) {
+        /*if (!$codigo || empty($codigo)) {
             throw new InvalidArgumentException('O código de um produto não pode ser vazio.');
+        }*/
+
+        if ($codigo === null || $codigo === ''){
+            $this->codigo = null;
+            return;
         }
+
         $this->codigo = filter_var($codigo, FILTER_SANITIZE_SPECIAL_CHARS);
     }
 }

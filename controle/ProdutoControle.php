@@ -31,14 +31,17 @@ class ProdutoControle
     public function verificar()
     {
         extract($_REQUEST);
+
+        $codigo = isset($codigo) && $codigo !== '' ? $codigo : null;
+
         if ((!isset($descricao)) || empty($descricao)) {
             $msg .= "descricao do produto nÃ£o informado. Por favor, informe um descricao!";
             header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
         }
-        if ((!isset($codigo)) || empty($codigo)) {
+        /*if ((!isset($codigo)) || empty($codigo)) {
             $msg .= "Código do produto nÃ£o informado. Por favor, informe o código!";
             header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
-        }
+        }*/
         if ((!isset($preco)) || empty($preco)) {
             $msg .= "Preço do produto nÃ£o informado. Por favor, informe um preço!";
             header('Location: ' . WWW . 'html/produto.html?msg=' . $msg);
