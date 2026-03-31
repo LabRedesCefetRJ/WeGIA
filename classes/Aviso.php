@@ -7,15 +7,23 @@
         private $idPessoaAtendida;
         private $descricao;
         private $data;
+        private $idEquipePlantao;
+        private $idEscalaDia;
+        private $dataPlantao;
+        private $turnoPlantao;
 
         /**
          * Recebe dois parâmetros do tipo inteiro ($idFuncionario, $idPessoaAtendida) e uma String ($descricao) para instanciar um objeto do tipo Aviso.
          */
-        public function __construct(int $idFuncionario, int $idPessoaAtendida, string $descricao)
+        public function __construct(int $idFuncionario, int $idPessoaAtendida, string $descricao, ?int $idEquipePlantao = null, ?int $idEscalaDia = null, ?string $dataPlantao = null, ?string $turnoPlantao = null)
         {
             $this->setIdFuncionario($idFuncionario);
             $this->setIdPessoaAtendida($idPessoaAtendida);
             $this->setDescricao($descricao);
+            $this->setIdEquipePlantao($idEquipePlantao);
+            $this->setIdEscalaDia($idEscalaDia);
+            $this->setDataPlantao($dataPlantao);
+            $this->setTurnoPlantao($turnoPlantao);
         }
 
         //Métodos Acessores
@@ -70,6 +78,70 @@
 
         public function setData($data){
             $this->data = $data;
+        }
+
+        public function getIdEquipePlantao(): ?int
+        {
+            return $this->idEquipePlantao;
+        }
+
+        public function setIdEquipePlantao(?int $idEquipePlantao): void
+        {
+            if (!is_null($idEquipePlantao) && $idEquipePlantao < 1) {
+                throw new InvalidArgumentException('O id da equipe de plantão não pode ser menor que 1.');
+            }
+
+            $this->idEquipePlantao = $idEquipePlantao;
+        }
+
+        public function getIdEscalaDia(): ?int
+        {
+            return $this->idEscalaDia;
+        }
+
+        public function setIdEscalaDia(?int $idEscalaDia): void
+        {
+            if (!is_null($idEscalaDia) && $idEscalaDia < 1) {
+                throw new InvalidArgumentException('O id da escala do dia não pode ser menor que 1.');
+            }
+
+            $this->idEscalaDia = $idEscalaDia;
+        }
+
+        public function getDataPlantao(): ?string
+        {
+            return $this->dataPlantao;
+        }
+
+        public function setDataPlantao(?string $dataPlantao): void
+        {
+            if (is_null($dataPlantao) || trim($dataPlantao) === '') {
+                $this->dataPlantao = null;
+                return;
+            }
+
+            $this->dataPlantao = $dataPlantao;
+        }
+
+        public function getTurnoPlantao(): ?string
+        {
+            return $this->turnoPlantao;
+        }
+
+        public function setTurnoPlantao(?string $turnoPlantao): void
+        {
+            if (is_null($turnoPlantao) || trim($turnoPlantao) === '') {
+                $this->turnoPlantao = null;
+                return;
+            }
+
+            $turnoPlantao = strtoupper(trim($turnoPlantao));
+
+            if (!in_array($turnoPlantao, ['DIA', 'NOITE'], true)) {
+                throw new InvalidArgumentException('O turno do plantão informado é inválido.');
+            }
+
+            $this->turnoPlantao = $turnoPlantao;
         }
     }
 ?>

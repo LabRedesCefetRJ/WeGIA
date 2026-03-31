@@ -22,6 +22,7 @@ include_once '../../classes/Cache.php';
 require_once "../personalizacao_display.php";
 
 require_once ROOT . "/controle/SaudeControle.php";
+require_once ROOT . "/service/SaudeEquipePlantaoService.php";
 
 if (!is_numeric($_GET['id_fichamedica']) || $_GET['id_fichamedica'] < 1) {
   header("Location: ../home.php?msg_c=O parâmetro informado é incorreto, informe um inteiro positivo maior ou igual a 1.");
@@ -56,6 +57,13 @@ if (!$stmtPaciente->execute()) {
 }
 
 $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
+$servicePlantao = new SaudeEquipePlantaoService();
+$plantaoHoje = $servicePlantao->resolverPlantaoPorData();
+$equipesPlantao = $servicePlantao->listarEquipes();
+$plantaoHojeNome = is_array($plantaoHoje) ? (string) ($plantaoHoje['equipe_nome'] ?? 'Não definida') : 'Não definida';
+$plantaoHojeTurno = is_array($plantaoHoje) ? (string) ($plantaoHoje['turno_label'] ?? '') : '';
+$plantaoHojeFaixa = is_array($plantaoHoje) ? (string) ($plantaoHoje['faixa_horario'] ?? '') : '';
+$plantaoHojeMembros = is_array($plantaoHoje) ? (array) ($plantaoHoje['membros_plantao'] ?? []) : [];
 
 ?>
 <!-- Vendor -->
@@ -193,7 +201,14 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
 
     function carregarIntercorrencias() {
       let id = <?php echo $_GET['id_fichamedica']; ?>;
-      const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("AvisoControle")}&metodo=${encodeURIComponent("listarIntercorrenciaPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id)}`;
+      const filtroEquipe = document.getElementById('filtroEquipeIntercorrencia');
+      const idEquipe = filtroEquipe ? Number(filtroEquipe.value || 0) : 0;
+      let url = `../../controle/control.php?nomeClasse=${encodeURIComponent("AvisoControle")}&metodo=${encodeURIComponent("listarIntercorrenciaPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id)}`;
+
+      if (idEquipe > 0) {
+        url += `&id_equipe_plantao=${encodeURIComponent(idEquipe)}`;
+      }
+
       fetch(url)
         .then(res => res.json())
         .then(intercorrencias => {
@@ -210,9 +225,15 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
             td1.textContent = item.descricao;
 
             const td2 = document.createElement("td");
-            td2.textContent = item.data;
+            td2.textContent = `${item.equipe_nome || "Não definida"}${item.turno_label ? ` - ${item.turno_label}` : ""}`;
 
-            tr.append(td1, td2);
+            const td3 = document.createElement("td");
+            td3.textContent = item.equipe_membros || "-";
+
+            const td4 = document.createElement("td");
+            td4.textContent = item.data;
+
+            tr.append(td1, td2, td3, td4);
             tbody.appendChild(tr);
           });
         })
@@ -330,6 +351,17 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                         <input type="hidden" name="idfichamedica" value="<?php echo $id; ?>">
 
                         <div class="form-group">
+                          <label>Plantão atual</label>
+                          <input type="text" class="form-control" readonly value="<?php echo htmlspecialchars($plantaoHojeNome . ($plantaoHojeTurno !== '' ? ' - ' . $plantaoHojeTurno : ''), ENT_QUOTES, 'UTF-8'); ?>">
+                          <?php if ($plantaoHojeFaixa !== ''): ?>
+                            <small class="text-muted">Horário do turno: <?php echo htmlspecialchars($plantaoHojeFaixa, ENT_QUOTES, 'UTF-8'); ?></small><br>
+                          <?php endif; ?>
+                          <?php if (!empty($plantaoHojeMembros)): ?>
+                            <small class="text-muted">Membros: <?php echo htmlspecialchars(implode(', ', array_column($plantaoHojeMembros, 'nome_completo')), ENT_QUOTES, 'UTF-8'); ?></small>
+                          <?php endif; ?>
+                        </div>
+
+                        <div class="form-group">
                           <label for="descricao_emergencia">Descrição da Intercorrência</label>
                           <textarea class="form-control" name="descricao_emergencia" cols="30" rows="10" placeholder="Insira aqui a descrição do ocorrido..." required></textarea>
                         </div>
@@ -340,10 +372,29 @@ $idPaciente = $stmtPaciente->fetch(PDO::FETCH_ASSOC);
                       <hr class="dotted short">
 
                       <div class="form-group" id="exibirintercorrencias">
+                        <div class="row" style="margin-bottom: 8px;">
+                          <div class="col-md-5">
+                            <label for="filtroEquipeIntercorrencia">Filtrar intercorrências por equipe</label>
+                            <div class="input-group">
+                              <select id="filtroEquipeIntercorrencia" class="form-control">
+                                <option value="0">Todas as equipes</option>
+                                <?php foreach ($equipesPlantao as $equipePlantao): ?>
+                                  <option value="<?php echo (int) $equipePlantao['id_equipe_plantao']; ?>"><?php echo htmlspecialchars($equipePlantao['nome'], ENT_QUOTES, 'UTF-8'); ?></option>
+                                <?php endforeach; ?>
+                              </select>
+                              <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" onclick="carregarIntercorrencias()">Aplicar</button>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
                         <table class="table table-bordered table-striped" id="datatable-intercorrencias">
                           <thead>
                             <tr style="font-size:15px;">
                               <th>Descrição</th>
+                              <th>Equipe / Turno</th>
+                              <th>Membros</th>
                               <th>Data</th>
                             </tr>
                           </thead>

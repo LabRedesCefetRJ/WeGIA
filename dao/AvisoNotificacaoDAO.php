@@ -56,22 +56,35 @@ class AvisoNotificacaoDAO
     /**
      * Recebe como parâmetro o id de uma pessoa e retornar todas as notificações que ainda não foram marcadas como lidas.
      */
-    public function buscarRecentes($idPessoa)
+    public function buscarRecentes($idPessoa, ?int $idEquipePlantao = null)
     {
 
-        $sql = "SELECT a.descricao, a.data, p.nome as atendido_nome, p.sobrenome as atendido_sobrenome, pe.nome as funcionario_nome, pe.sobrenome as funcionario_sobrenome, an.id_aviso_notificacao
+        $sql = "SELECT a.descricao, a.data, a.data_plantao, COALESCE(sed.turno, a.turno_plantao) AS turno_plantao, COALESCE(sed.id_equipe_plantao, a.id_saude_equipe_plantao) AS id_saude_equipe_plantao, a.id_saude_escala_dia, sep.nome AS equipe_nome, p.nome as atendido_nome, p.sobrenome as atendido_sobrenome, pe.nome as funcionario_nome, pe.sobrenome as funcionario_sobrenome, an.id_aviso_notificacao
         FROM pessoa as p 
         JOIN aviso as a ON (p.id_pessoa=a.id_pessoa_atendida) 
         JOIN aviso_notificacao as an ON (a.id_aviso=an.id_aviso) 
         JOIN funcionario as f ON (an.id_funcionario=f.id_funcionario) 
         JOIN funcionario as fu ON (a.id_funcionario_aviso=fu.id_funcionario) 
         JOIN pessoa as pe ON(fu.id_pessoa=pe.id_pessoa) 
+        LEFT JOIN saude_escala_dia sed ON sed.id_escala_dia = a.id_saude_escala_dia
+        LEFT JOIN saude_equipe_plantao sep ON sep.id_equipe_plantao = COALESCE(sed.id_equipe_plantao, a.id_saude_equipe_plantao)
         WHERE f.id_pessoa=:idPessoa AND an.status=1
-        ORDER BY a.data DESC";
+        ";
+
+        if (!is_null($idEquipePlantao) && $idEquipePlantao > 0) {
+            $sql .= " AND COALESCE(sed.id_equipe_plantao, a.id_saude_equipe_plantao) = :idEquipePlantao ";
+        }
+
+        $sql .= " ORDER BY a.data DESC";
 
         try {
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':idPessoa', $idPessoa);
+
+            if (!is_null($idEquipePlantao) && $idEquipePlantao > 0) {
+                $stmt->bindValue(':idEquipePlantao', $idEquipePlantao, PDO::PARAM_INT);
+            }
+
             $stmt->execute();
             $avisos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return $avisos;
@@ -83,21 +96,34 @@ class AvisoNotificacaoDAO
     /**
      * Recebe como parâmetro o id de uma pessoa e retornar todas as notificações que foram marcadas como lidas.
      */
-    public function buscarHistoricos($idPessoa)
+    public function buscarHistoricos($idPessoa, ?int $idEquipePlantao = null)
     {
-        $sql = "SELECT a.descricao, a.data, p.nome as atendido_nome, p.sobrenome as atendido_sobrenome, pe.nome as funcionario_nome, pe.sobrenome as funcionario_sobrenome
+        $sql = "SELECT a.descricao, a.data, a.data_plantao, COALESCE(sed.turno, a.turno_plantao) AS turno_plantao, COALESCE(sed.id_equipe_plantao, a.id_saude_equipe_plantao) AS id_saude_equipe_plantao, a.id_saude_escala_dia, sep.nome AS equipe_nome, p.nome as atendido_nome, p.sobrenome as atendido_sobrenome, pe.nome as funcionario_nome, pe.sobrenome as funcionario_sobrenome
         FROM pessoa as p 
         JOIN aviso as a ON (p.id_pessoa=a.id_pessoa_atendida) 
         JOIN aviso_notificacao as an ON (a.id_aviso=an.id_aviso) 
         JOIN funcionario as f ON (an.id_funcionario=f.id_funcionario) 
         JOIN funcionario as fu ON (a.id_funcionario_aviso=fu.id_funcionario) 
         JOIN pessoa as pe ON(fu.id_pessoa=pe.id_pessoa) 
+        LEFT JOIN saude_escala_dia sed ON sed.id_escala_dia = a.id_saude_escala_dia
+        LEFT JOIN saude_equipe_plantao sep ON sep.id_equipe_plantao = COALESCE(sed.id_equipe_plantao, a.id_saude_equipe_plantao)
         WHERE f.id_pessoa=:idPessoa AND an.status=0
-        ORDER BY a.data DESC";
+        ";
+
+        if (!is_null($idEquipePlantao) && $idEquipePlantao > 0) {
+            $sql .= " AND COALESCE(sed.id_equipe_plantao, a.id_saude_equipe_plantao) = :idEquipePlantao ";
+        }
+
+        $sql .= " ORDER BY a.data DESC";
 
         try {
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':idPessoa', $idPessoa);
+
+            if (!is_null($idEquipePlantao) && $idEquipePlantao > 0) {
+                $stmt->bindValue(':idEquipePlantao', $idEquipePlantao, PDO::PARAM_INT);
+            }
+
             $stmt->execute();
             $avisos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return $avisos;

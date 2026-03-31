@@ -56,6 +56,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'ReleaseControle' => [],
             'SaidaControle' => [22, 24],
             'SaudeControle' => [5, 12],
+            'SaudeEquipePlantaoControle' => [5],
             'SinaisVitaisControle' => [5],
             'SocioTagController' => [4],
             'TipoEntradaControle' => [23],
@@ -122,10 +123,15 @@ try {
 
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
+        if (!is_array($data)) {
+            $data = [];
+        }
+
+        $_REQUEST = array_merge($_REQUEST, $data);
 
         // Extrai as variáveis do array $data
-        $nomeClasse = filter_var($data['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        $metodo = filter_var($data['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
+        $nomeClasse = isset($data['nomeClasse']) ? filter_var($data['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $metodo = isset($data['metodo']) ? filter_var($data['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
         isset($data['modulo']) ? $modulo = filter_var($data['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
     } else {
         // Recebe os dados do formulário normalmente

@@ -13,19 +13,25 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'SaudeEquipePlantaoService.php';
 
 permissao($_SESSION['id_pessoa'], 5, 5);
 
 require_once '../../controle/AvisoNotificacaoControle.php';
 
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+$idEquipeFiltro = filter_input(INPUT_GET, 'id_equipe_plantao', FILTER_SANITIZE_NUMBER_INT);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
 
 $avisoNotificacaoControle = new AvisoNotificacaoControle();
-$recentes = $avisoNotificacaoControle->listarRecentes($id_pessoa);
-$historicos = $avisoNotificacaoControle->listarHistoricos($id_pessoa);
+$servicePlantao = new SaudeEquipePlantaoService();
+$equipesPlantao = $servicePlantao->listarEquipes();
+$recentes = $avisoNotificacaoControle->listarRecentes($id_pessoa, $idEquipeFiltro ?: null);
+$historicos = $avisoNotificacaoControle->listarHistoricos($id_pessoa, $idEquipeFiltro ?: null);
+$recentes = $servicePlantao->enriquecerIntercorrenciasComEquipe($recentes);
+$historicos = $servicePlantao->enriquecerIntercorrenciasComEquipe($historicos);
 
 /**Transforma as datas para o formato brasileiro e protege contra XSS*/
 function formataEProtege(array $intercorrencias)
@@ -34,6 +40,9 @@ function formataEProtege(array $intercorrencias)
         $data = new DateTime($intercorrencia['data']);
         $intercorrencias[$num]['data'] = $data->format('d/m/Y H:i:s');
         $intercorrencias[$num]['descricao'] = htmlspecialchars(html_entity_decode($intercorrencia['descricao'], ENT_QUOTES, 'UTF-8'));
+        $intercorrencias[$num]['equipe_nome'] = htmlspecialchars((string) ($intercorrencia['equipe_nome'] ?? 'Não definida'));
+        $intercorrencias[$num]['equipe_membros'] = htmlspecialchars((string) ($intercorrencia['equipe_membros'] ?? ''));
+        $intercorrencias[$num]['turno_label'] = htmlspecialchars((string) ($intercorrencia['turno_label'] ?? ''));
     }
 
     return $intercorrencias;
@@ -45,8 +54,9 @@ $recentesJSON =  json_encode(
 $historicoJSON = json_encode(
     formataEProtege($historicos)
 );
+$equipesJSON = json_encode($equipesPlantao);
 
-echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON</script>";
+echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON; let equipesPlantao = $equipesJSON;</script>";
 
 ?>
 
@@ -142,7 +152,7 @@ echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON</scri
                             <div class="card">
                                 <div class="card-body">
                                     <h5 class="card-title"><strong>Paciente:</strong> ${item.atendido_nome} ${item.atendido_sobrenome}</h5>
-                                    <p class="card-text"><strong>Descrição:</strong> ${item.descricao}<br><strong>Registrada em:</strong> ${item.data}<br><strong>Responsável pelo registro:</strong> ${item.funcionario_nome} ${item.funcionario_sobrenome}</p>
+                                    <p class="card-text"><strong>Descrição:</strong> ${item.descricao}<br><strong>Equipe de plantão:</strong> ${item.equipe_nome || 'Não definida'}${item.turno_label ? ` - ${item.turno_label}` : ''}<br><strong>Membros:</strong> ${item.equipe_membros || '-'}<br><strong>Registrada em:</strong> ${item.data}<br><strong>Responsável pelo registro:</strong> ${item.funcionario_nome} ${item.funcionario_sobrenome}</p>
                                     <form action="../../controle/control.php" method="POST">
                                         <input type="hidden" name="id_notificacao" value="${item.id_aviso_notificacao}">
                                         <input type="hidden" name="nomeClasse" value="AvisoNotificacaoControle">
@@ -172,7 +182,7 @@ echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON</scri
                     <div class="card">
                         <div class="card-body">
                              <h5 class="card-title"><strong>Paciente:</strong> ${item.atendido_nome} ${item.atendido_sobrenome}</h5>
-                              <p class="card-text"><strong>Descrição:</strong> ${item.descricao}<br><strong>Registrada em:</strong> ${item.data}<br><strong>Responsável pelo registro:</strong> ${item.funcionario_nome} ${item.funcionario_sobrenome}</p>
+                              <p class="card-text"><strong>Descrição:</strong> ${item.descricao}<br><strong>Equipe de plantão:</strong> ${item.equipe_nome || 'Não definida'}${item.turno_label ? ` - ${item.turno_label}` : ''}<br><strong>Membros:</strong> ${item.equipe_membros || '-'}<br><strong>Registrada em:</strong> ${item.data}<br><strong>Responsável pelo registro:</strong> ${item.funcionario_nome} ${item.funcionario_sobrenome}</p>
                          </div>
                     </div>
                 </div>`;
@@ -180,6 +190,20 @@ echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON</scri
             }
 
             exibidos.innerHTML = impressao;
+        }
+
+        function aplicarFiltroEquipe() {
+            const select = document.getElementById('filtro-equipe-plantao');
+            const idEquipe = select.value;
+            const url = new URL(window.location.href);
+
+            if (idEquipe && Number(idEquipe) > 0) {
+                url.searchParams.set('id_equipe_plantao', idEquipe);
+            } else {
+                url.searchParams.delete('id_equipe_plantao');
+            }
+
+            window.location.href = url.toString();
         }
     </script>
 </head>
@@ -216,6 +240,25 @@ echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON</scri
                 <!-- start: page -->
 
                 <section class="container">
+                    <div class="row" style="margin-top: 10px; margin-bottom: 15px;">
+                        <div class="col-md-6">
+                            <label for="filtro-equipe-plantao"><strong>Filtrar por equipe de plantão</strong></label>
+                            <div class="input-group">
+                                <select id="filtro-equipe-plantao" class="form-control">
+                                    <option value="0">Todas as equipes</option>
+                                    <?php foreach ($equipesPlantao as $equipePlantao): ?>
+                                        <option value="<?php echo (int) $equipePlantao['id_equipe_plantao']; ?>" <?php echo ((int) $idEquipeFiltro === (int) $equipePlantao['id_equipe_plantao']) ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($equipePlantao['nome']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" type="button" onclick="aplicarFiltroEquipe()">Aplicar</button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
                     <button class="btn btn-primary" onclick="exibirRecentes();">Recentes</button>
                     <button class="btn btn-primary" onclick="exibirHistorico();">Histórico</button>
 

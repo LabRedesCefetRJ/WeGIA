@@ -433,6 +433,11 @@ session_start();
 									<span>Intercorrências</span>
 								</a>
 							</li>
+							<li>
+								<a href="<?= WWW ?>html/saude/equipe_plantao.php">
+									<span>Equipe de Plantão</span>
+								</a>
+							</li>
 						</ul>
 					</li>
 				</ul>

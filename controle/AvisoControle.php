@@ -3,6 +3,7 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'AvisoNotificacaoControle.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AvisoDAO.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'SaudeEquipePlantaoService.php';
 
 class AvisoControle
 {
@@ -34,7 +35,14 @@ class AvisoControle
                 throw new InvalidArgumentException('Erro, a descrição informada não é válida.', 400);
             }
 
-            $aviso = new Aviso($idFuncionario, $idPessoaAtendida, $descricao);
+            $servicePlantao = new SaudeEquipePlantaoService();
+            $plantaoDia = $servicePlantao->resolverPlantaoPorData();
+            $idEquipePlantao = $plantaoDia['id_equipe_plantao'] ?? null;
+            $idEscalaDia = $plantaoDia['id_escala_dia'] ?? null;
+            $dataPlantao = $plantaoDia['data_plantao'] ?? null;
+            $turnoPlantao = $plantaoDia['turno'] ?? null;
+
+            $aviso = new Aviso($idFuncionario, $idPessoaAtendida, $descricao, $idEquipePlantao, $idEscalaDia, $dataPlantao, $turnoPlantao);
 
             $avisoNotificacaoControle = new AvisoNotificacaoControle();
 
@@ -57,18 +65,24 @@ class AvisoControle
         header('Content-Type: application/json');
         try {
             $idfichamedica = filter_input(INPUT_GET, 'id_fichamedica', FILTER_SANITIZE_NUMBER_INT);
+            $idEquipePlantao = filter_input(INPUT_GET, 'id_equipe_plantao', FILTER_SANITIZE_NUMBER_INT);
 
             if (!$idfichamedica || $idfichamedica < 1) {
                 throw new InvalidArgumentException('Erro, o id da ficha médica não pode ser menor que 1.', 400);
             }
 
             $avisoDAO = new AvisoDAO();
-            $intercorrencias = $avisoDAO->listarIntercorrenciaPorIdDaFichaMedica($idfichamedica);
+            $intercorrencias = $avisoDAO->listarIntercorrenciaPorIdDaFichaMedica($idfichamedica, $idEquipePlantao ?: null);
+            $servicePlantao = new SaudeEquipePlantaoService();
+            $intercorrencias = $servicePlantao->enriquecerIntercorrenciasComEquipe($intercorrencias);
 
             foreach ($intercorrencias as $key => $value) {
                 $data = new DateTime($value['data']);
                 $intercorrencias[$key]['data'] = $data->format('d/m/Y H:i:s');
                 $intercorrencias[$key]['descricao'] = htmlspecialchars(html_entity_decode($value['descricao'], ENT_QUOTES, 'UTF-8'));
+                $intercorrencias[$key]['equipe_nome'] = htmlspecialchars((string) ($value['equipe_nome'] ?? 'Não definida'), ENT_QUOTES, 'UTF-8');
+                $intercorrencias[$key]['equipe_membros'] = htmlspecialchars((string) ($value['equipe_membros'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $intercorrencias[$key]['turno_label'] = htmlspecialchars((string) ($value['turno_label'] ?? ''), ENT_QUOTES, 'UTF-8');
             }
 
             echo json_encode($intercorrencias);

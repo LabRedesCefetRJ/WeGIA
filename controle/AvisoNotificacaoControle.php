@@ -24,11 +24,11 @@ class AvisoNotificacaoControle
      /**
       * Recebe como parâmetro o id de uma pessoa, retorna o resultado do método buscarRecentes de um objeto do tipo AvisoNotificacaoDAO
       */
-     public function listarRecentes($idPessoa)
+     public function listarRecentes($idPessoa, ?int $idEquipePlantao = null)
      {
           try {
                $avisoNotificacaoDAO = new AvisoNotificacaoDAO();
-               $recentes = $avisoNotificacaoDAO->buscarRecentes($idPessoa);
+               $recentes = $avisoNotificacaoDAO->buscarRecentes($idPessoa, $idEquipePlantao);
                return $recentes;
           } catch (PDOException $e) {
                Util::tratarException($e);
@@ -38,11 +38,11 @@ class AvisoNotificacaoControle
      /**
       * Recebe como parâmetro o id de uma pessoa, retorna o resultado do método buscarHistoricos de um objeto do tipo AvisoNotificacaoDAO
       */
-     public function listarHistoricos($idPessoa)
+     public function listarHistoricos($idPessoa, ?int $idEquipePlantao = null)
      {
           try {
                $avisoNotificacaoDAO = new AvisoNotificacaoDAO();
-               $historicos = $avisoNotificacaoDAO->buscarHistoricos($idPessoa);
+               $historicos = $avisoNotificacaoDAO->buscarHistoricos($idPessoa, $idEquipePlantao);
                return $historicos;
           } catch (PDOException $e) {
                Util::tratarException($e);
