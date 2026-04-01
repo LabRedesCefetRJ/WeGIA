@@ -138,11 +138,11 @@ body.scale-locked .schedule-toolbar {
 }
 
 .toolbar-label {
-  margin-bottom: 8px;
-  font-size: 12px;
+  margin-bottom: 6px;
+  font-size: 11px;
   color: var(--text-soft);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
 }
 
 .toolbar-controls {
@@ -169,9 +169,10 @@ body.scale-locked .schedule-toolbar {
 
 .toolbar-field-label {
   margin: 0;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-soft);
   font-weight: 400;
+  opacity: 0.88;
 }
 
 .toolbar-actions {
@@ -179,6 +180,10 @@ body.scale-locked .schedule-toolbar {
   flex-wrap: wrap;
   gap: 8px;
   align-items: flex-end;
+}
+
+.toolbar-actions-bottom {
+  margin-top: 10px;
 }
 
 .toolbar-select {
@@ -201,6 +206,48 @@ body.scale-locked .schedule-toolbar {
   background: #e7edf3;
 }
 
+.toolbar-sequence {
+  margin-top: 10px;
+}
+
+.toolbar-sequence-title {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.toolbar-sequence-list {
+  display: grid;
+  gap: 8px;
+}
+
+.toolbar-sequence-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.toolbar-sequence-item .sequence-label {
+  min-width: 70px;
+  padding-bottom: 8px;
+}
+
+.toolbar-sequence-control {
+  flex: 1 1 210px;
+  min-width: 210px;
+}
+
+.toolbar-sequence-footer {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toolbar-sequence-remove {
+  min-width: 86px;
+}
+
 .secondary-panels {
   margin-top: var(--section-gap);
 }
@@ -217,9 +264,11 @@ body.scale-locked .schedule-toolbar {
 }
 
 .small-help {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-soft);
-  margin-top: 5px;
+  margin-top: 4px;
+  line-height: 1.45;
+  opacity: 0.88;
 }
 
 #plantaoCalendar {
@@ -276,6 +325,12 @@ body.scale-locked .schedule-toolbar {
   font-size: 12px;
 }
 
+.fc-theme-standard td,
+.fc-theme-standard th,
+.fc-theme-standard .fc-scrollgrid {
+  border-color: #c5d1de;
+}
+
 .fc .fc-daygrid-day {
   transition: background 0.2s ease;
 }
@@ -320,23 +375,54 @@ body.scale-locked .schedule-toolbar {
 .fc .event-team {
   border: none !important;
   border-radius: 4px;
-  padding: 2px 6px !important;
-  font-size: 10px;
+  padding: 3px 5px !important;
+  font-size: clamp(9px, 0.72vw, 11px);
   font-weight: 400;
-  line-height: 1.25;
+  line-height: 1.15;
   max-width: calc(100% - 6px);
   margin: 1px auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
   text-align: center;
   justify-content: center;
-  color: #ffffff !important;
+  color: #dbe4ee !important;
 }
 
 .fc .event-team .fc-event-main,
 .fc .event-team .fc-event-title {
-  color: #ffffff !important;
+  color: #dbe4ee !important;
+  font-weight: 700;
+  width: 100%;
+  white-space: normal;
+  overflow: visible;
+}
+
+.fc .event-team-content {
+  display: block;
+  width: 100%;
+}
+
+.fc .event-team-turno {
+  display: block;
+  font-size: clamp(7px, 0.56vw, 8px);
+  line-height: 1;
+  font-weight: 700;
+  opacity: 0.88;
+  margin-bottom: 2px;
+  color: #eef3f7;
+}
+
+.fc .event-team-name {
+  display: block;
+  font-size: clamp(8px, 0.75vw, 11px);
+  line-height: 1.1;
+  font-weight: 700;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  color: #eef3f7;
 }
 
 .fc .event-day {
@@ -377,6 +463,12 @@ body.scale-locked .schedule-toolbar {
 .table-teams {
   margin-top: 6px;
   margin-bottom: 0;
+}
+
+.table-teams.table-bordered,
+.table-teams.table-bordered > thead > tr > th,
+.table-teams.table-bordered > tbody > tr > td {
+  border-color: #cfd8e2;
 }
 
 .table-teams > thead > tr > th,

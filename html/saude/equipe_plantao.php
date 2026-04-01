@@ -25,7 +25,7 @@ $anoAtual = (int) date('Y');
 <html class="fixed">
 <head>
     <meta charset="UTF-8">
-    <title>Gestao de Plantao</title>
+    <title>Gestão de Plantão</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
@@ -70,12 +70,12 @@ $anoAtual = (int) date('Y');
 
         <section role="main" class="content-body">
             <header class="page-header">
-                <h2>Gestao de Plantao</h2>
+                <h2>Gestão de Plantão</h2>
                 <div class="right-wrapper pull-right">
                     <ol class="breadcrumbs">
                         <li><a href="../index.php"><i class="fa fa-home"></i></a></li>
-                        <li><span>Modulo Saude</span></li>
-                        <li><span>Equipe de Plantao</span></li>
+                        <li><span>Módulo Saúde</span></li>
+                        <li><span>Equipe de Plantão</span></li>
                     </ol>
                     <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
                 </div>
@@ -85,24 +85,24 @@ $anoAtual = (int) date('Y');
 
             <section class="panel painel-main">
                 <header class="panel-heading">
-                    <h2 class="panel-title">Escala Mensal - Operacao 12x36 por turno</h2>
+                    <h2 class="panel-title">Escala Mensal - Operação 12x36 por turno</h2>
                 </header>
                 <div class="panel-body">
                     <div class="page-actions">
                         <div class="form-group">
-                            <label for="filtroMes">Mes</label>
+                            <label for="filtroMes">Mês</label>
                             <select id="filtroMes" class="form-control"></select>
                         </div>
                         <div class="form-group">
                             <label for="filtroAno">Ano</label>
                             <select id="filtroAno" class="form-control"></select>
                         </div>
-                        <button id="btnCarregar" class="btn btn-default btn-sm" type="button"><i class="fa fa-refresh"></i> Descartar edicao</button>
+                        <button id="btnCarregar" class="btn btn-default btn-sm" type="button"><i class="fa fa-refresh"></i> Descartar edição</button>
                         <button id="btnEditarEscala" class="btn btn-default btn-sm" type="button" disabled><i class="fa fa-pencil"></i> Editar escala</button>
                         <button id="btnApagarEscala" class="btn btn-default btn-sm" type="button" disabled><i class="fa fa-trash"></i> Apagar escala</button>
                         <button id="btnSalvarEscala" class="btn btn-primary btn-sm" type="button"><i class="fa fa-save"></i> Salvar escala</button>
-                        <button id="btnVisualizarImpressao" class="btn btn-warning btn-sm" type="button"><i class="fa fa-search"></i> Visualizar impressao</button>
-                        <button id="btnImprimirDireto" class="btn btn-warning btn-sm" type="button"><i class="fa fa-print"></i> Imprimir</button>
+                        <button id="btnVisualizarImpressao" class="btn btn-warning btn-sm" type="button"><i class="fa fa-search"></i> Visualizar impressão</button>
+                        <button id="btnImprimirDireto" class="btn btn-warning btn-sm" type="button"><i class="fa fa-file-excel-o"></i> Gerar planilha</button>
                     </div>
 
                     <section class="schedule-toolbar">
@@ -124,10 +124,9 @@ $anoAtual = (int) date('Y');
                                     <button id="btnAplicarEquipeSelecionados" class="btn btn-primary btn-sm" type="button">Aplicar</button>
                                     <button id="btnLimparEquipeSelecionados" class="btn btn-default btn-sm" type="button">Limpar equipe</button>
                                     <button id="btnLimparSelecao" class="btn btn-default btn-sm" type="button">Limpar selecao</button>
-                                    <button id="btnAbrirDiaSelecionado" class="btn btn-default btn-sm" type="button">Editar dia</button>
                                 </div>
                             </div>
-                            <div class="small-help">1. Escolha o turno. 2. Selecione um ou mais dias no calendario. 3. Aplique a equipe ou abra a edicao do plantao.</div>
+                            <div class="small-help">Escolha turno e equipe. Clique nos dias vazios para selecionar. Clique na equipe do calendário para editar.</div>
                         </div>
                         <div class="toolbar-divider"></div>
                         <div class="toolbar-block">
@@ -144,20 +143,33 @@ $anoAtual = (int) date('Y');
                                     <label class="toolbar-field-label" for="escala12x36DiaInicial">Dia inicial</label>
                                     <select id="escala12x36DiaInicial" class="form-control input-sm toolbar-mini-select"></select>
                                 </div>
-                                <div class="toolbar-field">
-                                    <label class="toolbar-field-label" for="escala12x36EquipeA">Equipe do primeiro plantao</label>
-                                    <select id="escala12x36EquipeA" class="form-control input-sm toolbar-select"></select>
+                            </div>
+                            <div class="toolbar-sequence">
+                                <div class="toolbar-field-label toolbar-sequence-title">Sequência de equipes</div>
+                                <div id="escalaSequenciaContainer" class="toolbar-sequence-list">
+                                    <div class="toolbar-sequence-item" data-sequence-fixed="1">
+                                        <label class="toolbar-field-label sequence-label" for="escala12x36EquipeA">Equipe 1</label>
+                                        <div class="toolbar-sequence-control">
+                                            <select id="escala12x36EquipeA" class="form-control input-sm toolbar-select sequence-team-select"></select>
+                                        </div>
+                                    </div>
+                                    <div class="toolbar-sequence-item" data-sequence-fixed="1">
+                                        <label class="toolbar-field-label sequence-label" for="escala12x36EquipeB">Equipe 2</label>
+                                        <div class="toolbar-sequence-control">
+                                            <select id="escala12x36EquipeB" class="form-control input-sm toolbar-select sequence-team-select"></select>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="toolbar-field">
-                                    <label class="toolbar-field-label" for="escala12x36EquipeB">Equipe alternada</label>
-                                    <select id="escala12x36EquipeB" class="form-control input-sm toolbar-select"></select>
-                                </div>
-                                <div class="toolbar-actions">
-                                    <button id="btnGerar12x36" class="btn btn-info btn-sm" type="button">Gerar 12x36</button>
-                                    <button id="btnDesfazerLocal" class="btn btn-default btn-sm" type="button">Desfazer</button>
+                                <div class="toolbar-sequence-footer">
+                                    <button id="btnAdicionarEquipeSequencia" class="btn btn-default btn-sm" type="button">Adicionar equipe</button>
+                                    <button id="btnRemoverEquipeSequencia" class="btn btn-default btn-sm" type="button">Remover última equipe</button>
                                 </div>
                             </div>
-                            <div class="small-help">Escolha o turno, informe de qual dia a alternancia comeca e defina as duas equipes da sequencia 12x36.</div>
+                            <div class="toolbar-actions toolbar-actions-bottom">
+                                <button id="btnGerar12x36" class="btn btn-info btn-sm" type="button">Gerar 12x36</button>
+                                <button id="btnDesfazerLocal" class="btn btn-default btn-sm" type="button">Desfazer</button>
+                            </div>
+                            <div class="small-help">Defina turno, dia inicial e a sequência de equipes para a alternância.</div>
                         </div>
                     </section>
 
@@ -211,11 +223,11 @@ $anoAtual = (int) date('Y');
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="equipeDescricao">Descricao</label>
+                    <label for="equipeDescricao">Descrição</label>
                     <textarea id="equipeDescricao" class="form-control" rows="2" maxlength="255"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Tecnicos fixos da equipe</label>
+                    <label>Técnicos fixos da equipe</label>
                     <div id="checkTecnicosEquipe" class="well" style="max-height: 260px; overflow: auto; margin-bottom: 0;"></div>
                 </div>
             </div>
@@ -232,7 +244,7 @@ $anoAtual = (int) date('Y');
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="tituloModalDia">Edicao do dia</h4>
+                <h4 class="modal-title" id="tituloModalDia">Edição do dia</h4>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="modalDiaNumero">
@@ -245,8 +257,8 @@ $anoAtual = (int) date('Y');
                     <div class="col-md-3">
                         <label for="modalDiaTurno">Turno</label>
                         <select id="modalDiaTurno" class="form-control">
-                            <option value="DIA">Plantao do dia 07:00-19:00</option>
-                            <option value="NOITE">Plantao da noite 19:00-07:00</option>
+                            <option value="DIA">Plantão do dia 07:00-19:00</option>
+                            <option value="NOITE">Plantão da noite 19:00-07:00</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -254,14 +266,14 @@ $anoAtual = (int) date('Y');
                         <select id="modalDiaEquipe" class="form-control"></select>
                     </div>
                     <div class="col-md-3">
-                        <label for="modalDiaObs">Observacao</label>
+                        <label for="modalDiaObs">Observação</label>
                         <input id="modalDiaObs" class="form-control" maxlength="255" placeholder="Opcional">
                     </div>
                 </div>
 
                 <div class="row" style="margin-top: 10px;">
                     <div class="col-md-12">
-                        <button type="button" class="btn btn-primary btn-sm" id="btnAplicarDiaLocal">Aplicar alteracao local</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="btnAplicarDiaLocal">Aplicar alteração local</button>
                         <button type="button" class="btn btn-default btn-sm" id="btnLimparDiaLocal">Remover equipe do dia</button>
                         <button type="button" class="btn btn-info btn-sm" id="btnSalvarDiaAgora">Salvar dia agora no banco</button>
                     </div>
@@ -274,7 +286,7 @@ $anoAtual = (int) date('Y');
                         <p><strong>Membros fixos:</strong></p>
                         <ul id="listaMembrosFixos" class="list-plain"></ul>
 
-                        <p style="margin-top: 10px;"><strong>Membros finais do plantao:</strong></p>
+                        <p style="margin-top: 10px;"><strong>Membros finais do plantão:</strong></p>
                         <ul id="listaMembrosPlantao" class="list-plain"></ul>
                     </div>
                     <div class="col-md-6">
@@ -288,42 +300,42 @@ $anoAtual = (int) date('Y');
 
                 <hr>
 
-                <p><strong>Ajuste dinamico de membro no turno</strong></p>
+                <p><strong>Ajuste dinâmico de membro no turno</strong></p>
                 <div class="row">
                     <div class="col-md-5">
-                        <label for="ajusteTecnico">Tecnico</label>
+                        <label for="ajusteTecnico">Técnico</label>
                         <select id="ajusteTecnico" class="form-control"></select>
                     </div>
                     <div class="col-md-3">
-                        <label for="ajusteTipo">Acao</label>
+                        <label for="ajusteTipo">Ação</label>
                         <select id="ajusteTipo" class="form-control">
                             <option value="ADICIONAR">Adicionar</option>
                             <option value="REMOVER">Remover</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="ajusteObservacao">Observacao</label>
+                        <label for="ajusteObservacao">Observação</label>
                         <input id="ajusteObservacao" class="form-control" maxlength="255" placeholder="Opcional">
                     </div>
                 </div>
                 <div class="row" style="margin-top: 8px;">
                     <div class="col-md-12">
                         <button class="btn btn-primary btn-sm" type="button" id="btnSalvarAjusteDia">Salvar ajuste</button>
-                        <button class="btn btn-default btn-sm" type="button" id="btnRemoverAjusteDia">Remover ajuste do tecnico</button>
+                        <button class="btn btn-default btn-sm" type="button" id="btnRemoverAjusteDia">Remover ajuste do técnico</button>
                     </div>
                 </div>
 
                 <hr>
 
-                <p><strong>Historico de alteracoes</strong></p>
+                <p><strong>Histórico de alterações</strong></p>
                 <div class="log-table">
                     <table class="table table-bordered table-condensed">
                         <thead>
                             <tr>
                                 <th>Data/Hora</th>
-                                <th>Acao</th>
-                                <th>Usuario</th>
-                                <th>Descricao</th>
+                                <th>Ação</th>
+                                <th>Usuário</th>
+                                <th>Descrição</th>
                             </tr>
                         </thead>
                         <tbody id="tabelaLogsDia"></tbody>

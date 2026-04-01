@@ -145,7 +145,7 @@ echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON; let 
             let impressao = '';
 
             if (conteudo.length == 0) {
-                impressao = '<br><p>Nenhum conteúdo disponível para ser visualizado foi encontrado no momemento.</p>';
+                impressao = '<br><p>Nenhum conteúdo disponível para visualização foi encontrado no momento.</p>';
             } else {
                 impressao = conteudo.map(function(item) {
                     return `<div class="col-md-8">
@@ -174,7 +174,7 @@ echo "<script>let recentes = $recentesJSON; let historico = $historicoJSON; let 
             let impressao = '';
 
             if (conteudo.length == 0) {
-                impressao = '<br><p>Nenhum conteúdo disponível para ser visualizado foi encontrado no momemento.</p>';
+                impressao = '<br><p>Nenhum conteúdo disponível para visualização foi encontrado no momento.</p>';
             } else {
 
                 impressao = conteudo.map(function(item) {

@@ -1,7 +1,8 @@
 (() => {
   const TEAM_COLORS = ['#f57c00', '#6a1b9a', '#2e7d32', '#1e3a8a'];
   const TURNOS = ['DIA', 'NOITE'];
-  const MONTH_NAMES = ['', 'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const MONTH_NAMES = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const DRAFT_VERSION = 1;
 
   const state = {
     ano: (window.plantaoConfig && window.plantaoConfig.anoAtual) || new Date().getFullYear(),
@@ -39,14 +40,15 @@
     els.btnClearSelection = document.getElementById('btnLimparSelecao');
     els.btnGenerate1236 = document.getElementById('btnGerar12x36');
     els.btnUndoLocal = document.getElementById('btnDesfazerLocal');
-    els.btnOpenDay = document.getElementById('btnAbrirDiaSelecionado');
-
     els.batchTurno = document.getElementById('loteTurno');
     els.batchTeam = document.getElementById('loteEquipe');
     els.scaleTurno = document.getElementById('escala12x36Turno');
     els.scaleStartDay = document.getElementById('escala12x36DiaInicial');
     els.scaleTeamA = document.getElementById('escala12x36EquipeA');
     els.scaleTeamB = document.getElementById('escala12x36EquipeB');
+    els.scaleSequenceContainer = document.getElementById('escalaSequenciaContainer');
+    els.btnAddSequenceTeam = document.getElementById('btnAdicionarEquipeSequencia');
+    els.btnRemoveSequenceTeam = document.getElementById('btnRemoverEquipeSequencia');
 
     els.teamTable = document.getElementById('listaEquipesContainer');
 
@@ -87,17 +89,19 @@
   function bindEvents() {
     const handlePeriodoChange = () => {
       if (state.dirty) {
-        const confirmar = window.confirm('Existem alteracoes locais nao salvas. Deseja descartar e carregar outro periodo?');
+        const confirmar = window.confirm('Existem alterações locais não salvas. Deseja descartar e carregar outro período?');
         if (!confirmar) {
           els.selMes.value = String(state.mes);
           els.selAno.value = String(state.ano);
           return;
         }
+
+        clearDraft(state.ano, state.mes);
       }
 
       state.mes = Number(els.selMes.value || state.mes);
       state.ano = Number(els.selAno.value || state.ano);
-      loadMonthData();
+      loadMonthData({ preserveSelection: false });
     };
 
     els.selMes.addEventListener('change', handlePeriodoChange);
@@ -105,35 +109,29 @@
 
     els.btnLoad.addEventListener('click', () => {
       if (state.dirty) {
-        const confirmar = window.confirm('Deseja descartar a edicao atual e recarregar a escala salva no banco de dados?');
+        const confirmar = window.confirm('Deseja descartar a edição atual e recarregar a escala salva no banco de dados?');
         if (!confirmar) {
           return;
         }
       }
 
-      loadMonthData();
+      clearDraft();
+      loadMonthData({ ignoreDraft: true });
     });
 
     els.btnEditScale.addEventListener('click', unlockScaleForEditing);
     els.btnDeleteScale.addEventListener('click', clearScale);
     els.btnSaveScale.addEventListener('click', saveScale);
     els.btnPreviewPrint.addEventListener('click', () => openPrint(false));
-    els.btnDirectPrint.addEventListener('click', () => openPrint(true));
+    els.btnDirectPrint.addEventListener('click', openSpreadsheet);
 
     els.btnApplySelected.addEventListener('click', applyTeamToSelectedDays);
     els.btnClearSelected.addEventListener('click', clearTeamFromSelectedDays);
     els.btnClearSelection.addEventListener('click', clearSelection);
     els.btnGenerate1236.addEventListener('click', generate12x36);
     els.btnUndoLocal.addEventListener('click', undoLocalChanges);
-    els.btnOpenDay.addEventListener('click', () => {
-      if (state.selectedDays.size !== 1) {
-        showMessage('Selecione exatamente um dia para abrir a edicao.', 'warning');
-        return;
-      }
-
-      openDayModal(Array.from(state.selectedDays)[0], selectedTurno());
-    });
-
+    els.btnAddSequenceTeam.addEventListener('click', () => addSequenceTeamField());
+    els.btnRemoveSequenceTeam.addEventListener('click', removeLastSequenceTeamField);
     document.getElementById('btnNovaEquipe').addEventListener('click', () => openTeamModal());
     document.getElementById('btnSalvarEquipeModal').addEventListener('click', saveTeamModal);
 
@@ -166,7 +164,7 @@
       }
       const turno = normalizeTurno(els.dayTurno.value || 'DIA');
       if (isInactiveAssignedShift(state.currentDayModal, turno)) {
-        showMessage('Este turno esta bloqueado porque a equipe vinculada esta inativa. Substitua por uma equipe ativa via lote para voltar a usar.', 'warning');
+        showMessage('Este turno está bloqueado porque a equipe vinculada está inativa. Substitua por uma equipe ativa via lote para voltar a usar.', 'warning');
       }
       state.currentTurnoModal = turno;
       loadDayDetails(state.currentDayModal, turno);
@@ -208,11 +206,11 @@
     const json = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(json.erro || json.mensagem || 'Erro ao processar requisicao.');
+      throw new Error(json.erro || json.mensagem || 'Erro ao processar requisição.');
     }
 
     if (json.status && json.status !== 'ok') {
-      throw new Error(json.mensagem || 'Erro ao processar requisicao.');
+      throw new Error(json.mensagem || 'Erro ao processar requisição.');
     }
 
     return json.dados;
@@ -282,7 +280,7 @@
       faixa_horario: normalizeTurno(turno) === 'DIA' ? '07:00 às 19:00' : '19:00 às 07:00',
       id_escala_dia: null,
       id_equipe_plantao: 0,
-      equipe_nome: 'Nao definida',
+      equipe_nome: 'Não definida',
       equipe_ativa: null,
       observacao: '',
       quantidade_membros: 0,
@@ -329,7 +327,258 @@
   }
 
   function selectedTurno() {
-    return normalizeTurno((els.batchTurno && els.batchTurno.value) || 'DIA');
+    const valor = (els.batchTurno && els.batchTurno.value) || '';
+    return valor ? normalizeTurno(valor) : '';
+  }
+
+  function clearSelectSelection(element) {
+    if (!element) {
+      return;
+    }
+
+    element.selectedIndex = -1;
+    element.value = '';
+    if (element.options && element.options.length) {
+      Array.from(element.options).forEach((option) => {
+        option.selected = false;
+      });
+    }
+  }
+
+  function sequenceTeamSelects() {
+    return Array.from(els.scaleSequenceContainer.querySelectorAll('.sequence-team-select'));
+  }
+
+  function relabelSequenceFields() {
+    sequenceTeamSelects().forEach((select, index) => {
+      const item = select.closest('.toolbar-sequence-item');
+      const label = item ? item.querySelector('.sequence-label') : null;
+      if (label) {
+        label.textContent = `Equipe ${index + 1}`;
+      }
+    });
+  }
+
+  function buildSequenceTeamRow(value = 0) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'toolbar-sequence-item';
+
+    const label = document.createElement('label');
+    label.className = 'toolbar-field-label sequence-label';
+    label.textContent = 'Equipe';
+
+    const control = document.createElement('div');
+    control.className = 'toolbar-sequence-control';
+
+    const select = document.createElement('select');
+    select.className = 'form-control input-sm toolbar-select sequence-team-select';
+    select.innerHTML = buildTeamOptionHtml(value, true);
+    control.appendChild(select);
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(control);
+
+    return wrapper;
+  }
+
+  function addSequenceTeamField(value = 0) {
+    const row = buildSequenceTeamRow(value);
+    els.scaleSequenceContainer.appendChild(row);
+    relabelSequenceFields();
+    return row;
+  }
+
+  function removeLastSequenceTeamField() {
+    const items = els.scaleSequenceContainer.querySelectorAll('.toolbar-sequence-item');
+    if (items.length <= 2) {
+      showMessage('A sequência precisa manter pelo menos duas equipes.', 'warning');
+      return;
+    }
+
+    items[items.length - 1].remove();
+    relabelSequenceFields();
+  }
+
+  function getSequenceTeamIds() {
+    const ids = [];
+    const used = new Set();
+    const selects = sequenceTeamSelects();
+
+    for (let index = 0; index < selects.length; index += 1) {
+      const idEquipe = Number(selects[index].value || 0);
+      if (idEquipe <= 0) {
+        showMessage(`Selecione a equipe ${index + 1} da sequência.`, 'warning');
+        return null;
+      }
+
+      if (used.has(idEquipe)) {
+        showMessage('A sequência dinâmica não pode repetir a mesma equipe.', 'warning');
+        return null;
+      }
+
+      used.add(idEquipe);
+      ids.push(idEquipe);
+    }
+
+    if (ids.length < 2) {
+      showMessage('Adicione pelo menos duas equipes para gerar a alternância.', 'warning');
+      return null;
+    }
+
+    return ids;
+  }
+
+  function draftStorageKey(ano = state.ano, mes = state.mes) {
+    return `plantao-draft:${String(ano)}-${String(mes).padStart(2, '0')}`;
+  }
+
+  function canUseDraftStorage() {
+    try {
+      return typeof window.localStorage !== 'undefined';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function exportDraftDayMap() {
+    const days = {};
+
+    Object.keys(state.dayMap).forEach((dayKey) => {
+      const day = Number(dayKey);
+      if (day < 1 || day > totalDaysInMonth()) {
+        return;
+      }
+
+      days[day] = { turnos: {} };
+      TURNOS.forEach((turno) => {
+        const info = shiftInfo(day, turno);
+        days[day].turnos[turno] = {
+          id_equipe_plantao: Number(info.id_equipe_plantao || 0),
+          equipe_nome: String(info.equipe_nome || 'Não definida'),
+          equipe_ativa: info.equipe_ativa === null || typeof info.equipe_ativa === 'undefined'
+            ? null
+            : Number(info.equipe_ativa),
+          observacao: String(info.observacao || ''),
+          quantidade_membros: Number(info.quantidade_membros || 0)
+        };
+      });
+    });
+
+    return days;
+  }
+
+  function clearDraft(ano = state.ano, mes = state.mes) {
+    if (!canUseDraftStorage()) {
+      return;
+    }
+
+    try {
+      window.localStorage.removeItem(draftStorageKey(ano, mes));
+    } catch (error) {
+      // Ignora falha de storage local.
+    }
+  }
+
+  function persistDraft() {
+    if (!canUseDraftStorage()) {
+      return;
+    }
+
+    const hasDraftContent = !!state.dirty || state.selectedDays.size > 0;
+    if (!hasDraftContent) {
+      clearDraft();
+      return;
+    }
+
+    const draft = {
+      version: DRAFT_VERSION,
+      ano: state.ano,
+      mes: state.mes,
+      dirty: !!state.dirty,
+      selectedDays: Array.from(state.selectedDays)
+        .map((day) => Number(day))
+        .filter((day) => day >= 1 && day <= totalDaysInMonth()),
+      days: exportDraftDayMap()
+    };
+
+    try {
+      window.localStorage.setItem(draftStorageKey(), JSON.stringify(draft));
+    } catch (error) {
+      // Ignora falha de storage local.
+    }
+  }
+
+  function readDraft(ano = state.ano, mes = state.mes) {
+    if (!canUseDraftStorage()) {
+      return null;
+    }
+
+    try {
+      const rawDraft = window.localStorage.getItem(draftStorageKey(ano, mes));
+      if (!rawDraft) {
+        return null;
+      }
+
+      const draft = JSON.parse(rawDraft);
+      if (!draft || Number(draft.version || 0) !== DRAFT_VERSION) {
+        clearDraft(ano, mes);
+        return null;
+      }
+
+      if (Number(draft.ano || 0) !== Number(ano) || Number(draft.mes || 0) !== Number(mes)) {
+        return null;
+      }
+
+      return draft;
+    } catch (error) {
+      clearDraft(ano, mes);
+      return null;
+    }
+  }
+
+  function applyDraft(draft) {
+    if (!draft || !draft.days || typeof draft.days !== 'object') {
+      return false;
+    }
+
+    Object.keys(draft.days).forEach((dayKey) => {
+      const day = Number(dayKey);
+      if (day < 1 || day > totalDaysInMonth() || !state.dayMap[day]) {
+        return;
+      }
+
+      const draftDay = draft.days[dayKey] || {};
+      const draftTurnos = draftDay.turnos || {};
+
+      TURNOS.forEach((turno) => {
+        const draftInfo = draftTurnos[turno];
+        if (!draftInfo || typeof draftInfo !== 'object') {
+          return;
+        }
+
+        state.dayMap[day].turnos[turno] = {
+          ...state.dayMap[day].turnos[turno],
+          id_equipe_plantao: Number(draftInfo.id_equipe_plantao || 0),
+          equipe_nome: draftInfo.equipe_nome ? String(draftInfo.equipe_nome) : 'Não definida',
+          equipe_ativa: draftInfo.equipe_ativa === null || typeof draftInfo.equipe_ativa === 'undefined'
+            ? null
+            : Number(draftInfo.equipe_ativa),
+          observacao: String(draftInfo.observacao || ''),
+          quantidade_membros: Number(draftInfo.quantidade_membros || 0)
+        };
+      });
+    });
+
+    state.selectedDays = new Set(
+      Array.isArray(draft.selectedDays)
+        ? draft.selectedDays
+          .map((day) => Number(day))
+          .filter((day) => day >= 1 && day <= totalDaysInMonth())
+        : []
+    );
+    state.dirty = !!draft.dirty;
+
+    return true;
   }
 
   function seededRandomFactory(seed) {
@@ -453,7 +702,7 @@
           faixa_horario: current.faixa_horario || emptyShift(turno).faixa_horario,
           id_escala_dia: current.id_escala_dia || null,
           id_equipe_plantao: Number(current.id_equipe_plantao || 0),
-          equipe_nome: current.equipe_nome || 'Nao definida',
+          equipe_nome: current.equipe_nome || 'Não definida',
           equipe_ativa: current.equipe_ativa === null || typeof current.equipe_ativa === 'undefined'
             ? null
             : Number(current.equipe_ativa),
@@ -465,11 +714,11 @@
     });
 
     state.dayMap = map;
-    state.selectedDays = new Set();
   }
 
   function markDirty(isDirty) {
     state.dirty = !!isDirty;
+    persistDraft();
   }
 
   function setDisabled(element, disabled) {
@@ -495,8 +744,9 @@
 
   function updateScaleLockUi() {
     const locked = !!state.locked;
-    [els.batchTurno, els.batchTeam, els.scaleTurno, els.scaleStartDay, els.scaleTeamA, els.scaleTeamB].forEach((field) => setDisabled(field, locked));
-    [els.btnSaveScale, els.btnApplySelected, els.btnClearSelected, els.btnClearSelection, els.btnGenerate1236, els.btnUndoLocal, els.btnOpenDay].forEach((button) => setDisabled(button, locked));
+    [els.batchTurno, els.batchTeam, els.scaleTurno, els.scaleStartDay, els.scaleTeamA, els.scaleTeamB, els.btnAddSequenceTeam, els.btnRemoveSequenceTeam].forEach((field) => setDisabled(field, locked));
+    [els.btnSaveScale, els.btnApplySelected, els.btnClearSelected, els.btnClearSelection, els.btnGenerate1236, els.btnUndoLocal].forEach((button) => setDisabled(button, locked));
+    els.scaleSequenceContainer.querySelectorAll('.sequence-team-select').forEach((field) => setDisabled(field, locked));
 
     setDisabled(els.btnEditScale, !state.hasSavedScale || !locked);
     setDisabled(els.btnDeleteScale, !state.hasSavedScale || locked);
@@ -507,7 +757,7 @@
     updateDayModalLockUi();
   }
 
-  function ensureScaleEditable(message = 'A escala deste mes esta bloqueada. Clique em Editar escala para liberar alteracoes.') {
+  function ensureScaleEditable(message = 'A escala deste mês está bloqueada. Clique em Editar escala para liberar alterações.') {
     if (!state.locked) {
       return true;
     }
@@ -543,6 +793,12 @@
     els.scaleTeamA.innerHTML = buildTeamOptionHtml(0, true);
     els.scaleTeamB.innerHTML = buildTeamOptionHtml(0, true);
     els.dayTeam.innerHTML = buildTeamOptionHtml(0, true);
+    els.scaleSequenceContainer.querySelectorAll('.sequence-team-select').forEach((select) => {
+      const currentValue = Number(select.value || 0);
+      select.innerHTML = buildTeamOptionHtml(currentValue, true);
+      select.value = String(currentValue || 0);
+    });
+    relabelSequenceFields();
 
     els.scaleStartDay.innerHTML = '';
     for (let day = 1; day <= totalDaysInMonth(); day += 1) {
@@ -552,7 +808,7 @@
       els.scaleStartDay.appendChild(option);
     }
 
-    els.adjustTech.innerHTML = '<option value="0">Selecione um tecnico</option>';
+    els.adjustTech.innerHTML = '<option value="0">Selecione um técnico</option>';
     state.tecnicos.forEach((tech) => {
       const option = document.createElement('option');
       option.value = String(tech.id_funcionario);
@@ -594,7 +850,7 @@
             <div class="team-name-row">
               <span class="team-color-chip" style="background:${color}"></span>
               <span class="team-name">${safeText(team.nome)}</span>
-              <span class="team-days-meta">${uso} plantao(s)</span>
+              <span class="team-days-meta">${uso} plantão(ões)</span>
             </div>
           </td>
           <td class="muted-cell">${Number(team.quantidade_membros || 0)} membro(s)</td>
@@ -617,7 +873,7 @@
               <th>Equipe</th>
               <th>Membros</th>
               <th>Status</th>
-              <th>Acoes</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -636,7 +892,7 @@
     }
 
     if (typeof FullCalendar === 'undefined') {
-      showMessage('FullCalendar nao foi carregado. Verifique a conexao de rede ou os assets.', 'danger');
+      showMessage('FullCalendar não foi carregado. Verifique a conexão de rede ou os assets.', 'danger');
       return;
     }
 
@@ -645,44 +901,74 @@
       locale: 'pt-br',
       height: 'auto',
       fixedWeekCount: false,
-      selectable: true,
+      selectable: false,
       dayMaxEvents: 3,
+      eventContent: (info) => {
+        const eventKind = String(info.event.extendedProps.kind || '');
+        if (eventKind !== 'team') {
+          return undefined;
+        }
+
+        const turno = safeText(turnoShortLabel(info.event.extendedProps.turno || 'DIA'));
+        const equipeNome = safeText(info.event.extendedProps.equipe_nome || info.event.title || 'Equipe');
+
+        return {
+          html: `
+            <div class="event-team-content">
+              <span class="event-team-turno">${turno}</span>
+              <span class="event-team-name">${equipeNome}</span>
+            </div>
+          `
+        };
+      },
       headerToolbar: {
         left: '',
         center: 'title',
         right: ''
       },
-      select: (info) => {
-        if (state.locked) {
-          state.calendar.unselect();
-          showMessage('A escala esta bloqueada. Clique em Editar escala para liberar alteracoes.', 'warning');
-          return;
-        }
-
-        addSelectionRange(info.startStr, info.endStr);
-        state.calendar.unselect();
-      },
       dateClick: (info) => {
         if (info.date.getFullYear() !== state.ano || (info.date.getMonth() + 1) !== state.mes) {
           return;
         }
+
+        if (info.jsEvent && info.jsEvent.target && info.jsEvent.target.closest('.fc-event')) {
+          return;
+        }
+
         const day = dayFromIso(info.dateStr);
         if (state.locked) {
-          openDayModal(day, selectedTurno());
           return;
         }
         toggleDaySelection(day);
       },
       eventClick: (info) => {
+        const eventKind = String(info.event.extendedProps.kind || '');
+        if (eventKind === 'selection') {
+          if (state.locked) {
+            return;
+          }
+
+          const day = Number(info.event.extendedProps.day || 0);
+          if (day > 0) {
+            toggleDaySelection(day);
+          }
+          return;
+        }
+
+        if (eventKind !== 'team') {
+          return;
+        }
+
         const day = Number(info.event.extendedProps.day || 0);
         const turno = normalizeTurno(info.event.extendedProps.turno || 'DIA');
+        const infoTurno = shiftInfo(day, turno);
 
-        if (day <= 0) {
+        if (day <= 0 || Number(infoTurno.id_equipe_plantao || 0) <= 0) {
           return;
         }
 
         if (isInactiveAssignedShift(day, turno)) {
-          showMessage('Este turno esta bloqueado porque a equipe vinculada esta inativa. Substitua por uma equipe ativa para voltar a usar.', 'warning');
+          showMessage('Este turno está bloqueado porque a equipe vinculada está inativa. Substitua por uma equipe ativa para voltar a usar.', 'warning');
           return;
         }
 
@@ -724,7 +1010,8 @@
           extendedProps: {
             kind: 'team',
             day,
-            turno
+            turno,
+            equipe_nome: info.equipe_nome || 'Equipe'
           }
         });
       });
@@ -809,6 +1096,7 @@
       state.selectedDays.add(day);
     }
 
+    persistDraft();
     renderCalendar();
   }
 
@@ -836,7 +1124,25 @@
     }
 
     state.selectedDays = new Set();
+    persistDraft();
     renderCalendar();
+  }
+
+  function selectedDaysAlreadyUseTeam(turno, idEquipe) {
+    return Array.from(state.selectedDays).every((day) => Number(shiftInfo(day, turno).id_equipe_plantao || 0) === Number(idEquipe));
+  }
+
+  function generatedScaleMatchesCurrent(turno, startDay, sequenceIds) {
+    for (let day = startDay; day <= totalDaysInMonth(); day += 1) {
+      const expectedTeamId = sequenceIds[(day - startDay) % sequenceIds.length];
+      const currentTeamId = Number(shiftInfo(day, turno).id_equipe_plantao || 0);
+
+      if (currentTeamId !== Number(expectedTeamId)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   function applyTeamToSelectedDays() {
@@ -845,14 +1151,24 @@
     }
 
     if (!state.selectedDays.size) {
-      showMessage('Selecione ao menos um dia no calendario.', 'warning');
+      showMessage('Selecione ao menos um dia no calendário.', 'warning');
       return;
     }
 
     const turno = selectedTurno();
+    if (!turno) {
+      showMessage('Selecione o turno antes de aplicar a equipe.', 'warning');
+      return;
+    }
+
     const idEquipe = Number(els.batchTeam.value || 0);
     if (idEquipe <= 0) {
       showMessage('Escolha uma equipe para aplicar.', 'warning');
+      return;
+    }
+
+    if (selectedDaysAlreadyUseTeam(turno, idEquipe)) {
+      showMessage('Não é possível aplicar a mesma equipe no mesmo turno porque os dias selecionados já estão com essa configuração.', 'danger');
       return;
     }
 
@@ -862,12 +1178,16 @@
         ...state.dayMap[day].turnos[turno],
         id_equipe_plantao: idEquipe,
         equipe_ativa: 1,
-        equipe_nome: team ? team.nome : 'Nao definida',
+        equipe_nome: team ? team.nome : 'Não definida',
         quantidade_membros: team ? Number(team.quantidade_membros || 0) : 0
       };
     });
 
     markDirty(true);
+    state.selectedDays = new Set();
+    persistDraft();
+    clearSelectSelection(els.batchTurno);
+    clearSelectSelection(els.batchTeam);
     renderCalendar();
     renderTeamsTable();
   }
@@ -888,7 +1208,7 @@
         ...state.dayMap[day].turnos[turno],
         id_equipe_plantao: 0,
         equipe_ativa: null,
-        equipe_nome: 'Nao definida',
+        equipe_nome: 'Não definida',
         observacao: '',
         quantidade_membros: 0,
         membros_plantao: []
@@ -906,42 +1226,34 @@
     }
 
     const turno = normalizeTurno(els.scaleTurno.value || 'DIA');
-    const idEquipeA = Number(els.scaleTeamA.value || 0);
-    const idEquipeB = Number(els.scaleTeamB.value || 0);
     const startDay = Number(els.scaleStartDay.value || 1);
-
-    if (idEquipeA <= 0 || idEquipeB <= 0) {
-      showMessage('Selecione as duas equipes para gerar o 12x36.', 'warning');
+    const sequenceIds = getSequenceTeamIds();
+    if (!sequenceIds) {
       return;
     }
 
-    if (idEquipeA === idEquipeB) {
-      showMessage('No 12x36 as equipes devem ser diferentes.', 'warning');
+    if (generatedScaleMatchesCurrent(turno, startDay, sequenceIds)) {
+      showMessage('Não é possível gerar a escala porque esse turno já está com a mesma sequência de equipes.', 'danger');
       return;
     }
 
-    const teamA = teamById(idEquipeA);
-    const teamB = teamById(idEquipeB);
-
-    for (let day = 1; day <= totalDaysInMonth(); day += 1) {
-      const useA = Math.abs(day - startDay) % 2 === 0;
-      const team = useA ? teamA : teamB;
-      const teamId = useA ? idEquipeA : idEquipeB;
+    for (let day = startDay; day <= totalDaysInMonth(); day += 1) {
+      const teamId = sequenceIds[(day - startDay) % sequenceIds.length];
+      const team = teamById(teamId);
 
       state.dayMap[day].turnos[turno] = {
         ...state.dayMap[day].turnos[turno],
         id_equipe_plantao: teamId,
         equipe_ativa: 1,
-        equipe_nome: team ? team.nome : 'Nao definida',
+        equipe_nome: team ? team.nome : 'Não definida',
         quantidade_membros: team ? Number(team.quantidade_membros || 0) : 0
       };
     }
 
-    state.selectedDays = new Set();
     markDirty(true);
     renderCalendar();
     renderTeamsTable();
-    showMessage(`Escala 12x36 aplicada ao turno ${turnoShortLabel(turno).toLowerCase()}. Clique em Salvar escala para persistir.`, 'success');
+    showMessage(`Escala dinâmica aplicada ao turno ${turnoShortLabel(turno).toLowerCase()} a partir do dia ${startDay}. Clique em Salvar escala para persistir.`, 'success');
   }
 
   function undoLocalChanges() {
@@ -950,11 +1262,10 @@
     }
 
     restoreSnapshot();
-    state.selectedDays = new Set();
     markDirty(false);
     renderCalendar();
     renderTeamsTable();
-    showMessage('Alteracoes locais desfeitas.', 'info');
+    showMessage('Alterações locais desfeitas.', 'info');
   }
 
   function buildPayloadDays() {
@@ -986,10 +1297,11 @@
         dias: buildPayloadDays()
       });
 
+      clearDraft();
       showMessage('Escala salva e bloqueada com sucesso.', 'success');
-      await loadMonthData();
+      await loadMonthData({ ignoreDraft: true });
     } catch (error) {
-      showMessage(error.message || 'Erro ao salvar escala.', 'danger');
+      showMessage(error.message || 'Erro ao salvar a escala.', 'danger');
     }
   }
 
@@ -998,7 +1310,7 @@
       return;
     }
 
-    const confirmacao = window.confirm('Liberar esta escala para edicao? Apos liberar, novas alteracoes poderao ser feitas ate o proximo salvamento.');
+    const confirmacao = window.confirm('Liberar esta escala para edição? Após liberar, novas alterações poderão ser feitas até o próximo salvamento.');
     if (!confirmacao) {
       return;
     }
@@ -1010,24 +1322,24 @@
         bloqueada: 0
       });
 
-      showMessage('Edicao da escala liberada.', 'success');
+      showMessage('Edição da escala liberada.', 'success');
       await loadMonthData();
     } catch (error) {
-      showMessage(error.message || 'Erro ao liberar edicao da escala.', 'danger');
+      showMessage(error.message || 'Erro ao liberar a edição da escala.', 'danger');
     }
   }
 
   async function clearScale() {
     if (!state.hasSavedScale) {
-      showMessage('Nao existe escala salva para apagar neste mes.', 'warning');
+      showMessage('Não existe escala salva para apagar neste mês.', 'warning');
       return;
     }
 
-    if (!ensureScaleEditable('A escala deste mes esta bloqueada. Clique em Editar escala antes de apagar.')) {
+    if (!ensureScaleEditable('A escala deste mês está bloqueada. Clique em Editar escala antes de apagar.')) {
       return;
     }
 
-    const confirmacao = window.confirm('Apagar toda a escala deste mes? Esta acao remove os turnos configurados da escala.');
+    const confirmacao = window.confirm('Apagar toda a escala deste mês? Esta ação remove os turnos configurados da escala.');
     if (!confirmacao) {
       return;
     }
@@ -1038,14 +1350,22 @@
         mes: state.mes
       });
 
+      clearDraft();
       showMessage('Escala apagada com sucesso.', 'success');
-      await loadMonthData();
+      await loadMonthData({ ignoreDraft: true });
     } catch (error) {
-      showMessage(error.message || 'Erro ao apagar escala.', 'danger');
+      showMessage(error.message || 'Erro ao apagar a escala.', 'danger');
     }
   }
 
   function openPrint(autoPrint) {
+    if (state.dirty) {
+      const confirmar = window.confirm('Existem alterações locais não salvas. A visualização usa apenas a escala já gravada no banco. Deseja continuar?');
+      if (!confirmar) {
+        return;
+      }
+    }
+
     const params = new URLSearchParams({
       ano: String(state.ano),
       mes: String(state.mes),
@@ -1057,6 +1377,22 @@
     }
 
     window.open(`./equipe_plantao_impressao.php?${params.toString()}`, '_blank');
+  }
+
+  function openSpreadsheet() {
+    if (state.dirty) {
+      const confirmar = window.confirm('Existem alterações locais não salvas. A planilha será gerada com base apenas na escala já gravada no banco. Deseja continuar?');
+      if (!confirmar) {
+        return;
+      }
+    }
+
+    const params = new URLSearchParams({
+      ano: String(state.ano),
+      mes: String(state.mes)
+    });
+
+    window.open(`./equipe_plantao_planilha.php?${params.toString()}`, '_blank');
   }
 
   function openTeamModal(idEquipe = null) {
@@ -1082,13 +1418,13 @@
         els.modalTeam.modal('show');
       })
       .catch((error) => {
-        showMessage(error.message || 'Erro ao carregar equipe.', 'danger');
+      showMessage(error.message || 'Erro ao carregar a equipe.', 'danger');
       });
   }
 
   function renderTechChecklist(selectedIds) {
     if (!state.tecnicos.length) {
-      els.teamChecklist.innerHTML = '<p>Nenhum tecnico disponivel.</p>';
+      els.teamChecklist.innerHTML = '<p>Nenhum técnico disponível.</p>';
       return;
     }
 
@@ -1142,7 +1478,7 @@
       showMessage('Status da equipe atualizado.', 'success');
       await loadMonthData();
     } catch (error) {
-      showMessage(error.message || 'Erro ao alterar status da equipe.', 'danger');
+      showMessage(error.message || 'Erro ao alterar o status da equipe.', 'danger');
     }
   }
 
@@ -1197,12 +1533,12 @@
     }
 
     if (TURNOS.every((item) => isInactiveAssignedShift(day, item))) {
-      showMessage('Os dois turnos deste dia estao vinculados a equipes inativas. Substitua via lote para voltar a usar.', 'warning');
+      showMessage('Os dois turnos deste dia estão vinculados a equipes inativas. Substitua via lote para voltar a usar.', 'warning');
       return;
     }
 
     state.currentDayModal = day;
-    els.dayModalTitle.textContent = `Edicao do dia ${formatDateLabel(day)}`;
+    els.dayModalTitle.textContent = `Edição do dia ${formatDateLabel(day)}`;
     els.dayNumber.value = String(day);
     els.dayDate.value = formatDateLabel(day);
 
@@ -1245,7 +1581,7 @@
       if (Number(details.id_equipe_plantao || 0) <= 0) {
         els.dayPersistStatus.textContent = state.locked
           ? `${details.turno_label || turnoLabel(normalizedTurno)} sem equipe persistida. Escala em leitura.`
-          : `${details.turno_label || turnoLabel(normalizedTurno)} ainda nao persistido no banco.`;
+          : `${details.turno_label || turnoLabel(normalizedTurno)} ainda não persistido no banco.`;
         fillList(els.listFixos, []);
         fillList(els.listPlantao, []);
         fillList(els.listAdd, []);
@@ -1255,7 +1591,7 @@
         return;
       }
 
-      els.dayPersistStatus.textContent = `${details.turno_label || turnoLabel(normalizedTurno)} | ${details.equipe_nome || 'Nao definida'} | ${details.faixa_horario || ''}${state.locked ? ' | Escala em leitura' : ''}`;
+      els.dayPersistStatus.textContent = `${details.turno_label || turnoLabel(normalizedTurno)} | ${details.equipe_nome || 'Não definida'} | ${details.faixa_horario || ''}${state.locked ? ' | Escala em leitura' : ''}`;
       fillList(els.listFixos, details.membros_fixos || []);
       fillList(els.listPlantao, details.membros_plantao || []);
       fillList(els.listAdd, details.adicionados || []);
@@ -1263,8 +1599,8 @@
       renderLogs(details.logs || []);
       updateDayModalLockUi();
     } catch (error) {
-      els.dayPersistStatus.textContent = 'Nao foi possivel carregar os detalhes operacionais deste turno.';
-      showMessage(error.message || 'Erro ao detalhar turno.', 'warning');
+      els.dayPersistStatus.textContent = 'Não foi possível carregar os detalhes operacionais deste turno.';
+      showMessage(error.message || 'Erro ao detalhar o turno.', 'warning');
     }
   }
 
@@ -1286,7 +1622,7 @@
       ...state.dayMap[day].turnos[turno],
       id_equipe_plantao: idEquipe,
       equipe_ativa: idEquipe > 0 ? 1 : null,
-      equipe_nome: team ? team.nome : 'Nao definida',
+      equipe_nome: team ? team.nome : 'Não definida',
       observacao: els.dayObs.value.trim(),
       quantidade_membros: team ? Number(team.quantidade_membros || 0) : 0
     };
@@ -1294,7 +1630,7 @@
     markDirty(true);
     renderCalendar();
     renderTeamsTable();
-    showMessage('Alteracao local aplicada. Salve a escala para persistir.', 'info');
+    showMessage('Alteração local aplicada. Salve a escala para persistir.', 'info');
   }
 
   function clearDayLocal() {
@@ -1339,7 +1675,7 @@
       await loadMonthData();
       openDayModal(day, turno);
     } catch (error) {
-      showMessage(error.message || 'Erro ao salvar turno no banco.', 'danger');
+      showMessage(error.message || 'Erro ao salvar o turno no banco.', 'danger');
     }
   }
 
@@ -1355,7 +1691,7 @@
     const observacao = els.adjustObs.value.trim();
 
     if (day <= 0 || idFuncionario <= 0) {
-      showMessage('Selecione o tecnico para ajustar o plantao.', 'warning');
+      showMessage('Selecione o técnico para ajustar o plantão.', 'warning');
       return;
     }
 
@@ -1374,7 +1710,7 @@
       await loadMonthData();
       openDayModal(day, turno);
     } catch (error) {
-      showMessage(error.message || 'Erro ao salvar ajuste.', 'danger');
+      showMessage(error.message || 'Erro ao salvar o ajuste.', 'danger');
     }
   }
 
@@ -1388,7 +1724,7 @@
     const idFuncionario = Number(els.adjustTech.value || 0);
 
     if (day <= 0 || idFuncionario <= 0) {
-      showMessage('Selecione o tecnico para remover o ajuste.', 'warning');
+      showMessage('Selecione o técnico para remover o ajuste.', 'warning');
       return;
     }
 
@@ -1405,11 +1741,11 @@
       await loadMonthData();
       openDayModal(day, turno);
     } catch (error) {
-      showMessage(error.message || 'Erro ao remover ajuste.', 'danger');
+      showMessage(error.message || 'Erro ao remover o ajuste.', 'danger');
     }
   }
 
-  async function loadMonthData() {
+  async function loadMonthData(options = {}) {
     if (state.loading) {
       return;
     }
@@ -1422,6 +1758,11 @@
         mes: state.mes
       });
 
+      const preserveSelection = options.preserveSelection !== false;
+      const previousSelection = preserveSelection
+        ? new Set(Array.from(state.selectedDays).filter((day) => Number(day) >= 1 && Number(day) <= totalDaysInMonth()))
+        : new Set();
+
       state.equipes = data.equipes || [];
       state.tecnicos = data.tecnicos || [];
       rebuildTeamColorMap();
@@ -1430,7 +1771,11 @@
 
       buildDayMap((data.escala && data.escala.dias) || []);
       snapshotDayMap();
-      markDirty(false);
+      const draftApplied = !options.ignoreDraft && applyDraft(readDraft(state.ano, state.mes));
+      if (!draftApplied) {
+        state.selectedDays = previousSelection;
+        state.dirty = false;
+      }
 
       setupMonthYearSelectors();
       renderTeamSelectors();
@@ -1439,8 +1784,16 @@
       renderCalendar();
       updateScaleLockUi();
       renderSummary();
+
+      if (draftApplied) {
+        if (options.showDraftRestoreMessage) {
+          showMessage('Rascunho local restaurado.', 'info');
+        }
+      } else {
+        markDirty(false);
+      }
     } catch (error) {
-      showMessage(error.message || 'Erro ao carregar painel de plantao.', 'danger');
+      showMessage(error.message || 'Erro ao carregar o painel de plantão.', 'danger');
     } finally {
       state.loading = false;
     }
@@ -1451,7 +1804,7 @@
     bindEvents();
     setupMonthYearSelectors();
     createCalendarIfNeeded();
-    loadMonthData();
+    loadMonthData({ showDraftRestoreMessage: true });
   }
 
   document.addEventListener('DOMContentLoaded', init);

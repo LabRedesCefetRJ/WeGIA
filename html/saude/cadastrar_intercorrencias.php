@@ -238,7 +238,7 @@ $plantaoHojeMembros = is_array($plantaoHoje) ? (array) ($plantaoHoje['membros_pl
           });
         })
         .catch(err => {
-          console.error("Erro ao carregar aplicações:", err);
+          console.error("Erro ao carregar intercorrências:", err);
         });
     }
   </script>
