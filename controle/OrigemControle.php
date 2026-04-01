@@ -4,7 +4,7 @@ if (session_status() == PHP_SESSION_NONE)
 
 include_once ROOT . '/classes/Origem.php';
 include_once ROOT . '/dao/OrigemDAO.php';
-require_once ROOT . '/html/contribuicao/helper/Util.php';
+require_once ROOT . '/classes/Util.php';
 
 class OrigemControle
 {
