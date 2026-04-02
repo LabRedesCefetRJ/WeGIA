@@ -1,4 +1,8 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
 session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../index.php");
@@ -13,7 +17,6 @@ if ($_POST) {
     $extensao_arquivo = explode(".", $arquivo["name"])[1];
     $arquivo_b64 = base64_encode(file_get_contents($arquivo['tmp_name']));
 
-    date_default_timezone_set('America/Sao_Paulo');
     $data = date('Y-m-d H:i:s', time());
     try {
         $pdo = Conexao::connect();

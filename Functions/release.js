@@ -37,7 +37,7 @@ async function fetchRelease(url) {
 function showAlertMessage({
     message,
     type = "warning",      // warning | danger | success | info
-    icon = "⚠️",
+    icon = null,           // nome do ícone Font Awesome (ex: "triangle-exclamation")
     id = "generic-alert"
 }) {
     const container = document.getElementById("message-container");
@@ -46,17 +46,74 @@ function showAlertMessage({
     // Evita duplicar o alerta
     if (document.getElementById(id)) return;
 
+    // Mapa de ícones padrão por tipo de alerta
+    const defaultIcons = {
+        warning: "fa-triangle-exclamation",
+        danger: "fa-circle-exclamation",
+        success: "fa-circle-check",
+        info: "fa-circle-info"
+    };
+
+    // Usa o ícone fornecido ou usa o padrão para o tipo
+    const iconName = icon || defaultIcons[type] || defaultIcons.warning;
+
     const alert = document.createElement("div");
     alert.id = id;
     alert.className = `alert alert-${type} alert-dismissible`;
     alert.setAttribute("role", "alert");
+    alert.style.display = "flex";
+    alert.style.alignItems = "center";
+    alert.style.justifyContent = "space-between";
+    alert.style.flexWrap = "nowrap";
+    alert.style.padding = "0.55rem 1rem";
+    alert.style.lineHeight = "1.1";
 
-    alert.innerHTML = `
-        <button type="button" class="close" data-dismiss="alert" aria-label="Fechar">
-            <span aria-hidden="true">&times;</span>
-        </button>
-        <strong>${icon} ${message}</strong>
-    `;
+    // Cria o elemento ícone com Font Awesome
+    const iconElement = document.createElement("i");
+    iconElement.className = `fa-solid ${iconName}`;
+    if (iconName.includes("spinner")) {
+        iconElement.classList.add("fa-spin");
+    }
+    iconElement.style.setProperty("font-size", "1.25rem", "important");
+    iconElement.style.setProperty("margin-top", "0", "important");
+    iconElement.style.setProperty("margin-right", "0.55rem", "important");
+    iconElement.style.lineHeight = "1";
+
+    // Monta o conteúdo do alerta
+    const contentWrapper = document.createElement("div");
+    contentWrapper.style.display = "flex";
+    contentWrapper.style.alignItems = "center";
+    contentWrapper.style.justifyContent = "center";
+    contentWrapper.style.flex = "1";
+    contentWrapper.style.minWidth = "0";
+
+    const contentSpan = document.createElement("strong");
+    contentSpan.style.fontSize = "1.25rem";
+    contentSpan.style.fontWeight = "600";
+    contentSpan.style.display = "inline-flex";
+    contentSpan.style.alignItems = "center";
+    contentSpan.style.justifyContent = "center";
+    contentSpan.style.wordBreak = "break-word";
+    contentSpan.appendChild(iconElement);
+    contentSpan.appendChild(document.createTextNode(message));
+
+    contentWrapper.appendChild(contentSpan);
+
+    const closeButton = document.createElement("button");
+    closeButton.type = "button";
+    closeButton.className = "close";
+    closeButton.setAttribute("data-dismiss", "alert");
+    closeButton.setAttribute("aria-label", "Fechar");
+    closeButton.style.position = "relative";
+    closeButton.style.right = "0";
+    closeButton.style.padding = "0.3rem 0.5rem";
+    closeButton.style.marginLeft = "0.75rem";
+    closeButton.style.alignSelf = "center";
+    closeButton.style.flexShrink = "0";
+    closeButton.innerHTML = '<span aria-hidden="true">&times;</span>';
+
+    alert.appendChild(contentWrapper);
+    alert.appendChild(closeButton);
 
     container.appendChild(alert);
 }
@@ -100,7 +157,7 @@ function newReleaseMessage() {
     showAlertMessage({
         id: "new-release-alert",
         type: "warning",
-        icon: "⚠️",
+        icon: "fa-triangle-exclamation",
         message: "O sistema possui atualizações disponíveis!"
     });
 }
@@ -136,7 +193,7 @@ async function main() {
     showAlertMessage({
         id: "release-loading-alert",
         type: "info",
-        icon: "🔄",
+        icon: "fa-spinner",
         message: "Buscando por novas atualizações..."
     });
 
@@ -161,7 +218,7 @@ async function main() {
             showAlertMessage({
                 id: "release-success-alert",
                 type: "success",
-                icon: "✅",
+                icon: "fa-circle-check",
                 message: "Sistema atualizado"
             });
         }
@@ -179,7 +236,7 @@ async function main() {
         showAlertMessage({
             id: "release-error-alert",
             type: "danger",
-            icon: "❌",
+            icon: "fa-circle-exclamation",
             message: getUserFriendlyError(error)
         });
     }

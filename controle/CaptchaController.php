@@ -44,7 +44,7 @@ class CaptchaController
                 $msg = "Tentativa com falha da alteração das chaves do captcha de id {$captcha->getId()}.";
             }
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 9, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), $msg);
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 9, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), $msg);
 
             $sistemaLogDao = new SistemaLogDAO($pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {

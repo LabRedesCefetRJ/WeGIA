@@ -1,8 +1,10 @@
 <?php
-require_once '../classes/Estoque.php';
-require_once 'Conexao.php';
-require_once '../Functions/funcoes.php';
-require_once '../Functions/permissao/permissao.php';
+$basePath = dirname(__FILE__, 2);
+
+require_once $basePath . '/classes/Estoque.php';
+require_once $basePath . '/dao/Conexao.php';
+require_once $basePath . '/Functions/funcoes.php';
+require_once $basePath . '/Functions/permissao/permissao.php';
 
 class EstoqueDAO
 {
