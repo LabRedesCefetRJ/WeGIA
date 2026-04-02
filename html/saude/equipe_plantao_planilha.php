@@ -12,7 +12,18 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'SaudeEquipePlantaoPlanilhaService.php';
+
+$arquivoServicoPlanilha = dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'SaudeEquipePlantaoPlanilhaService.php';
+$arquivoServicoPlantao = dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'SaudeEquipePlantaoService.php';
+
+// Garante que o endpoint use a versão mais recente do código de geração, mesmo com OPcache agressivo.
+if (function_exists('opcache_invalidate')) {
+    @opcache_invalidate(__FILE__, true);
+    @opcache_invalidate($arquivoServicoPlanilha, true);
+    @opcache_invalidate($arquivoServicoPlantao, true);
+}
+
+require_once $arquivoServicoPlanilha;
 
 permissao($_SESSION['id_pessoa'], 5, 5);
 

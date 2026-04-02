@@ -1,0 +1,51 @@
+.historico-acoes {
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+#btnAtualizarHistorico {
+  min-width: 156px;
+  border-color: #2f7dbd;
+  color: #2f7dbd;
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+
+#btnAtualizarHistorico .fa {
+  margin-right: 6px;
+}
+
+#btnAtualizarHistorico:hover,
+#btnAtualizarHistorico:focus {
+  border-color: #2f7dbd;
+  background-color: #2f7dbd;
+  color: #fff;
+}
+
+#btnAtualizarHistorico[disabled] {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+.alert-inline {
+  margin-bottom: 12px;
+  display: none;
+}
+
+.alert-inline.show {
+  display: block;
+}
+
+#datatable-historico-plantao tbody td:last-child {
+  text-align: center;
+}
+
+.historico-action-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

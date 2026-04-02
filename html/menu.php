@@ -54,14 +54,14 @@ session_start();
 			<ul class="nav nav-main">
 				<li class="visivel">
 					<a href="<?= WWW ?>html/home.php">
-						<i class="fa-solid fa-home" aria-hidden="true"></i>
+						<i class="fa fa-home" aria-hidden="true"></i>
 						<span>Início</span>
 					</a>
 				</li>
 
 				<li class="nav-parent nav-active" id="1">
 					<a>
-						<i class="far fa-address-book"></i>
+						<i class="fa fa-users"></i>
 						<span>Pessoas</span>
 					</a>
 					<ul class="nav nav-children">
@@ -115,10 +115,10 @@ session_start();
 				</li>
 
 				<li class="nav-parent nav-active" id="6">
-					<a>
-						<i class="fa fa-paw" aria-hidden="true"></i>
-						<span>Pet</span>
-					</a>
+							<a>
+								<i class="fa fa-paw" aria-hidden="true"></i>
+								<span>Pet</span>
+							</a>
 					<ul class="nav nav-children">
 						<li>
 							<a href="<?= WWW ?>html/pet/cadastro_pet.php">
@@ -127,10 +127,10 @@ session_start();
 							</a>
 						</li>
 						<li>
-							<a href="<?= WWW ?>html/pet/informacao_pet.php">
-								<i class="fa fa-clipboard-list"></i>
-								<span>Informações Pets</span>
-							</a>
+									<a href="<?= WWW ?>html/pet/informacao_pet.php">
+										<i class="fa fa-list-alt"></i>
+										<span>Informações Pets</span>
+									</a>
 						</li>
 
 
@@ -158,10 +158,10 @@ session_start();
 								</li>
 
 								<li class="nav-parent nav-active">
-									<a>
-										<i class="fa fa-pills" aria-hidden="true"></i>
-										<span>Medicamentos</span>
-									</a>
+							<a>
+								<i class="fa fa-medkit" aria-hidden="true"></i>
+								<span>Medicamentos</span>
+							</a>
 
 									<ul class="nav nav-children">
 										<li>
@@ -184,7 +184,7 @@ session_start();
 
 						<li class="nav-parent nav-active">
 							<a>
-								<i class="fa fa-user"></i></i><i class="fas fa-paw"></i>
+								<i class="fa fa-user"></i>
 								<span>Adotantes</span>
 							</a>
 							<ul class="nav nav-children">
@@ -215,7 +215,7 @@ session_start();
 					<ul class="nav nav-children">
 						<li class="nav-parent nav-active">
 							<a>
-								<i class="fas fa-circle-arrow-down" aria-hidden="true"></i>
+								<i class="fa fa-arrow-circle-down" aria-hidden="true"></i>
 								<span>Entrada</span>
 							</a>
 
@@ -235,7 +235,7 @@ session_start();
 
 						<li class="nav-parent nav-active">
 							<a>
-								<i class="fas fa-circle-arrow-up" aria-hidden="true"></i>
+								<i class="fa fa-arrow-circle-up" aria-hidden="true"></i>
 								<span>Saída</span>
 							</a>
 
@@ -255,7 +255,7 @@ session_start();
 
 						<li class="nav-parent nav-active">
 							<a>
-								<i class="fa fa-boxes" aria-hidden="true"></i>
+								<i class="fa fa-cubes" aria-hidden="true"></i>
 								<span>Estoque</span>
 							</a>
 
@@ -268,7 +268,7 @@ session_start();
 								</li>
 								<li class="nav-parent nav-active">
 									<a>
-										<i class="fa fa-box" aria-hidden="true"></i>
+										<i class="fa fa-cube" aria-hidden="true"></i>
 										<span>Produtos</span>
 									</a>
 									<ul class="nav nav-children">
@@ -286,7 +286,7 @@ session_start();
 								</li>
 								<li class="nav-parent nav-active">
 									<a>
-										<i class="fa fa-warehouse" aria-hidden="true"></i>
+										<i class="fa fa-building-o" aria-hidden="true"></i>
 										<span>Almoxarifados</span>
 									</a>
 									<ul class="nav nav-children">
@@ -353,7 +353,7 @@ session_start();
 					</li>
 					<li class="nav-parent nav-active" id="32">
 						<a>
-							<i class="fa fa-money-bill" aria-hidden="true"></i>
+							<i class="fa fa-money" aria-hidden="true"></i>
 							<span>Contribuições</span>
 						</a>
 
@@ -372,7 +372,7 @@ session_start();
 					</li>
 					<li class="nav-parent nav-active" id="33">
 						<a>
-							<i class="far fa-plus-square" aria-hidden="true"></i>
+							<i class="fa fa-plus-square-o" aria-hidden="true"></i>
 							<span>Extra</span>
 						</a>
 						<ul class="nav nav-children">
@@ -388,7 +388,7 @@ session_start();
 
 			<li class="nav-parent nav-active" id="5">
 				<a>
-					<i class="fa fa-hospital-user" aria-hidden="true"></i>
+					<i class="fa fa-medkit" aria-hidden="true"></i>
 					<span>Saúde</span>
 				</a>
 
@@ -433,9 +433,23 @@ session_start();
 									<span>Intercorrências</span>
 								</a>
 							</li>
+						</ul>
+					</li>
+
+					<li class="nav-parent nav-active">
+						<a>
+							<i class="fa fa-users" aria-hidden="true"></i>
+							<span>Equipe</span>
+						</a>
+						<ul class="nav nav-children">
 							<li>
 								<a href="<?= WWW ?>html/saude/equipe_plantao.php">
-									<span>Equipe de Plantão</span>
+									<span>Gestão de Plantão</span>
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/saude/equipe_plantao_historico.php">
+									<span>Histórico de Plantões</span>
 								</a>
 							</li>
 						</ul>
@@ -446,31 +460,31 @@ session_start();
 			<!--contribuiçao-->
 			<li class="nav-parent nav-active" id="7">
 				<a>
-					<i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>
+					<i class="fa fa-heart" aria-hidden="true"></i>
 					<span>Contribuição</span>
 				</a>
 				<ul class="nav nav-children">
 					<li>
 						<a href="<?= WWW ?>html/contribuicao/view/gateway_pagamento.php">
-							<i class="fa-solid fa-building"></i>
+							<i class="fa fa-building-o"></i>
 							Gateway de pagamento
 						</a>
 					</li>
 					<li>
 						<a href="<?= WWW ?>html/contribuicao/view/meio_pagamento.php">
-							<i class="fa-regular fa-credit-card"></i>
+							<i class="fa fa-credit-card"></i>
 							Meio de pagamento
 						</a>
 					</li>
 					<li>
 						<a href="<?= WWW ?>html/contribuicao/view/regra_pagamento.php">
-							<i class="fa-solid fa-circle-exclamation"></i>
+							<i class="fa fa-exclamation-circle"></i>
 							Regras de pagamento
 						</a>
 					</li>
           <li >
 						<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
-							<i class="fa-solid fa-user-check"></i>
+							<i class="fa fa-check-square-o"></i>
 							Captcha
 						</a>
 					</li>

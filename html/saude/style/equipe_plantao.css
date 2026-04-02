@@ -1,7 +1,7 @@
 :root {
   --font-system: "Open Sans", Arial, sans-serif;
-  --text-main: #33485c;
-  --text-soft: #6d8092;
+  --text-main: #555;
+  --text-soft: #777;
   --line-soft: #dde5ed;
   --bg-soft: #f8fafc;
   --section-gap: 30px;
@@ -107,9 +107,10 @@ body,
 
 .painel-main .panel-title,
 .painel-side .panel-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-main);
+  color: #33353f;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 20px;
 }
 
 .painel-main .panel-body,
@@ -122,27 +123,31 @@ body,
   align-items: stretch;
   gap: 16px;
   margin-bottom: var(--section-gap);
-  padding: 12px 14px;
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  background: #fff;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 body.scale-locked .schedule-toolbar {
-  background: #fbfcfd;
+  background: transparent;
 }
 
 .toolbar-block {
   flex: 1 1 0;
   min-width: 0;
+  border: 1px solid #d8dde4;
+  border-radius: 5px;
+  background: #fdfdfd;
+  padding: 14px;
 }
 
 .toolbar-label {
-  margin-bottom: 6px;
-  font-size: 11px;
-  color: var(--text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #33353f;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
 }
 
 .toolbar-controls {
@@ -169,10 +174,10 @@ body.scale-locked .schedule-toolbar {
 
 .toolbar-field-label {
   margin: 0;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-soft);
   font-weight: 400;
-  opacity: 0.88;
+  opacity: 1;
 }
 
 .toolbar-actions {
@@ -202,8 +207,7 @@ body.scale-locked .schedule-toolbar {
 }
 
 .toolbar-divider {
-  width: 1px;
-  background: #e7edf3;
+  display: none;
 }
 
 .toolbar-sequence {
@@ -264,11 +268,11 @@ body.scale-locked .schedule-toolbar {
 }
 
 .small-help {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-soft);
   margin-top: 4px;
   line-height: 1.45;
-  opacity: 0.88;
+  opacity: 1;
 }
 
 #plantaoCalendar {
@@ -475,12 +479,12 @@ body.scale-locked .schedule-toolbar {
 .table-teams > tbody > tr > td {
   padding: 8px 10px;
   vertical-align: middle;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .table-teams > thead > tr > th {
   color: var(--text-soft);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .table-teams > tbody > tr:first-child > td {
@@ -515,14 +519,14 @@ body.scale-locked .schedule-toolbar {
 
 .team-name {
   color: var(--text-main);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.3;
 }
 
 .team-days-meta {
   color: var(--text-soft);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.2;
 }
 
@@ -543,11 +547,15 @@ body.scale-locked .schedule-toolbar {
 
 .team-status-text {
   color: var(--text-main);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .table-teams > tbody > tr > td.table-team-actions {
   vertical-align: middle;
+}
+
+#datatable-equipes-plantao_wrapper .dataTables_length {
+  display: none !important;
 }
 
 .table-teams > tbody > tr > td.muted-cell {
@@ -568,7 +576,7 @@ body.scale-locked .schedule-toolbar {
 }
 
 .modal-day-status {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-soft);
   margin-top: 4px;
 }
@@ -594,7 +602,10 @@ body.scale-locked .schedule-toolbar {
   font-weight: 400;
 }
 
-.modal-content .modal-title,
+.modal-content .modal-title {
+  font-weight: 400;
+}
+
 .modal-content strong {
   font-weight: 600;
 }

@@ -57,6 +57,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'SaidaControle' => [22, 24],
             'SaudeControle' => [5, 12],
             'SaudeEquipePlantaoControle' => [5],
+            'SaudeEquipePlantaoHistoricoControle' => [5],
             'SinaisVitaisControle' => [5],
             'SocioTagController' => [4],
             'TipoEntradaControle' => [23],

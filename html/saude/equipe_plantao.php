@@ -32,6 +32,8 @@ $anoAtual = (int) date('Y');
     <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
     <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
+    <link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
+    <link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css" />
@@ -75,7 +77,7 @@ $anoAtual = (int) date('Y');
                     <ol class="breadcrumbs">
                         <li><a href="../index.php"><i class="fa fa-home"></i></a></li>
                         <li><span>Módulo Saúde</span></li>
-                        <li><span>Equipe de Plantão</span></li>
+                        <li><span>Gestão de Plantão</span></li>
                     </ol>
                     <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
                 </div>
@@ -83,7 +85,7 @@ $anoAtual = (int) date('Y');
 
             <div id="globalMessage" class="alert alert-info alert-inline" role="alert"></div>
 
-            <section class="panel painel-main">
+            <section class="panel">
                 <header class="panel-heading">
                     <h2 class="panel-title">Escala Mensal - Operação 12x36 por turno</h2>
                 </header>
@@ -101,7 +103,6 @@ $anoAtual = (int) date('Y');
                         <button id="btnEditarEscala" class="btn btn-default btn-sm" type="button" disabled><i class="fa fa-pencil"></i> Editar escala</button>
                         <button id="btnApagarEscala" class="btn btn-default btn-sm" type="button" disabled><i class="fa fa-trash"></i> Apagar escala</button>
                         <button id="btnSalvarEscala" class="btn btn-primary btn-sm" type="button"><i class="fa fa-save"></i> Salvar escala</button>
-                        <button id="btnVisualizarImpressao" class="btn btn-warning btn-sm" type="button"><i class="fa fa-search"></i> Visualizar impressão</button>
                         <button id="btnImprimirDireto" class="btn btn-warning btn-sm" type="button"><i class="fa fa-file-excel-o"></i> Gerar planilha</button>
                     </div>
 
@@ -181,7 +182,7 @@ $anoAtual = (int) date('Y');
 
                     <div class="row secondary-panels">
                         <div class="col-md-12">
-                            <section class="panel painel-side">
+                            <section class="panel">
                                 <header class="panel-heading">
                                     <h3 class="panel-title">Equipes cadastradas</h3>
                                 </header>
@@ -349,6 +350,9 @@ $anoAtual = (int) date('Y');
     </div>
 </div>
 
+<script src="../../assets/vendor/select2/select2.js"></script>
+<script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+<script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 <script src="../../assets/javascripts/theme.js"></script>
 <script src="../../assets/javascripts/theme.custom.js"></script>
 <script src="../../assets/javascripts/theme.init.js"></script>

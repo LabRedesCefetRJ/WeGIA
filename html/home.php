@@ -252,7 +252,7 @@ require_once ROOT . "/html/geral/msg.php";
 
 					<a id="home1" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#pessoas">
-							<i class="far fa-address-book"></i>
+							<i class="fa fa-users"></i>
 							<h4>Pessoas</h4>
 						</div>
 					</a>
@@ -289,14 +289,14 @@ require_once ROOT . "/html/geral/msg.php";
 
 					<a id="home5" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#saude">
-							<i class="fas fa-hospital-user"></i>
+							<i class="fa fa-medkit"></i>
 							<h4>Saúde</h4>
 						</div>
 					</a>
 
 					<a id="home7" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#contribuicao">
-							<i class="fa-solid fa-hand-holding-heart"></i>
+							<i class="fa fa-heart"></i>
 							<h4>Contribuição</h4>
 						</div>
 					</a>
@@ -344,13 +344,13 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="funcionarios" class="removeIn collapse">
 						<a href="<?= WWW ?>html/funcionario/pre_cadastro_funcionario.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-address-book"></i>
+								<i class="fa fa-user"></i>
 								<h4>Cadastrar Funcionário</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=<?= WWW ?>html/funcionario/informacao_funcionario.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-address-card"></i>
+								<i class="fa fa-user"></i>
 								<h4>Informações Funcionários</h4>
 							</div>
 						</a>
@@ -362,14 +362,14 @@ require_once ROOT . "/html/geral/msg.php";
 
 						<a href="<?= WWW ?>html/atendido/processo_aceitacao.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa-solid fa-heart-circle-check" id="listarAtendido"></i>
+								<i class="fa fa-check-circle" id="listarAtendido"></i>
 								<h4>Processo de Aceitação</h4>
 							</div>
 						</a>
 
 						<a href="<?= WWW ?>html/atendido/pre_cadastro_atendido.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-address-book"></i>
+								<i class="fa fa-user"></i>
 								<h4>Cadastrar Atendido</h4>
 							</div>
 						</a>
@@ -377,7 +377,7 @@ require_once ROOT . "/html/geral/msg.php";
 						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=<?= WWW ?>html/atendido/Informacao_Atendido.php">
 							<div class="col-lg-2 col-md-8 i">
 								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
-									<i class="far fa-address-card" id="listarAtendido"></i>
+									<i class="fa fa-user" id="listarAtendido"></i>
 									<h4>Informação Atendidos</h4>
 								</form>
 							</div>
@@ -400,7 +400,7 @@ require_once ROOT . "/html/geral/msg.php";
 						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=.<?= WWW ?>html/atendido/cadastro_ocorrencia.php">
 							<div class="col-lg-2 col-md-8 i">
 								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
-									<i class="fa fa-address-book" id="listarAtendido"></i>
+									<i class="fa fa-user" id="listarAtendido"></i>
 									<h4>Cadastrar Ocorrência</h4>
 								</form>
 							</div>
@@ -408,7 +408,7 @@ require_once ROOT . "/html/geral/msg.php";
 						<a href="<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=<?= WWW ?>html/atendido/listar_ocorrencias_ativas.php">
 							<div class="col-lg-2 col-md-8 i">
 								<form id="listarAtendido" method="POST" action="<?= WWW ?>controle/control.php">
-									<i class="far fa-address-card" id="listarAtendido"></i>
+									<i class="fa fa-user" id="listarAtendido"></i>
 									<h4>Ocorrências Ativas</h4>
 								</form>
 							</div>
@@ -428,7 +428,7 @@ require_once ROOT . "/html/geral/msg.php";
 						</a>
 						<a href="<?= WWW ?>html/pet/informacao_pet.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-clipboard-list"></i>
+								<i class="fa fa-list-alt"></i>
 								<h4>Informações Pets</h4>
 							</div>
 						</a>
@@ -441,7 +441,7 @@ require_once ROOT . "/html/geral/msg.php";
 
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#adotante">
-								<i class="fa fa-user"></i></i><i class="fas fa-paw"></i>
+								<i class="fa fa-user"></i>
 								<h4>Adotantes</h4>
 							</div>
 						</a>
@@ -452,13 +452,13 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="adotante" class="removeIn collapse">
 						<a href="<?= WWW ?>html/pet/adotantes/pre_cadastro_adotante.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-address-book"></i>
+								<i class="fa fa-user"></i>
 								<h4>Cadastrar Adotante</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/pet/adotantes/informacao_adotantes.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-address-card"></i>
+								<i class="fa fa-user"></i>
 								<h4>Informações Adotantes</h4>
 							</div>
 						</a>
@@ -468,19 +468,19 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="saudePet" class="removeIn collapse">
 						<a href="<?= WWW ?>html/pet/cadastro_ficha_medica_pet.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa-solid fa-book-medical"></i>
+								<i class="fa fa-medkit"></i>
 								<h4>Cadastrar Ficha Médica Pet</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/pet/informacao_saude_pet.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa-solid fa-clipboard-list"></i>
+								<i class="fa fa-list-alt"></i>
 								<h4>Informações Saúde Pet</h4>
 							</div>
 						</a>
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-third" data-toggle="collapse" href="#medicamentos">
-								<i class="fa fa-pills"></i>
+								<i class="fa fa-medkit"></i>
 								<h4>Medicamentos dos Pets</h4>
 							</div>
 						</a>
@@ -491,13 +491,13 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="medicamentos" class="removeIn-2 collapse">
 						<a href="<?= WWW ?>html/pet/cadastrar_medicamento.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-clipboard"></i>
+								<i class="fa fa-clipboard"></i>
 								<h4>Cadastrar Medicamento</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/pet/informacao_medicamento.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-clipboard-list"></i>
+								<i class="fa fa-list-alt"></i>
 								<h4>Informações Medicamentos</h4>
 							</div>
 						</a>
@@ -510,19 +510,19 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="material" class="collapse">
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#entrada">
-								<i class="fa-solid fa-circle-arrow-down"></i>
+								<i class="fa fa-arrow-circle-down"></i>
 								<h4>Entrada</h4>
 							</div>
 						</a>
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#saida">
-								<i class="fa-solid fa-circle-arrow-up"></i>
+								<i class="fa fa-arrow-circle-up"></i>
 								<h4>Saída</h4>
 							</div>
 						</a>
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#estoque">
-								<i class="fa fa-boxes"></i>
+								<i class="fa fa-cubes"></i>
 								<h4>Estoque</h4>
 							</div>
 						</a>
@@ -534,7 +534,7 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="entrada" class="removeIn collapse">
 						<a href="<?= WWW ?>html/matPat/cadastro_entrada.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-clipboard"></i>
+								<i class="fa fa-clipboard"></i>
 								<h4>Registrar Entrada</h4>
 							</div>
 						</a>
@@ -551,7 +551,7 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="saida" class="removeIn collapse">
 						<a href="<?= WWW ?>html/matPat/cadastro_saida.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-clipboard"></i>
+								<i class="fa fa-clipboard"></i>
 								<h4>Registrar Saída</h4>
 							</div>
 						</a>
@@ -568,19 +568,19 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="estoque" class="removeIn collapse">
 						<a href="<?= WWW ?>html/matPat/relatorio.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-clipboard"></i>
+								<i class="fa fa-clipboard"></i>
 								<h4>Gerar Relatório</h4>
 							</div>
 						</a>
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-third" data-toggle="collapse" href="#produtos">
-								<i class="fa fa-box"></i>
+								<i class="fa fa-cube"></i>
 								<h4>Produtos</h4>
 							</div>
 						</a>
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-third" data-toggle="collapse" href="#almoxarifados">
-								<i class="fa fa-warehouse"></i>
+								<i class="fa fa-building-o"></i>
 								<h4>Almoxarifados</h4>
 							</div>
 						</a>
@@ -597,7 +597,7 @@ require_once ROOT . "/html/geral/msg.php";
 						</a>
 						<a href="<?= WWW ?>html/matPat/listar_produto.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-box"></i>
+								<i class="fa fa-cube"></i>
 								<h4>Listar Produtos</h4>
 							</div>
 						</a>
@@ -608,13 +608,13 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="almoxarifados" class="removeIn-2 collapse">
 						<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-clipboard"></i>
+								<i class="fa fa-clipboard"></i>
 								<h4>Adicionar Almoxarifado</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/matPat/listar_almox.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-clipboard-list"></i>
+								<i class="fa fa-list-alt"></i>
 								<h4>Listar Almoxarifados</h4>
 							</div>
 						</a>
@@ -662,19 +662,19 @@ require_once ROOT . "/html/geral/msg.php";
 						</a>
 						<a href="<?= WWW ?>html/socio/sistema/relatorios_socios.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-clipboard"></i>
+								<i class="fa fa-clipboard"></i>
 								<h4>Relatórios</h4>
 							</div>
 						</a>
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#contribuicoes">
-								<i class="fa fa-money-bill"></i>
+								<i class="fa fa-money"></i>
 								<h4>Contribuições</h4>
 							</div>
 						</a>
 						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#extra">
-								<i class="far fa-plus-square"></i>
+								<i class="fa fa-plus-square-o"></i>
 								<h4>Extra</h4>
 							</div>
 						</a>
@@ -685,19 +685,19 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="cobrancas" class="removeIn collapse">
 						<a href="<?= WWW ?>html/socio/sistema/cobrancas.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-chart-bar"></i>
+								<i class="fa fa-bar-chart-o"></i>
 								<h4>Controle Cobranças (Antigo)</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/socio/sistema/contribuicoes.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-chart-bar"></i>
+								<i class="fa fa-bar-chart-o"></i>
 								<h4>Controle de Contribuições</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/socio/sistema/psocio_geracao.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fas fa-hand-holding-usd"></i>
+								<i class="fa fa-money"></i>
 								<h4>Gerar Boleto</h4>
 							</div>
 						</a>
@@ -730,6 +730,12 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Registro Diário</h4>
 							</div>
 						</a>
+						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#equipeSaude">
+								<i class="fa fa-users"></i>
+								<h4>Equipe</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 
@@ -737,13 +743,13 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="paciente" class="removeIn collapse">
 						<a href="<?= WWW ?>html/saude/cadastro_ficha_medica.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-address-book"></i>
+								<i class="fa fa-user"></i>
 								<h4>Cadastrar Ficha Médica</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/saude/informacao_saude.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-address-card"></i>
+								<i class="fa fa-user"></i>
 								<h4>Informações Pacientes</h4>
 							</div>
 						</a>
@@ -754,13 +760,13 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="enfermaria" class="removeIn collapse">
 						<a href="<?= WWW ?>html/saude/administrar_medicamento.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-pills"></i>
+								<i class="fa fa-medkit"></i>
 								<h4>Medicamentos</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/saude/listar_sinais_vitais.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa fa-address-book"></i>
+								<i class="fa fa-user"></i>
 								<h4>Sinais Vitais</h4>
 							</div>
 						</a>
@@ -773,6 +779,23 @@ require_once ROOT . "/html/geral/msg.php";
 					</div>
 				</div>
 
+				<div class="row category-row-third">
+					<div id="equipeSaude" class="removeIn collapse">
+						<a href="<?= WWW ?>html/saude/equipe_plantao.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa fa-calendar" aria-hidden="true"></i>
+								<h4>Gestão de Plantão</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/saude/equipe_plantao_historico.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa fa-history" aria-hidden="true"></i>
+								<h4>Histórico de Plantões</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+
 				<!--fim da parte interna de #saude-->
 
 				<!--parte interna de #contribuicao-->
@@ -780,26 +803,26 @@ require_once ROOT . "/html/geral/msg.php";
 					<div id="contribuicao" class="collapse">
 						<a href="<?= WWW ?>html/contribuicao/view/gateway_pagamento.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa-solid fa-building"></i>
+								<i class="fa fa-building"></i>
 								<h4>Gateway de pagamentos</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/contribuicao/view/meio_pagamento.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa-regular fa-credit-card"></i>
+								<i class="fa fa-credit-card"></i>
 								<h4>Meio de pagamento</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/contribuicao/view/regra_pagamento.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa-solid fa-circle-exclamation"></i>
+								<i class="fa fa-exclamation-circle"></i>
 								<h4>Regras de pagamento</h4>
 							</div>
 						</a>
 
 						<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fa-solid fa-user-check"></i>
+								<i class="fa fa-check-square-o"></i>
 								<h4>Captcha</h4>
 							</div>
 						</a>
@@ -824,7 +847,7 @@ require_once ROOT . "/html/geral/msg.php";
 						</a>
 						<a href="../html/configuracao/configuracao_geral.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="fas fa-cog"></i>
+								<i class="fa fa-cog"></i>
 								<h4>Configurações Gerais</h4>
 							</div>
 						</a>

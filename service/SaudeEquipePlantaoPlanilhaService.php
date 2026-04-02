@@ -7,11 +7,13 @@ class SaudeEquipePlantaoPlanilhaService
     private const NS_CALCEXT = 'urn:org:documentfoundation:names:experimental:calc:xmlns:calcext:1.0';
     private const NS_CONFIG = 'urn:oasis:names:tc:opendocument:xmlns:config:1.0';
     private const NS_DRAW = 'urn:oasis:names:tc:opendocument:xmlns:drawing:1.0';
+    private const NS_FO = 'urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0';
     private const NS_OFFICE = 'urn:oasis:names:tc:opendocument:xmlns:office:1.0';
+    private const NS_STYLE = 'urn:oasis:names:tc:opendocument:xmlns:style:1.0';
     private const NS_TABLE = 'urn:oasis:names:tc:opendocument:xmlns:table:1.0';
     private const NS_TEXT = 'urn:oasis:names:tc:opendocument:xmlns:text:1.0';
 
-    private const MAPA_MESES = [
+    private const MAPA_MESES_TABELA = [
         1 => 'Janeiro',
         2 => 'Fevereiro',
         3 => 'Março',
@@ -26,6 +28,28 @@ class SaudeEquipePlantaoPlanilhaService
         12 => 'Dezembro'
     ];
 
+    private const MAPA_MESES_ARQUIVO = [
+        1 => 'Janeiro',
+        2 => 'Fevereiro',
+        3 => 'Marco',
+        4 => 'Abril',
+        5 => 'Maio',
+        6 => 'Junho',
+        7 => 'Julho',
+        8 => 'Agosto',
+        9 => 'Setembro',
+        10 => 'Outubro',
+        11 => 'Novembro',
+        12 => 'Dezembro'
+    ];
+
+    private const NOMES_GLOBAIS_MANTIDOS = [
+        'AnoCivil',
+        'DiasESemanas',
+        'InícioDaSemana',
+        'LinhaTítuloRegião1..L3.1'
+    ];
+
     private SaudeEquipePlantaoService $servicePlantao;
 
     public function __construct(?SaudeEquipePlantaoService $servicePlantao = null)
@@ -35,7 +59,7 @@ class SaudeEquipePlantaoPlanilhaService
 
     public function gerarPlanilhaMensal(int $ano, int $mes): array
     {
-        if (!isset(self::MAPA_MESES[$mes])) {
+        if (!isset(self::MAPA_MESES_TABELA[$mes])) {
             throw new InvalidArgumentException('Mês inválido para exportação da planilha.', 400);
         }
 
@@ -69,6 +93,7 @@ class SaudeEquipePlantaoPlanilhaService
 
         $contentXml = $zip->getFromName('content.xml');
         $settingsXml = $zip->getFromName('settings.xml');
+        $stylesXml = $zip->getFromName('styles.xml');
 
         if ($contentXml === false) {
             $zip->close();
@@ -80,15 +105,20 @@ class SaudeEquipePlantaoPlanilhaService
         $zip->addFromString('content.xml', $contentXml);
 
         if ($settingsXml !== false) {
-            $settingsXml = $this->atualizarSettingsPlanilha($settingsXml, self::MAPA_MESES[$mes]);
+            $settingsXml = $this->atualizarSettingsPlanilha($settingsXml, self::MAPA_MESES_TABELA[$mes]);
             $zip->addFromString('settings.xml', $settingsXml);
+        }
+
+        if ($stylesXml !== false) {
+            $stylesXml = $this->atualizarStylesPlanilha($stylesXml);
+            $zip->addFromString('styles.xml', $stylesXml);
         }
 
         $zip->close();
 
         return [
             'caminho' => $arquivoSaida,
-            'nome_arquivo' => sprintf('escala_plantao_%04d_%02d.ods', $ano, $mes),
+            'nome_arquivo' => sprintf('Escala_%04d_%s.ods', $ano, self::MAPA_MESES_ARQUIVO[$mes]),
             'content_type' => 'application/vnd.oasis.opendocument.spreadsheet'
         ];
     }
@@ -114,16 +144,22 @@ class SaudeEquipePlantaoPlanilhaService
         $xpath->registerNamespace('table', self::NS_TABLE);
         $xpath->registerNamespace('text', self::NS_TEXT);
         $xpath->registerNamespace('draw', self::NS_DRAW);
+        $xpath->registerNamespace('style', self::NS_STYLE);
 
         $this->atualizarAnoCivil($dom, $xpath, $ano);
         $this->limparConteudosDosMeses($dom, $xpath);
 
-        $sheetName = self::MAPA_MESES[$mes];
+        $sheetName = self::MAPA_MESES_TABELA[$mes];
         $tabelaMes = $this->buscarTabelaPorNome($xpath, $sheetName);
 
         if (!$tabelaMes) {
             throw new RuntimeException(sprintf('A aba "%s" não foi encontrada no modelo da planilha.', $sheetName));
         }
+
+        $this->normalizarEstilosTextoPadrao($xpath);
+        $this->normalizarEstilosCondicionais($xpath);
+        $this->normalizarEstilosDaGradeMensal($xpath, $tabelaMes);
+        $this->atualizarCabecalhoSemana($dom, $tabelaMes);
 
         $conteudosPorDia = $this->montarConteudosDoMes($escala);
         foreach ($conteudosPorDia as $dia => $linhas) {
@@ -131,9 +167,12 @@ class SaudeEquipePlantaoPlanilhaService
             $celula = $this->obterCelula($tabelaMes, $linha, $coluna);
 
             if ($celula instanceof DOMElement && $celula->localName === 'table-cell') {
-                $this->preencherCelulaPlantao($dom, $celula, $linhas, $linha === 4);
+                $this->preencherCelulaPlantao($dom, $celula, $linhas);
             }
         }
+
+        $this->manterSomenteTabelaDoMes($xpath, $sheetName);
+        $this->ajustarReferenciasGlobais($xpath, $sheetName);
 
         return $dom->saveXML();
     }
@@ -153,23 +192,104 @@ class SaudeEquipePlantaoPlanilhaService
             $itemAbaAtiva->nodeValue = $abaAtiva;
         }
 
+        foreach ($xpath->query('//config:config-item-map-named[@config:name="Tables"]/config:config-item-map-entry') as $itemTabela) {
+            if (!$itemTabela instanceof DOMElement) {
+                continue;
+            }
+
+            if ($itemTabela->getAttributeNS(self::NS_CONFIG, 'name') !== $abaAtiva) {
+                $itemTabela->parentNode?->removeChild($itemTabela);
+            }
+        }
+
+        foreach ($xpath->query('//config:config-item-map-named[@config:name="ScriptConfiguration"]/config:config-item-map-entry') as $itemScript) {
+            if (!$itemScript instanceof DOMElement) {
+                continue;
+            }
+
+            if ($itemScript->getAttributeNS(self::NS_CONFIG, 'name') !== $abaAtiva) {
+                $itemScript->parentNode?->removeChild($itemScript);
+            }
+        }
+
+        foreach ($xpath->query('//config:config-item[@config:name="HasSheetTabs"]') as $itemSheetTabs) {
+            $itemSheetTabs->nodeValue = 'false';
+        }
+
+        return $dom->saveXML();
+    }
+
+    private function atualizarStylesPlanilha(string $xml): string
+    {
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+        $dom->loadXML($xml);
+
+        $xpath = new DOMXPath($dom);
+        $xpath->registerNamespace('style', self::NS_STYLE);
+
+        foreach ($xpath->query('//style:style[starts-with(@style:name,"ConditionalStyle")]') as $styleNode) {
+            if (!$styleNode instanceof DOMElement) {
+                continue;
+            }
+
+            $tableCellProps = $xpath->query('./style:table-cell-properties', $styleNode)->item(0);
+            if (!$tableCellProps instanceof DOMElement) {
+                $tableCellProps = $dom->createElementNS(self::NS_STYLE, 'style:table-cell-properties');
+                $styleNode->appendChild($tableCellProps);
+            }
+
+            $tableCellProps->setAttributeNS(self::NS_STYLE, 'style:text-align-source', 'fix');
+            $tableCellProps->setAttributeNS(self::NS_FO, 'fo:wrap-option', 'wrap');
+            $tableCellProps->setAttributeNS(self::NS_STYLE, 'style:shrink-to-fit', 'false');
+            $tableCellProps->setAttributeNS(self::NS_STYLE, 'style:vertical-align', 'middle');
+
+            $paragraphProps = $xpath->query('./style:paragraph-properties', $styleNode)->item(0);
+            if (!$paragraphProps instanceof DOMElement) {
+                $paragraphProps = $dom->createElementNS(self::NS_STYLE, 'style:paragraph-properties');
+                $styleNode->appendChild($paragraphProps);
+            }
+
+            $paragraphProps->setAttributeNS(self::NS_FO, 'fo:text-align', 'start');
+            $paragraphProps->setAttributeNS(self::NS_FO, 'fo:margin-left', '0.323cm');
+            $paragraphProps->setAttributeNS(self::NS_STYLE, 'style:writing-mode', 'page');
+
+            $textProps = $xpath->query('./style:text-properties', $styleNode)->item(0);
+            if (!$textProps instanceof DOMElement) {
+                $textProps = $dom->createElementNS(self::NS_STYLE, 'style:text-properties');
+                $styleNode->appendChild($textProps);
+            }
+
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-name', 'Arial');
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-name-asian', 'Arial');
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-name-complex', 'Arial');
+
+            $textProps->setAttributeNS(self::NS_FO, 'fo:font-size', '8pt');
+            $textProps->setAttributeNS(self::NS_FO, 'fo:font-weight', 'normal');
+            $textProps->setAttributeNS(self::NS_FO, 'fo:font-style', 'normal');
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-size-asian', '8pt');
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-size-complex', '8pt');
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-weight-asian', 'normal');
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-weight-complex', 'normal');
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-style-asian', 'normal');
+            $textProps->setAttributeNS(self::NS_STYLE, 'style:font-style-complex', 'normal');
+        }
+
         return $dom->saveXML();
     }
 
     private function atualizarAnoCivil(DOMDocument $dom, DOMXPath $xpath, int $ano): void
     {
-        $tabelaJaneiro = $this->buscarTabelaPorNome($xpath, 'Janeiro');
-        if ($tabelaJaneiro) {
-            $celulaAnoCivil = $this->obterCelula($tabelaJaneiro, 2, 12);
-            if ($celulaAnoCivil instanceof DOMElement) {
-                $this->definirValorNumerico($dom, $celulaAnoCivil, $ano);
-            }
-        }
-
-        foreach (self::MAPA_MESES as $nomeMes) {
+        foreach (self::MAPA_MESES_TABELA as $nomeMes) {
             $tabelaMes = $this->buscarTabelaPorNome($xpath, $nomeMes);
             if (!$tabelaMes) {
                 continue;
+            }
+
+            $celulaAnoCivil = $this->obterCelula($tabelaMes, 2, 12);
+            if ($celulaAnoCivil instanceof DOMElement) {
+                $this->definirValorNumerico($dom, $celulaAnoCivil, $ano);
             }
 
             $celulaAnoVisivel = $this->obterCelula($tabelaMes, 1, 2);
@@ -196,7 +316,7 @@ class SaudeEquipePlantaoPlanilhaService
     {
         $linhasConteudo = [4, 6, 8, 10, 12, 14];
 
-        foreach (self::MAPA_MESES as $nomeMes) {
+        foreach (self::MAPA_MESES_TABELA as $nomeMes) {
             $tabelaMes = $this->buscarTabelaPorNome($xpath, $nomeMes);
             if (!$tabelaMes) {
                 continue;
@@ -246,7 +366,7 @@ class SaudeEquipePlantaoPlanilhaService
                 }
 
                 $linhas[] = [
-                    'rotulo' => $turno === 'DIA' ? 'DIA:' : 'NOITE:',
+                    'rotulo' => $turno === 'DIA' ? 'DIA' : 'NOITE',
                     'texto' => $membros
                 ];
             }
@@ -311,7 +431,7 @@ class SaudeEquipePlantaoPlanilhaService
         return [$linhaConteudo, $coluna];
     }
 
-    private function preencherCelulaPlantao(DOMDocument $dom, DOMElement $celula, array $linhas, bool $primeiraFaixaDoMes = false): void
+    private function preencherCelulaPlantao(DOMDocument $dom, DOMElement $celula, array $linhas): void
     {
         $this->limparConteudoCelula($dom, $celula);
 
@@ -322,9 +442,8 @@ class SaudeEquipePlantaoPlanilhaService
         $celula->setAttributeNS(self::NS_OFFICE, 'office:value-type', 'string');
         $celula->setAttributeNS(self::NS_CALCEXT, 'calcext:value-type', 'string');
 
-        $styleLabelDia = $primeiraFaixaDoMes ? 'T6' : 'T3';
-        $styleLabelNoite = $primeiraFaixaDoMes ? 'T8' : 'T5';
-        $styleTexto = $primeiraFaixaDoMes ? 'T7' : 'T4';
+        $styleLabelDia = 'T3';
+        $styleTexto = 'T4';
 
         $paragraph = $dom->createElementNS(self::NS_TEXT, 'text:p');
         $textos = [];
@@ -332,7 +451,7 @@ class SaudeEquipePlantaoPlanilhaService
         foreach ($linhas as $indice => $linha) {
             $rotulo = trim((string) ($linha['rotulo'] ?? ''));
             $texto = trim((string) ($linha['texto'] ?? ''));
-            $textoCompleto = trim($rotulo . ' ' . $texto);
+            $textoCompleto = trim($rotulo . ': ' . $texto);
 
             if ($textoCompleto === '') {
                 continue;
@@ -342,19 +461,17 @@ class SaudeEquipePlantaoPlanilhaService
                 $paragraph->appendChild($dom->createTextNode(' '));
             }
 
-            $styleLabel = $rotulo === 'NOITE:' ? $styleLabelNoite : $styleLabelDia;
+            $styleLabel = $styleLabelDia;
 
             $spanRotulo = $dom->createElementNS(self::NS_TEXT, 'text:span');
             $spanRotulo->setAttributeNS(self::NS_TEXT, 'text:style-name', $styleLabel);
-            $spanRotulo->appendChild($dom->createTextNode($rotulo . ' '));
+            $spanRotulo->appendChild($dom->createTextNode($rotulo));
             $paragraph->appendChild($spanRotulo);
 
-            if ($texto !== '') {
-                $spanTexto = $dom->createElementNS(self::NS_TEXT, 'text:span');
-                $spanTexto->setAttributeNS(self::NS_TEXT, 'text:style-name', $styleTexto);
-                $spanTexto->appendChild($dom->createTextNode($texto));
-                $paragraph->appendChild($spanTexto);
-            }
+            $spanTexto = $dom->createElementNS(self::NS_TEXT, 'text:span');
+            $spanTexto->setAttributeNS(self::NS_TEXT, 'text:style-name', $styleTexto);
+            $spanTexto->appendChild($dom->createTextNode(': ' . $texto));
+            $paragraph->appendChild($spanTexto);
 
             $textos[] = $textoCompleto;
         }
@@ -362,6 +479,43 @@ class SaudeEquipePlantaoPlanilhaService
         if (!empty($textos)) {
             $celula->appendChild($paragraph);
             $celula->setAttributeNS(self::NS_OFFICE, 'office:string-value', implode(' | ', $textos));
+        }
+    }
+
+    private function atualizarCabecalhoSemana(DOMDocument $dom, DOMElement $tabelaMes): void
+    {
+        $cabecalho = [
+            3 => 'DOM',
+            4 => 'SEG',
+            5 => 'TER',
+            6 => 'QUA',
+            7 => 'QUI',
+            8 => 'SEX',
+            9 => 'SÁB'
+        ];
+
+        foreach ($cabecalho as $coluna => $textoDia) {
+            $celula = $this->obterCelula($tabelaMes, 2, $coluna);
+            if (!$celula instanceof DOMElement || $celula->localName !== 'table-cell') {
+                continue;
+            }
+
+            $this->removerAtributosValor($celula);
+            $this->removerFilhos($celula);
+            $celula->removeAttributeNS(self::NS_TABLE, 'formula');
+            $celula->removeAttributeNS(self::NS_TABLE, 'content-validation-name');
+            $celula->removeAttribute('table:formula');
+            $celula->removeAttribute('formula');
+            $celula->removeAttribute('table:content-validation-name');
+            $celula->removeAttribute('content-validation-name');
+
+            $celula->setAttributeNS(self::NS_OFFICE, 'office:value-type', 'string');
+            $celula->setAttributeNS(self::NS_OFFICE, 'office:string-value', $textoDia);
+            $celula->setAttributeNS(self::NS_CALCEXT, 'calcext:value-type', 'string');
+
+            $paragraph = $dom->createElementNS(self::NS_TEXT, 'text:p');
+            $paragraph->appendChild($dom->createTextNode($textoDia));
+            $celula->appendChild($paragraph);
         }
     }
 
@@ -464,6 +618,170 @@ class SaudeEquipePlantaoPlanilhaService
         }
 
         return null;
+    }
+
+    private function manterSomenteTabelaDoMes(DOMXPath $xpath, string $nomeTabelaMantida): void
+    {
+        foreach ($xpath->query('//table:table') as $tabela) {
+            if (!$tabela instanceof DOMElement) {
+                continue;
+            }
+
+            $nomeTabela = $tabela->getAttributeNS(self::NS_TABLE, 'name');
+            if (!$this->ehTabelaDeMes($nomeTabela)) {
+                continue;
+            }
+
+            if ($nomeTabela !== $nomeTabelaMantida) {
+                $tabela->parentNode?->removeChild($tabela);
+            }
+        }
+    }
+
+    private function ajustarReferenciasGlobais(DOMXPath $xpath, string $nomeTabelaMantida): void
+    {
+        foreach ($xpath->query('//style:map[@style:base-cell-address]') as $mapaEstilo) {
+            if (!$mapaEstilo instanceof DOMElement) {
+                continue;
+            }
+
+            $valorAtual = $mapaEstilo->getAttributeNS(self::NS_STYLE, 'base-cell-address');
+            $mapaEstilo->setAttributeNS(
+                self::NS_STYLE,
+                'style:base-cell-address',
+                $this->substituirAbaNaReferencia($valorAtual, $nomeTabelaMantida)
+            );
+        }
+
+        foreach ($xpath->query('/office:document-content/office:body/office:spreadsheet/table:named-expressions/table:*') as $expressao) {
+            if (!$expressao instanceof DOMElement) {
+                continue;
+            }
+
+            $nome = $expressao->getAttributeNS(self::NS_TABLE, 'name');
+            if (!in_array($nome, self::NOMES_GLOBAIS_MANTIDOS, true)) {
+                $expressao->parentNode?->removeChild($expressao);
+                continue;
+            }
+
+            if ($expressao->hasAttributeNS(self::NS_TABLE, 'base-cell-address')) {
+                $expressao->setAttributeNS(
+                    self::NS_TABLE,
+                    'table:base-cell-address',
+                    $this->substituirAbaNaReferencia($expressao->getAttributeNS(self::NS_TABLE, 'base-cell-address'), $nomeTabelaMantida)
+                );
+            }
+
+            if ($expressao->hasAttributeNS(self::NS_TABLE, 'cell-range-address')) {
+                $novaReferencia = match ($nome) {
+                    'AnoCivil' => sprintf('$%s.$L$2', $nomeTabelaMantida),
+                    'InícioDaSemana' => sprintf('$%s.$L$3', $nomeTabelaMantida),
+                    'LinhaTítuloRegião1..L3.1' => sprintf('$%s.$K$2', $nomeTabelaMantida),
+                    default => $this->substituirAbaNaReferencia($expressao->getAttributeNS(self::NS_TABLE, 'cell-range-address'), $nomeTabelaMantida)
+                };
+
+                $expressao->setAttributeNS(self::NS_TABLE, 'table:cell-range-address', $novaReferencia);
+            }
+        }
+    }
+
+    private function substituirAbaNaReferencia(string $referencia, string $nomeTabela): string
+    {
+        return (string) preg_replace_callback(
+            '/^(\$?)[^.]+\./u',
+            static function (array $matches) use ($nomeTabela): string {
+                return ($matches[1] ?? '') . $nomeTabela . '.';
+            },
+            $referencia,
+            1
+        );
+    }
+
+    private function ehTabelaDeMes(string $nomeTabela): bool
+    {
+        return in_array($nomeTabela, array_values(self::MAPA_MESES_TABELA), true);
+    }
+
+    private function normalizarEstilosTextoPadrao(DOMXPath $xpath): void
+    {
+        $this->normalizarEstiloTextual($xpath, 'T3', '8pt', 'bold');
+        $this->normalizarEstiloTextual($xpath, 'T4', '8pt', 'normal');
+        $this->normalizarEstiloTextual($xpath, 'T5', '8pt', 'bold');
+        $this->normalizarEstiloTextual($xpath, 'T6', '8pt', 'bold');
+        $this->normalizarEstiloTextual($xpath, 'T7', '8pt', 'normal');
+        $this->normalizarEstiloTextual($xpath, 'T8', '8pt', 'bold');
+    }
+
+    private function normalizarEstilosDaGradeMensal(DOMXPath $xpath, DOMElement $tabelaMes): void
+    {
+        $estilos = [];
+
+        for ($semana = 0; $semana < 6; $semana++) {
+            $linhaNumero = 3 + ($semana * 2);
+            $linhaConteudo = $linhaNumero + 1;
+
+            for ($coluna = 3; $coluna <= 9; $coluna++) {
+                foreach ([$linhaNumero, $linhaConteudo] as $linha) {
+                    $celula = $this->obterCelula($tabelaMes, $linha, $coluna);
+                    if (!$celula instanceof DOMElement || $celula->localName !== 'table-cell') {
+                        continue;
+                    }
+
+                    $nomeEstilo = $celula->getAttributeNS(self::NS_TABLE, 'style-name');
+                    if ($nomeEstilo !== '') {
+                        $estilos[$nomeEstilo] = true;
+                    }
+                }
+            }
+        }
+
+        foreach (array_keys($estilos) as $nomeEstilo) {
+            $this->normalizarEstiloTextual($xpath, $nomeEstilo, '8pt', 'normal');
+        }
+    }
+
+    private function normalizarEstilosCondicionais(DOMXPath $xpath): void
+    {
+        foreach ($xpath->query('//style:style[starts-with(@style:name,"ConditionalStyle")]') as $styleNode) {
+            if (!$styleNode instanceof DOMElement) {
+                continue;
+            }
+
+            $nomeEstilo = $styleNode->getAttributeNS(self::NS_STYLE, 'name');
+            if ($nomeEstilo === '') {
+                continue;
+            }
+
+            $this->normalizarEstiloTextual($xpath, $nomeEstilo, '8pt', 'normal');
+        }
+    }
+
+    private function normalizarEstiloTextual(DOMXPath $xpath, string $nomeEstilo, string $fontSize, string $fontWeight): void
+    {
+        $styleNode = $xpath->query(sprintf('//style:style[@style:name="%s"]', $nomeEstilo))->item(0);
+        if (!$styleNode instanceof DOMElement) {
+            return;
+        }
+
+        $textProps = $xpath->query('./style:text-properties', $styleNode)->item(0);
+        if (!$textProps instanceof DOMElement) {
+            $textProps = $styleNode->ownerDocument->createElementNS(self::NS_STYLE, 'style:text-properties');
+            $styleNode->appendChild($textProps);
+        }
+
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-name', 'Arial');
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-name-asian', 'Arial');
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-name-complex', 'Arial');
+
+        $textProps->setAttributeNS(self::NS_FO, 'fo:font-size', $fontSize);
+        $textProps->setAttributeNS(self::NS_FO, 'fo:font-weight', $fontWeight);
+        $textProps->setAttributeNS(self::NS_FO, 'fo:font-style', 'normal');
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-size-asian', $fontSize);
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-size-complex', $fontSize);
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-weight-asian', $fontWeight);
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-weight-complex', $fontWeight);
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-style-asian', 'normal');
+        $textProps->setAttributeNS(self::NS_STYLE, 'style:font-style-complex', 'normal');
     }
 
     private function upper(string $texto): string

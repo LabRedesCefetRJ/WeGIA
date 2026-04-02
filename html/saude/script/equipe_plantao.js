@@ -19,7 +19,8 @@
     currentDayModal: null,
     currentTurnoModal: 'DIA',
     loading: false,
-    lastLoadedSnapshot: {}
+    lastLoadedSnapshot: {},
+    teamDataTable: null
   };
 
   const els = {};
@@ -33,7 +34,6 @@
     els.btnEditScale = document.getElementById('btnEditarEscala');
     els.btnDeleteScale = document.getElementById('btnApagarEscala');
     els.btnSaveScale = document.getElementById('btnSalvarEscala');
-    els.btnPreviewPrint = document.getElementById('btnVisualizarImpressao');
     els.btnDirectPrint = document.getElementById('btnImprimirDireto');
     els.btnApplySelected = document.getElementById('btnAplicarEquipeSelecionados');
     els.btnClearSelected = document.getElementById('btnLimparEquipeSelecionados');
@@ -122,8 +122,7 @@
     els.btnEditScale.addEventListener('click', unlockScaleForEditing);
     els.btnDeleteScale.addEventListener('click', clearScale);
     els.btnSaveScale.addEventListener('click', saveScale);
-    els.btnPreviewPrint.addEventListener('click', () => openPrint(false));
-    els.btnDirectPrint.addEventListener('click', openSpreadsheet);
+    els.btnDirectPrint.addEventListener('click', () => openSpreadsheet());
 
     els.btnApplySelected.addEventListener('click', applyTeamToSelectedDays);
     els.btnClearSelected.addEventListener('click', clearTeamFromSelectedDays);
@@ -830,7 +829,66 @@
     return usage;
   }
 
+  function destroyTeamsDataTable() {
+    if (!window.jQuery || !jQuery.fn || !jQuery.fn.DataTable) {
+      state.teamDataTable = null;
+      return;
+    }
+
+    if (state.teamDataTable && typeof state.teamDataTable.destroy === 'function') {
+      state.teamDataTable.destroy();
+      state.teamDataTable = null;
+      return;
+    }
+
+    const table = document.getElementById('datatable-equipes-plantao');
+    if (table && jQuery.fn.DataTable.isDataTable(table)) {
+      jQuery(table).DataTable().destroy();
+    }
+  }
+
+  function initTeamsDataTable() {
+    if (!window.jQuery || !jQuery.fn || !jQuery.fn.DataTable) {
+      return;
+    }
+
+    const table = document.getElementById('datatable-equipes-plantao');
+    if (!table) {
+      return;
+    }
+
+    const domSemLength = "<'row datatables-header form-inline'<'col-sm-12 col-md-6'><'col-sm-12 col-md-6'f>r><'table-responsive't><'row datatables-footer'<'col-sm-12 col-md-6'i><'col-sm-12 col-md-6'p>>";
+
+    state.teamDataTable = jQuery(table).DataTable({
+      order: [],
+      searching: true,
+      paging: true,
+      info: true,
+      lengthChange: false,
+      autoWidth: false,
+      sDom: domSemLength,
+      oLanguage: {
+        sSearch: ''
+      },
+      initComplete: function initTeamsFilter(settings) {
+        const $search = jQuery('.dataTables_filter input', settings.nTableWrapper);
+        $search
+          .attr({ placeholder: 'Search' })
+          .addClass('form-control');
+
+        if (jQuery.isFunction(jQuery.fn.placeholder)) {
+          $search.placeholder();
+        }
+      },
+      columnDefs: [
+        { targets: 3, orderable: false, searchable: false }
+      ]
+    });
+  }
+
   function renderTeamsTable() {
+    destroyTeamsDataTable();
+
     if (!state.equipes.length) {
       els.teamTable.innerHTML = '<p>Nenhuma equipe cadastrada.</p>';
       return;
@@ -866,20 +924,22 @@
     }).join('');
 
     els.teamTable.innerHTML = `
-      <div class="table-responsive">
-        <table class="table table-bordered table-striped mb-none table-teams">
-          <thead>
-            <tr>
-              <th>Equipe</th>
-              <th>Membros</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
+      <table class="table table-bordered table-striped mb-none table-teams" id="datatable-equipes-plantao">
+        <thead>
+          <tr>
+            <th>Equipe</th>
+            <th>Membros</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
     `;
+
+    window.requestAnimationFrame(() => {
+      initTeamsDataTable();
+    });
   }
 
   function renderLegend() {
@@ -1358,29 +1418,11 @@
     }
   }
 
-  function openPrint(autoPrint) {
-    if (state.dirty) {
-      const confirmar = window.confirm('Existem alterações locais não salvas. A visualização usa apenas a escala já gravada no banco. Deseja continuar?');
-      if (!confirmar) {
-        return;
-      }
-    }
+  function openSpreadsheet(ano = state.ano, mes = state.mes, validarRascunho = true) {
+    const anoNormalizado = Number(ano) > 0 ? Number(ano) : Number(state.ano);
+    const mesNormalizado = Number(mes) > 0 ? Number(mes) : Number(state.mes);
 
-    const params = new URLSearchParams({
-      ano: String(state.ano),
-      mes: String(state.mes),
-      formato: 'calendario'
-    });
-
-    if (autoPrint) {
-      params.set('auto_print', '1');
-    }
-
-    window.open(`./equipe_plantao_impressao.php?${params.toString()}`, '_blank');
-  }
-
-  function openSpreadsheet() {
-    if (state.dirty) {
+    if (validarRascunho && state.dirty && anoNormalizado === Number(state.ano) && mesNormalizado === Number(state.mes)) {
       const confirmar = window.confirm('Existem alterações locais não salvas. A planilha será gerada com base apenas na escala já gravada no banco. Deseja continuar?');
       if (!confirmar) {
         return;
@@ -1388,12 +1430,13 @@
     }
 
     const params = new URLSearchParams({
-      ano: String(state.ano),
-      mes: String(state.mes)
+      ano: String(anoNormalizado),
+      mes: String(mesNormalizado)
     });
 
     window.open(`./equipe_plantao_planilha.php?${params.toString()}`, '_blank');
   }
+
 
   function openTeamModal(idEquipe = null) {
     if (!idEquipe) {
