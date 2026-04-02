@@ -1,5 +1,7 @@
 <?php
-    require("../conexao.php");
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
+require("../conexao.php");
     if(!isset($_POST) or empty($_POST)){
         $data = file_get_contents( "php://input" );
         $data = json_decode( $data, true );

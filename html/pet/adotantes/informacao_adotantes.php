@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
 

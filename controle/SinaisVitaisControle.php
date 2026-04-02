@@ -146,7 +146,7 @@ class SinaisVitaisControle
 
         $data_nasc_atendido = $atendidoDAO->obterDataNascimentoPorPessoaId($idPaciente) ?: '1900-01-01';
 
-        $timezone = new DateTimeZone('America/Sao_Paulo');
+        $timezone = new DateTimeZone(date_default_timezone_get());
         $formatoDataAfericaoValido = preg_match('/^\d{4}-\d{2}-\d{2}(T|\s)\d{2}:\d{2}(:\d{2})?$/', $data_afericao) === 1;
         if (!$formatoDataAfericaoValido) {
             http_response_code(400);

@@ -12,6 +12,7 @@ if(file_exists($config_path)){
 }
 
 require_once ROOT."/classes/Atendido_ocorrenciaDoc.php";
+require_once ROOT."/classes/Util.php";
 require_once ROOT."/dao/Conexao.php";
 require_once ROOT."/Functions/funcoes.php";
 
@@ -77,7 +78,7 @@ class Atendido_ocorrenciaDocDAO
 
 			$id = $consulta['max(idatendido_ocorrencias)'];
 			$arquivo = $anexo->getAnexo();
-			date_default_timezone_set('America/Sao_Paulo');
+			Util::definirFusoHorario();
 			$data = date('Y-m-d H:i:s');
 			$extensao = $anexo->getExtensao();
 			$nome = $anexo->getNome();

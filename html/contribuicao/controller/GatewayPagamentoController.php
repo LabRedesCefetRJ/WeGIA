@@ -34,7 +34,7 @@ class GatewayPagamentoController
             $gatewayPagamento = new GatewayPagamento($nome, $endpoint, $token);
             $gatewayPagamento->cadastrar();
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Cadastro de gateway de pagamento.');
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Cadastro de gateway de pagamento.');
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -65,7 +65,7 @@ class GatewayPagamentoController
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gateways = $gatewayPagamentoDao->buscaTodos();
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 5, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Pesquisa de gateways de pagamento.');
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 5, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Pesquisa de gateways de pagamento.');
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -106,7 +106,7 @@ class GatewayPagamentoController
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamentoDao->excluirPorId($gatewayId);
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Exclusão do gateway de pagamento de id $gatewayId.");
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "Exclusão do gateway de pagamento de id $gatewayId.");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -154,7 +154,7 @@ class GatewayPagamentoController
             $gatewayPagamento->setId($gatewayId);
             $gatewayPagamento->editar();
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), "Alteração do gateway de pagamento de id $gatewayId.");
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "Alteração do gateway de pagamento de id $gatewayId.");
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {
@@ -209,7 +209,7 @@ class GatewayPagamentoController
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayPagamentoDao->alterarStatusPorId($status, $gatewayId);
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), $descricao);
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), $descricao);
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
             if (!$sistemaLogDao->registrar($sistemaLog)) {

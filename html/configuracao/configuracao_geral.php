@@ -21,6 +21,7 @@ require_once "../personalizacao_display.php";
 // Adiciona o Sistema de Mensagem
 require_once "../geral/msg.php";
 
+//Refazer para usar dados já carregados na sessão
 // Ultima release disponível
 $last_release = intval(file_get_contents("https://www.wegia.org/software/release"));
 // Release instalada
@@ -28,6 +29,7 @@ $local_release = intval(file_get_contents("../../.release"));
 
 define("SYSTEM_UP_TO_DATE", $local_release >= $last_release);
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!doctype html>
 <html class="fixed">
@@ -210,6 +212,7 @@ define("SYSTEM_UP_TO_DATE", $local_release >= $last_release);
 										</button>
 										<form method="post" action="./importar_dump.php" id="form5" enctype="multipart/form-data">
 											<input type="file" name="import" id="impFile" accept=".dump.tar.gz" required>
+											<?= Csrf::inputField() ?>
 										</form>
 									</div>
 								</div>

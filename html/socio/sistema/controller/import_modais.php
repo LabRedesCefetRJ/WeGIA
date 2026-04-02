@@ -90,18 +90,18 @@ try {
                 <div class="div_nasc">
                   <div class="form-group col-xs-4">
                     <label for="valor">Data de nascimento</label>
-                    <input type="date" class="form-control" id="data_nasc" name="data_nasc" max="<?= date('Y-m-d')?>">
+                    <input type="date" class="form-control" id="data_nasc" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d')?>">
                   </div>
                 </div>
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="valor">Data referência (ínicio contribuição)</label>
-                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" max="<?= date('Y-m-d')?>">
+                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" min="1900-01-01" max="<?= date('Y-m-d')?>">
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Valor/período em R$</label>
-                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" onkeypress="return Onlynumbers(event)" min="<?= 0 ?>">
+                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" onkeypress="return Onlynumbers(event)" min="0" step="0.01">
                 </div>
               </div>
               <div class="row">
