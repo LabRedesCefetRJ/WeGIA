@@ -1,6 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
-if (session_start() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
 
@@ -20,6 +20,8 @@ permissao($_SESSION['id_pessoa'], 21, 5);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
+require_once ROOT . '/classes/Csrf.php';
+
 ?>
 
 <!doctype html>
@@ -33,6 +35,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	if (!isset($_SESSION['almoxarifado'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/listar_almox.php');
+		exit;
 	}
 	if (isset($_SESSION['almoxarifado'])) {
 		$almoxarifado = $_SESSION['almoxarifado'];
@@ -104,6 +107,10 @@ require_once ROOT . "/html/personalizacao_display.php";
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
 		});
+
+		function editar(id) {
+			window.location.href = '<?= WWW ?>html/matPat/alterar_almox.php?id_almoxarifado=' + id;
+		}
 	</script>
 
 </head>
@@ -152,19 +159,28 @@ require_once ROOT . "/html/personalizacao_display.php";
 								</tr>
 							</thead>
 							<tbody id="tabela">
-								<?php foreach (json_decode($almoxarifado, true) as $item): ?>
+								<?php foreach(json_decode($almoxarifado, true) as $item):?>
 									<tr>
 										<td><?= htmlspecialchars($item['descricao_almoxarifado']) ?></td>
 										<td>
-											<form method="POST" action="<?= WWW ?>controle/control.php">
-												<input type="hidden" name="metodo" value="excluir">
-												<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
-												<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
-												<?= Csrf::inputField() ?>
-												<button type="submit" style="border:none;background:none;cursor:pointer;" title="Excluir">
-													<i class="fas fa-trash-alt"></i>
-												</button>
-											</form>
+											<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+        										<input type="hidden" name="metodo" value="excluir">
+        										<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+        										<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
+        										<?= Csrf::inputField() ?>
+        										<button type="submit" style="border:none;background:none;cursor:pointer;" title="Excluir">
+            										<i class="fas fa-trash-alt"></i>
+        										</button>
+    										</form>
+
+    										<button
+												type="button"
+        										onclick="editar(<?= (int)$item['id_almoxarifado'] ?>)"
+        										style="border:none;background:none;cursor:pointer;"
+        										title="Editar"
+    										>
+        										<i class="fas fa-pencil-alt"></i>
+    										</button>
 										</td>
 									</tr>
 								<?php endforeach; ?>

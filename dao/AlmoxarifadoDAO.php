@@ -48,15 +48,11 @@ class AlmoxarifadoDAO
 
     public function excluir($id_almoxarifado)
     {
-        try {
-            $pdo = Conexao::connect();
-            $sql = 'DELETE FROM almoxarifado WHERE id_almoxarifado = :id_almoxarifado';
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':id_almoxarifado', $id_almoxarifado);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela almoxarifado = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        $pdo = Conexao::connect();
+        $sql = 'DELETE FROM almoxarifado WHERE id_almoxarifado = :id_almoxarifado';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':id_almoxarifado', $id_almoxarifado);
+        $stmt->execute();
     }
     public function listarTodos()
     {
@@ -70,5 +66,25 @@ class AlmoxarifadoDAO
         }
         
         return json_encode($almoxarifados);
+    }
+
+    public function alterarAlmoxarifado($almoxarifado)
+    {
+        $pdo = Conexao::connect();
+
+        $sql = 'UPDATE almoxarifado 
+        set descricao_almoxarifado = :descricao_almoxarifado 
+        where id_almoxarifado = :id_almoxarifado';
+
+        $sql = str_replace("'", "\'", $sql);
+
+        $stmt = $pdo->prepare($sql);
+
+        $descricao = $almoxarifado->getDescricao_almoxarifado();
+        $id = $almoxarifado->getId_almoxarifado();
+
+        $stmt->bindParam(':descricao_almoxarifado', $descricao);
+        $stmt->bindParam(':id_almoxarifado', $id);
+        $stmt->execute();
     }
 }
