@@ -22,13 +22,22 @@ require_once ROOT . "/html/personalizacao_display.php";
 include_once ROOT . '/dao/Conexao.php';
 include_once ROOT . '/dao/SaidaDAO.php';
 
-// Validando sessão de saída
-if (!isset($_SESSION['saida'])) {
-	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=SaidaControle&nextPage=' . WWW . 'html/matPat/listar_saida.php');
-} else {
-	$saida = $_SESSION['saida'];
-	unset($_SESSION['saida']);
-}
+$tipo = $_GET['tipo'] ?? 'ativo';
+
+	if (!isset($_SESSION['saida'])) {
+		if($tipo === 'arquivado') {
+			header('Location: ' . WWW . 'controle/control.php?metodo=listarArquivados&nomeClasse=SaidaControle');
+		} else {
+			header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=SaidaControle&nextPage=' . WWW . 'html/listar_saida.php');
+		}
+
+		exit;
+	}
+	if (isset($_SESSION['saida'])) {
+		$saida = $_SESSION['saida'];
+
+		unset($_SESSION['saida']);
+	}
 ?>
 <!doctype html>
 <html class="fixed">
@@ -163,6 +172,19 @@ if (!isset($_SESSION['saida'])) {
 					<!-- start: page -->
 
 					<div class="panel-body">
+						<div style="margin-bottom: 15px;">
+							<a href="listar_saida.php?tipo=ativo">
+								<button <?= $tipo === 'ativo' ? 'style="font-weight:bold;"' : ''?>>
+									Ativos
+								</button>
+							</a>
+
+							<a href="listar_saida.php?tipo=arquivado">
+								<button <?= $tipo === 'arquivado' ? 'style="font-weight:bold;"' : ''?>>
+									Arquivados
+								</button>
+							</a>
+						</div>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>

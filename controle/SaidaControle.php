@@ -102,4 +102,12 @@ class SaidaControle
             echo "ERROR: " . $e->getMessage();
         }
     }
+
+    public function listarArquivados()
+    {
+        $saidaDAO = new SaidaDAO();
+        $_SESSION['saida'] = $saidaDAO->listarArquivados();
+
+        header('Location: ' . WWW . 'html/matPat/listar_saida.php?tipo=arquivado');
+    }
 }

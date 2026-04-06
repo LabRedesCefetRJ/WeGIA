@@ -119,4 +119,12 @@ class EntradaControle
             echo "ERROR: " . $e->getMessage();
         }
     }
+
+    public function listarArquivados()
+    {
+        $entradaDAO = new EntradaDAO();
+        $_SESSION['entrada'] = $entradaDAO->listarArquivados();
+
+        header('Location: ' . WWW . 'html/matPat/listar_entrada.php?tipo=arquivado');
+    }
 }

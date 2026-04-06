@@ -37,8 +37,16 @@ require_once ROOT . "/html/personalizacao_display.php";
 	include_once ROOT . '/dao/Conexao.php';
 	include_once ROOT . '/dao/EntradaDAO.php';
 
+	$tipo = $_GET['tipo'] ?? 'ativo';
+
 	if (!isset($_SESSION['entrada'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodosComProdutos&nomeClasse=EntradaControle&nextPage=' . WWW . 'html/listar_entrada.php');
+		if($tipo === 'arquivado') {
+			header('Location: ' . WWW . 'controle/control.php?metodo=listarArquivados&nomeClasse=EntradaControle');
+		} else {
+			header('Location: ' . WWW . 'controle/control.php?metodo=listarTodosComProdutos&nomeClasse=EntradaControle&nextPage=' . WWW . 'html/listar_entrada.php');
+		}
+
+		exit;
 	}
 	if (isset($_SESSION['entrada'])) {
 		$entrada = $_SESSION['entrada'];
@@ -173,6 +181,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 						<span style="color:red">Para mais informações, clique em uma entrada(*)</span>
 					</header>
 					<div class="panel-body">
+						<div style="margin-bottom: 15px;">
+							<a href="listar_entrada.php?tipo=ativo">
+								<button <?= $tipo === 'ativo' ? 'style="font-weight:bold;"' : ''?>>
+									Ativos
+								</button>
+							</a>
+
+							<a href="listar_entrada.php?tipo=arquivado">
+								<button <?= $tipo === 'arquivado' ? 'style="font-weight:bold;"' : ''?>>
+									Arquivados
+								</button>
+							</a>
+						</div>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>

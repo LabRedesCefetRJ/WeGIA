@@ -58,7 +58,7 @@ class AlmoxarifadoDAO
     {
         $almoxarifados = array();
         $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado ORDER BY descricao_almoxarifado");
+        $consulta = $pdo->query("SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado WHERE ativo = 1 ORDER BY descricao_almoxarifado");
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
             $almoxarifados[$x] = array('id_almoxarifado' => htmlspecialchars($linha['id_almoxarifado']), 'descricao_almoxarifado' => htmlspecialchars($linha['descricao_almoxarifado']));
@@ -86,5 +86,109 @@ class AlmoxarifadoDAO
         $stmt->bindParam(':descricao_almoxarifado', $descricao);
         $stmt->bindParam(':id_almoxarifado', $id);
         $stmt->execute();
+    }
+
+    public function listarArquivados()
+    {
+        $almoxarifados = array();
+        $pdo = Conexao::connect();
+
+        $consulta = $pdo->query("
+            SELECT id_almoxarifado, descricao_almoxarifado
+            FROM almoxarifado
+            WHERE ativo = 0
+            ORDER BY descricao_almoxarifado
+        ");
+
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $almoxarifados[] = $linha;
+        }
+
+        return json_encode($almoxarifados);
+    }
+
+    public function arquivar($id)
+    {
+        if (!is_numeric($id) || $id < 1) {
+            throw new InvalidArgumentException('ID de almoxarifado inválido.');
+        }
+
+        $pdo = Conexao::connect();
+
+        try {
+            $pdo->beginTransaction();
+
+            $stmt1 = $pdo->prepare("UPDATE almoxarifado SET ativo = 0 WHERE id_almoxarifado = :id");
+            $stmt1->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt1->execute();
+
+            $stmt2 = $pdo->prepare("UPDATE entrada SET ativo = 0 WHERE id_almoxarifado = :id");
+            $stmt2->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt2->execute();
+
+            $stmt3 = $pdo->prepare("UPDATE saida SET ativo = 0 WHERE id_almoxarifado = :id");
+            $stmt3->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt3->execute();
+
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function desarquivar($id)
+    {
+        if (!is_numeric($id) || $id < 1) {
+            throw new InvalidArgumentException('ID de almoxarifado inválido.');
+        }
+
+        $pdo = Conexao::connect();
+
+        try {
+            $pdo->beginTransaction();
+
+            $stmt1 = $pdo->prepare("UPDATE almoxarifado SET ativo = 1 WHERE id_almoxarifado = :id");
+            $stmt1->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt1->execute();
+
+            $stmt2 = $pdo->prepare("UPDATE entrada SET ativo = 1 WHERE id_almoxarifado = :id");
+            $stmt2->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt2->execute();
+
+            $stmt3 = $pdo->prepare("UPDATE saida SET ativo = 1 WHERE id_almoxarifado = :id");
+            $stmt3->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt3->execute();
+
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function temVinculo($id)
+    {
+        $pdo = Conexao::connect();
+
+        $sql1 = "SELECT COUNT(*) FROM almoxarife WHERE id_almoxarifado = :id";
+        $stmt1 = $pdo->prepare($sql1);
+        $stmt1->bindParam(':id', $id);
+        $stmt1->execute();
+        $temAlmoxarife = $stmt1->fetchColumn() > 0;
+
+        $sql2 = "SELECT COUNT(*) FROM entrada WHERE id_almoxarifado = :id";
+        $stmt2 = $pdo->prepare($sql2);
+        $stmt2->bindParam(':id', $id);
+        $stmt2->execute();
+        $temEntrada = $stmt2->fetchColumn() > 0;
+
+        $sql3 = "SELECT COUNT(*) FROM saida WHERE id_almoxarifado = :id";
+        $stmt3 = $pdo->prepare($sql3);
+        $stmt3->bindParam(':id', $id);
+        $stmt3->execute();
+        $temSaida = $stmt3->fetchColumn() > 0;
+
+        return ($temAlmoxarife || $temEntrada || $temSaida);
     }
 }

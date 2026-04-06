@@ -63,7 +63,7 @@ class EntradaDAO
             INNER JOIN origem o ON o.id_origem = e.id_origem
             INNER JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
             INNER JOIN tipo_entrada t ON t.id_tipo = e.id_tipo
-            INNER JOIN pessoa p ON p.id_pessoa = e.id_responsavel");
+            INNER JOIN pessoa p ON p.id_pessoa = e.id_responsavel WHERE e.ativo = 1");
         $x=0;
         while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
             //formatar data
@@ -89,6 +89,7 @@ class EntradaDAO
                 INNER JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
                 INNER JOIN tipo_entrada t ON t.id_tipo = e.id_tipo
                 INNER JOIN pessoa p ON p.id_pessoa = e.id_responsavel
+                where e.ativo = 1
             GROUP BY e.id_entrada");
             $x=0;
             while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
@@ -156,6 +157,27 @@ class EntradaDAO
             $ultima = array('id_entrada'=>$linha['id_entrada']);
         }
         return $ultima;
+    }
+
+    public function listarArquivados()
+    {
+        $entradas = array();
+        $pdo = Conexao::connect();
+
+        $consulta = $pdo->query("
+            SELECT e.id_entrada, o.nome_origem, a.descricao_almoxarifado, t.descricao, p.nome, e.data, e.hora, e.valor_total 
+            FROM entrada e 
+            INNER JOIN origem o ON o.id_origem = e.id_origem
+            INNER JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
+            INNER JOIN tipo_entrada t ON t.id_tipo = e.id_tipo
+            INNER JOIN pessoa p ON p.id_pessoa = e.id_responsavel WHERE e.ativo = 0
+        ");
+
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $almoxarifados[] = $linha;
+        }
+
+        return json_encode($almoxarifados);
     }
 }
 ?>

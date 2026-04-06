@@ -34,6 +34,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `wegia`.`almoxarifado` (
   `id_almoxarifado` INT(11) NOT NULL AUTO_INCREMENT,
   `descricao_almoxarifado` VARCHAR(240) NOT NULL,
+  `ativo` TINYINT(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id_almoxarifado`))
 ENGINE = InnoDB;
 
@@ -451,6 +452,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`entrada` (
   `data` DATE NULL DEFAULT NULL,
   `hora` TIME NULL DEFAULT NULL,
   `valor_total` DECIMAL(10,2) NULL DEFAULT NULL,
+  `ativo` TINYINT(1) DEFAULT '1',
   PRIMARY KEY (`id_entrada`),
   INDEX `id_origem` (`id_origem` ASC),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),
@@ -615,6 +617,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saida` (
   `data` DATE NULL DEFAULT NULL,
   `hora` TIME NULL DEFAULT NULL,
   `valor_total` DECIMAL(10,2) NULL DEFAULT NULL,
+  `ativo` TINYINT(1) DEFAULT '1',
   PRIMARY KEY (`id_saida`),
   INDEX `id_destino` (`id_destino` ASC),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),

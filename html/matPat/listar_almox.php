@@ -20,8 +20,6 @@ permissao($_SESSION['id_pessoa'], 21, 5);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
-require_once ROOT . '/classes/Csrf.php';
-
 ?>
 
 <!doctype html>
@@ -32,11 +30,19 @@ require_once ROOT . '/classes/Csrf.php';
 	include_once ROOT . '/dao/Conexao.php';
 	include_once ROOT . '/dao/AlmoxarifadoDAO.php';
 
+	$tipo = $_GET['tipo'] ?? 'ativo';
+	$tipo = in_array($tipo, ['ativo', 'arquivado'], true) ? $tipo : 'ativo';
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/listar_almox.php');
+		if ($tipo === 'arquivado') {
+			header('Location: ' . WWW . 'controle/control.php?metodo=listarArquivados&nomeClasse=AlmoxarifadoControle');
+		} else {
+			header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/listar_almox.php');
+		}
+
 		exit;
 	}
+	
 	if (isset($_SESSION['almoxarifado'])) {
 		$almoxarifado = $_SESSION['almoxarifado'];
 		unset($_SESSION['almoxarifado']);
@@ -151,6 +157,49 @@ require_once ROOT . '/classes/Csrf.php';
 						<h2 class="panel-title">Almoxarifado</h2>
 					</header>
 					<div class="panel-body">
+						<div style="margin-bottom: 15px;">
+							<a href="listar_almox.php?tipo=ativo">
+								<button <?= $tipo === 'ativo' ? 'style="font-weight:bold;"' : ''?>>
+									Ativos
+								</button>
+							</a>
+
+							<a href="listar_almox.php?tipo=arquivado">
+								<button <?= $tipo === 'arquivado' ? 'style="font-weight:bold;"' : ''?>>
+									Arquivados
+								</button>
+							</a>
+						</div>
+						<?php if(isset($_SESSION['erro'])): ?>
+							<div style="
+								background:#fff3cd;
+								border:1px solid #ffeeba;
+								padding:15px;
+								margin-bottom:15px;
+								border-radius:5px;">
+								<strong>Atenção:</strong><br>
+								<?= $_SESSION['erro'] ?><br><br>
+
+								<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+									<input type="hidden" name="metodo" value="arquivar">
+        							<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+        							<input type="hidden" name="id_almoxarifado" value="<?= $_SESSION['id_arquivar'] ?>">
+									<?= Csrf::inputField() ?>
+
+									<button style="background:#007bff;color:white;border:none;padding:5px 10px;">
+										Arquivar
+									</button>
+								</form>
+
+								<form method="GET" action="listar_almox.php" style="display:inline;">
+									<button style="background:#6c757d;color:white;border:none;padding:5px 10px;">
+										Cancelar
+									</button>
+								</form>
+							</div>
+						<?php unset($_SESSION['erro']);
+						unset($_SESSION['id_arquivar']);
+						endif?>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>
@@ -163,24 +212,43 @@ require_once ROOT . '/classes/Csrf.php';
 									<tr>
 										<td><?= htmlspecialchars($item['descricao_almoxarifado']) ?></td>
 										<td>
-											<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
-        										<input type="hidden" name="metodo" value="excluir">
-        										<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
-        										<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
-        										<?= Csrf::inputField() ?>
-        										<button type="submit" style="border:none;background:none;cursor:pointer;" title="Excluir">
-            										<i class="fas fa-trash-alt"></i>
-        										</button>
-    										</form>
+											<?php if ($tipo==='ativo'):?>
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+        											<input type="hidden" name="metodo" value="excluir">
+        											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+        											<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
+        											<?= Csrf::inputField() ?>
+        											<button type="submit" style="border:none;background:none;cursor:pointer;" title="Excluir">
+            											<i class="fas fa-trash-alt"></i>
+        											</button>
+    											</form>
 
-    										<button
-												type="button"
-        										onclick="editar(<?= (int)$item['id_almoxarifado'] ?>)"
-        										style="border:none;background:none;cursor:pointer;"
-        										title="Editar"
-    										>
-        										<i class="fas fa-pencil-alt"></i>
-    										</button>
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+													<input type="hidden" name="metodo" value="arquivar">
+        											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+        											<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
+													<?= Csrf::inputField() ?>
+													<button title="Arquivar" style="border:none;background:none;cursor:pointer;"><i class="fa-solid fa-folder"></i></button>
+												</form>
+
+    											<button
+													type="button"
+        											onclick="editar(<?= (int)$item['id_almoxarifado'] ?>)"
+        											style="border:none;background:none;cursor:pointer;"
+        											title="Editar"
+    											>
+        											<i class="fas fa-pencil-alt"></i>
+    											</button>
+
+											<?php else: ?>
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+													<input type="hidden" name="metodo" value="desarquivar">
+													<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+													<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
+													<?= Csrf::inputField() ?>
+													<button title="Restaurar" style="border:none;background:none;cursor:pointer;"><i class="fa-solid fa-folder-open"></i></button>
+												</form>
+											<?php endif; ?>
 										</td>
 									</tr>
 								<?php endforeach; ?>
