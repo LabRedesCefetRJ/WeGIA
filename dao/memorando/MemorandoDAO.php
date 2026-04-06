@@ -27,7 +27,7 @@ class MemorandoDAO
 			$pdo = Conexao::connect();
 			$cpf_usuario = $_SESSION["usuario"];
 			$usuario = new UsuarioDAO;
-			$id_usuario = $usuario->obterUsuario($cpf_usuario)['0']['id_pessoa'];
+			$id_usuario = $usuario->obterUsuario($cpf_usuario)['id_pessoa'];
 
 			$sql = "SELECT d.id_memorando, d.id_destinatario, m.titulo, d.data, d.id_remetente, m.id_status_memorando, m.id_pessoa, d.id_destinatario FROM despacho d INNER JOIN memorando m ON(d.id_memorando=m.id_memorando) WHERE (d.id_despacho IN (SELECT MAX(id_despacho) FROM despacho GROUP BY id_memorando)) AND m.id_status_memorando!='6' AND d.id_destinatario=:idUsuario ORDER BY m.data DESC";
 			$stmt = $pdo->prepare($sql);
@@ -55,8 +55,7 @@ class MemorandoDAO
 			$pdo = Conexao::connect();
 			$cpf_usuario = $_SESSION["usuario"];
 			$usuario = new UsuarioDAO;
-			$id_usuario = $usuario->obterUsuario($cpf_usuario);
-			$id_usuario = $id_usuario['0']['id_pessoa'];
+			$id_usuario = $usuario->obterUsuario($cpf_usuario)['id_pessoa'];
 
 			$sql = "SELECT titulo, id_status_memorando, id_pessoa, id_memorando FROM memorando WHERE id_memorando=:idMemorando";
 			$stmt = $pdo->prepare($sql);
@@ -84,7 +83,7 @@ class MemorandoDAO
 			$Memorandos = array();
 			$cpf_usuario = $_SESSION["usuario"];
 			$usuario = new UsuarioDAO;
-			$id_usuario = $usuario->obterUsuario($cpf_usuario)['0']['id_pessoa'];
+			$id_usuario = $usuario->obterUsuario($cpf_usuario)['id_pessoa'];
 			$pdo = Conexao::connect();
 
 			$sql = "SELECT DISTINCT m.id_memorando, m.titulo, m.data, p.nome, m.id_status_memorando FROM memorando m JOIN despacho d ON(d.id_memorando=m.id_memorando) JOIN pessoa p ON(m.id_pessoa=p.id_pessoa) WHERE d.id_remetente=:idUsuario";
@@ -116,7 +115,7 @@ class MemorandoDAO
 			$Memorandos = array();
 			$cpf_usuario = $_SESSION["usuario"];
 			$usuario = new UsuarioDAO;
-			$id_usuario = $usuario->obterUsuario($cpf_usuario)['0']['id_pessoa'];
+			$id_usuario = $usuario->obterUsuario($cpf_usuario)['id_pessoa'];
 			$pdo = Conexao::connect();
 
 			$sql = "SELECT DISTINCT m.id_memorando FROM memorando m JOIN despacho d ON(d.id_memorando=m.id_memorando) JOIN pessoa p ON(m.id_pessoa=p.id_pessoa) WHERE (d.id_destinatario=:idUsuario1 OR d.id_remetente=:idUsuario2)";
