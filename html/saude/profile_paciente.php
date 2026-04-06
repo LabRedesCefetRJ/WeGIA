@@ -1014,7 +1014,7 @@ try {
 
                       <div class="container">
                         <div class="row">
-                          <p><span class="text-bold">Nome:</span> <?= $pacienteOverview['nome'] . ' ' . $pacienteOverview['sobrenome'] ?></p>
+                          <p><span class="text-bold">Nome:</span> <?= htmlspecialchars($pacienteOverview['nome'] . ' ' . $pacienteOverview['sobrenome'], ENT_QUOTES, 'UTF-8') ?></p>
                         </div>
                         <div class="row">
                           <p><span class="text-bold">Sexo:</span>
