@@ -61,8 +61,20 @@ $app->get('/wegia', function (Request $request, Response $response, $args) {
     return $response;
 });
 
-$app->get('/protected', function (Request $request, Response $response, $args) {
-    $response->getBody()->write("This is a protected route!");
+$app->get('/dashboard', function (Request $request, Response $response, $args) {
+    //pegar do token o id do usuário e usar para mostrar as informações do usuário logado
+    $userId = $request->getAttribute('user_id');
+
+    if (!$userId) {
+        $response->getBody()->write(json_encode(['error' => 'User ID not found']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    $pessoaRepository = new \api\modules\Pessoa\PessoaRepository($this->get(PDO::class));
+    $user = $pessoaRepository->findById($userId);
+    $userName = $user ? $user['nome'] . ' ' . $user['sobrenome'] : 'Unknown';
+
+    $response->getBody()->write("Hello, $userName! Welcome to your dashboard.");
     return $response;
 })->add($container->get(AuthMiddleware::class));
 

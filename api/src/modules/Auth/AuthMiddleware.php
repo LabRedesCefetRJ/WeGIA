@@ -28,7 +28,7 @@ class AuthMiddleware
         try {
             $decoded = $this->authService->validateToken($token);
 
-            $request = $request->withAttribute('token', $decoded);
+            $request = $request->withAttribute('user_id', $decoded->sub);
 
         } catch (\Exception $e) {
             return $this->unauthorized($e->getMessage());

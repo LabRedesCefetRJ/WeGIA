@@ -48,7 +48,7 @@ class AuthService
             'aud' => 'wegia-users',
             'iat' => time(),
             'exp' => time() + 3600,
-            'sub' => $user['id']
+            'sub' => $user['id_pessoa']
         ];
 
         $token = JWT::encode($payload, $this->secret, 'HS256');
