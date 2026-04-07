@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
@@ -95,7 +97,7 @@ $stmtAtendido->execute();
 $dadosAtendido = $stmtAtendido->fetch(PDO::FETCH_ASSOC);
 $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
-$dataAtual = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+$dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>

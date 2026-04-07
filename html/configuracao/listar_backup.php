@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -22,30 +24,54 @@ require_once "../geral/msg.php";
 
 require_once "../../config.php";
 
-define("DUMP_IDENTIFIER", "dump");
+function loadDatabaseBackups(string $backupDir): array
+{
+	$pattern = rtrim($backupDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '*.dump.tar.gz';
+	$backups = [];
 
+	foreach (glob($pattern) ?: [] as $filePath) {
+		if (!preg_match('/^\d{14}(?:-(?:autosave|import))?\.dump\.tar\.gz$/i', basename($filePath))) {
+			continue;
+		}
 
-$bkpFiles = scandir(BKP_DIR);
-array_shift($bkpFiles);
-array_shift($bkpFiles);
-foreach ($bkpFiles as $key => $file) {
-	$bkpFiles[$key] = explode(".", $file);
-	if ($bkpFiles[$key][1] != DUMP_IDENTIFIER) {
-		unset($bkpFiles[$key]);
-	} else {
-		$bkpFiles[$key] = (object)[
-			'nome' => implode(".", $bkpFiles[$key]),
-			'ano' => substr($bkpFiles[$key][0], 0, 4),
-			'mes' => substr($bkpFiles[$key][0], 4, 2),
-			'dia' => substr($bkpFiles[$key][0], 6, 2),
-			'hora' => substr($bkpFiles[$key][0], 8, 2),
-			'min' => substr($bkpFiles[$key][0], 10, 2),
-			'seg' => substr($bkpFiles[$key][0], 12, 2),
-			'tamanho' => filesize(BKP_DIR . implode(".", $bkpFiles[$key]))
+		$fileSize = filesize($filePath);
+		$fileModifiedAt = filemtime($filePath);
+		if ($fileSize === false || $fileModifiedAt === false) {
+			continue;
+		}
+
+		$size = (float) $fileSize;
+		$unit = 'B';
+
+		if ($size >= 1024 * 1024 * 1024) {
+			$size /= 1024 * 1024 * 1024;
+			$unit = 'GB';
+		} elseif ($size >= 1024 * 1024) {
+			$size /= 1024 * 1024;
+			$unit = 'MB';
+		} elseif ($size >= 1024) {
+			$size /= 1024;
+			$unit = 'KB';
+		}
+
+		$backupDateTime = (new DateTimeImmutable())->setTimestamp($fileModifiedAt);
+
+		$backups[] = [
+			'nome' => basename($filePath),
+			'tamanho' => number_format($size, $unit === 'B' ? 0 : 1, '.', '') . ' ' . $unit,
+			'data' => $backupDateTime->format('d/m/Y'),
+			'hora' => $backupDateTime->format('H:i:s'),
 		];
 	}
+
+	usort($backups, static function (array $firstBackup, array $secondBackup): int {
+		return strcmp($secondBackup['nome'], $firstBackup['nome']);
+	});
+
+	return $backups;
 }
-$bkpFiles = array_values($bkpFiles);
+
+$bkpFiles = loadDatabaseBackups(BKP_DIR);
 
 ?>
 <!doctype html>
@@ -132,55 +158,6 @@ $bkpFiles = array_values($bkpFiles);
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
 		});
-		$(function() {
-			let estoque = <?= JSON_encode($bkpFiles) ?>;
-
-			$.each(estoque, function(i, item) {
-				let fSize = item.tamanho;
-				if (fSize >= 1000000000) {
-					fSize = (item.tamanho / 1000000000).toFixed(1) + " GB";
-				} else if (fSize >= 1000000) {
-					fSize = (item.tamanho / 1000000).toFixed(1) + " MB";
-				} else {
-					fSize = (item.tamanho / 1000).toFixed(1) + " KB";
-				}
-				$("#tabela")
-					.append($("<tr class='item " + item.nome + "'>")
-						.append($("<td class='txt-center'>")
-							.text(item.nome)
-						)
-						.append($("<td class='txt-center'>")
-							.text(fSize)
-						)
-						.append($("<td class='txt-center'>")
-							.text((!isNaN(Number(item.dia, 10)) && !isNaN(Number(item.mes, 10)) && !isNaN(Number(item.ano))) ? item.dia + "/" + item.mes + "/" + item.ano : "Indefinido")
-						)
-						.append($("<td class='txt-center'>")
-							.text((!isNaN(Number(item.hora, 10)) && !isNaN(Number(item.dia, 10)) && !isNaN(Number(item.seg))) ? item.hora + ":" + item.min + (item.seg ? ":" + item.seg : "") : "N/A")
-						)
-						.append($("<td class='txt-center'>")
-							.append($("<div class='btn-container'>")
-								.append($("<a href='#' onclick='confirmRestore(`" + item.nome + "`)'/>")
-									.append($("<button class='btn btn-primary'/>")
-										.html('<i class="fa fa-refresh" aria-hidden="true"></i>')
-									)
-								)
-								.append($("<a href='#' onclick='confirmDelete(`" + item.nome + "`)'/>")
-									.append($("<button class='btn btn-danger' />")
-										.html('<i class="fa fa-trash-o" aria-hidden="true" style="font-family: FontAwesome;" />')
-									)
-								)
-								.append($("<a href='#' onclick='confirmDownload(`" + item.nome + "`)'/>")
-									.append($("<button class='btn btn-success' />")
-										.html('<i class="fa fa-download" aria-hidden="true" style="font-family: FontAwesome;" />')
-									)
-								)
-							)
-						)
-					)
-			});
-		});
-
 		$(function() {
 			$('#datatable-default').DataTable({
 				"order": [
@@ -269,6 +246,30 @@ $bkpFiles = array_values($bkpFiles);
 								</tr>
 							</thead>
 							<tbody id="tabela">
+								<?php foreach ($bkpFiles as $backup) :
+									$fileName = htmlspecialchars($backup['nome'], ENT_QUOTES, 'UTF-8');
+									$fileNameJson = htmlspecialchars(json_encode($backup['nome'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+								?>
+									<tr class="item">
+										<td class="txt-center"><?= $fileName ?></td>
+										<td class="txt-center"><?= htmlspecialchars($backup['tamanho'], ENT_QUOTES, 'UTF-8') ?></td>
+										<td class="txt-center"><?= htmlspecialchars($backup['data'], ENT_QUOTES, 'UTF-8') ?></td>
+										<td class="txt-center"><?= htmlspecialchars($backup['hora'], ENT_QUOTES, 'UTF-8') ?></td>
+										<td class="txt-center">
+											<div class="btn-container">
+												<button type="button" class="btn btn-primary" onclick="confirmRestore(<?= $fileNameJson ?>)">
+													<i class="fa fa-refresh" aria-hidden="true"></i>
+												</button>
+												<button type="button" class="btn btn-danger" onclick="confirmDelete(<?= $fileNameJson ?>)">
+													<i class="fa fa-trash-o" aria-hidden="true" style="font-family: FontAwesome;"></i>
+												</button>
+												<button type="button" class="btn btn-success" onclick="confirmDownload(<?= $fileNameJson ?>)">
+													<i class="fa fa-download" aria-hidden="true" style="font-family: FontAwesome;"></i>
+												</button>
+											</div>
+										</td>
+									</tr>
+								<?php endforeach; ?>
 							</tbody>
 						</table>
 					</div>
@@ -297,9 +298,25 @@ $bkpFiles = array_values($bkpFiles);
 
 	function confirmDelete(file) {
 		if (window.confirm("ATENÇÃO! Você tem certeza que deseja deletar esse arquivo de backup do sistema?")) {
-			form = $("<form method='post' action='./gerenciar_backup.php' />")
-				.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"))
-				.append($("<input type='text' name='action' value='remove' readonly hidden />"));
+			$('.panel form').remove();
+
+			let form = $("<form>", {
+				method: "post",
+				action: "./gerenciar_backup.php"
+			});
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "file",
+				value: file
+			}));
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "action",
+				value: "remove"
+			}));
+
 			$('.panel').append(form);
 			form.submit();
 		}
@@ -307,17 +324,44 @@ $bkpFiles = array_values($bkpFiles);
 
 	function confirmRestore(file) {
 		if (window.confirm("ATENÇÃO! Você tem certeza que deseja sobrescrever a Base de Dados atual pela selecionada?")) {
-			form = $("<form method='post' action='./gerenciar_backup.php' />")
-				.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"))
-				.append($("<input type='text' name='action' value='restore' readonly hidden />"));
+			$('.panel form').remove();
+
+			let form = $("<form>", {
+				method: "post",
+				action: "./gerenciar_backup.php"
+			});
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "file",
+				value: file
+			}));
+
+			form.append($("<input>", {
+				type: "hidden",
+				name: "action",
+				value: "restore"
+			}));
+
 			$('.panel').append(form);
 			form.submit();
 		}
 	}
 
 	function confirmDownload(file) {
-		form = $("<form method='post' action='./exportar_dump.php' />")
-			.append($("<input type='text' name='file' value='" + file + "' readonly hidden />"));
+		$('.panel form').remove();
+
+		let form = $("<form>", {
+			method: "post",
+			action: "./exportar_dump.php"
+		});
+
+		form.append($("<input>", {
+			type: "hidden",
+			name: "file",
+			value: file
+		}));
+
 		$('.panel').append(form);
 		form.submit();
 	}

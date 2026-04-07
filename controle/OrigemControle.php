@@ -1,7 +1,10 @@
 <?php
+if (session_status() == PHP_SESSION_NONE)
+    session_start();
+
 include_once ROOT . '/classes/Origem.php';
 include_once ROOT . '/dao/OrigemDAO.php';
-require_once ROOT . '/html/contribuicao/helper/Util.php';
+require_once ROOT . '/classes/Util.php';
 
 class OrigemControle
 {
@@ -51,16 +54,16 @@ class OrigemControle
 
     public function listarTodos()
     {
-        $nextPage = isset($_REQUEST['nextPage']) ? $_REQUEST['nextPage'] : '../html/origem.html';
-        $origemDAO = new OrigemDAO();
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(listar_origem)\.php)$#';
 
         try {
+            $origemDAO = new OrigemDAO();
             $origens = $origemDAO->listarTodos();
-            session_start();
+
             $_SESSION['origem'] = $origens;
 
-            // Escapa a URL antes de redirecionar
-            header('Location: ' . htmlspecialchars($nextPage, ENT_QUOTES, 'UTF-8'));
+            preg_match($regex, $nextPage) ? header('Location: ' . htmlspecialchars($nextPage, ENT_QUOTES, 'UTF-8')) : header('Location: ' . WWW . 'html/home.php');
             exit;
         } catch (PDOException $e) {
             error_log("Erro ao listar origens: " . $e->getMessage());
@@ -70,14 +73,17 @@ class OrigemControle
 
     public function listarId_Nome()
     {
-        $nextPage = isset($_REQUEST['nextPage']) ? $_REQUEST['nextPage'] : '../html/origem.html';
-        $origemDAO = new OrigemDAO();
+
+        $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(cadastro_entrada)\.php)$#';
 
         try {
+            $origemDAO = new OrigemDAO();
             $origens = $origemDAO->listarId_Nome();
-            session_start();
+
             $_SESSION['origem'] = $origens;
-            header('Location: ' . htmlspecialchars($nextPage, ENT_QUOTES, 'UTF-8'));
+
+            preg_match($regex, $nextPage) ? header('Location: ' . htmlspecialchars($nextPage, ENT_QUOTES, 'UTF-8')) : header('Location: ' . WWW . 'html/home.php');
             exit;
         } catch (PDOException $e) {
             error_log("Erro ao listar ID/Nome: " . $e->getMessage());

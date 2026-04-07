@@ -1,57 +1,22 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ". WWW ."html/index.php");
+	header("Location: " . WWW . "html/index.php");
 	exit();
-}else{
+} else {
 	session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
 
-// Proteção contra injeção de SQL utilizando prepared statements
-$stmt = $conexao->prepare("SELECT id_cargo FROM funcionario WHERE id_pessoa = ?");
-$stmt->bind_param("i", $id_pessoa);
-$stmt->execute(); 
-$resultado = $stmt->get_result();
-
-if ($resultado && $resultado->num_rows > 0) {
-	$row = $resultado->fetch_assoc();
-	$id_cargo = $row['id_cargo'];
-
-	// Segunda consulta usando prepared statements
-	$stmt = $conexao->prepare("SELECT id_acao FROM permissao WHERE id_cargo = ? AND id_recurso = 24");
-	$stmt->bind_param("i", $id_cargo);
-	$stmt->execute();
-	$resultado = $stmt->get_result();
-
-	if ($resultado && $resultado->num_rows > 0) {
-		$permissao = $resultado->fetch_assoc();
-		if ($permissao['id_acao'] < 3) {
-			$msg = urlencode("Você não tem as permissões necessárias para essa página.");
-			header("Location: " . WWW ."html/home.php?msg_c=$msg");
-			exit();
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = urlencode("Você não tem as permissões necessárias para essa página.");
-		header("Location: " . WWW ."html/home.php?msg_c=$msg");
-		exit();
-	}
-} else {
-	$permissao = 1;
-	$msg = urlencode("Você não tem as permissões necessárias para essa página.");
-	header("Location: " . WWW ."html/home.php?msg_c=$msg");
-	exit();
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($id_pessoa, 24, 3);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -63,22 +28,22 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 <head>
 	<?php
-	include_once ROOT .'/dao/Conexao.php';
-	include_once ROOT .'/dao/AlmoxarifadoDAO.php';
-	include_once ROOT .'/dao/TipoEntradaDAO.php';
-	include_once ROOT .'/dao/ProdutoDAO.php';
+	include_once ROOT . '/dao/Conexao.php';
+	include_once ROOT . '/dao/AlmoxarifadoDAO.php';
+	include_once ROOT . '/dao/TipoEntradaDAO.php';
+	include_once ROOT . '/dao/ProdutoDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (!isset($_SESSION['tipo_saida'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage='. WWW . 'html/matPat/cadastro_saida.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (!isset($_SESSION['autocomplete'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage='. WWW . 'html/matPat/cadastro_saida.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (!isset($_SESSION['destino'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage='. WWW . 'html/matPat/cadastro_saida.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset($_SESSION['autocomplete']) && isset($_SESSION['destino'])) {
 
