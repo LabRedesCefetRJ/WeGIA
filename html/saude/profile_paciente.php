@@ -451,10 +451,10 @@ try {
             $("#imagem").attr("src", "../../img/semfoto.png");
           }
           if (item.sexo == "m") {
-            $("#sexo").html("Sexo: <i class='fa fa-male'></i>  Masculino");
+            $("#sexo").html("Sexo: <i class='fa fa-male'></i>");
             $("#radioM").prop('checked', true);
           } else if (item.sexo == "f") {
-            $("#sexo").html("Sexo: <i class='fa fa-female'>  Feminino");
+            $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
             $("#radioF").prop('checked', true);
           }
 
@@ -1041,7 +1041,7 @@ try {
                         </div>
                         <div class="row">
                           <p><span class="text-bold">Sexo:</span>
-                            <?= $pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"> </i>' . ' Feminino' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"> </i>' . ' Masculino';
+                            <?= $pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"></i>' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"></i>';
                             ?>
                           </p>
                         </div>

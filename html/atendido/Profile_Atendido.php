@@ -197,10 +197,10 @@ $dependente = json_encode($dependente);
             $("#imagem").attr("src", "../../img/semfoto.png");
           }
           if (item.sexo == "m") {
-            $("#sexo").html("Sexo: <i class='fa fa-male'></i>  Masculino");
+            $("#sexo").html("Sexo: <i class='fa fa-male'></i>");
             $("#radioM").prop('checked', true);
           } else if (item.sexo == "f") {
-            $("#sexo").html("Sexo: <i class='fa fa-female'>  Feminino");
+            $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
             $("#radioF").prop('checked', true);
           }
 

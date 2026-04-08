@@ -108,12 +108,12 @@ try {
         $("#cpf").val(item.cpf).prop('disabled', true);
         $("#rg").val(item.registro_geral);
         if (item.sexo == "m") {
-          $("#sexo").html("Sexo: <i class='fa fa-male'></i>  Masculino");
+          $("#sexo").html("Sexo: <i class='fa fa-male'></i>");
           $("#radioM").prop('checked', true);
           $("#radioF").prop('disabled', true);
 
         } else if (item.sexo == "f") {
-          $("#sexo").html("Sexo: <i class='fa fa-female'>  Feminino");
+          $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
           $("#radioF").prop('checked', true);
           $("#radioM").prop('disabled', true);
 
