@@ -165,10 +165,33 @@ function validateRestoreSqlFile(string $filePath): void
 
 function backupBD(): string
 {
+    set_time_limit(0);
     $timestamp = getBackupTimestamp();
     $baseName  = $timestamp . '.dump';
 
-    $tmpDir = sys_get_temp_dir() . '/db_backup_' . bin2hex(random_bytes(8));
+    $tmpDirCandidates = [];
+
+    $sysTmp = sys_get_temp_dir();
+    if ($sysTmp !== false && is_dir($sysTmp) && is_writable($sysTmp)) {
+        $tmpDirCandidates[$sysTmp] = disk_free_space($sysTmp) ?: 0;
+    }
+
+    if (is_dir(BKP_DIR) && is_writable(BKP_DIR)) {
+        $tmpDirCandidates[BKP_DIR] = disk_free_space(BKP_DIR) ?: 0;
+    }
+
+    if (empty($tmpDirCandidates)) {
+        throw new RuntimeException('Nenhum diretório temporário disponível para backup.');
+    }
+
+    arsort($tmpDirCandidates, SORT_NUMERIC);
+    $tmpDirBase = key($tmpDirCandidates);
+
+    if ($tmpDirCandidates[$tmpDirBase] < 100 * 1024 * 1024) {
+        throw new RuntimeException('Espaço insuficiente para backup.');
+    }
+
+    $tmpDir = rtrim($tmpDirBase, DIRECTORY_SEPARATOR) . '/db_backup_' . bin2hex(random_bytes(8));
     if (!mkdir($tmpDir, 0700, true)) {
         throw new RuntimeException('Falha ao criar diretório temporário.');
     }
@@ -224,12 +247,10 @@ function backupBD(): string
         }
 
         //Cria TAR
-        $tar = new PharData($tarFile);
-        $tar->addFile($sqlFile, basename($sqlFile));
-        $tar->addFile($sigFile, basename($sigFile));
+        exec("tar -cf $tarFile -C $tmpDir " . escapeshellarg(basename($sqlFile)) . " " . escapeshellarg(basename($sigFile)));
 
         //Compacta para TAR.GZ
-        $tar->compress(Phar::GZ);
+        exec("gzip $tarFile");
 
         if (!file_exists($tarFile . '.gz')) {
             throw new RuntimeException('Falha ao gerar TAR.GZ.');
@@ -313,7 +334,27 @@ function loadBackupDB(string $file): bool
         throw new RuntimeException('Arquivo fora do diretório permitido.');
     }
 
-    $tmpDir = sys_get_temp_dir() . '/db_restore_' . bin2hex(random_bytes(8));
+    $tmpDirCandidates = [];
+    $sysTmp = sys_get_temp_dir();
+    if ($sysTmp !== false && is_dir($sysTmp) && is_writable($sysTmp)) {
+        $tmpDirCandidates[$sysTmp] = disk_free_space($sysTmp) ?: 0;
+    }
+    if (is_dir(BKP_DIR) && is_writable(BKP_DIR)) {
+        $tmpDirCandidates[BKP_DIR] = disk_free_space(BKP_DIR) ?: 0;
+    }
+
+    if (empty($tmpDirCandidates)) {
+        throw new RuntimeException('Nenhum diretório temporário disponível para restauração.');
+    }
+
+    arsort($tmpDirCandidates, SORT_NUMERIC);
+    $tmpDirBase = key($tmpDirCandidates);
+
+    if ($tmpDirCandidates[$tmpDirBase] < 100 * 1024 * 1024) {
+        throw new RuntimeException('Espaço insuficiente para restaurar o backup.');
+    }
+
+    $tmpDir = rtrim($tmpDirBase, DIRECTORY_SEPARATOR) . '/db_restore_' . bin2hex(random_bytes(8));
     if (!mkdir($tmpDir, 0700, true)) {
         throw new RuntimeException('Falha ao criar diretório temporário.');
     }
@@ -405,48 +446,22 @@ function loadBackupDB(string $file): bool
         // Validação por streaming
         validateRestoreSqlFile($sqlFileReal);
 
-        // Importação via stream
-        $process = proc_open(
-            ['mysql', '-u', DB_USER, DB_NAME],
-            [
-                0 => ['pipe', 'r'],
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ],
-            $pipes,
-            null,
-            ['MYSQL_PWD' => DB_PASSWORD]
+        // Importação via mysql command line
+        $cmd = sprintf(
+            'sed "s/DEFINER=[^*]*\*/\*/g" %s | mysql -u %s -p%s %s 2>&1',
+            escapeshellarg($sqlFileReal),
+            escapeshellarg(DB_USER),
+            escapeshellarg(DB_PASSWORD),
+            escapeshellarg(DB_NAME)
         );
 
-        if (!is_resource($process)) {
-            throw new RuntimeException('Falha ao iniciar mysql.');
-        }
-
-        $handle = fopen($sqlFileReal, 'rb');
-        if (!$handle) {
-            throw new RuntimeException('Falha ao abrir SQL.');
-        }
-
-        while (!feof($handle)) {
-            $chunk = fread($handle, 1024 * 1024); // 1MB
-            if ($chunk === false) {
-                fclose($handle);
-                throw new RuntimeException('Erro ao ler SQL.');
-            }
-
-            fwrite($pipes[0], $chunk);
-        }
-
-        fclose($handle);
-        fclose($pipes[0]);
-
-        $error = stream_get_contents($pipes[2]);
-        fclose($pipes[2]);
-
-        $exitCode = proc_close($process);
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
 
         if ($exitCode !== 0) {
-            throw new RuntimeException('Erro ao importar banco: ' . $error);
+            $errorMsg = implode("\n", $output);
+            throw new RuntimeException('Erro ao importar banco: ' . $errorMsg);
         }
     } finally {
         if (is_dir($tmpDir)) {
