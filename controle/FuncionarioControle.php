@@ -301,21 +301,15 @@ class FuncionarioControle
         }
 
         if ((!isset($rg)) || empty(($rg))) {
-            http_response_code(412);
-            header('Location: ../html/funcionario.html?msg=RG do funcionario não informado. Por favor, informe um rg!');
-            exit();
+            $rg = '';
         }
 
         if ((!isset($orgao_emissor)) || empty(($orgao_emissor))) {
-            http_response_code(412);
-            header('Location: ../html/funcionario.html?msg=Órgão emissor do funcionario não informado. Por favor, informe o órgão emissor!');
-            exit();
+            $orgao_emissor = '';
         }
 
         if ((!isset($data_expedicao)) || (empty($data_expedicao))) {
-            http_response_code(412);
-            header('Location: ../html/funcionario.html?msg=Data de expedição do rg do funcionario não informado. Por favor, informe um data de expedição!');
-            exit();
+            $data_expedicao = '';
         }
 
         if ((!isset($cpf)) || (empty($cpf))) {
@@ -374,11 +368,13 @@ class FuncionarioControle
             exit();
         }
 
-        if (strtotime($data_expedicao) < strtotime(($nascimento))) {
-            http_response_code(412);
-            $_SESSION['erro'] = 'A data de expedição é anterior ao nascimento. Por favor, informa uma data válida!';
-            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
-            exit;
+        if (!empty($data_expedicao) && !empty($nascimento)) {
+            if (strtotime($data_expedicao) < strtotime(($nascimento))) {
+                http_response_code(412);
+                $_SESSION['erro'] = 'A data de expedição é anterior ao nascimento. Por favor, informa uma data válida!';
+                header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
+                exit;
+            }
         }
 
 
