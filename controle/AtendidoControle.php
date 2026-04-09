@@ -606,13 +606,19 @@ class AtendidoControle
                 } else {
                     $validador = new Util();
                     if (!$validador->validarCPF($cpf)) {
-                        throw new InvalidArgumentException('CPF inválido', 400);
+                        $_SESSION['msg'] = "CPF inválido!";
+                        $_SESSION['tipo'] = "error";
+                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+                        exit;
                     }
 
                     $stmt_unico = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ? AND id_pessoa != (SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = ?)");
                     $stmt_unico->execute([$cpf, $idatendido]);
                     if ($stmt_unico->fetchColumn() > 0) {
-                        throw new InvalidArgumentException('CPF já cadastrado em outro atendido', 400);
+                        $_SESSION['msg'] = "CPF já cadastrado em outro atendido!";
+                        $_SESSION['tipo'] = "error";
+                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+                        exit;
                     }
                 }
             }
@@ -655,7 +661,11 @@ class AtendidoControle
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
         } catch (Exception $e) {
-            Util::tratarException($e);
+            error_log("Erro alterarInfPessoal: " . $e->getMessage());
+            $_SESSION['msg'] = "Erro ao atualizar informações pessoais!";
+            $_SESSION['tipo'] = "error";
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+            exit;
         }
     }
 
