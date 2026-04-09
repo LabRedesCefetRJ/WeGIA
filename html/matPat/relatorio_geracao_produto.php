@@ -28,6 +28,24 @@ function quickQuery($query, $column)
 	return $res[0][$column];
 }
 
+function getClassePorTipo($tipo)
+{
+	switch ($tipo) {
+		case 'Compra':
+			return 'bg-secondary';
+		case 'Doação':
+			return 'bg-success';
+		case 'Troca':
+			return 'bg-warning';
+		case 'Vencido':
+			return 'bg-secondary';
+		case 'Consumo':
+			return 'bg-success';
+		default:
+			return 'bg-info';
+	}
+}
+
 ?>
 <!doctype html>
 <html class="fixed">
@@ -373,21 +391,23 @@ function quickQuery($query, $column)
 									almoxarifado.id_almoxarifado = :idAlmoxarifado
 									AND produto.id_produto = :idProduto";
 
-						if (!empty($datasArray)) {
-							$placeholders = implode(', ', array_map(function ($index) {
-								return ":data_saida_$index";
-							}, array_keys($datasArray)));
-							$query .= " AND saida.data IN ($placeholders)";
+						if ($dataInicio && $dataFim) {
+    						$query .= " AND saida.data BETWEEN :data_inicio AND :data_fim";
+						} elseif ($dataInicio) {
+    						$query .= " AND saida.data >= :data_inicio";
+						} elseif ($dataFim) {
+    						$query .= " AND saida.data <= :data_fim";
 						}
 
 						$stmtSaidas = $pdo->prepare($query);
 						$stmtSaidas->bindParam(':idProduto', $idProduto, PDO::PARAM_INT);
 						$stmtSaidas->bindParam(':idAlmoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
 
-						if (!empty($datasArray)) {
-							foreach ($datasArray as $index => $data) {
-								$stmtSaidas->bindValue(":data_saida_$index", $data, PDO::PARAM_STR);
-							}
+						if ($dataInicio) {
+    						$stmtSaidas->bindParam(':data_inicio', $dataInicio, PDO::PARAM_STR);
+						}
+						if ($dataFim) {
+    						$stmtSaidas->bindParam(':data_fim', $dataFim, PDO::PARAM_STR);
 						}
 
 						$stmtSaidas->execute();
@@ -460,10 +480,12 @@ function quickQuery($query, $column)
 							<?php
 							foreach ($entradas as $entrada) {
 								$dataEntrada = !empty($entrada['data_entrada']) && !empty($entrada['hora_entrada']) ? date('d/m/Y H:i', strtotime($entrada['data_entrada'] . ' ' . $entrada['hora_entrada'])) : "Não registrado.";
-							?>
-								<tr>
-									<td><?php echo $dataEntrada; ?></td>
-									<td><?php echo !empty($entrada['descricao_tipo_entrada']) ? htmlspecialchars(trim($entrada['descricao_tipo_entrada'])) : "Não registrado."; ?></td>
+							$tipoEntrada = !empty($entrada['descricao_tipo_entrada']) ? trim($entrada['descricao_tipo_entrada']) : "Não registrado.";
+							$classeEntrada = getClassePorTipo($tipoEntrada);
+						?>
+							<tr>
+								<td><?php echo $dataEntrada; ?></td>
+								<td><span class="badge <?php echo $classeEntrada; ?>"><?php echo htmlspecialchars($tipoEntrada); ?></span></td>
 									<td><?php echo !empty($entrada['quantidade_entrada']) ? htmlspecialchars(trim($entrada['quantidade_entrada'])) : "Não registrado."; ?></td>
 								</tr>
 							<?php } ?>
@@ -485,12 +507,13 @@ function quickQuery($query, $column)
 							<?php
 							foreach ($saidas as $saida) {
 								$dataSaida = (!empty($saida['data_saida']) && !empty($saida['hora_saida'])) ? date('d/m/Y H:i', strtotime($saida['data_saida'] . ' ' . $saida['hora_saida'])) : "Não registrado.";
-								$descricaoTipoSaida = !empty($saida['descricao_tipo_saida']) ? htmlspecialchars(trim($saida['descricao_tipo_saida'])) : "Não registrado.";
-								$quantidadeSaida = !empty($saida['quantidade_saida']) ? htmlspecialchars(trim($saida['quantidade_saida'])) : "Não registrado.";
-							?>
-								<tr>
-									<td><?php echo $dataSaida; ?></td>
-									<td><?php echo $descricaoTipoSaida; ?></td>
+							$tipoSaida = !empty($saida['descricao_tipo_saida']) ? trim($saida['descricao_tipo_saida']) : "Não registrado.";
+							$classeSaida = getClassePorTipo($tipoSaida);
+							$quantidadeSaida = !empty($saida['quantidade_saida']) ? htmlspecialchars(trim($saida['quantidade_saida'])) : "Não registrado.";
+						?>
+							<tr>
+								<td><?php echo $dataSaida; ?></td>
+								<td><span class="badge <?php echo $classeSaida; ?>"><?php echo htmlspecialchars($tipoSaida); ?></span></td>
 									<td><?php echo $quantidadeSaida; ?></td>
 								</tr>
 							<?php } ?>
