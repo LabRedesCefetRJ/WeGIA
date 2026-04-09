@@ -29,26 +29,6 @@ class AlmoxarifadoDAO
             echo 'Error: <b>  na tabela almoxarifado = ' . $sql . '</b> <br /><br />' . $e->getMessage();
         }
     }
-    public function listarUm($id_almoxarifado)
-    {
-        try {
-            $sql = "SELECT id_almoxarifado, descricao_almoxarifado  FROM almoxarifado WHERE id_almoxarifado = :id_almoxarifado";
-            $consulta = $this->pdo->prepare($sql);
-            $consulta->execute(array(
-                'id_almoxarifado' => $id_almoxarifado,
-            ));
-            $resultado = $consulta->fetch(PDO::FETCH_ASSOC);
-            try {
-                $almoxarifado = new Almoxarifado($resultado['descricao_almoxarifado']);
-                $almoxarifado->setId_almoxarifado(intval($resultado['id_almoxarifado']));
-                return $almoxarifado;
-            } catch (InvalidArgumentException $e) {
-                exit('Erro ao listar um almoxarifado: ' . $e->getMessage());
-            }
-        } catch (PDOException $e) {
-            throw $e;
-        }
-    }
 
     public function excluir($id_almoxarifado)
     {

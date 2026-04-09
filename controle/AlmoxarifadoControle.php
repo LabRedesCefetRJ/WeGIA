@@ -16,7 +16,7 @@ class AlmoxarifadoControle
     {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
-        $regex = '#^((\.\./|' . WWW . ')html/(matPat|geral)/(cadastrar_permissoes|cadastro_entrada|cadastro_saida|listar_almox|remover_produto|alterar_almox)\.php(\?id_produto=\d+)?)$#';
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat|geral)/(cadastrar_permissoes|cadastro_entrada|cadastro_saida|listar_almox|remover_produto)\.php(\?id_produto=\d+)?)$#';
 
         try {
             if (!filter_var($nextPage, FILTER_VALIDATE_URL))
@@ -28,26 +28,6 @@ class AlmoxarifadoControle
             $_SESSION['almoxarifado'] = $almoxarifados;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
-        } catch (Exception $e) {
-            Util::tratarException($e);
-        }
-    }
-
-    public function listarUm()
-    {
-        try {
-            $id = filter_input(INPUT_GET, 'id_almoxarifado', FILTER_VALIDATE_INT);
-
-            $dao = new AlmoxarifadoDAO();
-            $almox = $dao->listarUm($id);
-
-            $_SESSION['almoxarifado'] = [
-                'id_almoxarifado' => $almox->getId_almoxarifado(),
-                'descricao_almoxarifado' => $almox->getDescricao_almoxarifado()
-            ];
-
-            $nextPage = $_GET['nextPage'];
-            header("Location: $nextPage");
         } catch (Exception $e) {
             Util::tratarException($e);
         }
