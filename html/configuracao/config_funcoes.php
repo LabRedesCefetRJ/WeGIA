@@ -2,6 +2,118 @@
 define("DEBUG", false);
 require_once "../../config.php";
 
+function truncateAllTables(PDO $pdo)
+{
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+    $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+
+    foreach ($tables as $table) {
+        $pdo->exec("TRUNCATE TABLE `$table`");
+    }
+
+    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
+}
+
+function createSecureTempDir(string $prefix = 'db_backup_'): string
+{
+    $candidates = [];
+
+    $sysTmp = sys_get_temp_dir();
+    if ($sysTmp && is_dir($sysTmp) && is_writable($sysTmp)) {
+        $candidates[$sysTmp] = disk_free_space($sysTmp) ?: 0;
+    }
+
+    if (is_dir(BKP_DIR) && is_writable(BKP_DIR)) {
+        $candidates[BKP_DIR] = disk_free_space(BKP_DIR) ?: 0;
+    }
+
+    if (empty($candidates)) {
+        throw new RuntimeException('Nenhum diretório temporário disponível.');
+    }
+
+    arsort($candidates, SORT_NUMERIC);
+    $base = key($candidates);
+
+    if ($candidates[$base] < 100 * 1024 * 1024) {
+        throw new RuntimeException('Espaço insuficiente.');
+    }
+
+    $dir = rtrim($base, DIRECTORY_SEPARATOR) . '/' . $prefix . bin2hex(random_bytes(8));
+
+    if (!mkdir($dir, 0700, true)) {
+        throw new RuntimeException('Falha ao criar diretório temporário.');
+    }
+
+    return $dir;
+}
+
+function runMysqldump(string $outputFile, array $extraOptions = []): void
+{
+    $command = array_merge([
+        'mysqldump',
+        '-u',
+        DB_USER,
+        '--single-transaction',
+        '--quick',
+    ], $extraOptions, [
+        DB_NAME
+    ]);
+
+    $process = proc_open(
+        $command,
+        [
+            0 => ['pipe', 'r'],
+            1 => ['file', $outputFile, 'w'],
+            2 => ['pipe', 'w'],
+        ],
+        $pipes,
+        null,
+        ['MYSQL_PWD' => DB_PASSWORD]
+    );
+
+    if (!is_resource($process)) {
+        throw new RuntimeException('Falha ao iniciar mysqldump.');
+    }
+
+    fclose($pipes[0]);
+
+    $stderr = stream_get_contents($pipes[2]);
+    fclose($pipes[2]);
+
+    $exitCode = proc_close($process);
+
+    if ($exitCode !== 0) {
+        throw new RuntimeException('Erro no mysqldump: ' . $stderr);
+    }
+
+    if (!file_exists($outputFile) || filesize($outputFile) === 0) {
+        throw new RuntimeException('Dump SQL vazio.');
+    }
+}
+
+function createTarGz(string $tarFile, string $baseDir, array $files): void
+{
+    $escapedFiles = array_map(fn($f) => escapeshellarg(basename($f)), $files);
+
+    $cmdTar = sprintf(
+        'tar -cf %s -C %s %s',
+        escapeshellarg($tarFile),
+        escapeshellarg($baseDir),
+        implode(' ', $escapedFiles)
+    );
+
+    exec($cmdTar, $out, $code);
+    if ($code !== 0) {
+        throw new RuntimeException('Falha ao criar TAR.');
+    }
+
+    exec('gzip ' . escapeshellarg($tarFile), $out, $code);
+    if ($code !== 0) {
+        throw new RuntimeException('Falha ao compactar GZIP.');
+    }
+}
+
 function getBackupTimestamp(): string
 {
     return (new DateTimeImmutable())->format('YmdHis');
@@ -166,152 +278,122 @@ function validateRestoreSqlFile(string $filePath): void
 function backupBD(): string
 {
     set_time_limit(0);
+
     $timestamp = getBackupTimestamp();
     $baseName  = $timestamp . '.dump';
 
-    $tmpDirCandidates = [];
+    $tmpDir = createSecureTempDir();
 
-    $sysTmp = sys_get_temp_dir();
-    if ($sysTmp !== false && is_dir($sysTmp) && is_writable($sysTmp)) {
-        $tmpDirCandidates[$sysTmp] = disk_free_space($sysTmp) ?: 0;
-    }
-
-    if (is_dir(BKP_DIR) && is_writable(BKP_DIR)) {
-        $tmpDirCandidates[BKP_DIR] = disk_free_space(BKP_DIR) ?: 0;
-    }
-
-    if (empty($tmpDirCandidates)) {
-        throw new RuntimeException('Nenhum diretório temporário disponível para backup.');
-    }
-
-    arsort($tmpDirCandidates, SORT_NUMERIC);
-    $tmpDirBase = key($tmpDirCandidates);
-
-    if ($tmpDirCandidates[$tmpDirBase] < 100 * 1024 * 1024) {
-        throw new RuntimeException('Espaço insuficiente para backup.');
-    }
-
-    $tmpDir = rtrim($tmpDirBase, DIRECTORY_SEPARATOR) . '/db_backup_' . bin2hex(random_bytes(8));
-    if (!mkdir($tmpDir, 0700, true)) {
-        throw new RuntimeException('Falha ao criar diretório temporário.');
-    }
-
-    $sqlFile = $tmpDir . '/' . $baseName . '.sql';
-    $sigFile = $tmpDir . '/' . $baseName . '.sig';
-    $tarFile = $tmpDir . '/' . $baseName . '.tar';
-    $gzFile  = BKP_DIR . '/' . $baseName . '.tar.gz';
+    $sqlFile = "$tmpDir/$baseName.sql";
+    $sigFile = "$tmpDir/$baseName.sig";
+    $tarFile = "$tmpDir/$baseName.tar";
+    $gzFile  = BKP_DIR . "/$baseName.tar.gz";
 
     try {
-        //Gera o dump
-        $process = proc_open(
-            [
-                'mysqldump',
-                '-u',
-                DB_USER,
-                '--single-transaction',
-                '--quick',
-                DB_NAME
-            ],
-            [
-                0 => ['pipe', 'r'],
-                1 => ['file', $sqlFile, 'w'],
-                2 => ['pipe', 'w'],
-            ],
-            $pipes,
-            null,
-            ['MYSQL_PWD' => DB_PASSWORD]
-        );
-
-        if (!is_resource($process)) {
-            throw new RuntimeException('Falha ao iniciar mysqldump.');
-        }
-
-        fclose($pipes[0]);
-        $stderr = stream_get_contents($pipes[2]);
-        fclose($pipes[2]);
-
-        $exitCode = proc_close($process);
-        if ($exitCode !== 0) {
-            throw new RuntimeException('Erro no mysqldump: ' . $stderr);
-        }
-
-        //Valida se o SQL NÃO está vazio
-        if (!file_exists($sqlFile) || filesize($sqlFile) === 0) {
-            throw new RuntimeException('Dump SQL vazio.');
-        }
+        runMysqldump($sqlFile);
 
         $signature = signSqlFile($sqlFile);
 
         if (file_put_contents($sigFile, $signature, LOCK_EX) === false) {
-            throw new RuntimeException('Falha ao salvar assinatura do backup.');
+            throw new RuntimeException('Falha ao salvar assinatura.');
         }
 
-        //Cria TAR
-        exec("tar -cf $tarFile -C $tmpDir " . escapeshellarg(basename($sqlFile)) . " " . escapeshellarg(basename($sigFile)));
+        createTarGz($tarFile, $tmpDir, [$sqlFile, $sigFile]);
 
-        //Compacta para TAR.GZ
-        exec("gzip $tarFile");
-
-        if (!file_exists($tarFile . '.gz')) {
-            throw new RuntimeException('Falha ao gerar TAR.GZ.');
-        }
-
-        //Move para BKP_DIR
         if (!rename($tarFile . '.gz', $gzFile)) {
-            throw new RuntimeException('Falha ao mover backup final.');
+            throw new RuntimeException('Falha ao mover backup.');
         }
 
         return basename($gzFile);
     } finally {
-        //Limpeza garantida
-        foreach (glob($tmpDir . '/*') as $file) {
-            unlink($file);
+        foreach (glob("$tmpDir/*") as $f) {
+            @unlink($f);
         }
-        rmdir($tmpDir);
+        @rmdir($tmpDir);
     }
 }
 
-function rmBackupBD($file)
+function rmBackupBD(string $file): bool
 {
-    $rmDump = ("cd " . (BKP_DIR) . " && rm " . escapeshellarg($file));
+    // Validação do nome do arquivo
+    if (!preg_match('/^[a-zA-Z0-9_-]+\.dump\.tar\.gz$/', $file)) {
+        throw new RuntimeException('Nome de arquivo inválido.');
+    }
+
+    $backupDir = realpath(BKP_DIR);
+    if ($backupDir === false || !is_dir($backupDir)) {
+        throw new RuntimeException('Diretório de backup inválido.');
+    }
+
+    $filePath = realpath($backupDir . DIRECTORY_SEPARATOR . $file);
+
+    // Garante que o arquivo existe e está dentro do diretório permitido
+    if (
+        $filePath === false ||
+        !str_starts_with($filePath, $backupDir . DIRECTORY_SEPARATOR) ||
+        !is_file($filePath)
+    ) {
+        throw new RuntimeException('Arquivo inválido ou fora do diretório permitido.');
+    }
+
+    // Bloqueia symlink
+    if (is_link($filePath)) {
+        throw new RuntimeException('Arquivo inválido: link simbólico não permitido.');
+    }
+
     if (DEBUG) {
-        var_dump($rmDump);
+        var_dump($filePath);
         die();
     }
-    return shell_exec($rmDump);
+
+    if (!unlink($filePath)) {
+        throw new RuntimeException('Falha ao remover arquivo.');
+    }
+
+    return true;
 }
 
-function autosaveBD() //está com erro, providenciar um conserto.
+function autosaveBD(): string
 {
-    // Executando Backup do Banco de Dados
+    set_time_limit(0);
 
-    // Define nome do arquivo (sem o path)
-    define("AUTOSAVE_DUMP_NAME", getBackupTimestamp() . "-autosave");
-    define("AUTOSAVE_ERROR_FATAL", true);
+    $timestamp = getBackupTimestamp();
+    $baseName  = $timestamp . '-autosave';
 
-    // Define o comando para exportar o banco de dados para a pasta de backup com o nome definido acima
-    $dbDump = "cd " . BKP_DIR . " && mysqldump -u " . DB_USER . "  " . DB_NAME . " -p" . DB_PASSWORD . " --no-create-db --no-create-info --skip-triggers > " . BKP_DIR . AUTOSAVE_DUMP_NAME . ".bd.sql";
+    $tmpDir = createSecureTempDir('db_autosave_');
 
-    // Compacta o dump gerado em um .dump.tar.gz
-    $dbComp = "tar -czf " . AUTOSAVE_DUMP_NAME . ".dump.tar.gz " . AUTOSAVE_DUMP_NAME . ".bd.sql";
+    $sqlFile = "$tmpDir/$baseName.sql";
+    $sigFile = "$tmpDir/$baseName.sig";
+    $tarFile = "$tmpDir/$baseName.tar";
+    $gzFile  = BKP_DIR . "/$baseName.dump.tar.gz";
 
-    // Remove o arquivo não compactado
-    $dbRemv = "rm " . BKP_DIR . AUTOSAVE_DUMP_NAME . ".bd.sql";
+    try {
+        runMysqldump($sqlFile, [
+            '--no-create-db',
+            '--no-create-info',
+            '--skip-triggers'
+        ]);
 
-    // Faz os 3 comandos acima serem executados na mesma linha
-    $cmdStream = $dbDump . " && " . $dbComp . " && " . $dbRemv;
+        //assinatura
+        $signature = signSqlFile($sqlFile);
 
-    // var_dump(
-    //     AUTOSAVE_DUMP_NAME, 
-    //     $dbDump,
-    //     $dbComp,
-    //     $dbRemv,
-    //     $cmdStream
-    // );
-    // die();
+        if (file_put_contents($sigFile, $signature, LOCK_EX) === false) {
+            throw new RuntimeException('Falha ao salvar assinatura.');
+        }
 
-    // Executa os comandos
-    return shell_exec($cmdStream);
+        createTarGz($tarFile, $tmpDir, [$sqlFile, $sigFile]);
+
+        if (!rename($tarFile . '.gz', $gzFile)) {
+            throw new RuntimeException('Falha ao mover autosave.');
+        }
+
+        return basename($gzFile);
+    } finally {
+        foreach (glob("$tmpDir/*") as $f) {
+            @unlink($f);
+        }
+        @rmdir($tmpDir);
+    }
 }
 
 function backupSite()
