@@ -2276,18 +2276,20 @@ CREATE TABLE IF NOT EXISTS voluntario_docs (
  id_voluntario INT NOT NULL,
  id_docfuncional INT NOT NULL,
  data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
- extensao_arquivo VARCHAR(50) NOT NULL,
- nome_arquivo VARCHAR(256) NOT NULL,
- arquivo LONGBLOB NOT NULL,
+ id_pessoa_arquivo INT NOT NULL,
  PRIMARY KEY (id_voldocs),
  KEY voluntariodocs_ibfk_1 (id_voluntario),
  KEY voluntariodocs_ibfk_2 (id_docfuncional),
+ KEY voluntariodocs_ibfk_3 (id_pessoa_arquivo),
  CONSTRAINT voluntariodocs_ibfk_1
  FOREIGN KEY (id_voluntario)
  REFERENCES voluntario (id_voluntario) ON DELETE CASCADE,
  CONSTRAINT voluntariodocs_ibfk_2
  FOREIGN KEY (id_docfuncional)
- REFERENCES voluntario_docfuncional (id_docfuncional))
+ REFERENCES voluntario_docfuncional (id_docfuncional),
+ CONSTRAINT voluntariodocs_ibfk_3
+ FOREIGN KEY (id_pessoa_arquivo)
+ REFERENCES pessoa_arquivo (id))
  ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ########################### PROCEDURES #################### --

@@ -143,8 +143,7 @@ class VoluntarioDAO
         }
         catch (PDOException $e) {
             $this->pdo->rollBack();
-            Util::tratarException($e);
-            return null;
+            throw $e;
         }
     }
 
@@ -166,7 +165,7 @@ class VoluntarioDAO
             }
         }
         catch (PDOException $e) {
-            Util::tratarException($e);
+            throw $e;
         }
         return $voluntarios;
     }
@@ -189,21 +188,18 @@ class VoluntarioDAO
                 $pessoa = $stmtCheckPessoa->fetch(PDO::FETCH_ASSOC);
 
                 if ($pessoa) {
-                    header('Location: ../html/voluntario/cadastro_voluntario_pessoa_existente.php?cpf=' . htmlspecialchars($cpf));
-                    exit;
+                    return 'PESSOA_EXISTENTE';
                 }
                 else {
-                    header('Location: ../html/voluntario/cadastro_voluntario.php?cpf=' . htmlspecialchars($cpf));
-                    exit;
+                    return 'NOVO_CADASTRO';
                 }
             }
             else {
-                header("Location: ../html/voluntario/pre_cadastro_voluntario.php?msg_e=Erro, Voluntário já cadastrado no sistema.");
-                exit;
+                throw new Exception("Erro, Voluntário já cadastrado no sistema.");
             }
         }
         catch (PDOException $e) {
-            Util::tratarException($e);
+            throw $e;
         }
     }
 
@@ -217,7 +213,7 @@ class VoluntarioDAO
             }
         }
         catch (PDOException $e) {
-            Util::tratarException($e);
+            throw $e;
         }
         return $cpfs;
     }
