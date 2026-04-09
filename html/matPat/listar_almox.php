@@ -114,9 +114,16 @@ require_once ROOT . "/html/personalizacao_display.php";
 			$(".menuu").load("../menu.php");
 		});
 
-		function editar(id) {
-			window.location.href = '<?= WWW ?>html/matPat/alterar_almox.php?id_almoxarifado=' + id;
-		}
+		$(function() {
+			$(document).on('click', '.btn-edit-almox', function() {
+				var id = $(this).data('id');
+				var descricao = $(this).data('descricao');
+
+				$('#modal-id-almoxarifado').val(id);
+				$('#modal-descricao-almoxarifado').val(descricao);
+				$('#modalEditarAlmoxarifado').modal('show');
+			});
+		});
 	</script>
 
 </head>
@@ -233,7 +240,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
     											<button
 													type="button"
-        											onclick="editar(<?= (int)$item['id_almoxarifado'] ?>)"
+        											class="btn-edit-almox" data-id="<?= (int)$item['id_almoxarifado'] ?>" data-descricao="<?= htmlspecialchars($item['descricao_almoxarifado'], ENT_QUOTES) ?>"
         											style="border:none;background:none;cursor:pointer;"
         											title="Editar"
     											>
@@ -254,7 +261,34 @@ require_once ROOT . "/html/personalizacao_display.php";
 								<?php endforeach; ?>
 							</tbody>
 						</table>
-					</div><br>
+
+                        <div class="modal fade" id="modalEditarAlmoxarifado" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <form method="POST" action="<?= WWW ?>controle/control.php" class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Editar Almoxarifado</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <?= Csrf::inputField() ?>
+                                        <input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+                                        <input type="hidden" name="metodo" value="alterarAlmoxarifado">
+                                        <input type="hidden" name="id_almoxarifado" id="modal-id-almoxarifado">
+
+                                        <div class="form-group">
+                                            <label for="modal-descricao-almoxarifado">Nome do Almoxarifado</label>
+                                            <input type="text" class="form-control" name="descricao_almoxarifado" id="modal-descricao-almoxarifado" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary">Salvar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
 				</section>
 				<!-- end: page -->
 
