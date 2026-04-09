@@ -1161,14 +1161,15 @@ class FuncionarioControle
 
     public function alterarEndereco()
     {
+        $id_funcionario = filter_var($_REQUEST['id_funcionario'] ?? null, FILTER_SANITIZE_NUMBER_INT);
         try {
-            $cep = filter_var($_REQUEST['cep'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $uf = filter_var($_REQUEST['uf'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $cidade = filter_var($_REQUEST['cidade'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $bairro = filter_var($_REQUEST['bairro'], FILTER_SANITIZE_SPECIAL_CHARS);
-            $rua = filter_var($_REQUEST['rua'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $cep = trim((string) filter_input(INPUT_POST, 'cep', FILTER_UNSAFE_RAW));
+            $uf = html_entity_decode(trim((string) filter_input(INPUT_POST, 'uf', FILTER_UNSAFE_RAW)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $cidade = html_entity_decode(trim((string) filter_input(INPUT_POST, 'cidade', FILTER_UNSAFE_RAW)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $bairro = html_entity_decode(trim((string) filter_input(INPUT_POST, 'bairro', FILTER_UNSAFE_RAW)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $rua = html_entity_decode(trim((string) filter_input(INPUT_POST, 'rua', FILTER_UNSAFE_RAW)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
             $numero_residencia = filter_var($_REQUEST['numero_residencia'], FILTER_SANITIZE_NUMBER_INT);
-            $complemento = filter_var($_REQUEST['complemento'], FILTER_SANITIZE_SPECIAL_CHARS);
+            $complemento = html_entity_decode(trim((string) filter_input(INPUT_POST, 'complemento', FILTER_UNSAFE_RAW)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
             $ibge = filter_var($_REQUEST['ibge'], FILTER_SANITIZE_NUMBER_INT);
             $id_funcionario = filter_var($_REQUEST['id_funcionario'], FILTER_SANITIZE_NUMBER_INT);
 
@@ -1180,6 +1181,10 @@ class FuncionarioControle
 
             if (strlen($cep) != 0 && strlen(preg_replace('/\D/', '', $cep)) != 8)
                 throw new InvalidArgumentException('O tamanho do CEP informado não está correto.', 412);
+
+            if (strlen($cep) !== 0 && (empty($uf) || empty($cidade) || empty($bairro) || empty($rua) || empty($ibge))) {
+                throw new InvalidArgumentException('CEP inválido.', 412);
+            }
 
             if (strlen($uf) > 5)
                 throw new InvalidArgumentException('O tamanho do texto da unidade federativa ultrapassou o limite de 5 caracteres.', 412);
@@ -1215,6 +1220,10 @@ class FuncionarioControle
             exit();
         } catch (PDOException $e) {
             setSessionMsg("Erro ao atualizar endereço.", "err");
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
+            exit();
+        } catch (Exception $e) {
+            setSessionMsg($e->getMessage(), "err");
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . (int)$id_funcionario);
             exit();
         }

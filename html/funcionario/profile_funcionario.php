@@ -2096,6 +2096,7 @@ try {
   <!-- JavaScript Custom -->
   <script src="../geral/post.js"></script>
   <script src="../geral/formulario.js"></script>
+  <script src="../../Functions/cep_form_validation.js"></script>
   <script>
     var formState = [];
 
@@ -2120,7 +2121,11 @@ try {
       }
       switchButton(idForm);
     }
-    switchForm("editar_cargaHoraria", false)
+
+    switchForm("editar_cargaHoraria", false);
+    inicializarValidacaoCepFormulario({
+      formId: "formAlterarEndereco"
+    });
   </script>
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>

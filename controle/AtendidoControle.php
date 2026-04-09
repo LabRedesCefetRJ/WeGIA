@@ -755,18 +755,40 @@ class AtendidoControle
     public function alterarEndereco()
     {
         extract($_REQUEST);
+        $cep = trim((string)($cep ?? ''));
+        $estado = html_entity_decode(trim((string)($estado ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $cidade = html_entity_decode(trim((string)($cidade ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $bairro = html_entity_decode(trim((string)($bairro ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $rua = html_entity_decode(trim((string)($rua ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $complemento = html_entity_decode(trim((string)($complemento ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $ibge = trim((string)($ibge ?? ''));
         if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
             $numero_residencia = "null";
         }
         try {
+            if (!$idatendido || $idatendido < 1)
+                throw new InvalidArgumentException('O id do atendido informado não é válido.', 412);
+
+            if (strlen(trim((string)$cep)) !== 0 && strlen(preg_replace('/\D/', '', (string)$cep)) != 8)
+                throw new InvalidArgumentException('CEP inválido.', 412);
+
+            if (strlen(trim((string)$cep)) !== 0 && (empty($estado) || empty($cidade) || empty($bairro) || empty($rua) || empty($ibge)))
+                throw new InvalidArgumentException('CEP inválido.', 412);
+
             $atendido = new Atendido('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $estado, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
             $atendido->setIdatendido($idatendido);
             $atendidoDAO = new AtendidoDAO();
 
             $atendidoDAO->alterarEndereco($atendido);
+            $_SESSION['msg'] = 'Endereço atualizado com sucesso!';
+            $_SESSION['flag'] = 'sccs';
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
+            exit;
         } catch (Exception $e) {
-            Util::tratarException($e);
+            $_SESSION['msg'] = $e->getMessage();
+            $_SESSION['flag'] = 'err';
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars((string)$idatendido));
+            exit;
         }
     }
 

@@ -596,7 +596,7 @@ if ($id_dependente) {
                 <!-- start: page -->
 
                 <!-- Mensagem -->
-                <?php getMsgSession("msg", "tipo"); ?>
+                <?php sessionMsg(); ?>
 
 
                 <div class="panel">
@@ -802,7 +802,7 @@ if ($id_dependente) {
 
                                 <div id="endereco" class="tab-pane" role="tabpanel">
                                     <h4>Endereço</h4>
-                                    <form action="familiar_editarEndereco.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $idatendido_familiares ?>" method='POST'>
+                                    <form id="formAlterarEnderecoFamiliar" action="familiar_editarEndereco.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $idatendido_familiares ?>" method='POST'>
                                         <fieldset id="formEndereco">
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="cep">CEP</label>
@@ -939,6 +939,12 @@ if ($id_dependente) {
 
     <!-- Theme Initialization Files -->
     <script src="../../assets/javascripts/theme.init.js"></script>
+    <script src="../../Functions/cep_form_validation.js"></script>
+    <script>
+        inicializarValidacaoCepFormulario({
+            formId: "formAlterarEnderecoFamiliar"
+        });
+    </script>
 
 
     <!-- Examples -->
