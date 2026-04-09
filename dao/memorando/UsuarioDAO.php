@@ -4,23 +4,15 @@ class UsuarioDAO
 {
 	public function obterUsuario($usuario)
 	{
-		try
-		{
-			$Usuario=array();
-			$pdo = Conexao::connect();
-			$consulta = $pdo->query("SELECT id_pessoa FROM pessoa WHERE cpf = '$usuario'");
-			$x=0;
-			while($linha = $consulta->fetch(PDO::FETCH_ASSOC))
-			{
-				$Usuario[$x]=array('id_pessoa'=>$linha['id_pessoa']);
-				$x++;
-			}
+		$pdo = Conexao::connect();
+		$consulta = $pdo->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = :cpf");
+		$consulta->bindValue(':cpf', $usuario);
+		$consulta->execute();
+
+		if($consulta->rowCount() === 0) {
+			throw new InvalidArgumentException('Usuário não encontrado.', 404);
 		}
-		catch(PDOException $e)
-		{
-			echo 'Error:' . $e->getMessage();
-		}
-		return $Usuario;
+
+		return $consulta->fetch(PDO::FETCH_ASSOC);
 	}
 }
-?>
