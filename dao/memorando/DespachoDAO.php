@@ -32,7 +32,7 @@ class DespachoDAO
 			$x = 0;
 
 			while ($linha = $consulta->fetch(PDO::FETCH_ASSOC) and $linha1 = $consulta1->fetch(PDO::FETCH_ASSOC)) {
-				$Despachos[$x] = array('remetente' => $linha['nome'], 'data' => $linha['data'], 'texto' => $linha['texto'], 'id' => $linha['id_despacho'], 'destinatario' => $linha1['nome']);
+				$Despachos[$x] = array('remetente' => htmlspecialchars($linha['nome']), 'data' => $linha['data'], 'texto' => html_entity_decode($linha['texto']), 'id' => $linha['id_despacho'], 'destinatario' => htmlspecialchars($linha1['nome']));
 				$x++;
 			}
 		} catch (PDOException $e) {

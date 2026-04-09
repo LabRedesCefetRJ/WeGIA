@@ -84,8 +84,7 @@ class MemorandoControle
             exit();
         }
         $pessoa = new UsuarioDAO();
-        $id_pessoa = $pessoa->obterUsuario($cpf_usuario);
-        $id_pessoa = $id_pessoa['0']['id_pessoa'];
+        $id_pessoa = $pessoa->obterUsuario($cpf_usuario)['id_pessoa'];
         $memorando = new Memorando($assunto);
         $memorando->setId_pessoa($id_pessoa);
         $memorando->setData();

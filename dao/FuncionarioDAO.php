@@ -471,7 +471,7 @@ class FuncionarioDAO
     {
         require_once ROOT . "/dao/memorando/UsuarioDAO.php";
         $usuario = new UsuarioDAO();
-        $id_usuario = $usuario->obterUsuario($_SESSION['usuario'])[0]["id_pessoa"];
+        $id_usuario = $usuario->obterUsuario($_SESSION["usuario"])['id_pessoa'];
         $funcionarios = array();
 
         $consulta = $this->pdo->prepare("SELECT p.id_pessoa, p.nome, p.sobrenome FROM funcionario f INNER JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE p.id_pessoa!=:idUsuario");
