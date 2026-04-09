@@ -33,6 +33,11 @@ function mascara(m,t,e,c){
 	} else if(e.which){                 
 	    id = e.which;
 	}
+	
+	if ((id == 8 || id == 46) && t.selectionStart == 0 && t.selectionEnd == t.value.length) {
+		t.value = '';
+		return;
+	}
 	cursorfixo=false;
 	if(cursor < l)cursorfixo=true;
 	var livre = false;

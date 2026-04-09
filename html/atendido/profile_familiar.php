@@ -780,7 +780,7 @@ if ($id_dependente) {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeydown="mascara('###.###.###-##',this,event)" required>
+                                                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeydown="mascara('###.###.###-##',this,event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">

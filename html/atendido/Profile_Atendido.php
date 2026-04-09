@@ -961,9 +961,9 @@ $dependente = json_encode($dependente);
                               <div class="modal-body" style="padding: 15px 40px">
                                 <div class="form-group" style="display: grid;">
                                   <div class="form-group">
-                                    <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="cpf">CPF</label>
                                     <div class="col-md-6">
-                                      <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                      <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
                                     </div>
                                   </div>
                                   <div class="form-group">
@@ -1435,7 +1435,7 @@ $dependente = json_encode($dependente);
 
       function validarCPF(strCPF) {
 
-        if (!testaCPF(strCPF)) {
+        if (strCPF && !testaCPF(strCPF)) {
           $('#cpfFamiliarInvalido').show();
           document.getElementById("cadastrarFamiliar").disabled = true;
 
