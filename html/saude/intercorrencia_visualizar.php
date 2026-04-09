@@ -36,6 +36,10 @@ function formataEProtege(array $intercorrencias)
         $data = new DateTime($intercorrencia['data']);
         $intercorrencias[$num]['data'] = $data->format('d/m/Y H:i:s');
         $intercorrencias[$num]['descricao'] = htmlspecialchars(html_entity_decode($intercorrencia['descricao'], ENT_QUOTES, 'UTF-8'));
+        $intercorrencias[$num]['atendido_nome'] = htmlspecialchars($intercorrencia['atendido_nome'], ENT_QUOTES, 'UTF-8');
+        $intercorrencias[$num]['atendido_sobrenome'] = htmlspecialchars($intercorrencia['atendido_sobrenome'], ENT_QUOTES, 'UTF-8');
+        $intercorrencias[$num]['funcionario_nome'] = htmlspecialchars($intercorrencia['funcionario_nome'], ENT_QUOTES, 'UTF-8');
+        $intercorrencias[$num]['funcionario_sobrenome'] = htmlspecialchars($intercorrencia['funcionario_sobrenome'], ENT_QUOTES, 'UTF-8');
     }
 
     return $intercorrencias;

@@ -297,7 +297,7 @@ try {
                     <option value="0">Todos</option>
                     <?php if (!is_null($socios)): ?>
                       <?php foreach ($socios as $socio): ?>
-                        <option value="<?= $socio->getId() ?>"><?= $socio->getNome() ?></option>
+                        <option value="<?= $socio->getId() ?>"><?= htmlspecialchars($socio->getNome()) ?></option>
                       <?php endforeach; ?>
                     <?php endif; ?>
                   </select>
