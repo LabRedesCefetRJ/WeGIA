@@ -1,25 +1,15 @@
 <?php
+if (session_status() == PHP_SESSION_NONE)
+	session_start();
 
-ini_set('display_errors', 1);
-ini_set('display_startup_erros', 1);
-error_reporting(E_ALL);
-
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
+require_once dirname(__FILE__) . "/../../config.php";
 
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/memorando/Despacho.php";
 require_once ROOT . "/dao/memorando/DespachoDAO.php";
 require_once ROOT . "/dao/memorando/MemorandoDAO.php";
 require_once ROOT . "/controle/memorando/MemorandoControle.php";
+require_once ROOT . "/classes/Util.php";
 
 class DespachoControle
 {
@@ -86,40 +76,44 @@ class DespachoControle
 	//Verificar despachos
 	public function verificarDespacho()
 	{
-		session_start();
-		$cpf_usuario = $_SESSION["usuario"];
-		extract($_REQUEST);
-
-		$pessoa = new UsuarioDAO();
-		$id_pessoa = $pessoa->obterUsuario($cpf_usuario);
-		$id_pessoa = $id_pessoa['0']['id_pessoa'];
-
 		try {
+			$cpf_usuario = filter_var($_SESSION["usuario"], FILTER_SANITIZE_SPECIAL_CHARS);
+
+			if(!Util::validarCPF($cpf_usuario) && $cpf_usuario != 'admin') 
+				throw new InvalidArgumentException("CPF do usuário é inválido. $cpf_usuario", 400);
+
+			$pessoa = new UsuarioDAO();
+
+			$id_pessoa = filter_var($pessoa->obterUsuario($cpf_usuario)['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+			$destinatario = filter_var($_REQUEST['destinatario'], FILTER_SANITIZE_NUMBER_INT);
+			$id_memorando = filter_var($_REQUEST['id_memorando'], FILTER_SANITIZE_NUMBER_INT);
+			$texto = filter_var($_REQUEST['texto'], FILTER_SANITIZE_SPECIAL_CHARS);
+
 			$despacho = new Despacho($texto, $id_pessoa, $destinatario, $id_memorando);
 			return $despacho;
-		} catch (InvalidArgumentException $e) {
-			http_response_code(400);
-			exit('Erro ao verificar o despacho: ' . $e->getMessage());
+		} catch (Exception $e) {
+			Util::tratarException($e);
 		}
 	}
 
 	//Busca um despacho pelo id do memorando
-	public function getPorId(int $id){
-		try{
-			if($id < 1){
-                throw new InvalidArgumentException('O id de um despacho não pode ser menor que 1.');
-            }
+	public function getPorId(int $id)
+	{
+		try {
+			if ($id < 1) {
+				throw new InvalidArgumentException('O id de um despacho não pode ser menor que 1.');
+			}
 
 			$despachoDAO = new DespachoDAO();
 			$resultado = $despachoDAO->getPorId($id);
 
-			if(!$resultado){
+			if (!$resultado) {
 				return null;
 			}
 
 			return $resultado;
-		}catch(Exception $e){
-			echo 'Erro ao buscar um despacho pelo id: '.$e->getMessage();
+		} catch (Exception $e) {
+			echo 'Erro ao buscar um despacho pelo id: ' . $e->getMessage();
 		}
 	}
 }

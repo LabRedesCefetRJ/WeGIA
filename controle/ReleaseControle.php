@@ -46,7 +46,7 @@ class ReleaseControle
             );
 
             if ($externalRelease === false)
-                throw new Exception('Erro ao ler o arquivo de release externo.', 500);
+                throw new Exception('Erro ao buscar atualizações.', 500);
 
             echo json_encode(intval($externalRelease));
         } catch (Exception $e) {
