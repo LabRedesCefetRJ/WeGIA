@@ -2243,6 +2243,55 @@ CREATE TABLE IF NOT EXISTS `wegia`.`smtp_config` (
     `smtp_ativo` TINYINT(1) DEFAULT 1
 ) ENGINE = InnoDB;
 
+-- ------------------------------------------------------
+-- Table `wegia` . `voluntario`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS voluntario (
+ id_voluntario INT AUTO_INCREMENT PRIMARY KEY,
+ id_pessoa INT NOT NULL,
+ id_situacao INT NOT NULL,
+ data_admissao DATE NOT NULL,
+ FOREIGN KEY (id_pessoa) REFERENCES pessoa(id_pessoa) ON DELETE CASCADE,
+ FOREIGN KEY (id_situacao) REFERENCES situacao(id_situacao)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------
+-- Table `wegia` . `voluntario_docfuncional`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS voluntario_docfuncional (
+ id_docfuncional INT NOT NULL AUTO_INCREMENT,
+ nome_docfuncional VARCHAR(50) NOT NULL,
+ descricao_docfuncional VARCHAR(256) NULL DEFAULT NULL,
+ PRIMARY KEY (id_docfuncional))
+ ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------
+-- Table `wegia` . `voluntario_docs`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS voluntario_docs (
+ id_voldocs INT NOT NULL AUTO_INCREMENT,
+ id_voluntario INT NOT NULL,
+ id_docfuncional INT NOT NULL,
+ data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ id_pessoa_arquivo INT NOT NULL,
+ PRIMARY KEY (id_voldocs),
+ KEY voluntariodocs_ibfk_1 (id_voluntario),
+ KEY voluntariodocs_ibfk_2 (id_docfuncional),
+ KEY voluntariodocs_ibfk_3 (id_pessoa_arquivo),
+ CONSTRAINT voluntariodocs_ibfk_1
+ FOREIGN KEY (id_voluntario)
+ REFERENCES voluntario (id_voluntario) ON DELETE CASCADE,
+ CONSTRAINT voluntariodocs_ibfk_2
+ FOREIGN KEY (id_docfuncional)
+ REFERENCES voluntario_docfuncional (id_docfuncional),
+ CONSTRAINT voluntariodocs_ibfk_3
+ FOREIGN KEY (id_pessoa_arquivo)
+ REFERENCES pessoa_arquivo (id))
+ ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ########################### PROCEDURES #################### --
 
 USE `wegia` ;
