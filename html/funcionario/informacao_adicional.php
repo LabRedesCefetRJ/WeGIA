@@ -100,7 +100,15 @@ function listar(PDO $pdo)
 {
     $response_query = "SELECT * FROM funcionario_outrasinfo o JOIN funcionario_listainfo l ON o.funcionario_listainfo_idfuncionario_listainfo = l.idfuncionario_listainfo;";
     try {
-        echo json_encode($pdo->query($response_query)->fetchAll(PDO::FETCH_ASSOC));
+        $informacoes = $pdo->query($response_query)->fetchAll(PDO::FETCH_ASSOC);
+        
+        //evitar XSS
+        foreach ($informacoes as $index => $informacao) {
+            $informacoes[$index]['dados'] = htmlspecialchars($informacao['dados']);
+            $informacoes[$index]['descricao'] = htmlspecialchars($informacao['descricao']);
+        }
+        
+        echo json_encode($informacoes);
     } catch (PDOException $th) {
         echo json_encode($th);
     }
