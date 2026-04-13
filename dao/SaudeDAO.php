@@ -12,6 +12,7 @@ if (file_exists($config_path)) {
 }
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Saude.php";
+require_once ROOT . "/classes/Util.php";
 require_once ROOT . "/Functions/funcoes.php";
 
 class SaudeDAO
@@ -140,7 +141,7 @@ class SaudeDAO
 
         $pdo = Conexao::connect();
 
-        date_default_timezone_set('America/Sao_Paulo');
+        Util::definirFusoHorario();
         $data = date('Y-m-d H:i:s');
 
         $pdo->beginTransaction();

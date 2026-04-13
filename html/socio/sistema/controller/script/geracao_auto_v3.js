@@ -8,6 +8,19 @@ $(document).ready(function () {
             .done(function (dados) {
                 var socios = JSON.parse(dados);
                 if (socios) {
+                    //valor
+                    $("#valor_u").val(socios[0].valor_periodo);
+
+                    //periodo
+                    const periodoSocio = mapearTipoGeracao(socios[0].id_sociotipo);
+                    $("#tipo_geracao").val(periodoSocio).change();
+
+                    if ($("#tipo_geracao").val() == 0) {
+                        $("#num_parcelas").val(1);
+                        $("#num_parcelas").prop('disabled', true);
+                        $("#escolha-modo").css("display", "none");
+                    }
+
                     function montaTabelaInicial(data_inicial, periodicidade_socio, parcelas, valor, nome_socio) {
 
                         console.log('Data selecionada: ' + data_inicial);
@@ -301,6 +314,15 @@ $(document).ready(function () {
         } else {
             $('#parcelas-quantidade').hide();
         }
+    }
+
+    function mapearTipoGeracao(id) {
+        if ([0, 1, 20, 21].includes(id)) return "0";
+        if ([2, 3, 22, 23].includes(id)) return "1";
+        if ([6, 7, 24, 25].includes(id)) return "2";
+        if ([8, 9, 26, 27].includes(id)) return "3";
+        if ([10, 11, 28, 29].includes(id)) return "6";
+        return "7";
     }
 
     // Inicializa no carregamento

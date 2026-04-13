@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 include_once '../classes/Entrada.php';
 include_once '../dao/EntradaDAO.php';
 include_once '../classes/Origem.php';
@@ -13,15 +14,16 @@ include_once '../classes/Produto.php';
 include_once '../dao/ProdutoDAO.php';
 class EntradaControle
 {
-    public function verificar(){
-        
+    public function verificar()
+    {
+
         session_start();
 
         // Acesse variáveis diretamente e valide
         $total_total = isset($_REQUEST['total_total']) ? floatval($_REQUEST['total_total']) : 0;
         //extract($_REQUEST);
 
-        date_default_timezone_set('America/Sao_Paulo');
+        Util::definirFusoHorario();
         $horadata = explode(" ", date('Y-m-d H:i'));
         $data = $horadata[0];
         $hora = $horadata[1];
@@ -33,29 +35,32 @@ class EntradaControle
         }
 
         $entrada = new Entrada($data, $hora, $valor_total, $responsavel);
-        
+
         return $entrada;
     }
-    
-    public function listarTodos(){
+
+    public function listarTodos()
+    {
         extract($_REQUEST);
-        $entradaDAO= new EntradaDAO();
+        $entradaDAO = new EntradaDAO();
         $origens = $entradaDAO->listarTodos();
         session_start();
-        $_SESSION['entrada']=$origens;
+        $_SESSION['entrada'] = $origens;
         header('Location: ../html/matPat/listar_entrada.php');
     }
 
-    public function listarTodosComProdutos(){
+    public function listarTodosComProdutos()
+    {
         extract($_REQUEST);
-        $entradaDAO= new EntradaDAO();
+        $entradaDAO = new EntradaDAO();
         $origens = $entradaDAO->listarTodosComProdutos();
         session_start();
-        $_SESSION['entrada']=$origens;
+        $_SESSION['entrada'] = $origens;
         header('Location: ../html/matPat/listar_entrada.php');
     }
-    
-    public function incluir(){
+
+    public function incluir()
+    {
         extract($_REQUEST);
         $entrada = $this->verificar();
 
@@ -67,9 +72,9 @@ class EntradaControle
         $origem = $origem[0];
         $origem = $origemDAO->listarUm($origem);
         $almoxarifado = $almoxarifadoDAO->listarUm($almoxarifado);
-        $TipoEntrada =$TipoEntradaDAO->listarUm($tipo_entrada);
+        $TipoEntrada = $TipoEntradaDAO->listarUm($tipo_entrada);
 
-        try{
+        try {
             $entrada->set_origem($origem);
             $entrada->set_almoxarifado($almoxarifado);
             $entrada->set_tipo($TipoEntrada);
@@ -77,38 +82,38 @@ class EntradaControle
             $entradaDAO->incluir($entrada);
 
             $id_responsavel = $entradaDAO->ultima();
-            $id_responsavel = implode("",$id_responsavel);
+            $id_responsavel = implode("", $id_responsavel);
 
             $x = 1;
             $id = "id";
             $qtdd = "qtd";
             $valor_unitario = "valor_unitario";
-            while($x<=$conta){
-                if(isset(${$id.$x})){
-                    $ientrada = new Ientrada(${$qtdd.$x},${$valor_unitario.$x});
+            while ($x <= $conta) {
+                if (isset(${$id . $x})) {
+                    $ientrada = new Ientrada(${$qtdd . $x}, ${$valor_unitario . $x});
                     $ientradaDAO = new IentradaDAO();
                     $produtoDAO = new ProdutoDAO();
-                    $produto = $produtoDAO->listarUm(${$id.$x});
+                    $produto = $produtoDAO->listarUm(${$id . $x});
                     $entrada = $entradaDAO->listarUm($id_responsavel);
 
 
                     $ientrada->setId_produto($produto);
                     $ientrada->setId_entrada($entrada);
                     $ientrada = $ientradaDAO->incluir($ientrada);
-
                 }
-            $x++;
-            header('Location: ../html/matPat/cadastro_entrada.php');
+                $x++;
+                header('Location: ../html/matPat/cadastro_entrada.php');
             }
-        } catch (PDOException $e){
-            $msg= "Não foi possível adicionar a entrada"."<br>".$e->getMessage();
+        } catch (PDOException $e) {
+            $msg = "Não foi possível adicionar a entrada" . "<br>" . $e->getMessage();
             echo $msg;
         }
     }
 
-    public function listarId(){
+    public function listarId()
+    {
         extract($_REQUEST);
-        try{
+        try {
             $entradaDAO = new EntradaDAO();
             $entrada = $entradaDAO->listarId($id_entrada);
             session_start();

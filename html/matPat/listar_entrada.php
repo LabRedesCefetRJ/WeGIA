@@ -17,7 +17,7 @@ if (file_exists($config_path)) {
 if (!isset($_SESSION['usuario'])) {
 	header("Location:  " . WWW . "html/index.php");
 	exit();
-}else{
+} else {
 	session_regenerate_id();
 }
 

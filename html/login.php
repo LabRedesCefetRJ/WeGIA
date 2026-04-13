@@ -2,8 +2,6 @@
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
-date_default_timezone_set("America/Sao_Paulo");
-
 require_once '../dao/Conexao.php';
 require_once '../Functions/funcoes.php';
 require_once './seguranca/sessionStart.php';
