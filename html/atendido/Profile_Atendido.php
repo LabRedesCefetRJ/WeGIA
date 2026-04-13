@@ -124,6 +124,30 @@ $dependente = json_encode($dependente);
     .btn i {
       color: white;
     }
+
+    #atendidoDocFormError {
+      display: block !important;
+      max-height: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.25s ease, margin-bottom 0.25s ease, padding 0.25s ease, border-width 0.25s ease, visibility 0.25s ease;
+    }
+
+    #atendidoDocFormError.in {
+      max-height: 120px;
+      margin-bottom: 20px;
+      padding-top: 15px;
+      padding-bottom: 15px;
+      border-width: 1px;
+      opacity: 1;
+      visibility: visible;
+    }
+    
   </style>
   <!-- Theme CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
@@ -1023,6 +1047,29 @@ $dependente = json_encode($dependente);
                         <br>
                         <?php
                         $tiposDocumentoAtendido = $pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC);
+                        $uploadMaxFilesize = ini_get('upload_max_filesize');
+                        $converterTamanhoParaBytes = static function ($valor) {
+                          $valor = trim((string)$valor);
+                          if ($valor === '') {
+                            return 0;
+                          }
+
+                          $numero = (float)$valor;
+                          $unidade = strtolower(substr($valor, -1));
+
+                          switch ($unidade) {
+                            case 'g':
+                              $numero *= 1024;
+                            case 'm':
+                              $numero *= 1024;
+                            case 'k':
+                              $numero *= 1024;
+                              break;
+                          }
+
+                          return (int)$numero;
+                        };
+                        $uploadMaxFilesizeBytes = $converterTamanhoParaBytes($uploadMaxFilesize);
                         $modalUploadConfig = [
                           'button' => [
                             'label' => 'Adicionar',
@@ -1061,11 +1108,12 @@ $dependente = json_encode($dependente);
                             'name' => 'arquivo',
                             'label' => 'Arquivo',
                             'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
-                            'help' => 'PNG, JPG, PDF, DOC, DOCX e ODP.'
+                            'help' => 'PNG, JPG, PDF, DOC, DOCX e ODP.',
+                            'max_size_bytes' => $uploadMaxFilesizeBytes
                           ]
                         ];
                         require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
-                        unset($modalUploadConfig, $tiposDocumentoAtendido);
+                        unset($modalUploadConfig, $tiposDocumentoAtendido, $uploadMaxFilesizeBytes, $converterTamanhoParaBytes);
                         ?>
                     </section>
                   </div>
@@ -1439,14 +1487,67 @@ $dependente = json_encode($dependente);
         }
       }
 
+      let timeoutErroModalDocumento = null;
+
+      function exibirErroModalDocumento(mensagem) {
+        const campoErro = document.getElementById('atendidoDocFormError');
+        const textoErro = document.getElementById('atendidoDocFormErrorText');
+        if (!campoErro) {
+          return;
+        }
+
+        if (timeoutErroModalDocumento) {
+          clearTimeout(timeoutErroModalDocumento);
+        }
+
+        if (textoErro) {
+          textoErro.textContent = mensagem;
+        }
+        campoErro.classList.add('in');
+
+        timeoutErroModalDocumento = setTimeout(function() {
+          limparErroModalDocumento();
+        }, 5000);
+      }
+
+      function limparErroModalDocumento() {
+        const campoErro = document.getElementById('atendidoDocFormError');
+        const textoErro = document.getElementById('atendidoDocFormErrorText');
+        if (!campoErro) {
+          return;
+        }
+
+        campoErro.classList.remove('in');
+        if (textoErro) {
+          textoErro.textContent = '';
+        }
+
+        if (timeoutErroModalDocumento) {
+          clearTimeout(timeoutErroModalDocumento);
+          timeoutErroModalDocumento = null;
+        }
+      }
+
       /**verifica se um tipo de documento foi selecionado antes de submeter o formulário ao backend */
       function verificaTipo(ev) {
         const tipo = document.getElementById('tipoDocumento');
+        const arquivo = document.getElementById('arquivoDocumentoAtendido');
+
+        limparErroModalDocumento();
 
         if (isNaN(tipo.value) || tipo.value < 1) {
-          alert('Erro: selecione um tipo de documento adequado antes de prosseguir.');
+          exibirErroModalDocumento('Selecione um tipo de documento adequado antes de prosseguir.');
           ev.preventDefault(); // impede o envio
           return false; // impede o fluxo normal do onclick
+        }
+
+        if (arquivo && arquivo.files && arquivo.files.length > 0) {
+          const tamanhoMaximo = Number(arquivo.dataset.maxSizeBytes || 0);
+          if (tamanhoMaximo > 0 && arquivo.files[0].size > tamanhoMaximo) {
+            exibirErroModalDocumento('O arquivo selecionado excede o limite permitido de <?= addslashes($uploadMaxFilesize) ?>.');
+            ev.preventDefault();
+            return false;
+          }
         }
 
         // retorno true permite o envio normal do formulário

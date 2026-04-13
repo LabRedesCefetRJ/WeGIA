@@ -40,6 +40,7 @@ $fileLabel = $file['label'] ?? 'Arquivo';
 $fileAccept = $file['accept'] ?? '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp';
 $fileHelp = $file['help'] ?? 'Formatos aceitos: PNG, JPG, PDF, DOC, DOCX e ODP.';
 $fileRequired = array_key_exists('required', $file) ? (bool)$file['required'] : true;
+$fileMaxSizeBytes = isset($file['max_size_bytes']) ? (int)$file['max_size_bytes'] : 0;
 ?>
 
 <button
@@ -86,6 +87,17 @@ $fileRequired = array_key_exists('required', $file) ? (bool)$file['required'] : 
                 <?php endforeach; ?>
 
                 <div class="modal-body">
+                    <div
+                        id="atendidoDocFormError"
+                        class="alert alert-danger alert-dismissible fade"
+                        style="display: none;"
+                        role="alert">
+                        <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalDocumento(); return false;">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="atendidoDocFormErrorText"></span>
+                    </div>
+
                     <div class="form-group">
                         <label class="control-label" for="<?= htmlspecialchars($selectId, ENT_QUOTES, 'UTF-8') ?>">
                             <?= htmlspecialchars($selectLabel, ENT_QUOTES, 'UTF-8') ?><?php if ($selectRequired): ?> <sup class="obrig">*</sup><?php endif; ?>
@@ -132,6 +144,7 @@ $fileRequired = array_key_exists('required', $file) ? (bool)$file['required'] : 
                             class="form-control"
                             id="<?= htmlspecialchars($fileId, ENT_QUOTES, 'UTF-8') ?>"
                             accept="<?= htmlspecialchars($fileAccept, ENT_QUOTES, 'UTF-8') ?>"
+                            <?= $fileMaxSizeBytes > 0 ? 'data-max-size-bytes="' . htmlspecialchars((string)$fileMaxSizeBytes, ENT_QUOTES, 'UTF-8') . '"' : '' ?>
                             <?= $fileRequired ? 'required' : '' ?>>
                         <p class="help-block">
                             <span class="text-danger">Formatos aceitos:</span>
