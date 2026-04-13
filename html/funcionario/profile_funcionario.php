@@ -991,13 +991,14 @@ try {
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="inicio_remuneracao">Data Inicio</label>
                                 <div class="col-md-8">
-                                  <input type="date" name="inicio" id="inicio_remuneracao" class="form-control">
+                                  <input type="date" name="inicio" id="inicio_remuneracao" class="form-control" required>
                                 </div>
                               </div>
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="fim_remuneracao">Data Fim</label>
                                 <div class="col-md-8">
-                                  <input type="date" name="fim" id="fim_remuneracao" class="form-control">
+                                  <input type="date" name="fim" id="fim_remuneracao" class="form-control" required>
+                                  <p id="erro_periodo_remuneracao" style="display: none; color: #b30000; margin-top: 5px;">A data fim deve ser posterior ou igual à data início.</p>
                                 </div>
                               </div>
                               <!-- Pegar id funcionário de variável sanitizada -->
@@ -1878,9 +1879,66 @@ try {
       return true;
     }
 
+    function exibirErroRemuneracao(mensagem) {
+      window.alert(mensagem);
+      return false;
+    }
+
+    function limparErroPeriodoRemuneracao() {
+      $('#erro_periodo_remuneracao').hide().text('A data fim deve ser posterior ou igual à data início.');
+    }
+
+    function exibirErroPeriodoRemuneracao(mensagem) {
+      $('#erro_periodo_remuneracao').text(mensagem).show();
+      return false;
+    }
+
+    function validarPeriodoRemuneracao() {
+      var dataInicio = $('#inicio_remuneracao').val();
+      var dataFim = $('#fim_remuneracao').val();
+
+      if (!dataInicio || !dataFim) {
+        limparErroPeriodoRemuneracao();
+        return true;
+      }
+
+      if (dataFim < dataInicio) {
+        return exibirErroPeriodoRemuneracao('A data fim deve ser posterior ou igual à data início.');
+      }
+
+      limparErroPeriodoRemuneracao();
+      return true;
+    }
+
+    function destruirTabelaRemuneracao() {
+      if ($.fn.DataTable.isDataTable('#datatable-default')) {
+        $('#datatable-default').DataTable().destroy();
+      }
+    }
+
+    function inicializarTabelaRemuneracao() {
+      $('#datatable-default').DataTable({
+        "order": [
+          [1, "desc"]
+        ]
+      });
+    }
+
     function listar_remuneracao(lista) {
+      if (lista.erro) {
+        exibirErroRemuneracao(lista.erro);
+        return;
+      }
+
+      destruirTabelaRemuneracao();
+
       $("#tabela_remuneracao").empty();
+
+      var total = 0;
+
       $.each(lista, function(i, item) {
+        total += parseFloat(item.valor) || 0;
+
         $("#tabela_remuneracao")
           .append($("<tr>")
             .append($("<td>").text(item.descricao))
@@ -1890,21 +1948,30 @@ try {
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
               .append($("<button onclick='removerRemuneracao(" + item.id_remuneracao + ")' title='Excluir' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>"))
             )
-          )
-        $(function() {
-          var total = 0;
-          $('.tabela').each(function() {
-            total += parseInt(jQuery(this).text());
-          });
-          $('.total').html(total);
-        });
+          );
       });
+
+      $('.total').html(total);
+      inicializarTabelaRemuneracao();
     }
 
     function adicionarRemuneracao() {
-      if (submitForm('formRemuneracao', listar_remuneracao)) {
-        document.getElementById("closeRemuneracaoModal").click();
+      if (!validarPeriodoRemuneracao()) {
+        return false;
       }
+
+      return submitForm('formRemuneracao', function(response) {
+        if (response.erro) {
+          exibirErroRemuneracao(response.erro);
+          return;
+        }
+
+        listar_remuneracao(response);
+        $('#closeRemuneracaoModal').click();
+        $('#formRemuneracao').find('input[type="date"], input[type="number"]').val('');
+        $('#tipo_remuneracao').prop('selectedIndex', 0);
+        limparErroPeriodoRemuneracao();
+      });
     }
 
     function adicionarTipoRemuneracao() {
@@ -1940,6 +2007,8 @@ try {
       });
     }
     $(function() {
+      $('#inicio_remuneracao, #fim_remuneracao').on('change', validarPeriodoRemuneracao);
+      destruirTabelaRemuneracao();
       post("remuneracao.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_remuneracao);
     })
 
