@@ -218,6 +218,29 @@ try {
     .btn i {
       color: white;
     }
+
+    #atendidoDocFormError {
+      display: block !important;
+      max-height: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.25s ease, margin-bottom 0.25s ease, padding 0.25s ease, border-width 0.25s ease, visibility 0.25s ease;
+    }
+
+    #atendidoDocFormError.in {
+      max-height: 120px;
+      margin-bottom: 20px;
+      padding-top: 15px;
+      padding-bottom: 15px;
+      border-width: 1px;
+      opacity: 1;
+      visibility: visible;
+    }
   </style>
   <!-- jquery functions -->
   <script>
@@ -449,7 +472,6 @@ try {
     $(function() {
       var docfuncional = <?= $docfuncional ?>;
       $.each(docfuncional, function(i, item) {
-        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -465,7 +487,6 @@ try {
     function listarFunDocs(docfuncional) {
       $("#doc-tab").empty();
       $.each(docfuncional, function(i, item) {
-        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -1301,18 +1322,15 @@ try {
                                   post(url, data, listarInfoAdicional);
                                   $("#" + 'informacao' + id_descricao + "").remove();
                                 }
-
+                                
                                 //Refazer lógica abaixo
                                 function listarInfoAdicional(lista) {
                                   //Pegar id funcionário de variável sanitizada
-                                  console.log('Linha 1279');
                                   $.ajax({
                                     type: "GET",
                                     url: `../../controle/control.php?nomeClasse=${encodeURIComponent('InformacaoAdicionalControle')}&metodo=${encodeURIComponent('getTodasInformacoesAdicionaisPorIdFuncionario')}&id_funcionario=<?= $idFuncionario ?>`,
                                     dataType: 'json',
                                     success: function(resp) {
-                                      console.log('Informações adicionais', resp);
-
                                       let tabela = $("#addInfo-tab");
 
                                       // Limpa a tabela antes de adicionar os novos dados (se necessário)
@@ -1395,7 +1413,6 @@ try {
                               };
                               ?>
                             </select>
-                            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
                             <script>
                               $(document).ready(function() {
                                 $("#tipoCargaHoraria_input").on('change', function() {
@@ -1606,6 +1623,29 @@ try {
                       </table><br>
                       <?php
                       $tiposDocumentoFuncionario = $pdo->query("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC;")->fetchAll(PDO::FETCH_ASSOC);
+                      $uploadMaxFilesize = ini_get('upload_max_filesize');
+                      $converterTamanhoParaBytes = static function ($valor) {
+                        $valor = trim((string)$valor);
+                        if ($valor === '') {
+                          return 0;
+                        }
+
+                        $numero = (float)$valor;
+                        $unidade = strtolower(substr($valor, -1));
+
+                        switch ($unidade) {
+                          case 'g':
+                            $numero *= 1024;
+                          case 'm':
+                            $numero *= 1024;
+                          case 'k':
+                            $numero *= 1024;
+                            break;
+                        }
+
+                        return (int)$numero;
+                      };
+                      $uploadMaxFilesizeBytes = $converterTamanhoParaBytes($uploadMaxFilesize);
                       $modalUploadConfig = [
                         'button' => [
                           'label' => 'Adicionar',
@@ -1618,7 +1658,7 @@ try {
                         ],
                         'form' => [
                           'id' => 'funcionarioDocForm',
-                          'action' => 'documento_upload.php',
+                          'action' => 'documento_upload.php?id_funcionario=' . (int)$idFuncionario,
                           'method' => 'post',
                           'enctype' => 'multipart/form-data',
                           'hidden_fields' => [
@@ -1641,11 +1681,12 @@ try {
                           'name' => 'arquivo',
                           'label' => 'Arquivo',
                           'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
-                          'help' => 'PNG, JPG, PDF, DOC, DOCX e ODP.'
+                          'help' => 'PNG, JPG, PDF, DOC, DOCX e ODP.',
+                          'max_size_bytes' => $uploadMaxFilesizeBytes
                         ]
                       ];
                       require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
-                      unset($modalUploadConfig, $tiposDocumentoFuncionario);
+                      unset($modalUploadConfig, $tiposDocumentoFuncionario, $uploadMaxFilesize, $uploadMaxFilesizeBytes, $converterTamanhoParaBytes);
                       ?>
                     </div>
                   </section>
@@ -1850,7 +1891,6 @@ try {
       return true;
     }) {
       var data = getFormPostParams(idForm);
-      console.log(data);
       var url;
       var data_nova;
       switch (idForm) {
@@ -1872,7 +1912,6 @@ try {
         return false;
       }
       post(url, data_nova, callback);
-      console.log(idForm + " => " + data + " | ", callback);
       return true;
     }
 
@@ -1916,7 +1955,6 @@ try {
         return
       }
       data = "action=tipo_adicionar&descricao=" + descricao;
-      console.log(url + "?" + data);
       post(url, data, gerarTipoRemuneracao);
     }
 
@@ -2063,8 +2101,118 @@ try {
       })
     }
 
+    let timeoutErroModalDocumentoFuncionario = null;
+
+    function exibirErroModalDocumentoFuncionario(mensagem) {
+      const campoErro = document.getElementById('atendidoDocFormError');
+      const textoErro = document.getElementById('atendidoDocFormErrorText');
+      if (!campoErro) {
+        return;
+      }
+
+      if (timeoutErroModalDocumentoFuncionario) {
+        clearTimeout(timeoutErroModalDocumentoFuncionario);
+      }
+
+      if (textoErro) {
+        textoErro.textContent = mensagem;
+      }
+
+      campoErro.classList.add('in');
+
+      timeoutErroModalDocumentoFuncionario = setTimeout(function() {
+        limparErroModalDocumentoFuncionario();
+      }, 5000);
+    }
+
+    function limparErroModalDocumentoFuncionario() {
+      const campoErro = document.getElementById('atendidoDocFormError');
+      const textoErro = document.getElementById('atendidoDocFormErrorText');
+      if (!campoErro) {
+        return;
+      }
+
+      campoErro.classList.remove('in');
+
+      if (textoErro) {
+        textoErro.textContent = '';
+      }
+
+      if (timeoutErroModalDocumentoFuncionario) {
+        clearTimeout(timeoutErroModalDocumentoFuncionario);
+        timeoutErroModalDocumentoFuncionario = null;
+      }
+    }
+
+    function limparErroModalDocumento() {
+      limparErroModalDocumentoFuncionario();
+    }
+
+    function verificaTipoDocumentoFuncionario() {
+      const tipo = document.getElementById('id_docfuncional');
+      const arquivo = document.getElementById('arquivoDocumentoFuncionario');
+
+      limparErroModalDocumentoFuncionario();
+
+      if (!tipo || !tipo.value || Number(tipo.value) < 1) {
+        exibirErroModalDocumentoFuncionario('Selecione um tipo de documento adequado antes de prosseguir.');
+        return false;
+      }
+
+      if (arquivo && arquivo.files && arquivo.files.length > 0) {
+        const tamanhoMaximo = Number(arquivo.dataset.maxSizeBytes || 0);
+        if (tamanhoMaximo > 0 && arquivo.files[0].size > tamanhoMaximo) {
+          exibirErroModalDocumentoFuncionario('O arquivo selecionado excede o limite permitido de <?= addslashes(ini_get('upload_max_filesize')) ?>.');
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    $('#funcionarioDocForm').on('submit', function(ev) {
+      ev.preventDefault();
+
+      if (!verificaTipoDocumentoFuncionario()) {
+        return false;
+      }
+
+      const form = this;
+      const formData = new FormData(form);
+
+      $.ajax({
+        url: form.action,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(response) {
+          if (!response || response.status !== 'sucesso') {
+            exibirErroModalDocumentoFuncionario((response && response.mensagem) || 'Erro ao enviar o documento.');
+            return;
+          }
+
+          listarFunDocs(response.documentos || []);
+          limparErroModalDocumentoFuncionario();
+          form.reset();
+          $('#docFormModal').modal('hide');
+        },
+        error: function(xhr) {
+          let mensagem = 'Erro ao enviar o documento.';
+
+          if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+            mensagem = xhr.responseJSON.mensagem;
+          }
+
+          exibirErroModalDocumentoFuncionario(mensagem);
+        }
+      });
+
+      return false;
+    });
+
     function verificaSucesso(response) {
-      console.log(response);
       if (response.errorInfo) {
         if (response.errorInfo[1] == 1451) {
           window.alert("O dependente possui documentos cadastrados em seu nome. Retire-os do bando de dados antes de remover o dependente.");
