@@ -1048,6 +1048,7 @@ $dependente = json_encode($dependente);
                         <?php
                         $tiposDocumentoAtendido = $pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC);
                         $uploadMaxFilesize = ini_get('upload_max_filesize');
+                        $uploadMaxFilesizeFormatado = preg_replace('/^(\d+(?:[.,]\d+)?)\s*([KMG])$/i', '$1 $2B', (string)$uploadMaxFilesize);
                         $converterTamanhoParaBytes = static function ($valor) {
                           $valor = trim((string)$valor);
                           if ($valor === '') {
@@ -1544,7 +1545,7 @@ $dependente = json_encode($dependente);
         if (arquivo && arquivo.files && arquivo.files.length > 0) {
           const tamanhoMaximo = Number(arquivo.dataset.maxSizeBytes || 0);
           if (tamanhoMaximo > 0 && arquivo.files[0].size > tamanhoMaximo) {
-            exibirErroModalDocumento('O arquivo selecionado excede o limite permitido de <?= addslashes($uploadMaxFilesize) ?>.');
+            exibirErroModalDocumento('O arquivo selecionado excede o limite permitido de <?= addslashes($uploadMaxFilesizeFormatado) ?>.');
             ev.preventDefault();
             return false;
           }

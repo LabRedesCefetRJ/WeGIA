@@ -24,10 +24,25 @@ function responderJson(int $codigo, array $payload): void
     exit();
 }
 
+function formatarTamanhoUpload(string $valor): string
+{
+    $valor = strtoupper(trim($valor));
+    if ($valor === '') {
+        return '';
+    }
+
+    $unidade = substr($valor, -1);
+    if (in_array($unidade, ['K', 'M', 'G'], true)) {
+        return substr($valor, 0, -1) . ' ' . $unidade . 'B';
+    }
+
+    return $valor;
+}
+
 function obterMensagemErroUpload(int $codigoErro): string
 {
     return match ($codigoErro) {
-        UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'O arquivo selecionado excede o limite permitido de ' . ini_get('upload_max_filesize') . '.',
+        UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'O arquivo selecionado excede o limite permitido de ' . formatarTamanhoUpload((string)ini_get('upload_max_filesize')) . '.',
         UPLOAD_ERR_PARTIAL => 'O upload do arquivo foi enviado parcialmente.',
         UPLOAD_ERR_NO_FILE => 'Selecione um arquivo antes de enviar.',
         default => 'Erro ao enviar o documento.',
@@ -185,7 +200,7 @@ try {
 
     if (empty($_POST) && empty($_FILES)) {
         throw new InvalidArgumentException(
-            'O arquivo selecionado excede o limite permitido de ' . ini_get('upload_max_filesize') . '.',
+            'O arquivo selecionado excede o limite permitido de ' . formatarTamanhoUpload((string)ini_get('upload_max_filesize')) . '.',
             413
         );
     }

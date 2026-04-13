@@ -1624,6 +1624,7 @@ try {
                       <?php
                       $tiposDocumentoFuncionario = $pdo->query("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC;")->fetchAll(PDO::FETCH_ASSOC);
                       $uploadMaxFilesize = ini_get('upload_max_filesize');
+                      $uploadMaxFilesizeFormatado = preg_replace('/^(\d+(?:[.,]\d+)?)\s*([KMG])$/i', '$1 $2B', (string)$uploadMaxFilesize);
                       $converterTamanhoParaBytes = static function ($valor) {
                         $valor = trim((string)$valor);
                         if ($valor === '') {
@@ -2162,7 +2163,7 @@ try {
       if (arquivo && arquivo.files && arquivo.files.length > 0) {
         const tamanhoMaximo = Number(arquivo.dataset.maxSizeBytes || 0);
         if (tamanhoMaximo > 0 && arquivo.files[0].size > tamanhoMaximo) {
-          exibirErroModalDocumentoFuncionario('O arquivo selecionado excede o limite permitido de <?= addslashes(ini_get('upload_max_filesize')) ?>.');
+          exibirErroModalDocumentoFuncionario('O arquivo selecionado excede o limite permitido de <?= addslashes($uploadMaxFilesizeFormatado) ?>.');
           return false;
         }
       }
