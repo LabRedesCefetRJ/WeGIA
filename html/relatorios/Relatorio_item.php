@@ -199,7 +199,23 @@ class Item
                     isaida.valor_unitario, 
                     saida.data as data,
                     unidade.descricao_unidade as unidade,
-                    tipo_saida.descricao as tipo
+                    tipo_saida.descricao as tipo,
+                    ROUND(
+                        SUM(isaida.qtd) / NULLIF(
+                            DATEDIFF(
+                                COALESCE(
+                                    " . (!empty($this->getPeriodo()['fim']) ? ':dataFim' : 'CURDATE()') .",
+                                    CURDATE()
+                                ),
+                                COALESCE(
+                                    " . (!empty($this->getPeriodo()['inicio']) ? ':dataInicio' : '(SELECT MIN(s2.data) FROM saida s2)') .",
+                                    (SELECT MIN(s2.data) FROM saida s2)
+                                )
+                            ) + 1,
+                            0
+                        ),
+                        2
+                    ) as media_saida
                 FROM isaida 
                 LEFT JOIN produto ON produto.id_produto = isaida.id_produto 
                 LEFT JOIN saida ON saida.id_saida = isaida.id_saida 
@@ -273,7 +289,7 @@ class Item
 
                 // Caso 1: mostrar zerados
                 "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_produto_entrada 
-                SELECT produto.id_produto, produto.preco, IFNULL(SUM(CASE WHEN tipo_entrada.id_tipo = 1 THEN 0 ELSE ientrada.qtd END), 0) as somatorio, IFNULL(SUM(CASE WHEN tipo_entrada.id_tipo = 1 THEN 0 ELSE ientrada.qtd * ientrada.valor_unitario END), 0) as Total, 
+                SELECT produto.id_produto, produto.descricao, produto.preco, IFNULL(SUM(ientrada.qtd), 0) as somatorio, IFNULL(SUM(ientrada.qtd * ientrada.valor_unitario), 0) as Total, 
                 concat(produto.id_produto, IFNULL(ientrada.valor_unitario, 0)) as kungfu 
                 FROM produto 
                 LEFT JOIN ientrada ON ientrada.id_produto = produto.id_produto 
@@ -289,7 +305,7 @@ class Item
             $this->setDDL_cmd(
                 $table1[(int)$showZero] .
                     "CREATE TEMPORARY TABLE IF NOT EXISTS tabelaPrecoMedio 
-                SELECT id_produto, SUM(somatorio) as qtd_compra_total, IFNULL(SUM(Total) / NULLIF(SUM(somatorio), 0), preco) AS PrecoMedio 
+                SELECT id_produto, descricao, SUM(somatorio) as qtd_compra_total, IFNULL(SUM(Total) / NULLIF(SUM(somatorio), 0), preco) AS PrecoMedio 
                 FROM tabela_produto_entrada 
                 GROUP BY tabela_produto_entrada.descricao;
     
@@ -424,17 +440,33 @@ class Item
 
                 $classe_tipo = Util::getClassePorTipo($tipo_label);
 
-                echo ('
-                <tr>
-                    <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
-                    <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
-                    <td><span class="badge ' . $classe_tipo . '">' . $tipo_label . '</span></td>
-                    <td>' . htmlspecialchars($util->formatoDataDMY($item['data']), ENT_QUOTES, 'UTF-8') . '</td>
-                    <td>R$ ' . number_format($item['valor_unitario'], 2) . '</td>
-                    <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
-                    <td>R$ ' . number_format($item['valor_total'], 2) . '</td>
-                </tr>
-            ');
+                if($this->getRelatorio() == 'saida') {
+                
+                    echo ('
+                    <tr>
+                        <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
+                        <td>'. number_format($item['media_saida'], 2) .' / dia</td>
+                        <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
+                        <td><span class="badge ' . $classe_tipo . '">' . $tipo_label . '</span></td>
+                        <td>' . htmlspecialchars($util->formatoDataDMY($item['data']), ENT_QUOTES, 'UTF-8') . '</td>
+                        <td>R$ ' . number_format($item['valor_unitario'], 2) . '</td>
+                        <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
+                        <td>R$ ' . number_format($item['valor_total'], 2) . '</td>
+                    </tr>
+                ');
+                } else {
+                    echo ('
+                        <tr>
+                            <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
+                            <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
+                            <td><span class="badge ' . $classe_tipo . '">' . $tipo_label . '</span></td>
+                            <td>' . htmlspecialchars($util->formatoDataDMY($item['data']), ENT_QUOTES, 'UTF-8') . '</td>
+                            <td>R$ ' . number_format($item['valor_unitario'], 2) . '</td>
+                            <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
+                            <td>R$ ' . number_format($item['valor_total'], 2) . '</td>
+                        </tr>
+                    ');
+                }
             }
 
             if (
@@ -447,12 +479,28 @@ class Item
             $tot_val += $item['valor_total'];
         }
 
-        echo ('
-    <tr class="table-info">
-        <td scope="row" colspan="'.(($this->getRelatorio() == 'estoque') ? 4: 6) .'">Valor total:</td>
-        <td>R$ ' . number_format($tot_val, 2) . '</td>
-    </tr>
-    ');
+        if ($this->getRelatorio() == 'estoque') {
+            echo ('
+                <tr class="table-info">
+                    <td scope="row" colspan="4">Valor total:</td>
+                    <td>R$ ' . number_format($tot_val, 2) . '</td>
+                </tr>
+            ');
+        } else if ($this->getRelatorio() == 'saida') {
+            echo ('
+                <tr class="table-info">
+                    <td scope="row" colspan="7">Valor total:</td>
+                    <td>R$ ' . number_format($tot_val, 2) . '</td>
+                </tr>
+            ');
+        } else {
+            echo ('
+                <tr class="table-info">
+                    <td scope="row" colspan="6">Valor total:</td>
+                    <td>R$ ' . number_format($tot_val, 2) . '</td>
+                </tr>
+            ');
+        }
     }
 
 

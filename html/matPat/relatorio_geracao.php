@@ -287,6 +287,9 @@ function quickQuery($query, $parametro, $column)
 						<thead class="thead-dark">
 							<tr>
 								<th scope="col" width="11%">Quantidade</th>
+								<?php if($_POST['tipo_relatorio'] == 'saida') {
+									echo ('<th scope="col" width="14%">Média de saída</th>');
+								}?>
 								<th scope="col">Descrição</th>
 								<?php if ($_POST['tipo_relatorio'] != 'estoque') {
 									echo ('<th scope="col" width="12%">Tipo</th>');
