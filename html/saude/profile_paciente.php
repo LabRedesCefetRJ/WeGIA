@@ -1077,46 +1077,87 @@ try {
 
                         <div class="row">
                           <?php
-                          $sqlDocumentosDownload = "SELECT ad.id_pessoa_arquivo as id, ad.atendido_docs_atendidos_idatendido_docs_atendidos as tipo_doc FROM atendido_documentacao ad JOIN atendido_docs_atendidos ada ON (ad.atendido_docs_atendidos_idatendido_docs_atendidos=ada.idatendido_docs_atendidos) JOIN atendido a ON (ad.atendido_idatendido=a.idatendido) JOIN pessoa p ON (a.pessoa_id_pessoa=p.id_pessoa) JOIN saude_fichamedica sf ON(p.id_pessoa=sf.id_pessoa) WHERE sf.id_fichamedica=:idFichaMedica AND ad.atendido_docs_atendidos_idatendido_docs_atendidos IN (1,2,3,5) ORDER BY tipo_doc ASC";
-
                           try {
-                            $stmt = $pdo->prepare($sqlDocumentosDownload);
-                            $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
-                            $stmt->execute();
-
-                            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+                            // Buscar id_pessoa da ficha médica
+                            $stmtIdPessoa = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :idFichaMedica");
+                            $stmtIdPessoa->bindValue(':idFichaMedica', $_GET['id_fichamedica'], PDO::PARAM_INT);
+                            $stmtIdPessoa->execute();
+                            $pessoaData = $stmtIdPessoa->fetch(PDO::FETCH_ASSOC);
+                            
+                            if (!$pessoaData) {
+                              throw new Exception('Ficha médica não encontrada');
+                            }
+                            
+                            $idPessoa = $pessoaData['id_pessoa'];
                             $documentosDownload = [];
-
-                            foreach ($resultados as $documento) {
-                              $documentosDownload[$documento['tipo_doc']] =  $documento['id'];
+                            
+                            // Verificar se é um funcionário e buscar documentações
+                            $stmtCheckFuncionario = $pdo->prepare("SELECT id_funcionario FROM funcionario WHERE id_pessoa = :idPessoa LIMIT 1");
+                            $stmtCheckFuncionario->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+                            $stmtCheckFuncionario->execute();
+                            $funcionarioData = $stmtCheckFuncionario->fetch(PDO::FETCH_ASSOC);
+                            
+                            if ($funcionarioData) {
+                              // IDs para funcionário: 1=RG, 2=CPF, 9=SUS
+                              $sqlFuncionarioDocs = "SELECT fd.id_fundocs as id, fdf.id_docfuncional as tipo_doc
+                                                      FROM funcionario_docs fd 
+                                                      JOIN funcionario_docfuncional fdf ON (fd.id_docfuncional = fdf.id_docfuncional) 
+                                                      WHERE fd.id_funcionario = :idFuncionario 
+                                                      AND fd.id_docfuncional IN (1, 2, 9)
+                                                      ORDER BY fdf.id_docfuncional ASC";
+                              $stmtFuncionarioDocs = $pdo->prepare($sqlFuncionarioDocs);
+                              $stmtFuncionarioDocs->bindValue(':idFuncionario', $funcionarioData['id_funcionario'], PDO::PARAM_INT);
+                              $stmtFuncionarioDocs->execute();
+                              $funcionarioDocResultados = $stmtFuncionarioDocs->fetchAll(PDO::FETCH_ASSOC);
+                              
+                              foreach ($funcionarioDocResultados as $documento) {
+                                $mapeamento = [1 => 1, 2 => 2, 9 => 3]; // Mapear IDs funcionário para índice padrão (1=RG, 2=CPF, 3=SUS)
+                                $tipoMapeado = $mapeamento[$documento['tipo_doc']] ?? $documento['tipo_doc'];
+                                $documentosDownload[$tipoMapeado] = [
+                                  'id' => $documento['id'],
+                                  'endpoint' => '../funcionario/documento_download.php',
+                                  'tipo' => 'funcionario'
+                                ];
+                              }
+                            } else {
+                              // IDs para atendido: 1=RG, 2=CPF, 3=SUS, 5=Plano de Saúde
+                              $sqlAtendidoDocs = "SELECT ad.id_pessoa_arquivo as id, 
+                                                  ada.idatendido_docs_atendidos as tipo_doc
+                                                  FROM atendido_documentacao ad 
+                                                  JOIN atendido_docs_atendidos ada ON (ad.atendido_docs_atendidos_idatendido_docs_atendidos=ada.idatendido_docs_atendidos) 
+                                                  JOIN atendido a ON (ad.atendido_idatendido=a.idatendido) 
+                                                  JOIN pessoa p ON (a.pessoa_id_pessoa=p.id_pessoa) 
+                                                  WHERE p.id_pessoa = :idPessoa 
+                                                  AND ada.idatendido_docs_atendidos IN (1, 2, 3, 5)
+                                                  ORDER BY ada.idatendido_docs_atendidos ASC";
+                              $stmtAtendidoDocs = $pdo->prepare($sqlAtendidoDocs);
+                              $stmtAtendidoDocs->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+                              $stmtAtendidoDocs->execute();
+                              $atendidoDocResultados = $stmtAtendidoDocs->fetchAll(PDO::FETCH_ASSOC);
+                              
+                              foreach ($atendidoDocResultados as $documento) {
+                                $documentosDownload[$documento['tipo_doc']] = [
+                                  'id' => $documento['id'],
+                                  'endpoint' => '../atendido/documento_download.php',
+                                  'tipo' => 'atendido'
+                                ];
+                              }
                             }
 
                           } catch (PDOException $e) {
                             http_response_code(500);
                             echo json_encode(['erro' => 'Erro no servidor ao buscar documentações para download ' . $e->getMessage()]);
                             exit();
+                          } catch (Exception $e) {
+                            echo '';
                           }
                           ?>
 
-                          <!--Botão para baixar CPF -->
-                          <?php
-                          if (isset($documentosDownload[2])):
-                          ?>
-                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[2] ?>" class="btn btn-primary btn-document" title="Clique para baixar">CPF <i class="fas fa-download"></i></a>
-                          <?php
-                          else:
-                          ?>
-                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">CPF <i class="fas fa-download"></i></a>
-                          <?php
-                          endif;
-                          ?>
-
-                          <!-- Botão para baixar RG -->
+                          <!--Botão para baixar RG -->
                           <?php
                           if (isset($documentosDownload[1])):
                           ?>
-                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[1] ?>" class="btn btn-primary btn-document" title="Clique para baixar">RG <i class="fas fa-download"></i></a>
+                            <a href="<?= $documentosDownload[1]['endpoint'] ?>?id_doc=<?= $documentosDownload[1]['id'] ?>" class="btn btn-primary btn-document" title="Clique para baixar">RG <i class="fas fa-download"></i></a>
                           <?php
                           else:
                           ?>
@@ -1125,11 +1166,24 @@ try {
                           endif;
                           ?>
 
+                          <!--Botão para baixar CPF -->
+                          <?php
+                          if (isset($documentosDownload[2])):
+                          ?>
+                            <a href="<?= $documentosDownload[2]['endpoint'] ?>?id_doc=<?= $documentosDownload[2]['id'] ?>" class="btn btn-primary btn-document" title="Clique para baixar">CPF <i class="fas fa-download"></i></a>
+                          <?php
+                          else:
+                          ?>
+                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">CPF <i class="fas fa-download"></i></a>
+                          <?php
+                          endif;
+                          ?>
+
                           <!--Botão para baixar SUS-->
                           <?php
                           if (isset($documentosDownload[3])):
                           ?>
-                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[3] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Cartão do SUS <i class="fas fa-download"></i></a>
+                            <a href="<?= $documentosDownload[3]['endpoint'] ?>?id_doc=<?= $documentosDownload[3]['id'] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Cartão do SUS <i class="fas fa-download"></i></a>
                           <?php
                           else:
                           ?>
@@ -1138,10 +1192,11 @@ try {
                           endif;
                           ?>
 
+                          <!--Botão para baixar Plano de Saúde-->
                           <?php
                           if (isset($documentosDownload[5])):
                           ?>
-                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[5] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Plano de saúde <i class="fas fa-download"></i></a>
+                            <a href="<?= $documentosDownload[5]['endpoint'] ?>?id_doc=<?= $documentosDownload[5]['id'] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Plano de saúde <i class="fas fa-download"></i></a>
                           <?php
                           else:
                           ?>
