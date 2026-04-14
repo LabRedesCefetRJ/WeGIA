@@ -259,7 +259,7 @@ class Item
             $table1 = [
                 // Caso 0: não mostrar zerados
                 "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_produto_entrada 
-                SELECT produto.id_produto, produto.preco, SUM(CASE WHEN tipo_entrada.id_tipo = 1 THEN 0 ELSE ientrada.qtd END) as somatorio, produto.descricao, unidade.descricao_unidade as unidade, SUM(CASE WHEN tipo_entrada.id_tipo = 1 THEN 0 ELSE ientrada.qtd * ientrada.valor_unitario END)  as Total, 
+                SELECT produto.id_produto, produto.preco, SUM(ientrada.qtd) as somatorio, produto.descricao, unidade.descricao_unidade as unidade, SUM(ientrada.qtd * ientrada.valor_unitario) as Total, 
                 concat(ientrada.id_produto, valor_unitario) as kungfu 
                 FROM ientrada
                 INNER JOIN produto ON produto.id_produto = ientrada.id_produto
@@ -289,7 +289,7 @@ class Item
             $this->setDDL_cmd(
                 $table1[(int)$showZero] .
                     "CREATE TEMPORARY TABLE IF NOT EXISTS tabelaPrecoMedio 
-                SELECT id_produto, SUM(somatorio) as qtd_compra_total, IFNULL(SUM(Total) / SUM(somatorio), preco) AS PrecoMedio 
+                SELECT id_produto, SUM(somatorio) as qtd_compra_total, IFNULL(SUM(Total) / NULLIF(SUM(somatorio), 0), preco) AS PrecoMedio 
                 FROM tabela_produto_entrada 
                 GROUP BY tabela_produto_entrada.descricao;
     
@@ -325,7 +325,7 @@ class Item
             // Parte sem filtros continua igual (sem entrada externa)
             $this->setDDL_cmd("
                 CREATE TEMPORARY TABLE IF NOT EXISTS tabela1 
-                SELECT produto.id_produto, produto.preco, SUM(CASE WHEN tipo_entrada.id_tipo = 1 THEN 0 ELSE ientrada.qtd END) AS somatorio, produto.descricao, unidade.descricao_unidade as unidade, (SUM(CASE WHEN tipo_entrada.id_tipo = 1 THEN 0 ELSE ientrada.qtd * ientrada.valor_unitario END)) AS Total, 
+                SELECT produto.id_produto, produto.preco, SUM(ientrada.qtd) as somatorio, produto.descricao, unidade.descricao_unidade as unidade, SUM(ientrada.qtd * ientrada.valor_unitario) as Total, 
                 CONCAT(ientrada.id_produto, valor_unitario) AS kungfu 
                 FROM ientrada
                 INNER JOIN produto ON produto.id_produto = ientrada.id_produto
@@ -337,7 +337,7 @@ class Item
                 ORDER BY produto.descricao;
     
                 CREATE TEMPORARY TABLE IF NOT EXISTS tabela2 
-                SELECT id_produto, SUM(somatorio) AS qtd_compra_total, IFNULL(SUM(Total) / SUM(somatorio), preco) AS PrecoMedio 
+                SELECT id_produto, SUM(somatorio) AS qtd_compra_total, IFNULL(SUM(Total) / NULLIF(SUM(somatorio), 0), preco) AS PrecoMedio 
                 FROM tabela1 
                 GROUP BY tabela1.descricao;
     
