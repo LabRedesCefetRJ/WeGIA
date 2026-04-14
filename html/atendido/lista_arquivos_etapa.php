@@ -20,9 +20,16 @@ permissao($_SESSION['id_pessoa'], 14);
 require_once '../../dao/Conexao.php';
 require_once '../../dao/EtapaArquivoDAO.php';
 
-$idEtapa = (int)($_GET['id_etapa'] ?? 0);
+$idEtapa = filter_var($_GET['id_etapa'] ?? 0, FILTER_VALIDATE_INT);
+$idProcesso = filter_var($_GET['id_processo'] ?? 0, FILTER_VALIDATE_INT);
+
 if ($idEtapa <= 0) {
     echo '<div class="alert alert-danger">Etapa inválida.</div>';
+    exit;
+}
+
+if ($idProcesso <= 0) {
+    echo '<div class="alert alert-danger">Processo inválido.</div>';
     exit;
 }
 
@@ -72,8 +79,8 @@ if (empty($arquivos)) {
                     <input type="hidden" name="nomeClasse" value="ArquivoEtapaControle">
                     <input type="hidden" name="metodo" value="excluir">
                     <input type="hidden" name="id_arquivo" value="<?= (int)$arq['id'] ?>">
-                    <input type="hidden" name="id_etapa" value="<?= $idEtapa ?>">
-                    <input type="hidden" name="id_processo" value="<?= $_GET['id_processo'] ?? 0 ?>">
+                    <input type="hidden" name="id_etapa" value="<?= htmlspecialchars($idEtapa) ?>">
+                    <input type="hidden" name="id_processo" value="<?= htmlspecialchars($idProcesso)?>">
                     <button type="submit" class="btn btn-xs btn-danger" title="Excluir arquivo">
                         <i class="fa fa-trash" aria-hidden="true"></i>
                     </button>
