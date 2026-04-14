@@ -1049,7 +1049,7 @@ try {
                         </div>
                         <div class="row">
                           <div class="col-md-3" style="padding-left: 0px;">
-                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?: 'Nao informada' ?></p>
+                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?: 'Não informada' ?></p>
                           </div>
                           <div class="col-md-3">
                             <p><span class="text-bold">Idade:</span>
@@ -1062,10 +1062,10 @@ try {
                                   $idade = $dataNascimento->diff($hoje)->y;
                                   echo $idade . ' anos';
                                 } catch (Exception $e) {
-                                  echo 'Nao informada';
+                                  echo 'Não informada';
                                 }
                               } else {
-                                echo 'Nao informada';
+                                echo 'Não informada';
                               }
                               ?>
                             </p>
