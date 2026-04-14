@@ -64,15 +64,11 @@ class CategoriaDAO
 
     public function excluir($id_categoria_produto)
     {
-        try {
-            $pdo = Conexao::connect();
-            $sql = 'DELETE FROM categoria_produto WHERE id_categoria_produto = :id_categoria_produto';
-            $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':id_categoria_produto', $id_categoria_produto);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela categoria_produto = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        $pdo = Conexao::connect();
+        $sql = 'DELETE FROM categoria_produto WHERE id_categoria_produto = :id_categoria_produto';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':id_categoria_produto', $id_categoria_produto);
+        $stmt->execute();
     }
     public function listarTodos()
     {

@@ -1,6 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
-if (session_start() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
 
@@ -30,10 +30,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 	include_once ROOT . '/dao/Conexao.php';
 	include_once ROOT . '/dao/AlmoxarifadoDAO.php';
 
+	$tipo = $_GET['tipo'] ?? 'ativo';
+	$tipo = in_array($tipo, ['ativo', 'arquivado'], true) ? $tipo : 'ativo';
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/listar_almox.php');
+		if ($tipo === 'arquivado') {
+			header('Location: ' . WWW . 'controle/control.php?metodo=listarArquivados&nomeClasse=AlmoxarifadoControle');
+		} else {
+			header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/listar_almox.php');
+		}
+
+		exit;
 	}
+	
 	if (isset($_SESSION['almoxarifado'])) {
 		$almoxarifado = $_SESSION['almoxarifado'];
 		unset($_SESSION['almoxarifado']);
@@ -104,6 +113,17 @@ require_once ROOT . "/html/personalizacao_display.php";
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
 		});
+
+		$(function() {
+			$(document).on('click', '.btn-edit-almox', function() {
+				var id = $(this).data('id');
+				var descricao = $(this).data('descricao');
+
+				$('#modal-id-almoxarifado').val(id);
+				$('#modal-descricao-almoxarifado').val(descricao);
+				$('#modalEditarAlmoxarifado').modal('show');
+			});
+		});
 	</script>
 
 </head>
@@ -144,6 +164,49 @@ require_once ROOT . "/html/personalizacao_display.php";
 						<h2 class="panel-title">Almoxarifado</h2>
 					</header>
 					<div class="panel-body">
+						<div style="margin-bottom: 15px;">
+							<a href="listar_almox.php?tipo=ativo">
+								<button <?= $tipo === 'ativo' ? 'style="font-weight:bold;"' : ''?>>
+									Ativos
+								</button>
+							</a>
+
+							<a href="listar_almox.php?tipo=arquivado">
+								<button <?= $tipo === 'arquivado' ? 'style="font-weight:bold;"' : ''?>>
+									Arquivados
+								</button>
+							</a>
+						</div>
+						<?php if(isset($_SESSION['erro'])): ?>
+							<div style="
+								background:#fff3cd;
+								border:1px solid #ffeeba;
+								padding:15px;
+								margin-bottom:15px;
+								border-radius:5px;">
+								<strong>Atenção:</strong><br>
+								<?= $_SESSION['erro'] ?><br><br>
+
+								<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+									<input type="hidden" name="metodo" value="arquivar">
+        							<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+        							<input type="hidden" name="id_almoxarifado" value="<?= $_SESSION['id_arquivar'] ?>">
+									<?= Csrf::inputField() ?>
+
+									<button style="background:#007bff;color:white;border:none;padding:5px 10px;">
+										Arquivar
+									</button>
+								</form>
+
+								<form method="GET" action="listar_almox.php" style="display:inline;">
+									<button style="background:#6c757d;color:white;border:none;padding:5px 10px;">
+										Cancelar
+									</button>
+								</form>
+							</div>
+						<?php unset($_SESSION['erro']);
+						unset($_SESSION['id_arquivar']);
+						endif?>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>
@@ -152,25 +215,80 @@ require_once ROOT . "/html/personalizacao_display.php";
 								</tr>
 							</thead>
 							<tbody id="tabela">
-								<?php foreach (json_decode($almoxarifado, true) as $item): ?>
+								<?php foreach(json_decode($almoxarifado, true) as $item):?>
 									<tr>
 										<td><?= htmlspecialchars($item['descricao_almoxarifado']) ?></td>
 										<td>
-											<form method="POST" action="<?= WWW ?>controle/control.php">
-												<input type="hidden" name="metodo" value="excluir">
-												<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
-												<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
-												<?= Csrf::inputField() ?>
-												<button type="submit" style="border:none;background:none;cursor:pointer;" title="Excluir">
-													<i class="fas fa-trash-alt"></i>
-												</button>
-											</form>
+											<?php if ($tipo==='ativo'):?>
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+        											<input type="hidden" name="metodo" value="excluir">
+        											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+        											<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
+        											<?= Csrf::inputField() ?>
+        											<button type="submit" style="border:none;background:none;cursor:pointer;" title="Excluir">
+            											<i class="fas fa-trash-alt"></i>
+        											</button>
+    											</form>
+
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+													<input type="hidden" name="metodo" value="arquivar">
+        											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+        											<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
+													<?= Csrf::inputField() ?>
+													<button title="Arquivar" style="border:none;background:none;cursor:pointer;"><i class="fa-solid fa-folder"></i></button>
+												</form>
+
+    											<button
+													type="button"
+        											class="btn-edit-almox" data-id="<?= (int)$item['id_almoxarifado'] ?>" data-descricao="<?= htmlspecialchars($item['descricao_almoxarifado'], ENT_QUOTES) ?>"
+        											style="border:none;background:none;cursor:pointer;"
+        											title="Editar"
+    											>
+        											<i class="fas fa-pencil-alt"></i>
+    											</button>
+
+											<?php else: ?>
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+													<input type="hidden" name="metodo" value="desarquivar">
+													<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+													<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
+													<?= Csrf::inputField() ?>
+													<button title="Restaurar" style="border:none;background:none;cursor:pointer;"><i class="fa-solid fa-folder-open"></i></button>
+												</form>
+											<?php endif; ?>
 										</td>
 									</tr>
 								<?php endforeach; ?>
 							</tbody>
 						</table>
-					</div><br>
+
+                        <div class="modal fade" id="modalEditarAlmoxarifado" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <form method="POST" action="<?= WWW ?>controle/control.php" class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Editar Almoxarifado</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <?= Csrf::inputField() ?>
+                                        <input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
+                                        <input type="hidden" name="metodo" value="alterarAlmoxarifado">
+                                        <input type="hidden" name="id_almoxarifado" id="modal-id-almoxarifado">
+
+                                        <div class="form-group">
+                                            <label for="modal-descricao-almoxarifado">Nome do Almoxarifado</label>
+                                            <input type="text" class="form-control" name="descricao_almoxarifado" id="modal-descricao-almoxarifado" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary">Salvar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
 				</section>
 				<!-- end: page -->
 

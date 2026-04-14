@@ -22,7 +22,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 ?>
 
 <!doctype html>
-<html lass="fixed">
+<html class="fixed">
 
 <head>
 	<?php
@@ -30,6 +30,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	include_once ROOT . '/dao/AlmoxarifadoDAO.php';
 	include_once ROOT . '/dao/TipoEntradaDAO.php';
 	include_once ROOT . '/dao/ProdutoDAO.php';
+	include_once ROOT .'/dao/OrigemDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
@@ -150,12 +151,12 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="origem">Origem</label>
+													<label class="col-md-3 control-label" for="origens">Origem</label>
 													<a href="<?= WWW ?>html/matPat/cadastro_doador.php"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
-														<input type="search" list="origens" id="origem" name="origem" class="form-control" autocomplete="off" required>
-														<datalist id="origens">
-														</datalist>
+														<select class="form-control " name="origem" id="origens">
+															<option selected disabled value="blank">Selecionar</option>
+														</select>
 													</div>
 												</div>
 
@@ -198,8 +199,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 																	<!-- <datalist id="produtos_autocomplete">
 															</datalist> -->
 																</td>
-																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade"></td>
-																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0"></td>
+																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">incluir</button>
 																</td>
@@ -213,7 +214,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 														<thead>
 															<tr>
 
-																<th style="width: 160px;">Produto
+																<th style="width: 160px;">Produto</th>
 																<th style="width: 85px;">Quantidade</th>
 																<th>Preço</th>
 																<th>Total</th>
@@ -226,7 +227,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 															<tr>
 																<td>Valor total:</td>
 																<td id="valor-total">
-																	<input type="number" id="total_total" name="total_total" readonly="readonly" required>
+																	<input type="number" id="total_total" name="total_total" class="form-control" readonly="readonly" required>
 																	<input type="hidden" id="conta" name="conta" readonly="readonly">
 																	<input type="hidden" id="verifica" disabled>
 																</td>
@@ -246,7 +247,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 												<input type="hidden" name="metodo" value="incluir">
 												<input type="submit" class="btn btn-primary">
 											</div>
-										</div>
+										</div>ll
 									</form>
 								</div>
 							</div>
@@ -283,6 +284,10 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
 			})
 
+			$.each(origem, function(i, item) {
+				$('#origens').append('<option value="' + item.id_origem + '">' + item.nome_origem + '</option>');
+			})
+
 			let produtos_autocomplete = [];
 			let prods = [];
 
@@ -316,10 +321,6 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					}
 				});
 			});
-
-			$.each(origem, function(i, item) {
-				$('#origens').append('<option value="' + item.id_origem + '-' + item.nome_origem + '">');
-			})
 
 			$('#input_produtos').on('change', function() {
 				var teste = this.value.split('|');
@@ -442,6 +443,43 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		$(function() {
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
+		});
+	</script>
+	<script>
+		$(function () {
+			$('#formulario').on('submit', function (event) {
+				event.preventDefault();
+
+				if (validar() === false) {
+					return false;
+				}
+
+				$.ajax({
+					url: $(this).attr('action'),
+					method: 'POST',
+					data: $(this).serialize(),
+					dataType: 'json',
+					success: function (resposta) {
+						if (resposta.sucesso) {
+							alert(resposta.mensagem || 'Entrada cadastrada com sucesso');
+							window.location.href = '<?= WWW ?>html/matPat/cadastro_entrada.php';
+						} else {
+							alert(resposta.mensagem || 'Não foi possível cadastrar a entrada');
+						}
+					},
+					error: function (xhr) {
+						let mensagem = 'Erro ao cadastrar a entrada';
+
+						if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+							mensagem = xhr.responseJSON.mensagem;
+						}
+
+						alert(mensagem);
+					}
+				});
+
+				return false;
+			});
 		});
 	</script>
 

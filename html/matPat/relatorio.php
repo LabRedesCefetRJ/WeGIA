@@ -269,7 +269,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 										<?php
 										$pdo = Conexao::connect();
 										try {
-											$res = $pdo->query("SELECT * FROM almoxarifado ORDER BY descricao_almoxarifado;");
+											$res = $pdo->query("SELECT * FROM almoxarifado WHERE ativo = 1 ORDER BY descricao_almoxarifado;");
 											$almoxarifados = $res->fetchAll(PDO::FETCH_ASSOC);
 											foreach ($almoxarifados as $value) {
 												echo '<option value="' . $value['id_almoxarifado'] . '">' . htmlspecialchars($value['descricao_almoxarifado']) . '</option>';
@@ -332,7 +332,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 										<?php
 										$pdo = Conexao::connect();
 										try {
-											$res = $pdo->query("SELECT * FROM almoxarifado ORDER BY descricao_almoxarifado;");
+											$res = $pdo->query("SELECT * FROM almoxarifado WHERE ativo = 1 ORDER BY descricao_almoxarifado;");
 											$almoxarifados = $res->fetchAll(PDO::FETCH_ASSOC);
 											foreach ($almoxarifados as $value) {
 												echo '<option value="' . $value['id_almoxarifado'] . '">' . htmlspecialchars($value['descricao_almoxarifado']) . '</option>';

@@ -4,9 +4,9 @@ class ProdutoDTOCadastro implements JsonSerializable{
     private string $descricao;
     private int $quantidade;
     private float $valor;
-    private string $codigo;
+    private ?string $codigo;
 
-    public function __construct(int $id, string $descricao, int $quantidade, string $codigo, float $valor)
+    public function __construct(int $id, string $descricao, int $quantidade, ?string $codigo, float $valor)
     {
         $this->setId($id);
         $this->setDescricao($descricao);
@@ -107,9 +107,9 @@ class ProdutoDTOCadastro implements JsonSerializable{
      *
      * @return  self
      */ 
-    public function setCodigo($codigo)
+    public function setCodigo(?string $codigo)
     {
-        $this->codigo = $codigo;
+        $this->codigo = $codigo ?? '';
 
         return $this;
     }

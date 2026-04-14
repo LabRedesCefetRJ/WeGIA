@@ -33,6 +33,26 @@ class AlmoxarifadoControle
         }
     }
 
+    public function listarUm()
+    {
+        try {
+            $id = filter_input(INPUT_GET, 'id_almoxarifado', FILTER_VALIDATE_INT);
+
+            $dao = new AlmoxarifadoDAO();
+            $almox = $dao->listarUm($id);
+
+            $_SESSION['almoxarifado'] = [
+                'id_almoxarifado' => $almox->getId_almoxarifado(),
+                'descricao_almoxarifado' => $almox->getDescricao_almoxarifado()
+            ];
+
+            $nextPage = $_GET['nextPage'];
+            header("Location: $nextPage");
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
     /**
      * Extrai de um formulário HTTP via requisição POST o parâmetro 'descricao_almoxarifado' e cadastra no BD da aplicação um novo almoxarifado.
      */
@@ -57,6 +77,7 @@ class AlmoxarifadoControle
 
     /**
      * Extrai de um formulário HTTP via requisição POST o parâmetro 'id_almoxarifado' e remove do sistema o almoxarifado de id equivalente no BD da aplicação.
+     * A integridade referencial é garantida pelas restrições de chave estrangeira no banco de dados.
      */
     public function excluir()
     {
@@ -69,17 +90,97 @@ class AlmoxarifadoControle
             if (!$idAlmoxarifado || !is_numeric($idAlmoxarifado))
                 throw new InvalidArgumentException("O parâmetro idAlmoxarifado deve ser um número válido.", 400);
 
-
             if ($idAlmoxarifado < 1)
                 throw new InvalidArgumentException("O id de um almoxarifado deve ser um inteiro maior ou igual a 1.", 422);
 
             $almoxarifadoDAO = new AlmoxarifadoDAO();
             $almoxarifadoDAO->excluir($idAlmoxarifado);
+
             header('Location: ' . WWW . 'html/matPat/listar_almox.php');
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                $_SESSION['erro'] = "Não é possível excluir este almoxarifado pois existem registros vinculados (almoxarife, entrada ou saída).";
+                $_SESSION['id_arquivar'] = $idAlmoxarifado ?? null;
+
+                header('Location: ' . WWW . 'html/matPat/listar_almox.php');
+                exit;
+            }
+            Util::tratarException($e);
         } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
 
     //Futuramente adicionar um método para alterar a descrição de um almoxarifado
+    public function alterarAlmoxarifado()
+    {
+        try {
+            if(!Csrf::validateToken($_POST['csrf_token'] ?? null))
+                throw new InvalidArgumentException('Token CSRF inválido.', 401);
+
+            $id = filter_input(INPUT_POST, 'id_almoxarifado', FILTER_SANITIZE_NUMBER_INT);
+            $descricao = filter_input(INPUT_POST, 'descricao_almoxarifado', FILTER_SANITIZE_SPECIAL_CHARS);
+
+            if (!$id || !is_numeric($id) || $id < 1)
+                throw new InvalidArgumentException("ID inválido.", 400);
+
+            $almoxarifado = new Almoxarifado($descricao);
+            $almoxarifado->setId_almoxarifado($id);
+
+            $dao = new AlmoxarifadoDAO();
+            $dao->alterarAlmoxarifado($almoxarifado);
+
+            $_SESSION['msg'] = "Almoxarifado alterado com sucesso";
+
+            header('Location: ' . WWW . 'html/matPat/listar_almox.php');
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function listarArquivados()
+    {
+        $dao = new AlmoxarifadoDAO();
+        $_SESSION['almoxarifado'] = $dao->listarArquivados();
+
+        header('Location: ' . WWW . 'html/matPat/listar_almox.php?tipo=arquivado');
+    }
+
+    public function arquivar()
+    {
+        if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+            throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+        }
+
+        $id = filter_input(INPUT_POST, 'id_almoxarifado', FILTER_SANITIZE_NUMBER_INT);
+        if (!$id || $id < 1) {
+            throw new InvalidArgumentException('ID inválido para arquivamento.', 400);
+        }
+
+        $dao = new AlmoxarifadoDAO();
+        $dao->arquivar($id);
+
+        $_SESSION['msg'] = "Almoxarifado arquivado com sucesso.";
+
+        header('Location: ' . WWW . 'html/matPat/listar_almox.php');
+    }
+
+    public function desarquivar()
+    {
+        if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+            throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+        }
+
+        $id = filter_input(INPUT_POST, 'id_almoxarifado', FILTER_SANITIZE_NUMBER_INT);
+        if (!$id || $id < 1) {
+            throw new InvalidArgumentException('ID inválido para restauração.', 400);
+        }
+
+        $dao = new AlmoxarifadoDAO();
+        $dao->desarquivar($id);
+
+        $_SESSION['msg'] = "Almoxarifado restaurado com sucesso.";
+
+        header('Location: ' . WWW . 'html/matPat/listar_almox.php?tipo=arquivado');
+    }
 }

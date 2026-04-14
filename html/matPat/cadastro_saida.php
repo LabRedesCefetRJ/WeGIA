@@ -28,10 +28,11 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 <head>
 	<?php
-	include_once ROOT . '/dao/Conexao.php';
-	include_once ROOT . '/dao/AlmoxarifadoDAO.php';
-	include_once ROOT . '/dao/TipoEntradaDAO.php';
-	include_once ROOT . '/dao/ProdutoDAO.php';
+	include_once ROOT .'/dao/Conexao.php';
+	include_once ROOT .'/dao/AlmoxarifadoDAO.php';
+	include_once ROOT .'/dao/TipoEntradaDAO.php';
+	include_once ROOT .'/dao/ProdutoDAO.php';
+	include_once ROOT .'/dao/DestinoDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
@@ -95,18 +96,18 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 	<script type="text/javascript">
 		$(function() {
-			var prods = [];
-			var almoxarifado = <?= filtrarAlmoxarifado($_SESSION['id_pessoa'], $almoxarifado) ?>;
+			let prods = [];
+			const almoxarifado = <?= filtrarAlmoxarifado($_SESSION['id_pessoa'], $almoxarifado) ?>;
 
-			var tipo_saida = <?php
+			const tipo_saida = <?php
 								echo $tipo_saida;
 								?>;
 
-			var produtos_autocomplete = <?php
+			const produtos_autocomplete = <?php
 										echo $autocomplete;
 										?>;
 
-			var destino = <?php
+			const destino = <?php
 							echo $destino;
 							?>;
 
@@ -123,6 +124,10 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				prods[i] = item.id_produto + '|' + item.descricao + '|' + item.codigo; //alterar aqui
 			})
 
+			$.each(destino, function(i, item) {
+				$('#origens').append('<option value="' + item.id_destino + '">' + item.nome_destino + '</option>');
+			})
+
 			$("#input_produtos").autocomplete({
 				source: prods,
 				response: function(event, ui) {
@@ -134,12 +139,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				}
 			});
 
-			$.each(destino, function(i, item) {
-				$('#origens').append('<option value="' + item.id_destino + '-' + item.nome_destino + '">');
-			})
-
 			$('#input_produtos').on('change', function() {
-				var teste = this.value.split('|');
+				let teste = this.value.split('|');
 				$.each(produtos_autocomplete, function(i, item) {
 					if (teste[0] == item.id_produto && teste[1] == item.descricao) {
 						$("#valor_unitario").val(item.preco);
@@ -150,18 +151,18 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			});
 
 			//adicionar tabela
-			var conta = 0;
-			var verificar = 0;
+			let conta = 0;
+			let verificar = 0;
 			$(".add-row").click(function() {
-				var produto = $("#input_produtos").val();
-				var val = $("#input_produtos").val();
+				let produto = $("#input_produtos").val();
+				let val = $("#input_produtos").val();
 
 				//As próximas 3 linhas de código são responsáveis por deixar a formatação compatível para a verificação na linha de código seguinte, uma vez que os dados vem de tabelas diferentes e a tabela de produtos não possuí o campo quantidade
 				let parts = val.split('|');
 				parts.splice(2, 1);
 				val = parts.join('|')
 
-				var obj = prods.find;
+				let obj = prods.find;
 				(prod => prod === val);
 
 				produto = produto.split("|");
@@ -169,8 +170,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					if (Number(produto[2]) >= Number($("#quantidade").val())) {
 						$.each(produtos_autocomplete, function(i, item) {
 							if (produto[0] == item.id_produto && produto[1] == item.descricao) {
-								var quantidade = $("#quantidade").val();
-								var preco = parseFloat($("#valor_unitario").val());
+								let quantidade = $("#quantidade").val();
+								let preco = parseFloat($("#valor_unitario").val());
 
 								conta = conta + 1;
 
@@ -180,7 +181,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 								$("table tbody ").append(markup);
 								$("#valor_unitario").empty();
 								$("#input_produtos").val("");
-								var x = $("#total_total").val();
+								let x = $("#total_total").val();
 								x = Number(x);
 								x += (quantidade * preco);
 
@@ -204,8 +205,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 			//remover tabela
 			$("table tbody").on('click', '.delete-row', function() {
-				var valor_menos = $(this).closest('tr').find('th').find('input').val();
-				var xx = $("#total_total").val();
+				let valor_menos = $(this).closest('tr').find('th').find('input').val();
+				let xx = $("#total_total").val();
 				xx = xx - valor_menos;
 				$("#total_total").val(xx);
 				$(this).closest('tr').remove();
@@ -214,14 +215,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 			// validar origem
 			$("#origem").blur(function() {
-				var val = $("#origem").val();
-				var obj = $("#origens").find("option[value='" + val + "']");
-				if (obj != null && obj.length > 0) {
-					return true;
-				} else {
-					alert("Destino inválido, por favor insira um destino válido");
-					$("#origem").val("");
-				}
+				let val = $("#origem").val();
+				let obj = $("#origens").find("option[value='" + val + "']");
 			});
 		});
 	</script>
@@ -229,10 +224,16 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	<!-- Script para validar formulário -->
 	<script>
 		function validar() {
-			var almox = document.getElementById("almoxarifado");
-			var tipo = document.getElementById("tipo_entrada");
-			var verificar = document.getElementById("verifica");
-			if (almox.value == "blank") {
+			let desti = document.getElementById("origens")
+			let almox = document.getElementById("almoxarifado");
+			let tipo = document.getElementById("tipo_entrada");
+			let verificar = document.getElementById("verifica");
+			if (desti.value == "blank") {
+				alert("Selecione um destino");
+				desti.focus();
+				return false;
+			}
+			else if (almox.value == "blank") {
 				alert("Selecione um almoxarifado");
 				almox.focus();
 				return false;
@@ -250,6 +251,47 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		$(function() {
 			$("#header").load("<?= WWW ?>html/header.php");
 			$(".menuu").load("<?= WWW ?>html/menu.php");
+		});
+	</script>
+	<script>
+		$(function () {
+			$('#formulario').on('submit', function (event) {
+				event.preventDefault();
+
+				if ($('#input_produtos').is(':focus')) {
+					return false;
+				}
+
+				if (validar() === false) {
+					return false;
+				}
+
+				$.ajax({
+					url: $(this).attr('action'),
+					method: 'POST',
+					data: $(this).serialize(),
+					dataType: 'json',
+					success: function (resposta) {
+						if (resposta.sucesso) {
+							alert(resposta.mensagem || 'Saída cadastrada com sucesso');
+							window.location.href = '<?= WWW ?>html/matPat/cadastro_saida.php';
+						} else {
+							alert(resposta.mensagem || 'Não foi possível cadastrar a saída');
+						}
+					},
+					error: function (xhr) {
+						let mensagem = 'Erro ao cadastrar a saída';
+
+						if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+							mensagem = xhr.responseJSON.mensagem;
+						}
+
+						alert(mensagem);
+					}
+				});
+
+				return false;
+			});
 		});
 	</script>
 
@@ -313,12 +355,12 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="origem">Destino</label>
+													<label class="col-md-3 control-label" for="origens">Destino</label>
 													<a href="cadastro_destino.php"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
-														<input type="search" list="origens" id="origem" name="destino" class="form-control" autocomplete="off" required>
-														<datalist id="origens">
-														</datalist>
+														<select class="form-control " name="destino" id="origens">
+															<option selected disabled value="blank">Selecionar</option>
+														</select>
 													</div>
 												</div>
 
@@ -362,8 +404,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 																	<!-- <datalist id="produtos_autocomplete">
 															</datalist> -->
 																</td>
-																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade"></td>
-																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0"></td>
+																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">Adicionar produtos</button>
 																</td>
@@ -390,7 +432,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 															<tr>
 																<td>Valor total:</td>
 																<td id="valor-total">
-																	<input type="number" id="total_total" name="total_total" readonly="readonly">
+																	<input type="number" id="total_total" name="total_total" class="form-control" readonly="readonly">
 																	<input type="hidden" id="conta" name="conta" readonly="readonly">
 																	<input type="hidden" id="verifica" disabled>
 																</td>
@@ -442,22 +484,6 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
-
-	<script>
-		$(function() {
-			$('form').submit(function(event) {
-				return checkFocus(event);
-			});
-		});
-
-		function checkFocus(event) {
-			if ($('#input_produtos').is(':focus')) {
-				event.preventDefault();
-				return false;
-			}
-			return true;
-		}
-	</script>
 
 	<script type="text/javascript">
 		$(document).ready(function() {
