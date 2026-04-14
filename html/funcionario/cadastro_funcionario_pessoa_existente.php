@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE)
   session_start();
@@ -36,7 +38,7 @@ $pdo = Conexao::connect();
 
 $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
-if (!$cpf || $cpf < 1) {
+if (!$cpf || strlen($cpf) < 1) {
   http_response_code(400);
   echo json_encode(['erro' => 'O CPF informado não é válido.']);
   exit();

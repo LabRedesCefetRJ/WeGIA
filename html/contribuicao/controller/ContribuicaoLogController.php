@@ -700,7 +700,7 @@ class ContribuicaoLogController
             require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
 
             $sistemaLogDao = new SistemaLogDAO($this->pdo);
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Sincronização da tabela de contribuições com os gateways de pagamento');
+            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Sincronização da tabela de contribuições com os gateways de pagamento');
 
             if (!$sistemaLogDao->registrar($sistemaLog)) {
                 throw new Exception('Falha ao registrar log do sistema', 500);
@@ -870,7 +870,7 @@ class ContribuicaoLogController
                 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SistemaLogDAO.php';
 
                 $sistemaLogDao = new SistemaLogDAO($this->pdo);
-                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone('America/Sao_Paulo')), 'Sincronização da tabela de contribuições com os gateways de pagamento');
+                $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 71, 3, new DateTime('now', new DateTimeZone(date_default_timezone_get())), 'Sincronização da tabela de contribuições com os gateways de pagamento');
 
                 if (!$sistemaLogDao->registrar($sistemaLog)) {
                     throw new Exception('Falha ao registrar log do sistema');

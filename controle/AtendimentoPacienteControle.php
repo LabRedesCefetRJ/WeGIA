@@ -71,7 +71,7 @@ class AtendimentoPacienteControle
             $medicacoes = $this->normalizarMedicacoes($acervo);
             $this->validarMedicacoes($medicacoes);
 
-            $dataRegistro = (new DateTime('now', new DateTimeZone('America/Sao_Paulo')))
+            $dataRegistro = (new DateTime('now', new DateTimeZone(date_default_timezone_get())))
                 ->format('Y-m-d');
 
             $idAtendimento = $this->atendimentoPacienteDAO->inserirAtendimentoComMedicacoes(
@@ -141,7 +141,7 @@ class AtendimentoPacienteControle
         }
 
         $dataNascimentoPaciente = $this->atendidoDAO->obterDataNascimentoPorPessoaId($idPaciente) ?: '1900-01-01';
-        $timezone = new DateTimeZone('America/Sao_Paulo');
+        $timezone = new DateTimeZone(date_default_timezone_get());
 
         $dataAtendimentoObj = DateTime::createFromFormat('Y-m-d', $dataAtendimento, $timezone);
         if (!$dataAtendimentoObj) {

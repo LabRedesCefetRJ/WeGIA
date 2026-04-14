@@ -1,26 +1,25 @@
 <?php
-require_once ROOT . '/html/contribuicao/helper/Util.php';
+require_once ROOT . '/classes/Util.php';
 
 class Origem
 {
-   private $id_origem;
-   private $nome;
-   private $cnpj;
-   private $cpf;
-   private $telefone;
-   
-    public function __construct($nome,$cnpj,$cpf = null,$telefone)
+    private $id_origem;
+    private $nome;
+    private $cnpj;
+    private $cpf;
+    private $telefone;
+
+    public function __construct($nome, $cnpj, $cpf = null, $telefone)
     {
-        $this->nome=$nome;
-        $this->cnpj=$cnpj;
+        $this->nome = $nome;
+        $this->cnpj = $cnpj;
 
-        if(isset($cpf))
-            $this->cpf=$cpf;
+        if (isset($cpf))
+            $this->cpf = $cpf;
 
-        $this->telefone=$telefone;
-
+        $this->telefone = $telefone;
     }
-    
+
     public function getId_origem()
     {
         return $this->id_origem;
@@ -56,7 +55,8 @@ class Origem
         $this->nome = $nome;
     }
 
-    public function setCnpj($cnpj) {
+    public function setCnpj($cnpj)
+    {
         // Validar se o CNPJ possui um formato válido - Xablau
         if (Util::validaCnpj($cnpj)) {
             $this->cnpj = $cnpj;
@@ -65,7 +65,8 @@ class Origem
         }
     }
 
-    public function setCpf($cpf) {
+    public function setCpf($cpf)
+    {
         if (Util::validarCPF($cpf)) {
             $this->cpf = $cpf;
         } else {

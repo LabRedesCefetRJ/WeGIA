@@ -2,6 +2,13 @@
 
 class Util
 {
+    public static function definirFusoHorario(?string $fusoHorario = null): string
+    {
+        require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
+
+        return FusoHorarioSistema::definir($fusoHorario);
+    }
+
     /**
      * Valida se a ESTRUTURA de um CNPJ é válido
      */

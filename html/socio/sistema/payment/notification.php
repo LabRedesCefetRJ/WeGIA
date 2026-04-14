@@ -9,12 +9,13 @@
 			if(file_exists($config_path)) break;
 		}
 		require_once($config_path);
-	} 
+	}
+    require_once ROOT . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
     // Setando a conexão com o BD
     $conexao = mysqli_connect(DB_HOST,DB_USER,DB_PASSWORD,DB_NAME) or die("Erro ao conectar-se ao banco de dados.");
     // Verifica se a api está nos enviando um chargeReference válido e não nulo
     if(isset($_POST['chargeReference']) and $_POST['chargeReference'] != ''){
-        date_default_timezone_set("America/Sao_Paulo");
+        Util::definirFusoHorario();
         // Extraindo variáveis retornadas pela API (paymentToken, chargeReference e chargeCode)
         extract($_POST);
 
