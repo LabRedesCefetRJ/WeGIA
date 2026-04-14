@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+
 class ProcessoAceitacaoDAO
 {
     private $pdo;
@@ -17,10 +19,10 @@ class ProcessoAceitacaoDAO
      * @param string|null $descricao Opcional descrição inicial do processo.
      * @return int ID do processo criado.
      * @throws PDOException Em caso de erro no banco.
-     */
+    */
     public function criarProcessoInicial(int $id_pessoa, int $id_status = 1, ?string $descricao): int
     {
-        date_default_timezone_set("America/Sao_Paulo");
+        Util::definirFusoHorario();
         $data_inicio = date('Y-m-d H:i:s');
         $data_fim = null; // processo em andamento
 

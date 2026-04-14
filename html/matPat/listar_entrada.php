@@ -17,7 +17,7 @@ if (file_exists($config_path)) {
 if (!isset($_SESSION['usuario'])) {
 	header("Location:  " . WWW . "html/index.php");
 	exit();
-}else{
+} else {
 	session_regenerate_id();
 }
 
@@ -38,21 +38,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 	include_once ROOT . '/dao/EntradaDAO.php';
 
 	$tipo = $_GET['tipo'] ?? 'ativo';
-
-	if (!isset($_SESSION['entrada'])) {
-		if($tipo === 'arquivado') {
-			header('Location: ' . WWW . 'controle/control.php?metodo=listarArquivados&nomeClasse=EntradaControle');
-		} else {
-			header('Location: ' . WWW . 'controle/control.php?metodo=listarTodosComProdutos&nomeClasse=EntradaControle&nextPage=' . WWW . 'html/listar_entrada.php');
-		}
-
-		exit;
-	}
-	if (isset($_SESSION['entrada'])) {
-		$entrada = $_SESSION['entrada'];
-
-		unset($_SESSION['entrada']);
-	}
 	?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
@@ -108,36 +93,58 @@ require_once ROOT . "/html/personalizacao_display.php";
 		}
 	</script>
 	<script>
-		$(function() {
+		function listarId(id) {
+        	window.location.href = '<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=<?= WWW ?>html/matPat/listar_Ientrada.php&id_entrada=' + id;
+    	}
 
-			var entrada = <?php
-							echo $entrada;
-							?>;
+    	function carregarEntradas() {
+        	const tipo = '<?= $tipo ?>';
+        	const url = tipo === 'arquivado'
+            	? '<?= WWW ?>controle/control.php?metodo=listarArquivados&nomeClasse=EntradaControle'
+            	: '<?= WWW ?>controle/control.php?metodo=listarTodosComProdutos&nomeClasse=EntradaControle';
 
-			$.each(entrada, function(i, item) {
-				$('#tabela')
-					.append($('<tr style="cursor:pointer"/>')
-						.attr('onclick', 'listarId("' + item.id_entrada + '")')
-						.append($('<td />')
-							.text(item.descricao_almoxarifado))
-						.append($('<td />')
-							.text(item.nome_origem))
-						.append($('<td />')
-							.text(item.descricao))
-						.append($('<td />')
-							.text(item.nome))
-						.append($('<td />')
-							.text(item.valor_total))
-						.append($('<td />')
-							.text(item.data))
-						.append($('<td />')
-							.text(item.hora)))
-			})
-		});
-		$(function() {
-			$("#header").load("<?= WWW ?>html/header.php");
-			$(".menuu").load("<?= WWW ?>html/menu.php");
-		});
+        	$.ajax({
+            	url: url,
+            	method: 'GET',
+            	dataType: 'json',
+            	success: function(resposta) {
+                	$('#tabela').empty();
+
+                	if (!resposta.sucesso) {
+                    	alert(resposta.mensagem || 'Erro ao carregar entradas.');
+                    	return;
+                	}
+
+                	$.each(resposta.dados, function(i, item) {
+                    	$('#tabela').append(
+                        	$('<tr style="cursor:pointer"/>')
+                            	.attr('onclick', 'listarId("' + item.id_entrada + '")')
+                            	.append($('<td />').text(item.descricao_almoxarifado ?? ''))
+                            	.append($('<td />').text(item.nome_origem ?? ''))
+                            	.append($('<td />').text(item.descricao ?? ''))
+                            	.append($('<td />').text(item.nome ?? ''))
+                            	.append($('<td />').text(item.valor_total ?? ''))
+                            	.append($('<td />').text(item.data ?? ''))
+                            	.append($('<td />').text(item.hora ?? ''))
+                    	);
+                	});
+            	},
+            	error: function(xhr) {
+                	let mensagem = 'Erro ao carregar entradas.';
+                	if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+                    	mensagem = xhr.responseJSON.mensagem;
+                	}
+                	alert(mensagem);
+            	}
+        	});
+    	}
+
+    	$(function() {
+        	carregarEntradas();
+
+        	$("#header").load("<?= WWW ?>html/header.php");
+        	$(".menuu").load("<?= WWW ?>html/menu.php");
+    	});
 	</script>
 </head>
 
@@ -229,10 +236,10 @@ require_once ROOT . "/html/personalizacao_display.php";
 				<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 
-				<!-- Examples -->
+				<!-- Examples
 				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
 				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script> -->
 
 				<div align="right">
 					<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>

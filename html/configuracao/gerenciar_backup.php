@@ -1,6 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
+}
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: ../../index.php");
@@ -8,59 +9,106 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 require_once "./config_funcoes.php";
+require_once "../../config.php";
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
 
-if (PHP_OS != 'Linux') {
-    header("Location: ./listar_backup.php?msg=error&err=Função de backup compatível apenas com Linux. Seu Sistema Operacional: " . PHP_OS . "");
+// Permissão
+require_once '../permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 9);
+
+// Restrição de SO
+if (PHP_OS !== 'Linux') {
+    header("Location: ./listar_backup.php?msg=error&err=" . urlencode(
+        "Função de backup compatível apenas com Linux. Seu Sistema Operacional: " . PHP_OS
+    ));
     exit();
-} else {
-    // Verifica Permissão do Usuário
-    require_once '../permissao/permissao.php';
-    permissao($_SESSION['id_pessoa'], 9);
+}
 
-    require_once "../../config.php";
+$file   = $_REQUEST['file']   ?? null;
+$action = $_REQUEST['action'] ?? null;
 
-    extract($_REQUEST);
+if (!$file || !$action) {
+    header("Location: ./listar_backup.php?msg=warning&warn=" . urlencode("Parâmetros inválidos."));
+    exit();
+}
 
-    if (DEBUG) {
-        $files = scandir(BKP_DIR);
-        $ls = in_array($file, $files) ? $file : false;
-        var_dump("cd " . BKP_DIR . " && ls $file", $file, $ls, $ls == $file . "\n");
+try {
+    //Validação do nome
+    if (!preg_match('/^[a-zA-Z0-9_-]+\.dump\.tar\.gz$/', $file)) {
+        throw new RuntimeException('Nome de arquivo inválido.');
     }
-    if (in_array($file, scandir(BKP_DIR))) {
-        // echo "File exists\n";
-        if ($action == "remove") {
 
-            $log = rmBackupBD($file);
+    $backupDir = realpath(BKP_DIR);
+    if ($backupDir === false) {
+        throw new RuntimeException('Diretório de backup inválido.');
+    }
 
-            if ($log) {
-                header("Location: ./listar_backup.php?msg=error&err=Houve um erro ao remover o arquivo!&log=" . base64_encode($log));
-            } else {
-                header("Location: ./listar_backup.php?msg=success&sccs=Backup removido com sucesso!");
-            }
-        } else if ($action == "restore") {
-            $logAS = autosaveBD();
-            if ($logAS && defined('AUTOSAVE_ERROR_FATAL') && AUTOSAVE_ERROR_FATAL) {
-                header("Location: ./listar_backup.php?msg=error&err=A ação não pode ser realizada devido a um erro no backup automático!&log=" . base64_encode($logAS));
-                exit();
-            }
+    $filePath = realpath($backupDir . DIRECTORY_SEPARATOR . $file);
 
-            try {
-                $log = loadBackupDB($file); //refazer log depois
-            } catch (Throwable $e) {
-                header("Location: ./listar_backup.php?msg=error&err=Houve um erro ao restaurar a Base de Dados!&log=" . base64_encode($e->getMessage()));
-                exit();
-            }
+    if (
+        $filePath === false ||
+        !str_starts_with($filePath, $backupDir . DIRECTORY_SEPARATOR) ||
+        !is_file($filePath)
+    ) {
+        throw new RuntimeException('Arquivo não encontrado.');
+    }
 
-            if (!$log) {
-                header("Location: ./listar_backup.php?msg=error&err=Houve um erro ao restaurar a Base de Dados!");
-                exit();
-            }
+    if (is_link($filePath)) {
+        throw new RuntimeException('Arquivo inválido.');
+    }
 
-            session_destroy();
-            header("Location: ../../index.php");
+    // =========================
+    // AÇÕES
+    // =========================
+
+    if ($action === "remove") {
+
+        rmBackupBD($file);
+
+        header("Location: ./listar_backup.php?msg=success&sccs=" . urlencode("Backup removido com sucesso!"));
+        exit();
+    }
+
+    if ($action === "restore") {
+
+        //autosave antes de restaurar
+        try {
+            autosaveBD();
+        } catch (Throwable $e) {
+            header("Location: ./listar_backup.php?msg=error&err=" . urlencode(
+                "Falha ao gerar autosave antes da restauração: " . $e->getMessage()
+            ));
             exit();
-        } else {
-            header("Location: ./listar_backup.php?msg=warning&warn=Nenhuma ação válida foi selecionada!");
         }
+
+        //restore
+        try {
+            $pdo = Conexao::connect();
+
+            truncateAllTables($pdo);
+
+            if (!loadBackupDB($file)) {
+                throw new RuntimeException("Falha ao carregar backup.");
+            }
+        } catch (Throwable $e) {
+            header("Location: ./listar_backup.php?msg=error&err=" . urlencode(
+                "Falha ao restaurar backup: " . $e->getMessage()
+            ));
+            exit();
+        }
+
+        //destrói sessão após restore
+        session_destroy();
+
+        header("Location: ../../index.php");
+        exit();
     }
+
+    // ação inválida
+    header("Location: ./listar_backup.php?msg=warning&warn=" . urlencode("Ação inválida."));
+    exit();
+} catch (Throwable $e) {
+
+    header("Location: ./listar_backup.php?msg=error&err=" . urlencode($e->getMessage()));
+    exit();
 }

@@ -247,7 +247,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 												<input type="hidden" name="metodo" value="incluir">
 												<input type="submit" class="btn btn-primary">
 											</div>
-										</div>
+										</div>ll
 									</form>
 								</div>
 							</div>
@@ -443,6 +443,43 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		$(function() {
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
+		});
+	</script>
+	<script>
+		$(function () {
+			$('#formulario').on('submit', function (event) {
+				event.preventDefault();
+
+				if (validar() === false) {
+					return false;
+				}
+
+				$.ajax({
+					url: $(this).attr('action'),
+					method: 'POST',
+					data: $(this).serialize(),
+					dataType: 'json',
+					success: function (resposta) {
+						if (resposta.sucesso) {
+							alert(resposta.mensagem || 'Entrada cadastrada com sucesso');
+							window.location.href = '<?= WWW ?>html/matPat/cadastro_entrada.php';
+						} else {
+							alert(resposta.mensagem || 'Não foi possível cadastrar a entrada');
+						}
+					},
+					error: function (xhr) {
+						let mensagem = 'Erro ao cadastrar a entrada';
+
+						if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+							mensagem = xhr.responseJSON.mensagem;
+						}
+
+						alert(mensagem);
+					}
+				});
+
+				return false;
+			});
 		});
 	</script>
 

@@ -422,28 +422,8 @@ class Item
                 $util = new Util();
                 $tipo_label = !empty($item['tipo']) ? htmlspecialchars($item['tipo'], ENT_QUOTES, 'UTF-8') : 'N/A';
 
-                $classe_tipo = 'bg-secondary'; 
+                $classe_tipo = Util::getClassePorTipo($tipo_label);
 
-                switch ($item['tipo']) {
-                    case 'Compra':
-                        $classe_tipo = 'bg-secondary'; 
-                        break;
-                    case 'Doação':
-                        $classe_tipo = 'bg-success'; 
-                        break;
-                    case 'Troca':
-                        $classe_tipo = 'bg-warning'; 
-                        break;
-                    case 'Vencido':
-                        $classe_tipo = 'bg-secondary'; 
-                        break;
-                    case 'Consumo':
-                        $classe_tipo = 'bg-success';
-                        break;
-                    default:
-                        $classe_tipo = 'bg-info';
-                        break;
-}
                 echo ('
                 <tr>
                     <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>

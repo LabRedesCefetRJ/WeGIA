@@ -33,11 +33,11 @@ class SaidaDAO
                     'valor_total' => $linha['valor_total']
                 ];
             }
-            return json_encode($saidas);
+            return $saidas;
         } catch (PDOException $e){
             echo 'Error:' . $e->getMessage();
         }
-        return json_encode($saidas);
+        return $saidas;
     }
     
 
@@ -131,9 +131,9 @@ class SaidaDAO
                         'valor_total' => $linha['valor_total']
                     ];
 
-                    return json_encode($saida);
+                    return $saida;
                 } else {
-                    return json_encode([]);
+                    return [];
                 }
         }
 
@@ -153,7 +153,7 @@ class SaidaDAO
         } catch(PDOException $e){
             echo 'Erro: ' .  $e->getMessage();
         }
-        return json_encode($saidas);  
+        return $saidas;  
     }
 
     public function ultima(){
@@ -186,7 +186,7 @@ class SaidaDAO
             $almoxarifados[] = $linha;
         }
 
-        return json_encode($almoxarifados);
+        return $almoxarifados;
     }
 }
 ?>

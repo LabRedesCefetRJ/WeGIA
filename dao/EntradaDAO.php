@@ -74,7 +74,7 @@ class EntradaDAO
         } catch (PDOException $e){
             echo 'Error:' . $e->getMessage();
         }
-        return json_encode($entradas);
+        return $entradas;
     }
     public function listarTodosComProdutos(){
 
@@ -101,7 +101,7 @@ class EntradaDAO
             } catch (PDOException $e){
                 echo 'Error:' . $e->getMessage();
             }
-            return json_encode($entradas);
+            return $entradas;
         }
     public function listarUm($id)
         {
@@ -145,7 +145,7 @@ class EntradaDAO
         } catch (PDOException $e){
             echo 'Error:' . $e->getMessage();
         }
-        return json_encode($entradas);
+        return $entradas;
     }
 
     public function ultima(){
@@ -177,7 +177,7 @@ class EntradaDAO
             $almoxarifados[] = $linha;
         }
 
-        return json_encode($almoxarifados);
+        return $almoxarifados;
     }
 }
 ?>

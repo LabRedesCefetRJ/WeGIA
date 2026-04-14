@@ -1,57 +1,22 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: ". WWW ."html/index.php");
+	header("Location: " . WWW . "html/index.php");
 	exit();
-}else{
+} else {
 	session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$id_pessoa = $_SESSION['id_pessoa'];
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
 
-// Proteção contra injeção de SQL utilizando prepared statements
-$stmt = $conexao->prepare("SELECT id_cargo FROM funcionario WHERE id_pessoa = ?");
-$stmt->bind_param("i", $id_pessoa);
-$stmt->execute(); 
-$resultado = $stmt->get_result();
-
-if ($resultado && $resultado->num_rows > 0) {
-	$row = $resultado->fetch_assoc();
-	$id_cargo = $row['id_cargo'];
-
-	// Segunda consulta usando prepared statements
-	$stmt = $conexao->prepare("SELECT id_acao FROM permissao WHERE id_cargo = ? AND id_recurso = 24");
-	$stmt->bind_param("i", $id_cargo);
-	$stmt->execute();
-	$resultado = $stmt->get_result();
-
-	if ($resultado && $resultado->num_rows > 0) {
-		$permissao = $resultado->fetch_assoc();
-		if ($permissao['id_acao'] < 3) {
-			$msg = urlencode("Você não tem as permissões necessárias para essa página.");
-			header("Location: " . WWW ."html/home.php?msg_c=$msg");
-			exit();
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = urlencode("Você não tem as permissões necessárias para essa página.");
-		header("Location: " . WWW ."html/home.php?msg_c=$msg");
-		exit();
-	}
-} else {
-	$permissao = 1;
-	$msg = urlencode("Você não tem as permissões necessárias para essa página.");
-	header("Location: " . WWW ."html/home.php?msg_c=$msg");
-	exit();
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($id_pessoa, 24, 3);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -70,16 +35,16 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	include_once ROOT .'/dao/DestinoDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (!isset($_SESSION['tipo_saida'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage='. WWW . 'html/matPat/cadastro_saida.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (!isset($_SESSION['autocomplete'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage='. WWW . 'html/matPat/cadastro_saida.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (!isset($_SESSION['destino'])) {
-		header('Location: '. WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage='. WWW . 'html/matPat/cadastro_saida.php');
+		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
 	}
 	if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset($_SESSION['autocomplete']) && isset($_SESSION['destino'])) {
 
@@ -131,19 +96,18 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 	<script type="text/javascript">
 		$(function() {
-			var prods = [];
-			var almoxarifado = <?= filtrarAlmoxarifado($_SESSION['id_pessoa'], $almoxarifado) ?>;
-			console.log(almoxarifado)
+			let prods = [];
+			const almoxarifado = <?= filtrarAlmoxarifado($_SESSION['id_pessoa'], $almoxarifado) ?>;
 
-			var tipo_saida = <?php
+			const tipo_saida = <?php
 								echo $tipo_saida;
 								?>;
 
-			var produtos_autocomplete = <?php
+			const produtos_autocomplete = <?php
 										echo $autocomplete;
 										?>;
 
-			var destino = <?php
+			const destino = <?php
 							echo $destino;
 							?>;
 
@@ -176,7 +140,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			});
 
 			$('#input_produtos').on('change', function() {
-				var teste = this.value.split('|');
+				let teste = this.value.split('|');
 				$.each(produtos_autocomplete, function(i, item) {
 					if (teste[0] == item.id_produto && teste[1] == item.descricao) {
 						$("#valor_unitario").val(item.preco);
@@ -187,18 +151,18 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			});
 
 			//adicionar tabela
-			var conta = 0;
-			var verificar = 0;
+			let conta = 0;
+			let verificar = 0;
 			$(".add-row").click(function() {
-				var produto = $("#input_produtos").val();
-				var val = $("#input_produtos").val();
+				let produto = $("#input_produtos").val();
+				let val = $("#input_produtos").val();
 
 				//As próximas 3 linhas de código são responsáveis por deixar a formatação compatível para a verificação na linha de código seguinte, uma vez que os dados vem de tabelas diferentes e a tabela de produtos não possuí o campo quantidade
 				let parts = val.split('|');
 				parts.splice(2, 1);
 				val = parts.join('|')
 
-				var obj = prods.find;
+				let obj = prods.find;
 				(prod => prod === val);
 
 				produto = produto.split("|");
@@ -206,8 +170,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					if (Number(produto[2]) >= Number($("#quantidade").val())) {
 						$.each(produtos_autocomplete, function(i, item) {
 							if (produto[0] == item.id_produto && produto[1] == item.descricao) {
-								var quantidade = $("#quantidade").val();
-								var preco = parseFloat($("#valor_unitario").val());
+								let quantidade = $("#quantidade").val();
+								let preco = parseFloat($("#valor_unitario").val());
 
 								conta = conta + 1;
 
@@ -217,7 +181,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 								$("table tbody ").append(markup);
 								$("#valor_unitario").empty();
 								$("#input_produtos").val("");
-								var x = $("#total_total").val();
+								let x = $("#total_total").val();
 								x = Number(x);
 								x += (quantidade * preco);
 
@@ -241,8 +205,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 			//remover tabela
 			$("table tbody").on('click', '.delete-row', function() {
-				var valor_menos = $(this).closest('tr').find('th').find('input').val();
-				var xx = $("#total_total").val();
+				let valor_menos = $(this).closest('tr').find('th').find('input').val();
+				let xx = $("#total_total").val();
 				xx = xx - valor_menos;
 				$("#total_total").val(xx);
 				$(this).closest('tr').remove();
@@ -251,8 +215,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 			// validar origem
 			$("#origem").blur(function() {
-				var val = $("#origem").val();
-				var obj = $("#origens").find("option[value='" + val + "']");
+				let val = $("#origem").val();
+				let obj = $("#origens").find("option[value='" + val + "']");
 			});
 		});
 	</script>
@@ -260,10 +224,10 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	<!-- Script para validar formulário -->
 	<script>
 		function validar() {
-			var desti = document.getElementById("origens")
-			var almox = document.getElementById("almoxarifado");
-			var tipo = document.getElementById("tipo_entrada");
-			var verificar = document.getElementById("verifica");
+			let desti = document.getElementById("origens")
+			let almox = document.getElementById("almoxarifado");
+			let tipo = document.getElementById("tipo_entrada");
+			let verificar = document.getElementById("verifica");
 			if (desti.value == "blank") {
 				alert("Selecione um destino");
 				desti.focus();
@@ -287,6 +251,47 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		$(function() {
 			$("#header").load("<?= WWW ?>html/header.php");
 			$(".menuu").load("<?= WWW ?>html/menu.php");
+		});
+	</script>
+	<script>
+		$(function () {
+			$('#formulario').on('submit', function (event) {
+				event.preventDefault();
+
+				if ($('#input_produtos').is(':focus')) {
+					return false;
+				}
+
+				if (validar() === false) {
+					return false;
+				}
+
+				$.ajax({
+					url: $(this).attr('action'),
+					method: 'POST',
+					data: $(this).serialize(),
+					dataType: 'json',
+					success: function (resposta) {
+						if (resposta.sucesso) {
+							alert(resposta.mensagem || 'Saída cadastrada com sucesso');
+							window.location.href = '<?= WWW ?>html/matPat/cadastro_saida.php';
+						} else {
+							alert(resposta.mensagem || 'Não foi possível cadastrar a saída');
+						}
+					},
+					error: function (xhr) {
+						let mensagem = 'Erro ao cadastrar a saída';
+
+						if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+							mensagem = xhr.responseJSON.mensagem;
+						}
+
+						alert(mensagem);
+					}
+				});
+
+				return false;
+			});
 		});
 	</script>
 
@@ -479,22 +484,6 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
-
-	<script>
-		$(function() {
-			$('form').submit(function(event) {
-				return checkFocus(event);
-			});
-		});
-
-		function checkFocus(event) {
-			if ($('#input_produtos').is(':focus')) {
-				event.preventDefault();
-				return false;
-			}
-			return true;
-		}
-	</script>
 
 	<script type="text/javascript">
 		$(document).ready(function() {

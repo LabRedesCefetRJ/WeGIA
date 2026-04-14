@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE)
    session_start();
@@ -27,25 +29,6 @@ function quickQuery($query, $column)
 	$res = $res->fetchAll(PDO::FETCH_ASSOC);
 	return $res[0][$column];
 }
-
-function getClassePorTipo($tipo)
-{
-	switch ($tipo) {
-		case 'Compra':
-			return 'bg-secondary';
-		case 'Doação':
-			return 'bg-success';
-		case 'Troca':
-			return 'bg-warning';
-		case 'Vencido':
-			return 'bg-secondary';
-		case 'Consumo':
-			return 'bg-success';
-		default:
-			return 'bg-info';
-	}
-}
-
 ?>
 <!doctype html>
 <html class="fixed">
@@ -481,7 +464,7 @@ function getClassePorTipo($tipo)
 							foreach ($entradas as $entrada) {
 								$dataEntrada = !empty($entrada['data_entrada']) && !empty($entrada['hora_entrada']) ? date('d/m/Y H:i', strtotime($entrada['data_entrada'] . ' ' . $entrada['hora_entrada'])) : "Não registrado.";
 							$tipoEntrada = !empty($entrada['descricao_tipo_entrada']) ? trim($entrada['descricao_tipo_entrada']) : "Não registrado.";
-							$classeEntrada = getClassePorTipo($tipoEntrada);
+							$classeEntrada = Util::getClassePorTipo($tipoEntrada);
 						?>
 							<tr>
 								<td><?php echo $dataEntrada; ?></td>
@@ -508,7 +491,7 @@ function getClassePorTipo($tipo)
 							foreach ($saidas as $saida) {
 								$dataSaida = (!empty($saida['data_saida']) && !empty($saida['hora_saida'])) ? date('d/m/Y H:i', strtotime($saida['data_saida'] . ' ' . $saida['hora_saida'])) : "Não registrado.";
 							$tipoSaida = !empty($saida['descricao_tipo_saida']) ? trim($saida['descricao_tipo_saida']) : "Não registrado.";
-							$classeSaida = getClassePorTipo($tipoSaida);
+							$classeSaida = Util::getClassePorTipo($tipoSaida);
 							$quantidadeSaida = !empty($saida['quantidade_saida']) ? htmlspecialchars(trim($saida['quantidade_saida'])) : "Não registrado.";
 						?>
 							<tr>

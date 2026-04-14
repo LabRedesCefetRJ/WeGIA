@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 include_once ROOT .'/classes/Saida.php';
 include_once ROOT .'/dao/SaidaDAO.php';
 include_once ROOT .'/classes/Destino.php';
@@ -16,7 +17,7 @@ class SaidaControle
     public function verificar(){
         session_start();
         extract($_REQUEST);
-        date_default_timezone_set('America/Sao_Paulo');
+        Util::definirFusoHorario();
         $horadata = date('Y-m-d H:i');
         $horadata = explode(" ", $horadata);
         $data = $horadata[0];
@@ -28,32 +29,46 @@ class SaidaControle
         return $saida;
     }
     
-    
     public function listarTodos(){
-        extract($_REQUEST);
-        $saidaDAO= new SaidaDAO();
-        $origens = $saidaDAO->listarTodos();
-        session_start();
-        $_SESSION['saida']=$origens;
-        header('Location: ' . WWW . 'html/matPat/listar_saida.php');
+        header('Content-Type: application/json; charset=utf-8');
+
+        try{
+            $saidaDAO= new SaidaDAO();
+            $origens = $saidaDAO->listarTodos();
+            
+            echo json_encode([
+                "sucesso" => true,
+                "dados" => $origens
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Erro ao listar saídas"
+            ]);
+        }
+        
+        exit;
     }
     
     public function incluir(){
-        extract($_REQUEST);
-        $saida = $this->verificar();
-        
-
-        $saidaDAO = new SaidaDAO();
-        $destinoDAO = new DestinoDAO();
-        $almoxarifadoDAO = new AlmoxarifadoDAO();
-        $TipoSaidaDAO = new TipoSaidaDAO();
-        $destino = explode("-", $destino);
-        $destino = $destino[0];
-        $destino = $destinoDAO->listarUm($destino);
-        $almoxarifado = $almoxarifadoDAO->listarUm($almoxarifado);
-        $TipoSaida =$TipoSaidaDAO->listarUm($tipo_saida);
+        header('Content-Type: application/json; charset=utf-8');
 
         try{
+            extract($_REQUEST);
+            $saida = $this->verificar();
+        
+
+            $saidaDAO = new SaidaDAO();
+            $destinoDAO = new DestinoDAO();
+            $almoxarifadoDAO = new AlmoxarifadoDAO();
+            $TipoSaidaDAO = new TipoSaidaDAO();
+            $destino = explode("-", $destino);
+            $destino = $destino[0];
+            $destino = $destinoDAO->listarUm($destino);
+            $almoxarifado = $almoxarifadoDAO->listarUm($almoxarifado);
+            $TipoSaida =$TipoSaidaDAO->listarUm($tipo_saida);
+
             $saida->setId_destino($destino);
             $saida->setId_almoxarifado($almoxarifado);
             $saida->setId_tipo($TipoSaida);
@@ -81,13 +96,28 @@ class SaidaControle
                     $isaida = $isaidaDAO->incluir($isaida);
 
                 }
-            $x++;
-            header('Location: ' . WWW . 'html/matPat/cadastro_saida.php');
+                $x++;
             }
-        } catch (PDOException $e){
-            $msg= "Não foi possível adicionar a saida"."<br>".$e->getMessage();
-            echo $msg;
+
+            echo json_encode([
+                "sucesso" => true,
+                "mensagem" => "Saída cadastrada com sucesso"
+            ]);
+        } catch (Exception $e){
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => $e->getMessage()
+            ]);
+        } catch (PDOExeption $e) {
+            http_response_code(500);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Não foi possível cadastrar a saída"
+            ]);
         }
+
+        exit;
     }
 
     public function listarId(){
@@ -105,9 +135,22 @@ class SaidaControle
 
     public function listarArquivados()
     {
-        $saidaDAO = new SaidaDAO();
-        $_SESSION['saida'] = $saidaDAO->listarArquivados();
+        header('Content-Type: application/json; charset=utf-8');
 
-        header('Location: ' . WWW . 'html/matPat/listar_saida.php?tipo=arquivado');
+        try {
+            $saidaDAO = new SaidaDAO();
+            $saida = $saidaDAO->listarArquivados();
+            echo json_encode([
+                "sucesso" => true,
+                "dados" => $saida
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Erro ao listar saídas arquivadas"
+            ]);
+        }
     }
 }
+

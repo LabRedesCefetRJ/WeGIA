@@ -68,6 +68,27 @@ class AlmoxarifadoDAO
         $stmt->execute();
     }
 
+    public function listarUm($id_almoxarifado)
+    {
+        try {
+            $sql = "SELECT id_almoxarifado, descricao_almoxarifado  FROM almoxarifado WHERE id_almoxarifado = :id_almoxarifado";
+            $consulta = $this->pdo->prepare($sql);
+            $consulta->execute(array(
+                'id_almoxarifado' => $id_almoxarifado,
+            ));
+            $resultado = $consulta->fetch(PDO::FETCH_ASSOC);
+            try {
+                $almoxarifado = new Almoxarifado($resultado['descricao_almoxarifado']);
+                $almoxarifado->setId_almoxarifado(intval($resultado['id_almoxarifado']));
+                return $almoxarifado;
+            } catch (InvalidArgumentException $e) {
+                exit('Erro ao listar um almoxarifado: ' . $e->getMessage());
+            }
+        } catch (PDOException $e) {
+            throw $e;
+        }
+    }
+
     public function listarArquivados()
     {
         $almoxarifados = array();
@@ -140,28 +161,5 @@ class AlmoxarifadoDAO
             $this->pdo->rollBack();
             throw $e;
         }
-    }
-
-    public function temVinculo($id)
-    {
-        $sql1 = "SELECT COUNT(*) FROM almoxarife WHERE id_almoxarifado = :id";
-        $stmt1 = $this->pdo->prepare($sql1);
-        $stmt1->bindParam(':id', $id);
-        $stmt1->execute();
-        $temAlmoxarife = $stmt1->fetchColumn() > 0;
-
-        $sql2 = "SELECT COUNT(*) FROM entrada WHERE id_almoxarifado = :id";
-        $stmt2 = $this->pdo->prepare($sql2);
-        $stmt2->bindParam(':id', $id);
-        $stmt2->execute();
-        $temEntrada = $stmt2->fetchColumn() > 0;
-
-        $sql3 = "SELECT COUNT(*) FROM saida WHERE id_almoxarifado = :id";
-        $stmt3 = $this->pdo->prepare($sql3);
-        $stmt3->bindParam(':id', $id);
-        $stmt3->execute();
-        $temSaida = $stmt3->fetchColumn() > 0;
-
-        return ($temAlmoxarife || $temEntrada || $temSaida);
     }
 }

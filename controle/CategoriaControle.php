@@ -98,10 +98,17 @@ class CategoriaControle
                 "mensagem" => "Categoria excluída com sucesso"
             ]);
         } catch (PDOException $e) {
-            echo json_encode([
-                "sucesso" => false,
-                "mensagem" => "Não foi possível excluir essa categoria, pois já existe produto vinculado"
-            ]);
+            if (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1451) {
+                echo json_encode([
+                    "sucesso" => false,
+                    "mensagem" => "Não foi possível excluir essa categoria, pois já existe produto vinculado"
+                ]);
+            } else {
+                echo json_encode([
+                    "sucesso" => false,
+                    "mensagem" => "Erro inesperado ao excluir a categoria"
+                ]);
+            }
         }
 
         exit;
