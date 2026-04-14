@@ -7,71 +7,14 @@ if (session_status() === PHP_SESSION_NONE)
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit();
 } else {
 	session_regenerate_id();
 }
 
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 12, 7);
 
-
-if (!isset($_SESSION['usuario'])) {
-	header("Location: " . WWW . "index.php");
-}
-
-$id_pessoa = $_SESSION['id_pessoa'];
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$stmt = mysqli_prepare($conexao, "SELECT * FROM funcionario WHERE id_pessoa=?");
-mysqli_stmt_bind_param($stmt, 'i', $id_pessoa);
-mysqli_stmt_execute($stmt);
-$resultado = mysqli_stmt_get_result($stmt);
-if (!is_null($resultado)) {
-	$id_cargo = mysqli_fetch_array($resultado);
-	if (!is_null($id_cargo)) {
-		$id_cargo = $id_cargo['id_cargo'];
-	}
-	$stmt = mysqli_prepare($conexao, "SELECT * FROM permissao WHERE id_cargo=? and id_recurso=3");
-	mysqli_stmt_bind_param($stmt, 'i', $id_cargo);
-	mysqli_stmt_execute($stmt);
-	$resultado = mysqli_stmt_get_result($stmt);
-	if (!is_bool($resultado) and mysqli_num_rows($resultado)) {
-		$permissao = mysqli_fetch_array($resultado);
-		if ($permissao['id_acao'] == 1) {
-			$msg = "Você não tem as permissões necessárias para essa página.";
-			header("Location: " . WWW . "html/home.php?msg_c=$msg");
-		}
-		$permissao = $permissao['id_acao'];
-	} else {
-		$permissao = 1;
-		$msg = "Você não tem as permissões necessárias para essa página.";
-		header("Location: " . WWW . "html/home.php?msg_c=$msg");
-	}
-} else {
-	$permissao = 1;
-	$msg = "Você não tem as permissões necessárias para essa página.";
-	header("Location: " . WWW . "html/home.php?msg_c=$msg");
-}
-
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$intTipo = $mysqli->query("SELECT * FROM atendido_tipo");
-$intStatus = $mysqli->query("SELECT * FROM atendido_status");
-
-require_once ROOT . "/controle/AtendidoControle.php";
-$listaCPF2 = new AtendidoControle;
-$listaCPF2->listarCpf();
-
-require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
-
-require_once "../../classes/Util.php";
 $util = new Util();
 
 $cpf = trim($_GET['cpf']);
@@ -81,6 +24,12 @@ if (!$util->validarCPF($cpf)) {
 	header("Location: " . WWW . "html/home.php?msg_c=CPF Inválido");
 	exit();
 }
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'AtendidoDAO.php';
+
+$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+$intTipo = $mysqli->query("SELECT * FROM atendido_tipo");
+$intStatus = $mysqli->query("SELECT * FROM atendido_status");
 
 $atendido = new AtendidoDAO;
 $informacoesFunc = $atendido->listarPessoaExistente($cpf);
