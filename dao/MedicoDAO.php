@@ -27,7 +27,11 @@ class MedicoDAO
                 ':nome' => $nome
             ]);
 
-            return true;
+            return [
+                'id_medico' => (int)$this->pdo->lastInsertId(),
+                'crm' => $crm,
+                'nome' => $nome
+            ];
         } catch (PDOException $e) {
             return $e->getMessage();
         }

@@ -41,10 +41,11 @@
             try{
                 $MedicoDAO = new MedicoDAO;
                 $resposta = $MedicoDAO->inserirMedico($crm, $nome);
-                if($resposta === true){
+                if(is_array($resposta)){
                     die(json_encode([
                         "status" => "sucesso",
-                        "mensagem" => "Médico registrado com sucesso"
+                        "mensagem" => "Médico registrado com sucesso",
+                        "medico" => $resposta
                     ]));
                 } else{
                     die(json_encode([

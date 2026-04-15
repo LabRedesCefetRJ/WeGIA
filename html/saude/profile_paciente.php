@@ -916,6 +916,11 @@ try {
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
+
+    #atendimento_medico .input-group-btn .btn {
+      height: 34px;
+    }
+
   </style>
 
 </head>
@@ -1872,7 +1877,7 @@ try {
 
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany" id="data_atendimento">Data do atendimento:<sup class="obrig">*</sup></label>
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                               <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_atendimento" id="data_atendimento" max=<?php echo date('Y-m-d');?> min=<?= htmlspecialchars($data_nasc_atendido) ?> required>
                             </div>
 
@@ -1883,25 +1888,29 @@ try {
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="inputSuccess">Usuário:</label>
                             <div class="col-md-8">
-                              <input class="form-control" style="width:230px;" name="usuario" id="usuario" value="<?php echo $funcionarioNome; ?>" disabled="true">
+                              <input class="form-control" name="usuario" id="usuario" value="<?php echo $funcionarioNome; ?>" disabled="true">
                             </div>
                           </div>
 
                           <div class="form-group">
-                            <label class="col-md-3 control-label" for="inputSuccess">Médico:<sup class="obrig">*</sup></label>
-                            <div class="col-md-6">
-
-                              <select class="form-control input-lg mb-md" name="medicos" id="medicos" required>
-                                <option selected disabled>Selecionar</option>
-
-                              </select>
+                            <label class="col-md-3 control-label" for="medicos">Médico:<sup class="obrig">*</sup></label>
+                            <div class="col-md-8">
+                              <div class="input-group">
+                                <select class="form-control" name="medicos" id="medicos" required>
+                                  <option value="" selected disabled>Selecionar</option>
+                                </select>
+                                <span class="input-group-btn">
+                                  <button type="button" class="btn btn-default" onclick="abrirModalMedico()" title="Adicionar médico">
+                                    <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                  </button>
+                                </span>
+                              </div>
                             </div>
-                            <a onclick="adicionar_medico()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                           </div>
 
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany" for="texto">Descrição:<sup class="obrig">*</sup></label>
-                            <div class='col-md-6' id='div_texto'>
+                            <div class='col-md-8' id='div_texto'>
                               <textarea cols='30' rows='3' id='despacho' name='texto' class='form-control' value="teste" placeholder="teste" required></textarea>
                             </div>
                           </div>
@@ -1910,7 +1919,7 @@ try {
 
                           <div class="form-group" id="primeira_medicacao">
                             <label class="col-md-3 control-label" for="inputSuccess">Medicamento:<sup class="obrig">*</sup></label>
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                               <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao">
                             </div>
 
@@ -1919,21 +1928,21 @@ try {
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Dosagem:<sup class="obrig">*</sup></label>
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                           <input type="text" class="form-control" name="dosagem" id="dosagem">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Horário:<sup class="obrig">*</sup></label>
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                           <input type="time" class="form-control" name="horario_medicacao" id="horario_medicacao">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Duração:<sup class="obrig">*</sup></label>
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                           <input type="text" class="form-control" name="duracao_medicacao" id="duracao_medicacao">
                         </div>
                       </div>
@@ -1966,6 +1975,64 @@ try {
                     </div>
                     </form>
                   </section>
+
+                  <div class="modal fade upload-modal" id="medicoFormModal" tabindex="-1" role="dialog" aria-labelledby="medicoFormModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                          <h4 class="modal-title" id="medicoFormModalLabel">Adicionar médico</h4>
+                        </div>
+
+                        <form id="MedicoForm" action="" method="post">
+                          <div class="modal-body">
+                            <div id="medicoFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
+                              <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalMedico(); return false;">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <span id="medicoFormErrorText"></span>
+                            </div>
+
+                            <div class="form-group">
+                              <label class="control-label" for="nomeMedicoModal">
+                                Nome do médico <sup class="obrig">*</sup>
+                              </label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                name="nome_medico"
+                                id="nomeMedicoModal"
+                                maxlength="120"
+                                required>
+                            </div>
+
+                            <div class="form-group">
+                              <label class="control-label" for="crmMedicoModal">
+                                CRM <sup class="obrig">*</sup>
+                              </label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                name="crm_medico"
+                                id="crmMedicoModal"
+                                maxlength="30"
+                                required>
+                            </div>
+                          </div>
+
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                              <span class="fa fa-plus" aria-hidden="true"></span>
+                              Cadastrar
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Aba de medicações aplicadas -->
@@ -2501,7 +2568,16 @@ try {
         adicionar_exame();
       })
 
-      async function gerarMedicos() {
+      const formMedico = document.getElementById("MedicoForm");
+
+      if (formMedico) {
+        formMedico.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          await adicionar_medico();
+        });
+      }
+
+      async function gerarMedicos(idSelecionado = null) {
         medicos = await listarTodosOsMedicos()
         let length = medicos.length - 1;
         let select = document.getElementById("medicos");
@@ -2531,17 +2607,68 @@ try {
           optionSemMedico.textContent = "Sem médico definido";
           select.appendChild(optionSemMedico);
         }
+
+        if (idSelecionado !== null && idSelecionado !== undefined && idSelecionado !== "") {
+          select.value = String(idSelecionado);
+        }
       }
 
-      function adicionar_medico() {
-        const url = '../../controle/control.php'
+      function abrirModalMedico() {
+        const form = document.getElementById("MedicoForm");
+        if (form) {
+          form.reset();
+        }
 
-        let nome_medico = window.prompt("Insira o nome do médico:");
-        let crm_medico = window.prompt("Insira o CRM do médico:");
+        limparErroModalMedico();
+        $("#medicoFormModal").one("shown.bs.modal", () => {
+          const nomeMedicoInput = document.getElementById("nomeMedicoModal");
+          if (nomeMedicoInput) {
+            nomeMedicoInput.focus();
+          }
+        });
+        $("#medicoFormModal").modal("show");
+      }
 
-        if (!nome_medico || !crm_medico) {
+      function exibirErroModalMedico(mensagem) {
+        const alerta = document.getElementById("medicoFormError");
+        const texto = document.getElementById("medicoFormErrorText");
+
+        if (!alerta || !texto) {
           return;
         }
+
+        texto.textContent = mensagem;
+        alerta.style.display = "block";
+        alerta.classList.add("in");
+      }
+
+      function limparErroModalMedico() {
+        const alerta = document.getElementById("medicoFormError");
+        const texto = document.getElementById("medicoFormErrorText");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        texto.textContent = "";
+        alerta.style.display = "none";
+        alerta.classList.remove("in");
+      }
+
+      async function adicionar_medico() {
+        const url = '../../controle/control.php'
+        const nomeMedicoInput = document.getElementById("nomeMedicoModal");
+        const crmMedicoInput = document.getElementById("crmMedicoModal");
+
+        const nome_medico = nomeMedicoInput ? nomeMedicoInput.value.trim() : "";
+        const crm_medico = crmMedicoInput ? crmMedicoInput.value.trim() : "";
+
+        if (!nome_medico || !crm_medico) {
+          exibirErroModalMedico("Preencha o nome e o CRM do médico.");
+          return;
+        }
+
+        limparErroModalMedico();
 
         const data = {
           crm: crm_medico,
@@ -2550,25 +2677,32 @@ try {
           metodo: "inserirMedico"
         }
 
-        fetch(url, {
+        try {
+          const response = await fetch(url, {
             method: "POST",
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(data)
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Erro na requisição');
-            }
-            return response.json();
-          })
-          .then(result => {
-            gerarMedicos();
-          })
-          .catch(error => {
-            console.error('Erro ao enviar dados:', error);
           });
+
+          const result = await response.json();
+
+          if (!response.ok || result.status !== "sucesso") {
+            throw new Error(result.mensagem || result.erro || "Erro ao cadastrar médico.");
+          }
+
+          if (formMedico) {
+            formMedico.reset();
+          }
+
+          $("#medicoFormModal").modal("hide");
+          const medicoIdSelecionado = result.medico && result.medico.id_medico ? result.medico.id_medico : null;
+          await gerarMedicos(medicoIdSelecionado);
+        } catch (error) {
+          console.error('Erro ao enviar dados:', error);
+          exibirErroModalMedico(error.message || "Erro ao cadastrar médico.");
+        }
       }
 
       function gerar_alergia() {
