@@ -368,13 +368,11 @@ class FuncionarioControle
             exit();
         }
 
-        if (!empty($data_expedicao) && !empty($nascimento)) {
-            if (strtotime($data_expedicao) < strtotime(($nascimento))) {
-                http_response_code(412);
-                $_SESSION['erro'] = 'A data de expedição é anterior ao nascimento. Por favor, informa uma data válida!';
-                header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
-                exit;
-            }
+        if (!empty($data_expedicao) && !empty($nascimento) && strtotime($data_expedicao) < strtotime($nascimento)) {
+            http_response_code(412);
+            $_SESSION['erro'] = 'A data de expedição é anterior ao nascimento. Por favor, informa uma data válida!';
+            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
+            exit;
         }
 
 
