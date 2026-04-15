@@ -848,15 +848,25 @@ try {
     }
 
     #mensagem-cadastro-enfermidade,
-    #mensagem-cadastro-exame {
+    #mensagem-cadastro-exame,
+    #alergiaFormError {
       opacity: 0;
       transform: translateY(-8px);
       transition: opacity 0.35s ease, transform 0.35s ease;
       pointer-events: none;
     }
 
+    #alergiaFormError {
+      margin-bottom: 0;
+    }
+
+    .form-group {
+      margin-top: 15px;
+    }
+
     #mensagem-cadastro-enfermidade.is-visible,
-    #mensagem-cadastro-exame.is-visible {
+    #mensagem-cadastro-exame.is-visible,
+    #alergiaFormError.is-visible {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
@@ -921,6 +931,10 @@ try {
       height: 34px;
     }
 
+    #cadastro_alergias .input-group-btn .btn {
+      height: 34px;
+    }
+    
   </style>
 
 </head>
@@ -1518,18 +1532,68 @@ try {
                             <div class="form-group">
                               <label class="col-md-3 control-label" for="inputSuccess">Alergias</label>
                               <div class="col-md-6">
-                                <select class="form-control input-lg mb-md" name="id_CID_alergia" id="id_CID_alergia">
-                                  <option selected disabled>Selecionar</option>
-                                </select>
+                                <div class="input-group">
+                                  <select class="form-control" name="id_CID_alergia" id="id_CID_alergia">
+                                    <option selected disabled>Selecionar</option>
+                                  </select>
+                                  <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" onclick="abrirModalAlergia()" title="Adicionar alergia">
+                                      <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                    </button>
+                                  </span>
+                                </div>
                               </div>
-                              <a onclick="adicionar_alergia()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-
                             </div>
                             <div class="form-group">
                               <input type="button" onclick="alergia_upload()" class="btn btn-primary" id="salvarAlergia" value="Salvar" style="display: none;">
                             </div>
                           </div>
                         </form>
+                      </div>
+
+                      <div class="modal fade upload-modal" id="alergiaFormModal" tabindex="-1" role="dialog" aria-labelledby="alergiaFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="alergiaFormModalLabel">Adicionar alergia</h4>
+                            </div>
+
+                            <form id="AlergiaForm" action="" method="post">
+                              <div class="modal-body">
+                                <div id="alergiaFormError" class="alert alert-danger alert-dismissible" style="display: none;" role="alert">
+                                  <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalAlergia(); return false;">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <span id="alergiaFormErrorText"></span>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="nomeAlergiaModal">
+                                    Nome da alergia <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="nome_alergia"
+                                    id="nomeAlergiaModal"
+                                    maxlength="120"
+                                    required>
+                                </div>
+                              </div>
+
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">
+                                  <span class="fa fa-plus" aria-hidden="true"></span>
+                                  Cadastrar
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
                       </div>
                   </section>
                 </div>
@@ -2705,54 +2769,197 @@ try {
         }
       }
 
-      function gerar_alergia() {
-        const url = '../../controle/control.php';
-        $.ajax({
-          data: {
-            nomeClasse: "AlergiaControle",
-            metodo: "listarTodasAsAlergias"
-          },
-          type: "POST",
-          url: url,
-          async: true,
-          success: function(response) {
-            var situacoes_alergia = response;
-            const idsAlergiasPaciente = new Set(alergiasPaciente.map(function(alergia) {
-              return String(alergia.id_CID);
-            }));
-            $('#id_CID_alergia').empty();
-            $('#id_CID_alergia').append('<option selected disabled>Selecionar</option>');
-            $.each(situacoes_alergia, function(i, item) {
-              if (!idsAlergiasPaciente.has(String(item.id_CID))) {
-                $('#id_CID_alergia').append('<option value="' + item.id_CID + '">' + item.descricao + '</option>');
-              }
-            });
-          },
-          dataType: 'json'
+      const formAlergia = document.getElementById("AlergiaForm");
+
+      if (formAlergia) {
+        formAlergia.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          await adicionar_alergia();
         });
       }
 
-      function adicionar_alergia() {
-        url = 'adicionar_alergia.php';
-        let nome_alergia = window.prompt("Insira o nome da alergia:");
+      async function gerar_alergia() {
+        const url = '../../controle/control.php';
+        const formData = new URLSearchParams({
+          nomeClasse: "AlergiaControle",
+          metodo: "listarTodasAsAlergias"
+        });
 
-        if (!nome_alergia || nome_alergia == '') {
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Accept": "application/json"
+            },
+            body: formData.toString()
+          });
+
+          if (!response.ok) {
+            throw new Error("Erro ao carregar alergias.");
+          }
+
+          const situacoes_alergia = await response.json();
+          const idsAlergiasPaciente = new Set(alergiasPaciente.map(function(alergia) {
+            return String(alergia.id_CID);
+          }));
+          const selectAlergia = document.getElementById("id_CID_alergia");
+
+          if (!selectAlergia) {
+            return;
+          }
+
+          while (selectAlergia.firstChild) {
+            selectAlergia.removeChild(selectAlergia.firstChild);
+          }
+
+          const optionSelecionar = document.createElement("option");
+          optionSelecionar.selected = true;
+          optionSelecionar.disabled = true;
+          optionSelecionar.textContent = "Selecionar";
+          selectAlergia.appendChild(optionSelecionar);
+
+          situacoes_alergia.forEach(function(item) {
+            if (!idsAlergiasPaciente.has(String(item.id_CID))) {
+              const option = document.createElement("option");
+              option.value = item.id_CID;
+              option.textContent = item.descricao;
+              selectAlergia.appendChild(option);
+            }
+          });
+        } catch (error) {
+          console.error("Erro ao carregar alergias:", error);
+        }
+      }
+
+      function abrirModalAlergia() {
+        const form = document.getElementById("AlergiaForm");
+        if (form) {
+          form.reset();
+        }
+
+        limparErroModalAlergia();
+        $("#alergiaFormModal").one("shown.bs.modal", function() {
+          const nomeAlergiaInput = document.getElementById("nomeAlergiaModal");
+          if (nomeAlergiaInput) {
+            nomeAlergiaInput.focus();
+          }
+        });
+        $("#alergiaFormModal").modal("show");
+      }
+
+      let timeoutMensagemErroAlergia = null;
+      let timeoutFecharAnimacaoErroAlergia = null;
+
+      function exibirErroModalAlergia(mensagem) {
+        const alerta = document.getElementById("alergiaFormError");
+        const texto = document.getElementById("alergiaFormErrorText");
+
+        if (!alerta || !texto) {
           return;
         }
-        data = {
-          nome: nome_alergia
-        };
-        $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response) {
-            gerar_alergia();
-          },
-          error: function(response) {
-            // console.log(response);
-          },
-        })
+
+        texto.textContent = mensagem;
+        alerta.style.display = "block";
+        alerta.classList.remove("is-visible");
+        void alerta.offsetWidth;
+        alerta.classList.add("is-visible");
+
+        if (timeoutMensagemErroAlergia) {
+          clearTimeout(timeoutMensagemErroAlergia);
+        }
+
+        if (timeoutFecharAnimacaoErroAlergia) {
+          clearTimeout(timeoutFecharAnimacaoErroAlergia);
+          timeoutFecharAnimacaoErroAlergia = null;
+        }
+
+        timeoutMensagemErroAlergia = setTimeout(() => {
+          limparErroModalAlergia();
+        }, 10000);
+      }
+
+      function limparErroModalAlergia() {
+        const alerta = document.getElementById("alergiaFormError");
+        const texto = document.getElementById("alergiaFormErrorText");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        alerta.classList.remove("is-visible");
+
+        if (timeoutMensagemErroAlergia) {
+          clearTimeout(timeoutMensagemErroAlergia);
+          timeoutMensagemErroAlergia = null;
+        }
+
+        if (timeoutFecharAnimacaoErroAlergia) {
+          clearTimeout(timeoutFecharAnimacaoErroAlergia);
+        }
+
+        timeoutFecharAnimacaoErroAlergia = setTimeout(() => {
+          alerta.style.display = "none";
+          texto.textContent = "";
+          timeoutFecharAnimacaoErroAlergia = null;
+        }, 350);
+      }
+
+      async function adicionar_alergia() {
+        const url = 'adicionar_alergia.php';
+        const nomeAlergiaInput = document.getElementById("nomeAlergiaModal");
+        const nome_alergia = nomeAlergiaInput ? nomeAlergiaInput.value.trim() : "";
+
+        if (!nome_alergia || nome_alergia == '') {
+          exibirErroModalAlergia("Preencha o nome da alergia.");
+          return;
+        }
+
+        limparErroModalAlergia();
+
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Accept": "application/json"
+            },
+            body: new URLSearchParams({
+              nome: nome_alergia
+            }).toString()
+          });
+
+          let result = null;
+          const contentType = response.headers.get("content-type") || "";
+
+          if (response.redirected) {
+            throw new Error("Você não tem permissão para adicionar alergias.");
+          }
+
+          if (contentType.indexOf("application/json") === -1) {
+            throw new Error("Não foi possível processar a resposta do servidor.");
+          }
+
+          try {
+            result = await response.json();
+          } catch (e) {
+            throw new Error("Não foi possível processar a resposta do servidor.");
+          }
+
+          if (!response.ok || result.status !== "sucesso") {
+            throw new Error(result.mensagem || "Erro ao cadastrar alergia.");
+          }
+
+          if (formAlergia) {
+            formAlergia.reset();
+          }
+
+          $("#alergiaFormModal").modal("hide");
+          await gerar_alergia();
+        } catch (error) {
+          console.error("Erro ao cadastrar alergia:", error);
+          exibirErroModalAlergia(error.message || "Erro ao cadastrar alergia.");
+        }
       }
 
       function alergia_upload() {
