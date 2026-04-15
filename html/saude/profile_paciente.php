@@ -2012,7 +2012,7 @@ try {
 
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany" id="data_atendimento">Data do atendimento:<sup class="obrig">*</sup></label>
-                            <div class="col-md-8">
+                            <div class="col-md-6">
                               <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_atendimento" id="data_atendimento" max=<?php echo date('Y-m-d');?> min=<?= htmlspecialchars($data_nasc_atendido) ?> required>
                             </div>
 
@@ -2022,14 +2022,14 @@ try {
                           <!-- listar o funcionario, pessoa nome onde cargo = 3 -->
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="inputSuccess">Usuário:</label>
-                            <div class="col-md-8">
+                            <div class="col-md-6">
                               <input class="form-control" name="usuario" id="usuario" value="<?php echo $funcionarioNome; ?>" disabled="true">
                             </div>
                           </div>
 
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="medicos">Médico:<sup class="obrig">*</sup></label>
-                            <div class="col-md-8">
+                            <div class="col-md-6">
                               <div class="input-group">
                                 <select class="form-control" name="medicos" id="medicos" required>
                                   <option value="" selected disabled>Selecionar</option>
@@ -2045,7 +2045,7 @@ try {
 
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany" for="texto">Descrição:<sup class="obrig">*</sup></label>
-                            <div class='col-md-8' id='div_texto'>
+                            <div class='col-md-6' id='div_texto'>
                               <textarea cols='30' rows='3' id='despacho' name='texto' class='form-control' value="teste" placeholder="teste" required></textarea>
                             </div>
                           </div>
