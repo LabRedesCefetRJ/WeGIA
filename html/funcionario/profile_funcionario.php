@@ -1624,7 +1624,14 @@ try {
                         <tbody id="doc-tab"></tbody>
                       </table><br>
                       <?php
-                      $tiposDocumentoFuncionario = $pdo->query("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC;")->fetchAll(PDO::FETCH_ASSOC);
+                      $tiposDocumentoFuncionario = [];
+                      try {
+                        $stmtTiposDocumentoFuncionario = $pdo->prepare("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC");
+                        $stmtTiposDocumentoFuncionario->execute();
+                        $tiposDocumentoFuncionario = $stmtTiposDocumentoFuncionario->fetchAll(PDO::FETCH_ASSOC);
+                      } catch (PDOException $e) {
+                        error_log("Erro: Falha ao buscar tipos de documento do funcionario: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+                      }
                       $uploadMaxFilesize = ini_get('upload_max_filesize');
                       $uploadMaxFilesizeFormatado = preg_replace('/^(\d+(?:[.,]\d+)?)\s*([KMG])$/i', '$1 $2B', (string)$uploadMaxFilesize);
                       $converterTamanhoParaBytes = static function ($valor) {

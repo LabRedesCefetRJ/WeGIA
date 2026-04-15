@@ -674,7 +674,14 @@ $dependente = json_encode($dependente);
               <div class="panel-body">
                 <?php
                 $pdo = Conexao::connect();
-                $resultado = $pdo->query("SELECT COUNT(*) FROM endereco_instituicao;")->fetchColumn();
+                $resultado = 1;
+                try {
+                  $stmtEnderecoInstituicao = $pdo->prepare("SELECT COUNT(*) FROM endereco_instituicao");
+                  $stmtEnderecoInstituicao->execute();
+                  $resultado = (int)$stmtEnderecoInstituicao->fetchColumn();
+                } catch (PDOException $e) {
+                  error_log("Erro: Falha ao verificar cadastro do endereco da instituicao: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+                }
                 if (!$resultado) {
                   echo "<div class='alert alert-warning' id='cadastro_instituicao' style='font-size: 15px;'><i class='fas fa-check mr-md'></i>O endereço da instituição não está cadastrado no sistema<br><a href='../personalizacao.php'>Cadastrar endereço da instituição</a></div>";
                 }
@@ -1001,7 +1008,16 @@ $dependente = json_encode($dependente);
                                       <select name="id_parentesco" id="parentesco">
                                         <option selected disabled>Selecionar...</option>
                                         <?php
-                                        foreach ($pdo->query("SELECT * FROM atendido_parentesco ORDER BY parentesco ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                        $parentescosAtendido = [];
+                                        try {
+                                          $stmtParentescosAtendido = $pdo->prepare("SELECT * FROM atendido_parentesco ORDER BY parentesco ASC");
+                                          $stmtParentescosAtendido->execute();
+                                          $parentescosAtendido = $stmtParentescosAtendido->fetchAll(PDO::FETCH_ASSOC);
+                                        } catch (PDOException $e) {
+                                          error_log("Erro: Falha ao buscar parentescos do atendido: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+                                        }
+
+                                        foreach ($parentescosAtendido as $item) {
                                           echo ("
                                             <option value='" . $item["idatendido_parentesco"] . "' >" . htmlspecialchars($item["parentesco"]) . "</option>
                                             ");
@@ -1048,7 +1064,14 @@ $dependente = json_encode($dependente);
                         </table>
                         <br>
                         <?php
-                        $tiposDocumentoAtendido = $pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC);
+                        $tiposDocumentoAtendido = [];
+                        try {
+                          $stmtTiposDocumentoAtendido = $pdo->prepare("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC");
+                          $stmtTiposDocumentoAtendido->execute();
+                          $tiposDocumentoAtendido = $stmtTiposDocumentoAtendido->fetchAll(PDO::FETCH_ASSOC);
+                        } catch (PDOException $e) {
+                          error_log("Erro: Falha ao buscar tipos de documento do atendido: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+                        }
                         $uploadMaxFilesize = ini_get('upload_max_filesize');
                         $uploadMaxFilesizeFormatado = preg_replace('/^(\d+(?:[.,]\d+)?)\s*([KMG])$/i', '$1 $2B', (string)$uploadMaxFilesize);
                         $converterTamanhoParaBytes = static function ($valor) {
