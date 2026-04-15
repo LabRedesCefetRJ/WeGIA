@@ -66,8 +66,13 @@ class EnfermidadeDAO
         $stmt->bindParam(':enfermidadeCid', $enfermidadeCid);
         $stmt->bindParam('enfermidadeNome', $enfermidadeNome);
         $stmt->execute();
-        if ($stmt->rowCount() > 0)
-            return true;
+        if ($stmt->rowCount() > 0) {
+            return [
+                'id_CID' => (int) $this->pdo->lastInsertId(),
+                'CID' => $enfermidadeCid,
+                'descricao' => $enfermidadeNome
+            ];
+        }
         return false;
     }
 

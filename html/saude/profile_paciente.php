@@ -849,24 +849,28 @@ try {
 
     #mensagem-cadastro-enfermidade,
     #mensagem-cadastro-exame,
-    #alergiaFormError {
+    #alergiaFormError,
+    #enfermidadeFormError {
       opacity: 0;
       transform: translateY(-8px);
       transition: opacity 0.35s ease, transform 0.35s ease;
       pointer-events: none;
     }
 
-    #alergiaFormError {
+    #alergiaFormError,
+    #enfermidadeFormError {
       margin-bottom: 0;
     }
 
-    .form-group {
+    #alergiaFormError + .form-group,
+    #enfermidadeFormError + .form-group {
       margin-top: 15px;
     }
 
     #mensagem-cadastro-enfermidade.is-visible,
     #mensagem-cadastro-exame.is-visible,
-    #alergiaFormError.is-visible {
+    #alergiaFormError.is-visible,
+    #enfermidadeFormError.is-visible {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
@@ -932,6 +936,10 @@ try {
     }
 
     #cadastro_alergias .input-group-btn .btn {
+      height: 34px;
+    }
+
+    #cadastro_comorbidades .input-group-btn .btn {
       height: 34px;
     }
     
@@ -1657,16 +1665,21 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="inputSuccess">Enfermidades<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-
-                            <select class="form-control input-lg mb-md" name="id_CID" id="id_CID" required>
-                              <option selected disabled>Qualquer coisa</option>
-                              <?php
-                              /*while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
-                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
-                              }*/                            ?>
-                            </select>
+                            <div class="input-group">
+                              <select class="form-control" name="id_CID" id="id_CID" required>
+                                <option selected disabled>Selecionar</option>
+                                <?php
+                                /*while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
+                                  echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
+                                }*/                            ?>
+                              </select>
+                              <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" onclick="abrirModalEnfermidade()" title="Adicionar comorbidade">
+                                  <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                </button>
+                              </span>
+                            </div>
                           </div>
-                          <a onclick="adicionar_enfermidade()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
 
                         <div class="form-group">
@@ -1679,7 +1692,7 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="inputSuccess">Status<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="intStatus" id="intStatus" required>
+                            <select class="form-control" name="intStatus" id="intStatus" required>
                               <option value="" selected disabled>Selecionar</option>
                               <option value="1">Ativo</option>
                               <option value="0">Inativo</option>
@@ -1694,6 +1707,64 @@ try {
                           </div>
                         </div>
                       </form>
+
+                      <div class="modal fade upload-modal" id="enfermidadeFormModal" tabindex="-1" role="dialog" aria-labelledby="enfermidadeFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="enfermidadeFormModalLabel">Adicionar comorbidade</h4>
+                            </div>
+
+                            <form id="EnfermidadeForm" action="" method="post">
+                              <div class="modal-body">
+                                <div id="enfermidadeFormError" class="alert alert-danger alert-dismissible" style="display: none;" role="alert">
+                                  <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalEnfermidade(); return false;">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <span id="enfermidadeFormErrorText"></span>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="nomeEnfermidadeModal">
+                                    Nome da comorbidade <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="nome_enfermidade"
+                                    id="nomeEnfermidadeModal"
+                                    maxlength="120"
+                                    required>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="cidEnfermidadeModal">
+                                    CID <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="cid_enfermidade"
+                                    id="cidEnfermidadeModal"
+                                    maxlength="10"
+                                    required>
+                                </div>
+                              </div>
+
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">
+                                  <span class="fa fa-plus" aria-hidden="true"></span>
+                                  Cadastrar
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </section>
                 </div>
