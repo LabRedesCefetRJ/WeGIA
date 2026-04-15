@@ -273,6 +273,9 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					dataType: 'json',
 					success: function (resposta) {
 						if (resposta.sucesso) {
+							if(limparRascunhoSaida){
+								limparRascunhoSaida();
+							}
 							alert(resposta.mensagem || 'Saída cadastrada com sucesso');
 							window.location.href = '<?= WWW ?>html/matPat/cadastro_saida.php';
 						} else {
@@ -294,6 +297,69 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			});
 		});
 	</script>
+	<script>
+	$(function () {
+		const CHAVE = 'rascunho_cadastro_saida';
+
+		function salvarRascunho() {
+			const dados = {
+				origem: $('#origens').val(),
+				almoxarifado: $('#almoxarifado').val(),
+				tipo_entrada: $('#tipo_entrada').val(),
+				input_produtos: $('#input_produtos').val(),
+				quantidade: $('#quantidade').val(),
+				valor_unitario: $('#valor_unitario').val(),
+				total_total: $('#total_total').val(),
+				conta: $('#conta').val(),
+				verifica: $('#verifica').val(),
+				tabela: $('#lista-produtos').html()
+			};
+
+			sessionStorage.setItem(CHAVE, JSON.stringify(dados));
+		}
+
+		function restaurarRascunho() {
+			const bruto = sessionStorage.getItem(CHAVE);
+			if (!bruto) return;
+
+			try {
+				const dados = JSON.parse(bruto);
+
+				if (dados.origem) $('#origens').val(dados.origem);
+				if (dados.tipo_entrada) $('#tipo_entrada').val(dados.tipo_entrada);
+				if (dados.input_produtos) $('#input_produtos').val(dados.input_produtos);
+				if (dados.quantidade) $('#quantidade').val(dados.quantidade);
+				if (dados.valor_unitario) $('#valor_unitario').val(dados.valor_unitario);
+				if (dados.total_total) $('#total_total').val(dados.total_total);
+				if (dados.conta) $('#conta').val(dados.conta);
+				if (dados.verifica) $('#verifica').val(dados.verifica);
+				if (dados.tabela) $('#lista-produtos').html(dados.tabela);
+
+				if (dados.almoxarifado) {
+					$('#almoxarifado').val(dados.almoxarifado).trigger('change');
+
+					setTimeout(function () {
+						$('#almoxarifado').val(dados.almoxarifado);
+					}, 100);
+				}
+			} catch (e) {
+				console.error('Erro ao restaurar rascunho:', e);
+			}
+		}
+
+		function limparRascunho() {
+			sessionStorage.removeItem(CHAVE);
+		}
+
+		$('#btn-novo-destino, #btn-novo-almoxarifado, #btn-novo-tipo-saida, #btn-novo-produto').on('click', function () {
+			salvarRascunho();
+		});
+
+		restaurarRascunho();
+
+		window.limparRascunhoSaida = limparRascunho;
+	});
+</script>
 
 
 
@@ -356,7 +422,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="origens">Destino</label>
-													<a href="cadastro_destino.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="cadastro_destino.php" id="btn-novo-destino"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
 														<select class="form-control " name="destino" id="origens">
 															<option selected disabled value="blank">Selecionar</option>
@@ -366,7 +432,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
-													<a href="adicionar_almoxarifado.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="almoxarifado" id="almoxarifado">
 															<option selected disabled value="blank">Selecionar</option>
@@ -376,7 +442,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="tipo_entrada">Tipo</label>
-													<a href="adicionar_tipoSaida.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="adicionar_tipoSaida.php" id="btn-novo-tipo-saida"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="tipo_saida" id="tipo_entrada">
 															<option selected disabled value="blank">Selecionar</option>
@@ -426,7 +492,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 																<th>Ação</th>
 															</tr>
 														</thead>
-														<tbody>
+														<tbody id="lista-produtos">
 														</tbody>
 														<tfoot>
 															<tr>

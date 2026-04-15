@@ -152,7 +152,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="origens">Origem</label>
-													<a href="<?= WWW ?>html/matPat/cadastro_doador.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/cadastro_doador.php" id="btn-novo-doador"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
 														<select class="form-control " name="origem" id="origens">
 															<option selected disabled value="blank">Selecionar</option>
@@ -162,7 +162,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
-													<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="almoxarifado" id="almoxarifado">
 															<option selected disabled value="blank">Selecionar</option>
@@ -171,7 +171,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 												</div>
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="tipo_entrada">Tipo</label>
-													<a href="<?= WWW ?>html/matPat/adicionar_tipoEntrada.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/adicionar_tipoEntrada.php" id="btn-novo-tipo-entrada"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="tipo_entrada" id="tipo_entrada">
 															<option selected disabled value="blank">Selecionar</option>
@@ -186,7 +186,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 														<thead>
 															<tr style="width: 768px;">
 																<th>Produto
-																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge" style="float:right;" id="produto" class="produto">
+																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" id="btn-novo-produto" class="fas fa-plus w3-xlarge" style="float:right;">
 																	</a>
 																</th>
 																<th>quantidade</th>
@@ -221,7 +221,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 																<th>Ação</th>
 															</tr>
 														</thead>
-														<tbody>
+														<tbody id="lista-produtos">
 														</tbody>
 														<tfoot>
 															<tr>
@@ -461,6 +461,9 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					dataType: 'json',
 					success: function (resposta) {
 						if (resposta.sucesso) {
+							if(limparRascunhoEntrada) {
+								limparRascunhoEntrada();
+							}
 							alert(resposta.mensagem || 'Entrada cadastrada com sucesso');
 							window.location.href = '<?= WWW ?>html/matPat/cadastro_entrada.php';
 						} else {
@@ -482,6 +485,69 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			});
 		});
 	</script>
+	<script>
+	$(function () {
+		const CHAVE = 'rascunho_cadastro_entrada';
+
+		function salvarRascunho() {
+			const dados = {
+				origem: $('#origens').val(),
+				almoxarifado: $('#almoxarifado').val(),
+				tipo_entrada: $('#tipo_entrada').val(),
+				input_produtos: $('#input_produtos').val(),
+				quantidade: $('#quantidade').val(),
+				valor_unitario: $('#valor_unitario').val(),
+				total_total: $('#total_total').val(),
+				conta: $('#conta').val(),
+				verifica: $('#verifica').val(),
+				tabela: $('#lista-produtos').html()
+			};
+
+			sessionStorage.setItem(CHAVE, JSON.stringify(dados));
+		}
+
+		function restaurarRascunho() {
+			const bruto = sessionStorage.getItem(CHAVE);
+			if (!bruto) return;
+
+			try {
+				const dados = JSON.parse(bruto);
+
+				if (dados.origem) $('#origens').val(dados.origem);
+				if (dados.tipo_entrada) $('#tipo_entrada').val(dados.tipo_entrada);
+				if (dados.input_produtos) $('#input_produtos').val(dados.input_produtos);
+				if (dados.quantidade) $('#quantidade').val(dados.quantidade);
+				if (dados.valor_unitario) $('#valor_unitario').val(dados.valor_unitario);
+				if (dados.total_total) $('#total_total').val(dados.total_total);
+				if (dados.conta) $('#conta').val(dados.conta);
+				if (dados.verifica) $('#verifica').val(dados.verifica);
+				if (dados.tabela) $('#lista-produtos').html(dados.tabela);
+
+				if (dados.almoxarifado) {
+					$('#almoxarifado').val(dados.almoxarifado).trigger('change');
+
+					setTimeout(function () {
+						$('#almoxarifado').val(dados.almoxarifado);
+					}, 100);
+				}
+			} catch (e) {
+				console.error('Erro ao restaurar rascunho:', e);
+			}
+		}
+
+		function limparRascunho() {
+			sessionStorage.removeItem(CHAVE);
+		}
+
+		$('#btn-novo-doador, #btn-novo-almoxarifado, #btn-novo-tipo-entrada, #btn-novo-produto').on('click', function () {
+			salvarRascunho();
+		});
+
+		restaurarRascunho();
+
+		window.limparRascunhoEntrada = limparRascunho;
+	});
+</script>
 
 	<!-- Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>

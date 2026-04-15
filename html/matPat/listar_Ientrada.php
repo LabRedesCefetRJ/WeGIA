@@ -103,7 +103,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		async function getEntrada() {
-			return await <?php echo $entrada; ?>;
+			return await <?php echo json_encode($entrada); ?>;
 		}
 
 
