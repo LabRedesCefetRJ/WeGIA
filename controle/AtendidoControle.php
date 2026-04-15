@@ -606,19 +606,13 @@ class AtendidoControle
                 } else {
                     $validador = new Util();
                     if (!$validador->validarCPF($cpf)) {
-                        $_SESSION['msg'] = "CPF inválido!";
-                        $_SESSION['tipo'] = "error";
-                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-                        exit;
+                        throw new InvalidArgumentException("CPF inválido!");
                     }
 
                     $stmt_unico = $pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ? AND id_pessoa != (SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = ?)");
                     $stmt_unico->execute([$cpf, $idatendido]);
                     if ($stmt_unico->fetchColumn() > 0) {
-                        $_SESSION['msg'] = "CPF já cadastrado em outro atendido!";
-                        $_SESSION['tipo'] = "error";
-                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-                        exit;
+                        throw new InvalidArgumentException("CPF já cadastrado em outro atendido!");
                     }
                 }
             }
@@ -635,10 +629,8 @@ class AtendidoControle
             }
 
             if (empty($setClause)) {
-                $_SESSION['msg'] = "Nenhum dado para atualizar!";
-                header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-                exit;
-            }
+                throw new InvalidArgumentException("Nenhum dado para atualizar!");
+            }       
 
             $sql_update = "
             UPDATE pessoa p 
@@ -654,6 +646,13 @@ class AtendidoControle
             $_SESSION['tipo'] = "success";
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
+
+        } catch (InvalidArgumentException $e) {
+            $_SESSION['msg'] = $e->getMessage();
+            $_SESSION['tipo'] = "error";
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
+            exit;
+
         } catch (PDOException $e) {
             error_log("Erro DAO alterarInfPessoal: " . $e->getMessage());
             $_SESSION['msg'] = "Erro no banco de dados: " . $e->getMessage();
@@ -662,7 +661,7 @@ class AtendidoControle
             exit;
         } catch (Exception $e) {
             error_log("Erro alterarInfPessoal: " . $e->getMessage());
-            $_SESSION['msg'] = "Erro ao atualizar informações pessoais!";
+            $_SESSION['msg'] = "Erro ao atualizar informações pessoais!"; // Mensagem de erro padrão
             $_SESSION['tipo'] = "error";
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
