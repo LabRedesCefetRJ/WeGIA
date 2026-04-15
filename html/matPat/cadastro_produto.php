@@ -228,7 +228,7 @@ $dadosForm = $_SESSION['form_produto'];
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="codigo">Código</label>
 												<div class="col-md-8">
-													<input type="number" name="codigo" class="form-control" id="codigo" onchange="addSessionStorage(this)" required>
+													<input type="number" name="codigo" class="form-control" id="codigo" onchange="addSessionStorage(this)">
 
 													<input type="hidden" name="nomeClasse" value="ProdutoControle">
 

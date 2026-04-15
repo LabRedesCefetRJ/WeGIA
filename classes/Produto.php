@@ -72,6 +72,8 @@ class Produto
 
     public function setPreco($preco)
     {
+        $preco = str_replace(',', '.', $preco);
+
         if (!$preco || !is_numeric($preco) || $preco < 0) {
             throw new InvalidArgumentException('O preço de um produto deve ser um número positivo.');
         }
@@ -88,9 +90,11 @@ class Produto
 
     public function setCodigo($codigo)
     {
-        if (!$codigo || empty($codigo)) {
-            throw new InvalidArgumentException('O código de um produto não pode ser vazio.');
+        if ($codigo === null || $codigo === ''){
+            $this->codigo = null;
+            return;
         }
+
         $this->codigo = filter_var($codigo, FILTER_SANITIZE_SPECIAL_CHARS);
     }
 }

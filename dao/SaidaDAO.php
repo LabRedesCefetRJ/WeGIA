@@ -15,7 +15,7 @@ class SaidaDAO
                     INNER JOIN destino d ON d.id_destino = s.id_destino
                     INNER JOIN almoxarifado a ON a.id_almoxarifado = s.id_almoxarifado
                     INNER JOIN tipo_saida t ON t.id_tipo = s.id_tipo
-                    INNER JOIN pessoa p ON p.id_pessoa = s.id_responsavel";
+                    INNER JOIN pessoa p ON p.id_pessoa = s.id_responsavel where s.ativo = 1";
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
 
@@ -33,11 +33,11 @@ class SaidaDAO
                     'valor_total' => $linha['valor_total']
                 ];
             }
-            return json_encode($saidas);
+            return $saidas;
         } catch (PDOException $e){
             echo 'Error:' . $e->getMessage();
         }
-        return json_encode($saidas);
+        return $saidas;
     }
     
 
@@ -131,9 +131,9 @@ class SaidaDAO
                         'valor_total' => $linha['valor_total']
                     ];
 
-                    return json_encode($saida);
+                    return $saida;
                 } else {
-                    return json_encode([]);
+                    return [];
                 }
         }
 
@@ -153,7 +153,7 @@ class SaidaDAO
         } catch(PDOException $e){
             echo 'Erro: ' .  $e->getMessage();
         }
-        return json_encode($saidas);  
+        return $saidas;  
     }
 
     public function ultima(){
@@ -165,6 +165,28 @@ class SaidaDAO
             $ultima = array('id_saida'=>$linha['id_saida']);
         }
         return $ultima;
+    }
+
+    public function listarArquivados()
+    {
+        $entradas = array();
+        $pdo = Conexao::connect();
+
+        $consulta = $pdo->query("
+            SELECT s.id_saida, d.nome_destino, a.descricao_almoxarifado, 
+                t.descricao, p.nome, s.data, s.hora, s.valor_total 
+                FROM saida s
+                INNER JOIN destino d ON d.id_destino = s.id_destino
+                INNER JOIN almoxarifado a ON a.id_almoxarifado = s.id_almoxarifado
+                INNER JOIN tipo_saida t ON t.id_tipo = s.id_tipo
+                INNER JOIN pessoa p ON p.id_pessoa = s.id_responsavel where s.ativo = 0
+        ");
+
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $almoxarifados[] = $linha;
+        }
+
+        return $almoxarifados;
     }
 }
 ?>

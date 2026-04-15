@@ -66,10 +66,10 @@ class OrigemDAO
         try {
             $origens = array();
             $pdo = Conexao::connect();
-            $consulta = $pdo->query("SELECT id_origem,nome_origem,cnpj,cpf,telefone FROM origem");
-            $x = 0;
-            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-                $origens[$x] = array('id_origem' => $linha['id_origem'], 'nome_origem' => $linha['nome_origem'], 'cnpj' => $linha['cnpj'], 'cpf' => $linha['cpf'], 'telefone' => $linha['telefone']);
+            $consulta = $pdo->query("SELECT id_origem,nome_origem,cnpj,cpf,telefone FROM origem ORDER BY nome_origem");
+            $x=0;
+            while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
+                $origens[$x]=array('id_origem'=>$linha['id_origem'],'nome_origem'=>$linha['nome_origem'],'cnpj'=>$linha['cnpj'],'cpf'=>$linha['cpf'],'telefone'=>$linha['telefone']);
                 $x++;
             }
         } catch (PDOException $e) {
@@ -80,15 +80,18 @@ class OrigemDAO
 
     public function listarId_Nome()
     {
-        $origens = array();
-        $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT id_origem,nome_origem FROM origem");
-        $x = 0;
-        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-            $origens[$x] = array('id_origem' => $linha['id_origem'], 'nome_origem' => $linha['nome_origem']);
-            $x++;
+        try {
+            $origens = array();
+            $pdo = Conexao::connect();
+            $consulta = $pdo->query("SELECT id_origem,nome_origem FROM origem ORDER BY nome_origem");
+            $x = 0;
+            while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+                $origens[$x] = array('id_origem' => $linha['id_origem'], 'nome_origem' => $linha['nome_origem']);
+                $x++;
+            }
+        } catch (PDOException $e) {
+            echo 'Error:' . $e->getMessage();
         }
-
         return json_encode($origens);
     }
 }
