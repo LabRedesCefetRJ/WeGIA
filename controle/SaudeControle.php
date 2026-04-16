@@ -299,4 +299,26 @@ class SaudeControle
             Util::tratarException($e);
         }
     }
+
+    public function listarDocumentosDownloadPorFichaMedica(): void
+    {
+        header('Content-Type: application/json');
+        $idFichamedica = filter_input(INPUT_GET, 'id_fichamedica', FILTER_VALIDATE_INT);
+
+        try {
+            if (!$idFichamedica || $idFichamedica < 1) {
+                throw new InvalidArgumentException('O id da ficha médica informado é inválido.', 422);
+            }
+
+            $saudeDao = new SaudeDAO();
+            $documentosDownload = $saudeDao->listarDocumentosDownloadPorFichaMedica($idFichamedica);
+
+            echo json_encode([
+                'status' => 'sucesso',
+                'documentos' => $documentosDownload
+            ]);
+        } catch (Throwable $e) {
+            Util::tratarException($e);
+        }
+    }
 }

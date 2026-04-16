@@ -209,4 +209,90 @@ class SaudeDAO
         $descricoes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $descricoes;
     }
+
+    public function listarDocumentosDownloadPorFichaMedica(int $idFichaMedica): array
+    {
+        $pdo = Conexao::connect();
+
+        $stmtIdPessoa = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica = :idFichaMedica");
+        $stmtIdPessoa->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmtIdPessoa->execute();
+        $pessoaData = $stmtIdPessoa->fetch(PDO::FETCH_ASSOC);
+
+        if (!$pessoaData || empty($pessoaData['id_pessoa'])) {
+            throw new RuntimeException('Ficha médica não encontrada', 404);
+        }
+
+        $idPessoa = (int)$pessoaData['id_pessoa'];
+
+        $stmtCheckFuncionario = $pdo->prepare("SELECT id_funcionario FROM funcionario WHERE id_pessoa = :idPessoa LIMIT 1");
+        $stmtCheckFuncionario->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+        $stmtCheckFuncionario->execute();
+        $funcionarioData = $stmtCheckFuncionario->fetch(PDO::FETCH_ASSOC);
+
+        if ($funcionarioData && !empty($funcionarioData['id_funcionario'])) {
+            return $this->buscarDocumentosFuncionario($pdo, (int)$funcionarioData['id_funcionario']);
+        }
+
+        return $this->buscarDocumentosAtendido($pdo, $idPessoa);
+    }
+
+    private function buscarDocumentosFuncionario(PDO $pdo, int $idFuncionario): array
+    {
+        $sqlFuncionarioDocs = "SELECT fd.id_fundocs AS id, fd.id_docfuncional AS tipo_doc
+                               FROM funcionario_docs fd
+                               WHERE fd.id_funcionario = :idFuncionario
+                               AND fd.id_docfuncional IN (1, 2, 9)
+                               ORDER BY fd.id_docfuncional ASC";
+        $stmtFuncionarioDocs = $pdo->prepare($sqlFuncionarioDocs);
+        $stmtFuncionarioDocs->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+        $stmtFuncionarioDocs->execute();
+        $funcionarioDocResultados = $stmtFuncionarioDocs->fetchAll(PDO::FETCH_ASSOC);
+
+        $mapeamento = [1 => 1, 2 => 2, 9 => 3];
+        $documentosDownload = [];
+
+        foreach ($funcionarioDocResultados as $documento) {
+            $tipoDoc = (int)$documento['tipo_doc'];
+            $tipoMapeado = $mapeamento[$tipoDoc] ?? $tipoDoc;
+
+            $documentosDownload[$tipoMapeado] = [
+                'id' => (int)$documento['id'],
+                'endpoint' => '../funcionario/documento_download.php',
+                'tipo' => 'funcionario'
+            ];
+        }
+
+        return $documentosDownload;
+    }
+
+    private function buscarDocumentosAtendido(PDO $pdo, int $idPessoa): array
+    {
+        $sqlAtendidoDocs = "SELECT ad.id_pessoa_arquivo AS id,
+                                   ada.idatendido_docs_atendidos AS tipo_doc
+                            FROM atendido_documentacao ad
+                            JOIN atendido_docs_atendidos ada
+                              ON ad.atendido_docs_atendidos_idatendido_docs_atendidos = ada.idatendido_docs_atendidos
+                            JOIN atendido a ON ad.atendido_idatendido = a.idatendido
+                            JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa
+                            WHERE p.id_pessoa = :idPessoa
+                              AND ada.idatendido_docs_atendidos IN (1, 2, 3, 5)
+                            ORDER BY ada.idatendido_docs_atendidos ASC";
+        $stmtAtendidoDocs = $pdo->prepare($sqlAtendidoDocs);
+        $stmtAtendidoDocs->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+        $stmtAtendidoDocs->execute();
+        $atendidoDocResultados = $stmtAtendidoDocs->fetchAll(PDO::FETCH_ASSOC);
+
+        $documentosDownload = [];
+        foreach ($atendidoDocResultados as $documento) {
+            $tipoDoc = (int)$documento['tipo_doc'];
+            $documentosDownload[$tipoDoc] = [
+                'id' => (int)$documento['id'],
+                'endpoint' => '../atendido/documento_download.php',
+                'tipo' => 'atendido'
+            ];
+        }
+
+        return $documentosDownload;
+    }
 }
