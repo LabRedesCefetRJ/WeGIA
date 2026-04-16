@@ -327,7 +327,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group" id="almoxarifado2">
 								<label class="col-md-3 control-label">Almoxarifado</label>
 								<div class="col-md-8">
-									<select name="almoxarifado" id="almoxarifadoSelect">
+									<select name="almoxarifado" id="almoxarifadoSelect" required>
 										<option value="">Selecionar almoxarifado</option>
 										<?php
 										$pdo = Conexao::connect();
@@ -348,7 +348,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group" id="produto">
 								<label class="col-md-3 control-label">Produtos</label>
 								<div class="col-md-8">
-									<select name="produto" id="produtoSelect">
+									<select name="produto" id="produtoSelect" required>
 										<option value="">Selecione um Produto</option>
 									</select>
 								</div>
