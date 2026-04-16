@@ -129,15 +129,21 @@ $dadosForm = $_SESSION['form_produto'];
 	</script>
 	<script type="text/javascript">
 		function validar() {
-			const id_categoria = document.getElementyById("id_categoria").value;
-			const id_unidade = document.getElementyById("id_unidade").value;
+			const id_categoria = document.getElementById("id_categoria").value;
+			const id_unidade = document.getElementById("id_unidade").value;
+			const valor = document.getElementById("valor-form").value;
+
 			if (id_categoria == "blank") {
 				alert("Selecione uma categoria");
-				document.getElementyById("id_categoria").focus();
+				document.getElementById("id_categoria").focus();
 				return false;
 			} else if (id_unidade == "blank") {
 				alert("Selecione uma unidade");
-				document.getElementyById("id_unidade").focus();
+				document.getElementById("id_unidade").focus();
+				return false;
+			} else if (valor <= 0) {
+				alert("O valor deve ser maior que zero");
+				document.getElementById("valor-form").focus();
 				return false;
 			}
 		}
