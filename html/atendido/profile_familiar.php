@@ -326,7 +326,7 @@ if ($id_dependente) {
                     url = "./pessoa/editar_info_pessoal.php";
                     break;
                 case "formEndereco":
-                    url = "./pessoa/editar_endereco.php";
+                    url = "./pessoa/editar_endereco.php"; 
                     break;
                 case "formDocumentacao":
                     url = "./pessoa/editar_documentacao.php";
@@ -340,8 +340,10 @@ if ($id_dependente) {
                 window.alert("Preencha todos os campos obrigatórios antes de prosseguir!");
                 return false;
             }
-            post(url, "id_pessoa=" + dependente.id_pessoa + "&" + data);
-            getInfoDependente(idForm);
+            post(url, "id_pessoa=<?php echo $id_pessoa; ?>&" + data, function(response) {
+                getInfoDependente(idForm);
+                alert("Endereço alterado com sucesso!");
+            });
         }
 
         var id_dependente = <?= $id_dependente ?? null; ?>;
