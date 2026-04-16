@@ -17,6 +17,7 @@
     }
 
     require_once ROOT . '/dao/MedicoDAO.php';
+    require_once ROOT . '/classes/Util.php';
 
     class MedicoControle
     {
@@ -26,6 +27,7 @@
             $dados = json_decode(file_get_contents('php://input'), true);
 
             if (!$dados) {
+                http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Dados inválidos"]);
                 exit;
             }
@@ -34,48 +36,37 @@
             $nome = $dados['nome'] ?? null;
 
             if (!$crm || !$nome) {
+                http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Campos obrigatórios ausentes"]);
                 exit;
             }
 
-            try{
-                $MedicoDAO = new MedicoDAO;
+            try {
+                $MedicoDAO = new MedicoDAO();
                 $resposta = $MedicoDAO->inserirMedico($crm, $nome);
-                if(is_array($resposta)){
-                    die(json_encode([
-                        "status" => "sucesso",
-                        "mensagem" => "Médico registrado com sucesso",
-                        "medico" => $resposta
-                    ]));
-                } else{
-                    die(json_encode([
-                        "status" => "erro",
-                        "mensagem" => "Erro ao registrar Médico: " . $resposta
-                    ]));
-                }
-            } catch (Exception $e){
-                http_response_code($e->getCode());
-                echo json_encode(['erro' => $e->getMessage()]);
+
+                http_response_code(201);
+                echo json_encode([
+                    "status" => "sucesso",
+                    "mensagem" => "Médico registrado com sucesso",
+                    "medico" => $resposta
+                ]);
+                exit;
+            } catch (Throwable $e) {
+                Util::tratarException($e);
             }
         }
 
         public function listarTodosOsMedicos(){
             header('Content-Type: application/json');
-            try{
+            try {
                 $MedicoDAO = new MedicoDAO();
                 $medicos = $MedicoDAO->listarTodosOsMedicos();
-                
+
                 echo json_encode($medicos);
                 exit;
-            } catch(PDOException $e){
-                http_response_code(500);
-                echo json_encode(['erro' => "Erro ao Buscar Médicos no Banco de Dados"]);
-                exit;
-
-            } catch(Exception $e) {
-                http_response_code(500);
-                echo json_encode(['erro' => "Erro interno do Servidor"]);
-                exit;
+            } catch (Throwable $e) {
+                Util::tratarException($e);
             }
         }
     }
