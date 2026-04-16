@@ -101,13 +101,17 @@ require_once ROOT . "/html/personalizacao_display.php";
         	const tipo = '<?= $tipo ?>';
         	const url = tipo === 'arquivado'
             	? '<?= WWW ?>controle/control.php?metodo=listarArquivados&nomeClasse=EntradaControle'
-            	: '<?= WWW ?>controle/control.php?metodo=listarTodosComProdutos&nomeClasse=EntradaControle';
+            	: '<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=EntradaControle';
 
         	$.ajax({
             	url: url,
             	method: 'GET',
             	dataType: 'json',
             	success: function(resposta) {
+					if ($.fn.DataTable.isDataTable('#datatable-default')) {
+						$('#datatable-default').DataTable().destroy();
+					}
+
                 	$('#tabela').empty();
 
                 	if (!resposta.sucesso) {
@@ -128,6 +132,13 @@ require_once ROOT . "/html/personalizacao_display.php";
                             	.append($('<td />').text(item.hora ?? ''))
                     	);
                 	});
+
+					$('#datatable-default').DataTable({
+						pageLength: 10,
+						lengthChange: false,
+						searching: true,
+						ordering: true
+					});
             	},
             	error: function(xhr) {
                 	let mensagem = 'Erro ao carregar entradas.';
@@ -236,7 +247,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 				<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 
-				<!-- Examples
+				<!-- Examples 
 				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
 				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script> -->
