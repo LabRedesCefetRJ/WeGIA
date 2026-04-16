@@ -1,13 +1,17 @@
 <?php
-
+error_log("Entrou no editar_endereco.php com id_pessoa: " . $_POST['id_pessoa']);
 session_start();
 if (!isset($_SESSION["usuario"])){
     header("Location: ../../index.php");
+
+    exit();
 }
 
 // Verifica Permissão do Usuário
 require_once '../permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 1, 3);
+permissao($_SESSION['id_pessoa'], 12, 3);
+
+
 
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();

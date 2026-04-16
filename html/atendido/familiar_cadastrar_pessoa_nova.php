@@ -31,7 +31,7 @@ $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 $util = new Util();
 
-if(!$util->validarCPF($cpf)){
+if($cpf && !$util->validarCPF($cpf)){
     http_response_code(400);
     echo json_encode(['erro' => 'O CPF informado não é válido.']);
     exit();
@@ -54,6 +54,10 @@ $registro_geral = filter_input(INPUT_POST, 'rg', FILTER_SANITIZE_SPECIAL_CHARS);
 $orgao_emissor = filter_input(INPUT_POST, 'orgao_emissor', FILTER_SANITIZE_SPECIAL_CHARS);
 $data_expedicao = filter_input(INPUT_POST, 'data_expedicao', FILTER_SANITIZE_SPECIAL_CHARS);
 
+if ($cpf === '') {
+    $cpf = null;
+}
+
 define("NOVA_PESSOA", "INSERT IGNORE INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento, registro_geral, orgao_emissor, data_expedicao) VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :data_nascimento, :registro_geral, :orgao_emissor, :data_expedicao)");
 
 try {
@@ -68,6 +72,7 @@ try {
     $pessoa->bindValue(":orgao_emissor", $orgao_emissor);
     $pessoa->bindValue(":data_expedicao", $data_expedicao);
     $pessoa->execute();
+    $id_pessoa = $pdo->lastInsertId();
 } catch (PDOException $th) {
     echo "Houve um erro ao inserir a pessoa no banco de dados";
     die();
@@ -83,18 +88,6 @@ if(!$id_parentesco || $id_parentesco < 1){
     http_response_code(400);
     echo json_encode(['erro' => 'O id do parentesco não é válido.']);
     exit();
-}
-
-try {
-    $sql = "SELECT id_pessoa FROM pessoa WHERE cpf =:cpf";
-    $stmt = $pdo->prepare($sql);
-    $stmt->bindParam(":cpf", $cpf);
-    $stmt->execute();
-
-    $id_pessoa = $stmt->fetch(PDO::FETCH_ASSOC)["id_pessoa"];
-} catch (PDOException $th) {
-    echo "Houve um erro ao obter o id da pessoa do banco de dados";
-    die();
 }
 
 define("NOVO_FAMILIAR", "INSERT IGNORE INTO atendido_familiares (atendido_idatendido, pessoa_id_pessoa, atendido_parentesco_idatendido_parentesco ) VALUES (:idatendido, :id_pessoa, :id_parentesco);");

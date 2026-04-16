@@ -21,6 +21,7 @@ include_once '../../classes/Cache.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
+require_once "../geral/msg.php";
 
 $id = filter_input(INPUT_GET, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
 
@@ -643,6 +644,7 @@ $dependente = json_encode($dependente);
           </div>
         </header>
         <!-- start: page -->
+        <?php sessionMsg(); ?>
         <div class="row">
           <div class="col-md-4 col-lg-3">
             <section class="panel">
@@ -851,7 +853,7 @@ $dependente = json_encode($dependente);
                       <div class="panel-body">
                         <!--Endereço-->
                         <hr class="dotted short">
-                        <form id="endereco" class="form-horizontal" method="post" action="../../controle/control.php">
+                        <form id="formAlterarEnderecoAtendido" class="form-horizontal" method="post" action="../../controle/control.php">
                           <input type="hidden" name="nomeClasse" value="AtendidoControle">
                           <input type="hidden" name="metodo" value="alterarEndereco">
                           <div class="form-group">
@@ -959,9 +961,9 @@ $dependente = json_encode($dependente);
                               <div class="modal-body" style="padding: 15px 40px">
                                 <div class="form-group" style="display: grid;">
                                   <div class="form-group">
-                                    <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="cpf">CPF</label>
                                     <div class="col-md-6">
-                                      <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                      <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
                                     </div>
                                   </div>
                                   <div class="form-group">
@@ -1433,7 +1435,7 @@ $dependente = json_encode($dependente);
 
       function validarCPF(strCPF) {
 
-        if (!testaCPF(strCPF)) {
+        if (strCPF && !testaCPF(strCPF)) {
           $('#cpfFamiliarInvalido').show();
           document.getElementById("cadastrarFamiliar").disabled = true;
 
@@ -1460,6 +1462,7 @@ $dependente = json_encode($dependente);
     </script>
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
+    <script src="../../Functions/cep_form_validation.js"></script>
     <script src="../../Functions/atendido_parentesco.js"></script>
     <script>
       $(document).ready(function() {
@@ -1504,6 +1507,11 @@ $dependente = json_encode($dependente);
 
           $('body').append(form);
           form.submit();
+        });
+
+        inicializarValidacaoCepFormulario({
+          formId: 'formAlterarEnderecoAtendido',
+          estadoIds: ['estado']
         });
       });
     </script>

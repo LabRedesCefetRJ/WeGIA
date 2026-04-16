@@ -125,6 +125,20 @@ try {
   $stmt->execute();
   $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 
+  // lógica de permissao para cargos
+  $stmtAlvo = $pdo->prepare('SELECT p.id_pessoa, p.adm_configurado FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario = :idFuncionario');
+  $stmtAlvo->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+  $stmtAlvo->execute();
+  $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+
+  $pode_editar_cargo = true;
+  if ($alvo['id_pessoa'] == $id_pessoa) {
+      $pode_editar_cargo = false;
+  }
+  if ($alvo['adm_configurado'] == 1 && $adm_configurado != 1) {
+      $pode_editar_cargo = false;
+  }
+
   $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
 } catch (Exception $e) {
   Util::tratarException($e);
@@ -296,7 +310,6 @@ try {
       $("#data_expedicao").prop('disabled', false);
       $("#cpf").prop('disabled', true);
       alert("O cpf não pode ser editado!");
-      $("#data_admissao").prop('disabled', false);
       $("#botaoEditarDocumentacao").html('Cancelar');
       $("#botaoSalvarDocumentacao").prop('disabled', false);
       $("#botaoEditarDocumentacao").removeAttr('onclick');
@@ -308,7 +321,6 @@ try {
       $("#orgao_emissor").prop('disabled', true);
       $("#data_expedicao").prop('disabled', true);
       $("#cpf").prop('disabled', true);
-      $("#data_admissao").prop('disabled', true);
       $("#botaoEditarDocumentacao").html('Editar');
       $("#botaoSalvarDocumentacao").prop('disabled', true);
       $("#botaoEditarDocumentacao").removeAttr('onclick');
@@ -316,7 +328,7 @@ try {
     }
 
     function editar_outros() {
-      let adm_configurado = <?php echo $adm_configurado; ?>;
+      let pode_editar_cargo = <?php echo $pode_editar_cargo ? 'true' : 'false'; ?>;
 
       $("#pis").prop('disabled', false);
       $("#ctps").prop('disabled', false);
@@ -327,9 +339,12 @@ try {
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      if (adm_configurado) {
+      $("#data_admissao").prop('disabled', false);
+
+      if (pode_editar_cargo) {
         $("#cargo").prop('disabled', false);
       }
+
       $("#botaoEditarOutros").html('Cancelar');
       $("#botaoSalvarOutros").prop('disabled', false);
       $("#botaoEditarOutros").removeAttr('onclick');
@@ -347,6 +362,7 @@ try {
       $("#certificado_reservista_serie").prop('disabled', true);
       $("#situacao").prop('disabled', true);
       $("#cargo").prop('disabled', true);
+      $("#data_admissao").prop('disabled', true);
       $("#botaoEditarOutros").html('Editar');
       $("#botaoSalvarOutros").prop('disabled', true);
       $("#botaoEditarOutros").removeAttr('onclick');
@@ -991,13 +1007,14 @@ try {
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="inicio_remuneracao">Data Inicio</label>
                                 <div class="col-md-8">
-                                  <input type="date" name="inicio" id="inicio_remuneracao" class="form-control">
+                                  <input type="date" name="inicio" id="inicio_remuneracao" class="form-control" required>
                                 </div>
                               </div>
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="fim_remuneracao">Data Fim</label>
                                 <div class="col-md-8">
-                                  <input type="date" name="fim" id="fim_remuneracao" class="form-control">
+                                  <input type="date" name="fim" id="fim_remuneracao" class="form-control" required>
+                                  <p id="erro_periodo_remuneracao" style="display: none; color: #b30000; margin-top: 5px;">A data fim deve ser posterior ou igual à data início.</p>
                                 </div>
                               </div>
                               <!-- Pegar id funcionário de variável sanitizada -->
@@ -1151,6 +1168,10 @@ try {
                               <option selected disabled>Selecionar</option>
                               <?php
                               foreach ($cargo as $row) {
+                                // esconde a opção "Administrador" se o usuário logado não for adm
+                                if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
+                                    continue;
+                                }
                                 echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
@@ -1878,9 +1899,66 @@ try {
       return true;
     }
 
+    function exibirErroRemuneracao(mensagem) {
+      window.alert(mensagem);
+      return false;
+    }
+
+    function limparErroPeriodoRemuneracao() {
+      $('#erro_periodo_remuneracao').hide().text('A data fim deve ser posterior ou igual à data início.');
+    }
+
+    function exibirErroPeriodoRemuneracao(mensagem) {
+      $('#erro_periodo_remuneracao').text(mensagem).show();
+      return false;
+    }
+
+    function validarPeriodoRemuneracao() {
+      var dataInicio = $('#inicio_remuneracao').val();
+      var dataFim = $('#fim_remuneracao').val();
+
+      if (!dataInicio || !dataFim) {
+        limparErroPeriodoRemuneracao();
+        return true;
+      }
+
+      if (dataFim < dataInicio) {
+        return exibirErroPeriodoRemuneracao('A data fim deve ser posterior ou igual à data início.');
+      }
+
+      limparErroPeriodoRemuneracao();
+      return true;
+    }
+
+    function destruirTabelaRemuneracao() {
+      if ($.fn.DataTable.isDataTable('#datatable-default')) {
+        $('#datatable-default').DataTable().destroy();
+      }
+    }
+
+    function inicializarTabelaRemuneracao() {
+      $('#datatable-default').DataTable({
+        "order": [
+          [1, "desc"]
+        ]
+      });
+    }
+
     function listar_remuneracao(lista) {
+      if (lista.erro) {
+        exibirErroRemuneracao(lista.erro);
+        return;
+      }
+
+      destruirTabelaRemuneracao();
+
       $("#tabela_remuneracao").empty();
+
+      var total = 0;
+
       $.each(lista, function(i, item) {
+        total += parseFloat(item.valor) || 0;
+
         $("#tabela_remuneracao")
           .append($("<tr>")
             .append($("<td>").text(item.descricao))
@@ -1890,21 +1968,30 @@ try {
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
               .append($("<button onclick='removerRemuneracao(" + item.id_remuneracao + ")' title='Excluir' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>"))
             )
-          )
-        $(function() {
-          var total = 0;
-          $('.tabela').each(function() {
-            total += parseInt(jQuery(this).text());
-          });
-          $('.total').html(total);
-        });
+          );
       });
+
+      $('.total').html(total);
+      inicializarTabelaRemuneracao();
     }
 
     function adicionarRemuneracao() {
-      if (submitForm('formRemuneracao', listar_remuneracao)) {
-        document.getElementById("closeRemuneracaoModal").click();
+      if (!validarPeriodoRemuneracao()) {
+        return false;
       }
+
+      return submitForm('formRemuneracao', function(response) {
+        if (response.erro) {
+          exibirErroRemuneracao(response.erro);
+          return;
+        }
+
+        listar_remuneracao(response);
+        $('#closeRemuneracaoModal').click();
+        $('#formRemuneracao').find('input[type="date"], input[type="number"]').val('');
+        $('#tipo_remuneracao').prop('selectedIndex', 0);
+        limparErroPeriodoRemuneracao();
+      });
     }
 
     function adicionarTipoRemuneracao() {
@@ -1940,6 +2027,8 @@ try {
       });
     }
     $(function() {
+      $('#inicio_remuneracao, #fim_remuneracao').on('change', validarPeriodoRemuneracao);
+      destruirTabelaRemuneracao();
       post("remuneracao.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_remuneracao);
     })
 
@@ -2096,6 +2185,7 @@ try {
   <!-- JavaScript Custom -->
   <script src="../geral/post.js"></script>
   <script src="../geral/formulario.js"></script>
+  <script src="../../Functions/cep_form_validation.js"></script>
   <script>
     var formState = [];
 
@@ -2120,7 +2210,11 @@ try {
       }
       switchButton(idForm);
     }
-    switchForm("editar_cargaHoraria", false)
+
+    switchForm("editar_cargaHoraria", false);
+    inicializarValidacaoCepFormulario({
+      formId: "formAlterarEndereco"
+    });
   </script>
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>

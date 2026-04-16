@@ -326,7 +326,7 @@ if ($id_dependente) {
                     url = "./pessoa/editar_info_pessoal.php";
                     break;
                 case "formEndereco":
-                    url = "./pessoa/editar_endereco.php";
+                    url = "./pessoa/editar_endereco.php"; 
                     break;
                 case "formDocumentacao":
                     url = "./pessoa/editar_documentacao.php";
@@ -340,8 +340,10 @@ if ($id_dependente) {
                 window.alert("Preencha todos os campos obrigatórios antes de prosseguir!");
                 return false;
             }
-            post(url, "id_pessoa=" + dependente.id_pessoa + "&" + data);
-            getInfoDependente(idForm);
+            post(url, "id_pessoa=<?php echo $id_pessoa; ?>&" + data, function(response) {
+                getInfoDependente(idForm);
+                alert("Endereço alterado com sucesso!");
+            });
         }
 
         var id_dependente = <?= $id_dependente ?? null; ?>;
@@ -596,7 +598,7 @@ if ($id_dependente) {
                 <!-- start: page -->
 
                 <!-- Mensagem -->
-                <?php getMsgSession("msg", "tipo"); ?>
+                <?php sessionMsg(); ?>
 
 
                 <div class="panel">
@@ -780,7 +782,7 @@ if ($id_dependente) {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeydown="mascara('###.###.###-##',this,event)" required>
+                                                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeydown="mascara('###.###.###-##',this,event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -802,7 +804,7 @@ if ($id_dependente) {
 
                                 <div id="endereco" class="tab-pane" role="tabpanel">
                                     <h4>Endereço</h4>
-                                    <form action="familiar_editarEndereco.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $idatendido_familiares ?>" method='POST'>
+                                    <form id="formAlterarEnderecoFamiliar" action="familiar_editarEndereco.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $idatendido_familiares ?>" method='POST'>
                                         <fieldset id="formEndereco">
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="cep">CEP</label>
@@ -939,6 +941,12 @@ if ($id_dependente) {
 
     <!-- Theme Initialization Files -->
     <script src="../../assets/javascripts/theme.init.js"></script>
+    <script src="../../Functions/cep_form_validation.js"></script>
+    <script>
+        inicializarValidacaoCepFormulario({
+            formId: "formAlterarEnderecoFamiliar"
+        });
+    </script>
 
 
     <!-- Examples -->

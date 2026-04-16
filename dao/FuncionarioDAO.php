@@ -155,6 +155,12 @@ class FuncionarioDAO
         $rg = $funcionario->getRegistroGeral();
         $orgaoEmissor = $funcionario->getOrgaoEmissor();
         $dataExpedicao = $funcionario->getDataExpedicao();
+
+        // Converte vazio para NULL
+        $rg = empty($rg) ? null : $rg;
+        $orgaoEmissor = empty($orgaoEmissor) ? null : $orgaoEmissor;
+        $dataExpedicao = empty($dataExpedicao) ? null : $dataExpedicao;
+
         $nomePai = $funcionario->getNomePai();
         $nomeMae = $funcionario->getNomeMae();
         $sangue = $funcionario->getTipoSanguineo();
@@ -237,9 +243,15 @@ class FuncionarioDAO
         $telefone = $funcionario->getTelefone();
         $nascimento = $funcionario->getDataNascimento();
         $imagem = $funcionario->getImagem();
+
         $rg = $funcionario->getRegistroGeral();
-        $orgao_emissor = $funcionario->getOrgaoEmissor();
-        $data_expedicao = $funcionario->getDataExpedicao();
+        $orgaoEmissor = $funcionario->getOrgaoEmissor();
+        $dataExpedicao = $funcionario->getDataExpedicao();
+        // Converte vazio para NULL
+        $rg = empty($rg) ? null : $rg;
+        $orgaoEmissor = empty($orgaoEmissor) ? null : $orgaoEmissor;
+        $dataExpedicao = empty($dataExpedicao) ? null : $dataExpedicao;
+
         $dataAdmissao = $funcionario->getData_admissao();
         $certificadoReservistaNumero = $funcionario->getCertificado_reservista_numero();
         $certificadoReservistaSerie = $funcionario->getCertificado_reservista_serie();
@@ -395,6 +407,11 @@ class FuncionarioDAO
         $orgao_emissor = $funcionario->getOrgaoEmissor();
         $data_expedicao = $funcionario->getDataExpedicao();
         $data_admissao = $funcionario->getData_admissao();
+
+        // Converte vazio para NULL
+        $registro_geral = empty($registro_geral) ? null : $registro_geral;
+        $orgao_emissor = empty($orgao_emissor) ? null : $orgao_emissor;
+        $data_expedicao = empty($data_expedicao) ? null : $data_expedicao;
 
         //$stmt->bindParam(':cpf',$cpf);
         $stmt->bindParam(':id_funcionario', $id_funcionario);
