@@ -74,13 +74,13 @@
         status = "vazio";
         cepValidado = "";
         msg("");
-        return;
+        return false;
       }
 
       if (cepLimpo.length !== 8) {
         limpar();
         invalido("CEP inválido.");
-        return;
+        return false;
       }
 
       carregando();
@@ -112,41 +112,13 @@
         status = "valido";
         cepValidado = cepLimpo;
         msg("");
+        return true;
 
       } catch (error) {
         limpar();
         invalido("Não foi possível validar o CEP.");
-      }
-    };
-
-    const podeSalvar = () => {
-      const atualCep = digitos(cep.value);
-
-      if (!atualCep) {
-        status = "vazio";
-        msg("");
-        return true;
-      }
-      if (atualCep.length !== 8) {
-        limpar();
-        invalido("CEP inválido.");
         return false;
       }
-      if (cepValidado !== atualCep && status !== "carregando") {
-        buscar(cep.value);
-        msg("Aguarde a validação do CEP.");
-        return false;
-      }
-      if (status === "carregando") {
-        msg("Aguarde a validação do CEP.");
-        return false;
-      }
-      if (status !== "valido" || !enderecoOk()) {
-        invalido("CEP inválido.");
-        return false;
-      }
-      msg("");
-      return true;
     };
 
     cep.addEventListener("input", () => {
@@ -169,9 +141,23 @@
       }
     });
 
-    form.addEventListener("submit", (evento) => {
-      if (!podeSalvar()) {
-        evento.preventDefault();
+form.addEventListener("submit", async (evento) => {
+      const atualCep = digitos(cep.value);
+
+      if (!atualCep) return; 
+
+      if (status === "valido" && atualCep === cepValidado) return;
+
+      evento.preventDefault();
+
+      if (status === "carregando") return; 
+
+      const sucesso = await buscar(atualCep);
+
+      if (sucesso) {
+
+        form.submit();
+      } else {
         cep.reportValidity();
         cep.focus();
       }
