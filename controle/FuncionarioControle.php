@@ -1028,40 +1028,44 @@ class FuncionarioControle
         }
     }
 
-    public function alterarOutros()
+public function alterarOutros()
     {
         try {
             extract($_REQUEST);
 
             $idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
             $idFuncionario = filter_var($id_funcionario, FILTER_SANITIZE_NUMBER_INT);
+            $novoCargo = filter_var($cargo, FILTER_SANITIZE_NUMBER_INT);
 
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
-
             if (!$idPessoa || $idPessoa < 1)
                 throw new InvalidArgumentException('O id do usuário fornecido não é válido.', 412);
-
             if (!$idFuncionario || $idFuncionario < 1)
                 throw new InvalidArgumentException('O id do funcionário fornecido é inválido.', 412);
 
-            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
             $pdo = Conexao::connect();
             $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
             $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
             $stmt->execute();
-
             $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 
-            $stmt = $pdo->prepare('SELECT id_cargo FROM funcionario WHERE id_funcionario=:idFuncionario');
-            $stmt->bindValue(':idFuncionario', $idFuncionario);
-            $stmt->execute();
+            $stmtAlvo = $pdo->prepare('SELECT p.id_pessoa, p.adm_configurado, f.id_cargo FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario=:idFuncionario');
+            $stmtAlvo->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+            $stmtAlvo->execute();
+            $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+            
+            if ($alvo['id_pessoa'] == $idPessoa && $alvo['id_cargo'] != $novoCargo) {
+                throw new InvalidArgumentException("Acesso negado: Você não pode alterar o seu próprio cargo.", 403);
+            }
+            if ($alvo['adm_configurado'] == 1 && $adm_configurado != 1) {
+                throw new InvalidArgumentException("Acesso negado: Apenas administradores podem alterar os dados de outro administrador.", 403);
+            }
+            if ($novoCargo == 1 && $adm_configurado != 1) {
+                throw new InvalidArgumentException("Acesso negado: Apenas administradores podem conceder o cargo de Administrador.", 403);
+            }
 
-            $cargo_anterior_funcionario = $stmt->fetch(PDO::FETCH_ASSOC)['id_cargo'];
-
-            if (!$adm_configurado && $cargo_anterior_funcionario == 1)
-                throw new InvalidArgumentException("O usuário, mesmo como administrador, não pode alterar esse funcionário", 403);
-
+            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
             $funcionario->setId_funcionario($id_funcionario);
             $funcionario->setId_cargo($cargo);
             $funcionario->setPis($pis);
@@ -1073,9 +1077,10 @@ class FuncionarioControle
             $funcionario->setCertificado_reservista_numero($certificado_reservista_numero);
             $funcionario->setCertificado_reservista_serie($certificado_reservista_serie);
             $funcionario->setId_situacao($situacao);
+            $funcionario->setData_admissao($data_admissao);
             $funcionarioDAO = new FuncionarioDAO();
-
             $funcionarioDAO->alterarOutros($funcionario);
+            
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
         } catch (Exception $e) {
             Util::tratarException($e);

@@ -125,6 +125,20 @@ try {
   $stmt->execute();
   $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 
+  // lógica de permissao para cargos
+  $stmtAlvo = $pdo->prepare('SELECT p.id_pessoa, p.adm_configurado FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario = :idFuncionario');
+  $stmtAlvo->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+  $stmtAlvo->execute();
+  $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+
+  $pode_editar_cargo = true;
+  if ($alvo['id_pessoa'] == $id_pessoa) {
+      $pode_editar_cargo = false;
+  }
+  if ($alvo['adm_configurado'] == 1 && $adm_configurado != 1) {
+      $pode_editar_cargo = false;
+  }
+
   $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
 } catch (Exception $e) {
   Util::tratarException($e);
@@ -296,7 +310,6 @@ try {
       $("#data_expedicao").prop('disabled', false);
       $("#cpf").prop('disabled', true);
       alert("O cpf não pode ser editado!");
-      $("#data_admissao").prop('disabled', false);
       $("#botaoEditarDocumentacao").html('Cancelar');
       $("#botaoSalvarDocumentacao").prop('disabled', false);
       $("#botaoEditarDocumentacao").removeAttr('onclick');
@@ -308,7 +321,6 @@ try {
       $("#orgao_emissor").prop('disabled', true);
       $("#data_expedicao").prop('disabled', true);
       $("#cpf").prop('disabled', true);
-      $("#data_admissao").prop('disabled', true);
       $("#botaoEditarDocumentacao").html('Editar');
       $("#botaoSalvarDocumentacao").prop('disabled', true);
       $("#botaoEditarDocumentacao").removeAttr('onclick');
@@ -316,7 +328,7 @@ try {
     }
 
     function editar_outros() {
-      let adm_configurado = <?php echo $adm_configurado; ?>;
+      let pode_editar_cargo = <?php echo $pode_editar_cargo ? 'true' : 'false'; ?>;
 
       $("#pis").prop('disabled', false);
       $("#ctps").prop('disabled', false);
@@ -327,9 +339,12 @@ try {
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      if (adm_configurado) {
+      $("#data_admissao").prop('disabled', false);
+
+      if (pode_editar_cargo) {
         $("#cargo").prop('disabled', false);
       }
+
       $("#botaoEditarOutros").html('Cancelar');
       $("#botaoSalvarOutros").prop('disabled', false);
       $("#botaoEditarOutros").removeAttr('onclick');
@@ -347,6 +362,7 @@ try {
       $("#certificado_reservista_serie").prop('disabled', true);
       $("#situacao").prop('disabled', true);
       $("#cargo").prop('disabled', true);
+      $("#data_admissao").prop('disabled', true);
       $("#botaoEditarOutros").html('Editar');
       $("#botaoSalvarOutros").prop('disabled', true);
       $("#botaoEditarOutros").removeAttr('onclick');
@@ -1152,6 +1168,10 @@ try {
                               <option selected disabled>Selecionar</option>
                               <?php
                               foreach ($cargo as $row) {
+                                // esconde a opção "Administrador" se o usuário logado não for adm
+                                if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
+                                    continue;
+                                }
                                 echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
