@@ -102,8 +102,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		async function getSaida() {
-			let saida = await <?php echo json_encode($saida); ?>;
-			return await JSON.parse(saida);
+			return  await <?php echo json_encode($saida); ?>;
 		}
 
 

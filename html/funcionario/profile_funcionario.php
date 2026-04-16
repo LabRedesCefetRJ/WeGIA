@@ -125,6 +125,20 @@ try {
   $stmt->execute();
   $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
 
+  // lógica de permissao para cargos
+  $stmtAlvo = $pdo->prepare('SELECT p.id_pessoa, p.adm_configurado FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario = :idFuncionario');
+  $stmtAlvo->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+  $stmtAlvo->execute();
+  $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+
+  $pode_editar_cargo = true;
+  if ($alvo['id_pessoa'] == $id_pessoa) {
+      $pode_editar_cargo = false;
+  }
+  if ($alvo['adm_configurado'] == 1 && $adm_configurado != 1) {
+      $pode_editar_cargo = false;
+  }
+
   $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
 } catch (Exception $e) {
   Util::tratarException($e);
@@ -161,6 +175,7 @@ try {
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
   <link rel="stylesheet" href="../../css/profile-theme.css" />
   <link rel="stylesheet" href="../../css/modalInfoFuncionario.css" />
+  <link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
   <script src="../../Functions/onlyNumbers.js"></script>
@@ -218,6 +233,29 @@ try {
 
     .btn i {
       color: white;
+    }
+
+    #atendidoDocFormError {
+      display: block !important;
+      max-height: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.25s ease, margin-bottom 0.25s ease, padding 0.25s ease, border-width 0.25s ease, visibility 0.25s ease;
+    }
+
+    #atendidoDocFormError.in {
+      max-height: 120px;
+      margin-bottom: 20px;
+      padding-top: 15px;
+      padding-bottom: 15px;
+      border-width: 1px;
+      opacity: 1;
+      visibility: visible;
     }
   </style>
   <!-- jquery functions -->
@@ -296,7 +334,6 @@ try {
       $("#data_expedicao").prop('disabled', false);
       $("#cpf").prop('disabled', true);
       alert("O cpf não pode ser editado!");
-      $("#data_admissao").prop('disabled', false);
       $("#botaoEditarDocumentacao").html('Cancelar');
       $("#botaoSalvarDocumentacao").prop('disabled', false);
       $("#botaoEditarDocumentacao").removeAttr('onclick');
@@ -308,7 +345,6 @@ try {
       $("#orgao_emissor").prop('disabled', true);
       $("#data_expedicao").prop('disabled', true);
       $("#cpf").prop('disabled', true);
-      $("#data_admissao").prop('disabled', true);
       $("#botaoEditarDocumentacao").html('Editar');
       $("#botaoSalvarDocumentacao").prop('disabled', true);
       $("#botaoEditarDocumentacao").removeAttr('onclick');
@@ -316,7 +352,7 @@ try {
     }
 
     function editar_outros() {
-      let adm_configurado = <?php echo $adm_configurado; ?>;
+      let pode_editar_cargo = <?php echo $pode_editar_cargo ? 'true' : 'false'; ?>;
 
       $("#pis").prop('disabled', false);
       $("#ctps").prop('disabled', false);
@@ -327,9 +363,12 @@ try {
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      if (adm_configurado) {
+      $("#data_admissao").prop('disabled', false);
+
+      if (pode_editar_cargo) {
         $("#cargo").prop('disabled', false);
       }
+
       $("#botaoEditarOutros").html('Cancelar');
       $("#botaoSalvarOutros").prop('disabled', false);
       $("#botaoEditarOutros").removeAttr('onclick');
@@ -347,6 +386,7 @@ try {
       $("#certificado_reservista_serie").prop('disabled', true);
       $("#situacao").prop('disabled', true);
       $("#cargo").prop('disabled', true);
+      $("#data_admissao").prop('disabled', true);
       $("#botaoEditarOutros").html('Editar');
       $("#botaoSalvarOutros").prop('disabled', true);
       $("#botaoEditarOutros").removeAttr('onclick');
@@ -450,7 +490,6 @@ try {
     $(function() {
       var docfuncional = <?= $docfuncional ?>;
       $.each(docfuncional, function(i, item) {
-        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -466,7 +505,6 @@ try {
     function listarFunDocs(docfuncional) {
       $("#doc-tab").empty();
       $.each(docfuncional, function(i, item) {
-        console.log(item.data)
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -823,8 +861,8 @@ try {
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                         <div class="col-md-8">
-                          <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"> Masculino</i></label>
-                          <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"> Feminino</i> </label>
+                          <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
+                          <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
                         </div>
                       </div>
                       <div class="form-group">
@@ -991,13 +1029,14 @@ try {
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="inicio_remuneracao">Data Inicio</label>
                                 <div class="col-md-8">
-                                  <input type="date" name="inicio" id="inicio_remuneracao" class="form-control">
+                                  <input type="date" name="inicio" id="inicio_remuneracao" class="form-control" required>
                                 </div>
                               </div>
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="fim_remuneracao">Data Fim</label>
                                 <div class="col-md-8">
-                                  <input type="date" name="fim" id="fim_remuneracao" class="form-control">
+                                  <input type="date" name="fim" id="fim_remuneracao" class="form-control" required>
+                                  <p id="erro_periodo_remuneracao" style="display: none; color: #b30000; margin-top: 5px;">A data fim deve ser posterior ou igual à data início.</p>
                                 </div>
                               </div>
                               <!-- Pegar id funcionário de variável sanitizada -->
@@ -1151,6 +1190,10 @@ try {
                               <option selected disabled>Selecionar</option>
                               <?php
                               foreach ($cargo as $row) {
+                                // esconde a opção "Administrador" se o usuário logado não for adm
+                                if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
+                                    continue;
+                                }
                                 echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
@@ -1302,18 +1345,15 @@ try {
                                   post(url, data, listarInfoAdicional);
                                   $("#" + 'informacao' + id_descricao + "").remove();
                                 }
-
+                                
                                 //Refazer lógica abaixo
                                 function listarInfoAdicional(lista) {
                                   //Pegar id funcionário de variável sanitizada
-                                  console.log('Linha 1279');
                                   $.ajax({
                                     type: "GET",
                                     url: `../../controle/control.php?nomeClasse=${encodeURIComponent('InformacaoAdicionalControle')}&metodo=${encodeURIComponent('getTodasInformacoesAdicionaisPorIdFuncionario')}&id_funcionario=<?= $idFuncionario ?>`,
                                     dataType: 'json',
                                     success: function(resp) {
-                                      console.log('Informações adicionais', resp);
-
                                       let tabela = $("#addInfo-tab");
 
                                       // Limpa a tabela antes de adicionar os novos dados (se necessário)
@@ -1396,7 +1436,6 @@ try {
                               };
                               ?>
                             </select>
-                            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
                             <script>
                               $(document).ready(function() {
                                 $("#tipoCargaHoraria_input").on('change', function() {
@@ -1605,50 +1644,81 @@ try {
                         </thead>
                         <tbody id="doc-tab"></tbody>
                       </table><br>
-                      <!-- Button trigger modal -->
-                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal">
-                        Adicionar
-                      </button>
-                      <!-- Modal Form Documentos -->
-                      <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                          <div class="modal-content">
-                            <div class="modal-header" style="display: flex;justify-content: space-between;">
-                              <h5 class="modal-title" id="exampleModalLabel">Adicionar Arquivo</h5>
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                            </div>
-                            <form action='documento_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
-                              <div class="modal-body" style="padding: 15px 40px">
-                                <div class="form-group" style="display: grid;">
-                                  <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
-                                  <div style="display: flex;">
-                                    <select name="id_docfuncional" id="id_docfuncional" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
-                                      <option value="" selected disabled>Selecionar...</option>
-                                      <?php
-                                      foreach ($pdo->query("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                        echo ("<option value='" . htmlspecialchars($item["id_docfuncional"]) . "' >" . htmlspecialchars($item["nome_docfuncional"]) . "</option>");
-                                      }
-                                      ?>
-                                    </select>
-                                    <a onclick="adicionarDocFuncional()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                                  </div>
-                                </div>
-                                <div class="form-group">
-                                  <label for="arquivoDocumento">Arquivo</label>
-                                  <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
-                                </div>
-                                <input type="number" name="id_funcionario" value="<?= $idFuncionario ?>" style='display: none;'>
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                <input type="submit" value="Enviar" class="btn btn-primary">
-                              </div>
-                            </form>
-                          </div>
-                        </div>
-                      </div>
+                      <?php
+                      $tiposDocumentoFuncionario = [];
+                      try {
+                        $stmtTiposDocumentoFuncionario = $pdo->prepare("SELECT * FROM funcionario_docfuncional ORDER BY nome_docfuncional ASC");
+                        $stmtTiposDocumentoFuncionario->execute();
+                        $tiposDocumentoFuncionario = $stmtTiposDocumentoFuncionario->fetchAll(PDO::FETCH_ASSOC);
+                      } catch (PDOException $e) {
+                        error_log("Erro: Falha ao buscar tipos de documento do funcionario: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+                      }
+                      $uploadMaxFilesize = ini_get('upload_max_filesize');
+                      $uploadMaxFilesizeFormatado = preg_replace('/^(\d+(?:[.,]\d+)?)\s*([KMG])$/i', '$1 $2B', (string)$uploadMaxFilesize);
+                      $converterTamanhoParaBytes = static function ($valor) {
+                        $valor = trim((string)$valor);
+                        if ($valor === '') {
+                          return 0;
+                        }
+
+                        $numero = (float)$valor;
+                        $unidade = strtolower(substr($valor, -1));
+
+                        switch ($unidade) {
+                          case 'g':
+                            $numero *= 1024;
+                          case 'm':
+                            $numero *= 1024;
+                          case 'k':
+                            $numero *= 1024;
+                            break;
+                        }
+
+                        return (int)$numero;
+                      };
+                      $uploadMaxFilesizeBytes = $converterTamanhoParaBytes($uploadMaxFilesize);
+                      $modalUploadConfig = [
+                        'button' => [
+                          'label' => 'Adicionar',
+                          'onclick' => 'gerarDocFuncional()'
+                        ],
+                        'modal' => [
+                          'id' => 'docFormModal',
+                          'label_id' => 'docFormModalLabel',
+                          'title' => 'Adicionar arquivo'
+                        ],
+                        'form' => [
+                          'id' => 'funcionarioDocForm',
+                          'action' => 'documento_upload.php?id_funcionario=' . (int)$idFuncionario,
+                          'method' => 'post',
+                          'enctype' => 'multipart/form-data',
+                          'hidden_fields' => [
+                            'id_funcionario' => (int)$idFuncionario
+                          ]
+                        ],
+                        'select' => [
+                          'id' => 'id_docfuncional',
+                          'name' => 'id_docfuncional',
+                          'label' => 'Tipo de arquivo',
+                          'placeholder' => 'Selecionar',
+                          'options' => $tiposDocumentoFuncionario,
+                          'value_key' => 'id_docfuncional',
+                          'label_key' => 'nome_docfuncional',
+                          'add_button_onclick' => 'adicionarDocFuncional()',
+                          'add_button_title' => 'Adicionar tipo de arquivo'
+                        ],
+                        'file' => [
+                          'id' => 'arquivoDocumentoFuncionario',
+                          'name' => 'arquivo',
+                          'label' => 'Arquivo',
+                          'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
+                          'help' => 'PNG, JPG, PDF, DOC, DOCX e ODP.',
+                          'max_size_bytes' => $uploadMaxFilesizeBytes
+                        ]
+                      ];
+                      require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
+                      unset($modalUploadConfig, $tiposDocumentoFuncionario, $uploadMaxFilesize, $uploadMaxFilesizeBytes, $converterTamanhoParaBytes);
+                      ?>
                     </div>
                   </section>
                 </div>
@@ -1852,7 +1922,6 @@ try {
       return true;
     }) {
       var data = getFormPostParams(idForm);
-      console.log(data);
       var url;
       var data_nova;
       switch (idForm) {
@@ -1874,13 +1943,69 @@ try {
         return false;
       }
       post(url, data_nova, callback);
-      console.log(idForm + " => " + data + " | ", callback);
       return true;
     }
 
+    function exibirErroRemuneracao(mensagem) {
+      window.alert(mensagem);
+      return false;
+    }
+
+    function limparErroPeriodoRemuneracao() {
+      $('#erro_periodo_remuneracao').hide().text('A data fim deve ser posterior ou igual à data início.');
+    }
+
+    function exibirErroPeriodoRemuneracao(mensagem) {
+      $('#erro_periodo_remuneracao').text(mensagem).show();
+      return false;
+    }
+
+    function validarPeriodoRemuneracao() {
+      var dataInicio = $('#inicio_remuneracao').val();
+      var dataFim = $('#fim_remuneracao').val();
+
+      if (!dataInicio || !dataFim) {
+        limparErroPeriodoRemuneracao();
+        return true;
+      }
+
+      if (dataFim < dataInicio) {
+        return exibirErroPeriodoRemuneracao('A data fim deve ser posterior ou igual à data início.');
+      }
+
+      limparErroPeriodoRemuneracao();
+      return true;
+    }
+
+    function destruirTabelaRemuneracao() {
+      if ($.fn.DataTable.isDataTable('#datatable-default')) {
+        $('#datatable-default').DataTable().destroy();
+      }
+    }
+
+    function inicializarTabelaRemuneracao() {
+      $('#datatable-default').DataTable({
+        "order": [
+          [1, "desc"]
+        ]
+      });
+    }
+
     function listar_remuneracao(lista) {
+      if (lista.erro) {
+        exibirErroRemuneracao(lista.erro);
+        return;
+      }
+
+      destruirTabelaRemuneracao();
+
       $("#tabela_remuneracao").empty();
+
+      var total = 0;
+
       $.each(lista, function(i, item) {
+        total += parseFloat(item.valor) || 0;
+
         $("#tabela_remuneracao")
           .append($("<tr>")
             .append($("<td>").text(item.descricao))
@@ -1890,21 +2015,30 @@ try {
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
               .append($("<button onclick='removerRemuneracao(" + item.id_remuneracao + ")' title='Excluir' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>"))
             )
-          )
-        $(function() {
-          var total = 0;
-          $('.tabela').each(function() {
-            total += parseInt(jQuery(this).text());
-          });
-          $('.total').html(total);
-        });
+          );
       });
+
+      $('.total').html(total);
+      inicializarTabelaRemuneracao();
     }
 
     function adicionarRemuneracao() {
-      if (submitForm('formRemuneracao', listar_remuneracao)) {
-        document.getElementById("closeRemuneracaoModal").click();
+      if (!validarPeriodoRemuneracao()) {
+        return false;
       }
+
+      return submitForm('formRemuneracao', function(response) {
+        if (response.erro) {
+          exibirErroRemuneracao(response.erro);
+          return;
+        }
+
+        listar_remuneracao(response);
+        $('#closeRemuneracaoModal').click();
+        $('#formRemuneracao').find('input[type="date"], input[type="number"]').val('');
+        $('#tipo_remuneracao').prop('selectedIndex', 0);
+        limparErroPeriodoRemuneracao();
+      });
     }
 
     function adicionarTipoRemuneracao() {
@@ -1918,7 +2052,6 @@ try {
         return
       }
       data = "action=tipo_adicionar&descricao=" + descricao;
-      console.log(url + "?" + data);
       post(url, data, gerarTipoRemuneracao);
     }
 
@@ -1940,6 +2073,8 @@ try {
       });
     }
     $(function() {
+      $('#inicio_remuneracao, #fim_remuneracao').on('change', validarPeriodoRemuneracao);
+      destruirTabelaRemuneracao();
       post("remuneracao.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_remuneracao);
     })
 
@@ -2065,8 +2200,118 @@ try {
       })
     }
 
+    let timeoutErroModalDocumentoFuncionario = null;
+
+    function exibirErroModalDocumentoFuncionario(mensagem) {
+      const campoErro = document.getElementById('atendidoDocFormError');
+      const textoErro = document.getElementById('atendidoDocFormErrorText');
+      if (!campoErro) {
+        return;
+      }
+
+      if (timeoutErroModalDocumentoFuncionario) {
+        clearTimeout(timeoutErroModalDocumentoFuncionario);
+      }
+
+      if (textoErro) {
+        textoErro.textContent = mensagem;
+      }
+
+      campoErro.classList.add('in');
+
+      timeoutErroModalDocumentoFuncionario = setTimeout(function() {
+        limparErroModalDocumentoFuncionario();
+      }, 5000);
+    }
+
+    function limparErroModalDocumentoFuncionario() {
+      const campoErro = document.getElementById('atendidoDocFormError');
+      const textoErro = document.getElementById('atendidoDocFormErrorText');
+      if (!campoErro) {
+        return;
+      }
+
+      campoErro.classList.remove('in');
+
+      if (textoErro) {
+        textoErro.textContent = '';
+      }
+
+      if (timeoutErroModalDocumentoFuncionario) {
+        clearTimeout(timeoutErroModalDocumentoFuncionario);
+        timeoutErroModalDocumentoFuncionario = null;
+      }
+    }
+
+    function limparErroModalDocumento() {
+      limparErroModalDocumentoFuncionario();
+    }
+
+    function verificaTipoDocumentoFuncionario() {
+      const tipo = document.getElementById('id_docfuncional');
+      const arquivo = document.getElementById('arquivoDocumentoFuncionario');
+
+      limparErroModalDocumentoFuncionario();
+
+      if (!tipo || !tipo.value || Number(tipo.value) < 1) {
+        exibirErroModalDocumentoFuncionario('Selecione um tipo de documento adequado antes de prosseguir.');
+        return false;
+      }
+
+      if (arquivo && arquivo.files && arquivo.files.length > 0) {
+        const tamanhoMaximo = Number(arquivo.dataset.maxSizeBytes || 0);
+        if (tamanhoMaximo > 0 && arquivo.files[0].size > tamanhoMaximo) {
+          exibirErroModalDocumentoFuncionario('O arquivo selecionado excede o limite permitido de <?= addslashes($uploadMaxFilesizeFormatado) ?>.');
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    $('#funcionarioDocForm').on('submit', function(ev) {
+      ev.preventDefault();
+
+      if (!verificaTipoDocumentoFuncionario()) {
+        return false;
+      }
+
+      const form = this;
+      const formData = new FormData(form);
+
+      $.ajax({
+        url: form.action,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        dataType: 'json',
+        success: function(response) {
+          if (!response || response.status !== 'sucesso') {
+            exibirErroModalDocumentoFuncionario((response && response.mensagem) || 'Erro ao enviar o documento.');
+            return;
+          }
+
+          listarFunDocs(response.documentos || []);
+          limparErroModalDocumentoFuncionario();
+          form.reset();
+          $('#docFormModal').modal('hide');
+        },
+        error: function(xhr) {
+          let mensagem = 'Erro ao enviar o documento.';
+
+          if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+            mensagem = xhr.responseJSON.mensagem;
+          }
+
+          exibirErroModalDocumentoFuncionario(mensagem);
+        }
+      });
+
+      return false;
+    });
+
     function verificaSucesso(response) {
-      console.log(response);
       if (response.errorInfo) {
         if (response.errorInfo[1] == 1451) {
           window.alert("O dependente possui documentos cadastrados em seu nome. Retire-os do bando de dados antes de remover o dependente.");
@@ -2096,6 +2341,7 @@ try {
   <!-- JavaScript Custom -->
   <script src="../geral/post.js"></script>
   <script src="../geral/formulario.js"></script>
+  <script src="../../Functions/cep_form_validation.js"></script>
   <script>
     var formState = [];
 
@@ -2120,7 +2366,11 @@ try {
       }
       switchButton(idForm);
     }
-    switchForm("editar_cargaHoraria", false)
+
+    switchForm("editar_cargaHoraria", false);
+    inicializarValidacaoCepFormulario({
+      formId: "formAlterarEndereco"
+    });
   </script>
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>

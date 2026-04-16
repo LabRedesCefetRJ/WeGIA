@@ -21,6 +21,7 @@ include_once '../../classes/Cache.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
+require_once "../geral/msg.php";
 
 $id = filter_input(INPUT_GET, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
 
@@ -90,6 +91,7 @@ $dependente = json_encode($dependente);
   <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
   <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
   <link rel="stylesheet" type="text/css" href="../../css/profile-theme.css">
+  <link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
   <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
   <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
@@ -125,6 +127,30 @@ $dependente = json_encode($dependente);
     .btn i {
       color: white;
     }
+
+    #atendidoDocFormError {
+      display: block !important;
+      max-height: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.25s ease, margin-bottom 0.25s ease, padding 0.25s ease, border-width 0.25s ease, visibility 0.25s ease;
+    }
+
+    #atendidoDocFormError.in {
+      max-height: 120px;
+      margin-bottom: 20px;
+      padding-top: 15px;
+      padding-bottom: 15px;
+      border-width: 1px;
+      opacity: 1;
+      visibility: visible;
+    }
+    
   </style>
   <!-- Theme CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
@@ -198,10 +224,10 @@ $dependente = json_encode($dependente);
             $("#imagem").attr("src", "../../img/semfoto.png");
           }
           if (item.sexo == "m") {
-            $("#sexo").html("Sexo: <i class='fa fa-male'></i>  Masculino");
+            $("#sexo").html("Sexo: <i class='fa fa-male'></i>");
             $("#radioM").prop('checked', true);
           } else if (item.sexo == "f") {
-            $("#sexo").html("Sexo: <i class='fa fa-female'>  Feminino");
+            $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
             $("#radioF").prop('checked', true);
           }
 
@@ -538,7 +564,7 @@ $dependente = json_encode($dependente);
           .append($("<tr>")
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
+            .append($("<td style='display: flex; justify-content: center; align-items: center; gap: 8px; white-space: nowrap;'>")
               .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + "' target='_tab' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
               .append($("<a onclick='removerFuncionarioDocs(" + item.id_pessoa_arquivo + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
@@ -553,7 +579,7 @@ $dependente = json_encode($dependente);
           .append($("<tr>")
             .append($("<td>").text(item.descricao))
             .append($("<td>").text(item.data))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>")
+            .append($("<td style='display: flex; justify-content: center; align-items: center; gap: 8px; white-space: nowrap;'>")
               .append($("<a href='documento_download.php?id_doc=" + item.id_pessoa_arquivo + " '  target='_' title='Visualizar ou Baixar' ><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
               .append($("<a onclick='removerFuncionarioDocs(" + item.id_pessoa_arquivo + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
             )
@@ -643,13 +669,21 @@ $dependente = json_encode($dependente);
           </div>
         </header>
         <!-- start: page -->
+        <?php sessionMsg(); ?>
         <div class="row">
           <div class="col-md-4 col-lg-3">
             <section class="panel">
               <div class="panel-body">
                 <?php
                 $pdo = Conexao::connect();
-                $resultado = $pdo->query("SELECT COUNT(*) FROM endereco_instituicao;")->fetchColumn();
+                $resultado = 1;
+                try {
+                  $stmtEnderecoInstituicao = $pdo->prepare("SELECT COUNT(*) FROM endereco_instituicao");
+                  $stmtEnderecoInstituicao->execute();
+                  $resultado = (int)$stmtEnderecoInstituicao->fetchColumn();
+                } catch (PDOException $e) {
+                  error_log("Erro: Falha ao verificar cadastro do endereco da instituicao: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+                }
                 if (!$resultado) {
                   echo "<div class='alert alert-warning' id='cadastro_instituicao' style='font-size: 15px;'><i class='fas fa-check mr-md'></i>O endereço da instituição não está cadastrado no sistema<br><a href='../personalizacao.php'>Cadastrar endereço da instituição</a></div>";
                 }
@@ -851,7 +885,7 @@ $dependente = json_encode($dependente);
                       <div class="panel-body">
                         <!--Endereço-->
                         <hr class="dotted short">
-                        <form id="endereco" class="form-horizontal" method="post" action="../../controle/control.php">
+                        <form id="formAlterarEnderecoAtendido" class="form-horizontal" method="post" action="../../controle/control.php">
                           <input type="hidden" name="nomeClasse" value="AtendidoControle">
                           <input type="hidden" name="metodo" value="alterarEndereco">
                           <div class="form-group">
@@ -959,9 +993,9 @@ $dependente = json_encode($dependente);
                               <div class="modal-body" style="padding: 15px 40px">
                                 <div class="form-group" style="display: grid;">
                                   <div class="form-group">
-                                    <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="cpf">CPF</label>
                                     <div class="col-md-6">
-                                      <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                      <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
                                     </div>
                                   </div>
                                   <div class="form-group">
@@ -976,7 +1010,16 @@ $dependente = json_encode($dependente);
                                       <select name="id_parentesco" id="parentesco">
                                         <option selected disabled>Selecionar...</option>
                                         <?php
-                                        foreach ($pdo->query("SELECT * FROM atendido_parentesco ORDER BY parentesco ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                        $parentescosAtendido = [];
+                                        try {
+                                          $stmtParentescosAtendido = $pdo->prepare("SELECT * FROM atendido_parentesco ORDER BY parentesco ASC");
+                                          $stmtParentescosAtendido->execute();
+                                          $parentescosAtendido = $stmtParentescosAtendido->fetchAll(PDO::FETCH_ASSOC);
+                                        } catch (PDOException $e) {
+                                          error_log("Erro: Falha ao buscar parentescos do atendido: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+                                        }
+
+                                        foreach ($parentescosAtendido as $item) {
                                           echo ("
                                             <option value='" . $item["idatendido_parentesco"] . "' >" . htmlspecialchars($item["parentesco"]) . "</option>
                                             ");
@@ -1022,56 +1065,84 @@ $dependente = json_encode($dependente);
                           </tbody>
                         </table>
                         <br>
-                        <!-- Button trigger modal -->
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal">
-                          Adicionar
-                        </button>
-                        <!-- Modal Form Documentos -->
-                        <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
-                          <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                              <div class="modal-header" style="display: flex;justify-content: space-between;">
-                                <h5 class="modal-title" id="exampleModalLabel">Adicionar Arquivo</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                  <span aria-hidden="true">&times;</span>
-                                </button>
-                              </div>
-                              <form action='../../controle/control.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
-                                <input type="hidden" name="nomeClasse" value="AtendidoDocumentacaoControle">
-                                <input type="hidden" name="metodo" value="create">
-                                <input type="hidden" name="id_atendido" value="<?= (int)$id ?>">
-                                <div class="modal-body" style="padding: 15px 40px">
-                                  <div class="form-group" style="display: grid;">
-                                    <label class="my-1 mr-2" for="tipoDocumento">Tipo de Arquivo</label><br>
-                                    <div style="display: flex;">
-                                      <select name="id_tipo_documentacao" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
-                                        <option selected disabled>Selecionar...</option>
-                                        <?php
-                                        foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                          echo ("
-                                          <option value='" . $item["idatendido_docs_atendidos"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
-                                        }
-                                        ?>
+                        <?php
+                        $tiposDocumentoAtendido = [];
+                        try {
+                          $stmtTiposDocumentoAtendido = $pdo->prepare("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC");
+                          $stmtTiposDocumentoAtendido->execute();
+                          $tiposDocumentoAtendido = $stmtTiposDocumentoAtendido->fetchAll(PDO::FETCH_ASSOC);
+                        } catch (PDOException $e) {
+                          error_log("Erro: Falha ao buscar tipos de documento do atendido: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
+                        }
+                        $uploadMaxFilesize = ini_get('upload_max_filesize');
+                        $uploadMaxFilesizeFormatado = preg_replace('/^(\d+(?:[.,]\d+)?)\s*([KMG])$/i', '$1 $2B', (string)$uploadMaxFilesize);
+                        $converterTamanhoParaBytes = static function ($valor) {
+                          $valor = trim((string)$valor);
+                          if ($valor === '') {
+                            return 0;
+                          }
 
-                                      </select>
+                          $numero = (float)$valor;
+                          $unidade = strtolower(substr($valor, -1));
 
-                                      <a onclick="adicionar_tipo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-                                    </div>
-                                  </div>
-                                  <div class="form-group">
-                                    <label for="arquivoDocumento">Arquivo</label>
-                                    <input name="arquivo" type="file" class="form-control-file" id="id_documento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
-                                  </div>
-                                  <input type="number" name="idatendido" value="<?= $id ?>" style='display: none;'>
-                                </div>
-                                <div class="modal-footer">
-                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                  <input type="submit" value="Enviar" class="btn btn-primary" id="btn-atendido" onclick="verificaTipo(event)">
-                                </div>
-                              </form>
-                            </div>
-                          </div>
-                        </div>
+                          switch ($unidade) {
+                            case 'g':
+                              $numero *= 1024;
+                            case 'm':
+                              $numero *= 1024;
+                            case 'k':
+                              $numero *= 1024;
+                              break;
+                          }
+
+                          return (int)$numero;
+                        };
+                        $uploadMaxFilesizeBytes = $converterTamanhoParaBytes($uploadMaxFilesize);
+                        $modalUploadConfig = [
+                          'button' => [
+                            'label' => 'Adicionar',
+                            'onclick' => 'gerarTipo()'
+                          ],
+                          'modal' => [
+                            'id' => 'docFormModal',
+                            'label_id' => 'docFormModalLabel',
+                            'title' => 'Adicionar arquivo'
+                          ],
+                          'form' => [
+                            'id' => 'atendidoDocForm',
+                            'action' => '../../controle/control.php',
+                            'method' => 'post',
+                            'enctype' => 'multipart/form-data',
+                            'onsubmit' => 'return verificaTipo(event)',
+                            'hidden_fields' => [
+                              'nomeClasse' => 'AtendidoDocumentacaoControle',
+                              'metodo' => 'create',
+                              'id_atendido' => (int)$id
+                            ]
+                          ],
+                          'select' => [
+                            'id' => 'tipoDocumento',
+                            'name' => 'id_tipo_documentacao',
+                            'label' => 'Tipo de arquivo',
+                            'placeholder' => 'Selecionar',
+                            'options' => $tiposDocumentoAtendido,
+                            'value_key' => 'idatendido_docs_atendidos',
+                            'label_key' => 'descricao',
+                            'add_button_onclick' => 'adicionar_tipo()',
+                            'add_button_title' => 'Adicionar tipo de arquivo'
+                          ],
+                          'file' => [
+                            'id' => 'arquivoDocumentoAtendido',
+                            'name' => 'arquivo',
+                            'label' => 'Arquivo',
+                            'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
+                            'help' => 'PNG, JPG, PDF, DOC, DOCX e ODP.',
+                            'max_size_bytes' => $uploadMaxFilesizeBytes
+                          ]
+                        ];
+                        require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
+                        unset($modalUploadConfig, $tiposDocumentoAtendido, $uploadMaxFilesizeBytes, $converterTamanhoParaBytes);
+                        ?>
                     </section>
                   </div>
                   <div id="ocorrencias" class="tab-pane">
@@ -1433,7 +1504,7 @@ $dependente = json_encode($dependente);
 
       function validarCPF(strCPF) {
 
-        if (!testaCPF(strCPF)) {
+        if (strCPF && !testaCPF(strCPF)) {
           $('#cpfFamiliarInvalido').show();
           document.getElementById("cadastrarFamiliar").disabled = true;
 
@@ -1444,14 +1515,67 @@ $dependente = json_encode($dependente);
         }
       }
 
+      let timeoutErroModalDocumento = null;
+
+      function exibirErroModalDocumento(mensagem) {
+        const campoErro = document.getElementById('atendidoDocFormError');
+        const textoErro = document.getElementById('atendidoDocFormErrorText');
+        if (!campoErro) {
+          return;
+        }
+
+        if (timeoutErroModalDocumento) {
+          clearTimeout(timeoutErroModalDocumento);
+        }
+
+        if (textoErro) {
+          textoErro.textContent = mensagem;
+        }
+        campoErro.classList.add('in');
+
+        timeoutErroModalDocumento = setTimeout(function() {
+          limparErroModalDocumento();
+        }, 5000);
+      }
+
+      function limparErroModalDocumento() {
+        const campoErro = document.getElementById('atendidoDocFormError');
+        const textoErro = document.getElementById('atendidoDocFormErrorText');
+        if (!campoErro) {
+          return;
+        }
+
+        campoErro.classList.remove('in');
+        if (textoErro) {
+          textoErro.textContent = '';
+        }
+
+        if (timeoutErroModalDocumento) {
+          clearTimeout(timeoutErroModalDocumento);
+          timeoutErroModalDocumento = null;
+        }
+      }
+
       /**verifica se um tipo de documento foi selecionado antes de submeter o formulário ao backend */
       function verificaTipo(ev) {
         const tipo = document.getElementById('tipoDocumento');
+        const arquivo = document.getElementById('arquivoDocumentoAtendido');
+
+        limparErroModalDocumento();
 
         if (isNaN(tipo.value) || tipo.value < 1) {
-          alert('Erro: selecione um tipo de documento adequado antes de prosseguir.');
+          exibirErroModalDocumento('Selecione um tipo de documento adequado antes de prosseguir.');
           ev.preventDefault(); // impede o envio
           return false; // impede o fluxo normal do onclick
+        }
+
+        if (arquivo && arquivo.files && arquivo.files.length > 0) {
+          const tamanhoMaximo = Number(arquivo.dataset.maxSizeBytes || 0);
+          if (tamanhoMaximo > 0 && arquivo.files[0].size > tamanhoMaximo) {
+            exibirErroModalDocumento('O arquivo selecionado excede o limite permitido de <?= addslashes($uploadMaxFilesizeFormatado) ?>.');
+            ev.preventDefault();
+            return false;
+          }
         }
 
         // retorno true permite o envio normal do formulário
@@ -1460,6 +1584,7 @@ $dependente = json_encode($dependente);
     </script>
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
+    <script src="../../Functions/cep_form_validation.js"></script>
     <script src="../../Functions/atendido_parentesco.js"></script>
     <script>
       $(document).ready(function() {
@@ -1504,6 +1629,11 @@ $dependente = json_encode($dependente);
 
           $('body').append(form);
           form.submit();
+        });
+
+        inicializarValidacaoCepFormulario({
+          formId: 'formAlterarEnderecoAtendido',
+          estadoIds: ['estado']
         });
       });
     </script>

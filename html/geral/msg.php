@@ -230,7 +230,7 @@ function sessionMsg($msgName = 'msg', $flagName = 'flag')
 	 * 
 	 */
 	if (isset($_SESSION[$msgName])) {
-		$flag = $_SESSION[$flagName] ?? "sucesso";
+		$flag = $_SESSION[$flagName] ?? $_SESSION['tipo'] ?? "sucesso";
 		$msg = $_SESSION[$msgName];
 		$log = $_SESSION['session_msg_log'] ?? $_SESSION['log'] ?? null;
 
@@ -262,6 +262,9 @@ function sessionMsg($msgName = 'msg', $flagName = 'flag')
 		}
 		if (isset($_SESSION[$flagName])) {
 			unset($_SESSION[$flagName]);
+		}
+		if (isset($_SESSION['tipo'])) {
+			unset($_SESSION['tipo']);
 		}
 	}
 }
