@@ -540,10 +540,8 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                                                 <div class="col-md-8">
-                                                    <label><i class="fa fa-male" style="font-size: 20px;"> Masculino</i></label>
-                                                    <input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-right: 15px;" disabled>
-                                                    <label><i class="fa fa-female" style="font-size: 20px;"> Feminino</i></label>
-                                                    <input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-right: 15px;" disabled>
+                                                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                                                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-female" style="font-size: 20px;"></i></label>
                                                 </div>
                                             </div>
                                             <div class="form-group">

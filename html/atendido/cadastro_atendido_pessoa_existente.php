@@ -166,12 +166,12 @@ $sobrenome = $atendido->listarSobrenome($cpf);
 				$("#nascimento").val(alterardate(item.data_nascimento)).prop('disabled', true);
 				$("#cpf").val(item.cpf).prop('disabled', true);
 				if (item.sexo == "m") {
-					$("#sexo").html("Sexo: <i class='fa fa-male'></i>  Masculino");
+					$("#sexo").html("Sexo: <i class='fa fa-male'></i>");
 					$("#radio1").prop('checked', true);
 					$("#radio2").prop('disabled', true);
 
 				} else if (item.sexo == "f") {
-					$("#sexo").html("Sexo: <i class='fa fa-female'>  Feminino");
+					$("#sexo").html("Sexo: <i class='fa fa-female'></i>");
 					$("#radio2").prop('checked', true);
 					$("#radio1").prop('disabled', true);
 
