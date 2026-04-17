@@ -415,74 +415,66 @@ class SocioDAO
     /**Atualiza o status dos sócios de acordo com suas contribuições */
     public function sincronizarStatusSocios(): bool
     {
-        //revisar lógica
-  $sql = "
-UPDATE socio s
-LEFT JOIN (
-    SELECT 
-        cl.id_socio,
+        $sql = "
+            UPDATE socio s
+            LEFT JOIN (
+                SELECT 
+                    cl.id_socio,
 
-        COUNT(*) AS total_registros,
+                    MAX(CASE 
+                        WHEN cl.status_pagamento = 1 
+                        THEN cl.data_pagamento 
+                    END) AS ultimo_pagamento,
 
-        MAX(CASE 
-            WHEN cl.data_vencimento < CURDATE()
-            THEN cl.data_vencimento
-        END) AS ultima_contribuicao,
+                    MAX(CASE 
+                        WHEN cl.status_pagamento = 0
+                            AND cl.data_vencimento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                        THEN 1 ELSE 0
+                    END) AS tem_pendencia_antiga
 
-        MAX(CASE 
-            WHEN cl.status_pagamento = 1 
-            THEN cl.data_pagamento 
-        END) AS ultimo_pagamento,
+                FROM contribuicao_log cl
+                GROUP BY cl.id_socio
+            ) r ON r.id_socio = s.id_socio
 
-        MAX(CASE 
-            WHEN cl.status_pagamento = 0
-                 AND cl.data_vencimento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-            THEN 1 ELSE 0
-        END) AS tem_pendencia_antiga
+            SET s.id_sociostatus = 
+            CASE
 
-    FROM contribuicao_log cl
-    GROUP BY cl.id_socio
-) resumo ON resumo.id_socio = s.id_socio
+                -- INADIMPLENTE (pendência recente não resolvida)
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM contribuicao_log cl
+                    WHERE cl.id_socio = s.id_socio
+                    AND cl.status_pagamento = 0
+                    AND cl.data_vencimento < CURDATE()
+                    AND cl.data_vencimento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM contribuicao_log cl2
+                        WHERE cl2.id_socio = cl.id_socio
+                            AND cl2.status_pagamento = 1
+                            AND cl2.data_pagamento > cl.data_vencimento
+                    )
+                )
+                THEN 2
 
-SET s.id_sociostatus = 
-    CASE
-        -- ❌ INADIMPLENTE (CORRETO AGORA)
-        WHEN EXISTS (
-            SELECT 1
-            FROM contribuicao_log cl
-            WHERE cl.id_socio = s.id_socio
-              AND cl.status_pagamento = 0
-              AND cl.data_vencimento < CURDATE()
-              AND cl.data_vencimento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM contribuicao_log cl2
-                  WHERE cl2.id_socio = cl.id_socio
-                    AND cl2.status_pagamento = 1
-                    AND cl2.data_pagamento > cl.data_vencimento
-              )
-        )
-        THEN 2
+                -- ATIVO
+                WHEN r.ultimo_pagamento IS NOT NULL
+                    AND r.ultimo_pagamento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                THEN 0
 
-        -- ❌ INATIVO
-        WHEN resumo.total_registros IS NULL
-             OR resumo.tem_pendencia_antiga = 1
-             OR resumo.ultimo_pagamento IS NULL
-             OR resumo.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
-            THEN 1
+                -- INATIVO
+                WHEN r.ultimo_pagamento IS NULL
+                    OR r.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                    OR r.tem_pendencia_antiga = 1
+                THEN 1
 
-        -- ⚠️ INATIVO TEMPORÁRIO
-        WHEN resumo.ultima_contribuicao < DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
-            THEN 3
+                -- INATIVO TEMPORÁRIO
+                WHEN r.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                THEN 3
 
-        -- ✅ ATIVO
-        WHEN resumo.ultimo_pagamento IS NOT NULL
-             AND resumo.ultimo_pagamento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
-            THEN 0
-
-        ELSE s.id_sociostatus
-    END
-";
+                ELSE s.id_sociostatus
+            END
+            ";
 
         return $this->pdo->exec($sql) !== false;
     }
