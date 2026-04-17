@@ -357,6 +357,7 @@ try {
               </div>
               <!-- /.box-tools -->
 
+              <!-- Pegar como referência-->
               <div class="sync-control">
                 <button class="btn btn-primary" id="sync-btn" title="Sincroniza contribuições de acordo com os múltiplos gateways de pagamentos cadastrados">Sincronizar pagamentos</button>
                 <button class="btn btn-primary" id="fatura-btn" title="Busca as novas faturas de acordo com os múltiplos gateways de pagamentos cadastrados">Carregar faturas de recorrências</button>

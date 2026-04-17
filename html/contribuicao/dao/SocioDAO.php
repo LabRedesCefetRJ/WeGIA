@@ -412,60 +412,76 @@ class SocioDAO
         return $socios;
     }
 
+    /**Atualiza o status dos sócios de acordo com suas contribuições */
     public function sincronizarStatusSocios(): bool
     {
-       $sql = "
-    UPDATE socio s
-    LEFT JOIN (
-        SELECT 
-            cl.id_socio,
+        //revisar lógica
+  $sql = "
+UPDATE socio s
+LEFT JOIN (
+    SELECT 
+        cl.id_socio,
 
-            COUNT(*) AS total_registros,
+        COUNT(*) AS total_registros,
 
-            -- Última contribuição gerada
-            MAX(cl.data_vencimento) AS ultima_contribuicao,
+        MAX(CASE 
+            WHEN cl.data_vencimento < CURDATE()
+            THEN cl.data_vencimento
+        END) AS ultima_contribuicao,
 
-            -- Último pagamento
-            MAX(CASE 
-                WHEN cl.status_pagamento = 1 
-                THEN cl.data_pagamento 
-            END) AS ultimo_pagamento,
+        MAX(CASE 
+            WHEN cl.status_pagamento = 1 
+            THEN cl.data_pagamento 
+        END) AS ultimo_pagamento,
 
-            -- Último vencimento pendente
-            MAX(CASE 
-                WHEN cl.status_pagamento = 0 
-                THEN cl.data_vencimento 
-            END) AS ultimo_vencimento_pendente
+        MAX(CASE 
+            WHEN cl.status_pagamento = 0
+                 AND cl.data_vencimento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+            THEN 1 ELSE 0
+        END) AS tem_pendencia_antiga
 
-        FROM contribuicao_log cl
-        GROUP BY cl.id_socio
-    ) resumo ON resumo.id_socio = s.id_socio
+    FROM contribuicao_log cl
+    GROUP BY cl.id_socio
+) resumo ON resumo.id_socio = s.id_socio
 
-    SET s.id_sociostatus = 
-        CASE
-            -- NUNCA CONTRIBUIU
-            WHEN resumo.total_registros IS NULL
-                THEN 1
+SET s.id_sociostatus = 
+    CASE
+        -- ❌ INADIMPLENTE (CORRETO AGORA)
+        WHEN EXISTS (
+            SELECT 1
+            FROM contribuicao_log cl
+            WHERE cl.id_socio = s.id_socio
+              AND cl.status_pagamento = 0
+              AND cl.data_vencimento < CURDATE()
+              AND cl.data_vencimento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM contribuicao_log cl2
+                  WHERE cl2.id_socio = cl.id_socio
+                    AND cl2.status_pagamento = 1
+                    AND cl2.data_pagamento > cl.data_vencimento
+              )
+        )
+        THEN 2
 
-            -- NÃO GERA CONTRIBUIÇÃO HÁ MUITO TEMPO
-            WHEN resumo.ultima_contribuicao < DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 2 MONTH)
-                THEN 1
+        -- ❌ INATIVO
+        WHEN resumo.total_registros IS NULL
+             OR resumo.tem_pendencia_antiga = 1
+             OR resumo.ultimo_pagamento IS NULL
+             OR resumo.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+            THEN 1
 
-            -- INADIMPLENTE (pendência muito antiga)
-            WHEN resumo.ultimo_vencimento_pendente < DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 3 MONTH)
-                THEN 2
+        -- ⚠️ INATIVO TEMPORÁRIO
+        WHEN resumo.ultima_contribuicao < DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+            THEN 3
 
-            -- INATIVO TEMPORÁRIO (tem pendência)
-            WHEN resumo.ultimo_vencimento_pendente < CURDATE()
-                THEN 3
+        -- ✅ ATIVO
+        WHEN resumo.ultimo_pagamento IS NOT NULL
+             AND resumo.ultimo_pagamento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+            THEN 0
 
-            -- ATIVO (tem contribuição recente E não tem pendência)
-            WHEN resumo.ultima_contribuicao >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 2 MONTH)
-                 AND resumo.ultimo_vencimento_pendente IS NULL
-                THEN 0
-
-            ELSE s.id_sociostatus
-        END
+        ELSE s.id_sociostatus
+    END
 ";
 
         return $this->pdo->exec($sql) !== false;
