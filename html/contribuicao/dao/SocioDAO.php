@@ -474,6 +474,7 @@ class SocioDAO
 
                 ELSE s.id_sociostatus
             END
+            WHERE s.auto_status_contribuicoes = 1
             ";
 
         return $this->pdo->exec($sql) !== false;

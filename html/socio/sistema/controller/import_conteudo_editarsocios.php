@@ -19,6 +19,7 @@ $socio_tipo_str = $registro['tipo'];
 $bairro = $registro['bairro'];
 $cidade = $registro['cidade'];
 $estado = $registro['estado'];
+$auto_status_contribuicoes = isset($registro['auto_status_contribuicoes']) ? (int)$registro['auto_status_contribuicoes'] : 0;
 
 $data_referencia = $registro['data_referencia'];
 $valor_periodo = $registro['valor_periodo'];
@@ -112,7 +113,7 @@ $valor_periodo = $registro['valor_periodo'];
               </div>
 
               <div class="row">
-                <div class="form-group col-xs-4">
+                <div class="form-group col-xs-6">
                   <label for="pessoa">Contribuinte</label>
                   <select class="form-control" name="contribuinte" id="contribuinte">
                     <option value="mensal">Mensal</option>
@@ -123,7 +124,13 @@ $valor_periodo = $registro['valor_periodo'];
                     <option value="si">Sem informação</option>
                   </select>
                 </div>
-                <div class="form-group col-xs-4">
+                <div class="form-group col-xs-6">
+                  <label for="valor">Data de nascimento</label>
+                  <input type="date" class="form-control" id="data_nasc" value="<?php echo htmlspecialchars($data_nasc); ?>" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d')?>">
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group col-xs-6">
                   <label for="pessoa">Status</label>
                   <select class="form-control" name="status" id="status">
                     <option value="0">Ativo</option>
@@ -133,19 +140,13 @@ $valor_periodo = $registro['valor_periodo'];
                     <option value="4">Sem informação</option>
                   </select>
                 </div>
-                <div class="div_nasc">
-                  <?php
-                  if ($pessoa == "fisica") {
-                  ?>
-
-                    <div class="form-group col-xs-4">
-                      <label for="valor">Data de nascimento</label>
-                      <input type="date" class="form-control" id="data_nasc" value="<?php echo htmlspecialchars($data_nasc); ?>" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d')?>">
-                    </div>
-
-                  <?php
-                  }
-                  ?>
+                <div class="form-group col-xs-6" style="margin-top: 1.8em;">
+                  <div class="form-check">
+                    <label class="form-check-label" for="auto_status_contribuicoes">
+                      <input type="checkbox" class="form-check-input" id="auto_status_contribuicoes" name="auto_status_contribuicoes" value="1" <?php echo $auto_status_contribuicoes ? 'checked' : ''; ?>>
+                      Atualizar status com base nas contribuições do sistema
+                    </label>
+                  </div>
                 </div>
               </div>
               <div class="row">

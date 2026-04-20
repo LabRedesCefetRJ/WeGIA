@@ -17,6 +17,12 @@ if (!isset($contribuinte)) {
     $contribuinte = null;
 }
 
+if (!isset($auto_status_contribuicoes) || empty($auto_status_contribuicoes)) {
+    $auto_status_contribuicoes = 0;
+} else {
+    $auto_status_contribuicoes = 1;
+}
+
 if (!isset($data_referencia) or ($data_referencia == null) or ($data_referencia == "") or empty($data_referencia) or ($data_referencia == "imp")) {
     $data_referencia = null;
 } else $data_referencia = $data_referencia;
@@ -203,29 +209,32 @@ if ($stmt) {
                        email = ?, 
                        data_referencia = ?, 
                        valor_periodo = ?, 
-                       id_sociotag = ? 
+                       id_sociotag = ?, 
+                       auto_status_contribuicoes = ? 
                    WHERE id_socio = ?";
 
         $stmt = mysqli_prepare($conexao, $sqlUpdateSocio);
 
-        $status = filter_var($status, FILTER_SANITIZE_SPECIAL_CHARS);        
-        $email = filter_var($email, FILTER_SANITIZE_EMAIL);       
-        $data_referencia = filter_var($data_referencia, FILTER_SANITIZE_SPECIAL_CHARS); 
-        $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION); 
-        $tag = filter_var($tag, FILTER_SANITIZE_NUMBER_INT);           
-        $id_socio = filter_var($id_socio, FILTER_SANITIZE_NUMBER_INT);      
+        $status = filter_var($status, FILTER_VALIDATE_INT);
+        $auto_status_contribuicoes = filter_var($auto_status_contribuicoes, FILTER_VALIDATE_INT);
+        $email = filter_var($email, FILTER_SANITIZE_EMAIL);
+        $data_referencia = filter_var($data_referencia, FILTER_SANITIZE_SPECIAL_CHARS);
+        $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        $tag = filter_var($tag, FILTER_SANITIZE_NUMBER_INT);
+        $id_socio = filter_var($id_socio, FILTER_SANITIZE_NUMBER_INT);
 
         if ($stmt) {
             // Bind dos parâmetros
             $stmt->bind_param(
-                'sissdii',
-                $status,         // String (id_sociostatus)
-                $id_sociotipo,   // Inteiro (id_sociotipo)
-                $email,          // String (email)
-                $data_referencia, // String (data_referencia)
-                $valor_periodo,  // Double (valor_periodo)
-                $tag,            // Inteiro (id_sociotag)
-                $id_socio        // Inteiro (id_socio)
+                'iissdiii',
+                $status,               // Inteiro (id_sociostatus)
+                $id_sociotipo,         // Inteiro (id_sociotipo)
+                $email,                // String (email)
+                $data_referencia,      // String (data_referencia)
+                $valor_periodo,        // Double (valor_periodo)
+                $tag,                  // Inteiro (id_sociotag)
+                $auto_status_contribuicoes, // Inteiro (auto_status_contribuicoes)
+                $id_socio              // Inteiro (id_socio)
             );
 
             // Executa o statement
