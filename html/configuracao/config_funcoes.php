@@ -114,6 +114,33 @@ function createTarGz(string $tarFile, string $baseDir, array $files): void
     }
 }
 
+function cleanupDirectory(string $directory): void
+{
+    if (!is_dir($directory)) {
+        return;
+    }
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+
+    foreach ($iterator as $entry) {
+        $path = $entry->getPathname();
+
+        if ($entry->isLink() || $entry->isFile()) {
+            @unlink($path);
+            continue;
+        }
+
+        if ($entry->isDir()) {
+            @rmdir($path);
+        }
+    }
+
+    @rmdir($directory);
+}
+
 function getBackupTimestamp(): string
 {
     return (new DateTimeImmutable())->format('YmdHis');
@@ -306,10 +333,7 @@ function backupBD(): string
 
         return basename($gzFile);
     } finally {
-        foreach (glob("$tmpDir/*") as $f) {
-            @unlink($f);
-        }
-        @rmdir($tmpDir);
+        cleanupDirectory($tmpDir);
     }
 }
 
@@ -389,10 +413,7 @@ function autosaveBD(): string
 
         return basename($gzFile);
     } finally {
-        foreach (glob("$tmpDir/*") as $f) {
-            @unlink($f);
-        }
-        @rmdir($tmpDir);
+        cleanupDirectory($tmpDir);
     }
 }
 
