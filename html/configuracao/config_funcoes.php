@@ -420,8 +420,10 @@ function autosaveBD(): string
 function backupSite()
 {
     // Executando Backup do Diretório do site
-
-    return shell_exec("tar -czf " . BKP_DIR . getBackupTimestamp() . ".site.tar.gz " . ROOT);
+    $timestamp = getBackupTimestamp();
+    $cmd = "tar -czf " . BKP_DIR . $timestamp . ".site.tar.gz " . ROOT;
+    exec($cmd, $output, $return_var);
+    return $return_var === 0;
 }
 
 function loadBackupDB(string $file): bool
