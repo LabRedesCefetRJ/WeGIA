@@ -43,6 +43,7 @@ try {
 
   if (!isset($_SESSION['funcionario'])) {
     header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&id_funcionario=' . urlencode($idFuncionario));
+    exit();
   } else {
     $func = $_SESSION['funcionario'];
     unset($_SESSION['funcionario']);
@@ -1062,6 +1063,7 @@ try {
                     if (value.length > 11) value = value.substring(0, 11);
                     input.value = value.replace(/(\d{7})(\d{4})/, '$1/$2');
                   }
+
                 </script>
                 <div id="outros" class="tab-pane">
                   <section class="panel">
@@ -1081,7 +1083,7 @@ try {
                           <div class="col-md-6">
                             <input type="text" id="pis" name="pis" class="form-control" maxlength="14"
                               placeholder="123.45678.91-0"
-                              oninput="formatPIS(this)" required>
+                              oninput="formatPIS(this)">
                             <small>Formato: 123.45678.91-0</small>
                           </div>
                         </div>
@@ -1091,7 +1093,7 @@ try {
                           <div class="col-md-6">
                             <input type="text" id="ctps" name="ctps" class="form-control" maxlength="12"
                               placeholder="1234567/8910"
-                              oninput="formatCTPS(this)" required>
+                              oninput="formatCTPS(this)">
                             <small>Formato: 1234567/8910</small>
                           </div>
                         </div>
@@ -1110,8 +1112,7 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="titulo_eleitor" id="titulo_eleitor" class="form-control"
                               pattern="\d{12}" maxlength="12" placeholder="123456789012"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                              required>
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                             <small>Formato: 123456789012</small>
                           </div>
                         </div>
@@ -1122,8 +1123,7 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="zona_eleitoral" id="zona_eleitoral" class="form-control"
                               pattern="\d{3}" maxlength="3" placeholder="123"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                              required>
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                             <small>Formato: 123</small>
                           </div>
                         </div>
@@ -1134,8 +1134,7 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="secao_titulo_eleitor" id="secao_titulo_eleitor" class="form-control"
                               pattern="\d{4}" maxlength="4" placeholder="1234"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                              required>
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
                             <small>Formato: 1234</small>
                           </div>
                         </div>
@@ -1163,17 +1162,17 @@ try {
                         </div>
 
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Data de Admissão</label>
+                          <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_admissao" id="data_admissao" max=<?php echo date('Y-m-d'); ?>>
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_admissao" id="data_admissao" max=<?php echo date('Y-m-d'); ?> required>
                           </div>
 
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" style='text-align: right; margin-top: 10px;' for="situacao">Situação</label>
+                          <label class="col-md-3 control-label" style='text-align: right; margin-top: 10px;' for="situacao">Situação<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="situacao" id="situacao">
-                              <option selected disabled>Selecionar</option>
+                            <select class="form-control input-lg mb-md" name="situacao" id="situacao" required>
+                              <option value="" selected disabled>Selecionar</option>
                               <?php
                               foreach ($situacao as $row) {
                                 echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
@@ -1184,10 +1183,10 @@ try {
                           <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;' for="inputSuccess">Cargo</label>
+                          <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;' for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="cargo" id="cargo">
-                              <option selected disabled>Selecionar</option>
+                            <select class="form-control input-lg mb-md" name="cargo" id="cargo" required>
+                              <option value="" selected disabled>Selecionar</option>
                               <?php
                               foreach ($cargo as $row) {
                                 // esconde a opção "Administrador" se o usuário logado não for adm
