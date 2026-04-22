@@ -1107,6 +1107,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `email` VARCHAR(256) NULL DEFAULT NULL,
   `valor_periodo` DECIMAL(10,2) NULL DEFAULT NULL,
   `data_referencia` DATE NULL DEFAULT NULL,
+  `auto_status_contribuicoes` TINYINT(1) NOT NULL DEFAULT 1,
   UNIQUE INDEX (`id_pessoa` ASC),
   PRIMARY KEY (`id_socio`),
   INDEX `fk_socio_socio_status1_idx` (`id_sociostatus` ASC),

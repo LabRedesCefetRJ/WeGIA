@@ -107,11 +107,15 @@
 								<div class="col-md-8">
 									<select id="status">
 										<option value="x">Todas as Opções</option>
-										<option value="0">Ativos</option>
-										<option value="1">Inativos</option>
-										<option value="2">Inadimplentes</option>
-										<option value="3">Inativos temporariamente</option>
-										<option value="4">Sem informações de status</option>
+										<?php
+										$stmt_status = $conexao->prepare("SELECT id_sociostatus, status FROM socio_status ORDER BY id_sociostatus");
+										$stmt_status->execute();
+										$statuses = $stmt_status->get_result();
+										while ($row_status = $statuses->fetch_assoc()) {
+											$selected = ($row_status['id_sociostatus'] == $status) ? 'selected' : '';
+											echo "<option value=" . htmlspecialchars($row_status['id_sociostatus']) . " $selected>" . htmlspecialchars($row_status['status']) . "</option>";
+										}
+										?>
 									</select>
 								</div>
 							</div>
