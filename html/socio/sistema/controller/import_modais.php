@@ -1,14 +1,5 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-  require_once($config_path);
-} else {
-  while (true) {
-    $config_path = "../" . $config_path;
-    if (file_exists($config_path)) break;
-  }
-  require_once($config_path);
-}
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'config.php';
 
 try {
   $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -80,17 +71,24 @@ try {
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Data de nascimento</label>
-                  <input type="date" class="form-control" id="data_nasc" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d')?>">
+                  <input type="date" class="form-control" id="data_nasc" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d') ?>">
                 </div>
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="pessoa">Status</label>
-                  <select class="form-control" name="status" id="status">
-                    <option value="0">Ativo</option>
-                    <option value="1">Inativo</option>
-                    <option value="2">Inadimplente</option>
-                    <option value="3">Inativo temporariamente</option>
+                  <select class="form-control" name="status" id="status" required>
+                    <option value="" disabled selected>Selecionar Status</option>
+                    <?php
+                    if ($conexao) {
+                      $stmt = $conexao->prepare("SELECT id_sociostatus, status FROM socio_status ORDER BY id_sociostatus");
+                      $stmt->execute();
+                      $statuses = $stmt->get_result();
+                      while ($row = $statuses->fetch_assoc()) {
+                        echo "<option value=" . htmlspecialchars($row['id_sociostatus']) . ">" . htmlspecialchars($row['status']) . "</option>";
+                      }
+                    }
+                    ?>
                   </select>
                 </div>
                 <div class="form-group col-xs-6" style="margin-top: 1.8em;">
@@ -105,7 +103,7 @@ try {
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="valor">Data referência (ínicio contribuição)</label>
-                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" min="1900-01-01" max="<?= date('Y-m-d')?>">
+                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" min="1900-01-01" max="<?= date('Y-m-d') ?>">
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Valor/período em R$</label>
@@ -244,10 +242,10 @@ try {
                     //print_r($socios);
                     $opcoesSocio = "";
 
-                    foreach($socios as $socio){
+                    foreach ($socios as $socio) {
                       $idSocio = $socio->getId();
                       $nomeSocio = $socio->getNome();
-                      $opcoesSocio .= "<option value=\"$idSocio\">".htmlspecialchars($nomeSocio)."</option>";
+                      $opcoesSocio .= "<option value=\"$idSocio\">" . htmlspecialchars($nomeSocio) . "</option>";
                     }
 
                     echo $opcoesSocio;
@@ -515,7 +513,7 @@ try {
                   $email = htmlspecialchars($resultado['email']);
                   $telefone = htmlspecialchars($resultado['telefone']);
                   $data_nascimento = explode('-', $resultado['data_nascimento']);
-                  $dataFormatada = $data_nascimento['2'].'/'.$data_nascimento['1'];
+                  $dataFormatada = $data_nascimento['2'] . '/' . $data_nascimento['1'];
                   $idade = intval($ano_atual - $data_nascimento['0']);
                   if ($resultado['logradouro'] == "") {
                     $endereco = "Endereço não informado/incompleto.";

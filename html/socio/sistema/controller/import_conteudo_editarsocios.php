@@ -1,6 +1,22 @@
 <?php
-$resultado = mysqli_query($conexao, "SELECT * FROM socio AS s LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa LEFT JOIN socio_tipo st ON st.id_sociotipo = s.id_sociotipo WHERE id_socio = $id_socio");
+// Sanitizar e validar $id_socio como inteiro para prevenir SQL Injection
+if (!isset($id_socio) || !is_numeric($id_socio)) {
+  die("ID de sócio inválido");
+}
+
+$id_socio = (int)$id_socio;
+
+// Usar prepared statement para prevenir SQL Injection
+$stmt = $conexao->prepare("SELECT * FROM socio AS s LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa LEFT JOIN socio_tipo st ON st.id_sociotipo = s.id_sociotipo WHERE s.id_socio = ?");
+$stmt->bind_param("i", $id_socio);
+$stmt->execute();
+$resultado = $stmt->get_result();
 $registro = mysqli_fetch_array($resultado);
+
+if (!$registro) {
+  die("Sócio não encontrado");
+}
+
 $nome_socio = $registro['nome'];
 $email = $registro['email'];
 $telefone = $registro['telefone'];
@@ -65,7 +81,7 @@ $valor_periodo = $registro['valor_periodo'];
           </div>
           <div class="box-body">
             <form id="frm_editar_socio" method="POST">
-              <input type="hidden" id="id_socio" name="id_socio" value="<?= htmlspecialchars($id_socio)?>">
+              <input type="hidden" id="id_socio" name="id_socio" value="<?= htmlspecialchars($id_socio) ?>">
               <div class="row">
                 <div class="form-group mb-2 col-xs-5">
                   <label for="nome_cliente">Nome sócio</label>
@@ -126,18 +142,23 @@ $valor_periodo = $registro['valor_periodo'];
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Data de nascimento</label>
-                  <input type="date" class="form-control" id="data_nasc" value="<?php echo htmlspecialchars($data_nasc); ?>" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d')?>">
+                  <input type="date" class="form-control" id="data_nasc" value="<?php echo htmlspecialchars($data_nasc); ?>" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d') ?>">
                 </div>
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="pessoa">Status</label>
-                  <select class="form-control" name="status" id="status">
-                    <option value="0">Ativo</option>
-                    <option value="1">Inativo</option>
-                    <option value="2">Inadimplente</option>
-                    <option value="3">Inativo temporariamente</option>
-                    <option value="4">Sem informação</option>
+                  <select class="form-control" name="status" id="status" required>
+                    <option value="" disabled>Selecionar Status</option>
+                    <?php
+                    $stmt_status = $conexao->prepare("SELECT id_sociostatus, status FROM socio_status ORDER BY id_sociostatus");
+                    $stmt_status->execute();
+                    $statuses = $stmt_status->get_result();
+                    while ($row_status = $statuses->fetch_assoc()) {
+                      $selected = ($row_status['id_sociostatus'] == $status) ? 'selected' : '';
+                      echo "<option value=" . htmlspecialchars($row_status['id_sociostatus']) . " $selected>" . htmlspecialchars($row_status['status']) . "</option>";
+                    }
+                    ?>
                   </select>
                 </div>
                 <div class="form-group col-xs-6" style="margin-top: 1.8em;">
@@ -152,7 +173,7 @@ $valor_periodo = $registro['valor_periodo'];
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="valor">Data referência (ínicio contribuição)</label>
-                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" value="<?php echo htmlspecialchars($data_referencia); ?>" min="1900-01-01" max="<?= date('Y-m-d')?>">
+                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" value="<?php echo htmlspecialchars($data_referencia); ?>" min="1900-01-01" max="<?= date('Y-m-d') ?>">
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Valor/período em R$</label>
