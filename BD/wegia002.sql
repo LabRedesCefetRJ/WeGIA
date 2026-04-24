@@ -288,3 +288,37 @@ INSERT INTO `almoxarife` (`id_almoxarife`, `id_funcionario`, `id_almoxarifado`, 
 
 INSERT INTO `saude_medicos` (`id_medico`, `crm`, `nome`) VALUES ('0', '123456/RJ', 'Sem médico definido');
 UPDATE `saude_medicos` SET `id_medico` = '0' WHERE `saude_medicos`.`id_medico` = 1;
+
+
+-- ----------------------------------------------------
+-- MÓDULO PROJETOS
+-- ----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Inserts iniciais projeto_tipo
+-- -----------------------------------------------------
+INSERT IGNORE INTO `wegia`.`projeto_tipo` (`descricao`) VALUES
+('Esportivo'),
+('Educacional'),
+('Social');
+
+
+-- -----------------------------------------------------
+-- Inserts iniciais projeto_funcao
+-- -----------------------------------------------------
+INSERT IGNORE INTO `wegia`.`projeto_funcao` (`descricao`) VALUES
+('Gestor'),
+('Professor'),
+('Assistente Social'),
+('Monitor Social');
+
+INSERT IGNORE INTO `wegia`.`projeto_local` (`nome`, `descricao`) VALUES 
+('Local não definido', 'Sem descrição');
+
+INSERT IGNORE INTO `wegia`.`projeto_status` (`descricao`) VALUES
+('Ativo'), 
+('Inativo');
+
+INSERT IGNORE INTO `wegia`.`projeto_atendido_status` (`descricao`) VALUES
+('Ativo'), 
+('Inativo');
