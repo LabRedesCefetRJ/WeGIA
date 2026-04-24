@@ -118,7 +118,7 @@ session_start();
 							</a>
 							<ul class="nav nav-children">
 								<li>
-									<a href="<?= WWW ?>html/voluntario/cadastro_voluntario.php">
+									<a href="<?= WWW ?>html/voluntario/pre_cadastro_voluntario.php">
 										<span>Cadastrar Voluntário</span>
 									</a>
 								</li>

@@ -67,6 +67,7 @@ endif; ?>
                       <th>Sobrenome</th>
                       <th>CPF</th>
                       <th>Situação</th>
+                      <th>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -84,6 +85,7 @@ if (isset($_SESSION['voluntarios'])) {
       echo "<td>" . htmlspecialchars($vol['sobrenome']) . "</td>";
       echo "<td>" . htmlspecialchars($vol['cpf']) . "</td>";
       echo "<td>" . htmlspecialchars($vol['situacao']) . "</td>";
+      echo "<td><a href='profile_voluntario.php?id_voluntario=" . urlencode($vol['id_voluntario']) . "'><i class='fas fa-user-edit'></i></a></td>";
       echo "</tr>";
     }
   }
