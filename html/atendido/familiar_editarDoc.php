@@ -26,6 +26,19 @@ $data_expedicao = trim($_POST['data_expedicao']);
         $data_expedicao= null;
     }*/
 
+if ($cpf === '') {
+    $cpf = null;
+}
+if ($rg === '') {
+    $rg = null;
+}
+if ($orgao_emissor === '') {
+    $orgao_emissor = null;
+}
+if ($data_expedicao === '') {
+    $data_expedicao = null;
+}
+
 define("ALTERAR_DOC", "UPDATE pessoa SET orgao_emissor=:orgao_emissor, data_expedicao=:data_expedicao, registro_geral=:registro_geral, cpf=:cpf where id_pessoa = :id");
 
 if (!$id || !is_numeric($id)) {
@@ -33,14 +46,9 @@ if (!$id || !is_numeric($id)) {
     exit('Erro, o id da pessoa fornecido não é válido');
 }
 
-if (!$cpf || empty($cpf)) { //Fazer posteriormente uma validação do formato do CPF quando essa funcionalidade for implementada na classe Util.php
-    http_response_code();
-    exit('Erro, o CPF fornecido está vazio.');
-}
-
-if (!$rg || !$orgao_emissor || !$data_expedicao || empty($rg) || empty($orgao_emissor) || empty($data_expedicao)) { //Fazer posteriormente uma validação do formato do RG quando essa funcionalidade for implementada na classe Util.php
+if ($cpf && !Util::validarCPF($cpf)) {
     http_response_code(400);
-    exit('Erro, estão faltando informações necessárias para realizar a alteração do RG.');
+    exit('Erro, o CPF fornecido não é válido.');
 }
 
 if ($data_expedicao && $id) {

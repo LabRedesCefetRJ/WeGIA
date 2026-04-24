@@ -36,7 +36,7 @@ $pessoa = trim($_REQUEST['pessoa']);
 $contribuinte = trim($_REQUEST['contribuinte']);
 $status = trim($_REQUEST['status']);
 $email = trim($_REQUEST['email']);
-$tag = trim($_REQUEST['tag']);
+$tag = trim($_REQUEST['tags'] ?? $_REQUEST['tag'] ?? '');
 $telefone = trim($_REQUEST['telefone']);
 $cpf_cnpj = trim($_REQUEST['cpf_cnpj']);
 $rua = trim($_REQUEST['rua']);
@@ -50,6 +50,7 @@ $cep = trim($_REQUEST['cep']);
 $data_referencia = trim($_REQUEST['data_referencia']);
 $valor_periodo = trim($_REQUEST['valor_periodo']);
 $tipo_contribuicao = trim($_REQUEST['tipo_contribuicao']);
+$auto_status_contribuicoes = isset($_REQUEST['auto_status_contribuicoes']) && !empty($_REQUEST['auto_status_contribuicoes']) ? 1 : 0;
 
 if (!$socio_nome || empty($socio_nome)) {
     http_response_code(400);
@@ -220,8 +221,8 @@ if ($stmt->execute()) {
             break;
     }
 
-    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia, id_sociotag) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt2->bind_param('iiisdss', $id_pessoa, $status, $id_sociotipo, $email, $valor_periodo, $data_referencia, $tag);
+    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia, id_sociotag, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt2->bind_param('iiisdssi', $id_pessoa, $status, $id_sociotipo, $email, $valor_periodo, $data_referencia, $tag, $auto_status_contribuicoes);
     $stmt2->execute();
 
     if ($stmt2->affected_rows > 0) $cadastrado = true;

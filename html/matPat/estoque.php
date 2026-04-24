@@ -294,7 +294,7 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 								<option selected value="todos">Todos</option>
 								<?php
 								$pdo = Conexao::connect();
-								$res = $pdo->query("select descricao_almoxarifado, id_almoxarifado from almoxarifado;");
+								$res = $pdo->query("select descricao_almoxarifado, id_almoxarifado from almoxarifado WHERE ativo = 1;");
 								$almoxarifado = $res->fetchAll(PDO::FETCH_ASSOC);
 								$almoxarifado = JSON_decode(filtrarAlmoxarifado($_SESSION['id_pessoa'], JSON_encode($almoxarifado)));
 								foreach ($almoxarifado as $value) {

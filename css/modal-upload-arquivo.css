@@ -1,0 +1,93 @@
+.upload-modal .modal-title {
+  font-weight: 500;
+  color: #fff;
+}
+
+.upload-modal .modal-header {
+  background-color: #337ab7;
+  border-bottom-color: #2e6da4;
+}
+
+.upload-modal .modal-header .close,
+.upload-modal .modal-header .close span {
+  color: #fff;
+  opacity: 1;
+  text-shadow: none;
+}
+
+.upload-modal .modal-header .close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-top: -6px;
+  border-radius: 999px;
+  background-color: transparent;
+  filter: brightness(1);
+  transition: background-color 0.18s ease, filter 0.18s ease;
+}
+
+.upload-modal .modal-header .close:hover,
+.upload-modal .modal-header .close:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+  filter: brightness(1.08);
+  outline: none;
+}
+
+.upload-modal .modal-header .close:hover span,
+.upload-modal .modal-header .close:focus span {
+  filter: brightness(1.08);
+}
+
+.upload-modal .modal-body {
+  padding: 20px 25px 10px;
+}
+
+.upload-modal .form-group {
+  text-align: left;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 18px;
+}
+
+.upload-modal .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.upload-modal .control-label {
+  display: block;
+  text-align: left;
+  margin-bottom: 6px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.upload-modal .input-group {
+  width: 100%;
+}
+
+.upload-modal .input-group-btn .btn {
+  height: 34px;
+  padding: 6px 12px;
+}
+
+.upload-modal .input-group-btn .btn .fa-plus {
+  color: #337ab7 !important;
+}
+
+.upload-modal input[type="file"].form-control {
+  height: auto;
+  min-height: 34px;
+  padding: 4px 12px;
+  line-height: 1.4;
+}
+
+.upload-modal .help-block {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+.upload-modal .modal-footer .glyphicon-upload {
+  margin-right: 6px;
+}
