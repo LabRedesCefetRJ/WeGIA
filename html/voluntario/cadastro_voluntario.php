@@ -23,6 +23,8 @@ if (isset($_GET['msg'])) {
     $erro = $_GET['msg'];
 }
 
+// Teste da Issue #1587
+
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
 require_once ROOT . '/classes/Csrf.php';
