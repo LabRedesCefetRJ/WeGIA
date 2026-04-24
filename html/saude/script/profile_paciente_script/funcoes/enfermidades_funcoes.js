@@ -1,44 +1,150 @@
-//Essa função serve para adicionar um novo tipo de comorbidade
-async function adicionar_enfermidade() {
-    const url = `../../controle/control.php`;
+const formAdicionarEnfermidade = document.getElementById("EnfermidadeForm");
 
-    let nome_enfermidade = window.prompt("Insira o nome da enfermidade:");
-    let cid_enfermidade = window.prompt("Insira o CID da enfermidade:");
+if (formAdicionarEnfermidade) {
+    formAdicionarEnfermidade.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await adicionar_enfermidade();
+    });
+}
 
-    if (!nome_enfermidade || !cid_enfermidade) {
+function abrirModalEnfermidade() {
+    const form = document.getElementById("EnfermidadeForm");
+
+    if (form) {
+        form.reset();
+    }
+
+    limparErroModalEnfermidade();
+    $("#enfermidadeFormModal").one("shown.bs.modal", function() {
+        const nomeEnfermidadeInput = document.getElementById("nomeEnfermidadeModal");
+        if (nomeEnfermidadeInput) {
+            nomeEnfermidadeInput.focus();
+        }
+    });
+    $("#enfermidadeFormModal").modal("show");
+}
+
+let timeoutMensagemErroEnfermidade = null;
+let timeoutFecharAnimacaoErroEnfermidade = null;
+
+function exibirErroModalEnfermidade(mensagem) {
+    const alerta = document.getElementById("enfermidadeFormError");
+    const texto = document.getElementById("enfermidadeFormErrorText");
+
+    if (!alerta || !texto) {
         return;
     }
 
-   const dados = {
-    cid: cid_enfermidade,
-    nome: nome_enfermidade,
-    nomeClasse: encodeURIComponent("EnfermidadeControle"),
-    metodo: encodeURIComponent("adicionarEnfermidade")
-   }
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
 
-   try{
+    if (timeoutMensagemErroEnfermidade) {
+        clearTimeout(timeoutMensagemErroEnfermidade);
+    }
+
+    if (timeoutFecharAnimacaoErroEnfermidade) {
+        clearTimeout(timeoutFecharAnimacaoErroEnfermidade);
+        timeoutFecharAnimacaoErroEnfermidade = null;
+    }
+
+    timeoutMensagemErroEnfermidade = setTimeout(() => {
+        limparErroModalEnfermidade();
+    }, 10000);
+}
+
+function limparErroModalEnfermidade() {
+    const alerta = document.getElementById("enfermidadeFormError");
+    const texto = document.getElementById("enfermidadeFormErrorText");
+
+    if (!alerta || !texto) {
+        return;
+    }
+
+    alerta.classList.remove("is-visible");
+
+    if (timeoutMensagemErroEnfermidade) {
+        clearTimeout(timeoutMensagemErroEnfermidade);
+        timeoutMensagemErroEnfermidade = null;
+    }
+
+    if (timeoutFecharAnimacaoErroEnfermidade) {
+        clearTimeout(timeoutFecharAnimacaoErroEnfermidade);
+    }
+
+    timeoutFecharAnimacaoErroEnfermidade = setTimeout(() => {
+        alerta.style.display = "none";
+        texto.textContent = "";
+        timeoutFecharAnimacaoErroEnfermidade = null;
+    }, 350);
+}
+
+//Essa função serve para adicionar um novo tipo de comorbidade
+async function adicionar_enfermidade() {
+    const url = "../../controle/control.php";
+    const nomeEnfermidadeInput = document.getElementById("nomeEnfermidadeModal");
+    const cidEnfermidadeInput = document.getElementById("cidEnfermidadeModal");
+    const nome_enfermidade = nomeEnfermidadeInput ? nomeEnfermidadeInput.value.trim() : "";
+    const cid_enfermidade = cidEnfermidadeInput ? cidEnfermidadeInput.value.trim().toUpperCase() : "";
+
+    if (!nome_enfermidade || !cid_enfermidade) {
+        exibirErroModalEnfermidade("Preencha o nome e o CID da comorbidade.");
+        return;
+    }
+
+    limparErroModalEnfermidade();
+
+    const dados = {
+        cid: cid_enfermidade,
+        nome: nome_enfermidade,
+        nomeClasse: "EnfermidadeControle",
+        metodo: "adicionarEnfermidade"
+    };
+
+    try {
         const resposta = await fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
+                "Accept": "application/json"
             },
             body: JSON.stringify(dados)
-        })
-        if(resposta.ok){
-            await gerarEnfermidade();
-            return;
-        }else{
-            const data = await resposta.json();
-            const mensagemErro = Object.prototype.hasOwnProperty.call(data, "erro") ? data.erro : `Algum erro ocorreu ao tentar adicionar uma nova enfermidade`;
-            throw new Error(mensagemErro);
-        }
-   }catch(e){
-    console.error('Erro ao buscar enfermidades:', e.message);
-    window.alert(e.message);
-    return;
-   }
+        });
 
-   
+        const contentType = resposta.headers.get("content-type") || "";
+        let resultado = null;
+
+        if (resposta.redirected) {
+            throw new Error("Você não tem permissão para adicionar comorbidades.");
+        }
+
+        if (contentType.indexOf("application/json") === -1) {
+            throw new Error("Não foi possível processar a resposta do servidor.");
+        }
+
+        try {
+            resultado = await resposta.json();
+        } catch (error) {
+            throw new Error("Não foi possível processar a resposta do servidor.");
+        }
+
+        if (!resposta.ok || resultado.status !== "sucesso") {
+            throw new Error(resultado.mensagem || resultado.erro || "Erro ao cadastrar comorbidade.");
+        }
+
+        if (formAdicionarEnfermidade) {
+            formAdicionarEnfermidade.reset();
+        }
+
+        $("#enfermidadeFormModal").modal("hide");
+        const idSelecionado = resultado.enfermidade && resultado.enfermidade.id_CID ? resultado.enfermidade.id_CID : null;
+        await gerarEnfermidade(idSelecionado);
+    } catch (error) {
+        console.error("Erro ao cadastrar comorbidade:", error);
+        exibirErroModalEnfermidade(error.message || "Erro ao cadastrar comorbidade.");
+    }
 }
 
 //Essa função serve para retornar a lista de tipos de enfermidade
@@ -64,10 +170,12 @@ async function listarTodasAsEnfermidades() {
     }
 }
 
+const FILTRO_COMORBIDADES_PADRAO = "ativo";
+
 //Essa função serve para gerar as opçoes de enfermidades no select de tipos de enfermidade
-async function gerarEnfermidade() {
+async function gerarEnfermidade(idSelecionado = null) {
     const situacoes = await listarTodasAsEnfermidades();
-    const enfermidadesDoPaciente = await buscarEnfermidadesPorIDFichaMedica();
+    const enfermidadesDoPaciente = await buscarEnfermidadesAtivasPorIDFichaMedica();
     const listaSituacoes = Array.isArray(situacoes) ? situacoes : [];
     const listaEnfermidadesPaciente = Array.isArray(enfermidadesDoPaciente) ? enfermidadesDoPaciente : [];
     const idsEnfermidadesDoPaciente = new Set(
@@ -96,16 +204,20 @@ async function gerarEnfermidade() {
         option.textContent = item.descricao;
         select.appendChild(option);
     }
+
+    if (idSelecionado !== null && idSelecionado !== undefined && idSelecionado !== "") {
+        select.value = String(idSelecionado);
+    }
 }
 
-//Essa função serve para buscar e retornar todas as enfermidades ativas ligadas a uma ficha médica determinada pelo id_fichamedica
-async function buscarEnfermidadesPorIDFichaMedica() {
+//Essa função serve para buscar e retornar as enfermidades ligadas a uma ficha médica determinada pelo id_fichamedica
+async function buscarEnfermidadesPorIDFichaMedica(status = "todos") {
     const params = new URLSearchParams(window.location.search);
-    const id_fichamedica = params.get("id_fichamedica")
+    const id_fichamedica = params.get("id_fichamedica");
     const nomeClasse = 'EnfermidadeControle';
-    const metodo = 'getEnfermidadesAtivasPorFichaMedica';
+    const metodo = 'getEnfermidadesPorFichaMedica';
 
-    const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}&id_fichamedica=${encodeURIComponent(id_fichamedica)}`;
+    const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}&id_fichamedica=${encodeURIComponent(id_fichamedica)}&status=${encodeURIComponent(status)}`;
 
     try {
         const response = await fetch(url);
@@ -121,6 +233,11 @@ async function buscarEnfermidadesPorIDFichaMedica() {
         console.error('Erro ao buscar enfermidades:', error);
         return [];
     }
+}
+
+//Essa função serve para buscar e retornar as enfermidades ativas ligadas a uma ficha médica determinada pelo id_fichamedica
+async function buscarEnfermidadesAtivasPorIDFichaMedica() {
+    return buscarEnfermidadesPorIDFichaMedica("ativo");
 }
 
 let timeoutMensagemCadastroEnfermidade = null;
@@ -202,6 +319,34 @@ function ocultarMensagemCadastroEnfermidade() {
     }, 350);
 }
 
+function aplicarFiltroComorbidades() {
+    const filtro = document.getElementById("filtro-comorbidades");
+    const valorFiltro = filtro ? filtro.value : FILTRO_COMORBIDADES_PADRAO;
+    const linhas = document.querySelectorAll("#doc-tab tr");
+    let totalVisivel = 0;
+
+    linhas.forEach((linha) => {
+        const status = linha.getAttribute("data-status");
+        const mostrar = valorFiltro === "todos" || status === valorFiltro;
+        linha.style.display = mostrar ? "" : "none";
+
+        if (mostrar) {
+            totalVisivel++;
+        }
+    });
+
+    const avisoSemResultados = document.getElementById("comorbidades-sem-resultados");
+    if (avisoSemResultados) {
+        avisoSemResultados.classList.toggle("hidden", totalVisivel > 0);
+    }
+}
+
+$(function() {
+    $("#filtro-comorbidades").on("change", function() {
+        aplicarFiltroComorbidades();
+    });
+});
+
 async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
     ev.preventDefault();
     const selectStatus = document.getElementById("intStatus")
@@ -238,7 +383,7 @@ async function cadastrarEnfermidade(ev) { // Torna a função assíncrona
         const data = await response.json();
         
         if (!response.ok) {
-            const mensagemErro = Object.prototype.hasOwnProperty.call(data, "erro") ? data.erro : "Nao foi possivel cadastrar a comorbidade.";
+            const mensagemErro = Object.prototype.hasOwnProperty.call(data, "erro") ? data.erro : "Não foi possível cadastrar a comorbidade.";
             mostrarMensagemCadastroEnfermidade(mensagemErro, "danger");
             return;
         }
@@ -263,7 +408,7 @@ async function gerarEnfermidadesDoPaciente() {
         tabela.removeChild(tabela.firstChild);
     }
 
-    const enfermidades = await buscarEnfermidadesPorIDFichaMedica();
+    const enfermidades = await buscarEnfermidadesPorIDFichaMedica("todos");
 
     for (const item of enfermidades) {
         if (!item.descricao || !item.data_diagnostico) {
@@ -272,6 +417,8 @@ async function gerarEnfermidadesDoPaciente() {
         }
 
         const tr = document.createElement("tr");
+        const enfermidadeAtiva = Number(item.status) === 1;
+        tr.setAttribute("data-status", enfermidadeAtiva ? "ativo" : "inativo");
 
         // Descrição
         const tdDescricao = document.createElement("td");
@@ -283,33 +430,44 @@ async function gerarEnfermidadesDoPaciente() {
         tdData.textContent = formatarDataBr(item.data_diagnostico);
         tr.appendChild(tdData);
 
+        // Status
+        const tdStatus = document.createElement("td");
+        tdStatus.textContent = enfermidadeAtiva ? "Ativa" : "Inativa";
+        tr.appendChild(tdStatus);
+
         // Ações
         const tdAcoes = document.createElement("td");
         tdAcoes.style.verticalAlign = "middle";
         tdAcoes.style.textAlign = "center";
 
-        const linkRemover = document.createElement("a");
-        linkRemover.href = "#";
-        linkRemover.title = "Inativar";
-        linkRemover.addEventListener("click", (e) => {
-            e.preventDefault();
-            removerEnfermidade(item.id_enfermidade);
-        });
+        if (enfermidadeAtiva) {
+            const linkRemover = document.createElement("a");
+            linkRemover.href = "#";
+            linkRemover.title = "Inativar";
+            linkRemover.addEventListener("click", (e) => {
+                e.preventDefault();
+                removerEnfermidade(item.id_enfermidade);
+            });
 
-        const botao = document.createElement("button");
-        botao.className = "btn btn-dark";
+            const botao = document.createElement("button");
+            botao.className = "btn btn-dark";
 
-        const icone = document.createElement("i");
-        icone.className = "glyphicon glyphicon-remove";
+            const icone = document.createElement("i");
+            icone.className = "glyphicon glyphicon-remove";
 
-        botao.appendChild(icone);
-        linkRemover.appendChild(botao);
-        tdAcoes.appendChild(linkRemover);
+            botao.appendChild(icone);
+            linkRemover.appendChild(botao);
+            tdAcoes.appendChild(linkRemover);
+        } else {
+            tdAcoes.textContent = "-";
+        }
+
         tr.appendChild(tdAcoes);
 
         tabela.appendChild(tr);
     }
 
+    aplicarFiltroComorbidades();
     await gerarEnfermidade();
 }
 

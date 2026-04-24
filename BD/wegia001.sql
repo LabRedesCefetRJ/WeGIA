@@ -34,6 +34,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `wegia`.`almoxarifado` (
   `id_almoxarifado` INT(11) NOT NULL AUTO_INCREMENT,
   `descricao_almoxarifado` VARCHAR(240) NOT NULL,
+  `ativo` TINYINT(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id_almoxarifado`))
 ENGINE = InnoDB;
 
@@ -304,7 +305,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`almoxarife` (
     REFERENCES `wegia`.`funcionario` (`id_funcionario`),
   CONSTRAINT `almoxarife_ibfk_2`
     FOREIGN KEY (`id_almoxarifado`)
-    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`))
+    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT)
 ENGINE = InnoDB;
 
 
@@ -451,6 +454,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`entrada` (
   `data` DATE NULL DEFAULT NULL,
   `hora` TIME NULL DEFAULT NULL,
   `valor_total` DECIMAL(10,2) NULL DEFAULT NULL,
+  `ativo` TINYINT(1) DEFAULT '1',
   PRIMARY KEY (`id_entrada`),
   INDEX `id_origem` (`id_origem` ASC),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),
@@ -461,7 +465,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`entrada` (
     REFERENCES `wegia`.`origem` (`id_origem`),
   CONSTRAINT `entrada_ibfk_2`
     FOREIGN KEY (`id_almoxarifado`)
-    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`),
+    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT `entrada_ibfk_3`
     FOREIGN KEY (`id_tipo`)
     REFERENCES `wegia`.`tipo_entrada` (`id_tipo`),
@@ -499,7 +505,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`produto` (
   INDEX `id_unidade` (`id_unidade` ASC),
   CONSTRAINT `produto_ibfk_1`
     FOREIGN KEY (`id_categoria_produto`)
-    REFERENCES `wegia`.`categoria_produto` (`id_categoria_produto`),
+    REFERENCES `wegia`.`categoria_produto` (`id_categoria_produto`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT `produto_ibfk_2`
     FOREIGN KEY (`id_unidade`)
     REFERENCES `wegia`.`unidade` (`id_unidade`))
@@ -615,6 +623,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saida` (
   `data` DATE NULL DEFAULT NULL,
   `hora` TIME NULL DEFAULT NULL,
   `valor_total` DECIMAL(10,2) NULL DEFAULT NULL,
+  `ativo` TINYINT(1) DEFAULT '1',
   PRIMARY KEY (`id_saida`),
   INDEX `id_destino` (`id_destino` ASC),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),
@@ -625,7 +634,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saida` (
     REFERENCES `wegia`.`destino` (`id_destino`),
   CONSTRAINT `saida_ibfk_2`
     FOREIGN KEY (`id_almoxarifado`)
-    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`),
+    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT `saida_ibfk_3`
     FOREIGN KEY (`id_tipo`)
     REFERENCES `wegia`.`tipo_saida` (`id_tipo`),
@@ -1096,6 +1107,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `email` VARCHAR(256) NULL DEFAULT NULL,
   `valor_periodo` DECIMAL(10,2) NULL DEFAULT NULL,
   `data_referencia` DATE NULL DEFAULT NULL,
+  `auto_status_contribuicoes` TINYINT(1) NOT NULL DEFAULT 1,
   UNIQUE INDEX (`id_pessoa` ASC),
   PRIMARY KEY (`id_socio`),
   INDEX `fk_socio_socio_status1_idx` (`id_sociostatus` ASC),

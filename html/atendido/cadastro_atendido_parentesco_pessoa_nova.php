@@ -21,7 +21,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 try {
 	$cpfDigitado = filter_var($_SESSION['cpf_digitado'], FILTER_SANITIZE_SPECIAL_CHARS);
 
-	if (!$cpfDigitado || !Util::validarCPF($cpfDigitado)) {
+	if ($cpfDigitado && !Util::validarCPF($cpfDigitado)) {
 		throw new InvalidArgumentException('O CPF informado não é válido.', 400);
 	}
 
@@ -106,7 +106,7 @@ $parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
 	<!-- jquery functions -->
 	<script>
 		function validarCPF(strCPF) {
-			if (!testaCPF(strCPF)) {
+			if (strCPF && !testaCPF(strCPF)) {
 				$('#cpfInvalido').show();
 				document.getElementById("enviar").disabled = true;
 			} else {
@@ -229,9 +229,9 @@ $parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
 											<hr class="dotted short">
 											<h4 class="mb-xlg doch4">Documentação</h4>
 											<div class="form-group">
-												<label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
+												<label class="col-md-3 control-label" for="cpf">Número do CPF</label>
 												<div class="col-md-6">
-													<input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?php echo $cpfDigitado; ?>" readonly>
+													<input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?php echo $cpfDigitado; ?>">
 												</div>
 											</div>
 											<div class="form-group">

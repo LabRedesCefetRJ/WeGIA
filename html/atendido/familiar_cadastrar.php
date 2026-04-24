@@ -25,7 +25,7 @@ $id_parentesco = filter_input(INPUT_POST, 'id_parentesco', FILTER_SANITIZE_NUMBE
 $idatendido = filter_input(INPUT_POST, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
 
 $util = new Util();
-if(!$util->validarCPF($cpf)){
+if($cpf && !$util->validarCPF($cpf)){
     http_response_code(400);
     echo json_encode(['erro' => 'O CPF informado não é válido.']);
     exit();

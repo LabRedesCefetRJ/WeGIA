@@ -1,23 +1,21 @@
 <?php
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
 
-session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit();
 }
 
 // Verifica Permissão do Usuário
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 11, 7);
 
-
-require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
-extract($_POST);
 $id_doc = $_POST["id_doc"] ?? null;
 $action = $_POST["action"] ?? null;
 $g_id_doc = $_GET["id_doc"] ?? null;
 $g_action = $_GET["action"] ?? null;
-
 
 define("TYPEOF_EXTENSION", [
     'jpg' => 'image/jpg',
@@ -29,9 +27,14 @@ define("TYPEOF_EXTENSION", [
     'odp' => 'application/odp',
 ]);
 
-if ($action == "download" || $g_action == "download") {
-    $sql = "SELECT extensao_arquivo, nome_arquivo, UNCOMPRESS(arquivo) AS arquivo FROM funcionario_dependentes_docs WHERE id_doc=:idDoc";
-    try {
+require_once "../../dao/Conexao.php";
+
+try {
+    $pdo = Conexao::connect();
+
+    if ($action == "download" || $g_action == "download") {
+        $sql = "SELECT extensao_arquivo, nome_arquivo, UNCOMPRESS(arquivo) AS arquivo FROM funcionario_dependentes_docs WHERE id_doc=:idDoc";
+
         $stmt = $pdo->prepare($sql);
 
         $stmt->bindParam(':idDoc', $g_id_doc);
@@ -44,15 +47,11 @@ if ($action == "download" || $g_action == "download") {
         ob_clean();
         flush();
         echo base64_decode($docdependente["arquivo"]);
-    } catch (PDOException $th) {
-        echo "[{'exception': ['$th'], 'action': ['post': '$action', 'get': '$g_action'], 'id_doc': ['post': '$id_doc', 'get': '$g_id_doc']}]";
-    }
-} else if ($action == "excluir" || $g_action == "excluir") {
-    $sql1 = "DELETE FROM funcionario_dependentes_docs WHERE id_doc=:idDoc";
+    } else if ($action == "excluir" || $g_action == "excluir") {
+        $sql1 = "DELETE FROM funcionario_dependentes_docs WHERE id_doc=:idDoc";
 
-    $sql2 = "SELECT doc.nome_docdependente AS descricao, ddoc.data, ddoc.id_doc FROM funcionario_dependentes_docs ddoc LEFT JOIN funcionario_docdependentes doc ON doc.id_docdependentes = ddoc.id_docdependentes WHERE ddoc.id_dependente=:idDependente";
-    
-    try {
+        $sql2 = "SELECT doc.nome_docdependente AS descricao, ddoc.data, ddoc.id_doc FROM funcionario_dependentes_docs ddoc LEFT JOIN funcionario_docdependentes doc ON doc.id_docdependentes = ddoc.id_docdependentes WHERE ddoc.id_dependente=:idDependente";
+
         $stmt1 = $pdo->prepare($sql1);
         $stmt1->bindParam(':idDoc', $id_doc);
         $stmt1->execute();
@@ -64,25 +63,15 @@ if ($action == "download" || $g_action == "download") {
         $docdependente = $stmt2->fetchAll(PDO::FETCH_ASSOC);
         $docdependente = json_encode($docdependente);
         echo $docdependente;
-    } catch (PDOException $th) {
-        echo "[{'exception': ['$th'], 'action': ['post': '$action', 'get': '$g_action'], 'id_doc': ['post': '$id_doc', 'get': '$g_id_doc']}]";
+    } else if ($action == "adicionar" || $g_action == "adicionar") {
+        $sql = [
+            "INSERT INTO funcionario_docdependentes (nome_docdependente) VALUES (:n);",
+            "SELECT * FROM funcionario_docdependentes;"
+        ];
     }
-} else if ($action = "adicionar" || $g_action == "adicionar") {
-    $sql = [
-        "INSERT INTO funcionario_docdependentes (nome_docdependente) VALUES (:n);",
-        "SELECT * FROM funcionario_docdependentes;"
-    ];
-    try {
-        $prep = $pdo->prepare($sql[0]);
-        $prep->bindValue(":n", $nome);
-        $prep->execute();
-        $query = $pdo->query($sql[1]);
-        $docdependente = $query->fetchAll(PDO::FETCH_ASSOC);
-        $docdependente = json_encode($docdependente);
-        echo $docdependente;
-    } catch (PDOException $th) {
-        echo "[{'exception': ['$th'], 'action': ['post': '$action', 'get': '$g_action'], 'id_doc': ['post': '$id_doc', 'get': '$g_id_doc']}]";
-    }
+} catch (Exception $e) {
+    require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+    Util::tratarException($e);
 }
 
 die();

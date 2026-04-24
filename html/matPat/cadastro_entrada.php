@@ -22,7 +22,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 ?>
 
 <!doctype html>
-<html lass="fixed">
+<html class="fixed">
 
 <head>
 	<?php
@@ -30,6 +30,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	include_once ROOT . '/dao/AlmoxarifadoDAO.php';
 	include_once ROOT . '/dao/TipoEntradaDAO.php';
 	include_once ROOT . '/dao/ProdutoDAO.php';
+	include_once ROOT .'/dao/OrigemDAO.php';
 
 	if (!isset($_SESSION['almoxarifado'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_entrada.php');
@@ -150,18 +151,18 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="origem">Origem</label>
-													<a href="<?= WWW ?>html/matPat/cadastro_doador.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<label class="col-md-3 control-label" for="origens">Origem</label>
+													<a href="<?= WWW ?>html/matPat/cadastro_doador.php" id="btn-novo-doador"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
-														<input type="search" list="origens" id="origem" name="origem" class="form-control" autocomplete="off" required>
-														<datalist id="origens">
-														</datalist>
+														<select class="form-control " name="origem" id="origens">
+															<option selected disabled value="blank">Selecionar</option>
+														</select>
 													</div>
 												</div>
 
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
-													<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="almoxarifado" id="almoxarifado">
 															<option selected disabled value="blank">Selecionar</option>
@@ -170,7 +171,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 												</div>
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="tipo_entrada">Tipo</label>
-													<a href="<?= WWW ?>html/matPat/adicionar_tipoEntrada.php"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/adicionar_tipoEntrada.php" id="btn-novo-tipo-entrada"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="tipo_entrada" id="tipo_entrada">
 															<option selected disabled value="blank">Selecionar</option>
@@ -185,7 +186,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 														<thead>
 															<tr style="width: 768px;">
 																<th>Produto
-																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge" style="float:right;" id="produto" class="produto">
+																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" id="btn-novo-produto" class="fas fa-plus w3-xlarge" style="float:right;">
 																	</a>
 																</th>
 																<th>quantidade</th>
@@ -198,8 +199,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 																	<!-- <datalist id="produtos_autocomplete">
 															</datalist> -->
 																</td>
-																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade"></td>
-																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0"></td>
+																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">incluir</button>
 																</td>
@@ -213,20 +214,20 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 														<thead>
 															<tr>
 
-																<th style="width: 160px;">Produto
+																<th style="width: 160px;">Produto</th>
 																<th style="width: 85px;">Quantidade</th>
 																<th>Preço</th>
 																<th>Total</th>
 																<th>Ação</th>
 															</tr>
 														</thead>
-														<tbody>
+														<tbody id="lista-produtos">
 														</tbody>
 														<tfoot>
 															<tr>
 																<td>Valor total:</td>
 																<td id="valor-total">
-																	<input type="number" id="total_total" name="total_total" readonly="readonly" required>
+																	<input type="number" id="total_total" name="total_total" class="form-control" readonly="readonly" required>
 																	<input type="hidden" id="conta" name="conta" readonly="readonly">
 																	<input type="hidden" id="verifica" disabled>
 																</td>
@@ -246,7 +247,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 												<input type="hidden" name="metodo" value="incluir">
 												<input type="submit" class="btn btn-primary">
 											</div>
-										</div>
+										</div>ll
 									</form>
 								</div>
 							</div>
@@ -283,6 +284,10 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
 			})
 
+			$.each(origem, function(i, item) {
+				$('#origens').append('<option value="' + item.id_origem + '">' + item.nome_origem + '</option>');
+			})
+
 			let produtos_autocomplete = [];
 			let prods = [];
 
@@ -316,10 +321,6 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					}
 				});
 			});
-
-			$.each(origem, function(i, item) {
-				$('#origens').append('<option value="' + item.id_origem + '-' + item.nome_origem + '">');
-			})
 
 			$('#input_produtos').on('change', function() {
 				var teste = this.value.split('|');
@@ -444,6 +445,109 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			$(".menuu").load("../menu.php");
 		});
 	</script>
+	<script>
+		$(function () {
+			$('#formulario').on('submit', function (event) {
+				event.preventDefault();
+
+				if (validar() === false) {
+					return false;
+				}
+
+				$.ajax({
+					url: $(this).attr('action'),
+					method: 'POST',
+					data: $(this).serialize(),
+					dataType: 'json',
+					success: function (resposta) {
+						if (resposta.sucesso) {
+							if(limparRascunhoEntrada) {
+								limparRascunhoEntrada();
+							}
+							alert(resposta.mensagem || 'Entrada cadastrada com sucesso');
+							window.location.href = '<?= WWW ?>html/matPat/cadastro_entrada.php';
+						} else {
+							alert(resposta.mensagem || 'Não foi possível cadastrar a entrada');
+						}
+					},
+					error: function (xhr) {
+						let mensagem = 'Erro ao cadastrar a entrada';
+
+						if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+							mensagem = xhr.responseJSON.mensagem;
+						}
+
+						alert(mensagem);
+					}
+				});
+
+				return false;
+			});
+		});
+	</script>
+	<script>
+	$(function () {
+		const CHAVE = 'rascunho_cadastro_entrada';
+
+		function salvarRascunho() {
+			const dados = {
+				origem: $('#origens').val(),
+				almoxarifado: $('#almoxarifado').val(),
+				tipo_entrada: $('#tipo_entrada').val(),
+				input_produtos: $('#input_produtos').val(),
+				quantidade: $('#quantidade').val(),
+				valor_unitario: $('#valor_unitario').val(),
+				total_total: $('#total_total').val(),
+				conta: $('#conta').val(),
+				verifica: $('#verifica').val(),
+				tabela: $('#lista-produtos').html()
+			};
+
+			sessionStorage.setItem(CHAVE, JSON.stringify(dados));
+		}
+
+		function restaurarRascunho() {
+			const bruto = sessionStorage.getItem(CHAVE);
+			if (!bruto) return;
+
+			try {
+				const dados = JSON.parse(bruto);
+
+				if (dados.origem) $('#origens').val(dados.origem);
+				if (dados.tipo_entrada) $('#tipo_entrada').val(dados.tipo_entrada);
+				if (dados.input_produtos) $('#input_produtos').val(dados.input_produtos);
+				if (dados.quantidade) $('#quantidade').val(dados.quantidade);
+				if (dados.valor_unitario) $('#valor_unitario').val(dados.valor_unitario);
+				if (dados.total_total) $('#total_total').val(dados.total_total);
+				if (dados.conta) $('#conta').val(dados.conta);
+				if (dados.verifica) $('#verifica').val(dados.verifica);
+				if (dados.tabela) $('#lista-produtos').html(dados.tabela);
+
+				if (dados.almoxarifado) {
+					$('#almoxarifado').val(dados.almoxarifado).trigger('change');
+
+					setTimeout(function () {
+						$('#almoxarifado').val(dados.almoxarifado);
+					}, 100);
+				}
+			} catch (e) {
+				console.error('Erro ao restaurar rascunho:', e);
+			}
+		}
+
+		function limparRascunho() {
+			sessionStorage.removeItem(CHAVE);
+		}
+
+		$('#btn-novo-doador, #btn-novo-almoxarifado, #btn-novo-tipo-entrada, #btn-novo-produto').on('click', function () {
+			salvarRascunho();
+		});
+
+		restaurarRascunho();
+
+		window.limparRascunhoEntrada = limparRascunho;
+	});
+</script>
 
 	<!-- Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>

@@ -35,9 +35,14 @@ session_start();
         if (PHP_OS != 'Linux'){
             return false;
         }
-        $log[0] = autosaveBD();
-        $log[1] = backupSite();
-        return !$log[0] && !$log[1];
+        try {
+            $log[0] = autosaveBD();
+            $success_db = true;
+        } catch (Exception $e) {
+            $success_db = false;
+        }
+        $success_site = backupSite();
+        return $success_db && $success_site;
     }
 
     function gitPull() {
