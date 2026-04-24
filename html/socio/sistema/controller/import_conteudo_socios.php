@@ -198,9 +198,12 @@
               <a id="btn_importar_xlsx" class="btn btn-app">
                 <i class="fa fa-upload"></i> Importar sócios
               </a>
-              <a onclick="location.reload()" id="btn_atualizar" class="btn btn-app">
-                <i class="fa fa-refresh"></i> Atualizar
+              <a id="btn_sync_status_socios" class="btn btn-app">
+                <i class="fa fa-refresh"></i> Sincronizar status
               </a>
+              <!--<a onclick="location.reload()" id="btn_atualizar" class="btn btn-app">
+                <i class="fa fa-refresh"></i> Atualizar
+              </a>-->
               <a id="btn_aniversariantes" class="btn btn-app">
                 <i class="fa fa-birthday-cake"></i> Aniversariantes do mês
               </a>

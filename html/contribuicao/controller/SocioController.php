@@ -336,4 +336,17 @@ class SocioController
             Util::tratarException($e);
         }
     }
+
+    public function sincronizarStatusSocios()//Usar esse método para atualizar o status dos sócios 
+    {
+        try {
+            $socioDao = new SocioDAO($this->pdo);
+            $socioDao->sincronizarStatusSocios();
+
+            http_response_code(200);
+            echo json_encode(['mensagem' => 'Status dos sócios sincronizados com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
 }

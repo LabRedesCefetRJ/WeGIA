@@ -681,7 +681,7 @@ class ContribuicaoLogController
             // Identificar contribuições pagas
             $this->pdo->beginTransaction();
 
-            foreach ($contribuicoesPendentesArray as $contribuicaoPendente) {
+            foreach ($contribuicoesPendentesArray as $contribuicaoPendente) { //Otimizar esse trecho de código
                 $contribuicaoLog = $contribuicoesExternas->findByCodigo($contribuicaoPendente['codigo']);
 
                 if (!is_null($contribuicaoLog)) {
@@ -705,6 +705,8 @@ class ContribuicaoLogController
             if (!$sistemaLogDao->registrar($sistemaLog)) {
                 throw new Exception('Falha ao registrar log do sistema', 500);
             }
+
+            //atualizar status dos sócios com base nos status das contribuições
 
             $this->pdo->commit();
 

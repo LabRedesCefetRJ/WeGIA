@@ -6,3 +6,55 @@
 	font-weight: bolder;
 	font-size: 110%;
 }
+
+/* Padronizacao visual de sexo nos modulos funcionario, atendido e saude */
+.fa.fa-male,
+.fa.fa-female {
+	font-size: 20px !important;
+	line-height: 1;
+	vertical-align: middle;
+}
+
+.fa.fa-male {
+	color: #1f6feb !important;
+}
+
+.fa.fa-female {
+	color: #e64980 !important;
+}
+
+label:has(i.fa.fa-male),
+label:has(i.fa.fa-female) {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+input[type="radio"] + i.fa.fa-male,
+input[type="radio"] + i.fa.fa-female {
+	margin-left: 4px;
+	vertical-align: middle;
+}
+
+label:has(input[type="radio"] + i.fa.fa-male) input[type="radio"],
+label:has(input[type="radio"] + i.fa.fa-female) input[type="radio"],
+input[type="radio"]#radio1,
+input[type="radio"]#radio2,
+input[type="radio"]#radioM,
+input[type="radio"]#radioF {
+	margin-top: 0 !important;
+	vertical-align: middle;
+}
+
+label:has(i.fa.fa-male) input[type="radio"],
+input[type="radio"]#radio1,
+input[type="radio"]#radioM {
+	accent-color: #1f6feb;
+}
+
+label:has(i.fa.fa-female) input[type="radio"],
+input[type="radio"]#radio2,
+input[type="radio"]#radioF {
+	accent-color: #e64980;
+}

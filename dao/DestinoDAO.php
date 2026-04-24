@@ -54,7 +54,7 @@ class DestinoDAO
     {
         $destinos = array();
         $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT id_destino,nome_destino,cnpj,cpf,telefone FROM destino");
+        $consulta = $pdo->query("SELECT id_destino,nome_destino,cnpj,cpf,telefone FROM destino ORDER BY nome_destino");
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
             $destinos[$x] = array('id_destino' => $linha['id_destino'], 'nome_destino' => $linha['nome_destino'], 'cnpj' => $linha['cnpj'], 'cpf' => $linha['cpf'], 'telefone' => $linha['telefone']);

@@ -85,7 +85,8 @@ INSERT INTO `socio_status` (`id_sociostatus`, `status`) VALUES
 (1, 'Inativo'),
 (2, 'Inadimplente'),
 (3, 'Inativo Temporariamente'),
-(4, 'Sem informação');
+(4, 'Sem informação'),
+(5, 'Cancelado');
 
 INSERT INTO `socio_tag` (`tag`) VALUES
 ('Solicitante');

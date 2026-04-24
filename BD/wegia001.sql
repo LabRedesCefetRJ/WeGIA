@@ -34,6 +34,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS `wegia`.`almoxarifado` (
   `id_almoxarifado` INT(11) NOT NULL AUTO_INCREMENT,
   `descricao_almoxarifado` VARCHAR(240) NOT NULL,
+  `ativo` TINYINT(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id_almoxarifado`))
 ENGINE = InnoDB;
 
@@ -304,7 +305,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`almoxarife` (
     REFERENCES `wegia`.`funcionario` (`id_funcionario`),
   CONSTRAINT `almoxarife_ibfk_2`
     FOREIGN KEY (`id_almoxarifado`)
-    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`))
+    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT)
 ENGINE = InnoDB;
 
 
@@ -451,6 +454,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`entrada` (
   `data` DATE NULL DEFAULT NULL,
   `hora` TIME NULL DEFAULT NULL,
   `valor_total` DECIMAL(10,2) NULL DEFAULT NULL,
+  `ativo` TINYINT(1) DEFAULT '1',
   PRIMARY KEY (`id_entrada`),
   INDEX `id_origem` (`id_origem` ASC),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),
@@ -461,7 +465,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`entrada` (
     REFERENCES `wegia`.`origem` (`id_origem`),
   CONSTRAINT `entrada_ibfk_2`
     FOREIGN KEY (`id_almoxarifado`)
-    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`),
+    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT `entrada_ibfk_3`
     FOREIGN KEY (`id_tipo`)
     REFERENCES `wegia`.`tipo_entrada` (`id_tipo`),
@@ -499,7 +505,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`produto` (
   INDEX `id_unidade` (`id_unidade` ASC),
   CONSTRAINT `produto_ibfk_1`
     FOREIGN KEY (`id_categoria_produto`)
-    REFERENCES `wegia`.`categoria_produto` (`id_categoria_produto`),
+    REFERENCES `wegia`.`categoria_produto` (`id_categoria_produto`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT `produto_ibfk_2`
     FOREIGN KEY (`id_unidade`)
     REFERENCES `wegia`.`unidade` (`id_unidade`))
@@ -615,6 +623,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saida` (
   `data` DATE NULL DEFAULT NULL,
   `hora` TIME NULL DEFAULT NULL,
   `valor_total` DECIMAL(10,2) NULL DEFAULT NULL,
+  `ativo` TINYINT(1) DEFAULT '1',
   PRIMARY KEY (`id_saida`),
   INDEX `id_destino` (`id_destino` ASC),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),
@@ -625,7 +634,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saida` (
     REFERENCES `wegia`.`destino` (`id_destino`),
   CONSTRAINT `saida_ibfk_2`
     FOREIGN KEY (`id_almoxarifado`)
-    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`),
+    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT,
   CONSTRAINT `saida_ibfk_3`
     FOREIGN KEY (`id_tipo`)
     REFERENCES `wegia`.`tipo_saida` (`id_tipo`),
@@ -1096,6 +1107,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `email` VARCHAR(256) NULL DEFAULT NULL,
   `valor_periodo` DECIMAL(10,2) NULL DEFAULT NULL,
   `data_referencia` DATE NULL DEFAULT NULL,
+  `auto_status_contribuicoes` TINYINT(1) NOT NULL DEFAULT 1,
   UNIQUE INDEX (`id_pessoa` ASC),
   PRIMARY KEY (`id_socio`),
   INDEX `fk_socio_socio_status1_idx` (`id_sociostatus` ASC),
@@ -2242,6 +2254,55 @@ CREATE TABLE IF NOT EXISTS `wegia`.`smtp_config` (
     `smtp_from_name` VARCHAR(255) NOT NULL,
     `smtp_ativo` TINYINT(1) DEFAULT 1
 ) ENGINE = InnoDB;
+
+-- ------------------------------------------------------
+-- Table `wegia` . `voluntario`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS voluntario (
+ id_voluntario INT AUTO_INCREMENT PRIMARY KEY,
+ id_pessoa INT NOT NULL,
+ id_situacao INT NOT NULL,
+ data_admissao DATE NOT NULL,
+ FOREIGN KEY (id_pessoa) REFERENCES pessoa(id_pessoa) ON DELETE CASCADE,
+ FOREIGN KEY (id_situacao) REFERENCES situacao(id_situacao)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------
+-- Table `wegia` . `voluntario_docfuncional`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS voluntario_docfuncional (
+ id_docfuncional INT NOT NULL AUTO_INCREMENT,
+ nome_docfuncional VARCHAR(50) NOT NULL,
+ descricao_docfuncional VARCHAR(256) NULL DEFAULT NULL,
+ PRIMARY KEY (id_docfuncional))
+ ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ------------------------------------------------------
+-- Table `wegia` . `voluntario_docs`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS voluntario_docs (
+ id_voldocs INT NOT NULL AUTO_INCREMENT,
+ id_voluntario INT NOT NULL,
+ id_docfuncional INT NOT NULL,
+ data TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ id_pessoa_arquivo INT NOT NULL,
+ PRIMARY KEY (id_voldocs),
+ KEY voluntariodocs_ibfk_1 (id_voluntario),
+ KEY voluntariodocs_ibfk_2 (id_docfuncional),
+ KEY voluntariodocs_ibfk_3 (id_pessoa_arquivo),
+ CONSTRAINT voluntariodocs_ibfk_1
+ FOREIGN KEY (id_voluntario)
+ REFERENCES voluntario (id_voluntario) ON DELETE CASCADE,
+ CONSTRAINT voluntariodocs_ibfk_2
+ FOREIGN KEY (id_docfuncional)
+ REFERENCES voluntario_docfuncional (id_docfuncional),
+ CONSTRAINT voluntariodocs_ibfk_3
+ FOREIGN KEY (id_pessoa_arquivo)
+ REFERENCES pessoa_arquivo (id))
+ ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ########################### PROCEDURES #################### --
 

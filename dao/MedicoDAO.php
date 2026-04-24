@@ -13,24 +13,24 @@ class MedicoDAO
 
     public function inserirMedico($crm, $nome)
     {
-        try {
-            $stmt = $this->pdo->prepare("
-                INSERT INTO saude_medicos (
-                    crm, nome
-                ) VALUES (
-                    :crm, :nome
-                )
-            ");
+        $stmt = $this->pdo->prepare("
+            INSERT INTO saude_medicos (
+                crm, nome
+            ) VALUES (
+                :crm, :nome
+            )
+        ");
 
-            $stmt->execute([
-                ':crm' => $crm,
-                ':nome' => $nome
-            ]);
+        $stmt->execute([
+            ':crm' => $crm,
+            ':nome' => $nome
+        ]);
 
-            return true;
-        } catch (PDOException $e) {
-            return $e->getMessage();
-        }
+        return [
+            'id_medico' => (int)$this->pdo->lastInsertId(),
+            'crm' => $crm,
+            'nome' => $nome
+        ];
     }
 
      public function listarTodosOsMedicos(){
