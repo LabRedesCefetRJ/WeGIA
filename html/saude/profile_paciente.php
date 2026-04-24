@@ -249,6 +249,7 @@ try {
 <!-- Specific Page Vendor CSS -->
 <link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
 <link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+<link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
 
 
 <script>
@@ -452,10 +453,10 @@ try {
             $("#imagem").attr("src", "../../img/semfoto.png");
           }
           if (item.sexo == "m") {
-            $("#sexo").html("Sexo: <i class='fa fa-male'></i>  Masculino");
+            $("#sexo").html("Sexo: <i class='fa fa-male'></i>");
             $("#radioM").prop('checked', true);
           } else if (item.sexo == "f") {
-            $("#sexo").html("Sexo: <i class='fa fa-female'>  Feminino");
+            $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
             $("#radioF").prop('checked', true);
           }
 
@@ -847,50 +848,101 @@ try {
     }
 
     #mensagem-cadastro-enfermidade,
-    #mensagem-cadastro-exame {
+    #mensagem-cadastro-exame,
+    #alergiaFormError,
+    #enfermidadeFormError {
       opacity: 0;
       transform: translateY(-8px);
       transition: opacity 0.35s ease, transform 0.35s ease;
       pointer-events: none;
     }
 
+    #alergiaFormError,
+    #enfermidadeFormError {
+      margin-bottom: 0;
+    }
+
+    #alergiaFormError + .form-group,
+    #enfermidadeFormError + .form-group {
+      margin-top: 15px;
+    }
+
     #mensagem-cadastro-enfermidade.is-visible,
-    #mensagem-cadastro-exame.is-visible {
+    #mensagem-cadastro-exame.is-visible,
+    #alergiaFormError.is-visible,
+    #enfermidadeFormError.is-visible {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
     }
 
-    #docFormModal .modal-title,
     #modal-anular-atendimento .modal-title {
       font-weight: 500;
+      color: #fff;
     }
 
-    #docFormModal .modal-body {
-      padding: 20px 25px 10px;
+    #modal-anular-atendimento .modal-header {
+      background-color: #337ab7;
+      border-bottom-color: #2e6da4;
     }
 
-    #docFormModal .form-group {
-      text-align: left;
-      margin-left: 0;
-      margin-right: 0;
+    #modal-anular-atendimento .modal-header .close,
+    #modal-anular-atendimento .modal-header .close span {
+      color: #fff;
+      opacity: 1;
+      text-shadow: none;
     }
 
-    #docFormModal .control-label {
-      display: block;
-      text-align: left;
-      margin-bottom: 6px;
-      padding-left: 0;
-      padding-right: 0;
+    #modal-anular-atendimento .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background-color: transparent;
+      filter: brightness(1);
+      transition: background-color 0.18s ease, filter 0.18s ease;
     }
 
-    #docFormModal .input-group {
-      width: 100%;
+    #modal-anular-atendimento .modal-header .close:hover,
+    #modal-anular-atendimento .modal-header .close:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      filter: brightness(1.08);
+      outline: none;
     }
 
-    #docFormModal .help-block {
-      margin-bottom: 0;
+    #modal-anular-atendimento .modal-header .close:hover span,
+    #modal-anular-atendimento .modal-header .close:focus span {
+      filter: brightness(1.08);
     }
+
+    #arquivo .table tbody td:first-child,
+    #arquivo .table thead th:first-child {
+      max-width: 240px;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+    }
+
+    #arquivo .table tbody td {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    #atendimento_medico .input-group-btn .btn {
+      height: 34px;
+    }
+
+    #cadastro_alergias .input-group-btn .btn {
+      height: 34px;
+    }
+
+    #cadastro_comorbidades .input-group-btn .btn {
+      height: 34px;
+    }
+    
   </style>
 
 </head>
@@ -1018,13 +1070,13 @@ try {
                         </div>
                         <div class="row">
                           <p><span class="text-bold">Sexo:</span>
-                            <?= $pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"> </i>' . ' Feminino' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"> </i>' . ' Masculino';
+                            <?= $pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"></i>' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"></i>';
                             ?>
                           </p>
                         </div>
                         <div class="row">
                           <div class="col-md-3" style="padding-left: 0px;">
-                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?: 'Nao informada' ?></p>
+                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?: 'Não informada' ?></p>
                           </div>
                           <div class="col-md-3">
                             <p><span class="text-bold">Idade:</span>
@@ -1037,10 +1089,10 @@ try {
                                   $idade = $dataNascimento->diff($hoje)->y;
                                   echo $idade . ' anos';
                                 } catch (Exception $e) {
-                                  echo 'Nao informada';
+                                  echo 'Não informada';
                                 }
                               } else {
-                                echo 'Nao informada';
+                                echo 'Não informada';
                               }
                               ?>
                             </p>
@@ -1051,80 +1103,10 @@ try {
                         </div>
 
                         <div class="row">
-                          <?php
-                          $sqlDocumentosDownload = "SELECT ad.id_pessoa_arquivo as id, ad.atendido_docs_atendidos_idatendido_docs_atendidos as tipo_doc FROM atendido_documentacao ad JOIN atendido_docs_atendidos ada ON (ad.atendido_docs_atendidos_idatendido_docs_atendidos=ada.idatendido_docs_atendidos) JOIN atendido a ON (ad.atendido_idatendido=a.idatendido) JOIN pessoa p ON (a.pessoa_id_pessoa=p.id_pessoa) JOIN saude_fichamedica sf ON(p.id_pessoa=sf.id_pessoa) WHERE sf.id_fichamedica=:idFichaMedica AND ad.atendido_docs_atendidos_idatendido_docs_atendidos IN (1,2,3,5) ORDER BY tipo_doc ASC";
-
-                          try {
-                            $stmt = $pdo->prepare($sqlDocumentosDownload);
-                            $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
-                            $stmt->execute();
-
-                            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                            $documentosDownload = [];
-
-                            foreach ($resultados as $documento) {
-                              $documentosDownload[$documento['tipo_doc']] =  $documento['id'];
-                            }
-
-                          } catch (PDOException $e) {
-                            http_response_code(500);
-                            echo json_encode(['erro' => 'Erro no servidor ao buscar documentações para download ' . $e->getMessage()]);
-                            exit();
-                          }
-                          ?>
-
-                          <!--Botão para baixar CPF -->
-                          <?php
-                          if (isset($documentosDownload[2])):
-                          ?>
-                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[2] ?>" class="btn btn-primary btn-document" title="Clique para baixar">CPF <i class="fas fa-download"></i></a>
-                          <?php
-                          else:
-                          ?>
-                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">CPF <i class="fas fa-download"></i></a>
-                          <?php
-                          endif;
-                          ?>
-
-                          <!-- Botão para baixar RG -->
-                          <?php
-                          if (isset($documentosDownload[1])):
-                          ?>
-                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[1] ?>" class="btn btn-primary btn-document" title="Clique para baixar">RG <i class="fas fa-download"></i></a>
-                          <?php
-                          else:
-                          ?>
-                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">RG <i class="fas fa-download"></i></a>
-                          <?php
-                          endif;
-                          ?>
-
-                          <!--Botão para baixar SUS-->
-                          <?php
-                          if (isset($documentosDownload[3])):
-                          ?>
-                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[3] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Cartão do SUS <i class="fas fa-download"></i></a>
-                          <?php
-                          else:
-                          ?>
-                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">Cartão do SUS <i class="fas fa-download"></i></a>
-                          <?php
-                          endif;
-                          ?>
-
-                          <?php
-                          if (isset($documentosDownload[5])):
-                          ?>
-                            <a href="../atendido/documento_download.php?id_doc=<?= $documentosDownload[5] ?>" class="btn btn-primary btn-document" title="Clique para baixar">Plano de saúde <i class="fas fa-download"></i></a>
-                          <?php
-                          else:
-                          ?>
-                            <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível">Plano de saúde <i class="fas fa-download"></i></a>
-                          <?php
-                          endif;
-                          ?>
-
+                          <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="1">RG <i class="fas fa-download"></i></a>
+                          <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="2">CPF <i class="fas fa-download"></i></a>
+                          <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="3">Cartão do SUS <i class="fas fa-download"></i></a>
+                          <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="5">Plano de saúde <i class="fas fa-download"></i></a>
                         </div>
                       </div>
 
@@ -1433,18 +1415,68 @@ try {
                             <div class="form-group">
                               <label class="col-md-3 control-label" for="inputSuccess">Alergias</label>
                               <div class="col-md-6">
-                                <select class="form-control input-lg mb-md" name="id_CID_alergia" id="id_CID_alergia">
-                                  <option selected disabled>Selecionar</option>
-                                </select>
+                                <div class="input-group">
+                                  <select class="form-control" name="id_CID_alergia" id="id_CID_alergia">
+                                    <option selected disabled>Selecionar</option>
+                                  </select>
+                                  <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" onclick="abrirModalAlergia()" title="Adicionar alergia">
+                                      <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                    </button>
+                                  </span>
+                                </div>
                               </div>
-                              <a onclick="adicionar_alergia()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
-
                             </div>
                             <div class="form-group">
                               <input type="button" onclick="alergia_upload()" class="btn btn-primary" id="salvarAlergia" value="Salvar" style="display: none;">
                             </div>
                           </div>
                         </form>
+                      </div>
+
+                      <div class="modal fade upload-modal" id="alergiaFormModal" tabindex="-1" role="dialog" aria-labelledby="alergiaFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="alergiaFormModalLabel">Adicionar alergia</h4>
+                            </div>
+
+                            <form id="AlergiaForm" action="" method="post">
+                              <div class="modal-body">
+                                <div id="alergiaFormError" class="alert alert-danger alert-dismissible" style="display: none;" role="alert">
+                                  <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalAlergia(); return false;">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <span id="alergiaFormErrorText"></span>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="nomeAlergiaModal">
+                                    Nome da alergia <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="nome_alergia"
+                                    id="nomeAlergiaModal"
+                                    maxlength="120"
+                                    required>
+                                </div>
+                              </div>
+
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">
+                                  <span class="fa fa-plus" aria-hidden="true"></span>
+                                  Cadastrar
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
                       </div>
                   </section>
                 </div>
@@ -1467,18 +1499,35 @@ try {
                       </div>
                       <hr class="dotted short">
 
-                      <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
-                        <thead>
-                          <tr style="font-size:15px;">
-                            <th>Comorbidades</th>
-                            <th>Data</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody id="doc-tab">
+                      <div class="form-group">
+                        <div class="row" style="margin-bottom: 15px;">
+                          <div class="col-sm-12 col-md-4">
+                            <label for="filtro-comorbidades">Filtrar comorbidades</label>
+                            <select id="filtro-comorbidades" class="form-control">
+                              <option value="todos">Todas</option>
+                              <option value="ativo" selected>Ativas</option>
+                              <option value="inativo">Inativas</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
 
-                        </tbody>
-                      </table>
+                      <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Comorbidades</th>
+                              <th>Data</th>
+                              <th>Status</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="doc-tab">
+
+                          </tbody>
+                        </table>
+                      </div>
+                      <p id="comorbidades-sem-resultados" class="text-muted hidden" style="margin-top: 10px;">Nenhuma comorbidade encontrada para o filtro selecionado.</p>
 
                       <br>
                       <form id='form-enfermidade'>
@@ -1491,16 +1540,21 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="inputSuccess">Enfermidades<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-
-                            <select class="form-control input-lg mb-md" name="id_CID" id="id_CID" required>
-                              <option selected disabled>Qualquer coisa</option>
-                              <?php
-                              /*while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
-                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
-                              }*/                            ?>
-                            </select>
+                            <div class="input-group">
+                              <select class="form-control" name="id_CID" id="id_CID" required>
+                                <option selected disabled>Selecionar</option>
+                                <?php
+                                /*while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
+                                  echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
+                                }*/                            ?>
+                              </select>
+                              <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" onclick="abrirModalEnfermidade()" title="Adicionar comorbidade">
+                                  <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                </button>
+                              </span>
+                            </div>
                           </div>
-                          <a onclick="adicionar_enfermidade()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
 
                         <div class="form-group">
@@ -1513,7 +1567,7 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="inputSuccess">Status<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="intStatus" id="intStatus" required>
+                            <select class="form-control" name="intStatus" id="intStatus" required>
                               <option value="" selected disabled>Selecionar</option>
                               <option value="1">Ativo</option>
                               <option value="0">Inativo</option>
@@ -1528,6 +1582,64 @@ try {
                           </div>
                         </div>
                       </form>
+
+                      <div class="modal fade upload-modal" id="enfermidadeFormModal" tabindex="-1" role="dialog" aria-labelledby="enfermidadeFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="enfermidadeFormModalLabel">Adicionar comorbidade</h4>
+                            </div>
+
+                            <form id="EnfermidadeForm" action="" method="post">
+                              <div class="modal-body">
+                                <div id="enfermidadeFormError" class="alert alert-danger alert-dismissible" style="display: none;" role="alert">
+                                  <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalEnfermidade(); return false;">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <span id="enfermidadeFormErrorText"></span>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="nomeEnfermidadeModal">
+                                    Nome da comorbidade <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="nome_enfermidade"
+                                    id="nomeEnfermidadeModal"
+                                    maxlength="120"
+                                    required>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="cidEnfermidadeModal">
+                                    CID <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="cid_enfermidade"
+                                    id="cidEnfermidadeModal"
+                                    maxlength="10"
+                                    required>
+                                </div>
+                              </div>
+
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">
+                                  <span class="fa fa-plus" aria-hidden="true"></span>
+                                  Cadastrar
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </section>
                 </div>
@@ -1563,51 +1675,51 @@ try {
                         </tbody>
                       </table>
                       <br>
-                      <!-- Button trigger modal -->
-                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal" onclick="gerar_tipo_exame()">
-                        Adicionar
-                      </button>
-                      <div class="modal" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                              <h4 class="modal-title" id="docFormModalLabel">Adicionar exame</h4>
-                            </div>
-
-                            <form id="ExameDocForm">
-                              <div class="modal-body">
-                                <div class="form-group">
-                                  <label class="control-label" for="tipoDocumentoExame">Tipo de exame <sup class="obrig">*</sup></label>
-                                  <div class="input-group">
-                                    <select class="form-control" name="id_docfuncional" id="tipoDocumentoExame" required>
-                                    </select>
-                                    <span class="input-group-btn">
-                                      <button type="button" class="btn btn-default" onclick="adicionar_tipo_exame()" title="Adicionar tipo de exame">
-                                        <i class="fa fa-plus text-primary"></i>
-                                      </button>
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div class="form-group">
-                                  <label class="control-label" for="documentoExame">Arquivo <sup class="obrig">*</sup></label>
-                                  <input name="arquivo" type="file" class="form-control" id="documentoExame" accept=".png,.jpeg,.jpg,.pdf,.docx,.doc,.odp" required>
-                                  <p class="help-block"><span class="text-danger">Formatos aceitos:</span> PNG, JPG, PDF, DOC, DOCX, ODP.</p>
-                                </div>
-
-                                <input type="hidden" id="exame_id_fichamedica" name="id_fichamedica" value="<?= $id_fichamedica; ?>">
-                              </div>
-                              <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">Enviar</button>
-                              </div>
-                            </form>
-                          </div>
-                        </div>
-                      </div>
+                      <?php
+                      $modalUploadConfig = [
+                        'button' => [
+                          'label' => 'Adicionar',
+                          'onclick' => 'gerar_tipo_exame()'
+                        ],
+                        'modal' => [
+                          'id' => 'docFormModal',
+                          'label_id' => 'docFormModalLabel',
+                          'title' => 'Adicionar exame'
+                        ],
+                        'form' => [
+                          'id' => 'ExameDocForm',
+                          'action' => '',
+                          'method' => 'post',
+                          'enctype' => 'multipart/form-data',
+                          'hidden_fields' => [
+                            'id_fichamedica' => [
+                              'value' => (int)$id_fichamedica,
+                              'id' => 'exame_id_fichamedica'
+                            ]
+                          ]
+                        ],
+                        'select' => [
+                          'id' => 'tipoDocumentoExame',
+                          'name' => 'id_docfuncional',
+                          'label' => 'Tipo de exame',
+                          'placeholder' => 'Selecionar',
+                          'options' => $tipoexame,
+                          'value_key' => 'id_exame_tipo',
+                          'label_key' => 'descricao',
+                          'add_button_onclick' => 'adicionar_tipo_exame()',
+                          'add_button_title' => 'Adicionar tipo de exame'
+                        ],
+                        'file' => [
+                          'id' => 'documentoExame',
+                          'name' => 'arquivo',
+                          'label' => 'Arquivo',
+                          'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
+                          'help' => 'PNG, JPG, PDF, DOC, DOCX, ODP.'
+                        ]
+                      ];
+                      require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
+                      unset($modalUploadConfig);
+                      ?>
                       <br />
                   </section>
                 </div>
@@ -1785,21 +1897,25 @@ try {
                           <!-- listar o funcionario, pessoa nome onde cargo = 3 -->
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="inputSuccess">Usuário:</label>
-                            <div class="col-md-8">
-                              <input class="form-control" style="width:230px;" name="usuario" id="usuario" value="<?php echo $funcionarioNome; ?>" disabled="true">
+                            <div class="col-md-6">
+                              <input class="form-control" name="usuario" id="usuario" value="<?php echo $funcionarioNome; ?>" disabled="true">
                             </div>
                           </div>
 
                           <div class="form-group">
-                            <label class="col-md-3 control-label" for="inputSuccess">Médico:<sup class="obrig">*</sup></label>
+                            <label class="col-md-3 control-label" for="medicos">Médico:<sup class="obrig">*</sup></label>
                             <div class="col-md-6">
-
-                              <select class="form-control input-lg mb-md" name="medicos" id="medicos" required>
-                                <option selected disabled>Selecionar</option>
-
-                              </select>
+                              <div class="input-group">
+                                <select class="form-control" name="medicos" id="medicos" required>
+                                  <option value="" selected disabled>Selecionar</option>
+                                </select>
+                                <span class="input-group-btn">
+                                  <button type="button" class="btn btn-default" onclick="abrirModalMedico()" title="Adicionar médico">
+                                    <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                  </button>
+                                </span>
+                              </div>
                             </div>
-                            <a onclick="adicionar_medico()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                           </div>
 
                           <div class="form-group">
@@ -1813,7 +1929,7 @@ try {
 
                           <div class="form-group" id="primeira_medicacao">
                             <label class="col-md-3 control-label" for="inputSuccess">Medicamento:<sup class="obrig">*</sup></label>
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                               <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao">
                             </div>
 
@@ -1822,21 +1938,21 @@ try {
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Dosagem:<sup class="obrig">*</sup></label>
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                           <input type="text" class="form-control" name="dosagem" id="dosagem">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Horário:<sup class="obrig">*</sup></label>
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                           <input type="time" class="form-control" name="horario_medicacao" id="horario_medicacao">
                         </div>
                       </div>
 
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Duração:<sup class="obrig">*</sup></label>
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                           <input type="text" class="form-control" name="duracao_medicacao" id="duracao_medicacao">
                         </div>
                       </div>
@@ -1869,6 +1985,64 @@ try {
                     </div>
                     </form>
                   </section>
+
+                  <div class="modal fade upload-modal" id="medicoFormModal" tabindex="-1" role="dialog" aria-labelledby="medicoFormModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                          <h4 class="modal-title" id="medicoFormModalLabel">Adicionar médico</h4>
+                        </div>
+
+                        <form id="MedicoForm" action="" method="post">
+                          <div class="modal-body">
+                            <div id="medicoFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
+                              <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalMedico(); return false;">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <span id="medicoFormErrorText"></span>
+                            </div>
+
+                            <div class="form-group">
+                              <label class="control-label" for="nomeMedicoModal">
+                                Nome do médico <sup class="obrig">*</sup>
+                              </label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                name="nome_medico"
+                                id="nomeMedicoModal"
+                                maxlength="120"
+                                required>
+                            </div>
+
+                            <div class="form-group">
+                              <label class="control-label" for="crmMedicoModal">
+                                CRM <sup class="obrig">*</sup>
+                              </label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                name="crm_medico"
+                                id="crmMedicoModal"
+                                maxlength="30"
+                                required>
+                            </div>
+                          </div>
+
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                              <span class="fa fa-plus" aria-hidden="true"></span>
+                              Cadastrar
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Aba de medicações aplicadas -->
@@ -2404,7 +2578,16 @@ try {
         adicionar_exame();
       })
 
-      async function gerarMedicos() {
+      const formMedico = document.getElementById("MedicoForm");
+
+      if (formMedico) {
+        formMedico.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          await adicionar_medico();
+        });
+      }
+
+      async function gerarMedicos(idSelecionado = null) {
         medicos = await listarTodosOsMedicos()
         let length = medicos.length - 1;
         let select = document.getElementById("medicos");
@@ -2434,17 +2617,68 @@ try {
           optionSemMedico.textContent = "Sem médico definido";
           select.appendChild(optionSemMedico);
         }
+
+        if (idSelecionado !== null && idSelecionado !== undefined && idSelecionado !== "") {
+          select.value = String(idSelecionado);
+        }
       }
 
-      function adicionar_medico() {
-        const url = '../../controle/control.php'
+      function abrirModalMedico() {
+        const form = document.getElementById("MedicoForm");
+        if (form) {
+          form.reset();
+        }
 
-        let nome_medico = window.prompt("Insira o nome do médico:");
-        let crm_medico = window.prompt("Insira o CRM do médico:");
+        limparErroModalMedico();
+        $("#medicoFormModal").one("shown.bs.modal", () => {
+          const nomeMedicoInput = document.getElementById("nomeMedicoModal");
+          if (nomeMedicoInput) {
+            nomeMedicoInput.focus();
+          }
+        });
+        $("#medicoFormModal").modal("show");
+      }
 
-        if (!nome_medico || !crm_medico) {
+      function exibirErroModalMedico(mensagem) {
+        const alerta = document.getElementById("medicoFormError");
+        const texto = document.getElementById("medicoFormErrorText");
+
+        if (!alerta || !texto) {
           return;
         }
+
+        texto.textContent = mensagem;
+        alerta.style.display = "block";
+        alerta.classList.add("in");
+      }
+
+      function limparErroModalMedico() {
+        const alerta = document.getElementById("medicoFormError");
+        const texto = document.getElementById("medicoFormErrorText");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        texto.textContent = "";
+        alerta.style.display = "none";
+        alerta.classList.remove("in");
+      }
+
+      async function adicionar_medico() {
+        const url = '../../controle/control.php'
+        const nomeMedicoInput = document.getElementById("nomeMedicoModal");
+        const crmMedicoInput = document.getElementById("crmMedicoModal");
+
+        const nome_medico = nomeMedicoInput ? nomeMedicoInput.value.trim() : "";
+        const crm_medico = crmMedicoInput ? crmMedicoInput.value.trim() : "";
+
+        if (!nome_medico || !crm_medico) {
+          exibirErroModalMedico("Preencha o nome e o CRM do médico.");
+          return;
+        }
+
+        limparErroModalMedico();
 
         const data = {
           crm: crm_medico,
@@ -2453,75 +2687,225 @@ try {
           metodo: "inserirMedico"
         }
 
-        fetch(url, {
+        try {
+          const response = await fetch(url, {
             method: "POST",
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(data)
-          })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('Erro na requisição');
-            }
-            return response.json();
-          })
-          .then(result => {
-            gerarMedicos();
-          })
-          .catch(error => {
-            console.error('Erro ao enviar dados:', error);
           });
+
+          const result = await response.json();
+
+          if (!response.ok || result.status !== "sucesso") {
+            throw new Error(result.mensagem || result.erro || "Erro ao cadastrar médico.");
+          }
+
+          if (formMedico) {
+            formMedico.reset();
+          }
+
+          $("#medicoFormModal").modal("hide");
+          const medicoIdSelecionado = result.medico && result.medico.id_medico ? result.medico.id_medico : null;
+          await gerarMedicos(medicoIdSelecionado);
+        } catch (error) {
+          console.error('Erro ao enviar dados:', error);
+          exibirErroModalMedico(error.message || "Erro ao cadastrar médico.");
+        }
       }
 
-      function gerar_alergia() {
-        const url = '../../controle/control.php';
-        $.ajax({
-          data: {
-            nomeClasse: "AlergiaControle",
-            metodo: "listarTodasAsAlergias"
-          },
-          type: "POST",
-          url: url,
-          async: true,
-          success: function(response) {
-            var situacoes_alergia = response;
-            const idsAlergiasPaciente = new Set(alergiasPaciente.map(function(alergia) {
-              return String(alergia.id_CID);
-            }));
-            $('#id_CID_alergia').empty();
-            $('#id_CID_alergia').append('<option selected disabled>Selecionar</option>');
-            $.each(situacoes_alergia, function(i, item) {
-              if (!idsAlergiasPaciente.has(String(item.id_CID))) {
-                $('#id_CID_alergia').append('<option value="' + item.id_CID + '">' + item.descricao + '</option>');
-              }
-            });
-          },
-          dataType: 'json'
+      const formAlergia = document.getElementById("AlergiaForm");
+
+      if (formAlergia) {
+        formAlergia.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          await adicionar_alergia();
         });
       }
 
-      function adicionar_alergia() {
-        url = 'adicionar_alergia.php';
-        let nome_alergia = window.prompt("Insira o nome da alergia:");
+      async function gerar_alergia() {
+        const url = '../../controle/control.php';
+        const formData = new URLSearchParams({
+          nomeClasse: "AlergiaControle",
+          metodo: "listarTodasAsAlergias"
+        });
 
-        if (!nome_alergia || nome_alergia == '') {
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Accept": "application/json"
+            },
+            body: formData.toString()
+          });
+
+          if (!response.ok) {
+            throw new Error("Erro ao carregar alergias.");
+          }
+
+          const situacoes_alergia = await response.json();
+          const idsAlergiasPaciente = new Set(alergiasPaciente.map(function(alergia) {
+            return String(alergia.id_CID);
+          }));
+          const selectAlergia = document.getElementById("id_CID_alergia");
+
+          if (!selectAlergia) {
+            return;
+          }
+
+          while (selectAlergia.firstChild) {
+            selectAlergia.removeChild(selectAlergia.firstChild);
+          }
+
+          const optionSelecionar = document.createElement("option");
+          optionSelecionar.selected = true;
+          optionSelecionar.disabled = true;
+          optionSelecionar.textContent = "Selecionar";
+          selectAlergia.appendChild(optionSelecionar);
+
+          situacoes_alergia.forEach(function(item) {
+            if (!idsAlergiasPaciente.has(String(item.id_CID))) {
+              const option = document.createElement("option");
+              option.value = item.id_CID;
+              option.textContent = item.descricao;
+              selectAlergia.appendChild(option);
+            }
+          });
+        } catch (error) {
+          console.error("Erro ao carregar alergias:", error);
+        }
+      }
+
+      function abrirModalAlergia() {
+        const form = document.getElementById("AlergiaForm");
+        if (form) {
+          form.reset();
+        }
+
+        limparErroModalAlergia();
+        $("#alergiaFormModal").one("shown.bs.modal", function() {
+          const nomeAlergiaInput = document.getElementById("nomeAlergiaModal");
+          if (nomeAlergiaInput) {
+            nomeAlergiaInput.focus();
+          }
+        });
+        $("#alergiaFormModal").modal("show");
+      }
+
+      let timeoutMensagemErroAlergia = null;
+      let timeoutFecharAnimacaoErroAlergia = null;
+
+      function exibirErroModalAlergia(mensagem) {
+        const alerta = document.getElementById("alergiaFormError");
+        const texto = document.getElementById("alergiaFormErrorText");
+
+        if (!alerta || !texto) {
           return;
         }
-        data = {
-          nome: nome_alergia
-        };
-        $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response) {
-            gerar_alergia();
-          },
-          error: function(response) {
-            // console.log(response);
-          },
-        })
+
+        texto.textContent = mensagem;
+        alerta.style.display = "block";
+        alerta.classList.remove("is-visible");
+        void alerta.offsetWidth;
+        alerta.classList.add("is-visible");
+
+        if (timeoutMensagemErroAlergia) {
+          clearTimeout(timeoutMensagemErroAlergia);
+        }
+
+        if (timeoutFecharAnimacaoErroAlergia) {
+          clearTimeout(timeoutFecharAnimacaoErroAlergia);
+          timeoutFecharAnimacaoErroAlergia = null;
+        }
+
+        timeoutMensagemErroAlergia = setTimeout(() => {
+          limparErroModalAlergia();
+        }, 10000);
+      }
+
+      function limparErroModalAlergia() {
+        const alerta = document.getElementById("alergiaFormError");
+        const texto = document.getElementById("alergiaFormErrorText");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        alerta.classList.remove("is-visible");
+
+        if (timeoutMensagemErroAlergia) {
+          clearTimeout(timeoutMensagemErroAlergia);
+          timeoutMensagemErroAlergia = null;
+        }
+
+        if (timeoutFecharAnimacaoErroAlergia) {
+          clearTimeout(timeoutFecharAnimacaoErroAlergia);
+        }
+
+        timeoutFecharAnimacaoErroAlergia = setTimeout(() => {
+          alerta.style.display = "none";
+          texto.textContent = "";
+          timeoutFecharAnimacaoErroAlergia = null;
+        }, 350);
+      }
+
+      async function adicionar_alergia() {
+        const url = 'adicionar_alergia.php';
+        const nomeAlergiaInput = document.getElementById("nomeAlergiaModal");
+        const nome_alergia = nomeAlergiaInput ? nomeAlergiaInput.value.trim() : "";
+
+        if (!nome_alergia || nome_alergia == '') {
+          exibirErroModalAlergia("Preencha o nome da alergia.");
+          return;
+        }
+
+        limparErroModalAlergia();
+
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Accept": "application/json"
+            },
+            body: new URLSearchParams({
+              nome: nome_alergia
+            }).toString()
+          });
+
+          let result = null;
+          const contentType = response.headers.get("content-type") || "";
+
+          if (response.redirected) {
+            throw new Error("Você não tem permissão para adicionar alergias.");
+          }
+
+          if (contentType.indexOf("application/json") === -1) {
+            throw new Error("Não foi possível processar a resposta do servidor.");
+          }
+
+          try {
+            result = await response.json();
+          } catch (e) {
+            throw new Error("Não foi possível processar a resposta do servidor.");
+          }
+
+          if (!response.ok || result.status !== "sucesso") {
+            throw new Error(result.mensagem || "Erro ao cadastrar alergia.");
+          }
+
+          if (formAlergia) {
+            formAlergia.reset();
+          }
+
+          $("#alergiaFormModal").modal("hide");
+          await gerar_alergia();
+        } catch (error) {
+          console.error("Erro ao cadastrar alergia:", error);
+          exibirErroModalAlergia(error.message || "Erro ao cadastrar alergia.");
+        }
       }
 
       function alergia_upload() {
@@ -2680,6 +3064,43 @@ try {
         $('#tab-sin-vit').DataTable({
           "order": []
         });
+      });
+
+      function habilitarBotaoDocumentoParaDownload(tipoDocumento, documento) {
+        const botao = document.querySelector(`[data-doc-tipo="${tipoDocumento}"]`);
+        if (!botao || !documento || !documento.id || !documento.endpoint) {
+          return;
+        }
+
+        botao.href = `${documento.endpoint}?id_doc=${encodeURIComponent(documento.id)}`;
+        botao.classList.remove('disabled-fix');
+        botao.title = 'Clique para baixar';
+      }
+
+      async function carregarDocumentosParaDownload(idFichaMedica) {
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("SaudeControle")}&metodo=${encodeURIComponent("listarDocumentosDownloadPorFichaMedica")}&id_fichamedica=${encodeURIComponent(idFichaMedica)}`;
+
+        try {
+          const resposta = await fetch(url);
+          if (!resposta.ok) {
+            return;
+          }
+
+          const dados = await resposta.json();
+          if (!dados || dados.status !== 'sucesso' || !dados.documentos) {
+            return;
+          }
+
+          [1, 2, 3, 5].forEach((tipoDocumento) => {
+            habilitarBotaoDocumentoParaDownload(tipoDocumento, dados.documentos[tipoDocumento]);
+          });
+        } catch (error) {
+          console.error('Erro ao carregar documentos para download:', error);
+        }
+      }
+
+      $(function() {
+        carregarDocumentosParaDownload(<?= (int)$id_fichamedica ?>);
       });
 
 

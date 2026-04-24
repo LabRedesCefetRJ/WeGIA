@@ -1,69 +1,71 @@
 <?php
-require_once ('acesso.php');
+require_once 'Pessoa.php';
 
 class Voluntario extends Pessoa
 {
-
     private $id_voluntario;
-
     private $id_pessoa;
+    private $id_situacao;
+    private $data_admissao;
 
-    // Insert
-    public function incluir($cpf, $senha, $nome, $sexo, $telefone, $data_nascimento, $imagem, $cep, $cidade, $bairro, $logradouro, $numero_endereco, $complemento, $registro_geral, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $tipo_sanguineo)
+    public function getId_voluntario()
     {
-        $id_pessoa = $this->incluirPessoa($cpf, $senha, $nome, $sexo, $telefone, $data_nascimento, $imagem, $cep, $cidade, $bairro, $logradouro, $numero_endereco, $complemento, $registro_geral, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $tipo_sanguineo);
+        return $this->id_voluntario;
     }
 
-    // excluir
-    public function excluir($idcargo)
+    public function getId_pessoa()
     {
-        try {
-            $sql = 'DELETE from cargo WHERE idcargo = :idcargo';
-            $sql = str_replace("'", "\'", $sql);
-            $acesso = new Acesso();
-            
-            $pdo = $acesso->conexao();
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
-            $stmt = $pdo->prepare($sql);
-            
-            $stmt->bindParam(':idcargo', $idcargo);
-            
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        return $this->id_pessoa;
     }
 
-    // Editar
-    public function alterar($idfuncionario, $tipo, $carga_mensal, $primeira_entrada, $primeira_saida, $segunda_entrada, $segunda_saida, $carga_diaria, $dias_trabalhados, $folgas)
+    public function getId_situacao()
     {
-        try {
-            $sql = 'update pessoas set idfuncionario=:idfuncionario, idpessoa=:idpessoa, idcargo=:idcargo, imagem=:imagem, vale_transporte=:vale_transporte, data_admissao=:data_admissao, registro_geral=:registro_geral, orgao_emissor=:orgao_emissor, data_expedicao=:data_expedicao, pis=:pis, ctps=:ctps, uf_ctps=:uf_ctps, zona=:zona, certificado_reservista_numero=:certificado_reservista_numero, nome_mae=:nome_mae, nome_pai=:nome_pai, tipo_sanguineo=:tipo_sanguineo';
-            $sql = str_replace("'", "\'", $sql);
-            $acesso = new Acesso();
-            
-            $pdo = $acesso->conexao();
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            
-            $stmt = $pdo->prepare($sql);
-            
-            $stmt->bindParam(':idfuncionario', $idfuncionario);
-            $stmt->bindParam(':tipo', $tipo);
-            $stmt->execute();
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        }
+        return $this->id_situacao;
     }
 
-    // Consultar
-    public function consultar($sql)
+    public function getData_admissao()
     {
-        $acesso = new Acesso();
-        $acesso->conexao();
-        $acesso->query($sql);
-        $this->Linha = $acesso->linha;
-        $this->Result = $acesso->result;
+        return $this->data_admissao;
+    }
+
+    public function setId_voluntario($id_voluntario)
+    {
+        $this->id_voluntario = $id_voluntario;
+    }
+
+    public function setId_pessoa($id_pessoa)
+    {
+        $this->id_pessoa = $id_pessoa;
+    }
+
+    public function setId_situacao($id_situacao)
+    {
+        $this->id_situacao = $id_situacao;
+    }
+
+    public function setData_admissao($data_admissao)
+    {
+        $this->data_admissao = $data_admissao;
+    }
+
+    /**
+     * Retorna a data mínima de nascimento para o cadastro de um novo voluntário no sistema.
+     */
+    static public function getDataNascimentoMinima()
+    {
+        $idadeMaxima = 100;
+        $data = date('Y-m-d', strtotime("-$idadeMaxima years"));
+        return $data;
+    }
+
+    /**
+     * Retorna a data máxima de nascimento para o cadastro de um novo voluntário no sistema.
+     * Pode ser ajustado conforme regra de negócio (ex: 14 anos).
+     */
+    static public function getDataNascimentoMaxima()
+    {
+        $idadeMinima = 14;
+        $data = date('Y-m-d', strtotime("-$idadeMinima years"));
+        return $data;
     }
 }
-

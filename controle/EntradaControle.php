@@ -41,22 +41,44 @@ class EntradaControle
 
     public function listarTodos()
     {
-        extract($_REQUEST);
-        $entradaDAO = new EntradaDAO();
-        $origens = $entradaDAO->listarTodos();
-        session_start();
-        $_SESSION['entrada'] = $origens;
-        header('Location: ../html/matPat/listar_entrada.php');
+        try {
+            $entradaDAO = new EntradaDAO();
+            $entradas = $entradaDAO->listarTodos();
+
+            echo json_encode([
+                "sucesso" => true,
+                "dados" => $entradas
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Não foi possível listar as entradas"
+            ]);
+        }
     }
 
     public function listarTodosComProdutos()
     {
-        extract($_REQUEST);
-        $entradaDAO = new EntradaDAO();
-        $origens = $entradaDAO->listarTodosComProdutos();
-        session_start();
-        $_SESSION['entrada'] = $origens;
-        header('Location: ../html/matPat/listar_entrada.php');
+        header('Content-Type: application/json');
+
+        try {
+            $entradaDAO = new EntradaDAO();
+            $entradas = $entradaDAO->listarTodosComProdutos();
+
+            echo json_encode([
+                "sucesso" => true,
+                "dados" => $entradas
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Não foi possível listar as entradas com produtos"
+            ]);
+        }
+
+        exit;
     }
 
     public function incluir()
@@ -102,26 +124,78 @@ class EntradaControle
                     $ientrada = $ientradaDAO->incluir($ientrada);
                 }
                 $x++;
-                header('Location: ../html/matPat/cadastro_entrada.php');
             }
+
+            echo json_encode([
+                    "sucesso" => true,
+                    "mensagem" => "Entrada cadastrada com sucesso"
+            ]);
         } catch (PDOException $e) {
-            $msg = "Não foi possível adicionar a entrada" . "<br>" . $e->getMessage();
-            echo $msg;
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => $e->getMessage()
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Não foi possível adicionar a entrada"
+            ]);
         }
     }
 
     public function listarId()
     {
-        extract($_REQUEST);
+        header('Content-Type: application/json');
+
+        $id_entrada = $_REQUEST['id_entrada'] ?? null;
+
+        if (!$id_entrada || !is_numeric($id_entrada) || $id_entrada < 1) {
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "ID inválido"
+            ]);
+            exit;
+        }
+
         try {
             $entradaDAO = new EntradaDAO();
             $entrada = $entradaDAO->listarId($id_entrada);
-            session_start();
-            $_SESSION['entrada'] = $entrada;
-            echo $_SESSION['entrada'];
-            header('Location: ' . $nextPage);
+
+            echo json_encode([
+                "sucesso" => true,
+                "dados" => $entrada
+            ]);
         } catch (PDOException $e) {
-            echo "ERROR: " . $e->getMessage();
+            http_response_code(500);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Não foi possível buscar a entrada"
+            ]);
         }
+    }
+
+    public function listarArquivados()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $entradaDAO = new EntradaDAO();
+            $entradas = $entradaDAO->listarArquivados();
+
+            echo json_encode([
+                "sucesso" => true,
+                "dados" => $entradas
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => "Não foi possível listar as entradas arquivadas"
+            ]);
+        }
+        exit;
     }
 }

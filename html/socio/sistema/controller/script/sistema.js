@@ -338,6 +338,7 @@ $(document).ready(function () {
         var data_referencia = $("#data_referencia").val();
         var valor_periodo = $("#valor_periodo").val();
         var tipo_contribuicao = $("#tipo_contribuicao").val();
+        var auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
         const csrf = document.querySelector('input[name="csrf_token"]').value;
         // Requisição POST - AJAX
         if (valida_cpf_cnpj(cpf_cnpj)) {
@@ -361,6 +362,7 @@ $(document).ready(function () {
                 "data_referencia": data_referencia,
                 "valor_periodo": valor_periodo,
                 "tipo_contribuicao": tipo_contribuicao,
+                "auto_status_contribuicoes": auto_status_contribuicoes,
                 "csrf_token": csrf
             }).done(function (resultadoCadastro) {
                 var resultado = JSON.parse(resultadoCadastro);
@@ -413,6 +415,7 @@ $(document).ready(function () {
                     "data_referencia": data_referencia,
                     "valor_periodo": valor_periodo,
                     "tipo_contribuicao": tipo_contribuicao,
+                    "auto_status_contribuicoes": auto_status_contribuicoes,
                     "csrf_token": csrf
                 }).done(function (resultadoCadastro) {
                     var resultado = JSON.parse(resultadoCadastro);
@@ -461,6 +464,7 @@ $(document).ready(function () {
         var data_referencia = $("#data_referencia").val();
         var valor_periodo = $("#valor_periodo").val();
         var tipo_contribuicao = $("#tipo_contribuicao").val();
+        var auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
         // Requisição POST - AJAX
         if (valida_cpf_cnpj(cpf_cnpj)) {
             $.post("./processa_edicao_socio.php", {
@@ -483,7 +487,8 @@ $(document).ready(function () {
                 "cep": cep,
                 "data_referencia": data_referencia,
                 "valor_periodo": valor_periodo,
-                "tipo_contribuicao": tipo_contribuicao
+                "tipo_contribuicao": tipo_contribuicao,
+                "auto_status_contribuicoes": auto_status_contribuicoes
             }).done(function (resultadoCadastro) {
                 var resultado = JSON.parse(resultadoCadastro);
                 if (resultado) {
@@ -520,7 +525,8 @@ $(document).ready(function () {
                     "cep": cep,
                     "data_referencia": data_referencia,
                     "valor_periodo": valor_periodo,
-                    "tipo_contribuicao": tipo_contribuicao
+                    "tipo_contribuicao": tipo_contribuicao,
+                    "auto_status_contribuicoes": auto_status_contribuicoes
                 }).done(function (resultadoCadastro) {
                     var resultado = JSON.parse(resultadoCadastro);
                     if (resultado) {

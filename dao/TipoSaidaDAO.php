@@ -50,7 +50,7 @@ class TipoSaidaDAO
     {
         $tiposaidas = array();
         $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT id_tipo, descricao FROM tipo_saida");
+        $consulta = $pdo->query("SELECT id_tipo, descricao FROM tipo_saida ORDER BY descricao");
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
             $tiposaidas[$x] = array('id_tipo' => $linha['id_tipo'], 'descricao' => $linha['descricao']);

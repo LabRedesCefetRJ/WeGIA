@@ -163,7 +163,7 @@ require_once "../personalizacao_display.php";
 														<button id="enviar" class="btn btn-primary" type="submit">Enviar</button>
 														<input type="reset" class="btn btn-default">
 														<a href="cadastro_entrada.php" style="color: white; text-decoration: none;">
-															<button class="btn btn-info" type="button">Voltar</button>
+															<button class="btn btn-info" type="button" onclick="history.back()">Voltar</button>
 														</a>
 														<a href="<?= WWW ?>html/matPat/listar_almox.php" style="color: white; text-decoration:none;">
 															<button class="btn btn-success" type="button">Listar almoxarifado</button></a>

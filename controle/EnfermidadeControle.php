@@ -23,7 +23,7 @@ class EnfermidadeControle{
 
         if(empty($dados["id_fichamedica"]) || empty($dados["id_CID"]) || empty($dados["data_diagnostico"]) || !isset($dados["intStatus"])){
             http_response_code(400);
-            echo json_encode(["erro" => "Campos invalidos ou ausentes"]);
+            echo json_encode(["erro" => "Campos inválidos ou ausentes"]);
             exit();
         }
 
@@ -106,20 +106,59 @@ class EnfermidadeControle{
         exit();
     }
 
+    public function getEnfermidadesPorFichaMedica(){
+        $idFichaMedica = trim(filter_input(INPUT_GET, 'id_fichamedica', FILTER_SANITIZE_NUMBER_INT));
+        $status = trim((string) filter_input(INPUT_GET, 'status', FILTER_UNSAFE_RAW));
+
+        if(!$idFichaMedica || $idFichaMedica < 1){
+            http_response_code(400);
+            echo json_encode(['erro' => 'O parâmetro informado não possuí valor válido.']);
+            exit();
+        }
+
+        if ($status === '') {
+            $status = 'todos';
+        }
+
+        $statusNormalizado = match ($status) {
+            'ativo' => 1,
+            'inativo' => 0,
+            'todos' => null,
+            default => false
+        };
+
+        if ($statusNormalizado === false) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Filtro de status inválido.']);
+            exit();
+        }
+
+        try{
+            $enfermidadeDao = new EnfermidadeDAO($this->pdo);
+            $enfermidades = $enfermidadeDao->getEnfermidadesPorFichaMedica((int) $idFichaMedica, $statusNormalizado);
+
+            echo json_encode($enfermidades);
+        }catch(Exception $e){
+            http_response_code(500);
+            echo json_encode(['erro' => 'Problema no servidor ao buscar as enfermidades ligadas ao paciente']);
+        }
+        exit();
+    }
+
     public function adicionarEnfermidade(){
         header('Content-Type: application/json');
 
         $dados = json_decode(file_get_contents('php://input'), true);
 
-        $eNome = trim($dados["nome"]);
-        $eCid = trim($dados["cid"]);
+        $eNome = trim((string) ($dados["nome"] ?? ''));
+        $eCid = strtoupper(trim((string) ($dados["cid"] ?? '')));
 
         $regexCid = '/^[A-TV-Z][0-9]{2}(\.[0-9A-Z]{1,4})?$/';
 
 
-        if(!$eCid || !isset($eCid) || !$eNome || !isset($eNome)){
+        if($eCid === '' || $eNome === ''){
             http_response_code(400);
-            echo json_encode(["erro" => "Campos invalidos"]);
+            echo json_encode(["erro" => "Campos inválidos"]);
             exit();
         }  else if (!preg_match($regexCid, $eCid)) {
 	        http_response_code(400);
@@ -130,9 +169,13 @@ class EnfermidadeControle{
         try{
             $enfermidadeDao = new EnfermidadeDAO($this->pdo);
             $resultado = $enfermidadeDao->adicionarEnfermidade($eNome, $eCid);
-            if($resultado){
+            if(is_array($resultado)){
                 http_response_code(200);
-                json_encode(["ok" => "Enfermidade adicionada com sucesso"]);
+                echo json_encode([
+                    "status" => "sucesso",
+                    "mensagem" => "Comorbidade adicionada com sucesso.",
+                    "enfermidade" => $resultado
+                ]);
             }else{
                 throw new Exception("Enfermidade não adicionada", 500);
             }

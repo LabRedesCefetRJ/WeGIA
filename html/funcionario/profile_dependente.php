@@ -495,7 +495,7 @@ try {
                 </header>
                 <!-- start: page -->
                 <!-- Mensagem -->
-                <?php getMsgSession("msg", "tipo"); ?>
+                <?php sessionMsg(); ?>
                 <div class="panel">
                     <div class="panel-body">
                         <h3>Dependente de: <?= $dependente["nome_funcionario"] . " " . $dependente["sobrenome_funcionario"]; ?></h3>
@@ -540,10 +540,8 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                                                 <div class="col-md-8">
-                                                    <label><i class="fa fa-male" style="font-size: 20px;"> Masculino</i></label>
-                                                    <input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-right: 15px;" disabled>
-                                                    <label><i class="fa fa-female" style="font-size: 20px;"> Feminino</i></label>
-                                                    <input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-right: 15px;" disabled>
+                                                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                                                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-female" style="font-size: 20px;"></i></label>
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -714,7 +712,7 @@ try {
                                 <!-- Aba de endereço do dependente -->
                                 <div id="endereco" class="tab-pane" role="tabpanel">
                                     <h4>Endereço</h4>
-                                    <form action="dependente_editarEndereco.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $id_dependente ?>" method='POST'>
+                                    <form id="formAlterarEnderecoDependente" action="dependente_editarEndereco.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $id_dependente ?>" method='POST'>
                                         <fieldset id="formEndereco">
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="cep">CEP</label>
@@ -771,7 +769,7 @@ try {
                                             </div>
                                             <div class="form-group center">
                                                 <button type="button" class="btn btn-primary" id="botaoEditar_formEndereco" onclick="switchForm('formEndereco')">Editar</button>
-                                                <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvar_formEndereco" onclick="submitForm('formEndereco')">
+                                                <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvar_formEndereco">
                                             </div>
                                         </fieldset>
                                     </form>
@@ -806,6 +804,12 @@ try {
     <script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
     <script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
     <script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+    <script src="../../Functions/cep_form_validation.js"></script>
+    <script>
+        inicializarValidacaoCepFormulario({
+            formId: "formAlterarEnderecoDependente"
+        });
+    </script>
     <div align="right">
         <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
     </div>

@@ -147,7 +147,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
             </ul>
             <div class="tab-content">
               <div id="overview" class="tab-pane active">
-                <form class="form-horizontal" method="POST" action="../../controle/control.php">
+                <form class="form-horizontal" id="formPrincipal" method="POST" action="../../controle/control.php">
                   <h4 class="mb-xlg">Informações Pessoais</h4>
                   <h5 class="obrig">Campos Obrigatórios(*)</h5>
                   <div class="form-group">
@@ -183,25 +183,47 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   </div>
                   <hr class="dotted short">
                   <h4 class="mb-xlg doch4">Documentação</h4>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileCompany">Número do RG<sup class="obrig">*</sup></label>
-                    <div class="col-md-6">
-                      <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
+
+                 <div id="grupoRG">
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">Número do RG</label>
+                      <div class="col-md-6">
+                        <input type="text" class="form-control" name="rg" id="rg"
+                          onkeypress="return Onlynumbers(event)"
+                          placeholder="Ex: 22.222.222-2"
+                          onkeyup="mascara('##.###.###-#',this,event)">
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">Órgão Emissor</label>
+                      <div class="col-md-6">
+                        <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor"
+                          onkeypress="return Onlychars(event)">
+                          <p id="erro_orgao" style="display:none; color:#b30000;">
+                            Preencha o órgão emissor
+                          </p>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="col-md-3 control-label">Data de expedição</label>
+                      <div class="col-md-6">
+                        <input type="date" class="form-control"
+                          name="data_expedicao" id="data_expedicao"
+                          max="<?php echo date('Y-m-d'); ?>">
+                          <p id="erro_dataExp" style="display:none; color: #b30000;">
+                            Preencha a data de expedição
+                          </p>
+                        
+                        <p id="dataNascInvalida" style="display: block; color: #b30000">
+                          Selecione a data de nascimento primeiro!
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor<sup class="obrig">*</sup></label>
-                    <div class="col-md-6">
-                      <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileCompany">Data de expedição<sup class="obrig">*</sup></label>
-                    <div class="col-md-6">
-                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required disabled>
-                      <p id="dataNascInvalida" style="display: block; color: #b30000">Selecione a data de nascimento primeiro!</p>
-                    </div>
-                  </div>
+
+                  
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
@@ -364,6 +386,12 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       display: block;
       padding-bottom: 100%;
     }
+
+  #grupoRG .form-group {
+
+    margin-bottom: 20px;
+  }
+
   </style>
   <script type="text/javascript">
     var clickcont = 0;
@@ -435,23 +463,33 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
     function validarFuncionario() {
       var btn = $("#enviar");
-      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo isset($_SESSION['cpf_interno']) ? $_SESSION['cpf_interno'] : ''; ?>);
-      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>);
+      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo isset($_SESSION['cpf_interno']) ? $_SESSION['cpf_interno'] : '[]'; ?>);
       var cpf = (($("#cpf").val()).replaceAll(".", "")).replaceAll("-", "");
       console.log(this);
+      
+      var cpfDuplicado = false;
       $.each(cpf_cadastrado, function(i, item) {
         if (item.cpf == cpf) {
-          alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
-          btn.attr('disabled', 'disabled');
-          return false;
+          cpfDuplicado = true;
+          return false; // break the loop
         }
       });
+      
+      if (cpfDuplicado) {
+        alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
+        return false;
+      }
 
       var nome = document.getElementById('profileFirstName').value;
 
       var sobrenome = document.getElementById('sobrenome').value;
 
-      var sexo = document.querySelector('input[name="gender"]:checked').value;
+      var sexo = document.querySelector('input[name="gender"]:checked');
+
+      if (!sexo) {
+        return false;
+      }
+      sexo = sexo.value;
 
       var telefone = document.getElementById('telefone').value;
 
@@ -494,10 +532,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       var tipo = d.options[d.selectedIndex].text;
 
       const data_nascimento = document.querySelector("#nascimento").value;
-      if (dt_expedicao < data_nascimento) {
+      if (dt_expedicao && dt_expedicao < data_nascimento) {
         return false;
       }
-      if (nome && sobrenome && sexo && telefone && dt_nasc && rg && orgao_emissor && dt_expedicao && dt_admissao && situacao && cargo && escala && tipo) {}
+      // Note: The final check for all fields is removed as required attributes handle it
     }
 
     function numero_residencial() {
@@ -739,40 +777,82 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       reader.readAsDataURL(this.files[0]);
     });
   </script>
-  <script>
-    $(document).ready(function() {
-      $('#nascimento').on('change', function() {
-        var dataNasc = $(this).val();
-        var dataAdmInput = $('#data_admissao');
+<script>
+$(document).ready(function() {
 
-        if (dataNasc) {
-          var minAdm = new Date(dataNasc);
-          minAdm.setDate(minAdm.getDate() + 1);
-          var minAdmStr = minAdm.toISOString().split('T')[0];
+  $('#nascimento').on('change', function() {
+    var dataNasc = $(this).val();
+    var dataAdmInput = $('#data_admissao');
 
-          dataAdmInput.attr('min', minAdmStr);
+    if (dataNasc) {
+      var minAdm = new Date(dataNasc);
+      minAdm.setDate(minAdm.getDate() + 1);
+      var minAdmStr = minAdm.toISOString().split('T')[0];
 
-          if (dataAdmInput.val() && new Date(dataAdmInput.val()) < minAdm) {
-            dataAdmInput.val('');
-            alert('Data de admissão ajustada: deve ser posterior à data de nascimento.');
-          }
-        } else {
-          dataAdmInput.removeAttr('min');
-        }
-      });
+      dataAdmInput.attr('min', minAdmStr);
 
-      $('#formsubmit').on('submit', function(e) {
-        var dataNasc = new Date($('#nascimento').val());
-        var dataAdm = new Date($('#data_admissao').val());
+      if (dataAdmInput.val() && new Date(dataAdmInput.val()) < minAdm) {
+        dataAdmInput.val('');
+      }
+    } else {
+      dataAdmInput.removeAttr('min');
+    }
+  });
 
-        if (dataNasc && dataAdm && dataAdm <= dataNasc) {
-          e.preventDefault();
-          alert('Data de admissão deve ser posterior à data de nascimento!');
-          return false;
-        }
-      });
-    });
-  </script>
+  // esconde os campos
+  $("#orgao_emissor").closest(".form-group").hide();
+  $("#data_expedicao").closest(".form-group").hide();
+
+  // RG
+  function validarRGCampos() {
+    var rg = $("#rg").val().trim();
+
+    if (rg !== "") {
+      // mostra campos
+      $("#orgao_emissor").closest(".form-group").fadeIn(150);
+      $("#data_expedicao").closest(".form-group").fadeIn(150);
+
+      // torna obrigatório
+      $("#orgao_emissor").attr("required", true);
+      $("#data_expedicao").attr("required", true);
+
+      // adiciona * no label (se ainda não tiver)
+      if (!$("#orgao_emissor").closest(".form-group").find(".obrig").length) {
+        $("#orgao_emissor").closest(".form-group").find("label")
+          .append('<sup class="obrig">*</sup>');
+      }
+
+      if (!$("#data_expedicao").closest(".form-group").find(".obrig").length) {
+        $("#data_expedicao").closest(".form-group").find("label")
+          .append('<sup class="obrig">*</sup>');
+      }
+
+    } else {
+      // esconde campos
+      $("#orgao_emissor").closest(".form-group").fadeOut(150);
+      $("#data_expedicao").closest(".form-group").fadeOut(150);
+
+      // limpa valores
+      $("#orgao_emissor").val("");
+      $("#data_expedicao").val("");
+
+      // remove required
+      $("#orgao_emissor").removeAttr("required");
+      $("#data_expedicao").removeAttr("required");
+
+      // remove *
+      $("#orgao_emissor").closest(".form-group").find(".obrig").remove();
+      $("#data_expedicao").closest(".form-group").find(".obrig").remove();
+    }
+  }
+
+  // quando digitar RG
+  $("#rg").on("input", validarRGCampos);
+
+  validarRGCampos();
+
+});
+</script>
 
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>

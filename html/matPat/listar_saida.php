@@ -22,13 +22,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 include_once ROOT . '/dao/Conexao.php';
 include_once ROOT . '/dao/SaidaDAO.php';
 
-// Validando sessão de saída
-if (!isset($_SESSION['saida'])) {
-	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=SaidaControle&nextPage=' . WWW . 'html/matPat/listar_saida.php');
-} else {
-	$saida = $_SESSION['saida'];
-	unset($_SESSION['saida']);
-}
+$tipo = $_GET['tipo'] ?? 'ativo';
 ?>
 <!doctype html>
 <html class="fixed">
@@ -88,37 +82,69 @@ if (!isset($_SESSION['saida'])) {
 		}
 	</script>
 	<script>
-		$(function() {
-			var saida = <?php
-						echo $saida;
-						?>;
+		function listarId(id) {
+			window.location.href = '<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=<?= WWW ?>html/matPat/listar_Isaida.php&id_saida=' + id;
+		}
 
-			$.each(saida, function(i, item) {
-				$('#tabela')
-					.append($('<tr style="cursor:pointer" />')
-						.attr('onclick', 'listarId("' + item.id_saida + '")')
-						.append($('<td />')
-							.text(item.descricao_almoxarifado))
-						.append($('<td />')
-							.text(item.nome_destino))
-						.append($('<td />')
-							.text(item.descricao))
-						.append($('<td />')
-							.text(item.nome))
-						.append($('<td />')
-							.text(item.valor_total))
-						.append($('<td />')
-							.text(item.data))
-						.append($('<td />')
-							.text(item.hora)
-						)
-					)
-			})
-		});
+		let tabela = null;
+
+		function carregarSaidas() {
+			const tipo = '<?= $tipo ?>';
+			const url = tipo === 'arquivado'
+				? '<?= WWW ?>controle/control.php?metodo=listarArquivados&nomeClasse=SaidaControle'
+				: '<?= WWW ?>controle/control.php?metodo=listarTodos&nomeClasse=SaidaControle';
+
+			$.ajax({
+				url: url,
+				method: 'GET',
+				dataType: 'json',
+				success: function(resposta) {
+					if (!resposta.sucesso) {
+						alert(resposta.mensagem || 'Erro ao carregar saídas.');
+						return;
+					}
+
+					if ($.fn.DataTable.isDataTable('#datatable-default')) {
+						tabela.destroy();
+					}
+
+					$('#tabela').empty();
+
+					$.each(resposta.dados, function(i, item) {
+						$('#tabela').append(
+							$('<tr style="cursor:pointer" />')
+								.attr('onclick', 'listarId("' + item.id_saida + '")')
+								.append($('<td />').text(item.descricao_almoxarifado ?? ''))
+								.append($('<td />').text(item.nome_destino ?? ''))
+								.append($('<td />').text(item.descricao ?? ''))
+								.append($('<td />').text(item.nome ?? ''))
+								.append($('<td />').text(item.valor_total ?? ''))
+								.append($('<td />').text(item.data ?? ''))
+								.append($('<td />').text(item.hora ?? ''))
+						);
+					});
+
+					tabela = $('#datatable-default').DataTable({
+						destroy: true,
+						retrieve: true
+					});
+				},
+				error: function(xhr) {
+					let mensagem = 'Erro ao carregar saídas.';
+					if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+						mensagem = xhr.responseJSON.mensagem;
+					}
+					alert(mensagem);
+				}
+			});
+		}
+
 		$(function() {
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
+			carregarSaidas();
 		});
+
 	</script>
 </head>
 
@@ -163,6 +189,19 @@ if (!isset($_SESSION['saida'])) {
 					<!-- start: page -->
 
 					<div class="panel-body">
+						<div style="margin-bottom: 15px;">
+							<a href="listar_saida.php?tipo=ativo">
+								<button <?= $tipo === 'ativo' ? 'style="font-weight:bold;"' : ''?>>
+									Ativos
+								</button>
+							</a>
+
+							<a href="listar_saida.php?tipo=arquivado">
+								<button <?= $tipo === 'arquivado' ? 'style="font-weight:bold;"' : ''?>>
+									Arquivados
+								</button>
+							</a>
+						</div>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>
@@ -203,10 +242,10 @@ if (!isset($_SESSION['saida'])) {
 	<!-- Theme Initialization Files -->
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
-	<!-- Examples -->
+	<!-- Examples 
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>-->
 	<div align="right">
 		<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 	</div>

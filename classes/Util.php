@@ -1120,4 +1120,22 @@ class Util
 
         return $userAgent;
     }
+
+    public static function getClassePorTipo($tipo)
+    {
+	    switch ($tipo) {
+		    case 'Compra':
+			    return 'bg-secondary';
+		    case 'Doação':
+			    return 'bg-success';
+		    case 'Troca':
+			    return 'bg-warning';
+		    case 'Vencido':
+			    return 'bg-secondary';
+		    case 'Consumo':
+			    return 'bg-success';
+		    default:
+			    return 'bg-info';
+	    }
+    }
 }

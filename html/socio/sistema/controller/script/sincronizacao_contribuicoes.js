@@ -1,3 +1,4 @@
+//Pegar como referência
 const syncBtn = document.getElementById('sync-btn');
 const faturaBtn = document.getElementById('fatura-btn');
 

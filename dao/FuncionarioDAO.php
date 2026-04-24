@@ -155,6 +155,12 @@ class FuncionarioDAO
         $rg = $funcionario->getRegistroGeral();
         $orgaoEmissor = $funcionario->getOrgaoEmissor();
         $dataExpedicao = $funcionario->getDataExpedicao();
+
+        // Converte vazio para NULL
+        $rg = empty($rg) ? null : $rg;
+        $orgaoEmissor = empty($orgaoEmissor) ? null : $orgaoEmissor;
+        $dataExpedicao = empty($dataExpedicao) ? null : $dataExpedicao;
+
         $nomePai = $funcionario->getNomePai();
         $nomeMae = $funcionario->getNomeMae();
         $sangue = $funcionario->getTipoSanguineo();
@@ -237,9 +243,15 @@ class FuncionarioDAO
         $telefone = $funcionario->getTelefone();
         $nascimento = $funcionario->getDataNascimento();
         $imagem = $funcionario->getImagem();
+
         $rg = $funcionario->getRegistroGeral();
-        $orgao_emissor = $funcionario->getOrgaoEmissor();
-        $data_expedicao = $funcionario->getDataExpedicao();
+        $orgaoEmissor = $funcionario->getOrgaoEmissor();
+        $dataExpedicao = $funcionario->getDataExpedicao();
+        // Converte vazio para NULL
+        $rg = empty($rg) ? null : $rg;
+        $orgaoEmissor = empty($orgaoEmissor) ? null : $orgaoEmissor;
+        $dataExpedicao = empty($dataExpedicao) ? null : $dataExpedicao;
+
         $dataAdmissao = $funcionario->getData_admissao();
         $certificadoReservistaNumero = $funcionario->getCertificado_reservista_numero();
         $certificadoReservistaSerie = $funcionario->getCertificado_reservista_serie();
@@ -396,6 +408,11 @@ class FuncionarioDAO
         $data_expedicao = $funcionario->getDataExpedicao();
         $data_admissao = $funcionario->getData_admissao();
 
+        // Converte vazio para NULL
+        $registro_geral = empty($registro_geral) ? null : $registro_geral;
+        $orgao_emissor = empty($orgao_emissor) ? null : $orgao_emissor;
+        $data_expedicao = empty($data_expedicao) ? null : $data_expedicao;
+
         //$stmt->bindParam(':cpf',$cpf);
         $stmt->bindParam(':id_funcionario', $id_funcionario);
         $stmt->bindParam(':registro_geral', $registro_geral);
@@ -408,7 +425,7 @@ class FuncionarioDAO
     {
         try {
 
-            $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set f.pis=:pis,f.ctps=:ctps,f.uf_ctps=:uf_ctps,f.numero_titulo=:numero_titulo,f.zona=:zona, f.secao=:secao,f.certificado_reservista_numero=:certificado_reservista_numero,f.certificado_reservista_serie=:certificado_reservista_serie,f.id_situacao=:id_situacao,f.id_cargo=:id_cargo where f.id_funcionario=:id_funcionario';
+            $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set f.pis=:pis,f.ctps=:ctps,f.uf_ctps=:uf_ctps,f.numero_titulo=:numero_titulo,f.zona=:zona, f.secao=:secao,f.certificado_reservista_numero=:certificado_reservista_numero,f.certificado_reservista_serie=:certificado_reservista_serie,f.id_situacao=:id_situacao,f.id_cargo=:id_cargo,f.data_admissao=:data_admissao where f.id_funcionario=:id_funcionario';
 
             $sql = str_replace("'", "\'", $sql);
 
@@ -426,6 +443,7 @@ class FuncionarioDAO
             $certificado_reservista_numero = $funcionario->getCertificado_reservista_numero();
             $certificado_reservista_serie = $funcionario->getCertificado_reservista_serie();
             $id_situacao = $funcionario->getId_situacao();
+            $data_admissao = $funcionario->getData_admissao();
 
             if ($id_situacao == 2) {
                 $id_cargo = 2;
@@ -441,6 +459,7 @@ class FuncionarioDAO
             $stmt->bindParam(':certificado_reservista_numero', $certificado_reservista_numero);
             $stmt->bindParam(':certificado_reservista_serie', $certificado_reservista_serie);
             $stmt->bindParam(':id_situacao', $id_situacao);
+            $stmt->bindParam(':data_admissao', $data_admissao);
             $stmt->execute();
         } catch (PDOException $e) {
             echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
