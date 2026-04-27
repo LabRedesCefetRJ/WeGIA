@@ -62,4 +62,34 @@ class AuthController
                 ->withHeader('Content-Type', 'application/json');
         }
     }
+
+    public function refresh(Request $request, Response $response): Response
+    {
+        $data = $request->getParsedBody();
+        $refreshToken = $data['refresh_token'] ?? null;
+
+        if (!$refreshToken) {
+            $response->getBody()->write(json_encode([
+                'error' => 'Refresh token é obrigatório'
+            ]));
+
+            return $response->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+        }
+
+        try {
+            $result = $this->authService->refreshToken($refreshToken);
+
+            $response->getBody()->write(json_encode($result));
+            return $response->withHeader('Content-Type', 'application/json');
+
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage()
+            ]));
+
+            return $response->withStatus(401)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

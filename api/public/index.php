@@ -80,5 +80,6 @@ $app->get('/dashboard', function (Request $request, Response $response, $args) {
 
 $app->post('/login', [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
+$app->post('/refresh', [AuthController::class, 'refresh']);
 
 $app->run();

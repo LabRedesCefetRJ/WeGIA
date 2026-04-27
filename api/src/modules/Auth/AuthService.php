@@ -43,18 +43,54 @@ class AuthService
             throw new \Exception('Credenciais inválidas');
         }
 
-        $payload = [
+        return $this->generateTokens($user['id_pessoa']);
+    }
+
+    public function refreshToken(string $token): array
+    {
+        try {
+            $decoded = $this->validateToken($token);
+            $userId = $decoded->sub;
+
+            return $this->generateTokens($userId);
+        } catch (\Exception $e) {
+            throw new \Exception('Token inválido ou expirado');
+        }
+    }
+
+    private function generateTokens(int $userId): array
+    {
+        $now = time();
+
+        // Access token - 15 minutos
+        $accessPayload = [
             'iss' => 'wegia',
             'aud' => 'wegia-users',
-            'iat' => time(),
-            'exp' => time() + 3600,
-            'sub' => $user['id_pessoa']
+            'iat' => $now,
+            'exp' => $now + 900,
+            'sub' => $userId,
+            'type' => 'access'
         ];
 
-        $token = JWT::encode($payload, $this->secret, 'HS256');
+        $accessToken = JWT::encode($accessPayload, $this->secret, 'HS256');
+
+        // Refresh token - 7 dias
+        $refreshPayload = [
+            'iss' => 'wegia',
+            'aud' => 'wegia-users',
+            'iat' => $now,
+            'exp' => $now + 604800,
+            'sub' => $userId,
+            'type' => 'refresh'
+        ];
+
+        $refreshToken = JWT::encode($refreshPayload, $this->secret, 'HS256');
 
         return [
-            'token' => $token
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'expires_in' => 900,
+            'token_type' => 'Bearer'
         ];
     }
 
