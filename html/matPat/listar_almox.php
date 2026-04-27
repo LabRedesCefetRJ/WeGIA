@@ -220,7 +220,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 										<td><?= htmlspecialchars($item['descricao_almoxarifado']) ?></td>
 										<td>
 											<?php if ($tipo==='ativo'):?>
-												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;" onsubmit="return confirm('Deseja excluir este almoxarifado?');">
         											<input type="hidden" name="metodo" value="excluir">
         											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
         											<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
@@ -230,7 +230,7 @@ require_once ROOT . "/html/personalizacao_display.php";
         											</button>
     											</form>
 
-												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;" onsubmit="return confirm('Deseja arquivar este almoxarifado?');">
 													<input type="hidden" name="metodo" value="arquivar">
         											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
         											<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
