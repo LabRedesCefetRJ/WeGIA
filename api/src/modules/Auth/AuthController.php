@@ -92,4 +92,35 @@ class AuthController
                 ->withHeader('Content-Type', 'application/json');
         }
     }
+
+    public function logout(Request $request, Response $response): Response
+    {
+        $authHeader = $request->getHeaderLine('Authorization');
+
+        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
+            $response->getBody()->write(json_encode([
+                'error' => 'Token não fornecido'
+            ]));
+
+            return $response->withStatus(401)
+                ->withHeader('Content-Type', 'application/json');
+        }
+
+        $token = str_replace('Bearer ', '', $authHeader);
+
+        try {
+            $result = $this->authService->logout($token);
+
+            $response->getBody()->write(json_encode($result));
+            return $response->withHeader('Content-Type', 'application/json');
+
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage()
+            ]));
+
+            return $response->withStatus(401)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

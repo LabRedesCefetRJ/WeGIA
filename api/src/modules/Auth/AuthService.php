@@ -106,4 +106,19 @@ class AuthService
             throw new \Exception('Token inválido');
         }
     }
+
+    public function logout(string $token): array
+    {
+        try {
+            $decoded = $this->validateToken($token);
+            
+            // Token é válido, logout realizado
+            return [
+                'message' => 'Logout realizado com sucesso',
+                'user_id' => $decoded->sub
+            ];
+        } catch (\Exception $e) {
+            throw new \Exception('Token inválido ou expirado');
+        }
+    }
 }

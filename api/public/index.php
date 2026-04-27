@@ -81,5 +81,6 @@ $app->get('/dashboard', function (Request $request, Response $response, $args) {
 $app->post('/login', [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
 $app->post('/refresh', [AuthController::class, 'refresh']);
+$app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de logout, os tokens são stateless, então não tem como invalidar o token, a única forma é ter uma blacklist de tokens ou usar um campo de "token_version" no banco de dados para invalidar os tokens antigos
 
 $app->run();
