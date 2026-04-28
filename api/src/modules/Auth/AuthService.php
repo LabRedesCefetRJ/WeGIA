@@ -27,7 +27,7 @@ class AuthService
 
         return $this->userRepository->save([
             'login' => $login,
-            'senha' => password_hash($senha, PASSWORD_DEFAULT)
+            'senha' => \LoginHelper::hashPassword($senha)
         ]);
 
     }
@@ -39,8 +39,14 @@ class AuthService
             throw new \Exception('Credenciais inválidas');
         }
 
-        if (!password_verify($senha, $user['senha'])) {
+        $passwordCheck = \LoginHelper::verifyAndMigrate($senha, $user['senha'] ?? null);
+
+        if (!$passwordCheck['valid']) {
             throw new \Exception('Credenciais inválidas');
+        }
+
+        if ($passwordCheck['updated_hash'] !== null) {
+            $this->userRepository->updatePasswordHash((int) $user['id_pessoa'], $passwordCheck['updated_hash']);
         }
 
         return $this->generateTokens($user['id_pessoa']);

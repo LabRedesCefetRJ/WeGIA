@@ -34,4 +34,14 @@ class UserRepository
             'login' => $user['login']
         ];
     }
+
+    public function updatePasswordHash(int $userId, string $passwordHash): void
+    {
+        $query = "UPDATE pessoa SET senha = :senha WHERE id_pessoa = :id_pessoa";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute([
+            'senha' => $passwordHash,
+            'id_pessoa' => $userId,
+        ]);
+    }
 }
