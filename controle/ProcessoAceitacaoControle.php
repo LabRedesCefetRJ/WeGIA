@@ -45,48 +45,160 @@ class ProcessoAceitacaoControle
     public function incluir()
     {
         try {
-            $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
-            $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
-            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
-            $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+            $nome = $this->getPostValue('nome');
+            $sobrenome = $this->getPostValue('sobrenome');
+            $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
+            $descricao = $this->getPostValue('descricao');
+            $telefone = $this->getPostValue('telefone');
+            $cep = $this->getPostValue('cep');
+            $rua = $this->getPostValue('rua');
+            $bairro = $this->getPostValue('bairro');
+            $cidade = $this->getPostValue('cidade');
+            $uf = $this->getPostValue('uf');
+            $numero = $this->getPostValue('numero_residencia');
+            $complemento = $this->getPostValue('complemento');
+            $ibge = $this->getPostValue('ibge');
 
-            if (empty($nome) || empty($sobrenome))
-                throw new InvalidArgumentException('Erro: Nome e Sobrenome são obrigatórios.', 400);
+            if (empty($nome) || empty($sobrenome)) {
+                throw new InvalidArgumentException('Nome e Sobrenome são obrigatórios.', 400);
+            }
 
-            if (strlen($cpf) != 0 && !Util::validarCPF($cpf))
-                throw new InvalidArgumentException('Erro: o CPF informado não é válido.', 400);
+            if ($cpf !== null && !Util::validarCPF($cpf)) {
+                throw new InvalidArgumentException('CPF inválido. Verifique o número informado.', 400);
+            }
 
-            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?"); //Isso deve virar responsabilidade da classe de Pessoa
-            $stmt->execute([$cpf]);
+            $this->validarTelefone($telefone);
+            $cep = $this->validarCep($cep);
+            $this->validarEndereco([
+                'cep' => $cep,
+                'rua' => $rua,
+                'bairro' => $bairro,
+                'cidade' => $cidade,
+                'uf' => $uf,
+                'numero_residencia' => $numero,
+                'complemento' => $complemento,
+                'ibge' => $ibge,
+            ]);
 
-            //futuramente caso um CPF já esteja cadastrado, o sistema deve pegar os dados da pessoa existente no sistema e usar para criar o processo
-            if ((int)$stmt->fetchColumn() > 0)
-                throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
+            if ($cpf !== null) {
+                $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
+                $stmt->execute([$cpf]);
+
+                if ((int)$stmt->fetchColumn() > 0) {
+                    throw new InvalidArgumentException('CPF já cadastrado no sistema.', 400);
+                }
+            }
 
             $pessoaDAO = new PessoaDAO($this->pdo);
             $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
 
             $this->pdo->beginTransaction();
 
-            $id_pessoa = isset($cpf) && !empty($cpf) ? $pessoaDAO->inserirPessoa($cpf, $nome, $sobrenome): $pessoaDAO->inserirPessoa(null, $nome, $sobrenome);
+            $id_pessoa = $pessoaDAO->inserirPessoa(
+                $cpf,
+                $nome,
+                $sobrenome,
+                $telefone,
+                $cep,
+                $rua,
+                $bairro,
+                $cidade,
+                $uf,
+                $numero,
+                $complemento,
+                $ibge
+            );
 
-            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao); 
-            if(!$resultado || $resultado <= 0)
+            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao);
+            if (!$resultado || $resultado <= 0) {
                 throw new Exception('Erro ao cadastrar processo de aceitação no servidor.', 500);
+            }
 
             $this->pdo->commit();
 
-            $_SESSION['msg'] = "Processo cadastrado com sucesso!";
-            header("Location: ../html/atendido/processo_aceitacao.php");
+            $_SESSION['msg'] = 'Processo cadastrado com sucesso!';
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            exit();
         } catch (Exception $e) {
-            if($this->pdo->inTransaction())
+            if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
+            }
 
-            $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação' : $e->getMessage();
+            $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação.' : $e->getMessage();
             $_SESSION['mensagem_erro'] = $mensagem;
 
-            header("Location: ../html/atendido/processo_aceitacao.php");
-            Util::tratarException($e);
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            exit();
+        }
+    }
+
+    private function getPostValue(string $name, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): ?string
+    {
+        $value = filter_input(INPUT_POST, $name, $filter);
+
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+        return $value === '' ? null : $value;
+    }
+
+    private function normalizeCpf(?string $cpf): ?string
+    {
+        if ($cpf === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $cpf);
+        return $digits === '' ? null : $digits;
+    }
+
+    private function validarTelefone(?string $telefone): void
+    {
+        if ($telefone === null) {
+            return;
+        }
+
+        $digits = preg_replace('/\D+/', '', $telefone);
+        if (!preg_match('/^\d{10,11}$/', $digits)) {
+            throw new InvalidArgumentException('Telefone inválido. Informe DDD + número, com 10 ou 11 dígitos.', 400);
+        }
+    }
+
+    private function validarCep(?string $cep): ?string
+    {
+        if ($cep === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $cep);
+        if (!preg_match('/^\d{8}$/', $digits)) {
+            throw new InvalidArgumentException('CEP inválido. Use o formato 00000-000.', 400);
+        }
+
+        return substr($digits, 0, 5) . '-' . substr($digits, 5);
+    }
+
+    private function validarEndereco(array $endereco): void
+    {
+        $anyAddressField = false;
+        foreach ($endereco as $value) {
+            if (!empty($value)) {
+                $anyAddressField = true;
+                break;
+            }
+        }
+
+        if (!$anyAddressField) {
+            return;
+        }
+
+        $requiredFields = ['rua', 'bairro', 'cidade', 'uf'];
+        foreach ($requiredFields as $field) {
+            if (empty($endereco[$field])) {
+                throw new InvalidArgumentException('Informe o endereço completo ou deixe todos os campos de endereço em branco.', 400);
+            }
         }
     }
 

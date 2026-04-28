@@ -427,11 +427,12 @@ class AtendidoControle
 
         $processoDao = new ProcessoAceitacaoDAO($pdo);
 
-        if (!$processoDao->buscarPorIdConcluido($idProcesso)) {
+        $processo = $processoDao->buscarPorIdConcluido($idProcesso);
+        if (!$processo) {
             throw new RuntimeException('Não é possível criar atendido: processo ainda não está CONCLUÍDO.');
         }
 
-        $idPessoa = $processoDao->getIdPessoaByProcesso($idProcesso);
+        $idPessoa = $processo['id_pessoa'];
 
         $atendidoDao = new AtendidoDAO($pdo);
         $idAtendido = $atendidoDao->criarPorPessoa($idPessoa, $tipo, $status);

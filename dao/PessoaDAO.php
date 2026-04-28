@@ -68,19 +68,30 @@ class PessoaDAO
     }
 
 
-    public function inserirPessoa(?string $cpf, string $nome, string $sobrenome): int
-    {
-        $sql = "INSERT INTO pessoa (cpf, nome, sobrenome) VALUES (:cpf, :nome, :sobrenome)";
-        $stmt = $this->pdo->prepare($sql);
+public function inserirPessoa($cpf, $nome, $sobrenome, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null) 
+{
+    $sql = "INSERT INTO pessoa (cpf, nome, sobrenome, telefone, cep, logradouro, bairro, cidade, estado, numero_endereco, complemento, ibge) 
+            VALUES (:cpf, :nome, :sobrenome, :telefone, :cep, :rua, :bairro, :cidade, :uf, :numero, :complemento, :ibge)";
+    
+    $stmt = $this->pdo->prepare($sql);
+    
+    $stmt->bindValue(':cpf', $cpf);
+    $stmt->bindValue(':nome', $nome);
+    $stmt->bindValue(':sobrenome', $sobrenome);
+    $stmt->bindValue(':telefone', $telefone);
+    $stmt->bindValue(':cep', $cep);
+    $stmt->bindValue(':rua', $rua);
+    $stmt->bindValue(':bairro', $bairro);
+    $stmt->bindValue(':cidade', $cidade);
+    $stmt->bindValue(':uf', $uf);
+    $stmt->bindValue(':numero', $numero);
+    $stmt->bindValue(':complemento', $complemento);
+    $stmt->bindValue(':ibge', $ibge);
 
-        $stmt->bindParam(':cpf', $cpf);
-        $stmt->bindParam(':nome', $nome);
-        $stmt->bindParam(':sobrenome', $sobrenome);
-
-        if (!$stmt->execute()) {
-            throw new PDOException("Erro ao inserir pessoa no banco.");
-        }
-
-        return (int)$this->pdo->lastInsertId();
+    if ($stmt->execute()) {
+        return $this->pdo->lastInsertId();
     }
+    
+    throw new Exception("Erro ao inserir pessoa.");
+}
 }

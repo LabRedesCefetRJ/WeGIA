@@ -144,7 +144,7 @@ class ProcessoAceitacaoDAO
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function getIdPessoaByProcesso(int $idProcesso): int
+    public function getIdPessoaByProcesso(int $idProcesso): ?int
     {
         $sql = "SELECT id_pessoa
             FROM processo_aceitacao
@@ -157,11 +157,7 @@ class ProcessoAceitacaoDAO
 
         $idPessoa = $stmt->fetchColumn();
 
-        if (!$idPessoa) {
-            throw new RuntimeException('Processo não encontrado ou sem pessoa vinculada.');
-        }
-
-        return (int)$idPessoa;
+        return $idPessoa ? (int)$idPessoa : null;
     }
 
     public function getByStatus(int $status)
@@ -174,11 +170,14 @@ class ProcessoAceitacaoDAO
             s.descricao AS status,
             pa.id,
             pa.id_status,
-            pa.descricao 
+            pa.descricao,
+            COUNT(e.id) AS etapas_count
         FROM processo_aceitacao pa
         JOIN pessoa p ON pa.id_pessoa = p.id_pessoa
         JOIN pa_status s ON pa.id_status = s.id
+        LEFT JOIN pa_etapa e ON e.id_processo_aceitacao = pa.id
         WHERE pa.id_status = :idStatus
+        GROUP BY p.id_pessoa, p.nome, p.sobrenome, p.cpf, s.descricao, pa.id, pa.id_status, pa.descricao
         ORDER BY p.nome ASC';
 
         $stmt = $this->pdo->prepare($query);

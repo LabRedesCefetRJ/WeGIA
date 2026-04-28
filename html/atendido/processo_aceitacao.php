@@ -226,10 +226,13 @@ try {
 												<td <?php if(!$showCpfColumn) echo 'style="display:none"' ?>><?= isset($processo['cpf']) && !empty($processo['cpf']) ? htmlspecialchars($processo['cpf']) : 'Não informado.' ?></td>
 												<td style="max-width: 150px;"><?= isset($processo['descricao']) && !empty($processo['descricao']) ? nl2br(html_entity_decode($processo['descricao'], ENT_QUOTES, 'UTF-8')) : '' ?></td>
 												<td>
-													<a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" class="btn btn-xs btn-primary">
-														<i class="fa fa-edit"></i>
-													</a>
-												</td>
+								<?php if (!empty($processo['etapas_count']) && (int)$processo['etapas_count'] > 0): ?>
+									<a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" class="btn btn-xs btn-primary">
+										<i class="fa fa-edit"></i>
+									</a>
+								<?php else: ?>
+									<span class="text-muted" style="font-size: 12px;">Sem etapas</span>
+								<?php endif; ?>
 
 												<td>
 													<button type="button"
@@ -324,37 +327,84 @@ try {
 
 				<div class="modal fade" id="modalNovoProcesso" tabindex="-1" role="dialog" aria-hidden="true">
 					<div class="modal-dialog" role="document">
-						<form method="post" action="../../controle/control.php" class="modal-content">
-							<div class="modal-header">
-								<h5 class="modal-title">Novo Processo de Aceitação</h5>
-								<button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-									<span aria-hidden="true">&times;</span>
-								</button>
-							</div>
-							<div class="modal-body">
-								<input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
-								<input type="hidden" name="metodo" value="incluir">
+                        <form id="formNovoProcesso" method="post" action="../../controle/control.php" class="modal-content" onsubmit="return validarFormularioProcesso(event)">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Novo Processo de Aceitação</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
+                                <input type="hidden" name="metodo" value="incluir">
 
-								<div class="form-group">
-									<label>Nome <span class="text-danger">*</span></label>
-									<input type="text" name="nome" class="form-control" required />
+                                <div id="alertNovoProcesso" class="alert alert-danger" role="alert" style="display: none;"></div>
+
+                                <div class="form-group">
+                                    <label>Nome <span class="text-danger">*</span></label>
+                                    <input type="text" name="nome" class="form-control" required autocomplete="given-name" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Sobrenome <span class="text-danger">*</span></label>
+                                    <input type="text" name="sobrenome" class="form-control" required autocomplete="family-name" />
+                                </div>
+                                <div class="form-group">
+                                    <label>CPF</label>
+                                    <input type="text"
+                                        name="cpf"
+                                        id="cpf"
+                                        maxlength="14"
+                                        placeholder="000.000.000-00"
+                                        onkeypress="return Onlynumbers(event)"
+                                        onkeyup="mascara('###.###.###-##',this,event)"
+                                        onblur="validarCPF(this.value)"
+                                        class="form-control" />
+                                    <p id="cpfInvalido" style="display: none; color: #b30000; font-size: 12px;">CPF INVÁLIDO!</p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Telefone</label>
+                                    <input type="tel" name="telefone" id="telefone" maxlength="15" placeholder="(22) 99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##) #####-####',this,event)" class="form-control" />
+								<hr> <div class="row">
+									<div class="form-group col-md-4">
+										<label>CEP</label>
+										<input type="text" name="cep" id="cep" class="form-control" maxlength="9" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)" onblur="pesquisacep(this.value);" onkeydown="return cepEnter(event, this.value);" placeholder="00000-000" />
+                                                                                  <p id="cepInvalido" class="text-danger" style="display: none; font-size: 12px;">Formato de CEP inválido!</p>
+									</div>
+									<div class="form-group col-md-8">
+										<label>Rua</label>
+										<input type="text" name="rua" id="rua" class="form-control" />
+									</div>
 								</div>
-								<div class="form-group">
-									<label>Sobrenome <span class="text-danger">*</span></label>
-									<input type="text" name="sobrenome" class="form-control" required />
+
+								<div class="row">
+									<div class="form-group col-md-3">
+										<label>Nº</label>
+										<input type="text" name="numero_residencia" id="numero_residencia" class="form-control" />
+									</div>
+									<div class="form-group col-md-5">
+										<label>Bairro</label>
+										<input type="text" name="bairro" id="bairro" class="form-control" />
+									</div>
+									<div class="form-group col-md-4">
+										<label>Complemento</label>
+										<input type="text" name="complemento" id="complemento" class="form-control" />
+									</div>
 								</div>
-								<div class="form-group">
-									<label>CPF</label>
-									<input type="text"
-										name="cpf"
-										id="cpf"
-										maxlength="14"
-										placeholder="000.000.000-00"
-										onkeypress="return Onlynumbers(event)"
-										onkeyup="mascara('###.###.###-##',this,event)"
-										onblur="validarCPF(this.value)"
-										class="form-control" />
-									<p id="cpfInvalido" style="display: none; color: #b30000; font-size: 12px;">CPF INVÁLIDO!</p>
+
+								<div class="row">
+									<div class="form-group col-md-5">
+										<label>Cidade</label>
+										<input type="text" name="cidade" id="cidade" class="form-control" readonly />
+									</div>
+									<div class="form-group col-md-3">
+										<label>UF</label>
+										<input type="text" name="uf" id="uf" class="form-control" readonly />
+									</div>
+									<div class="form-group col-md-4">
+										<label>IBGE</label>
+										<input type="text" name="ibge" id="ibge" class="form-control" readonly />
+									</div>
 								</div>
 
 								<div class="form-group">
@@ -422,6 +472,7 @@ try {
 						</div>
 					</div>
 				</div>
+
 			</section>
 		</div>
 	</section>
@@ -487,28 +538,75 @@ try {
 			}
 		}
 
-		function Onlynumbers(evt) {
-			var charCode = (evt.which) ? evt.which : evt.keyCode;
-			if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-				return false;
-			}
-			return true;
-		}
+        function mostrarErroModal(message) {
+            const alertBox = $('#alertNovoProcesso');
+            alertBox.text(message).show();
+        }
 
+        function limparErroModal() {
+            const alertBox = $('#alertNovoProcesso');
+            alertBox.hide().text('');
+        }
 
-		function verificaTipoProcesso(ev) {
-			const tipo = document.getElementById('tipoDocumentoProcesso');
+        function validarFormularioProcesso(event) {
+            event = event || window.event;
+            const form = event.target || event.srcElement;
 
-			if (!tipo.value || isNaN(tipo.value) || tipo.value < 1) {
-				alert('Erro: selecione um tipo de documento adequado antes de prosseguir.');
-				ev.preventDefault();
-				return false;
-			}
+            limparErroModal();
+            limparCepErro();
 
-			return true;
-		}
+            const nome = form.nome.value.trim();
+            const sobrenome = form.sobrenome.value.trim();
+            const telefone = form.telefone.value.trim();
+            const cep = form.cep.value.trim();
+            const rua = form.rua.value.trim();
+            const bairro = form.bairro.value.trim();
+            const cidade = form.cidade.value.trim();
+            const uf = form.uf.value.trim();
 
-		function adicionarTipoProcesso() {
+            if (!nome || !sobrenome) {
+                mostrarErroModal('Informe nome e sobrenome antes de cadastrar o processo.');
+                return false;
+            }
+
+            if (telefone) {
+                const telefoneNumeros = telefone.replace(/\D/g, '');
+                if (!/^\d{10,11}$/.test(telefoneNumeros)) {
+                    mostrarErroModal('Telefone inválido. Digite o DDD e número com 10 ou 11 dígitos.');
+                    return false;
+                }
+            }
+
+            if (cep) {
+                const cepNumeros = cep.replace(/\D/g, '');
+                if (!/^\d{8}$/.test(cepNumeros)) {
+                    mostrarErroModal('CEP inválido. Use o formato 00000-000.');
+                    return false;
+                }
+            }
+
+            const enderecoPreenchido = cep || rua || bairro || cidade || uf;
+            if (enderecoPreenchido && (!rua || !bairro || !cidade || !uf)) {
+                mostrarErroModal('Preencha o endereço completo ou deixe todos os campos de endereço em branco.');
+                return false;
+            }
+
+            return true;
+        }
+
+        function verificaTipoProcesso(ev) {
+            const tipo = document.getElementById('tipoDocumentoProcesso');
+
+            if (!tipo.value || isNaN(tipo.value) || tipo.value < 1) {
+                alert('Erro: selecione um tipo de documento adequado antes de prosseguir.');
+                ev.preventDefault();
+                return false;
+            }
+
+            return true;
+        }
+
+        function adicionarTipoProcesso() {
 			var tipo = window.prompt("Cadastre um Novo Tipo de Documento:");
 
 			if (!tipo) {
@@ -615,6 +713,74 @@ try {
 				}
 			});
 		});
+	</script>
+
+	<script>
+
+		function limpa_formulário_cep() {
+			document.getElementById('rua').value=("");
+			document.getElementById('bairro').value=("");
+			document.getElementById('cidade').value=("");
+			document.getElementById('uf').value=("");
+			document.getElementById('ibge').value=("");
+			limparCepErro();
+		}
+
+		function mostrarCepErro(message) {
+			const cepError = document.getElementById('cepInvalido');
+			cepError.textContent = message;
+			cepError.style.display = 'block';
+		}
+
+		function limparCepErro() {
+			const cepError = document.getElementById('cepInvalido');
+			if (cepError) {
+				cepError.style.display = 'none';
+				cepError.textContent = 'Formato de CEP inválido!';
+			}
+		}
+
+		function cepEnter(event, value) {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				pesquisacep(value);
+				return false;
+			}
+			return true;
+		}
+
+		function meu_callback(conteudo) {
+			if (!("erro" in conteudo)) {
+				document.getElementById('rua').value=(conteudo.logradouro);
+				document.getElementById('bairro').value=(conteudo.bairro);
+				document.getElementById('cidade').value=(conteudo.localidade);
+				document.getElementById('uf').value=(conteudo.uf);
+				document.getElementById('ibge').value=(conteudo.ibge);
+			} else {
+				limpa_formulário_cep();
+				mostrarCepErro('CEP não encontrado.');
+			}
+		}
+			
+		function pesquisacep(valor) {
+			var cep = valor.replace(/\D/g, '');
+			if (cep != "") {
+				var validacep = /^[0-9]{8}$/;
+				if(validacep.test(cep)) {
+                    limparCepErro();
+
+					var script = document.createElement('script');
+					script.src = 'https://viacep.com.br/ws/'+ cep + '/json/?callback=meu_callback';
+					document.body.appendChild(script);
+				} else {
+					limpa_formulário_cep();
+					mostrarCepErro('Formato de CEP inválido.');
+				}
+			} else {
+				limpa_formulário_cep();
+			}
+		};
+		
 	</script>
 
 	<script src="../../Functions/pa_status.js"></script>
