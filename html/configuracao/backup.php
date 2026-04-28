@@ -50,8 +50,8 @@ if (PHP_OS != 'Linux') {
 
         // Executando Backup do Diretório do site
         $siteLog = backupSite();
-        if ($siteLog) {
-            $errors[] = "Houve um erro ao realizar o Backup do Sistema:\n" . $siteLog;
+        if (!$siteLog) {
+            $errors[] = "Houve um erro ao realizar o Backup do Sistema.";
         }
     } else {
         if ($action == "bd") {
@@ -67,8 +67,8 @@ if (PHP_OS != 'Linux') {
 
             // Executando Backup do Diretório do site
             $siteLog = backupSite();
-            if ($siteLog) {
-                $errors[] = "Houve um erro ao realizar o Backup do Sistema:\n" . $siteLog;
+            if (!$siteLog) {
+                $errors[] = "Houve um erro ao realizar o Backup do Sistema.";
             }
         } else {
             $redirect = REDIRECT_URLS[0];
@@ -81,8 +81,8 @@ if (PHP_OS != 'Linux') {
 
             // Executando Backup do Diretório do site
             $siteLog = backupSite();
-            if ($siteLog) {
-                $errors[] = "Houve um erro ao realizar o Backup do Sistema:\n" . $siteLog;
+            if (!$siteLog) {
+                $errors[] = "Houve um erro ao realizar o Backup do Sistema.";
             }
         }
     }
