@@ -583,7 +583,7 @@ class FuncionarioDAO
 
     public function getSenhaByIdPessoa(int $idPessoa)
     {
-        $stmt = $$this->pdo->prepare("SELECT senha FROM pessoa where id_pessoa=:idPessoa");
+        $stmt = $this->pdo->prepare("SELECT senha FROM pessoa where id_pessoa=:idPessoa");
         $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
         $stmt->execute();
 

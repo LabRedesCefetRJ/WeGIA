@@ -6,6 +6,7 @@ require_once '../dao/Conexao.php';
 require_once '../Functions/funcoes.php';
 require_once './seguranca/sessionStart.php';
 require_once '../classes/Util.php';
+require_once '../classes/LoginHelper.php';
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -42,12 +43,23 @@ try {
         exit;
     }
 
-    //Verificação de senha - Estudar uma migração para password_verify com retrocompatibilidade para usuários antigos
-	$pwd = hash('sha256', $senha);
+    $passwordCheck = LoginHelper::verifyAndMigrate($senha, $usuario['senha'] ?? null);
 
-    if ($pwd != $usuario['senha']) {
+    if (!$passwordCheck['valid']) {
         header("Location: ../index.php?erro=erro");
         exit;
+    }
+
+    if ($passwordCheck['updated_hash'] !== null) {
+        $updateStmt = $pdo->prepare("
+            UPDATE pessoa
+            SET senha = :senha
+            WHERE id_pessoa = :id_pessoa
+        ");
+        $updateStmt->bindValue(':senha', $passwordCheck['updated_hash']);
+        $updateStmt->bindValue(':id_pessoa', $usuario['id_pessoa'], PDO::PARAM_INT);
+        $updateStmt->execute();
+        $usuario['senha'] = $passwordCheck['updated_hash'];
     }
 
     //Proteção contra Session Fixation
