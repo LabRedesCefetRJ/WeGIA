@@ -1137,6 +1137,28 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`socio_has_tag`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`socio_has_tag` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_socio` INT(11) NOT NULL,
+  `id_sociotag` INT(11) NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_socio_tag` (`id_socio`, `id_sociotag`),
+  KEY `idx_sociotag` (`id_sociotag`),  -- índice extra para busca por tag isolada
+  CONSTRAINT `fk_socio_has_tag_socio`
+    FOREIGN KEY (`id_socio`) REFERENCES `wegia`.`socio` (`id_socio`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_socio_has_tag_sociotag`
+    FOREIGN KEY (`id_sociotag`) REFERENCES `wegia`.`socio_tag` (`id_sociotag`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB 
+  DEFAULT CHARSET = utf8mb4 
+  COLLATE = utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`socio_log`
 -- -----------------------------------------------------
 
