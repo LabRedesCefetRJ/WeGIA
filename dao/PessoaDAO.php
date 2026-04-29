@@ -68,10 +68,10 @@ class PessoaDAO
     }
 
 
-public function inserirPessoa($cpf, $nome, $sobrenome, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null) 
+public function inserirPessoa($cpf, $nome, $sobrenome, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null, $sexo = null, $dataNascimento = null) 
 {
-    $sql = "INSERT INTO pessoa (cpf, nome, sobrenome, telefone, cep, logradouro, bairro, cidade, estado, numero_endereco, complemento, ibge) 
-            VALUES (:cpf, :nome, :sobrenome, :telefone, :cep, :rua, :bairro, :cidade, :uf, :numero, :complemento, :ibge)";
+    $sql = "INSERT INTO pessoa (cpf, nome, sobrenome, telefone, cep, logradouro, bairro, cidade, estado, numero_endereco, complemento, ibge, sexo, data_nascimento) 
+            VALUES (:cpf, :nome, :sobrenome, :telefone, :cep, :rua, :bairro, :cidade, :uf, :numero, :complemento, :ibge, :sexo, :dataNascimento)";
     
     $stmt = $this->pdo->prepare($sql);
     
@@ -81,12 +81,14 @@ public function inserirPessoa($cpf, $nome, $sobrenome, $telefone = null, $cep = 
     $stmt->bindValue(':telefone', $telefone);
     $stmt->bindValue(':cep', $cep);
     $stmt->bindValue(':rua', $rua);
-    $stmt->bindValue(':bairro', $bairro);
+    $stmt->bindValue(':bairro', $bairro); 
     $stmt->bindValue(':cidade', $cidade);
     $stmt->bindValue(':uf', $uf);
     $stmt->bindValue(':numero', $numero);
     $stmt->bindValue(':complemento', $complemento);
     $stmt->bindValue(':ibge', $ibge);
+    $stmt->bindValue(':sexo', $sexo);
+    $stmt->bindValue(':dataNascimento', $dataNascimento);
 
     if ($stmt->execute()) {
         return $this->pdo->lastInsertId();

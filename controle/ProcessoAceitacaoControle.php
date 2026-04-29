@@ -47,6 +47,8 @@ class ProcessoAceitacaoControle
         try {
             $nome = $this->getPostValue('nome');
             $sobrenome = $this->getPostValue('sobrenome');
+            $sexo = $this->getPostValue('sexo');
+            $dataNascimento = $this->getPostValue('data_nascimento');
             $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
             $descricao = $this->getPostValue('descricao');
             $telefone = $this->getPostValue('telefone');
@@ -106,7 +108,9 @@ class ProcessoAceitacaoControle
                 $uf,
                 $numero,
                 $complemento,
-                $ibge
+                $ibge,
+                $sexo,
+                $dataNascimento
             );
 
             $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao);
@@ -173,11 +177,22 @@ class ProcessoAceitacaoControle
         }
 
         $digits = preg_replace('/\D+/', '', $cep);
-        if (!preg_match('/^\d{8}$/', $digits)) {
+        if (!preg_match('/^\d{8}$/', $digits)) { 
             throw new InvalidArgumentException('CEP inválido. Use o formato 00000-000.', 400);
         }
 
         return substr($digits, 0, 5) . '-' . substr($digits, 5);
+    }
+
+    private function validarDataNascimento(string $data): void
+    {
+        $d = DateTime::createFromFormat('Y-m-d', $data);
+        if (!$d || $d->format('Y-m-d') !== $data) {
+            throw new InvalidArgumentException('Data de nascimento em formato inválido.', 400);
+        }
+        if ($d > new DateTime()) {
+            throw new InvalidArgumentException('A data de nascimento não pode ser no futuro.', 400);
+        }
     }
 
     private function validarEndereco(array $endereco): void

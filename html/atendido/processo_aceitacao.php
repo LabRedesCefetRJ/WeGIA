@@ -258,8 +258,8 @@ try {
 
 													<?php elseif (in_array((int)$processo['id'], $processosConcluidos)): ?>
 														<a href="../../controle/control.php?nomeClasse=ProcessoAceitacaoControle&metodo=criarAtendidoProcesso&id_processo=<?= (int)$processo['id'] ?>"
-															class="btn btn-xs btn-success"
-															onclick="return confirm('Confirmar cadastro de atendido para este processo?');">
+															class="btn btn-xs btn-success" 
+															onclick="return confirm('Tem certeza de que deseja cadastrar um atendido para o processo de <?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome'], ENT_QUOTES) ?>?');">
 															<i class="fa fa-user-plus"></i> Cadastrar Atendido
 														</a>
 													<?php else: ?>
@@ -347,6 +347,21 @@ try {
                                 <div class="form-group">
                                     <label>Sobrenome <span class="text-danger">*</span></label>
                                     <input type="text" name="sobrenome" class="form-control" required autocomplete="family-name" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Sexo</label>
+                                    <div>
+                                        <label style="margin-right: 20px; margin-left: 10px;"><input type="radio" name="sexo" value="m"> <i class="fa fa-male"></i> Masculino</label>
+                                        <label><input type="radio" name="sexo" value="f"> <i class="fa fa-female"></i> Feminino</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Data de Nascimento</label>
+                                    <input type="date" name="data_nascimento" id="data_nascimento_processo" class="form-control"
+                                        max="<?= date('Y-m-d') ?>"
+                                        min="<?= date('Y-m-d', strtotime('-170 years')) ?>"
+                                        onchange="validarDataNascimentoProcesso()" />
+                                    <p id="dataNascimentoInvalida" style="display: none; color: #b30000; font-size: 12px;"></p>
                                 </div>
                                 <div class="form-group">
                                     <label>CPF</label>
@@ -516,18 +531,6 @@ try {
 	</style>
 
 	<script>
-		$(function() {
-			$('.btn-arquivos-processo').on('click', function() {
-				var idProcesso = $(this).data('id_processo');
-				var nomeProc = $(this).data('nome');
-
-				$('#upload_id_processo').val(idProcesso);
-				$('#tituloProcesso').text(' - ' + nomeProc);
-
-				$('#lista-arquivos-processo').load('lista_arquivos_processo.php?id_processo=' + idProcesso);
-			});
-		});
-
 		function validarCPF(strCPF) {
 			if (strCPF.length != 0 && !testaCPF(strCPF)) {
 				$('#cpfInvalido').show();
@@ -585,12 +588,59 @@ try {
                 }
             }
 
+            const sexo = form.querySelector('input[name="sexo"]:checked');
+            const dataNascimento = form.data_nascimento.value.trim();
+            if (dataNascimento && !validarDataNascimentoProcesso()) {
+                return false;
+            }
+
             const enderecoPreenchido = cep || rua || bairro || cidade || uf;
             if (enderecoPreenchido && (!rua || !bairro || !cidade || !uf)) {
                 mostrarErroModal('Preencha o endereço completo ou deixe todos os campos de endereço em branco.');
                 return false;
             }
 
+            return true;
+        }
+
+        function validarDataNascimentoProcesso() {
+            const dataNascimentoElm = document.getElementById('data_nascimento_processo');
+            const mensagemElm = document.getElementById('dataNascimentoInvalida');
+            const dataValue = dataNascimentoElm.value.trim();
+            mensagemElm.style.display = 'none';
+            mensagemElm.textContent = '';
+
+            if (!dataValue) {
+                return true;
+            }
+
+            const data = new Date(dataValue);
+            if (Number.isNaN(data.getTime())) {
+                mensagemElm.textContent = 'Data de nascimento em formato inválido.';
+                mensagemElm.style.display = 'block';
+                mostrarErroModal('Data de nascimento em formato inválido.');
+                return false;
+            }
+
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            if (data > hoje) {
+                mensagemElm.textContent = 'A data de nascimento não pode ser no futuro.';
+                mensagemElm.style.display = 'block';
+                mostrarErroModal('A data de nascimento não pode ser no futuro.');
+                return false;
+            }
+
+            const dataMinima = new Date();
+            dataMinima.setFullYear(dataMinima.getFullYear() - 170);
+            if (data < dataMinima) {
+                mensagemElm.textContent = 'A data de nascimento deve estar em um intervalo válido (máximo 170 anos).';
+                mensagemElm.style.display = 'block';
+                mostrarErroModal('A data de nascimento deve estar em um intervalo válido (máximo 170 anos).');
+                return false;
+            }
+
+            mensagemElm.style.display = 'none';
             return true;
         }
 
