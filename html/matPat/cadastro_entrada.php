@@ -503,11 +503,11 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				tabela: $('#lista-produtos').html()
 			};
 
-			sessionStorage.setItem(CHAVE, JSON.stringify(dados));
+			localStorage.setItem(CHAVE, JSON.stringify(dados));
 		}
 
 		function restaurarRascunho() {
-			const bruto = sessionStorage.getItem(CHAVE);
+			const bruto = localStorage.getItem(CHAVE);
 			if (!bruto) return;
 
 			try {
@@ -536,7 +536,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		}
 
 		function limparRascunho() {
-			sessionStorage.removeItem(CHAVE);
+			localStorage.removeItem(CHAVE);
 		}
 
 		$('#btn-novo-doador, #btn-novo-almoxarifado, #btn-novo-tipo-entrada, #btn-novo-produto').on('click', function () {
