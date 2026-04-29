@@ -141,7 +141,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li cla ss="active">
-									<a href="#overview" data-toggle="tab">Cadastro de Doação</a>
+									<a href="#overview" data-toggle="tab">Registro de entrada</a>
 								</li>
 							</ul>
 							<div class="tab-content">
@@ -245,9 +245,9 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="col-md-9 col-md-offset-3">
 												<input type="hidden" name="nomeClasse" value="EntradaControle">
 												<input type="hidden" name="metodo" value="incluir">
-												<input type="submit" class="btn btn-primary">
+												<input type="submit" class="btn btn-primary" value="Registrar entrada"> 
 											</div>
-										</div>ll
+										</div>
 									</form>
 								</div>
 							</div>
