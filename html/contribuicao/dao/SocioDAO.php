@@ -1,12 +1,14 @@
 <?php
 //requisitar arquivo de conexão
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SocioHasTagMySql.php';
 
 //requisitar model
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model/Socio.php';
 class SocioDAO
 {
     private $pdo;
+    private SocioHasTagMySql $socioHasTagDao;
 
     public function __construct(?PDO $pdo = null)
     {
@@ -15,6 +17,8 @@ class SocioDAO
         } else {
             $this->pdo = $pdo;
         }
+
+        $this->socioHasTagDao = new SocioHasTagMySql($this->pdo);
     }
 
     public function montarSocio($socioArray)
@@ -34,7 +38,8 @@ class SocioDAO
             ->setCep($socioArray['cep'])
             ->setNumeroEndereco($socioArray['numero_endereco'])
             ->setLogradouro($socioArray['logradouro'])
-            ->setDocumento($socioArray['cpf']);
+            ->setDocumento($socioArray['cpf'])
+            ->setTags($this->socioHasTagDao->getTagIdsBySocioId((int) $socioArray['id_socio']));
 
         return $socio;
     }
@@ -67,11 +72,9 @@ class SocioDAO
         //criar socio
         $idSocioStatus = 3; //Define o status do sócio como Inativo temporariamente
 
-        $tagSolicitante = $this->pdo->query("SELECT * FROM socio_tag WHERE tag='Solicitante'")->fetch(PDO::FETCH_ASSOC);
+        $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $idSocioTag = $tagSolicitante['id_sociotag']; //Define o grupo do sócio como Solicitante
-
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, id_sociotag, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :idSocioTag, :email, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :email, :valor, :dataReferencia)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -82,7 +85,6 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindParam(':idSocioTag', $idSocioTag);
         $stmtSocio->bindParam(':email', $socio->getEmail());
         $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
@@ -92,8 +94,9 @@ class SocioDAO
         //registrar no socio_log
         $idSocio = $this->pdo->lastInsertId();
         $socio->setId($idSocio);
+        $tagsSincronizadas = $this->socioHasTagDao->sync((int) $idSocio, $tagIds);
 
-        if ($this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
+        if ($tagsSincronizadas && $this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
             $this->pdo->commit();
         } else {
             $this->pdo->rollBack();
@@ -110,11 +113,9 @@ class SocioDAO
         //criar socio
         $idSocioStatus = 3; //Define o status do sócio como Inativo temporariamente
 
-        $tagSolicitante = $this->pdo->query("SELECT * FROM socio_tag WHERE tag='Solicitante'")->fetch(PDO::FETCH_ASSOC);
+        $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $idSocioTag = $tagSolicitante['id_sociotag']; //Define o grupo do sócio como Solicitante
-
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, id_sociotag, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :idSocioTag, :email, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :email, :valor, :dataReferencia)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -125,7 +126,6 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindParam(':idSocioTag', $idSocioTag);
         $stmtSocio->bindParam(':email', $socio->getEmail());
         $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
@@ -135,8 +135,9 @@ class SocioDAO
         //registrar no socio_log
         $idSocio = $this->pdo->lastInsertId();
         $socio->setId($idSocio);
+        $tagsSincronizadas = $this->socioHasTagDao->sync((int) $idSocio, $tagIds);
 
-        if ($this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
+        if ($tagsSincronizadas && $this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
             $this->pdo->commit();
         } else {
             $this->pdo->rollBack();
@@ -184,27 +185,20 @@ class SocioDAO
 
         //atualizar os dados de socio
 
-        //verificar se possuí o status de Ativo
-        $sqlBuscaAtivo = "SELECT s.id_sociotag FROM socio s JOIN pessoa p ON (s.id_pessoa=p.id_pessoa) WHERE cpf=:cpf AND s.id_sociostatus =0";
+        $idSocio = $this->buscarIdSocioPorDocumento($socio->getDocumento());
 
-        $stmtStatusAtivo = $this->pdo->prepare($sqlBuscaAtivo);
-        $stmtStatusAtivo->bindParam(':cpf', $socio->getDocumento());
-        $stmtStatusAtivo->execute();
-
-        if ($stmtStatusAtivo->rowCount() > 0) {
-            $idSocioTag = $stmtStatusAtivo->fetch(PDO::FETCH_ASSOC)['id_sociotag'];
-        } else {
-            $tagSolicitante = $this->pdo->query("SELECT * FROM socio_tag WHERE tag='Solicitante'")->fetch(PDO::FETCH_ASSOC);
-            $idSocioTag = $tagSolicitante['id_sociotag']; //Define o grupo do sócio como Solicitante
+        if ($idSocio === null) {
+            throw new RuntimeException('Sócio não encontrado para atualização.', 404);
         }
+
+        $tagIds = $this->resolverTagsParaPersistencia($socio->getTags(), (int) $idSocio);
 
         $sqlAtualizarSocio =
             'UPDATE socio s 
         JOIN pessoa p ON s.id_pessoa = p.id_pessoa
         SET 
             s.email = :email, 
-            s.valor_periodo = :valor, 
-            s.id_sociotag =:tag
+            s.valor_periodo = :valor
         WHERE p.cpf = :cpf';
 
         $stmtSocio = $this->pdo->prepare($sqlAtualizarSocio);
@@ -212,9 +206,14 @@ class SocioDAO
         $stmtSocio->bindParam(':email', $socio->getEmail());
         $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':cpf', $socio->getDocumento());
-        $stmtSocio->bindParam(':tag', $idSocioTag);
 
-        return $stmtSocio->execute();
+        $atualizado = $stmtSocio->execute();
+
+        if (!$atualizado) {
+            return false;
+        }
+
+        return $this->socioHasTagDao->sync((int) $idSocio, $tagIds);
     }
 
     public function verificarInternoPorDocumento($documento)
@@ -478,5 +477,62 @@ class SocioDAO
             ";
 
         return $this->pdo->exec($sql) !== false;
+    }
+
+    private function buscarIdSocioPorDocumento(string $documento): ?int
+    {
+        $sql = '
+            SELECT s.id_socio
+            FROM socio s
+            JOIN pessoa p ON p.id_pessoa = s.id_pessoa
+            WHERE p.cpf = :cpf
+            LIMIT 1
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':cpf', $documento, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $idSocio = $stmt->fetchColumn();
+
+        return $idSocio === false ? null : (int) $idSocio;
+    }
+
+    private function buscarIdTagSolicitante(): int
+    {
+        $stmt = $this->pdo->query("SELECT id_sociotag FROM socio_tag WHERE tag='Solicitante' LIMIT 1");
+        $idTag = $stmt ? $stmt->fetchColumn() : false;
+
+        if ($idTag === false) {
+            throw new RuntimeException("A tag 'Solicitante' não foi encontrada.", 500);
+        }
+
+        return (int) $idTag;
+    }
+
+    private function resolverTagsParaPersistencia(array $tagIds, ?int $idSocio = null): array
+    {
+        $tagsNormalizadas = [];
+
+        foreach ($tagIds as $tagId) {
+            $tagId = (int) $tagId;
+
+            if ($tagId > 0) {
+                $tagsNormalizadas[$tagId] = $tagId;
+            }
+        }
+
+        if (!empty($tagsNormalizadas)) {
+            return array_values($tagsNormalizadas);
+        }
+
+        if ($idSocio !== null) {
+            $tagsAtuais = $this->socioHasTagDao->getTagIdsBySocioId($idSocio);
+            if (!empty($tagsAtuais)) {
+                return $tagsAtuais;
+            }
+        }
+
+        return [$this->buscarIdTagSolicitante()];
     }
 }

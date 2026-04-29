@@ -25,9 +25,15 @@ $data_nasc = $registro['data_nascimento'];
 $cpf_cnpj = $registro['cpf'];
 $logradouro = $registro['logradouro'];
 $numero = $registro['numero_endereco'];
-if ($registro['id_sociotag'] == null || $registro['id_sociotag'] == "") {
-  $tag = "";
-} else $tag = $registro['id_sociotag'];
+$tagsSelecionadas = [];
+$stmt_tags_socio = $conexao->prepare("SELECT id_sociotag FROM socio_has_tag WHERE id_socio = ?");
+$stmt_tags_socio->bind_param("i", $id_socio);
+$stmt_tags_socio->execute();
+$resultado_tags_socio = $stmt_tags_socio->get_result();
+
+while ($row_tag_socio = $resultado_tags_socio->fetch_assoc()) {
+  $tagsSelecionadas[] = (int) $row_tag_socio['id_sociotag'];
+}
 $complemento = $registro['complemento'];
 $cep = $registro['cep'];
 $socio_tipo = $registro['id_sociotipo'];
@@ -192,18 +198,16 @@ $valor_periodo = $registro['valor_periodo'];
               </div>
               <div class="row">
                 <div style="margin-bottom:  1em" class="form-group col-xs-12 mb-2">
-                  <label for="valor">Grupo</label>
+                  <label for="valor">Grupos</label>
                   <a onclick="adicionar_tag()">
                     <i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
                   </a>
-                  <select class="form-control" name="tags" id="tags">
-                    <option value="none">Selecionar Grupo</option>
+                  <select class="form-control" name="tags[]" id="tags" multiple size="6">
                     <?php
                     $tags = mysqli_query($conexao, "SELECT * FROM socio_tag");
                     while ($row = $tags->fetch_array(MYSQLI_NUM)) {
-                      if ($row[0] == $tag) {
-                        echo ("<option value=" . htmlspecialchars($row[0]) . " selected>" . htmlspecialchars($row[1]) . "</option>");
-                      } else echo ("<option value=" . htmlspecialchars($row[0]) . ">" . htmlspecialchars($row[1]) . "</option>");
+                      $selected = in_array((int) $row[0], $tagsSelecionadas, true) ? ' selected' : '';
+                      echo ('<option value="' . htmlspecialchars($row[0]) . '"' . $selected . '>' . htmlspecialchars($row[1]) . '</option>');
                     }
 
                     ?>
@@ -275,9 +279,8 @@ $valor_periodo = $registro['valor_periodo'];
   var sociotipo = <?php echo htmlspecialchars($socio_tipo); ?>;
   var status = <?php echo htmlspecialchars($status); ?>;
 
-  var tag = <?php if ($tag != "" && $tag != null) echo htmlspecialchars($tag);
-            else echo ("''"); ?>;
-  $("#tags").val(tag);
+  var tagsSelecionadas = <?php echo json_encode($tagsSelecionadas); ?>;
+  $("#tags").val(tagsSelecionadas);
 
   $("#status").val(status);
   if (status == 4) {

@@ -62,6 +62,12 @@ function chamaModal(tr) {
     })
 
 }
+function obterTagsSelecionadas() {
+    return ($("#tags").val() || []).filter(function (tagId) {
+        return tagId !== null && tagId !== "" && tagId !== "none";
+    });
+}
+
 function criarBotoes() {
     return `<button id="manageBtn" type="button" onclick="chamaModal($(this).closest('tr'))" class="btn btn-success btn-xs"><i class="far fa-address-card"></i> +Informações</button>`;
 }
@@ -332,7 +338,7 @@ $(document).ready(function () {
         var bairro = $("#bairro").val();
         var estado = $("#estado").val();
         var cidade = $("#cidade").val();
-        var tag = $("#tags").val();
+        var tags = obterTagsSelecionadas();
         var data_nasc = $("#data_nasc").val();
         var cep = $("#cep").val();
         var data_referencia = $("#data_referencia").val();
@@ -348,7 +354,7 @@ $(document).ready(function () {
                 "contribuinte": contribuinte,
                 "status": status,
                 "email": email,
-                "tag": tag,
+                "tags": tags,
                 "telefone": telefone,
                 "cpf_cnpj": cpf_cnpj,
                 "rua": rua,
@@ -401,7 +407,7 @@ $(document).ready(function () {
                     "contribuinte": contribuinte,
                     "status": status,
                     "email": email,
-                    "tag": tag,
+                    "tags": tags,
                     "telefone": telefone,
                     "cpf_cnpj": cpf_cnpj,
                     "rua": rua,
@@ -456,7 +462,7 @@ $(document).ready(function () {
         var numero = $("#numero").val();
         var complemento = $("#complemento").val();
         var bairro = $("#bairro").val();
-        var tag = $("#tags").val();
+        var tags = obterTagsSelecionadas();
         var estado = $("#estado").val();
         var cidade = $("#cidade").val();
         var data_nasc = $("#data_nasc").val();
@@ -477,7 +483,7 @@ $(document).ready(function () {
                 "telefone": telefone,
                 "cpf_cnpj": cpf_cnpj,
                 "rua": rua,
-                "tag": tag,
+                "tags": tags,
                 "numero": numero,
                 "complemento": complemento,
                 "bairro": bairro,
@@ -515,7 +521,7 @@ $(document).ready(function () {
                     "telefone": telefone,
                     "cpf_cnpj": cpf_cnpj,
                     "rua": rua,
-                    "tag": tag,
+                    "tags": tags,
                     "numero": numero,
                     "complemento": complemento,
                     "bairro": bairro,

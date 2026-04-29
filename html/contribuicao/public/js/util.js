@@ -330,6 +330,7 @@ async function cadastrarSocio() {
     formData.append('documento_socio', documento);
     formData.append('cep', cep);
     formData.append('data_nascimento', dataNascimento);
+    anexarTagsAoFormData(form, formData);
 
     try {
         const response = await fetch("../controller/control.php", {
@@ -365,6 +366,7 @@ async function atualizarSocio() {
     formData.append('documento_socio', documento);
     formData.append('cep', cep);
     formData.append('data_nascimento', dataNascimento);
+    anexarTagsAoFormData(form, formData);
 
     try {
         const response = await fetch("../controller/control.php", {
@@ -383,6 +385,51 @@ async function atualizarSocio() {
         }
     } catch (error) {
         console.error("Erro:", error);
+    }
+}
+
+function anexarTagsAoFormData(form, formData) {
+    formData.delete('tags');
+    formData.delete('tags[]');
+
+    const campoTags =
+        form.querySelector('[name="tags[]"]') ||
+        form.querySelector('[name="tags"]') ||
+        form.querySelector('#tags');
+
+    if (!campoTags) {
+        return;
+    }
+
+    if (campoTags instanceof HTMLSelectElement && campoTags.multiple) {
+        Array.from(campoTags.selectedOptions).forEach((option) => {
+            formData.append('tags[]', option.value);
+        });
+        return;
+    }
+
+    if (campoTags.type === 'hidden' || campoTags.type === 'text') {
+        const valor = campoTags.value ? campoTags.value.trim() : '';
+
+        if (!valor) {
+            return;
+        }
+
+        try {
+            const tags = JSON.parse(valor);
+            if (Array.isArray(tags)) {
+                tags.forEach((tagId) => formData.append('tags[]', tagId));
+                return;
+            }
+        } catch (error) {
+        }
+
+        valor.split(',').forEach((tagId) => {
+            const tag = tagId.trim();
+            if (tag) {
+                formData.append('tags[]', tag);
+            }
+        });
     }
 }
 
@@ -680,4 +727,3 @@ function formatarCPF(cpf) {
     // Aplica a formatação: xxx.xxx.xxx-xx
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 }
-
