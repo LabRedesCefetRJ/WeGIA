@@ -96,4 +96,36 @@ public function inserirPessoa($cpf, $nome, $sobrenome, $telefone = null, $cep = 
     
     throw new Exception("Erro ao inserir pessoa.");
 }
+
+    public function buscarPessoaPorId(int $id_pessoa): ?array
+    {
+        $sql = "SELECT * FROM pessoa WHERE id_pessoa = :id_pessoa";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id_pessoa', $id_pessoa, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result : null;
+    }
+
+    public function atualizarPessoa(int $id_pessoa, array $dados): bool
+    {
+        $setParts = [];
+        $params = [];
+        
+        foreach ($dados as $key => $value) {
+            $setParts[] = "$key = :$key";
+            $params[":$key"] = $value;
+        }
+        
+        if (empty($setParts)) {
+            return false;
+        }
+        
+        $params[':id_pessoa'] = $id_pessoa;
+        $sql = "UPDATE pessoa SET " . implode(', ', $setParts) . " WHERE id_pessoa = :id_pessoa";
+        
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
 }

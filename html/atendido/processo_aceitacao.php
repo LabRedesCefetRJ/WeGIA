@@ -245,7 +245,7 @@ try {
 													</button>
 												</td>
 
-												<td style="max-width:150px; white-space: normal;">
+												<td style="display: flex; flex-wrap: wrap; gap: 10px;">
 													<?php
 													$atendidoId = $processoDAO->getIdAtendido($processo['id']);
 
@@ -274,6 +274,9 @@ try {
 
 													<button type="button" class="btn btn-xs btn-primary btn-alter-status" data-toggle="modal" data-id_processo="<?= htmlspecialchars($processo['id']) ?> " data-descricao="<?= isset($processo['descricao']) && !empty($processo['descricao']) ? htmlspecialchars($processo['descricao']) : '' ?>" data-target="#modalStatusProcesso">
 														Alterar Processo
+													</button>
+													<button type="button" class="btn btn-xs btn-warning btn-editar-perfil" data-id_processo="<?= htmlspecialchars($processo['id']) ?>" title="Editar Perfil da Pessoa">
+														<i class="fa fa-edit"></i> Editar Perfil
 													</button>
 												</td>
 											</tr>
@@ -320,6 +323,113 @@ try {
 							<div class="modal-footer">
 								<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
 								<button type="submit" class="btn btn-primary">Salvar</button>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<div class="modal fade" id="modalEditarPerfil" tabindex="-1" role="dialog" aria-hidden="true">
+					<div class="modal-dialog" role="document">
+                        <form id="formEditarPerfil" method="post" action="../../controle/control.php" class="modal-content" onsubmit="return validarFormularioEditarPerfil(event)">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Editar Perfil</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
+                                <input type="hidden" name="metodo" value="editarPerfil">
+                                <input type="hidden" name="id_processo" id="edit_id_processo">
+
+                                <div id="alertEditarPerfil" class="alert alert-danger" role="alert" style="display: none;"></div>
+
+                                <div class="form-group">
+                                    <label>Nome <span class="text-danger">*</span></label>
+                                    <input type="text" name="nome" id="edit_nome" class="form-control" required autocomplete="given-name" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Sobrenome <span class="text-danger">*</span></label>
+                                    <input type="text" name="sobrenome" id="edit_sobrenome" class="form-control" required autocomplete="family-name" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Sexo</label>
+                                    <div>
+                                        <label style="margin-right: 20px; margin-left: 10px;"><input type="radio" name="sexo" id="edit_sexo_m" value="m"> <i class="fa fa-male"></i> Masculino</label>
+                                        <label><input type="radio" name="sexo" id="edit_sexo_f" value="f"> <i class="fa fa-female"></i> Feminino</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Data de Nascimento</label>
+                                    <input type="date" name="data_nascimento" id="edit_data_nascimento" class="form-control"
+                                        max="<?= date('Y-m-d') ?>"
+                                        min="<?= date('Y-m-d', strtotime('-170 years')) ?>"
+                                        onchange="validarDataNascimentoEditar()" />
+                                    <p id="editDataNascimentoInvalida" style="display: none; color: #b30000; font-size: 12px;"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>CPF</label>
+                                    <input type="text"
+                                        name="cpf"
+                                        id="edit_cpf"
+                                        maxlength="14"
+                                        placeholder="000.000.000-00"
+                                        onkeypress="return Onlynumbers(event)"
+                                        onkeyup="mascara('###.###.###-##',this,event)"
+                                        onblur="validarCPFEditar(this.value)"
+                                        class="form-control" />
+                                    <p id="editCpfInvalido" style="display: none; color: #b30000; font-size: 12px;">CPF INVÁLIDO!</p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Telefone</label>
+                                    <input type="tel" name="telefone" id="edit_telefone" maxlength="15" placeholder="(22) 99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##) #####-####',this,event)" class="form-control" />
+                                </div>
+								<hr> <div class="row">
+									<div class="form-group col-md-4">
+										<label>CEP</label>
+										<input type="text" name="cep" id="edit_cep" class="form-control" maxlength="9" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)" onblur="pesquisacep_edit(this.value);" onkeydown="return cepEnterEdit(event, this.value);" placeholder="00000-000" />
+                                                                                  <p id="editCepInvalido" class="text-danger" style="display: none; font-size: 12px;">Formato de CEP inválido!</p>
+									</div>
+									<div class="form-group col-md-8">
+										<label>Rua</label>
+										<input type="text" name="rua" id="edit_rua" class="form-control" />
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="form-group col-md-3">
+										<label>Nº</label>
+										<input type="text" name="numero_residencia" id="edit_numero_residencia" class="form-control" />
+									</div>
+									<div class="form-group col-md-5">
+										<label>Bairro</label>
+										<input type="text" name="bairro" id="edit_bairro" class="form-control" />
+									</div>
+									<div class="form-group col-md-4">
+										<label>Complemento</label>
+										<input type="text" name="complemento" id="edit_complemento" class="form-control" />
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="form-group col-md-5">
+										<label>Cidade</label>
+										<input type="text" name="cidade" id="edit_cidade" class="form-control" readonly />
+									</div>
+									<div class="form-group col-md-3">
+										<label>UF</label>
+										<input type="text" name="uf" id="edit_uf" class="form-control" readonly />
+									</div>
+									<div class="form-group col-md-4">
+										<label>IBGE</label>
+										<input type="text" name="ibge" id="edit_ibge" class="form-control" readonly />
+									</div>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+								<button type="submit" class="btn btn-primary" id="btnSalvarEdicao">Salvar Alterações</button>
 							</div>
 						</form>
 					</div>
@@ -380,6 +490,7 @@ try {
                                 <div class="form-group">
                                     <label>Telefone</label>
                                     <input type="tel" name="telefone" id="telefone" maxlength="15" placeholder="(22) 99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##) #####-####',this,event)" class="form-control" />
+                                </div>
 								<hr> <div class="row">
 									<div class="form-group col-md-4">
 										<label>CEP</label>
@@ -834,6 +945,237 @@ try {
 	</script>
 
 	<script src="../../Functions/pa_status.js"></script>
+
+	<script>
+		$(document).on('click', '.btn-editar-perfil', function() {
+			const idProcesso = $(this).data('id_processo');
+			
+			$('#formEditarPerfil')[0].reset();
+			limparErroModalEdit();
+			limparCepErroEdit();
+			$('#edit_id_processo').val(idProcesso);
+			
+			$.ajax({
+				url: '../../controle/control.php',
+				type: 'GET',
+				dataType: 'json',
+				data: {
+					id_processo: idProcesso,
+					nomeClasse: 'ProcessoAceitacaoControle',
+					metodo: 'getPessoaDoProcesso'
+				},
+				success: function(response) {
+					if (response.success) {
+						const pessoa = response.pessoa;
+						
+						$('#edit_nome').val(pessoa.nome);
+						$('#edit_sobrenome').val(pessoa.sobrenome);
+						
+						if (pessoa.sexo === 'm') {
+							$('#edit_sexo_m').prop('checked', true);
+						} else if (pessoa.sexo === 'f') {
+							$('#edit_sexo_f').prop('checked', true);
+						}
+						
+						$('#edit_data_nascimento').val(pessoa.data_nascimento);
+						$('#edit_cpf').val(pessoa.cpf);
+						$('#edit_telefone').val(pessoa.telefone);
+						$('#edit_cep').val(pessoa.cep);
+						$('#edit_rua').val(pessoa.logradouro);
+						$('#edit_numero_residencia').val(pessoa.numero_endereco);
+						$('#edit_bairro').val(pessoa.bairro);
+						$('#edit_complemento').val(pessoa.complemento);
+						$('#edit_cidade').val(pessoa.cidade);
+						$('#edit_uf').val(pessoa.estado);
+						$('#edit_ibge').val(pessoa.ibge);
+						
+						$('#modalEditarPerfil').modal('show');
+					} else {
+						alert('Erro: ' + (response.erro || 'Não foi possível carregar os dados da pessoa.'));
+					}
+				},
+				error: function() {
+					alert('Erro ao comunicar com o servidor.');
+				}
+			});
+		});
+
+		function validarCPFEditar(strCPF) {
+			if (strCPF.length != 0 && !testaCPF(strCPF)) {
+				$('#editCpfInvalido').show();
+				$('#btnSalvarEdicao').prop('disabled', true);
+			} else {
+				$('#editCpfInvalido').hide();
+				$('#btnSalvarEdicao').prop('disabled', false);
+			}
+		}
+
+        function mostrarErroModalEdit(message) {
+            const alertBox = $('#alertEditarPerfil');
+            alertBox.text(message).show();
+        }
+
+        function limparErroModalEdit() {
+            const alertBox = $('#alertEditarPerfil');
+            alertBox.hide().text('');
+        }
+
+        function validarFormularioEditarPerfil(event) {
+            event = event || window.event;
+            const form = event.target || event.srcElement;
+
+            limparErroModalEdit();
+            limparCepErroEdit();
+
+            const nome = form.nome.value.trim();
+            const sobrenome = form.sobrenome.value.trim();
+            const telefone = form.telefone.value.trim();
+            const cep = form.cep.value.trim();
+            const rua = form.rua.value.trim();
+            const bairro = form.bairro.value.trim();
+            const cidade = form.cidade.value.trim();
+            const uf = form.uf.value.trim();
+
+            if (!nome || !sobrenome) {
+                mostrarErroModalEdit('Informe nome e sobrenome.');
+                return false;
+            }
+
+            if (telefone) {
+                const telefoneNumeros = telefone.replace(/\D/g, '');
+                if (!/^\d{10,11}$/.test(telefoneNumeros)) {
+                    mostrarErroModalEdit('Telefone inválido. Digite o DDD e número com 10 ou 11 dígitos.');
+                    return false;
+                }
+            }
+
+            if (cep) {
+                const cepNumeros = cep.replace(/\D/g, '');
+                if (!/^\d{8}$/.test(cepNumeros)) {
+                    mostrarErroModalEdit('CEP inválido. Use o formato 00000-000.');
+                    return false;
+                }
+            }
+
+            const dataNascimento = form.data_nascimento.value.trim();
+            if (dataNascimento && !validarDataNascimentoEditar()) {
+                return false;
+            }
+
+            const enderecoPreenchido = cep || rua || bairro || cidade || uf;
+            if (enderecoPreenchido && (!rua || !bairro || !cidade || !uf)) {
+                mostrarErroModalEdit('Preencha o endereço completo ou deixe todos os campos de endereço em branco.');
+                return false;
+            }
+
+            return true;
+        }
+
+        function validarDataNascimentoEditar() {
+            const dataNascimentoElm = document.getElementById('edit_data_nascimento');
+            const mensagemElm = document.getElementById('editDataNascimentoInvalida');
+            const dataValue = dataNascimentoElm.value.trim();
+            mensagemElm.style.display = 'none';
+            mensagemElm.textContent = '';
+
+            if (!dataValue) {
+                return true;
+            }
+
+            const data = new Date(dataValue);
+            if (Number.isNaN(data.getTime())) {
+                mensagemElm.textContent = 'Data de nascimento em formato inválido.';
+                mensagemElm.style.display = 'block';
+                mostrarErroModalEdit('Data de nascimento em formato inválido.');
+                return false;
+            }
+
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            if (data > hoje) {
+                mensagemElm.textContent = 'A data de nascimento não pode ser no futuro.';
+                mensagemElm.style.display = 'block';
+                mostrarErroModalEdit('A data de nascimento não pode ser no futuro.');
+                return false;
+            }
+
+            const dataMinima = new Date();
+            dataMinima.setFullYear(dataMinima.getFullYear() - 170);
+            if (data < dataMinima) {
+                mensagemElm.textContent = 'A data de nascimento deve estar em um intervalo válido.';
+                mensagemElm.style.display = 'block';
+                mostrarErroModalEdit('A data de nascimento deve estar em um intervalo válido.');
+                return false;
+            }
+
+            mensagemElm.style.display = 'none';
+            return true;
+        }
+
+		function limpa_formulário_cep_edit() {
+			document.getElementById('edit_rua').value=("");
+			document.getElementById('edit_bairro').value=("");
+			document.getElementById('edit_cidade').value=("");
+			document.getElementById('edit_uf').value=("");
+			document.getElementById('edit_ibge').value=("");
+			limparCepErroEdit();
+		}
+
+		function mostrarCepErroEdit(message) {
+			const cepError = document.getElementById('editCepInvalido');
+			cepError.textContent = message;
+			cepError.style.display = 'block';
+		}
+
+		function limparCepErroEdit() {
+			const cepError = document.getElementById('editCepInvalido');
+			if (cepError) {
+				cepError.style.display = 'none';
+				cepError.textContent = 'Formato de CEP inválido!';
+			}
+		}
+
+		function cepEnterEdit(event, value) {
+			if (event.key === 'Enter') {
+				event.preventDefault();
+				pesquisacep_edit(value);
+				return false;
+			}
+			return true;
+		}
+
+		function meu_callback_edit(conteudo) {
+			if (!("erro" in conteudo)) {
+				document.getElementById('edit_rua').value=(conteudo.logradouro);
+				document.getElementById('edit_bairro').value=(conteudo.bairro);
+				document.getElementById('edit_cidade').value=(conteudo.localidade);
+				document.getElementById('edit_uf').value=(conteudo.uf);
+				document.getElementById('edit_ibge').value=(conteudo.ibge);
+			} else {
+				limpa_formulário_cep_edit();
+				mostrarCepErroEdit('CEP não encontrado.');
+			}
+		}
+			
+		function pesquisacep_edit(valor) {
+			var cep = valor.replace(/\D/g, '');
+			if (cep != "") {
+				var validacep = /^[0-9]{8}$/;
+				if(validacep.test(cep)) {
+                    limparCepErroEdit();
+
+					var script = document.createElement('script');
+					script.src = 'https://viacep.com.br/ws/'+ cep + '/json/?callback=meu_callback_edit';
+					document.body.appendChild(script);
+				} else {
+					limpa_formulário_cep_edit();
+					mostrarCepErroEdit('Formato de CEP inválido.');
+				}
+			} else {
+				limpa_formulário_cep_edit();
+			}
+		};
+	</script>
 </body>
 
 </html>
