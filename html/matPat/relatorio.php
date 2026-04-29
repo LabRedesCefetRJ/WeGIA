@@ -137,7 +137,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="type">Tipo de Relatório <span class="obrig">*</span></label>
 								<div class="col-md-8">
-									<select name="tipo_relatorio" oninput="changeType(this.value)" id="tipo-relat" required>
+									<select name="tipo_relatorio" oninput="changeType(this.value); controlarCampoMediaSaida();" id="tipo-relat" required>
 										<option value="entrada">Relatório de Entrada</option>
 										<option value="estoque">Relatório de Estoque</option>
 										<option value="saida">Relatório de Saída</option>
@@ -163,6 +163,17 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" id="data_inicio" name="data_inicio" max="9999-12-31">
 									<br>
 									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" id="data_fim" name="data_fim" max="9999-12-31">
+								</div>
+							</div>
+
+							<div class="form-group" id="media-saida">
+								<label class="col-md-3 control-label"> Média de saída</label>
+								<div class="col-md-8">
+									<select name="tipo_media">
+										<option value="dia">Por dia</option>
+										<option value="mes">Por mês</option>
+										<option value="ano">Por ano</option>
+									</select>
 								</div>
 							</div>
 
@@ -630,6 +641,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 			document.getElementById('produtoSelect').innerHTML = '<option value="">Selecione um Produto</option>';
 		}
 	});
+
+	function controlarCampoMediaSaida() {
+		const tipoRelatorio = document.getElementById('tipo-relat').value;
+		const campoMedia = document.getElementById('media-saida');
+
+		if (tipoRelatorio === 'saida') {
+			campoMedia.style.display = 'block';
+		} else {
+			campoMedia.style.display = 'none';
+		}
+	}
+
+	document.addEventListener('DOMContentLoaded', controlarCampoMediaSaida)
 </script>
 <script src="<?= WWW ?>html/relatorios/relatorio.js" defer></script>
 

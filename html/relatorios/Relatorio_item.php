@@ -16,10 +16,11 @@ class Item
     private $paramsExternos = [];
     private $mostrarZerado;
     private $DDL_cmd;
+    private $tipoMedia;
 
     // Constructor
 
-    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false)
+    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false, $tipoMedia = 'dia')
     {
         $this
             ->setRelatorio($relat)
@@ -30,6 +31,7 @@ class Item
             ->setPeriodo($p)
             ->setAlmoxarifado($a)
             ->setMostrarZerado($z)
+            ->setTipoMedia($tipoMedia)
         ;
     }
 
@@ -191,6 +193,28 @@ class Item
                 $cont++;
             }
 
+            $tipoMedia = $_REQUEST['tipo_media'] ?? 'dia';
+
+            $inicio = !empty($this->getPeriodo()['inicio'])
+                ? ':dataInicio'
+                : '(SELECT MIN(s2.data) FROM saida s2)';
+
+            $fim = !empty($this->getPeriodo()['fim'])
+                ? ':dataFim'
+                : 'CURDATE()';
+
+            switch ($tipoMedia) {
+                case 'mes':
+                    $divisor = "TIMESTAMPDIFF(MONTH, $inicio, $fim)";
+                    break;
+                case 'ano':
+                    $divisor = "TIMESTAMPDIFF(YEAR, $inicio, $fim)";
+                    break;
+                case 'dia':
+                    $divisor = "TIMESTAMPDIFF(DAY, $inicio, $fim) + 1";
+                    break;
+            }
+ 
             $this->setQuery("
                 SELECT 
                     SUM(isaida.qtd) as qtd_total, 
@@ -201,19 +225,7 @@ class Item
                     unidade.descricao_unidade as unidade,
                     tipo_saida.descricao as tipo,
                     ROUND(
-                        SUM(isaida.qtd) / NULLIF(
-                            DATEDIFF(
-                                COALESCE(
-                                    " . (!empty($this->getPeriodo()['fim']) ? ':dataFim' : 'CURDATE()') .",
-                                    CURDATE()
-                                ),
-                                COALESCE(
-                                    " . (!empty($this->getPeriodo()['inicio']) ? ':dataInicio' : '(SELECT MIN(s2.data) FROM saida s2)') .",
-                                    (SELECT MIN(s2.data) FROM saida s2)
-                                )
-                            ) + 1,
-                            0
-                        ),
+                        SUM(isaida.qtd) / NULLIF($divisor, 0),
                         2
                     ) as media_saida
                 FROM isaida 
@@ -490,7 +502,7 @@ class Item
                     echo ('
                     <tr>
                         <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
-                        <td>'. number_format($item['media_saida'], 2) .' / dia</td>
+                        <td>'. number_format($item['media_saida'], 2) .' /' . htmlspecialchars($this->getTipoMedia(), ENT_QUOTES, 'UTF-8') .'</td>
                         <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
                         <td><span class="badge ' . $classe_tipo . '">' . $tipo_label . '</span></td>
                         <td>' . htmlspecialchars($util->formatoDataDMY($item['data']), ENT_QUOTES, 'UTF-8') . '</td>
@@ -667,6 +679,24 @@ class Item
     public function setMostrarZerado($mostrarZerado)
     {
         $this->mostrarZerado = $mostrarZerado;
+
+        return $this;
+    }
+
+    public function getTipoMedia()
+    {
+        return $this->tipoMedia;
+    }
+
+    public function setTipoMedia($tipoMedia)
+    {
+        $tiposPermitidos = ['dia', 'mes', 'ano'];
+
+        if (!in_array($tipoMedia, $tiposPermitidos)) {
+            $tipoMedia = 'dia';
+        }
+
+        $this->tipoMedia = $tipoMedia;
 
         return $this;
     }
