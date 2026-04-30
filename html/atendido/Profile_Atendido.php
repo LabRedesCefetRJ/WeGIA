@@ -102,6 +102,7 @@ $dependente = json_encode($dependente);
 
   <!-- JavaScript Functions -->
   <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+  <script src="<?php echo WWW; ?>Functions/validacoes-cns.js"></script>
 
   <style type="text/css">
     .btn span.fa-check {
@@ -233,6 +234,7 @@ $dependente = json_encode($dependente);
 
           $("#telefone").text("Telefone:" + item.telefone);
           $("#telefone").val(item.telefone);
+          $("#cns").val(item.cns || '');
 
 
           $("#tipoSanguineoSelecionado").text(item.tipo_sanguineo);
@@ -257,8 +259,10 @@ $dependente = json_encode($dependente);
             $("#cpf").text("Não informado");
             $("#cpf").val("Não informado");
           } else {
-            $("#cpf").text(item.cpf);
-            $("#cpf").val(item.cpf);
+            // Formatar CPF: 12345678901 -> 123.456.789-01
+            let cpfFormatado = item.cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+            $("#cpf").text(cpfFormatado);
+            $("#cpf").val(cpfFormatado);
           }
 
           $("#inss").text("INSS: " + item.inss);
@@ -275,7 +279,7 @@ $dependente = json_encode($dependente);
 
           $("#saf").text("SAF: " + item.saf);
 
-          $("#sus").text("SUS: " + item.sus);
+          $("#cns").text("CNS: " + item.cns);
 
           $("#bpc").text("BPC: " + item.bpc);
 
@@ -302,6 +306,7 @@ $dependente = json_encode($dependente);
       $("#radioM").prop('disabled', false);
       $("#radioF").prop('disabled', false);
       $("#telefone").prop('disabled', false);
+      $("#cns").prop('disabled', false);
       $("#data_nascimento").prop('disabled', false);
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
@@ -328,6 +333,7 @@ $dependente = json_encode($dependente);
       $("#radioM").prop('disabled', true);
       $("#radioF").prop('disabled', true);
       $("#telefone").prop('disabled', true);
+      $("#cns").prop('disabled', true);
       $("#data_nascimento").prop('disabled', true);
       $("#pai").prop('disabled', true);
       $("#mae").prop('disabled', true);
@@ -783,6 +789,13 @@ $dependente = json_encode($dependente);
                           <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                           <div class="col-md-8">
                             <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" disabled placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="cns">CNS</label>
+                          <div class="col-md-8">
+                            <input type="text" class="form-control" maxlength="15" name="cns" id="cns" disabled placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+                            <small class="form-text text-muted">Cadastro Nacional de Saúde</small>
                           </div>
                         </div>
                         <div class="form-group">

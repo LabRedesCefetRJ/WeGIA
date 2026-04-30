@@ -8,6 +8,7 @@ class Atendido extends Pessoa
     private $id_pessoa;
     private $intStatus;
     private $intTipo;
+    private $cns;
 
     public function getIdatendido()
     {
@@ -24,6 +25,10 @@ class Atendido extends Pessoa
     public function getIntTipo()
     {
         return $this->intTipo;
+    }
+    public function getCns()
+    {
+        return $this->cns;
     }
    
     public function setIdatendido(int $idatendido)
@@ -45,6 +50,10 @@ class Atendido extends Pessoa
     public function setId_pessoa($id_pessoa)
     {
         $this->id_pessoa = $id_pessoa;
+    }
+    public function setCns(?string $cns)
+    {
+        $this->cns = $cns;
     }
 
     /**

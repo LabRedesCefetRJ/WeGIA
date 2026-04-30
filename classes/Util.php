@@ -61,6 +61,32 @@ class Util
     }
 
     /**
+     * Valida número de Cartão SUS (Sistema Único de Saúde)
+     * O SUS deve conter exatamente 15 dígitos numéricos
+     */
+    public static function validaCNS(?string $cns): bool
+    {
+        if ($cns === null || empty($cns)) {
+            return true; 
+        }
+
+        // Remove caracteres não numéricos
+        $cnsLimpo = preg_replace('/[^0-9]/', '', $cns);
+
+        // Verifica se tem exatamente 15 dígitos
+        if (strlen($cnsLimpo) != 15) {
+            return false;
+        }
+
+        // Valida se não são todos dígitos iguais
+        if (preg_match('/(\d)\1{14}/', $cnsLimpo)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Registra o log de erro e emite um JSON para o cliente
      */
     public static function tratarException(Throwable $e): void

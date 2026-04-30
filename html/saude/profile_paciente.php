@@ -1101,6 +1101,9 @@ try {
                         <div class="row">
                           <p><span class="text-bold">Tipo sanguíneo:</span> <?= ($pacienteOverview['tipo_sanguineo']) !== null ? $pacienteOverview['tipo_sanguineo'] : 'Indefinido' ?></p>
                         </div>
+                        <div class="row">
+                          <p><span class="text-bold">CNS:</span> <?= !empty($pacienteOverview['cns']) ? htmlspecialchars($pacienteOverview['cns'], ENT_QUOTES, 'UTF-8') : 'não informado' ?></p>
+                        </div>
 
                         <div class="row">
                           <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="1">RG <i class="fas fa-download"></i></a>

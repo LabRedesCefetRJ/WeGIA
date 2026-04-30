@@ -126,16 +126,18 @@ class AtendidoDAO
 
         $idPessoa = $pdo->lastInsertId();
 
-        $sqlAtendido = "INSERT INTO atendido (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
-                    VALUES (:pessoaId, :tipo, :status)";
+        $sqlAtendido = "INSERT INTO atendido (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status, cns)
+                    VALUES (:pessoaId, :tipo, :status, :cns)";
         $stmtAtendido = $pdo->prepare($sqlAtendido);
 
         $intTipo   = $atendido->getIntTipo();
         $intStatus = $atendido->getIntStatus();
+        $cns       = $atendido->getCns();
 
         $stmtAtendido->bindValue(':pessoaId', $idPessoa, PDO::PARAM_INT);
         $stmtAtendido->bindValue(':tipo',     $intTipo, PDO::PARAM_INT);
         $stmtAtendido->bindValue(':status',   $intStatus, PDO::PARAM_INT);
+        $stmtAtendido->bindValue(':cns',      $cns);
 
         $stmtAtendido->execute();
 
@@ -151,14 +153,15 @@ class AtendidoDAO
         $pdo = $this->pdo;
 
         $sql = "INSERT INTO atendido
-              (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
+              (pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status, cns)
             VALUES
-              (:idPessoa, :tipo, :status)";
+              (:idPessoa, :tipo, :status, :cns)";
 
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':idPessoa', $idPessoa, PDO::PARAM_INT);
         $stmt->bindParam(':tipo', $tipo, PDO::PARAM_INT);
         $stmt->bindParam(':status', $status, PDO::PARAM_INT);
+        $stmt->bindValue(':cns', null);
         $stmt->execute();
 
         return (int)$pdo->lastInsertId();
@@ -173,8 +176,8 @@ class AtendidoDAO
             SET sobrenome = :sobrenome, sexo = :sexo
             WHERE id_pessoa = :id_pessoa;";
 
-        $sql2 = "INSERT INTO atendido(pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
-             VALUES(:id_pessoa, :intTipo, :intStatus)";
+        $sql2 = "INSERT INTO atendido(pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status, cns)
+             VALUES(:id_pessoa, :intTipo, :intStatus, :cns)";
 
         $pdo = $this->pdo;
 
@@ -185,6 +188,7 @@ class AtendidoDAO
         $sexo      = $atendido->getSexo();
         $tipo      = $atendido->getIntTipo();
         $status    = $atendido->getIntStatus();
+        $cns       = $atendido->getCns();
 
         $stmt->bindParam(':id_pessoa', $idPessoa, PDO::PARAM_INT);
         $stmt->bindValue(':sobrenome', $sobrenomeAtendido);
@@ -193,6 +197,7 @@ class AtendidoDAO
         $stmt2->bindParam(':id_pessoa', $idPessoa, PDO::PARAM_INT);
         $stmt2->bindValue(':intTipo', $tipo, PDO::PARAM_INT);
         $stmt2->bindValue(':intStatus', $status, PDO::PARAM_INT);
+        $stmt2->bindValue(':cns', $cns);
 
         try {
             $pdo->beginTransaction();
@@ -416,7 +421,7 @@ class AtendidoDAO
         echo $id;
         $pdo = Conexao::connect();
 
-        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.telefone,p.data_nascimento, p.cep,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo, a.atendido_status_idatendido_status FROM pessoa p LEFT JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.idatendido=:id";
+        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.telefone,p.data_nascimento, p.cep,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,a.cns, a.atendido_status_idatendido_status FROM pessoa p LEFT JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.idatendido=:id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $id);
 
@@ -424,9 +429,9 @@ class AtendidoDAO
         $pessoa = array();
         while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
             if ($linha['cpf'] === "Não informado") {
-                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
+                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
             } else {
-                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
+                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
             }
         }
 
@@ -491,7 +496,7 @@ class AtendidoDAO
 
         if ($cpfAtual === null || $cpfAtual === '') {
             $sql .= ", cpf = :cpf";
-            $params[':cpf'] = $_POST['cpf'] ?? '';
+            $params[':cpf'] = $atendido->getCpf();
         }
 
         $sql .= " WHERE id_pessoa = :id_pessoa";
@@ -503,6 +508,22 @@ class AtendidoDAO
         }
 
         $stmt->execute();
+
+        // Atualizar CNS na tabela atendido
+        $cns = $atendido->getCns();
+        if ($cns !== null && $cns !== '') {
+            $sql_cns = "UPDATE atendido SET cns = :cns WHERE idatendido = :idatendido";
+            $stmt_cns = $pdo->prepare($sql_cns);
+            $stmt_cns->bindValue(':cns', $cns);
+            $stmt_cns->bindValue(':idatendido', $idAtendido, PDO::PARAM_INT);
+            $stmt_cns->execute();
+        } else {
+            // Se CNS vazio, atualizar para NULL
+            $sql_cns = "UPDATE atendido SET cns = NULL WHERE idatendido = :idatendido";
+            $stmt_cns = $pdo->prepare($sql_cns);
+            $stmt_cns->bindValue(':idatendido', $idAtendido, PDO::PARAM_INT);
+            $stmt_cns->execute();
+        }
     }
 
 

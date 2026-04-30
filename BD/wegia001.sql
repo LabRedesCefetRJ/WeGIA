@@ -1334,6 +1334,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido` (
   `pessoa_id_pessoa` INT(11) NOT NULL,
   `atendido_tipo_idatendido_tipo` INT NOT NULL,
   `atendido_status_idatendido_status` INT NOT NULL,
+  `cns` CHAR(15) NULL,
   PRIMARY KEY (`idatendido`),
 
   UNIQUE KEY `uq_atendido_pessoa` (`pessoa_id_pessoa`),

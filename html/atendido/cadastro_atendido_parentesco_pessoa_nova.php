@@ -102,6 +102,7 @@ $parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
 	<script src="../../Functions/mascara.js"></script>
 	<script src="../../Functions/lista.js"></script>
 	<script src="../../Functions/testaCPF.js"></script>
+	<script src="../../Functions/validacoes-cns.js"></script>
 
 	<!-- jquery functions -->
 	<script>
@@ -226,6 +227,13 @@ $parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
 													<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
 												</div>
 											</div>
+											<div class="form-group">
+										<label class="col-md-3 control-label" for="cns">CNS</label>
+										<div class="col-md-8">
+											<input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+											<small class="form-text text-muted">Cadastro Nacional de Saúde</small>
+											</div>
+										</div>
 											<hr class="dotted short">
 											<h4 class="mb-xlg doch4">Documentação</h4>
 											<div class="form-group">
