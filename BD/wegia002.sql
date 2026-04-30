@@ -131,7 +131,10 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('73', 'Meios de Pagamento'),
 ('74', 'Regras de Pagamento'),
 ('9', 'Configurações'),
-('91', 'Permissões');
+('91', 'Permissões'),
+('8', 'Módulo Projetos'),
+('81', 'Projetos - Cadastrar'),
+('82', 'Projetos - Listar');
 
 
 INSERT INTO `modulos_visiveis` (`id_recurso`, `visivel`) VALUES
@@ -141,7 +144,8 @@ INSERT INTO `modulos_visiveis` (`id_recurso`, `visivel`) VALUES
 (4, 1),
 (5, 1),
 (6, 1),
-(7, 1);
+(7, 1),
+(8, 1);
 
 INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 1),
@@ -150,6 +154,7 @@ INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 4),
 (1, 7, 5),
 (1, 7, 6),
+(1, 7, 8),
 (1, 7, 9),
 (1, 7, 11),
 (1, 7, 12),
@@ -168,6 +173,8 @@ INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 62),
 (1, 7, 63),
 (1, 7, 64),
+(1, 7, 81),
+(1, 7, 82),
 (1, 7, 91);
 
 INSERT INTO `funcionario_docfuncional`(`id_docfuncional`, `nome_docfuncional`) VALUES
