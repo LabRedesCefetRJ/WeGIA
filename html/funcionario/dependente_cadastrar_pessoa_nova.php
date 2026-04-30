@@ -13,6 +13,7 @@ if (!isset($_SESSION["usuario"])){
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 11, 7);
 require_once '../../dao/Conexao.php';
+require_once '../../classes/Util.php';
 $pdo = Conexao::connect();
 
 $id_funcionario = $_POST['id_funcionario'];
@@ -28,6 +29,15 @@ $id_funcionario = $_POST['id_funcionario'];
     $registro_geral = $_POST['rg'];
     $orgao_emissor = $_POST['orgao_emissor'];
     $data_expedicao = $_POST['data_expedicao'];
+
+    try {
+        Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
+    } catch (InvalidArgumentException $e) {
+        http_response_code($e->getCode());
+        echo json_encode(['erro' => $e->getMessage()]);
+        exit();
+    }
 
 
     define("NOVA_PESSOA", "INSERT IGNORE INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento, registro_geral, orgao_emissor, data_expedicao) VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :data_nascimento, :registro_geral, :orgao_emissor, :data_expedicao)");

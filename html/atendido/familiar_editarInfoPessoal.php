@@ -56,6 +56,16 @@ if (!$nome || empty($nome) || !$sobrenome || empty($sobrenome)) {
     exit('Erro, as informações de nome e sobrenome estão faltando.');
 }
 
+try {
+    Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+    Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
+    Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 400);
+    Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 400);
+} catch (InvalidArgumentException $e) {
+    http_response_code($e->getCode());
+    exit($e->getMessage());
+}
+
 if ($sexo != 'm' && $sexo != 'f') {
     http_response_code(400);
     exit('Erro, a opção de sexo fornecida não é válida.');

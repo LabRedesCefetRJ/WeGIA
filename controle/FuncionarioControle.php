@@ -236,6 +236,8 @@ class FuncionarioControle
             header('Location: ../html/funcionario.html?msg=Sobrenome do funcionario não informado. Por favor, informe um sobrenome!');
             exit();
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
         if ((!isset($gender)) || (empty($gender))) {
             http_response_code(412);
             header('Location: ../html/funcionario.html?msg=Sexo do funcionario não informado. Por favor, informe um sexo!');
@@ -265,6 +267,8 @@ class FuncionarioControle
         if ((!isset($nome_mae)) || (empty($nome_mae))) {
             $nome_mae = '';
         }
+        Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 412);
 
         if ((!isset($sangue)) || (empty($sangue))) {
             $sangue = '';
@@ -407,11 +411,13 @@ class FuncionarioControle
     {
         extract($_REQUEST);
         if ((!isset($nome)) || (empty($nome))) {
-            $nome = '';
+            $nome = 'Pessoa existente';
         }
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = '';
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
         if ((!isset($gender)) || (empty($gender))) {
             $gender = '';
         }
@@ -431,6 +437,8 @@ class FuncionarioControle
         if ((!isset($nome_mae)) || (empty($nome_mae))) {
             $nome_mae = '';
         }
+        Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 412);
         if ((!isset($sangue)) || (empty($sangue))) {
             $sangue = '';
         }
@@ -963,6 +971,14 @@ class FuncionarioControle
                 $erros[] = "Nome do funcionário não pode ser vazio.";
             if (!isset($sobrenome) || trim($sobrenome) === '')
                 $erros[] = "Sobrenome do funcionário não pode ser vazio.";
+            if (isset($nome) && trim($nome) !== '' && !Util::validarNomePessoa($nome))
+                $erros[] = Util::MENSAGEM_NOME_INVALIDO;
+            if (isset($sobrenome) && trim($sobrenome) !== '' && !Util::validarNomePessoa($sobrenome))
+                $erros[] = Util::MENSAGEM_SOBRENOME_INVALIDO;
+            if (isset($nome_pai))
+                Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 412);
+            if (isset($nome_mae))
+                Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 412);
             if (!isset($gender) || ($gender !== 'm' && $gender !== 'f'))
                 $erros[] = "Sexo do funcionário é obrigatório.";
             if (!isset($nascimento) || trim($nascimento) === '')

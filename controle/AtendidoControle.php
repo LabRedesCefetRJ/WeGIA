@@ -48,6 +48,10 @@ class AtendidoControle
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = "";
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
         if ((!isset($sexo)) || (empty($sexo))) {
             $msg .= "Sexo do atendido não informado. Por favor, informe o sexo!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
@@ -131,11 +135,15 @@ class AtendidoControle
             $cpf = "";
         }
         if ((!isset($nome)) || (empty($nome))) {
-            $nome = '';
+            $nome = 'Pessoa existente';
         }
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = '';
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
         if ((!isset($sexo)) || (empty($sexo))) {
             $sexo = '';
         }
@@ -495,11 +503,11 @@ class AtendidoControle
 
     public function incluirExistente()
     {
-        $atendido = $this->verificarExistente();
-        $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
-        $sobrenome = $_GET['sobrenome'] ?? '';
-
         try {
+            $atendido = $this->verificarExistente();
+            $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
+            $sobrenome = $_GET['sobrenome'] ?? '';
+
             $atendidoDAO = new AtendidoDAO();
             $atendidoDAO->incluirExistente($atendido, $idPessoa, $sobrenome);
 
@@ -624,6 +632,10 @@ class AtendidoControle
 
             foreach ($campos as $campo) {
                 if (isset($_POST[$campo]) && $_POST[$campo] !== '') {
+                    if (in_array($campo, ['nome', 'sobrenome', 'nome_mae', 'nome_pai'], true)) {
+                        $nomeCampo = $campo === 'sobrenome' ? 'sobrenome' : str_replace('_', ' ', $campo);
+                        Util::validarNomePessoaOuLancar($_POST[$campo], $nomeCampo, 400);
+                    }
                     $setClause[] = "p.`$campo` = :" . $campo;
                     $params[":$campo"] = $_POST[$campo];
                 }

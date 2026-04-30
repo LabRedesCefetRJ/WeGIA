@@ -64,6 +64,8 @@ class ProcessoAceitacaoControle
             if (empty($nome) || empty($sobrenome)) {
                 throw new InvalidArgumentException('Nome e Sobrenome são obrigatórios.', 400);
             }
+            Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+            Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
 
             if ($cpf !== null && !Util::validarCPF($cpf)) {
                 throw new InvalidArgumentException('CPF inválido. Verifique o número informado.', 400);
@@ -335,6 +337,8 @@ class ProcessoAceitacaoControle
             if (empty($nome) || empty($sobrenome)) {
                 throw new InvalidArgumentException('Nome e Sobrenome são obrigatórios.', 400);
             }
+            Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+            Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
 
             if ($cpf !== null && !Util::validarCPF($cpf)) {
                 throw new InvalidArgumentException('CPF inválido. Verifique o número informado.', 400);

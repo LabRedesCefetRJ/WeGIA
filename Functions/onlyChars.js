@@ -14,3 +14,18 @@
 			return false;
 		}
 	}
+
+(function carregarValidadorDeNome() {
+	if (typeof document === 'undefined' || typeof validarNome === 'function') {
+		return;
+	}
+
+	var scriptAtual = document.currentScript;
+	if (!scriptAtual || !scriptAtual.src) {
+		return;
+	}
+
+	var script = document.createElement('script');
+	script.src = scriptAtual.src.replace(/onlyChars\.js(?:\?.*)?$/, 'valida_nome.js');
+	document.head.appendChild(script);
+})();

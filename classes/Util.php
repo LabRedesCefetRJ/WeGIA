@@ -2,11 +2,51 @@
 
 class Util
 {
+    public const MENSAGEM_NOME_INVALIDO = 'O nome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
+    public const MENSAGEM_SOBRENOME_INVALIDO = 'O sobrenome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
+
     public static function definirFusoHorario(?string $fusoHorario = null): string
     {
         require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
 
         return FusoHorarioSistema::definir($fusoHorario);
+    }
+
+    public static function validarNomePessoa(?string $nome): bool
+    {
+        if (!is_string($nome)) {
+            return false;
+        }
+
+        $nome = trim($nome);
+        if ($nome === '') {
+            return false;
+        }
+
+        return preg_match('/\p{L}/u', $nome) === 1
+            && preg_match("/^\p{L}+(?:[ .'\-]\p{L}+)*$/u", $nome) === 1;
+    }
+
+    public static function validarNomePessoaOuLancar(?string $nome, string $campo = 'nome', int $codigo = 400): void
+    {
+        if (self::validarNomePessoa($nome)) {
+            return;
+        }
+
+        $mensagem = $campo === 'sobrenome'
+            ? self::MENSAGEM_SOBRENOME_INVALIDO
+            : 'O ' . $campo . ' informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
+
+        throw new InvalidArgumentException($mensagem, $codigo);
+    }
+
+    public static function validarNomePessoaOpcionalOuLancar(?string $nome, string $campo, int $codigo = 400): void
+    {
+        if ($nome === null || trim($nome) === '') {
+            return;
+        }
+
+        self::validarNomePessoaOuLancar($nome, $campo, $codigo);
     }
 
     /**

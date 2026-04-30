@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Util.php';
+
 abstract class Pessoa
 {
 
@@ -51,15 +53,15 @@ abstract class Pessoa
     public function __construct($cpf,$nome,$sobrenome,$sexo,$dataNascimento,$registroGeral,$orgaoEmissor,$dataExpedicao,$nomeMae,$nomePai,$tipoSanguineo,$senha,$telefone,$imagem,$cep,$estado,$cidade,$bairro,$logradouro,$numeroEndereco,$complemento,$ibge)
     {
         $this->cpf=$cpf;
-        $this->nome=$nome;
-        $this->sobrenome=$sobrenome;
+        $this->setNome($nome);
+        $this->setSobrenome($sobrenome);
         $this->sexo=$sexo;
         $this->dataNascimento=$dataNascimento;
         $this->registroGeral=$registroGeral;
         $this->orgaoEmissor=$orgaoEmissor;
         $this->dataExpedicao=$dataExpedicao;
-        $this->nomeMae=$nomeMae;
-        $this->nomePai=$nomePai;
+        $this->setNomeMae($nomeMae);
+        $this->setNomePai($nomePai);
         $this->tipoSanguineo=$tipoSanguineo;
         $this->senha=$senha;
         $this->telefone=$telefone;
@@ -214,11 +216,13 @@ abstract class Pessoa
 
     public function setNome($nome)
     {
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
         $this->nome = $nome;
     }
 
     public function setSobrenome($sobrenome)
     {
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
         $this->sobrenome = $sobrenome;
     }
 
@@ -289,11 +293,13 @@ abstract class Pessoa
 
     public function setNomeMae($nomeMae)
     {
+        Util::validarNomePessoaOpcionalOuLancar($nomeMae, 'nome da mãe', 412);
         $this->nomeMae = $nomeMae;
     }
 
     public function setNomePai($nomePai)
     {
+        Util::validarNomePessoaOpcionalOuLancar($nomePai, 'nome do pai', 412);
         $this->nomePai = $nomePai;
     }
 

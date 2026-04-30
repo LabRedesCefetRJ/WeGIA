@@ -4,6 +4,7 @@ use function PHPSTORM_META\type;
 
 require_once dirname(__FILE__) . '/Conexao.php';
 require_once dirname(__FILE__, 2) . '/classes/PessoaDTOSocio.php';
+require_once dirname(__FILE__, 2) . '/classes/Util.php';
 
 class PessoaDAO
 {
@@ -70,6 +71,9 @@ class PessoaDAO
 
 public function inserirPessoa($cpf, $nome, $sobrenome, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null, $sexo = null, $dataNascimento = null) 
 {
+    Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+    Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
+
     $sql = "INSERT INTO pessoa (cpf, nome, sobrenome, telefone, cep, logradouro, bairro, cidade, estado, numero_endereco, complemento, ibge, sexo, data_nascimento) 
             VALUES (:cpf, :nome, :sobrenome, :telefone, :cep, :rua, :bairro, :cidade, :uf, :numero, :complemento, :ibge, :sexo, :dataNascimento)";
     
@@ -110,6 +114,14 @@ public function inserirPessoa($cpf, $nome, $sobrenome, $telefone = null, $cep = 
 
     public function atualizarPessoa(int $id_pessoa, array $dados): bool
     {
+        if (isset($dados['nome'])) {
+            Util::validarNomePessoaOuLancar($dados['nome'], 'nome', 400);
+        }
+
+        if (isset($dados['sobrenome'])) {
+            Util::validarNomePessoaOuLancar($dados['sobrenome'], 'sobrenome', 400);
+        }
+
         $setParts = [];
         $params = [];
         

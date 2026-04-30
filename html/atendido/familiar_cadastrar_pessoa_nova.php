@@ -41,6 +41,15 @@ $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
 $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
 $sexo = filter_input(INPUT_POST, 'sexo', FILTER_SANITIZE_SPECIAL_CHARS);
 
+try {
+    Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+    Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
+} catch (InvalidArgumentException $e) {
+    http_response_code($e->getCode());
+    echo json_encode(['erro' => $e->getMessage()]);
+    exit();
+}
+
 if($sexo != 'm' && $sexo != 'f'){
     http_response_code(400);
     echo json_encode(['erro' => 'O sexo informado não é válido no sistema.']);
