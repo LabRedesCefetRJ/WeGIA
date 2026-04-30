@@ -2,9 +2,10 @@
 
 namespace api\modules\Pessoa;
 
+use api\contracts\PessoaInterface;
 use DateTime;
 
-class Pessoa implements \JsonSerializable
+class Pessoa implements PessoaInterface, \JsonSerializable
 {
     private ?int $id = null;
     private string $nome;

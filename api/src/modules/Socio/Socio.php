@@ -2,15 +2,27 @@
 
 namespace api\modules\Socio;
 
-use api\modules\Pessoa\Pessoa;
+use api\contracts\PessoaInterface;
+use api\contracts\SocioInterface;
 
-class Socio
+class Socio implements SocioInterface
 {
     private int $id;
-    private Pessoa $pessoa; //pegar via contrato
+    private PessoaInterface $pessoa;
 
-    public function __construct(int $id, Pessoa $pessoa)
+    public function __construct(int $id, PessoaInterface $pessoa)
     {
-        throw new \Exception('Not implemented.');
+        $this->id = $id;
+        $this->pessoa = $pessoa;
+    }
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function getPessoa(): PessoaInterface
+    {
+        return $this->pessoa;
     }
 }
