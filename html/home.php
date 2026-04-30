@@ -301,6 +301,13 @@ require_once ROOT . "/html/geral/msg.php";
 						</div>
 					</a>
 
+					<a id="home8" href="#">
+						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#projetos">
+							<i class="fa-solid fa-diagram-project"></i>
+							<h4>Projetos</h4>
+						</div>
+					</a>
+
 					<a class="visivel" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#configuracao">
 							<i class="fa fa-cogs"></i>
@@ -828,7 +835,24 @@ require_once ROOT . "/html/geral/msg.php";
 					</div>
 				</div>
 				<!--fim da parte interna de #contribuicao-->
-
+				<!--parte interna de #projetos-->
+				<div class="row category-row-second">
+					<div id="projetos" class="collapse">
+						<a href="<?= WWW ?>html/projetos/cadastrar_projeto.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-file-circle-plus"></i>
+								<h4>Cadastrar Projeto</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/projetos/informacao_projeto.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-clipboard-list"></i>
+								<h4>Informações Projetos</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+				<!--fim da parte interna de #projetos-->
 				<!--parte interna de #configuracao-->
 				<div class="row">
 					<div id="configuracao" class="collapse">
