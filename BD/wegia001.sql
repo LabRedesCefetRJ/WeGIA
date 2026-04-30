@@ -2839,3 +2839,157 @@ DELIMITER ;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+-- -----------------------------------------------------
+-- Módulo Projetos (revisado)
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_status`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_status` (
+  `id_status` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_status`),
+  UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_local`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_local` (
+  `id_local` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(150) NOT NULL,
+  `descricao` TEXT NULL,
+  PRIMARY KEY (`id_local`)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_tipo`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_tipo` (
+  `id_tipo` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_tipo`),
+  UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_funcao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_funcao` (
+  `id_funcao` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_funcao`),
+  UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto` (
+  `id_projeto` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(150) NOT NULL,
+  `descricao` TEXT NULL,
+  `id_tipo` INT NOT NULL,
+  `id_local` INT NOT NULL,
+  `id_status` INT NOT NULL,
+  `data_inicio` DATE NOT NULL,
+  `data_fim` DATE NULL,
+  PRIMARY KEY (`id_projeto`),
+  INDEX `fk_projeto_tipo_idx` (`id_tipo` ASC),
+  INDEX `fk_projeto_local_idx` (`id_local` ASC),
+  INDEX `fk_projeto_status_idx` (`id_status` ASC),
+  CONSTRAINT `fk_projeto_tipo`
+    FOREIGN KEY (`id_tipo`)
+    REFERENCES `wegia`.`projeto_tipo` (`id_tipo`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_projeto_local`
+    FOREIGN KEY (`id_local`)
+    REFERENCES `wegia`.`projeto_local` (`id_local`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_projeto_status`
+    FOREIGN KEY (`id_status`)
+    REFERENCES `wegia`.`projeto_status` (`id_status`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_executante`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_executante` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_projeto` INT NOT NULL,
+  `id_pessoa` INT NOT NULL,
+  `id_funcao` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_projeto_executante` (`id_projeto` ASC, `id_pessoa` ASC),
+  INDEX `fk_pf_projeto_idx` (`id_projeto` ASC),
+  INDEX `fk_pf_pessoa_idx` (`id_pessoa` ASC),
+  INDEX `fk_pf_funcao_idx` (`id_funcao` ASC),
+  CONSTRAINT `fk_pf_projeto`
+    FOREIGN KEY (`id_projeto`)
+    REFERENCES `wegia`.`projeto` (`id_projeto`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_pf_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_pf_funcao`
+    FOREIGN KEY (`id_funcao`)
+    REFERENCES `wegia`.`projeto_funcao` (`id_funcao`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_atendido_status`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_atendido_status` (
+  `id_status` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_status`),
+  UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC)
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_atendido`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_atendido` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_projeto` INT NOT NULL,
+  `id_atendido` INT NOT NULL,
+  `id_status` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_projeto_atendido` (`id_projeto` ASC, `id_atendido` ASC),
+  INDEX `fk_pa_projeto_idx` (`id_projeto` ASC),
+  INDEX `fk_pa_atendido_idx` (`id_atendido` ASC),
+  INDEX `fk_pa_status_idx` (`id_status` ASC),
+  CONSTRAINT `fk_pa_projeto`
+    FOREIGN KEY (`id_projeto`)
+    REFERENCES `wegia`.`projeto` (`id_projeto`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_pa_atendido`
+    FOREIGN KEY (`id_atendido`)
+    REFERENCES `wegia`.`atendido` (`idatendido`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_pa_status`
+    FOREIGN KEY (`id_status`)
+    REFERENCES `wegia`.`projeto_atendido_status` (`id_status`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
