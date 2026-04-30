@@ -177,21 +177,21 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Número do RG<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
+                    <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
+                    <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Data de expedição<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                   <div class="col-md-6">
-                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required disabled>
+                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> disabled>
                     <p id="dataNascInvalida" style="display: block; color: #b30000">Selecione a data de nascimento primeiro!</p>
                   </div>
                 </div>
@@ -464,6 +464,59 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
       $("#header").load("../header.php");
       $(".menuu").load("../menu.php");
     });
+
+    $(document).ready(function() {
+
+      $("#orgao_emissor").closest(".form-group").hide();
+      $("#data_expedicao").closest(".form-group").hide();
+
+      function validarRGDependente() {
+        var rg = $("#rg").val().trim();
+
+        if (rg !== "") {
+
+          $("#orgao_emissor").closest(".form-group").fadeIn(150);
+          $("#data_expedicao").closest(".form-group").fadeIn(150);
+
+          $("#orgao_emissor").attr("required", true);
+          if ($("#nascimento").val()) {
+          $("#data_expedicao").prop("disabled", false);
+          } else {
+            $("#data_expedicao").prop("disabled", true);
+          }
+
+          if (!$("#orgao_emissor").closest(".form-group").find(".obrig").length) {
+            $("#orgao_emissor").closest(".form-group").find("label")
+              .append('<sup class="obrig">*</sup>');
+          }
+
+          if (!$("#data_expedicao").closest(".form-group").find(".obrig").length) {
+            $("#data_expedicao").closest(".form-group").find("label")
+              .append('<sup class="obrig">*</sup>');
+          }
+
+        } else {
+
+          $("#orgao_emissor").closest(".form-group").fadeOut(150);
+          $("#data_expedicao").closest(".form-group").fadeOut(150);
+
+          $("#orgao_emissor").val("");
+          $("#data_expedicao").val("");
+
+          $("#orgao_emissor").removeAttr("required");
+          $("#data_expedicao").removeAttr("required");
+
+          $("#orgao_emissor").closest(".form-group").find(".obrig").remove();
+          $("#data_expedicao").closest(".form-group").find(".obrig").remove();
+        }
+      }
+
+      $("#rg").on("input", validarRGDependente);
+
+      validarRGDependente();
+
+    });
+
   </script>
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
