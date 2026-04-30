@@ -16,7 +16,7 @@ class VoluntarioControle
     {
         extract($_REQUEST);
 
-        $camposObrigatorios = ['nome', 'sobrenome', 'gender', 'nascimento', 'rg', 'orgao_emissor', 'data_expedicao', 'cpf', 'data_admissao', 'situacao'];
+        $camposObrigatorios = ['nome', 'sobrenome', 'gender', 'nascimento', 'cpf', 'data_admissao', 'situacao'];
 
         foreach ($camposObrigatorios as $campo) {
             if (!isset($$campo) || empty($$campo)) {
@@ -33,7 +33,7 @@ class VoluntarioControle
         }
 
         $senha = '';
-        $voluntario = new Voluntario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', $senha, $telefone ?? 'null', $imgperfil ?? '', $cep ?? '', $uf ?? '', $cidade ?? '', $bairro ?? '', $rua ?? '', $numero_residencia ?? '', $complemento ?? '', $ibge ?? '');
+        $voluntario = new Voluntario($cpf, $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', $senha, $telefone ?? null, $imgperfil ?? '', $cep ?? '', $uf ?? '', $cidade ?? '', $bairro ?? '', $rua ?? '', $numero_residencia ?? '', $complemento ?? '', $ibge ?? '');
         $voluntario->setData_admissao($data_admissao);
         $voluntario->setId_situacao($situacao);
 
@@ -93,6 +93,32 @@ class VoluntarioControle
         }
     }
 
+    public function incluirExistente()
+    {
+        try {
+            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            $data_admissao = filter_input(INPUT_POST, 'data_admissao', FILTER_SANITIZE_SPECIAL_CHARS);
+            $situacao = filter_input(INPUT_POST, 'situacao', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
+            $voluntarioDAO = new VoluntarioDAO();
+            $idVoluntario = $voluntarioDAO->incluirExistente($cpf, $situacao, $data_admissao);
+
+            if (!isset($idVoluntario))
+                throw new PDOException('Erro ao cadastrar o voluntário existente.', 500);
+
+            $_SESSION['msg'] = "Voluntário cadastrado com sucesso";
+            $_SESSION['tipo'] = "success";
+
+            header("Location: ../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php");
+        }
+        catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
     public function listarTodos()
     {
         try {
@@ -112,6 +138,137 @@ class VoluntarioControle
             }
             header('Location: ' . $nextPage);
             exit();
+        }
+        catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function listarUm()
+    {
+        try {
+            $id = filter_input(INPUT_GET, 'id_voluntario', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id || $id <= 0)
+                throw new InvalidArgumentException("ID Inválido.", 412);
+
+            $voluntarioDAO = new VoluntarioDAO();
+            $resultado = $voluntarioDAO->listarUm($id);
+
+            $_SESSION['voluntario'] = json_encode([$resultado]);
+
+            header('Location: ../html/voluntario/profile_voluntario.php?id_voluntario=' . urlencode($id));
+            exit();
+        }
+        catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function alterarInfPessoal()
+    {
+        try {
+            extract($_REQUEST);
+            $id_voluntario = filter_var($id_voluntario, FILTER_VALIDATE_INT);
+
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
+            if (!$id_voluntario || $id_voluntario < 1)
+                throw new InvalidArgumentException('O id do voluntário não está dentro dos limites permitidos.', 412);
+
+            if (!empty($nascimento) && ($nascimento > Voluntario::getDataNascimentoMaxima() || $nascimento < Voluntario::getDataNascimentoMinima()))
+                throw new InvalidArgumentException('A data de nascimento não está dentro dos limites permitidos.', 412);
+
+            $voluntario = new Voluntario('', $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae, $nome_pai, $sangue, '', $telefone, '', '', '', '', '', '', '', '', '');
+            $voluntario->setId_voluntario($id_voluntario);
+
+            $voluntarioDAO = new VoluntarioDAO();
+            $voluntarioDAO->alterarInfPessoal($voluntario);
+
+            header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
+            exit;
+        }
+        catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function alterarEndereco()
+    {
+        try {
+            extract($_REQUEST);
+            $id_voluntario = filter_var($_REQUEST['id_voluntario'] ?? null, FILTER_SANITIZE_NUMBER_INT);
+            $numero_residencia = filter_var($_REQUEST['numero_residencia'] ?? null, FILTER_SANITIZE_NUMBER_INT);
+
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
+            if (!$id_voluntario || $id_voluntario < 1)
+                throw new InvalidArgumentException('O id do voluntário informado não é válido.', 412);
+
+            if ((!isset($numero_residencia)) || empty(($numero_residencia))) {
+                $numero_residencia = null;
+            }
+
+            $voluntario = new Voluntario('', '', '', '', '', null, null, null, '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+            $voluntario->setId_voluntario($id_voluntario);
+
+            $voluntarioDAO = new VoluntarioDAO();
+            $voluntarioDAO->alterarEndereco($voluntario);
+
+            header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
+            exit();
+        }
+        catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function alterarDetalhes()
+    {
+        try {
+            extract($_REQUEST);
+            $id_voluntario = filter_var($_REQUEST['id_voluntario'] ?? null, FILTER_SANITIZE_NUMBER_INT);
+
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
+            if (!$id_voluntario || $id_voluntario < 1)
+                throw new InvalidArgumentException('O id do voluntário informado não é válido.', 412);
+            
+            $voluntario = new Voluntario('', '', '', '', '', null, null, null, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $voluntario->setId_voluntario($id_voluntario);
+            $voluntario->setData_admissao($data_admissao);
+            $voluntario->setId_situacao($situacao);
+
+            $voluntarioDAO = new VoluntarioDAO();
+            $voluntarioDAO->alterarDetalhes($voluntario);
+
+            header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
+            exit();
+        }
+        catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function alterarImagem()
+    {
+        try {
+            $id_voluntario = filter_var($_REQUEST['id_voluntario'], FILTER_SANITIZE_NUMBER_INT);
+
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+
+            if (!$id_voluntario || $id_voluntario < 1)
+                throw new InvalidArgumentException('O id fornecido é inválido.', 412);
+
+            $img = file_get_contents($_FILES['imgperfil']['tmp_name']);
+            $voluntarioDAO = new VoluntarioDAO();
+
+            $voluntarioDAO->alterarImagem($id_voluntario, $img);
+            header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
         }
         catch (Exception $e) {
             Util::tratarException($e);
