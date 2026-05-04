@@ -165,16 +165,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 					</header>
 					<div class="panel-body">
 						<div style="margin-bottom: 15px;">
-							<a href="listar_almox.php?tipo=ativo">
-								<button <?= $tipo === 'ativo' ? 'style="font-weight:bold;"' : ''?>>
-									Ativos
-								</button>
+							<a href="listar_almox.php?tipo=ativo"
+								class="btn btn-default <?= $tipo === 'ativo' ? 'active' : ''?>">
+								Ativos
 							</a>
 
-							<a href="listar_almox.php?tipo=arquivado">
-								<button <?= $tipo === 'arquivado' ? 'style="font-weight:bold;"' : ''?>>
-									Arquivados
-								</button>
+							<a href="listar_almox.php?tipo=arquivado"
+								class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : ''?>">
+								Arquivados
 							</a>
 						</div>
 						<?php if(isset($_SESSION['erro'])): ?>
