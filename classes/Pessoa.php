@@ -52,28 +52,36 @@ abstract class Pessoa
 
     public function __construct($cpf,$nome,$sobrenome,$sexo,$dataNascimento,$registroGeral,$orgaoEmissor,$dataExpedicao,$nomeMae,$nomePai,$tipoSanguineo,$senha,$telefone,$imagem,$cep,$estado,$cidade,$bairro,$logradouro,$numeroEndereco,$complemento,$ibge)
     {
-        $this->cpf=$cpf;
-        $this->setNome($nome);
-        $this->setSobrenome($sobrenome);
-        $this->sexo=$sexo;
-        $this->dataNascimento=$dataNascimento;
-        $this->registroGeral=$registroGeral;
-        $this->orgaoEmissor=$orgaoEmissor;
-        $this->dataExpedicao=$dataExpedicao;
+        $this->cpf = $cpf;
+        if ($nome !== null && trim($nome) !== '') {
+            $this->setNome($nome);
+        } else {
+            $this->nome = $nome;
+        }
+        if ($sobrenome !== null && trim($sobrenome) !== '') {
+            $this->setSobrenome($sobrenome);
+        } else {
+            $this->sobrenome = $sobrenome;
+        }
+        $this->sexo = $sexo;
+        $this->dataNascimento = $dataNascimento;
+        $this->registroGeral = $registroGeral;
+        $this->orgaoEmissor = $orgaoEmissor;
+        $this->dataExpedicao = $dataExpedicao;
         $this->setNomeMae($nomeMae);
         $this->setNomePai($nomePai);
-        $this->tipoSanguineo=$tipoSanguineo;
-        $this->senha=$senha;
-        $this->telefone=$telefone;
-        $this->imagem=$imagem;
-        $this->cep=$cep;
-        $this->estado=$estado;
-        $this->cidade=$cidade;
-        $this->bairro=$bairro;
-        $this->logradouro=$logradouro;
-        $this->numeroEndereco=$numeroEndereco;
-        $this->complemento=$complemento;
-        $this->ibge=$ibge;
+        $this->tipoSanguineo = $tipoSanguineo;
+        $this->senha = $senha;
+        $this->telefone = $telefone;
+        $this->imagem = $imagem;
+        $this->cep = $cep;
+        $this->estado = $estado;
+        $this->cidade = $cidade;
+        $this->bairro = $bairro;
+        $this->logradouro = $logradouro;
+        $this->numeroEndereco = $numeroEndereco;
+        $this->complemento = $complemento;
+        $this->ibge = $ibge;
     }
     
     public function getEstado()

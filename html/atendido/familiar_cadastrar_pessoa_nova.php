@@ -17,13 +17,23 @@ require_once '../../dao/Conexao.php';
 $pdo = Conexao::connect();
 
 // Pessoa
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'geral' . DIRECTORY_SEPARATOR . 'msg.php';
 
 $idatendido = filter_input(INPUT_POST, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
+$redirectCadastro = 'cadastro_atendido_parentesco_pessoa_nova.php?idatendido=' . urlencode((string)$idatendido);
+
+function redirectNovoFamiliarError(string $message, string $field = 'global'): void
+{
+    global $redirectCadastro;
+    setSessionFormData($_POST);
+    setSessionFormErrors([$field => $message]);
+    setSessionMsg($message, 'err');
+    header("Location: $redirectCadastro");
+    exit();
+}
 
 if(!$idatendido || $idatendido < 1){
-    http_response_code(400);
-    echo json_encode(['erro' => 'O id do atendido não é válido.']);
-    exit();
+    redirectNovoFamiliarError('O id do atendido não é válido.');
 }
 
 $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -32,9 +42,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 $util = new Util();
 
 if($cpf && !$util->validarCPF($cpf)){
-    http_response_code(400);
-    echo json_encode(['erro' => 'O CPF informado não é válido.']);
-    exit();
+    redirectNovoFamiliarError('O CPF informado não é válido.', 'cpf');
 }
 
 $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -45,15 +53,12 @@ try {
     Util::validarNomePessoaOuLancar($nome, 'nome', 400);
     Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
 } catch (InvalidArgumentException $e) {
-    http_response_code($e->getCode());
-    echo json_encode(['erro' => $e->getMessage()]);
-    exit();
+    setSessionFormErrorFromMessage($e->getMessage());
+    redirectNovoFamiliarError($e->getMessage(), getSessionFormErrors(false) ? array_key_first(getSessionFormErrors(false)) : 'global');
 }
 
 if($sexo != 'm' && $sexo != 'f'){
-    http_response_code(400);
-    echo json_encode(['erro' => 'O sexo informado não é válido no sistema.']);
-    exit();
+    redirectNovoFamiliarError('O sexo informado não é válido no sistema.', 'sexo');
 }
 
 $telefone = filter_input(INPUT_POST, 'telefone', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -83,8 +88,7 @@ try {
     $pessoa->execute();
     $id_pessoa = $pdo->lastInsertId();
 } catch (PDOException $th) {
-    echo "Houve um erro ao inserir a pessoa no banco de dados";
-    die();
+    redirectNovoFamiliarError('Erro ao inserir a pessoa no banco de dados.');
 }
 
 // Familiar
@@ -94,9 +98,7 @@ $id_parentesco = $_POST['id_parentesco'];
 $id_parentesco = filter_input(INPUT_POST, 'id_parentesco', FILTER_SANITIZE_NUMBER_INT);
 
 if(!$id_parentesco || $id_parentesco < 1){
-    http_response_code(400);
-    echo json_encode(['erro' => 'O id do parentesco não é válido.']);
-    exit();
+    redirectNovoFamiliarError('O parentesco informado não é válido.', 'id_parentesco');
 }
 
 define("NOVO_FAMILIAR", "INSERT IGNORE INTO atendido_familiares (atendido_idatendido, pessoa_id_pessoa, atendido_parentesco_idatendido_parentesco ) VALUES (:idatendido, :id_pessoa, :id_parentesco);");
@@ -108,8 +110,7 @@ try {
     $stmt->bindParam(":id_parentesco", $id_parentesco);
     $stmt->execute();
 } catch (PDOException $th) {
-    echo "Houve um erro ao adicionar o dependente ao banco de dados:";
-    die();
+    redirectNovoFamiliarError('Erro ao adicionar o familiar ao banco de dados.');
 }
 
 header("Location: Profile_Atendido.php?idatendido=$idatendido");

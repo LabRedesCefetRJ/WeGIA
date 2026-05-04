@@ -9,6 +9,7 @@ require_once ROOT . '/dao/PessoaDAO.php';
 require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
 require_once ROOT . '/classes/Util.php';
 require_once ROOT . '/dao/Conexao.php';
+require_once ROOT . '/html/geral/msg.php';
 
 class ProcessoAceitacaoControle
 {
@@ -38,7 +39,9 @@ class ProcessoAceitacaoControle
             header("Location: ../html/atendido/processo_aceitacao.php?status-processo=" . htmlspecialchars($idStatus));
             exit();
         } catch (Exception $e) {
-            Util::tratarException($e);
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit();
         }
     }
 
@@ -71,6 +74,9 @@ class ProcessoAceitacaoControle
                 throw new InvalidArgumentException('CPF inválido. Verifique o número informado.', 400);
             }
 
+            if ($dataNascimento !== null) {
+                $this->validarDataNascimento($dataNascimento);
+            }
             $this->validarTelefone($telefone);
             $cep = $this->validarCep($cep);
             $this->validarEndereco([
@@ -131,7 +137,10 @@ class ProcessoAceitacaoControle
             }
 
             $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação.' : $e->getMessage();
-            $_SESSION['mensagem_erro'] = $mensagem;
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($mensagem);
+            setSessionOpenModal('modalNovoProcesso');
+            setSessionMsg($mensagem, 'err');
 
             header('Location: ../html/atendido/processo_aceitacao.php');
             exit();
@@ -246,7 +255,9 @@ class ProcessoAceitacaoControle
             );
             exit;
         } catch (Exception $e) {
-            Util::tratarException($e);
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
         }
     }
 
@@ -344,6 +355,9 @@ class ProcessoAceitacaoControle
                 throw new InvalidArgumentException('CPF inválido. Verifique o número informado.', 400);
             }
 
+            if ($dataNascimento !== null) {
+                $this->validarDataNascimento($dataNascimento);
+            }
             $this->validarTelefone($telefone);
             $cep = $this->validarCep($cep);
             $this->validarEndereco([
@@ -402,7 +416,10 @@ class ProcessoAceitacaoControle
             exit();
         } catch (Exception $e) {
             $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação.' : $e->getMessage();
-            $_SESSION['mensagem_erro'] = $mensagem;
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($mensagem);
+            setSessionOpenModal('modalEditarPerfil');
+            setSessionMsg($mensagem, 'err');
 
             header('Location: ../html/atendido/processo_aceitacao.php');
             exit();

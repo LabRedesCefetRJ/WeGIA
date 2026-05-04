@@ -42,18 +42,24 @@ $nome_pai = filter_input(INPUT_POST, 'nome_pai', FILTER_SANITIZE_SPECIAL_CHARS);
 define("ALTERAR_INFO_PESSOAL", "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, telefone=:telefone, nome_mae=:nome_mae, nome_pai=:nome_pai where id_pessoa = :id");
 
 if (!$id || !is_numeric($id)) {
-    http_response_code(400);
-    exit('Erro, o valor do id fornecido para uma pessoa não é válido.');
+    $_SESSION['msg'] = 'Erro, o valor do id fornecido para uma pessoa não é válido.';
+    $_SESSION['tipo'] = 'error';
+    header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+    exit();
 }
 
 if (!$idatendido_familiares || !is_numeric($idatendido_familiares)) {
-    http_response_code(400);
-    exit('Erro, o valor do id fornecido para um familiar não é válido.');
+    $_SESSION['msg'] = 'Erro, o valor do id fornecido para um familiar não é válido.';
+    $_SESSION['tipo'] = 'error';
+    header("Location: ../home.php");
+    exit();
 }
 
 if (!$nome || empty($nome) || !$sobrenome || empty($sobrenome)) {
-    http_response_code(400);
-    exit('Erro, as informações de nome e sobrenome estão faltando.');
+    $_SESSION['msg'] = 'Erro, as informações de nome e sobrenome estão faltando.';
+    $_SESSION['tipo'] = 'error';
+    header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+    exit();
 }
 
 try {
@@ -62,13 +68,17 @@ try {
     Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 400);
     Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 400);
 } catch (InvalidArgumentException $e) {
-    http_response_code($e->getCode());
-    exit($e->getMessage());
+    $_SESSION['msg'] = $e->getMessage();
+    $_SESSION['tipo'] = 'error';
+    header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+    exit();
 }
 
 if ($sexo != 'm' && $sexo != 'f') {
-    http_response_code(400);
-    exit('Erro, a opção de sexo fornecida não é válida.');
+    $_SESSION['msg'] = 'Erro, a opção de sexo fornecida não é válida.';
+    $_SESSION['tipo'] = 'error';
+    header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+    exit();
 }
 
 if (!$telefone || empty($telefone)) {
@@ -77,14 +87,18 @@ if (!$telefone || empty($telefone)) {
     $telefone = Util::validarTelefone($telefone);
 
     if (!$telefone) {
-        http_response_code(400);
-        exit('Erro, o telefone fornecido não está em um formato válido.');
+        $_SESSION['msg'] = 'Erro, o telefone fornecido não está em um formato válido.';
+        $_SESSION['tipo'] = 'error';
+        header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+        exit();
     }
 }
 
 if (!$data_nascimento || empty($data_nascimento)) { //Posteriormente fazer validação do formato da data de nascimento quando o respectivo método for implementado na classe Util.php
-    http_response_code(400);
-    exit('Erro, a data de nascimento fornecida não está em um formato válido.');
+    $_SESSION['msg'] = 'Erro, a data de nascimento fornecida não está em um formato válido.';
+    $_SESSION['tipo'] = 'error';
+    header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+    exit();
 }
 
 if ($data_nascimento && $id) {
@@ -104,12 +118,18 @@ if ($data_nascimento && $id) {
             $data_expedicao_obj = new DateTime($pessoa_doc['data_expedicao']);
 
             if ($data_nascimento_obj >= $data_expedicao_obj) {
-                die(json_encode(['A data de nascimento não pode ser posterior ou igual à data de expedição do documento!']));
+                $_SESSION['msg'] = 'A data de nascimento não pode ser posterior ou igual à data de expedição do documento!';
+                $_SESSION['tipo'] = 'error';
+                header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+                exit();
             }
         }
         // Se não existe data de expedição no banco, permite a alteração sem validação
     } catch (PDOException $e) {
-        die(json_encode(["Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição.{$e->getMessage()}"]));
+        $_SESSION['msg'] = "Erro ao consultar o banco de dados para verificação das datas de nascimento e expedição. {$e->getMessage()}";
+        $_SESSION['tipo'] = 'error';
+        header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+        exit();
     }
 }
 
@@ -126,8 +146,14 @@ try {
     $pessoa->bindValue(":nome_pai", $nome_pai);
     $pessoa->execute();
 } catch (PDOException $th) {
-    echo "Houve um erro ao inserir a pessoa no banco de dados: $th";
-    die();
+    if ($th->getCode() == 23000) {
+        $_SESSION['msg'] = "Erro: Dados duplicados ou inválidos.";
+    } else {
+        $_SESSION['msg'] = "Houve um erro ao atualizar as informações: " . $th->getMessage();
+    }
+    $_SESSION['tipo'] = "error";
+    header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+    exit();
 }
 
 header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");

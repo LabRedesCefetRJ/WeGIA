@@ -19,6 +19,7 @@ require_once '../../dao/ProcessoAceitacaoDAO.php';
 require_once '../../dao/PaStatusDAO.php';
 require_once "../personalizacao_display.php";
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'geral' . DIRECTORY_SEPARATOR . 'msg.php';
 
 try {
 	$pdo             = Conexao::connect();
@@ -54,9 +55,11 @@ try {
 		}
 	}
 
-	$msg   = $_SESSION['msg'] ?? '';
 	$error = $_SESSION['mensagem_erro'] ?? '';
-	unset($_SESSION['msg'], $_SESSION['mensagem_erro']);
+	unset($_SESSION['mensagem_erro']);
+	$oldInput = getSessionFormData(false);
+	$fieldErrors = getSessionFormErrors(false);
+	$openModal = getSessionOpenModal(false);
 } catch (Exception $e) {
 	Util::tratarException($e);
 	header("Location: ../home.php");
@@ -165,12 +168,7 @@ try {
 				</header>
 
 				<!-- start: page -->
-				<?php if ($msg): ?>
-					<div class="alert alert-success alert-block">
-						<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-						<p><?= htmlspecialchars($msg) ?></p>
-					</div>
-				<?php endif; ?>
+				<?php sessionMsg(); ?>
 
 				<?php if ($error): ?>
 					<div class="alert alert-danger alert-block">
@@ -347,10 +345,16 @@ try {
                                 <div class="form-group">
                                     <label>Nome <span class="text-danger">*</span></label>
                                     <input type="text" name="nome" id="edit_nome" class="form-control" required autocomplete="given-name" />
+                                    <?php if (!empty($fieldErrors['nome']) && $openModal === 'modalEditarPerfil'): ?>
+                                        <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') ?></p>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="form-group">
                                     <label>Sobrenome <span class="text-danger">*</span></label>
                                     <input type="text" name="sobrenome" id="edit_sobrenome" class="form-control" required autocomplete="family-name" />
+                                    <?php if (!empty($fieldErrors['sobrenome']) && $openModal === 'modalEditarPerfil'): ?>
+                                        <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') ?></p>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="form-group">
                                     <label>Sexo</label>
@@ -377,8 +381,8 @@ try {
                                         onkeypress="return Onlynumbers(event)"
                                         onkeyup="mascara('###.###.###-##',this,event)"
                                         onblur="validarCPFEditar(this.value)"
-                                        class="form-control" />
-                                    <p id="editCpfInvalido" style="display: none; color: #b30000; font-size: 12px;">CPF INVÁLIDO!</p>
+                                        class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalEditarPerfil' ? ' is-invalid' : '' ?>" />
+                                    <p id="editCpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'modalEditarPerfil' ? 'block' : 'none' ?>; color: #b30000; font-size: 12px;"><?= !empty($fieldErrors['cpf']) && $openModal === 'modalEditarPerfil' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                 </div>
 
                                 <div class="form-group">
@@ -452,17 +456,23 @@ try {
 
                                 <div class="form-group">
                                     <label>Nome <span class="text-danger">*</span></label>
-                                    <input type="text" name="nome" class="form-control" required autocomplete="given-name" />
+                                    <input type="text" name="nome" class="form-control<?= !empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="given-name" value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                    <?php if (!empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso'): ?>
+                                        <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') ?></p>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="form-group">
                                     <label>Sobrenome <span class="text-danger">*</span></label>
-                                    <input type="text" name="sobrenome" class="form-control" required autocomplete="family-name" />
+                                    <input type="text" name="sobrenome" class="form-control<?= !empty($fieldErrors['sobrenome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="family-name" value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                    <?php if (!empty($fieldErrors['sobrenome']) && $openModal === 'modalNovoProcesso'): ?>
+                                        <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') ?></p>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="form-group">
                                     <label>Sexo</label>
                                     <div>
-                                        <label style="margin-right: 20px; margin-left: 10px;"><input type="radio" name="sexo" value="m"> <i class="fa fa-male"></i> Masculino</label>
-                                        <label><input type="radio" name="sexo" value="f"> <i class="fa fa-female"></i> Feminino</label>
+                                        <label style="margin-right: 20px; margin-left: 10px;"><input type="radio" name="sexo" value="m" <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>> <i class="fa fa-male"></i> Masculino</label>
+                                        <label><input type="radio" name="sexo" value="f" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>> <i class="fa fa-female"></i> Feminino</label>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -470,8 +480,9 @@ try {
                                     <input type="date" name="data_nascimento" id="data_nascimento_processo" class="form-control"
                                         max="<?= date('Y-m-d') ?>"
                                         min="<?= date('Y-m-d', strtotime('-170 years')) ?>"
+                                        value="<?= htmlspecialchars($oldInput['data_nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                         onchange="validarDataNascimentoProcesso()" />
-                                    <p id="dataNascimentoInvalida" style="display: none; color: #b30000; font-size: 12px;"></p>
+                                    <p id="dataNascimentoInvalida" style="display: <?= !empty($fieldErrors['data_nascimento']) && $openModal === 'modalNovoProcesso' ? 'block' : 'none' ?>; color: #b30000; font-size: 12px;"><?= !empty($fieldErrors['data_nascimento']) && $openModal === 'modalNovoProcesso' ? htmlspecialchars($fieldErrors['data_nascimento'], ENT_QUOTES, 'UTF-8') : '' ?></p>
                                 </div>
                                 <div class="form-group">
                                     <label>CPF</label>
@@ -483,59 +494,63 @@ try {
                                         onkeypress="return Onlynumbers(event)"
                                         onkeyup="mascara('###.###.###-##',this,event)"
                                         onblur="validarCPF(this.value)"
-                                        class="form-control" />
-                                    <p id="cpfInvalido" style="display: none; color: #b30000; font-size: 12px;">CPF INVÁLIDO!</p>
+                                        class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>"
+                                        value="<?= htmlspecialchars($oldInput['cpf'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                    <p id="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? 'block' : 'none' ?>; color: #b30000; font-size: 12px;"><?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                 </div>
 
                                 <div class="form-group">
                                     <label>Telefone</label>
-                                    <input type="tel" name="telefone" id="telefone" maxlength="15" placeholder="(22) 99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##) #####-####',this,event)" class="form-control" />
+                                    <input type="tel" name="telefone" id="telefone" maxlength="15" placeholder="(22) 99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##) #####-####',this,event)" class="form-control<?= !empty($fieldErrors['telefone']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                    <?php if (!empty($fieldErrors['telefone']) && $openModal === 'modalNovoProcesso'): ?>
+                                        <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['telefone'], ENT_QUOTES, 'UTF-8') ?></p>
+                                    <?php endif; ?>
                                 </div>
 								<hr> <div class="row">
 									<div class="form-group col-md-4">
 										<label>CEP</label>
-										<input type="text" name="cep" id="cep" class="form-control" maxlength="9" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)" onblur="pesquisacep(this.value);" onkeydown="return cepEnter(event, this.value);" placeholder="00000-000" />
-                                                                                  <p id="cepInvalido" class="text-danger" style="display: none; font-size: 12px;">Formato de CEP inválido!</p>
+										<input type="text" name="cep" id="cep" class="form-control<?= !empty($fieldErrors['cep']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" maxlength="9" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)" onblur="pesquisacep(this.value);" onkeydown="return cepEnter(event, this.value);" placeholder="00000-000" value="<?= htmlspecialchars($oldInput['cep'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                                                                  <p id="cepInvalido" class="text-danger" style="display: <?= !empty($fieldErrors['cep']) && $openModal === 'modalNovoProcesso' ? 'block' : 'none' ?>; font-size: 12px;"><?= !empty($fieldErrors['cep']) && $openModal === 'modalNovoProcesso' ? htmlspecialchars($fieldErrors['cep'], ENT_QUOTES, 'UTF-8') : 'Formato de CEP inválido!' ?></p>
 									</div>
 									<div class="form-group col-md-8">
 										<label>Rua</label>
-										<input type="text" name="rua" id="rua" class="form-control" />
+										<input type="text" name="rua" id="rua" class="form-control" value="<?= htmlspecialchars($oldInput['rua'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
 									</div>
 								</div>
 
 								<div class="row">
 									<div class="form-group col-md-3">
 										<label>Nº</label>
-										<input type="text" name="numero_residencia" id="numero_residencia" class="form-control" />
+										<input type="text" name="numero_residencia" id="numero_residencia" class="form-control" value="<?= htmlspecialchars($oldInput['numero_residencia'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
 									</div>
 									<div class="form-group col-md-5">
 										<label>Bairro</label>
-										<input type="text" name="bairro" id="bairro" class="form-control" />
+										<input type="text" name="bairro" id="bairro" class="form-control" value="<?= htmlspecialchars($oldInput['bairro'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
 									</div>
 									<div class="form-group col-md-4">
 										<label>Complemento</label>
-										<input type="text" name="complemento" id="complemento" class="form-control" />
+										<input type="text" name="complemento" id="complemento" class="form-control" value="<?= htmlspecialchars($oldInput['complemento'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
 									</div>
 								</div>
 
 								<div class="row">
 									<div class="form-group col-md-5">
 										<label>Cidade</label>
-										<input type="text" name="cidade" id="cidade" class="form-control" readonly />
+										<input type="text" name="cidade" id="cidade" class="form-control" readonly value="<?= htmlspecialchars($oldInput['cidade'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
 									</div>
 									<div class="form-group col-md-3">
 										<label>UF</label>
-										<input type="text" name="uf" id="uf" class="form-control" readonly />
+										<input type="text" name="uf" id="uf" class="form-control" readonly value="<?= htmlspecialchars($oldInput['uf'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
 									</div>
 									<div class="form-group col-md-4">
 										<label>IBGE</label>
-										<input type="text" name="ibge" id="ibge" class="form-control" readonly />
+										<input type="text" name="ibge" id="ibge" class="form-control" readonly value="<?= htmlspecialchars($oldInput['ibge'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
 									</div>
 								</div>
 
 								<div class="form-group">
 									<label>Descrição</label>
-									<textarea class="form-control" rows="5" name="descricao"></textarea>
+									<textarea class="form-control" rows="5" name="descricao"><?= htmlspecialchars($oldInput['descricao'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
 								</div>
 							</div>
 							<div class="modal-footer">
@@ -634,6 +649,36 @@ try {
 	<script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
 	<script src="<?php echo WWW; ?>Functions/mascara.js"></script>
 	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<?php if (!empty($openModal)): ?>
+		<script>
+			$(function() {
+				const modalId = <?= json_encode($openModal) ?>;
+				const oldInput = <?= json_encode($oldInput, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+
+				if (modalId === 'modalEditarPerfil') {
+					$('#edit_id_processo').val(oldInput.id_processo || '');
+					$('#edit_nome').val(oldInput.nome || '');
+					$('#edit_sobrenome').val(oldInput.sobrenome || '');
+					$('#edit_data_nascimento').val(oldInput.data_nascimento || '');
+					$('#edit_cpf').val(oldInput.cpf || '');
+					$('#edit_telefone').val(oldInput.telefone || '');
+					$('#edit_cep').val(oldInput.cep || '');
+					$('#edit_rua').val(oldInput.rua || '');
+					$('#edit_numero_residencia').val(oldInput.numero_residencia || '');
+					$('#edit_bairro').val(oldInput.bairro || '');
+					$('#edit_complemento').val(oldInput.complemento || '');
+					$('#edit_cidade').val(oldInput.cidade || '');
+					$('#edit_uf').val(oldInput.uf || '');
+					$('#edit_ibge').val(oldInput.ibge || '');
+					if (oldInput.sexo === 'm' || oldInput.sexo === 'f') {
+						$('input[name="sexo"][value="' + oldInput.sexo + '"]', '#modalEditarPerfil').prop('checked', true);
+					}
+				}
+
+				$('#' + modalId).modal('show');
+			});
+		</script>
+	<?php clearSessionFormState(); endif; ?>
 
 	<style type="text/css">
 		.obrig {

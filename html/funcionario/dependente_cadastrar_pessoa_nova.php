@@ -14,29 +14,57 @@ require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 11, 7);
 require_once '../../dao/Conexao.php';
 require_once '../../classes/Util.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'geral' . DIRECTORY_SEPARATOR . 'msg.php';
 $pdo = Conexao::connect();
 
-$id_funcionario = $_POST['id_funcionario'];
+$id_funcionario = filter_input(INPUT_POST, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+$redirectCadastro = 'cadastro_dependente_pessoa_nova.php?id_funcionario=' . urlencode((string)$id_funcionario);
+
+function redirectNovoDependenteError(string $message, string $field = 'global'): void
+{
+    global $redirectCadastro;
+    setSessionFormData($_POST);
+    setSessionFormErrors([$field => $message]);
+    setSessionMsg($message, 'err');
+    header("Location: $redirectCadastro");
+    exit();
+}
+
+if (!$id_funcionario || $id_funcionario < 1) {
+    redirectNovoDependenteError('O id do funcionário informado não é válido.');
+}
+
 // Pessoa
 
-    $nome = $_POST['nome'];
-    $sobrenome = $_POST['sobrenome'];
-    $sexo = $_POST['sexo'];
-    $telefone = $_POST['telefone'];
-    $data_nascimento = $_POST['nascimento'];
-    $id_parentesco = $_POST['id_parentesco'];
-    $cpf = $_POST['cpf'];
-    $registro_geral = $_POST['rg'];
-    $orgao_emissor = $_POST['orgao_emissor'];
-    $data_expedicao = $_POST['data_expedicao'];
+    $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+    $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
+    $sexo = filter_input(INPUT_POST, 'sexo', FILTER_SANITIZE_SPECIAL_CHARS);
+    $telefone = filter_input(INPUT_POST, 'telefone', FILTER_SANITIZE_SPECIAL_CHARS);
+    $data_nascimento = filter_input(INPUT_POST, 'nascimento', FILTER_SANITIZE_SPECIAL_CHARS);
+    $id_parentesco = filter_input(INPUT_POST, 'id_parentesco', FILTER_SANITIZE_NUMBER_INT);
+    $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+    $registro_geral = filter_input(INPUT_POST, 'rg', FILTER_SANITIZE_SPECIAL_CHARS);
+    $orgao_emissor = filter_input(INPUT_POST, 'orgao_emissor', FILTER_SANITIZE_SPECIAL_CHARS);
+    $data_expedicao = filter_input(INPUT_POST, 'data_expedicao', FILTER_SANITIZE_SPECIAL_CHARS);
 
     try {
         Util::validarNomePessoaOuLancar($nome, 'nome', 400);
         Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
     } catch (InvalidArgumentException $e) {
-        http_response_code($e->getCode());
-        echo json_encode(['erro' => $e->getMessage()]);
-        exit();
+        setSessionFormErrorFromMessage($e->getMessage());
+        redirectNovoDependenteError($e->getMessage(), getSessionFormErrors(false) ? array_key_first(getSessionFormErrors(false)) : 'global');
+    }
+
+    if (!$cpf || !Util::validarCPF($cpf)) {
+        redirectNovoDependenteError('O CPF informado não é válido.', 'cpf');
+    }
+
+    if ($sexo !== 'm' && $sexo !== 'f') {
+        redirectNovoDependenteError('O sexo informado não é válido.', 'sexo');
+    }
+
+    if (!$id_parentesco || $id_parentesco < 1) {
+        redirectNovoDependenteError('O parentesco informado não é válido.', 'id_parentesco');
     }
 
 
@@ -54,8 +82,7 @@ $id_funcionario = $_POST['id_funcionario'];
         $pessoa->bindValue(":data_expedicao", $data_expedicao);
         $pessoa->execute();
     } catch (PDOException $th) {
-        echo "Houve um erro ao inserir a pessoa no banco de dados: $th";
-        die();
+        redirectNovoDependenteError('Erro ao inserir a pessoa no banco de dados.');
     }
 
     // Dependente
@@ -64,10 +91,10 @@ $id_funcionario = $_POST['id_funcionario'];
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':cpf', $cpf);
         $stmt->execute();
-        $id_pessoa = $stmt->fetch(PDO::FETCH_ASSOC)["id_pessoa"];
+        $pessoa = $stmt->fetch(PDO::FETCH_ASSOC);
+        $id_pessoa = $pessoa["id_pessoa"] ?? null;
     } catch (PDOException $th) {
-        echo "Houve um erro ao obter o id da pessoa do banco de dados: $th";
-        die();
+        redirectNovoDependenteError('Erro ao obter a pessoa cadastrada no banco de dados.');
     }
 
     try {
@@ -76,11 +103,7 @@ $id_funcionario = $_POST['id_funcionario'];
         $id_parentesco = trim($id_parentesco);
 
         if(!is_numeric($id_funcionario) || !is_numeric($id_pessoa) || !is_numeric($id_parentesco)){
-            var_dump($id_pessoa);
-            var_dump($id_funcionario);
-            var_dump($id_parentesco);
-            echo 'Erro: Os parâmetros informados para a consulta não correspondem a um tipo válido de ID';
-            die();
+            redirectNovoDependenteError('Os parâmetros informados não correspondem a um tipo válido de ID.');
         }
         $sql = "INSERT IGNORE INTO funcionario_dependentes (id_funcionario, id_pessoa, id_parentesco) VALUES (:id_funcionario, :id_pessoa, :id_parentesco)";
         $stmt = $pdo->prepare($sql);
@@ -89,8 +112,7 @@ $id_funcionario = $_POST['id_funcionario'];
         $stmt->bindParam(':id_parentesco', $id_parentesco);
         $stmt->execute();
     } catch (PDOException $th) {
-        echo "Houve um erro ao adicionar o dependente ao banco de dados: $th";
-        die();
+        redirectNovoDependenteError('Erro ao adicionar o dependente ao banco de dados.');
     }
 
 header("Location: profile_funcionario.php?id_funcionario=$id_funcionario");

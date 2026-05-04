@@ -1,7 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE)
-    if (session_status() === PHP_SESSION_NONE)
-        session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
@@ -929,6 +929,14 @@ class FuncionarioControle
             header("Location: ../html/funcionario/cadastro_funcionario.php?cpf=" . urlencode($cpf));
             exit();
         }
+        catch (PDOException $e) {
+            $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($message, 'global');
+            setSessionMsg($message, 'err');
+            header("Location: ../html/funcionario/cadastro_funcionario.php?cpf=" . urlencode($cpf));
+            exit();
+        }
         catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -975,6 +983,14 @@ class FuncionarioControle
                 $fieldErrors['global'] = $message;
             }
             setSessionFormErrors($fieldErrors);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=" . urlencode($cpf));
+            exit();
+        }
+        catch (PDOException $e) {
+            $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($message, 'global');
             setSessionMsg($message, 'err');
             header("Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=" . urlencode($cpf));
             exit();
@@ -1141,7 +1157,7 @@ public function alterarOutros()
             $stmtAlvo->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
             $stmtAlvo->execute();
             $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
-            
+
             if ($alvo['id_pessoa'] == $idPessoa && $alvo['id_cargo'] != $novoCargo) {
                 throw new InvalidArgumentException("Acesso negado: Você não pode alterar o seu próprio cargo.", 403);
             }
@@ -1150,6 +1166,18 @@ public function alterarOutros()
             }
             if ($novoCargo == 1 && $adm_configurado != 1) {
                 throw new InvalidArgumentException("Acesso negado: Apenas administradores podem conceder o cargo de Administrador.", 403);
+            }
+
+            if (!empty($data_admissao)) {
+                $pdo = Conexao::connect();
+                $stmt = $pdo->prepare('SELECT p.data_nascimento FROM funcionario f JOIN pessoa p ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario = :idFuncionario');
+                $stmt->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+                $stmt->execute();
+                $pessoa = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($pessoa && !empty($pessoa['data_nascimento'])) {
+                    $this->validarDataAdmissao($pessoa['data_nascimento'], $data_admissao);
+                }
             }
 
             $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
@@ -1167,8 +1195,26 @@ public function alterarOutros()
             $funcionario->setData_admissao($data_admissao);
             $funcionarioDAO = new FuncionarioDAO();
             $funcionarioDAO->alterarOutros($funcionario);
-            
+
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        }
+        catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'data de admissão') !== false || stripos($message, 'idade mínima') !== false || stripos($message, 'admissão') !== false) {
+                $fieldErrors['data_admissao'] = $message;
+            } elseif (stripos($message, 'cargo') !== false) {
+                $fieldErrors['cargo'] = $message;
+            } elseif (stripos($message, 'situação') !== false || stripos($message, 'situacao') !== false) {
+                $fieldErrors['situacao'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+            exit();
         }
         catch (Exception $e) {
             Util::tratarException($e);

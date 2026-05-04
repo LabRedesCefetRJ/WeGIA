@@ -85,6 +85,9 @@ try {
   $cpf1 = new AtendidoControle;
   $cpf1->listarCPF();
   require_once "../geral/msg.php";
+  $oldInput = getSessionFormData();
+  $fieldErrors = getSessionFormErrors();
+  $openModal = getSessionOpenModal();
   $docfuncional = $pdo->prepare("SELECT * FROM funcionario_docs f JOIN funcionario_docfuncional docf ON f.id_docfuncional = docf.id_docfuncional WHERE id_funcionario =:idFuncionario");
 
   $docfuncional->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
@@ -862,8 +865,8 @@ try {
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                         <div class="col-md-8">
-                          <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
-                          <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                          <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
+                          <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
                         </div>
                       </div>
                       <div class="form-group">
@@ -1083,7 +1086,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" id="pis" name="pis" class="form-control" maxlength="14"
                               placeholder="123.45678.91-0"
-                              oninput="formatPIS(this)">
+                              oninput="formatPIS(this)"
+                              value="<?= htmlspecialchars($oldInput['pis'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123.45678.91-0</small>
                           </div>
                         </div>
@@ -1093,7 +1097,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" id="ctps" name="ctps" class="form-control" maxlength="12"
                               placeholder="1234567/8910"
-                              oninput="formatCTPS(this)">
+                              oninput="formatCTPS(this)"
+                              value="<?= htmlspecialchars($oldInput['ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 1234567/8910</small>
                           </div>
                         </div>
@@ -1102,7 +1107,7 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="uf">Estado CTPS</label>
                           <div class="col-md-6">
-                            <input type="text" name="uf_ctps" size="60" class="form-control" id="uf_ctps">
+                            <input type="text" name="uf_ctps" size="60" class="form-control" id="uf_ctps" value="<?= htmlspecialchars($oldInput['uf_ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                           </div>
                         </div>
 
@@ -1112,7 +1117,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="titulo_eleitor" id="titulo_eleitor" class="form-control"
                               pattern="\d{12}" maxlength="12" placeholder="123456789012"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['titulo_eleitor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123456789012</small>
                           </div>
                         </div>
@@ -1123,7 +1129,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="zona_eleitoral" id="zona_eleitoral" class="form-control"
                               pattern="\d{3}" maxlength="3" placeholder="123"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['zona_eleitoral'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123</small>
                           </div>
                         </div>
@@ -1134,7 +1141,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="secao_titulo_eleitor" id="secao_titulo_eleitor" class="form-control"
                               pattern="\d{4}" maxlength="4" placeholder="1234"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['secao_titulo_eleitor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 1234</small>
                           </div>
                         </div>
@@ -1145,7 +1153,8 @@ try {
                             <input type="text" id="certificado_reservista_numero" name="certificado_reservista_numero"
                               class="form-control num_reservista" maxlength="9"
                               pattern="\d*" inputmode="numeric" placeholder="123456789"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['certificado_reservista_numero'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123456789</small>
                           </div>
                         </div>
@@ -1156,7 +1165,8 @@ try {
                             <input type="text" id="certificado_reservista_serie" name="certificado_reservista_serie"
                               class="form-control serie_reservista" maxlength="3"
                               pattern="\d*" inputmode="numeric" placeholder="001"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['certificado_reservista_serie'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 001</small>
                           </div>
                         </div>
@@ -1164,28 +1174,35 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_admissao" id="data_admissao" max=<?php echo date('Y-m-d'); ?> required>
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>" name="data_admissao" id="data_admissao" max="<?= date('Y-m-d') ?>" required value="<?= htmlspecialchars($oldInput['data_admissao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                            <?php if (!empty($fieldErrors['data_admissao'])): ?>
+                              <div class="invalid-feedback"><?= htmlspecialchars($fieldErrors['data_admissao'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
 
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" style='text-align: right; margin-top: 10px;' for="situacao">Situação<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="situacao" id="situacao" required>
+                            <select class="form-control input-lg mb-md<?= !empty($fieldErrors['situacao']) ? ' is-invalid' : '' ?>" name="situacao" id="situacao" required>
                               <option value="" selected disabled>Selecionar</option>
                               <?php
                               foreach ($situacao as $row) {
-                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+                                $selected = isset($oldInput['situacao']) && ((string)$row[0] === (string)$oldInput['situacao']) ? ' selected' : '';
+                                echo "<option value=\"{$row[0]}\"{$selected}>" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
                             </select>
+                            <?php if (!empty($fieldErrors['situacao'])): ?>
+                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['situacao'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
                           <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;' for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="cargo" id="cargo" required>
+                            <select class="form-control input-lg mb-md<?= !empty($fieldErrors['cargo']) ? ' is-invalid' : '' ?>" name="cargo" id="cargo" required>
                               <option value="" selected disabled>Selecionar</option>
                               <?php
                               foreach ($cargo as $row) {
@@ -1193,10 +1210,14 @@ try {
                                 if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
                                     continue;
                                 }
-                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+                                $selectedCargo = isset($oldInput['cargo']) && ((string)$row[0] === (string)$oldInput['cargo']) ? ' selected' : '';
+                                echo "<option value=\"{$row[0]}\"{$selectedCargo}>" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
                             </select>
+                            <?php if (!empty($fieldErrors['cargo'])): ?>
+                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['cargo'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
                           <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
@@ -1765,23 +1786,24 @@ try {
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
                                   <div class="col-md-6">
-                                    <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarDependente')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                    <input type="text" class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarDependente')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required value="<?= $openModal === 'depFormModal' ? htmlspecialchars($oldInput['cpf'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
                                   </div>
                                 </div>
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="profileCompany"></label>
                                   <div class="col-md-6">
-                                    <p class="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+                                    <p class="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? 'block' : 'none' ?>; color: #b30000"><?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                   </div>
                                 </div>
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
                                   <div class="col-md-6" style="display: flex;">
-                                    <select name="id_parentesco" id="parentesco">
+                                    <select name="id_parentesco" id="parentesco" class="<?= !empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal' ? 'is-invalid' : '' ?>">
                                       <option selected disabled>Selecionar...</option>
                                       <?php
                                       foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                        echo ("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
+                                        $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["id_parentesco"] ? ' selected' : '';
+                                        echo ("<option value='" . $item["id_parentesco"] . "'{$selected}>" . htmlspecialchars($item["descricao"]) . "</option>");
                                       }
                                       ?>
                                     </select>
@@ -1789,6 +1811,9 @@ try {
                                   </div>
                                 </div>
                                 <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?> readonly>
+                                <?php if (!empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal'): ?>
+                                  <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['id_parentesco'], ENT_QUOTES, 'UTF-8') ?></p>
+                                <?php endif; ?>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                                   <input id="enviarDependente" type="submit" value="Enviar" class="btn btn-primary">
@@ -1872,7 +1897,7 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
                           <div class="col-md-8">
-                            <input type="text" class="form-control" name="complemento" id="complemento" id="profileCompany">
+                            <input type="text" class="form-control" name="complemento" id="complemento">
                           </div>
                         </div>
                         <div class="form-group">
@@ -2370,6 +2395,10 @@ try {
     inicializarValidacaoCepFormulario({
       formId: "formAlterarEndereco"
     });
+    <?php if ($openModal === 'depFormModal'): ?>
+      $('.nav-tabs a[href="#dependentes"]').tab('show');
+      $('#depFormModal').modal('show');
+    <?php endif; ?>
   </script>
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>

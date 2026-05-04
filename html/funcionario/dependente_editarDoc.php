@@ -98,10 +98,15 @@ try {
     header("Location: profile_dependente.php?id_dependente=$idatendido_familiares");
 } catch (Exception $e) {
     error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
-    http_response_code($e->getCode());
-    if ($e instanceof PDOException) {
-        echo json_encode(['erro' => 'Erro no servidor ao editar os documentos de um dependente.']);
+    if ($e instanceof PDOException && $e->getCode() == 23000) {
+        $_SESSION['msg'] = "Erro: Já existe uma pessoa cadastrada com o CPF informado.";
+        $_SESSION['tipo'] = 'error';
     } else {
-        echo json_encode(['erro' => $e->getMessage()]);
+        $_SESSION['msg'] = $e->getMessage();
+        $_SESSION['tipo'] = 'error';
     }
+    // Usa o ID para redirecionar de volta. Caso não tenha, redireciona para um fallback seguro.
+    $redirectId = isset($idatendido_familiares) && $idatendido_familiares > 0 ? $idatendido_familiares : 0;
+    header("Location: profile_dependente.php?id_dependente=$redirectId");
+    exit();
 }

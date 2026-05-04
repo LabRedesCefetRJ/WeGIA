@@ -11,6 +11,7 @@ require_once ROOT . '/dao/DocumentoDAO.php';
 require_once ROOT . '/controle/DocumentoControle.php';
 include_once ROOT . '/classes/Cache.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/html/geral/msg.php';
 include_once ROOT . "/dao/Conexao.php";
 
 require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
@@ -37,7 +38,8 @@ class AtendidoControle
     public function verificar()
     {
         extract($_REQUEST);
-        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf = '0')) {
+        $msg = '';
+        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf == '0')) {
             $msg .= "cpf do atendido não informado. Por favor, informe o cpf!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -57,7 +59,7 @@ class AtendidoControle
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
         }
-        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf = '0')) {
+        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf == '0')) {
             $msg .= "Nascimento do atendido não informado. Por favor, informe a data!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -382,8 +384,19 @@ class AtendidoControle
 
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . (int)$idAtendido);
             exit;
+        } catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($e->getMessage());
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=" . urlencode($cpf ?? ''));
+            exit;
         } catch (PDOException $e) {
-            Util::tratarException($e);
+            $message = $e->getCode() == 23000 ? 'Erro: CPF já cadastrado no sistema.' : 'Erro ao cadastrar atendido.';
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($message);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=" . urlencode($cpf ?? ''));
+            exit;
         }
     }
 
@@ -503,9 +516,10 @@ class AtendidoControle
 
     public function incluirExistente()
     {
+        $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
+        $cpf = $_GET['cpf'] ?? '';
         try {
             $atendido = $this->verificarExistente();
-            $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
             $sobrenome = $_GET['sobrenome'] ?? '';
 
             $atendidoDAO = new AtendidoDAO();
@@ -521,8 +535,18 @@ class AtendidoControle
             $_SESSION['mensagem_erro'] = $e->getMessage();
             header("Location: ../html/atendido/processo_aceitacao.php");
             exit;
+        } catch (InvalidArgumentException $e) {
+            setSessionFormData($_GET);
+            setSessionFormErrorFromMessage($e->getMessage());
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=" . urlencode($cpf) . "&id_pessoa=" . urlencode((string)$idPessoa));
+            exit;
         } catch (PDOException $e) {
-            Util::tratarException($e);
+            $message = $e->getCode() == 23000 ? 'Erro: CPF já cadastrado no sistema.' : 'Erro ao cadastrar atendido.';
+            setSessionFormData($_GET);
+            setSessionFormErrorFromMessage($message);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=" . urlencode($cpf) . "&id_pessoa=" . urlencode((string)$idPessoa));
             exit;
         } catch (Exception $e) {
             Util::tratarException($e);
@@ -661,8 +685,18 @@ class AtendidoControle
             exit;
 
         } catch (InvalidArgumentException $e) {
-            $_SESSION['msg'] = $e->getMessage();
-            $_SESSION['tipo'] = "error";
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'CPF') !== false) {
+                $fieldErrors['cpf'] = $message;
+            } elseif (stripos($message, 'data de nascimento') !== false || stripos($message, 'Formato de data') !== false) {
+                $fieldErrors['data_nascimento'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($message, 'err');
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
 
