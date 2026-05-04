@@ -104,10 +104,9 @@ class SaudeDAO
     {
         $pdo = Conexao::connect();
 
-        $sql = "SELECT p.nome, p.sobrenome, p.imagem, p.sexo, p.data_nascimento, p.tipo_sanguineo, a.cns 
-        FROM pessoa p 
-        JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa 
-        LEFT JOIN atendido a ON a.pessoa_id_pessoa = p.id_pessoa
+        $sql = "SELECT p.nome, p.sobrenome, p.imagem, p.sexo, p.data_nascimento, p.tipo_sanguineo, p.cns
+        FROM pessoa p
+        JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa
         WHERE sf.id_fichamedica=:id";
 
         $stmt = $pdo->prepare($sql);

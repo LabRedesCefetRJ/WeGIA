@@ -364,6 +364,13 @@ class FuncionarioControle
             $certificado_reservista_serie = '';
         }
 
+        $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
+        if ($cns !== '' && !Util::validaCNS($cns)) {
+            http_response_code(412);
+            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf ?? '') . '&msg=O CNS informado não é válido. Deve conter 15 dígitos.');
+            exit();
+        }
+
         if (!Util::validarCPF($cpf)) {
             http_response_code(412);
             header('Location: ../html/funcionario.html?msg=O CPF informado é inválido.');
@@ -399,6 +406,7 @@ class FuncionarioControle
         $funcionario->setCertificado_reservista_serie($certificado_reservista_serie);
         $funcionario->setId_situacao($situacao);
         $funcionario->setId_cargo($cargo);
+        $funcionario->setCns($cns !== '' ? $cns : null);
 
         return $funcionario;
     }
@@ -978,12 +986,18 @@ class FuncionarioControle
 
             $nascimentoFinal = ($nascimento === '') ? null : $nascimento;
 
+            $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
+            if ($cns !== '' && !Util::validaCNS($cns)) {
+                throw new InvalidArgumentException('Erro, o CNS informado não é válido. Deve conter 15 dígitos.', 400);
+            }
+
             $funcionario = new Funcionario(
                 '', $nome, $sobrenome, $gender, $nascimentoFinal, '', '', '',
                 $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', '',
                 $telefone, '', '', '', '', '', '', '', '', '', ''
                 );
             $funcionario->setId_funcionario($id_funcionario);
+            $funcionario->setCns($cns !== '' ? $cns : null);
 
             $funcionarioDAO = new FuncionarioDAO();
             $funcionarioDAO->alterarInfPessoal($funcionario);
