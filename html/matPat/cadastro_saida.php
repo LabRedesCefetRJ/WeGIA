@@ -173,6 +173,21 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 								let quantidade = $("#quantidade").val();
 								let preco = parseFloat($("#valor_unitario").val());
 
+								quantidade = Number(quantidade);
+								preco = Number(preco);
+
+								if(!Number.isFinite(quantidade) || quantidade <= 0) {
+									alert("A quantidade deve ser um número positivo.");
+									$("#quantidade").focus();
+									return;
+								}
+
+								if(!Number.isFinite(preco) || preco < 0) {
+									alert("O valor unitário deve ser um número válido e não negativo.");
+									$("#valor_unitario").focus();
+									return;
+								}
+
 								conta = conta + 1;
 
 								$("#conta").val(conta);
@@ -224,10 +239,12 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	<!-- Script para validar formulário -->
 	<script>
 		function validar() {
-			let desti = document.getElementById("origens")
-			let almox = document.getElementById("almoxarifado");
-			let tipo = document.getElementById("tipo_entrada");
-			let verificar = document.getElementById("verifica");
+			var desti = document.getElementById("origens")
+			var almox = document.getElementById("almoxarifado");
+			var tipo = document.getElementById("tipo_entrada");
+			var verificar = document.getElementById("verifica");
+			var erro = false;
+
 			if (desti.value == "blank") {
 				alert("Selecione um destino");
 				desti.focus();
@@ -244,6 +261,27 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			} else if (verificar.value == 0) {
 				alert("Nenhum produto inserido");
 				document.getElementById("input_produtos").focus();
+				return false;
+			}
+
+			$("#lista-produtos tr").each(function () {
+				const quantidade = Number($(this).find("input[name^='qtd']").val());
+				const valorUnitario = Number($(this).find("input[name^='valor_unitario']").val());
+
+				if(!Number.isFinite(quantidade) || quantidade <= 0) {
+					alert("Existe um produto com quantidade inválida na lista.");
+					erro = true;
+					return false;
+				}
+
+				if(!Number.isFinite(valorUnitario) || valorUnitario < 0) {
+					alert("Existe um produto com valor unitário inválido na lista.");
+					erro = true;
+					return false;
+				}
+			});
+
+			if(erro) {
 				return false;
 			}
 		}
@@ -457,7 +495,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 														<thead>
 															<tr style="width: 768px;">
 																<th>Produto
-																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge" style="float:right;" id="produto" class="produto">
+																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge" style="float:right;" id="btn-novo-produto" class="produto">
 																	</a>
 																</th>
 																<th>Quantidade</th>
@@ -471,7 +509,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 															</datalist> -->
 																</td>
 																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
-																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">Adicionar produtos</button>
 																</td>
