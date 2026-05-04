@@ -423,6 +423,7 @@ try {
   <!-- JavaScript Functions -->
   <script src="../../Functions/enviar_dados.js"></script>
   <script src="../../Functions/mascara.js"></script>
+  <script src="../../Functions/validacoes_saude.js"></script>
   <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
   <script src="script/profile_paciente_script/funcoes/enfermidades_funcoes.js" defer></script>
   <script>
@@ -1466,6 +1467,8 @@ try {
                                     name="nome_alergia"
                                     id="nomeAlergiaModal"
                                     maxlength="120"
+                                    pattern="[A-Za-zÀ-ÿ\s\-'.']+"
+                                    title="apenas letras, espaços e hífens (números não são permitidos)"
                                     required>
                                 </div>
                               </div>
@@ -1615,6 +1618,8 @@ try {
                                     name="nome_enfermidade"
                                     id="nomeEnfermidadeModal"
                                     maxlength="120"
+                                    pattern="[A-Za-zÀ-ÿ\s\-'.']+"
+                                    title="apenas letras, espaços e hífens (números não são permitidos)"
                                     required>
                                 </div>
 
@@ -2018,6 +2023,8 @@ try {
                                 name="nome_medico"
                                 id="nomeMedicoModal"
                                 maxlength="120"
+                                pattern="[A-Za-zÀ-ÿ\s\-'.']+"
+                                title="apenas letras, espaços e hífens (números não são permitidos)"
                                 required>
                             </div>
 
@@ -2365,6 +2372,13 @@ try {
         if (!exame) {
           return;
         }
+
+        const validacaoTipoExame = SaudeValidator.validarNome(exame);
+        if (!validacaoTipoExame.valido) {
+          alert("Tipo de exame inválido: " + validacaoTipoExame.mensagem);
+          return;
+        }
+
         const data = {
           exame: exame,
           nomeClasse: "ExameControle",
@@ -2676,8 +2690,9 @@ try {
         const nome_medico = nomeMedicoInput ? nomeMedicoInput.value.trim() : "";
         const crm_medico = crmMedicoInput ? crmMedicoInput.value.trim() : "";
 
-        if (!nome_medico || !crm_medico) {
-          exibirErroModalMedico("Preencha o nome e o CRM do médico.");
+        const validacaoNomeMedico = SaudeValidator.validarNome(nome_medico);
+        if (!validacaoNomeMedico.valido) {
+          exibirErroModalMedico("Nome do médico: " + validacaoNomeMedico.mensagem);
           return;
         }
 
@@ -2859,8 +2874,9 @@ try {
         const nomeAlergiaInput = document.getElementById("nomeAlergiaModal");
         const nome_alergia = nomeAlergiaInput ? nomeAlergiaInput.value.trim() : "";
 
-        if (!nome_alergia || nome_alergia == '') {
-          exibirErroModalAlergia("Preencha o nome da alergia.");
+        const validacaoNomeAlergia = SaudeValidator.validarNome(nome_alergia);
+        if (!validacaoNomeAlergia.valido) {
+          exibirErroModalAlergia("Nome da alergia: " + validacaoNomeAlergia.mensagem);
           return;
         }
 
@@ -3006,6 +3022,24 @@ try {
 
           if (!todosCamposMedicacaoPreenchidos(medicacao)) {
             alert("Por favor, informe a medicação corretamente!");
+            return;
+          }
+
+          const validacaoNomeMedicacao = SaudeValidator.validarNome(medicacao.nome_medicacao);
+          if (!validacaoNomeMedicacao.valido) {
+            alert("Medicamento: " + validacaoNomeMedicacao.mensagem);
+            return;
+          }
+
+          const validacaoDosagem = SaudeValidator.validarValorPositivo(medicacao.dosagem, "Dosagem");
+          if (!validacaoDosagem.valido) {
+            alert(validacaoDosagem.mensagem);
+            return;
+          }
+
+          const validacaoDuracao = SaudeValidator.validarValorPositivo(medicacao.tempo, "Duração");
+          if (!validacaoDuracao.valido) {
+            alert(validacaoDuracao.mensagem);
             return;
           }
 

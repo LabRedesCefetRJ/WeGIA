@@ -217,6 +217,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
   <!-- JavaScript Functions -->
   <script src="../../Functions/enviar_dados.js"></script>
   <script src="../../Functions/mascara.js"></script>
+  <script src="../../Functions/validacoes_saude.js"></script>
 
   <script>
     $(function() {
@@ -646,6 +647,24 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
         alert('Por favor, preencha todos os campos do Medicamento SOS.');
         return;
       }
+
+      const validacaoNomeMed = SaudeValidator.validarNome(dadosForm.medicamento);
+      if (!validacaoNomeMed.valido) {
+        alert('Medicamento: ' + validacaoNomeMed.mensagem);
+        return;
+      }
+
+      const validacaoDosagem = SaudeValidator.validarValorPositivo(dadosForm.dosagem, 'Dosagem');
+      if (!validacaoDosagem.valido) {
+        alert(validacaoDosagem.mensagem);
+        return;
+      }
+
+      const validacaoDuracao = SaudeValidator.validarValorPositivo(dadosForm.duracao, 'Duração');
+      if (!validacaoDuracao.valido) {
+        alert(validacaoDuracao.mensagem);
+        return;
+      }
       const payload = {
         nomeClasse: "MedicamentoPacienteControle",
         metodo: "cadastrarMedicacaoSOS",
@@ -862,7 +881,10 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                             Medicamento:<sup class="obrig">*</sup>
                           </label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao" required>
+                            <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao"
+                              pattern="[A-Za-zÀ-ÿ\s\-'.']+"
+                              title="apenas letras, espaços e hífens (números não são permitidos)"
+                              required>
                           </div>
                         </div>
 
@@ -871,7 +893,9 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                             Dosagem:<sup class="obrig">*</sup>
                           </label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="dosagem_sos" id="dosagem_sos" required>
+                            <input type="text" class="form-control" name="dosagem_sos" id="dosagem_sos"
+                              title="valor positivo (ex: 500mg, 2ml)"
+                              required>
                           </div>
                         </div>
 
@@ -889,7 +913,9 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                             Duração:<sup class="obrig">*</sup>
                           </label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="duracao_medicacao_sos" id="duracao_medicacao_sos" required>
+                            <input type="text" class="form-control" name="duracao_medicacao_sos" id="duracao_medicacao_sos"
+                              title="valor positivo (ex: 7 dias, 2 semanas)"
+                              required>
                           </div>
                         </div>
 

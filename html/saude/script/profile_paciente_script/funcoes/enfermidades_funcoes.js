@@ -89,8 +89,14 @@ async function adicionar_enfermidade() {
     const nome_enfermidade = nomeEnfermidadeInput ? nomeEnfermidadeInput.value.trim() : "";
     const cid_enfermidade = cidEnfermidadeInput ? cidEnfermidadeInput.value.trim().toUpperCase() : "";
 
-    if (!nome_enfermidade || !cid_enfermidade) {
-        exibirErroModalEnfermidade("Preencha o nome e o CID da comorbidade.");
+    if (!cid_enfermidade) {
+        exibirErroModalEnfermidade("Preencha o CID da comorbidade.");
+        return;
+    }
+
+    const validacaoNomeEnfermidade = SaudeValidator.validarNome(nome_enfermidade);
+    if (!validacaoNomeEnfermidade.valido) {
+        exibirErroModalEnfermidade("Nome da comorbidade: " + validacaoNomeEnfermidade.mensagem);
         return;
     }
 
