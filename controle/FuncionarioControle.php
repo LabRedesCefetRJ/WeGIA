@@ -31,6 +31,21 @@ class FuncionarioControle
         return $dataAmericana;
     }
 
+    private function validarDataAdmissao(string $dataNascimento, string $dataAdmissao): void
+    {
+        $nascimento = new DateTime($dataNascimento);
+        $admissao = new DateTime($dataAdmissao);
+
+        if ($admissao <= $nascimento) {
+            throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
+        }
+
+        $nascimentoMais14 = (clone $nascimento)->add(new DateInterval('P14Y'));
+        if ($admissao < $nascimentoMais14) {
+            throw new InvalidArgumentException('A data de admissão deve respeitar a idade mínima de 14 anos do funcionário.', 412);
+        }
+    }
+
     /**
      * Recebe dois parâmetros no formato HH:mm e retorna a soma deles de acordo com o sistema sexagesimal.
      */
@@ -878,11 +893,7 @@ class FuncionarioControle
             $dataNascimento = $funcionario->getDataNascimento();
 
             if (!empty($dataAdmissao) && !empty($dataNascimento)) {
-                $nascimento = new DateTime($dataNascimento);
-                $admissao = new DateTime($dataAdmissao);
-                if ($admissao <= $nascimento) {
-                    throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
-                }
+                $this->validarDataAdmissao($dataNascimento, $dataAdmissao);
             }
 
             $funcionarioDAO = new FuncionarioDAO();
@@ -900,6 +911,24 @@ class FuncionarioControle
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
         }
+        catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'cpf') !== false) {
+                $fieldErrors['cpf'] = $message;
+            } elseif (stripos($message, 'data de admissão') !== false || stripos($message, 'idade mínima') !== false || stripos($message, 'admissão') !== false) {
+                $fieldErrors['data_admissao'] = $message;
+            } elseif (stripos($message, 'nascimento') !== false) {
+                $fieldErrors['nascimento'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/funcionario/cadastro_funcionario.php?cpf=" . urlencode($cpf));
+            exit();
+        }
         catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -910,6 +939,8 @@ class FuncionarioControle
 
     public function incluirExistente()
     {
+        $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
@@ -922,11 +953,7 @@ class FuncionarioControle
             $dataNascimento = $funcionario->getDataNascimento();
 
             if (!empty($dataAdmissao) && !empty($dataNascimento)) {
-                $nascimento = new DateTime($dataNascimento);
-                $admissao = new DateTime($dataAdmissao);
-                if ($admissao <= $nascimento) {
-                    throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
-                }
+                $this->validarDataAdmissao($dataNascimento, $dataAdmissao);
             }
 
             $funcionarioDAO = new FuncionarioDAO();
@@ -935,6 +962,22 @@ class FuncionarioControle
             $_SESSION['proxima'] = "Cadastrar outro funcionario";
             $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
             header("Location: ../html/funcionario/informacao_funcionario.php");
+        }
+        catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'data de admissão') !== false || stripos($message, 'idade mínima') !== false || stripos($message, 'admissão') !== false) {
+                $fieldErrors['data_admissao'] = $message;
+            } elseif (stripos($message, 'cpf') !== false) {
+                $fieldErrors['cpf'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=" . urlencode($cpf));
+            exit();
         }
         catch (Exception $e) {
             Util::tratarException($e);
@@ -959,11 +1002,7 @@ class FuncionarioControle
 
             $dataAdmissao = $_POST['data_admissao'] ?? '';
             if (!empty($dataAdmissao) && !empty($nascimento)) {
-                $nascimentoObj = new DateTime($nascimento);
-                $admissaoObj = new DateTime($dataAdmissao);
-                if ($admissaoObj <= $nascimentoObj) {
-                    throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
-                }
+                $this->validarDataAdmissao($nascimento, $dataAdmissao);
             }
 
             $erros = [];
@@ -1005,6 +1044,11 @@ class FuncionarioControle
             $funcionarioDAO->alterarInfPessoal($funcionario);
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        }
+        catch (InvalidArgumentException $e) {
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+            exit();
         }
         catch (Exception $e) {
             Util::tratarException($e);
