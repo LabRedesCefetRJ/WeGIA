@@ -1427,7 +1427,7 @@ try {
                       <h2 class="panel-title">Carga Horária</h2>
                     </header>
                     <div class="panel-body">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarCargaHoraria">
                         <div class="form-group">
                           <label class="col-md-3 control-label">Escala</label>
                           <div class="col-md-6">
@@ -1644,6 +1644,42 @@ try {
                     </div>
                   </section>
                 </div>
+                <!-- Modal de Validação Carga Horária -->
+                <div class="modal fade" id="modalValidacaoCargaHoraria" role="dialog">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title"><i class="fas fa-exclamation-circle" style="color: #d9534f;"></i> Validação de Carga Horária</h4>
+                      </div>
+                      <div class="modal-body">
+                        <p id="modalMensagem"></p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Entendi</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Modal de Sucesso Carga Horária -->
+                <div class="modal fade" id="modalSucessoCargaHoraria" role="dialog">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title"><i class="fas fa-check-circle" style="color: #5cb85c;"></i> Sucesso</h4>
+                      </div>
+                      <div class="modal-body">
+                        <p>Carga horária atualizada com sucesso!</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="location.reload()">Fechar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Aba de arquivos -->
                 <div id="arquivo" class="tab-pane">
                   <section class="panel">
@@ -2395,6 +2431,114 @@ try {
     inicializarValidacaoCepFormulario({
       formId: "formAlterarEndereco"
     });
+
+    // Função auxiliar para exibir modal de erro
+    function exibirErroValidacao(mensagem) {
+      document.getElementById('modalMensagem').textContent = mensagem;
+      $('#modalValidacaoCargaHoraria').modal('show');
+    }
+
+    // Function para converter HH:mm para minutos
+    function converterParaMinutos(hora) {
+      if (!hora) return null;
+      const [h, m] = hora.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    // Validação de Carga Horária
+    document.getElementById('formAlterarCargaHoraria').addEventListener('submit', function(event) {
+      event.preventDefault();
+      
+      let entrada1 = document.getElementById('entrada1_input').value;
+      let saida1 = document.getElementById('saida1_input').value;
+      let entrada2 = document.getElementById('entrada2_input').value;
+      let saida2 = document.getElementById('saida2_input').value;
+
+      // Validar primeiro período
+      if ((entrada1 && !saida1) || (!entrada1 && saida1)) {
+        exibirErroValidacao('Primeiro período: Entrada e saída devem ser preenchidas juntas.');
+        return false;
+      }
+
+      // Validar segundo período
+      if ((entrada2 && !saida2) || (!entrada2 && saida2)) {
+        exibirErroValidacao('Segundo período: Entrada e saída devem ser preenchidas juntas.');
+        return false;
+      }
+
+      // Validar horários do primeiro período
+      if (entrada1 && saida1) {
+        let entradaMin = converterParaMinutos(entrada1);
+        let saidaMin = converterParaMinutos(saida1);
+
+        if (entradaMin === saidaMin) {
+          exibirErroValidacao('Entrada e saída do primeiro período não podem ser iguais.');
+          return false;
+        }
+      }
+
+      // Validar horários do segundo período
+      if (entrada2 && saida2) {
+        let entradaMin = converterParaMinutos(entrada2);
+        let saidaMin = converterParaMinutos(saida2);
+
+        if (entradaMin === saidaMin) {
+          exibirErroValidacao('Entrada e saída do segundo período não podem ser iguais.');
+          return false;
+        }
+      }
+
+      // Validar que há pelo menos 1 dia trabalhado (exceto para plantão)
+      let diasTrabalhados = document.querySelectorAll('input[id^="diaTrabalhado_"]:not([id$="Plantão"]):checked');
+      let plantao = document.querySelector('input[name="plantao"]:checked');
+      let nenhum_dia_selecionado = diasTrabalhados.length === 0 && !plantao;
+
+      if (nenhum_dia_selecionado) {
+        exibirErroValidacao('É necessário selecionar pelo menos 1 dia trabalhado ou um plantão.');
+        return false;
+      }
+
+      // Validar que plantão não é combinado com outros dias
+      if (plantao && diasTrabalhados.length > 0) {
+        exibirErroValidacao('Plantão não pode ser combinado com outros dias trabalhados.');
+        return false;
+      }
+
+      // Se houve ao menos 1 horário preenchido, validar que não são todas folgas
+      let temHorario = (entrada1 && saida1) || (entrada2 && saida2);
+      if (!temHorario && !plantao) {
+        exibirErroValidacao('É necessário informar pelo menos um período de trabalho (entrada e saída).');
+        return false;
+      }
+
+      // Se passou em todas as validações, enviar via AJAX
+      enviarFormularioCargaHoraria();
+    });
+
+    // Função para enviar o formulário via AJAX
+    function enviarFormularioCargaHoraria() {
+      const form = document.getElementById('formAlterarCargaHoraria');
+      const formData = new FormData(form);
+
+      fetch('../../controle/control.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'sucesso') {
+          $('#modalSucessoCargaHoraria').modal('show');
+        } else if (data.status === 'erro') {
+          exibirErroValidacao(data.mensagem);
+        } else {
+          exibirErroValidacao('Erro desconhecido ao atualizar carga horária.');
+        }
+      })
+      .catch(error => {
+        exibirErroValidacao('Erro na comunicação com o servidor: ' + error);
+      });
+    }
+
     <?php if ($openModal === 'depFormModal'): ?>
       $('.nav-tabs a[href="#dependentes"]').tab('show');
       $('#depFormModal').modal('show');

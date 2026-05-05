@@ -78,30 +78,68 @@ class FuncionarioControle
 
     /**
      * Recebe como parâmetros as horas de entrada e saida do expediente no formato HH:mm e retorna o total de tempo entre elas.
+     * Suporta turnos noturnos (quando a saída é menor que a entrada, considera próximo dia).
+     * 
+     * @param string $entrada Hora em formato HH:mm
+     * @param string $saida Hora em formato HH:mm
+     * @param bool $permitirTurnoNoturno Se true, permite turnos noturnos; se false, valida horário direto
+     * @return string Tempo em formato HH:mm ou mensagem de erro
      */
-    function calcularHora($entrada, $saida)
+    function calcularHora($entrada, $saida, $permitirTurnoNoturno = true)
     {
-        $hora1 = explode(":", $entrada);
-        $hora2 = explode(":", $saida);
-        if (sizeof($hora1) > 1 && sizeof($hora2) > 1) {
-            $horaTotal = ((intval($hora2[0]) * 60) + intval($hora2[1])) - ((intval($hora1[0]) * 60) + intval($hora1[1]));
-
-            $horaTotall = floor($horaTotal / 60);
-            $minutoTotal = $horaTotal % 60;
-
-            if (strlen($minutoTotal) == 1) {
-                $minutoTotal = "0" . $minutoTotal;
-            }
-
-            if (strlen($horaTotall) == 1) {
-                $horaTotal = "0" . $horaTotal;
-            }
-
-            $final = $horaTotall . ":" . $minutoTotal;
-            return $final;
+        // Se ambas as horas estão vazias, retorna vazio (intervalo opcional)
+        if (empty($entrada) && empty($saida)) {
+            return '00:00';
         }
 
-        return '';
+        // Se só uma está preenchida, é inválido
+        if ((empty($entrada) && !empty($saida)) || (!empty($entrada) && empty($saida))) {
+            throw new InvalidArgumentException('Entrada e saída devem ser preenchidas juntas.');
+        }
+
+        $hora1 = explode(":", $entrada);
+        $hora2 = explode(":", $saida);
+
+        if (sizeof($hora1) < 2 || sizeof($hora2) < 2) {
+            throw new InvalidArgumentException('Formato de hora inválido. Use HH:mm.');
+        }
+
+        $entrada_minutos = intval($hora1[0]) * 60 + intval($hora1[1]);
+        $saida_minutos = intval($hora2[0]) * 60 + intval($hora2[1]);
+
+        // Validar intervalo válido de minutos (0-1439)
+        if ($entrada_minutos < 0 || $entrada_minutos > 1439 || $saida_minutos < 0 || $saida_minutos > 1439) {
+            throw new InvalidArgumentException('Horas inválidas. Use valores entre 00:00 e 23:59.');
+        }
+
+        $horaTotal = $saida_minutos - $entrada_minutos;
+
+        // Se for negativo, é um turno noturno (passa de um dia para outro)
+        if ($horaTotal < 0) {
+            if (!$permitirTurnoNoturno) {
+                throw new InvalidArgumentException('Horário de saída não pode ser anterior ao de entrada.');
+            }
+            // Adiciona 24 horas para turnos noturnos
+            $horaTotal += 1440; // 24 * 60 minutos
+        }
+
+        // Validação extra: se a carga horária calculada é 0, é inválido
+        if ($horaTotal == 0) {
+            throw new InvalidArgumentException('Entrada e saída não podem ser iguais.');
+        }
+
+        $horaTotalHoras = floor($horaTotal / 60);
+        $minutoTotal = $horaTotal % 60;
+
+        if (strlen($minutoTotal) == 1) {
+            $minutoTotal = "0" . $minutoTotal;
+        }
+
+        if (strlen($horaTotalHoras) == 1) {
+            $horaTotalHoras = "0" . $horaTotalHoras;
+        }
+
+        return $horaTotalHoras . ":" . $minutoTotal;
     }
 
     public function verificarHorario()
@@ -126,21 +164,30 @@ class FuncionarioControle
             $saida2 = '';
         }
 
-        $subtotal1 = $this->calcularHora($entrada1, $saida1);
-        $subtotal2 = $this->calcularHora($entrada2, $saida2);
-        $total = $this->somarHoras($subtotal1, $subtotal2);
+        // Calcula as horas com validação de turnos noturnos
+        try {
+            $subtotal1 = $this->calcularHora($entrada1, $saida1);
+            $subtotal2 = $this->calcularHora($entrada2, $saida2);
+            $total = $this->somarHoras($subtotal1, $subtotal2);
+        } catch (InvalidArgumentException $e) {
+            throw new InvalidArgumentException('Erro na validação de horários: ' . $e->getMessage(), 400);
+        }
+
+        // Se não houver nenhuma hora preenchida, valida que existe formação de horário
+        if (empty($total) || $total === '00:00') {
+            throw new InvalidArgumentException('É necessário informar pelo menos um período de trabalho (entrada e saída).', 400);
+        }
 
         $diasTrabalhados = array();
         $folgas = array();
 
-
+        // Coleta dias de folga
         if (isset($folgaSeg)) {
             array_push($folgas, $folgaSeg);
         }
         if (isset($folgaTer)) {
             array_push($folgas, $folgaTer);
         }
-
         if (isset($folgaQua)) {
             array_push($folgas, $folgaQua);
         }
@@ -162,13 +209,13 @@ class FuncionarioControle
 
         $folga = implode(",", $folgas);
 
+        // Coleta dias trabalhados
         if (isset($trabSeg)) {
             array_push($diasTrabalhados, $trabSeg);
         }
         if (isset($trabTer)) {
             array_push($diasTrabalhados, $trabTer);
         }
-
         if (isset($trabQua)) {
             array_push($diasTrabalhados, $trabQua);
         }
@@ -186,6 +233,17 @@ class FuncionarioControle
         }
 
         $diasMultiplicados = count($diasTrabalhados);
+
+        // Validação: Deve existir pelo menos 1 dia trabalhado
+        // EXCETO se for Plantão 12/36
+        if ($diasMultiplicados === 0 && !isset($plantao)) {
+            throw new InvalidArgumentException('É necessário selecionar pelo menos 1 dia trabalhado.', 400);
+        }
+
+        // Validação: Se platão, deve ser único
+        if (isset($plantao) && $diasMultiplicados > 0) {
+            throw new InvalidArgumentException('Plantão não pode ser combinado com outros dias trabalhados.', 400);
+        }
 
         if ($total) {
             $arrayHorasDiarias = explode(":", $total);
@@ -206,7 +264,6 @@ class FuncionarioControle
 
             $carga_horaria = $horaTotal . ":" . $minutoTotal;
 
-
             if (isset($plantao)) {
                 $dias_trabalhados = $plantao;
                 $carga_horaria = 174;
@@ -218,7 +275,6 @@ class FuncionarioControle
         }
 
         $dias_trabalhados = implode(",", $diasTrabalhados);
-
 
         $horario = new QuadroHorario();
 
@@ -1387,13 +1443,24 @@ public function alterarOutros()
 
             $quadroHorarioDAO->alterar($carga_horaria, $id_funcionario);
 
-            $_SESSION['msg'] = "Informações do funcionário alteradas com sucesso!";
-            $_SESSION['proxima'] = "Ver lista de funcionario";
-            $_SESSION['link'] = "../html/funcionario/informacao_funcionario.php";
-            header("Location: ../html/sucesso.php");
+            // Retorna JSON para requisições AJAX
+            header('Content-Type: application/json');
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'sucesso',
+                'mensagem' => 'Carga horária atualizada com sucesso!'
+            ]);
+            exit();
         }
         catch (Exception $e) {
-            Util::tratarException($e);
+            // Retorna JSON com erro
+            header('Content-Type: application/json');
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'erro',
+                'mensagem' => $e->getMessage()
+            ]);
+            exit();
         }
     }
 
