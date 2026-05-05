@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE)
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+require_once ROOT . '/classes/LoginHelper.php';
 include_once ROOT . "/dao/Conexao.php";
 include_once ROOT . '/classes/Funcionario.php';
 include_once ROOT . '/classes/QuadroHorario.php';
@@ -537,19 +538,20 @@ class FuncionarioControle
     {
         try {
             extract($_REQUEST);
-            $nova_senha = hash('sha256', $nova_senha);
-            $confirmar_senha = hash('sha256', $confirmar_senha);
-            $senha_antiga = hash('sha256', $senha_antiga);
             if ($nova_senha != $confirmar_senha) {
                 return 1;
             }
             else {
-                $pdo = Conexao::connect();
                 $funcionarioDAO = new FuncionarioDAO();
-                $senha = $funcionarioDAO->getSenhaByIdPessoa($id_pessoa);
+                $senha = $funcionarioDAO->getSenhaByIdPessoa((int) $id_pessoa);
+                $passwordCheck = LoginHelper::verifyAndMigrate($senha_antiga, $senha);
 
-                if ($senha != $senha_antiga) {
+                if (!$passwordCheck['valid']) {
                     return 2;
+                }
+
+                if ($passwordCheck['updated_hash'] !== null) {
+                    $funcionarioDAO->alterarSenha((int) $id_pessoa, $passwordCheck['updated_hash']);
                 }
             }
             return 3;
@@ -561,8 +563,6 @@ class FuncionarioControle
     public function verificarSenhaConfig()
     {
         extract($_REQUEST);
-        $nova_senha = hash('sha256', $nova_senha);
-        $confirmar_senha = hash('sha256', $confirmar_senha);
         if ($nova_senha != $confirmar_senha) {
             return 1;
         }
@@ -1026,7 +1026,7 @@ class FuncionarioControle
             if (!preg_match($regex, $nova_senha))
                 throw new InvalidArgumentException('A senha informada não atende aos requisitos mínimos estabelecidos.', 412);
 
-            $nova_senha = hash('sha256', $nova_senha);
+            $nova_senha = LoginHelper::hashPassword($nova_senha);
             if (isset($redir)) {
                 $page = $redir;
                 $verificacao = $this->verificarSenhaConfig();
