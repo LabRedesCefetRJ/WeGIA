@@ -117,7 +117,11 @@ try {
 
         $("#nome").val(item.nome).prop('disabled', true);
         $("#sobrenome").val(item.sobrenome).prop('disabled', true);
-        $("#telefone").val(item.telefone).prop('disabled', true);
+        if (item.telefone && item.telefone !== "null" && item.telefone !== "") {
+          $("#telefone").val(item.telefone).prop('disabled', true);
+        } else {
+          $("#telefone").val("").prop('disabled', false);
+        }
         $("#orgao_emissor").val(item.orgao_emissor);
         $("#nascimento").val(alterardate(item.data_nascimento)).prop('disabled', true);
         $("#data_expedicao").val(alterardate(item.data_expedicao));
@@ -128,15 +132,15 @@ try {
           $("#radioM").prop('checked', true);
           $("#radioF").prop('disabled', true);
 
-        } else if (item.sexo == "f") {
+        } else if (item.sexo === "f") {
           $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
           $("#radioF").prop('checked', true);
           $("#radioM").prop('disabled', true);
 
-        } else if (item.sexo = null) {
-          $("#radio").prop('disabled', false);
+        } else if (item.sexo == null) {
+          $("input[name=gender]").prop('disabled', false);
         }
-      })
+      });
 
       function alterardate(data) {
         var date = data.split("/")
