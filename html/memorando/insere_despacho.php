@@ -474,7 +474,24 @@ require_once ROOT . "/html/personalizacao_display.php";
 
     <div align="right">
         <iframe src="https://www.wegia.org/software/footer/memorando.html" width="200" height="60" style="border:none;"></iframe>
+    
     </div>
+    <script>
+        document.getElementById('enviar').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            const conteudoEditor = CKEDITOR.instances['despacho'].getData().trim();
+
+            const textoPuro = conteudoEditor.replace(/<[^>]*>/g, '').trim();
+
+            if (textoPuro === "") {
+                window.alert("O despacho não pode estar vazio");
+            } else {
+                CKEDITOR.instances['despacho'].updateElement();
+                this.closest('form').submit();
+            }
+        });
+    </script>
 </body>
 
 </html>
