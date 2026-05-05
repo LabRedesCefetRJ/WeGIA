@@ -1,6 +1,6 @@
 <?php
 
-namespace api\contracts;
+namespace api\contracts\entities;
 
 use DateTime;
 

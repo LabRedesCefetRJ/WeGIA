@@ -1,10 +1,17 @@
 <?php
 
 use api\Container\AppContainer;
+use api\contracts\services\SocioServiceInterface;
+use api\modules\Socio\SocioController;
+use api\modules\Socio\SocioService;
+use api\contracts\services\PessoaServiceInterface;
+use api\modules\Pessoa\PessoaService;
+use api\modules\Pessoa\PessoaRepository;
 use api\modules\Auth\AuthController;
 use api\modules\Auth\AuthMiddleware;
 use api\modules\Auth\AuthService;
 use api\modules\Auth\UserRepository;
+use api\modules\Socio\SocioRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -13,6 +20,7 @@ require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../../config.php';
 require __DIR__ . '/../../classes/LoginHelper.php';
 
+//dividir container em arquivos separados para cada módulo
 $container = new AppContainer([
     PDO::class => function () {
         $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET);
@@ -33,6 +41,27 @@ $container = new AppContainer([
     },
     AuthMiddleware::class => function ($c) {
         return new AuthMiddleware($c->get(AuthService::class));
+    },
+    SocioRepository::class => function ($c) {
+        return new SocioRepository($c->get(PDO::class));
+    },
+    SocioService::class => function ($c) {
+        return new SocioService($c->get(SocioRepository::class));
+    },
+    SocioServiceInterface::class => function ($c) {
+        return new SocioService($c->get(SocioRepository::class));
+    },
+    PessoaRepository::class => function ($c) {
+        return new PessoaRepository($c->get(PDO::class));
+    },
+    PessoaService::class => function ($c) {
+        return new PessoaService($c->get(PessoaRepository::class));
+    },
+    PessoaServiceInterface::class => function ($c) {
+        return $c->get(PessoaService::class);
+    },
+    SocioController::class => function ($c) {
+        return new SocioController($c->get(SocioServiceInterface::class), $c->get(PessoaServiceInterface::class));
     },
 ]);
 
@@ -83,5 +112,8 @@ $app->post('/login', [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
 $app->post('/refresh', [AuthController::class, 'refresh']);
 $app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de logout, os tokens são stateless, então não tem como invalidar o token, a única forma é ter uma blacklist de tokens ou usar um campo de "token_version" no banco de dados para invalidar os tokens antigos
+
+//Módulo Sócio
+$app->post('/socios/register', [SocioController::class, 'registerSocio']);
 
 $app->run();

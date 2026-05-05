@@ -2,8 +2,8 @@
 
 namespace api\modules\Socio;
 
-use api\contracts\PessoaInterface;
-use api\contracts\SocioInterface;
+use api\contracts\entities\PessoaInterface;
+use api\contracts\entities\SocioInterface;
 use DateTime;
 use JsonSerializable;
 
@@ -13,18 +13,20 @@ class Socio implements SocioInterface, JsonSerializable
     private int $idSocioTipo;
     private PessoaInterface $pessoa;
     private string $email;
-    private bool $status;
+    private int $idSocioStatus;
     private bool $autoStatusContribuicao;
     private float $valorMensalidade;
     private DateTime $inicioContribuicao;
 
-    public function __construct(PessoaInterface $pessoa, string $email, DateTime $inicioContribuicao, float $valorMensalidade = 10.0, bool $status = true, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null)
+    public function __construct(PessoaInterface $pessoa, string $email, DateTime $inicioContribuicao, float $valorMensalidade = 10.0, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null)
     {
-        $this->id = $id;
+        if ($id !== null)
+            $this->id = $id;
+        
         $this->idSocioTipo = $idSocioTipo;
         $this->pessoa = $pessoa;
         $this->email = $email;
-        $this->status = $status;
+        $this->idSocioStatus = $idSocioStatus;
         $this->autoStatusContribuicao = $autoStatusContribuicao;
         $this->valorMensalidade = $valorMensalidade;
         $this->inicioContribuicao = $inicioContribuicao;
@@ -45,9 +47,9 @@ class Socio implements SocioInterface, JsonSerializable
         return $this->email;
     }
 
-    public function getStatus(): bool
+    public function getStatus(): int
     {
-        return $this->status;
+        return $this->idSocioStatus;
     }
 
     public function getAutoStatusContribuicao(): bool
@@ -85,9 +87,9 @@ class Socio implements SocioInterface, JsonSerializable
         $this->email = $email;
     }
 
-    public function setStatus(bool $status): void
+    public function setStatus(int $status): void
     {
-        $this->status = $status;
+        $this->idSocioStatus = $status;
     }
 
     public function setAutoStatusContribuicao(bool $autoStatusContribuicao): void
@@ -116,7 +118,7 @@ class Socio implements SocioInterface, JsonSerializable
             'id' => $this->id,
             'idSocioTipo' => $this->idSocioTipo,
             'email' => $this->email,
-            'status' => $this->status,
+            'status' => $this->idSocioStatus,
             'autoStatusContribuicao' => $this->autoStatusContribuicao,
             'valorMensalidade' => $this->valorMensalidade,
             'inicioContribuicao' => $this->inicioContribuicao->format('Y-m-d'),

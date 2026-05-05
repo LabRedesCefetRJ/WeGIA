@@ -2,7 +2,7 @@
 
 namespace api\modules\Pessoa;
 
-use api\contracts\PessoaInterface;
+use api\contracts\entities\PessoaInterface;
 use DateTime;
 
 class Pessoa implements PessoaInterface, \JsonSerializable
@@ -29,10 +29,16 @@ class Pessoa implements PessoaInterface, \JsonSerializable
         $this->setNome($nome)
             ->setSobrenome($sobrenome)
             ->setCpf($cpf)
-            ->setDataNascimento($dataNascimento)
-            ->setSexo($sexo)
-            ->setTelefone($telefone)
-            ->setEndereco($endereco);
+            ->setDataNascimento($dataNascimento);
+
+        if ($sexo !== null)
+            $this->setSexo($sexo);
+
+        if ($telefone !== null)
+            $this->setTelefone($telefone);
+
+        if ($endereco !== null)
+            $this->setEndereco($endereco);
 
         if ($id !== null)
             $this->setId($id);

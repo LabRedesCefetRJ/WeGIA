@@ -1,6 +1,6 @@
 <?php
 
-namespace api\contracts;
+namespace api\contracts\entities;
 
 use DateTime;
 
@@ -11,7 +11,7 @@ use DateTime;
  */
 interface SocioInterface
 {
-    public function __construct(PessoaInterface $pessoa, string $email, DateTime $inicioContribuicao, float $valorMensalidade,bool $status = true, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null);
+    public function __construct(PessoaInterface $pessoa, string $email, DateTime $inicioContribuicao, float $valorMensalidade, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null);
 
     /**
      * Obtém o ID do sócio
@@ -31,7 +31,7 @@ interface SocioInterface
     /**
      * Obtém o status do sócio
      */
-    public function getStatus(): bool;
+    public function getStatus(): int;
 
     /**
      * Obtém o status de atualização automática com base nas contribuições do sócio
@@ -71,7 +71,7 @@ interface SocioInterface
     /**
      * Define o status do sócio
      */
-    public function setStatus(bool $status): void;
+    public function setStatus(int $status): void;
 
     /**
      * Define o status automaticamente com base nas contribuições do sócio
