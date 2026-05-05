@@ -271,13 +271,8 @@ function mostrarMensagemCadastroEnfermidade(mensagem, tipo = "success") {
     }
 
     alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
-    if (tipo === "danger") {
-        alerta.classList.add("alert-danger");
-    } else if (tipo === "warning") {
-        alerta.classList.add("alert-warning");
-    } else {
-        alerta.classList.add("alert-success");
-    }
+    alerta.classList.add("alert-" + tipo);
+
     texto.textContent = mensagem;
     alerta.style.display = "block";
     alerta.classList.remove("is-visible");

@@ -276,6 +276,93 @@ try {
     body.setStyle('box-sizing', 'border-box');
   }
 
+  let timeoutMensagemMedicacao = null;
+  let timeoutFecharAnimacaoMedicacao = null;
+
+  function mostrarMensagemMedicacao(mensagem, tipo = "danger") {
+    const alerta = document.getElementById("mensagem-medicacao");
+    const texto = document.getElementById("mensagem-medicacao-texto");
+    if (!alerta || !texto) return;
+    alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+    alerta.classList.add("alert-" + tipo);
+
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
+    if (timeoutMensagemMedicacao) clearTimeout(timeoutMensagemMedicacao);
+    if (timeoutFecharAnimacaoMedicacao) { clearTimeout(timeoutFecharAnimacaoMedicacao); timeoutFecharAnimacaoMedicacao = null; }
+    timeoutMensagemMedicacao = setTimeout(() => ocultarMensagemMedicacao(), 10000);
+  }
+
+  function ocultarMensagemMedicacao() {
+    const alerta = document.getElementById("mensagem-medicacao");
+    if (!alerta) return;
+    alerta.classList.remove("is-visible");
+    if (timeoutMensagemMedicacao) { clearTimeout(timeoutMensagemMedicacao); timeoutMensagemMedicacao = null; }
+    if (timeoutFecharAnimacaoMedicacao) clearTimeout(timeoutFecharAnimacaoMedicacao);
+    timeoutFecharAnimacaoMedicacao = setTimeout(() => { alerta.style.display = "none"; timeoutFecharAnimacaoMedicacao = null; }, 350);
+  }
+
+  let timeoutMensagemAtendimento = null;
+  let timeoutFecharAnimacaoAtendimento = null;
+
+  function mostrarMensagemAtendimento(mensagem, tipo = "danger") {
+    const alerta = document.getElementById("mensagem-atendimento");
+    const texto = document.getElementById("mensagem-atendimento-texto");
+    if (!alerta || !texto) return;
+    alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+    alerta.classList.add("alert-" + tipo);
+
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
+    if (timeoutMensagemAtendimento) clearTimeout(timeoutMensagemAtendimento);
+    if (timeoutFecharAnimacaoAtendimento) { clearTimeout(timeoutFecharAnimacaoAtendimento); timeoutFecharAnimacaoAtendimento = null; }
+    timeoutMensagemAtendimento = setTimeout(() => ocultarMensagemAtendimento(), 10000);
+  }
+
+  function ocultarMensagemAtendimento() {
+    const alerta = document.getElementById("mensagem-atendimento");
+    if (!alerta) return;
+    alerta.classList.remove("is-visible");
+    if (timeoutMensagemAtendimento) { clearTimeout(timeoutMensagemAtendimento); timeoutMensagemAtendimento = null; }
+    if (timeoutFecharAnimacaoAtendimento) clearTimeout(timeoutFecharAnimacaoAtendimento);
+    timeoutFecharAnimacaoAtendimento = setTimeout(() => { alerta.style.display = "none"; timeoutFecharAnimacaoAtendimento = null; }, 350);
+  }
+
+  let timeoutMensagemProntuario = null;
+  let timeoutFecharAnimacaoProntuario = null;
+
+  function mostrarMensagemProntuario(mensagem, tipo = "danger") {
+    const alerta = document.getElementById("mensagem-prontuario");
+    const texto = document.getElementById("mensagem-prontuario-texto");
+    if (!alerta || !texto) return;
+    alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+    alerta.classList.add("alert-" + tipo);
+
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
+    if (timeoutMensagemProntuario) clearTimeout(timeoutMensagemProntuario);
+    if (timeoutFecharAnimacaoProntuario) { clearTimeout(timeoutFecharAnimacaoProntuario); timeoutFecharAnimacaoProntuario = null; }
+    timeoutMensagemProntuario = setTimeout(() => ocultarMensagemProntuario(), 10000);
+  }
+
+  function ocultarMensagemProntuario() {
+    const alerta = document.getElementById("mensagem-prontuario");
+    if (!alerta) return;
+    alerta.classList.remove("is-visible");
+    if (timeoutMensagemProntuario) { clearTimeout(timeoutMensagemProntuario); timeoutMensagemProntuario = null; }
+    if (timeoutFecharAnimacaoProntuario) clearTimeout(timeoutFecharAnimacaoProntuario);
+    timeoutFecharAnimacaoProntuario = setTimeout(() => { alerta.style.display = "none"; timeoutFecharAnimacaoProntuario = null; }, 350);
+  }
+
   $(function() {
     localStorage.setItem("id_ficha_medica", 'null')
 
@@ -286,7 +373,7 @@ try {
       width: '100%'
     });
     editor.on('required', function(e) {
-      alert("Por favor, informe a descrição!");
+      mostrarMensagemAtendimento("Por favor, informe a descrição!", "danger");
       e.cancel();
     });
 
@@ -680,7 +767,7 @@ try {
     function anularAtendimento(idAtendimento) {
       const id = parseInt(idAtendimento, 10);
       if (!id || id < 1) {
-        window.alert("Não foi possível identificar o atendimento.");
+        console.error("Não foi possível identificar o atendimento.");
         return;
       }
 
@@ -689,7 +776,7 @@ try {
       const erroMotivo = document.getElementById("erro_motivo_anulacao");
 
       if (!inputAtendimento || !motivoInput) {
-        window.alert("Não foi possível processar a anulação.");
+        console.error("Não foi possível processar a anulação.");
         return;
       }
 
@@ -709,7 +796,7 @@ try {
       const erroMotivo = document.getElementById("erro_motivo_anulacao");
 
       if (!formAnulacao || !motivoInput) {
-        window.alert("Não foi possível processar a anulação.");
+        console.error("Não foi possível processar a anulação.");
         return;
       }
 
@@ -850,8 +937,13 @@ try {
 
     #mensagem-cadastro-enfermidade,
     #mensagem-cadastro-exame,
+    #mensagem-medicacao,
+    #mensagem-atendimento,
+    #mensagem-prontuario,
     #alergiaFormError,
-    #enfermidadeFormError {
+    #enfermidadeFormError,
+    #medicoFormError,
+    #atendidoDocFormError {
       opacity: 0;
       transform: translateY(-8px);
       transition: opacity 0.35s ease, transform 0.35s ease;
@@ -859,25 +951,35 @@ try {
     }
 
     #alergiaFormError,
-    #enfermidadeFormError {
+    #enfermidadeFormError,
+    #medicoFormError,
+    #atendidoDocFormError {
       margin-bottom: 0;
     }
 
     #alergiaFormError + .form-group,
-    #enfermidadeFormError + .form-group {
+    #enfermidadeFormError + .form-group,
+    #medicoFormError + .form-group,
+    #atendidoDocFormError + .form-group {
       margin-top: 15px;
     }
 
     #mensagem-cadastro-enfermidade.is-visible,
     #mensagem-cadastro-exame.is-visible,
+    #mensagem-medicacao.is-visible,
+    #mensagem-atendimento.is-visible,
+    #mensagem-prontuario.is-visible,
     #alergiaFormError.is-visible,
-    #enfermidadeFormError.is-visible {
+    #enfermidadeFormError.is-visible,
+    #medicoFormError.is-visible,
+    #atendidoDocFormError.is-visible {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
     }
 
-    #modal-anular-atendimento .modal-title {
+
+#modal-anular-atendimento .modal-title {
       font-weight: 500;
       color: #fff;
     }
@@ -1361,15 +1463,23 @@ try {
                     <input type="hidden" name="id_fichamedica" value="<?php echo $_GET['id_fichamedica'] ?>">
 
                     <label for="textoProntuario" class="titulo-prontuario">Prontuário Público</label>
-                    <textarea name="textoProntuario" class="form-control" required id="prontuario" cols="30" rows="10"><?php
-                                                                                                                        $stringConcatenada = '';
+                    <div id="mensagem-prontuario" class="alert alert-danger alert-dismissible" role="alert" style="display: none;">
+                      <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemProntuario(); return false;">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                      <span id="mensagem-prontuario-texto"></span>
+                    </div>
+                    <textarea name="textoProntuario" class="form-control" required id="prontuario" cols="30" rows="10">
+                      <?php
+                      $stringConcatenada = '';
 
-                                                                                                                        foreach ($prontuarioPHP as $prontuario) {
-                                                                                                                          $stringConcatenada .= $prontuario['descricao'];
-                                                                                                                        }
+                      foreach ($prontuarioPHP as $prontuario) {
+                        $stringConcatenada .= $prontuario['descricao'];
+                      }
 
-                                                                                                                        echo $stringConcatenada;
-                                                                                                                        ?></textarea>
+                      echo $stringConcatenada;
+                      ?>
+                    </textarea>
                     <button id="btn-editarProntuario" class="btn btn-primary btn-edicaoProntuario" onclick="event.preventDefault(); editarProntuario();">Editar Prontuário</button>
                     <button id="btn-cancelarEdicao" class="btn btn-danger btn-edicaoProntuario hidden" onclick="event.preventDefault(); cancelarEdicao()">Cancelar</button>
                     <button type="submit" id="btn-confirmarEdicao" class="btn btn-success btn-edicaoProntuario hidden">Salvar</button>
@@ -1497,8 +1607,8 @@ try {
                       <h2 class="panel-title">Cadastro de comorbidades</h2>
                     </header>
                     <div class="panel-body">
-                      <div id="mensagem-cadastro-enfermidade" class="alert alert-success" role="alert" style="display: none;">
-                        <button type="button" class="close" aria-label="Close" onclick="if (typeof ocultarMensagemCadastroEnfermidade === 'function') { ocultarMensagemCadastroEnfermidade(); } else { this.parentElement.style.display='none'; } return false;">
+                      <div id="mensagem-cadastro-enfermidade" class="alert alert-success alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="if (typeof ocultarMensagemCadastroEnfermidade === 'function') { ocultarMensagemCadastroEnfermidade(); } else { this.parentElement.style.display='none'; } return false;">
                           <span aria-hidden="true">&times;</span>
                         </button>
                         <span id="mensagem-cadastro-enfermidade-texto"></span>
@@ -1662,8 +1772,8 @@ try {
                       <h2 class="panel-title">Exames</h2>
                     </header>
                     <div class="panel-body">
-                      <div id="mensagem-cadastro-exame" class="alert alert-success" role="alert" style="display: none;">
-                        <button type="button" class="close" aria-label="Close" onclick="if (typeof ocultarMensagemCadastroExame === 'function') { ocultarMensagemCadastroExame(); } else { this.parentElement.style.display='none'; } return false;">
+                      <div id="mensagem-cadastro-exame" class="alert alert-success alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="if (typeof ocultarMensagemCadastroExame === 'function') { ocultarMensagemCadastroExame(); } else { this.parentElement.style.display='none'; } return false;">
                           <span aria-hidden="true">&times;</span>
                         </button>
                         <span id="mensagem-cadastro-exame-texto"></span>
@@ -1825,7 +1935,7 @@ try {
                         </table>
                       </div>
 
-                      <div class="modal fade" id="testemed" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true" style="display:none;">
+                      <div class="modal fade" id="testemed" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">
                           <div class="modal-content">
 
@@ -1966,6 +2076,12 @@ try {
                       </div>
 
                       <br>
+                      <div id="mensagem-medicacao" class="alert alert-danger alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemMedicacao(); return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="mensagem-medicacao-texto"></span>
+                      </div>
                       <br>
                       <button type="button" class="btn btn-success" id="botao">Cadastrar medicação</button>
 
@@ -1989,6 +2105,12 @@ try {
                       <br>
                       <input type="number" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
                       <input type="hidden" name="acervo">
+                      <div id="mensagem-atendimento" class="alert alert-danger alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemAtendimento(); return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="mensagem-atendimento-texto"></span>
+                      </div>
                       <input type="submit" class="btn btn-primary" value="Cadastrar atendimento" id="salvar_bd">
                     </div>
                     </form>
@@ -2006,7 +2128,7 @@ try {
 
                         <form id="MedicoForm" action="" method="post">
                           <div class="modal-body">
-                            <div id="medicoFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
+                            <div id="medicoFormError" class="alert alert-danger alert-dismissible" style="display: none;" role="alert">
                               <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalMedico(); return false;">
                                 <span aria-hidden="true">&times;</span>
                               </button>
@@ -2375,7 +2497,7 @@ try {
 
         const validacaoTipoExame = SaudeValidator.validarNome(exame);
         if (!validacaoTipoExame.valido) {
-          alert("Tipo de exame inválido: " + validacaoTipoExame.mensagem);
+          exibirErroModalDocumento("Tipo de exame inválido: " + validacaoTipoExame.mensagem);
           return;
         }
 
@@ -2415,13 +2537,8 @@ try {
         }
 
         alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
-        if (tipo === "danger") {
-          alerta.classList.add("alert-danger");
-        } else if (tipo === "warning") {
-          alerta.classList.add("alert-warning");
-        } else {
-          alerta.classList.add("alert-success");
-        }
+        alerta.classList.add("alert-" + tipo);
+    
         texto.textContent = mensagem;
         alerta.style.display = "block";
         alerta.classList.remove("is-visible");
@@ -2489,12 +2606,12 @@ try {
         const tipoDocumento = document.getElementById("tipoDocumentoExame");
 
         if (!tipoDocumento || !tipoDocumento.value) {
-          mostrarMensagemCadastroExame("É necessário escolher um tipo de exame.", "danger");
+          exibirErroModalDocumento("É necessário escolher um tipo de exame.");
           return;
         }
 
         if (!documentos.files[0]) {
-          mostrarMensagemCadastroExame("É necessário inserir um documento.", "danger");
+          exibirErroModalDocumento("É necessário inserir um documento.");
           return;
         }
 
@@ -2553,19 +2670,16 @@ try {
         let options = {
           method: "GET" //usei GET pois aparentemente o delete ta desabilitado
         }
-        let mensagem = "";
-
         try {
           let response = await fetch(url, options);
           if (response.ok) {
-            mensagem = "Exame deletado com sucesso";
+            mostrarMensagemCadastroExame("Exame deletado com sucesso", "success");
           } else {
             throw new Error("Erro HTTP: " + response.status);
           }
         } catch (e) {
-          mensagem = "Erro ao deletar exame";
+          mostrarMensagemCadastroExame("Erro ao deletar exame", "danger");
         } finally {
-          window.alert(mensagem);
           gerarExames();
         }
       }
@@ -2584,7 +2698,7 @@ try {
             window.URL.revokeObjectURL(url);
           }
         } catch (e) {
-          window.alert("Erro ao Baixar arquivo");
+          mostrarMensagemCadastroExame("Erro ao Baixar arquivo", "danger");
         }
       }
 
@@ -2656,6 +2770,9 @@ try {
         $("#medicoFormModal").modal("show");
       }
 
+      let timeoutMensagemErroMedico = null;
+      let timeoutFecharAnimacaoErroMedico = null;
+
       function exibirErroModalMedico(mensagem) {
         const alerta = document.getElementById("medicoFormError");
         const texto = document.getElementById("medicoFormErrorText");
@@ -2666,7 +2783,22 @@ try {
 
         texto.textContent = mensagem;
         alerta.style.display = "block";
-        alerta.classList.add("in");
+        alerta.classList.remove("is-visible");
+        void alerta.offsetWidth;
+        alerta.classList.add("is-visible");
+
+        if (timeoutMensagemErroMedico) {
+          clearTimeout(timeoutMensagemErroMedico);
+        }
+
+        if (timeoutFecharAnimacaoErroMedico) {
+          clearTimeout(timeoutFecharAnimacaoErroMedico);
+          timeoutFecharAnimacaoErroMedico = null;
+        }
+
+        timeoutMensagemErroMedico = setTimeout(() => {
+          limparErroModalMedico();
+        }, 10000);
       }
 
       function limparErroModalMedico() {
@@ -2677,9 +2809,53 @@ try {
           return;
         }
 
-        texto.textContent = "";
-        alerta.style.display = "none";
-        alerta.classList.remove("in");
+        alerta.classList.remove("is-visible");
+
+        if (timeoutMensagemErroMedico) {
+          clearTimeout(timeoutMensagemErroMedico);
+          timeoutMensagemErroMedico = null;
+        }
+
+        if (timeoutFecharAnimacaoErroMedico) {
+          clearTimeout(timeoutFecharAnimacaoErroMedico);
+        }
+
+        timeoutFecharAnimacaoErroMedico = setTimeout(() => {
+          alerta.style.display = "none";
+          texto.textContent = "";
+          timeoutFecharAnimacaoErroMedico = null;
+        }, 350);
+      }
+
+      let timeoutErroModalDocumento = null;
+      let timeoutFecharAnimacaoErroDocumento = null;
+
+      function exibirErroModalDocumento(mensagem) {
+        const alerta = document.getElementById('atendidoDocFormError');
+        const texto = document.getElementById('atendidoDocFormErrorText');
+        if (!alerta || !texto) return;
+        texto.textContent = mensagem;
+        alerta.style.display = 'block';
+        alerta.classList.remove('is-visible');
+        void alerta.offsetWidth;
+        alerta.classList.add('is-visible');
+        if (timeoutErroModalDocumento) clearTimeout(timeoutErroModalDocumento);
+        if (timeoutFecharAnimacaoErroDocumento) { clearTimeout(timeoutFecharAnimacaoErroDocumento); timeoutFecharAnimacaoErroDocumento = null; }
+        timeoutErroModalDocumento = setTimeout(() => limparErroModalDocumento(), 10000);
+      }
+
+      function limparErroModalDocumento() {
+        const alerta = document.getElementById('atendidoDocFormError');
+        const texto = document.getElementById('atendidoDocFormErrorText');
+        if (!alerta || !texto) return;
+        alerta.classList.remove('is-visible');
+        if (timeoutErroModalDocumento) { clearTimeout(timeoutErroModalDocumento); timeoutErroModalDocumento = null; }
+        if (timeoutFecharAnimacaoErroDocumento) clearTimeout(timeoutFecharAnimacaoErroDocumento);
+        timeoutFecharAnimacaoErroDocumento = setTimeout(() => {
+          alerta.style.display = 'none';
+          texto.textContent = '';
+          timeoutFecharAnimacaoErroDocumento = null;
+        }, 350);
       }
 
       async function adicionar_medico() {
@@ -3021,25 +3197,25 @@ try {
           const medicacao = lerCamposMedicacao();
 
           if (!todosCamposMedicacaoPreenchidos(medicacao)) {
-            alert("Por favor, informe a medicação corretamente!");
+            mostrarMensagemMedicacao("Por favor, informe a medicação corretamente!", "danger");
             return;
           }
 
           const validacaoNomeMedicacao = SaudeValidator.validarNome(medicacao.nome_medicacao);
           if (!validacaoNomeMedicacao.valido) {
-            alert("Medicamento: " + validacaoNomeMedicacao.mensagem);
+            mostrarMensagemMedicacao("Medicamento: " + validacaoNomeMedicacao.mensagem, "danger");
             return;
           }
 
           const validacaoDosagem = SaudeValidator.validarValorPositivo(medicacao.dosagem, "Dosagem");
           if (!validacaoDosagem.valido) {
-            alert(validacaoDosagem.mensagem);
+            mostrarMensagemMedicacao(validacaoDosagem.mensagem, "danger");
             return;
           }
 
           const validacaoDuracao = SaudeValidator.validarValorPositivo(medicacao.tempo, "Duração");
           if (!validacaoDuracao.valido) {
-            alert(validacaoDuracao.mensagem);
+            mostrarMensagemMedicacao(validacaoDuracao.mensagem, "danger");
             return;
           }
 
@@ -3059,7 +3235,7 @@ try {
           const medicoSelecionado = $("#medicos").val();
           if (!medicoSelecionado) {
             e.preventDefault();
-            alert('Selecione um médico. Se necessário, escolha "Sem médico definido".');
+            mostrarMensagemAtendimento('Selecione um médico. Se necessário, escolha "Sem médico definido".', "danger");
             return;
           }
 
@@ -3068,7 +3244,7 @@ try {
           const medicacaoDigitada = lerCamposMedicacao();
           if (algumCampoMedicacaoPreenchido(medicacaoDigitada)) {
             e.preventDefault();
-            alert('Para incluir esta medicação, clique em "Cadastrar medicação" antes de salvar o atendimento.');
+            mostrarMensagemAtendimento('Para incluir esta medicação, clique em "Cadastrar medicação" antes de salvar o atendimento.', "danger");
             return;
           }
 
@@ -3148,7 +3324,7 @@ try {
       });
 
       editor2.on('required', function(e) {
-        alert("Por favor, informe a descrição!");
+        mostrarMensagemProntuario("Por favor, informe a descrição!", "danger");
         e.cancel();
       });
 
@@ -3258,11 +3434,7 @@ try {
         await gerarEnfermidadesDoPaciente();
         const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
         const exibirAvisoDataComorbidade = (mensagem) => {
-          if (typeof mostrarMensagemCadastroEnfermidade === 'function') {
-            mostrarMensagemCadastroEnfermidade(mensagem, "warning");
-          } else {
-            alert(mensagem);
-          }
+          mostrarMensagemCadastroEnfermidade(mensagem, "warning");
         };
 
         // Adiciona validação ao clique do botão
