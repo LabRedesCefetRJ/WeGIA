@@ -147,6 +147,38 @@ class VoluntarioDAO
         }
     }
 
+    public function incluirExistente($cpf, $situacao, $data_admissao)
+    {
+        $this->pdo->beginTransaction();
+
+        try {
+            $buscaPessoa = $this->pdo->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = :cpf");
+            $buscaPessoa->bindParam(':cpf', $cpf);
+            $buscaPessoa->execute();
+            $idPessoa = $buscaPessoa->fetchColumn();
+
+            if (!$idPessoa) {
+                throw new PDOException('Pessoa não encontrada.');
+            }
+
+            $sqlVoluntario = "INSERT INTO voluntario (id_pessoa, id_situacao, data_admissao) VALUES (:id_pessoa, :id_situacao, :data_admissao)";
+            $stmtVoluntario = $this->pdo->prepare($sqlVoluntario);
+            $stmtVoluntario->bindParam(':id_pessoa', $idPessoa);
+            $stmtVoluntario->bindParam(':id_situacao', $situacao);
+            $stmtVoluntario->bindParam(':data_admissao', $data_admissao);
+            $stmtVoluntario->execute();
+            $idVoluntario = $this->pdo->lastInsertId();
+
+            $this->pdo->commit();
+            return $idVoluntario;
+
+        }
+        catch (PDOException $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
     public function listarTodos()
     {
         $voluntarios = array();
@@ -216,5 +248,140 @@ class VoluntarioDAO
             throw $e;
         }
         return $cpfs;
+    }
+
+    public function listarUm($id)
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT p.*, v.* FROM pessoa p JOIN voluntario v ON p.id_pessoa=v.id_pessoa WHERE v.id_voluntario = :id");
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+        catch (PDOException $e) {
+            throw $e;
+        }
+    }
+
+    public function alterarInfPessoal(Voluntario $voluntario)
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $sql = "UPDATE voluntario v JOIN pessoa p ON v.id_pessoa = p.id_pessoa 
+                    SET p.nome = :nome, p.sobrenome = :sobrenome, p.sexo = :sexo, p.telefone = :telefone, p.data_nascimento = :data_nascimento, p.tipo_sanguineo = :tipo_sanguineo, p.nome_pai = :nome_pai, p.nome_mae = :nome_mae 
+                    WHERE v.id_voluntario = :id";
+            $stmt = $this->pdo->prepare($sql);
+
+            $id = $voluntario->getId_voluntario();
+            $nome = $voluntario->getNome();
+            $sobrenome = $voluntario->getSobrenome();
+            $sexo = $voluntario->getSexo();
+            $telefone = $voluntario->getTelefone();
+            $nascimento = $voluntario->getDataNascimento();
+            $nomePai = $voluntario->getNomePai();
+            $nomeMae = $voluntario->getNomeMae();
+            $sangue = $voluntario->getTipoSanguineo();
+
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':nome', $nome);
+            $stmt->bindParam(':sobrenome', $sobrenome);
+            $stmt->bindParam(':sexo', $sexo);
+            $stmt->bindParam(':telefone', $telefone);
+            $stmt->bindParam(':data_nascimento', $nascimento);
+            $stmt->bindParam(':tipo_sanguineo', $sangue);
+            $stmt->bindParam(':nome_pai', $nomePai);
+            $stmt->bindParam(':nome_mae', $nomeMae);
+
+            $stmt->execute();
+            $this->pdo->commit();
+        }
+        catch (PDOException $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function alterarEndereco(Voluntario $voluntario)
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $sql = "UPDATE voluntario v JOIN pessoa p ON v.id_pessoa = p.id_pessoa 
+                    SET p.cep = :cep, p.estado = :estado, p.cidade = :cidade, p.bairro = :bairro, p.logradouro = :logradouro, p.numero_endereco = :numero_endereco, p.complemento = :complemento, p.ibge = :ibge 
+                    WHERE v.id_voluntario = :id";
+            $stmt = $this->pdo->prepare($sql);
+
+            $id = $voluntario->getId_voluntario();
+            $cep = $voluntario->getCep();
+            $estado = $voluntario->getEstado();
+            $cidade = $voluntario->getCidade();
+            $bairro = $voluntario->getBairro();
+            $logradouro = $voluntario->getLogradouro();
+            $numeroEndereco = $voluntario->getNumeroEndereco();
+            $complemento = $voluntario->getComplemento();
+            $ibge = $voluntario->getIbge();
+
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':cep', $cep);
+            $stmt->bindParam(':estado', $estado);
+            $stmt->bindParam(':cidade', $cidade);
+            $stmt->bindParam(':bairro', $bairro);
+            $stmt->bindParam(':logradouro', $logradouro);
+            $stmt->bindParam(':numero_endereco', $numeroEndereco);
+            $stmt->bindParam(':complemento', $complemento);
+            $stmt->bindParam(':ibge', $ibge);
+
+            $stmt->execute();
+            $this->pdo->commit();
+        }
+        catch (PDOException $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function alterarDetalhes(Voluntario $voluntario)
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $sql = "UPDATE voluntario 
+                    SET data_admissao = :data_admissao, id_situacao = :id_situacao 
+                    WHERE id_voluntario = :id";
+            $stmt = $this->pdo->prepare($sql);
+
+            $id = $voluntario->getId_voluntario();
+            $data = $voluntario->getData_admissao();
+            $situacao = $voluntario->getId_situacao();
+
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':data_admissao', $data);
+            $stmt->bindParam(':id_situacao', $situacao);
+
+            $stmt->execute();
+            $this->pdo->commit();
+        }
+        catch (PDOException $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function alterarImagem($id, $img)
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $sql = "UPDATE voluntario v JOIN pessoa p ON v.id_pessoa = p.id_pessoa 
+                    SET p.imagem = :imagem 
+                    WHERE v.id_voluntario = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->bindParam(':imagem', $img, PDO::PARAM_LOB);
+
+            $stmt->execute();
+            $this->pdo->commit();
+        }
+        catch (PDOException $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 }

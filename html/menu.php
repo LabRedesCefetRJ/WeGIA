@@ -118,7 +118,7 @@ session_start();
 							</a>
 							<ul class="nav nav-children">
 								<li>
-									<a href="<?= WWW ?>html/voluntario/cadastro_voluntario.php">
+									<a href="<?= WWW ?>html/voluntario/pre_cadastro_voluntario.php">
 										<span>Cadastrar Voluntário</span>
 									</a>
 								</li>
@@ -481,7 +481,7 @@ session_start();
 							Regras de pagamento
 						</a>
 					</li>
-          <li >
+					<li>
 						<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
 							<i class="fa-solid fa-user-check"></i>
 							Captcha
@@ -490,7 +490,28 @@ session_start();
 				</ul>
 			</li>
 			<!--fim contribuiçao-->
-
+			<!--projetos-->
+			<li class="nav-parent nav-active" id="8">
+				<a>
+					<i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
+					<span>Projetos</span>
+				</a>
+				<ul class="nav nav-children">
+					<li>
+						<a href="<?= WWW ?>html/projetos/cadastrar_projeto.php">
+							<i class="fa-solid fa-file-circle-plus"></i>
+							<span>Cadastrar Projeto</span>
+						</a>
+					</li>
+					<li>
+						<a href="<?= WWW ?>html/projetos/informacao_projeto.php">
+							<i class="fa-solid fa-clipboard-list"></i>
+							<span>Informações Projetos</span>
+						</a>
+					</li>
+				</ul>
+			</li>
+			<!--fim projetos-->
 			<li class="nav-parent nav-active visivel">
 				<a>
 					<i class="fa fa-cog" aria-hidden="true"></i>
@@ -565,6 +586,12 @@ session_start();
 	<input type="hidden" name="nomeClasse" value="VoluntarioControle">
 	<input type="hidden" name="metodo" value="listartodos">
 	<input type="hidden" name="nextPage" value="<?= WWW ?>html/voluntario/informacao_voluntario.php">
+</form>
+
+<form id="listarProjeto" method="POST" action="<?= WWW ?>controle/control.php">
+	<input type="hidden" name="nomeClasse" value="ProjetoControle">
+	<input type="hidden" name="metodo" value="listartodos">
+	<input type="hidden" name="nextPage" value="<?= WWW ?>html/projetos/informacao_projeto.php">
 </form>
 
 <!-- Theme Base, Components and Settings -->

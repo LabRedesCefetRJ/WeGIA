@@ -11,6 +11,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once ROOT . "/controle/VoluntarioControle.php";
 require_once ROOT . "/classes/Voluntario.php";
 require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/dao/Conexao.php";
+
 $dataNascimentoMaxima = Voluntario::getDataNascimentoMaxima();
 $dataNascimentoMinima = Voluntario::getDataNascimentoMinima();
 
@@ -23,12 +25,26 @@ if (isset($_GET['msg'])) {
     $erro = $_GET['msg'];
 }
 
-$cpfPrefilled = '';
-if (isset($_GET['cpf'])) {
-    $cpfPrefilled = htmlspecialchars($_GET['cpf'], ENT_QUOTES, 'UTF-8');
+$cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
+if (!$cpf || strlen($cpf) < 1) {
+    http_response_code(400);
+    echo "O CPF informado não é válido.";
+    exit();
 }
 
-// Teste da Issue #1587
+$pdo = Conexao::connect();
+
+$stmt = $pdo->prepare("SELECT * FROM pessoa WHERE cpf = :cpf");
+$stmt->bindParam(':cpf', $cpf);
+$stmt->execute();
+$pessoa = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$pessoa) {
+    http_response_code(404);
+    echo "Pessoa não encontrada.";
+    exit();
+}
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
@@ -52,6 +68,32 @@ require_once ROOT . '/classes/Csrf.php';
     <script src="../../assets/javascripts/theme.js"></script>
     <script src="../../assets/javascripts/theme.custom.js"></script>
     <script src="../../assets/javascripts/theme.init.js"></script>
+    
+    <script>
+        $(function() {
+            var pessoa = <?php echo json_encode($pessoa); ?>;
+            $("#nome").val(pessoa.nome).prop('readonly', true);
+            $("#sobrenome").val(pessoa.sobrenome).prop('readonly', true);
+            $("#cpf").val(pessoa.cpf).prop('readonly', true);
+            if (pessoa.data_nascimento) {
+                var date = pessoa.data_nascimento.split("/");
+                if (date.length === 3) {
+                    $("#nascimento").val(date[2] + "-" + date[1] + "-" + date[0]).prop('readonly', true);
+                } else {
+                    $("#nascimento").val(pessoa.data_nascimento).prop('readonly', true);
+                }
+            }
+            if (pessoa.sexo == "m") {
+                $("#radioM").prop('checked', true);
+                $("input[name=gender]").prop('disabled', true);
+                $("#hiddenGender").val('m');
+            } else if (pessoa.sexo == "f") {
+                $("#radioF").prop('checked', true);
+                $("input[name=gender]").prop('disabled', true);
+                $("#hiddenGender").val('f');
+            }
+        });
+    </script>
 </head>
 
 <body>
@@ -76,31 +118,32 @@ endif; ?>
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Nome *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="nome" required>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="nome" id="nome" required readonly>
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Sobrenome *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="sobrenome"
-                                            required></div>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="sobrenome" id="sobrenome"
+                                            required readonly></div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">CPF *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="cpf"
-                                            maxlength="14" value="<?= $cpfPrefilled ?>" required></div>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="cpf" id="cpf"
+                                            maxlength="14" required readonly></div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Sexo *</label>
                                     <div class="col-md-6">
-                                        <input type="radio" name="gender" value="m" required> M
-                                        <input type="radio" name="gender" value="f" required> F
+                                        <input type="radio" name="gender" id="radioM" value="m" required disabled> M
+                                        <input type="radio" name="gender" id="radioF" value="f" required disabled> F
+                                        <input type="hidden" name="gender" id="hiddenGender" value="">
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Nascimento *</label>
-                                    <div class="col-md-6"><input type="date" class="form-control" name="nascimento"
+                                    <div class="col-md-6"><input type="date" class="form-control" name="nascimento" id="nascimento"
                                             min="<?= $dataNascimentoMinima?>" max="<?= $dataNascimentoMaxima?>"
-                                            required></div>
+                                            required readonly></div>
                                 </div>
                                 <hr>
                                 <h4 class="mb-xlg">Detalhes do Voluntariado</h4>
@@ -124,7 +167,7 @@ endif; ?>
                             <div class="panel-footer">
                                 <?= Csrf::inputField()?>
                                 <input type="hidden" name="nomeClasse" value="VoluntarioControle">
-                                <input type="hidden" name="metodo" value="incluir">
+                                <input type="hidden" name="metodo" value="incluirExistente">
                                 <button type="submit" class="btn btn-primary">Salvar</button>
                             </div>
                         </form>
