@@ -127,4 +127,18 @@ class AuthService
             throw new \Exception('Token inválido ou expirado');
         }
     }
+
+    public function assignPasswordToPerson(int $idPessoa, string $senha): void
+    {
+        if ($idPessoa <= 0) {
+            throw new \Exception('ID da pessoa inválido');
+        }
+
+        if (empty($senha)) {
+            throw new \Exception('Senha não pode estar vazia');
+        }
+
+        $hashedPassword = \LoginHelper::hashPassword($senha);
+        $this->userRepository->updatePasswordHash($idPessoa, $hashedPassword);
+    }
 }

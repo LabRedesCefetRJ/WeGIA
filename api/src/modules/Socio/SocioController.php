@@ -3,6 +3,7 @@
 namespace api\modules\Socio;
 
 use api\contracts\services\PessoaServiceInterface;
+use api\modules\Auth\AuthService;
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 
@@ -10,11 +11,13 @@ class SocioController
 {
     private SocioService $socioService;
     private PessoaServiceInterface $pessoaService;
+    private AuthService $authService;
 
-    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService)
+    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, AuthService $authService)
     {
         $this->socioService = $socioService;
         $this->pessoaService = $pessoaService;
+        $this->authService = $authService;
     }
 
     public function registerSocio(Request $request, Response $response)
@@ -46,7 +49,19 @@ class SocioController
                 $data['idSocioTipo'] ?? 0
             );
 
-            //futuramente poderia retornar um token de autenticação para o sócio recém-criado, mas por enquanto vamos apenas retornar os dados do sócio criado
+        
+            //Antes de atribuir a senha, é necessário validar o código enviado por e-mail, para evitar o roubo de contas existentes.
+
+
+            // Atribuir senha para a pessoa criada/existente
+            if (isset($data['senha']) && !empty($data['senha'])) {
+                $this->authService->assignPasswordToPerson(
+                    $pessoa->getId(),
+                    $data['senha']
+                );
+            }
+
+            //futuramente poderia retornar um token de autenticação para o sócio recém-criado
 
             $response->getBody()->write(json_encode($socio));
 
