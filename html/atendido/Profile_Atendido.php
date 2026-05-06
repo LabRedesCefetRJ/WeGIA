@@ -1183,19 +1183,26 @@ $dependente = json_encode($dependente);
                           <thead>
                             <tr>
                               <th>Data</th>
+                              <th>Tipo</th>
                               <th>Informações</th>
                               <th style="width: 120px;">Ações</th>
                             </tr>
                           </thead>
                           <tbody id="doc-tabl">
                             <?php
-                            $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
+                            $stmt = $pdo->prepare(
+                              "SELECT ao.data, ao.descricao, ao.idatendido_ocorrencias, t.descricao AS tipo " .
+                              "FROM atendido_ocorrencia ao " .
+                              "LEFT JOIN atendido_ocorrencia_tipos t " .
+                              "ON ao.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = t.idatendido_ocorrencia_tipos " .
+                              "WHERE atendido_idatendido = :id ORDER BY ao.data DESC"
+                            );
                             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                             $stmt->execute();
                             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                             if (empty($resultados)) {
-                              echo '<tr><td colspan="3" class="text-center text-muted">Nenhuma ocorrência cadastrada</td></tr>';
+                              echo '<tr><td colspan="4" class="text-center text-muted">Nenhuma ocorrência cadastrada</td></tr>';
                             }
 
                             foreach ($resultados as $item) {
@@ -1203,6 +1210,7 @@ $dependente = json_encode($dependente);
                             ?>
                               <tr style="cursor: pointer;" onclick="clicar(<?= (int)$item['idatendido_ocorrencias'] ?>)">
                                 <td><?= $data[2] . "/" . $data[1] . "/" . $data[0] ?></td>
+                                <td><?= htmlspecialchars($item['tipo'] ?? 'Não informado', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td>
                                   <?= htmlspecialchars(
                                     strip_tags(
