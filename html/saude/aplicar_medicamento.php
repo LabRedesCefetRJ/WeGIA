@@ -175,6 +175,12 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
   .col-md-3 {
     width: 10%;
   }
+
+  #enf {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+  }
 </style>
 
 
