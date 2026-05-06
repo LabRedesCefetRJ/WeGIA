@@ -98,6 +98,17 @@ require_once "../personalizacao_display.php";
 		function clicar(id) {
 			window.location.href = "Profile_Atendido.php?idatendido=" + id;
 		}
+
+		function formatCpfDisplay(cpf) {
+			if (!cpf || typeof cpf !== 'string') {
+				return cpf || '';
+			}
+			var digits = cpf.replace(/\D/g, '');
+			if (digits.length !== 11) {
+				return cpf;
+			}
+			return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+		}
 		$(function() {
 			var atendidos = <?php
 							$response = new AtendidoControle;
@@ -112,7 +123,7 @@ require_once "../personalizacao_display.php";
 						.append($("<td>")
 							.text(item.nome + ' ' + item.sobrenome))
 						.append($("<td id=cpf" + item.id + ">")
-							.text(item.cpf))
+							.text(item.cpf ? formatCpfDisplay(item.cpf) : 'Não informado'))
 						.append($("<td />")
 							.attr('onclick', 'clicar("' + item.id + '")')
 							.html('<i class="glyphicon glyphicon-pencil"></i>')));

@@ -201,6 +201,17 @@ $dependente = json_encode($dependente);
       return date[2] + "/" + date[1] + "/" + date[0];
     }
 
+    function formatCpfDisplay(cpf) {
+      if (!cpf || typeof cpf !== 'string') {
+        return cpf || '';
+      }
+      var digits = cpf.replace(/\D/g, '');
+      if (digits.length !== 11) {
+        return cpf;
+      }
+      return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+
     function excluirimg(id) {
       $("#excluirimg").modal('show');
       $('input[name="id_documento"]').val(id);
@@ -256,12 +267,13 @@ $dependente = json_encode($dependente);
 
           $('#orgaoEmissor').text("Orgão emissor: " + item.orgao_emissor);
           $("#orgaoEmissor").val(item.orgao_emissor);
-          if (item.cpf.indexOf("ni") != -1) {
+          if (typeof item.cpf !== 'string' || item.cpf.indexOf("ni") != -1 || item.cpf.trim() === '') {
             $("#cpf").text("Não informado");
             $("#cpf").val("Não informado");
           } else {
-            $("#cpf").text(item.cpf);
-            $("#cpf").val(item.cpf);
+            const cpfFormatado = formatCpfDisplay(item.cpf);
+            $("#cpf").text(cpfFormatado);
+            $("#cpf").val(cpfFormatado);
           }
 
           $("#inss").text("INSS: " + item.inss);

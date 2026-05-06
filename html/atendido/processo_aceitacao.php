@@ -60,6 +60,14 @@ try {
 	$oldInput = getSessionFormData(false);
 	$fieldErrors = getSessionFormErrors(false);
 	$openModal = getSessionOpenModal(false);
+
+	function formatCpfForDisplay(?string $cpf): string {
+		$digits = preg_replace('/\D+/', '', $cpf ?? '');
+		if (strlen($digits) !== 11) {
+			return htmlspecialchars($cpf ?? '', ENT_QUOTES, 'UTF-8');
+		}
+		return htmlspecialchars(preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $digits), ENT_QUOTES, 'UTF-8');
+	}
 } catch (Exception $e) {
 	Util::tratarException($e);
 	header("Location: ../home.php");
@@ -221,7 +229,7 @@ try {
 										<?php foreach ($processosAceitacao as $processo): ?>
 											<tr>
 												<td onclick="window.location.href = './etapa_processo.php?id=<?= (int)$processo['id'] ?>'"><a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" style="color: inherit"><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></a></td>
-												<td <?php if(!$showCpfColumn) echo 'style="display:none"' ?>><?= isset($processo['cpf']) && !empty($processo['cpf']) ? htmlspecialchars($processo['cpf']) : 'Não informado.' ?></td>
+												<td <?php if(!$showCpfColumn) echo 'style="display:none"' ?>><?= isset($processo['cpf']) && !empty($processo['cpf']) ? formatCpfForDisplay($processo['cpf']) : 'Não informado.' ?></td>
 												<td style="max-width: 150px;"><?= isset($processo['descricao']) && !empty($processo['descricao']) ? nl2br(htmlspecialchars(html_entity_decode($processo['descricao'], ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8')) : '' ?></td>
 												<td>
 								<?php if (!empty($processo['etapas_count']) && (int)$processo['etapas_count'] > 0): ?>
@@ -379,8 +387,9 @@ try {
                                         maxlength="14"
                                         placeholder="000.000.000-00"
                                         onkeypress="return Onlynumbers(event)"
+                                        oninput="mascara('###.###.###-##',this,event)"
                                         onkeyup="mascara('###.###.###-##',this,event)"
-                                        onblur="validarCPFEditar(this.value)"
+                                        onblur="formatCpfField(this); validarCPFEditar(this.value)"
                                         class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalEditarPerfil' ? ' is-invalid' : '' ?>" />
                                     <p id="editCpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'modalEditarPerfil' ? 'block' : 'none' ?>; color: #b30000; font-size: 12px;"><?= !empty($fieldErrors['cpf']) && $openModal === 'modalEditarPerfil' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                 </div>
@@ -492,10 +501,11 @@ try {
                                         maxlength="14"
                                         placeholder="000.000.000-00"
                                         onkeypress="return Onlynumbers(event)"
+                                        oninput="mascara('###.###.###-##',this,event)"
                                         onkeyup="mascara('###.###.###-##',this,event)"
-                                        onblur="validarCPF(this.value)"
+                                        onblur="formatCpfField(this); validarCPF(this.value)"
                                         class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>"
-                                        value="<?= htmlspecialchars($oldInput['cpf'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                        value="<?= htmlspecialchars(preg_replace('/^(\d{3})(\d{3})(\d{3})(\d{2})$/', '$1.$2.$3-$4', $oldInput['cpf'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
                                     <p id="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? 'block' : 'none' ?>; color: #b30000; font-size: 12px;"><?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                 </div>
 
@@ -687,7 +697,18 @@ try {
 	</style>
 
 	<script>
-		function validarCPF(strCPF) {
+function formatCpfField(field) {
+            if (!field) {
+                return;
+            }
+
+            const digits = field.value.replace(/\D/g, '');
+            if (digits.length === 11) {
+                field.value = digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            }
+        }
+
+        function validarCPF(strCPF) {
 			if (strCPF.length != 0 && !testaCPF(strCPF)) {
 				$('#cpfInvalido').show();
 				$('#enviar').prop('disabled', true);
@@ -1024,6 +1045,7 @@ try {
 						
 						$('#edit_data_nascimento').val(pessoa.data_nascimento);
 						$('#edit_cpf').val(pessoa.cpf);
+					formatCpfField(document.getElementById('edit_cpf'));
 						$('#edit_telefone').val(pessoa.telefone);
 						$('#edit_cep').val(pessoa.cep);
 						$('#edit_rua').val(pessoa.logradouro);
