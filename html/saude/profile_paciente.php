@@ -1045,7 +1045,25 @@ try {
     #cadastro_comorbidades .input-group-btn .btn {
       height: 34px;
     }
-    
+
+    #tipoExameFormError {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+      margin-bottom: 0;
+    }
+
+    #tipoExameFormError + .form-group {
+      margin-top: 15px;
+    }
+
+    #tipoExameFormError.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
   </style>
 
 </head>
@@ -1838,6 +1856,38 @@ try {
                       require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
                       unset($modalUploadConfig);
                       ?>
+
+                      <div class="modal fade upload-modal" id="tipoExameFormModal" tabindex="-1" role="dialog" aria-labelledby="tipoExameFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="tipoExameFormModalLabel">Adicionar tipo de exame</h4>
+                            </div>
+                            <div class="modal-body">
+                              <div id="tipoExameFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
+                                <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalTipoExame(); return false;">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                                <span id="tipoExameFormErrorText"></span>
+                              </div>
+                              <div class="form-group">
+                                <label class="control-label" for="novoTipoExameInput">
+                                  Descrição <sup class="obrig">*</sup>
+                                </label>
+                                <input type="text" class="form-control" id="novoTipoExameInput" placeholder="Nome do tipo de exame" maxlength="100" />
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                              <button type="button" class="btn btn-primary" onclick="confirmarAdicionarTipoExame()">Salvar</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <br />
                   </section>
                 </div>
@@ -2489,40 +2539,41 @@ try {
       }
 
       function adicionar_tipo_exame() {
-        const url = '../../controle/control.php';
-        let exame = window.prompt("Cadastre um novo exame: ");
+        const input = document.getElementById('novoTipoExameInput');
+        if (input) input.value = '';
+        limparErroModalTipoExame();
+        $('#tipoExameFormModal').modal('show');
+      }
+
+      async function confirmarAdicionarTipoExame() {
+        const input = document.getElementById('novoTipoExameInput');
+        const exame = input ? input.value.trim() : '';
+
         if (!exame) {
+          exibirErroModalTipoExame('O nome do tipo de exame é obrigatório.');
           return;
         }
 
         const validacaoTipoExame = SaudeValidator.validarNome(exame);
         if (!validacaoTipoExame.valido) {
-          exibirErroModalDocumento("Tipo de exame inválido: " + validacaoTipoExame.mensagem);
+          exibirErroModalTipoExame('Tipo de exame inválido: ' + validacaoTipoExame.mensagem);
           return;
         }
 
-        const data = {
-          exame: exame,
-          nomeClasse: "ExameControle",
-          metodo: "inserirTipoExame"
-        }
-        fetch(url, {
+        try {
+          const response = await fetch('../../controle/control.php', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-          }).then(response => {
-            if (!response.ok) {
-              throw new Error('Erro na requisição');
-            }
-            return response.json();
-          }).then(result => {
-            gerar_tipo_exame();
-          })
-          .catch(error => {
-            console.error('Erro ao enviar dados:', error);
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ exame, nomeClasse: 'ExameControle', metodo: 'inserirTipoExame' })
           });
+          if (!response.ok) throw new Error('Erro na requisição');
+          await response.json();
+          $('#tipoExameFormModal').modal('hide');
+          gerar_tipo_exame();
+        } catch (error) {
+          exibirErroModalTipoExame('Não foi possível salvar o tipo de exame. Tente novamente.');
+          console.error('Erro ao enviar dados:', error);
+        }
       }
 
       let timeoutMensagemCadastroExame = null;
@@ -2826,6 +2877,53 @@ try {
           timeoutFecharAnimacaoErroMedico = null;
         }, 350);
       }
+
+      let timeoutErroModalTipoExame = null;
+      let timeoutFecharAnimacaoErroTipoExame = null;
+
+      function exibirErroModalTipoExame(mensagem) {
+        const alerta = document.getElementById('tipoExameFormError');
+        const texto = document.getElementById('tipoExameFormErrorText');
+        if (!alerta || !texto) return;
+        texto.textContent = mensagem;
+        alerta.style.display = 'block';
+        alerta.classList.remove('is-visible');
+        void alerta.offsetWidth;
+        alerta.classList.add('is-visible');
+        if (timeoutErroModalTipoExame) clearTimeout(timeoutErroModalTipoExame);
+        if (timeoutFecharAnimacaoErroTipoExame) { clearTimeout(timeoutFecharAnimacaoErroTipoExame); timeoutFecharAnimacaoErroTipoExame = null; }
+        timeoutErroModalTipoExame = setTimeout(() => limparErroModalTipoExame(), 10000);
+      }
+
+      function limparErroModalTipoExame() {
+        const alerta = document.getElementById('tipoExameFormError');
+        const texto = document.getElementById('tipoExameFormErrorText');
+        if (!alerta || !texto) return;
+        alerta.classList.remove('is-visible');
+        if (timeoutErroModalTipoExame) { clearTimeout(timeoutErroModalTipoExame); timeoutErroModalTipoExame = null; }
+        if (timeoutFecharAnimacaoErroTipoExame) clearTimeout(timeoutFecharAnimacaoErroTipoExame);
+        timeoutFecharAnimacaoErroTipoExame = setTimeout(() => {
+          alerta.style.display = 'none';
+          texto.textContent = '';
+          timeoutFecharAnimacaoErroTipoExame = null;
+        }, 350);
+      }
+
+      $(document).on('show.bs.modal', '#tipoExameFormModal', function () {
+        const abertos = $('.modal.in').length;
+        if (abertos === 0) return;
+        const zIndex = 1050 + 10 * abertos;
+        $(this).css('z-index', zIndex);
+        setTimeout(function () {
+          $('.modal-backdrop').not('.modal-stack').last().css('z-index', zIndex - 1).addClass('modal-stack');
+        }, 0);
+      });
+
+      $(document).on('hidden.bs.modal', '#tipoExameFormModal', function () {
+        if ($('.modal.in').length) {
+          $('body').addClass('modal-open');
+        }
+      });
 
       let timeoutErroModalDocumento = null;
       let timeoutFecharAnimacaoErroDocumento = null;
