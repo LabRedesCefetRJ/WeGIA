@@ -145,6 +145,44 @@ class FuncionarioControle
     public function verificarHorario()
     {
         extract($_REQUEST);
+
+        $horarioCampos = [
+            'escala',
+            'tipoCargaHoraria',
+            'entrada1',
+            'saida1',
+            'entrada2',
+            'saida2',
+            'folgaSeg',
+            'folgaTer',
+            'folgaQua',
+            'folgaQui',
+            'folgaSex',
+            'folgaSab',
+            'folgaDom',
+            'folgaAlternado',
+            'trabSeg',
+            'trabTer',
+            'trabQua',
+            'trabQui',
+            'trabSex',
+            'trabSab',
+            'trabDom',
+            'plantao'
+        ];
+
+        $temHorario = false;
+        foreach ($horarioCampos as $campo) {
+            if (array_key_exists($campo, $_REQUEST) && $_REQUEST[$campo] !== null && $_REQUEST[$campo] !== '') {
+                $temHorario = true;
+                break;
+            }
+        }
+
+        if (!$temHorario) {
+            return new QuadroHorario();
+        }
+
         if ((!isset($escala)) || (empty($escala))) {
             $escala = null;
         }
@@ -164,6 +202,26 @@ class FuncionarioControle
             $saida2 = '';
         }
 
+        $hasHorarioData = !empty($entrada1) || !empty($saida1) || !empty($entrada2) || !empty($saida2);
+        $hasDiaTrabalhado = isset($trabSeg) || isset($trabTer) || isset($trabQua) || isset($trabQui) || isset($trabSex) || isset($trabSab) || isset($trabDom);
+        $hasFolga = isset($folgaSeg) || isset($folgaTer) || isset($folgaQua) || isset($folgaQui) || isset($folgaSex) || isset($folgaSab) || isset($folgaDom) || isset($folgaAlternado);
+
+        // If only schedule type/escala were provided without actual period/day details, accept an empty schedule.
+        if (!$hasHorarioData && !$hasDiaTrabalhado && !$hasFolga && !isset($plantao)) {
+            $horario = new QuadroHorario();
+            $horario->setEscala($escala);
+            $horario->setTipo($tipoCargaHoraria);
+            $horario->setCarga_horaria(null);
+            $horario->setEntrada1('');
+            $horario->setSaida1('');
+            $horario->setEntrada2('');
+            $horario->setSaida2('');
+            $horario->setTotal('');
+            $horario->setDias_trabalhados(null);
+            $horario->setFolga('');
+            return $horario;
+        }
+
         // Calcula as horas com validação de turnos noturnos
         try {
             $subtotal1 = $this->calcularHora($entrada1, $saida1);
@@ -175,7 +233,11 @@ class FuncionarioControle
 
         // Se não houver nenhuma hora preenchida, valida que existe formação de horário
         if (empty($total) || $total === '00:00') {
-            throw new InvalidArgumentException('É necessário informar pelo menos um período de trabalho (entrada e saída).', 400);
+            if (isset($plantao)) {
+                $total = '00:00';
+            } else {
+                throw new InvalidArgumentException('É necessário informar pelo menos um período de trabalho (entrada e saída).', 400);
+            }
         }
 
         $diasTrabalhados = array();

@@ -997,7 +997,7 @@ try {
                         </thead>
                         <tbody id="tabela_remuneracao"></tbody>
                       </table>
-                      <button id="excluir" type="button" class="btn btn-success" data-toggle="modal" data-target="#adicionar">Adicionar</button>
+                      <button id="excluir" type="button" class="btn btn-success" onclick="abrirModalRemuneracao(false)">Adicionar</button>
                     </div><br>
                     <div class="modal fade" id="adicionar" role="dialog">
                       <div class="modal-dialog">
@@ -1005,7 +1005,7 @@ try {
                         <div class="modal-content">
                           <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" id="closeRemuneracaoModal">×</button>
-                            <h3>Adicionar Remuneração</h3>
+                            <h3 id="remuneracaoModalTitle">Adicionar Remuneração</h3>
                           </div>
                           <div class="modal-body">
                             <fieldset id="formRemuneracao">
@@ -1046,6 +1046,8 @@ try {
                               <!-- Pegar id funcionário de variável sanitizada -->
                               <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                               <input type="hidden" name="action" value="remuneracao_adicionar">
+                              <input type="hidden" name="id_remuneracao" value="">
+                              <input type="hidden" name="id_funcionario_remuneracao" value="">
                               <button class="btn btn-primary" id="botaoSalvarRemuneracao" onclick="adicionarRemuneracao('formRemuneracao', console.log)">Salvar</button>
                             </fieldset>
                           </div>
@@ -1987,7 +1989,18 @@ try {
       switch (idForm) {
         case "formRemuneracao":
           url = "remuneracao.php";
-          data_nova = "id_tipo=" + data[0] + "&valor=" + data[1] + "&inicio=" + data[2] + "&fim=" + data[3] + "&action=remuneracao_adicionar&id_funcionario=" + data[4];
+          var action = $("#" + idForm + " input[name='action']").val() || 'remuneracao_adicionar';
+          var idTipo = $("#" + idForm + " select[name='id_tipo']").val();
+          var valor = $("#" + idForm + " input[name='valor']").val();
+          var inicio = $("#" + idForm + " input[name='inicio']").val();
+          var fim = $("#" + idForm + " input[name='fim']").val();
+          var idFuncionario = $("#" + idForm + " input[name='id_funcionario']").val();
+          data_nova = "id_tipo=" + encodeURIComponent(idTipo) + "&valor=" + encodeURIComponent(valor) + "&inicio=" + encodeURIComponent(inicio) + "&fim=" + encodeURIComponent(fim) + "&action=" + encodeURIComponent(action) + "&id_funcionario=" + encodeURIComponent(idFuncionario);
+          if (action === 'remuneracao_editar') {
+            var idRemuneracao = $("#" + idForm + " input[name='id_remuneracao']").val();
+            var idFuncionarioRemuneracao = $("#" + idForm + " input[name='id_funcionario_remuneracao']").val();
+            data_nova += "&id_remuneracao=" + encodeURIComponent(idRemuneracao) + "&id_funcionario_remuneracao=" + encodeURIComponent(idFuncionarioRemuneracao);
+          }
           break;
         case "formInfoAdicional":
           url = "informacao_adicional.php";
@@ -2073,6 +2086,7 @@ try {
             .append($("<td>").text(item.fim))
             .append($("<td class='tabela'>").text(item.valor))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
+              .append($("<button onclick='abrirModalRemuneracao(true, " + item.id_remuneracao + ", " + item.id_tipo + ", \"" + item.inicio + "\", \"" + item.fim + "\", " + item.valor + ")' title='Editar' class='btn btn-primary'><i class='fas fa-edit'></i></button>"))
               .append($("<button onclick='removerRemuneracao(" + item.id_remuneracao + ")' title='Excluir' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>"))
             )
           );
@@ -2080,6 +2094,31 @@ try {
 
       $('.total').html(total);
       inicializarTabelaRemuneracao();
+    }
+
+    function abrirModalRemuneracao(isEdit, idRemuneracao, idTipo, inicio, fim, valor) {
+      $('#tipo_remuneracao').prop('selectedIndex', 0);
+      $('#valor_remuneracao, #inicio_remuneracao, #fim_remuneracao').val('');
+      $('#formRemuneracao input[name="id_remuneracao"]').val('');
+      $('#formRemuneracao input[name="id_funcionario_remuneracao"]').val('');
+      $('#formRemuneracao input[name="action"]').val('remuneracao_adicionar');
+      $('#botaoSalvarRemuneracao').text('Salvar');
+      $('#remuneracaoModalTitle').text('Adicionar Remuneração');
+      $('#erro_periodo_remuneracao').hide();
+
+      if (isEdit) {
+        $('#formRemuneracao input[name="action"]').val('remuneracao_editar');
+        $('#formRemuneracao input[name="id_remuneracao"]').val(idTipo);
+        $('#formRemuneracao input[name="id_funcionario_remuneracao"]').val(idRemuneracao);
+        $('#tipo_remuneracao').val(idTipo);
+        $('#valor_remuneracao').val(valor);
+        $('#inicio_remuneracao').val(inicio);
+        $('#fim_remuneracao').val(fim);
+        $('#botaoSalvarRemuneracao').text('Atualizar');
+        $('#remuneracaoModalTitle').text('Editar Remuneração');
+      }
+
+      $('#adicionar').modal('show');
     }
 
     function adicionarRemuneracao() {
@@ -2116,6 +2155,9 @@ try {
     }
 
     function removerRemuneracao(id) {
+      if (!confirm('Tem certeza que deseja excluir esta remuneração?')) {
+        return;
+      }
       var url = "remuneracao.php";
       var data = "action=remover&id_remuneracao=" + id + "&id_funcionario=<?= $idFuncionario ?>";
       post(url, data, listar_remuneracao);
