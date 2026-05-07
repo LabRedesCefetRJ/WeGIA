@@ -701,6 +701,35 @@ $(document).ready(function () {
         $(this).val(currentValue);
     });
     // Configuração tabela sócios
+    // Filtro customizado para desconsiderar caracteres antes do termo de busca
+    $.fn.dataTable.ext.afnFiltering.push(
+        function(settings, data, dataIndex) {
+            // Aplica apenas à tabela #example
+            if (settings.nTable.id !== 'example') {
+                return true;
+            }
+            
+            var searchTerm = settings.oPreviousSearch.sSearch.toLowerCase();
+            
+            // Se não há termo de busca, retorna true (mostra a linha)
+            if (!searchTerm) {
+                return true;
+            }
+            
+            // Procura em todas as colunas
+            for (var i = 0; i < data.length; i++) {
+                var cellData = data[i].toLowerCase();
+                // Verifica se começa com o termo de busca ou aparece após espaço
+                if (cellData.indexOf(searchTerm) === 0 || 
+                    cellData.indexOf(' ' + searchTerm) >= 0) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+    );
+
     $(document).ready(function () {
         $('#example').DataTable({
             "processing": true,
