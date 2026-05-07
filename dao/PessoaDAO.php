@@ -26,11 +26,12 @@ class PessoaDAO
      */
     public function verificarExistencia(string $cpf): PessoaDTOSocio|null
     {
+        $cpfDigits = preg_replace('/\D+/', '', $cpf);
 
-        $sql = "SELECT * FROM pessoa WHERE cpf=:cpf";
+        $sql = "SELECT * FROM pessoa WHERE REPLACE(REPLACE(REPLACE(cpf, '.', ''), '-', ''), ' ', '') = :cpf";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':cpf', $cpf);
+        $stmt->bindParam(':cpf', $cpfDigits);
         $stmt->execute();
 
         if ($stmt->rowCount() < 1) {

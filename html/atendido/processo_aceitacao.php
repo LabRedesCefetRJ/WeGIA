@@ -469,14 +469,14 @@ try {
 
                                 <div class="form-group">
                                     <label>Nome <span class="text-danger">*</span></label>
-                                    <input type="text" name="nome" class="form-control<?= !empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="given-name" value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                    <input type="text" id="nome" name="nome" class="form-control<?= !empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="given-name" value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
                                     <?php if (!empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso'): ?>
                                         <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') ?></p>
                                     <?php endif; ?>
                                 </div>
                                 <div class="form-group">
                                     <label>Sobrenome <span class="text-danger">*</span></label>
-                                    <input type="text" name="sobrenome" class="form-control<?= !empty($fieldErrors['sobrenome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="family-name" value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                    <input type="text" id="sobrenome" name="sobrenome" class="form-control<?= !empty($fieldErrors['sobrenome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="family-name" value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
                                     <?php if (!empty($fieldErrors['sobrenome']) && $openModal === 'modalNovoProcesso'): ?>
                                         <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') ?></p>
                                     <?php endif; ?>
@@ -506,8 +506,8 @@ try {
                                         placeholder="000.000.000-00"
                                         onkeypress="return Onlynumbers(event)"
                                         oninput="mascara('###.###.###-##',this,event)"
-                                        onkeyup="mascara('###.###.###-##',this,event)"
-                                        onblur="formatCpfField(this); validarCPF(this.value)"
+                                        onkeyup="mascara('###.###.###-##',this,event); if (this.value.replace(/\D/g,'').length === 11) buscarPessoaPorCpf(this.value);"
+                                        onblur="formatCpfField(this); validarCPF(this.value); buscarPessoaPorCpf(this.value)"
                                         class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>"
                                         value="<?= htmlspecialchars(preg_replace('/^(\d{3})(\d{3})(\d{3})(\d{2})$/', '$1.$2.$3-$4', $oldInput['cpf'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
                                     <p id="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? 'block' : 'none' ?>; color: #b30000; font-size: 12px;"><?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
@@ -721,6 +721,48 @@ function formatCpfField(field) {
 				$('#enviar').prop('disabled', false);
 			}
 		}
+
+        function buscarPessoaPorCpf(cpf) {
+            const digits = cpf.replace(/\D/g, '');
+            if (digits.length !== 11) {
+                return;
+            }
+
+            $.ajax({
+                url: '../../controle/control.php',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    nomeClasse: 'ProcessoAceitacaoControle',
+                    metodo: 'getPessoaPorCpf',
+                    cpf: digits
+                },
+                success: function(response) {
+                    if (!response.success || !response.pessoa) {
+                        return;
+                    }
+
+                    $('#nome').val(response.pessoa.nome || '');
+                    $('#sobrenome').val(response.pessoa.sobrenome || '');
+                    $('#telefone').val(response.pessoa.telefone || '');
+                    $('#cep').val(response.pessoa.cep || '');
+                    $('#rua').val(response.pessoa.logradouro || '');
+                    $('#numero_residencia').val(response.pessoa.numero_endereco || '');
+                    $('#bairro').val(response.pessoa.bairro || '');
+                    $('#cidade').val(response.pessoa.cidade || '');
+                    $('#uf').val(response.pessoa.estado || '');
+                    $('#ibge').val(response.pessoa.ibge || '');
+                    $('#data_nascimento_processo').val(response.pessoa.data_nascimento || '');
+
+                    if (response.pessoa.sexo === 'm' || response.pessoa.sexo === 'f') {
+                        $('input[name="sexo"][value="' + response.pessoa.sexo + '"]').prop('checked', true);
+                    }
+                },
+                error: function() {
+                    // ignore errors silently
+                }
+            });
+        }
 
         function mostrarErroModal(message) {
             const alertBox = $('#alertNovoProcesso');

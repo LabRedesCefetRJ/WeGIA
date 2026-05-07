@@ -48,10 +48,6 @@ class ProcessoAceitacaoControle
     public function incluir()
     {
         try {
-            $nome = $this->getPostValue('nome');
-            $sobrenome = $this->getPostValue('sobrenome');
-            $sexo = $this->getPostValue('sexo');
-            $dataNascimento = $this->getPostValue('data_nascimento');
             $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
             $descricao = $this->getPostValue('descricao');
             $telefone = $this->getPostValue('telefone');
@@ -63,6 +59,33 @@ class ProcessoAceitacaoControle
             $numero = $this->getPostValue('numero_residencia');
             $complemento = $this->getPostValue('complemento');
             $ibge = $this->getPostValue('ibge');
+
+            $pessoaDAO = new PessoaDAO($this->pdo);
+            $existingPessoa = null;
+            if ($cpf !== null) {
+                $existingPessoa = $pessoaDAO->verificarExistencia($cpf);
+            }
+
+            if ($existingPessoa !== null) {
+                $nome = $existingPessoa->getNome();
+                $sobrenome = $existingPessoa->getSobrenome();
+                $sexo = $existingPessoa->getSexo();
+                $dataNascimento = $existingPessoa->getDataNascimento();
+                $telefone = $existingPessoa->getTelefone();
+                $cep = $existingPessoa->getCep();
+                $rua = $existingPessoa->getLogradouro();
+                $bairro = $existingPessoa->getBairro();
+                $cidade = $existingPessoa->getCidade();
+                $uf = $existingPessoa->getEstado();
+                $numero = $existingPessoa->getNumeroEndereco();
+                $complemento = $existingPessoa->getComplemento();
+                $ibge = $existingPessoa->getIbge();
+            } else {
+                $nome = $this->getPostValue('nome');
+                $sobrenome = $this->getPostValue('sobrenome');
+                $sexo = $this->getPostValue('sexo');
+                $dataNascimento = $this->getPostValue('data_nascimento');
+            }
 
             if (empty($nome) || empty($sobrenome)) {
                 throw new InvalidArgumentException('Nome e Sobrenome são obrigatórios.', 400);
@@ -90,36 +113,27 @@ class ProcessoAceitacaoControle
                 'ibge' => $ibge,
             ]);
 
-            if ($cpf !== null) {
-                $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?");
-                $stmt->execute([$cpf]);
-
-                if ((int)$stmt->fetchColumn() > 0) {
-                    throw new InvalidArgumentException('CPF já cadastrado no sistema.', 400);
-                }
-            }
-
-            $pessoaDAO = new PessoaDAO($this->pdo);
             $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
-
             $this->pdo->beginTransaction();
 
-            $id_pessoa = $pessoaDAO->inserirPessoa(
-                $cpf,
-                $nome,
-                $sobrenome,
-                $telefone,
-                $cep,
-                $rua,
-                $bairro,
-                $cidade,
-                $uf,
-                $numero,
-                $complemento,
-                $ibge,
-                $sexo,
-                $dataNascimento
-            );
+            if (!isset($id_pessoa)) {
+                $id_pessoa = $pessoaDAO->inserirPessoa(
+                    $cpf,
+                    $nome,
+                    $sobrenome,
+                    $telefone,
+                    $cep,
+                    $rua,
+                    $bairro,
+                    $cidade,
+                    $uf,
+                    $numero,
+                    $complemento,
+                    $ibge,
+                    $sexo,
+                    $dataNascimento
+                );
+            }
 
             $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao);
             if (!$resultado || $resultado <= 0) {
@@ -286,6 +300,52 @@ class ProcessoAceitacaoControle
             ]);
         } catch (Exception $e) {
             Util::tratarException($e);
+        }
+    }
+
+    public function getPessoaPorCpf()
+    {
+        $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
+        try {
+            if (!$cpf) {
+                throw new InvalidArgumentException('CPF não informado.', 400);
+            }
+
+            $cpf = $this->normalizeCpf($cpf);
+            if ($cpf === null || !Util::validarCPF($cpf)) {
+                throw new InvalidArgumentException('CPF inválido.', 400);
+            }
+
+            $pessoaDao = new PessoaDAO($this->pdo);
+            $existingPessoa = $pessoaDao->verificarExistencia($cpf);
+
+            if ($existingPessoa === null) {
+                echo json_encode(['success' => false, 'erro' => 'CPF não encontrado.']);
+                exit();
+            }
+
+            echo json_encode([
+                'success' => true,
+                'pessoa' => [
+                    'cpf' => $existingPessoa->getCpf(),
+                    'nome' => $existingPessoa->getNome(),
+                    'sobrenome' => $existingPessoa->getSobrenome(),
+                    'sexo' => $existingPessoa->getSexo(),
+                    'data_nascimento' => $existingPessoa->getDataNascimento(),
+                    'telefone' => $existingPessoa->getTelefone(),
+                    'cep' => $existingPessoa->getCep(),
+                    'logradouro' => $existingPessoa->getLogradouro(),
+                    'numero_endereco' => $existingPessoa->getNumeroEndereco(),
+                    'bairro' => $existingPessoa->getBairro(),
+                    'cidade' => $existingPessoa->getCidade(),
+                    'estado' => $existingPessoa->getEstado(),
+                    'complemento' => $existingPessoa->getComplemento(),
+                    'ibge' => $existingPessoa->getIbge()
+                ]
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'erro' => $e->getMessage()]);
         }
     }
 
