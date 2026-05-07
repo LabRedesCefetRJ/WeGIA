@@ -176,10 +176,14 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
     width: 10%;
   }
 
-  #enf {
-    display: block;
+  .responsive-table-wrapper {
     overflow-x: auto;
     width: 100%;
+  }
+
+  .responsive-table-wrapper .table {
+    margin-bottom: 0;
+    min-width: 100%;
   }
 </style>
 
@@ -1001,18 +1005,20 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                       </div>
                       <br />
 
-                      <table class="table table-bordered table-striped mb-none" id="enf">
-                        <thead>
-                          <tr style="font-size:15px;">
-                            <th>Responsável pela aplicação</th>
-                            <th>Medicações aplicadas</th>
-                            <th>Horário da aplicação</th>
-                          </tr>
-                        </thead>
-                        <tbody id="exibiaplicacao" style="font-size:15px">
+                      <div class="responsive-table-wrapper">
+                        <table class="table table-bordered table-striped mb-none" id="enf">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Responsável pela aplicação</th>
+                              <th>Medicações aplicadas</th>
+                              <th>Horário da aplicação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="exibiaplicacao" style="font-size:15px">
 
-                        </tbody>
-                      </table>
+                          </tbody>
+                        </table>
+                      </div>
 
                       <br>
                       <br>
