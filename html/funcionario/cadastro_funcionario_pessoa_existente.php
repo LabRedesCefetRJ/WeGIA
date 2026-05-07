@@ -103,7 +103,11 @@ try {
 
         $("#nome").val(item.nome).prop('disabled', true);
         $("#sobrenome").val(item.sobrenome).prop('disabled', true);
-        $("#telefone").val(item.telefone).prop('disabled', true);
+        if (item.telefone && item.telefone !== "null" && item.telefone !== "") {
+          $("#telefone").val(item.telefone).prop('disabled', true);
+        } else {
+          $("#telefone").val("").prop('disabled', false);
+        }
         $("#orgao_emissor").val(item.orgao_emissor);
         $("#nascimento").val(alterardate(item.data_nascimento)).prop('disabled', true);
         $("#data_expedicao").val(alterardate(item.data_expedicao));
@@ -114,15 +118,15 @@ try {
           $("#radioM").prop('checked', true);
           $("#radioF").prop('disabled', true);
 
-        } else if (item.sexo == "f") {
+        } else if (item.sexo === "f") {
           $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
           $("#radioF").prop('checked', true);
           $("#radioM").prop('disabled', true);
 
-        } else if (item.sexo = null) {
-          $("#radio").prop('disabled', false);
+        } else if (item.sexo == null) {
+          $("input[name=gender]").prop('disabled', false);
         }
-      })
+      });
 
       function alterardate(data) {
         var date = data.split("/")
@@ -186,8 +190,8 @@ try {
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <label><input type="radio" name="gender" id="radio" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                    <label><input type="radio" name="gender" id="radio" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
                   </div>
                 </div>
                 <div class="form-group">
