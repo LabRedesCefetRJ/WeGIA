@@ -2238,18 +2238,20 @@ try {
                     <div class="panel-body">
                       <hr class="dotted short">
 
-                      <table class="table table-bordered table-striped mb-none" id="enf">
-                        <thead>
-                          <tr style="font-size:15px;">
-                            <th>Responsável pela aplicação</th>
-                            <th>Medicações aplicadas</th>
-                            <th>Horário da aplicação</th>
-                          </tr>
-                        </thead>
-                        <tbody id="exibiaplicacao" style="font-size:15px">
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-none" id="enf">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Responsável pela aplicação</th>
+                              <th>Medicações aplicadas</th>
+                              <th>Horário da aplicação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="exibiaplicacao" style="font-size:15px">
 
-                        </tbody>
-                      </table>
+                          </tbody>
+                        </table>
+                      </div>
 
                       <br>
                       <br>
