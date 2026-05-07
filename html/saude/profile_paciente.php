@@ -1968,19 +1968,21 @@ try {
 
                       <div class="form-group">
                         <hr class="dotted short">
-                        <table class="table table-bordered table-striped mb-none">
-                          <thead>
-                            <tr style=" font-size:15px;">
-                          <th>Data do atendimento</th>
-                          <th>Medicações</th>
-                          <th>Status</th>
-                          <th>Ação</th>
-                          </tr>
-                          </thead>
-                          <tbody id="exibimed" style="font-size:15px">
+                        <div class="table-responsive">
+                          <table class="table table-bordered table-striped mb-none">
+                            <thead>
+                              <tr style="font-size:15px;">
+                                <th>Data do atendimento</th>
+                                <th>Medicações</th>
+                                <th>Status</th>
+                                <th>Ação</th>
+                              </tr>
+                            </thead>
+                            <tbody id="exibimed" style="font-size:15px">
 
-                          </tbody>
-                        </table>
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
 
                       <div class="modal fade" id="testemed" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
@@ -2135,20 +2137,22 @@ try {
 
                       <br>
                       <hr class="dotted short">
-                      <table class="table table-bordered table-striped mb-none" id="tabmed">
-                        <thead>
-                          <tr style="font-size:15px;">
-                            <th>Medicação</th>
-                            <th>Dosagem</th>
-                            <th>Horário</th>
-                            <th>Duração</th>
-                            <th>Ação</th>
-                          </tr>
-                        </thead>
-                        <tbody style="font-size:15px">
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-none" id="tabmed">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Medicação</th>
+                              <th>Dosagem</th>
+                              <th>Horário</th>
+                              <th>Duração</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody style="font-size:15px">
 
-                        </tbody>
-                      </table>
+                          </tbody>
+                        </table>
+                      </div>
                       <br>
                       <br>
                       <input type="number" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
