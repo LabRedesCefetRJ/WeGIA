@@ -31,6 +31,7 @@ if (!$id_projeto || $id_projeto < 1) {
 }
 
 require_once ROOT . "/dao/ProjetoDAO.php";
+require_once ROOT . "/dao/FuncionarioDAO.php";
 require_once ROOT . "/controle/ProjetoControle.php";
 
 $projetoControle = new ProjetoControle();
@@ -51,6 +52,17 @@ if (isset($_SESSION['projeto'])) {
 $tipos         = $projetoControle->obterTipos();
 $locais        = $projetoControle->obterLocais();
 $statusProjeto = $projetoControle->obterStatus();
+
+// Buscar funcionários ativos para o select
+$executanteDAO = new FuncionarioDAO();
+$executantes = $executanteDAO->listarTodos(1); // 1 = ativos
+
+// Buscar funções disponíveis
+$projetoDAO = new ProjetoDAO();
+$funcoes = $projetoDAO->listarFuncoesProjeto();
+
+// Buscar equipe já cadastrada
+$equipe = $projetoDAO->listarEquipeProjeto($id_projeto);
 
 require_once ROOT . "/html/personalizacao_display.php";
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
@@ -73,7 +85,11 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
 
-  <style>.obrig { color: rgb(255,0,0); }</style>
+  <style>
+    .obrig {
+      color: rgb(255, 0, 0);
+    }
+  </style>
 </head>
 
 <body>
@@ -95,99 +111,263 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       </header>
 
       <div class="row">
-        <div class="col-md-8 col-lg-8">
+        <div class="col-md-12">
           <div class="tabs">
             <ul class="nav nav-tabs tabs-primary">
-              <li class="active"><a href="#overview" data-toggle="tab">Editar Projeto</a></li>
+              <li class="active"><a href="#overview" data-toggle="tab">Dados do Projeto</a></li>
+              <li><a href="#equipe" data-toggle="tab">Equipe do Projeto</a></li>
+              <li><a href="#atendidos" data-toggle="tab">Atendidos</a></li>
             </ul>
             <div class="tab-content">
+
+              <!-- ABA 1: Dados do Projeto -->
               <div id="overview" class="tab-pane active">
-                <h4 class="mb-xlg">Informações do Projeto</h4>
-                <h5 class="obrig">Campos Obrigatórios(*)</h5>
+                <div class="col-md-8 col-lg-8">
+                  <h4 class="mb-xlg">Informações do Projeto</h4>
+                  <h5 class="obrig">Campos Obrigatórios(*)</h5>
 
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="nome_projeto">Nome do Projeto<sup class="obrig">*</sup></label>
-                  <div class="col-md-8">
-                    <input type="text" class="form-control" id="nome_projeto" value="<?= htmlspecialchars($projeto['nome']) ?>" required>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="nome_projeto">Nome do Projeto<sup class="obrig">*</sup></label>
+                    <div class="col-md-8">
+                      <input type="text" class="form-control" id="nome_projeto" value="<?= htmlspecialchars($projeto['nome']) ?>" required>
+                    </div>
                   </div>
-                </div>
 
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="tipo_projeto">Tipo de Projeto<sup class="obrig">*</sup></label>
-                  <div class="col-md-8">
-                    <select class="form-control input-lg mb-md" id="tipo_projeto" required>
-                      <option selected disabled>Selecionar</option>
-                      <?php foreach ($tipos as $tipo): ?>
-                        <option value="<?= $tipo['id_tipo'] ?>" <?= ($tipo['id_tipo'] == $projeto['id_tipo']) ? 'selected' : '' ?>>
-                          <?= htmlspecialchars($tipo['descricao']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="tipo_projeto">Tipo de Projeto<sup class="obrig">*</sup></label>
+                    <div class="col-md-8">
+                      <select class="form-control input-lg mb-md" id="tipo_projeto" required>
+                        <option selected disabled>Selecionar</option>
+                        <?php foreach ($tipos as $tipo): ?>
+                          <option value="<?= $tipo['id_tipo'] ?>" <?= ($tipo['id_tipo'] == $projeto['id_tipo']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($tipo['descricao']) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
                   </div>
-                </div>
 
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="local_projeto">Local<sup class="obrig">*</sup></label>
-                  <div class="col-md-8">
-                    <select class="form-control input-lg mb-md" id="local_projeto" required>
-                      <option selected disabled>Selecionar</option>
-                      <?php foreach ($locais as $local): ?>
-                        <option value="<?= $local['id_local'] ?>" <?= ($local['id_local'] == $projeto['id_local']) ? 'selected' : '' ?>>
-                          <?= htmlspecialchars($local['nome']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="local_projeto">Local<sup class="obrig">*</sup></label>
+                    <div class="col-md-8">
+                      <select class="form-control input-lg mb-md" id="local_projeto" required>
+                        <option selected disabled>Selecionar</option>
+                        <?php foreach ($locais as $local): ?>
+                          <option value="<?= $local['id_local'] ?>" <?= ($local['id_local'] == $projeto['id_local']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($local['nome']) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
                   </div>
-                </div>
 
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="status_projeto">Status<sup class="obrig">*</sup></label>
-                  <div class="col-md-8">
-                    <select class="form-control input-lg mb-md" id="status_projeto" required>
-                      <option selected disabled>Selecionar</option>
-                      <?php foreach ($statusProjeto as $status): ?>
-                        <option value="<?= $status['id_status'] ?>" <?= ($status['id_status'] == $projeto['id_status']) ? 'selected' : '' ?>>
-                          <?= htmlspecialchars($status['descricao']) ?>
-                        </option>
-                      <?php endforeach; ?>
-                    </select>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="status_projeto">Status<sup class="obrig">*</sup></label>
+                    <div class="col-md-8">
+                      <select class="form-control input-lg mb-md" id="status_projeto" required>
+                        <option selected disabled>Selecionar</option>
+                        <?php foreach ($statusProjeto as $status): ?>
+                          <option value="<?= $status['id_status'] ?>" <?= ($status['id_status'] == $projeto['id_status']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($status['descricao']) ?>
+                          </option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
                   </div>
-                </div>
 
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="data_inicio">Data de Início<sup class="obrig">*</sup></label>
-                  <div class="col-md-8">
-                    <input type="date" class="form-control" id="data_inicio" value="<?= htmlspecialchars($projeto['data_inicio']) ?>" required>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="data_inicio">Data de Início<sup class="obrig">*</sup></label>
+                    <div class="col-md-8">
+                      <input type="date" class="form-control" id="data_inicio" value="<?= htmlspecialchars($projeto['data_inicio']) ?>" required>
+                    </div>
                   </div>
-                </div>
 
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="data_fim">Data de Término</label>
-                  <div class="col-md-8">
-                    <input type="date" class="form-control" id="data_fim" value="<?= htmlspecialchars($projeto['data_fim'] ?? '') ?>">
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="data_fim">Data de Término</label>
+                    <div class="col-md-8">
+                      <input type="date" class="form-control" id="data_fim" value="<?= htmlspecialchars($projeto['data_fim'] ?? '') ?>">
+                    </div>
                   </div>
-                </div>
 
-                <div class="form-group">
-                  <label class="col-md-3 control-label" for="descricao_projeto">Descrição</label>
-                  <div class="col-md-8">
-                    <textarea class="form-control" id="descricao_projeto" rows="4"><?= htmlspecialchars($projeto['descricao'] ?? '') ?></textarea>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="descricao_projeto">Descrição</label>
+                    <div class="col-md-8">
+                      <textarea class="form-control" id="descricao_projeto" rows="4"><?= htmlspecialchars($projeto['descricao'] ?? '') ?></textarea>
+                    </div>
                   </div>
-                </div>
 
-                <hr class="dotted short">
+                  <hr class="dotted short">
 
-                <div class="panel-footer">
-                  <div class="row">
-                    <div class="col-md-9 col-md-offset-3">
-                      <input type="hidden" id="csrf_token" value="<?= Csrf::generateToken() ?>">
-                      <input type="hidden" id="id_projeto" value="<?= $id_projeto ?>">
-                      <button type="button" class="btn btn-primary" id="btn-salvar">Salvar Alterações</button>
-                      <a href="informacao_projeto.php" class="btn btn-default">Cancelar</a>
+                  <div class="panel-footer">
+                    <div class="row">
+                      <div class="col-md-9 col-md-offset-3">
+                        <input type="hidden" id="csrf_token" value="<?= Csrf::generateToken() ?>">
+                        <input type="hidden" id="id_projeto" value="<?= $id_projeto ?>">
+                        <button type="button" class="btn btn-primary" id="btn-salvar">Salvar Alterações</button>
+                        <a href="informacao_projeto.php" class="btn btn-default">Cancelar</a>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <!-- ABA 2: Equipe do Projeto -->
+              <div id="equipe" class="tab-pane">
+                <div class="col-md-12">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Membros da Equipe</h2>
+                    </header>
+                    <div class="panel-body">
+                      <table class="table table-bordered table-striped mb-none">
+                        <thead>
+                          <tr>
+                            <th>Executante</th>
+                            <th>CPF</th>
+                            <th>Cargo/Função</th>
+                            <th class="text-center" width="80">Ação</th>
+                          </tr>
+                        </thead>
+                        <tbody id="equipe-tab">
+                          <?php if ($equipe && count($equipe) > 0): ?>
+                            <?php foreach ($equipe as $membro): ?>
+                              <tr id="equipe-<?= $membro['id'] ?>">
+                                <td><?= htmlspecialchars($membro['nome'] . ' ' . ($membro['sobrenome'] ?? '')) ?></td>
+                                <td><?= htmlspecialchars($membro['cpf'] ?? '--') ?></td>
+                                <td><?= htmlspecialchars($membro['funcao_descricao'] ?? '--') ?></td>
+                                <td class="actions text-center">
+                                  <button type="button" onclick="removerMembroEquipe(<?= $membro['id'] ?>)" id="btn-remover-<?= $membro['id'] ?>" class="btn btn-danger btn-xs" title="Remover">
+                                    <i class="fa fa-trash"></i>
+                                  </button>
+                                </td>
+                              </tr>
+                            <?php endforeach; ?>
+                          <?php else: ?>
+                            <tr>
+                              <td colspan="4" class="text-center">Nenhum membro cadastrado nesta equipe.</td>
+                            </tr>
+                          <?php endif; ?>
+                        </tbody>
+                      </table>
+
+                      <hr class="dotted short">
+
+                      <h4>Adicionar Novo Membro</h4>
+                      <div class="row">
+                        <div class="col-md-5">
+                          <div class="form-group">
+                            <label for="novo_funcionario">Executante<sup class="obrig">*</sup></label>
+                            <select id="novo_funcionario" class="form-control">
+                              <option selected disabled>Selecion Executante</option>
+                              <?php foreach ($executantes as $executante): ?>
+                                <option value="<?= $executante['id_funcionario'] ?>">
+                                  <?= htmlspecialchars($executante['nome'] . ' ' . ($executante['sobrenome'] ?? '')) ?>
+                                </option>
+                              <?php endforeach; ?>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-md-5">
+                          <div class="form-group">
+                            <label for="nova_funcao">Cargo/Função<sup class="obrig">*</sup></label>
+                            <div style="display: flex;">
+                              <select id="nova_funcao" class="form-control" style="flex: 1;">
+                                <option selected disabled>Selecionar Função</option>
+                                <?php foreach ($funcoes as $funcao): ?>
+                                  <option value="<?= $funcao['id_funcao'] ?>">
+                                    <?= htmlspecialchars($funcao['descricao']) ?>
+                                  </option>
+                                <?php endforeach; ?>
+                              </select>
+                              <a onclick="adicionarNovaFuncao()" style="cursor:pointer; margin-left: 10px; display: flex; align-items: center;">
+                                <i class="fas fa-plus w3-xlarge" style="font-size: 24px; color: #007bff;"></i>
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-2">
+                          <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="button" id="btn-adicionar-membro" class="btn btn-primary form-control" onclick="adicionarMembroEquipe()">
+                              <i class="fa fa-plus"></i> Adicionar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <!-- ABA 3: Atendidos do Projeto -->
+              <div id="atendidos" class="tab-pane">
+                <div class="col-md-12">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Atendidos Vinculados</h2>
+                    </header>
+                    <div class="panel-body">
+                      <table class="table table-bordered table-striped mb-none">
+                        <thead>
+                          <tr>
+                            <th>Atendido</th>
+                            <th>CPF</th>
+                            <th>Status</th>
+                            <th class="text-center" width="100">Ação</th>
+                            </td>
+                        </thead>
+                        <tbody id="atendidos-tab">
+                          <tr>
+                            <td colspan="4" class="text-center">Carregando...</td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <hr class="dotted short">
+
+                      <h4>Vincular Novo Atendido</h4>
+                      <div class="row">
+                        <div class="col-md-5">
+                          <div class="form-group">
+                            <label for="novo_atendido">Atendido<sup class="obrig">*</sup></label>
+                            <select id="novo_atendido" class="form-control">
+                              <option selected disabled>Selecionar Atendido</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-group">
+                            <label for="status_atendido">Status<sup class="obrig">*</sup></label>
+                            <div style="display: flex;">
+                              <select id="status_atendido" class="form-control" style="flex: 1;">
+                                <option selected disabled>Selecionar Status</option>
+                              </select>
+                              <a onclick="adicionarNovoStatusAtendido()" style="cursor:pointer; margin-left: 10px; display: flex; align-items: center;">
+                                <i class="fas fa-plus w3-xlarge" style="font-size: 24px; color: #007bff;"></i>
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-md-3">
+                          <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button type="button" id="btn-adicionar-atendido" class="btn btn-primary form-control" onclick="adicionarAtendidoProjeto()">
+                              <i class="fa fa-plus"></i> Vincular
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -198,11 +378,14 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
   <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
   <script src="../../Functions/projetos_editar.js"></script>
-  <script>
+  <script src="../../Functions/projetos_equipe.js"></script>
+
+  <script type="text/javascript">
     $(function() {
       $("#header").load("../header.php");
       $(".menuu").load("../menu.php");
     });
   </script>
 </body>
+
 </html>

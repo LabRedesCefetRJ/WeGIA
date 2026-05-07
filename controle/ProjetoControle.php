@@ -6,6 +6,7 @@ require_once ROOT . "/dao/ProjetoDAO.php";
 require_once ROOT . "/classes/projetos/Projeto.php";
 require_once ROOT . "/classes/Util.php";
 require_once ROOT . "/classes/Csrf.php";
+require_once ROOT . "/controle/FuncionarioControle.php";
 
 class ProjetoControle
 {
@@ -88,18 +89,18 @@ class ProjetoControle
     {
         $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
         $isJson = strpos($contentType, 'application/json') !== false;
-        
+
         if ($isJson) {
             $json = file_get_contents('php://input');
             $data = json_decode($json, true);
-            
+
             if (!is_array($data)) {
                 throw new InvalidArgumentException('Dados inválidos.', 400);
             }
-            
+
             return $data;
         }
-        
+
         return $_POST;
     }
 
@@ -155,9 +156,9 @@ class ProjetoControle
     {
         try {
             $dados = $this->obterDadosRequisicao();
-            
+
             $csrf_token = $dados['csrf_token'] ?? null;
-            
+
             if (!Csrf::validateToken($csrf_token))
                 throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
 
@@ -228,9 +229,9 @@ class ProjetoControle
     {
         try {
             $dados = $this->obterDadosRequisicao();
-            
+
             $csrf_token = $dados['csrf_token'] ?? null;
-            
+
             if (!Csrf::validateToken($csrf_token))
                 throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
 
@@ -273,6 +274,302 @@ class ProjetoControle
             exit();
         }
         return $data;
+    }
+
+    // ================== FUNÇÕES PARA EQUIPE ==================
+
+    public function adicionarMembroEquipe()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $projeto_id = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+            $id_pessoa  = filter_input(INPUT_POST, 'funcionario_id', FILTER_SANITIZE_NUMBER_INT);
+            $id_funcao  = filter_input(INPUT_POST, 'funcao_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$projeto_id || $projeto_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
+                return;
+            }
+
+            if (!$id_pessoa || $id_pessoa < 1) {
+                echo json_encode(['success' => false, 'message' => 'Pessoa inválida']);
+                return;
+            }
+
+            if (!$id_funcao || $id_funcao < 1) {
+                echo json_encode(['success' => false, 'message' => 'Função inválida']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->adicionarMembroEquipe($projeto_id, $id_pessoa, $id_funcao);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function removerMembroEquipe()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id         = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+            $projeto_id = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id || $id < 1) {
+                echo json_encode(['success' => false, 'message' => 'ID inválido']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->removerMembroEquipe($id, $projeto_id);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function listarEquipeAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $projeto_id = filter_input(INPUT_GET, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$projeto_id || $projeto_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
+                return;
+            }
+
+            $equipe = $this->projetoDAO->listarEquipeProjeto($projeto_id);
+
+            echo json_encode(['success' => true, 'data' => $equipe]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function adicionarFuncaoProjeto()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $descricao = trim(filter_var($_POST['descricao'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
+
+            if (empty($descricao)) {
+                echo json_encode(['success' => false, 'message' => 'Descrição da função não informada']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->adicionarFuncaoProjeto($descricao);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function listarFuncoesAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $funcoes = $this->projetoDAO->listarFuncoesProjeto();
+
+            echo json_encode(['success' => true, 'data' => $funcoes]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    // ================== FUNÇÕES PARA ATENDIDOS ==================
+
+    public function listarAtendidosAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+            // Delegado ao DAO — sem acesso direto ao pdo, sem dependência de CPF
+            $atendidos = $this->projetoDAO->listarTodosAtendidos();
+            echo json_encode(['success' => true, 'data' => $atendidos]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function listarAtendidosProjetoAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $projeto_id = filter_input(INPUT_GET, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$projeto_id || $projeto_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
+                return;
+            }
+
+            $atendidos = $this->projetoDAO->listarAtendidosProjeto($projeto_id);
+
+            echo json_encode(['success' => true, 'data' => $atendidos]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function listarStatusAtendidosAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $status = $this->projetoDAO->listarStatusAtendidoProjeto();
+
+            echo json_encode(['success' => true, 'data' => $status]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function adicionarAtendidoProjeto()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $projeto_id  = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+            $id_atendido = filter_input(INPUT_POST, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
+            $id_status   = filter_input(INPUT_POST, 'status_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$projeto_id || $projeto_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
+                return;
+            }
+
+            if (!$id_atendido || $id_atendido < 1) {
+                echo json_encode(['success' => false, 'message' => 'Atendido inválido']);
+                return;
+            }
+
+            if (!$id_status || $id_status < 1) {
+                echo json_encode(['success' => false, 'message' => 'Status inválido']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->adicionarAtendidoProjeto($projeto_id, $id_atendido, $id_status);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function removerAtendidoProjeto()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id         = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+            $projeto_id = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id || $id < 1) {
+                echo json_encode(['success' => false, 'message' => 'ID inválido']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->removerAtendidoProjeto($id, $projeto_id);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function atualizarStatusAtendidoProjeto()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id        = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+            $id_status = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id || $id < 1) {
+                echo json_encode(['success' => false, 'message' => 'ID inválido']);
+                return;
+            }
+
+            if (!$id_status || $id_status < 1) {
+                echo json_encode(['success' => false, 'message' => 'Status inválido']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->atualizarStatusAtendidoProjeto($id, $id_status);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function adicionarStatusAtendidoProjeto()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $descricao = trim(filter_var($_POST['descricao'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
+
+            if (empty($descricao)) {
+                echo json_encode(['success' => false, 'message' => 'Descrição do status não informada']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->adicionarStatusAtendidoProjeto($descricao);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 }
 ?>
