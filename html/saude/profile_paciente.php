@@ -408,9 +408,17 @@ try {
     margin-bottom: 15px;
   }
 
-  .table,
-  .table-responsive {
+  .table {
     width: 100%;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .table-responsive > .table {
+    width: max-content;
+    min-width: 100%;
   }
 
   #div_texto {
@@ -1021,18 +1029,6 @@ try {
       filter: brightness(1.08);
     }
 
-    #arquivo .table tbody td:first-child,
-    #arquivo .table thead th:first-child {
-      max-width: 240px;
-      white-space: normal;
-      overflow-wrap: anywhere;
-      word-break: break-all;
-    }
-
-    #arquivo .table tbody td {
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-    }
 
     #atendimento_medico .input-group-btn .btn {
       height: 34px;
@@ -1797,19 +1793,21 @@ try {
                         <span id="mensagem-cadastro-exame-texto"></span>
                       </div>
                       <hr class="dotted short">
-                      <table class="table table-bordered table-striped mb-none">
-                        <thead>
-                          <tr style="font-size:15px;">
-                            <th>Arquivo</th>
-                            <th>Tipo exame</th>
-                            <th>Data exame</th>
-                            <th>Ação</th>
-                          </tr>
-                        </thead>
-                        <tbody id="dep-tab" style="font-size:15px">
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-none">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Arquivo</th>
+                              <th>Tipo exame</th>
+                              <th>Data exame</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="dep-tab" style="font-size:15px;">
 
-                        </tbody>
-                      </table>
+                          </tbody>
+                        </table>
+                      </div>
                       <br>
                       <?php
                       $modalUploadConfig = [
