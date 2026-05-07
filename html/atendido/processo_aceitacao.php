@@ -35,7 +35,8 @@ try {
 		$idStatusGet = 1;
 
 	$processoDAO     = new ProcessoAceitacaoDAO($pdo);
-	$processosAceitacao = $processoDAO->getByStatus($idStatusGet);
+	$nomeProcessoGet = isset($_GET['nome-processo']) ? trim(filter_input(INPUT_GET, 'nome-processo', FILTER_SANITIZE_SPECIAL_CHARS)) : '';
+	$processosAceitacao = $processoDAO->getByStatus($idStatusGet, $nomeProcessoGet);
 
 	define('ID_STATUS_CONCLUIDO', 2);
 
@@ -200,7 +201,10 @@ try {
 								<?php foreach ($statusProcesso as $status): ?>
 									<option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
 								<?php endforeach; ?>
-							</select>
+					</select>
+					<div class="form-group" style="margin-bottom: 0;">
+						<input type="text" id="nome-processo" class="form-control" placeholder="Pesquisar por nome" value="<?= htmlspecialchars($nomeProcessoGet ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+					</div>
 
 							<button type="button" class="btn btn-default" id="listar-processo">
 								Listar
@@ -888,9 +892,14 @@ function formatCpfField(field) {
 
 		btnListar.addEventListener('click', function() {
 			const valorStatus = selectElement.value;
+			const nomeProcesso = document.getElementById('nome-processo').value.trim();
 
-			window.location.href =
-				'./processo_aceitacao.php?status-processo=' + encodeURIComponent(valorStatus);
+			let url = './processo_aceitacao.php?status-processo=' + encodeURIComponent(valorStatus);
+			if (nomeProcesso !== '') {
+				url += '&nome-processo=' + encodeURIComponent(nomeProcesso);
+			}
+
+			window.location.href = url;
 		});
 	</script>
 
