@@ -1,6 +1,7 @@
-config.php
+web/config.php
+api/config.php
 BD/.idea/
-html/contribuicao/pdfs/
-html/socio/sistema/tabelas/
-html/seguranca/ips_bloqueados.json
+web/html/contribuicao/pdfs/
+web/html/socio/sistema/tabelas/
+web/html/seguranca/ips_bloqueados.json
 
