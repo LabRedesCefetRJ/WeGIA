@@ -1,178 +1,142 @@
-// Funções para Tipo de Projeto
-function gerarTipo() {
-  url = '../../dao/projetos/exibir_tipo_projeto.php';
-  $.ajax({
-    data: '',
-    type: "POST",
-    url: url,
-    success: function(response) {
-      var tipos = response;
-      $('#tipo_projeto').empty();
-      $('#tipo_projeto').append('<option selected disabled>Selecionar</option>');
-      $.each(tipos, function(i, item) {
-        $('#tipo_projeto').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
-      });
-    },
-    dataType: 'json'
-  });
+const CONTROL_URL = '../../controle/control.php';
+
+function recarregarSelects(dados) {
+  if (dados.tipos) {
+    $('#tipo_projeto').empty().append('<option selected disabled>Selecionar</option>');
+    dados.tipos.forEach(function(t) {
+      $('#tipo_projeto').append('<option value="' + t.id_tipo + '">' + t.descricao + '</option>');
+    });
+  }
+  if (dados.locais) {
+    $('#local_projeto').empty().append('<option selected disabled>Selecionar</option>');
+    dados.locais.forEach(function(l) {
+      $('#local_projeto').append('<option value="' + l.id_local + '">' + l.nome + '</option>');
+    });
+  }
+  if (dados.status) {
+    $('#status_projeto').empty().append('<option selected disabled>Selecionar</option>');
+    dados.status.forEach(function(s) {
+      $('#status_projeto').append('<option value="' + s.id_status + '">' + s.descricao + '</option>');
+    });
+  }
 }
 
 function adicionar_tipo() {
-  url = '../../dao/projetos/adicionar_tipo_projeto.php';
-  var tipo = window.prompt("Cadastre um Novo Tipo de Projeto:");
-  if (!tipo) return;
-  tipo = tipo.trim();
-  if (tipo == '') return;
+  var tipo = window.prompt('Cadastre um Novo Tipo de Projeto:');
+  if (!tipo || !tipo.trim()) return;
 
-  data = 'tipo=' + tipo;
-  $.ajax({
-    type: "POST",
-    url: url,
-    data: data,
-    success: function(response) {
-      gerarTipo();
-    },
-    dataType: 'text'
-  });
-}
-
-// Funções para Local
-function gerarLocal() {
-  url = '../../dao/projetos/exibir_local_projeto.php';
-  $.ajax({
-    data: '',
-    type: "POST",
-    url: url,
-    success: function(response) {
-      var locais = response;
-      $('#local_projeto').empty();
-      $('#local_projeto').append('<option selected disabled>Selecionar</option>');
-      $.each(locais, function(i, item) {
-        $('#local_projeto').append('<option value="' + item.id_local + '">' + item.nome + '</option>');
-      });
-    },
-    dataType: 'json'
-  });
+  fetch(CONTROL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarTipo', tipo: tipo.trim() })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(dados) {
+    if (dados.erro) { alert(dados.erro); return; }
+    recarregarSelects(dados);
+  })
+  .catch(function() { alert('Erro ao adicionar tipo.'); });
 }
 
 function adicionar_local() {
-  url = '../../dao/projetos/adicionar_local_projeto.php';
-  var local = window.prompt("Cadastre um Novo Local:");
-  if (!local) return;
-  local = local.trim();
-  if (local == '') return;
+  var local = window.prompt('Cadastre um Novo Local:');
+  if (!local || !local.trim()) return;
 
-  data = 'local=' + local;
-  $.ajax({
-    type: "POST",
-    url: url,
-    data: data,
-    success: function(response) {
-      gerarLocal();
-    },
-    dataType: 'text'
-  });
-}
-
-// Funções para Status
-function gerarStatus() {
-  url = '../../dao/projetos/exibir_status_projeto.php';
-  $.ajax({
-    data: '',
-    type: "POST",
-    url: url,
-    success: function(response) {
-      var status = response;
-      $('#status_projeto').empty();
-      $('#status_projeto').append('<option selected disabled>Selecionar</option>');
-      $.each(status, function(i, item) {
-        $('#status_projeto').append('<option value="' + item.id_status + '">' + item.descricao + '</option>');
-      });
-    },
-    dataType: 'json'
-  });
+  fetch(CONTROL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarLocal', local: local.trim() })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(dados) {
+    if (dados.erro) { alert(dados.erro); return; }
+    recarregarSelects(dados);
+  })
+  .catch(function() { alert('Erro ao adicionar local.'); });
 }
 
 function adicionar_status() {
-  url = '../../dao/projetos/adicionar_status_projeto.php';
-  var status = window.prompt("Cadastre um Novo Status:");
-  if (!status) return;
-  status = status.trim();
-  if (status == '') return;
+  var status = window.prompt('Cadastre um Novo Status:');
+  if (!status || !status.trim()) return;
 
-  data = 'status=' + status;
-  $.ajax({
-    type: "POST",
-    url: url,
-    data: data,
-    success: function(response) {
-      gerarStatus();
-    },
-    dataType: 'text'
+  fetch(CONTROL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarStatus', status: status.trim() })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(dados) {
+    if (dados.erro) { alert(dados.erro); return; }
+    recarregarSelects(dados);
+  })
+  .catch(function() { alert('Erro ao adicionar status.'); });
+}
+
+function limparFormulario() {
+  $('#nome_projeto').val('');
+  $('#tipo_projeto').val('');
+  $('#local_projeto').val('');
+  $('#status_projeto').val('');
+  $('#data_inicio').val('');
+  $('#data_fim').val('');
+  $('#descricao_projeto').val('');
+}
+
+function submeterFormulario() {
+  var nome       = $('#nome_projeto').val().trim();
+  var tipo       = $('#tipo_projeto').val();
+  var local      = $('#local_projeto').val();
+  var status     = $('#status_projeto').val();
+  var dataInicio = $('#data_inicio').val();
+  var dataFim    = $('#data_fim').val();
+  var descricao  = $('#descricao_projeto').val().trim();
+  var csrf       = $('#csrf_token').val();
+
+  if (!nome || nome.length < 3) { alert('Nome do projeto inválido.'); return; }
+  if (!tipo)       { alert('Selecione um tipo de projeto.'); return; }
+  if (!local)      { alert('Selecione um local.'); return; }
+  if (!status)     { alert('Selecione um status.'); return; }
+  if (!dataInicio) { alert('Informe a data de início.'); return; }
+  if (dataFim && dataInicio && new Date(dataFim) < new Date(dataInicio)) {
+    alert('Data de término não pode ser anterior à data de início.');
+    return;
+  }
+
+  $('#btn-salvar').prop('disabled', true).text('Salvando...');
+
+  fetch(CONTROL_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nomeClasse:        'ProjetoControle',
+      metodo:            'incluir',
+      csrf_token:        csrf,
+      nome_projeto:      nome,
+      tipo_projeto:      tipo,
+      local_projeto:     local,
+      status_projeto:    status,
+      data_inicio:       dataInicio,
+      data_fim:          dataFim,
+      descricao_projeto: descricao
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(dados) {
+    if (dados.erro) {
+      alert('Erro: ' + dados.erro);
+      $('#btn-salvar').prop('disabled', false).text('Salvar');
+      return;
+    }
+    window.location.href = '../projetos/informacao_projeto.php?msg=Projeto cadastrado com sucesso!';
+  })
+  .catch(function() {
+    alert('Erro ao cadastrar projeto.');
+    $('#btn-salvar').prop('disabled', false).text('Salvar');
   });
 }
 
-// Validação do formulário antes de enviar
-function validarFormularioProjeto(event) {
-  var nome = $('#nome_projeto').val().trim();
-  var tipo = $('#tipo_projeto').val();
-  var local = $('#local_projeto').val();
-  var status = $('#status_projeto').val();
-  var dataInicio = $('#data_inicio').val();
-  
-  var erros = [];
-  
-  if (!nome || nome.length < 3) {
-    erros.push('Nome do projeto não informado ou inválido!');
-  }
-  
-  if (!tipo || tipo === null) {
-    erros.push('Tipo de projeto não informado!');
-  }
-  
-  if (!local || local === null) {
-    erros.push('Local não informado!');
-  }
-  
-  if (!status || status === null) {
-    erros.push('Status não informado!');
-  }
-  
-  if (!dataInicio) {
-    erros.push('Data de início não informada!');
-  }
-  
-  // Validar data fim se preenchida
-  var dataFim = $('#data_fim').val();
-  if (dataFim && dataInicio) {
-    if (new Date(dataFim) < new Date(dataInicio)) {
-      erros.push('Data de término não pode ser anterior à data de início!');
-    }
-  }
-  
-  if (erros.length > 0) {
-    event.preventDefault(); // Impede o envio do formulário
-    
-    // Exibe os erros
-    var mensagem = 'Por favor, corrija os seguintes erros:\n\n';
-    erros.forEach(function(erro, index) {
-      mensagem += (index + 1) + '. ' + erro + '\n';
-    });
-    
-    alert(mensagem);
-    return false;
-  }
-  
-  return true;
-}
-
-// Carregar header e menu
 $(function() {
   $("#header").load("../header.php");
   $(".menuu").load("../menu.php");
-  
-  // Adicionar validação ao formulário
-  $('form').on('submit', function(event) {
-    return validarFormularioProjeto(event);
-  });
+  $('#btn-salvar').on('click', submeterFormulario);
 });
