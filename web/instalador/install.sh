@@ -55,11 +55,11 @@ conf_wegia_internet(){
 cat <<EOF > /etc/apache2/sites-available/wegia.conf
 <VirtualHost *:80>
     ServerName              wegia.instituicao.org 
-    DocumentRoot            /var/www/WeGIA
+    DocumentRoot            /var/www/WeGIA/web/
     #ErrorDocument 404       http://wegia.instituicao.org/
     #ErrorDocument 403       http://wegia.instituicao.org/
 
-    <Directory /var/www/WeGIA>
+    <Directory /var/www/WeGIA/web>
         Options -Indexes
         AllowOverride All
         Require all granted
