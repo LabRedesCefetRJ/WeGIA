@@ -53,7 +53,7 @@ class Voluntario extends Pessoa
      */
     static public function getDataNascimentoMinima()
     {
-        $idadeMaxima = 100;
+        $idadeMaxima = 150;
         $data = date('Y-m-d', strtotime("-$idadeMaxima years"));
         return $data;
     }
