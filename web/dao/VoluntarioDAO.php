@@ -73,8 +73,7 @@ class VoluntarioDAO
                 $stmtPessoa->execute();
 
                 $idPessoa = $this->pdo->lastInsertId();
-            }
-            else {
+            } else {
                 // Atualiza pessoa existente
                 $sqlPessoa = "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, telefone=:telefone, data_nascimento=:data_nascimento, cep=:cep, estado=:estado, cidade=:cidade, bairro=:bairro, logradouro=:logradouro, numero_endereco=:numero_endereco, complemento=:complemento, ibge=:ibge, registro_geral=:registro_geral, orgao_emissor=:orgao_emissor, data_expedicao=:data_expedicao, nome_pai=:nome_pai, nome_mae=:nome_mae, tipo_sanguineo=:tipo_sanguineo WHERE id_pessoa=:id_pessoa";
 
@@ -140,8 +139,7 @@ class VoluntarioDAO
             $this->pdo->commit();
             return $idVoluntario;
 
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             $this->pdo->rollBack();
             throw $e;
         }
@@ -172,8 +170,7 @@ class VoluntarioDAO
             $this->pdo->commit();
             return $idVoluntario;
 
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             $this->pdo->rollBack();
             throw $e;
         }
@@ -195,8 +192,7 @@ class VoluntarioDAO
                     'situacao' => htmlspecialchars($linha['situacoes'])
                 );
             }
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             throw $e;
         }
         return $voluntarios;
@@ -221,16 +217,13 @@ class VoluntarioDAO
 
                 if ($pessoa) {
                     return 'PESSOA_EXISTENTE';
-                }
-                else {
+                } else {
                     return 'NOVO_CADASTRO';
                 }
-            }
-            else {
+            } else {
                 throw new Exception("Erro, Voluntário já cadastrado no sistema.");
             }
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             throw $e;
         }
     }
@@ -243,8 +236,7 @@ class VoluntarioDAO
             while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
                 $cpfs[] = array('cpf' => $linha['cpf'], 'id' => $linha['id_voluntario']);
             }
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             throw $e;
         }
         return $cpfs;
@@ -257,8 +249,7 @@ class VoluntarioDAO
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             throw $e;
         }
     }
@@ -294,8 +285,7 @@ class VoluntarioDAO
 
             $stmt->execute();
             $this->pdo->commit();
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             $this->pdo->rollBack();
             throw $e;
         }
@@ -332,8 +322,7 @@ class VoluntarioDAO
 
             $stmt->execute();
             $this->pdo->commit();
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             $this->pdo->rollBack();
             throw $e;
         }
@@ -358,8 +347,7 @@ class VoluntarioDAO
 
             $stmt->execute();
             $this->pdo->commit();
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             $this->pdo->rollBack();
             throw $e;
         }
@@ -369,6 +357,8 @@ class VoluntarioDAO
     {
         $this->pdo->beginTransaction();
         try {
+            $img = base64_encode($img);
+
             $sql = "UPDATE voluntario v JOIN pessoa p ON v.id_pessoa = p.id_pessoa 
                     SET p.imagem = :imagem 
                     WHERE v.id_voluntario = :id";
@@ -378,8 +368,7 @@ class VoluntarioDAO
 
             $stmt->execute();
             $this->pdo->commit();
-        }
-        catch (PDOException $e) {
+        } catch (PDOException $e) {
             $this->pdo->rollBack();
             throw $e;
         }
