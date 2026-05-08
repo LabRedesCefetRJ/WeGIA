@@ -1,4 +1,5 @@
-config.php
+web/config.php
+api/config.php
 BD/.idea/
 html/contribuicao/pdfs/
 html/socio/sistema/tabelas/
