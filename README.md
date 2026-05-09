@@ -18,8 +18,8 @@ Contato: [Prof. Nilson  Lazarin](https://bsi.cefet-rj.br/~lazarin/)
 Em um terminal execute os comandos abaixo:
 ```
 apt update
-apt install wget dialog -y
-wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/instalador/install.sh
+apt install wget -y
+wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/web/instalador/install.sh
 chmod +x install.sh
 ./install.sh
 ```
