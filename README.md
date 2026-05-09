@@ -14,6 +14,12 @@ A versão atual do sistema conta com os módulos:
 Contato: [Prof. Nilson  Lazarin](https://bsi.cefet-rj.br/~lazarin/)
 <hr>
 
+## Como testar?
+
+- Use nosso servidor de demonstração [demo.wegia.org](https://demo.wegia.org/), exclusivo para instituições ou usuários interessados no software.
+  
+Para testes de desenvolvimento ou de segurança, use [dev.wegia.org](http://dev.wegia.org/) ou [sec.wegia.org](http://sec.wegia.org/)
+
 ## Como instalar?
 Em um terminal execute os comandos abaixo:
 ```
