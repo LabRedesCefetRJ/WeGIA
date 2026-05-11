@@ -484,9 +484,9 @@ async function removerEnfermidade(id_enfermidade) {
         if(resposta.ok){
             await gerarEnfermidadesDoPaciente();
         }else{
-            window.alert("Aconteceu algum problema ao remover uma enfermidade");
+            mostrarMensagemCadastroEnfermidade("Aconteceu algum problema ao remover uma enfermidade.", "danger");
         }
     }catch(e){
-        window.alert("Aconteceu algum problema ao remover uma enfermidade");
+        mostrarMensagemCadastroEnfermidade("Aconteceu algum problema ao remover uma enfermidade.", "danger");
     }
 }
