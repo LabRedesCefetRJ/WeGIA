@@ -260,8 +260,7 @@ if ($stmt) {
         }
         $sqlUpdateSocio = "UPDATE socio 
                    SET id_sociostatus = ?, 
-                       id_sociotipo = ?, 
-                       email = ?, 
+                       id_sociotipo = ?,  
                        data_referencia = ?, 
                        valor_periodo = ?, 
                        auto_status_contribuicoes = ? 
@@ -279,10 +278,9 @@ if ($stmt) {
         if ($stmt) {
             // Bind dos parâmetros
             $stmt->bind_param(
-                'iissdii',
+                'iisdii',
                 $status,               // Inteiro (id_sociostatus)
                 $id_sociotipo,         // Inteiro (id_sociotipo)
-                $email,                // String (email)
                 $data_referencia,      // String (data_referencia)
                 $valor_periodo,        // Double (valor_periodo)
                 $auto_status_contribuicoes, // Inteiro (auto_status_contribuicoes)
