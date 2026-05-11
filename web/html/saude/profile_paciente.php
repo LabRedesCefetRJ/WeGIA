@@ -987,7 +987,50 @@ try {
     }
 
 
-#modal-anular-atendimento .modal-title {
+#modal-anular-atendimento .modal-title,
+    #modalConfirmarInativarEnfermidade .modal-title {
+      font-weight: 500;
+      color: #fff;
+    }
+
+    #modalConfirmarInativarEnfermidade .modal-header {
+      background-color: #337ab7;
+      border-bottom-color: #2e6da4;
+    }
+
+    #modalConfirmarInativarEnfermidade .modal-header .close,
+    #modalConfirmarInativarEnfermidade .modal-header .close span {
+      color: #fff;
+      opacity: 1;
+      text-shadow: none;
+    }
+
+    #modalConfirmarInativarEnfermidade .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background-color: transparent;
+      filter: brightness(1);
+      transition: background-color 0.18s ease, filter 0.18s ease;
+    }
+
+    #modalConfirmarInativarEnfermidade .modal-header .close:hover,
+    #modalConfirmarInativarEnfermidade .modal-header .close:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      filter: brightness(1.08);
+      outline: none;
+    }
+
+    #modalConfirmarInativarEnfermidade .modal-header .close:hover span,
+    #modalConfirmarInativarEnfermidade .modal-header .close:focus span {
+      filter: brightness(1.08);
+    }
+
+    #modal-anular-atendimento .modal-title {
       font-weight: 500;
       color: #fff;
     }
@@ -3635,6 +3678,26 @@ try {
 
     <!-- importante para a aba de exames -->
     <script src="../geral/formulario.js"></script>
+
+    <div class="modal fade" id="modalConfirmarInativarEnfermidade" tabindex="-1" role="dialog" aria-labelledby="modalInativarEnfermidadeLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="modalInativarEnfermidadeLabel">Inativar enfermidade</h4>
+          </div>
+          <div class="modal-body">
+            <p>Tem certeza que deseja inativar essa enfermidade?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" onclick="confirmarInativarEnfermidade()">Inativar</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div align="right">
       <iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>
