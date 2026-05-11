@@ -17,8 +17,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
-require __DIR__ . '/../../config.php';
-require __DIR__ . '/../../classes/LoginHelper.php';
+require __DIR__ . '/../config.php';
+require __DIR__ . '/../../web/classes/LoginHelper.php';
 
 //dividir container em arquivos separados para cada módulo
 $container = new AppContainer([
