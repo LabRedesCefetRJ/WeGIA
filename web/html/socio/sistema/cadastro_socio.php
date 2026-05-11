@@ -138,10 +138,10 @@ if ($stmtBuscaSocio->execute()) {
     exit();
 }
 
-$stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, telefone, email, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-$stmt->bind_param('sssssssssss', $cpf_cnpj, $socio_nome, $telefone, $data_nasc, $cep, $estado, $cidade, $bairro, $rua, $numero, $complemento);
+$stmt->bind_param('ssssssssssss', $cpf_cnpj, $socio_nome, $telefone, $email, $data_nasc, $cep, $estado, $cidade, $bairro, $rua, $numero, $complemento);
 
 
 if ($stmt->execute()) {
@@ -245,8 +245,8 @@ if ($stmt->execute()) {
             break;
     }
 
-    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt2->bind_param('iiisdsi', $id_pessoa, $status, $id_sociotipo, $email, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
+    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt2->bind_param('iiidsi', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
     $stmt2->execute();
 
     if ($stmt2->affected_rows > 0) {
