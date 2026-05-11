@@ -277,3 +277,91 @@ function setSessionMsg($msg, $flag = "success", $log = null)
 		$_SESSION['session_msg_log'] = $log;
 	}
 }
+
+function setSessionFormData(array $data)
+{
+	$_SESSION['old_input'] = $data;
+}
+
+function getSessionFormData(bool $clear = true): array
+{
+	$oldInput = $_SESSION['old_input'] ?? [];
+	if ($clear) {
+		unset($_SESSION['old_input']);
+	}
+	return $oldInput;
+}
+
+function setSessionFormErrors(array $errors)
+{
+	$_SESSION['field_errors'] = $errors;
+}
+
+function getSessionFormErrors(bool $clear = true): array
+{
+	$fieldErrors = $_SESSION['field_errors'] ?? [];
+	if ($clear) {
+		unset($_SESSION['field_errors']);
+	}
+	return $fieldErrors;
+}
+
+function clearSessionFormState(): void
+{
+	unset($_SESSION['old_input'], $_SESSION['field_errors'], $_SESSION['open_modal']);
+}
+
+function setSessionOpenModal(string $modalId): void
+{
+	$_SESSION['open_modal'] = $modalId;
+}
+
+function getSessionOpenModal(bool $clear = true): ?string
+{
+	$modalId = $_SESSION['open_modal'] ?? null;
+	if ($clear) {
+		unset($_SESSION['open_modal']);
+	}
+	return $modalId;
+}
+
+function setSessionFormErrorFromMessage(string $message, string $fallbackField = 'global'): void
+{
+	$field = $fallbackField;
+	$messageLower = function_exists('mb_strtolower') ? mb_strtolower($message, 'UTF-8') : strtolower($message);
+
+	$map = [
+		'cpf' => 'cpf',
+		'nome' => 'nome',
+		'sobrenome' => 'sobrenome',
+		'telefone' => 'telefone',
+		'cep' => 'cep',
+		'endereço' => 'cep',
+		'endereco' => 'cep',
+		'data de nascimento' => 'data_nascimento',
+		'nascimento' => 'data_nascimento',
+		'data de admissão' => 'data_admissao',
+		'admissão' => 'data_admissao',
+		'admissao' => 'data_admissao',
+		'data de expedição' => 'data_expedicao',
+		'expedição' => 'data_expedicao',
+		'expedicao' => 'data_expedicao',
+		'parentesco' => 'id_parentesco',
+		'sexo' => 'sexo',
+		'cargo' => 'cargo',
+		'situação' => 'situacao',
+		'situacao' => 'situacao',
+	];
+
+	foreach ($map as $needle => $mappedField) {
+		$found = function_exists('mb_strpos')
+			? mb_strpos($messageLower, $needle, 0, 'UTF-8')
+			: strpos($messageLower, $needle);
+		if ($found !== false) {
+			$field = $mappedField;
+			break;
+		}
+	}
+
+	setSessionFormErrors([$field => $message]);
+}

@@ -17,6 +17,7 @@ permissao($_SESSION['id_pessoa'], 12, 7);
 require_once "../personalizacao_display.php";
 require_once "../../classes/Atendido.php";
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'geral' . DIRECTORY_SEPARATOR . 'msg.php';
 
 try {
 	$cpfDigitado = filter_var($_SESSION['cpf_digitado'], FILTER_SANITIZE_SPECIAL_CHARS);
@@ -37,7 +38,9 @@ try {
 $dataNascimentoMaxima = Atendido::getDataNascimentoMaxima();
 $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 
-$parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
+$parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo'] ?? '');
+$oldInput = getSessionFormData();
+$fieldErrors = getSessionFormErrors();
 ?>
 <!doctype html>
 <html class="fixed">
@@ -187,6 +190,7 @@ $parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
 				?>
 
 				<div class="col-md-8 col-lg-12">
+					<?php sessionMsg(); ?>
 					<div class="tabs">
 						<ul class="nav nav-tabs tabs-primary">
 							<li class="active">
@@ -205,26 +209,32 @@ $parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
 												<div class="col-md-8">
-													<input type="text" class="form-control" name="nome" id="profileFirstName" id="nome" onkeypress="return Onlychars(event)" required>
+													<input type="text" class="form-control<?= !empty($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+													<?php if (!empty($fieldErrors['nome'])): ?>
+														<p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') ?></p>
+													<?php endif; ?>
 												</div>
 											</div>
 											<div class="form-group">
 												<label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
 												<div class="col-md-8">
-													<input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required>
+													<input type="text" class="form-control<?= !empty($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+													<?php if (!empty($fieldErrors['sobrenome'])): ?>
+														<p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') ?></p>
+													<?php endif; ?>
 												</div>
 											</div>
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
 												<div class="col-md-8">
-													<label><input type="radio" name="sexo" id="radio" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
-													<label><input type="radio" name="sexo" id="radio" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+													<label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+													<label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
 												</div>
 											</div>
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="telefone">Telefone</label>
 												<div class="col-md-8">
-													<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+													<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 												</div>
 											</div>
 											<div class="form-group">
@@ -239,23 +249,24 @@ $parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="cpf">Número do CPF</label>
 												<div class="col-md-6">
-													<input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?php echo $cpfDigitado; ?>">
+													<input type="text" class="form-control<?= !empty($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? $cpfDigitado, ENT_QUOTES, 'UTF-8') ?>">
 												</div>
 											</div>
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="profileCompany"></label>
 												<div class="col-md-6">
-													<p id="cpfFamiliarInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+													<p id="cpfFamiliarInvalido" style="display: <?= !empty($fieldErrors['cpf']) ? 'block' : 'none' ?>; color: #b30000"><?= !empty($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
 												</div>
 											</div>
 											<div class="form-group">
 												<label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
 												<div class="col-md-6" style="display: flex;">
-													<select name="id_parentesco" id="parentesco">
+													<select name="id_parentesco" id="parentesco" class="<?= !empty($fieldErrors['id_parentesco']) ? 'is-invalid' : '' ?>">
 														<option selected disabled>Selecionar...</option>
 														<?php
 														foreach ($pdo->query("SELECT * FROM atendido_parentesco ORDER BY parentesco ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-															if ($item["idatendido_parentesco"]  == $parentescoPrevio) {
+															$parentescoSelecionado = $oldInput['id_parentesco'] ?? $parentescoPrevio;
+															if ($item["idatendido_parentesco"]  == $parentescoSelecionado) {
 																echo ("<option value='" . $item["idatendido_parentesco"] . "' selected>" . htmlspecialchars($item["parentesco"]) . "</option>");
 															} else {
 																echo ("<option value='" . $item["idatendido_parentesco"] . "' >" . htmlspecialchars($item["parentesco"]) . "</option>");
@@ -266,6 +277,9 @@ $parentescoPrevio = htmlspecialchars($_SESSION['parentesco_previo']);
 													<a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
 												</div>
 											</div>
+											<?php if (!empty($fieldErrors['id_parentesco'])): ?>
+												<p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['id_parentesco'], ENT_QUOTES, 'UTF-8') ?></p>
+											<?php endif; ?>
 											<input type="hidden" name="idatendido" value="<?= htmlspecialchars($_GET['idatendido']); ?>" readonly>
 											<div class="modal-footer">
 												<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>

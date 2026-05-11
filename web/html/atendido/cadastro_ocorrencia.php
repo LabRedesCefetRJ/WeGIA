@@ -455,6 +455,16 @@ try {
                                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                                                     Erro no formato da data. Verifique a data da ocorrência.
                                                 </div>
+                                            <?php elseif ($ocorrencia_msg == 'data-anterior-acolhimento'): ?>
+                                                <div class="alert alert-danger text-center alert-dismissible" role="alert">
+                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                    A data de falecimento não pode ser anterior à data de acolhimento.
+                                                </div>
+                                            <?php elseif ($ocorrencia_msg == 'falecimento-sem-acolhimento'): ?>
+                                                <div class="alert alert-danger text-center alert-dismissible" role="alert">
+                                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                                    Não foi encontrada ocorrência de acolhimento para este atendido.
+                                                </div>
                                             <?php elseif ($ocorrencia_msg == 'id-invalido'): ?>
                                                 <div class="alert alert-danger text-center alert-dismissible" role="alert">
                                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>

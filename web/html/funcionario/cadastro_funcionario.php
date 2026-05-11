@@ -29,6 +29,7 @@ $funcionario = new FuncionarioDAO;
 $informacoesFunc = $funcionario->listarPessoaExistente($cpf);
 
 require_once "../../classes/Funcionario.php";
+require_once ROOT . "/html/geral/msg.php";
 $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
 $dataNascimentoMinima = Funcionario::getDataNascimentoMinima();
 
@@ -40,6 +41,9 @@ if (isset($_SESSION['erro'])) {
   $erro = $_SESSION['erro'];
   unset($_SESSION['erro']);
 }
+
+$oldInput = getSessionFormData();
+$fieldErrors = getSessionFormErrors();
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
@@ -107,6 +111,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       </header>
       <!-- start: page -->
       <div class="row" id="formulario">
+        <?php sessionMsg(); ?>
         <?php if ($erro): ?>
           <div style="color: red; font-weight: bold; text-align:center">
             <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
@@ -131,7 +136,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   <div id="display_image" class="thumb-info mb-md"></div>
                   <div id="botima">
                     <h5 id="okText"></h5>
-                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(this)" id="okButton" id="botima" value="Ok">
+                    <input type="submit" class="btn btn-primary stylebutton" onclick="submitButtonStyle(this)" id="okButton" value="Ok">
                   </div>
                 </div>
               </div>
@@ -147,38 +152,54 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
             </ul>
             <div class="tab-content">
               <div id="overview" class="tab-pane active">
-                <form class="form-horizontal" id="formPrincipal" method="POST" action="../../controle/control.php">
+                <form class="form-horizontal" id="formPrincipal" method="POST" action="../../controle/control.php" onsubmit="return validarFuncionario()">
+                  <div id="clientValidationAlert" class="alert alert-danger alert-dismissible" style="display:none;">
+                    <button type="button" class="close" onclick="$('#clientValidationAlert').hide()">&times;</button>
+                    <span id="clientValidationAlertText"></span>
+                  </div>
                   <h4 class="mb-xlg">Informações Pessoais</h4>
                   <h5 class="obrig">Campos Obrigatórios(*)</h5>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="text" class="form-control" name="nome" id="profileFirstName" id="nome" onkeypress="return Onlychars(event)" required>
+                      <input type="text" class="form-control<?= isset($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <p id="error_nome" class="help-block text-danger" style="display: <?= isset($fieldErrors['nome']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['nome']) ? htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required>
+                      <input type="text" class="form-control<?= isset($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <p id="error_sobrenome" class="help-block text-danger" style="display: <?= isset($fieldErrors['sobrenome']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['sobrenome']) ? htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                      <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                      <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                      <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="telefone">Telefone<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                      <input type="text" class="form-control<?= isset($fieldErrors['telefone']) ? ' is-invalid' : '' ?>" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <p id="error_telefone" class="help-block text-danger" style="display: <?= isset($fieldErrors['telefone']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['telefone']) ? htmlspecialchars($fieldErrors['telefone'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="date" name="nascimento" id="nascimento" class="form-control" min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>" required>
+                      <input type="date" name="nascimento" id="nascimento" class="form-control<?= isset($fieldErrors['nascimento']) ? ' is-invalid' : '' ?>" min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>" required value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <p id="error_nascimento" class="help-block text-danger" style="display: <?= isset($fieldErrors['nascimento']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['nascimento']) ? htmlspecialchars($fieldErrors['nascimento'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                     </div>
                   </div>
                   <div class="form-group">
@@ -195,20 +216,26 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     <div class="form-group">
                       <label class="col-md-3 control-label">Número do RG</label>
                       <div class="col-md-6">
-                        <input type="text" class="form-control" name="rg" id="rg"
+                        <input type="text" class="form-control<?= isset($fieldErrors['rg']) ? ' is-invalid' : '' ?>" name="rg" id="rg"
                           onkeypress="return Onlynumbers(event)"
                           placeholder="Ex: 22.222.222-2"
-                          onkeyup="mascara('##.###.###-#',this,event)">
+                          onkeyup="mascara('##.###.###-#',this,event)" value="<?= htmlspecialchars($oldInput['rg'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <p id="error_rg" class="help-block text-danger" style="display: <?= isset($fieldErrors['rg']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['rg']) ? htmlspecialchars($fieldErrors['rg'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                       </div>
                     </div>
 
                     <div class="form-group">
                       <label class="col-md-3 control-label">Órgão Emissor</label>
                       <div class="col-md-6">
-                        <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor"
-                          onkeypress="return Onlychars(event)">
+                        <input type="text" class="form-control<?= isset($fieldErrors['orgao_emissor']) ? ' is-invalid' : '' ?>" name="orgao_emissor" id="orgao_emissor"
+                          onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['orgao_emissor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                           <p id="erro_orgao" style="display:none; color:#b30000;">
                             Preencha o órgão emissor
+                          </p>
+                          <p id="error_orgao_emissor" class="help-block text-danger" style="display: <?= isset($fieldErrors['orgao_emissor']) ? 'block' : 'none' ?>;">
+                            <?= isset($fieldErrors['orgao_emissor']) ? htmlspecialchars($fieldErrors['orgao_emissor'], ENT_QUOTES, 'UTF-8') : '' ?>
                           </p>
                       </div>
                     </div>
@@ -216,15 +243,18 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     <div class="form-group">
                       <label class="col-md-3 control-label">Data de expedição</label>
                       <div class="col-md-6">
-                        <input type="date" class="form-control"
+                        <input type="date" class="form-control<?= isset($fieldErrors['data_expedicao']) ? ' is-invalid' : '' ?>"
                           name="data_expedicao" id="data_expedicao"
-                          max="<?php echo date('Y-m-d'); ?>">
+                          max="<?php echo date('Y-m-d'); ?>" value="<?= htmlspecialchars($oldInput['data_expedicao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                           <p id="erro_dataExp" style="display:none; color: #b30000;">
                             Preencha a data de expedição
                           </p>
                         
                         <p id="dataNascInvalida" style="display: block; color: #b30000">
                           Selecione a data de nascimento primeiro!
+                        </p>
+                        <p id="error_data_expedicao" class="help-block text-danger" style="display: <?= isset($fieldErrors['data_expedicao']) ? 'block' : 'none' ?>;">
+                          <?= isset($fieldErrors['data_expedicao']) ? htmlspecialchars($fieldErrors['data_expedicao'], ENT_QUOTES, 'UTF-8') : '' ?>
                         </p>
                       </div>
                     </div>
@@ -234,10 +264,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" value="<?php
-                                                                                                                                                                                                                                                                          if (isset($cpf) && !is_null(trim($cpf))) {
-                                                                                                                                                                                                                                                                            echo htmlspecialchars($cpf);
-                                                                                                                                                                                                                                                                          } ?>" required>
+                      <input type="text" class="form-control<?= isset($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? ($cpf ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
+                      <p id="error_cpf" class="help-block text-danger" style="display: <?= isset($fieldErrors['cpf']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                     </div>
                   </div>
                   <div class="form-group">
@@ -249,11 +279,14 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="date" class="form-control"
+                      <input type="date" class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>"
                         name="data_admissao"
                         id="data_admissao"
                         max="<?php echo date('Y-m-d'); ?>"
-                        required>
+                        required value="<?= htmlspecialchars($oldInput['data_admissao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                      <p id="error_data_admissao" class="help-block text-danger" style="display: <?= isset($fieldErrors['data_admissao']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['data_admissao']) ? htmlspecialchars($fieldErrors['data_admissao'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                     </div>
                   </div>
                   <div class="form-group">
@@ -264,7 +297,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         <option selected disabled>Selecionar</option>
                         <?php
                         while ($row = $situacao->fetch_array(MYSQLI_NUM)) {
-                          echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+                          $selected = isset($oldInput['situacao']) && $oldInput['situacao'] == $row[0] ? ' selected' : '';
+                          echo "<option value=\"" . htmlspecialchars($row[0]) . "\"" . $selected . ">" . htmlspecialchars($row[1]) . "</option>";
                         }                            ?>
                       </select>
                     </div>
@@ -277,7 +311,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         <option selected disabled>Selecionar</option>
                         <?php
                         while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
-                          echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+                          $selected = isset($oldInput['cargo']) && $oldInput['cargo'] == $row[0] ? ' selected' : '';
+                          echo "<option value=\"" . htmlspecialchars($row[0]) . "\"" . $selected . ">" . htmlspecialchars($row[1]) . "</option>";
                         }
                         ?>
                       </select>
@@ -293,7 +328,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         $pdo = Conexao::connect();
                         $escala = $pdo->query("SELECT * FROM escala_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
                         foreach ($escala as $key => $value) {
-                          echo ("<option value=" . $value["id_escala"] . ">" . htmlspecialchars($value["descricao"]) . "</option>");
+                          $selected = isset($oldInput['escala']) && $oldInput['escala'] == $value['id_escala'] ? ' selected' : '';
+                          echo ("<option value=\"" . htmlspecialchars($value['id_escala']) . "\"" . $selected . ">" . htmlspecialchars($value['descricao']) . "</option>");
                         }
                         ?>
                       </select>
@@ -309,7 +345,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         $pdo = Conexao::connect();
                         $tipo = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
                         foreach ($tipo as $key => $value) {
-                          echo ("<option value=" . $value["id_tipo"] . ">" . htmlspecialchars($value["descricao"]) . "</option>");
+                          $selected = isset($oldInput['tipoCargaHoraria']) && $oldInput['tipoCargaHoraria'] == $value['id_tipo'] ? ' selected' : '';
+                          echo ("<option value=\"" . htmlspecialchars($value['id_tipo']) . "\"" . $selected . ">" . htmlspecialchars($value['descricao']) . "</option>");
                         }
                         ?>
                       </select>
@@ -370,6 +407,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
     .obrig {
       color: rgb(255, 0, 0);
+    }
+
+    .is-invalid {
+      border-color: #a94442 !important;
     }
 
     iframe {
@@ -468,81 +509,87 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       if (apoio == 0) {}
     }
 
+    function clearValidationFeedback() {
+      $('.form-control').removeClass('is-invalid');
+      $('.help-block.text-danger').hide();
+      $('#clientValidationAlert').hide();
+      $('#clientValidationAlertText').text('');
+    }
+
+    function showClientAlert(message) {
+      $('#clientValidationAlertText').text(message);
+      $('#clientValidationAlert').show();
+    }
+
+    function showFieldError(fieldId, message) {
+      $('#' + fieldId).addClass('is-invalid');
+      $('#error_' + fieldId).text(message).show();
+    }
+
     function validarFuncionario() {
-      var btn = $("#enviar");
-      var cpf_cadastrado = (<?php echo $_SESSION['cpf_funcionario']; ?>).concat(<?php echo isset($_SESSION['cpf_interno']) ? $_SESSION['cpf_interno'] : '[]'; ?>);
+      clearValidationFeedback();
+
+      var cpf_cadastrado = (<?php echo isset($_SESSION['cpf_funcionario']) ? $_SESSION['cpf_funcionario'] : '[]'; ?>).concat(<?php echo isset($_SESSION['cpf_interno']) ? $_SESSION['cpf_interno'] : '[]'; ?>);
       var cpf = (($("#cpf").val()).replaceAll(".", "")).replaceAll("-", "");
-      console.log(this);
-      
       var cpfDuplicado = false;
       $.each(cpf_cadastrado, function(i, item) {
         if (item.cpf == cpf) {
           cpfDuplicado = true;
-          return false; // break the loop
+          return false;
         }
       });
-      
+
       if (cpfDuplicado) {
-        alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
+        showClientAlert('Cadastro não realizado! O CPF informado já está cadastrado no sistema.');
+        showFieldError('cpf', 'CPF já cadastrado.');
         return false;
       }
-
-      var nome = document.getElementById('profileFirstName').value;
-
-      var sobrenome = document.getElementById('sobrenome').value;
 
       var sexo = document.querySelector('input[name="gender"]:checked');
-
       if (!sexo) {
+        showClientAlert('O sexo do funcionário é obrigatório.');
         return false;
       }
-      sexo = sexo.value;
-
-      var telefone = document.getElementById('telefone').value;
 
       var dt_nasc = document.getElementById('nascimento').value;
-
-      let dataNascimentoMaxima = "<?= $dataNascimentoMaxima ?>";
-      dataNascimentoMaxima = dataNascimentoMaxima.replaceAll('-', '');
-
-      let dataNascimentoMinima = "<?= $dataNascimentoMinima ?>";
-      dataNascimentoMinima = dataNascimentoMinima.replaceAll('-', '');
-
-      dt_nasc = dt_nasc.replaceAll('-', '');
-
-      if (dt_nasc > dataNascimentoMaxima) {
-        return false;
-      }
-
-      if (dt_nasc < dataNascimentoMinima) {
-        return false;
-      }
-
-      var rg = document.getElementById('rg').value;
-
-      var orgao_emissor = document.getElementById('orgao_emissor').value;
-
-      var dt_expedicao = document.getElementById('data_expedicao').value;
-
       var dt_admissao = document.getElementById('data_admissao').value;
 
-      var a = document.getElementById('situacao');
-      var situacao = a.options[a.selectedIndex].text;
+      if (dt_nasc) {
+        let dataNascimentoMaxima = "<?= $dataNascimentoMaxima ?>";
+        let dataNascimentoMinima = "<?= $dataNascimentoMinima ?>";
+        if (dt_nasc > dataNascimentoMaxima) {
+          showClientAlert('A data de nascimento não pode ser posterior ao permitido.');
+          showFieldError('nascimento', 'Data de nascimento fora do intervalo permitido.');
+          return false;
+        }
+        if (dt_nasc < dataNascimentoMinima) {
+          showClientAlert('A data de nascimento não pode ser anterior ao permitido.');
+          showFieldError('nascimento', 'Data de nascimento fora do intervalo permitido.');
+          return false;
+        }
+      }
 
-      var b = document.getElementById('cargo');
-      var cargo = b.options[b.selectedIndex].text;
+      if (dt_nasc && dt_admissao) {
+        var nascimentoObj = new Date(dt_nasc);
+        var admissaoObj = new Date(dt_admissao);
+        var minAdmissao = new Date(nascimentoObj);
+        minAdmissao.setFullYear(minAdmissao.getFullYear() + 14);
 
-      var c = document.getElementById('escala_input');
-      var escala = c.options[c.selectedIndex].text;
+        if (admissaoObj < minAdmissao) {
+          showClientAlert('A data de admissão deve respeitar a idade mínima de 14 anos do funcionário.');
+          showFieldError('data_admissao', 'Data de admissão deve respeitar 14 anos mínimos.');
+          return false;
+        }
+      }
 
-      var d = document.getElementById('tipoCargaHoraria_input');
-      var tipo = d.options[d.selectedIndex].text;
-
-      const data_nascimento = document.querySelector("#nascimento").value;
-      if (dt_expedicao && dt_expedicao < data_nascimento) {
+      var data_expedicao = document.getElementById('data_expedicao').value;
+      if (dt_nasc && data_expedicao && data_expedicao < dt_nasc) {
+        showClientAlert('A data de expedição não pode ser anterior à data de nascimento.');
+        showFieldError('data_expedicao', 'Data de expedição deve ser posterior à data de nascimento.');
         return false;
       }
-      // Note: The final check for all fields is removed as required attributes handle it
+
+      return true;
     }
 
     function numero_residencial() {
@@ -794,15 +841,7 @@ $(document).ready(function() {
 
     if (dataNasc) {
       var minAdm = new Date(dataNasc);
-      minAdm.setDate(minAdm.getDate() + 1);
-      var minAdmStr = minAdm.toISOString().split('T')[0];
-
-      dataAdmInput.attr('min', minAdmStr);
-
-      if (dataAdmInput.val() && new Date(dataAdmInput.val()) < minAdm) {
-        dataAdmInput.val('');
-      }
-    } else {
+          minAdm.setFullYear(minAdm.getFullYear() + 14);
       dataAdmInput.removeAttr('min');
     }
   });

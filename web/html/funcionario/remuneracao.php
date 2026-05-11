@@ -156,6 +156,7 @@ if ($action == "remuneracao_editar") {
         $stmt->bindParam(':idFuncionarioRemuneracao', $idFuncionarioRemuneracao);
 
         $stmt->execute();
+        $action = "listar";
     } catch (Exception $e) {
         Util::tratarException($e);
         exit();

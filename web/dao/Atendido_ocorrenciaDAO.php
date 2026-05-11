@@ -75,9 +75,9 @@ class Atendido_ocorrenciaDAO
 
     public function listarTodos()
     {
+        $ocorrencias = array();
 
         try {
-            $ocorrencias = array();
             $pdo = Conexao::connect();
             $consulta = $pdo->query("SELECT ao.idatendido_ocorrencias, p.nome, p.sobrenome, ao.data, ao.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos FROM pessoa p INNER JOIN atendido a ON(p.id_pessoa=a.pessoa_id_pessoa) INNER JOIN atendido_ocorrencia ao ON (a.idatendido=ao.atendido_idatendido)");
             // $produtos = Array();
@@ -178,7 +178,8 @@ class Atendido_ocorrenciaDAO
                     $prep->bindValue(":atentido_ocorrencia_idatentido_ocorrencias", $id);
                     $prep->bindValue(":arquivo_nome", $arquivo_nome);
                     $prep->bindValue(":arquivo_extensao", $extensao_nome);
-                    $prep->bindParam(":arquivo", gzcompress($arquivo_b64), PDO::PARAM_LOB);
+                    $arquivo_comprimido = gzcompress($arquivo_b64);
+                    $prep->bindParam(":arquivo", $arquivo_comprimido, PDO::PARAM_LOB);
 
                     $dataDocumento = date('Y/m/d');
                     $prep->bindValue(":data", $dataDocumento);

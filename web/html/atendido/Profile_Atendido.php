@@ -22,6 +22,9 @@ include_once '../../classes/Cache.php';
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
 require_once "../geral/msg.php";
+$oldInput = getSessionFormData();
+$fieldErrors = getSessionFormErrors();
+$openModal = getSessionOpenModal();
 
 $id = filter_input(INPUT_GET, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
 
@@ -217,6 +220,17 @@ $dependente = json_encode($dependente);
       return date[2] + "/" + date[1] + "/" + date[0];
     }
 
+    function formatCpfDisplay(cpf) {
+      if (!cpf || typeof cpf !== 'string') {
+        return cpf || '';
+      }
+      var digits = cpf.replace(/\D/g, '');
+      if (digits.length !== 11) {
+        return cpf;
+      }
+      return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+
     function excluirimg(id) {
       $("#excluirimg").modal('show');
       $('input[name="id_documento"]').val(id);
@@ -273,7 +287,7 @@ $dependente = json_encode($dependente);
 
           $('#orgaoEmissor').text("Orgão emissor: " + item.orgao_emissor);
           $("#orgaoEmissor").val(item.orgao_emissor);
-          if (item.cpf.indexOf("ni") != -1) {
+          if (typeof item.cpf !== 'string' || item.cpf.indexOf("ni") != -1 || item.cpf.trim() === '') {
             $("#cpf").text("Não informado");
             $("#cpf").val("Não informado");
           } else {
@@ -806,13 +820,16 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                           <div class="col-md-8">
-                            <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" disabled placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                            <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" disabled placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                           <div class="col-md-8">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_nascimento" disabled id="data_nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()">
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control<?= !empty($fieldErrors['data_nascimento']) && $openModal !== 'depFormModal' ? ' is-invalid' : '' ?>" name="data_nascimento" disabled id="data_nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()" value="<?= $openModal !== 'depFormModal' ? htmlspecialchars($oldInput['data_nascimento'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
+                            <?php if (!empty($fieldErrors['data_nascimento']) && $openModal !== 'depFormModal'): ?>
+                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['data_nascimento'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
                         </div>
                         <div class="form-group">
@@ -841,12 +858,15 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" disabled
+                            <input type="text" class="form-control<?= !empty($fieldErrors['cpf']) && $openModal !== 'depFormModal' ? ' is-invalid' : '' ?>" id="cpf" name="cpf" disabled
                               placeholder="Ex: 222.222.222-22" maxlength="14"
-                              value="<?= htmlspecialchars($atend->cpf ?? '') ?>"
+                              value="<?= htmlspecialchars($openModal !== 'depFormModal' ? ($oldInput['cpf'] ?? $atend->cpf ?? '') : ($atend->cpf ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                               onblur="validarCPF(this.value)"
                               onkeypress="return Onlynumbers(event)"
                               onkeyup="mascara('###.###.###-##',this,event)">
+                              <?php if (!empty($fieldErrors['cpf']) && $openModal !== 'depFormModal'): ?>
+                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
                         </div>
                         <input type="hidden" name="idatendido" value=<?= $id ?>>
@@ -963,7 +983,7 @@ $dependente = json_encode($dependente);
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
                             <div class="col-md-8">
-                              <input type="text" class="form-control" name="complemento" id="complemento" id="profileCompany">
+                              <input type="text" class="form-control" name="complemento" id="complemento">
                             </div>
                           </div>
                           <div class="form-group">
@@ -1026,19 +1046,19 @@ $dependente = json_encode($dependente);
                                   <div class="form-group">
                                     <label class="col-md-3 control-label" for="cpf">CPF</label>
                                     <div class="col-md-6">
-                                      <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                                      <input type="text" class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= $openModal === 'depFormModal' ? htmlspecialchars($oldInput['cpf'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
                                     </div>
                                   </div>
                                   <div class="form-group">
                                     <label class="col-md-3 control-label" for="profileCompany"></label>
                                     <div class="col-md-6">
-                                      <p id="cpfFamiliarInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+                                      <p id="cpfFamiliarInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? 'block' : 'none' ?>; color: #b30000"><?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                     </div>
                                   </div>
                                   <div class="form-group">
                                     <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
                                     <div class="col-md-6" style="display: flex;">
-                                      <select name="id_parentesco" id="parentesco">
+                                      <select name="id_parentesco" id="parentesco" class="<?= !empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal' ? 'is-invalid' : '' ?>">
                                         <option selected disabled>Selecionar...</option>
                                         <?php
                                         $parentescosAtendido = [];
@@ -1051,8 +1071,9 @@ $dependente = json_encode($dependente);
                                         }
 
                                         foreach ($parentescosAtendido as $item) {
+                                          $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["idatendido_parentesco"] ? ' selected' : '';
                                           echo ("
-                                            <option value='" . $item["idatendido_parentesco"] . "' >" . htmlspecialchars($item["parentesco"]) . "</option>
+                                            <option value='" . $item["idatendido_parentesco"] . "'{$selected}>" . htmlspecialchars($item["parentesco"]) . "</option>
                                             ");
                                         }
                                         ?>
@@ -1061,6 +1082,9 @@ $dependente = json_encode($dependente);
                                     </div>
                                   </div>
                                   <input type="hidden" name="idatendido" value="<?= $id ?>" readonly>
+                                  <?php if (!empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal'): ?>
+                                    <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['id_parentesco'], ENT_QUOTES, 'UTF-8') ?></p>
+                                  <?php endif; ?>
                                   <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                                     <input type="submit" id="cadastrarFamiliar" value="Enviar" class="btn btn-primary">
@@ -1221,19 +1245,26 @@ $dependente = json_encode($dependente);
                           <thead>
                             <tr>
                               <th>Data</th>
+                              <th>Tipo</th>
                               <th>Informações</th>
                               <th style="width: 120px;">Ações</th>
                             </tr>
                           </thead>
                           <tbody id="doc-tabl">
                             <?php
-                            $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
+                            $stmt = $pdo->prepare(
+                              "SELECT ao.data, ao.descricao, ao.idatendido_ocorrencias, t.descricao AS tipo " .
+                              "FROM atendido_ocorrencia ao " .
+                              "LEFT JOIN atendido_ocorrencia_tipos t " .
+                              "ON ao.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = t.idatendido_ocorrencia_tipos " .
+                              "WHERE atendido_idatendido = :id ORDER BY ao.data DESC"
+                            );
                             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                             $stmt->execute();
                             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                             if (empty($resultados)) {
-                              echo '<tr><td colspan="3" class="text-center text-muted">Nenhuma ocorrência cadastrada</td></tr>';
+                              echo '<tr><td colspan="4" class="text-center text-muted">Nenhuma ocorrência cadastrada</td></tr>';
                             }
 
                             foreach ($resultados as $item) {
@@ -1241,6 +1272,7 @@ $dependente = json_encode($dependente);
                             ?>
                               <tr style="cursor: pointer;" onclick="clicar(<?= (int)$item['idatendido_ocorrencias'] ?>)">
                                 <td><?= $data[2] . "/" . $data[1] . "/" . $data[0] ?></td>
+                                <td><?= htmlspecialchars($item['tipo'] ?? 'Não informado', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td>
                                   <?= htmlspecialchars(
                                     strip_tags(
@@ -1752,6 +1784,10 @@ $dependente = json_encode($dependente);
           formId: 'formAlterarEnderecoAtendido',
           estadoIds: ['estado']
         });
+
+        <?php if ($openModal === 'depFormModal'): ?>
+          $('#depFormModal').modal('show');
+        <?php endif; ?>
       });
     </script>
 

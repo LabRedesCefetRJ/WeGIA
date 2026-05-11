@@ -11,6 +11,7 @@ require_once ROOT . '/dao/DocumentoDAO.php';
 require_once ROOT . '/controle/DocumentoControle.php';
 include_once ROOT . '/classes/Cache.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/html/geral/msg.php';
 include_once ROOT . "/dao/Conexao.php";
 
 require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
@@ -50,12 +51,16 @@ class AtendidoControle
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = "";
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
         if ((!isset($sexo)) || (empty($sexo))) {
             $msg .= "Sexo do atendido não informado. Por favor, informe o sexo!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
         }
-        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf = '0')) {
+        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf == '0')) {
             $msg .= "Nascimento do atendido não informado. Por favor, informe a data!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -138,11 +143,15 @@ class AtendidoControle
             $cpf = "";
         }
         if ((!isset($nome)) || (empty($nome))) {
-            $nome = '';
+            $nome = 'Pessoa existente';
         }
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = '';
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
         if ((!isset($sexo)) || (empty($sexo))) {
             $sexo = '';
         }
@@ -393,8 +402,19 @@ class AtendidoControle
 
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . (int)$idAtendido);
             exit;
+        } catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($e->getMessage());
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=" . urlencode($cpf ?? ''));
+            exit;
         } catch (PDOException $e) {
-            Util::tratarException($e);
+            $message = $e->getCode() == 23000 ? 'Erro: CPF já cadastrado no sistema.' : 'Erro ao cadastrar atendido.';
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($message);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=" . urlencode($cpf ?? ''));
+            exit;
         }
     }
 
@@ -446,11 +466,12 @@ class AtendidoControle
 
         $processoDao = new ProcessoAceitacaoDAO($pdo);
 
-        if (!$processoDao->buscarPorIdConcluido($idProcesso)) {
+        $processo = $processoDao->buscarPorIdConcluido($idProcesso);
+        if (!$processo) {
             throw new RuntimeException('Não é possível criar atendido: processo ainda não está CONCLUÍDO.');
         }
 
-        $idPessoa = $processoDao->getIdPessoaByProcesso($idProcesso);
+        $idPessoa = $processo['id_pessoa'];
 
         $atendidoDao = new AtendidoDAO($pdo);
         $idAtendido = $atendidoDao->criarPorPessoa($idPessoa, $tipo, $status);
@@ -513,11 +534,13 @@ class AtendidoControle
 
     public function incluirExistente()
     {
-        $atendido = $this->verificarExistente();
         $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
-        $sobrenome = $_GET['sobrenome'] ?? '';
-
+        $cpf = $_GET['cpf'] ?? '';
         try {
+<<<<<<< master
+            $atendido = $this->verificarExistente();
+            $sobrenome = $_GET['sobrenome'] ?? '';
+=======
             $validador = new Util();
             
             // Valida CNS se fornecido
@@ -527,6 +550,7 @@ class AtendidoControle
                     throw new InvalidArgumentException('Erro, o CNS informado não é válido. Deve conter 15 dígitos.', 400);
                 }
             }
+>>>>>>> pre-master-LAJE-261105-Pedro
 
             $atendidoDAO = new AtendidoDAO();
             $atendidoDAO->incluirExistente($atendido, $idPessoa, $sobrenome);
@@ -541,8 +565,18 @@ class AtendidoControle
             $_SESSION['mensagem_erro'] = $e->getMessage();
             header("Location: ../html/atendido/processo_aceitacao.php");
             exit;
+        } catch (InvalidArgumentException $e) {
+            setSessionFormData($_GET);
+            setSessionFormErrorFromMessage($e->getMessage());
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=" . urlencode($cpf) . "&id_pessoa=" . urlencode((string)$idPessoa));
+            exit;
         } catch (PDOException $e) {
-            Util::tratarException($e);
+            $message = $e->getCode() == 23000 ? 'Erro: CPF já cadastrado no sistema.' : 'Erro ao cadastrar atendido.';
+            setSessionFormData($_GET);
+            setSessionFormErrorFromMessage($message);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=" . urlencode($cpf) . "&id_pessoa=" . urlencode((string)$idPessoa));
             exit;
         } catch (Exception $e) {
             Util::tratarException($e);
@@ -637,10 +671,26 @@ class AtendidoControle
                 }
             }
 
+<<<<<<< master
+            $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'telefone', 'nome_mae', 'nome_pai', 'tipo_sanguineo'];
+            $setClause = [];
+            $params = [':idatendido' => $idatendido];
+
+            foreach ($campos as $campo) {
+                if (isset($_POST[$campo]) && $_POST[$campo] !== '') {
+                    if (in_array($campo, ['nome', 'sobrenome', 'nome_mae', 'nome_pai'], true)) {
+                        $nomeCampo = $campo === 'sobrenome' ? 'sobrenome' : str_replace('_', ' ', $campo);
+                        Util::validarNomePessoaOuLancar($_POST[$campo], $nomeCampo, 400);
+                    }
+                    $setClause[] = "p.`$campo` = :" . $campo;
+                    $params[":$campo"] = $_POST[$campo];
+                }
+=======
             // Validação de CNS
             $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
             if ($cns !== '' && !Util::validaCNS($cns)) {
                 throw new InvalidArgumentException("Erro, o CNS informado não é válido. Deve conter 15 dígitos.");
+>>>>>>> pre-master-LAJE-261105-Pedro
             }
 
             // Popula objeto Atendido
@@ -657,8 +707,18 @@ class AtendidoControle
             exit;
 
         } catch (InvalidArgumentException $e) {
-            $_SESSION['msg'] = $e->getMessage();
-            $_SESSION['tipo'] = "error";
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'CPF') !== false) {
+                $fieldErrors['cpf'] = $message;
+            } elseif (stripos($message, 'data de nascimento') !== false || stripos($message, 'Formato de data') !== false) {
+                $fieldErrors['data_nascimento'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($message, 'err');
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
         } catch (PDOException $e) {
