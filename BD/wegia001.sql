@@ -1103,7 +1103,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `id_pessoa` INT(11) NOT NULL,
   `id_sociostatus` INT NOT NULL,
   `id_sociotipo` INT NOT NULL,
-  `id_sociotag` INT NULL DEFAULT NULL,
   `email` VARCHAR(256) NULL DEFAULT NULL,
   `valor_periodo` DECIMAL(10,2) NULL DEFAULT NULL,
   `data_referencia` DATE NULL DEFAULT NULL,
@@ -1113,7 +1112,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   INDEX `fk_socio_socio_status1_idx` (`id_sociostatus` ASC),
   INDEX `fk_socio_pessoa1_idx` (`id_pessoa` ASC),
   INDEX `fk_socio_socio_tipo1_idx` (`id_sociotipo` ASC),
-  INDEX `fk_socio_socio_tag1_idx` (`id_sociotag` ASC),
   CONSTRAINT `fk_socio_socio_status1`
     FOREIGN KEY (`id_sociostatus`)
     REFERENCES `wegia`.`socio_status` (`id_sociostatus`)
@@ -1128,13 +1126,30 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
     FOREIGN KEY (`id_sociotipo`)
     REFERENCES `wegia`.`socio_tipo` (`id_sociotipo`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_socio_socio_tag1`
-    FOREIGN KEY (`id_sociotag`)
-    REFERENCES `wegia`.`socio_tag` (`id_sociotag`)
-    ON DELETE SET NULL
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`socio_has_tag`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`socio_has_tag` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_socio` INT(11) NOT NULL,
+  `id_sociotag` INT(11) NOT NULL,
+  `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_socio_tag` (`id_socio`, `id_sociotag`),
+  KEY `idx_sociotag` (`id_sociotag`),  -- índice extra para busca por tag isolada
+  CONSTRAINT `fk_socio_has_tag_socio`
+    FOREIGN KEY (`id_socio`) REFERENCES `wegia`.`socio` (`id_socio`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_socio_has_tag_sociotag`
+    FOREIGN KEY (`id_sociotag`) REFERENCES `wegia`.`socio_tag` (`id_sociotag`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE = InnoDB 
+  DEFAULT CHARSET = utf8mb4 
+  COLLATE = utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`socio_log`

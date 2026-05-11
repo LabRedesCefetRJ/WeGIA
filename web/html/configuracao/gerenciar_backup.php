@@ -10,8 +10,6 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once "./config_funcoes.php";
 require_once "../../config.php";
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
-
 // Permissão
 require_once '../permissao/permissao.php';
 permissao($_SESSION['id_pessoa'], 9);
@@ -83,10 +81,6 @@ try {
 
         //restore
         try {
-            $pdo = Conexao::connect();
-
-            truncateAllTables($pdo);
-
             if (!loadBackupDB($file)) {
                 throw new RuntimeException("Falha ao carregar backup.");
             }

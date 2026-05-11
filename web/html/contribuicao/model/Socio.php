@@ -16,6 +16,7 @@ class Socio implements JsonSerializable{
     private $documento;
     private $ibge;
     private $valor;
+    private array $tags = [];
 
     //métodos de lógica
 
@@ -35,6 +36,7 @@ class Socio implements JsonSerializable{
             'numeroEndereco' => $this->numeroEndereco,
             'logradouro' => $this->logradouro,
             'documento' => $this->documento,
+            'tags' => $this->tags,
         ];
     }
 
@@ -336,6 +338,30 @@ class Socio implements JsonSerializable{
     public function setValor($valor)
     {
         $this->valor = $valor;
+
+        return $this;
+    }
+
+    public function getTags(): array
+    {
+        return $this->tags;
+    }
+
+    public function setTags(array $tags)
+    {
+        $tagsNormalizadas = [];
+
+        foreach ($tags as $tag) {
+            $tagId = (int) $tag;
+
+            if ($tagId < 1) {
+                continue;
+            }
+
+            $tagsNormalizadas[$tagId] = $tagId;
+        }
+
+        $this->tags = array_values($tagsNormalizadas);
 
         return $this;
     }
