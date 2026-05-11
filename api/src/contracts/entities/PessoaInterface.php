@@ -28,6 +28,11 @@ interface PessoaInterface
     public function getSobrenome(): string;
 
     /**
+     * Obtém o email da pessoa
+     */    
+    public function getEmail(): ?string;
+
+    /**
      * Obtém a data de nascimento da pessoa
      */
     public function getDataNascimento(): ?DateTime;

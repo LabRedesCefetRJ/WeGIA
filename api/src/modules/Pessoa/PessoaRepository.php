@@ -23,8 +23,8 @@ class PessoaRepository
 
     public function create(Pessoa $pessoa): int|false
     {
-        $query = "INSERT INTO pessoa (nome, sobrenome, data_nascimento, sexo, telefone, cpf) 
-                  VALUES (:nome, :sobrenome, :data_nascimento, :sexo, :telefone, :cpf)";
+        $query = "INSERT INTO pessoa (nome, sobrenome, data_nascimento, sexo, telefone, email, cpf) 
+                  VALUES (:nome, :sobrenome, :data_nascimento, :sexo, :telefone, :email, :cpf)";
         $stmt = $this->pdo->prepare($query);
 
         $resultado = $stmt->execute([
@@ -33,6 +33,7 @@ class PessoaRepository
             'data_nascimento' => $pessoa->getDataNascimento() ? $pessoa->getDataNascimento()->format('Y-m-d') : null,
             'sexo' => $pessoa->getSexo(),
             'telefone' => $pessoa->getTelefone(),
+            'email' => $pessoa->getEmail(),
             'cpf' => $pessoa->getCpf()
         ]);
 

@@ -11,7 +11,7 @@ use DateTime;
  */
 interface SocioInterface
 {
-    public function __construct(PessoaInterface $pessoa, string $email, DateTime $inicioContribuicao, float $valorMensalidade, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null);
+    public function __construct(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null);
 
     /**
      * Obtém o ID do sócio
@@ -22,11 +22,6 @@ interface SocioInterface
      * Obtém a Pessoa associada ao sócio
      */
     public function getPessoa(): PessoaInterface;
-
-    /**
-     * Obtém o email do sócio
-     */
-    public function getEmail(): string;
 
     /**
      * Obtém o status do sócio
@@ -62,11 +57,6 @@ interface SocioInterface
      * Define o ID do sócio
      */
     public function setId(int $id): void;
-
-    /**
-     * Define o email do sócio
-     */
-    public function setEmail(string $email): void;
 
     /**
      * Define o status do sócio

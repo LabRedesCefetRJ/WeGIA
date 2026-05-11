@@ -16,9 +16,9 @@ class SocioService implements SocioServiceInterface
         $this->socioRepository = $socioRepository;
     }
 
-    public function criarSocio(PessoaInterface $pessoa, string $email, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
+    public function criarSocio(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
     {
-        $socio = new Socio($pessoa, $email, $inicioContribuicao, $valorMensalidade, $idSocioStatus, $autoStatusContribuicao, $idSocioTipo);
+        $socio = new Socio($pessoa, $inicioContribuicao, $valorMensalidade, $idSocioStatus, $autoStatusContribuicao, $idSocioTipo);
         return $this->socioRepository->save($socio);
     }
 
@@ -29,7 +29,7 @@ class SocioService implements SocioServiceInterface
         throw new \Exception("Método obterSocioPorId ainda não implementado", 501);
     }
 
-    public function atualizarSocio(int $id, PessoaInterface $pessoa, string $email, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
+    public function atualizarSocio(int $id, PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
     {
         // Lógica para atualizar um sócio existente
         // Exemplo: validar dados, atualizar o objeto Sócio e salvar as alterações no banco de dados

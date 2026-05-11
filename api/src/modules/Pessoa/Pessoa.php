@@ -13,6 +13,7 @@ class Pessoa implements PessoaInterface, \JsonSerializable
     private ?DateTime $dataNascimento = null;
     private ?string $sexo = null;
     private ?string $telefone = null;
+    private ?string $email = null;
     private string $cpf;
     private ?Endereco $endereco = null;
 
@@ -23,6 +24,7 @@ class Pessoa implements PessoaInterface, \JsonSerializable
         ?DateTime $dataNascimento = null,
         ?string $sexo = null,
         ?string $telefone = null,
+        ?string $email = null,
         ?Endereco $endereco = null,
         ?int $id = null
     ) {
@@ -36,6 +38,9 @@ class Pessoa implements PessoaInterface, \JsonSerializable
 
         if ($telefone !== null)
             $this->setTelefone($telefone);
+
+        if ($email !== null)
+            $this->setEmail($email);
 
         if ($endereco !== null)
             $this->setEndereco($endereco);
@@ -72,6 +77,10 @@ class Pessoa implements PessoaInterface, \JsonSerializable
     public function getTelefone(): ?string
     {
         return $this->telefone;
+    }
+    public function getEmail(): ?string
+    {
+        return $this->email;
     }
 
     public function getCpf(): string
@@ -126,6 +135,12 @@ class Pessoa implements PessoaInterface, \JsonSerializable
         return $this;
     }
 
+    public function setEmail(?string $email)
+    {
+        $this->email = $email;
+        return $this;
+    }
+
     public function setCpf(string $cpf)
     {
         $this->cpf = $cpf;
@@ -141,6 +156,7 @@ class Pessoa implements PessoaInterface, \JsonSerializable
             'dataNascimento' => $this->dataNascimento ? $this->dataNascimento->format('Y-m-d') : null,
             'sexo' => $this->sexo,
             'telefone' => $this->telefone,
+            'email' => $this->email,
             'cpf' => $this->cpf,
             'endereco' => $this->endereco ? [
                 'logradouro' => $this->endereco->getLogradouro(),

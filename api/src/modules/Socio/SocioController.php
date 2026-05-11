@@ -35,13 +35,13 @@ class SocioController
                     isset($data['dataNascimento']) ? new \DateTime($data['dataNascimento']) : null,
                     $data['sexo'] ?? null,
                     $data['telefone'] ?? null,
+                    $data['email'] ?? null,
                     $data['cpf']
                 );
             }
 
             $socio = $this->socioService->criarSocio(
                 $pessoa,
-                $data['email'],
                 new \DateTime($data['inicioContribuicao']),
                 $data['valorMensalidade'] ?? 10.0,
                 $data['status'] ?? 1,

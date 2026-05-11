@@ -12,20 +12,18 @@ class Socio implements SocioInterface, JsonSerializable
     private int $id;
     private int $idSocioTipo;
     private PessoaInterface $pessoa;
-    private string $email;
     private int $idSocioStatus;
     private bool $autoStatusContribuicao;
     private float $valorMensalidade;
     private DateTime $inicioContribuicao;
 
-    public function __construct(PessoaInterface $pessoa, string $email, DateTime $inicioContribuicao, float $valorMensalidade = 10.0, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null)
+    public function __construct(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade = 10.0, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null)
     {
         if ($id !== null)
             $this->id = $id;
         
         $this->idSocioTipo = $idSocioTipo;
         $this->pessoa = $pessoa;
-        $this->email = $email;
         $this->idSocioStatus = $idSocioStatus;
         $this->autoStatusContribuicao = $autoStatusContribuicao;
         $this->valorMensalidade = $valorMensalidade;
@@ -40,11 +38,6 @@ class Socio implements SocioInterface, JsonSerializable
     public function getIdSocioTipo(): int
     {
         return $this->idSocioTipo;
-    }
-
-    public function getEmail(): string
-    {
-        return $this->email;
     }
 
     public function getStatus(): int
@@ -82,11 +75,6 @@ class Socio implements SocioInterface, JsonSerializable
         $this->idSocioTipo = $idSocioTipo;
     }
 
-    public function setEmail(string $email): void
-    {
-        $this->email = $email;
-    }
-
     public function setStatus(int $status): void
     {
         $this->idSocioStatus = $status;
@@ -117,7 +105,6 @@ class Socio implements SocioInterface, JsonSerializable
         return [
             'id' => $this->id,
             'idSocioTipo' => $this->idSocioTipo,
-            'email' => $this->email,
             'status' => $this->idSocioStatus,
             'autoStatusContribuicao' => $this->autoStatusContribuicao,
             'valorMensalidade' => $this->valorMensalidade,

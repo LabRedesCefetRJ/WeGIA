@@ -15,9 +15,9 @@ class PessoaService implements PessoaServiceInterface
         $this->pessoaRepository = $pessoaRepository;
     }
 
-    public function criarPessoa(string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, string $cpf): PessoaInterface
+    public function criarPessoa(string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf): PessoaInterface
     {
-        $pessoa = new Pessoa($nome, $sobrenome, $cpf, $dataNascimento, $sexo, $telefone);
+        $pessoa = new Pessoa($nome, $sobrenome, $cpf, $dataNascimento, $sexo, $telefone, $email);
         $idPessoa = $this->pessoaRepository->create($pessoa);
 
         if (!$idPessoa) {
@@ -49,12 +49,13 @@ class PessoaService implements PessoaServiceInterface
             isset($resultado['data_nascimento']) ? new DateTime($resultado['data_nascimento']) : null,
             $resultado['sexo'] ?? null,
             $resultado['telefone'] ?? null,
+            $resultado['email'] ?? null,
             null,
             (int)$resultado['id_pessoa']
         );
     }
 
-    public function atualizarPessoa(int $id, string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, string $cpf): PessoaInterface
+    public function atualizarPessoa(int $id, string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf): PessoaInterface
     {
         // Implementação para atualizar os dados de uma pessoa existente
         throw new \Exception("Método atualizarPessoa ainda não implementado", 501);
