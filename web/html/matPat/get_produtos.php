@@ -1,4 +1,6 @@
 <?php
+ob_start();
+
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -28,6 +30,8 @@ if (isset($_GET['id_almoxarifado'])) {
 
         // Obter resultados
         $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        ob_clean();
 
         if ($produtos) {
             echo json_encode($produtos);

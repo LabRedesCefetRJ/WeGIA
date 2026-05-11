@@ -2787,7 +2787,7 @@ BEGIN
   
 END$$
 
-USE `wegia`$$
+/*USE `wegia`$$
 CREATE
 TRIGGER `wegia`.`tgr_ientrada_atualiza_preco`
 AFTER INSERT ON `wegia`.`ientrada`
@@ -2819,7 +2819,7 @@ BEGIN
   CLOSE cur;
 	
     UPDATE produto SET preco = (@preco_total / @qtd_total) WHERE id_produto = NEW.id_produto;
-END$$
+END$$*/
 
 USE `wegia`$$
 CREATE

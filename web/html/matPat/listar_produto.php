@@ -6,16 +6,18 @@ if (session_status() === PHP_SESSION_NONE)
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
-if (!isset($_SESSION['usuario'])) {
+if (!isset($_SESSION['usuario'], $_SESSION['id_pessoa'])) {
 	header("Location: " . WWW . "html/index.php");
 	exit();
 } else {
 	session_regenerate_id();
 }
 
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
-permissao($_SESSION['id_pessoa'], 22, 5);
+permissao($id_pessoa, 22, 5);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -25,6 +27,7 @@ include_once ROOT . '/dao/ProdutoDAO.php';
 
 if (!isset($_SESSION['produtos'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/listar_produto.php');
+	exit();
 } else {
 	$produtos = $_SESSION['produtos'];
 	unset($_SESSION['produtos']);
@@ -140,7 +143,7 @@ if (!isset($_SESSION['produtos'])) {
 								.attr('onclick', 'excluir("' + item.id_produto + '")')
 							)
 							.append($('<button/>')
-								.html('<i class="fas fa-pencil-alt"</i>')
+								.html('<i class="fas fa-pencil-alt"></i>')
 								.attr('onclick', 'clicar(' + item.id_produto + ')')
 							)
 						)
