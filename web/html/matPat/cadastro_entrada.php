@@ -141,7 +141,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li cla ss="active">
-									<a href="#overview" data-toggle="tab">Cadastro de Doação</a>
+									<a href="#overview" data-toggle="tab">Registro de entrada</a>
 								</li>
 							</ul>
 							<div class="tab-content">
@@ -200,7 +200,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 															</datalist> -->
 																</td>
 																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
-																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">incluir</button>
 																</td>
@@ -245,9 +245,9 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="col-md-9 col-md-offset-3">
 												<input type="hidden" name="nomeClasse" value="EntradaControle">
 												<input type="hidden" name="metodo" value="incluir">
-												<input type="submit" class="btn btn-primary">
+												<input type="submit" class="btn btn-primary" value="Registrar entrada"> 
 											</div>
-										</div>ll
+										</div>
 									</form>
 								</div>
 							</div>
@@ -352,6 +352,21 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 							var quantidade = $("#quantidade").val();
 							var preco = parseFloat($("#valor_unitario").val());
 
+							quantidade = Number(quantidade);
+							preco = Number(preco);
+
+							if(!Number.isFinite(quantidade) || quantidade <= 0) {
+								alert("A quantidade deve ser um número positivo.");
+								$("#quantidade").focus();
+								return;
+							}
+
+							if(!Number.isFinite(preco) || preco < 0) {
+								alert("O valor unitário deve ser um número válido e não negativo.");
+								$("#valor_unitario").focus();
+								return;
+							}
+
 							conta = conta + 1;
 
 							$("#conta").val(conta);
@@ -426,6 +441,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			var almox = document.getElementById("almoxarifado");
 			var tipo = document.getElementById("tipo_entrada");
 			var verificar = document.getElementById("verifica");
+			var erro = false;
+
 			if (almox.value == "blank") {
 				alert("Selecione um almoxarifado");
 				almox.focus();
@@ -437,6 +454,27 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			} else if (verificar.value == 0 && !$('#input_produtos').is(':focus')) {
 				alert("Nenhum produto inserido");
 				document.getElementById("input_produtos").focus();
+				return false;
+			}
+
+			$("#lista-produtos tr").each(function () {
+				const quantidade = Number($(this).find("input[name^='qtd']").val());
+				const valorUnitario = Number($(this).find("input[name^='valor_unitario']").val());
+
+				if(!Number.isFinite(quantidade) || quantidade <= 0) {
+					alert("Existe um produto com quantidade inválida na lista.");
+					erro = true;
+					return false;
+				}
+
+				if(!Number.isFinite(valorUnitario) || valorUnitario < 0) {
+					alert("Existe um produto com valor unitário inválido na lista.");
+					erro = true;
+					return false;
+				}
+			});
+
+			if(erro) {
 				return false;
 			}
 		}
@@ -503,11 +541,11 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				tabela: $('#lista-produtos').html()
 			};
 
-			sessionStorage.setItem(CHAVE, JSON.stringify(dados));
+			localStorage.setItem(CHAVE, JSON.stringify(dados));
 		}
 
 		function restaurarRascunho() {
-			const bruto = sessionStorage.getItem(CHAVE);
+			const bruto = localStorage.getItem(CHAVE);
 			if (!bruto) return;
 
 			try {
@@ -536,7 +574,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		}
 
 		function limparRascunho() {
-			sessionStorage.removeItem(CHAVE);
+			localStorage.removeItem(CHAVE);
 		}
 
 		$('#btn-novo-doador, #btn-novo-almoxarifado, #btn-novo-tipo-entrada, #btn-novo-produto').on('click', function () {

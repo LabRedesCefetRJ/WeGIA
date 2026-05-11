@@ -61,6 +61,14 @@ class IentradaDAO
             $qtd = $ientrada->getQtd();
             $valor_unitario = $ientrada->getValor_unitario();
 
+            // Validação dos valores
+            if (!is_numeric($qtd) || $qtd <= 0) {
+                throw new InvalidArgumentException("A quantidade deve ser um número positivo.");
+            }
+            if (!is_numeric($valor_unitario) || $valor_unitario < 0) {
+                throw new InvalidArgumentException("O valor unitário deve ser um número válido.");
+            }
+
             // Bind com tipos corretos
             $stmt->bindParam(':id_entrada', $id_entrada, PDO::PARAM_INT);
             $stmt->bindParam(':id_produto', $id_produto, PDO::PARAM_INT);
@@ -70,14 +78,14 @@ class IentradaDAO
             $stmt->execute();
 
             return json_encode([
-                'success' => true,
-                'message' => 'Item de entrada incluído com sucesso.'
+                'sucesso' => true,
+                'mensagem' => 'Item de entrada incluído com sucesso.'
             ]);
 
         } catch (PDOException $e) {
             return json_encode([
-                'error' => true,
-                'message' => 'Erro ao incluir item de entrada: ' . $e->getMessage()
+                'sucesso' => false,
+                'mensagem' => 'Erro ao incluir item de entrada: ' . $e->getMessage()
             ]);
         }
     }
