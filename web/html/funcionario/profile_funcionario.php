@@ -184,6 +184,7 @@ try {
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
   <script src="../../Functions/onlyNumbers.js"></script>
   <script src="../../Functions/onlyChars.js"></script>
+  <script src="../../Functions/valida_nome.js"></script>
   <script src="../../Functions/mascara.js"></script>
   <script src="../../Functions/lista.js"></script>
   <script src="../../Functions/funcionario_parentesco.js"></script>

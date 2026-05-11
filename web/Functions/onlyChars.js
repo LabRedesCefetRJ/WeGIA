@@ -1,5 +1,21 @@
 	function Onlychars(e)
 	{
+		if (e && (e.ctrlKey || e.metaKey || e.altKey)) {
+			return true;
+		}
+
+		if (e && e.key) {
+			if (e.key === 'Dead' || e.isComposing) {
+				return true;
+			}
+
+			if (/^\d$/.test(e.key)) {
+				return false;
+			}
+
+			return true;
+		}
+
 		var tecla=new Number();
 		if(window.event) {
 			tecla = e.keyCode;

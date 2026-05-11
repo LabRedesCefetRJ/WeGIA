@@ -4,13 +4,13 @@ function validarNome(nome) {
     nome = nome.trim();
 
     var contemLetra = /[A-Za-zÀ-ÿ]/.test(nome);
-    var formatoValido = /^[A-Za-zÀ-ÿ]+(?:[ .'\-][A-Za-zÀ-ÿ]+)*$/.test(nome);
+    var formatoValido = /^[A-Za-zÀ-ÿ\u0300-\u036f]+(?:[ .'\-][A-Za-zÀ-ÿ\u0300-\u036f]+)*$/.test(nome);
 
     return contemLetra && formatoValido;
 }
 
 function sanitizarNome(nome) {
-    return nome.replace(/[^A-Za-zÀ-ÿ .'\-]/g, '');
+    return nome.replace(/[^A-Za-zÀ-ÿ\u0300-\u036f .'\-]/g, '');
 }
 
 function mensagemNomeInvalido(campo) {
@@ -85,10 +85,14 @@ function limparErroNome(campo) {
 function aplicarValidacaoNome() {
     var seletores = [
         'input[name="nome"]',
+        'input[id="nomeForm"]',
         'input[name="sobrenome"]',
+        'input[id="sobrenomeForm"]',
         'input[name="sobrenomeForm"]',
         'input[name="nome_pai"]',
+        'input[id="pai"]',
         'input[name="nome_mae"]',
+        'input[id="mae"]',
         'input[name="nomePai"]',
         'input[name="nomeMae"]'
     ];
@@ -102,6 +106,7 @@ function aplicarValidacaoNome() {
         }
 
         campo.dataset.validacaoNomeAplicada = 'true';
+        campo.dataset.validacaoNomeCompondo = 'false';
 
         if (!campo.dataset.nomeCampo) {
             campo.dataset.nomeCampo = campo.name === 'sobrenome' || campo.name === 'sobrenomeForm'
@@ -113,7 +118,27 @@ function aplicarValidacaoNome() {
                         : 'nome';
         }
 
+        campo.addEventListener('compositionstart', function() {
+            campo.dataset.validacaoNomeCompondo = 'true';
+        });
+
+        campo.addEventListener('compositionend', function() {
+            campo.dataset.validacaoNomeCompondo = 'false';
+            var valorSanitizado = sanitizarNome(campo.value);
+            if (campo.value !== valorSanitizado) {
+                campo.value = valorSanitizado;
+            }
+
+            if (!campo.value.trim() || validarNome(campo.value)) {
+                limparErroNome(campo);
+            }
+        });
+
         campo.addEventListener('input', function() {
+            if (campo.dataset.validacaoNomeCompondo === 'true') {
+                return;
+            }
+
             var valorSanitizado = sanitizarNome(campo.value);
             if (campo.value !== valorSanitizado) {
                 campo.value = valorSanitizado;

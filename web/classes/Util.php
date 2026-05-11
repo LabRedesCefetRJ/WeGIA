@@ -24,7 +24,7 @@ class Util
         }
 
         return preg_match('/\p{L}/u', $nome) === 1
-            && preg_match("/^\p{L}+(?:[ .'\-]\p{L}+)*$/u", $nome) === 1;
+            && preg_match("/^[\p{L}\p{M}]+(?:[ .'\-][\p{L}\p{M}]+)*$/u", $nome) === 1;
     }
 
     public static function validarNomePessoaOuLancar(?string $nome, string $campo = 'nome', int $codigo = 400): void
