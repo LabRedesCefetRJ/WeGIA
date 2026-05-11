@@ -31,12 +31,36 @@ if(!Csrf::validateToken($_POST['csrf_token'])){
 
 $cadastrado =  false;
 
+function normalizarTagsSocio($tagsBrutas): array
+{
+    if (!is_array($tagsBrutas)) {
+        $tagsBrutas = [$tagsBrutas];
+    }
+
+    $tags = [];
+
+    foreach ($tagsBrutas as $tag) {
+        if ($tag === null || $tag === '' || $tag === 'none') {
+            continue;
+        }
+
+        if (!is_numeric($tag) || (int) $tag < 1) {
+            continue;
+        }
+
+        $tagId = (int) $tag;
+        $tags[$tagId] = $tagId;
+    }
+
+    return array_values($tags);
+}
+
 $socio_nome = trim($_REQUEST['socio_nome']);
 $pessoa = trim($_REQUEST['pessoa']);
 $contribuinte = trim($_REQUEST['contribuinte']);
 $status = trim($_REQUEST['status']);
 $email = trim($_REQUEST['email']);
-$tag = trim($_REQUEST['tags'] ?? $_REQUEST['tag'] ?? '');
+$tags = normalizarTagsSocio($_REQUEST['tags'] ?? $_REQUEST['tag'] ?? []);
 $telefone = trim($_REQUEST['telefone']);
 $cpf_cnpj = trim($_REQUEST['cpf_cnpj']);
 $rua = trim($_REQUEST['rua']);
@@ -67,9 +91,9 @@ if (!$contribuinte || empty($contribuinte)) {
     exit('O tipo do contribuinte não pode ser vazio.');
 }
 
-if (!$tag || !is_numeric($tag) || $tag < 1) {
+if (count($tags) < 1) {
     http_response_code(400);
-    exit('O id de uma tag deve ser um inteiro maior ou igual a 1.');
+    exit('Selecione ao menos uma tag válida para o sócio.');
 }
 
 if (!$cpf_cnpj || empty($cpf_cnpj)) { //posteriormente adicionar validações de formato
@@ -221,11 +245,31 @@ if ($stmt->execute()) {
             break;
     }
 
-    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia, id_sociotag, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt2->bind_param('iiisdssi', $id_pessoa, $status, $id_sociotipo, $email, $valor_periodo, $data_referencia, $tag, $auto_status_contribuicoes);
+    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt2->bind_param('iiisdsi', $id_pessoa, $status, $id_sociotipo, $email, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
     $stmt2->execute();
 
-    if ($stmt2->affected_rows > 0) $cadastrado = true;
+    if ($stmt2->affected_rows > 0) {
+        $id_socio = mysqli_insert_id($conexao);
+        $stmtTag = $conexao->prepare("INSERT INTO socio_has_tag (id_socio, id_sociotag) VALUES (?, ?)");
+
+        if (!$stmtTag) {
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao preparar o vínculo das tags do sócio']);
+            exit();
+        }
+
+        $cadastrado = true;
+        foreach ($tags as $tagId) {
+            $stmtTag->bind_param('ii', $id_socio, $tagId);
+            if (!$stmtTag->execute()) {
+                $cadastrado = false;
+                break;
+            }
+        }
+
+        $stmtTag->close();
+    }
 }
 
 $stmt->close();

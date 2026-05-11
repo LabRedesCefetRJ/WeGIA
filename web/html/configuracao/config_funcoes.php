@@ -2,17 +2,82 @@
 define("DEBUG", false);
 require_once "../../config.php";
 
-function truncateAllTables(PDO $pdo)
+function quoteMysqlIdentifier(string $identifier): string
 {
-    $pdo->exec("SET FOREIGN_KEY_CHECKS = 0");
+    return '`' . str_replace('`', '``', $identifier) . '`';
+}
 
-    $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+function createDatabasePdoConnection(): PDO
+{
+    $charset = defined('DB_CHARSET') ? DB_CHARSET : 'utf8';
+    $pdo = new PDO(
+        'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . $charset,
+        DB_USER,
+        DB_PASSWORD
+    );
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    foreach ($tables as $table) {
-        $pdo->exec("TRUNCATE TABLE `$table`");
+    return $pdo;
+}
+
+function resetDatabaseSchema(PDO $pdo): void
+{
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+
+    try {
+        $views = $pdo->prepare(
+            "SELECT TABLE_NAME
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = :schema AND TABLE_TYPE = 'VIEW'"
+        );
+        $views->execute(['schema' => DB_NAME]);
+
+        foreach ($views->fetchAll(PDO::FETCH_COLUMN) as $viewName) {
+            $pdo->exec('DROP VIEW IF EXISTS ' . quoteMysqlIdentifier($viewName));
+        }
+
+        $tables = $pdo->prepare(
+            "SELECT TABLE_NAME
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = :schema AND TABLE_TYPE = 'BASE TABLE'"
+        );
+        $tables->execute(['schema' => DB_NAME]);
+
+        foreach ($tables->fetchAll(PDO::FETCH_COLUMN) as $tableName) {
+            $pdo->exec('DROP TABLE IF EXISTS ' . quoteMysqlIdentifier($tableName));
+        }
+
+        $routines = $pdo->prepare(
+            "SELECT ROUTINE_NAME, ROUTINE_TYPE
+             FROM information_schema.ROUTINES
+             WHERE ROUTINE_SCHEMA = :schema"
+        );
+        $routines->execute(['schema' => DB_NAME]);
+
+        foreach ($routines->fetchAll(PDO::FETCH_ASSOC) as $routine) {
+            $routineType = strtoupper((string) ($routine['ROUTINE_TYPE'] ?? ''));
+            $routineName = (string) ($routine['ROUTINE_NAME'] ?? '');
+
+            if ($routineType !== 'PROCEDURE' && $routineType !== 'FUNCTION') {
+                continue;
+            }
+
+            $pdo->exec('DROP ' . $routineType . ' IF EXISTS ' . quoteMysqlIdentifier($routineName));
+        }
+
+        $events = $pdo->prepare(
+            "SELECT EVENT_NAME
+             FROM information_schema.EVENTS
+             WHERE EVENT_SCHEMA = :schema"
+        );
+        $events->execute(['schema' => DB_NAME]);
+
+        foreach ($events->fetchAll(PDO::FETCH_COLUMN) as $eventName) {
+            $pdo->exec('DROP EVENT IF EXISTS ' . quoteMysqlIdentifier($eventName));
+        }
+    } finally {
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
     }
-
-    $pdo->exec("SET FOREIGN_KEY_CHECKS = 1");
 }
 
 function createSecureTempDir(string $prefix = 'db_backup_'): string
@@ -52,11 +117,19 @@ function runMysqldump(string $outputFile, array $extraOptions = []): void
 {
     $command = array_merge([
         'mysqldump',
+        '-h',
+        DB_HOST,
         '-u',
         DB_USER,
         '--single-transaction',
         '--quick',
+        '--add-drop-table',
+        '--add-drop-trigger',
+        '--triggers',
+        '--routines',
+        '--events',
     ], $extraOptions, [
+        '--default-character-set=' . (defined('DB_CHARSET') ? DB_CHARSET : 'utf8'),
         DB_NAME
     ]);
 
@@ -392,11 +465,7 @@ function autosaveBD(): string
     $gzFile  = BKP_DIR . "/$baseName.dump.tar.gz";
 
     try {
-        runMysqldump($sqlFile, [
-            '--no-create-db',
-            '--no-create-info',
-            '--skip-triggers'
-        ]);
+        runMysqldump($sqlFile);
 
         //assinatura
         $signature = signSqlFile($sqlFile);
@@ -551,12 +620,17 @@ function loadBackupDB(string $file): bool
         // Validação por streaming
         validateRestoreSqlFile($sqlFileReal);
 
+        $pdo = createDatabasePdoConnection();
+        resetDatabaseSchema($pdo);
+
         // Importação via mysql command line
         $cmd = sprintf(
-            'sed "s/DEFINER=[^*]*\*/\*/g" %s | mysql -u %s -p%s %s 2>&1',
+            'sed "s/DEFINER=[^*]*\*/\*/g" %s | mysql -h %s -u %s -p%s --default-character-set=%s %s 2>&1',
             escapeshellarg($sqlFileReal),
+            escapeshellarg(DB_HOST),
             escapeshellarg(DB_USER),
             escapeshellarg(DB_PASSWORD),
+            escapeshellarg(defined('DB_CHARSET') ? DB_CHARSET : 'utf8'),
             escapeshellarg(DB_NAME)
         );
 

@@ -107,12 +107,14 @@ $tipoSocioMap = [
 $tipoSocioIds = $tipoSocioMap[$tipo_socio] ?? null;
 
 // SQL base
-$base = "SELECT p.nome, p.telefone, p.cpf, s.valor_periodo, s.email, st.tipo, ss.status, stag.tag
+$base = "SELECT p.nome, p.telefone, p.cpf, s.valor_periodo, s.email, st.tipo, ss.status,
+GROUP_CONCAT(DISTINCT stag.tag ORDER BY stag.tag SEPARATOR ', ') AS tag
 FROM pessoa p
 JOIN socio s ON (p.id_pessoa = s.id_pessoa)
 JOIN socio_tipo st ON (s.id_sociotipo = st.id_sociotipo)
 JOIN socio_status ss ON (ss.id_sociostatus = s.id_sociostatus)
-LEFT JOIN socio_tag stag ON stag.id_sociotag = s.id_sociotag";
+LEFT JOIN socio_has_tag sht ON sht.id_socio = s.id_socio
+LEFT JOIN socio_tag stag ON stag.id_sociotag = sht.id_sociotag";
 
 $whereClauses = [];
 $params = []; // valores para bind (posicionais)
@@ -125,7 +127,12 @@ if ($status !== 'x') {
     $types .= 'i';
 }
 if ($tag !== 'x') {
-    $whereClauses[] = "s.id_sociotag = ?";
+    $whereClauses[] = "EXISTS (
+        SELECT 1
+        FROM socio_has_tag sht_filter
+        WHERE sht_filter.id_socio = s.id_socio
+        AND sht_filter.id_sociotag = ?
+    )";
     $params[] = (int)$tag;
     $types .= 'i';
 }
@@ -170,6 +177,7 @@ $sql = $base;
 if (count($whereClauses) > 0) {
     $sql .= ' WHERE ' . implode(' AND ', $whereClauses);
 }
+$sql .= ' GROUP BY s.id_socio, p.nome, p.telefone, p.cpf, s.valor_periodo, s.email, st.tipo, ss.status';
 $sql .= ' ORDER BY p.nome';
 
 $stmt = $conexao->prepare($sql);
