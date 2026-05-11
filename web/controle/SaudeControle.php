@@ -141,9 +141,9 @@ class SaudeControle
             if (!$infSaude) {
                 $SaudeDAO = new SaudeDAO();
                 $infSaude = $SaudeDAO->listar($id);
-                $_SESSION['id_fichamedica'] = $infSaude;
                 $cache->save($id, $infSaude, '1 seconds');
             }
+            $_SESSION['id_fichamedica'] = $infSaude;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
         } catch (Exception $e) {

@@ -180,6 +180,7 @@ try {
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
   <script src="../../Functions/onlyNumbers.js"></script>
+  <script src="../../Functions/validacoes-cns.js"></script>
   <script src="../../Functions/onlyChars.js"></script>
   <script src="../../Functions/mascara.js"></script>
   <script src="../../Functions/lista.js"></script>
@@ -271,6 +272,7 @@ try {
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
       $("#sangue").prop('disabled', false);
+      $("#cns").prop('disabled', false);
       $("#botaoEditarIP").html('Cancelar');
       $("#botaoSalvarIP").prop('disabled', false);
       $("#botaoEditarIP").removeAttr('onclick');
@@ -287,6 +289,7 @@ try {
       $("#pai").prop('disabled', true);
       $("#mae").prop('disabled', true);
       $("#sangue").prop('disabled', true);
+      $("#cns").prop('disabled', true);
       $("#botaoEditarIP").html('Editar');
       $("#botaoSalvarIP").prop('disabled', true);
       $("#botaoEditarIP").removeAttr('onclick');
@@ -418,6 +421,7 @@ try {
         $("#pai").val(item.nome_pai).prop('disabled', true);
         $("#mae").val(item.nome_mae).prop('disabled', true);
         $("#sangue").val(item.tipo_sanguineo).prop('disabled', true);
+        $("#cns").val(item.cns || '').prop('disabled', true);
         //Endereço
         $("#cep").val(item.cep).prop('disabled', true);
         $("#uf").val(item.estado).prop('disabled', true);
@@ -883,6 +887,13 @@ try {
                             id="nascimento"
                             min="<?= $dataNascimentoMinima ?>"
                             max="<?= $dataNascimentoMaxima ?>" required>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="cns">CNS</label>
+                        <div class="col-md-8">
+                          <input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+                          <small class="form-text text-muted">Cadastro Nacional de Saúde</small>
                         </div>
                       </div>
                       <div class="form-group">

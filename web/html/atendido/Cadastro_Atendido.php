@@ -137,6 +137,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 	<script src="../../Functions/mascara.js"></script>
 	<script src="../../Functions/lista.js"></script>
 	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<script src="../../Functions/validacoes-cns.js"></script>
 
 	<!-- jquery functions -->
 	<script>
@@ -348,6 +349,13 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 										<?php if (!$semCpf) echo 'required'; ?> 
 										value="<?php echo isset($nascimento) ? htmlspecialchars($nascimento) : ''; ?>"
 									>
+								</div>
+							</div>
+							<div class="form-horizontal form-group">
+							<label class="col-md-3 control-label" for="cns">CNS</label>
+							<div class="col-md-6">
+								<input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+								<small class="form-text text-muted">Cadastro Nacional de Saúde</small>
 								</div>
 							</div>
 							<div class="form-horizontal form-group">
