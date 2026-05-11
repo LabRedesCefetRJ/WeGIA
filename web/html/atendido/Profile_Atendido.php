@@ -105,6 +105,7 @@ $dependente = json_encode($dependente);
 
   <!-- JavaScript Functions -->
   <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+  <script src="<?php echo WWW; ?>Functions/validacoes-cns.js"></script>
 
   <style type="text/css">
     .btn span.fa-check {
@@ -153,7 +154,25 @@ $dependente = json_encode($dependente);
       opacity: 1;
       visibility: visible;
     }
-    
+
+    #tipoDocAtendidoFormError {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+      margin-bottom: 0;
+    }
+
+    #tipoDocAtendidoFormError + .form-group {
+      margin-top: 15px;
+    }
+
+    #tipoDocAtendidoFormError.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
   </style>
   <!-- Theme CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
@@ -247,6 +266,7 @@ $dependente = json_encode($dependente);
 
           $("#telefone").text("Telefone:" + item.telefone);
           $("#telefone").val(item.telefone);
+          $("#cns").val(item.cns || '');
 
 
           $("#tipoSanguineoSelecionado").text(item.tipo_sanguineo);
@@ -271,7 +291,8 @@ $dependente = json_encode($dependente);
             $("#cpf").text("Não informado");
             $("#cpf").val("Não informado");
           } else {
-            const cpfFormatado = formatCpfDisplay(item.cpf);
+            // Formatar CPF: 12345678901 -> 123.456.789-01
+            let cpfFormatado = item.cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
             $("#cpf").text(cpfFormatado);
             $("#cpf").val(cpfFormatado);
           }
@@ -290,7 +311,7 @@ $dependente = json_encode($dependente);
 
           $("#saf").text("SAF: " + item.saf);
 
-          $("#sus").text("SUS: " + item.sus);
+          $("#cns").text("CNS: " + item.cns);
 
           $("#bpc").text("BPC: " + item.bpc);
 
@@ -317,6 +338,7 @@ $dependente = json_encode($dependente);
       $("#radioM").prop('disabled', false);
       $("#radioF").prop('disabled', false);
       $("#telefone").prop('disabled', false);
+      $("#cns").prop('disabled', false);
       $("#data_nascimento").prop('disabled', false);
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
@@ -343,6 +365,7 @@ $dependente = json_encode($dependente);
       $("#radioM").prop('disabled', true);
       $("#radioF").prop('disabled', true);
       $("#telefone").prop('disabled', true);
+      $("#cns").prop('disabled', true);
       $("#data_nascimento").prop('disabled', true);
       $("#pai").prop('disabled', true);
       $("#mae").prop('disabled', true);
@@ -810,6 +833,13 @@ $dependente = json_encode($dependente);
                           </div>
                         </div>
                         <div class="form-group">
+                          <label class="col-md-3 control-label" for="cns">CNS</label>
+                          <div class="col-md-8">
+                            <input type="text" class="form-control" maxlength="15" name="cns" id="cns" disabled placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+                            <small class="form-text text-muted">Cadastro Nacional de Saúde</small>
+                          </div>
+                        </div>
+                        <div class="form-group">
                           <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
                           <div class="col-md-6">
                             <select class="form-control input-lg mb-md" name="tipo_sanguineo" id="tipo_sanguineo" disabled>
@@ -1168,6 +1198,38 @@ $dependente = json_encode($dependente);
                         require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
                         unset($modalUploadConfig, $tiposDocumentoAtendido, $uploadMaxFilesizeBytes, $converterTamanhoParaBytes);
                         ?>
+
+                      <div class="modal fade upload-modal" id="tipoDocAtendidoFormModal" tabindex="-1" role="dialog" aria-labelledby="tipoDocAtendidoFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="tipoDocAtendidoFormModalLabel">Adicionar tipo de arquivo</h4>
+                            </div>
+                            <div class="modal-body">
+                              <div id="tipoDocAtendidoFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
+                                <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalTipoDocAtendido(); return false;">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                                <span id="tipoDocAtendidoFormErrorText"></span>
+                              </div>
+                              <div class="form-group">
+                                <label class="control-label" for="novoTipoDocAtendidoInput">
+                                  Descrição <sup class="obrig">*</sup>
+                                </label>
+                                <input type="text" class="form-control" id="novoTipoDocAtendidoInput" placeholder="Nome do tipo de arquivo" maxlength="100" />
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                              <button type="button" class="btn btn-primary" onclick="confirmarAdicionarTipo()">Salvar</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                     </section>
                   </div>
                   <div id="ocorrencias" class="tab-pane">
@@ -1511,28 +1573,35 @@ $dependente = json_encode($dependente);
       }
 
       function adicionar_tipo() {
-        url = '../../dao/adicionar_tipo_docs_atendido.php';
-        var tipo = window.prompt("Cadastre um Novo Tipo:");
+        const input = document.getElementById('novoTipoDocAtendidoInput');
+        if (input) input.value = '';
+        limparErroModalTipoDocAtendido();
+        $('#tipoDocAtendidoFormModal').modal('show');
+      }
+
+      async function confirmarAdicionarTipo() {
+        const input = document.getElementById('novoTipoDocAtendidoInput');
+        const tipo = input ? input.value.trim() : '';
+
         if (!tipo) {
-          return
-        }
-        tipo = tipo.trim();
-        if (tipo == '') {
-          return
+          exibirErroModalTipoDocAtendido('O nome do tipo de arquivo é obrigatório.');
+          return;
         }
 
-        data = 'tipo=' + tipo;
-
-        console.log(data);
-        $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response) {
-            gerarTipo();
-          },
-          dataType: 'text'
-        })
+        try {
+          const response = await fetch('../../dao/adicionar_tipo_docs_atendido.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'tipo=' + encodeURIComponent(tipo)
+          });
+          if (!response.ok) throw new Error('Erro na requisição');
+          await response.text();
+          $('#tipoDocAtendidoFormModal').modal('hide');
+          gerarTipo();
+        } catch (error) {
+          exibirErroModalTipoDocAtendido('Não foi possível salvar o tipo de arquivo. Tente novamente.');
+          console.error('Erro ao enviar dados:', error);
+        }
       }
 
       function validarCPF(strCPF) {
@@ -1547,6 +1616,53 @@ $dependente = json_encode($dependente);
           document.getElementById("cadastrarFamiliar").disabled = false;
         }
       }
+
+      let timeoutErroModalTipoDocAtendido = null;
+      let timeoutFecharAnimacaoErroTipoDocAtendido = null;
+
+      function exibirErroModalTipoDocAtendido(mensagem) {
+        const alerta = document.getElementById('tipoDocAtendidoFormError');
+        const texto = document.getElementById('tipoDocAtendidoFormErrorText');
+        if (!alerta || !texto) return;
+        texto.textContent = mensagem;
+        alerta.style.display = 'block';
+        alerta.classList.remove('is-visible');
+        void alerta.offsetWidth;
+        alerta.classList.add('is-visible');
+        if (timeoutErroModalTipoDocAtendido) clearTimeout(timeoutErroModalTipoDocAtendido);
+        if (timeoutFecharAnimacaoErroTipoDocAtendido) { clearTimeout(timeoutFecharAnimacaoErroTipoDocAtendido); timeoutFecharAnimacaoErroTipoDocAtendido = null; }
+        timeoutErroModalTipoDocAtendido = setTimeout(() => limparErroModalTipoDocAtendido(), 10000);
+      }
+
+      function limparErroModalTipoDocAtendido() {
+        const alerta = document.getElementById('tipoDocAtendidoFormError');
+        const texto = document.getElementById('tipoDocAtendidoFormErrorText');
+        if (!alerta || !texto) return;
+        alerta.classList.remove('is-visible');
+        if (timeoutErroModalTipoDocAtendido) { clearTimeout(timeoutErroModalTipoDocAtendido); timeoutErroModalTipoDocAtendido = null; }
+        if (timeoutFecharAnimacaoErroTipoDocAtendido) clearTimeout(timeoutFecharAnimacaoErroTipoDocAtendido);
+        timeoutFecharAnimacaoErroTipoDocAtendido = setTimeout(() => {
+          alerta.style.display = 'none';
+          texto.textContent = '';
+          timeoutFecharAnimacaoErroTipoDocAtendido = null;
+        }, 350);
+      }
+
+      $(document).on('show.bs.modal', '#tipoDocAtendidoFormModal', function () {
+        const abertos = $('.modal.in').length;
+        if (abertos === 0) return;
+        const zIndex = 1050 + 10 * abertos;
+        $(this).css('z-index', zIndex);
+        setTimeout(function () {
+          $('.modal-backdrop').not('.modal-stack').last().css('z-index', zIndex - 1).addClass('modal-stack');
+        }, 0);
+      });
+
+      $(document).on('hidden.bs.modal', '#tipoDocAtendidoFormModal', function () {
+        if ($('.modal.in').length) {
+          $('body').addClass('modal-open');
+        }
+      });
 
       let timeoutErroModalDocumento = null;
 

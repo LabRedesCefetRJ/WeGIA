@@ -202,6 +202,13 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       </p>
                     </div>
                   </div>
+                  <div class="form-group">
+                    <label class="col-md-3 control-label" for="cns">CNS</label>
+                    <div class="col-md-6">
+                      <input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+                      <small class="form-text text-muted">Cadastro Nacional de Saúde</small>
+                    </div>
+                  </div>
                   <hr class="dotted short">
                   <h4 class="mb-xlg doch4">Documentação</h4>
 
@@ -772,6 +779,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
   <!-- javascript functions -->
   <script src="../../Functions/onlyNumbers.js"></script>
+  <script src="../../Functions/validacoes-cns.js"></script>
   <script src="../../Functions/onlyChars.js"></script>
   <script src="../../Functions/mascara.js"></script>
   <script src="../../Functions/lista.js"></script>

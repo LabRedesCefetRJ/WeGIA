@@ -217,6 +217,15 @@ class FuncionarioDAO
             $busca->execute();
 
             $idFuncionario = (int)$busca->fetchColumn();
+
+            $cns = $funcionario->getCns();
+            if ($idFuncionario && $cns !== null) {
+                $stmtCns = $this->pdo->prepare("UPDATE pessoa p JOIN funcionario f ON f.id_pessoa = p.id_pessoa SET p.cns = :cns WHERE f.id_funcionario = :id_funcionario");
+                $stmtCns->bindValue(':cns', $cns);
+                $stmtCns->bindValue(':id_funcionario', $idFuncionario, PDO::PARAM_INT);
+                $stmtCns->execute();
+            }
+
             return $idFuncionario;
         }
 
@@ -299,11 +308,7 @@ class FuncionarioDAO
     // Editar
     public function alterarInfPessoal($funcionario)
     {
-        $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set nome=:nome,sobrenome=:sobrenome,sexo=:sexo,telefone=:telefone,data_nascimento=:data_nascimento,nome_pai=:nome_pai,nome_mae=:nome_mae,tipo_sanguineo=:tipo_sanguineo where id_funcionario=:id_funcionario';
-
-        $sql = str_replace("'", "\'", $sql);
-
-        $stmt = $this->pdo->prepare($sql);
+        $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set nome=:nome,sobrenome=:sobrenome,sexo=:sexo,telefone=:telefone,data_nascimento=:data_nascimento,nome_pai=:nome_pai,nome_mae=:nome_mae,tipo_sanguineo=:tipo_sanguineo,cns=:cns where id_funcionario=:id_funcionario';
 
         $stmt = $this->pdo->prepare($sql);
         $nome = $funcionario->getNome();
@@ -315,6 +320,7 @@ class FuncionarioDAO
         $nomePai = $funcionario->getNomePai();
         $nomeMae = $funcionario->getNomeMae();
         $sangue = $funcionario->getTipoSanguineo();
+        $cns = $funcionario->getCns();
 
         $stmt->bindParam(':nome', $nome);
         $stmt->bindParam(':sobrenome', $sobrenome);
@@ -325,6 +331,7 @@ class FuncionarioDAO
         $stmt->bindParam(':nome_pai', $nomePai);
         $stmt->bindParam(':nome_mae', $nomeMae);
         $stmt->bindParam(':tipo_sanguineo', $sangue);
+        $stmt->bindValue(':cns', $cns);
         $stmt->execute();
     }
 
@@ -523,7 +530,7 @@ class FuncionarioDAO
     //Consultar um utilizando o id
     public function listar($id_funcionario)
     {
-        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf,p.senha,p.sexo,p.telefone,p.data_nascimento,p.cep,p.ibge,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,f.id_funcionario,f.data_admissao,f.pis,f.ctps,f.uf_ctps,f.numero_titulo,f.zona,f.secao,f.certificado_reservista_numero,f.certificado_reservista_serie,s.id_situacao,s.situacoes,c.id_cargo,c.cargo,qh.escala,qh.tipo,qh.carga_horaria,qh.entrada1,qh.saida1,qh.entrada2,qh.saida2,qh.total,qh.dias_trabalhados,qh.folga 
+        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf,p.senha,p.sexo,p.telefone,p.data_nascimento,p.cep,p.ibge,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,p.cns,f.id_funcionario,f.data_admissao,f.pis,f.ctps,f.uf_ctps,f.numero_titulo,f.zona,f.secao,f.certificado_reservista_numero,f.certificado_reservista_serie,s.id_situacao,s.situacoes,c.id_cargo,c.cargo,qh.escala,qh.tipo,qh.carga_horaria,qh.entrada1,qh.saida1,qh.entrada2,qh.saida2,qh.total,qh.dias_trabalhados,qh.folga
             FROM pessoa p 
             INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa 
             LEFT JOIN quadro_horario_funcionario qh ON qh.id_funcionario = f.id_funcionario 
@@ -538,7 +545,7 @@ class FuncionarioDAO
         $funcionario = array();
 
         while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $funcionario[] = array('imagem' => $linha['imagem'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $this->formatoDataDMY($linha['data_expedicao']), 'nome_mae' => $linha['nome_mae'], 'nome_pai' => $linha['nome_pai'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'senha' => $linha['senha'], 'telefone' => $linha['telefone'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'ibge' => $linha['ibge'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'id_funcionario' => $linha['id_funcionario'], 'data_admissao' => $this->formatoDataDMY($linha['data_admissao']), 'pis' => $linha['pis'], 'ctps' => $linha['ctps'], 'uf_ctps' => $linha['uf_ctps'], 'numero_titulo' => $linha['numero_titulo'], 'zona' => $linha['zona'], 'secao' => $linha['secao'], 'certificado_reservista_numero' => $linha['certificado_reservista_numero'], 'certificado_reservista_serie' => $linha['certificado_reservista_serie'], 'id_situacao' => $linha['id_situacao'], 'situacao' => $linha['situacao'], 'escala' => $linha['escala'], 'tipo' => $linha['tipo'], 'carga_horaria' => $linha['carga_horaria'], 'entrada1' => $linha['entrada1'], 'saida1' => $linha['saida1'], 'entrada2' => $linha['entrada2'], 'saida2' => $linha['saida2'], 'total' => $linha['total'], 'dias_trabalhados' => $linha['dias_trabalhados'], 'folga' => $linha['folga'], 'id_cargo' => $linha['id_cargo'], 'cargo' => $linha['cargo']);
+            $funcionario[] = array('imagem' => $linha['imagem'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $this->formatoDataDMY($linha['data_expedicao']), 'nome_mae' => $linha['nome_mae'], 'nome_pai' => $linha['nome_pai'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'senha' => $linha['senha'], 'telefone' => $linha['telefone'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'ibge' => $linha['ibge'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'id_funcionario' => $linha['id_funcionario'], 'data_admissao' => $this->formatoDataDMY($linha['data_admissao']), 'pis' => $linha['pis'], 'ctps' => $linha['ctps'], 'uf_ctps' => $linha['uf_ctps'], 'numero_titulo' => $linha['numero_titulo'], 'zona' => $linha['zona'], 'secao' => $linha['secao'], 'certificado_reservista_numero' => $linha['certificado_reservista_numero'], 'certificado_reservista_serie' => $linha['certificado_reservista_serie'], 'id_situacao' => $linha['id_situacao'], 'situacao' => $linha['situacao'], 'escala' => $linha['escala'], 'tipo' => $linha['tipo'], 'carga_horaria' => $linha['carga_horaria'], 'entrada1' => $linha['entrada1'], 'saida1' => $linha['saida1'], 'entrada2' => $linha['entrada2'], 'saida2' => $linha['saida2'], 'total' => $linha['total'], 'dias_trabalhados' => $linha['dias_trabalhados'], 'folga' => $linha['folga'], 'id_cargo' => $linha['id_cargo'], 'cargo' => $linha['cargo']);
         }
 
         return $funcionario;

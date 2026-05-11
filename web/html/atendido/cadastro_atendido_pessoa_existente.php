@@ -103,6 +103,7 @@ $fieldErrors = getSessionFormErrors();
 	<script src="../../Functions/mascara.js"></script>
 	<script src="../../Functions/lista.js"></script>
 	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<script src="../../Functions/validacoes-cns.js"></script>
 
 	<script>
 		$(function() {
@@ -343,6 +344,13 @@ $fieldErrors = getSessionFormErrors();
 								<div class="col-md-8">
 									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?> required value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 								</div>
+							</div>
+							<div class="form-group">
+							<label class="col-md-3 control-label" for="cns">CNS</label>
+							<div class="col-md-8">
+								<input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+								<small class="form-text text-muted">Cadastro Nacional de Saúde</small>
+							</div>
 							</div>
 
 							<div class="form-group">
