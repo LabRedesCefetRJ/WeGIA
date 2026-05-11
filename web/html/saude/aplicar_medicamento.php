@@ -864,6 +864,48 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
       pointer-events: auto;
     }
 
+    #modalHorarioAplicacao .modal-title {
+      font-weight: 500;
+      color: #fff;
+    }
+
+    #modalHorarioAplicacao .modal-header {
+      background-color: #337ab7;
+      border-bottom-color: #2e6da4;
+    }
+
+    #modalHorarioAplicacao .modal-header .close,
+    #modalHorarioAplicacao .modal-header .close span {
+      color: #fff;
+      opacity: 1;
+      text-shadow: none;
+    }
+
+    #modalHorarioAplicacao .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background-color: transparent;
+      filter: brightness(1);
+      transition: background-color 0.18s ease, filter 0.18s ease;
+    }
+
+    #modalHorarioAplicacao .modal-header .close:hover,
+    #modalHorarioAplicacao .modal-header .close:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      filter: brightness(1.08);
+      outline: none;
+    }
+
+    #modalHorarioAplicacao .modal-header .close:hover span,
+    #modalHorarioAplicacao .modal-header .close:focus span {
+      filter: brightness(1.08);
+    }
+
     @media(max-width:768px) {
       #prontuario_publico tr p {
         max-width: 250px;
@@ -1231,12 +1273,6 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
       </div>
 
       <script>
-        function aplicarMedicacao() {
-          if (!window.confirm("Tem certeza que deseja aplicar essa medicação?")) {
-            return false;
-          }
-        }
-
         function variosMed() {
           localStorage.setItem("currentTab", "2");
           mostrarMensagemAplicacao("Medicamento aplicado com sucesso!");
