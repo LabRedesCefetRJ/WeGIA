@@ -8,6 +8,31 @@ if (!isset($_POST) or empty($_POST)) {
     $_POST = json_decode($_POST, true);
 }
 $cadastrado =  false;
+
+function normalizarTagsSocio($tagsBrutas): array
+{
+    if (!is_array($tagsBrutas)) {
+        $tagsBrutas = [$tagsBrutas];
+    }
+
+    $tags = [];
+
+    foreach ($tagsBrutas as $tag) {
+        if ($tag === null || $tag === '' || $tag === 'none') {
+            continue;
+        }
+
+        if (!is_numeric($tag) || (int) $tag < 1) {
+            continue;
+        }
+
+        $tagId = (int) $tag;
+        $tags[$tagId] = $tagId;
+    }
+
+    return array_values($tags);
+}
+
 extract($_REQUEST);
 if (!isset($data_nasc)) {
     $data_nasc = null;
@@ -36,8 +61,12 @@ if (!isset($valor_periodo) or ($valor_periodo == null) or ($valor_periodo == "")
     $valor_periodo = null;
 } else $valor_periodo = $valor_periodo;
 
-if (!isset($tag) or ($tag == null) or ($tag == "none")) {
-    $tag = null;
+$tags = normalizarTagsSocio($_REQUEST['tags'] ?? $_REQUEST['tag'] ?? []);
+
+if (count($tags) < 1) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'Selecione ao menos uma tag válida para o sócio']);
+    exit();
 }
 
 $sqlBuscaIdPessoa = "SELECT id_pessoa FROM socio WHERE id_socio = ?";
@@ -209,7 +238,6 @@ if ($stmt) {
                        email = ?, 
                        data_referencia = ?, 
                        valor_periodo = ?, 
-                       id_sociotag = ?, 
                        auto_status_contribuicoes = ? 
                    WHERE id_socio = ?";
 
@@ -220,26 +248,43 @@ if ($stmt) {
         $email = filter_var($email, FILTER_SANITIZE_EMAIL);
         $data_referencia = filter_var($data_referencia, FILTER_SANITIZE_SPECIAL_CHARS);
         $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        $tag = filter_var($tag, FILTER_SANITIZE_NUMBER_INT);
         $id_socio = filter_var($id_socio, FILTER_SANITIZE_NUMBER_INT);
 
         if ($stmt) {
             // Bind dos parâmetros
             $stmt->bind_param(
-                'iissdiii',
+                'iissdii',
                 $status,               // Inteiro (id_sociostatus)
                 $id_sociotipo,         // Inteiro (id_sociotipo)
                 $email,                // String (email)
                 $data_referencia,      // String (data_referencia)
                 $valor_periodo,        // Double (valor_periodo)
-                $tag,                  // Inteiro (id_sociotag)
                 $auto_status_contribuicoes, // Inteiro (auto_status_contribuicoes)
                 $id_socio              // Inteiro (id_socio)
             );
 
             // Executa o statement
             if ($stmt->execute()) {
-                $cadastrado = true;
+                $stmtDeleteTags = $conexao->prepare("DELETE FROM socio_has_tag WHERE id_socio = ?");
+                $stmtDeleteTags->bind_param('i', $id_socio);
+
+                if ($stmtDeleteTags->execute()) {
+                    $stmtInsertTag = $conexao->prepare("INSERT INTO socio_has_tag (id_socio, id_sociotag) VALUES (?, ?)");
+
+                    if ($stmtInsertTag) {
+                        $cadastrado = true;
+                        foreach ($tags as $tagId) {
+                            $stmtInsertTag->bind_param('ii', $id_socio, $tagId);
+                            if (!$stmtInsertTag->execute()) {
+                                $cadastrado = false;
+                                break;
+                            }
+                        }
+                        $stmtInsertTag->close();
+                    }
+                }
+
+                $stmtDeleteTags->close();
             } 
         }
     }

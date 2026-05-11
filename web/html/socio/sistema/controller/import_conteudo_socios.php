@@ -52,7 +52,7 @@
                   <th>Nome</th>
                   <th>Email</th>
                   <th>Telefone</th>
-                  <th>Endereço</th>
+                  <th>Status</th>
                   <th>CPF/CNPJ</th>
                   <th>Tipo</th>
                   <th>Observação</th>
@@ -68,8 +68,9 @@
                 $mensal = 0;
                 $casual = 0;
                 $si_contrib = 0;
-                $stmt = $conexao->prepare("SELECT *, s.id_socio AS socioid, sl.descricao AS ultima_descricao_log, sl.data AS ultima_data_socio_log
+                $stmt = $conexao->prepare("SELECT *, s.id_socio AS socioid, sl.descricao AS ultima_descricao_log, sl.data AS ultima_data_socio_log, ss.status AS status_socio
                           FROM socio AS s
+                          LEFT JOIN socio_status AS ss ON s.id_sociostatus = ss.id_sociostatus
                           LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa
                           LEFT JOIN socio_tipo AS st ON s.id_sociotipo = st.id_sociotipo
                           LEFT JOIN (
@@ -117,11 +118,14 @@
                   $email = htmlspecialchars($resultado['email']);
                   $telefone = htmlspecialchars($resultado['telefone']);
                   $tipo_socio = htmlspecialchars($resultado['tipo']);
+                  /*
                   if ($resultado['logradouro'] == "") {
                     $endereco = "Endereço não informado/incompleto.";
                   } else {
                     $endereco = htmlspecialchars($resultado['logradouro']) . " " . htmlspecialchars($resultado['numero_endereco']) . ", " . htmlspecialchars($resultado['bairro']) . ", " . htmlspecialchars($resultado['cidade']) . " - " . htmlspecialchars($resultado['estado']);
-                  }
+                  }*/
+
+                  $status = htmlspecialchars($resultado['status_socio']);
 
                   if (strlen($telefone) == 14) {
                     $tel_url = preg_replace("/[^0-9]/", "", $telefone);
@@ -165,7 +169,7 @@
                   }
 
                   $del_json = json_encode(array("id" => $id, "nome" => $nome_s, "pessoa" => $pessoa));
-                  echo ("<tr><td >$id</td><td onclick='detalhar_socio($id);' style='cursor: pointer' class='$class'>$nome_s</td><td><a href='mailto:$email'>$email</a></td><td>$telefone</td><td>$endereco</td><td>$cpf_cnpj</td><td>$tipo_socio</td><td>$socioLog</td><td><a href='editar_socio.php?socio=$id'><button type='button' class='btn btn-default btn-flat'><i class='fa fa-edit'></i></button></a></td><td><button onclick='deletar_socio_modal($del_json)' type='button' class='btn btn-default btn-flat'><i class='fa fa-remove text-red'></i></button></td></tr>");
+                  echo ("<tr><td >$id</td><td onclick='detalhar_socio($id);' style='cursor: pointer' class='$class'>$nome_s</td><td><a href='mailto:$email'>$email</a></td><td>$telefone</td><td>$status</td><td>$cpf_cnpj</td><td>$tipo_socio</td><td>$socioLog</td><td><a href='editar_socio.php?socio=$id'><button type='button' class='btn btn-default btn-flat'><i class='fa fa-edit'></i></button></a></td><td><button onclick='deletar_socio_modal($del_json)' type='button' class='btn btn-default btn-flat'><i class='fa fa-remove text-red'></i></button></td></tr>");
                 }
                 ?>
               </tbody>
@@ -175,7 +179,7 @@
                   <th>Nome</th>
                   <th>Email</th>
                   <th>Telefone</th>
-                  <th>Endereço</th>
+                  <th>status</th>
                   <th>CPF/CNPJ</th>
                   <th>Tipo</th>
                   <th>Observação</th>
