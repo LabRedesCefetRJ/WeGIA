@@ -22,6 +22,8 @@ require_once ROOT . "/dao/Conexao.php";
 
 require_once ROOT . "/html/relatorios/Relatorio_item.php";
 
+$tipoMedia = $_POST['tipo_media'] ?? 'dia';
+
 $o_d = null;
 if ($_POST['tipo_relatorio'] == 'entrada') {
 	$o_d = $_POST['origem'];
@@ -51,7 +53,8 @@ $item = new Item(
 		'fim' => $_POST['data_fim']
 	],
 	$_POST['almoxarifado'],
-	$_POST['mostrarZerados'] == "on" ?? false
+	$_POST['mostrarZerados'] == "on" ?? false,
+	$tipoMedia
 );
 
 function quickQuery($query, $parametro, $column)
@@ -288,7 +291,13 @@ function quickQuery($query, $parametro, $column)
 							<tr>
 								<th scope="col" width="11%">Quantidade</th>
 								<?php if($_POST['tipo_relatorio'] == 'saida') {
-									echo ('<th scope="col" width="14%">Média de saída</th>');
+									$labelMedia = [
+										'dia' => 'Média por dia',
+										'mes' => 'Média por mês',
+										'ano' => 'Média por ano'
+									];
+
+									echo ('<th scope="col" width="14%">' . htmlspecialchars($labelMedia[$tipoMedia] ?? 'Média por dia') . '</th>');
 								}?>
 								<th scope="col">Descrição</th>
 								<?php if ($_POST['tipo_relatorio'] != 'estoque') {
