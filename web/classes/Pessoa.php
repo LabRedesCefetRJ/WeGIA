@@ -50,6 +50,8 @@ abstract class Pessoa
     
     private $tipoSanguineo;
 
+    private $cns;
+
     public function __construct($cpf,$nome,$sobrenome,$sexo,$dataNascimento,$registroGeral,$orgaoEmissor,$dataExpedicao,$nomeMae,$nomePai,$tipoSanguineo,$senha,$telefone,$imagem,$cep,$estado,$cidade,$bairro,$logradouro,$numeroEndereco,$complemento,$ibge)
     {
         $this->cpf = $cpf;
@@ -314,5 +316,15 @@ abstract class Pessoa
     public function setTipoSanguineo($tipoSanguineo)
     {
         $this->tipoSanguineo = $tipoSanguineo;
+    }
+
+    public function getCns()
+    {
+        return $this->cns;
+    }
+
+    public function setCns(?string $cns)
+    {
+        $this->cns = $cns;
     }
 }

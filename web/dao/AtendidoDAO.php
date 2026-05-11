@@ -102,8 +102,8 @@ class AtendidoDAO
 
         $pdo->beginTransaction();
 
-        $sqlPessoa = "INSERT INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento) 
-                  VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :dataNascimento)";
+        $sqlPessoa = "INSERT INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento, cns)
+                  VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :dataNascimento, :cns)";
         $stmtPessoa = $pdo->prepare($sqlPessoa);
 
         $nome           = $atendido->getNome();
@@ -111,6 +111,7 @@ class AtendidoDAO
         $sexo           = $atendido->getSexo();
         $telefone       = $atendido->getTelefone();
         $dataNascimento = $atendido->getDataNascimento();
+        $cns            = $atendido->getCns();
         if (empty($dataNascimento)) {
             $dataNascimento = null;
         }
@@ -121,6 +122,7 @@ class AtendidoDAO
         $stmtPessoa->bindValue(':sexo',           $sexo);
         $stmtPessoa->bindValue(':telefone',       $telefone);
         $stmtPessoa->bindValue(':dataNascimento', $dataNascimento);
+        $stmtPessoa->bindValue(':cns',            $cns);
 
         $stmtPessoa->execute();
 
@@ -170,7 +172,7 @@ class AtendidoDAO
     public function incluirExistente($atendido, int $idPessoa, string $sobrenome): int
     {
         $sql = "UPDATE pessoa
-            SET sobrenome = :sobrenome, sexo = :sexo
+            SET sobrenome = :sobrenome, sexo = :sexo, cns = :cns
             WHERE id_pessoa = :id_pessoa;";
 
         $sql2 = "INSERT INTO atendido(pessoa_id_pessoa, atendido_tipo_idatendido_tipo, atendido_status_idatendido_status)
@@ -185,10 +187,12 @@ class AtendidoDAO
         $sexo      = $atendido->getSexo();
         $tipo      = $atendido->getIntTipo();
         $status    = $atendido->getIntStatus();
+        $cns       = $atendido->getCns();
 
         $stmt->bindParam(':id_pessoa', $idPessoa, PDO::PARAM_INT);
         $stmt->bindValue(':sobrenome', $sobrenomeAtendido);
         $stmt->bindValue(':sexo', $sexo);
+        $stmt->bindValue(':cns', $cns);
 
         $stmt2->bindParam(':id_pessoa', $idPessoa, PDO::PARAM_INT);
         $stmt2->bindValue(':intTipo', $tipo, PDO::PARAM_INT);
@@ -413,10 +417,9 @@ class AtendidoDAO
 
     public function listar($id)
     {
-        echo $id;
         $pdo = Conexao::connect();
 
-        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.telefone,p.data_nascimento, p.cep,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo, a.atendido_status_idatendido_status FROM pessoa p LEFT JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.idatendido=:id";
+        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.telefone,p.data_nascimento, p.cep,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,p.cns, a.atendido_status_idatendido_status FROM pessoa p LEFT JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.idatendido=:id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $id);
 
@@ -424,9 +427,9 @@ class AtendidoDAO
         $pessoa = array();
         while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
             if ($linha['cpf'] === "Não informado") {
-                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
+                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
             } else {
-                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
+                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
             }
         }
 
@@ -468,7 +471,9 @@ class AtendidoDAO
         $stmt_cpf->execute();
         $cpfAtual = $stmt_cpf->fetchColumn();
 
-        $sql = "UPDATE pessoa SET 
+        $cns = $atendido->getCns();
+
+        $sql = "UPDATE pessoa SET
             nome = :nome,
             sobrenome = :sobrenome,
             sexo = :sexo,
@@ -476,7 +481,8 @@ class AtendidoDAO
             data_nascimento = :data_nascimento,
             nome_pai = :nome_pai,
             nome_mae = :nome_mae,
-            tipo_sanguineo = :tipo_sanguineo";
+            tipo_sanguineo = :tipo_sanguineo,
+            cns = :cns";
 
         $params = [
             ':nome' => $atendido->getNome(),
@@ -486,12 +492,13 @@ class AtendidoDAO
             ':data_nascimento' => $atendido->getDataNascimento(),
             ':nome_pai' => $atendido->getNomePai(),
             ':nome_mae' => $atendido->getNomeMae(),
-            ':tipo_sanguineo' => $atendido->getTipoSanguineo()
+            ':tipo_sanguineo' => $atendido->getTipoSanguineo(),
+            ':cns' => ($cns !== '' ? $cns : null)
         ];
 
         if ($cpfAtual === null || $cpfAtual === '') {
             $sql .= ", cpf = :cpf";
-            $params[':cpf'] = $_POST['cpf'] ?? '';
+            $params[':cpf'] = $atendido->getCpf();
         }
 
         $sql .= " WHERE id_pessoa = :id_pessoa";

@@ -46,6 +46,19 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
       display: none;
     }
 
+    #msg-historico {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+
+    #msg-historico.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
     #conteudo-pagina {
       margin-left: 10%;
     }
@@ -171,6 +184,15 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
                     <option value="" selected disabled>Selecionar ...</option>
                   </select>
                 </div>
+                <div id="msg-historico-wrapper" style="display: none; margin-top: 10px;">
+                  <div id="msg-historico" class="alert alert-danger alert-dismissible" role="alert">
+                    <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemHistorico(); return false;">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                    <span id="msg-historico-texto"></span>
+                  </div>
+                </div>
+
                 <button class="btn btn-primary" id="visualizar" onclick="event.preventDefault(); visualizarProntuario();">Visualizar</button>
               </form>
 
@@ -277,12 +299,42 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
 
     document.addEventListener("DOMContentLoaded", gerarOptions(prontuarios, "historicoOpcao"))
 
+    let _historicoMsgTimer = null;
+
+    function mostrarMensagemHistorico(mensagem, tipo = "danger") {
+      const wrapper = document.getElementById("msg-historico-wrapper");
+      const alerta = document.getElementById("msg-historico");
+      const texto = document.getElementById("msg-historico-texto");
+      if (!wrapper || !alerta || !texto) return;
+      clearTimeout(_historicoMsgTimer);
+      alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+      alerta.classList.add("alert-" + tipo);
+      texto.textContent = mensagem;
+      wrapper.style.display = "block";
+      alerta.classList.remove("is-visible");
+      void alerta.offsetWidth;
+      alerta.classList.add("is-visible");
+      _historicoMsgTimer = setTimeout(ocultarMensagemHistorico, 10000);
+    }
+
+    function ocultarMensagemHistorico() {
+      clearTimeout(_historicoMsgTimer);
+      const wrapper = document.getElementById("msg-historico-wrapper");
+      const alerta = document.getElementById("msg-historico");
+      if (!alerta) return;
+      alerta.classList.remove("is-visible");
+      alerta.addEventListener("transitionend", function handler() {
+        if (wrapper) wrapper.style.display = "none";
+        alerta.removeEventListener("transitionend", handler);
+      });
+    }
+
     async function visualizarProntuario() {
 
       const opcao = document.getElementById('historicoOpcao').value;
 
       if (!opcao || opcao.trim() === "") {
-        alert("Escolha uma opção de data válida antes de clicar em visualizar.");
+        mostrarMensagemHistorico("Escolha uma opção de data válida antes de clicar em visualizar.");
         return;
       }
 
@@ -295,7 +347,7 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
       });
 
       if (!resposta.ok) {
-        alert('Ops!, ocorreu algum erro ao tentar puxar as informações do histórico');
+        mostrarMensagemHistorico('Ops!, ocorreu algum erro ao tentar puxar as informações do histórico');
         return;
       }
 

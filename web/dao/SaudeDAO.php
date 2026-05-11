@@ -102,11 +102,11 @@ class SaudeDAO
 
     public function listar($id)
     {
-        echo $id;
         $pdo = Conexao::connect();
 
-        $sql = "SELECT p.nome,p.sobrenome,p.imagem,p.sexo,p.data_nascimento,p.tipo_sanguineo FROM pessoa p 
-        JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa 
+        $sql = "SELECT p.nome, p.sobrenome, p.imagem, p.sexo, p.data_nascimento, p.tipo_sanguineo, p.cns
+        FROM pessoa p
+        JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa
         WHERE sf.id_fichamedica=:id";
 
         $stmt = $pdo->prepare($sql);
@@ -115,7 +115,15 @@ class SaudeDAO
         $stmt->execute();
         $paciente = array();
         while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $paciente[] = array('nome' => $linha['nome'], 'imagem' => $linha['imagem'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $linha['data_nascimento'], 'tipo_sanguineo' => $linha['tipo_sanguineo']);
+            $paciente[] = array(
+                'nome' => $linha['nome'],
+                'imagem' => $linha['imagem'],
+                'sobrenome' => $linha['sobrenome'],
+                'sexo' => $linha['sexo'],
+                'data_nascimento' => $linha['data_nascimento'],
+                'tipo_sanguineo' => $linha['tipo_sanguineo'],
+                'cns' => $linha['cns']
+            );
         }
         return json_encode($paciente);
     }
