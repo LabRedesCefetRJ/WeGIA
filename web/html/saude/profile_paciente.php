@@ -1886,6 +1886,26 @@ try {
                         </div>
                       </div>
 
+                      <div class="modal fade upload-modal" id="modalConfirmarRemoverExame" tabindex="-1" role="dialog" aria-labelledby="modalRemoverExameLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="modalRemoverExameLabel">Remover exame</h4>
+                            </div>
+                            <div class="modal-body">
+                              <p>Tem certeza que deseja remover esse exame?</p>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                              <button type="button" class="btn btn-danger" onclick="confirmarRemoverExame()">Remover</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       <br />
                   </section>
                 </div>
@@ -2716,10 +2736,18 @@ try {
         }
       }
 
-      async function deletar_exame(id) {
-        if (!window.confirm("Tem certeza que deseja remover esse exame?")) {
-          return;
-        }
+      let _idExamePendente = null;
+
+      function deletar_exame(id) {
+        _idExamePendente = id;
+        $('#modalConfirmarRemoverExame').modal('show');
+      }
+
+      async function confirmarRemoverExame() {
+        const id = _idExamePendente;
+        _idExamePendente = null;
+        $('#modalConfirmarRemoverExame').modal('hide');
+
         let url = `../../controle/control.php?id_exame=${id}&metodo=${encodeURIComponent("removerExame")}&nomeClasse=${encodeURIComponent("ExameControle")}`;
 
         let options = {
