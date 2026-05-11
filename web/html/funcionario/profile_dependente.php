@@ -758,7 +758,7 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="complemento" id="complemento" id="profileCompany">
+                                                    <input type="text" class="form-control" name="complemento" id="complemento">
                                                 </div>
                                             </div>
                                             <div class="form-group">

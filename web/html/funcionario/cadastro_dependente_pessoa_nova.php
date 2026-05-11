@@ -40,13 +40,16 @@ $listaCPF2->listarCpf();
 
 // Inclui display de Campos
 require_once "../personalizacao_display.php";
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'geral' . DIRECTORY_SEPARATOR . 'msg.php';
 
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
 
-$cpfDigitado = $_SESSION['cpf_digitado'];
-$parentescoPrevio = $_SESSION['parentesco_previo'];
+$cpfDigitado = $_SESSION['cpf_digitado'] ?? '';
+$parentescoPrevio = $_SESSION['parentesco_previo'] ?? '';
+$oldInput = getSessionFormData();
+$fieldErrors = getSessionFormErrors();
 
 ?>
 <!DOCTYPE html>
@@ -109,6 +112,7 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
       </header>
 
       <div class="col-md-8 col-lg-12">
+        <?php sessionMsg(); ?>
         <div class="tabs">
           <ul class="nav nav-tabs tabs-primary">
             <li class="active">
@@ -123,32 +127,38 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" name="nome" id="nome" onkeypress="return Onlychars(event)">
+                    <input type="text" class="form-control<?= !empty($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    <?php if (!empty($fieldErrors['nome'])): ?>
+                      <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') ?></p>
+                    <?php endif; ?>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)">
+                    <input type="text" class="form-control<?= !empty($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    <?php if (!empty($fieldErrors['sobrenome'])): ?>
+                      <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') ?></p>
+                    <?php endif; ?>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
                   <div class="col-md-8">
-                    <label><input type="radio" name="sexo" id="radio" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                    <label><input type="radio" name="sexo" id="radio" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="telefone">Telefone<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                    <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?>>
+                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?> value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                   </div>
                 </div>
                 <div class="form-group">
@@ -157,7 +167,8 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                     <select name="id_parentesco" id="parentesco">
                       <?php
                       foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                        if ($item["id_parentesco"] == $parentescoPrevio) {
+                        $parentescoSelecionado = $oldInput['id_parentesco'] ?? $parentescoPrevio;
+                        if ($item["id_parentesco"] == $parentescoSelecionado) {
                           echo ("<option value='" . $item["id_parentesco"] . "' selected>" . htmlspecialchars($item["descricao"]) . "</option>");
                         } else {
                           echo ("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
@@ -173,25 +184,28 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?php echo $cpfDigitado; ?>" readonly>
+                    <input type="text" class="form-control<?= !empty($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? $cpfDigitado, ENT_QUOTES, 'UTF-8') ?>" readonly>
+                    <?php if (!empty($fieldErrors['cpf'])): ?>
+                      <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') ?></p>
+                    <?php endif; ?>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Número do RG<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
+                    <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
+                    <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Data de expedição<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                   <div class="col-md-6">
-                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required disabled>
+                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> disabled>
                     <p id="dataNascInvalida" style="display: block; color: #b30000">Selecione a data de nascimento primeiro!</p>
                   </div>
                 </div>
@@ -464,6 +478,59 @@ $parentescoPrevio = $_SESSION['parentesco_previo'];
       $("#header").load("../header.php");
       $(".menuu").load("../menu.php");
     });
+
+    $(document).ready(function() {
+
+      $("#orgao_emissor").closest(".form-group").hide();
+      $("#data_expedicao").closest(".form-group").hide();
+
+      function validarRGDependente() {
+        var rg = $("#rg").val().trim();
+
+        if (rg !== "") {
+
+          $("#orgao_emissor").closest(".form-group").fadeIn(150);
+          $("#data_expedicao").closest(".form-group").fadeIn(150);
+
+          $("#orgao_emissor").attr("required", true);
+          if ($("#nascimento").val()) {
+          $("#data_expedicao").prop("disabled", false);
+          } else {
+            $("#data_expedicao").prop("disabled", true);
+          }
+
+          if (!$("#orgao_emissor").closest(".form-group").find(".obrig").length) {
+            $("#orgao_emissor").closest(".form-group").find("label")
+              .append('<sup class="obrig">*</sup>');
+          }
+
+          if (!$("#data_expedicao").closest(".form-group").find(".obrig").length) {
+            $("#data_expedicao").closest(".form-group").find("label")
+              .append('<sup class="obrig">*</sup>');
+          }
+
+        } else {
+
+          $("#orgao_emissor").closest(".form-group").fadeOut(150);
+          $("#data_expedicao").closest(".form-group").fadeOut(150);
+
+          $("#orgao_emissor").val("");
+          $("#data_expedicao").val("");
+
+          $("#orgao_emissor").removeAttr("required");
+          $("#data_expedicao").removeAttr("required");
+
+          $("#orgao_emissor").closest(".form-group").find(".obrig").remove();
+          $("#data_expedicao").closest(".form-group").find(".obrig").remove();
+        }
+      }
+
+      $("#rg").on("input", validarRGDependente);
+
+      validarRGDependente();
+
+    });
+
   </script>
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>

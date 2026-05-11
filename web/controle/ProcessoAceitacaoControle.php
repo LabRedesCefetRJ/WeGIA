@@ -9,6 +9,7 @@ require_once ROOT . '/dao/PessoaDAO.php';
 require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
 require_once ROOT . '/classes/Util.php';
 require_once ROOT . '/dao/Conexao.php';
+require_once ROOT . '/html/geral/msg.php';
 
 class ProcessoAceitacaoControle
 {
@@ -38,55 +39,206 @@ class ProcessoAceitacaoControle
             header("Location: ../html/atendido/processo_aceitacao.php?status-processo=" . htmlspecialchars($idStatus));
             exit();
         } catch (Exception $e) {
-            Util::tratarException($e);
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit();
         }
     }
 
     public function incluir()
     {
         try {
-            $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
-            $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
-            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
-            $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
-
-            if (empty($nome) || empty($sobrenome))
-                throw new InvalidArgumentException('Erro: Nome e Sobrenome são obrigatórios.', 400);
-
-            if (strlen($cpf) != 0 && !Util::validarCPF($cpf))
-                throw new InvalidArgumentException('Erro: o CPF informado não é válido.', 400);
-
-            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM pessoa WHERE cpf = ?"); //Isso deve virar responsabilidade da classe de Pessoa
-            $stmt->execute([$cpf]);
-
-            //futuramente caso um CPF já esteja cadastrado, o sistema deve pegar os dados da pessoa existente no sistema e usar para criar o processo
-            if ((int)$stmt->fetchColumn() > 0)
-                throw new InvalidArgumentException('Erro: CPF já cadastrado no sistema.', 400);
+            $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
+            $descricao = $this->getPostValue('descricao');
+            $telefone = $this->getPostValue('telefone');
+            $cep = $this->getPostValue('cep');
+            $rua = $this->getPostValue('rua');
+            $bairro = $this->getPostValue('bairro');
+            $cidade = $this->getPostValue('cidade');
+            $uf = $this->getPostValue('uf');
+            $numero = $this->getPostValue('numero_residencia');
+            $complemento = $this->getPostValue('complemento');
+            $ibge = $this->getPostValue('ibge');
 
             $pessoaDAO = new PessoaDAO($this->pdo);
-            $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
+            $existingPessoa = null;
+            if ($cpf !== null) {
+                $existingPessoa = $pessoaDAO->verificarExistencia($cpf);
+            }
 
+            if ($existingPessoa !== null) {
+                $nome = $existingPessoa->getNome();
+                $sobrenome = $existingPessoa->getSobrenome();
+                $sexo = $existingPessoa->getSexo();
+                $dataNascimento = $existingPessoa->getDataNascimento();
+                $telefone = $existingPessoa->getTelefone();
+                $cep = $existingPessoa->getCep();
+                $rua = $existingPessoa->getLogradouro();
+                $bairro = $existingPessoa->getBairro();
+                $cidade = $existingPessoa->getCidade();
+                $uf = $existingPessoa->getEstado();
+                $numero = $existingPessoa->getNumeroEndereco();
+                $complemento = $existingPessoa->getComplemento();
+                $ibge = $existingPessoa->getIbge();
+            } else {
+                $nome = $this->getPostValue('nome');
+                $sobrenome = $this->getPostValue('sobrenome');
+                $sexo = $this->getPostValue('sexo');
+                $dataNascimento = $this->getPostValue('data_nascimento');
+            }
+
+            if (empty($nome) || empty($sobrenome)) {
+                throw new InvalidArgumentException('Nome e Sobrenome são obrigatórios.', 400);
+            }
+            Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+            Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
+
+            if ($cpf !== null && !Util::validarCPF($cpf)) {
+                throw new InvalidArgumentException('CPF inválido. Verifique o número informado.', 400);
+            }
+
+            if ($dataNascimento !== null) {
+                $this->validarDataNascimento($dataNascimento);
+            }
+            $this->validarTelefone($telefone);
+            $cep = $this->validarCep($cep);
+            $this->validarEndereco([
+                'cep' => $cep,
+                'rua' => $rua,
+                'bairro' => $bairro,
+                'cidade' => $cidade,
+                'uf' => $uf,
+                'numero_residencia' => $numero,
+                'complemento' => $complemento,
+                'ibge' => $ibge,
+            ]);
+
+            $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
             $this->pdo->beginTransaction();
 
-            $id_pessoa = isset($cpf) && !empty($cpf) ? $pessoaDAO->inserirPessoa($cpf, $nome, $sobrenome): $pessoaDAO->inserirPessoa(null, $nome, $sobrenome);
+            if (!isset($id_pessoa)) {
+                $id_pessoa = $pessoaDAO->inserirPessoa(
+                    $cpf,
+                    $nome,
+                    $sobrenome,
+                    $telefone,
+                    $cep,
+                    $rua,
+                    $bairro,
+                    $cidade,
+                    $uf,
+                    $numero,
+                    $complemento,
+                    $ibge,
+                    $sexo,
+                    $dataNascimento
+                );
+            }
 
-            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao); 
-            if(!$resultado || $resultado <= 0)
+            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao);
+            if (!$resultado || $resultado <= 0) {
                 throw new Exception('Erro ao cadastrar processo de aceitação no servidor.', 500);
+            }
 
             $this->pdo->commit();
 
-            $_SESSION['msg'] = "Processo cadastrado com sucesso!";
-            header("Location: ../html/atendido/processo_aceitacao.php");
+            $_SESSION['msg'] = 'Processo cadastrado com sucesso!';
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            exit();
         } catch (Exception $e) {
-            if($this->pdo->inTransaction())
+            if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
+            }
 
-            $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação' : $e->getMessage();
-            $_SESSION['mensagem_erro'] = $mensagem;
+            $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação.' : $e->getMessage();
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($mensagem);
+            setSessionOpenModal('modalNovoProcesso');
+            setSessionMsg($mensagem, 'err');
 
-            header("Location: ../html/atendido/processo_aceitacao.php");
-            Util::tratarException($e);
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            exit();
+        }
+    }
+
+    private function getPostValue(string $name, int $filter = FILTER_SANITIZE_SPECIAL_CHARS): ?string
+    {
+        $value = filter_input(INPUT_POST, $name, $filter);
+
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+        return $value === '' ? null : $value;
+    }
+
+    private function normalizeCpf(?string $cpf): ?string
+    {
+        if ($cpf === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $cpf);
+        return $digits === '' ? null : $digits;
+    }
+
+    private function validarTelefone(?string $telefone): void
+    {
+        if ($telefone === null) {
+            return;
+        }
+
+        $digits = preg_replace('/\D+/', '', $telefone);
+        if (!preg_match('/^\d{10,11}$/', $digits)) {
+            throw new InvalidArgumentException('Telefone inválido. Informe DDD + número, com 10 ou 11 dígitos.', 400);
+        }
+    }
+
+    private function validarCep(?string $cep): ?string
+    {
+        if ($cep === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $cep);
+        if (!preg_match('/^\d{8}$/', $digits)) { 
+            throw new InvalidArgumentException('CEP inválido. Use o formato 00000-000.', 400);
+        }
+
+        return substr($digits, 0, 5) . '-' . substr($digits, 5);
+    }
+
+    private function validarDataNascimento(string $data): void
+    {
+        $d = DateTime::createFromFormat('Y-m-d', $data);
+        if (!$d || $d->format('Y-m-d') !== $data) {
+            throw new InvalidArgumentException('Data de nascimento em formato inválido.', 400);
+        }
+        if ($d > new DateTime()) {
+            throw new InvalidArgumentException('A data de nascimento não pode ser no futuro.', 400);
+        }
+    }
+
+    private function validarEndereco(array $endereco): void
+    {
+        $anyAddressField = false;
+        foreach ($endereco as $value) {
+            if (!empty($value)) {
+                $anyAddressField = true;
+                break;
+            }
+        }
+
+        if (!$anyAddressField) {
+            return;
+        }
+
+        $requiredFields = ['rua', 'bairro', 'cidade', 'uf'];
+        foreach ($requiredFields as $field) {
+            if (empty($endereco[$field])) {
+                throw new InvalidArgumentException('Informe o endereço completo ou deixe todos os campos de endereço em branco.', 400);
+            }
         }
     }
 
@@ -117,7 +269,9 @@ class ProcessoAceitacaoControle
             );
             exit;
         } catch (Exception $e) {
-            Util::tratarException($e);
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
         }
     }
 
@@ -146,6 +300,189 @@ class ProcessoAceitacaoControle
             ]);
         } catch (Exception $e) {
             Util::tratarException($e);
+        }
+    }
+
+    public function getPessoaPorCpf()
+    {
+        $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
+        try {
+            if (!$cpf) {
+                throw new InvalidArgumentException('CPF não informado.', 400);
+            }
+
+            $cpf = $this->normalizeCpf($cpf);
+            if ($cpf === null || !Util::validarCPF($cpf)) {
+                throw new InvalidArgumentException('CPF inválido.', 400);
+            }
+
+            $pessoaDao = new PessoaDAO($this->pdo);
+            $existingPessoa = $pessoaDao->verificarExistencia($cpf);
+
+            if ($existingPessoa === null) {
+                echo json_encode(['success' => false, 'erro' => 'CPF não encontrado.']);
+                exit();
+            }
+
+            echo json_encode([
+                'success' => true,
+                'pessoa' => [
+                    'cpf' => $existingPessoa->getCpf(),
+                    'nome' => $existingPessoa->getNome(),
+                    'sobrenome' => $existingPessoa->getSobrenome(),
+                    'sexo' => $existingPessoa->getSexo(),
+                    'data_nascimento' => $existingPessoa->getDataNascimento(),
+                    'telefone' => $existingPessoa->getTelefone(),
+                    'cep' => $existingPessoa->getCep(),
+                    'logradouro' => $existingPessoa->getLogradouro(),
+                    'numero_endereco' => $existingPessoa->getNumeroEndereco(),
+                    'bairro' => $existingPessoa->getBairro(),
+                    'cidade' => $existingPessoa->getCidade(),
+                    'estado' => $existingPessoa->getEstado(),
+                    'complemento' => $existingPessoa->getComplemento(),
+                    'ibge' => $existingPessoa->getIbge()
+                ]
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'erro' => $e->getMessage()]);
+        }
+    }
+
+    public function getPessoaDoProcesso()
+    {
+        $idProcesso = filter_input(INPUT_GET, 'id_processo', FILTER_SANITIZE_NUMBER_INT);
+        
+        try {
+            if (!$idProcesso || $idProcesso < 1) {
+                echo json_encode(["success" => false, "erro" => "ID de processo inválido."]);
+                exit();
+            }
+            
+            $processoDao = new ProcessoAceitacaoDAO($this->pdo);
+            $idPessoa = $processoDao->getIdPessoaByProcesso($idProcesso);
+            
+            if (!$idPessoa) {
+                echo json_encode(["success" => false, "erro" => "Pessoa não encontrada para este processo."]);
+                exit();
+            }
+            
+            $pessoaDao = new PessoaDAO($this->pdo);
+            $pessoa = $pessoaDao->buscarPessoaPorId($idPessoa);
+            
+            if (!$pessoa) {
+                echo json_encode(["success" => false, "erro" => "Dados da pessoa não encontrados."]);
+                exit();
+            }
+            
+            echo json_encode(["success" => true, "pessoa" => $pessoa]);
+        } catch (Exception $e) {
+            echo json_encode(["success" => false, "erro" => $e->getMessage()]);
+        }
+    }
+
+    public function editarPerfil()
+    {
+        try {
+            $idProcesso = (int)($this->getPostValue('id_processo', FILTER_SANITIZE_NUMBER_INT) ?? 0);
+            
+            if ($idProcesso <= 0) {
+                throw new InvalidArgumentException('ID de processo inválido.', 400);
+            }
+            
+            $nome = $this->getPostValue('nome');
+            $sobrenome = $this->getPostValue('sobrenome');
+            $sexo = $this->getPostValue('sexo');
+            $dataNascimento = $this->getPostValue('data_nascimento');
+            $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
+            $telefone = $this->getPostValue('telefone');
+            $cep = $this->getPostValue('cep');
+            $rua = $this->getPostValue('rua');
+            $bairro = $this->getPostValue('bairro');
+            $cidade = $this->getPostValue('cidade');
+            $uf = $this->getPostValue('uf');
+            $numero = $this->getPostValue('numero_residencia');
+            $complemento = $this->getPostValue('complemento');
+            $ibge = $this->getPostValue('ibge');
+
+            if (empty($nome) || empty($sobrenome)) {
+                throw new InvalidArgumentException('Nome e Sobrenome são obrigatórios.', 400);
+            }
+            Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+            Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
+
+            if ($cpf !== null && !Util::validarCPF($cpf)) {
+                throw new InvalidArgumentException('CPF inválido. Verifique o número informado.', 400);
+            }
+
+            if ($dataNascimento !== null) {
+                $this->validarDataNascimento($dataNascimento);
+            }
+            $this->validarTelefone($telefone);
+            $cep = $this->validarCep($cep);
+            $this->validarEndereco([
+                'cep' => $cep,
+                'rua' => $rua,
+                'bairro' => $bairro,
+                'cidade' => $cidade,
+                'uf' => $uf,
+                'numero_residencia' => $numero,
+                'complemento' => $complemento,
+                'ibge' => $ibge,
+            ]);
+
+            $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
+            $idPessoa = $processoDAO->getIdPessoaByProcesso($idProcesso);
+            
+            if (!$idPessoa) {
+                throw new Exception('Pessoa não encontrada para este processo.', 404);
+            }
+
+            if ($cpf !== null) {
+                $stmt = $this->pdo->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = ? AND id_pessoa != ?");
+                $stmt->execute([$cpf, $idPessoa]);
+
+                if ($stmt->fetchColumn() !== false) {
+                    throw new InvalidArgumentException('CPF já cadastrado no sistema para outra pessoa.', 400);
+                }
+            }
+
+            $dadosPessoa = [
+                'nome' => $nome,
+                'sobrenome' => $sobrenome,
+                'sexo' => $sexo,
+                'data_nascimento' => empty($dataNascimento) ? null : $dataNascimento,
+                'cpf' => $cpf,
+                'telefone' => $telefone,
+                'cep' => $cep,
+                'logradouro' => $rua,
+                'bairro' => $bairro,
+                'cidade' => $cidade,
+                'estado' => $uf,
+                'numero_endereco' => $numero,
+                'complemento' => $complemento,
+                'ibge' => $ibge
+            ];
+
+            $pessoaDAO = new PessoaDAO($this->pdo);
+            $sucesso = $pessoaDAO->atualizarPessoa($idPessoa, $dadosPessoa);
+            
+            if ($sucesso === false) {
+                throw new Exception('Erro ao atualizar os dados da pessoa.', 500);
+            }
+
+            $_SESSION['msg'] = 'Perfil editado com sucesso!';
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            exit();
+        } catch (Exception $e) {
+            $mensagem = $e instanceof PDOException ? 'Erro ao manipular o banco de dados da aplicação.' : $e->getMessage();
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($mensagem);
+            setSessionOpenModal('modalEditarPerfil');
+            setSessionMsg($mensagem, 'err');
+
+            header('Location: ../html/atendido/processo_aceitacao.php');
+            exit();
         }
     }
 }

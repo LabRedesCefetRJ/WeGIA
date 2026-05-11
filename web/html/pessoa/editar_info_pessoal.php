@@ -34,15 +34,19 @@ try {
     
     if(!$nome || strlen($nome) < 3)
         throw new InvalidArgumentException('O nome informado não contém a quantidade mínima de caracteres necessária.', 422);
+    Util::validarNomePessoaOuLancar($nome, 'nome', 422);
 
     if(!$sobrenome || strlen($sobrenome) < 3)
         throw new InvalidArgumentException('O sobrenome informado não contém a quantidade mínima de caracteres necessária.', 422);
+    Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 422);
 
     if(!$nome_pai || strlen($nome_pai) < 3)
         throw new InvalidArgumentException('O nome do pai informado não contém a quantidade mínima de caracteres necessária.', 422);
+    Util::validarNomePessoaOuLancar($nome_pai, 'nome do pai', 422);
 
     if(!$nome_mae || strlen($nome_mae) < 3)
         throw new InvalidArgumentException('O nome da mãe informado não contém a quantidade mínima de caracteres necessária.', 422);
+    Util::validarNomePessoaOuLancar($nome_mae, 'nome da mãe', 422);
 
     if($sexo != 'm' && $sexo !='f')
         throw new InvalidArgumentException('O sexo informado não é válido.', 422);
