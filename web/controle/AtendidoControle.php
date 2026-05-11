@@ -537,10 +537,9 @@ class AtendidoControle
         $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
         $cpf = $_GET['cpf'] ?? '';
         try {
-<<<<<<< master
             $atendido = $this->verificarExistente();
             $sobrenome = $_GET['sobrenome'] ?? '';
-=======
+            
             $validador = new Util();
             
             // Valida CNS se fornecido
@@ -550,7 +549,6 @@ class AtendidoControle
                     throw new InvalidArgumentException('Erro, o CNS informado não é válido. Deve conter 15 dígitos.', 400);
                 }
             }
->>>>>>> pre-master-LAJE-261105-Pedro
 
             $atendidoDAO = new AtendidoDAO();
             $atendidoDAO->incluirExistente($atendido, $idPessoa, $sobrenome);
@@ -671,7 +669,6 @@ class AtendidoControle
                 }
             }
 
-<<<<<<< master
             $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'telefone', 'nome_mae', 'nome_pai', 'tipo_sanguineo'];
             $setClause = [];
             $params = [':idatendido' => $idatendido];
@@ -685,12 +682,11 @@ class AtendidoControle
                     $setClause[] = "p.`$campo` = :" . $campo;
                     $params[":$campo"] = $_POST[$campo];
                 }
-=======
+            }
             // Validação de CNS
             $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
             if ($cns !== '' && !Util::validaCNS($cns)) {
                 throw new InvalidArgumentException("Erro, o CNS informado não é válido. Deve conter 15 dígitos.");
->>>>>>> pre-master-LAJE-261105-Pedro
             }
 
             // Popula objeto Atendido
