@@ -1167,6 +1167,24 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio_log` (
 )ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`socio_verification_code`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`socio_verification_code` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_socio` INT NOT NULL,
+  `code` VARCHAR(6) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `expire_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 5 MINUTE),
+  PRIMARY KEY (`id`),
+  INDEX `idx_id_socio` (`id_socio` ASC),
+  CONSTRAINT `fk_socio_verification_code_socio`
+    FOREIGN KEY (`id_socio`)
+    REFERENCES `wegia`.`socio` (`id_socio`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`endereco_instituicao`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`endereco_instituicao` (
