@@ -206,6 +206,36 @@ require_once ROOT."/html/personalizacao_display.php";
     <!-- jquery functions -->
 
     <script>
+        let _fichaMedicaMsgTimer = null;
+
+        function mostrarMensagemFichaMedica(mensagem, tipo = "danger") {
+            const wrapper = document.getElementById("msg-ficha-medica-wrapper");
+            const alerta = document.getElementById("msg-ficha-medica");
+            const texto = document.getElementById("msg-ficha-medica-texto");
+            if (!wrapper || !alerta || !texto) return;
+            clearTimeout(_fichaMedicaMsgTimer);
+            wrapper.classList.remove("hidden");
+            alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+            alerta.classList.add("alert-" + tipo);
+            texto.textContent = mensagem;
+            wrapper.style.display = "block";
+            alerta.classList.remove("is-visible");
+            void alerta.offsetWidth;
+            alerta.classList.add("is-visible");
+            wrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+            _fichaMedicaMsgTimer = setTimeout(ocultarMensagemFichaMedica, 10000);
+        }
+
+        function ocultarMensagemFichaMedica() {
+            clearTimeout(_fichaMedicaMsgTimer);
+            const wrapper = document.getElementById("msg-ficha-medica-wrapper");
+            const alerta = document.getElementById("msg-ficha-medica");
+            if (!alerta || !wrapper) return;
+            alerta.classList.remove("is-visible");
+            setTimeout(() => {
+                wrapper.classList.add("hidden");
+            }, 350);
+        }
 
         $(function(){
             var funcionario=[];
@@ -216,41 +246,17 @@ require_once ROOT."/html/personalizacao_display.php";
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
 
-
-            let _fichaMedicaMsgTimer = null;
-
-            function mostrarMensagemFichaMedica(mensagem, tipo = "danger") {
-                const wrapper = document.getElementById("msg-ficha-medica-wrapper");
-                const alerta = document.getElementById("msg-ficha-medica");
-                const texto = document.getElementById("msg-ficha-medica-texto");
-                if (!wrapper || !alerta || !texto) return;
-                clearTimeout(_fichaMedicaMsgTimer);
-                alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
-                alerta.classList.add("alert-" + tipo);
-                texto.textContent = mensagem;
-                wrapper.style.display = "block";
-                alerta.classList.remove("is-visible");
-                void alerta.offsetWidth;
-                alerta.classList.add("is-visible");
-                wrapper.scrollIntoView({ behavior: "smooth", block: "center" });
-                _fichaMedicaMsgTimer = setTimeout(ocultarMensagemFichaMedica, 10000);
-            }
-
-            function ocultarMensagemFichaMedica() {
-                clearTimeout(_fichaMedicaMsgTimer);
-                const wrapper = document.getElementById("msg-ficha-medica-wrapper");
-                const alerta = document.getElementById("msg-ficha-medica");
-                if (!alerta) return;
-                alerta.classList.remove("is-visible");
-                setTimeout(() => {
-                    if (wrapper) wrapper.style.display = "none";
-                }, 350);
-            }
-
             var editor = CKEDITOR.replace('despacho');
             editor.on('required', function(e){
                 mostrarMensagemFichaMedica("Por favor, informe o prontuário público!");
                 e.cancel();
+            });
+
+            // Event listener para fechar o alerta ao clicar no X
+            document.getElementById('btn-fechar-msg-ficha').addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                ocultarMensagemFichaMedica();
             });
             
         });
@@ -282,6 +288,10 @@ require_once ROOT."/html/personalizacao_display.php";
             opacity: 1;
             transform: translateY(0);
             pointer-events: auto;
+        }
+
+        #msg-ficha-medica-wrapper.hidden {
+            display: none !important;
         }
         img{
         	margin-left:10px;
@@ -355,7 +365,7 @@ require_once ROOT."/html/personalizacao_display.php";
                                         <div class="panel-body">    
                                             <div class="form-group" id="msg-ficha-medica-wrapper" style="display: none; width: 100%; margin-bottom: 15px; margin-top: 10px; padding: 0; margin-left: 0; margin-right: 0;">
                                                 <div id="msg-ficha-medica" class="alert alert-danger alert-dismissible" role="alert" style="width: 100%; margin: 0; margin-left: 0; margin-right: 0;">
-                                                    <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemFichaMedica(); return false;">
+                                                    <button type="button" class="close" id="btn-fechar-msg-ficha" aria-label="Fechar">
                                                         <span aria-hidden="true">&times;</span>
                                                     </button>
                                                     <span id="msg-ficha-medica-texto"></span>
