@@ -1,0 +1,3644 @@
+<?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+
+extract($_REQUEST);
+
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
+
+if (!isset($_SESSION['usuario'])) {
+  header("Location: ../index.php");
+  exit(401);
+} else {
+  session_regenerate_id();
+}
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+require_once "../../dao/Conexao.php";
+$pdo = Conexao::connect();
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+  http_response_code(400);
+  echo json_encode(['erro' => 'O id da pessoa informado é inválido.']);
+  exit();
+}
+
+//Verifica permissão do usuário
+permissao($id_pessoa, 52, 7);
+
+include_once '../../classes/Cache.php';
+require_once "../personalizacao_display.php";
+
+require_once ROOT . "/controle/SaudeControle.php";
+
+//sanitizar entrada
+$id_fichamedica = filter_input(INPUT_GET, 'id_fichamedica', FILTER_VALIDATE_INT);
+
+if (!$id_fichamedica || $id_fichamedica < 1) {
+  echo json_encode(['erro' => 'O id da ficha médica informado não é válido.']);
+  exit(400);
+}
+
+$cache = new Cache();
+$teste = $cache->read($id_fichamedica);
+require_once "../../dao/Conexao.php";
+$pdo = Conexao::connect();
+
+if (!isset($teste)) {
+  header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/profile_paciente.php?id_fichamedica=' . $id_fichamedica . '&id=' . $id_fichamedica);
+}
+
+$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+
+$stmtEnfermidades = $pdo->prepare("SELECT sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID NOT LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica ORDER BY sf.data_diagnostico DESC, sf.id_enfermidade DESC");
+
+$stmtEnfermidades->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+
+$stmtEnfermidades->execute();
+
+$enfermidades = $stmtEnfermidades->fetchAll(PDO::FETCH_ASSOC);
+
+//Formata data das enfermidades para o formato brasileiro
+require_once '../../classes/Util.php';
+$util = new Util();
+
+foreach ($enfermidades as $index => $enfermidade) {
+  $enfermidades[$index]['data_diagnostico'] = $util->formatoDataDMY($enfermidade['data_diagnostico']);
+  $enfermidades[$index]['descricao'] = htmlspecialchars($enfermidade['descricao']);
+}
+
+$enfermidades = json_encode($enfermidades);
+
+$stmtAlergias = $pdo->prepare("SELECT sf.id_enfermidade, sf.id_CID, sf.data_diagnostico, sf.status, stc.descricao FROM saude_enfermidades sf JOIN saude_tabelacid stc ON sf.id_CID = stc.id_CID WHERE stc.CID LIKE 'T78.4%' AND sf.status = 1 AND id_fichamedica=:idFichaMedica ORDER BY sf.data_diagnostico DESC, sf.id_enfermidade DESC");
+$stmtAlergias->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+$stmtAlergias->execute();
+
+$alergias = $stmtAlergias->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($alergias as $index => $alergia) {
+  $alergias[$index]['descricao'] = htmlspecialchars($alergia['descricao']);
+}
+
+$alergias = json_encode($alergias);
+
+$stmtSinaisVitais = $pdo->prepare("SELECT data, saturacao, pressao_arterial, frequencia_cardiaca, frequencia_respiratoria, temperatura, hgt, observacao, p.nome, p.sobrenome FROM saude_sinais_vitais sv JOIN funcionario f ON(sv.id_funcionario = f.id_funcionario) JOIN pessoa p ON (f.id_pessoa = p.id_pessoa) WHERE sv.id_fichamedica =:idFichaMedica ORDER BY sv.data DESC, sv.id_sinais_vitais DESC");
+
+$stmtSinaisVitais->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+$stmtSinaisVitais->execute();
+
+$sinaisvitais = $stmtSinaisVitais->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($sinaisvitais as $key => $value) {
+  //formata data e observacao
+  $data = new DateTime($value['data']);
+  $sinaisvitais[$key]['data_ordem'] = $data->format('Y-m-d H:i:s');
+  $sinaisvitais[$key]['data'] = $data->format('d/m/Y h:i:s');
+  $sinaisvitais[$key]['observacao'] = htmlspecialchars($value['observacao'] ?? '');
+}
+
+$sinaisvitais = json_encode($sinaisvitais);
+
+$sqlDescricaoMedica = "SELECT
+    a.id_atendimento AS id_atendimento,
+    a.descricao AS descricao,
+    a.data_atendimento AS data_atendimento,
+    m.nome AS medicoNome,
+    p.nome AS enfermeiraNome,
+    p.sobrenome AS enfermeiraSobrenome,
+    a.anulado AS anulado,
+    a.data_anulacao AS data_anulacao,
+    a.motivo_anulacao AS motivo_anulacao,
+    TRIM(CONCAT(COALESCE(pAnulador.nome, ''), ' ', COALESCE(pAnulador.sobrenome, ''))) AS anulado_por
+  FROM saude_atendimento a
+  JOIN funcionario f ON (a.id_funcionario = f.id_funcionario)
+  JOIN pessoa p ON (p.id_pessoa = f.id_pessoa)
+  JOIN saude_medicos m ON (a.id_medico = m.id_medico)
+  LEFT JOIN funcionario fAnulador ON (a.id_funcionario_anulacao = fAnulador.id_funcionario)
+  LEFT JOIN pessoa pAnulador ON (pAnulador.id_pessoa = fAnulador.id_pessoa)
+  WHERE a.id_fichamedica = :idFichaMedica
+  ORDER BY a.data_atendimento DESC, a.id_atendimento DESC";
+
+$stmtDescricaoMedica = $pdo->prepare($sqlDescricaoMedica);
+
+$stmtDescricaoMedica->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+$stmtDescricaoMedica->execute();
+
+$descricao_medica = $stmtDescricaoMedica->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($descricao_medica as $key => $value) {
+  $descricao_medica[$key]['id_atendimento'] = (int)($value['id_atendimento'] ?? 0);
+  $descricao_medica[$key]['anulado'] = (int)($value['anulado'] ?? 0);
+
+  if (!empty($value['data_atendimento'])) {
+    $data = new DateTime($value['data_atendimento']);
+    $descricao_medica[$key]['data_atendimento_ordem'] = $data->format('Y-m-d H:i:s');
+    $descricao_medica[$key]['data_atendimento'] = $data->format('d/m/Y');
+  } else {
+    $descricao_medica[$key]['data_atendimento_ordem'] = '';
+    $descricao_medica[$key]['data_atendimento'] = '';
+  }
+
+  if (!empty($value['data_anulacao'])) {
+    $dataAnulacao = new DateTime($value['data_anulacao']);
+    $descricao_medica[$key]['data_anulacao'] = $dataAnulacao->format('d/m/Y H:i:s');
+  } else {
+    $descricao_medica[$key]['data_anulacao'] = '';
+  }
+
+  $descricao_medica[$key]['motivo_anulacao'] = isset($value['motivo_anulacao']) ? trim((string)$value['motivo_anulacao']) : '';
+  $descricao_medica[$key]['anulado_por'] = isset($value['anulado_por']) ? trim((string)$value['anulado_por']) : '';
+}
+
+$descricao_medica = json_encode($descricao_medica);
+
+$stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC");
+
+$stmtMedicacoes->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+$stmtMedicacoes->execute();
+
+$exibimed = $stmtMedicacoes->fetchAll(PDO::FETCH_ASSOC);
+
+foreach ($exibimed as $key => $value) {
+  //formata data
+  $data = new DateTime($value['data_atendimento']);
+  $exibimed[$key]['data_atendimento_ordem'] = $data->format('Y-m-d H:i:s');
+  $exibimed[$key]['data_atendimento'] = $data->format('d/m/Y');
+}
+
+$exibimed = json_encode($exibimed);
+
+$stmtProntuarioPublico = $pdo->prepare("SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica=:idFichaMedica");
+
+$stmtProntuarioPublico->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
+$stmtProntuarioPublico->execute();
+
+$prontuariopublico = $stmtProntuarioPublico->fetchAll(PDO::FETCH_ASSOC);
+$prontuarioPHP = $prontuariopublico;
+$prontuariopublico = json_encode($prontuariopublico);
+
+$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+$tabelacid_enfermidades = $mysqli->query("SELECT * FROM saude_tabelacid WHERE CID NOT LIKE 'T78.4%'");
+$cargoMedico = $mysqli->query("SELECT * FROM pessoa p JOIN funcionario f ON (p.id_pessoa=f.id_pessoa) WHERE f.id_cargo = 3");
+$cargoEnfermeiro = $mysqli->query("SELECT * FROM pessoa p JOIN funcionario f ON (p.id_pessoa=f.id_pessoa) WHERE f.id_cargo = 4");
+
+try {
+  $tipoexame = $pdo->query("SELECT * FROM saude_exame_tipos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC);
+  $medicamentoenfermeiro = $mysqli->query("SELECT * FROM saude_medicacao");
+  $medstatus = $mysqli->query("SELECT * FROM saude_medicacao_status");
+
+  //aplicar statement
+  $stmtFuncionario = $pdo->prepare("SELECT nome FROM pessoa p JOIN funcionario f ON(p.id_pessoa = f.id_pessoa) WHERE f.id_pessoa =:idPessoa");
+
+  $stmtFuncionario->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+  $stmtFuncionario->execute();
+
+  $funcionarioNome = $stmtFuncionario->fetch(PDO::FETCH_ASSOC)['nome'];
+
+  $stmtProcuraIdPaciente = $pdo->prepare("SELECT id_pessoa FROM saude_fichamedica WHERE id_fichamedica =:idFicha");
+
+  $stmtProcuraIdPaciente->bindValue(':idFicha', $id_fichamedica, PDO::PARAM_INT);
+  $stmtProcuraIdPaciente->execute();
+  $idPaciente = $stmtProcuraIdPaciente->fetch(PDO::FETCH_ASSOC)['id_pessoa'];
+} catch (PDOException $e) {
+  echo $e->getMessage();
+}
+
+  $stmtAtendido = $pdo->prepare("SELECT p.data_nascimento FROM pessoa p JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.pessoa_id_pessoa = :idPessoa");
+  $stmtAtendido->bindValue('idPessoa', $idPaciente, PDO::PARAM_INT);
+  $stmtAtendido->execute();
+
+  $dadosAtendido = $stmtAtendido->fetch(PDO::FETCH_ASSOC);
+  $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
+
+  $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
+
+?>
+<!-- Vendor -->
+<script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
+<script src="<?php echo WWW; ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+<script src="<?php echo WWW; ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
+<script src="<?php echo WWW; ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+<script src="<?php echo WWW; ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+<script src="<?php echo WWW; ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+<script src="<?php echo WWW; ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+
+<!-- Specific Page Vendor -->
+<script src="<?php echo WWW; ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
+
+<!-- Theme Custom -->
+<script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
+
+<!-- Theme Initialization Files -->
+<script src="<?php echo WWW; ?>assets/javascripts/theme.init.js"></script>
+
+<!-- javascript functions -->
+<script src="<?php echo WWW; ?>Functions/onlyNumbers.js"></script>
+<script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
+<script src="<?php echo WWW; ?>Functions/mascara.js"></script>
+
+<!-- jkeditor -->
+<script src="<?php echo WWW; ?>assets/vendor/ckeditor/ckeditor.js"></script>
+
+<!-- Specific Page Vendor CSS -->
+<link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
+<link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+<link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
+
+
+<script>
+  function ajustarLarguraEditores() {
+    ['despacho', 'prontuario'].forEach(function(id) {
+      const instancia = CKEDITOR.instances[id];
+      if (instancia && instancia.container) {
+        instancia.container.setStyle('width', '100%');
+      }
+    });
+  }
+
+  function ajustarEspacamentoConteudoEditor(editorInstance) {
+    if (!editorInstance || !editorInstance.document) {
+      return;
+    }
+
+    const body = editorInstance.document.getBody();
+    if (!body) {
+      return;
+    }
+
+    body.setStyle('padding-bottom', '12px');
+    body.setStyle('box-sizing', 'border-box');
+  }
+
+  let timeoutMensagemMedicacao = null;
+  let timeoutFecharAnimacaoMedicacao = null;
+
+  function mostrarMensagemMedicacao(mensagem, tipo = "danger") {
+    const alerta = document.getElementById("mensagem-medicacao");
+    const texto = document.getElementById("mensagem-medicacao-texto");
+    if (!alerta || !texto) return;
+    alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+    alerta.classList.add("alert-" + tipo);
+
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
+    if (timeoutMensagemMedicacao) clearTimeout(timeoutMensagemMedicacao);
+    if (timeoutFecharAnimacaoMedicacao) { clearTimeout(timeoutFecharAnimacaoMedicacao); timeoutFecharAnimacaoMedicacao = null; }
+    timeoutMensagemMedicacao = setTimeout(() => ocultarMensagemMedicacao(), 10000);
+  }
+
+  function ocultarMensagemMedicacao() {
+    const alerta = document.getElementById("mensagem-medicacao");
+    if (!alerta) return;
+    alerta.classList.remove("is-visible");
+    if (timeoutMensagemMedicacao) { clearTimeout(timeoutMensagemMedicacao); timeoutMensagemMedicacao = null; }
+    if (timeoutFecharAnimacaoMedicacao) clearTimeout(timeoutFecharAnimacaoMedicacao);
+    timeoutFecharAnimacaoMedicacao = setTimeout(() => { alerta.style.display = "none"; timeoutFecharAnimacaoMedicacao = null; }, 350);
+  }
+
+  let timeoutMensagemAtendimento = null;
+  let timeoutFecharAnimacaoAtendimento = null;
+
+  function mostrarMensagemAtendimento(mensagem, tipo = "danger") {
+    const alerta = document.getElementById("mensagem-atendimento");
+    const texto = document.getElementById("mensagem-atendimento-texto");
+    if (!alerta || !texto) return;
+    alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+    alerta.classList.add("alert-" + tipo);
+
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
+    if (timeoutMensagemAtendimento) clearTimeout(timeoutMensagemAtendimento);
+    if (timeoutFecharAnimacaoAtendimento) { clearTimeout(timeoutFecharAnimacaoAtendimento); timeoutFecharAnimacaoAtendimento = null; }
+    timeoutMensagemAtendimento = setTimeout(() => ocultarMensagemAtendimento(), 10000);
+  }
+
+  function ocultarMensagemAtendimento() {
+    const alerta = document.getElementById("mensagem-atendimento");
+    if (!alerta) return;
+    alerta.classList.remove("is-visible");
+    if (timeoutMensagemAtendimento) { clearTimeout(timeoutMensagemAtendimento); timeoutMensagemAtendimento = null; }
+    if (timeoutFecharAnimacaoAtendimento) clearTimeout(timeoutFecharAnimacaoAtendimento);
+    timeoutFecharAnimacaoAtendimento = setTimeout(() => { alerta.style.display = "none"; timeoutFecharAnimacaoAtendimento = null; }, 350);
+  }
+
+  let timeoutMensagemProntuario = null;
+  let timeoutFecharAnimacaoProntuario = null;
+
+  function mostrarMensagemProntuario(mensagem, tipo = "danger") {
+    const alerta = document.getElementById("mensagem-prontuario");
+    const texto = document.getElementById("mensagem-prontuario-texto");
+    if (!alerta || !texto) return;
+    alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+    alerta.classList.add("alert-" + tipo);
+
+    texto.textContent = mensagem;
+    alerta.style.display = "block";
+    alerta.classList.remove("is-visible");
+    void alerta.offsetWidth;
+    alerta.classList.add("is-visible");
+    if (timeoutMensagemProntuario) clearTimeout(timeoutMensagemProntuario);
+    if (timeoutFecharAnimacaoProntuario) { clearTimeout(timeoutFecharAnimacaoProntuario); timeoutFecharAnimacaoProntuario = null; }
+    timeoutMensagemProntuario = setTimeout(() => ocultarMensagemProntuario(), 10000);
+  }
+
+  function ocultarMensagemProntuario() {
+    const alerta = document.getElementById("mensagem-prontuario");
+    if (!alerta) return;
+    alerta.classList.remove("is-visible");
+    if (timeoutMensagemProntuario) { clearTimeout(timeoutMensagemProntuario); timeoutMensagemProntuario = null; }
+    if (timeoutFecharAnimacaoProntuario) clearTimeout(timeoutFecharAnimacaoProntuario);
+    timeoutFecharAnimacaoProntuario = setTimeout(() => { alerta.style.display = "none"; timeoutFecharAnimacaoProntuario = null; }, 350);
+  }
+
+  $(function() {
+    localStorage.setItem("id_ficha_medica", 'null')
+
+    $("#header").load("../header.php");
+    $(".menuu").load("../menu.php");
+
+    var editor = CKEDITOR.replace('despacho', {
+      width: '100%'
+    });
+    editor.on('required', function(e) {
+      mostrarMensagemAtendimento("Por favor, informe a descrição!", "danger");
+      e.cancel();
+    });
+
+    editor.on('instanceReady', function() {
+      ajustarLarguraEditores();
+      ajustarEspacamentoConteudoEditor(editor);
+    });
+
+    $(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function() {
+      ajustarLarguraEditores();
+    });
+
+    $(window).on('resize', function() {
+      ajustarLarguraEditores();
+    });
+
+  });
+</script>
+
+<style type="text/css">
+  .select {
+    position: absolute;
+    width: 235px;
+  }
+
+  .select-table-filter {
+    width: 140px;
+    float: left;
+  }
+
+  .panel-body {
+    margin-bottom: 15px;
+  }
+
+  .table {
+    width: 100%;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+  }
+
+  .table-responsive > .table {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  #div_texto {
+    width: 100%;
+  }
+
+  #div_texto .cke {
+    width: 100% !important;
+    margin-bottom: 15px;
+  }
+
+  #div_texto .cke_contents,
+  #cke_prontuario .cke_contents {
+    min-height: 320px;
+  }
+
+  #cke_prontuario {
+    margin-bottom: 15px;
+  }
+
+  .col-md-3 {
+    width: 10%;
+  }
+
+  .titulo-prontuario {
+    font-weight: bold;
+  }
+
+  .panel-informacoes-gerais {
+    border-width: 1px;
+    border-style: solid;
+    border-color: #428bca;
+  }
+
+  .text-bold {
+    font-weight: bold;
+  }
+
+  .btn-document {
+    margin-right: 10px;
+  }
+
+  .disabled-fix {
+    pointer-events: none;
+    /* Impede o clique */
+    opacity: 0.6;
+    /* Deixa o botão mais escuro */
+    cursor: not-allowed;
+    /* Muda o cursor para indicar que está desativado */
+  }
+
+  .small-text {
+    font-size: small;
+  }
+
+  .celula-observacao {
+    white-space: pre-wrap;
+  }
+
+</style>
+
+
+<!DOCTYPE html>
+<html class="fixed">
+
+<head>
+  <!-- Basic -->
+  <meta charset="UTF-8">
+  <title>Informações paciente</title>
+  <!-- Mobile Metas -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <!-- Web Fonts  -->
+  <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+  <!-- Vendor CSS -->
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
+  <link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+  <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+
+  <link rel="stylesheet" type="text/css" href="../../css/profile-theme.css">
+  </script>
+  <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+  <script src="../../assets/vendor/nanoscroller/nanoscroller.js"></script>
+  <script src="../../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+  <script src="../../assets/vendor/magnific-popup/magnific-popup.js"></script>
+  <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
+  <!-- Skin CSS -->
+  <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
+  <!-- Theme Custom CSS -->
+  <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+  <!-- Head Libs -->
+  <script src="../../assets/vendor/modernizr/modernizr.js"></script>
+  <script src="../../Functions/lista.js"></script>
+  <!-- JavaScript Functions -->
+  <script src="../../Functions/enviar_dados.js"></script>
+  <script src="../../Functions/mascara.js"></script>
+  <script src="../../Functions/validacoes_saude.js"></script>
+  <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+  <script src="script/profile_paciente_script/funcoes/enfermidades_funcoes.js" defer></script>
+  <script>
+    function excluirimg(id) {
+      $("#excluirimg").modal('show');
+      $('input[name="id_documento"]').val(id);
+    }
+
+    function editimg(id, descricao) {
+      $('#teste').val(descricao).prop('selected', true);
+      $('input[name="id_documento"]').val(id);
+      $("#editimg").modal('show');
+    }
+
+    $(function() {
+      // pega no SaudeControle, listarUm //
+      var interno = <?php echo $_SESSION['id_fichamedica']; ?>;
+
+      $.each(interno, function(i, item) {
+        if (i = 1) {
+          $("#formulario").append($("<input type='hidden' name='id_fichamedica' value='" + item.id + "'>"));
+          $("#nome").text("Nome: " + item.nome + ' ' + item.sobrenome);
+          $("#nome").val(item.nome + " " + item.sobrenome);
+
+          if (item.imagem != "" && item.imagem != null) {
+            $("#imagem").attr("src", "data:image/gif;base64," + item.imagem);
+          } else {
+            $("#imagem").attr("src", "../../img/semfoto.png");
+          }
+          if (item.sexo == "m") {
+            $("#sexo").html("Sexo: <i class='fa fa-male'></i>");
+            $("#radioM").prop('checked', true);
+          } else if (item.sexo == "f") {
+            $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
+            $("#radioF").prop('checked', true);
+          }
+
+          $("#nascimento").text("Data de nascimento: " + item.data_nascimento);
+          $("#nascimento").val(item.data_nascimento);
+
+          if (item.tipo_sanguineo == null || item.tipo_sanguineo == "") {
+            $("#adicionartipo").show();
+
+          } else if (item.tipo_sanguineo != null && item.tipo_sanguineo != "") {
+            $("#sangue").text("Sangue: " + item.tipo_sanguineo);
+            $("#sangue").val(item.tipo_sanguineo);
+            $("#exibirtipo").show();
+          }
+        }
+      });
+    });
+
+    // exame //
+    async function gerarExames() {
+      const docfuncional = await listarExamesPorId(<?php echo $_GET["id_fichamedica"]; ?>);
+
+      const depTab = document.getElementById("dep-tab");
+
+      while (depTab.firstChild) {
+        depTab.removeChild(depTab.firstChild);
+      }
+      docfuncional.forEach(item => {
+        const tr = document.createElement("tr");
+
+        // coluna arquivo_nome
+        const tdArquivo = document.createElement("td");
+        tdArquivo.textContent = item.arquivo_nome;
+        tr.appendChild(tdArquivo);
+
+        // coluna descricao
+        const tdDesc = document.createElement("td");
+        tdDesc.textContent = item.descricao;
+        tr.appendChild(tdDesc);
+
+        // coluna data
+        const tdData = document.createElement("td");
+        tdData.textContent = item.data;
+        tr.appendChild(tdData);
+
+        // coluna ações
+        const tdAcoes = document.createElement("td");
+        tdAcoes.style.verticalAlign = "middle";
+        tdAcoes.style.paddingLeft = "8px";
+        tdAcoes.style.paddingRight = "8px";
+        const divAcoes = document.createElement("div");
+        divAcoes.style.display = "flex";
+        divAcoes.style.width = "100%";
+        divAcoes.style.justifyContent = "flex-start";
+        divAcoes.style.alignItems = "center";
+        divAcoes.style.gap = "10px";
+        divAcoes.style.whiteSpace = "nowrap";
+
+        // botão download
+        const linkDownload = document.createElement("a");
+        linkDownload.onclick = (e) => {
+          e.preventDefault();
+          baixarArquivo(item.id_exame);
+        }
+        linkDownload.title = "Visualizar ou Baixar";
+        const btnDownload = document.createElement("button");
+        btnDownload.className = "btn btn-primary";
+        btnDownload.innerHTML = "<i class='fas fa-download'></i>";
+        linkDownload.appendChild(btnDownload);
+
+        // botão excluir
+        const linkExcluir = document.createElement("a");
+        linkExcluir.href = "#";
+        linkExcluir.title = "Excluir";
+        linkExcluir.onclick = function(e) {
+          e.preventDefault();
+          deletar_exame(item.id_exame);
+        };
+        const btnExcluir = document.createElement("button");
+        btnExcluir.className = "btn btn-danger";
+        btnExcluir.innerHTML = "<i class='fas fa-trash-alt'></i>";
+        linkExcluir.appendChild(btnExcluir);
+
+        divAcoes.appendChild(linkDownload);
+        divAcoes.appendChild(linkExcluir);
+        tdAcoes.appendChild(divAcoes);
+        tr.appendChild(tdAcoes);
+
+        depTab.appendChild(tr);
+      });
+    };
+
+    // enfermidade //
+    let alergiasPaciente = <?= $alergias ?>;
+    $(function() {
+      listarAlergias(alergiasPaciente);
+    });
+
+
+
+    function listarAlergias(alergias) {
+      if (typeof alergias === 'string') {
+        try {
+          alergias = JSON.parse(alergias);
+        } catch (error) {
+          alergias = [];
+        }
+      }
+
+      alergiasPaciente = Array.isArray(alergias) ? alergias : [];
+      $("#doc-tab-alergias").empty();
+      $.each(alergiasPaciente, function(i, item) {
+        $("#doc-tab-alergias")
+          .append($("<tr>")
+            .append($("<td>").text(item.descricao))
+            .append($("<td style='display: flex; justify-content: space-evenly;'>")
+              .append($("<a onclick='removerAlergia(" + item.id_enfermidade + ")' href='#' title='Inativar'><button class='btn btn-dark'><i class='glyphicon glyphicon-remove'></i></button></a>"))
+            )
+          )
+      });
+
+      gerar_alergia();
+    }
+
+    //descricao medica 
+    $(function() {
+      var descricao_medica = <?= $descricao_medica ?>;
+      $.each(descricao_medica, function(i, item) {
+        const atendimentoAnulado = Number(item.anulado) === 1;
+        const statusTexto = atendimentoAnulado ?
+          `Anulado${item.data_anulacao ? ' em ' + item.data_anulacao : ''}` :
+          'Ativo';
+        const motivoAnulacao = atendimentoAnulado && item.motivo_anulacao ? item.motivo_anulacao : 'Não informado';
+        const anuladoPor = atendimentoAnulado && item.anulado_por ? item.anulado_por : 'Não informado';
+
+        const tr = $("<tr>");
+        tr.attr("data-status", atendimentoAnulado ? "anulado" : "ativo");
+
+        tr.append($("<td>").text(item.medicoNome));
+        tr.append($("<td>").text(item.enfermeiraNome + ' ' + item.enfermeiraSobrenome));
+        tr.append($("<td>").html(item.descricao));
+        tr.append($("<td>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento));
+        tr.append(
+          $("<td class='coluna-status'>")
+            .text(statusTexto)
+            .attr("title", atendimentoAnulado && item.motivo_anulacao ? ("Motivo: " + item.motivo_anulacao) : "")
+        );
+        tr.append($("<td class='coluna-anulacao hidden coluna-motivo-anulacao'>").text(motivoAnulacao));
+        tr.append($("<td class='coluna-anulacao hidden coluna-anulado-por'>").text(anuladoPor));
+
+        const tdAcao = $("<td class='coluna-acao' style='text-align: center; vertical-align: middle;'>");
+        if (!atendimentoAnulado) {
+          tdAcao.append(
+            $("<a href='#' title='Anular atendimento'>")
+              .on("click", function(e) {
+                e.preventDefault();
+                anularAtendimento(item.id_atendimento);
+              })
+              .append($("<button class='btn btn-warning'>").append($("<i class='glyphicon glyphicon-ban-circle'></i>")))
+          );
+        }
+
+        tr.append(tdAcao);
+        $("#de-tab").append(tr);
+      });
+
+      aplicarFiltroHistoricoAtendimento();
+    });
+
+    function aplicarFiltroHistoricoAtendimento() {
+      const filtro = document.getElementById("filtro-historico-atendimento");
+      const valorFiltro = filtro ? filtro.value : "ativo";
+      const mostrarDetalhesAnulacao = valorFiltro === "anulado";
+      const linhas = document.querySelectorAll("#de-tab tr");
+      const colunasAnulacao = document.querySelectorAll(".coluna-anulacao");
+      const colunasAcao = document.querySelectorAll(".coluna-acao");
+      let totalVisivel = 0;
+
+      colunasAnulacao.forEach(function(coluna) {
+        coluna.classList.toggle("hidden", !mostrarDetalhesAnulacao);
+      });
+      colunasAcao.forEach(function(coluna) {
+        coluna.classList.toggle("hidden", valorFiltro === "anulado");
+      });
+
+      linhas.forEach(function(linha) {
+        const status = linha.getAttribute("data-status");
+        const mostrar = valorFiltro === "todos" || status === valorFiltro;
+        linha.style.display = mostrar ? "" : "none";
+        if (mostrar) {
+          totalVisivel++;
+        }
+      });
+
+      const avisoSemResultados = document.getElementById("historico-sem-resultados");
+      if (avisoSemResultados) {
+        avisoSemResultados.classList.toggle("hidden", totalVisivel > 0);
+      }
+    }
+
+    $(function() {
+      $("#filtro-historico-atendimento").on("change", function() {
+        aplicarFiltroHistoricoAtendimento();
+      });
+    });
+
+    function limitarTextoComContador(campo, contadorId) {
+      campo.value = campo.value.replace(/<|>/g, '');
+
+      if (campo.maxLength > 0 && campo.value.length > campo.maxLength) {
+        campo.value = campo.value.slice(0, campo.maxLength);
+      }
+
+      const contadorElemento = document.getElementById(contadorId);
+      if (contadorElemento) {
+        contadorElemento.textContent = campo.value.length;
+      }
+    }
+
+    function anularAtendimento(idAtendimento) {
+      const id = parseInt(idAtendimento, 10);
+      if (!id || id < 1) {
+        console.error("Não foi possível identificar o atendimento.");
+        return;
+      }
+
+      const inputAtendimento = document.getElementById("id_atendimento_anular");
+      const motivoInput = document.getElementById("motivo_anulacao");
+      const erroMotivo = document.getElementById("erro_motivo_anulacao");
+
+      if (!inputAtendimento || !motivoInput) {
+        console.error("Não foi possível processar a anulação.");
+        return;
+      }
+
+      inputAtendimento.value = String(id);
+      motivoInput.value = "";
+      limitarTextoComContador(motivoInput, "contador-caracteres-motivo-anulacao");
+      if (erroMotivo) {
+        erroMotivo.classList.add("hidden");
+      }
+
+      $("#modal-anular-atendimento").modal("show");
+    }
+
+    function confirmarAnulacaoAtendimento() {
+      const formAnulacao = document.getElementById("form-anular-atendimento");
+      const motivoInput = document.getElementById("motivo_anulacao");
+      const erroMotivo = document.getElementById("erro_motivo_anulacao");
+
+      if (!formAnulacao || !motivoInput) {
+        console.error("Não foi possível processar a anulação.");
+        return;
+      }
+
+      const motivo = motivoInput.value.trim();
+
+      if (!motivo) {
+        if (erroMotivo) {
+          erroMotivo.textContent = "Informe o motivo da anulação.";
+          erroMotivo.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (motivo.length > 255) {
+        if (erroMotivo) {
+          erroMotivo.textContent = "O motivo deve ter no máximo 255 caracteres.";
+          erroMotivo.classList.remove("hidden");
+        }
+        return;
+      }
+
+      if (erroMotivo) {
+        erroMotivo.classList.add("hidden");
+      }
+
+      formAnulacao.submit();
+    }
+
+    $(function() {
+      const motivoInput = document.getElementById("motivo_anulacao");
+      if (motivoInput) {
+        limitarTextoComContador(motivoInput, "contador-caracteres-motivo-anulacao");
+      }
+    });
+
+    $(function() {
+      var exibimed = <?= $exibimed ?>;
+      $("#exibimed").empty();
+      $.each(exibimed, function(i, item) {
+        $("#exibimed")
+          .append($("<tr>")
+            .append($("<td style='text-align: center; vertical-align: middle;'>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + item.horario + ", " + item.duracao + "."))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
+            .append($("<td style='text-align: center; vertical-align: middle;'>")
+              .append($("<a onclick='editarStatusMedico(" + item.id_medicacao + ")' href='#'title='Editar'><button class='btn btn-primary' id='teste'><i class='glyphicon glyphicon-pencil'></i></button></a>"))
+            )
+          )
+      });
+    });
+
+    // listar aplicacao enfermeiro
+    document.addEventListener("DOMContentLoaded", () => {
+      let id_ficha_medica = <?php echo $_GET["id_fichamedica"]; ?>;
+      const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("MedicamentoPacienteControle")}&metodo=${encodeURIComponent("listarMedicamentosAplicadosPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id_ficha_medica)}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(medaplicadas => {
+          const tabela = document.getElementById("exibiaplicacao");
+
+          medaplicadas.forEach(item => {
+            const aplicacaoOrdem = item.aplicacao || "";
+            item.aplicacao = formatarDataBr(item.aplicacao)
+
+            const tr = document.createElement("tr");
+
+            const td1 = document.createElement("td");
+            td1.textContent = item.nomeFuncionario;
+
+            const td2 = document.createElement("td");
+            td2.textContent = item.medicamento;
+
+            const td3 = document.createElement("td");
+            td3.setAttribute("data-order", aplicacaoOrdem);
+            td3.textContent = item.aplicacao;
+
+            tr.append(td1, td2, td3);
+            tabela.appendChild(tr);
+          });
+        })
+        .catch(err => {
+          console.error("Erro ao carregar aplicações:", err);
+        });
+    })
+
+
+    $(function() {
+      // DataTables removido dessas tabelas dinâmicas para evitar conflito
+      // de largura/renderização quando a aba ainda está oculta.
+    });
+
+    function escrevermed() {
+
+      let nome_medicacao = window.prompt("Informe a medicação:");
+      $("#primeira_medicacao").remove();
+      $("#mais_medicacoes").show();
+      $(".meddisabled").val(nome_medicacao);
+    }
+
+    function carregarIntercorrencias() {
+      let id = <?php echo $_GET['id_fichamedica']; ?>;
+      const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("AvisoControle")}&metodo=${encodeURIComponent("listarIntercorrenciaPorIdDaFichaMedica")}&id_fichamedica=${encodeURIComponent(id)}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(intercorrencias => {
+          const tbody = document.getElementById("doc-tab-intercorrencias");
+
+          intercorrencias.forEach(item => {
+            const tr = document.createElement("tr");
+
+            const td1 = document.createElement("td");
+            td1.textContent = item.descricao;
+
+            const td2 = document.createElement("td");
+            td2.textContent = item.data;
+
+            tr.append(td1, td2);
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(err => {
+          console.error("Erro ao carregar aplicações:", err);
+        });
+    }
+  </script>
+  <style type="text/css">
+    .obrig {
+      color: rgb(255, 0, 0);
+    }
+
+    .btn-edicaoProntuario {
+      margin-top: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #mensagem-cadastro-enfermidade,
+    #mensagem-cadastro-exame,
+    #mensagem-medicacao,
+    #mensagem-atendimento,
+    #mensagem-prontuario,
+    #alergiaFormError,
+    #enfermidadeFormError,
+    #medicoFormError,
+    #atendidoDocFormError {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+
+    #alergiaFormError,
+    #enfermidadeFormError,
+    #medicoFormError,
+    #atendidoDocFormError {
+      margin-bottom: 0;
+    }
+
+    #alergiaFormError + .form-group,
+    #enfermidadeFormError + .form-group,
+    #medicoFormError + .form-group,
+    #atendidoDocFormError + .form-group {
+      margin-top: 15px;
+    }
+
+    #mensagem-cadastro-enfermidade.is-visible,
+    #mensagem-cadastro-exame.is-visible,
+    #mensagem-medicacao.is-visible,
+    #mensagem-atendimento.is-visible,
+    #mensagem-prontuario.is-visible,
+    #alergiaFormError.is-visible,
+    #enfermidadeFormError.is-visible,
+    #medicoFormError.is-visible,
+    #atendidoDocFormError.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+
+#modal-anular-atendimento .modal-title {
+      font-weight: 500;
+      color: #fff;
+    }
+
+    #modal-anular-atendimento .modal-header {
+      background-color: #337ab7;
+      border-bottom-color: #2e6da4;
+    }
+
+    #modal-anular-atendimento .modal-header .close,
+    #modal-anular-atendimento .modal-header .close span {
+      color: #fff;
+      opacity: 1;
+      text-shadow: none;
+    }
+
+    #modal-anular-atendimento .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background-color: transparent;
+      filter: brightness(1);
+      transition: background-color 0.18s ease, filter 0.18s ease;
+    }
+
+    #modal-anular-atendimento .modal-header .close:hover,
+    #modal-anular-atendimento .modal-header .close:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      filter: brightness(1.08);
+      outline: none;
+    }
+
+    #modal-anular-atendimento .modal-header .close:hover span,
+    #modal-anular-atendimento .modal-header .close:focus span {
+      filter: brightness(1.08);
+    }
+
+
+    #atendimento_medico .input-group-btn .btn {
+      height: 34px;
+    }
+
+    #cadastro_alergias .input-group-btn .btn {
+      height: 34px;
+    }
+
+    #cadastro_comorbidades .input-group-btn .btn {
+      height: 34px;
+    }
+
+    #tipoExameFormError {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+      margin-bottom: 0;
+    }
+
+    #tipoExameFormError + .form-group {
+      margin-top: 15px;
+    }
+
+    #tipoExameFormError.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+  </style>
+
+</head>
+
+<body>
+  <section class="body">
+    <div id="header"></div>
+    <!-- end: header -->
+    <div class="inner-wrapper">
+      <!-- start: sidebar -->
+      <aside id="sidebar-left" class="sidebar-left menuu"></aside>
+      <!-- end: sidebar -->
+      <section role="main" class="content-body">
+        <header class="page-header">
+          <h2>Informações paciente</h2>
+          <div class="right-wrapper pull-right">
+            <ol class="breadcrumbs">
+              <li>
+                <a href="../index.php">
+                  <i class="fa fa-home"></i>
+                </a>
+              </li>
+              <li><span>Informações paciente</span></li>
+            </ol>
+            <a class="sidebar-right-toggle" data-open="sidebar-right"><i class="fa fa-chevron-left"></i></a>
+          </div>
+        </header>
+        <!-- start: page -->
+        <div class="row">
+          <div class="col-md-4 col-lg-2">
+            <section class="panel">
+              <div class="panel-body">
+                <div class="thumb-info mb-md">
+                  <img id="imagem" alt="John Doe">
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="col-md-8 col-lg-8">
+            <?php
+            if (session_status() === PHP_SESSION_NONE) {
+              session_start();
+            }
+
+            if (isset($_SESSION['msg']) && !empty($_SESSION['msg'])) {
+              $mensagem = $_SESSION['msg'];
+
+              echo "<div class=\"alert alert-success\" role=\"alert\">
+                  $mensagem
+                  <button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">
+                    <span aria-hidden=\"true\">&times;</span>
+                  </button>
+                </div>";
+
+              unset($_SESSION['msg']);
+            } else if (isset($_SESSION['msg_e']) && !empty($_SESSION['msg_e'])) {
+              $mensagem = $_SESSION['msg_e'];
+
+              echo "<div class=\"alert alert-danger\" role=\"alert\">
+                  $mensagem
+                  <button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\">
+                    <span aria-hidden=\"true\">&times;</span>
+                  </button>
+                </div>";
+
+              unset($_SESSION['msg_e']);
+            }
+            ?>
+            <div class="tabs">
+              <ul class="nav nav-tabs tabs-primary">
+                <li class="active">
+                  <a href="#overview" data-toggle="tab">Informações Gerais</a>
+                </li>
+                <li>
+                  <a href="#cadastro_alergias" data-toggle="tab">Alergias</a>
+                </li>
+                <li>
+                  <a href="#cadastro_comorbidades" data-toggle="tab">Comorbidades</a>
+                </li>
+                <li>
+                  <a href="#arquivo" data-toggle="tab">Exames</a>
+                </li>
+                <li>
+                  <a href="#historico_medico" data-toggle="tab">Histórico do Paciente</a>
+                </li>
+                <li>
+                <li>
+                  <a href="#atendimento_medico" data-toggle="tab">Atendimento do Paciente</a>
+                </li>
+                <li>
+                  <a href="#medicacoes_aplicadas" data-toggle="tab">Medicações Aplicadas</a>
+                </li>
+                <li>
+                  <a href="#sinais_vitais" data-toggle="tab">Sinais Vitais</a>
+                </li>
+                <li>
+                  <a href="#intercorrencias" data-toggle="tab">Intercorrências</a>
+                </li>
+              </ul>
+
+              <div class="tab-content">
+
+                <div id="overview" class="tab-pane active">
+
+                  <?php
+                  $pacienteOverview = json_decode($_SESSION['id_fichamedica'], true)[0];
+                  //var_dump($pacienteOverview);exit;
+                  ?>
+                  <!-- Substituir o form abaixo por outra forma de visualização -->
+                  <!--<form class="form-horizontal" method="post" action="../../controle/control.php">
+                    <input type="hidden" name="nomeClasse" value="SaudeControle">-->
+                  <section class="panel panel-primary">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a class="fa fa-caret-down" title="Mostrar/Ocultar"></a>
+                      </div>
+                      <h2 class="panel-title">Informações pessoais</h2>
+                    </header>
+
+                    <div class="panel-body panel-informacoes-gerais">
+
+                      <div class="container">
+                        <div class="row">
+                          <p><span class="text-bold">Nome:</span> <?= htmlspecialchars($pacienteOverview['nome'] . ' ' . $pacienteOverview['sobrenome'], ENT_QUOTES, 'UTF-8') ?></p>
+                        </div>
+                        <div class="row">
+                          <p><span class="text-bold">Sexo:</span>
+                            <?= $pacienteOverview['sexo'] == 'f' ? '<i class="fa fa-female" style="font-size: 15px; color:deeppink;"></i>' : '<i class="fa fa-male" style="font-size: 15px; color:darkblue"></i>';
+                            ?>
+                          </p>
+                        </div>
+                        <div class="row">
+                          <div class="col-md-3" style="padding-left: 0px;">
+                            <p><span class="text-bold">Data de nascimento: </span><?= $util->formatoDataDMY($pacienteOverview['data_nascimento']) ?: 'Não informada' ?></p>
+                          </div>
+                          <div class="col-md-3">
+                            <p><span class="text-bold">Idade:</span>
+                              <?php
+                              $dataNascimentoRaw = $pacienteOverview['data_nascimento'] ?? null;
+                              if (!empty($dataNascimentoRaw) && $dataNascimentoRaw !== '0000-00-00') {
+                                try {
+                                  $dataNascimento = new DateTime($dataNascimentoRaw);
+                                  $hoje = new DateTime();
+                                  $idade = $dataNascimento->diff($hoje)->y;
+                                  echo $idade . ' anos';
+                                } catch (Exception $e) {
+                                  echo 'Não informada';
+                                }
+                              } else {
+                                echo 'Não informada';
+                              }
+                              ?>
+                            </p>
+                          </div>
+                        </div>
+                        <div class="row">
+                          <p><span class="text-bold">Tipo sanguíneo:</span> <?= ($pacienteOverview['tipo_sanguineo']) !== null ? $pacienteOverview['tipo_sanguineo'] : 'Indefinido' ?></p>
+                        </div>
+                        <div class="row">
+                          <p><span class="text-bold">CNS:</span> <?= !empty($pacienteOverview['cns']) ? htmlspecialchars($pacienteOverview['cns'], ENT_QUOTES, 'UTF-8') : 'não informado' ?></p>
+                        </div>
+
+                        <div class="row">
+                          <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="1">RG <i class="fas fa-download"></i></a>
+                          <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="2">CPF <i class="fas fa-download"></i></a>
+                          <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="3">Cartão do SUS <i class="fas fa-download"></i></a>
+                          <a href="#" class="btn btn-primary btn-document disabled-fix" title="Arquivo não disponível" data-doc-tipo="5">Plano de saúde <i class="fas fa-download"></i></a>
+                        </div>
+                      </div>
+
+                    </div>
+                  </section>
+                  <!--</form>-->
+
+                  <?php
+                  $alergiasArray = json_decode($alergias, true);
+                  if (count($alergiasArray) > 0):
+                  ?>
+                    <div id="lista-alergias" class="tab-pane">
+                      <section class="panel panel-primary">
+                        <header class="panel-heading">
+                          <div class="panel-actions">
+                            <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                          </div>
+                          <h2 class="panel-title">Lista de Alergias</h2>
+                        </header>
+
+                        <div class="panel-body panel-informacoes-gerais" style="display: none;">
+
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de alergias -->
+                              <?php
+                              foreach ($alergiasArray as $index => $alergia):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= $alergia['descricao'] ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+
+
+                        </div>
+                    </div>
+                  <?php
+                  endif;
+                  ?>
+
+                  <?php
+                  $enfermidadesArray = json_decode($enfermidades, true);
+                  if (count($enfermidadesArray) > 0):
+                  ?>
+                    <div id="lista-comorbidades" class="tab-pane">
+                      <section class="panel panel-primary">
+                        <header class="panel-heading">
+                          <div class="panel-actions">
+                            <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                          </div>
+                          <h2 class="panel-title">Lista de Comorbidades</h2>
+                        </header>
+
+                        <div class="panel-body panel-informacoes-gerais" style="display: none;">
+
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de Comorbidades-->
+                              <?php
+                              foreach ($enfermidadesArray as $index => $enfermidade):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= $enfermidade['descricao'] ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+                        </div>
+                    </div>
+                  <?php
+                  endif;
+                  ?>
+
+                  <?php
+                  $medicamentosEmUso = [];
+                  $medicamentosPaciente = json_decode($exibimed, true);
+                  foreach ($medicamentosPaciente as $medicamento) {
+                    if ($medicamento['id_status'] == 1) {
+                      $medicamentosEmUso[] = $medicamento;
+                    }
+                  }
+
+                  if (count($medicamentosEmUso) > 0):
+                  ?>
+                    <div id="lista-medicacoes-uso" class="tab-pane">
+                      <section class="panel panel-primary">
+                        <header class="panel-heading">
+                          <div class="panel-actions">
+                            <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                          </div>
+                          <h2 class="panel-title">Lista de Medicações em uso</h2>
+                        </header>
+
+                        <div class="panel-body panel-informacoes-gerais" style="display: none;">
+
+                          <table class="table table-hover">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Descrição</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de Medicamentos-->
+                              <?php
+                              foreach ($medicamentosEmUso as $index => $medicamento):
+                              ?>
+                                <tr>
+                                  <td><?= $index + 1 ?></td>
+                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . $medicamento['horario'] . '|' . $medicamento['duracao']) ?></td>
+                                </tr>
+                              <?php
+                              endforeach;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        </div>
+                    </div>
+                  <?php
+                  endif;
+                  ?>
+
+                  <?php
+                  function pegarSinalVital($sql, $pdo)
+                  {
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->bindValue(':idFichaMedica', $_GET['id_fichamedica']);
+                    $stmt->execute();
+
+                    if ($stmt->rowCount() != 0) {
+                      return  $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    }
+
+                    return false;
+                  }
+
+                  function diaMes($dataCompleta)
+                  {
+                    $dataArray = explode('/', $dataCompleta);
+
+                    return $dataArray[0] . '/' . $dataArray[1];
+                  }
+
+                  $sinaisVitaisArray = [];
+
+                  $sqlSaturacao = "SELECT saturacao, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.saturacao !='' ORDER BY data DESC LIMIT 5";
+
+                  $sqlPressaoArterial = "SELECT pressao_arterial, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.pressao_arterial !='' ORDER BY data DESC LIMIT 5";
+
+                  $sqlFrequenciaCardiaca = "SELECT frequencia_cardiaca, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_cardiaca !='' ORDER BY data DESC LIMIT 5";
+
+                  $sqlFrequenciaRespiratoria = "SELECT frequencia_respiratoria, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.frequencia_respiratoria !='' ORDER BY data DESC LIMIT 5";
+
+                  $sqlTemperatura = "SELECT temperatura, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.temperatura !='' ORDER BY data DESC LIMIT 5";
+
+                  $sqlHgt = "SELECT hgt, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.hgt !='' ORDER BY data DESC LIMIT 5";
+
+                  $sqlObservacao = "SELECT observacao, data FROM `saude_sinais_vitais`  WHERE saude_sinais_vitais.id_fichamedica=:idFichaMedica AND saude_sinais_vitais.observacao !='' ORDER BY data DESC LIMIT 5";
+
+
+                  try {
+                    $sinaisVitaisArray['saturacao'] = pegarSinalVital($sqlSaturacao, $pdo);
+                    $sinaisVitaisArray['pressaoArterial'] = pegarSinalVital($sqlPressaoArterial, $pdo);
+                    $sinaisVitaisArray['frequenciaCardiaca'] = pegarSinalVital($sqlFrequenciaCardiaca, $pdo);
+                    $sinaisVitaisArray['frequenciaRespiratoria'] = pegarSinalVital($sqlFrequenciaRespiratoria, $pdo);
+                    $sinaisVitaisArray['temperatura'] = pegarSinalVital($sqlTemperatura, $pdo);
+                    $sinaisVitaisArray['hgt'] = pegarSinalVital($sqlHgt, $pdo);
+                    $sinaisVitaisArray['observacao'] = pegarSinalVital($sqlObservacao, $pdo);
+                  } catch (PDOException $e) {
+                    http_response_code(500);
+                    echo json_encode(['erro' => 'Erro ao buscar o histórico dos sinais vitais']);
+                    exit();
+                  }
+
+                  if ($sinaisVitaisArray['saturacao'] || $sinaisVitaisArray['pressaoArterial'] || $sinaisVitaisArray['frequenciaCardiaca'] || $sinaisVitaisArray['frequenciaRespiratoria'] || $sinaisVitaisArray['temperatura'] || $sinaisVitaisArray['hgt']):
+                  ?>
+                    <div id="lista-sinais-vitais" class="tab-pane">
+                      <section class="panel panel-primary">
+                        <header class="panel-heading">
+                          <div class="panel-actions">
+                            <a class="fa fa-caret-up" title="Mostrar/Ocultar"></a>
+                          </div>
+                          <h2 class="panel-title">Informações vitais</h2>
+                        </header>
+
+                        <div class="panel-body panel-informacoes-gerais table-responsive" style="display: none;">
+
+                          <table class="table table-hover small-text ">
+                            <thead>
+                              <th>#</th>
+                              <th class="text-center">Saturação</th>
+                              <th class="text-center">Pressão arterial</th>
+                              <th class="text-center">Frequência cardíaca</th>
+                              <th class="text-center">Frequência respiratória</th>
+                              <th class="text-center">Temperatura</th>
+                              <th class="text-center">HGT</th>
+                              <th class="text-center">Observação</th>
+                            </thead>
+
+                            <tbody>
+                              <!--Lista de Sinais Vitais-->
+                              <?php
+                              for ($i = 0; $i < 5; $i++):
+                              ?>
+                                <tr>
+                                  <td><?= $i + 1 ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['saturacao'][$i]['data']) ? $sinaisVitaisArray['saturacao'][$i]['saturacao'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['saturacao'][$i]['data'])) : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['pressaoArterial'][$i]['data']) ? $sinaisVitaisArray['pressaoArterial'][$i]['pressao_arterial'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['pressaoArterial'][$i]['data']))  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']) ? $sinaisVitaisArray['frequenciaCardiaca'][$i]['frequencia_cardiaca'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaCardiaca'][$i]['data']))  : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data']) ? $sinaisVitaisArray['frequenciaRespiratoria'][$i]['frequencia_respiratoria'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['frequenciaRespiratoria'][$i]['data'])) : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['temperatura'][$i]['data']) ? $sinaisVitaisArray['temperatura'][$i]['temperatura'] . ' | ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['temperatura'][$i]['data'])) : 'Sem registro' ?></td>
+                                  <td class="text-center"><?= isset($sinaisVitaisArray['hgt'][$i]['data']) ? $sinaisVitaisArray['hgt'][$i]['hgt'] . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['hgt'][$i]['data'])) : 'Sem registro' ?></td>
+                                  <td class="text-center celula-observacao"><?= isset($sinaisVitaisArray['observacao'][$i]['data']) ? htmlspecialchars($sinaisVitaisArray['observacao'][$i]['observacao']) . ' : ' . diaMes($util->formatoDataDMY($sinaisVitaisArray['observacao'][$i]['data'])) : 'Sem registro' ?></td>
+                                </tr>
+                              <?php
+                              endfor;
+                              ?>
+                            </tbody>
+                          </table>
+
+                        </div>
+                    </div>
+                  <?php
+                  endif;
+                  ?>
+
+                  <form action="../../controle/control.php" method="POST" id="editarProntuario">
+                    <input type="hidden" name="nomeClasse" value="SaudeControle">
+                    <input type="hidden" name="metodo" value="alterarProntuario">
+                    <input type="hidden" name="id_fichamedica" value="<?php echo $_GET['id_fichamedica'] ?>">
+
+                    <label for="textoProntuario" class="titulo-prontuario">Prontuário Público</label>
+                    <div id="mensagem-prontuario" class="alert alert-danger alert-dismissible" role="alert" style="display: none;">
+                      <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemProntuario(); return false;">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                      <span id="mensagem-prontuario-texto"></span>
+                    </div>
+                    <textarea name="textoProntuario" class="form-control" required id="prontuario" cols="30" rows="10">
+                      <?php
+                      $stringConcatenada = '';
+
+                      foreach ($prontuarioPHP as $prontuario) {
+                        $stringConcatenada .= $prontuario['descricao'];
+                      }
+
+                      echo $stringConcatenada;
+                      ?>
+                    </textarea>
+                    <button id="btn-editarProntuario" class="btn btn-primary btn-edicaoProntuario" onclick="event.preventDefault(); editarProntuario();">Editar Prontuário</button>
+                    <button id="btn-cancelarEdicao" class="btn btn-danger btn-edicaoProntuario hidden" onclick="event.preventDefault(); cancelarEdicao()">Cancelar</button>
+                    <button type="submit" id="btn-confirmarEdicao" class="btn btn-success btn-edicaoProntuario hidden">Salvar</button>
+                  </form>
+
+                  <form action="../../controle/control.php" method="POST">
+                    <input type="hidden" name="nomeClasse" value="SaudeControle">
+                    <input type="hidden" name="metodo" value="adicionarProntuarioAoHistorico">
+                    <input type="hidden" name="id_fichamedica" value="<?php echo $_GET['id_fichamedica'] ?>">
+                    <input type="hidden" name="id_paciente" value="<?= $idPaciente ?>">
+
+                    <button id="btn-adicionarAoHistorico" class="btn btn-primary btn-edicaoProntuario">Adicionar versão ao histórico</button>
+
+                    <button id="btn-listarDoHistorico" class="btn btn-primary btn-edicaoProntuario" onclick="event.preventDefault(); listarProntuariosDoHistorico()">Listar prontuários do histórico</button>
+                  </form>
+
+
+                </div>
+
+                <!-- Aba  de  alergias -->
+                <div id="cadastro_alergias" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Alergias</h2>
+                    </header>
+                    <div class="panel-body">
+                      <hr class="dotted short">
+
+                      <div class="form-group" id="exibiralergias">
+                        <table class="table table-bordered table-striped" id="datatable-alergias">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Descrição</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="doc-tab-alergias">
+                          </tbody>
+                        </table>
+                        <br>
+
+                        <form action='alergia_upload.php' method='post' id='funcionarioDoc'>
+                          <div class='col-md-12' id="div_alergia" style="display: none;">
+                            <div class="form-group">
+                              <label class="col-md-3 control-label" for="inputSuccess">Alergias</label>
+                              <div class="col-md-6">
+                                <div class="input-group">
+                                  <select class="form-control" name="id_CID_alergia" id="id_CID_alergia">
+                                    <option selected disabled>Selecionar</option>
+                                  </select>
+                                  <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" onclick="abrirModalAlergia()" title="Adicionar alergia">
+                                      <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                    </button>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="form-group">
+                              <input type="button" onclick="alergia_upload()" class="btn btn-primary" id="salvarAlergia" value="Salvar" style="display: none;">
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+
+                      <div class="modal fade upload-modal" id="alergiaFormModal" tabindex="-1" role="dialog" aria-labelledby="alergiaFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="alergiaFormModalLabel">Adicionar alergia</h4>
+                            </div>
+
+                            <form id="AlergiaForm" action="" method="post">
+                              <div class="modal-body">
+                                <div id="alergiaFormError" class="alert alert-danger alert-dismissible" style="display: none;" role="alert">
+                                  <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalAlergia(); return false;">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <span id="alergiaFormErrorText"></span>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="nomeAlergiaModal">
+                                    Nome da alergia <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="nome_alergia"
+                                    id="nomeAlergiaModal"
+                                    maxlength="120"
+                                    pattern="[A-Za-zÀ-ÿ\s\-'.']+"
+                                    title="apenas letras, espaços e hífens (números não são permitidos)"
+                                    required>
+                                </div>
+                              </div>
+
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">
+                                  <span class="fa fa-plus" aria-hidden="true"></span>
+                                  Cadastrar
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                  </section>
+                </div>
+
+                <!-- Aba  de  comorbidades -->
+                <div id="cadastro_comorbidades" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Cadastro de comorbidades</h2>
+                    </header>
+                    <div class="panel-body">
+                      <div id="mensagem-cadastro-enfermidade" class="alert alert-success alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="if (typeof ocultarMensagemCadastroEnfermidade === 'function') { ocultarMensagemCadastroEnfermidade(); } else { this.parentElement.style.display='none'; } return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="mensagem-cadastro-enfermidade-texto"></span>
+                      </div>
+                      <hr class="dotted short">
+
+                      <div class="form-group">
+                        <div class="row" style="margin-bottom: 15px;">
+                          <div class="col-sm-12 col-md-4">
+                            <label for="filtro-comorbidades">Filtrar comorbidades</label>
+                            <select id="filtro-comorbidades" class="form-control">
+                              <option value="todos">Todas</option>
+                              <option value="ativo" selected>Ativas</option>
+                              <option value="inativo">Inativas</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Comorbidades</th>
+                              <th>Data</th>
+                              <th>Status</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="doc-tab">
+
+                          </tbody>
+                        </table>
+                      </div>
+                      <p id="comorbidades-sem-resultados" class="text-muted hidden" style="margin-top: 10px;">Nenhuma comorbidade encontrada para o filtro selecionado.</p>
+
+                      <br>
+                      <form id='form-enfermidade'>
+                        <div class="form-group">
+                          <div class="col-md-6" style="padding-right: 0;">
+                            <h5 class="obrig">Campos Obrigatórios(*)</h5>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="inputSuccess">Enfermidades<sup class="obrig">*</sup></label>
+                          <div class="col-md-6">
+                            <div class="input-group">
+                              <select class="form-control" name="id_CID" id="id_CID" required>
+                                <option selected disabled>Selecionar</option>
+                                <?php
+                                /*while ($row = $tabelacid_enfermidades->fetch_array(MYSQLI_NUM)) {
+                                  echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[2]) . "</option>";
+                                }*/                            ?>
+                              </select>
+                              <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" onclick="abrirModalEnfermidade()" title="Adicionar comorbidade">
+                                  <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                </button>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="profileCompany">Data do diagnóstico<sup class="obrig">*</sup></label>
+                          <div class="col-md-6">
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_diagnostico" id="data_diagnostico" max=<?php echo date('Y-m-d'); ?> required>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="inputSuccess">Status<sup class="obrig">*</sup></label>
+                          <div class="col-md-6">
+                            <select class="form-control" name="intStatus" id="intStatus" required>
+                              <option value="" selected disabled>Selecionar</option>
+                              <option value="1">Ativo</option>
+                              <option value="0">Inativo</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <div class="col-md-6">
+                            <input type="hidden" id="id_fichamedica_enfermidade" name="id_fichamedica" value=<?php echo $_GET['id_fichamedica'] ?>>
+                            <input type="submit" class="btn btn-primary" value="Cadastrar" id="btn-cadastrar-enfermidade">
+                          </div>
+                        </div>
+                      </form>
+
+                      <div class="modal fade upload-modal" id="enfermidadeFormModal" tabindex="-1" role="dialog" aria-labelledby="enfermidadeFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="enfermidadeFormModalLabel">Adicionar comorbidade</h4>
+                            </div>
+
+                            <form id="EnfermidadeForm" action="" method="post">
+                              <div class="modal-body">
+                                <div id="enfermidadeFormError" class="alert alert-danger alert-dismissible" style="display: none;" role="alert">
+                                  <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalEnfermidade(); return false;">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <span id="enfermidadeFormErrorText"></span>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="nomeEnfermidadeModal">
+                                    Nome da comorbidade <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="nome_enfermidade"
+                                    id="nomeEnfermidadeModal"
+                                    maxlength="120"
+                                    pattern="[A-Za-zÀ-ÿ\s\-'.']+"
+                                    title="apenas letras, espaços e hífens (números não são permitidos)"
+                                    required>
+                                </div>
+
+                                <div class="form-group">
+                                  <label class="control-label" for="cidEnfermidadeModal">
+                                    CID <sup class="obrig">*</sup>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    name="cid_enfermidade"
+                                    id="cidEnfermidadeModal"
+                                    maxlength="10"
+                                    required>
+                                </div>
+                              </div>
+
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">
+                                  <span class="fa fa-plus" aria-hidden="true"></span>
+                                  Cadastrar
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+
+                <!-- Aba de exames -->
+                <div id="arquivo" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Exames</h2>
+                    </header>
+                    <div class="panel-body">
+                      <div id="mensagem-cadastro-exame" class="alert alert-success alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="if (typeof ocultarMensagemCadastroExame === 'function') { ocultarMensagemCadastroExame(); } else { this.parentElement.style.display='none'; } return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="mensagem-cadastro-exame-texto"></span>
+                      </div>
+                      <hr class="dotted short">
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-none">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Arquivo</th>
+                              <th>Tipo exame</th>
+                              <th>Data exame</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="dep-tab" style="font-size:15px;">
+
+                          </tbody>
+                        </table>
+                      </div>
+                      <br>
+                      <?php
+                      $modalUploadConfig = [
+                        'button' => [
+                          'label' => 'Adicionar',
+                          'onclick' => 'gerar_tipo_exame()'
+                        ],
+                        'modal' => [
+                          'id' => 'docFormModal',
+                          'label_id' => 'docFormModalLabel',
+                          'title' => 'Adicionar exame'
+                        ],
+                        'form' => [
+                          'id' => 'ExameDocForm',
+                          'action' => '',
+                          'method' => 'post',
+                          'enctype' => 'multipart/form-data',
+                          'hidden_fields' => [
+                            'id_fichamedica' => [
+                              'value' => (int)$id_fichamedica,
+                              'id' => 'exame_id_fichamedica'
+                            ]
+                          ]
+                        ],
+                        'select' => [
+                          'id' => 'tipoDocumentoExame',
+                          'name' => 'id_docfuncional',
+                          'label' => 'Tipo de exame',
+                          'placeholder' => 'Selecionar',
+                          'options' => $tipoexame,
+                          'value_key' => 'id_exame_tipo',
+                          'label_key' => 'descricao',
+                          'add_button_onclick' => 'adicionar_tipo_exame()',
+                          'add_button_title' => 'Adicionar tipo de exame'
+                        ],
+                        'file' => [
+                          'id' => 'documentoExame',
+                          'name' => 'arquivo',
+                          'label' => 'Arquivo',
+                          'accept' => '.png,.jpeg,.jpg,.pdf,.docx,.doc,.odp',
+                          'help' => 'PNG, JPG, PDF, DOC, DOCX, ODP.'
+                        ]
+                      ];
+                      require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
+                      unset($modalUploadConfig);
+                      ?>
+
+                      <div class="modal fade upload-modal" id="tipoExameFormModal" tabindex="-1" role="dialog" aria-labelledby="tipoExameFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="tipoExameFormModalLabel">Adicionar tipo de exame</h4>
+                            </div>
+                            <div class="modal-body">
+                              <div id="tipoExameFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
+                                <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalTipoExame(); return false;">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                                <span id="tipoExameFormErrorText"></span>
+                              </div>
+                              <div class="form-group">
+                                <label class="control-label" for="novoTipoExameInput">
+                                  Descrição <sup class="obrig">*</sup>
+                                </label>
+                                <input type="text" class="form-control" id="novoTipoExameInput" placeholder="Nome do tipo de exame" maxlength="100" />
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                              <button type="button" class="btn btn-primary" onclick="confirmarAdicionarTipoExame()">Salvar</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="modal fade upload-modal" id="modalConfirmarRemoverExame" tabindex="-1" role="dialog" aria-labelledby="modalRemoverExameLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <h4 class="modal-title" id="modalRemoverExameLabel">Remover exame</h4>
+                            </div>
+                            <div class="modal-body">
+                              <p>Tem certeza que deseja remover esse exame?</p>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                              <button type="button" class="btn btn-danger" onclick="confirmarRemoverExame()">Remover</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <br />
+                  </section>
+                </div>
+
+                <!-- aba de atendimento médico -->
+                <div id="historico_medico" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Histórico do Paciente</h2>
+                    </header>
+
+                    <div class="panel-body">
+                      <hr class="dotted short">
+                      <div class="form-group">
+                        <div class="row" style="margin-bottom: 15px;">
+                          <div class="col-sm-12 col-md-4">
+                            <label for="filtro-historico-atendimento">Filtrar histórico</label>
+                            <select id="filtro-historico-atendimento" class="form-control">
+                              <option value="todos">Todos</option>
+                              <option value="ativo" selected>Ativos</option>
+                              <option value="anulado">Anulados</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div class="table-responsive" style="overflow-x: auto;">
+                          <table class="table table-bordered table-striped mb-none">
+                            <thead>
+                              <tr style="font-size:15px;">
+                                <th>Médico</th>
+                                <th>Registro</th>
+                                <th>Descrições</th>
+                                <th>Data do atendimento</th>
+                                <th>Status</th>
+                                <th class="coluna-anulacao hidden">Motivo</th>
+                                <th class="coluna-anulacao hidden">Anulador</th>
+                                <th class="coluna-acao">Ação</th>
+                              </tr>
+                            </thead>
+                            <tbody id="de-tab" style="font-size:15px">
+
+                            </tbody>
+                          </table>
+                        </div>
+                        <p id="historico-sem-resultados" class="text-muted hidden" style="margin-top: 10px;">Nenhum atendimento encontrado para o filtro selecionado.</p>
+                        <div class="modal fade" id="modal-anular-atendimento" tabindex="-1" role="dialog" aria-labelledby="modalAnularAtendimentoLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                                <h4 class="modal-title" id="modalAnularAtendimentoLabel">Anular atendimento</h4>
+                              </div>
+                              <form method="post" action="anular_atendimento.php" id="form-anular-atendimento">
+                                <div class="modal-body">
+                                  <p>Essa ação não exclui o registro e ficará marcada como anulada.</p>
+                                  <div class="form-group">
+                                    <label for="motivo_anulacao">Motivo da anulação <sup class="obrig">*</sup></label>
+                                    <textarea class="form-control" id="motivo_anulacao" name="motivo_anulacao" rows="4" maxlength="255" oninput="limitarTextoComContador(this, 'contador-caracteres-motivo-anulacao')" required></textarea>
+                                    <div style="margin-top: 8px; text-align: right;">
+                                      <small class="text-muted"><span id="contador-caracteres-motivo-anulacao">0</span> / 255</small>
+                                    </div>
+                                    <p id="erro_motivo_anulacao" class="text-danger hidden" style="margin-top: 8px;"></p>
+                                  </div>
+                                  <input type="hidden" name="id_fichamedica" value="<?php echo (int)$id_fichamedica; ?>">
+                                  <input type="hidden" name="id_atendimento" id="id_atendimento_anular" value="">
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                  <button type="button" class="btn btn-warning" onclick="confirmarAnulacaoAtendimento()">Confirmar anulação</button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <hr class="dotted short">
+                        <div class="table-responsive">
+                          <table class="table table-bordered table-striped mb-none">
+                            <thead>
+                              <tr style="font-size:15px;">
+                                <th>Data do atendimento</th>
+                                <th>Medicações</th>
+                                <th>Status</th>
+                                <th>Ação</th>
+                              </tr>
+                            </thead>
+                            <tbody id="exibimed" style="font-size:15px">
+
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      <div class="modal fade" id="testemed" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+
+                            <div class="modal-header" style="display: flex;justify-content: space-between;">
+                              <h5 class="modal-title" id="exampleModalLabel">Alterar Status</h5>
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                            </div>
+
+                            <form action='status_update.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                              <div class="modal-body" style="padding: 15px 40px">
+                                <div class="form-group" style="display: grid;">
+
+
+                                  <label class="my-1 mr-2" for="tipoDocumento">Status</label><br>
+                                  <div style="display: flex;">
+                                    <input type="hidden" name="id_fichamedica" id="id_fichamedica" value="<?php echo $_GET['id_fichamedica']; ?>" />
+                                    <select class="form-control input-lg mb-md" name="id_status" id="id_status" style="width:170px;" required>
+                                      <option selected disabled>Selecionar</option>
+                                      <?php
+                                      while ($row = $medstatus->fetch_array(MYSQLI_NUM)) {
+                                        echo "<option value=" . $row[0] . ">" . $row[1] . "</option>";
+                                      }
+                                      ?>
+                                    </select>
+                                  </div>
+                                </div>
+
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                <input type="hidden" class="statusDoenca" name="id_medicacao">
+                                <input type="submit" value="Enviar" class="btn btn-primary">
+                              </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </section>
+                </div>
+
+                <!-- aba de cadastro médico -->
+                <div id="atendimento_medico" class="tab-pane">
+                  <section class="panel" id="medicacao">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+
+                      <h2 class="panel-title">Atendimento do paciente</h2>
+                    </header>
+                    <div class="panel-body">
+                      <div class="form-group" id="escondermedicacao">
+
+                        <form action='../../controle/control.php' method='post' enctype='multipart/form-data' id='form-atendimento-paciente'>
+                          <input type="hidden" name="nomeClasse" value="AtendimentoPacienteControle">
+                          <input type="hidden" name="metodo" value="cadastrarAtendimentoPaciente">
+                          <hr class="dotted short">
+                          <div class="form-group">
+                            <div class="col-md-6">
+                              <h5 class="obrig">Campos Obrigatórios(*)</h5>
+                            </div>
+                          </div>
+
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="profileCompany" id="data_atendimento">Data do atendimento:<sup class="obrig">*</sup></label>
+                            <div class="col-md-6">
+                              <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_atendimento" id="data_atendimento" max=<?php echo date('Y-m-d');?> min=<?= htmlspecialchars($data_nasc_atendido) ?> required>
+                            </div>
+
+                          </div>
+
+
+                          <!-- listar o funcionario, pessoa nome onde cargo = 3 -->
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="inputSuccess">Usuário:</label>
+                            <div class="col-md-6">
+                              <input class="form-control" name="usuario" id="usuario" value="<?php echo $funcionarioNome; ?>" disabled="true">
+                            </div>
+                          </div>
+
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="medicos">Médico:<sup class="obrig">*</sup></label>
+                            <div class="col-md-6">
+                              <div class="input-group">
+                                <select class="form-control" name="medicos" id="medicos" required>
+                                  <option value="" selected disabled>Selecionar</option>
+                                </select>
+                                <span class="input-group-btn">
+                                  <button type="button" class="btn btn-default" onclick="abrirModalMedico()" title="Adicionar médico">
+                                    <i class="fa fa-plus text-primary" aria-hidden="true"></i>
+                                  </button>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="form-group">
+                            <label class="col-md-3 control-label" for="profileCompany" for="texto">Descrição:<sup class="obrig">*</sup></label>
+                            <div class='col-md-6' id='div_texto'>
+                              <textarea cols='30' rows='3' id='despacho' name='texto' class='form-control' value="teste" placeholder="teste" required></textarea>
+                            </div>
+                          </div>
+
+                          <br>
+
+                          <div class="form-group" id="primeira_medicacao">
+                            <label class="col-md-3 control-label" for="inputSuccess">Medicamento:<sup class="obrig">*</sup></label>
+                            <div class="col-md-8">
+                              <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao">
+                            </div>
+
+                          </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Dosagem:<sup class="obrig">*</sup></label>
+                        <div class="col-md-8">
+                          <input type="text" class="form-control" name="dosagem" id="dosagem">
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Horário:<sup class="obrig">*</sup></label>
+                        <div class="col-md-8">
+                          <input type="time" class="form-control" name="horario_medicacao" id="horario_medicacao">
+                        </div>
+                      </div>
+
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="profileCompany">Duração:<sup class="obrig">*</sup></label>
+                        <div class="col-md-8">
+                          <input type="text" class="form-control" name="duracao_medicacao" id="duracao_medicacao">
+                        </div>
+                      </div>
+
+                      <br>
+                      <div id="mensagem-medicacao" class="alert alert-danger alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemMedicacao(); return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="mensagem-medicacao-texto"></span>
+                      </div>
+                      <br>
+                      <button type="button" class="btn btn-success" id="botao">Cadastrar medicação</button>
+
+                      <br>
+                      <hr class="dotted short">
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-none" id="tabmed">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Medicação</th>
+                              <th>Dosagem</th>
+                              <th>Horário</th>
+                              <th>Duração</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody style="font-size:15px">
+
+                          </tbody>
+                        </table>
+                      </div>
+                      <br>
+                      <br>
+                      <input type="number" name="id_fichamedica" value="<?= $_GET['id_fichamedica']; ?>" style='display: none;'>
+                      <input type="hidden" name="acervo">
+                      <div id="mensagem-atendimento" class="alert alert-danger alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemAtendimento(); return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="mensagem-atendimento-texto"></span>
+                      </div>
+                      <input type="submit" class="btn btn-primary" value="Cadastrar atendimento" id="salvar_bd">
+                    </div>
+                    </form>
+                  </section>
+
+                  <div class="modal fade upload-modal" id="medicoFormModal" tabindex="-1" role="dialog" aria-labelledby="medicoFormModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                          <h4 class="modal-title" id="medicoFormModalLabel">Adicionar médico</h4>
+                        </div>
+
+                        <form id="MedicoForm" action="" method="post">
+                          <div class="modal-body">
+                            <div id="medicoFormError" class="alert alert-danger alert-dismissible" style="display: none;" role="alert">
+                              <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalMedico(); return false;">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                              <span id="medicoFormErrorText"></span>
+                            </div>
+
+                            <div class="form-group">
+                              <label class="control-label" for="nomeMedicoModal">
+                                Nome do médico <sup class="obrig">*</sup>
+                              </label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                name="nome_medico"
+                                id="nomeMedicoModal"
+                                maxlength="120"
+                                pattern="[A-Za-zÀ-ÿ\s\-'.']+"
+                                title="apenas letras, espaços e hífens (números não são permitidos)"
+                                required>
+                            </div>
+
+                            <div class="form-group">
+                              <label class="control-label" for="crmMedicoModal">
+                                CRM <sup class="obrig">*</sup>
+                              </label>
+                              <input
+                                type="text"
+                                class="form-control"
+                                name="crm_medico"
+                                id="crmMedicoModal"
+                                maxlength="30"
+                                required>
+                            </div>
+                          </div>
+
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">
+                              <span class="fa fa-plus" aria-hidden="true"></span>
+                              Cadastrar
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Aba de medicações aplicadas -->
+                <div id="medicacoes_aplicadas" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Medicações aplicadas</h2>
+                    </header>
+
+                    <div class="panel-body">
+                      <hr class="dotted short">
+
+                      <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-none" id="enf">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Responsável pela aplicação</th>
+                              <th>Medicações aplicadas</th>
+                              <th>Horário da aplicação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="exibiaplicacao" style="font-size:15px">
+
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <br>
+                      <br>
+
+                      <input type="hidden" name="a_enf">
+                  </section>
+                </div>
+                <div id="intercorrencias" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Intercorrências</h2>
+                    </header>
+                    <div class="panel-body">
+                      <hr class="dotted short">
+
+                      <div class="form-group" id="exibirintercorrencias">
+                        <table class="table table-bordered table-striped" id="datatable-intercorrencias">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Descrição</th>
+                              <th>Data</th>
+                            </tr>
+                          </thead>
+                          <tbody id="doc-tab-intercorrencias">
+                          </tbody>
+                        </table>
+                      </div>
+                  </section>
+                </div>
+
+                <!-- Aba de medicações aplicadas -->
+                <div id="sinais_vitais" class="tab-pane">
+                  <header class="panel-heading">
+                    <div class="panel-actions">
+                      <a href="#" class="fa fa-caret-down"></a>
+                    </div>
+                    <h2 class="panel-title">Sinais Vitais Aferidos</h2>
+                  </header>
+
+                  <div class="panel-body">
+                    <hr class="dotted short">
+
+                    <table class="table table-bordered table-striped mb-none" id="tab-sin-vit">
+                      <thead>
+                        <tr style="font-size:15px;">
+                          <th>Data</th>
+                          <th>Aferidor</th>
+                          <th>Saturação</th>
+                          <th>Pressão arterial</th>
+                          <th>Frequência cardíaca</th>
+                          <th>Frequência repiratória</th>
+                          <th>Temperatura</th>
+                          <th>HGT</th>
+                          <th>Observação</th>
+                        </tr>
+                      </thead>
+                      <tbody id="exibe-sinais-vitais" style="font-size:15px">
+
+                      </tbody>
+                    </table>
+
+                    <br>
+                    <br>
+
+                    <input type="hidden" name="a_enf">
+                  </div>
+
+                  <aside id="sidebar-right" class="sidebar-right">
+                    <div class="nano">
+                      <div class="nano-content">
+                        <a href="#" class="mobile-close visible-xs">
+                          Collapse <i class="fa fa-chevron-right"></i>
+                        </a>
+                        <div class="sidebar-right-wrapper">
+                          <div class="sidebar-widget widget-calendar">
+                            <h6>Upcoming Tasks</h6>
+                            <div data-plugin-datepicker data-plugin-skin="dark"></div>
+                            <ul>
+                              <li>
+                                <time datetime="2014-04-19T00:00+00:00">04/19/2014</time>
+                                <span>Company Meeting</span>
+                              </li>
+                            </ul>
+                          </div>
+                          <div class="sidebar-widget widget-friends">
+                            <h6>Friends</h6>
+                            <ul>
+                              <li class="status-online">
+                                <figure class="profile-picture">
+                                  <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
+                                </figure>
+                                <div class="profile-info">
+                                  <span class="name">Joseph Doe Junior</span>
+                                  <span class="title">Hey, how are you?</span>
+                                </div>
+                              </li>
+                              <li class="status-online">
+                                <figure class="profile-picture">
+                                  <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
+                                </figure>
+                                <div class="profile-info">
+                                  <span class="name">Joseph Doe Junior</span>
+                                  <span class="title">Hey, how are you?</span>
+                                </div>
+                              </li>
+                              <li class="status-offline">
+                                <figure class="profile-picture">
+                                  <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
+                                </figure>
+                                <div class="profile-info">
+                                  <span class="name">Joseph Doe Junior</span>
+                                  <span class="title">Hey, how are you?</span>
+                                </div>
+                              </li>
+                              <li class="status-offline">
+                                <figure class="profile-picture">
+                                  <img src="../../img/semfoto.png" alt="Joseph Doe" class="img-circle">
+                                </figure>
+                                <div class="profile-info">
+                                  <span class="name">Joseph Doe Junior</span>
+                                  <span class="title">Hey, how are you?</span>
+                                </div>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </aside>
+      </section>
+      <!-- Vendor -->
+      <script src="../../assets/vendor/select2/select2.js"></script>
+      <script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+      <script src="../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+      <script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+      <!-- Theme Custom -->
+      <script src="../../assets/javascripts/theme.custom.js"></script>
+      <!-- Theme Initialization Files -->
+      <!-- Examples -->
+      <script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
+      <script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+      <script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+      <div class="modal fade" id="excluirimg" role="dialog">
+        <div class="modal-dialog">
+          <!-- Modal content-->
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">×</button>
+              <h3>Excluir um Documento</h3>
+            </div>
+            <div class="modal-body">
+              <p> Tem certeza que deseja excluir a imagem desse documento? Essa ação não poderá ser desfeita! </p>
+              <form action="../../controle/control.php" method="GET">
+                <input type="hidden" name="id_documento" id="excluirdoc">
+                <input type="hidden" name="nomeClasse" value="DocumentoControle">
+                <input type="hidden" name="metodo" value="excluir">
+                <input type="hidden" name="id" value="">
+                <input type="submit" value="Confirmar" class="btn btn-success">
+                <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <iv class="modal fade" id="editimg" role="dialog">
+        <div class="modal-dialog">
+          <!-- Modal content-->
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">×</button>
+              <h3>Alterar um Documento</h3>
+            </div>
+            <div class="modal-body">
+              <p> Selecione o benefício referente a nova imagem</p>
+              <form action="../../controle/control.php" method="POST" enctype="multipart/form-data">
+                <select name="descricao" id="teste">
+                  <option value="Certidão de Nascimento">Certidão de Nascimento</option>
+                  <option value="Certidão de Casamento">Certidão de Casamento</option>
+                  <option value="Curatela">Curatela</option>
+                  <option value="INSS">INSS</option>
+                  <option value="LOAS">LOAS</option>
+                  <option value="FUNRURAL">FUNRURAL</option>
+                  <option value="Título de Eleitor">Título de Eleitor</option>
+                  <option value="CTPS">CTPS</option>
+                  <option value="SAF">SAF</option>
+                  <option value="SUS">SUS</option>
+                  <option value="BPC">BPC</option>
+                  <option value="CPF">CPF</option>
+                  <option value="Registro Geral">RG</option>
+                </select><br />
+
+                <p> Selecione a nova imagem</p>
+                <div class="col-md-12">
+                  <input type="file" name="doc" size="60" class="form-control">
+                </div><br />
+                <input type="hidden" name="id_documento" id="id_documento">
+                <input type="hidden" name="id" value="">
+                <input type="hidden" name="nomeClasse" value="DocumentoControle">
+                <input type="hidden" name="metodo" value="alterar">
+                <input type="submit" value="Confirmar" class="btn btn-success">
+                <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+              </form>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <script defer>
+      function removerAlergia(id_enfermidade) {
+        if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
+          return false;
+        }
+        let url = "alergia_excluir.php?id_enfermidade=" + id_enfermidade + "&id_fichamedica=<?= $_GET['id_fichamedica'] ?>";
+        let data = "";
+        $.post(url, data, function(response) {
+          listarAlergias(response);
+        }, 'json');
+      }
+
+      function editarStatusMedico(id_medicacao) {
+        $("#testemed").modal('show');
+
+        $(".statusDoenca").val(id_medicacao);
+      }
+
+
+      //Adicionar alergias
+      $(document).ready(function() {
+        $("#exibiralergias").append("<div class='col-md-6'><input type='button' class='btn btn-success' value='Adicionar alergia' id='addAlergia'></div>");
+        $("#addAlergia").on('click', function() {
+          $("#addAlergia").hide();
+          $("#div_alergia").css("display", "block");
+          $("#salvarAlergia").css("display", "block");
+          gerar_alergia();
+        })
+      });
+
+      async function gerar_tipo_exame() {
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("listarTodosTiposDeExame")}`;
+
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error('Erro na requisição');
+          }
+
+          const situacoes = await response.json();
+
+          const select = document.getElementById('tipoDocumentoExame');
+
+          while (select.firstChild) {
+            select.removeChild(select.firstChild);
+          }
+
+          const defaultOption = document.createElement('option');
+          defaultOption.value = "";
+          defaultOption.disabled = true;
+          defaultOption.selected = true;
+          defaultOption.appendChild(document.createTextNode('Selecionar'));
+          select.appendChild(defaultOption);
+
+          situacoes.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id_exame_tipo;
+            option.appendChild(document.createTextNode(item.descricao));
+            select.appendChild(option);
+          });
+
+        } catch (error) {
+          console.error('Erro ao carregar exames:', error);
+        }
+      }
+
+      function adicionar_tipo_exame() {
+        const input = document.getElementById('novoTipoExameInput');
+        if (input) input.value = '';
+        limparErroModalTipoExame();
+        $('#tipoExameFormModal').modal('show');
+      }
+
+      async function confirmarAdicionarTipoExame() {
+        const input = document.getElementById('novoTipoExameInput');
+        const exame = input ? input.value.trim() : '';
+
+        if (!exame) {
+          exibirErroModalTipoExame('O nome do tipo de exame é obrigatório.');
+          return;
+        }
+
+        const validacaoTipoExame = SaudeValidator.validarNome(exame);
+        if (!validacaoTipoExame.valido) {
+          exibirErroModalTipoExame('Tipo de exame inválido: ' + validacaoTipoExame.mensagem);
+          return;
+        }
+
+        try {
+          const response = await fetch('../../controle/control.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ exame, nomeClasse: 'ExameControle', metodo: 'inserirTipoExame' })
+          });
+          if (!response.ok) throw new Error('Erro na requisição');
+          await response.json();
+          $('#tipoExameFormModal').modal('hide');
+          gerar_tipo_exame();
+        } catch (error) {
+          exibirErroModalTipoExame('Não foi possível salvar o tipo de exame. Tente novamente.');
+          console.error('Erro ao enviar dados:', error);
+        }
+      }
+
+      let timeoutMensagemCadastroExame = null;
+      let timeoutFecharAnimacaoExame = null;
+
+      function mostrarMensagemCadastroExame(mensagem, tipo = "success") {
+        const alerta = document.getElementById("mensagem-cadastro-exame");
+        const texto = document.getElementById("mensagem-cadastro-exame-texto");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+        alerta.classList.add("alert-" + tipo);
+    
+        texto.textContent = mensagem;
+        alerta.style.display = "block";
+        alerta.classList.remove("is-visible");
+        void alerta.offsetWidth;
+        alerta.classList.add("is-visible");
+
+        if (timeoutMensagemCadastroExame) {
+          clearTimeout(timeoutMensagemCadastroExame);
+        }
+
+        if (timeoutFecharAnimacaoExame) {
+          clearTimeout(timeoutFecharAnimacaoExame);
+          timeoutFecharAnimacaoExame = null;
+        }
+
+        timeoutMensagemCadastroExame = setTimeout(() => {
+          ocultarMensagemCadastroExame();
+        }, 10000);
+      }
+
+      function ocultarMensagemCadastroExame() {
+        const alerta = document.getElementById("mensagem-cadastro-exame");
+
+        if (!alerta) {
+          return;
+        }
+
+        alerta.classList.remove("is-visible");
+
+        if (timeoutMensagemCadastroExame) {
+          clearTimeout(timeoutMensagemCadastroExame);
+          timeoutMensagemCadastroExame = null;
+        }
+
+        if (timeoutFecharAnimacaoExame) {
+          clearTimeout(timeoutFecharAnimacaoExame);
+        }
+
+        timeoutFecharAnimacaoExame = setTimeout(() => {
+          alerta.style.display = "none";
+          timeoutFecharAnimacaoExame = null;
+        }, 350);
+      }
+
+      function fecharModalExameEMostrarMensagem(mensagem, tipo = "success") {
+        const modalExame = $('#docFormModal');
+
+        if (!modalExame.length) {
+          mostrarMensagemCadastroExame(mensagem, tipo);
+          return;
+        }
+
+        if (modalExame.hasClass('in')) {
+          mostrarMensagemCadastroExame(mensagem, tipo);
+          modalExame.modal('hide');
+        } else {
+          mostrarMensagemCadastroExame(mensagem, tipo);
+        }
+      }
+
+      async function adicionar_exame() {
+        const formData = new FormData();
+        const documentos = document.getElementById("documentoExame");
+        const idFichaMedica = document.getElementById("exame_id_fichamedica");
+        const tipoDocumento = document.getElementById("tipoDocumentoExame");
+
+        if (!tipoDocumento || !tipoDocumento.value) {
+          exibirErroModalDocumento("É necessário escolher um tipo de exame.");
+          return;
+        }
+
+        if (!documentos.files[0]) {
+          exibirErroModalDocumento("É necessário inserir um documento.");
+          return;
+        }
+
+        ocultarMensagemCadastroExame();
+
+        formData.append("arquivo", documentos.files[0]);
+        formData.append("tipoDocumento", tipoDocumento.value);
+        formData.append("id_fichamedica", idFichaMedica.value);
+        formData.append("nomeClasse", "ExameControle");
+        formData.append("metodo", "inserirExame");
+
+        try {
+          const requisicao = await fetch("../../controle/control.php", {
+            method: "POST",
+            body: formData
+          });
+
+          if (!requisicao.ok) {
+            throw new Error("Erro na requisição");
+          }
+
+          documentos.value = '';
+          tipoDocumento.value = "";
+          fecharModalExameEMostrarMensagem("Exame adicionado com sucesso!");
+          gerarExames();
+        } catch (e) {
+          fecharModalExameEMostrarMensagem("Erro ao adicionar exame.", "danger");
+        }
+      }
+
+      async function listarExamesPorId(id) {
+        const url = `../../controle/control.php?id_fichamedica=${id}&nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("listarExamesPorId")}`;
+
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            throw new Error('Erro na requisição');
+          }
+
+          const dados = await response.json();
+
+          return dados;
+
+        } catch (error) {
+          console.error('Erro ao carregar exames:', error);
+        }
+      }
+
+      let _idExamePendente = null;
+
+      function deletar_exame(id) {
+        _idExamePendente = id;
+        $('#modalConfirmarRemoverExame').modal('show');
+      }
+
+      async function confirmarRemoverExame() {
+        const id = _idExamePendente;
+        _idExamePendente = null;
+        $('#modalConfirmarRemoverExame').modal('hide');
+
+        let url = `../../controle/control.php?id_exame=${id}&metodo=${encodeURIComponent("removerExame")}&nomeClasse=${encodeURIComponent("ExameControle")}`;
+
+        let options = {
+          method: "GET" //usei GET pois aparentemente o delete ta desabilitado
+        }
+        try {
+          let response = await fetch(url, options);
+          if (response.ok) {
+            mostrarMensagemCadastroExame("Exame deletado com sucesso", "success");
+          } else {
+            throw new Error("Erro HTTP: " + response.status);
+          }
+        } catch (e) {
+          mostrarMensagemCadastroExame("Erro ao deletar exame", "danger");
+        } finally {
+          gerarExames();
+        }
+      }
+      async function baixarArquivo(id) {
+        try {
+          const response = await fetch(`../../controle/control.php?nomeClasse=${encodeURIComponent("ExameControle")}&metodo=${encodeURIComponent("retornaArquivoPorId")}&id_exame=${id}`);
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "exame_" + id;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          }
+        } catch (e) {
+          mostrarMensagemCadastroExame("Erro ao Baixar arquivo", "danger");
+        }
+      }
+
+      const formExames = document.getElementById("ExameDocForm");
+
+      formExames.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        adicionar_exame();
+      })
+
+      const formMedico = document.getElementById("MedicoForm");
+
+      if (formMedico) {
+        formMedico.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          await adicionar_medico();
+        });
+      }
+
+      async function gerarMedicos(idSelecionado = null) {
+        medicos = await listarTodosOsMedicos()
+        let length = medicos.length - 1;
+        let select = document.getElementById("medicos");
+        let possuiSemMedicoDefinido = false;
+        while (select.firstChild) {
+          select.removeChild(select.firstChild)
+        }
+        let selecionar = document.createElement("option");
+        selecionar.value = "";
+        selecionar.textContent = "Selecionar"
+        selecionar.selected = true;
+        selecionar.disabled = true;
+        select.appendChild(selecionar)
+        for (let i = 0; i <= length; i = i + 1) {
+          if (Number(medicos[i].id_medico) === 0) {
+            possuiSemMedicoDefinido = true;
+          }
+          let option = document.createElement("option");
+          option.value = medicos[i].id_medico;
+          option.textContent = medicos[i].nome;
+          select.appendChild(option);
+        }
+
+        if (!possuiSemMedicoDefinido) {
+          let optionSemMedico = document.createElement("option");
+          optionSemMedico.value = "0";
+          optionSemMedico.textContent = "Sem médico definido";
+          select.appendChild(optionSemMedico);
+        }
+
+        if (idSelecionado !== null && idSelecionado !== undefined && idSelecionado !== "") {
+          select.value = String(idSelecionado);
+        }
+      }
+
+      function abrirModalMedico() {
+        const form = document.getElementById("MedicoForm");
+        if (form) {
+          form.reset();
+        }
+
+        limparErroModalMedico();
+        $("#medicoFormModal").one("shown.bs.modal", () => {
+          const nomeMedicoInput = document.getElementById("nomeMedicoModal");
+          if (nomeMedicoInput) {
+            nomeMedicoInput.focus();
+          }
+        });
+        $("#medicoFormModal").modal("show");
+      }
+
+      let timeoutMensagemErroMedico = null;
+      let timeoutFecharAnimacaoErroMedico = null;
+
+      function exibirErroModalMedico(mensagem) {
+        const alerta = document.getElementById("medicoFormError");
+        const texto = document.getElementById("medicoFormErrorText");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        texto.textContent = mensagem;
+        alerta.style.display = "block";
+        alerta.classList.remove("is-visible");
+        void alerta.offsetWidth;
+        alerta.classList.add("is-visible");
+
+        if (timeoutMensagemErroMedico) {
+          clearTimeout(timeoutMensagemErroMedico);
+        }
+
+        if (timeoutFecharAnimacaoErroMedico) {
+          clearTimeout(timeoutFecharAnimacaoErroMedico);
+          timeoutFecharAnimacaoErroMedico = null;
+        }
+
+        timeoutMensagemErroMedico = setTimeout(() => {
+          limparErroModalMedico();
+        }, 10000);
+      }
+
+      function limparErroModalMedico() {
+        const alerta = document.getElementById("medicoFormError");
+        const texto = document.getElementById("medicoFormErrorText");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        alerta.classList.remove("is-visible");
+
+        if (timeoutMensagemErroMedico) {
+          clearTimeout(timeoutMensagemErroMedico);
+          timeoutMensagemErroMedico = null;
+        }
+
+        if (timeoutFecharAnimacaoErroMedico) {
+          clearTimeout(timeoutFecharAnimacaoErroMedico);
+        }
+
+        timeoutFecharAnimacaoErroMedico = setTimeout(() => {
+          alerta.style.display = "none";
+          texto.textContent = "";
+          timeoutFecharAnimacaoErroMedico = null;
+        }, 350);
+      }
+
+      let timeoutErroModalTipoExame = null;
+      let timeoutFecharAnimacaoErroTipoExame = null;
+
+      function exibirErroModalTipoExame(mensagem) {
+        const alerta = document.getElementById('tipoExameFormError');
+        const texto = document.getElementById('tipoExameFormErrorText');
+        if (!alerta || !texto) return;
+        texto.textContent = mensagem;
+        alerta.style.display = 'block';
+        alerta.classList.remove('is-visible');
+        void alerta.offsetWidth;
+        alerta.classList.add('is-visible');
+        if (timeoutErroModalTipoExame) clearTimeout(timeoutErroModalTipoExame);
+        if (timeoutFecharAnimacaoErroTipoExame) { clearTimeout(timeoutFecharAnimacaoErroTipoExame); timeoutFecharAnimacaoErroTipoExame = null; }
+        timeoutErroModalTipoExame = setTimeout(() => limparErroModalTipoExame(), 10000);
+      }
+
+      function limparErroModalTipoExame() {
+        const alerta = document.getElementById('tipoExameFormError');
+        const texto = document.getElementById('tipoExameFormErrorText');
+        if (!alerta || !texto) return;
+        alerta.classList.remove('is-visible');
+        if (timeoutErroModalTipoExame) { clearTimeout(timeoutErroModalTipoExame); timeoutErroModalTipoExame = null; }
+        if (timeoutFecharAnimacaoErroTipoExame) clearTimeout(timeoutFecharAnimacaoErroTipoExame);
+        timeoutFecharAnimacaoErroTipoExame = setTimeout(() => {
+          alerta.style.display = 'none';
+          texto.textContent = '';
+          timeoutFecharAnimacaoErroTipoExame = null;
+        }, 350);
+      }
+
+      $(document).on('show.bs.modal', '#tipoExameFormModal', function () {
+        const abertos = $('.modal.in').length;
+        if (abertos === 0) return;
+        const zIndex = 1050 + 10 * abertos;
+        $(this).css('z-index', zIndex);
+        setTimeout(function () {
+          $('.modal-backdrop').not('.modal-stack').last().css('z-index', zIndex - 1).addClass('modal-stack');
+        }, 0);
+      });
+
+      $(document).on('hidden.bs.modal', '#tipoExameFormModal', function () {
+        if ($('.modal.in').length) {
+          $('body').addClass('modal-open');
+        }
+      });
+
+      let timeoutErroModalDocumento = null;
+      let timeoutFecharAnimacaoErroDocumento = null;
+
+      function exibirErroModalDocumento(mensagem) {
+        const alerta = document.getElementById('atendidoDocFormError');
+        const texto = document.getElementById('atendidoDocFormErrorText');
+        if (!alerta || !texto) return;
+        texto.textContent = mensagem;
+        alerta.style.display = 'block';
+        alerta.classList.remove('is-visible');
+        void alerta.offsetWidth;
+        alerta.classList.add('is-visible');
+        if (timeoutErroModalDocumento) clearTimeout(timeoutErroModalDocumento);
+        if (timeoutFecharAnimacaoErroDocumento) { clearTimeout(timeoutFecharAnimacaoErroDocumento); timeoutFecharAnimacaoErroDocumento = null; }
+        timeoutErroModalDocumento = setTimeout(() => limparErroModalDocumento(), 10000);
+      }
+
+      function limparErroModalDocumento() {
+        const alerta = document.getElementById('atendidoDocFormError');
+        const texto = document.getElementById('atendidoDocFormErrorText');
+        if (!alerta || !texto) return;
+        alerta.classList.remove('is-visible');
+        if (timeoutErroModalDocumento) { clearTimeout(timeoutErroModalDocumento); timeoutErroModalDocumento = null; }
+        if (timeoutFecharAnimacaoErroDocumento) clearTimeout(timeoutFecharAnimacaoErroDocumento);
+        timeoutFecharAnimacaoErroDocumento = setTimeout(() => {
+          alerta.style.display = 'none';
+          texto.textContent = '';
+          timeoutFecharAnimacaoErroDocumento = null;
+        }, 350);
+      }
+
+      async function adicionar_medico() {
+        const url = '../../controle/control.php'
+        const nomeMedicoInput = document.getElementById("nomeMedicoModal");
+        const crmMedicoInput = document.getElementById("crmMedicoModal");
+
+        const nome_medico = nomeMedicoInput ? nomeMedicoInput.value.trim() : "";
+        const crm_medico = crmMedicoInput ? crmMedicoInput.value.trim() : "";
+
+        const validacaoNomeMedico = SaudeValidator.validarNome(nome_medico);
+        if (!validacaoNomeMedico.valido) {
+          exibirErroModalMedico("Nome do médico: " + validacaoNomeMedico.mensagem);
+          return;
+        }
+
+        limparErroModalMedico();
+
+        const data = {
+          crm: crm_medico,
+          nome: nome_medico,
+          nomeClasse: "MedicoControle",
+          metodo: "inserirMedico"
+        }
+
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || result.status !== "sucesso") {
+            throw new Error(result.mensagem || result.erro || "Erro ao cadastrar médico.");
+          }
+
+          if (formMedico) {
+            formMedico.reset();
+          }
+
+          $("#medicoFormModal").modal("hide");
+          const medicoIdSelecionado = result.medico && result.medico.id_medico ? result.medico.id_medico : null;
+          await gerarMedicos(medicoIdSelecionado);
+        } catch (error) {
+          console.error('Erro ao enviar dados:', error);
+          exibirErroModalMedico(error.message || "Erro ao cadastrar médico.");
+        }
+      }
+
+      const formAlergia = document.getElementById("AlergiaForm");
+
+      if (formAlergia) {
+        formAlergia.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          await adicionar_alergia();
+        });
+      }
+
+      async function gerar_alergia() {
+        const url = '../../controle/control.php';
+        const formData = new URLSearchParams({
+          nomeClasse: "AlergiaControle",
+          metodo: "listarTodasAsAlergias"
+        });
+
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Accept": "application/json"
+            },
+            body: formData.toString()
+          });
+
+          if (!response.ok) {
+            throw new Error("Erro ao carregar alergias.");
+          }
+
+          const situacoes_alergia = await response.json();
+          const idsAlergiasPaciente = new Set(alergiasPaciente.map(function(alergia) {
+            return String(alergia.id_CID);
+          }));
+          const selectAlergia = document.getElementById("id_CID_alergia");
+
+          if (!selectAlergia) {
+            return;
+          }
+
+          while (selectAlergia.firstChild) {
+            selectAlergia.removeChild(selectAlergia.firstChild);
+          }
+
+          const optionSelecionar = document.createElement("option");
+          optionSelecionar.selected = true;
+          optionSelecionar.disabled = true;
+          optionSelecionar.textContent = "Selecionar";
+          selectAlergia.appendChild(optionSelecionar);
+
+          situacoes_alergia.forEach(function(item) {
+            if (!idsAlergiasPaciente.has(String(item.id_CID))) {
+              const option = document.createElement("option");
+              option.value = item.id_CID;
+              option.textContent = item.descricao;
+              selectAlergia.appendChild(option);
+            }
+          });
+        } catch (error) {
+          console.error("Erro ao carregar alergias:", error);
+        }
+      }
+
+      function abrirModalAlergia() {
+        const form = document.getElementById("AlergiaForm");
+        if (form) {
+          form.reset();
+        }
+
+        limparErroModalAlergia();
+        $("#alergiaFormModal").one("shown.bs.modal", function() {
+          const nomeAlergiaInput = document.getElementById("nomeAlergiaModal");
+          if (nomeAlergiaInput) {
+            nomeAlergiaInput.focus();
+          }
+        });
+        $("#alergiaFormModal").modal("show");
+      }
+
+      let timeoutMensagemErroAlergia = null;
+      let timeoutFecharAnimacaoErroAlergia = null;
+
+      function exibirErroModalAlergia(mensagem) {
+        const alerta = document.getElementById("alergiaFormError");
+        const texto = document.getElementById("alergiaFormErrorText");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        texto.textContent = mensagem;
+        alerta.style.display = "block";
+        alerta.classList.remove("is-visible");
+        void alerta.offsetWidth;
+        alerta.classList.add("is-visible");
+
+        if (timeoutMensagemErroAlergia) {
+          clearTimeout(timeoutMensagemErroAlergia);
+        }
+
+        if (timeoutFecharAnimacaoErroAlergia) {
+          clearTimeout(timeoutFecharAnimacaoErroAlergia);
+          timeoutFecharAnimacaoErroAlergia = null;
+        }
+
+        timeoutMensagemErroAlergia = setTimeout(() => {
+          limparErroModalAlergia();
+        }, 10000);
+      }
+
+      function limparErroModalAlergia() {
+        const alerta = document.getElementById("alergiaFormError");
+        const texto = document.getElementById("alergiaFormErrorText");
+
+        if (!alerta || !texto) {
+          return;
+        }
+
+        alerta.classList.remove("is-visible");
+
+        if (timeoutMensagemErroAlergia) {
+          clearTimeout(timeoutMensagemErroAlergia);
+          timeoutMensagemErroAlergia = null;
+        }
+
+        if (timeoutFecharAnimacaoErroAlergia) {
+          clearTimeout(timeoutFecharAnimacaoErroAlergia);
+        }
+
+        timeoutFecharAnimacaoErroAlergia = setTimeout(() => {
+          alerta.style.display = "none";
+          texto.textContent = "";
+          timeoutFecharAnimacaoErroAlergia = null;
+        }, 350);
+      }
+
+      async function adicionar_alergia() {
+        const url = 'adicionar_alergia.php';
+        const nomeAlergiaInput = document.getElementById("nomeAlergiaModal");
+        const nome_alergia = nomeAlergiaInput ? nomeAlergiaInput.value.trim() : "";
+
+        const validacaoNomeAlergia = SaudeValidator.validarNome(nome_alergia);
+        if (!validacaoNomeAlergia.valido) {
+          exibirErroModalAlergia("Nome da alergia: " + validacaoNomeAlergia.mensagem);
+          return;
+        }
+
+        limparErroModalAlergia();
+
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Accept": "application/json"
+            },
+            body: new URLSearchParams({
+              nome: nome_alergia
+            }).toString()
+          });
+
+          let result = null;
+          const contentType = response.headers.get("content-type") || "";
+
+          if (response.redirected) {
+            throw new Error("Você não tem permissão para adicionar alergias.");
+          }
+
+          if (contentType.indexOf("application/json") === -1) {
+            throw new Error("Não foi possível processar a resposta do servidor.");
+          }
+
+          try {
+            result = await response.json();
+          } catch (e) {
+            throw new Error("Não foi possível processar a resposta do servidor.");
+          }
+
+          if (!response.ok || result.status !== "sucesso") {
+            throw new Error(result.mensagem || "Erro ao cadastrar alergia.");
+          }
+
+          if (formAlergia) {
+            formAlergia.reset();
+          }
+
+          $("#alergiaFormModal").modal("hide");
+          await gerar_alergia();
+        } catch (error) {
+          console.error("Erro ao cadastrar alergia:", error);
+          exibirErroModalAlergia(error.message || "Erro ao cadastrar alergia.");
+        }
+      }
+
+      function alergia_upload() {
+        url = 'alergia_upload.php';
+        let id_CID_alergia = $("#id_CID_alergia").val();
+        let id_fichamedica = "<?= $id_fichamedica ?>";
+        let data = {
+          id_CID_alergia: id_CID_alergia,
+          id_fichamedica: id_fichamedica
+        };
+        $.post({
+          url: url,
+          data: data,
+          success: function(response) {
+            location.reload();
+          }
+        })
+      }
+
+      // codigo para inserir medicacao na tabela do medico
+      $(function() {
+        function lerCamposMedicacao() {
+          return {
+            nome_medicacao: ($("#nome_medicacao").val() || "").trim(),
+            dosagem: ($("#dosagem").val() || "").trim(),
+            horario: ($("#horario_medicacao").val() || "").trim(),
+            tempo: ($("#duracao_medicacao").val() || "").trim()
+          };
+        }
+
+        function limparCamposMedicacao() {
+          $("#nome_medicacao").val("");
+          $("#dosagem").val("");
+          $("#horario_medicacao").val("");
+          $("#duracao_medicacao").val("");
+        }
+
+        function todosCamposMedicacaoPreenchidos(medicacao) {
+          return (
+            medicacao.nome_medicacao !== "" &&
+            medicacao.dosagem !== "" &&
+            medicacao.horario !== "" &&
+            medicacao.tempo !== ""
+          );
+        }
+
+        function algumCampoMedicacaoPreenchido(medicacao) {
+          return (
+            medicacao.nome_medicacao !== "" ||
+            medicacao.dosagem !== "" ||
+            medicacao.horario !== "" ||
+            medicacao.tempo !== ""
+          );
+        }
+
+        function adicionarLinhaMedicacao(medicacao) {
+          $("#tabmed tbody").append(
+            $("<tr>")
+              .addClass("tabmed")
+              .append($("<td>").text(medicacao.nome_medicacao))
+              .append($("<td>").text(medicacao.dosagem))
+              .append($("<td>").text(medicacao.horario))
+              .append($("<td>").text(medicacao.tempo))
+              .append(
+                $("<td style='display: flex; justify-content: space-evenly;'>").append(
+                  $("<button type='button' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>")
+                )
+              )
+          );
+        }
+
+        function atualizarAcervoInputPelaTabela() {
+          const tabelaMedicacao = [];
+
+          $("#tabmed tbody tr.tabmed").each(function() {
+            const colunas = $(this).find("td");
+            if (colunas.length < 4) {
+              return;
+            }
+
+            tabelaMedicacao.push({
+              nome_medicacao: ($(colunas[0]).text() || "").trim(),
+              dosagem: ($(colunas[1]).text() || "").trim(),
+              horario: ($(colunas[2]).text() || "").trim(),
+              tempo: ($(colunas[3]).text() || "").trim()
+            });
+          });
+
+          $("input[name=acervo]").val(JSON.stringify(tabelaMedicacao));
+          return tabelaMedicacao;
+        }
+
+        $("#botao").on("click", function() {
+          const medicacao = lerCamposMedicacao();
+
+          if (!todosCamposMedicacaoPreenchidos(medicacao)) {
+            mostrarMensagemMedicacao("Por favor, informe a medicação corretamente!", "danger");
+            return;
+          }
+
+          const validacaoNomeMedicacao = SaudeValidator.validarNome(medicacao.nome_medicacao);
+          if (!validacaoNomeMedicacao.valido) {
+            mostrarMensagemMedicacao("Medicamento: " + validacaoNomeMedicacao.mensagem, "danger");
+            return;
+          }
+
+          const validacaoDosagem = SaudeValidator.validarValorPositivo(medicacao.dosagem, "Dosagem");
+          if (!validacaoDosagem.valido) {
+            mostrarMensagemMedicacao(validacaoDosagem.mensagem, "danger");
+            return;
+          }
+
+          const validacaoDuracao = SaudeValidator.validarValorPositivo(medicacao.tempo, "Duração");
+          if (!validacaoDuracao.valido) {
+            mostrarMensagemMedicacao(validacaoDuracao.mensagem, "danger");
+            return;
+          }
+
+          adicionarLinhaMedicacao(medicacao);
+          limparCamposMedicacao();
+          atualizarAcervoInputPelaTabela();
+        });
+
+        $("#tabmed").on("click", "button", function(e) {
+          e.preventDefault();
+          $(this).closest("tr").remove();
+          atualizarAcervoInputPelaTabela();
+        });
+
+        const formAtendimento = $("#form-atendimento-paciente");
+        formAtendimento.on("submit", function(e) {
+          const medicoSelecionado = $("#medicos").val();
+          if (!medicoSelecionado) {
+            e.preventDefault();
+            mostrarMensagemAtendimento('Selecione um médico. Se necessário, escolha "Sem médico definido".', "danger");
+            return;
+          }
+
+          // Só considera medicações já adicionadas na tabela via botão
+          // "Cadastrar medicação".
+          const medicacaoDigitada = lerCamposMedicacao();
+          if (algumCampoMedicacaoPreenchido(medicacaoDigitada)) {
+            e.preventDefault();
+            mostrarMensagemAtendimento('Para incluir esta medicação, clique em "Cadastrar medicação" antes de salvar o atendimento.', "danger");
+            return;
+          }
+
+          atualizarAcervoInputPelaTabela();
+        });
+
+      });
+
+
+      $(function() {
+        var sinaisvitais = <?= $sinaisvitais ?>;
+        $("#sin-vit-tab").empty();
+
+        $.each(sinaisvitais, function(i, item) {
+          $("#exibe-sinais-vitais")
+            .append($("<tr>")
+              .append($("<td>").attr("data-order", item.data_ordem || "").text(item.data))
+              .append($("<td>").text(item.nome + " " + (item.sobrenome !== null ? item.sobrenome : "")))
+              .append($("<td>").text(item.saturacao))
+              .append($("<td>").text(item.pressao_arterial))
+              .append($("<td>").text(item.frequencia_cardiaca))
+              .append($("<td>").text(item.frequencia_respiratoria))
+              .append($("<td>").text(item.temperatura))
+              .append($("<td>").text(item.hgt))
+              .append($("<td>").addClass("celula-observacao").text(item.observacao))
+            )
+        });
+      });
+      $(document).ready(function() {
+        $('#tab-sin-vit').DataTable({
+          "order": []
+        });
+      });
+
+      function habilitarBotaoDocumentoParaDownload(tipoDocumento, documento) {
+        const botao = document.querySelector(`[data-doc-tipo="${tipoDocumento}"]`);
+        if (!botao || !documento || !documento.id || !documento.endpoint) {
+          return;
+        }
+
+        botao.href = `${documento.endpoint}?id_doc=${encodeURIComponent(documento.id)}`;
+        botao.classList.remove('disabled-fix');
+        botao.title = 'Clique para baixar';
+      }
+
+      async function carregarDocumentosParaDownload(idFichaMedica) {
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("SaudeControle")}&metodo=${encodeURIComponent("listarDocumentosDownloadPorFichaMedica")}&id_fichamedica=${encodeURIComponent(idFichaMedica)}`;
+
+        try {
+          const resposta = await fetch(url);
+          if (!resposta.ok) {
+            return;
+          }
+
+          const dados = await resposta.json();
+          if (!dados || dados.status !== 'sucesso' || !dados.documentos) {
+            return;
+          }
+
+          [1, 2, 3, 5].forEach((tipoDocumento) => {
+            habilitarBotaoDocumentoParaDownload(tipoDocumento, dados.documentos[tipoDocumento]);
+          });
+        } catch (error) {
+          console.error('Erro ao carregar documentos para download:', error);
+        }
+      }
+
+      $(function() {
+        carregarDocumentosParaDownload(<?= (int)$id_fichamedica ?>);
+      });
+
+
+
+      var editor2 = CKEDITOR.replace('prontuario', {
+        readOnly: true,
+        width: '100%'
+      });
+
+      editor2.on('required', function(e) {
+        mostrarMensagemProntuario("Por favor, informe a descrição!", "danger");
+        e.cancel();
+      });
+
+      editor2.on('instanceReady', function() {
+        ajustarLarguraEditores();
+        ajustarEspacamentoConteudoEditor(editor2);
+      });
+
+
+      function editarProntuario() {
+        editor2.setReadOnly(false);
+        document.getElementById('btn-editarProntuario').classList.add('hidden');
+        document.getElementById('btn-adicionarAoHistorico').classList.add('hidden');
+        document.getElementById('btn-listarDoHistorico').classList.add('hidden');
+        document.getElementById('btn-cancelarEdicao').classList.remove('hidden');
+        document.getElementById('btn-confirmarEdicao').classList.remove('hidden');
+      }
+
+      function cancelarEdicao() {
+        editor2.setReadOnly(true);
+        document.getElementById('btn-editarProntuario').classList.remove('hidden');
+        document.getElementById('btn-adicionarAoHistorico').classList.remove('hidden');
+        document.getElementById('btn-listarDoHistorico').classList.remove('hidden');
+        document.getElementById('btn-cancelarEdicao').classList.add('hidden');
+        document.getElementById('btn-confirmarEdicao').classList.add('hidden');
+        location.reload();
+      }
+
+      function listarProntuariosDoHistorico() {
+        const idPaciente = <?= $idPaciente ?>;
+        window.location.href = `./historico_prontuarios.php?id_paciente=${idPaciente}`
+      }
+
+      //Formatar data para brasileiro
+      function formatarDataBr(data) {
+        let hour = null;
+
+        // Verifica se existe parte de hora
+        if (data.split(" ")[1] !== undefined && data.split(" ")[1] !== null) {
+          const partes = data.split(" ");
+          hour = partes[1].split(":");
+          data = partes[0];
+        }
+
+        const parts = data.split('-'); // Supondo que a data esteja no formato 'YYYY-MM-DD'
+
+        let dataFinal = "";
+        let dataObj;
+
+        if (hour !== null) {
+          dataObj = new Date(parts[0], parts[1] - 1, parts[2], hour[0], hour[1], hour[2]);
+          const horaFormatada = dataObj.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          dataFinal += " " + horaFormatada;
+        } else {
+          dataObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        const options = {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        };
+
+        const dataFormatada = dataObj.toLocaleDateString('pt-BR', options);
+        dataFinal = dataFormatada + dataFinal;
+
+        return dataFinal;
+      }
+
+
+      async function listarTodosOsMedicos() {
+        const nomeClasse = 'MedicoControle';
+        const metodo = 'listarTodosOsMedicos';
+
+        const url = `../../controle/control.php?nomeClasse=${encodeURIComponent(nomeClasse)}&metodo=${encodeURIComponent(metodo)}`;
+
+        try {
+          const response = await fetch(url, {
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            let erro = data.erro;
+            throw new Error(`Erro na requisição: ${response.status} - ${erro}`);
+          }
+
+          const data = await response.json();
+
+          return data ?? []; //Retorna um array vazio se `null`
+        } catch (error) {
+          console.error('Erro ao buscar médicos:', error.message);
+          return [];
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        await gerarEnfermidade();
+        await gerarMedicos();
+        await gerarExames();
+        await gerarEnfermidadesDoPaciente();
+        const btnCadastrarEnfermidade = document.getElementById('btn-cadastrar-enfermidade');
+        const exibirAvisoDataComorbidade = (mensagem) => {
+          mostrarMensagemCadastroEnfermidade(mensagem, "warning");
+        };
+
+        // Adiciona validação ao clique do botão
+        btnCadastrarEnfermidade.addEventListener('click', function(event) {
+          event.preventDefault();
+
+          let veriDataPassada = true;
+          let veriDataFutura = true;
+
+          const dataInput = document.getElementById("data_diagnostico");
+          const dataValue = dataInput.value;
+
+          if (!dataValue) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            exibirAvisoDataComorbidade("Por favor, preencha a data do diagnóstico.");
+            return;
+          }
+
+          const dataDigitada = new Date(dataValue);
+          const dataPaciente = new Date("<?= $data_nasc_atendido ?>T00:00:00");
+          console.log(dataPaciente)
+
+          const formatador = new Intl.DateTimeFormat('pt-BR');
+
+          if (dataDigitada < dataPaciente) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              const nascFormatado = formatador.format(dataPaciente);
+              exibirAvisoDataComorbidade("Data inválida: Não pode ser anterior à data de nascimento (" + nascFormatado + ").");
+              veriDataPassada = false;
+              return; 
+          }
+
+          // Verifica se a data é futura
+          const partesData = dataValue.split('-');
+          const dataSelecionada = new Date(partesData[0], partesData[1] - 1, partesData[2]);
+          const dataAgora = new Date();
+          dataAgora.setHours(0, 0, 0, 0); 
+
+          if (dataSelecionada > dataAgora) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            exibirAvisoDataComorbidade("A data do diagnóstico não pode ser no futuro, ajuste para a data atual: " + formatador.format(dataAgora));
+            veriDataFutura = false;
+            return;
+          }
+
+          if(veriDataPassada && veriDataFutura){
+              cadastrarEnfermidade(event);
+          }else{
+            return;
+          }
+
+        });
+      })
+
+      carregarIntercorrencias();
+    </script>
+
+    <!-- Vendor -->
+    <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+
+    <!-- Theme Custom -->
+    <script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
+
+    <script src="<?php echo WWW; ?>assets/javascripts/theme.js"></script>
+
+    <!-- Theme Initialization Files -->
+    <!-- Examples -->
+    <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.default.js"></script>
+    <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+    <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
+    <!-- importante para a aba de exames -->
+    <script src="../geral/formulario.js"></script>
+
+    <div align="right">
+      <iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,538 @@
+<?php
+//requisitar arquivo de conexão
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'SocioHasTagMySql.php';
+
+//requisitar model
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model/Socio.php';
+class SocioDAO
+{
+    private $pdo;
+    private SocioHasTagMySql $socioHasTagDao;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        if (is_null($pdo)) {
+            $this->pdo = ConexaoDAO::conectar();
+        } else {
+            $this->pdo = $pdo;
+        }
+
+        $this->socioHasTagDao = new SocioHasTagMySql($this->pdo);
+    }
+
+    public function montarSocio($socioArray)
+    {
+        $socio = new Socio();
+        $socio
+            ->setId($socioArray['id_socio'])
+            ->setNome($socioArray['nome'])
+            ->setDataNascimento($socioArray['data_nascimento'])
+            ->setTelefone($socioArray['telefone'])
+            ->setEmail($socioArray['email'])
+            ->setEstado($socioArray['estado'])
+            ->setTelefone($socioArray['telefone'])
+            ->setCidade($socioArray['cidade'])
+            ->setBairro($socioArray['bairro'])
+            ->setComplemento($socioArray['complemento'])
+            ->setCep($socioArray['cep'])
+            ->setNumeroEndereco($socioArray['numero_endereco'])
+            ->setLogradouro($socioArray['logradouro'])
+            ->setDocumento($socioArray['cpf'])
+            ->setTags($this->socioHasTagDao->getTagIdsBySocioId((int) $socioArray['id_socio']));
+
+        return $socio;
+    }
+
+    public function criarSocio(Socio $socio)
+    {
+        $this->pdo->beginTransaction();
+
+        //criar pessoa
+        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
+
+        $stmtPessoa = $this->pdo->prepare($sqlPessoa);
+
+        $stmtPessoa->bindParam(':cpf', $socio->getDocumento());
+        $stmtPessoa->bindParam(':nome', $socio->getNome());
+        $stmtPessoa->bindParam(':telefone', $socio->getTelefone());
+        $stmtPessoa->bindParam(':dataNascimento', $socio->getDataNascimento());
+        $stmtPessoa->bindParam(':cep', $socio->getCep());
+        $stmtPessoa->bindParam(':estado', $socio->getEstado());
+        $stmtPessoa->bindParam(':cidade', $socio->getCidade());
+        $stmtPessoa->bindParam(':bairro', $socio->getBairro());
+        $stmtPessoa->bindParam(':logradouro', $socio->getLogradouro());
+        $stmtPessoa->bindParam(':numeroEndereco', $socio->getNumeroEndereco());
+        $stmtPessoa->bindParam(':complemento', $socio->getComplemento());
+        $stmtPessoa->bindParam(':ibge', $socio->getIbge());
+
+        $stmtPessoa->execute();
+        $idPessoa = $this->pdo->lastInsertId();
+
+        //criar socio
+        $idSocioStatus = 3; //Define o status do sócio como Inativo temporariamente
+
+        $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
+
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :email, :valor, :dataReferencia)';
+
+        $stmtSocio = $this->pdo->prepare($sqlSocio);
+
+        $periodicidade = 0;
+        $dataReferencia = new DateTime();
+        $dataReferencia = $dataReferencia->format('Y-m-d');
+
+        $stmtSocio->bindParam(':idPessoa', $idPessoa);
+        $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
+        $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
+        $stmtSocio->bindParam(':email', $socio->getEmail());
+        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+
+        $stmtSocio->execute();
+
+        //registrar no socio_log
+        $idSocio = $this->pdo->lastInsertId();
+        $socio->setId($idSocio);
+        $tagsSincronizadas = $this->socioHasTagDao->sync((int) $idSocio, $tagIds);
+
+        if ($tagsSincronizadas && $this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
+            $this->pdo->commit();
+        } else {
+            $this->pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao cadastrar sócio no sistema']);
+            exit();
+        }
+    }
+
+    public function criarSocioPessoaPreExistente(socio $socio, int $idPessoa)
+    {
+        $this->pdo->beginTransaction();
+
+        //criar socio
+        $idSocioStatus = 3; //Define o status do sócio como Inativo temporariamente
+
+        $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
+
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :email, :valor, :dataReferencia)';
+
+        $stmtSocio = $this->pdo->prepare($sqlSocio);
+
+        $periodicidade = 0;
+        $dataReferencia = new DateTime();
+        $dataReferencia = $dataReferencia->format('Y-m-d');
+
+        $stmtSocio->bindParam(':idPessoa', $idPessoa);
+        $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
+        $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
+        $stmtSocio->bindParam(':email', $socio->getEmail());
+        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+
+        $stmtSocio->execute();
+
+        //registrar no socio_log
+        $idSocio = $this->pdo->lastInsertId();
+        $socio->setId($idSocio);
+        $tagsSincronizadas = $this->socioHasTagDao->sync((int) $idSocio, $tagIds);
+
+        if ($tagsSincronizadas && $this->registrarLog($socio, 'Inscrição recente', Util::getUserIp(), Util::getUserAgent())) {
+            $this->pdo->commit();
+        } else {
+            $this->pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao cadastrar sócio no sistema']);
+            exit();
+        }
+    }
+
+    public function atualizarSocio(Socio $socio)
+    {
+        //atualizar os dados de pessoa
+        $sqlAtualizarPessoa =
+            'UPDATE pessoa 
+        SET 
+            nome=:nome, 
+            telefone=:telefone, 
+            data_nascimento=:dataNascimento, 
+            cep=:cep, 
+            estado=:estado, 
+            cidade=:cidade, 
+            bairro=:bairro, 
+            logradouro=:logradouro, 
+            numero_endereco=:numeroEndereco, 
+            complemento=:complemento, 
+            ibge=:ibge
+        WHERE cpf=:cpf';
+
+        $stmtPessoa = $this->pdo->prepare($sqlAtualizarPessoa);
+
+        $stmtPessoa->bindParam(':nome', $socio->getNome());
+        $stmtPessoa->bindParam(':telefone', $socio->getTelefone());
+        $stmtPessoa->bindParam(':dataNascimento', $socio->getDataNascimento());
+        $stmtPessoa->bindParam(':cep', $socio->getCep());
+        $stmtPessoa->bindParam(':estado', $socio->getEstado());
+        $stmtPessoa->bindParam(':cidade', $socio->getCidade());
+        $stmtPessoa->bindParam(':bairro', $socio->getBairro());
+        $stmtPessoa->bindParam(':logradouro', $socio->getLogradouro());
+        $stmtPessoa->bindParam(':numeroEndereco', $socio->getNumeroEndereco());
+        $stmtPessoa->bindParam(':complemento', $socio->getComplemento());
+        $stmtPessoa->bindParam(':ibge', $socio->getIbge());
+        $stmtPessoa->bindParam(':cpf', $socio->getDocumento());
+
+        $stmtPessoa->execute();
+
+        //atualizar os dados de socio
+
+        $idSocio = $this->buscarIdSocioPorDocumento($socio->getDocumento());
+
+        if ($idSocio === null) {
+            throw new RuntimeException('Sócio não encontrado para atualização.', 404);
+        }
+
+        $tagIds = $this->resolverTagsParaPersistencia($socio->getTags(), (int) $idSocio);
+
+        $sqlAtualizarSocio =
+            'UPDATE socio s 
+        JOIN pessoa p ON s.id_pessoa = p.id_pessoa
+        SET 
+            s.email = :email, 
+            s.valor_periodo = :valor
+        WHERE p.cpf = :cpf';
+
+        $stmtSocio = $this->pdo->prepare($sqlAtualizarSocio);
+
+        $stmtSocio->bindParam(':email', $socio->getEmail());
+        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindParam(':cpf', $socio->getDocumento());
+
+        $atualizado = $stmtSocio->execute();
+
+        if (!$atualizado) {
+            return false;
+        }
+
+        return $this->socioHasTagDao->sync((int) $idSocio, $tagIds);
+    }
+
+    public function verificarInternoPorDocumento($documento)
+    {
+        $sqlVerificarInterno = 'SELECT p.id_pessoa FROM pessoa p JOIN socio s ON (s.id_pessoa=p.id_pessoa) LEFT JOIN atendido a ON(a.pessoa_id_pessoa=p.id_pessoa) LEFT JOIN funcionario f ON(f.id_pessoa=p.id_pessoa) WHERE p.cpf=:cpf AND (a.pessoa_id_pessoa IS NOT NULL OR f.id_pessoa IS NOT NULL)';
+
+        $stmt = $this->pdo->prepare($sqlVerificarInterno);
+        $stmt->bindParam(':cpf', $documento);
+        $stmt->execute();
+
+        if ($stmt->rowCount() > 0) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function buscarPorId($id)
+    {
+        $sqlBuscaPorDocumento =
+            "SELECT 
+            pessoa.id_pessoa, 
+            pessoa.nome,
+            pessoa.data_nascimento, 
+            pessoa.telefone, 
+            pessoa.cep, 
+            pessoa.estado, 
+            pessoa.cidade, 
+            pessoa.bairro, 
+            pessoa.complemento, 
+            pessoa.numero_endereco, 
+            pessoa.logradouro, 
+            pessoa.cpf
+            socio.id_socio, 
+            socio.email 
+        FROM pessoa, socio 
+        WHERE pessoa.id_pessoa = socio.id_pessoa 
+        AND socio.id_socio=:id";
+
+        $stmt = $this->pdo->prepare($sqlBuscaPorDocumento);
+        $stmt->bindParam(':id', $id);
+
+        $stmt->execute();
+
+        if ($stmt->rowCount() === 0) {
+            return null;
+        }
+
+        $socioArray = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $socio = $this->montarSocio($socioArray);
+
+        return $socio;
+    }
+
+    public function buscarPorDocumento($documento)
+    {
+        $sqlBuscaPorDocumento =
+            "SELECT 
+            pessoa.id_pessoa, 
+            pessoa.nome,
+            pessoa.data_nascimento, 
+            pessoa.telefone, 
+            pessoa.cep, 
+            pessoa.estado, 
+            pessoa.cidade, 
+            pessoa.bairro, 
+            pessoa.complemento, 
+            pessoa.numero_endereco, 
+            pessoa.logradouro, 
+            pessoa.cpf,
+            socio.id_socio, 
+            socio.email 
+        FROM pessoa, socio 
+        WHERE pessoa.id_pessoa = socio.id_pessoa 
+        AND pessoa.cpf=:documento";
+
+        $stmt = $this->pdo->prepare($sqlBuscaPorDocumento);
+        $stmt->bindParam(':documento', $documento);
+
+        $stmt->execute();
+
+        if ($stmt->rowCount() === 0) {
+            return null;
+        }
+
+        $socioArray = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        $socio = $this->montarSocio($socioArray);
+
+        return $socio;
+    }
+
+    //refatorar para receber parâmetros via objeto
+    public function registrarLog(Socio $socio, string $mensagem, ?string $ip = null, ?string $userAgent = null)
+    {
+        $campos = ['id_socio', 'descricao'];
+        $valores = [':idSocio', ':mensagem'];
+
+        if ($ip !== null) {
+            $campos[]  = 'ip';
+            $valores[] = ':ip';
+        }
+
+        if ($userAgent !== null) {
+            $campos[]  = 'user_agent';
+            $valores[] = ':userAgent';
+        }
+
+        $sql = sprintf(
+            "INSERT INTO socio_log (%s) VALUES (%s)",
+            implode(', ', $campos),
+            implode(', ', $valores)
+        );
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':idSocio', $socio->getId(), PDO::PARAM_INT);
+        $stmt->bindValue(':mensagem', $mensagem, PDO::PARAM_STR);
+
+        if ($ip !== null) {
+            $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
+        }
+
+        if ($userAgent !== null) {
+            $stmt->bindValue(':userAgent', $userAgent, PDO::PARAM_STR);
+        }
+
+        return $stmt->execute();
+    }
+
+    //refatorar para receber parâmetros via objeto
+    public function registrarLogPorDocumento(string $documento, string $mensagem, ?string $ip = null, ?string $userAgent = null)
+    {
+        $campos  = ['id_socio', 'descricao'];
+        $valores = [
+            '(SELECT s.id_socio
+          FROM socio s
+          JOIN pessoa p ON s.id_pessoa = p.id_pessoa
+          WHERE p.cpf = :cpf)',
+            ':mensagem'
+        ];
+
+        if ($ip !== null) {
+            $campos[]  = 'ip';
+            $valores[] = ':ip';
+        }
+
+        if ($userAgent !== null) {
+            $campos[]  = 'user_agent';
+            $valores[] = ':userAgent';
+        }
+
+        $sql = sprintf(
+            "INSERT INTO socio_log (%s) VALUES (%s)",
+            implode(', ', $campos),
+            implode(', ', $valores)
+        );
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':cpf', $documento, PDO::PARAM_STR);
+        $stmt->bindValue(':mensagem', $mensagem, PDO::PARAM_STR);
+
+        if ($ip !== null) {
+            $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
+        }
+
+        if ($userAgent !== null) {
+            $stmt->bindValue(':userAgent', $userAgent, PDO::PARAM_STR);
+        }
+
+        return $stmt->execute();
+    }
+
+    /**Retorna todos os sócios do sistema*/
+    public function getSocios()
+    {
+        $socios = [];
+
+        $sql = "
+            SELECT p.nome, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.email, s.valor_periodo 
+            FROM socio s JOIN pessoa p ON(s.id_pessoa=p.id_pessoa)
+            ORDER BY nome ASC
+        ";
+
+        $sociosArray = $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($sociosArray) < 1) {
+            return null;
+        }
+
+        foreach ($sociosArray as $socioArray) {
+            $socios[] = $this->montarSocio($socioArray);
+        }
+
+        return $socios;
+    }
+
+    /**Atualiza o status dos sócios de acordo com suas contribuições */
+    public function sincronizarStatusSocios(): bool
+    {
+        $sql = "
+            UPDATE socio s
+            LEFT JOIN (
+                SELECT 
+                    cl.id_socio,
+
+                    MAX(CASE 
+                        WHEN cl.status_pagamento = 1 
+                        THEN cl.data_pagamento 
+                    END) AS ultimo_pagamento,
+
+                    MAX(CASE 
+                        WHEN cl.status_pagamento = 0
+                            AND cl.data_vencimento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                        THEN 1 ELSE 0
+                    END) AS tem_pendencia_antiga
+
+                FROM contribuicao_log cl
+                GROUP BY cl.id_socio
+            ) r ON r.id_socio = s.id_socio
+
+            SET s.id_sociostatus = 
+            CASE
+
+                -- INADIMPLENTE (pendência recente não resolvida)
+                WHEN EXISTS (
+                    SELECT 1
+                    FROM contribuicao_log cl
+                    WHERE cl.id_socio = s.id_socio
+                    AND cl.status_pagamento = 0
+                    AND cl.data_vencimento < CURDATE()
+                    AND cl.data_vencimento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM contribuicao_log cl2
+                        WHERE cl2.id_socio = cl.id_socio
+                            AND cl2.status_pagamento = 1
+                            AND cl2.data_pagamento > cl.data_vencimento
+                    )
+                )
+                THEN 2
+
+                -- ATIVO
+                WHEN r.ultimo_pagamento IS NOT NULL
+                    AND r.ultimo_pagamento >= DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                THEN 0
+
+                -- INATIVO
+                WHEN r.ultimo_pagamento IS NULL
+                    OR r.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+                    OR r.tem_pendencia_antiga = 1
+                THEN 1
+
+                -- INATIVO TEMPORÁRIO
+                WHEN r.ultimo_pagamento < DATE_SUB(CURDATE(), INTERVAL 2 MONTH)
+                THEN 3
+
+                ELSE s.id_sociostatus
+            END
+            WHERE s.auto_status_contribuicoes = 1
+            ";
+
+        return $this->pdo->exec($sql) !== false;
+    }
+
+    private function buscarIdSocioPorDocumento(string $documento): ?int
+    {
+        $sql = '
+            SELECT s.id_socio
+            FROM socio s
+            JOIN pessoa p ON p.id_pessoa = s.id_pessoa
+            WHERE p.cpf = :cpf
+            LIMIT 1
+        ';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':cpf', $documento, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $idSocio = $stmt->fetchColumn();
+
+        return $idSocio === false ? null : (int) $idSocio;
+    }
+
+    private function buscarIdTagSolicitante(): int
+    {
+        $stmt = $this->pdo->query("SELECT id_sociotag FROM socio_tag WHERE tag='Solicitante' LIMIT 1");
+        $idTag = $stmt ? $stmt->fetchColumn() : false;
+
+        if ($idTag === false) {
+            throw new RuntimeException("A tag 'Solicitante' não foi encontrada.", 500);
+        }
+
+        return (int) $idTag;
+    }
+
+    private function resolverTagsParaPersistencia(array $tagIds, ?int $idSocio = null): array
+    {
+        $tagsNormalizadas = [];
+
+        foreach ($tagIds as $tagId) {
+            $tagId = (int) $tagId;
+
+            if ($tagId > 0) {
+                $tagsNormalizadas[$tagId] = $tagId;
+            }
+        }
+
+        if (!empty($tagsNormalizadas)) {
+            return array_values($tagsNormalizadas);
+        }
+
+        if ($idSocio !== null) {
+            $tagsAtuais = $this->socioHasTagDao->getTagIdsBySocioId($idSocio);
+            if (!empty($tagsAtuais)) {
+                return $tagsAtuais;
+            }
+        }
+
+        return [$this->buscarIdTagSolicitante()];
+    }
+}

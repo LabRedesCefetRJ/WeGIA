@@ -1,0 +1,666 @@
+<?php
+define("DEBUG", false);
+require_once "../../config.php";
+
+function quoteMysqlIdentifier(string $identifier): string
+{
+    return '`' . str_replace('`', '``', $identifier) . '`';
+}
+
+function createDatabasePdoConnection(): PDO
+{
+    $charset = defined('DB_CHARSET') ? DB_CHARSET : 'utf8';
+    $pdo = new PDO(
+        'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . $charset,
+        DB_USER,
+        DB_PASSWORD
+    );
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    return $pdo;
+}
+
+function resetDatabaseSchema(PDO $pdo): void
+{
+    $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+
+    try {
+        $views = $pdo->prepare(
+            "SELECT TABLE_NAME
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = :schema AND TABLE_TYPE = 'VIEW'"
+        );
+        $views->execute(['schema' => DB_NAME]);
+
+        foreach ($views->fetchAll(PDO::FETCH_COLUMN) as $viewName) {
+            $pdo->exec('DROP VIEW IF EXISTS ' . quoteMysqlIdentifier($viewName));
+        }
+
+        $tables = $pdo->prepare(
+            "SELECT TABLE_NAME
+             FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = :schema AND TABLE_TYPE = 'BASE TABLE'"
+        );
+        $tables->execute(['schema' => DB_NAME]);
+
+        foreach ($tables->fetchAll(PDO::FETCH_COLUMN) as $tableName) {
+            $pdo->exec('DROP TABLE IF EXISTS ' . quoteMysqlIdentifier($tableName));
+        }
+
+        $routines = $pdo->prepare(
+            "SELECT ROUTINE_NAME, ROUTINE_TYPE
+             FROM information_schema.ROUTINES
+             WHERE ROUTINE_SCHEMA = :schema"
+        );
+        $routines->execute(['schema' => DB_NAME]);
+
+        foreach ($routines->fetchAll(PDO::FETCH_ASSOC) as $routine) {
+            $routineType = strtoupper((string) ($routine['ROUTINE_TYPE'] ?? ''));
+            $routineName = (string) ($routine['ROUTINE_NAME'] ?? '');
+
+            if ($routineType !== 'PROCEDURE' && $routineType !== 'FUNCTION') {
+                continue;
+            }
+
+            $pdo->exec('DROP ' . $routineType . ' IF EXISTS ' . quoteMysqlIdentifier($routineName));
+        }
+
+        $events = $pdo->prepare(
+            "SELECT EVENT_NAME
+             FROM information_schema.EVENTS
+             WHERE EVENT_SCHEMA = :schema"
+        );
+        $events->execute(['schema' => DB_NAME]);
+
+        foreach ($events->fetchAll(PDO::FETCH_COLUMN) as $eventName) {
+            $pdo->exec('DROP EVENT IF EXISTS ' . quoteMysqlIdentifier($eventName));
+        }
+    } finally {
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+    }
+}
+
+function createSecureTempDir(string $prefix = 'db_backup_'): string
+{
+    $candidates = [];
+
+    $sysTmp = sys_get_temp_dir();
+    if ($sysTmp && is_dir($sysTmp) && is_writable($sysTmp)) {
+        $candidates[$sysTmp] = disk_free_space($sysTmp) ?: 0;
+    }
+
+    if (is_dir(BKP_DIR) && is_writable(BKP_DIR)) {
+        $candidates[BKP_DIR] = disk_free_space(BKP_DIR) ?: 0;
+    }
+
+    if (empty($candidates)) {
+        throw new RuntimeException('Nenhum diretório temporário disponível.');
+    }
+
+    arsort($candidates, SORT_NUMERIC);
+    $base = key($candidates);
+
+    if ($candidates[$base] < 100 * 1024 * 1024) {
+        throw new RuntimeException('Espaço insuficiente.');
+    }
+
+    $dir = rtrim($base, DIRECTORY_SEPARATOR) . '/' . $prefix . bin2hex(random_bytes(8));
+
+    if (!mkdir($dir, 0700, true)) {
+        throw new RuntimeException('Falha ao criar diretório temporário.');
+    }
+
+    return $dir;
+}
+
+function runMysqldump(string $outputFile, array $extraOptions = []): void
+{
+    $command = array_merge([
+        'mysqldump',
+        '-h',
+        DB_HOST,
+        '-u',
+        DB_USER,
+        '--single-transaction',
+        '--quick',
+        '--add-drop-table',
+        '--add-drop-trigger',
+        '--triggers',
+        '--routines',
+        '--events',
+    ], $extraOptions, [
+        '--default-character-set=' . (defined('DB_CHARSET') ? DB_CHARSET : 'utf8'),
+        DB_NAME
+    ]);
+
+    $process = proc_open(
+        $command,
+        [
+            0 => ['pipe', 'r'],
+            1 => ['file', $outputFile, 'w'],
+            2 => ['pipe', 'w'],
+        ],
+        $pipes,
+        null,
+        ['MYSQL_PWD' => DB_PASSWORD]
+    );
+
+    if (!is_resource($process)) {
+        throw new RuntimeException('Falha ao iniciar mysqldump.');
+    }
+
+    fclose($pipes[0]);
+
+    $stderr = stream_get_contents($pipes[2]);
+    fclose($pipes[2]);
+
+    $exitCode = proc_close($process);
+
+    if ($exitCode !== 0) {
+        throw new RuntimeException('Erro no mysqldump: ' . $stderr);
+    }
+
+    if (!file_exists($outputFile) || filesize($outputFile) === 0) {
+        throw new RuntimeException('Dump SQL vazio.');
+    }
+}
+
+function createTarGz(string $tarFile, string $baseDir, array $files): void
+{
+    $escapedFiles = array_map(fn($f) => escapeshellarg(basename($f)), $files);
+
+    $cmdTar = sprintf(
+        'tar -cf %s -C %s %s',
+        escapeshellarg($tarFile),
+        escapeshellarg($baseDir),
+        implode(' ', $escapedFiles)
+    );
+
+    exec($cmdTar, $out, $code);
+    if ($code !== 0) {
+        throw new RuntimeException('Falha ao criar TAR.');
+    }
+
+    exec('gzip ' . escapeshellarg($tarFile), $out, $code);
+    if ($code !== 0) {
+        throw new RuntimeException('Falha ao compactar GZIP.');
+    }
+}
+
+function cleanupDirectory(string $directory): void
+{
+    if (!is_dir($directory)) {
+        return;
+    }
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+
+    foreach ($iterator as $entry) {
+        $path = $entry->getPathname();
+
+        if ($entry->isLink() || $entry->isFile()) {
+            @unlink($path);
+            continue;
+        }
+
+        if ($entry->isDir()) {
+            @rmdir($path);
+        }
+    }
+
+    @rmdir($directory);
+}
+
+function getBackupTimestamp(): string
+{
+    return (new DateTimeImmutable())->format('YmdHis');
+}
+
+function getBackupSigningKeyFilePath(): string
+{
+    if (defined('BACKUP_SIGNING_KEY_FILE') && is_string(BACKUP_SIGNING_KEY_FILE) && trim(BACKUP_SIGNING_KEY_FILE) !== '') {
+        return BACKUP_SIGNING_KEY_FILE;
+    }
+
+    return rtrim(BKP_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '.backup_signing_private.pem';
+}
+
+function getBackupSigningPrivateKey()
+{
+    if (!extension_loaded('openssl')) {
+        throw new RuntimeException('Extensão OpenSSL não disponível no PHP.');
+    }
+
+    $backupDir = realpath(BKP_DIR);
+    if ($backupDir === false || !is_dir($backupDir)) {
+        throw new RuntimeException('Diretório de backup inválido.');
+    }
+
+    $keyFile = getBackupSigningKeyFilePath();
+
+    if (!is_file($keyFile)) {
+        throw new RuntimeException('Chave privada de assinatura não encontrada. Gere a chave manualmente e coloque em: ' . $keyFile);
+    }
+
+    $privateKeyPem = file_get_contents($keyFile);
+    if ($privateKeyPem === false || trim($privateKeyPem) === '') {
+        throw new RuntimeException('Arquivo de chave privada inválido.');
+    }
+
+    $privateKey = openssl_pkey_get_private($privateKeyPem);
+    if ($privateKey === false) {
+        throw new RuntimeException('Falha ao carregar chave privada de assinatura.');
+    }
+
+    return $privateKey;
+}
+
+function signSqlFile(string $filePath): string
+{
+    $privateKey = getBackupSigningPrivateKey();
+
+    $context = hash_init('sha256');
+
+    $handle = fopen($filePath, 'rb');
+    if (!$handle) {
+        throw new RuntimeException('Falha ao abrir SQL para assinatura.');
+    }
+
+    while (!feof($handle)) {
+        $chunk = fread($handle, 1024 * 1024); // 1MB
+        if ($chunk === false) {
+            fclose($handle);
+            throw new RuntimeException('Erro ao ler SQL.');
+        }
+        hash_update($context, $chunk);
+    }
+
+    fclose($handle);
+
+    // hash final (binário!)
+    $hash = hash_final($context, true);
+
+    $signature = '';
+    if (!openssl_sign($hash, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+        throw new RuntimeException('Falha ao assinar hash do backup.');
+    }
+
+    return base64_encode($signature);
+}
+
+function verifySqlSignatureFromFile(string $filePath, string $signatureBase64): void
+{
+    $signature = base64_decode(trim($signatureBase64), true);
+    if ($signature === false || $signature === '') {
+        throw new RuntimeException('Assinatura do backup inválida.');
+    }
+
+    $privateKey = getBackupSigningPrivateKey();
+    $details = openssl_pkey_get_details($privateKey);
+
+    if (!is_array($details) || empty($details['key'])) {
+        throw new RuntimeException('Falha ao obter chave pública.');
+    }
+
+    $publicKey = openssl_pkey_get_public($details['key']);
+    if ($publicKey === false) {
+        throw new RuntimeException('Falha ao carregar chave pública.');
+    }
+
+    //hash streaming
+    $context = hash_init('sha256');
+
+    $handle = fopen($filePath, 'rb');
+    if (!$handle) {
+        throw new RuntimeException('Falha ao abrir SQL para verificação.');
+    }
+
+    while (!feof($handle)) {
+        $chunk = fread($handle, 1024 * 1024);
+        if ($chunk === false) {
+            fclose($handle);
+            throw new RuntimeException('Erro ao ler SQL.');
+        }
+        hash_update($context, $chunk);
+    }
+
+    fclose($handle);
+
+    $hash = hash_final($context, true);
+
+    //Verifica assinatura do hash
+    $result = openssl_verify($hash, $signature, $publicKey, OPENSSL_ALGO_SHA256);
+
+    if ($result !== 1) {
+        throw new RuntimeException('Assinatura do backup não confere.');
+    }
+}
+
+function validateRestoreSqlFile(string $filePath): void
+{
+    $handle = fopen($filePath, 'rb');
+    if (!$handle) {
+        throw new RuntimeException('Falha ao abrir SQL para validação.');
+    }
+
+    $forbiddenPatterns = [
+        '/\\bCREATE\\s+USER\\b/i',
+        '/\\bALTER\\s+USER\\b/i',
+        '/\\bDROP\\s+USER\\b/i',
+        '/\\bGRANT\\b/i',
+        '/\\bREVOKE\\b/i',
+        '/\\bSET\\s+PASSWORD\\b/i',
+        '/\\bCREATE\\s+DATABASE\\b/i',
+        '/\\bDROP\\s+DATABASE\\b/i',
+    ];
+
+    while (!feof($handle)) {
+        $chunk = fread($handle, 1024 * 1024);
+        if ($chunk === false) {
+            fclose($handle);
+            throw new RuntimeException('Erro ao ler SQL.');
+        }
+
+        foreach ($forbiddenPatterns as $pattern) {
+            if (preg_match($pattern, $chunk)) {
+                fclose($handle);
+                throw new RuntimeException('SQL contém instruções não permitidas.');
+            }
+        }
+    }
+
+    fclose($handle);
+}
+
+function backupBD(): string
+{
+    set_time_limit(0);
+
+    $timestamp = getBackupTimestamp();
+    $baseName  = $timestamp . '.dump';
+
+    $tmpDir = createSecureTempDir();
+
+    $sqlFile = "$tmpDir/$baseName.sql";
+    $sigFile = "$tmpDir/$baseName.sig";
+    $tarFile = "$tmpDir/$baseName.tar";
+    $gzFile  = BKP_DIR . "/$baseName.tar.gz";
+
+    try {
+        runMysqldump($sqlFile);
+
+        $signature = signSqlFile($sqlFile);
+
+        if (file_put_contents($sigFile, $signature, LOCK_EX) === false) {
+            throw new RuntimeException('Falha ao salvar assinatura.');
+        }
+
+        createTarGz($tarFile, $tmpDir, [$sqlFile, $sigFile]);
+
+        if (!rename($tarFile . '.gz', $gzFile)) {
+            throw new RuntimeException('Falha ao mover backup.');
+        }
+
+        return basename($gzFile);
+    } finally {
+        cleanupDirectory($tmpDir);
+    }
+}
+
+function rmBackupBD(string $file): bool
+{
+    // Validação do nome do arquivo
+    if (!preg_match('/^[a-zA-Z0-9_-]+\.dump\.tar\.gz$/', $file)) {
+        throw new RuntimeException('Nome de arquivo inválido.');
+    }
+
+    $backupDir = realpath(BKP_DIR);
+    if ($backupDir === false || !is_dir($backupDir)) {
+        throw new RuntimeException('Diretório de backup inválido.');
+    }
+
+    $filePath = realpath($backupDir . DIRECTORY_SEPARATOR . $file);
+
+    // Garante que o arquivo existe e está dentro do diretório permitido
+    if (
+        $filePath === false ||
+        !str_starts_with($filePath, $backupDir . DIRECTORY_SEPARATOR) ||
+        !is_file($filePath)
+    ) {
+        throw new RuntimeException('Arquivo inválido ou fora do diretório permitido.');
+    }
+
+    // Bloqueia symlink
+    if (is_link($filePath)) {
+        throw new RuntimeException('Arquivo inválido: link simbólico não permitido.');
+    }
+
+    if (DEBUG) {
+        var_dump($filePath);
+        die();
+    }
+
+    if (!unlink($filePath)) {
+        throw new RuntimeException('Falha ao remover arquivo.');
+    }
+
+    return true;
+}
+
+function autosaveBD(): string
+{
+    set_time_limit(0);
+
+    $timestamp = getBackupTimestamp();
+    $baseName  = $timestamp . '-autosave';
+
+    $tmpDir = createSecureTempDir('db_autosave_');
+
+    $sqlFile = "$tmpDir/$baseName.sql";
+    $sigFile = "$tmpDir/$baseName.sig";
+    $tarFile = "$tmpDir/$baseName.tar";
+    $gzFile  = BKP_DIR . "/$baseName.dump.tar.gz";
+
+    try {
+        runMysqldump($sqlFile);
+
+        //assinatura
+        $signature = signSqlFile($sqlFile);
+
+        if (file_put_contents($sigFile, $signature, LOCK_EX) === false) {
+            throw new RuntimeException('Falha ao salvar assinatura.');
+        }
+
+        createTarGz($tarFile, $tmpDir, [$sqlFile, $sigFile]);
+
+        if (!rename($tarFile . '.gz', $gzFile)) {
+            throw new RuntimeException('Falha ao mover autosave.');
+        }
+
+        return basename($gzFile);
+    } finally {
+        cleanupDirectory($tmpDir);
+    }
+}
+
+function backupSite()
+{
+    // Executando Backup do Diretório do site
+    $timestamp = getBackupTimestamp();
+    $cmd = "tar -czf " . BKP_DIR . $timestamp . ".site.tar.gz " . ROOT;
+    exec($cmd, $output, $return_var);
+    return $return_var === 0;
+}
+
+function loadBackupDB(string $file): bool
+{
+    if (!preg_match('/^[a-zA-Z0-9_-]+\.dump\.tar\.gz$/', $file)) {
+        throw new RuntimeException('Nome de arquivo inválido.');
+    }
+
+    $backupDir  = realpath(BKP_DIR);
+    $backupPath = realpath(BKP_DIR . DIRECTORY_SEPARATOR . $file);
+
+    if ($backupPath === false || !str_starts_with($backupPath, $backupDir)) {
+        throw new RuntimeException('Arquivo fora do diretório permitido.');
+    }
+
+    $tmpDirCandidates = [];
+    $sysTmp = sys_get_temp_dir();
+    if ($sysTmp !== false && is_dir($sysTmp) && is_writable($sysTmp)) {
+        $tmpDirCandidates[$sysTmp] = disk_free_space($sysTmp) ?: 0;
+    }
+    if (is_dir(BKP_DIR) && is_writable(BKP_DIR)) {
+        $tmpDirCandidates[BKP_DIR] = disk_free_space(BKP_DIR) ?: 0;
+    }
+
+    if (empty($tmpDirCandidates)) {
+        throw new RuntimeException('Nenhum diretório temporário disponível para restauração.');
+    }
+
+    arsort($tmpDirCandidates, SORT_NUMERIC);
+    $tmpDirBase = key($tmpDirCandidates);
+
+    if ($tmpDirCandidates[$tmpDirBase] < 100 * 1024 * 1024) {
+        throw new RuntimeException('Espaço insuficiente para restaurar o backup.');
+    }
+
+    $tmpDir = rtrim($tmpDirBase, DIRECTORY_SEPARATOR) . '/db_restore_' . bin2hex(random_bytes(8));
+    if (!mkdir($tmpDir, 0700, true)) {
+        throw new RuntimeException('Falha ao criar diretório temporário.');
+    }
+
+    $tmpDirReal = realpath($tmpDir);
+    if ($tmpDirReal === false) {
+        throw new RuntimeException('Falha ao resolver diretório temporário.');
+    }
+
+    try {
+        // Copia backup
+        $tmpGz = $tmpDir . '/backup.tar.gz';
+        if (!copy($backupPath, $tmpGz)) {
+            throw new RuntimeException('Falha ao copiar backup.');
+        }
+
+        // Extrai
+        $cmd = sprintf(
+            'tar -xzf %s -C %s --no-same-owner --no-same-permissions',
+            escapeshellarg($tmpGz),
+            escapeshellarg($tmpDir)
+        );
+
+        exec($cmd, $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            throw new RuntimeException('Falha ao extrair o backup.');
+        }
+
+        // Validação de paths e symlinks
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($tmpDirReal, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $entry) {
+            $entryPath = $entry->getPathname();
+
+            if (is_link($entryPath)) {
+                throw new RuntimeException('Backup inválido: contém link simbólico.');
+            }
+
+            $resolvedPath = realpath($entryPath);
+            if ($resolvedPath === false) {
+                throw new RuntimeException('Backup inválido: contém caminho não resolvível.');
+            }
+
+            if (!str_starts_with($resolvedPath, $tmpDirReal . DIRECTORY_SEPARATOR)) {
+                throw new RuntimeException('Backup inválido: contém path fora do diretório.');
+            }
+        }
+
+        // Localiza arquivos
+        $sqlFiles = glob($tmpDir . '/*.sql');
+        if (!$sqlFiles || count($sqlFiles) !== 1) {
+            throw new RuntimeException('Backup deve conter exatamente um .sql.');
+        }
+
+        $sigFiles = glob($tmpDir . '/*.sig');
+        if (!$sigFiles || count($sigFiles) !== 1) {
+            throw new RuntimeException('Backup deve conter exatamente um .sig.');
+        }
+
+        $sqlFileReal = realpath($sqlFiles[0]);
+        $sigFileReal = realpath($sigFiles[0]);
+
+        if (
+            $sqlFileReal === false ||
+            $sigFileReal === false ||
+            !str_starts_with($sqlFileReal, $tmpDirReal . DIRECTORY_SEPARATOR) ||
+            !str_starts_with($sigFileReal, $tmpDirReal . DIRECTORY_SEPARATOR)
+        ) {
+            throw new RuntimeException('Arquivos do backup inválidos.');
+        }
+
+        if (is_link($sqlFileReal) || is_link($sigFileReal)) {
+            throw new RuntimeException('Backup contém links simbólicos inválidos.');
+        }
+
+        // Lê apenas a assinatura (pequena)
+        $signatureBase64 = file_get_contents($sigFileReal);
+        if ($signatureBase64 === false) {
+            throw new RuntimeException('Falha ao ler assinatura.');
+        }
+
+        // Verificação por streaming
+        verifySqlSignatureFromFile($sqlFileReal, $signatureBase64);
+
+        // Validação por streaming
+        validateRestoreSqlFile($sqlFileReal);
+
+        $pdo = createDatabasePdoConnection();
+        resetDatabaseSchema($pdo);
+
+        // Importação via mysql command line
+        $cmd = sprintf(
+            'sed "s/DEFINER=[^*]*\*/\*/g" %s | mysql -h %s -u %s -p%s --default-character-set=%s %s 2>&1',
+            escapeshellarg($sqlFileReal),
+            escapeshellarg(DB_HOST),
+            escapeshellarg(DB_USER),
+            escapeshellarg(DB_PASSWORD),
+            escapeshellarg(defined('DB_CHARSET') ? DB_CHARSET : 'utf8'),
+            escapeshellarg(DB_NAME)
+        );
+
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            $errorMsg = implode("\n", $output);
+            throw new RuntimeException('Erro ao importar banco: ' . $errorMsg);
+        }
+    } finally {
+        if (is_dir($tmpDir)) {
+            $cleanupIterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($tmpDir, FilesystemIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+
+            foreach ($cleanupIterator as $entry) {
+                $entryPath = $entry->getPathname();
+                if ($entry->isDir() && !$entry->isLink()) {
+                    @rmdir($entryPath);
+                } else {
+                    @unlink($entryPath);
+                }
+            }
+        }
+
+        @rmdir($tmpDir);
+    }
+
+    return true;
+}

@@ -1,0 +1,818 @@
+<?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+Util::definirFusoHorario();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['usuario'])) {
+    header('Location: ../../index.php');
+    exit();
+} else {
+    session_regenerate_id();
+}
+
+require_once "../permissao/permissao.php";
+permissao($_SESSION['id_pessoa'], 11, 7);
+
+require_once "../personalizacao_display.php";
+require_once "../geral/msg.php";
+require_once "../../dao/Conexao.php";
+
+try {
+    $pdo = Conexao::connect();
+
+    $id = filter_input(INPUT_GET, 'id_dependente', FILTER_SANITIZE_NUMBER_INT);
+
+    if (!$id || $id < 1) {
+        http_response_code(400);
+        exit('O id do dependente informado não é válido.');
+    }
+
+    $sql = 'SELECT *, par.descricao AS parentesco, p2.nome as nome_funcionario, p2.sobrenome as sobrenome_funcionario
+    FROM funcionario_dependentes fdep
+    LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
+    LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
+    JOIN funcionario f ON (fdep.id_funcionario=f.id_funcionario) JOIN pessoa p2 ON (f.id_pessoa=p2.id_pessoa)
+    WHERE fdep.id_dependente = :id_dependente';
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':id_dependente' => $id]);
+    $dependente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    $id_pessoa = $dependente["id_pessoa"];
+    $id_dependente = $dependente["id_dependente"];
+    $JSON_dependente = json_encode($dependente);
+} catch (PDOException $e) {
+    http_response_code(500);
+    exit('Erro ao buscar informações do dependente no banco de dados da aplicação');
+}
+
+?>
+<!doctype html>
+<html class="fixed">
+
+<head>
+    <!-- Basic -->
+    <meta charset="UTF-8">
+    <title>Perfil de Dependente</title>
+    <meta name="keywords" content="HTML5 Admin Template" />
+    <meta name="description" content="Porto Admin - Responsive HTML5 Template">
+    <meta name="author" content="okler.net">
+    <!-- Mobile Metas -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Web Fonts  -->
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+    <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+    <!-- Vendor CSS -->
+    <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
+    <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
+    <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+    <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
+    <!-- Skin CSS -->
+    <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
+    <!-- Theme Custom CSS -->
+    <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+    <link rel="stylesheet" href="../../css/profile-theme.css" />
+    <!-- Head Libs -->
+    <script src="../../Functions/onlyNumbers.js"></script>
+    <script src="../../Functions/onlyChars.js"></script>
+    <!--script src="../Functions/enviar_dados.js"></script-->
+    <script src="../../Functions/mascara.js"></script>
+    <script src="../../Functions/lista.js"></script>
+    <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+    <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
+    <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+    <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+    <!-- Specific Page Vendor CSS -->
+    <link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
+    <link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
+    <!-- Skin CSS -->
+    <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
+    <!-- Theme Custom CSS -->
+    <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+    <!-- Head Libs -->
+    <script src="../../assets/vendor/modernizr/modernizr.js"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+    <!-- Vendor -->
+    <script src="../../assets/vendor/jquery/jquery.min.js"></script>
+    <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+    <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
+    <script src="../../assets/vendor/nanoscroller/nanoscroller.js"></script>
+    <script src="../../assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+    <script src="../../assets/vendor/magnific-popup/magnific-popup.js"></script>
+    <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+    <!-- JavaScript Custom -->
+    <script src="../geral/post.js"></script>
+    <script src="../geral/formulario.js"></script>
+    <script>
+        var dependente = <?= $JSON_dependente; ?>;
+        var url = "dependente_listar_um.php",
+            data = "id_dependente=<?= $id_dependente ?>";
+        var formState = [],
+            form = {
+                set: function(dep) {
+                    this.formInfoPessoal(dep);
+                    this.formEndereco(dep);
+                    this.formDocumentacao(dep);
+                },
+                formInfoPessoal: function(dep) {
+                    $("#nomeForm").val(dep.nome);
+                    $("#sobrenomeForm").val(dep.sobrenome);
+                    $("#telefone").val(dep.telefone);
+                    $("#nascimento").val(dep.data_nascimento);
+                    $("#pai").val(dep.nome_pai);
+                    $("#mae").val(dep.nome_mae);
+                    if (dep.sexo) {
+                        let radio = $("input:radio[name=sexo]");
+                        radio.filter('[value=' + dep.sexo + ']').prop('checked', true);
+                    }
+                },
+                formEndereco: function(dep) {
+                    $("#cep").val(dep.cep);
+                    $("#uf").val(dep.estado);
+                    $("#cidade").val(dep.cidade);
+                    $("#bairro").val(dep.bairro);
+                    $("#rua").val(dep.logradouro);
+                    $("#complemento").val(dep.complemento);
+                    $("#ibge").val(dep.ibge);
+                    $("#numero_residencia").val(dep.numero_endereco);
+                    if (dep.numero_endereco == 'Não possui' || dep.numero_endereco == null) {
+                        $("#numResidencial").prop('checked', true).prop('disabled', true);
+                        $("#numero_residencia").prop('disabled', true);
+                    } else {
+                        $("#numero_residencia").val(dep.numero_endereco).prop('disabled', true);
+                        $("#numResidencial").prop('disabled', true);
+                    }
+                },
+                formDocumentacao: function(dep) {
+                    $("#rg").val(dep.registro_geral).prop('disabled', true);
+                    $("#orgao_emissor").val(dep.orgao_emissor).prop('disabled', true);
+                    $("#data_expedicao").val(dep.data_expedicao).prop('disabled', true);
+                    $("#cpf").val(dep.cpf).prop('disabled', true);
+                },
+            };
+
+        function switchButton(idForm) {
+            if (!formState[idForm]) {
+                $("#botaoEditar_" + idForm).text("Editar").prop("class", "btn btn-primary");
+            } else {
+                $("#botaoEditar_" + idForm).text("Cancelar").prop("class", "btn btn-danger");
+            }
+        }
+
+        function switchForm(idForm, setState = null) {
+            if (setState !== null) {
+                formState[idForm] = !setState;
+            }
+            if (formState[idForm]) {
+                formState[idForm] = false;
+                disableForm(idForm);
+
+                const dependenteSession = sessionStorage.getItem('dependente');
+
+                if (dependenteSession) {
+                    form.set(JSON.parse(dependenteSession));
+                }
+
+            } else {
+                formState[idForm] = true;
+                enableForm(idForm);
+            }
+            switchButton(idForm);
+        }
+
+        function getInfoDependente(id) {
+            if (!id) {
+                id = dependente.iddependente;
+            }
+
+            var url = "../../controle/control.php";
+            var data = "nomeClasse=DependenteControle&metodo=listarUm&id_dependente=" + id;
+
+            $.post(url, data, function(dependente) {
+                form.set(dependente);
+                sessionStorage.setItem('dependente', JSON.stringify(dependente));
+            });
+        }
+
+        function validarDatasNascimentoExpedicao() {
+            const dataNascimento = document.getElementById('nascimento').value;
+            const dataExpedicao = document.getElementById('data_expedicao').value;
+
+            if (dataNascimento && dataExpedicao) {
+                const nascimento = new Date(dataNascimento);
+                const expedicao = new Date(dataExpedicao);
+
+                if (expedicao < nascimento) {
+                    alert('Erro: A data de expedição do documento não pode ser anterior à data de nascimento!');
+                    document.getElementById('data_expedicao').value = '';
+                    document.getElementById('botaoSalvar_formDocumentacao').disabled = true;
+                    return false;
+                }
+            }
+
+            document.getElementById('botaoSalvar_formDocumentacao').disabled = false;
+            return true;
+        }
+
+        function validarDataNascimentoContraExpedicao() {
+            const dataNascimento = document.getElementById('nascimento').value;
+            const dataExpedicao = document.getElementById('data_expedicao').value;
+
+            if (dataNascimento && dataExpedicao) {
+                const nascimento = new Date(dataNascimento);
+                const expedicao = new Date(dataExpedicao);
+
+                if (nascimento > expedicao) {
+                    alert('Erro: A data de nascimento não pode ser posterior à data de expedição do documento!');
+                    document.getElementById('nascimento').value = '';
+                    document.getElementById('botaoSalvar_formInfoPessoal').disabled = true;
+                    return false;
+                }
+            }
+
+            document.getElementById('botaoSalvar_formInfoPessoal').disabled = false;
+            return true;
+        }
+
+        function submitForm(idForm) {
+            var data = getFormPostParams(idForm);
+
+            // Validações cruzadas entre os formulários
+            if (idForm === "formDocumentacao") {
+                if (!validarDatasNascimentoExpedicao()) {
+                    return false;
+                }
+            }
+
+            if (idForm === "formInfoPessoal") {
+                if (!validarDataNascimentoContraExpedicao()) {
+                    return false;
+                }
+            }
+
+            if (idForm === "formInfoPessoal") {
+                data += "&nomeClasse=DependenteControle&metodo=editarInfoPessoal&id_dependente=" + dependente.iddependente;
+                $.post("../../controle/control.php", data, function() {
+                    getInfoDependente(idForm);
+                });
+                return true;
+            }
+
+            var url;
+            switch (idForm) {
+                case "formEndereco":
+                    var data = $("#" + idForm).serialize();
+                    data += "&nomeClasse=DependenteControle";
+                    data += "&metodo=editarEndereco";
+                    data += "&id_dependente=" + dependente.id_dependente;
+
+                    $.post("../../controle/control.php", data, function() {
+                        getInfoDependente(idForm);
+                    });
+                    return true;
+                case "formDocumentacao":
+                    var data = $("#" + idForm).serialize();
+                    data += "&nomeClasse=DependenteControle";
+                    data += "&metodo=editarDocumentacao";
+                    data += "&id_dependente=" + dependente.id_dependente;
+
+                    $.post("../../controle/control.php", data, function() {
+                        getInfoDependente(idForm);
+                    });
+                    return true;
+                default:
+                    console.warn("Não existe nenhuma URL para: " + idForm);
+                    return false;
+            }
+
+            if (!data) {
+                window.alert("Preencha todos os campos obrigatórios!");
+                return false;
+            }
+
+            post(url, "id_pessoa=" + dependente.id_pessoa + "&" + data);
+            getInfoDependente(idForm);
+        }
+        var id_dependente = <?= $id_dependente ?>;
+        $(function() {
+            $("#header").load("../header.php");
+            $(".menuu").load("../menu.php");
+            if (id_dependente) {
+                getInfoDependente(id_dependente);
+            }
+            post("./dependente_documento.php", "id_dependente=" + dependente.id_dependente, function(response) {
+                listarDocDependente(response)
+                $('#datatable-documentos').DataTable({
+                    "order": [
+                        [0, "asc"]
+                    ]
+                });
+            });
+
+        });
+    </script>
+    <script type="text/javascript">
+        function numero_residencial() {
+            if ($("#numResidencial").prop('checked')) {
+                $("#numero_residencia").val('');
+                document.getElementById("numero_residencia").disabled = true;
+            } else {
+                document.getElementById("numero_residencia").disabled = false;
+            }
+        }
+
+        function meu_callback(conteudo) {
+            if (!("erro" in conteudo)) {
+                //Atualiza os campos com os valores.
+                document.getElementById('rua').value = (conteudo.logradouro);
+                document.getElementById('bairro').value = (conteudo.bairro);
+                document.getElementById('cidade').value = (conteudo.localidade);
+                document.getElementById('uf').value = (conteudo.uf);
+                document.getElementById('ibge').value = (conteudo.ibge);
+            } //end if.
+            else {
+                //CEP não Encontrado.
+                limpa_formulário_cep();
+                alert("CEP não encontrado.");
+            }
+        }
+
+        function pesquisacep(valor) {
+            //Nova variável "cep" somente com dígitos.
+            var cep = valor.replace(/\D/g, '');
+            //Verifica se campo cep possui valor informado.
+            if (cep != "") {
+                //Expressão regular para validar o CEP.
+                var validacep = /^[0-9]{8}$/;
+                //Valida o formato do CEP.
+                if (validacep.test(cep)) {
+                    //Preenche os campos com "..." enquanto consulta webservice.
+                    document.getElementById('rua').value = "...";
+                    document.getElementById('bairro').value = "...";
+                    document.getElementById('cidade').value = "...";
+                    document.getElementById('uf').value = "...";
+                    document.getElementById('ibge').value = "...";
+                    //Cria um elemento javascript.
+                    var script = document.createElement('script');
+                    //Sincroniza com o callback.
+                    script.src = 'https://viacep.com.br/ws/' + cep + '/json/?callback=meu_callback';
+                    //Insere script no documento e carrega o conteúdo.
+                    document.body.appendChild(script);
+                } //end if.
+                else {
+                    //cep é inválido.
+                    limpa_formulário_cep();
+                    alert("Formato de CEP inválido.");
+                }
+            } //end if.
+            else {
+                //cep sem valor, limpa formulário.
+                limpa_formulário_cep();
+            }
+        };
+
+        function validarCPF(strCPF) {
+            if (!testaCPF(strCPF)) {
+                $('#cpfInvalido').show();
+                document.getElementById("enviarEditar").disabled = true;
+            } else {
+                $('#cpfInvalido').hide();
+                document.getElementById("enviarEditar").disabled = false;
+            }
+        }
+
+        function listarDocDependente(docdependentes) {
+            $("#doc-tab").empty();
+            $.each(docdependentes, function(i, item) {
+                $("#doc-tab")
+                    .append($("<tr>")
+                        .append($("<td>").text(item.descricao))
+                        .append($("<td>").text(item.data))
+                        .append($("<td style='display: flex; justify-content: space-evenly;'>")
+                            .append($("<a href='dependente_docdependente.php?action=download&id_doc=" + item.id_doc + "' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
+                            .append($("<a href='#' onclick='excluir_docdependente(" + item.id_doc + ")' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+                        )
+                    )
+            });
+        }
+
+        function excluir_docdependente(id_doc) {
+            if (!window.confirm("Tem certeza que deseja remover esse documento?")) {
+                return false;
+            }
+
+            const url = `dependente_docdependente.php?action=excluir&id_doc=${id_doc}&id_dependente=${dependente.id_dependente}`;
+            post(url, '', listarDocDependente);
+        }
+
+        function gerarDocFuncional(response) {
+            var documento = response;
+            $('#tipoDocumento').empty();
+            $('#tipoDocumento').append('<option selected disabled>Selecionar...</option>');
+            $.each(documento, function(i, item) {
+                $('#tipoDocumento').append('<option value="' + item.id_docdependentes + '">' + item.nome_docdependente + '</option>');
+            });
+        }
+
+        function adicionarDocDependente() {
+            url = 'dependente_docdependente.php';
+            var nome_docdependente = window.prompt("Cadastre um novo tipo de Documento:");
+            if (!nome_docdependente) {
+                return
+            }
+            nome_docdependente = nome_docdependente.trim();
+            if (nome_docdependente == '') {
+                return
+            }
+            data = "action=adicionar&nome=" + nome_docdependente;
+            post(url, data, gerarDocFuncional);
+        }
+    </script>
+    <script>
+        function goBack() {
+            window.history.back()
+        }
+    </script>
+    <style type="text/css">
+        .btn span.fa-check {
+            opacity: 0;
+        }
+
+        .btn.active span.fa-check {
+            opacity: 1;
+        }
+
+        #frame {
+            width: 100%;
+        }
+
+        .obrig {
+            color: rgb(255, 0, 0);
+        }
+
+        .form-control {
+            padding: 0 12px;
+        }
+
+        .btn i {
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="body">
+        <div id="header"></div>
+        <!-- end: header -->
+        <div class="inner-wrapper">
+            <!-- start: sidebar -->
+            <aside id="sidebar-left" class="sidebar-left menuu"></aside>
+            <!-- end: sidebar -->
+            <section role="main" class="content-body">
+                <header class="page-header">
+                    <h2>Dependente</h2>
+                    <div class="right-wrapper pull-right">
+                        <ol class="breadcrumbs">
+                            <li>
+                                <a href="home.php">
+                                    <i class="fa fa-home"></i>
+                                </a>
+                            </li>
+                            <li><span>Páginas</span></li>
+                            <li><span>Dependente</span></li>
+                        </ol>
+                        <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+                    </div>
+                </header>
+                <!-- start: page -->
+                <!-- Mensagem -->
+                <?php sessionMsg(); ?>
+                <div class="panel">
+                    <div class="panel-body">
+                        <h3>Dependente de: <?= $dependente["nome_funcionario"] . " " . $dependente["sobrenome_funcionario"]; ?></h3>
+                        <div class="tabs">
+                            <ul class="nav nav-tabs tabs-primary">
+                                <li class="active">
+                                    <a href="#overview" data-toggle="tab">Visão Geral</a>
+                                </li>
+                                <li>
+                                    <a href="#documentacao" data-toggle="tab">Documentação</a>
+                                </li>
+                                <li>
+                                    <a href="#arquivo" data-toggle="tab">Arquivo</a>
+                                </li>
+                                <li>
+                                    <a href="#endereco" data-toggle="tab">Endereço</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content">
+                                <!-- Aba de visão geral -->
+                                <div id="overview" class="tab-pane active" role="tabpanel">
+                                    <h4>Informações Pessoais</h4><br>
+                                    <form action="../../controle/control.php" method="POST" id="formInfoPessoal">
+                                        <input type="hidden" name="nomeClasse" value="DependenteControle">
+                                        <input type="hidden" name="metodo" value="editarInfoPessoal">
+                                        <input type="hidden" name="id_dependente" value="<?= (int)$id_dependente ?>">
+                                        <input type="hidden" name="id_pessoa" value="<?= (int)$id_pessoa ?>">
+
+                                        <fieldset id="formInfoPessoal">
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="nomeForm">Nome</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)" required minlength="2" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="sobrenomeForm">Sobrenome</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" required minlength="2" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
+                                                <div class="col-md-8">
+                                                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                                                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-female" style="font-size: 20px;"></i></label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="telefone">Telefone</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeydown="mascara('(##)#####-####',this,event)" disabled>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="nascimento">Nascimento</label>
+                                                <div class="col-md-8">
+                                                    <input type="date" class="form-control" name="nascimento" id="nascimento" max="<?= date('Y-m-d') ?>" onchange="validarDataNascimentoContraExpedicao()" disabled>
+                                                </div>
+                                            </div>
+                                            <script>
+                                                function Onlychars(e) {
+                                                    var input = e.target;
+                                                    input.value = input.value.replace(/[^a-zA-ZÀ-ÿ\s]/g, '');
+                                                }
+                                            </script>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="pai">Nome do pai</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control"
+                                                        name="nome_pai" id="pai"
+                                                        onkeypress="return Onlychars(event)"
+                                                        disabled>
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="mae">Nome da mãe</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control"
+                                                        name="nome_mae" id="mae"
+                                                        onkeypress="return Onlychars(event)"
+                                                        disabled>
+
+                                                </div>
+                                            </div>
+                                            <div class="form-group center">
+                                                <button type="button" class="btn btn-primary"
+                                                    id="botaoEditar_formInfoPessoal"
+                                                    onclick="switchForm('formInfoPessoal')">Editar</button>
+                                                </button>
+                                                <input type="submit" class="btn btn-primary"
+                                                    disabled="true"
+                                                    id="botaoSalvar_formInfoPessoal"
+                                                    value="Salvar">
+
+                                            </div>
+                                        </fieldset>
+                                    </form>
+
+                                    <hr>
+                                </div>
+                                <!-- Aba de arquivos do dependente -->
+                                <div id="arquivo" class="tab-pane" role="tabpanel">
+                                    <section class="panel">
+                                        <header class="panel-heading">
+                                            <div class="panel-actions">
+                                                <a href="#" class="fa fa-caret-down"></a>
+                                            </div>
+                                            <h2 class="panel-title">Arquivos</h2>
+                                        </header>
+                                        <div class="panel-body">
+                                            <table class="table table-bordered table-striped mb-none" id="datatable-docfuncional">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Arquivo</th>
+                                                        <th>Data</th>
+                                                        <th>Ação</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="doc-tab"></tbody>
+                                            </table>
+                                            <br>
+                                            <!-- Button trigger modal -->
+                                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal">
+                                                Adicionar arquivo
+                                            </button>
+                                            <!-- Modal Form Documentos -->
+                                            <div class="modal fade" id="docFormModal" tabindex="-1" role="dialog" aria-labelledby="docFormModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header" style="display: flex;justify-content: space-between;">
+                                                            <h5 class="modal-title" id="exampleModalLabel">Adicionar Documento</h5>
+                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button>
+                                                        </div>
+                                                        <form action='docdependente_upload.php' method='post' enctype='multipart/form-data' id='funcionarioDocForm'>
+                                                            <div class="modal-body" style="padding: 15px 40px">
+                                                                <div class="form-group" style="display: grid;">
+                                                                    <label class="my-1 mr-2" for="id_docdependente">Tipo de Documento</label><br>
+                                                                    <div style="display: flex;">
+                                                                        <select name="id_docdependente" class="custom-select my-1 mr-sm-2" id="tipoDocumento" required>
+                                                                            <option selected disabled>Selecionar...</option>
+                                                                            <?php
+                                                                            foreach ($pdo->query("SELECT * FROM funcionario_docdependentes ORDER BY nome_docdependente ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                                                                echo ("<option value='" . $item["id_docdependentes"] . "' >" . htmlspecialchars($item["nome_docdependente"]) . "</option>");
+                                                                            }
+                                                                            ?>
+                                                                        </select>
+                                                                        <a onclick="adicionarDocDependente()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group">
+                                                                    <label for="arquivoDocumento">Arquivo do Documento</label>
+                                                                    <input name="arquivo" type="file" class="form-control-file" id="arquivoDocumento" accept="png;jpeg;jpg;pdf;docx;doc;odp" required>
+                                                                </div>
+                                                                <input type="number" name="id_dependente" value="<?= $id_dependente ?>" style='display: none;'>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                                                <input type="submit" value="Enviar" class="btn btn-primary">
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                                <!-- Aba de documentação do dependente -->
+                                <div id="documentacao" class="tab-pane" role="tabpanel">
+                                    <h4>Documentação</h4>
+                                    <form method='POST' id="formDocumentacao">
+                                        <fieldset id="formDocumentacao">
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeydown="mascara('##.###.###-#',this,event)">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
+                                                <div class="col-md-8">
+                                                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max="<?php echo date('Y-m-d'); ?>" onchange="validarDatasNascimentoExpedicao()">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeydown="mascara('###.###.###-##',this,event)" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="profileCompany"></label>
+                                                <div class="col-md-6">
+                                                    <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+                                                </div>
+                                            </div>
+                                            <br />
+                                            <div class="form-group center">
+                                                <button type="button" class="btn btn-primary" id="botaoEditar_formDocumentacao" onclick="switchForm('formDocumentacao')">Editar</button>
+                                                <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvar_formDocumentacao" onclick="submitForm('formDocumentacao')">
+                                            </div>
+                                        </fieldset>
+                                    </form>
+                                </div>
+                                <!-- Aba de endereço do dependente -->
+                                <div id="endereco" class="tab-pane" role="tabpanel">
+                                    <h4>Endereço</h4>
+                                    <form id="formAlterarEnderecoDependente" action="dependente_editarEndereco.php?id_pessoa=<?php echo $id_pessoa ?>&idatendido_familiares=<?php echo $id_dependente ?>" method='POST'>
+                                        <fieldset id="formEndereco">
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="cep">CEP</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" name="cep" value="" size="10" onblur="pesquisacep(this.value);" class="form-control" id="cep" maxlength="9" placeholder="Ex: 22222-222" onkeydown="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="uf">Estado</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" name="uf" size="60" class="form-control" id="uf">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="cidade">Cidade</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" size="40" class="form-control" name="cidade" id="cidade">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="bairro">Bairro</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" name="bairro" size="40" class="form-control" id="bairro">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="rua">Logradouro</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" name="rua" size="2" class="form-control" id="rua">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="profileCompany">Número residencial</label>
+                                                <div class="col-md-4">
+                                                    <input type="number" min="0" oninput="this.value = Math.abs(this.value)" class="form-control" name="numero_residencia" id="numero_residencia">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <label>Não possuo número
+                                                        <input type="checkbox" id="numResidencial" name="naoPossuiNumeroResidencial" style="margin-left: 4px" onclick="return numero_residencial()">
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" class="form-control" name="complemento" id="complemento">
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="ibge">IBGE</label>
+                                                <div class="col-md-8">
+                                                    <input type="text" size="8" name="ibge" class="form-control" id="ibge">
+                                                </div>
+                                            </div>
+                                            <div class="form-group center">
+                                                <button type="button" class="btn btn-primary" id="botaoEditar_formEndereco" onclick="switchForm('formEndereco')">Editar</button>
+                                                <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvar_formEndereco">
+                                            </div>
+                                        </fieldset>
+                                    </form>
+                                </div>
+                                <div class="justify-content-between" style="height: 30px;">
+                                    <a type="buton" onclick="goBack()" class="btn btn-secondary" style="float: right;">
+                                        Voltar
+                                        <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- end: page -->
+            </section>
+        </div>
+    </section>
+
+    <!-- Vendor -->
+    <script src="../../assets/vendor/select2/select2.js"></script>
+    <script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+    <script src="../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+    <script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+    <!-- Theme Base, Components and Settings -->
+    <script src="../../assets/javascripts/theme.js"></script>
+    <!-- Theme Custom -->
+    <script src="../../assets/javascripts/theme.custom.js"></script>
+    <!-- Theme Initialization Files -->
+    <script src="../../assets/javascripts/theme.init.js"></script>
+    <!-- Examples -->
+    <script src="../../assets/javascripts/tables/examples.datatables.default.js"></script>
+    <script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+    <script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+    <script src="../../Functions/cep_form_validation.js"></script>
+    <script>
+        inicializarValidacaoCepFormulario({
+            formId: "formAlterarEnderecoDependente"
+        });
+    </script>
+    <div align="right">
+        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+    </div>
+</body>
+
+</html>
