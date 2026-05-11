@@ -26,12 +26,17 @@ add_backports_repo() {
     fi
 }
 
-install_deps(){
+install_localdeps(){
     apt update
-    apt install sudo git curl dialog -y
-    apt install python3-certbot-apache -y
+    apt install sudo git curl -y
+    apt install openssl -y
     apt install mariadb-server -y
-    apt install apache2  php8.2 php8.2-cli php8.2-common php8.2-curl php8.2-gd php8.2-intl php8.2-mbstring php8.2-mysql php8.2-opcache php8.2-readline php8.2-soap php8.2-xml php8.2-xmlrpc php8.2-zip -y
+    apt install apache2 php8.2 php8.2-cli php8.2-common php8.2-curl php8.2-gd php8.2-intl php8.2-mbstring php8.2-mysql php8.2-opcache php8.2-readline php8.2-soap php8.2-xml php8.2-xmlrpc php8.2-zip -y    
+}
+
+install_internetdeps(){
+    install_localdeps
+    apt install python3-certbot-apache -y
     apt install -t bookworm-backports libapache2-mod-qos libpcre3 libpcre3-dev libapache2-mod-evasive -y
     
     mkdir /var/log/apache2/evasive
@@ -40,7 +45,7 @@ install_deps(){
 }
 
 download_wegia(){
-    sudo -u www-data git -C /tmp clone https://github.com/LabRedesCefetRJ/WeGIA.git
+    sudo -u www-data git -C /tmp clone -b master --single-branch https://github.com/LabRedesCefetRJ/WeGIA.git
     mv /tmp/WeGIA /var/www/
 
     mkdir -p /var/www/bkpWeGIA
@@ -55,11 +60,11 @@ conf_wegia_internet(){
 cat <<EOF > /etc/apache2/sites-available/wegia.conf
 <VirtualHost *:80>
     ServerName              wegia.instituicao.org 
-    DocumentRoot            /var/www/WeGIA
+    DocumentRoot            /var/www/WeGIA/web/
     #ErrorDocument 404       http://wegia.instituicao.org/
     #ErrorDocument 403       http://wegia.instituicao.org/
 
-    <Directory /var/www/WeGIA>
+    <Directory /var/www/WeGIA/web>
         Options -Indexes
         AllowOverride All
         Require all granted
@@ -122,7 +127,7 @@ EOF
 }
 
 conf_wegia_local(){
-    ln -s /var/www/WeGIA /var/www/html/WeGIA
+    ln -s /var/www/WeGIA/web /var/www/html/WeGIA
     a2enmod ssl
     a2ensite default-ssl.conf 
     systemctl restart apache2
@@ -139,9 +144,23 @@ create_database(){
     mysql -u root -e "FLUSH PRIVILEGES;"
 }
 
+############################################
+# Pré dependencias...
+apt install dialog locales -y
+if ! locale -a | grep -q "pt_BR.utf8"; then
+    echo "Configurando locale pt_BR.UTF-8..."
+    sed -i '/pt_BR.UTF-8 UTF-8/s/^# //' /etc/locale.gen
+    locale-gen
+    update-locale LANG=pt_BR.UTF-8
+else
+    echo "Locale pt_BR.UTF-8 já está configurado."
+fi
+export LANG=pt_BR.UTF-8
+
+
 
 dialog --title "Aceitação de Licença" --yesno "\
-Bem-vindo ao instalador do WeGIA! Este software está licenciado sob a Licença Pública Geral GNU (GPL).
+Bem-vindo ao instalador do WeGIA! Este software é distribuído sob a Licença Pública Geral GNU (GPL).
 Você está prestes a instalar o WeGIA. Ao continuar, você concorda com os termos de licenciamento e aceita as responsabilidades pelo uso do software.\n
 O WeGIA é fornecido no estado em que se encontra, sem garantias de qualquer tipo.\n
 Você aceita os termos de licenciamento do WeGIA?" 15 60
@@ -168,7 +187,7 @@ case $CHOICE in
         clear
         check_debian_12
         add_backports_repo
-        install_deps
+        install_localdeps
         download_wegia
         conf_wegia_local
         create_database
@@ -178,7 +197,7 @@ case $CHOICE in
         clear
         check_debian_12
         add_backports_repo
-        install_deps
+        install_internetdeps
         download_wegia
         conf_wegia_internet
         create_database
