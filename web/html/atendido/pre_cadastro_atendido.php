@@ -15,6 +15,7 @@ permissao($_SESSION['id_pessoa'], 12, 7);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/html/geral/msg.php";
 ?>
 
 
@@ -200,6 +201,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 
                 <section class="panel">
+                    <?php sessionMsg(); ?>
                     <?php
                     if (isset($_GET['msg_c'])) {
                         $msg = filter_input(INPUT_GET, 'msg_c', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -219,13 +221,13 @@ require_once ROOT . "/html/personalizacao_display.php";
                     <div class="panel-body">
 
                         <form method="GET" action="../../controle/control.php">
-                            <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                             <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                             <br>
                             <input type="hidden" name="nomeClasse" value="AtendidoControle">
                             <input type="hidden" name="metodo" value="selecionarCadastro">
                             <input type='submit' value='Enviar' name='enviar' id='enviar' class='mb-xs mt-xs mr-xs btn btn-primary'>
-                            <button type="button" id="btnSemCpf" class="btn btn-warning"> Cadastrar sem CPF</bottun>
+                            <button type="button" id="btnSemCpf" class="btn btn-warning">Cadastrar sem CPF</button>
                         </form>
                     </div>
                 </section>

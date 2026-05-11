@@ -48,6 +48,8 @@ class Dependente
 
     public function setNome(string $nome)
     {
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+
         if (strlen($nome) < 2)
             throw new InvalidArgumentException('Nome deve ter pelo menos 2 caracteres.', 412);
 
@@ -62,6 +64,8 @@ class Dependente
 
     public function setSobrenome(string $sobrenome)
     {
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+
         if (strlen($sobrenome) < 2)
             throw new InvalidArgumentException('Sobrenome deve ter pelo menos 2 caracteres.', 412);
 
@@ -128,6 +132,8 @@ class Dependente
 
     public function setNomePai(string $nome)
     {
+        Util::validarNomePessoaOuLancar($nome, 'nome do pai', 412);
+
         if (strlen($nome) < 2)
             throw new InvalidArgumentException('Nome do pai deve ter pelo menos 2 caracteres.', 412);
 
@@ -142,6 +148,8 @@ class Dependente
 
     public function setNomeMae(string $nome)
     {
+        Util::validarNomePessoaOuLancar($nome, 'nome da mãe', 412);
+
         if (strlen($nome) < 2)
             throw new InvalidArgumentException('Nome da mãe deve ter pelo menos 2 caracteres.', 412);
 

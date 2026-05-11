@@ -356,12 +356,12 @@ $atendidoOcorrencia = $atendidoOcorrenciaDao->listar($id);
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label" for="profileFirstName">Nome</label>
                                                     <div class="col-md-8">
-                                                        <input type="text" class="form-control" disabled name="nome" id="nome" id="profileFirstName" onkeypress="return Onlychars(event)" required>
+                                                        <input type="text" class="form-control" disabled name="nome" id="nome" onkeypress="return Onlychars(event)" required>
                                                         <?php
                                                         // foreach($nome as $key => $value)
                                                         // {
                                                         //     // echo "" . "" . $nome[$key]['nome'] . " " . $nome[$key]['sobrenome'];
-                                                        //     // echo "<input type='text' class='form-control' disabled name='nome' id='nome' id='profileFirstName' onkeypress='return Onlychars(event)' value='$nome['nome']' required>"
+                                                        //     // echo "<input type='text' class='form-control' disabled name='nome' id='nome' onkeypress='return Onlychars(event)' value='$nome['nome']' required>"
                                                         // }
                                                         ?>
                                                     </div>
@@ -370,7 +370,7 @@ $atendidoOcorrencia = $atendidoOcorrenciaDao->listar($id);
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label" for="profileFirstName">Tipo da ocorrência</label>
                                                     <div class="col-md-8">
-                                                        <input type="text" class="form-control" disabled name="nome" id="tipo" id="tipo" onkeypress="return Onlychars(event)" required>
+                                                        <input type="text" class="form-control" disabled name="nome" id="tipo" onkeypress="return Onlychars(event)" required>
                                                         <!-- <?php
                                                                 foreach ($tipo as $key => $value) {
                                                                     echo "" . "" . $tipo[$key]['descricao'];
@@ -382,7 +382,7 @@ $atendidoOcorrencia = $atendidoOcorrenciaDao->listar($id);
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label" for="profileFirstName">Autor da ocorrência</label>
                                                     <div class="col-md-8">
-                                                        <input type="text" class="form-control" disabled name="autor" id="autor" id="autor" onkeypress="return Onlychars(event)" required>
+                                                        <input type="text" class="form-control" disabled name="autor" id="autor" onkeypress="return Onlychars(event)" required>
                                                     </div>
                                                 </div>
                                                 <div class="form-group">
@@ -394,7 +394,7 @@ $atendidoOcorrencia = $atendidoOcorrenciaDao->listar($id);
                                                 <div class="form-group">
                                                     <label class="col-md-2 control-label" for="profileFirstName">Descrição</label>
                                                     <div class="col-md-8">
-                                                        <textarea type="text" class="form-control" disabled name="autor" id="descricao" id="descricao" onkeypress="return Onlychars(event)" required>
+                                                        <textarea type="text" class="form-control" disabled name="autor" id="descricao" onkeypress="return Onlychars(event)" required>
                                                 </textarea>
                                                     </div>
                                                 </div>
@@ -409,13 +409,13 @@ $atendidoOcorrencia = $atendidoOcorrenciaDao->listar($id);
                                                 <!-- <div class="form-group">
                                                 <label class="col-md-2 control-label" for="profileFirstName">Descrição</label>
                                                 <div class="col-md-8">
-                                                    <textarea type="text" class="form-control" disabled name="descricao" id="descricao" id="profileFirstName" onkeypress="return Onlychars(event)">
+                                                    <textarea type="text" class="form-control" disabled name="descricao" id="descricao" onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-2 control-label" for="profileFirstName">Descrição</label>
                                                 <div class="col-md-8">
-                                                    <textarea type="text" class="form-control" disabled name="descricao" id="descricao" id="profileFirstName" onkeypress="return Onlychars(event)">
+                                                    <textarea type="text" class="form-control" disabled name="descricao" id="descricao" onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>            -->
 
