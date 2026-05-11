@@ -576,53 +576,70 @@ try {
 				</div>
 
 				<div class="modal fade" id="modalArquivosProcesso" tabindex="-1" role="dialog" aria-hidden="true">
-					<div class="modal-dialog modal-lg" role="document">
+					<div class="modal-dialog modal-lg modal-arquivos-processo" role="document">
 						<div class="modal-content">
-							<div class="modal-header">
-								<h5 class="modal-title">
-									Arquivos do Processo <span id="tituloProcesso"></span>
-								</h5>
+							<div class="modal-header processo-arquivos-header">
 								<button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
 									<span aria-hidden="true">&times;</span>
 								</button>
+								<div class="processo-arquivos-title-wrap">
+									<div>
+										<h5 class="modal-title">Arquivos do Processo</h5>
+										<p id="tituloProcesso" class="processo-arquivos-subtitle"></p>
+									</div>
+								</div>
 							</div>
-							<div class="modal-body">
-								<div id="lista-arquivos-processo"></div>
+							<div class="modal-body processo-arquivos-body">
+								<section class="processo-arquivos-section">
+									<div class="processo-arquivos-section-header">
+										<h6>Arquivos anexados</h6>
+									</div>
+									<div id="lista-arquivos-processo" class="processo-arquivos-lista"></div>
+								</section>
 
-								<hr>
-								<form id="formUploadDocProcesso" method="post" action="../../controle/control.php" enctype="multipart/form-data">
-									<input type="hidden" name="nomeClasse" value="PaArquivoControle">
-									<input type="hidden" name="metodo" value="upload">
-									<input type="hidden" name="id_processo" id="upload_id_processo">
+								<section class="processo-arquivos-section processo-arquivos-upload">
+									<div class="processo-arquivos-section-header">
+										<h6>Novo anexo</h6>
+									</div>
+									<form id="formUploadDocProcesso" method="post" action="../../controle/control.php" enctype="multipart/form-data">
+										<input type="hidden" name="nomeClasse" value="PaArquivoControle">
+										<input type="hidden" name="metodo" value="upload">
+										<input type="hidden" name="id_processo" id="upload_id_processo">
 
-									<div class="form-group">
-										<label class="my-1 mr-2" for="tipoDocumentoProcesso">Tipo de Documento <span class="text-danger">*</span></label>
-										<div style="display: flex; align-items: center; gap: 10px;">
-											<select name="id_tipo_documentacao" class="form-control" id="tipoDocumentoProcesso" required style="flex: 1;">
-												<option selected disabled value="">Selecionar...</option>
-												<?php
-												foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-													echo "<option value='" . $item["idatendido_docs_atendidos"] . "'>" . htmlspecialchars($item["descricao"]) . "</option>";
-												}
-												?>
-											</select>
-											<a href="javascript:void(0)" onclick="adicionarTipoProcesso()">
-												<i class="fas fa-plus" style="font-size: 20px;"></i>
-											</a>
+										<div class="processo-arquivos-grid">
+											<div class="form-group processo-arquivos-campo">
+												<label for="tipoDocumentoProcesso">Tipo de Documento <span class="text-danger">*</span></label>
+												<div class="processo-arquivos-select-row">
+													<select name="id_tipo_documentacao" class="form-control" id="tipoDocumentoProcesso" required>
+														<option selected disabled value="">Selecionar...</option>
+														<?php
+														foreach ($pdo->query("SELECT * FROM atendido_docs_atendidos ORDER BY descricao ASC")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+															echo "<option value='" . $item["idatendido_docs_atendidos"] . "'>" . htmlspecialchars($item["descricao"]) . "</option>";
+														}
+														?>
+													</select>
+													<a href="javascript:void(0)" class="btn btn-default processo-arquivos-add-tipo" onclick="adicionarTipoProcesso()" title="Adicionar tipo de documento" aria-label="Adicionar tipo de documento">
+														<i class="fas fa-plus" aria-hidden="true"></i>
+													</a>
+												</div>
+											</div>
+
+											<div class="form-group processo-arquivos-campo">
+												<label for="arquivoProcesso">Arquivo <span class="text-danger">*</span></label>
+												<p class="help-block processo-arquivos-ajuda">Permitido envio de até <?= ini_get('upload_max_filesize') ?> de tamanho por documento.</p>
+												<input type="file" name="arquivo" class="form-control processo-arquivos-file" id="arquivoProcesso"
+													accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odp" required>
+											</div>
 										</div>
-									</div>
 
-									<div class="form-group">
-										<label for="arquivoProcesso">Arquivo<span class="text-danger">*</span></label>
-										<p>Permitido envio de até <?= ini_get('upload_max_filesize') ?> de tamanho por documento.</p>
-										<input type="file" name="arquivo" class="form-control-file" id="arquivoProcesso"
-											accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.odp" required>
-									</div>
-
-									<button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)" style="margin-top: 10px;">
-										<i class="fa fa-upload"></i> Anexar arquivo
-									</button>
-								</form>
+										<div class="processo-arquivos-actions">
+											<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+											<button type="submit" class="btn btn-primary" onclick="return verificaTipoProcesso(event)">
+												<i class="fa fa-upload" aria-hidden="true"></i> Anexar arquivo
+											</button>
+										</div>
+									</form>
+								</section>
 							</div>
 						</div>
 					</div>
@@ -697,6 +714,199 @@ try {
 	<style type="text/css">
 		.obrig {
 			color: #ff0000;
+		}
+
+		#modalArquivosProcesso .modal-arquivos-processo {
+			width: min(920px, calc(100vw - 32px));
+			margin: 30px auto;
+		}
+
+		#modalArquivosProcesso .modal-content {
+			border-radius: 6px;
+			overflow: hidden;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-header {
+			padding: 20px 24px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-header .close {
+			margin-top: 4px;
+			font-size: 28px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-title-wrap {
+			display: flex;
+			align-items: center;
+			padding-right: 36px;
+		}
+
+		#modalArquivosProcesso .modal-title {
+			margin: 0;
+			font-size: 18px;
+			font-weight: 600;
+			line-height: 1.3;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-subtitle {
+			margin: 3px 0 0;
+			font-size: 13px;
+			line-height: 1.35;
+			word-break: break-word;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-body {
+			padding: 24px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-section + .processo-arquivos-section {
+			margin-top: 24px;
+			padding-top: 24px;
+			border-top: 1px solid #ddd;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-section-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 14px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-section-header h6 {
+			margin: 0;
+			font-size: 14px;
+			font-weight: 700;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-lista {
+			max-height: 300px;
+			overflow: auto;
+			border: 1px solid #ddd;
+			border-radius: 6px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-lista .alert {
+			margin: 0;
+			border: 0;
+			border-radius: 0;
+			padding: 16px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-lista table {
+			margin-bottom: 0;
+			min-width: 640px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-lista th {
+			font-weight: 600;
+			white-space: nowrap;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-lista td {
+			vertical-align: middle;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-upload {
+			margin-left: -24px;
+			margin-right: -24px;
+			margin-bottom: -24px;
+			padding-left: 24px;
+			padding-right: 24px;
+			padding-bottom: 24px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-grid {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			gap: 20px;
+			align-items: start;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-campo {
+			margin-bottom: 0;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-campo label {
+			display: block;
+			margin-bottom: 8px;
+			font-weight: 600;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-select-row {
+			display: flex;
+			gap: 10px;
+			align-items: stretch;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-select-row select {
+			min-width: 0;
+			flex: 1;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-add-tipo {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 42px;
+			flex: 0 0 42px;
+			padding: 0;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-ajuda {
+			margin-top: -2px;
+			margin-bottom: 8px;
+			font-size: 12px;
+			line-height: 1.35;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-file {
+			height: auto;
+			padding: 8px 10px;
+		}
+
+		#modalArquivosProcesso .processo-arquivos-actions {
+			display: flex;
+			justify-content: flex-end;
+			gap: 10px;
+			margin-top: 22px;
+		}
+
+		@media (max-width: 767px) {
+			#modalArquivosProcesso .modal-arquivos-processo {
+				width: calc(100vw - 20px);
+				margin: 10px auto;
+			}
+
+			#modalArquivosProcesso .processo-arquivos-header,
+			#modalArquivosProcesso .processo-arquivos-body {
+				padding: 18px;
+			}
+
+			#modalArquivosProcesso .processo-arquivos-upload {
+				margin-left: -18px;
+				margin-right: -18px;
+				margin-bottom: -18px;
+				padding-left: 18px;
+				padding-right: 18px;
+				padding-bottom: 18px;
+			}
+
+			#modalArquivosProcesso .processo-arquivos-grid {
+				grid-template-columns: 1fr;
+				gap: 16px;
+			}
+
+			#modalArquivosProcesso .processo-arquivos-lista {
+				max-height: 260px;
+			}
+
+			#modalArquivosProcesso .processo-arquivos-actions {
+				flex-direction: column-reverse;
+			}
+
+			#modalArquivosProcesso .processo-arquivos-actions .btn {
+				width: 100%;
+			}
 		}
 	</style>
 
@@ -868,7 +1078,14 @@ function formatCpfField(field) {
         }
 
         function verificaTipoProcesso(ev) {
+            const idProcesso = document.getElementById('upload_id_processo');
             const tipo = document.getElementById('tipoDocumentoProcesso');
+
+            if (!idProcesso.value || isNaN(idProcesso.value) || idProcesso.value < 1) {
+                alert('Erro: processo não informado para anexar o arquivo.');
+                ev.preventDefault();
+                return false;
+            }
 
             if (!tipo.value || isNaN(tipo.value) || tipo.value < 1) {
                 alert('Erro: selecione um tipo de documento adequado antes de prosseguir.');
@@ -878,6 +1095,24 @@ function formatCpfField(field) {
 
             return true;
         }
+
+        $(document).on('click', '.btn-arquivos-processo', function() {
+            const idProcesso = $(this).attr('data-id_processo') || $(this).data('id_processo');
+            const nome = $(this).attr('data-nome') || '';
+
+            $('#upload_id_processo').val(idProcesso || '');
+            $('#tituloProcesso').text(nome ? '- ' + nome : '');
+            $('#tipoDocumentoProcesso').val('');
+            $('#arquivoProcesso').val('');
+
+            if (idProcesso) {
+                $('#lista-arquivos-processo').load(
+                    'lista_arquivos_processo.php?id_processo=' + encodeURIComponent(idProcesso)
+                );
+            } else {
+                $('#lista-arquivos-processo').html('<div class="alert alert-danger">Processo inválido.</div>');
+            }
+        });
 
         function adicionarTipoProcesso() {
 			var tipo = window.prompt("Cadastre um Novo Tipo de Documento:");
