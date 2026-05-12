@@ -1204,4 +1204,27 @@ class Util
 			    return 'bg-info';
 	    }
     }
+
+    /**
+     * Lista os arquivos de um diretório específico
+     * Remove os diretórios '.' e '..' e o arquivo 'index.php' da lista
+     * 
+     * @param string $diretorio Caminho do diretório a ser listado
+     * @return array|bool Array com os nomes dos arquivos ou false se o diretório não existe
+     */
+    public static function listarArquivos(string $diretorio)
+    {
+        // Verifica se o diretório existe
+        if (!is_dir($diretorio)) {
+            return false;
+        }
+
+        // Abre o diretório
+        $arquivos = scandir($diretorio);
+
+        // Remove os diretórios '.' e '..' e o arquivo index.php da lista de arquivos
+        $arquivos = array_diff($arquivos, array('.', '..', 'index.php'));
+
+        return $arquivos;
+    }
 }
