@@ -522,6 +522,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`estoque` (
   `id_produto` INT(11) NOT NULL,
   `id_almoxarifado` INT(11) NOT NULL,
   `qtd` INT(11) NULL DEFAULT NULL,
+  `qtd_minima` INT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_produto`, `id_almoxarifado`),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),
   CONSTRAINT `estoque_ibfk_1`
@@ -2254,6 +2255,52 @@ CREATE TABLE IF NOT EXISTS `wegia` . `aviso_notificacao` (
     ON UPDATE CASCADE)
 
 ENGINE = InnoDB;
+
+-- ------------------------------------------------------
+-- Table `wegia` . `notificacao`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`notificacao` (
+  `id_notificacao` INT NOT NULL AUTO_INCREMENT,
+  `id_recurso` INT NOT NULL,
+  `titulo` VARCHAR(150) NOT NULL,
+  `mensagem` TEXT NOT NULL,
+  `tipo` VARCHAR(50) NULL,
+  `link` VARCHAR(255) NULL,
+  `data_criacao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_notificacao`),
+  INDEX `fk_notificacao_recurso_idx` (`id_recurso` ASC),
+  CONSTRAINT `fk_notificacao_recurso`
+    FOREIGN KEY (`id_recurso`)
+    REFERENCES `wegia`.`recurso` (`id_recurso`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- ------------------------------------------------------
+-- Table `wegia` . `notificacao_destinatario`
+-- ------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`notificacao_destinatario` (
+  `id_notificacao_destinatario` INT NOT NULL AUTO_INCREMENT,
+  `id_notificacao` INT NOT NULL,
+  `id_pessoa` INT NOT NULL,
+  `visualizada` TINYINT(1) NOT NULL DEFAULT 0,
+  `data_visualizacao` DATETIME NULL,
+  PRIMARY KEY (`id_notificacao_destinatario`),
+  UNIQUE KEY `uq_notificacao_destinatario` (`id_notificacao`, `id_pessoa`),
+  INDEX `idx_notificacao_destinatario_pessoa` (`id_pessoa`, `visualizada`),
+  CONSTRAINT `fk_notificacao_destinatario_notificacao`
+    FOREIGN KEY (`id_notificacao`)
+    REFERENCES `wegia`.`notificacao` (`id_notificacao`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_notificacao_destinatario_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
 
 -- ------------------------------------------------------
 -- Table `wegia` . `smtp_config`

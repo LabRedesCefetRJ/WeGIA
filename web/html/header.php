@@ -120,6 +120,21 @@ require_once ROOT . "/html/personalizacao_display.php";
 			}
 
 			?>
+			<?php
+			require_once ROOT . '/dao/NotificacaoDAO.php';
+
+			$notificacaoDAO = new NotificacaoDAO();
+			$totalNotificacoes = $notificacaoDAO->contarPendentes((int) $id_pessoa);
+			$paginaNotificacoes = WWW . 'html/matPat/listar_notificacoes.php';
+
+			echo '<a href="' . $paginaNotificacoes . '">Notificações <i class="fa fa-bell" aria-hidden="true"></i>';
+
+			if ($totalNotificacoes > 0) {
+    			echo '<span class="badge notify-intercorrencia">' . $totalNotificacoes . '</span>';
+			}
+
+			echo '</a>';
+			?>
 		</div>
 		<div id="userbox" class="userbox">
 			<a href="#" data-toggle="dropdown">
