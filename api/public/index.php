@@ -2,8 +2,11 @@
 
 use api\Container\AppContainer;
 use api\contracts\services\SocioServiceInterface;
+use api\contracts\services\EmailVerificationServiceInterface;
 use api\modules\Socio\SocioController;
 use api\modules\Socio\SocioService;
+use api\modules\Socio\EmailVerificationService;
+use api\modules\Socio\VerificationCodeRepository;
 use api\contracts\services\PessoaServiceInterface;
 use api\modules\Pessoa\PessoaService;
 use api\modules\Pessoa\PessoaRepository;
@@ -60,8 +63,17 @@ $container = new AppContainer([
     PessoaServiceInterface::class => function ($c) {
         return $c->get(PessoaService::class);
     },
+    VerificationCodeRepository::class => function ($c) {
+        return new VerificationCodeRepository($c->get(PDO::class));
+    },
+    EmailVerificationService::class => function ($c) {
+        return new EmailVerificationService($c->get(VerificationCodeRepository::class), 15, 'WeGIA');
+    },
+    EmailVerificationServiceInterface::class => function ($c) {
+        return $c->get(EmailVerificationService::class);
+    },
     SocioController::class => function ($c) {
-        return new SocioController($c->get(SocioServiceInterface::class), $c->get(PessoaServiceInterface::class), $c->get(AuthService::class));
+        return new SocioController($c->get(SocioServiceInterface::class), $c->get(PessoaServiceInterface::class), $c->get(AuthService::class), $c->get(EmailVerificationService::class));
     },
 ]);
 
@@ -115,5 +127,6 @@ $app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de l
 
 //Módulo Sócio
 $app->post('/socios/register', [SocioController::class, 'registerSocio']);
+$app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
 
 $app->run();
