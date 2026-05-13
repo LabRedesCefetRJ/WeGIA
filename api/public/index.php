@@ -48,11 +48,20 @@ $container = new AppContainer([
     SocioRepository::class => function ($c) {
         return new SocioRepository($c->get(PDO::class));
     },
+    VerificationCodeRepository::class => function ($c) {
+        return new VerificationCodeRepository($c->get(PDO::class));
+    },
+    EmailVerificationService::class => function ($c) {
+        return new EmailVerificationService($c->get(VerificationCodeRepository::class), 15, 'WeGIA');
+    },
+    EmailVerificationServiceInterface::class => function ($c) {
+        return $c->get(EmailVerificationService::class);
+    },
     SocioService::class => function ($c) {
-        return new SocioService($c->get(SocioRepository::class));
+        return new SocioService($c->get(SocioRepository::class), $c->get(EmailVerificationService::class), $c->get(AuthService::class));
     },
     SocioServiceInterface::class => function ($c) {
-        return new SocioService($c->get(SocioRepository::class));
+        return $c->get(SocioService::class);
     },
     PessoaRepository::class => function ($c) {
         return new PessoaRepository($c->get(PDO::class));
@@ -63,17 +72,8 @@ $container = new AppContainer([
     PessoaServiceInterface::class => function ($c) {
         return $c->get(PessoaService::class);
     },
-    VerificationCodeRepository::class => function ($c) {
-        return new VerificationCodeRepository($c->get(PDO::class));
-    },
-    EmailVerificationService::class => function ($c) {
-        return new EmailVerificationService($c->get(VerificationCodeRepository::class), 15, 'WeGIA');
-    },
-    EmailVerificationServiceInterface::class => function ($c) {
-        return $c->get(EmailVerificationService::class);
-    },
     SocioController::class => function ($c) {
-        return new SocioController($c->get(SocioServiceInterface::class), $c->get(PessoaServiceInterface::class), $c->get(AuthService::class), $c->get(EmailVerificationService::class));
+        return new SocioController($c->get(SocioService::class), $c->get(PessoaServiceInterface::class), $c->get(AuthService::class), $c->get(EmailVerificationService::class));
     },
 ]);
 
@@ -128,5 +128,6 @@ $app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de l
 //Módulo Sócio
 $app->post('/socios/register', [SocioController::class, 'registerSocio']);
 $app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
+$app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
 
 $app->run();

@@ -143,4 +143,59 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         }
     }
+
+    /**
+     * Alter password for a socio using a verification code
+     * POST /socios/alter-password
+     * 
+     * Body JSON:
+     * {
+     *   "id_socio": 1,
+     *   "id_pessoa": 1,
+     *   "senha": "novasenha123",
+     *   "confirmacao_senha": "novasenha123",
+     *   "codigo_verificacao": "123456"
+     * }
+     */
+    public function alterPassword(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody();
+
+            // Validate required data
+            if (empty($data['id_socio']) || empty($data['senha']) || empty($data['confirmacao_senha']) || 
+                empty($data['codigo_verificacao'])) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'id_socio, senha, confirmacao_senha e codigo_verificacao são obrigatórios'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Call service to alter password
+            $result = $this->socioService->alterPassword(
+                (int)$data['id_socio'],
+                $data['senha'],
+                $data['confirmacao_senha'],
+                $data['codigo_verificacao']
+            );
+
+            $statusCode = $result['success'] ? 200 : 400;
+
+            $response->getBody()->write(json_encode($result));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

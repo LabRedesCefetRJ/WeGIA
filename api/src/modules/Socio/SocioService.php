@@ -5,15 +5,20 @@ namespace api\modules\Socio;
 use api\contracts\entities\PessoaInterface;
 use api\contracts\entities\SocioInterface;
 use api\contracts\services\SocioServiceInterface;
+use api\modules\Auth\AuthService;
 use DateTime;
 
 class SocioService implements SocioServiceInterface
 {
     private SocioRepository $socioRepository;
+    private EmailVerificationService $emailVerificationService;
+    private AuthService $authService;
 
-    public function __construct(SocioRepository $socioRepository)
+    public function __construct(SocioRepository $socioRepository, EmailVerificationService $emailVerificationService = null, AuthService $authService = null)
     {
         $this->socioRepository = $socioRepository;
+        $this->emailVerificationService = $emailVerificationService;
+        $this->authService = $authService;
     }
 
     public function criarSocio(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
@@ -41,5 +46,97 @@ class SocioService implements SocioServiceInterface
         // Lógica para deletar um sócio por ID
         // Exemplo: anonimizar o registro do banco de dados e retornar true se a operação foi bem-sucedida ou false caso contrário
         throw new \Exception("Método deletarSocio ainda não implementado", 501);
+    }
+
+    /**
+     * Alter password of a socio using a verification code
+     * 
+     * @param int $idSocio The ID of the socio
+     * @param int $idPessoa The ID of the pessoa (user) associated with the socio
+     * @param string $senha The new password
+     * @param string $confirmacaoSenha The password confirmation
+     * @param string $code The verification code
+     * @return array Result array with success status and message
+     */
+    public function alterPassword(int $idSocio, string $senha, string $confirmacaoSenha, string $code): array
+    {
+        try {
+            // Validate that both email verification and auth services are available
+            if ($this->emailVerificationService === null || $this->authService === null) {
+                return [
+                    'success' => false,
+                    'message' => 'Required services not available'
+                ];
+            }
+
+            // Validate that passwords match
+            if ($senha !== $confirmacaoSenha) {
+                return [
+                    'success' => false,
+                    'message' => 'Passwords do not match'
+                ];
+            }
+
+            // Validate password is not empty
+            if (empty($senha)) {
+                return [
+                    'success' => false,
+                    'message' => 'Password cannot be empty'
+                ];
+            }
+
+            // Validate password minimum length (at least 8 characters)
+            if (strlen($senha) < 8) {
+                return [
+                    'success' => false,
+                    'message' => 'Password must be at least 8 characters long'
+                ];
+            }
+
+            // Verify the code
+            $verifyResult = $this->emailVerificationService->verifyCode($idSocio, $code);
+            if (!$verifyResult['success']) {
+                return $verifyResult;
+            }
+
+            //get id_pessoa associated with id_socio
+            $idPessoa = $this->socioRepository->getIdPessoaByIdSocio($idSocio);
+            if (!$idPessoa) {
+                return [
+                    'success' => false,
+                    'message' => 'Pessoa not found for the given socio ID'
+                ];
+            }
+
+            // Update the password
+            try {
+                $this->authService->assignPasswordToPerson($idPessoa, $senha);
+            } catch (\Exception $e) {
+                return [
+                    'success' => false,
+                    'message' => 'Error updating password: ' . $e->getMessage()
+                ];
+            }
+
+            // Mark the code as used
+            $markResult = $this->emailVerificationService->markCodeAsUsed($idSocio, $code);
+            if (!$markResult['success']) {
+                return [
+                    'success' => false,
+                    'message' => 'Password updated but error marking code as used: ' . $markResult['message']
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Password altered successfully'
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error altering password: ' . $e->getMessage()
+            ];
+        }
     }
 }

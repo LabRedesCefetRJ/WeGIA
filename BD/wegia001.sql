@@ -1175,7 +1175,8 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio_verification_code` (
   `id_socio` INT NOT NULL,
   `code` VARCHAR(6) NOT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `expire_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 5 MINUTE),
+  `expires_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 5 MINUTE),
+  `code_used` BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY (`id`),
   INDEX `idx_id_socio` (`id_socio` ASC),
   CONSTRAINT `fk_socio_verification_code_socio`

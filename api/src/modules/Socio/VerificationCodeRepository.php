@@ -19,7 +19,7 @@ class VerificationCodeRepository
      */
     public function save(int $idSocio, string $code, DateTime $expiresAt): bool
     {
-        $query = "INSERT INTO socio_verification_code (id_socio, code, created_at, expires_at, verified) 
+        $query = "INSERT INTO socio_verification_code (id_socio, code, created_at, expires_at, code_used) 
                   VALUES (:id_socio, :code, NOW(), :expires_at, 0)";
         
         $stmt = $this->db->prepare($query);
@@ -37,7 +37,7 @@ class VerificationCodeRepository
     {
         $query = "SELECT * FROM socio_verification_code 
                   WHERE id_socio = :id_socio 
-                  AND verified = 0
+                  AND code_used = 0
                   AND expires_at > NOW()
                   ORDER BY created_at DESC
                   LIMIT 1";
@@ -75,13 +75,13 @@ class VerificationCodeRepository
     }
 
     /**
-     * Mark code as verified
+     * Mark code as used (when it's used to change password)
      */
-    public function markAsVerified(int $idSocio, string $code): bool
+    public function markAsUsed(int $idSocio, string $code): bool
     {
         $query = "UPDATE socio_verification_code 
-                  SET verified = 1, verified_at = NOW()
-                  WHERE id_socio = :id_socio AND code = :code AND verified = 0";
+                  SET code_used = 1, code_used_at = NOW()
+                  WHERE id_socio = :id_socio AND code = :code AND code_used = 0";
         
         $stmt = $this->db->prepare($query);
         return $stmt->execute([
@@ -97,21 +97,21 @@ class VerificationCodeRepository
     {
         $query = "UPDATE socio_verification_code 
                   SET expires_at = NOW()
-                  WHERE id_socio = :id_socio AND verified = 0 AND expires_at > NOW()";
+                  WHERE id_socio = :id_socio AND code_used = 0 AND expires_at > NOW()";
         
         $stmt = $this->db->prepare($query);
         return $stmt->execute([':id_socio' => $idSocio]);
     }
 
     /**
-     * Get verified code for a socio
+     * Get code that was used for a socio
      */
-    public function getVerifiedCode(int $idSocio): ?array
+    public function getUsedCode(int $idSocio): ?array
     {
         $query = "SELECT * FROM socio_verification_code 
                   WHERE id_socio = :id_socio 
-                  AND verified = 1
-                  ORDER BY verified_at DESC
+                  AND code_used = 1
+                  ORDER BY code_used_at DESC
                   LIMIT 1";
         
         $stmt = $this->db->prepare($query);

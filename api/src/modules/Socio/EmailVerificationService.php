@@ -121,6 +121,8 @@ class EmailVerificationService implements EmailVerificationServiceInterface
 
     /**
      * Verify if the code matches the socio id and is valid
+     * Note: This method only validates the code, it does NOT mark it as used.
+     * The code will be marked as used only when it's used to change the password.
      */
     public function verifyCode(int $idSocio, string $code): array
     {
@@ -133,7 +135,7 @@ class EmailVerificationService implements EmailVerificationServiceInterface
                 ];
             }
 
-            // Verify code
+            // Verify code validity
             $isValid = $this->repository->verifyCode($idSocio, $code);
 
             if (!$isValid) {
@@ -143,25 +145,44 @@ class EmailVerificationService implements EmailVerificationServiceInterface
                 ];
             }
 
-            // Mark as verified
-            $marked = $this->repository->markAsVerified($idSocio, $code);
-
-            if (!$marked) {
-                return [
-                    'success' => false,
-                    'message' => 'Error verifying code'
-                ];
-            }
-
             return [
                 'success' => true,
-                'message' => 'Email verified successfully'
+                'message' => 'Code is valid'
             ];
 
         } catch (\Exception $e) {
             return [
                 'success' => false,
                 'message' => 'Error verifying code: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Mark code as used (when it's used for password change)
+     */
+    public function markCodeAsUsed(int $idSocio, string $code): array
+    {
+        try {
+            // Mark code as used
+            $marked = $this->repository->markAsUsed($idSocio, $code);
+
+            if (!$marked) {
+                return [
+                    'success' => false,
+                    'message' => 'Error marking code as used'
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Code marked as used successfully'
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error marking code as used: ' . $e->getMessage()
             ];
         }
     }
@@ -184,7 +205,7 @@ class EmailVerificationService implements EmailVerificationServiceInterface
             'id_socio' => $code['id_socio'],
             'created_at' => $code['created_at'],
             'expires_at' => $code['expires_at'],
-            'verified' => (bool)$code['verified'],
+            'code_used' => (bool)$code['code_used'],
             'remaining_minutes' => $timeRemaining->format('%i')
         ];
     }
@@ -209,19 +230,14 @@ class EmailVerificationService implements EmailVerificationServiceInterface
         }
 
         // Try to find and load EmailControle
-        $emailControlPaths = [
-            __DIR__ . '/../../../web/controle/EmailControle.php',
-            dirname(__DIR__, 3) . '/web/controle/EmailControle.php'
-        ];
+        $emailControlPath = dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'web' . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 
-        foreach ($emailControlPaths as $path) {
-            if (file_exists($path)) {
-                require_once $path;
-                return new \EmailControle();
+        if (file_exists($emailControlPath)) {
+            require_once $emailControlPath;
+            return new \EmailControle();
             }
-        }
 
-        throw new \Exception('EmailControle not found');
+        throw new \Exception('EmailControle not found' . (dirname(__DIR__, 3) . '/web/controle/EmailControle.php'));
     }
 }
 ?>
