@@ -852,11 +852,11 @@ class ContribuicaoLogController
 
             if (!$registrou) {
                 $this->pdo->rollBack();
-                throw new LogicException('Nenhuma nova fatura foi encontrada.', 200);
+                echo json_encode(['sucesso' => 'Nenhuma nova fatura encontrada.', 200]);
+            }else{
+                $this->pdo->commit();
+                echo json_encode(['sucesso' => 'Faturas registradas com sucesso.', 200]);
             }
-
-            $this->pdo->commit();
-            echo json_encode(['sucesso' => 'Faturas registradas com sucesso.', 200]);
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
