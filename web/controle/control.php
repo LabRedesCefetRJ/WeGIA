@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config.php';
+//declaração de util
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 Util::definirFusoHorario();

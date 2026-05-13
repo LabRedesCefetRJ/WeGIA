@@ -166,6 +166,33 @@ class Util
         exit;
     }
 
+    public static function verificarRegras($valor, array $conjuntoRegrasPagamento)
+    {
+        if ($conjuntoRegrasPagamento && count($conjuntoRegrasPagamento) > 0) {
+            foreach ($conjuntoRegrasPagamento as $regraPagamento) {
+                if ($regraPagamento['id_regra'] == 1) {
+                    if ($valor < $regraPagamento['valor']) {
+                        echo json_encode(['erro' => "O valor informado está abaixo do permitido (R\${$regraPagamento['valor']})."]);
+                        exit;
+                    }
+                } else if ($regraPagamento['id_regra'] == 2) {
+                    if ($valor > $regraPagamento['valor']) {
+                        echo json_encode(['erro' => "O valor informado está acima do permitido (R\${$regraPagamento['valor']})."]);
+                        exit;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Retorna apenas os números de um CPF
+     */
+    public static function limpaCpf($cpf)
+    {
+        return preg_replace('/\D/', '', $cpf);
+    }
+
     // esta função formata para o bd
     public function formatoDataYMD($data)
     {
@@ -1203,5 +1230,111 @@ class Util
 		    default:
 			    return 'bg-info';
 	    }
+    }
+
+    /**
+     * Lista os arquivos de um diretório específico
+     * Remove os diretórios '.' e '..' e o arquivo 'index.php' da lista
+     * 
+     * @param string $diretorio Caminho do diretório a ser listado
+     * @return array|bool Array com os nomes dos arquivos ou false se o diretório não existe
+     */
+    public static function listarArquivos(string $diretorio)
+    {
+        // Verifica se o diretório existe
+        if (!is_dir($diretorio)) {
+            return false;
+        }
+
+        // Abre o diretório
+        $arquivos = scandir($diretorio);
+
+        // Remove os diretórios '.' e '..' e o arquivo index.php da lista de arquivos
+        $arquivos = array_diff($arquivos, array('.', '..', 'index.php'));
+
+        return $arquivos;
+    }
+
+    /**
+     * Retorna um número com a quantidade de algarismos informada no parâmetro
+     */
+    public static function gerarNumeroDocumento($tamanho)
+    {
+        $numeroDocumento = '';
+
+        for ($i = 0; $i < $tamanho; $i++) {
+            $numeroDocumento .= rand(0, 9);
+        }
+
+        return intval($numeroDocumento);
+    }
+
+    /**
+     * Gera um código completamente aleatório
+     */
+    public static function gerarCodigoAleatorio()
+    {
+        $numeroDePartes = rand(2, 5); // entre 2 e 5 partes
+        $codigo = [];
+
+        for ($i = 0; $i < $numeroDePartes; $i++) {
+            $tamanho = rand(8, 20); // cada parte terá entre 8 e 20 caracteres
+            $codigo[] = bin2hex(random_bytes(intval($tamanho / 2)));
+        }
+
+        return implode('-', $codigo);
+    }
+
+    /**
+     * Retorna apenas os números de um telefone
+     */
+    public static function limpaTelefone(string $telefone)
+    {
+        return preg_replace('/\D/', '', $telefone);
+    }
+
+    /**
+     * Calcula as datas de vencimento de parcelas com intervalo específico
+     * 
+     * @param int $intervalo Intervalo em meses entre as parcelas
+     * @param int $qtd_p Quantidade de parcelas
+     * @param string $diaVencimento Data inicial no formato Y-m-d
+     * @return array Array com as datas de vencimento em formato Y-m-d
+     */
+    public static function mensalidadeInterna(int $intervalo, int $qtd_p, string $diaVencimento)
+    {
+        $datasVencimento = [];
+
+        if (empty($diaVencimento)) {
+            echo json_encode('O dia de vencimento de uma parcela não pode ser vazio');
+            exit();
+        }
+
+        $dia = explode('-', $diaVencimento)[2];
+
+        // Pegar a data informada
+        $dataAtual = new DateTime($diaVencimento);
+
+        // Iterar sobre a quantidade de parcelas
+        for ($i = 0; $i < $qtd_p; $i++) {
+            // Clonar a data atual para evitar modificar o objeto original
+            $dataVencimento = clone $dataAtual;
+
+            //incremento de meses
+            $incremento = $intervalo * $i;
+
+            // Adicionar os meses de acordo com o índice da parcela
+            $dataVencimento->modify("+{$incremento} month");
+
+            //verificar se o dia de dataVencimento é diferente de $dia, se forem diferentes
+            //subtrair um mês e modificar para o último dia
+            if ($dataVencimento->format('d') != $dia) {
+                $dataVencimento->modify('last day of previous month');
+            }
+
+            // Adicionar a data formatada ao array
+            $datasVencimento[] = $dataVencimento->format('Y-m-d');
+        }
+        return $datasVencimento;
     }
 }
