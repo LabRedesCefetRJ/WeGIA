@@ -19,28 +19,15 @@ class SaudeDAO
 {
     public function incluir($saude)
     {
-        try {
-            $sql = "INSERT INTO saude_fichamedica(id_pessoa) VALUES (:id_pessoa)"; //continuar daqui...
-            $pdo = Conexao::connect();
+        $sql = "INSERT INTO saude_fichamedica(id_pessoa) VALUES (:idPessoa)"; //continuar daqui...
+        $pdo = Conexao::connect();
 
-            $pdo->beginTransaction();
+        $stmt = $pdo->prepare($sql);
 
-            $stmt = $pdo->prepare($sql);
+        $idPessoa = $saude->getIdPessoa();
+        $stmt->bindParam(':idPessoa', $idPessoa);
 
-            $idPessoa = $saude->getNome();
-            $stmt->bindParam(':id_pessoa', $idPessoa);
-
-            if ($stmt->execute()) {
-                $pdo->commit();
-            } else {
-                $pdo->rollBack();
-            }
-
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        } finally {
-            $pdo = null;
-        }
+        $stmt->execute();
     }
     public function alterarImagem($id_fichamedica, $imagem)
     {

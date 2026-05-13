@@ -20,6 +20,10 @@ class SaudeControle
     {
         extract($_REQUEST);
 
+        if ((!isset($idPessoa)) || (empty($idPessoa))) {
+            $idPessoa = "";
+        }
+
         if ((!isset($texto)) || (empty($texto))) {
             $msg .= "Descricao do paciente não informada. Por favor, informe a descricao!";
             header('Location: ../html/saude/cadastro_ficha_medica.php?msg=' . $msg);
@@ -97,10 +101,8 @@ class SaudeControle
         $saude = new Saude($cpf, $nome, $sobrenome, $sexo, $dataNascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $telefone, $imagem, $cep, $estado, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
 
         // $saude->setNome($nome);
+        $saude->setIdPessoa($idPessoa);
         $saude->setTexto($texto);
-        $saude->setEnfermidade($enfermidade);
-        $saude->setData_diagnostico($data_diagnostico);
-        $saude->setIntStatus($intStatus);
         return $saude;
     }
 

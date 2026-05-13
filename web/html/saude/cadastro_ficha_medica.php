@@ -386,7 +386,7 @@ require_once ROOT."/html/personalizacao_display.php";
                                                 <div id="clicado" style="display:none;">
                                                     <label class="col-md-3 control-label" for="inputSuccess" style="padding-left:29px;">Paciente:<sup class="obrig">*</sup></label>
                                                     <div class="col-md-6">
-                                                        <select class="form-control input-lg mb-md" name="nome" id="nome" required>
+                                                        <select class="form-control input-lg mb-md" name="idPessoa" id="nome" required>
                                                             <option selected disabled>Selecionar</option>
                                                             
                                                         </select><br>

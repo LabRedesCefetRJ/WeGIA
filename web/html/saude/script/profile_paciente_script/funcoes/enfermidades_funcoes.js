@@ -472,21 +472,28 @@ async function gerarEnfermidadesDoPaciente() {
     await gerarEnfermidade();
 }
 
-//Essa função serve para remover uma enfermidade da ficha de um paciente
-async function removerEnfermidade(id_enfermidade) {
-    if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
-        return false;
-    }
+let _idEnfermidadePendente = null;
+
+function removerEnfermidade(id_enfermidade) {
+    _idEnfermidadePendente = id_enfermidade;
+    $('#modalConfirmarInativarEnfermidade').modal('show');
+}
+
+async function confirmarInativarEnfermidade() {
+    const id_enfermidade = _idEnfermidadePendente;
+    _idEnfermidadePendente = null;
+    $('#modalConfirmarInativarEnfermidade').modal('hide');
+
     const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("EnfermidadeControle")}&metodo=${encodeURIComponent("tornarEnfermidadeInativa")}&id_enfermidade=${encodeURIComponent(id_enfermidade)}`;
-    try{
+    try {
         const resposta = await fetch(url);
 
-        if(resposta.ok){
+        if (resposta.ok) {
             await gerarEnfermidadesDoPaciente();
-        }else{
+        } else {
             mostrarMensagemCadastroEnfermidade("Aconteceu algum problema ao remover uma enfermidade.", "danger");
         }
-    }catch(e){
+    } catch(e) {
         mostrarMensagemCadastroEnfermidade("Aconteceu algum problema ao remover uma enfermidade.", "danger");
     }
 }

@@ -4,6 +4,7 @@ document.getElementById('cpf_cnpj').addEventListener('blur', async function () {
 
     if (documento === "") return; // evita requisição vazia
 
+    //Ir para o controller
     try {
         const url = "../../contribuicao/controller/control.php" +
             "?nomeClasse=SocioController&metodo=buscarPorDocumento" +

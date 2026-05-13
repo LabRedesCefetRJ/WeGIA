@@ -245,6 +245,14 @@ require_once ROOT . "/html/personalizacao_display.php";
         											<i class="fas fa-pencil-alt"></i>
     											</button>
 
+												<a href="<?= WWW ?>controle/control.php?nomeClasse=EstoqueControle&metodo=listarProdutosPorAlmoxarifadoComLimite&id_almoxarifado=<?= (int)$item['id_almoxarifado']?>"
+													title="Limites de estoque"
+													style="margin-left:8px;">
+													<button type="button" style="border:none;background:none;cursor:pointer;">
+														<i class="fas fa-boxes" style="color: rgb(110,110,110);"></i>
+													</button>
+												</a>
+
 											<?php else: ?>
 												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
 													<input type="hidden" name="metodo" value="desarquivar">

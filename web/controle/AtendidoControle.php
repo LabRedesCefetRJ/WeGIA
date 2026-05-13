@@ -40,7 +40,7 @@ class AtendidoControle
         // Extrair GET e POST explicitamente para garantir que todas as variáveis sejam capturadas
         extract($_GET);
         extract($_POST);
-        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf = '0')) {
+        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf == '0')) {
             $msg .= "cpf do atendido não informado. Por favor, informe o cpf!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();

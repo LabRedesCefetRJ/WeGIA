@@ -265,8 +265,22 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
       });
     });
 
+    let _sinalVitalPendente = null;
+    let _linhaSinalVitalPendente = null;
+
     function removerSinVit(sinal, linha) {
-      if (!window.confirm("Deseja excluir esse registro da tabela?")) return false;
+      _sinalVitalPendente = sinal;
+      _linhaSinalVitalPendente = linha;
+      $('#modalConfirmarExcluirSinalVital').modal('show');
+    }
+
+    function confirmarExcluirSinalVital() {
+      const sinal = _sinalVitalPendente;
+      const linha = _linhaSinalVitalPendente;
+      _sinalVitalPendente = null;
+      _linhaSinalVitalPendente = null;
+      $('#modalConfirmarExcluirSinalVital').modal('hide');
+
       $.ajax({
         url: "sinais_vitais_excluir.php",
         type: "POST",
@@ -523,6 +537,48 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
       flex-direction: row;
       justify-content: flex-end;
     }
+
+    #modalConfirmarExcluirSinalVital .modal-title {
+      font-weight: 500;
+      color: #fff;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header {
+      background-color: #337ab7;
+      border-bottom-color: #2e6da4;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header .close,
+    #modalConfirmarExcluirSinalVital .modal-header .close span {
+      color: #fff;
+      opacity: 1;
+      text-shadow: none;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background-color: transparent;
+      filter: brightness(1);
+      transition: background-color 0.18s ease, filter 0.18s ease;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header .close:hover,
+    #modalConfirmarExcluirSinalVital .modal-header .close:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      filter: brightness(1.08);
+      outline: none;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header .close:hover span,
+    #modalConfirmarExcluirSinalVital .modal-header .close:focus span {
+      filter: brightness(1.08);
+    }
   </style>
 
 </head>
@@ -741,6 +797,26 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
     <!-- importante para a aba de exames -->
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
+
+    <div class="modal fade" id="modalConfirmarExcluirSinalVital" tabindex="-1" role="dialog" aria-labelledby="modalExcluirSinalVitalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="modalExcluirSinalVitalLabel">Excluir sinal vital</h4>
+          </div>
+          <div class="modal-body">
+            <p>Deseja excluir esse registro da tabela?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" onclick="confirmarExcluirSinalVital()">Excluir</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div align="right">
       <iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>

@@ -6,9 +6,9 @@ require_once '../model/Socio.php';
 require_once '../model/ContribuicaoLogCollection.php';
 require_once '../dao/SocioDAO.php';
 require_once '../dao/ContribuicaoLogDAO.php';
-require_once '../helper/Util.php';
 require_once '../dao/ConexaoDAO.php';
 require_once '../../../dao/PessoaDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
 
