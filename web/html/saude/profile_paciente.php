@@ -158,7 +158,19 @@ foreach ($descricao_medica as $key => $value) {
 
 $descricao_medica = json_encode($descricao_medica);
 
-$stmtMedicacoes = $pdo->prepare("SELECT id_medicacao, data_atendimento, medicamento, dosagem, horario, duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status as id_status FROM saude_atendimento sa JOIN saude_medicacao sm ON (sa.id_atendimento=sm.id_atendimento) JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)  WHERE id_fichamedica=:idFichaMedica ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC");
+$stmtMedicacoes = $pdo->prepare("
+    SELECT sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem,
+           GROUP_CONCAT(TIME_FORMAT(smh.horario, '%H:%i') ORDER BY smh.horario SEPARATOR ', ') AS horarios,
+           sm.duracao, st.descricao,
+           sm.saude_medicacao_status_idsaude_medicacao_status AS id_status
+    FROM saude_atendimento sa
+    JOIN saude_medicacao sm ON (sa.id_atendimento = sm.id_atendimento)
+    JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)
+    LEFT JOIN saude_medicacao_horario smh ON (smh.id_medicacao = sm.id_medicacao)
+    WHERE sa.id_fichamedica = :idFichaMedica
+    GROUP BY sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem, sm.duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status
+    ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC
+");
 
 $stmtMedicacoes->bindValue(':idFichaMedica', $id_fichamedica, PDO::PARAM_INT);
 $stmtMedicacoes->execute();
@@ -496,6 +508,7 @@ try {
   <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
   <link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
   <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 
@@ -692,7 +705,7 @@ try {
         tr.attr("data-status", atendimentoAnulado ? "anulado" : "ativo");
 
         tr.append($("<td>").text(item.medicoNome));
-        tr.append($("<td>").text(item.enfermeiraNome + ' ' + item.enfermeiraSobrenome));
+        tr.append($("<td>").text(item.enfermeiraNome + (item.enfermeiraSobrenome ? ' ' + item.enfermeiraSobrenome : '')));
         tr.append($("<td>").html(item.descricao));
         tr.append($("<td>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento));
         tr.append(
@@ -847,7 +860,7 @@ try {
         $("#exibimed")
           .append($("<tr>")
             .append($("<td style='text-align: center; vertical-align: middle;'>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento))
-            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + item.horario + ", " + item.duracao + "."))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + (item.horarios || 'Livre') + ", " + item.duracao + "."))
             .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
             .append($("<td style='text-align: center; vertical-align: middle;'>")
               .append($("<a onclick='editarStatusMedico(" + item.id_medicacao + ")' href='#'title='Editar'><button class='btn btn-primary' id='teste'><i class='glyphicon glyphicon-pencil'></i></button></a>"))
@@ -1101,6 +1114,24 @@ try {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
+    }
+
+    .horario-item {
+      position: relative;
+      margin-bottom: 6px;
+    }
+
+    .btn-horario {
+      position: absolute;
+      top: 0;
+      left: calc(100% + 8px);
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
     }
 
   </style>
@@ -1396,7 +1427,7 @@ try {
                               ?>
                                 <tr>
                                   <td><?= $index + 1 ?></td>
-                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . $medicamento['horario'] . '|' . $medicamento['duracao']) ?></td>
+                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . ($medicamento['horarios'] ?? '') . '|' . $medicamento['duracao']) ?></td>
                                 </tr>
                               <?php
                               endforeach;
@@ -2175,9 +2206,12 @@ try {
                       </div>
 
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileCompany">Horário:<sup class="obrig">*</sup></label>
-                        <div class="col-md-8">
-                          <input type="time" class="form-control" name="horario_medicacao" id="horario_medicacao">
+                        <label class="col-md-3 control-label">Horários:<sup class="obrig">*</sup></label>
+                        <div class="col-md-8" id="container_horarios_atd" style="overflow:visible;">
+                          <div class="horario-item">
+                            <input type="time" class="form-control horario_medicacao_atd" name="horario_medicacao[]">
+                            <button type="button" class="btn btn-success btn-horario" id="btn_add_horario_atd" title="Adicionar horário"><i class="bi bi-plus"></i></button>
+                          </div>
                         </div>
                       </div>
 
@@ -3290,7 +3324,7 @@ try {
           return {
             nome_medicacao: ($("#nome_medicacao").val() || "").trim(),
             dosagem: ($("#dosagem").val() || "").trim(),
-            horario: ($("#horario_medicacao").val() || "").trim(),
+            horarios: Array.from(document.querySelectorAll('.horario_medicacao_atd')).map(el => el.value).filter(v => v),
             tempo: ($("#duracao_medicacao").val() || "").trim()
           };
         }
@@ -3298,15 +3332,21 @@ try {
         function limparCamposMedicacao() {
           $("#nome_medicacao").val("");
           $("#dosagem").val("");
-          $("#horario_medicacao").val("");
           $("#duracao_medicacao").val("");
+          const container = document.getElementById('container_horarios_atd');
+          container.innerHTML = `
+            <div class="horario-item">
+              <input type="time" class="form-control horario_medicacao_atd" name="horario_medicacao[]">
+              <button type="button" class="btn btn-success btn-horario" id="btn_add_horario_atd" title="Adicionar horário"><i class="bi bi-plus"></i></button>
+            </div>`;
+          container.querySelector('#btn_add_horario_atd').addEventListener('click', adicionarCampoHorario);
         }
 
         function todosCamposMedicacaoPreenchidos(medicacao) {
           return (
             medicacao.nome_medicacao !== "" &&
             medicacao.dosagem !== "" &&
-            medicacao.horario !== "" &&
+            medicacao.horarios.length > 0 &&
             medicacao.tempo !== ""
           );
         }
@@ -3315,18 +3355,20 @@ try {
           return (
             medicacao.nome_medicacao !== "" ||
             medicacao.dosagem !== "" ||
-            medicacao.horario !== "" ||
+            medicacao.horarios.length > 0 ||
             medicacao.tempo !== ""
           );
         }
 
         function adicionarLinhaMedicacao(medicacao) {
+          const horarioTexto = medicacao.horarios.join(", ");
           $("#tabmed tbody").append(
             $("<tr>")
               .addClass("tabmed")
+              .data("horarios", medicacao.horarios)
               .append($("<td>").text(medicacao.nome_medicacao))
               .append($("<td>").text(medicacao.dosagem))
-              .append($("<td>").text(medicacao.horario))
+              .append($("<td>").text(horarioTexto))
               .append($("<td>").text(medicacao.tempo))
               .append(
                 $("<td style='display: flex; justify-content: space-evenly;'>").append(
@@ -3345,10 +3387,13 @@ try {
               return;
             }
 
+            const horarios = $(this).data("horarios") ||
+              ($(colunas[2]).text() || "").trim().split(", ").filter(v => v);
+
             tabelaMedicacao.push({
               nome_medicacao: ($(colunas[0]).text() || "").trim(),
               dosagem: ($(colunas[1]).text() || "").trim(),
-              horario: ($(colunas[2]).text() || "").trim(),
+              horarios: horarios,
               tempo: ($(colunas[3]).text() || "").trim()
             });
           });
@@ -3356,6 +3401,26 @@ try {
           $("input[name=acervo]").val(JSON.stringify(tabelaMedicacao));
           return tabelaMedicacao;
         }
+
+        function adicionarCampoHorario() {
+          const container = document.getElementById('container_horarios_atd');
+          const div = document.createElement('div');
+          div.className = 'horario-item';
+          div.innerHTML = `
+            <input type="time" class="form-control horario_medicacao_atd" name="horario_medicacao[]">
+            <button type="button" class="btn btn-danger btn-horario remover-horario-atd" title="Remover horário"><i class="bi bi-dash"></i></button>
+          `;
+          container.appendChild(div);
+        }
+
+        document.getElementById('btn_add_horario_atd').addEventListener('click', adicionarCampoHorario);
+
+        document.getElementById('container_horarios_atd').addEventListener('click', function(e) {
+          const btn = e.target.closest('.remover-horario-atd');
+          if (btn) {
+            btn.closest('.horario-item').remove();
+          }
+        });
 
         $("#botao").on("click", function() {
           const medicacao = lerCamposMedicacao();
