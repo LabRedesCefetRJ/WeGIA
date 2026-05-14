@@ -3276,13 +3276,13 @@ try {
           }
 
           if (contentType.indexOf("application/json") === -1) {
-            throw new Error("Não foi possível processar a resposta do servidor.");
+            throw new Error("Formato de resposta inválido.");
           }
 
           try {
             result = await response.json();
           } catch (e) {
-            throw new Error("Não foi possível processar a resposta do servidor.");
+            throw new Error("Erro ao processar a resposta do servidor.");
           }
 
           if (!response.ok || result.status !== "sucesso") {
