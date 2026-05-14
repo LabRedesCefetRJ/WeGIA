@@ -69,27 +69,11 @@ class SocioService implements SocioServiceInterface
                 ];
             }
 
-            // Validate that passwords match
+            // Verify password and confirmation are equals
             if ($senha !== $confirmacaoSenha) {
                 return [
                     'success' => false,
                     'message' => 'Passwords do not match'
-                ];
-            }
-
-            // Validate password is not empty
-            if (empty($senha)) {
-                return [
-                    'success' => false,
-                    'message' => 'Password cannot be empty'
-                ];
-            }
-
-            // Validate password minimum length (at least 8 characters)
-            if (strlen($senha) < 8) {
-                return [
-                    'success' => false,
-                    'message' => 'Password must be at least 8 characters long'
                 ];
             }
 

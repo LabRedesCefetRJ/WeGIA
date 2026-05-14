@@ -25,6 +25,10 @@ class AuthService
             throw new \Exception('Usuário já existe');
         }
 
+        // Validate password
+        $confirmacaoSenha = $senha; // In register, password must be validated by caller, but we validate here
+        $this->validatePassword($senha, $confirmacaoSenha);
+
         return $this->userRepository->save([
             'login' => $login,
             'senha' => \LoginHelper::hashPassword($senha)
@@ -134,11 +138,57 @@ class AuthService
             throw new \Exception('ID da pessoa inválido');
         }
 
-        if (empty($senha)) {
-            throw new \Exception('Senha não pode estar vazia');
-        }
+        // Validate password
+        $confirmacaoSenha = $senha; // In this context, password must be validated by caller, but we validate here
+        $this->validatePassword($senha, $confirmacaoSenha);
 
         $hashedPassword = \LoginHelper::hashPassword($senha);
         $this->userRepository->updatePasswordHash($idPessoa, $hashedPassword);
+    }
+
+    /**
+     * Validate a new password with confirmation
+     * Throws exception if validation fails
+     * 
+     * @param string $senha The new password
+     * @param string $confirmacaoSenha The password confirmation
+     * @throws \Exception If password validation fails
+     */
+    private function validatePassword(string $senha, string $confirmacaoSenha): void
+    {
+        // Validate password is not empty
+        if (empty($senha)) {
+            throw new \Exception('Password cannot be empty');
+        }
+
+        // Validate that passwords match
+        if ($senha !== $confirmacaoSenha) {
+            throw new \Exception('Passwords do not match');
+        }
+
+        // Validate password minimum length (at least 8 characters)
+        if (strlen($senha) < 8) {
+            throw new \Exception('Password must be at least 8 characters long');
+        }
+
+        // Validate uppercase letters
+        if (!preg_match('/[A-Z]/', $senha)) {
+            throw new \Exception('Password must contain at least one uppercase letter');
+        }
+
+        // Validate lowercase letters
+        if (!preg_match('/[a-z]/', $senha)) {
+            throw new \Exception('Password must contain at least one lowercase letter');
+        }
+
+        // Validate numbers
+        if (!preg_match('/[0-9]/', $senha)) {
+            throw new \Exception('Password must contain at least one number');
+        }
+
+        // Validate special characters
+        if (!preg_match('/[!@#$%^&*()_+\-=\[\]{};:\'",.<>?\/\\|`~]/', $senha)) {
+            throw new \Exception('Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':\",./<>?/\\|`~)');
+        }
     }
 }

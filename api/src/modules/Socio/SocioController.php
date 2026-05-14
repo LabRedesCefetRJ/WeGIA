@@ -62,17 +62,6 @@ class SocioController
                 );
             }
 
-            //Isso terá que ser passado para uma outra função
-            // Assign password to created/existing person
-            if (isset($data['senha']) && !empty($data['senha'])) {
-                $this->authService->assignPasswordToPerson(
-                    $pessoa->getId(),
-                    $data['senha']
-                );
-            }
-
-            // In the future could return an authentication token for the newly created socio
-
             $responseData = [
                 'socio' => $socio,
                 'email_verification' => $verificationResult ?? [
