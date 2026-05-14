@@ -34,7 +34,7 @@ class SocioRepository
 
     public function getIdPessoaByIdSocio(int $idSocio): ?int
     {
-        $query = "SELECT id_pessoa FROM socio WHERE id = :id_socio";
+        $query = "SELECT id_pessoa FROM socio WHERE id_socio = :id_socio";
         $stmt = $this->db->prepare($query);
         $stmt->execute([':id_socio' => $idSocio]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
