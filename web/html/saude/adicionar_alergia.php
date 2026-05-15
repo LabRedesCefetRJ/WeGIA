@@ -1,10 +1,15 @@
 <?php
-session_start();
-require_once '../../dao/Conexao.php';
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
-header('Content-Type: application/json');
-
 try {
+	if(session_status() === PHP_SESSION_NONE) {
+		session_start();
+	}
+
+	require_once '../../dao/Conexao.php';
+	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+
+	// Garante que o content-type seja JSON
+	header('Content-Type: application/json; charset=utf-8');
+
 	if (!isset($_SESSION['id_pessoa'])) {
 		throw new RuntimeException('Sua sessão expirou. Atualize a página e tente novamente.', 401);
 	}
@@ -13,7 +18,7 @@ try {
 	require_once '../permissao/permissao.php';
 	permissao($_SESSION['id_pessoa'], 53, 7);
 
-	$alergiaNome = trim((string)filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_STRING));
+	$alergiaNome = trim((string) filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS));
 	if ($alergiaNome === '') {
 		throw new InvalidArgumentException('O nome da alergia precisa ser informado.', 400);
 	}
