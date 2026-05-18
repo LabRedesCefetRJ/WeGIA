@@ -3,8 +3,9 @@ class AgendaEquipeMembro {
     private $id;
     private $id_equipe;
     private $id_pessoa;
-    private $entrada;
-    private $saida;
+    private $data_inicio_plantao;
+    private $data_fim_plantao;
+    private $ativo;
 
     public function getId()
     {
@@ -18,13 +19,17 @@ class AgendaEquipeMembro {
     {
         return $this->id_pessoa;
     }
-    public function getEntrada()
+    public function getData_inicio_plantao()
     {
-        return $this->entrada;
+        return $this->data_inicio_plantao;
     }
-    public function getSaida()
+    public function getData_fim_plantao()
     {
-        return $this->saida;
+        return $this->data_fim_plantao;
+    }
+    public function getAtivo()
+    {
+        return $this->ativo;
     }
     public function setId(int $id)
     {
@@ -41,13 +46,17 @@ class AgendaEquipeMembro {
     {
         $this->id_pessoa = $id_pessoa;  
     }
-    public function setEntrada($entrada)
+    public function setData_inicio_plantao($data_inicio_plantao)
     {
-        $this->entrada = $entrada;
+        $this->data_inicio_plantao = $data_inicio_plantao;
     }
-    public function setSaida($saida)
+    public function setData_fim_plantao($data_fim_plantao)  
     {
-        $this->saida = $saida;
+        $this->data_fim_plantao = $data_fim_plantao;
+    }
+    public function setAtivo($ativo)
+    {
+        $this->ativo = $ativo;
     }
 }
 
