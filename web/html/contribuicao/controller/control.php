@@ -29,7 +29,17 @@ try {
 
     $rotasPublicas = [
         'SocioController' => [
-            'criarSocio'
+            'criarSocio',
+            'buscarPorDocumento',
+            'exibirBoletosPorCpf',
+            'atualizarSocio'
+        ],
+        'ReciboController' => [
+            'gerarRecibo',
+            'download'
+        ],
+        'RecorrenciaController' => [
+            'criarAssinatura'
         ],
         'RegraPagamentoController' => [
             'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento'
@@ -38,17 +48,7 @@ try {
 
     $rotasPrivadas = [
         'SocioController' => [
-            'buscarPorDocumento',
-            'atualizarSocio',
-            'exibirBoletosPorCpf',
             'sincronizarStatusSocios'
-        ],
-        'ReciboController' => [
-            'gerarRecibo',
-            'download'
-        ],
-        'RecorrenciaController' => [
-            'criarAssinatura'
         ],
         'ContribuicaoLogController' => [
             'criarBoleto',
