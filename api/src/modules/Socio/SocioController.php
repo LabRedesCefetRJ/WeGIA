@@ -42,6 +42,16 @@ class SocioController
                 );
             }
 
+            //Interromper se pessoa não possuir email para envio do código de verificação
+            if (!$pessoa->getEmail()) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Pessoa deve possuir um e-mail para registro de sócio.'
+                ]));
+
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
             $socio = $this->socioService->criarSocio(
                 $pessoa,
                 new \DateTime($data['inicioContribuicao']),
@@ -191,32 +201,18 @@ class SocioController
     public function getSocioByCpf(Request $request, Response $response, array $args)
     {
         try {
-            $cpf = $args['cpf'] ?? '';
-            $cpf = str_starts_with($cpf, 'cpf=') ? substr($cpf, 4) : $cpf;
+            $resultado = $this->buscarSocioPorCpf($args['cpf'] ?? '');
 
-            $pessoa = $this->pessoaService->obterPessoaPorCpf($cpf);
-
-            if (!$pessoa) {
+            if (!$resultado['socio']) {
                 $response->getBody()->write(json_encode([
-                    'message' => 'Pessoa não localizada.'
+                    'message' => $resultado['message']
                 ]));
 
                 return $response->withStatus(404)
                     ->withHeader('Content-Type', 'application/json');
             }
 
-            $socio = $this->socioService->obterSocioPorPessoaId($pessoa->getId(), $pessoa);
-
-            if (!$socio) {
-                $response->getBody()->write(json_encode([
-                    'message' => 'Sócio não localizado.'
-                ]));
-
-                return $response->withStatus(404)
-                    ->withHeader('Content-Type', 'application/json');
-            }
-
-            $response->getBody()->write(json_encode($socio));
+            $response->getBody()->write(json_encode($resultado['socio']));
 
             return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
@@ -227,5 +223,75 @@ class SocioController
             return $response->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
         }
+    }
+
+    public function checkSocioExistsByCpf(Request $request, Response $response, array $args)
+    {
+        try {
+            $resultado = $this->buscarSocioPorCpf($args['cpf'] ?? '');
+
+            if (!$resultado['socio']) {
+                $response->getBody()->write(json_encode([
+                    'exists' => false,
+                    'hasEmail' => $resultado['pessoa'] ? !empty($resultado['pessoa']->getEmail()) : false,
+                    'message' => $resultado['message']
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $possuiEmail = !empty($resultado['pessoa']->getEmail());
+
+            $response->getBody()->write(json_encode([
+                'exists' => true,
+                'hasEmail' => $possuiEmail
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    private function buscarSocioPorCpf(string $cpf): array
+    {
+        $cpf = $this->normalizarCpf($cpf);
+        $pessoa = $this->pessoaService->obterPessoaPorCpf($cpf);
+
+        if (!$pessoa) {
+            return [
+                'pessoa' => null,
+                'socio' => null,
+                'message' => 'Pessoa não localizada.'
+            ];
+        }
+
+        $socio = $this->socioService->obterSocioPorPessoaId($pessoa->getId(), $pessoa);
+
+        if (!$socio) {
+            return [
+                'pessoa' => $pessoa,
+                'socio' => null,
+                'message' => 'Sócio não localizado.'
+            ];
+        }
+
+        return [
+            'pessoa' => $pessoa,
+            'socio' => $socio,
+            'message' => null
+        ];
+    }
+
+    private function normalizarCpf(string $cpf): string
+    {
+        return str_starts_with($cpf, 'cpf=') ? substr($cpf, 4) : $cpf;
     }
 }
