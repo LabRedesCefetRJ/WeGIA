@@ -187,4 +187,45 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         }
     }
+
+    public function getSocioByCpf(Request $request, Response $response, array $args)
+    {
+        try {
+            $cpf = $args['cpf'] ?? '';
+            $cpf = str_starts_with($cpf, 'cpf=') ? substr($cpf, 4) : $cpf;
+
+            $pessoa = $this->pessoaService->obterPessoaPorCpf($cpf);
+
+            if (!$pessoa) {
+                $response->getBody()->write(json_encode([
+                    'message' => 'Pessoa não localizada.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $socio = $this->socioService->obterSocioPorPessoaId($pessoa->getId(), $pessoa);
+
+            if (!$socio) {
+                $response->getBody()->write(json_encode([
+                    'message' => 'Sócio não localizado.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($socio));
+
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

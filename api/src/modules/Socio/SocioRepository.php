@@ -1,5 +1,6 @@
 <?php
 namespace api\modules\Socio;
+
 use PDO;
 
 class SocioRepository
@@ -39,6 +40,25 @@ class SocioRepository
         $stmt->execute([':id_socio' => $idSocio]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ? (int)$result['id_pessoa'] : null;
+    }
+
+    public function findByPessoaId(int $idPessoa): ?array
+    {
+        $query = "SELECT 
+                    id_socio,
+                    id_sociostatus,
+                    id_sociotipo,
+                    valor_periodo,
+                    data_referencia,
+                    auto_status_contribuicoes
+                  FROM socio
+                  WHERE id_pessoa = :id_pessoa
+                  LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([':id_pessoa' => $idPessoa]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : $result;
     }
 
 }

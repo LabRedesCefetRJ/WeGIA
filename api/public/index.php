@@ -127,6 +127,7 @@ $app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de l
 
 //Módulo Sócio
 $app->post('/socios/register', [SocioController::class, 'registerSocio']);
+$app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf']);
 $app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
 $app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
 

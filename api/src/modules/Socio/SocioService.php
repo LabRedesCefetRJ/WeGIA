@@ -34,6 +34,25 @@ class SocioService implements SocioServiceInterface
         throw new \Exception("Método obterSocioPorId ainda não implementado", 501);
     }
 
+    public function obterSocioPorPessoaId(int $idPessoa, PessoaInterface $pessoa): ?SocioInterface
+    {
+        $resultado = $this->socioRepository->findByPessoaId($idPessoa);
+
+        if (!$resultado) {
+            return null;
+        }
+
+        return new Socio(
+            $pessoa,
+            new DateTime($resultado['data_referencia']),
+            (float)$resultado['valor_periodo'],
+            (int)$resultado['id_sociostatus'],
+            (bool)$resultado['auto_status_contribuicoes'],
+            (int)$resultado['id_sociotipo'],
+            (int)$resultado['id_socio']
+        );
+    }
+
     public function atualizarSocio(int $id, PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
     {
         // Lógica para atualizar um sócio existente
