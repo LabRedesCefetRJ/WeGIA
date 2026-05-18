@@ -113,6 +113,7 @@ $sqlUpdatePessoa = "UPDATE pessoa
                         nome = ?,
                         sobrenome = ?,
                         telefone = ?, 
+                        email = ?, 
                         data_nascimento = ?, 
                         cep = ?, 
                         estado = ?, 
@@ -130,6 +131,7 @@ $cpf_cnpj = filter_var($cpf_cnpj,FILTER_SANITIZE_SPECIAL_CHARS);
 $socio_nome = filter_var($socio_nome, FILTER_SANITIZE_SPECIAL_CHARS);
 $socio_sobrenome = filter_var($socio_sobrenome, FILTER_SANITIZE_SPECIAL_CHARS);
 $telefone = filter_var($telefone, FILTER_SANITIZE_SPECIAL_CHARS);
+$email = filter_var($email, FILTER_SANITIZE_EMAIL);
 $cep = filter_var($cep, FILTER_SANITIZE_SPECIAL_CHARS);
 $estado = filter_var($estado, FILTER_SANITIZE_SPECIAL_CHARS);
 $cidade = filter_var($cidade, FILTER_SANITIZE_SPECIAL_CHARS);
@@ -147,6 +149,7 @@ if ($stmt) {
         $socio_nome,
         $socio_sobrenome,
         $telefone,
+        $email,
         $data_nasc,
         $cep,
         $estado,
@@ -270,7 +273,6 @@ if ($stmt) {
 
         $status = filter_var($status, FILTER_VALIDATE_INT);
         $auto_status_contribuicoes = filter_var($auto_status_contribuicoes, FILTER_VALIDATE_INT);
-        $email = filter_var($email, FILTER_SANITIZE_EMAIL);
         $data_referencia = filter_var($data_referencia, FILTER_SANITIZE_SPECIAL_CHARS);
         $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
         $id_socio = filter_var($id_socio, FILTER_SANITIZE_NUMBER_INT);
