@@ -1845,7 +1845,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicacao` (
   `id_atendimento` INT NOT NULL,
   `medicamento` VARCHAR(255) NOT NULL,
   `dosagem` VARCHAR(100) NULL,
-  `horario` VARCHAR(100) NULL,
   `duracao` VARCHAR(100) NULL,
   `saude_medicacao_status_idsaude_medicacao_status` INT NOT NULL,
   PRIMARY KEY (`id_medicacao`),
@@ -1862,6 +1861,23 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicacao` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`saude_medicacao_horario`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`saude_medicacao_horario` (
+  `id_horario`   INT  NOT NULL AUTO_INCREMENT,
+  `id_medicacao` INT  NOT NULL,
+  `horario`      TIME NOT NULL,
+  PRIMARY KEY (`id_horario`),
+  INDEX `fk_medicacao_horario_medicacao_idx` (`id_medicacao` ASC),
+  CONSTRAINT `fk_medicacao_horario_medicacao`
+    FOREIGN KEY (`id_medicacao`)
+    REFERENCES `wegia`.`saude_medicacao` (`id_medicacao`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------

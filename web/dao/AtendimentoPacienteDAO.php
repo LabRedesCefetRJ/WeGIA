@@ -124,17 +124,19 @@ class AtendimentoPacienteDAO
                         id_atendimento,
                         medicamento,
                         dosagem,
-                        horario,
                         duracao,
                         saude_medicacao_status_idsaude_medicacao_status
                     ) VALUES (
                         :id_atendimento,
                         :medicamento,
                         :dosagem,
-                        :horario,
                         :duracao,
                         :status
                     )'
+                );
+
+                $stmtHorario = $this->pdo->prepare(
+                    'INSERT INTO saude_medicacao_horario (id_medicacao, horario) VALUES (:id_medicacao, :horario)'
                 );
 
                 foreach ($medicacoes as $medicacao) {
@@ -148,10 +150,13 @@ class AtendimentoPacienteDAO
 
                     $medicamento = trim((string)($medicacao['nome_medicacao'] ?? ''));
                     $dosagem = trim((string)($medicacao['dosagem'] ?? ''));
-                    $horario = trim((string)($medicacao['horario'] ?? ''));
+                    $horarios = $medicacao['horarios'] ?? [];
+                    if (is_string($horarios)) {
+                        $horarios = array_filter(array_map('trim', explode(',', $horarios)));
+                    }
                     $duracao = trim((string)($medicacao['tempo'] ?? ''));
 
-                    if ($medicamento === '' || $dosagem === '' || $horario === '' || $duracao === '') {
+                    if ($medicamento === '' || $dosagem === '' || empty($horarios) || $duracao === '') {
                         if ($this->pdo->inTransaction()) {
                             $this->pdo->rollBack();
                         }
@@ -162,10 +167,16 @@ class AtendimentoPacienteDAO
                     $stmtMedicacao->bindValue(':id_atendimento', $idAtendimento, PDO::PARAM_INT);
                     $stmtMedicacao->bindValue(':medicamento', $medicamento);
                     $stmtMedicacao->bindValue(':dosagem', $dosagem);
-                    $stmtMedicacao->bindValue(':horario', $horario);
                     $stmtMedicacao->bindValue(':duracao', $duracao);
                     $stmtMedicacao->bindValue(':status', 1, PDO::PARAM_INT);
                     $stmtMedicacao->execute();
+
+                    $idMedicacao = (int)$this->pdo->lastInsertId();
+                    foreach ($horarios as $horario) {
+                        if (!empty(trim((string)$horario))) {
+                            $stmtHorario->execute([':id_medicacao' => $idMedicacao, ':horario' => trim((string)$horario)]);
+                        }
+                    }
                 }
             }
 
