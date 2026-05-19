@@ -45,12 +45,7 @@ try {
             'criarBoleto',
             'criarCarne',
             'criarQRCode',
-            'processarCartaoCredito',
-            'pagarPorId',
-            'sincronizarStatus',
-            'getContribuicoesLogJSON',
-            'getRelatorio',
-            'registrarFaturas'
+            'processarCartaoCredito'
         ],
         'RegraPagamentoController' => [
             'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento'
@@ -67,6 +62,13 @@ try {
             'excluirPorId',
             'editarPorId',
             'alterarStatus'
+        ],
+        'ContribuicaoLogController' => [
+            'pagarPorId',
+            'sincronizarStatus',
+            'getContribuicoesLogJSON',
+            'getRelatorio',
+            'registrarFaturas'
         ],
         'MeioPagamentoController' => [
             'cadastrar',
