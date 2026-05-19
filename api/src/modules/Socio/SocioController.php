@@ -260,6 +260,34 @@ class SocioController
         }
     }
 
+    public function getSupportContact(Request $request, Response $response)
+    {
+        try {
+            $contato = $this->socioService->obterContatoSuporte();
+
+            if (!$contato) {
+                $response->getBody()->write(json_encode([
+                    'message' => 'Contato de suporte não localizado.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($contato));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     private function buscarSocioPorCpf(string $cpf): array
     {
         $cpf = $this->normalizarCpf($cpf);

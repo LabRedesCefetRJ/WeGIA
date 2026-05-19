@@ -61,4 +61,17 @@ class SocioRepository
         return $result === false ? null : $result;
     }
 
+    public function findContatoInstituicaoById(int $id): ?array
+    {
+        $query = "SELECT id, descricao, contato
+                  FROM contato_instituicao
+                  WHERE id = :id
+                  LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([':id' => $id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : $result;
+    }
+
 }

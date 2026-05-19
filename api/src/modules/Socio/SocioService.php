@@ -53,6 +53,16 @@ class SocioService implements SocioServiceInterface
         );
     }
 
+    public function obterContatoSuporte(): ?array
+    {
+        $resultado = $this->socioRepository->findContatoInstituicaoById(1);
+        if(!$resultado) {
+            return null;
+        }
+        
+        return ['contatct' => $resultado['contato'] ?? null];
+    }
+
     public function atualizarSocio(int $id, PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
     {
         // Lógica para atualizar um sócio existente

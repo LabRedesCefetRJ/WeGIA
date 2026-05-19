@@ -128,11 +128,12 @@ $app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de l
 //Módulo Sócio
 $app->post('/socios/register', [SocioController::class, 'registerSocio']);
 
-//aplicar middleware de autenticação e de permissão
-$app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf'])->add($container->get(AuthMiddleware::class));
-
 $app->get('/socios/exists/{cpf}', [SocioController::class, 'checkSocioExistsByCpf']);
+$app->get('/socios/support-contact', [SocioController::class, 'getSupportContact']);
 $app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
 $app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
+
+//aplicar middleware de autenticação e de permissão
+$app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf'])->add($container->get(AuthMiddleware::class));
 
 $app->run();
