@@ -250,7 +250,7 @@ class AgendaDAO
     }
 
     // Lista membros do turno de hoje
-    public function listarMembrosDePlantaoHoje(int $idEquipe)
+    public function listarMembrosDeTurnoHoje(int $idEquipe)
     {
         $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_turno, m.data_fim_turno
                 FROM agenda_equipe_membro m
@@ -305,7 +305,7 @@ class AgendaDAO
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':data_inicio_turno', $membro->getData_inicio_turno());
         $stmt->bindValue(':data_fim_turno',    $membro->getData_fim_turno());
-        $stmt->bindValue(':id',                  $membro->getId(), PDO::PARAM_INT);
+        $stmt->bindValue(':id',                $membro->getId(), PDO::PARAM_INT);
         $stmt->execute();
     }
 }

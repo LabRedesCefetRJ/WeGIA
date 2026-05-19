@@ -130,11 +130,16 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('72', 'Gateways de Pagamento'),
 ('73', 'Meios de Pagamento'),
 ('74', 'Regras de Pagamento'),
-('9', 'Configurações'),
-('91', 'Permissões'),
 ('8', 'Módulo Projetos'),
 ('81', 'Projetos - Cadastrar'),
-('82', 'Projetos - Listar');
+('82', 'Projetos - Listar'),
+('9', 'Configurações'),
+('91', 'Permissões'),
+('10',  'Módulo Agenda'),
+('101', 'Gerenciar Agenda'),
+('102', 'Gerenciar Equipe'),
+('103', 'Visualizar Agenda');
+
 
 
 INSERT INTO `modulos_visiveis` (`id_recurso`, `visivel`) VALUES
