@@ -41,15 +41,6 @@ try {
         'RecorrenciaController' => [
             'criarAssinatura'
         ],
-        'RegraPagamentoController' => [
-            'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento'
-        ]
-    ];
-
-    $rotasPrivadas = [
-        'SocioController' => [
-            'sincronizarStatusSocios'
-        ],
         'ContribuicaoLogController' => [
             'criarBoleto',
             'criarCarne',
@@ -60,6 +51,15 @@ try {
             'getContribuicoesLogJSON',
             'getRelatorio',
             'registrarFaturas'
+        ],
+        'RegraPagamentoController' => [
+            'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento'
+        ]
+    ];
+
+    $rotasPrivadas = [
+        'SocioController' => [
+            'sincronizarStatusSocios'
         ],
         'GatewayPagamentoController' => [
             'cadastrar',
