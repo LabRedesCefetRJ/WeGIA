@@ -3,8 +3,8 @@ class AgendaEquipeMembro {
     private $id;
     private $id_equipe;
     private $id_pessoa;
-    private $data_inicio_plantao;
-    private $data_fim_plantao;
+    private $data_inicio_turno;
+    private $data_fim_turno;
     private $ativo;
 
     public function getId()
@@ -19,13 +19,13 @@ class AgendaEquipeMembro {
     {
         return $this->id_pessoa;
     }
-    public function getData_inicio_plantao()
+    public function getData_inicio_turno()
     {
-        return $this->data_inicio_plantao;
+        return $this->data_inicio_turno;
     }
-    public function getData_fim_plantao()
+    public function getData_fim_turno()
     {
-        return $this->data_fim_plantao;
+        return $this->data_fim_turno;
     }
     public function getAtivo()
     {
@@ -46,13 +46,13 @@ class AgendaEquipeMembro {
     {
         $this->id_pessoa = $id_pessoa;  
     }
-    public function setData_inicio_plantao($data_inicio_plantao)
+    public function setData_inicio_turno($data_inicio_turno)
     {
-        $this->data_inicio_plantao = $data_inicio_plantao;
+        $this->data_inicio_turno = $data_inicio_turno;
     }
-    public function setData_fim_plantao($data_fim_plantao)  
+    public function setData_fim_turno($data_fim_turno)  
     {
-        $this->data_fim_plantao = $data_fim_plantao;
+        $this->data_fim_turno = $data_fim_turno;
     }
     public function setAtivo($ativo)
     {

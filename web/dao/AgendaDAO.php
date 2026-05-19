@@ -223,13 +223,13 @@ class AgendaDAO
 
     public function incluirMembro(AgendaEquipeMembro $membro)
     {
-        $sql = "INSERT INTO agenda_equipe_membro (id_equipe, id_pessoa, data_inicio_plantao, data_fim_plantao, ativo)
-                VALUES (:id_equipe, :id_pessoa, :data_inicio_plantao, :data_fim_plantao, :ativo)";
+        $sql = "INSERT INTO agenda_equipe_membro (id_equipe, id_pessoa, data_inicio_turno, data_fim_turno, ativo)
+                VALUES (:id_equipe, :id_pessoa, :data_inicio_turno, :data_fim_turno, :ativo)";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_equipe',          $membro->getId_equipe(), PDO::PARAM_INT);
         $stmt->bindValue(':id_pessoa',          $membro->getId_pessoa(), PDO::PARAM_INT);
-        $stmt->bindValue(':data_inicio_plantao',$membro->getData_inicio_plantao());
-        $stmt->bindValue(':data_fim_plantao',   $membro->getData_fim_plantao());
+        $stmt->bindValue(':data_inicio_turno',$membro->getData_inicio_turno());
+        $stmt->bindValue(':data_fim_turno',   $membro->getData_fim_turno());
         $stmt->bindValue(':ativo',              1, PDO::PARAM_INT);
         $stmt->execute();
         return $this->pdo->lastInsertId();
@@ -238,7 +238,7 @@ class AgendaDAO
     // Lista apenas membros ativos da equipe
     public function listarMembrosPorEquipe(int $idEquipe)
     {
-        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_plantao, m.data_fim_plantao, m.ativo
+        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_turno, m.data_fim_turno, m.ativo
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 WHERE m.id_equipe = :id_equipe
@@ -249,16 +249,16 @@ class AgendaDAO
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Lista membros de plantão hoje
+    // Lista membros do turno de hoje
     public function listarMembrosDePlantaoHoje(int $idEquipe)
     {
-        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_plantao, m.data_fim_plantao
+        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_turno, m.data_fim_turno
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 WHERE m.id_equipe = :id_equipe
                 AND m.ativo = 1
-                AND m.data_inicio_plantao <= NOW()
-                AND m.data_fim_plantao >= NOW()";
+                AND m.data_inicio_turno <= NOW()
+                AND m.data_fim_turno >= NOW()";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_equipe', $idEquipe, PDO::PARAM_INT);
         $stmt->execute();
@@ -268,7 +268,7 @@ class AgendaDAO
     // Lista histórico completo
     public function listarHistoricoMembrosPorEquipe(int $idEquipe)
     {
-        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_plantao, m.data_fim_plantao, m.ativo
+        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_turno, m.data_fim_turno, m.ativo
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 WHERE m.id_equipe = :id_equipe";
@@ -299,12 +299,12 @@ class AgendaDAO
     public function alterarMembro(AgendaEquipeMembro $membro)
     {
         $sql = "UPDATE agenda_equipe_membro SET
-                    data_inicio_plantao = :data_inicio_plantao,
-                    data_fim_plantao    = :data_fim_plantao
+                    data_inicio_turno = :data_inicio_turno,
+                    data_fim_turno    = :data_fim_turno
                 WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':data_inicio_plantao', $membro->getData_inicio_plantao());
-        $stmt->bindValue(':data_fim_plantao',    $membro->getData_fim_plantao());
+        $stmt->bindValue(':data_inicio_turno', $membro->getData_inicio_turno());
+        $stmt->bindValue(':data_fim_turno',    $membro->getData_fim_turno());
         $stmt->bindValue(':id',                  $membro->getId(), PDO::PARAM_INT);
         $stmt->execute();
     }
