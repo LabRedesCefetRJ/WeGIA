@@ -81,6 +81,7 @@ AppFactory::setContainer($container);
 
 $app = AppFactory::create();
 
+$app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
 
 $displayErrorDetails = ENV_APP === 'development' ? true : false;
