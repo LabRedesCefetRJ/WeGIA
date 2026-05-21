@@ -2,13 +2,13 @@
 
 $config_path = "config.php";
 if (file_exists($config_path)) {
-    require_once($config_path);
+    require_once $config_path;
 } else {
     while (true) {
         $config_path = "../" . $config_path;
         if (file_exists($config_path)) break;
     }
-    require_once($config_path);
+    require_once $config_path;
 }
 require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/classes/Agenda.php";
@@ -152,6 +152,21 @@ class AgendaDAO
         $stmt->execute();
     }
 
+    public function listarTodasAlocacoes()
+    {
+        $sql = "SELECT al.id, al.inicio AS start, al.fim AS end, al.fim AS fim_display, al.lembrete,
+                       al.id_agenda, al.id_equipe,
+                       a.descricao AS agenda, e.nome AS equipe,
+                       CONCAT(a.descricao, ' — ', e.nome) AS title
+                FROM agenda_alocacao al
+                INNER JOIN agenda a ON al.id_agenda = a.id
+                INNER JOIN agenda_equipe e ON al.id_equipe = e.id
+                ORDER BY al.inicio";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     // -------------------------------------------------------
     // AGENDA EQUIPE
     // -------------------------------------------------------
@@ -223,13 +238,13 @@ class AgendaDAO
 
     public function incluirMembro(AgendaEquipeMembro $membro)
     {
-        $sql = "INSERT INTO agenda_equipe_membro (id_equipe, id_pessoa, data_inicio_turno, data_fim_turno, ativo)
-                VALUES (:id_equipe, :id_pessoa, :data_inicio_turno, :data_fim_turno, :ativo)";
+        $sql = "INSERT INTO agenda_equipe_membro (id_equipe, id_pessoa, inicio_turno, fim_turno, ativo)
+                VALUES (:id_equipe, :id_pessoa, :inicio_turno, :fim_turno, :ativo)";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_equipe',          $membro->getId_equipe(), PDO::PARAM_INT);
         $stmt->bindValue(':id_pessoa',          $membro->getId_pessoa(), PDO::PARAM_INT);
-        $stmt->bindValue(':data_inicio_turno',$membro->getData_inicio_turno());
-        $stmt->bindValue(':data_fim_turno',   $membro->getData_fim_turno());
+        $stmt->bindValue(':inicio_turno',$membro->getInicio_turno());
+        $stmt->bindValue(':fim_turno',   $membro->getFim_turno());
         $stmt->bindValue(':ativo',              1, PDO::PARAM_INT);
         $stmt->execute();
         return $this->pdo->lastInsertId();
@@ -238,7 +253,7 @@ class AgendaDAO
     // Lista apenas membros ativos da equipe
     public function listarMembrosPorEquipe(int $idEquipe)
     {
-        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_turno, m.data_fim_turno, m.ativo
+        $sql = "SELECT m.id, p.nome, p.sobrenome, m.inicio_turno, m.fim_turno, m.ativo
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 WHERE m.id_equipe = :id_equipe
@@ -252,13 +267,13 @@ class AgendaDAO
     // Lista membros do turno de hoje
     public function listarMembrosDeTurnoHoje(int $idEquipe)
     {
-        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_turno, m.data_fim_turno
+        $sql = "SELECT m.id, p.nome, p.sobrenome, m.inicio_turno, m.fim_turno
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 WHERE m.id_equipe = :id_equipe
                 AND m.ativo = 1
-                AND m.data_inicio_turno <= NOW()
-                AND m.data_fim_turno >= NOW()";
+                AND m.inicio_turno <= CURTIME()
+                AND (m.fim_turno IS NULL OR m.fim_turno >= CURTIME())";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_equipe', $idEquipe, PDO::PARAM_INT);
         $stmt->execute();
@@ -268,7 +283,7 @@ class AgendaDAO
     // Lista histórico completo
     public function listarHistoricoMembrosPorEquipe(int $idEquipe)
     {
-        $sql = "SELECT m.id, p.nome, p.sobrenome, m.data_inicio_turno, m.data_fim_turno, m.ativo
+        $sql = "SELECT m.id, p.nome, p.sobrenome, m.inicio_turno, m.fim_turno, m.ativo
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 WHERE m.id_equipe = :id_equipe";
@@ -299,13 +314,53 @@ class AgendaDAO
     public function alterarMembro(AgendaEquipeMembro $membro)
     {
         $sql = "UPDATE agenda_equipe_membro SET
-                    data_inicio_turno = :data_inicio_turno,
-                    data_fim_turno    = :data_fim_turno
+                    inicio_turno = :inicio_turno,
+                    fim_turno    = :fim_turno
                 WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':data_inicio_turno', $membro->getData_inicio_turno());
-        $stmt->bindValue(':data_fim_turno',    $membro->getData_fim_turno());
+        $stmt->bindValue(':inicio_turno', $membro->getInicio_turno());
+        $stmt->bindValue(':fim_turno',    $membro->getFim_turno());
         $stmt->bindValue(':id',                $membro->getId(), PDO::PARAM_INT);
         $stmt->execute();
+    }
+
+    public function listarTodosMembrosAtivos()
+    {
+        $sql = "SELECT m.id, m.id_equipe, m.inicio_turno, m.fim_turno,
+                       CONCAT(p.nome, ' ', COALESCE(p.sobrenome, '')) AS nome_completo
+                FROM agenda_equipe_membro m
+                INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
+                WHERE m.ativo = 1
+                ORDER BY m.id_equipe, p.nome";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function excluirMembro(int $id)
+    {
+        $sql = "DELETE FROM agenda_equipe_membro WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function excluirAlocacao(int $id)
+    {
+        $sql = "DELETE FROM agenda_alocacao WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function listarPessoas()
+    {
+        $sql = "SELECT id_pessoa, CONCAT(nome, ' ', sobrenome) AS nome_completo
+                FROM pessoa
+                WHERE nome IS NOT NULL
+                ORDER BY nome, sobrenome";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

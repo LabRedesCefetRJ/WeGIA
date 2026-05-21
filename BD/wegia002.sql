@@ -332,5 +332,13 @@ INSERT IGNORE INTO `wegia`.`projeto_status` (`descricao`) VALUES
 ('Inativo');
 
 INSERT IGNORE INTO `wegia`.`projeto_atendido_status` (`descricao`) VALUES
-('Ativo'), 
+('Ativo'),
+('Inativo');
+
+INSERT IGNORE INTO `wegia`.`agenda_status` (`descricao`) VALUES
+('Ativo'),
+('Inativo');
+
+INSERT IGNORE INTO `wegia`.`agenda_equipe_status` (`descricao`) VALUES
+('Ativo'),
 ('Inativo');

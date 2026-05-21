@@ -2383,9 +2383,9 @@ CREATE TABLE IF NOT EXISTS voluntario_docs (
  REFERENCES pessoa_arquivo (id))
  ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =====================================================
+-- -----------------------------------------------------
 -- Módulo Agenda
--- =====================================================
+-- -----------------------------------------------------
 
 -- -----------------------------------------------------
 -- Table `wegia`.`agenda_status`
@@ -2447,8 +2447,8 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_membro` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `id_equipe` INT NOT NULL,
   `id_pessoa` INT NOT NULL,
-  `data_inicio_turno` DATETIME NOT NULL,
-  `data_fim_turno` DATETIME NULL DEFAULT NULL,
+  `inicio_turno` TIME NOT NULL,
+  `fim_turno` TIME NOT NULL,
   `ativo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uq_equipe_pessoa` (`id_equipe` ASC, `id_pessoa` ASC),
@@ -2473,8 +2473,8 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `id_agenda` INT NOT NULL,
   `id_equipe` INT NOT NULL,
-  `inicio` DATETIME NOT NULL,
-  `fim` DATETIME NOT NULL,
+  `inicio` DATE NOT NULL,
+  `fim` DATE NOT NULL,
   `lembrete` DATETIME NULL DEFAULT NULL,
   `lembrete_enviado` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),

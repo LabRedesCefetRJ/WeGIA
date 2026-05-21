@@ -210,6 +210,87 @@ class AgendaControle
         exit;
     }
 
+    public function listarTodasAlocacoes()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $dao = new AgendaDAO();
+            echo json_encode($dao->listarTodasAlocacoes());
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function excluirAlocacao()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id || $id < 1)
+                throw new InvalidArgumentException('O id informado não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            $dao->excluirAlocacao($id);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Alocação excluída com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function listarTodosMembrosAtivos()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $dao = new AgendaDAO();
+            echo json_encode($dao->listarTodosMembrosAtivos());
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function excluirMembro()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id || $id < 1)
+                throw new InvalidArgumentException('O id informado não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            $dao->excluirMembro($id);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Membro removido com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function listarPessoas()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $dao = new AgendaDAO();
+            echo json_encode($dao->listarPessoas());
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
     public function alterarAlocacao()
     {
         header('Content-Type: application/json');
@@ -375,8 +456,8 @@ class AgendaControle
         try {
             $id_equipe         = filter_input(INPUT_POST, 'id_equipe', FILTER_SANITIZE_NUMBER_INT);
             $id_pessoa         = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
-            $data_inicio_turno = filter_input(INPUT_POST, 'data_inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
-            $data_fim_turno    = filter_input(INPUT_POST, 'data_fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
+            $inicio_turno = filter_input(INPUT_POST, 'inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
+            $fim_turno    = filter_input(INPUT_POST, 'fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
 
             if (!$id_equipe || $id_equipe < 1)
                 throw new InvalidArgumentException('A equipe informada não é válida.', 412);
@@ -384,17 +465,20 @@ class AgendaControle
             if (!$id_pessoa || $id_pessoa < 1)
                 throw new InvalidArgumentException('A pessoa informada não é válida.', 412);
 
-            if (empty($data_inicio_turno))
-                throw new InvalidArgumentException('A data de início do turno não pode ser vazia.', 412);
+            if (empty($inicio_turno))
+                throw new InvalidArgumentException('O horário de início do turno não pode ser vazio.', 412);
 
-            if (!empty($data_fim_turno) && $data_inicio_turno > $data_fim_turno)
-                throw new InvalidArgumentException('A data de início não pode ser maior que a data de fim.', 412);
+            if (empty($fim_turno))
+                throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
+
+            if ($inicio_turno >= $fim_turno)
+                throw new InvalidArgumentException('O horário de início deve ser menor que o horário de fim.', 412);
 
             $membro = new AgendaEquipeMembro();
             $membro->setId_equipe($id_equipe);
             $membro->setId_pessoa($id_pessoa);
-            $membro->setData_inicio_turno($data_inicio_turno);
-            $membro->setData_fim_turno(!empty($data_fim_turno) ? $data_fim_turno : null);
+            $membro->setInicio_turno($inicio_turno);
+            $membro->setFim_turno($fim_turno);
             $membro->setAtivo(1);
 
             $dao = new AgendaDAO();
@@ -510,19 +594,25 @@ class AgendaControle
 
         try {
             $id                = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
-            $data_inicio_turno = filter_input(INPUT_POST, 'data_inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
-            $data_fim_turno    = filter_input(INPUT_POST, 'data_fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
+            $inicio_turno = filter_input(INPUT_POST, 'inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
+            $fim_turno    = filter_input(INPUT_POST, 'fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
 
             if (!$id || $id < 1)
                 throw new InvalidArgumentException('O id informado não é válido.', 412);
 
-            if (!empty($data_fim_turno) && $data_inicio_turno > $data_fim_turno)
-                throw new InvalidArgumentException('A data de início não pode ser maior que a data de fim.', 412);
+            if (empty($inicio_turno))
+                throw new InvalidArgumentException('O horário de início do turno não pode ser vazio.', 412);
+
+            if (empty($fim_turno))
+                throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
+
+            if ($inicio_turno >= $fim_turno)
+                throw new InvalidArgumentException('O horário de início deve ser menor que o horário de fim.', 412);
 
             $membro = new AgendaEquipeMembro();
             $membro->setId($id);
-            $membro->setData_inicio_turno($data_inicio_turno);
-            $membro->setData_fim_turno(!empty($data_fim_turno) ? $data_fim_turno : null);
+            $membro->setInicio_turno($inicio_turno);
+            $membro->setFim_turno($fim_turno);
 
             $dao = new AgendaDAO();
             $dao->alterarMembro($membro);
