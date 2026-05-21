@@ -14,13 +14,21 @@ class SocioController
     private PessoaServiceInterface $pessoaService;
     private AuthService $authService;
     private EmailVerificationService $emailVerificationService;
+    private SocioVerificationHelper $verificationHelper;
 
-    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, AuthService $authService, EmailVerificationService $emailVerificationService)
+    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, AuthService $authService, EmailVerificationService $emailVerificationService, SocioVerificationHelper $verificationHelper = null)
     {
         $this->socioService = $socioService;
         $this->pessoaService = $pessoaService;
         $this->authService = $authService;
         $this->emailVerificationService = $emailVerificationService;
+        
+        // Initialize helper if not provided (backward compatibility)
+        if ($verificationHelper === null) {
+            $this->verificationHelper = new SocioVerificationHelper($pessoaService, $socioService, $emailVerificationService);
+        } else {
+            $this->verificationHelper = $verificationHelper;
+        }
     }
 
     public function registerSocio(Request $request, Response $response)
@@ -111,7 +119,7 @@ class SocioController
      * 
      * Body JSON:
      * {
-     *   "id_socio": 1,
+     *   "cpf": "12345678901",
      *   "code": "123456"
      * }
      */
@@ -121,7 +129,7 @@ class SocioController
             $data = $request->getParsedBody();
 
             // Validate required data
-            if (empty($data['id_socio']) || empty($data['code'])) {
+            if (empty($data['cpf']) || empty($data['code'])) {
                 $response->getBody()->write(json_encode([
                     'success' => false,
                     'message' => 'CPF e código são obrigatórios'
@@ -130,9 +138,22 @@ class SocioController
                     ->withHeader('Content-Type', 'application/json');
             }
 
+            // Find socio by CPF
+            $resultado = $this->verificationHelper->findSocioByCpf($data['cpf']);
+
+            // Check if socio exists
+            if (!$resultado['socio']) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => $resultado['message'] ?? 'Sócio não localizado'
+                ]));
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
             // Verify code
             $result = $this->emailVerificationService->verifyCode(
-                (int)$data['id_socio'],
+                $resultado['socio']->getId(),
                 $data['code']
             );
 
@@ -292,6 +313,78 @@ class SocioController
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    /**
+     * Send a new verification code to a socio's email
+     * GET /socios/verify-code
+     * 
+     * Query parameter: cpf (required)
+     * 
+     * Example: GET /socios/verify-code?cpf=12345678901
+     */
+    public function sendVerificationCodeByCpf(Request $request, Response $response)
+    {
+        try {
+            $queryParams = $request->getQueryParams();
+            $cpf = $queryParams['cpf'] ?? '';
+
+            // Validate CPF parameter
+            if (empty($cpf)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'CPF é obrigatório'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Find socio by CPF
+            $resultado = $this->verificationHelper->findSocioByCpf($cpf);
+
+            // Check if socio exists
+            if (!$resultado['socio'] || !$resultado['pessoa']) {
+                $statusCode = $resultado['socio'] ? 400 : 404;
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => $resultado['message'] ?? 'Sócio não localizado'
+                ]));
+                return $response->withStatus($statusCode)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Check if socio has email
+            if (!$resultado['pessoa']->getEmail()) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Sócio não possui e-mail cadastrado'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Send verification code (automatically invalidates previous codes)
+            $verificationResult = $this->verificationHelper->sendVerificationCode(
+                $resultado['socio']->getId(),
+                $resultado['pessoa']->getEmail()
+            );
+
+            $statusCode = $verificationResult['success'] ? 200 : 500;
+
+            $response->getBody()->write(json_encode($verificationResult));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => 500
             ]));
 
             return $response->withStatus(500)

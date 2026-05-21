@@ -7,6 +7,7 @@ use api\modules\Socio\SocioController;
 use api\modules\Socio\SocioService;
 use api\modules\Socio\EmailVerificationService;
 use api\modules\Socio\VerificationCodeRepository;
+use api\modules\Socio\SocioVerificationHelper;
 use api\contracts\services\PessoaServiceInterface;
 use api\modules\Pessoa\PessoaService;
 use api\modules\Pessoa\PessoaRepository;
@@ -73,7 +74,10 @@ $container = new AppContainer([
         return $c->get(PessoaService::class);
     },
     SocioController::class => function ($c) {
-        return new SocioController($c->get(SocioService::class), $c->get(PessoaServiceInterface::class), $c->get(AuthService::class), $c->get(EmailVerificationService::class));
+        return new SocioController($c->get(SocioService::class), $c->get(PessoaServiceInterface::class), $c->get(AuthService::class), $c->get(EmailVerificationService::class), $c->get(SocioVerificationHelper::class));
+    },
+    SocioVerificationHelper::class => function ($c) {
+        return new SocioVerificationHelper($c->get(PessoaServiceInterface::class), $c->get(SocioService::class), $c->get(EmailVerificationService::class));
     },
 ]);
 
@@ -130,6 +134,7 @@ $app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de l
 $app->post('/socios/register', [SocioController::class, 'registerSocio']);
 
 $app->get('/socios/exists/{cpf}', [SocioController::class, 'checkSocioExistsByCpf']);
+$app->get('/socios/verify-code', [SocioController::class, 'sendVerificationCodeByCpf']);
 $app->get('/socios/support-contact', [SocioController::class, 'getSupportContact']);
 $app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
 $app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
