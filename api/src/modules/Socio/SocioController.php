@@ -4,6 +4,7 @@ namespace api\modules\Socio;
 
 use api\contracts\services\PessoaServiceInterface;
 use api\modules\Auth\AuthService;
+use api\utils\Cpf;
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 
@@ -26,6 +27,16 @@ class SocioController
     {
         try {
             $data = $request->getParsedBody();
+
+            // Validar CPF
+            if (empty($data['cpf']) || !Cpf::validate($data['cpf'])) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'CPF inválido.'
+                ]));
+
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
 
             //verificar se existe uma pessoa com o CPF fornecido, se não existir, criar uma nova pessoa, caso contrário, usar a pessoa existente para criar o sócio
             $pessoa = $this->pessoaService->obterPessoaPorCpf($data['cpf']);
@@ -290,7 +301,16 @@ class SocioController
 
     private function buscarSocioPorCpf(string $cpf): array
     {
-        $cpf = $this->normalizarCpf($cpf);
+        // Validar CPF
+        if (!Cpf::validate($cpf)) {
+            return [
+                'pessoa' => null,
+                'socio' => null,
+                'message' => 'CPF inválido.'
+            ];
+        }
+
+        $cpf = Cpf::normalize($cpf);
         $pessoa = $this->pessoaService->obterPessoaPorCpf($cpf);
 
         if (!$pessoa) {
@@ -316,10 +336,5 @@ class SocioController
             'socio' => $socio,
             'message' => null
         ];
-    }
-
-    private function normalizarCpf(string $cpf): string
-    {
-        return str_starts_with($cpf, 'cpf=') ? substr($cpf, 4) : $cpf;
     }
 }

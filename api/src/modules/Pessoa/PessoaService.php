@@ -4,6 +4,7 @@ namespace api\modules\Pessoa;
 
 use api\contracts\entities\PessoaInterface;
 use api\contracts\services\PessoaServiceInterface;
+use api\utils\Cpf;
 use DateTime;
 
 class PessoaService implements PessoaServiceInterface
@@ -17,6 +18,14 @@ class PessoaService implements PessoaServiceInterface
 
     public function criarPessoa(string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf): PessoaInterface
     {
+        // Validar CPF
+        if (!Cpf::validate($cpf)) {
+            throw new \Exception("CPF inválido", 400);
+        }
+
+        // Normaliza o CPF antes de criar
+        $cpf = Cpf::normalize($cpf);
+        
         $pessoa = new Pessoa($nome, $sobrenome, $cpf, $dataNascimento, $sexo, $telefone, $email);
         $idPessoa = $this->pessoaRepository->create($pessoa);
 
@@ -36,7 +45,15 @@ class PessoaService implements PessoaServiceInterface
 
     public function obterPessoaPorCpf(string $cpf): ?PessoaInterface
     {
-        $resultado =  $this->pessoaRepository->findByCpf($cpf);
+        // Validar CPF
+        if (!Cpf::validate($cpf)) {
+            return null;
+        }
+
+        // Normaliza o CPF (remove máscara e formata)
+        $cpf = Cpf::normalize($cpf);
+        
+        $resultado = $this->pessoaRepository->findByCpf($cpf);
 
         if(!$resultado) {
             return null;
