@@ -55,6 +55,7 @@ try {
     require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
     $situacao = $pdo->query("SELECT * FROM situacao")->fetchAll();
+    $cargo = $pdo->query("SELECT * FROM cargo")->fetchAll();
 
     require_once "../personalizacao_display.php";
     require_once ROOT . "/controle/VoluntarioControle.php";
@@ -78,7 +79,8 @@ try {
     <meta charset="UTF-8">
     <title>Perfil Voluntário</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light"
+        rel="stylesheet" type="text/css">
     <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
     <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
@@ -92,21 +94,22 @@ try {
     <script src="../../Functions/onlyNumbers.js"></script>
     <script src="../../Functions/onlyChars.js"></script>
     <script src="../../Functions/mascara.js"></script>
+    <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
 
     <script>
         function alterardate(data) {
             if (!data) return "";
             var date = data.split("/");
-            if(date.length !== 3) return data.split(" ")[0]; // handles yyyy-mm-dd
+            if (date.length !== 3) return data.split(" ")[0]; // handles yyyy-mm-dd
             return date[2] + "-" + date[1] + "-" + date[0];
         }
 
-        $(function() {
+        $(function () {
             $("#header").load("../header.php");
             $(".menuu").load("../menu.php");
 
             var voluntario = <?= $vol ?>;
-            $.each(voluntario, function(i, item) {
+            $.each(voluntario, function (i, item) {
                 // Info Pessoal
                 $("#nomeForm").val(item.nome).prop('disabled', true);
                 $("#sobrenomeForm").val(item.sobrenome).prop('disabled', true);
@@ -143,6 +146,7 @@ try {
                 // Voluntariado
                 $("#data_admissao").val(item.data_admissao).prop('disabled', true);
                 $("#situacao").val(item.id_situacao).prop('disabled', true);
+                $("#cargo").val(item.id_cargo).prop('disabled', true);
             });
         });
 
@@ -217,6 +221,7 @@ try {
         function editar_outros() {
             $("#situacao").prop('disabled', false);
             $("#data_admissao").prop('disabled', false);
+            $("#cargo").prop('disabled', false);
             $("#botaoEditarOutros").html('Cancelar');
             $("#botaoSalvarOutros").prop('disabled', false);
             $("#botaoEditarOutros").removeAttr('onclick');
@@ -226,6 +231,7 @@ try {
         function cancelar_outros() {
             $("#situacao").prop('disabled', true);
             $("#data_admissao").prop('disabled', true);
+            $("#cargo").prop('disabled', true);
             $("#botaoEditarOutros").html('Editar');
             $("#botaoSalvarOutros").prop('disabled', true);
             $("#botaoEditarOutros").removeAttr('onclick');
@@ -312,31 +318,41 @@ try {
                                     }
                                     echo "<img src='$foto' style='margin-bottom: 15px;' id='imagem' class='rounded img-responsive' alt='Perfil'>";
                                     ?>
-                                    <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"><i class="fa fa-camera-retro"></i></button>
+                                    <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"><i
+                                            class="fa fa-camera-retro"></i></button>
 
                                     <div class="container">
                                         <div class="modal fade" id="myModal" role="dialog">
                                             <div class="modal-dialog">
                                                 <div class="modal-content">
                                                     <div class="modal-header">
-                                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                        <button type="button" class="close"
+                                                            data-dismiss="modal">&times;</button>
                                                         <h4 class="modal-title">Adicionar uma Foto</h4>
                                                     </div>
                                                     <div class="modal-body">
-                                                        <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
-                                                            <input type="hidden" name="nomeClasse" value="VoluntarioControle">
+                                                        <form class="form-horizontal" method="POST"
+                                                            action="../../controle/control.php"
+                                                            enctype="multipart/form-data">
+                                                            <input type="hidden" name="nomeClasse"
+                                                                value="VoluntarioControle">
                                                             <input type="hidden" name="metodo" value="alterarImagem">
                                                             <?= Csrf::inputField() ?>
                                                             <div class="form-group">
-                                                                <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
+                                                                <label class="col-md-4 control-label"
+                                                                    for="imgperfil">Carregue nova imagem de
+                                                                    perfil:</label>
                                                                 <div class="col-md-8">
-                                                                    <input type="file" name="imgperfil" size="60" id="imgform" class="form-control">
+                                                                    <input type="file" name="imgperfil" size="60"
+                                                                        id="imgform" class="form-control">
                                                                 </div>
                                                             </div>
                                                     </div>
                                                     <div class="modal-footer">
-                                                        <input type="hidden" name="id_voluntario" value="<?= htmlspecialchars($idVoluntario) ?>">
-                                                        <input type="submit" id="formsubmit" value="Alterar imagem" class="btn btn-primary">
+                                                        <input type="hidden" name="id_voluntario"
+                                                            value="<?= htmlspecialchars($idVoluntario) ?>">
+                                                        <input type="submit" id="formsubmit" value="Alterar imagem"
+                                                            class="btn btn-primary">
                                                     </div>
                                                     </form>
                                                 </div>
@@ -367,50 +383,64 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Nome</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)">
+                                                    <input type="text" class="form-control" name="nome" id="nomeForm"
+                                                        onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Sobrenome</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)">
+                                                    <input type="text" class="form-control" name="sobrenome"
+                                                        id="sobrenomeForm" onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">CPF</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="cpf" id="cpf" disabled>
+                                                    <input type="text" class="form-control" name="cpf" id="cpf"
+                                                        disabled>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Sexo</label>
                                                 <div class="col-md-8">
-                                                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-female" style="font-size: 20px;"></i></label>
+                                                    <label><input type="radio" name="gender" id="radioM" value="m"
+                                                            style="margin-top: 10px; margin-left: 15px;"> <i
+                                                            class="fa fa-male" style="font-size: 20px;"></i></label>
+                                                    <label><input type="radio" name="gender" id="radioF" value="f"
+                                                            style="margin-top: 10px; margin-left: 15px;"> <i
+                                                            class="fa fa-female" style="font-size: 20px;"></i></label>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Telefone</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" maxlength="14" name="telefone" id="telefone" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
+                                                    <input type="text" class="form-control" maxlength="14"
+                                                        name="telefone" id="telefone"
+                                                        onkeypress="return Onlynumbers(event)"
+                                                        onkeyup="mascara('(##)#####-####',this,event)" required>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Nascimento</label>
                                                 <div class="col-md-8">
-                                                    <input type="date" class="form-control" name="nascimento" id="nascimento" min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>" required>
+                                                    <input type="date" class="form-control" name="nascimento"
+                                                        id="nascimento" min="<?= $dataNascimentoMinima ?>"
+                                                        max="<?= $dataNascimentoMaxima ?>" required>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Nome do pai</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="nome_pai" id="pai" onkeypress="return Onlychars(event)">
+                                                    <input type="text" class="form-control" name="nome_pai" id="pai"
+                                                        onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Nome da mãe</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="nome_mae" id="mae" onkeypress="return Onlychars(event)">
+                                                    <input type="text" class="form-control" name="nome_mae" id="mae"
+                                                        onkeypress="return Onlychars(event)">
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -429,9 +459,12 @@ try {
                                                     </select>
                                                 </div>
                                             </div>
-                                            <input type="hidden" name="id_voluntario" value="<?= htmlspecialchars($idVoluntario) ?>">
-                                            <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes_pessoais()">Editar</button>
-                                            <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
+                                            <input type="hidden" name="id_voluntario"
+                                                value="<?= htmlspecialchars($idVoluntario) ?>">
+                                            <button type="button" class="btn btn-primary" id="botaoEditarIP"
+                                                onclick="return editar_informacoes_pessoais()">Editar</button>
+                                            <input type="submit" class="btn btn-primary" disabled="true" value="Salvar"
+                                                id="botaoSalvarIP">
                                         </fieldset>
                                     </form>
                                 </div>
@@ -446,57 +479,72 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">CEP</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" name="cep" id="cep" class="form-control" value="" size="10" maxlength="9" onblur="pesquisacep(this.value);" required>
+                                                    <input type="text" name="cep" id="cep" class="form-control" value=""
+                                                        size="10" maxlength="9" onblur="pesquisacep(this.value);"
+                                                        required>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Estado</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" name="uf" id="uf" class="form-control" required readonly>
+                                                    <input type="text" name="uf" id="uf" class="form-control" required
+                                                        readonly>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Cidade</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" name="cidade" id="cidade" class="form-control" required readonly>
+                                                    <input type="text" name="cidade" id="cidade" class="form-control"
+                                                        required readonly>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Bairro</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" name="bairro" id="bairro" class="form-control" required readonly>
+                                                    <input type="text" name="bairro" id="bairro" class="form-control"
+                                                        required readonly>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Logradouro</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" name="rua" id="rua" class="form-control" required readonly>
+                                                    <input type="text" name="rua" id="rua" class="form-control" required
+                                                        readonly>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Número</label>
                                                 <div class="col-md-8">
-                                                    <input type="number" class="form-control" name="numero_residencia" id="numero_residencia" min="0" oninput="this.value = Math.abs(this.value)">
+                                                    <input type="number" class="form-control" name="numero_residencia"
+                                                        id="numero_residencia" min="0"
+                                                        oninput="this.value = Math.abs(this.value)">
                                                     <div class="checkbox">
-                                                        <label><input type="checkbox" id="numResidencial" onclick="return numero_residencial()"> Sem número</label>
+                                                        <label><input type="checkbox" id="numResidencial"
+                                                                onclick="return numero_residencial()"> Sem
+                                                            número</label>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Complemento</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="complemento" id="complemento" maxlength="50">
+                                                    <input type="text" class="form-control" name="complemento"
+                                                        id="complemento" maxlength="50">
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">IBGE</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" name="ibge" id="ibge" class="form-control" required readonly>
+                                                    <input type="text" name="ibge" id="ibge" class="form-control"
+                                                        required readonly>
                                                 </div>
                                             </div>
-                                            <input type="hidden" name="id_voluntario" value="<?= htmlspecialchars($idVoluntario) ?>">
-                                            <button type="button" class="btn btn-primary" id="botaoEditarEndereco" onclick="return editar_endereco()">Editar</button>
-                                            <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarEndereco">
+                                            <input type="hidden" name="id_voluntario"
+                                                value="<?= htmlspecialchars($idVoluntario) ?>">
+                                            <button type="button" class="btn btn-primary" id="botaoEditarEndereco"
+                                                onclick="return editar_endereco()">Editar</button>
+                                            <input type="submit" class="btn btn-primary" disabled="true" value="Salvar"
+                                                id="botaoSalvarEndereco">
                                         </fieldset>
                                     </form>
                                 </div>
@@ -511,22 +559,38 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Data Admissão</label>
                                                 <div class="col-md-8">
-                                                    <input type="date" class="form-control" name="data_admissao" id="data_admissao" required>
+                                                    <input type="date" class="form-control" name="data_admissao"
+                                                        id="data_admissao" required>
                                                 </div>
                                             </div>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label">Situação</label>
                                                 <div class="col-md-6">
-                                                    <select class="form-control mb-md" name="situacao" id="situacao" required>
+                                                    <select class="form-control" name="situacao" id="situacao" required>
                                                         <?php foreach ($situacao as $row) {
                                                             echo "<option value=" . htmlspecialchars($row['id_situacao']) . ">" . htmlspecialchars($row['situacoes']) . "</option>";
                                                         } ?>
                                                     </select>
                                                 </div>
                                             </div>
-                                            <input type="hidden" name="id_voluntario" value="<?= htmlspecialchars($idVoluntario) ?>">
-                                            <button type="button" class="btn btn-primary" id="botaoEditarOutros" onclick="return editar_outros()">Editar</button>
-                                            <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarOutros">
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label">Cargo</label>
+                                                <div class="col-md-6">
+                                                    <select class="form-control mb-md" name="cargo" id="cargo" required>
+                                                        <option value="" selected disabled>Selecionar</option>
+                                                        <?php foreach ($cargo as $row) {
+                                                            echo "<option value=\"{$row[0]}\">" . htmlspecialchars($row[1]) . "</option>";
+                                                        } ?>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            <input type="hidden" name="id_voluntario"
+                                                value="<?= htmlspecialchars($idVoluntario) ?>">
+                                            <button type="button" class="btn btn-primary" id="botaoEditarOutros"
+                                                onclick="return editar_outros()">Editar</button>
+                                            <input type="submit" class="btn btn-primary" disabled="true" value="Salvar"
+                                                id="botaoSalvarOutros">
                                         </fieldset>
                                     </form>
                                 </div>
@@ -539,4 +603,5 @@ try {
         </div>
     </section>
 </body>
+
 </html>

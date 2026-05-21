@@ -32,6 +32,7 @@ if (isset($_GET['cpf'])) {
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $situacao = $mysqli->query("SELECT * FROM situacao");
+$cargo = $mysqli->query("SELECT * FROM cargo");
 require_once ROOT . '/classes/Csrf.php';
 ?>
 <!DOCTYPE html>
@@ -65,11 +66,11 @@ require_once ROOT . '/classes/Csrf.php';
                 </header>
                 <div class="row" id="formulario">
                     <?php if ($erro): ?>
-                    <div style="color: red; font-weight: bold; text-align:center">
-                        <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
-                    </div>
-                    <?php
-endif; ?>
+                        <div style="color: red; font-weight: bold; text-align:center">
+                            <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
+                        </div>
+                        <?php
+                    endif; ?>
                     <div class="col-md-12 col-lg-12">
                         <form class="form-horizontal" method="POST" action="../../controle/control.php">
                             <div class="panel-body">
@@ -99,7 +100,7 @@ endif; ?>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Nascimento *</label>
                                     <div class="col-md-6"><input type="date" class="form-control" name="nascimento"
-                                            min="<?= $dataNascimentoMinima?>" max="<?= $dataNascimentoMaxima?>"
+                                            min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>"
                                             required></div>
                                 </div>
                                 <hr>
@@ -115,14 +116,29 @@ endif; ?>
                                         <select class="form-control" name="situacao" required>
                                             <option selected disabled>Selecionar</option>
                                             <?php while ($row = $situacao->fetch_array(MYSQLI_NUM)) {
-    echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
-}?>
+                                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+                                            } ?>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label" for="inputSuccess">Cargo *</label>
+                                    <div class="col-md-6">
+                                        <select class="form-control" name="cargo" id="cargo" required>
+                                            <option selected disabled>Selecionar</option>
+                                            <?php
+                                            while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
+                                                $selected = isset($oldInput['cargo']) && $oldInput['cargo'] == $row[0] ? ' selected' : '';
+                                                echo "<option value=\"" . htmlspecialchars($row[0]) . "\"" . $selected . ">" . htmlspecialchars($row[1]) . "</option>";
+                                            }
+                                            ?>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                             <div class="panel-footer">
-                                <?= Csrf::inputField()?>
+                                <?= Csrf::inputField() ?>
                                 <input type="hidden" name="nomeClasse" value="VoluntarioControle">
                                 <input type="hidden" name="metodo" value="incluir">
                                 <button type="submit" class="btn btn-primary">Salvar</button>
