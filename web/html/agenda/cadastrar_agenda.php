@@ -841,36 +841,41 @@ $('#btn-salvar-agenda').on('click', function () {
 
 /* ── Equipes ─────────────────────────────────────────────── */
 
+function renderTabelaEquipes(equipes, membros) {
+    var memPorEquipe = {};
+    $.each(membros || [], function (_, m) {
+        if (!memPorEquipe[m.id_equipe]) memPorEquipe[m.id_equipe] = [];
+        memPorEquipe[m.id_equipe].push(m.nome_completo.trim());
+    });
+    var html = '';
+    $.each(equipes || [], function (_, e) {
+        var badge = e.status && e.status.toLowerCase() === 'ativo'
+            ? '<span class="badge badge-ativo">' + e.status + '</span>'
+            : '<span class="badge badge-inativo">' + (e.status || '—') + '</span>';
+        var nomes = memPorEquipe[e.id] || [];
+        var membrosHtml = nomes.length
+            ? $.map(nomes, function (n) { return '<span class="badge-membro">' + n + '</span>'; }).join('')
+            : '<span class="text-muted">Nenhum membro</span>';
+        html += '<tr>'
+            + '<td><strong>' + e.nome + '</strong></td>'
+            + '<td>' + (e.descricao || '—') + '</td>'
+            + '<td class="membros-cell">' + membrosHtml + '</td>'
+            + '<td class="col-status">' + badge + '</td>'
+            + '<td class="col-acoes"><div class="acoes-grupo">'
+            + '<button class="btn btn-xs btn-success btn-acao btn-membros-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" title="Membros"><i class="fa fa-users"></i></button>'
+            + '<button class="btn btn-xs btn-info btn-acao btn-editar-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" data-descricao="' + (e.descricao||'') + '" data-status="' + e.id_status + '" title="Editar"><i class="fa fa-pencil"></i></button>'
+            + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-equipe" data-id="' + e.id + '" title="Excluir"><i class="fa fa-trash"></i></button>'
+            + '</div></td></tr>';
+    });
+    $('#tbody-equipes').html(html);
+    dtInit('dt-equipes');
+}
+
 function carregarEquipes() {
-    $.when(api('listarEquipes'), api('listarTodosMembrosAtivos')).done(function (resE, resM) {
-        var equipes = resE[0], membros = resM[0];
-        var memPorEquipe = {};
-        $.each(membros, function (_, m) {
-            if (!memPorEquipe[m.id_equipe]) memPorEquipe[m.id_equipe] = [];
-            memPorEquipe[m.id_equipe].push(m.nome_completo.trim());
-        });
-        var html = '';
-        $.each(equipes || [], function (_, e) {
-            var badge = e.status && e.status.toLowerCase() === 'ativo'
-                ? '<span class="badge badge-ativo">' + e.status + '</span>'
-                : '<span class="badge badge-inativo">' + (e.status || '—') + '</span>';
-            var nomes = memPorEquipe[e.id] || [];
-            var membrosHtml = nomes.length
-                ? $.map(nomes, function (n) { return '<span class="badge-membro">' + n + '</span>'; }).join('')
-                : '<span class="text-muted">Nenhum membro</span>';
-            html += '<tr>'
-                + '<td><strong>' + e.nome + '</strong></td>'
-                + '<td>' + (e.descricao || '—') + '</td>'
-                + '<td class="membros-cell">' + membrosHtml + '</td>'
-                + '<td class="col-status">' + badge + '</td>'
-                + '<td class="col-acoes"><div class="acoes-grupo">'
-                + '<button class="btn btn-xs btn-success btn-acao btn-membros-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" title="Membros"><i class="fa fa-users"></i></button>'
-                + '<button class="btn btn-xs btn-info btn-acao btn-editar-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" data-descricao="' + (e.descricao||'') + '" data-status="' + e.id_status + '" title="Editar"><i class="fa fa-pencil"></i></button>'
-                + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-equipe" data-id="' + e.id + '" title="Excluir"><i class="fa fa-trash"></i></button>'
-                + '</div></td></tr>';
-        });
-        $('#tbody-equipes').html(html);
-        dtInit('dt-equipes');
+    api('listarEquipes').done(function (equipes) {
+        api('listarTodosMembrosAtivos')
+            .done(function (membros) { renderTabelaEquipes(equipes, membros); })
+            .fail(function ()        { renderTabelaEquipes(equipes, []); });
     });
 }
 
