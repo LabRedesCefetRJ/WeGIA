@@ -181,8 +181,7 @@ class SocioController
      * 
      * Body JSON:
      * {
-     *   "id_socio": 1,
-     *   "id_pessoa": 1,
+     *   "cpf": "12345678901",
      *   "senha": "novasenha123",
      *   "confirmacao_senha": "novasenha123",
      *   "codigo_verificacao": "123456"
@@ -194,19 +193,32 @@ class SocioController
             $data = $request->getParsedBody();
 
             // Validate required data
-            if (empty($data['id_socio']) || empty($data['senha']) || empty($data['confirmacao_senha']) || 
+            if (empty($data['cpf']) || empty($data['senha']) || empty($data['confirmacao_senha']) || 
                 empty($data['codigo_verificacao'])) {
                 $response->getBody()->write(json_encode([
                     'success' => false,
-                    'message' => 'id_socio, senha, confirmacao_senha e codigo_verificacao são obrigatórios'
+                    'message' => 'cpf, senha, confirmacao_senha e codigo_verificacao são obrigatórios'
                 ]));
                 return $response->withStatus(400)
                     ->withHeader('Content-Type', 'application/json');
             }
 
+            // Find socio by CPF
+            $resultado = $this->verificationHelper->findSocioByCpf($data['cpf']);
+
+            // Check if socio exists
+            if (!$resultado['socio']) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => $resultado['message'] ?? 'Sócio não localizado'
+                ]));
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
             // Call service to alter password
             $result = $this->socioService->alterPassword(
-                (int)$data['id_socio'],
+                $resultado['socio']->getId(),
                 $data['senha'],
                 $data['confirmacao_senha'],
                 $data['codigo_verificacao']

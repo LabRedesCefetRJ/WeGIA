@@ -319,8 +319,7 @@ Altera a senha de um sócio utilizando um código de verificação.
 ### Requisição
 ```json
 {
-  "id_socio": 1,
-  "id_pessoa": 1,
+  "cpf": "12345678901",
   "senha": "novasenha123",
   "confirmacao_senha": "novasenha123",
   "codigo_verificacao": "123456"
@@ -329,8 +328,7 @@ Altera a senha de um sócio utilizando um código de verificação.
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `id_socio` | integer | Sim | ID do sócio |
-| `id_pessoa` | integer | Sim | ID da pessoa associada ao sócio |
+| `cpf` | string | Sim | CPF do sócio |
 | `senha` | string | Sim | Nova senha |
 | `confirmacao_senha` | string | Sim | Confirmação da nova senha |
 | `codigo_verificacao` | string | Sim | Código de verificação com 6 dígitos |
@@ -363,7 +361,7 @@ Altera a senha de um sócio utilizando um código de verificação.
 ```json
 {
   "success": false,
-  "message": "id_socio, senha, confirmacao_senha e codigo_verificacao são obrigatórios"
+  "message": "cpf, senha, confirmacao_senha e codigo_verificacao são obrigatórios"
 }
 ```
 
@@ -388,6 +386,14 @@ Altera a senha de um sócio utilizando um código de verificação.
 {
   "success": false,
   "message": "Password updated but error marking code as used: Mensagem de erro específico"
+}
+```
+
+### Resposta - 404 Not Found (Sócio Não Encontrado)
+```json
+{
+  "success": false,
+  "message": "Sócio não localizado"
 }
 ```
 
