@@ -712,6 +712,7 @@ function carregarSidebarAgendas() {
             opts += '<option value="' + a.id + '">' + a.descricao + '</option>';
         });
         $('#sidebar-agenda-select').html(opts);
+        initSelect2('#sidebar-agenda-select', 'Selecione uma agenda...');
     });
 }
 
@@ -732,6 +733,7 @@ function carregarSidebarEquipes(idAgenda) {
         $('#sidebar-equipe-select')
             .html('<option value="">Selecione uma equipe</option>')
             .prop('disabled', true);
+        initSelect2('#sidebar-equipe-select', 'Selecione uma equipe...');
         atualizarCardEquipe(null);
         return;
     }
@@ -747,6 +749,7 @@ function carregarSidebarEquipes(idAgenda) {
             idx++;
         });
         $('#sidebar-equipe-select').html(opts).prop('disabled', false);
+        initSelect2('#sidebar-equipe-select', 'Selecione uma equipe...');
         atualizarCardEquipe(null);
         /* Aplica cores nos eventos já renderizados */
         if (window._calendar) {
@@ -782,6 +785,7 @@ $(function () {
     dtInit('dt-agendas');
     dtInit('dt-equipes');
     dtInit('dt-alocacoes');
+    initSelect2('#filtro-equipe-status', 'Status');
 });
 
 /* ── Utilitários ─────────────────────────────────────────── */
@@ -875,16 +879,18 @@ function initSelect2(selector, placeholder) {
     if ($el.hasClass('select2-hidden-accessible')) {
         $el.select2('destroy');
     }
-    $el.select2({
-        dropdownParent: $el.closest('.modal'),
+    var $modal = $el.closest('.modal');
+    var opts = {
         placeholder: placeholder || 'Selecione...',
         allowClear: true,
-        width: '100%',
+        width: $modal.length ? '100%' : 'resolve',
         language: {
             noResults: function () { return 'Nenhum resultado encontrado'; },
             searching: function () { return 'Buscando...'; }
         }
-    });
+    };
+    if ($modal.length) opts.dropdownParent = $modal;
+    $el.select2(opts);
 }
 
 /* ── Calendário ──────────────────────────────────────────── */
@@ -1153,6 +1159,7 @@ function carregarFiltroEquipeAgenda() {
             opts += '<option value="' + a.id + '">' + a.descricao + '</option>';
         });
         $('#filtro-equipe-agenda').html(opts);
+        initSelect2('#filtro-equipe-agenda', 'Todas as agendas');
     });
 }
 
@@ -1278,12 +1285,12 @@ $(document).on('click', '.btn-membros-equipe', function () {
     ocultarErroModal('modal-membros-erro');
     ocultarErroModal('modal-membros-sucesso');
     api('listarPessoas').done(function (dados) {
-        var opts = '<option value="">Selecione uma pessoa...</option>';
+        var opts = '<option value="">Selecione uma pessoa</option>';
         $.each(dados, function (_, p) {
             opts += '<option value="' + p.id_pessoa + '">' + p.nome_completo + '</option>';
         });
         $('#membro-pessoa').html(opts);
-        initSelect2('#membro-pessoa', 'Selecione uma pessoa...');
+        initSelect2('#membro-pessoa', 'Selecione uma pessoa');
     });
     carregarMembros(id);
     $('#modal-membros').modal('show');
