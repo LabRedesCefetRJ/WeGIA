@@ -388,15 +388,21 @@ require_once "../personalizacao_display.php";
                                         <span id="msg-alocacoes-texto"></span>
                                     </div>
 
-                                    <div class="clearfix mb-md">
-                                        <button class="btn btn-primary pull-right" id="btn-nova-alocacao">
+                                    <div class="cal-toolbar mb-md">
+                                        <div class="cal-toolbar-group">
+                                            <span class="cal-toolbar-label"><i class="fa fa-list-alt mr-xs"></i>Agenda</span>
+                                            <select class="form-control input-sm cal-toolbar-select" id="filtro-alocacao-agenda">
+                                                <option value="">Todas as agendas</option>
+                                            </select>
+                                        </div>
+                                        <div style="flex:1;"></div>
+                                        <button class="btn btn-primary btn-sm" id="btn-nova-alocacao">
                                             <i class="fa fa-plus mr-xs"></i> Nova Alocação
                                         </button>
                                     </div>
                                     <table class="table table-bordered table-striped table-hover mb-none" id="dt-alocacoes">
                                         <thead>
                                             <tr>
-                                                <th>Agenda</th>
                                                 <th>Equipe</th>
                                                 <th style="width:120px;">Data início</th>
                                                 <th style="width:120px;">Data fim</th>
@@ -1404,12 +1410,27 @@ $(document).on('click', '.btn-excluir-membro', function () {
 
 /* ── Alocações ───────────────────────────────────────────── */
 
+function carregarFiltroAlocacaoAgenda() {
+    api('listarAgendas').done(function (agendas) {
+        var opts = '<option value="">Todas as agendas</option>';
+        $.each(agendas, function (_, a) {
+            if (!a.status || a.status.toLowerCase() !== 'ativo') return;
+            opts += '<option value="' + a.id + '">' + a.descricao + '</option>';
+        });
+        $('#filtro-alocacao-agenda').html(opts);
+        initSelect2('#filtro-alocacao-agenda', 'Todas as agendas');
+    });
+}
+
 function carregarAlocacoes() {
     api('listarTodasAlocacoes').done(function (dados) {
+        var filtroAgenda = $('#filtro-alocacao-agenda').val();
+        var lista = filtroAgenda
+            ? $.grep(dados || [], function (al) { return String(al.id_agenda) === String(filtroAgenda); })
+            : (dados || []);
         var html = '';
-        $.each(dados || [], function (_, al) {
+        $.each(lista, function (_, al) {
             html += '<tr>'
-                + '<td>' + al.agenda + '</td>'
                 + '<td>' + al.equipe + '</td>'
                 + '<td>' + fmtDate(al.start) + '</td>'
                 + '<td>' + fmtDate(al.fim_display) + '</td>'
@@ -1459,7 +1480,12 @@ $(document).on('change', '#alocacao-agenda', function () {
     carregarSelectEquipePorAgenda($(this).val() || null, null);
 });
 
-$('#abas-agenda a[href="#tab-alocacoes"]').on('shown.bs.tab', carregarAlocacoes);
+$('#abas-agenda a[href="#tab-alocacoes"]').on('shown.bs.tab', function () {
+    carregarFiltroAlocacaoAgenda();
+    carregarAlocacoes();
+});
+
+$(document).on('change', '#filtro-alocacao-agenda', carregarAlocacoes);
 
 $('#btn-nova-alocacao').on('click', function () {
     $('#modal-alocacao-titulo').text('Nova Alocação');
