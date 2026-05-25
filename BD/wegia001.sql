@@ -2431,12 +2431,19 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe` (
   `nome` VARCHAR(150) NOT NULL,
   `id_status` INT NOT NULL,
   `descricao` TEXT NULL,
+  `id_agenda` INT NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_agenda_equipe_status_idx` (`id_status` ASC),
+  INDEX `fk_agenda_equipe_agenda_idx` (`id_agenda` ASC),
   CONSTRAINT `fk_agenda_equipe_status`
     FOREIGN KEY (`id_status`)
     REFERENCES `wegia`.`agenda_equipe_status` (`id`)
     ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_agenda_equipe_agenda`
+    FOREIGN KEY (`id_agenda`)
+    REFERENCES `wegia`.`agenda` (`id`)
+    ON DELETE CASCADE
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
 

@@ -289,11 +289,18 @@ require_once "../personalizacao_display.php";
                                         </div>
                                         <div class="cal-toolbar-divider"></div>
                                         <div class="cal-toolbar-group cal-toolbar-equipes">
-                                            <span class="cal-toolbar-label"><i class="fa fa-users mr-xs"></i>Equipes</span>
-                                            <div id="sidebar-equipes-lista">
-                                                <span class="text-muted" style="font-size:.8rem;">Carregando...</span>
+                                            <span class="cal-toolbar-label"><i class="fa fa-users mr-xs"></i>Equipe</span>
+                                            <select class="form-control input-sm cal-toolbar-select" id="sidebar-equipe-select" disabled>
+                                                <option value="">Selecione a agenda primeiro...</option>
+                                            </select>
+                                            <div id="sidebar-drag-container">
+                                                <div class="equipe-card" id="sidebar-equipe-card" style="display:none;"
+                                                     data-id="" data-nome="" data-cor="">
+                                                    <i class="fa fa-users"></i>
+                                                    <span id="sidebar-equipe-card-nome"></span>
+                                                </div>
                                             </div>
-                                            <span class="cal-sidebar-hint">arraste para o calendário</span>
+                                            <span class="cal-sidebar-hint" id="sidebar-drag-hint" style="display:none;">arraste para o calendário</span>
                                         </div>
                                     </div>
                                     <div id="calendar"></div>
@@ -336,15 +343,31 @@ require_once "../personalizacao_display.php";
                                         <span id="msg-equipes-texto"></span>
                                     </div>
 
-                                    <div class="clearfix mb-md">
-                                        <button class="btn btn-primary pull-right" id="btn-nova-equipe">
+                                    <div class="cal-toolbar mb-md">
+                                        <div class="cal-toolbar-group">
+                                            <span class="cal-toolbar-label"><i class="fa fa-list-alt mr-xs"></i>Agenda</span>
+                                            <select class="form-control input-sm cal-toolbar-select" id="filtro-equipe-agenda">
+                                                <option value="">Todas as agendas</option>
+                                            </select>
+                                        </div>
+                                        <div class="cal-toolbar-divider"></div>
+                                        <div class="cal-toolbar-group">
+                                            <span class="cal-toolbar-label"><i class="fa fa-toggle-on mr-xs"></i>Status</span>
+                                            <select class="form-control input-sm cal-toolbar-select" id="filtro-equipe-status">
+                                                <option value="ativo">Ativas</option>
+                                                <option value="">Todas</option>
+                                                <option value="inativo">Inativas</option>
+                                            </select>
+                                        </div>
+                                        <div style="flex:1;"></div>
+                                        <button class="btn btn-primary btn-sm" id="btn-nova-equipe">
                                             <i class="fa fa-plus mr-xs"></i> Nova Equipe
                                         </button>
                                     </div>
                                     <table class="table table-bordered table-striped table-hover mb-none" id="dt-equipes">
                                         <thead>
                                             <tr>
-                                                <th style="width:180px;">Nome</th>
+                                                <th style="width:160px;">Nome</th>
                                                 <th>Descrição</th>
                                                 <th>Membros</th>
                                                 <th style="width:100px;" class="col-status">Status</th>
@@ -454,6 +477,10 @@ require_once "../personalizacao_display.php";
                 </div>
 
                 <input type="hidden" id="equipe-id">
+                <div class="form-group">
+                    <label class="control-label">Agenda <sup class="text-danger">*</sup></label>
+                    <select class="form-control" id="equipe-agenda"></select>
+                </div>
                 <div class="form-group">
                     <label class="control-label">Nome <sup class="text-danger">*</sup></label>
                     <input type="text" class="form-control" id="equipe-nome" maxlength="100">
@@ -679,47 +706,49 @@ var _draggableInst = null;
 
 function carregarSidebarAgendas() {
     api('listarAgendas').done(function (agendas) {
-        var opts = '<option value="">Selecione uma agenda...</option>';
+        var opts = '<option value="">Selecione uma agenda</option>';
         $.each(agendas, function (_, a) {
+            if (!a.status || a.status.toLowerCase() !== 'ativo') return;
             opts += '<option value="' + a.id + '">' + a.descricao + '</option>';
         });
         $('#sidebar-agenda-select').html(opts);
     });
 }
 
-function carregarSidebarEquipes() {
-    api('listarEquipes').done(function (equipes) {
-        _equipeCorMap = {};
-        var html = '';
-        $.each(equipes, function (idx, e) {
-            var cor = CORES_EQUIPE[idx % CORES_EQUIPE.length];
-            _equipeCorMap[String(e.id)] = cor;   /* registra a cor pelo id */
-            html += '<div class="equipe-card" data-id="' + e.id
-                  + '" data-nome="' + e.nome
-                  + '" data-cor="' + cor
-                  + '" style="background:' + cor + ';">'
-                  + '<i class="fa fa-users"></i> ' + e.nome
-                  + '</div>';
+function carregarSelectAgendaEquipe(selecionado) {
+    api('listarAgendas').done(function (dados) {
+        var opts = '<option value="">Selecione...</option>';
+        $.each(dados, function (_, a) {
+            if (!a.status || a.status.toLowerCase() !== 'ativo') return;
+            opts += '<option value="' + a.id + '"' + (a.id == selecionado ? ' selected' : '') + '>' + a.descricao + '</option>';
         });
-        $('#sidebar-equipes-lista').html(
-            html || '<p class="text-muted" style="font-size:0.9rem; display: flex; align-items: center;">Nenhuma equipe cadastrada.</p>'
-        );
-        if (!_draggableInst) {
-            _draggableInst = new FullCalendar.Draggable(
-                document.getElementById('sidebar-equipes-lista'),
-                {
-                    itemSelector: '.equipe-card',
-                    eventData: function (cardEl) {
-                        return {
-                            title:         cardEl.getAttribute('data-nome'),
-                            color:         cardEl.getAttribute('data-cor'),
-                            extendedProps: { id_equipe: cardEl.getAttribute('data-id') }
-                        };
-                    }
-                }
-            );
-        }
-        /* Aplica cores nos eventos já renderizados (caso calendário carregou antes do mapa) */
+        $('#equipe-agenda').html(opts);
+        initSelect2('#equipe-agenda', 'Selecione a agenda');
+    });
+}
+
+function carregarSidebarEquipes(idAgenda) {
+    if (!idAgenda) {
+        $('#sidebar-equipe-select')
+            .html('<option value="">Selecione uma equipe</option>')
+            .prop('disabled', true);
+        atualizarCardEquipe(null);
+        return;
+    }
+    api('listarEquipes', { id_agenda: idAgenda }).done(function (equipes) {
+        _equipeCorMap = {};
+        var opts = '<option value="">Selecione uma equipe</option>';
+        var idx = 0;
+        $.each(equipes, function (_, e) {
+            if (!e.status || e.status.toLowerCase() !== 'ativo') return;
+            var cor = CORES_EQUIPE[idx % CORES_EQUIPE.length];
+            _equipeCorMap[String(e.id)] = cor;
+            opts += '<option value="' + e.id + '">' + e.nome + '</option>';
+            idx++;
+        });
+        $('#sidebar-equipe-select').html(opts).prop('disabled', false);
+        atualizarCardEquipe(null);
+        /* Aplica cores nos eventos já renderizados */
         if (window._calendar) {
             $.each(window._calendar.getEvents(), function (_, evt) {
                 var cor = _equipeCorMap[String(evt.extendedProps.id_equipe)];
@@ -727,6 +756,24 @@ function carregarSidebarEquipes() {
             });
         }
     });
+}
+
+function atualizarCardEquipe(idEquipe) {
+    var $card = $('#sidebar-equipe-card');
+    if (!idEquipe) {
+        $card.hide();
+        $('#sidebar-drag-hint').hide();
+        return;
+    }
+    var nome = $('#sidebar-equipe-select option[value="' + idEquipe + '"]').text();
+    var cor  = _equipeCorMap[String(idEquipe)] || CORES_EQUIPE[0];
+    $card.attr('data-id', idEquipe)
+         .attr('data-nome', nome)
+         .attr('data-cor', cor)
+         .css('background', cor)
+         .show();
+    $('#sidebar-equipe-card-nome').text(nome);
+    $('#sidebar-drag-hint').show();
 }
 
 $(function () {
@@ -923,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 /* Sincroniza o id com o servidor para que _calRefetch() possa remover corretamente */
                 event.setProp('id', String(r.id));
                 event.setExtendedProp('fim_display', inicio);
-                var nomeEq = $('#sidebar-equipes-lista .equipe-card[data-id="' + idEquipe + '"]').attr('data-nome') || '';
+                var nomeEq = $('#sidebar-equipe-card').attr('data-nome') || '';
                 event.setExtendedProp('equipe', nomeEq);
                 _calPendingEvents.push(event);
                 exibirMsgAba('msg-calendario', 'Alocação criada com sucesso!', 'success');
@@ -940,6 +987,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     cal.render();
     window._calendar = cal;
+
+    _draggableInst = new FullCalendar.Draggable(
+        document.getElementById('sidebar-drag-container'),
+        {
+            itemSelector: '.equipe-card',
+            eventData: function (cardEl) {
+                return {
+                    title:         cardEl.getAttribute('data-nome'),
+                    color:         cardEl.getAttribute('data-cor'),
+                    extendedProps: { id_equipe: cardEl.getAttribute('data-id') }
+                };
+            }
+        }
+    );
+
     carregarSidebarAgendas();
     carregarSidebarEquipes();
 });
@@ -947,7 +1009,15 @@ document.addEventListener('DOMContentLoaded', function () {
 $('#abas-agenda a[href="#tab-calendario"]').on('shown.bs.tab', function () {
     if (window._calendar) window._calendar.updateSize();
     carregarSidebarAgendas();
-    carregarSidebarEquipes();
+    carregarSidebarEquipes($('#sidebar-agenda-select').val() || null);
+});
+
+$(document).on('change', '#sidebar-agenda-select', function () {
+    carregarSidebarEquipes($(this).val() || null);
+});
+
+$(document).on('change', '#sidebar-equipe-select', function () {
+    atualizarCardEquipe($(this).val() || null);
 });
 
 /* ── Agendas ─────────────────────────────────────────────── */
@@ -1067,7 +1137,7 @@ function renderTabelaEquipes(equipes, membros) {
             + '<td class="col-status">' + badge + '</td>'
             + '<td class="col-acoes"><div class="acoes-grupo">'
             + '<button class="btn btn-xs btn-success btn-acao btn-membros-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" title="Membros"><i class="fa fa-users"></i></button>'
-            + '<button class="btn btn-xs btn-info btn-acao btn-editar-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" data-descricao="' + (e.descricao||'') + '" data-status="' + e.id_status + '" title="Editar"><i class="fa fa-pencil"></i></button>'
+            + '<button class="btn btn-xs btn-info btn-acao btn-editar-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" data-descricao="' + (e.descricao||'') + '" data-status="' + e.id_status + '" data-agenda="' + (e.id_agenda||'') + '" title="Editar"><i class="fa fa-pencil"></i></button>'
             + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-equipe" data-id="' + e.id + '" title="Excluir"><i class="fa fa-trash"></i></button>'
             + '</div></td></tr>';
     });
@@ -1075,11 +1145,28 @@ function renderTabelaEquipes(equipes, membros) {
     dtInit('dt-equipes');
 }
 
+function carregarFiltroEquipeAgenda() {
+    api('listarAgendas').done(function (agendas) {
+        var opts = '<option value="">Todas as agendas</option>';
+        $.each(agendas, function (_, a) {
+            if (!a.status || a.status.toLowerCase() !== 'ativo') return;
+            opts += '<option value="' + a.id + '">' + a.descricao + '</option>';
+        });
+        $('#filtro-equipe-agenda').html(opts);
+    });
+}
+
 function carregarEquipes() {
-    api('listarEquipes').done(function (equipes) {
+    var idAgenda     = $('#filtro-equipe-agenda').val() || null;
+    var filtroStatus = $('#filtro-equipe-status').val();
+    var params       = idAgenda ? { id_agenda: idAgenda } : {};
+    api('listarEquipes', params).done(function (equipes) {
+        var filtradas = filtroStatus
+            ? $.grep(equipes, function (e) { return (e.status || '').toLowerCase() === filtroStatus; })
+            : equipes;
         api('listarTodosMembrosAtivos')
-            .done(function (membros) { renderTabelaEquipes(equipes, membros); })
-            .fail(function ()        { renderTabelaEquipes(equipes, []); });
+            .done(function (membros) { renderTabelaEquipes(filtradas, membros); })
+            .fail(function ()        { renderTabelaEquipes(filtradas, []); });
     });
 }
 
@@ -1094,12 +1181,18 @@ function carregarStatusEquipe(selecionado) {
     });
 }
 
-$('#abas-agenda a[href="#tab-equipes"]').on('shown.bs.tab', carregarEquipes);
+$('#abas-agenda a[href="#tab-equipes"]').on('shown.bs.tab', function () {
+    carregarFiltroEquipeAgenda();
+    carregarEquipes();
+});
+
+$(document).on('change', '#filtro-equipe-agenda, #filtro-equipe-status', carregarEquipes);
 
 $('#btn-nova-equipe').on('click', function () {
     $('#modal-equipe-titulo').text('Nova Equipe');
     $('#equipe-id').val(''); $('#equipe-nome').val(''); $('#equipe-descricao').val('');
     ocultarErroModal('modal-equipe-erro');
+    carregarSelectAgendaEquipe(null);
     carregarStatusEquipe(null);
     $('#modal-equipe').modal('show');
 });
@@ -1111,6 +1204,7 @@ $(document).on('click', '.btn-editar-equipe', function () {
     $('#equipe-nome').val($b.data('nome'));
     $('#equipe-descricao').val($b.data('descricao'));
     ocultarErroModal('modal-equipe-erro');
+    carregarSelectAgendaEquipe($b.data('agenda'));
     carregarStatusEquipe($b.data('status'));
     $('#modal-equipe').modal('show');
 });
@@ -1130,15 +1224,17 @@ $(document).on('click', '.btn-excluir-equipe', function () {
 
 $('#btn-salvar-equipe').on('click', function () {
     var id        = $('#equipe-id').val();
+    var id_agenda = $('#equipe-agenda').val();
     var nome      = $.trim($('#equipe-nome').val());
     var descricao = $.trim($('#equipe-descricao').val());
     var status    = $('#equipe-status').val();
 
     ocultarErroModal('modal-equipe-erro');
-    if (!nome)   { exibirErroModal('modal-equipe-erro', 'Informe o nome da equipe.'); return; }
-    if (!status) { exibirErroModal('modal-equipe-erro', 'Selecione o status.'); return; }
+    if (!id_agenda) { exibirErroModal('modal-equipe-erro', 'Selecione a agenda.'); return; }
+    if (!nome)      { exibirErroModal('modal-equipe-erro', 'Informe o nome da equipe.'); return; }
+    if (!status)    { exibirErroModal('modal-equipe-erro', 'Selecione o status.'); return; }
 
-    var dados = { nome: nome, descricao: descricao, id_status: status };
+    var dados = { nome: nome, descricao: descricao, id_status: status, id_agenda: id_agenda };
     if (id) dados.id = id;
 
     apiPost(id ? 'alterarEquipe' : 'incluirEquipe', dados).done(function (r) {
@@ -1282,24 +1378,35 @@ function carregarAlocacoes() {
     });
 }
 
-function carregarSelectsAlocacao(selAgenda, selEquipe) {
-    api('listarAgendas').done(function (agendas) {
-        var opts = '<option value="">Selecione...</option>';
-        $.each(agendas, function (_, a) {
-            opts += '<option value="' + a.id + '"' + (a.id == selAgenda ? ' selected' : '') + '>' + a.descricao + '</option>';
-        });
-        $('#alocacao-agenda').html(opts);
-        initSelect2('#alocacao-agenda', 'Selecione a agenda...');
-    });
-    api('listarEquipes').done(function (equipes) {
+function carregarSelectEquipePorAgenda(idAgenda, selEquipe) {
+    var params = idAgenda ? { id_agenda: idAgenda } : {};
+    api('listarEquipes', params).done(function (equipes) {
         var opts = '<option value="">Selecione...</option>';
         $.each(equipes, function (_, e) {
+            if (!e.status || e.status.toLowerCase() !== 'ativo') return;
             opts += '<option value="' + e.id + '"' + (e.id == selEquipe ? ' selected' : '') + '>' + e.nome + '</option>';
         });
         $('#alocacao-equipe').html(opts);
         initSelect2('#alocacao-equipe', 'Selecione a equipe...');
     });
 }
+
+function carregarSelectsAlocacao(selAgenda, selEquipe) {
+    api('listarAgendas').done(function (agendas) {
+        var opts = '<option value="">Selecione...</option>';
+        $.each(agendas, function (_, a) {
+            if (!a.status || a.status.toLowerCase() !== 'ativo') return;
+            opts += '<option value="' + a.id + '"' + (a.id == selAgenda ? ' selected' : '') + '>' + a.descricao + '</option>';
+        });
+        $('#alocacao-agenda').html(opts);
+        initSelect2('#alocacao-agenda', 'Selecione a agenda...');
+        carregarSelectEquipePorAgenda(selAgenda, selEquipe);
+    });
+}
+
+$(document).on('change', '#alocacao-agenda', function () {
+    carregarSelectEquipePorAgenda($(this).val() || null, null);
+});
 
 $('#abas-agenda a[href="#tab-alocacoes"]').on('shown.bs.tab', carregarAlocacoes);
 

@@ -173,22 +173,31 @@ class AgendaDAO
 
     public function incluirEquipe(AgendaEquipe $equipe)
     {
-        $sql = "INSERT INTO agenda_equipe (nome, id_status, descricao)
-                VALUES (:nome, :id_status, :descricao)";
+        $sql = "INSERT INTO agenda_equipe (nome, id_status, descricao, id_agenda)
+                VALUES (:nome, :id_status, :descricao, :id_agenda)";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':nome',      $equipe->getNome());
         $stmt->bindValue(':id_status', $equipe->getId_status(), PDO::PARAM_INT);
         $stmt->bindValue(':descricao', $equipe->getDescricao());
+        $stmt->bindValue(':id_agenda', $equipe->getId_agenda(), PDO::PARAM_INT);
         $stmt->execute();
         return $this->pdo->lastInsertId();
     }
 
-    public function listarEquipes()
+    public function listarEquipes(?int $idAgenda = null)
     {
-        $sql = "SELECT e.id, e.nome, e.descricao, s.descricao as status
+        $sql = "SELECT e.id, e.nome, e.descricao, e.id_agenda, s.descricao as status,
+                       a.descricao as agenda_descricao
                 FROM agenda_equipe e
-                INNER JOIN agenda_equipe_status s ON e.id_status = s.id";
+                INNER JOIN agenda_equipe_status s ON e.id_status = s.id
+                INNER JOIN agenda a ON e.id_agenda = a.id";
+        if ($idAgenda !== null) {
+            $sql .= " WHERE e.id_agenda = :id_agenda";
+        }
         $stmt = $this->pdo->prepare($sql);
+        if ($idAgenda !== null) {
+            $stmt->bindValue(':id_agenda', $idAgenda, PDO::PARAM_INT);
+        }
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -210,12 +219,14 @@ class AgendaDAO
         $sql = "UPDATE agenda_equipe SET
                     nome      = :nome,
                     id_status = :id_status,
-                    descricao = :descricao
+                    descricao = :descricao,
+                    id_agenda = :id_agenda
                 WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':nome',      $equipe->getNome());
         $stmt->bindValue(':id_status', $equipe->getId_status(), PDO::PARAM_INT);
         $stmt->bindValue(':descricao', $equipe->getDescricao());
+        $stmt->bindValue(':id_agenda', $equipe->getId_agenda(), PDO::PARAM_INT);
         $stmt->bindValue(':id',        $equipe->getId(), PDO::PARAM_INT);
         $stmt->execute();
     }

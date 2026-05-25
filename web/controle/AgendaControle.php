@@ -342,6 +342,7 @@ class AgendaControle
             $nome      = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
             $id_status = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
             $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+            $id_agenda = filter_input(INPUT_POST, 'id_agenda', FILTER_SANITIZE_NUMBER_INT);
 
             if (empty($nome))
                 throw new InvalidArgumentException('O nome da equipe não pode ser vazio.', 412);
@@ -349,10 +350,14 @@ class AgendaControle
             if (!$id_status || $id_status < 1)
                 throw new InvalidArgumentException('O status informado não é válido.', 412);
 
+            if (!$id_agenda || $id_agenda < 1)
+                throw new InvalidArgumentException('A agenda informada não é válida.', 412);
+
             $equipe = new AgendaEquipe();
             $equipe->setNome($nome);
             $equipe->setId_status($id_status);
             $equipe->setDescricao($descricao);
+            $equipe->setId_agenda($id_agenda);
 
             $dao = new AgendaDAO();
             $dao->incluirEquipe($equipe);
@@ -370,8 +375,9 @@ class AgendaControle
         header('Content-Type: application/json');
 
         try {
+            $id_agenda = filter_input(INPUT_GET, 'id_agenda', FILTER_SANITIZE_NUMBER_INT);
             $dao = new AgendaDAO();
-            echo json_encode($dao->listarEquipes());
+            echo json_encode($dao->listarEquipes($id_agenda ? (int)$id_agenda : null));
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -387,6 +393,7 @@ class AgendaControle
             $nome      = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
             $id_status = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
             $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+            $id_agenda = filter_input(INPUT_POST, 'id_agenda', FILTER_SANITIZE_NUMBER_INT);
 
             if (!$id || $id < 1)
                 throw new InvalidArgumentException('O id informado não é válido.', 412);
@@ -394,11 +401,15 @@ class AgendaControle
             if (empty($nome))
                 throw new InvalidArgumentException('O nome da equipe não pode ser vazio.', 412);
 
+            if (!$id_agenda || $id_agenda < 1)
+                throw new InvalidArgumentException('A agenda informada não é válida.', 412);
+
             $equipe = new AgendaEquipe();
             $equipe->setId($id);
             $equipe->setNome($nome);
             $equipe->setId_status($id_status);
             $equipe->setDescricao($descricao);
+            $equipe->setId_agenda($id_agenda);
 
             $dao = new AgendaDAO();
             $dao->alterarEquipe($equipe);
