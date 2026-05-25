@@ -74,8 +74,9 @@ require_once "../personalizacao_display.php";
             width: 26px; height: 26px; display: flex; align-items: center;
             justify-content: center; padding: 0; margin: 4px 6px;
         }
-        .fc-event { cursor: pointer; border-radius: 4px !important; font-weight: 500 !important; padding: 3px 7px !important; border-left: 3px solid rgba(0,0,0,.15) !important; transition: filter .15s; }
+        .fc-event { cursor: pointer; border-radius: 4px !important; font-weight: 500 !important; padding: 2px 6px !important; border-left: 3px solid rgba(0,0,0,.15) !important; transition: filter .15s; }
         .fc-event:hover { filter: brightness(.92); }
+        .fc .fc-daygrid-day-frame { min-height: 100px; }
         .fc .fc-scrollgrid { border-radius: 6px; overflow: hidden; }
 
         /* ── Abas ── */
@@ -203,6 +204,34 @@ require_once "../personalizacao_display.php";
             background: #f8fbff; border: 1px solid #e4e9ef;
             border-radius: 6px; padding: 16px; margin-top: 8px;
         }
+
+        
+        /* ── Toolbar acima do calendário (agenda + equipes arrastáveis) ── */
+        .cal-toolbar {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+            background: #f8fbff; border: 1px solid #e4e9ef;
+            border-radius: 6px; padding: 10px 16px; margin-bottom: 14px;
+        }
+        .cal-toolbar-group { display: flex; align-items: center; gap: 8px; }
+        .cal-toolbar-equipes { flex: 1; }
+        .cal-toolbar-label {
+            font-weight: 700; font-size: 1rem; text-transform: uppercase;
+            letter-spacing: .06em; color: #607080; white-space: nowrap;
+        }
+        .cal-toolbar-select { width: 180px !important; }
+        .cal-toolbar-divider { width: 1px; height: 28px; background: #d0dbe7; margin: 0 4px; flex-shrink: 0; }
+        .cal-sidebar-hint { font-size: 1rem; color: #8fa0b0; white-space: nowrap; }
+        #sidebar-equipes-lista { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .equipe-card {
+            border-radius: 5px; padding: 6px 10px; margin-bottom: 0;
+            cursor: grab; color: #fff; font-weight: 600; font-size: 0.82rem;
+            user-select: none; display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.14);
+            transition: filter .15s, box-shadow .15s;
+        }
+        .equipe-card:hover  { filter: brightness(.88); box-shadow: 0 3px 8px rgba(0,0,0,.2); }
+        .equipe-card:active { cursor: grabbing; }
+
     </style>
 </head>
 
@@ -241,12 +270,36 @@ require_once "../personalizacao_display.php";
 
                             <div class="tab-content" style="padding-top:20px;">
 
-                                <!-- ══════════════ CALENDÁRIO ══════════════ -->
+                                <!-------- CALENDÁRIO -------->
                                 <div class="tab-pane active" id="tab-calendario">
+
+                                    <div id="msg-calendario" class="alert alert-success alert-dismissible" role="alert" style="display:none;">
+                                        <button type="button" class="close" aria-label="Fechar" onclick="ocultarMsg('msg-calendario'); return false;">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        <span id="msg-calendario-texto"></span>
+                                    </div>
+
+                                    <div class="cal-toolbar">
+                                        <div class="cal-toolbar-group">
+                                            <span class="cal-toolbar-label"><i class="fa fa-list-alt mr-xs"></i>Agenda</span>
+                                            <select class="form-control input-sm cal-toolbar-select" id="sidebar-agenda-select">
+                                                <option value="">Selecione...</option>
+                                            </select>
+                                        </div>
+                                        <div class="cal-toolbar-divider"></div>
+                                        <div class="cal-toolbar-group cal-toolbar-equipes">
+                                            <span class="cal-toolbar-label"><i class="fa fa-users mr-xs"></i>Equipes</span>
+                                            <div id="sidebar-equipes-lista">
+                                                <span class="text-muted" style="font-size:.8rem;">Carregando...</span>
+                                            </div>
+                                            <span class="cal-sidebar-hint">arraste para o calendário</span>
+                                        </div>
+                                    </div>
                                     <div id="calendar"></div>
                                 </div>
 
-                                <!-- ══════════════ AGENDAS ══════════════ -->
+                                <!-------- AGENDAS -------->
                                 <div class="tab-pane" id="tab-agendas">
 
                                     <div id="msg-agendas" class="alert alert-success alert-dismissible" role="alert" style="display:none;">
@@ -273,7 +326,7 @@ require_once "../personalizacao_display.php";
                                     </table>
                                 </div>
 
-                                <!-- ══════════════ EQUIPES ══════════════ -->
+                                <!-------- EQUIPES -------->
                                 <div class="tab-pane" id="tab-equipes">
 
                                     <div id="msg-equipes" class="alert alert-success alert-dismissible" role="alert" style="display:none;">
@@ -302,7 +355,7 @@ require_once "../personalizacao_display.php";
                                     </table>
                                 </div>
 
-                                <!-- ══════════════ ALOCAÇÕES ══════════════ -->
+                                <!-------- ALOCAÇÕES -------->
                                 <div class="tab-pane" id="tab-alocacoes">
 
                                     <div id="msg-alocacoes" class="alert alert-success alert-dismissible" role="alert" style="display:none;">
@@ -583,6 +636,7 @@ require_once "../personalizacao_display.php";
     </div>
 </div>
 
+<!-- Toast flutuante do calendário -->
 <!-- Vendor -->
 <script src="../../assets/vendor/jquery/jquery.min.js"></script>
 <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -601,6 +655,79 @@ require_once "../personalizacao_display.php";
 
 <script>
 var API = '../../controle/control.php';
+
+/* ── Helpers para calendar.addEvent() sem duplicatas ────────
+   Eventos criados otimisticamente são rastreados em
+   _calPendingEvents. _calRefetch() os remove antes de buscar
+   do servidor, evitando duplicatas no calendário.           */
+var _calPendingEvents = [];
+function _pad(n) { return n < 10 ? '0' + n : '' + n; }
+function _calAddEvent(data) {
+    if (window._calendar) _calPendingEvents.push(window._calendar.addEvent(data));
+}
+function _calRefetch() {
+    $.each(_calPendingEvents, function (_, e) { if (e) e.remove(); });
+    _calPendingEvents = [];
+    if (window._calendar) window._calendar.refetchEvents();
+}
+
+/* ── Sidebar de equipes (drag-and-drop externo) ──────────── */
+
+var CORES_EQUIPE  = ['#337ab7','#5cb85c','#d9534f','#f0ad4e','#5bc0de','#777777'];
+var _equipeCorMap  = {};   /* id_equipe → cor; fonte única para toolbar e calendário */
+var _draggableInst = null;
+
+function carregarSidebarAgendas() {
+    api('listarAgendas').done(function (agendas) {
+        var opts = '<option value="">Selecione uma agenda...</option>';
+        $.each(agendas, function (_, a) {
+            opts += '<option value="' + a.id + '">' + a.descricao + '</option>';
+        });
+        $('#sidebar-agenda-select').html(opts);
+    });
+}
+
+function carregarSidebarEquipes() {
+    api('listarEquipes').done(function (equipes) {
+        _equipeCorMap = {};
+        var html = '';
+        $.each(equipes, function (idx, e) {
+            var cor = CORES_EQUIPE[idx % CORES_EQUIPE.length];
+            _equipeCorMap[String(e.id)] = cor;   /* registra a cor pelo id */
+            html += '<div class="equipe-card" data-id="' + e.id
+                  + '" data-nome="' + e.nome
+                  + '" data-cor="' + cor
+                  + '" style="background:' + cor + ';">'
+                  + '<i class="fa fa-users"></i> ' + e.nome
+                  + '</div>';
+        });
+        $('#sidebar-equipes-lista').html(
+            html || '<p class="text-muted" style="font-size:0.9rem; display: flex; align-items: center;">Nenhuma equipe cadastrada.</p>'
+        );
+        if (!_draggableInst) {
+            _draggableInst = new FullCalendar.Draggable(
+                document.getElementById('sidebar-equipes-lista'),
+                {
+                    itemSelector: '.equipe-card',
+                    eventData: function (cardEl) {
+                        return {
+                            title:         cardEl.getAttribute('data-nome'),
+                            color:         cardEl.getAttribute('data-cor'),
+                            extendedProps: { id_equipe: cardEl.getAttribute('data-id') }
+                        };
+                    }
+                }
+            );
+        }
+        /* Aplica cores nos eventos já renderizados (caso calendário carregou antes do mapa) */
+        if (window._calendar) {
+            $.each(window._calendar.getEvents(), function (_, evt) {
+                var cor = _equipeCorMap[String(evt.extendedProps.id_equipe)];
+                if (cor) evt.setProp('color', cor);
+            });
+        }
+    });
+}
 
 $(function () {
     $("#header").load("../header.php");
@@ -625,7 +752,9 @@ function exibirMsgAba(idAba, texto, tipo) {
     var $a = $('#' + idAba);
     $a.removeClass('alert-success alert-danger alert-warning').addClass('alert-' + tipo);
     $('#' + idAba + '-texto').text(texto);
-    $a.show();
+    $a.stop(true, true).show();
+    clearTimeout($a.data('_timer'));
+    $a.data('_timer', setTimeout(function () { $a.fadeOut(400); }, 10000));
 }
 
 function ocultarMsg(id) {
@@ -721,6 +850,34 @@ document.addEventListener('DOMContentLoaded', function () {
         buttonText: { today:'Hoje', month:'Mês', week:'Semana', day:'Dia', list:'Lista' },
         navLinks: true,
         editable: false,
+        droppable: true,
+        selectable: true,
+        selectMirror: true,
+        select: function (info) {
+            var startStr = info.startStr.substring(0, 10);
+            var endStr;
+            if (info.allDay) {
+                /* FC entrega fim exclusivo em all-day: subtrai 1 dia */
+                var d = info.endStr.substring(0, 10).split('-');
+                var dt = new Date(+d[0], +d[1] - 1, +d[2] - 1);
+                endStr = dt.getFullYear() + '-' + _pad(dt.getMonth() + 1) + '-' + _pad(dt.getDate());
+                if (endStr < startStr) endStr = startStr;
+            } else {
+                endStr = info.endStr.substring(0, 10);
+                if (endStr < startStr) endStr = startStr;
+            }
+            $('#modal-alocacao-titulo').text('Nova Alocação');
+            $('#alocacao-id').val('');
+            $('#alocacao-inicio').val(startStr);
+            $('#alocacao-fim').val(endStr);
+            $('#alocacao-lembrete').val('');
+            ocultarErroModal('modal-alocacao-erro');
+            carregarSelectsAlocacao(null, null);
+            $('#modal-alocacao').modal('show');
+            $('#modal-alocacao').one('hidden.bs.modal', function () {
+                if (window._calendar) window._calendar.unselect();
+            });
+        },
         dayMaxEvents: true,
         events: {
             url: API, method: 'GET',
@@ -736,14 +893,61 @@ document.addEventListener('DOMContentLoaded', function () {
             if (p.lembrete) { $('#modal-evento-lembrete').text(fmtDatetime(p.lembrete)); $('#modal-evento-lembrete-row').show(); }
             else            { $('#modal-evento-lembrete-row').hide(); }
             $('#modal-evento').modal('show');
+        },
+        eventDidMount: function (info) {
+            var cor = _equipeCorMap[String(info.event.extendedProps.id_equipe)];
+            if (cor) {
+                info.el.style.backgroundColor = cor;
+                info.el.style.setProperty('border-left-color', cor, 'important');
+            }
+        },
+        eventReceive: function (info) {
+            var event    = info.event;
+            var idEquipe = event.extendedProps.id_equipe;
+            var inicio   = event.startStr.substring(0, 10);
+            var idAgenda = $('#sidebar-agenda-select').val();
+
+            if (!idAgenda) {
+                event.remove();
+                exibirMsgAba('msg-calendario', 'Selecione uma Agenda na barra lateral antes de arrastar.', 'warning');
+                return;
+            }
+            if (!idEquipe) { event.remove(); return; }
+
+            apiPost('incluirAlocacao', {
+                id_agenda: idAgenda,
+                id_equipe: idEquipe,
+                inicio:    inicio,
+                fim:       inicio
+            }).done(function (r) {
+                /* Sincroniza o id com o servidor para que _calRefetch() possa remover corretamente */
+                event.setProp('id', String(r.id));
+                event.setExtendedProp('fim_display', inicio);
+                var nomeEq = $('#sidebar-equipes-lista .equipe-card[data-id="' + idEquipe + '"]').attr('data-nome') || '';
+                event.setExtendedProp('equipe', nomeEq);
+                _calPendingEvents.push(event);
+                exibirMsgAba('msg-calendario', 'Alocação criada com sucesso!', 'success');
+                carregarAlocacoes();
+            }).fail(function (xhr) {
+                /* Rollback: remove o evento otimista e exibe o motivo do erro */
+                event.remove();
+                var msg = (xhr.responseJSON && xhr.responseJSON.erro)
+                    ? xhr.responseJSON.erro
+                    : 'Erro ao salvar alocação. Tente novamente.';
+                exibirMsgAba('msg-calendario', msg, 'danger');
+            });
         }
     });
     cal.render();
     window._calendar = cal;
+    carregarSidebarAgendas();
+    carregarSidebarEquipes();
 });
 
 $('#abas-agenda a[href="#tab-calendario"]').on('shown.bs.tab', function () {
     if (window._calendar) window._calendar.updateSize();
+    carregarSidebarAgendas();
+    carregarSidebarEquipes();
 });
 
 /* ── Agendas ─────────────────────────────────────────────── */
@@ -808,7 +1012,7 @@ $(document).on('click', '.btn-excluir-agenda', function () {
         api('excluirAgenda', { id: id }).done(function (r) {
             exibirMsgAba('msg-agendas', r.msg || 'Excluído com sucesso.', 'success');
             carregarAgendas();
-            if (window._calendar) window._calendar.refetchEvents();
+            _calRefetch();
         }).fail(function (xhr) {
             var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao excluir.';
             exibirMsgAba('msg-agendas', msg, 'danger');
@@ -832,7 +1036,7 @@ $('#btn-salvar-agenda').on('click', function () {
         $('#modal-agenda').modal('hide');
         exibirMsgAba('msg-agendas', r.msg || 'Salvo com sucesso.', 'success');
         carregarAgendas();
-        if (window._calendar) window._calendar.refetchEvents();
+        _calRefetch();
     }).fail(function (xhr) {
         var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar.';
         exibirErroModal('modal-agenda-erro', msg);
@@ -1126,7 +1330,7 @@ $(document).on('click', '.btn-excluir-alocacao', function () {
             .done(function (r) {
                 exibirMsgAba('msg-alocacoes', r.msg || 'Excluído com sucesso.', 'success');
                 carregarAlocacoes();
-                if (window._calendar) window._calendar.refetchEvents();
+                _calRefetch();
             })
             .fail(function (xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao excluir.';
@@ -1136,12 +1340,15 @@ $(document).on('click', '.btn-excluir-alocacao', function () {
 });
 
 $('#btn-salvar-alocacao').on('click', function () {
-    var id       = $('#alocacao-id').val();
-    var agenda   = $('#alocacao-agenda').val();
-    var equipe   = $('#alocacao-equipe').val();
-    var inicio   = $('#alocacao-inicio').val();
-    var fim      = $('#alocacao-fim').val();
-    var lembrete = $('#alocacao-lembrete').val();
+    var id         = $('#alocacao-id').val();
+    var agenda     = $('#alocacao-agenda').val();
+    var equipe     = $('#alocacao-equipe').val();
+    var inicio     = $('#alocacao-inicio').val();
+    var fim        = $('#alocacao-fim').val();
+    var lembrete   = $('#alocacao-lembrete').val();
+    /* capturado antes do modal fechar para uso no addEvent */
+    var agendaNome = $('#alocacao-agenda option[value="' + agenda + '"]').text();
+    var equipNome  = $('#alocacao-equipe option[value="' + equipe + '"]').text();
 
     ocultarErroModal('modal-alocacao-erro');
     if (!agenda) { exibirErroModal('modal-alocacao-erro', 'Selecione a agenda.'); return; }
@@ -1163,7 +1370,29 @@ $('#btn-salvar-alocacao').on('click', function () {
             $('#modal-alocacao').modal('hide');
             exibirMsgAba('msg-alocacoes', r.msg || 'Salvo com sucesso.', 'success');
             carregarAlocacoes();
-            if (window._calendar) window._calendar.refetchEvents();
+            if (!id && r.id) {
+                /* Nova alocação: adiciona imediatamente no calendário.
+                   FC usa fim exclusivo em all-day, então +1 dia. */
+                var p    = fim.split('-');
+                var fcDt = new Date(+p[0], +p[1] - 1, +p[2] + 1);
+                _calAddEvent({
+                    id: String(r.id),
+                    title: equipNome,
+                    start: inicio,
+                    end: fcDt.getFullYear() + '-' + _pad(fcDt.getMonth() + 1) + '-' + _pad(fcDt.getDate()),
+                    allDay: true,
+                    extendedProps: {
+                        equipe:      equipNome,
+                        fim_display: fim,
+                        lembrete:    lembrete ? lembrete.replace('T', ' ') : null,
+                        id_agenda:   agenda,
+                        id_equipe:   equipe
+                    }
+                });
+            } else {
+                /* Edição: sincroniza com o servidor (remove pendentes antes) */
+                _calRefetch();
+            }
         })
         .fail(function (xhr) {
             var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar.';

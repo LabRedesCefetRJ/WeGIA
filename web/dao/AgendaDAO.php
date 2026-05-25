@@ -154,10 +154,10 @@ class AgendaDAO
 
     public function listarTodasAlocacoes()
     {
-        $sql = "SELECT al.id, al.inicio AS start, al.fim AS end, al.fim AS fim_display, al.lembrete,
+        $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display, al.lembrete,
                        al.id_agenda, al.id_equipe,
                        a.descricao AS agenda, e.nome AS equipe,
-                       CONCAT(a.descricao, ' — ', e.nome) AS title
+                       e.nome AS title
                 FROM agenda_alocacao al
                 INNER JOIN agenda a ON al.id_agenda = a.id
                 INNER JOIN agenda_equipe e ON al.id_equipe = e.id

@@ -182,10 +182,10 @@ class AgendaControle
             $alocacao->setLembrete_enviado($lembrete_enviado);
 
             $dao = new AgendaDAO();
-            $dao->incluirAlocacao($alocacao);
+            $id = $dao->incluirAlocacao($alocacao);
 
             http_response_code(200);
-            echo json_encode(['msg' => 'Alocação cadastrada com sucesso!']);
+            echo json_encode(['msg' => 'Alocação cadastrada com sucesso!', 'id' => (int)$id]);
         } catch (Exception $e) {
             Util::tratarException($e);
         }
