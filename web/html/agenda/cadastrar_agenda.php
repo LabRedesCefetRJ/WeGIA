@@ -663,7 +663,29 @@ require_once "../personalizacao_display.php";
     </div>
 </div>
 
-<!-- Toast flutuante do calendário -->
+<!-- ══════════════════════════════════════════
+     MODAL — CONFIRMAÇÃO
+══════════════════════════════════════════ -->
+<div class="modal fade" id="modal-confirmar" tabindex="-1" role="dialog" aria-labelledby="modal-confirmar-titulo" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header modal-header-padrao">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="modal-confirmar-titulo">Confirmar</h4>
+            </div>
+            <div class="modal-body">
+                <p id="modal-confirmar-msg" style="margin:0; font-size:1.2rem;"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btn-confirmar-ok">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Vendor -->
 <script src="../../assets/vendor/jquery/jquery.min.js"></script>
 <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -703,6 +725,22 @@ function _calRefetch() {
 var CORES_EQUIPE  = ['#337ab7','#5cb85c','#d9534f','#f0ad4e','#5bc0de','#777777'];
 var _equipeCorMap  = {};   /* id_equipe → cor; fonte única para toolbar e calendário */
 var _draggableInst = null;
+
+function preCarregarEquipesCores() {
+    api('listarEquipes').done(function (equipes) {
+        $.each(equipes, function (idx, e) {
+            if (!_equipeCorMap[String(e.id)]) {
+                _equipeCorMap[String(e.id)] = CORES_EQUIPE[idx % CORES_EQUIPE.length];
+            }
+        });
+        if (window._calendar) {
+            window._calendar.getEvents().forEach(function (evt) {
+                var cor = _equipeCorMap[String(evt.extendedProps.id_equipe)];
+                if (cor) evt.setProp('color', cor);
+            });
+        }
+    });
+}
 
 function carregarSidebarAgendas() {
     api('listarAgendas').done(function (agendas) {
@@ -822,7 +860,12 @@ function ocultarErroModal(id) {
 }
 
 function confirmar(msg, cb) {
-    if (window.confirm(msg)) cb();
+    $('#modal-confirmar-msg').text(msg);
+    $('#btn-confirmar-ok').off('click').on('click', function () {
+        $('#modal-confirmar').modal('hide');
+        cb();
+    });
+    $('#modal-confirmar').modal('show');
 }
 
 function fmtDatetime(str) {
@@ -1008,6 +1051,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     );
 
+    preCarregarEquipesCores();
     carregarSidebarAgendas();
     carregarSidebarEquipes();
 });
