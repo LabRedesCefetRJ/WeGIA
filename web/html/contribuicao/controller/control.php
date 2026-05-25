@@ -139,5 +139,5 @@ try {
 
 } catch (Throwable $e) {
     http_response_code(400);
-    exit('Erro: ' . $e->getMessage());
+    exit('Requisição inválida');
 }
