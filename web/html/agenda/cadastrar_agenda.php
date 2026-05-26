@@ -1043,6 +1043,14 @@ document.addEventListener('DOMContentLoaded', function () {
     cal.render();
     window._calendar = cal;
 
+    /* Redimensiona o calendário */
+    var _calContentBody = document.querySelector('.content-body');
+    if (_calContentBody) {
+        _calContentBody.addEventListener('transitionend', function (e) {
+            if (window._calendar) window._calendar.updateSize();
+        });
+    }
+
     _draggableInst = new FullCalendar.Draggable(
         document.getElementById('sidebar-drag-container'),
         {
