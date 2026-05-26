@@ -16,6 +16,9 @@ use api\modules\Auth\AuthMiddleware;
 use api\modules\Auth\AuthService;
 use api\modules\Auth\UserRepository;
 use api\modules\Socio\SocioRepository;
+use api\modules\Contribuicao\ContribuicaoController;
+use api\modules\Contribuicao\ContribuicaoService;
+use api\modules\Contribuicao\ContribuicaoRepository;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -79,6 +82,15 @@ $container = new AppContainer([
     SocioVerificationHelper::class => function ($c) {
         return new SocioVerificationHelper($c->get(PessoaServiceInterface::class), $c->get(SocioService::class), $c->get(EmailVerificationService::class));
     },
+    ContribuicaoRepository::class => function ($c) {
+        return new ContribuicaoRepository($c->get(PDO::class));
+    },
+    ContribuicaoService::class => function ($c) {
+        return new ContribuicaoService($c->get(ContribuicaoRepository::class));
+    },
+    ContribuicaoController::class => function ($c) {
+        return new ContribuicaoController($c->get(ContribuicaoService::class), $c->get(SocioRepository::class));
+    },
 ]);
 
 AppFactory::setContainer($container);
@@ -141,5 +153,11 @@ $app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
 
 //aplicar middleware de autenticação e de permissão
 $app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf'])->add($container->get(AuthMiddleware::class));
+
+//Módulo Contribuição
+$app->get('/socios/{id}/contribuicoes', [ContribuicaoController::class, 'getContribuicoesBySocio'])->add($container->get(AuthMiddleware::class));
+$app->get('/socios/{id}/contribuicoes/filter', [ContribuicaoController::class, 'getContribuicoesBySocioAndStatus'])->add($container->get(AuthMiddleware::class));
+$app->get('/socios/{id}/contribuicoes/resume', [ContribuicaoController::class, 'getResumoContribuicoes'])->add($container->get(AuthMiddleware::class));
+
 
 $app->run();
