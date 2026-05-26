@@ -317,7 +317,7 @@ require_once "../personalizacao_display.php";
                                     </div>
 
                                     <div class="clearfix mb-md">
-                                        <button class="btn btn-primary pull-right" id="btn-nova-agenda">
+                                        <button class="btn btn-primary btn-sm pull-right" id="btn-nova-agenda">
                                             <i class="fa fa-plus mr-xs"></i> Nova Agenda
                                         </button>
                                     </div>
@@ -449,7 +449,7 @@ require_once "../personalizacao_display.php";
                     <label class="control-label">Descrição <sup class="text-danger">*</sup></label>
                     <input type="text" class="form-control" id="agenda-descricao" maxlength="255">
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="agenda-status-grupo">
                     <label class="control-label">Status <sup class="text-danger">*</sup></label>
                     <select class="form-control" id="agenda-status"></select>
                 </div>
@@ -495,7 +495,7 @@ require_once "../personalizacao_display.php";
                     <label class="control-label">Descrição</label>
                     <textarea class="form-control" id="equipe-descricao" rows="2"></textarea>
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="equipe-status-grupo">
                     <label class="control-label">Status <sup class="text-danger">*</sup></label>
                     <select class="form-control" id="equipe-status"></select>
                 </div>
@@ -1098,7 +1098,7 @@ function carregarAgendas() {
     });
 }
 
-function carregarStatusAgenda(selecionado) {
+function carregarStatusAgenda(selecionado, autoSelecionarPrimeiro) {
     api('listarStatus').done(function (dados) {
         var opts = '<option value="">Selecione...</option>';
         $.each(dados, function (_, s) {
@@ -1106,6 +1106,9 @@ function carregarStatusAgenda(selecionado) {
         });
         $('#agenda-status').html(opts);
         initSelect2('#agenda-status', 'Selecione o status...');
+        if (autoSelecionarPrimeiro && dados.length) {
+            $('#agenda-status').val(dados[0].id).trigger('change');
+        }
     });
 }
 
@@ -1116,7 +1119,8 @@ $('#btn-nova-agenda').on('click', function () {
     $('#agenda-id').val('');
     $('#agenda-descricao').val('');
     ocultarErroModal('modal-agenda-erro');
-    carregarStatusAgenda(null);
+    $('#agenda-status-grupo').hide();
+    carregarStatusAgenda(null, true);
     $('#modal-agenda').modal('show');
 });
 
@@ -1127,6 +1131,7 @@ $(document).on('click', '.btn-editar-agenda', function () {
         $('#agenda-id').val(a.id);
         $('#agenda-descricao').val(a.descricao);
         ocultarErroModal('modal-agenda-erro');
+        $('#agenda-status-grupo').show();
         carregarStatusAgenda(a.id_status);
         $('#modal-agenda').modal('show');
     });
@@ -1153,7 +1158,7 @@ $('#btn-salvar-agenda').on('click', function () {
 
     ocultarErroModal('modal-agenda-erro');
     if (!descricao) { exibirErroModal('modal-agenda-erro', 'Informe a descrição.'); return; }
-    if (!status)    { exibirErroModal('modal-agenda-erro', 'Selecione o status.'); return; }
+    if (id && !status) { exibirErroModal('modal-agenda-erro', 'Selecione o status.'); return; }
 
     var dados = { descricao: descricao, id_status: status };
     if (id) dados.id = id;
@@ -1227,7 +1232,7 @@ function carregarEquipes() {
     });
 }
 
-function carregarStatusEquipe(selecionado) {
+function carregarStatusEquipe(selecionado, autoSelecionarPrimeiro) {
     api('listarEquipeStatus').done(function (dados) {
         var opts = '<option value="">Selecione...</option>';
         $.each(dados, function (_, s) {
@@ -1235,6 +1240,9 @@ function carregarStatusEquipe(selecionado) {
         });
         $('#equipe-status').html(opts);
         initSelect2('#equipe-status', 'Selecione o status...');
+        if (autoSelecionarPrimeiro && dados.length) {
+            $('#equipe-status').val(dados[0].id).trigger('change');
+        }
     });
 }
 
@@ -1249,8 +1257,9 @@ $('#btn-nova-equipe').on('click', function () {
     $('#modal-equipe-titulo').text('Nova Equipe');
     $('#equipe-id').val(''); $('#equipe-nome').val(''); $('#equipe-descricao').val('');
     ocultarErroModal('modal-equipe-erro');
+    $('#equipe-status-grupo').hide();
     carregarSelectAgendaEquipe(null);
-    carregarStatusEquipe(null);
+    carregarStatusEquipe(null, true);
     $('#modal-equipe').modal('show');
 });
 
@@ -1261,6 +1270,7 @@ $(document).on('click', '.btn-editar-equipe', function () {
     $('#equipe-nome').val($b.data('nome'));
     $('#equipe-descricao').val($b.data('descricao'));
     ocultarErroModal('modal-equipe-erro');
+    $('#equipe-status-grupo').show();
     carregarSelectAgendaEquipe($b.data('agenda'));
     carregarStatusEquipe($b.data('status'));
     $('#modal-equipe').modal('show');
@@ -1287,9 +1297,9 @@ $('#btn-salvar-equipe').on('click', function () {
     var status    = $('#equipe-status').val();
 
     ocultarErroModal('modal-equipe-erro');
-    if (!id_agenda) { exibirErroModal('modal-equipe-erro', 'Selecione a agenda.'); return; }
-    if (!nome)      { exibirErroModal('modal-equipe-erro', 'Informe o nome da equipe.'); return; }
-    if (!status)    { exibirErroModal('modal-equipe-erro', 'Selecione o status.'); return; }
+    if (!id_agenda)    { exibirErroModal('modal-equipe-erro', 'Selecione a agenda.'); return; }
+    if (!nome)         { exibirErroModal('modal-equipe-erro', 'Informe o nome da equipe.'); return; }
+    if (id && !status) { exibirErroModal('modal-equipe-erro', 'Selecione o status.'); return; }
 
     var dados = { nome: nome, descricao: descricao, id_status: status, id_agenda: id_agenda };
     if (id) dados.id = id;
