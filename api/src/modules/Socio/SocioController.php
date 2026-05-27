@@ -256,6 +256,17 @@ class SocioController
                     ->withHeader('Content-Type', 'application/json');
             }
 
+            // Validate socio ownership
+            $idPessoa = $request->getAttribute('user_id');
+            if (!$idPessoa || $idPessoa !== $resultado['pessoa']->getId()) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Acesso negado. Você não tem permissão para acessar os dados de outro sócio.'
+                ]));
+
+                return $response->withStatus(403)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
             $response->getBody()->write(json_encode($resultado['socio']));
 
             return $response->withHeader('Content-Type', 'application/json');

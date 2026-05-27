@@ -408,37 +408,119 @@ Altera a senha de um sócio utilizando um código de verificação.
 
 ---
 
+## 7. GET `/socios/{cpf}`
+
+Retorna os dados de um sócio específico pelo CPF. Requer autenticação via token JWT. O usuário autenticado só pode acessar seus próprios dados.
+
+### Parâmetros
+- **cpf** (path parameter, obrigatório): CPF do sócio a buscar
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+
+### Exemplos de Requisição
+```
+GET /socios/12345678901
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+### Resposta - 200 OK (Sócio Encontrado)
+```json
+{
+  "id": 1,
+  "pessoa": {
+    "id": 1,
+    "nome": "João",
+    "sobrenome": "Silva",
+    "cpf": "12345678901",
+    "email": "joao@example.com",
+    "dataNascimento": "1990-05-15",
+    "sexo": "M",
+    "telefone": "11987654321"
+  },
+  "inicioContribuicao": "2024-01-01",
+  "valorMensalidade": 50.00,
+  "status": 1,
+  "autoStatusContribuicao": true,
+  "idSocioTipo": 0
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id` | integer | ID único do sócio |
+| `pessoa` | object | Dados da pessoa associada ao sócio |
+| `inicioContribuicao` | string | Data de início da contribuição (YYYY-MM-DD) |
+| `valorMensalidade` | float | Valor da mensalidade em reais |
+| `status` | integer | Status do sócio |
+| `autoStatusContribuicao` | boolean | Atualiza status automaticamente conforme contribuição |
+| `idSocioTipo` | integer | ID do tipo de sócio |
+
+### Resposta - 401 Unauthorized (Token Não Fornecido)
+```json
+{
+  "error": "Token inválido"
+}
+```
+
+### Resposta - 403 Forbidden (Acesso Negado)
+```json
+{
+  "error": "Acesso negado. Você não tem permissão para acessar os dados de outro sócio."
+}
+```
+
+### Resposta - 404 Not Found (Sócio Não Encontrado)
+```json
+{
+  "message": "Sócio não localizado."
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Mensagem de erro detalhada | Código do erro"
+}
+```
+
+---
+
 ## Observações Gerais
 
 1. **Content-Type**: Todas as respostas são em JSON com header `Content-Type: application/json`
 
-2. **Códigos de Verificação**: 
+2. **Autenticação**: 
+   - A rota GET `/socios/{cpf}` requer autenticação via token JWT
+   - O usuário autenticado só pode acessar seus próprios dados
+   - Tentativas de acessar dados de outro sócio resultarão em erro 403 Forbidden
+
+3. **Códigos de Verificação**: 
    - Formato: Sempre 6 dígitos
    - Validade: 15 minutos por padrão
    - Invalidação: Um novo código invalida todos os anteriores
 
-3. **Tratamento de Erros**: 
+4. **Tratamento de Erros**: 
    - Erros 400: Requisição mal formada ou validação falhou
+   - Erros 403: Acesso negado (não autorizado para acessar o recurso)
    - Erros 404: Recurso não encontrado
    - Erros 500: Erro interno do servidor
 
-4. **Nota sobre Typos**: 
+5. **Nota sobre Typos**: 
    - Campo `contatct` em `/socios/support-contact` contém um typo (deveria ser `contact`)
 
-5. **Fluxo para Solicitar um Novo Código de Verificação**:
+6. **Fluxo para Solicitar um Novo Código de Verificação**:
    - Cliente chama GET `/socios/verify-code?cpf=12345678901` para solicitar um novo código
    - O sistema valida o CPF, localiza o sócio e envia um novo código para seu email
    - Qualquer código anterior é automaticamente invalidado
    - O cliente pode usar o novo código para validar na rota POST `/socios/verify-code` ou para alterar senha na rota POST `/socios/alter-password`
 
-6. **Fluxo Típico para Alterar Senha**:
+7. **Fluxo Típico para Alterar Senha**:
    - Cliente chama GET `/socios/verify-code?cpf=12345678901` para solicitar um código de verificação
    - Cliente recebe o código por email
    - Cliente chama POST `/socios/verify-code` com o código para validá-lo (opcional, para confirmação prévia)
    - Cliente chama POST `/socios/alter-password` com a nova senha e o código de verificação
    - O sistema valida novamente o código e atualiza a senha
 
-7. **Fluxo de Registro de Sócio**:
+8. **Fluxo de Registro de Sócio**:
    - Cliente chama POST `/socios/register` com os dados do novo sócio
    - O sistema verifica se a pessoa (por CPF) já existe no banco; se não, cria uma nova
    - O sistema verifica se a pessoa tem email; se não, retorna erro 400
@@ -446,7 +528,7 @@ Altera a senha de um sócio utilizando um código de verificação.
    - O sistema envia automaticamente um código de verificação por email (código com 6 dígitos, válido por 15 minutos)
    - A resposta inclui os dados do sócio criado e o resultado do envio do código de verificação
 
-8. **Validação de CPF**:
+9. **Validação de CPF**:
    - O CPF é usado como identificador único para verificar se a pessoa já existe
    - Se a pessoa já existe, os dados de `nome`, `sobrenome` etc. fornecidos no request são ignorados
 
