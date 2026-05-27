@@ -1168,6 +1168,21 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio_log` (
 )ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`socio_beneficio_regra`
+-- -----------------------------------------------------
+CREATE TABLE  IF NOT EXISTS `wegia`.`socio_benefit_rule` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `value_per_point` DECIMAL(10,2) NOT NULL,
+    `max_points_concurrent` INT UNSIGNED NOT NULL,
+    `duration_point_months` INT UNSIGNED NOT NULL,
+    `analysis_window_months` INT UNSIGNED NOT NULL,
+    `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------
 -- Table `wegia`.`socio_verification_code`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`socio_verification_code` (
