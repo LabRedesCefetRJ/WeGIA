@@ -37,11 +37,15 @@ function renderizarTurmas() {
     } else {
         turmasDados.forEach(function(turma) {
             $lista.append(
-                '<div class="label label-default" style="display:inline-flex;align-items:center;margin:3px;padding:6px 10px;font-size:13px;">' +
+                '<span class="label label-default" ' +
+                'style="display:inline-flex;align-items:center;margin:3px;padding:6px 10px;font-size:13px;">' +
                 escapeHtml(turma.nome) +
-                ' <a onclick="removerTurma(' + turma.id_turma + ')" style="cursor:pointer;margin-left:8px;color:#fff;" title="Remover turma">' +
-                '<i class="fa fa-times"></i></a>' +
-                '</div>'
+                ' <button id="' + turma.id_turma + '" class="btn-remover-turma" ' +
+                'style="background:none;border:none;padding:0;margin-left:8px;color:#e74c3c;cursor:pointer;font-size:12px;" ' +
+                'title="Remover turma">' +
+                '<i class="fa fa-times"></i>' +
+                '</button>' +
+                '</span>'
             );
         });
     }
@@ -50,6 +54,8 @@ function renderizarTurmas() {
     if (typeof renderizarSelectsFiltroEquipe === 'function')   renderizarSelectsFiltroEquipe();
     if (typeof renderizarSelectsFiltroAtendidos === 'function') renderizarSelectsFiltroAtendidos();
 }
+
+
 
 function adicionarTurma() {
     var nome = window.prompt("Nome da nova turma:");
@@ -94,14 +100,13 @@ function removerTurma(id_turma) {
     const projetoId = $('#id_projeto').val();
     const csrfToken = $('#csrf_token').val();
 
-    // Se a turma removida estava ativa como filtro, limpar
-    if (typeof equipeTurmaAtiva !== 'undefined' && equipeTurmaAtiva == id_turma) {
-        equipeTurmaAtiva = null;
-        recarregarListaEquipe();
+    if (typeof equipeTurmasFiltro !== 'undefined' && equipeTurmasFiltro.includes(parseInt(id_turma))) {
+        equipeTurmasFiltro = equipeTurmasFiltro.filter(function(id) { return id !== parseInt(id_turma); });
+        if (typeof recarregarListaEquipe === 'function') recarregarListaEquipe();
     }
-    if (typeof atendidosTurmaAtiva !== 'undefined' && atendidosTurmaAtiva == id_turma) {
-        atendidosTurmaAtiva = null;
-        recarregarListaAtendidos();
+    if (typeof atendidosTurmasFiltro !== 'undefined' && atendidosTurmasFiltro.includes(parseInt(id_turma))) {
+        atendidosTurmasFiltro = atendidosTurmasFiltro.filter(function(id) { return id !== parseInt(id_turma); });
+        if (typeof recarregarListaAtendidos === 'function') recarregarListaAtendidos();
     }
 
     $.ajax({
@@ -130,5 +135,11 @@ function removerTurma(id_turma) {
 }
 
 $(document).ready(function() {
+    // Evento delegado único — detecta clique em qualquer .btn-remover-turma dentro de #turmas-lista
+    $('#turmas-lista').on('click', '.btn-remover-turma', function() {
+        const id_turma = $(this).attr('id');
+        removerTurma(id_turma);
+    });
+
     carregarTurmas();
 });
