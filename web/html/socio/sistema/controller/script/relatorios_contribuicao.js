@@ -49,7 +49,17 @@ function gerarTabela(data) {
         tdPlataforma.innerText = element.plataforma;
 
         const tdMeioPagamento = document.createElement('td');
-        tdMeioPagamento.innerText = element.meio == 'Carne' ? 'Carnê' : element.meio;
+        
+        switch(element.meio){
+            case 'Carne' : 
+                tdMeioPagamento.innerText = 'Carnê';
+                break;
+            case 'Recorrencia' :
+                tdMeioPagamento.innerText = 'Recorrência';
+                break;
+            default:
+                tdMeioPagamento.innerText = element.meio;
+        }
 
         tr.append(tdCodigo, tdNome, tdPlataforma, tdMeioPagamento, tdDataGeracao, tdDataVencimento, tdDataPagamento, tdValor, tdStatus);
         tBody.appendChild(tr);
