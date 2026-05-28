@@ -14,3 +14,4 @@ define( 'ROOT',dirname(__FILE__));
 define( 'WWW', 'https://demo.wegia.org/');
 define('JWT_SECRET', 'your_jwt_secret_key_here');
 define('ENV_APP', 'production');
+define('CORS_ORIGIN', 'https://demo.wegia.org');

@@ -19,6 +19,7 @@ use api\modules\Socio\SocioRepository;
 use api\modules\Contribuicao\ContribuicaoController;
 use api\modules\Contribuicao\ContribuicaoService;
 use api\modules\Contribuicao\ContribuicaoRepository;
+use api\middleware\CorsMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -91,6 +92,16 @@ $container = new AppContainer([
     ContribuicaoController::class => function ($c) {
         return new ContribuicaoController($c->get(ContribuicaoService::class), $c->get(SocioRepository::class));
     },
+    CorsMiddleware::class => function ($c) {
+        $origin = defined('CORS_ORIGIN') ? CORS_ORIGIN : '*';
+        return new CorsMiddleware(
+            $origin,
+            ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+            ['Content-Type', 'Authorization', 'X-Requested-With'],
+            true,
+            86400
+        );
+    },
 ]);
 
 AppFactory::setContainer($container);
@@ -98,6 +109,7 @@ AppFactory::setContainer($container);
 $app = AppFactory::create();
 
 $app->addBodyParsingMiddleware();
+$app->add($container->get(CorsMiddleware::class));
 $app->addRoutingMiddleware();
 
 $displayErrorDetails = ENV_APP === 'development' ? true : false;
@@ -114,6 +126,11 @@ $displayErrorDetails = ENV_APP === 'development' ? true : false;
  * for middleware added after it.
  */
 $errorMiddleware = $app->addErrorMiddleware($displayErrorDetails, true, true);
+
+// Handle OPTIONS requests (CORS preflight)
+$app->options('/{routes:.*}', function (Request $request, Response $response) {
+    return $response;
+});
 
 $app->get('/wegia', function (Request $request, Response $response, $args) {
     $response->getBody()->write("Hello, API Wegia!");
