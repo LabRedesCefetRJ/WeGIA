@@ -106,8 +106,18 @@ try {
             throw new Exception('Violação de acesso');
         }
 
+        switch ($controller) {
+            case 'GatewayPagamentoController':
+            case 'MeioPagamentoController':
+            case 'RegraPagamentoController':
+                $id_recurso = 7; // Recurso de contribuições
+                break;
+            default:
+                $id_recurso = 4; // Recurso de sócios
+        }
+
         require_once '../../permissao/permissao.php';
-        permissao($_SESSION['id_pessoa'], 9, 3);
+        permissao($_SESSION['id_pessoa'], $id_recurso, 3);
     }
 
     $baseDir = realpath(__DIR__);
