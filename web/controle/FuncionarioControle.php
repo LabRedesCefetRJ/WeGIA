@@ -790,7 +790,6 @@ class FuncionarioControle
             Util::tratarException($e);
         }
     }
-
     public function getIdFuncionarioComIdPessoa()
     {
         try {
@@ -802,7 +801,31 @@ class FuncionarioControle
 
             $funcionarioDAO = new FuncionarioDAO;
             $id_funcionario = $funcionarioDAO->getIdFuncionarioComIdPessoa($id_pessoa);
+
             echo json_encode($id_funcionario);
+        }
+        catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function listarPessoasComCargo()
+    {
+        try {
+            extract($_REQUEST);
+
+            isset($_GET['select_situacao']) === false ? $situacao_selecionada = 1 : $situacao_selecionada = $_GET['select_situacao'];
+
+            $funcionariosDAO = new FuncionarioDAO();
+            $pessoas = $funcionariosDAO->listarPessoasComCargo($situacao_selecionada);
+
+            $_SESSION['pessoas_com_cargo'] = json_encode($pessoas);
+
+            $whitePages = [
+                '../html/geral/cadastrar_permissoes.php',
+            ];
+
+            isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
         }
         catch (Exception $e) {
             Util::tratarException($e);
