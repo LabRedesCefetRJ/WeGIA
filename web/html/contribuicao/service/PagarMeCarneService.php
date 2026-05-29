@@ -1,7 +1,7 @@
 <?php
 require_once '../model/ContribuicaoLogCollection.php';
 require_once '../model/ContribuicaoLog.php';
-require_once '../helper/Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once 'ApiCarneServiceInterface.php';
 require_once '../vendor/autoload.php';
 

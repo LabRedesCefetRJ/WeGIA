@@ -1,9 +1,9 @@
 <?php
-if(session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
 //Verifica se um usuário está logado e possui as permissões necessárias
-if(!isset($_SESSION['usuario'])){
+if (!isset($_SESSION['usuario'])) {
 	header('Location: ../index.php');
 	exit();
 }
@@ -11,7 +11,7 @@ if(!isset($_SESSION['usuario'])){
 session_regenerate_id();
 
 require_once '../html/permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 11, 3);
+permissao($_SESSION['id_pessoa'], 12, 3);
 
 require_once 'Conexao.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -31,7 +31,7 @@ try {
 	$stmt->bindParam(':atendido_ocorrencia_tipos', $ocorrencia);
 	$stmt->execute();
 
-	if($stmt->rowCount() > 0)
+	if ($stmt->rowCount() > 0)
 		echo json_encode(['sucesso' => $pdo->lastInsertId('atendido_ocorrencia_tipos')]);
 } catch (Exception $e) {
 	// Erro de duplicidade (Duplicate entry)

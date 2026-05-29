@@ -152,10 +152,16 @@
 
             
             $id_pessoa_paciente = $dados['id_pessoa_paciente'] ?? null;
-            $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null; 
+            $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
             $medicamento = $dados['medicamento'] ?? null;
             $dosagem = $dados['dosagem'] ?? null;
-            $horario = $dados['horario'] ?? null;
+            $horarios = $dados['horarios'] ?? [];
+            if (empty($horarios) && !empty($dados['horario'])) {
+                $horarios = [$dados['horario']];
+            }
+            if (is_string($horarios)) {
+                $horarios = [$horarios];
+            }
             $duracao = $dados['duracao'] ?? null;
             $status_id = $dados['status_id'] ?? 1;
 
@@ -193,15 +199,18 @@
                     throw new Exception("Falha ao obter ID do atendimento recém-criado.", 500);
                 }
 
-                $MedicamentosPacienteDAO->cadastrarMedicamentoSos(
+                $id_medicacao = $MedicamentosPacienteDAO->cadastrarMedicamentoSos(
                     $novo_id_atendimento,
                     $medicamento,
                     $dosagem,
-                    $horario,
                     $duracao,
                     (int)$status_id
                 );
-                
+
+                if (!empty($horarios)) {
+                    $MedicamentosPacienteDAO->inserirHorariosMedicacao($id_medicacao, $horarios);
+                }
+
                 $MedicamentosPacienteDAO->commit();
 
                 http_response_code(201); 

@@ -47,8 +47,8 @@ class MiddlewareDAO
                 $sqlRecurso = 'SELECT * FROM permissao WHERE id_cargo=:idCargo and id_recurso=:idRecurso';
 
                 $stmtRecurso = $this->pdo->prepare($sqlRecurso);
-                $stmtRecurso->bindParam(':idCargo', $idCargo);
-                $stmtRecurso->bindParam(':idRecurso', $recurso);
+                $stmtRecurso->bindParam(':idCargo', $idCargo, PDO::PARAM_INT);
+                $stmtRecurso->bindParam(':idRecurso', $recurso, PDO::PARAM_INT);
 
                 $stmtRecurso->execute();
 

@@ -863,6 +863,16 @@ $(document).ready(function () {
                 { "data": "plataforma" },
                 {
                     "data": "meio", "render": function (data, type, row) {
+                        switch(data){
+            case 'Carne' : 
+                return 'Carnê';
+                break;
+            case 'Recorrencia' :
+                return 'Recorrência';
+                break;
+            default:
+                return data;
+        }
                         return data == 'Carne' ? "Carnê" : data;
                     }
                 },
