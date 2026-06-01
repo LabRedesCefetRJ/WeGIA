@@ -308,6 +308,13 @@ require_once ROOT . "/html/geral/msg.php";
 						</div>
 					</a>
 
+					<a id="home10" href="<?= WWW ?>html/agenda/cadastrar_agenda.php">
+						<div class="col-lg-2 col-md-8 i category-item">
+							<i class="fa fa-calendar"></i>
+							<h4>Agenda</h4>
+						</div>
+					</a>
+
 					<a class="visivel" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#configuracao">
 							<i class="fa fa-cogs"></i>
