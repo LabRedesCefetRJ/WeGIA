@@ -1236,16 +1236,18 @@ function renderTabelaEquipes(equipes, membros) {
     var memPorEquipe = {};
     $.each(membros || [], function (_, m) {
         if (!memPorEquipe[m.id_equipe]) memPorEquipe[m.id_equipe] = [];
-        memPorEquipe[m.id_equipe].push(m.nome_completo.trim());
+        memPorEquipe[m.id_equipe].push(m);
     });
     var html = '';
     $.each(equipes || [], function (_, e) {
         var badge = e.status && e.status.toLowerCase() === 'ativo'
             ? '<span class="badge badge-ativo">' + e.status + '</span>'
             : '<span class="badge badge-inativo">' + (e.status || '—') + '</span>';
-        var nomes = memPorEquipe[e.id] || [];
-        var membrosHtml = nomes.length
-            ? $.map(nomes, function (n) { return '<span class="badge-membro">' + n + '</span>'; }).join('')
+        var mems = memPorEquipe[e.id] || [];
+        var membrosHtml = mems.length
+            ? $.map(mems, function (m) {
+                return m.nome_completo.trim() + (m.cargo ? ' - ' + m.cargo : '');
+              }).join(' | ')
             : '<span class="text-muted">Nenhum membro</span>';
         html += '<tr>'
             + '<td><strong>' + e.nome + '</strong></td>'
@@ -1366,7 +1368,6 @@ $('#btn-salvar-equipe').on('click', function () {
     if (!nome)         { exibirErroModal('modal-equipe-erro', 'Informe o nome da equipe.'); return; }
     if (!inicio_turno) { exibirErroModal('modal-equipe-erro', 'Informe o horário de início do turno.'); return; }
     if (!fim_turno)    { exibirErroModal('modal-equipe-erro', 'Informe o horário de fim do turno.'); return; }
-    if (inicio_turno >= fim_turno) { exibirErroModal('modal-equipe-erro', 'O horário de início deve ser menor que o horário de fim.'); return; }
     if (id && !status) { exibirErroModal('modal-equipe-erro', 'Selecione o status.'); return; }
 
     var dados = { nome: nome, descricao: descricao, id_status: status, id_agenda: id_agenda, inicio_turno: inicio_turno, fim_turno: fim_turno };
@@ -1392,7 +1393,7 @@ function carregarMembros(idEquipe) {
         } else {
             $.each(dados, function (_, m) {
                 html += '<tr>'
-                    + '<td>' + m.nome + ' ' + (m.sobrenome || '') + '</td>'
+                    + '<td>' + m.nome + ' ' + (m.sobrenome || '') + (m.cargo ? ' - ' + m.cargo : '') + '</td>'
                     + '<td>' + fmtTime(m.inicio_turno) + ' – ' + fmtTime(m.fim_turno) + '</td>'
                     + '<td>'
                     + '<button class="btn btn-xs btn-warning btn-acao mr-xs btn-inativar-membro" data-id="' + m.id + '" title="Inativar"><i class="fa fa-ban"></i></button>'

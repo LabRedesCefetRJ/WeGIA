@@ -290,10 +290,20 @@ class AgendaDAO
     public function listarMembrosPorEquipe(int $idEquipe)
     {
         $sql = "SELECT m.id, p.nome, p.sobrenome, m.ativo,
-                       e.inicio_turno, e.fim_turno
+                       e.inicio_turno, e.fim_turno,
+                       CASE
+                           WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
+                           WHEN v.id_pessoa IS NOT NULL THEN 'Voluntário'
+                           WHEN a.pessoa_id_pessoa IS NOT NULL THEN 'Atendido'
+                           ELSE NULL
+                       END AS cargo
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 INNER JOIN agenda_equipe e ON m.id_equipe = e.id
+                LEFT JOIN funcionario f ON f.id_pessoa = p.id_pessoa
+                LEFT JOIN cargo c ON c.id_cargo = f.id_cargo
+                LEFT JOIN voluntario v ON v.id_pessoa = p.id_pessoa
+                LEFT JOIN atendido a ON a.pessoa_id_pessoa = p.id_pessoa
                 WHERE m.id_equipe = :id_equipe
                 AND m.ativo = 1";
         $stmt = $this->pdo->prepare($sql);
@@ -354,10 +364,20 @@ class AgendaDAO
     public function listarTodosMembrosAtivos()
     {
         $sql = "SELECT m.id, m.id_equipe, e.inicio_turno, e.fim_turno,
-                       CONCAT(p.nome, ' ', COALESCE(p.sobrenome, '')) AS nome_completo
+                       CONCAT(p.nome, ' ', COALESCE(p.sobrenome, '')) AS nome_completo,
+                       CASE
+                           WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
+                           WHEN v.id_pessoa IS NOT NULL THEN 'Voluntário'
+                           WHEN a.pessoa_id_pessoa IS NOT NULL THEN 'Atendido'
+                           ELSE NULL
+                       END AS cargo
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 INNER JOIN agenda_equipe e ON m.id_equipe = e.id
+                LEFT JOIN funcionario f ON f.id_pessoa = p.id_pessoa
+                LEFT JOIN cargo c ON c.id_cargo = f.id_cargo
+                LEFT JOIN voluntario v ON v.id_pessoa = p.id_pessoa
+                LEFT JOIN atendido a ON a.pessoa_id_pessoa = p.id_pessoa
                 WHERE m.ativo = 1
                 ORDER BY m.id_equipe, p.nome";
         $stmt = $this->pdo->prepare($sql);

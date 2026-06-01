@@ -428,9 +428,6 @@ class AgendaControle
             if (empty($fim_turno))
                 throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
 
-            if ($inicio_turno >= $fim_turno)
-                throw new InvalidArgumentException('O horário de início deve ser menor que o horário de fim.', 412);
-
             $equipe = new AgendaEquipe();
             $equipe->setNome($nome);
             $equipe->setId_status($id_status);
@@ -491,9 +488,6 @@ class AgendaControle
 
             if (empty($fim_turno))
                 throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
-
-            if ($inicio_turno >= $fim_turno)
-                throw new InvalidArgumentException('O horário de início deve ser menor que o horário de fim.', 412);
 
             $equipe = new AgendaEquipe();
             $equipe->setId($id);
