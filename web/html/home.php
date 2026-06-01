@@ -740,6 +740,13 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Tags (grupos)</h4>
 							</div>
 						</a>
+
+						<a href="<?= WWW ?>html/socio/sistema/beneficios.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-file-signature"></i>
+								<h4>Regras de benefícios</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 				<!--fim da parte interna de #socios-->
