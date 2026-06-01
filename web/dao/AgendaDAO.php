@@ -112,11 +112,15 @@ class AgendaDAO
 
     public function listarAlocacoesPorAgenda(int $idAgenda)
     {
-        $sql = "SELECT al.id, al.inicio, al.fim, al.lembrete, al.lembrete_enviado,
-                       e.nome as equipe
+        $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display, al.lembrete,
+                       al.id_agenda, al.id_equipe,
+                       a.descricao AS agenda, e.nome AS equipe,
+                       e.nome AS title
                 FROM agenda_alocacao al
+                INNER JOIN agenda a ON al.id_agenda = a.id
                 INNER JOIN agenda_equipe e ON al.id_equipe = e.id
-                WHERE al.id_agenda = :id_agenda";
+                WHERE al.id_agenda = :id_agenda
+                ORDER BY al.inicio";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_agenda', $idAgenda, PDO::PARAM_INT);
         $stmt->execute();
@@ -165,6 +169,21 @@ class AgendaDAO
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function listarAlocacaoPorId(int $id): array
+    {
+        $sql = "SELECT al.id, DATE(al.inicio) AS inicio, DATE(al.fim) AS fim,
+                       a.descricao AS agenda, e.nome AS equipe,
+                       e.inicio_turno, e.fim_turno
+                FROM agenda_alocacao al
+                INNER JOIN agenda a ON al.id_agenda = a.id
+                INNER JOIN agenda_equipe e ON al.id_equipe = e.id
+                WHERE al.id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     }
 
     // -------------------------------------------------------
@@ -358,6 +377,15 @@ class AgendaDAO
     {
         $sql = "DELETE FROM agenda_alocacao WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function salvarLembrete(int $id, ?string $lembrete)
+    {
+        $sql = "UPDATE agenda_alocacao SET lembrete = :lembrete WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':lembrete', $lembrete);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
     }

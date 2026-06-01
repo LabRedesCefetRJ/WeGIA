@@ -7,6 +7,8 @@ require_once ROOT . '/classes/AgendaEquipe.php';
 require_once ROOT . '/classes/AgendaEquipeMembro.php';
 require_once ROOT . '/dao/AgendaDAO.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/classes/Notificacao.php';
+require_once ROOT . '/dao/NotificacaoDAO.php';
 
 class AgendaControle
 {
@@ -238,6 +240,71 @@ class AgendaControle
 
             http_response_code(200);
             echo json_encode(['msg' => 'Alocação excluída com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function salvarLembrete()
+    {
+        header('Content-Type: application/json');
+
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        try {
+            $id       = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+            $lembrete = filter_input(INPUT_POST, 'lembrete', FILTER_SANITIZE_SPECIAL_CHARS);
+            $mensagem = filter_input(INPUT_POST, 'mensagem', FILTER_SANITIZE_SPECIAL_CHARS);
+            $idPessoa = (int) ($_SESSION['id_pessoa'] ?? 0);
+
+            if (!$id || $id < 1)
+                throw new InvalidArgumentException('O id informado não é válido.', 412);
+
+            if (!$idPessoa)
+                throw new InvalidArgumentException('Usuário inválido.', 412);
+
+            $agendaDao = new AgendaDAO();
+            $alocacao  = $agendaDao->listarAlocacaoPorId((int) $id);
+
+            if (empty($alocacao))
+                throw new InvalidArgumentException('Alocação não encontrada.', 412);
+
+            // Atualiza o campo lembrete na alocação (mantido para exibição no calendário)
+            $agendaDao->salvarLembrete((int) $id, !empty($lembrete) ? $lembrete : null);
+
+            $linkAlocacao = 'html/agenda/cadastrar_agenda.php';
+            $notifDao     = new NotificacaoDAO();
+
+            if (!empty($lembrete)) {
+                // Formata data do lembrete para exibição
+                $dtLembrete = new DateTime($lembrete);
+                $dtFormatada = $dtLembrete->format('d/m/Y \à\s H:i');
+
+                // Formata datas da alocação
+                $dtInicio = (new DateTime($alocacao['inicio']))->format('d/m/Y');
+                $dtFim    = (new DateTime($alocacao['fim']))->format('d/m/Y');
+
+                $msgBase = 'Alocação da equipe "' . $alocacao['equipe'] . '" de ' . $dtInicio . ' a ' . $dtFim . '. Lembrete agendado para ' . $dtFormatada . '.';
+
+                $msgFinal = !empty($mensagem) ? $msgBase . ' Mensagem: ' . $mensagem : $msgBase;
+
+                $notificacao = new Notificacao(
+                    10, // Módulo Agenda
+                    'Lembrete: ' . $alocacao['equipe'],
+                    $msgFinal,
+                    'lembrete',
+                    $linkAlocacao
+                );
+
+                $notifDao->criar($notificacao, [$idPessoa]);
+            } else {
+                // Lembrete removido: marca notificações pendentes desta alocação como visualizadas
+                $notifDao->marcarPendentesComoVisualizadasPorReferencia(10, 'lembrete', $linkAlocacao);
+            }
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Lembrete salvo com sucesso!']);
         } catch (Exception $e) {
             Util::tratarException($e);
         }

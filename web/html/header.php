@@ -125,7 +125,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 			$notificacaoDAO = new NotificacaoDAO();
 			$totalNotificacoes = $notificacaoDAO->contarPendentes((int) $id_pessoa);
-			$paginaNotificacoes = WWW . 'html/matPat/listar_notificacoes.php';
+			$paginaNotificacoes = WWW . 'html/geral/listar_notificacoes.php';
 
 			echo '<a href="' . $paginaNotificacoes . '">Notificações <i class="fa fa-bell" aria-hidden="true"></i>';
 

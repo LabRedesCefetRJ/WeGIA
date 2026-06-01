@@ -677,10 +677,27 @@ require_once "../personalizacao_display.php";
                 <h4 class="modal-title" id="modal-evento-titulo"></h4>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="modal-evento-id">
                 <p><strong><i class="fa fa-calendar mr-xs"></i> Início:</strong> <span id="modal-evento-inicio"></span></p>
-                <p><strong><i class="fa fa-calendar-check-o mr-xs"></i> Fim:</strong> <span id="modal-evento-fim"></span></p>
-                <p><strong><i class="fa fa-users mr-xs"></i> Equipe:</strong> <span id="modal-evento-equipe"></span></p>
-                <p id="modal-evento-lembrete-row"><strong><i class="fa fa-bell mr-xs"></i> Lembrete:</strong> <span id="modal-evento-lembrete"></span></p>
+                <p><strong><i class="fas fa-calendar-check mr-xs"></i> Fim:</strong> <span id="modal-evento-fim"></span></p>
+                <hr style="margin:10px 0;">
+                <div id="modal-evento-lembrete-wrap">
+                    <label style="font-weight:600; margin-bottom:4px;"><i class="fa fa-bell mr-xs"></i> Lembrete</label>
+                    <div id="modal-evento-lembrete-erro" class="alert alert-danger alert-dismissible" style="display:none;" role="alert">
+                        <button type="button" class="close" aria-label="Fechar" onclick="ocultarErroModal('modal-evento-lembrete-erro'); return false;"><span aria-hidden="true">&times;</span></button>
+                        <span id="modal-evento-lembrete-erro-texto"></span>
+                    </div>
+                    <div class="form-group" style="margin-bottom:6px;">
+                        <input type="datetime-local" class="form-control input-sm" id="modal-evento-lembrete-input" placeholder="Data e hora">
+                    </div>
+                    <div class="form-group" style="margin-bottom:6px;">
+                        <textarea class="form-control input-sm" id="modal-evento-lembrete-mensagem" rows="2" maxlength="255" placeholder="Mensagem do lembrete (opcional)"></textarea>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-primary" id="btn-salvar-lembrete" title="Salvar lembrete"><i class="fa fa-save"></i></button>
+                        <button class="btn btn-sm btn-danger" id="btn-limpar-lembrete" title="Remover lembrete"><i class="fa fa-trash"></i></button>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
@@ -1001,19 +1018,25 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         },
         dayMaxEvents: true,
-        events: {
-            url: API, method: 'GET',
-            extraParams: { metodo:'listarTodasAlocacoes', nomeClasse:'AgendaControle' },
-            failure: function () { exibirMsgAba('msg-agendas', 'Erro ao carregar eventos do calendário.', 'danger'); }
+        events: function (fetchInfo, successCallback, failureCallback) {
+            var idAgenda = $('#sidebar-agenda-select').val();
+            if (!idAgenda) { successCallback([]); return; }
+            $.get(API, { metodo: 'listarAlocacoesPorAgenda', nomeClasse: 'AgendaControle', id_agenda: idAgenda })
+                .done(function (data) { successCallback(Array.isArray(data) ? data : []); })
+                .fail(function () {
+                    failureCallback();
+                    exibirMsgAba('msg-calendario', 'Erro ao carregar eventos do calendário.', 'danger');
+                });
         },
         eventClick: function (info) {
             var e = info.event, p = e.extendedProps;
+            $('#modal-evento-id').val(e.id);
             $('#modal-evento-titulo').text(e.title);
             $('#modal-evento-inicio').text(fmtDate(e.startStr));
             $('#modal-evento-fim').text(fmtDate(p.fim_display));
-            $('#modal-evento-equipe').text(p.equipe || '—');
-            if (p.lembrete) { $('#modal-evento-lembrete').text(fmtDatetime(p.lembrete)); $('#modal-evento-lembrete-row').show(); }
-            else            { $('#modal-evento-lembrete-row').hide(); }
+            $('#modal-evento-lembrete-input').val(p.lembrete ? p.lembrete.replace(' ', 'T').substring(0, 16) : '');
+            $('#modal-evento-lembrete-mensagem').val('');
+            ocultarErroModal('modal-evento-lembrete-erro');
             $('#modal-evento').modal('show');
         },
         eventDidMount: function (info) {
@@ -1097,7 +1120,9 @@ $('#abas-agenda a[href="#tab-calendario"]').on('shown.bs.tab', function () {
 });
 
 $(document).on('change', '#sidebar-agenda-select', function () {
-    carregarSidebarEquipes($(this).val() || null);
+    var idAgenda = $(this).val() || null;
+    carregarSidebarEquipes(idAgenda);
+    _calRefetch();
 });
 
 $(document).on('change', '#sidebar-equipe-select', function () {
@@ -1502,6 +1527,35 @@ $(document).on('click', '.btn-reativar-membro', function () {
     });
 });
 
+/* ── Lembrete do evento ──────────────────────────────────── */
+
+function _salvarLembrete(valor) {
+    var id       = $('#modal-evento-id').val();
+    var mensagem = $.trim($('#modal-evento-lembrete-mensagem').val());
+    if (!id) return;
+    ocultarErroModal('modal-evento-lembrete-erro');
+    apiPost('salvarLembrete', { id: id, lembrete: valor, mensagem: mensagem })
+        .done(function () {
+            $('#modal-evento').modal('hide');
+            _calRefetch();
+        })
+        .fail(function (xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar lembrete.';
+            exibirErroModal('modal-evento-lembrete-erro', msg);
+        });
+}
+
+$('#btn-salvar-lembrete').on('click', function () {
+    var val = $('#modal-evento-lembrete-input').val();
+    _salvarLembrete(val ? val.replace('T', ' ') : '');
+});
+
+$('#btn-limpar-lembrete').on('click', function () {
+    $('#modal-evento-lembrete-input').val('');
+    $('#modal-evento-lembrete-mensagem').val('');
+    _salvarLembrete('');
+});
+
 /* ── Alocações ───────────────────────────────────────────── */
 
 function carregarFiltroAlocacaoAgenda() {
@@ -1545,14 +1599,19 @@ function carregarAlocacoes() {
 }
 
 function carregarSelectEquipePorAgenda(idAgenda, selEquipe) {
-    var params = idAgenda ? { id_agenda: idAgenda } : {};
-    api('listarEquipes', params).done(function (equipes) {
+    var $sel = $('#alocacao-equipe');
+    if (!idAgenda) {
+        $sel.html('<option value="">Selecione a agenda primeiro...</option>').prop('disabled', true);
+        initSelect2('#alocacao-equipe', 'Selecione a agenda primeiro...');
+        return;
+    }
+    api('listarEquipes', { id_agenda: idAgenda }).done(function (equipes) {
         var opts = '<option value="">Selecione...</option>';
         $.each(equipes, function (_, e) {
             if (!e.status || e.status.toLowerCase() !== 'ativo') return;
             opts += '<option value="' + e.id + '"' + (e.id == selEquipe ? ' selected' : '') + '>' + e.nome + '</option>';
         });
-        $('#alocacao-equipe').html(opts);
+        $sel.html(opts).prop('disabled', false);
         initSelect2('#alocacao-equipe', 'Selecione a equipe...');
     });
 }
