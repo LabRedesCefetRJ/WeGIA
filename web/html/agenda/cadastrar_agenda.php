@@ -370,6 +370,7 @@ require_once "../personalizacao_display.php";
                                                 <th style="width:160px;">Nome</th>
                                                 <th>Descrição</th>
                                                 <th>Membros</th>
+                                                <th style="width:110px;">Turno</th>
                                                 <th style="width:100px;" class="col-status">Status</th>
                                                 <th style="width:130px;" class="col-acoes">Ações</th>
                                             </tr>
@@ -495,6 +496,20 @@ require_once "../personalizacao_display.php";
                     <label class="control-label">Descrição</label>
                     <textarea class="form-control" id="equipe-descricao" rows="2"></textarea>
                 </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">Início do turno <sup class="text-danger">*</sup></label>
+                            <input type="time" class="form-control" id="equipe-inicio-turno">
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label class="control-label">Fim do turno <sup class="text-danger">*</sup></label>
+                            <input type="time" class="form-control" id="equipe-fim-turno">
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group" id="equipe-status-grupo">
                     <label class="control-label">Status <sup class="text-danger">*</sup></label>
                     <select class="form-control" id="equipe-status"></select>
@@ -540,22 +555,10 @@ require_once "../personalizacao_display.php";
                 <div class="membros-panel mb-md">
                     <h5 style="margin-top:0; font-weight:700; color:#2d3a4a;">Adicionar Membro</h5>
                     <div class="row">
-                        <div class="col-sm-4">
+                        <div class="col-sm-10">
                             <div class="form-group">
                                 <label class="control-label">Pessoa <sup class="text-danger">*</sup></label>
                                 <select class="form-control" id="membro-pessoa"></select>
-                            </div>
-                        </div>
-                        <div class="col-sm-3">
-                            <div class="form-group">
-                                <label class="control-label">Início do turno <sup class="text-danger">*</sup></label>
-                                <input type="time" class="form-control" id="membro-inicio">
-                            </div>
-                        </div>
-                        <div class="col-sm-3">
-                            <div class="form-group">
-                                <label class="control-label">Fim do turno <sup class="text-danger">*</sup></label>
-                                <input type="time" class="form-control" id="membro-fim">
                             </div>
                         </div>
                         <div class="col-sm-2" style="padding-top:25px;">
@@ -570,15 +573,32 @@ require_once "../personalizacao_display.php";
                     <thead>
                         <tr>
                             <th>Nome</th>
-                            <th>Início turno</th>
-                            <th>Fim turno</th>
+                            <th style="width:110px;">Turno</th>
                             <th style="width:100px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tbody-membros">
-                        <tr><td colspan="4" class="text-center text-muted">Nenhum membro ativo.</td></tr>
+                        <tr><td colspan="3" class="text-center text-muted">Nenhum membro ativo.</td></tr>
                     </tbody>
                 </table>
+
+                <div id="secao-membros-inativos" style="display:none; margin-top:8px;">
+                    <h6 style="font-weight:700; color:#95a5a6; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;">
+                        <i class="fa fa-ban mr-xs"></i> Inativos
+                    </h6>
+                    <table class="table table-bordered table-condensed" style="margin-bottom:0;">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th style="width:100px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-membros-inativos"></tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-link btn-xs" id="btn-toggle-inativos" style="margin-top:6px; padding:0; color:#95a5a6; display:none;">
+                    <i class="fa fa-chevron-down mr-xs"></i><span id="toggle-inativos-label">Ver inativos</span>
+                </button>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
@@ -1086,6 +1106,8 @@ $(document).on('change', '#sidebar-equipe-select', function () {
 
 /* ── Agendas ─────────────────────────────────────────────── */
 
+var _defaultStatusAgendaId = null;
+
 function carregarAgendas() {
     api('listarAgendas').done(function (dados) {
         var html = '';
@@ -1115,6 +1137,7 @@ function carregarStatusAgenda(selecionado, autoSelecionarPrimeiro) {
         $('#agenda-status').html(opts);
         initSelect2('#agenda-status', 'Selecione o status...');
         if (autoSelecionarPrimeiro && dados.length) {
+            _defaultStatusAgendaId = String(dados[0].id);
             $('#agenda-status').val(dados[0].id).trigger('change');
         }
     });
@@ -1162,7 +1185,7 @@ $(document).on('click', '.btn-excluir-agenda', function () {
 $('#btn-salvar-agenda').on('click', function () {
     var id        = $('#agenda-id').val();
     var descricao = $.trim($('#agenda-descricao').val());
-    var status    = $('#agenda-status').val();
+    var status    = id ? $('#agenda-status').val() : (_defaultStatusAgendaId || $('#agenda-status option:not([value=""])').first().val());
 
     ocultarErroModal('modal-agenda-erro');
     if (!descricao) { exibirErroModal('modal-agenda-erro', 'Informe a descrição.'); return; }
@@ -1203,10 +1226,11 @@ function renderTabelaEquipes(equipes, membros) {
             + '<td><strong>' + e.nome + '</strong></td>'
             + '<td>' + (e.descricao || '—') + '</td>'
             + '<td class="membros-cell">' + membrosHtml + '</td>'
+            + '<td>' + fmtTime(e.inicio_turno) + ' – ' + fmtTime(e.fim_turno) + '</td>'
             + '<td class="col-status">' + badge + '</td>'
             + '<td class="col-acoes"><div class="acoes-grupo">'
             + '<button class="btn btn-xs btn-success btn-acao btn-membros-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" title="Membros"><i class="fa fa-users"></i></button>'
-            + '<button class="btn btn-xs btn-info btn-acao btn-editar-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" data-descricao="' + (e.descricao||'') + '" data-status="' + e.id_status + '" data-agenda="' + (e.id_agenda||'') + '" title="Editar"><i class="fa fa-pencil"></i></button>'
+            + '<button class="btn btn-xs btn-info btn-acao btn-editar-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" data-descricao="' + (e.descricao||'') + '" data-status="' + (e.id_status||'') + '" data-agenda="' + (e.id_agenda||'') + '" data-inicio-turno="' + (e.inicio_turno||'') + '" data-fim-turno="' + (e.fim_turno||'') + '" title="Editar"><i class="fa fa-pencil"></i></button>'
             + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-equipe" data-id="' + e.id + '" title="Excluir"><i class="fa fa-trash"></i></button>'
             + '</div></td></tr>';
     });
@@ -1240,6 +1264,8 @@ function carregarEquipes() {
     });
 }
 
+var _defaultStatusEquipeId = null;
+
 function carregarStatusEquipe(selecionado, autoSelecionarPrimeiro) {
     api('listarEquipeStatus').done(function (dados) {
         var opts = '<option value="">Selecione...</option>';
@@ -1249,6 +1275,7 @@ function carregarStatusEquipe(selecionado, autoSelecionarPrimeiro) {
         $('#equipe-status').html(opts);
         initSelect2('#equipe-status', 'Selecione o status...');
         if (autoSelecionarPrimeiro && dados.length) {
+            _defaultStatusEquipeId = String(dados[0].id);
             $('#equipe-status').val(dados[0].id).trigger('change');
         }
     });
@@ -1264,6 +1291,7 @@ $(document).on('change', '#filtro-equipe-agenda, #filtro-equipe-status', carrega
 $('#btn-nova-equipe').on('click', function () {
     $('#modal-equipe-titulo').text('Nova Equipe');
     $('#equipe-id').val(''); $('#equipe-nome').val(''); $('#equipe-descricao').val('');
+    $('#equipe-inicio-turno').val(''); $('#equipe-fim-turno').val('');
     ocultarErroModal('modal-equipe-erro');
     $('#equipe-status-grupo').hide();
     carregarSelectAgendaEquipe(null);
@@ -1277,6 +1305,8 @@ $(document).on('click', '.btn-editar-equipe', function () {
     $('#equipe-id').val($b.data('id'));
     $('#equipe-nome').val($b.data('nome'));
     $('#equipe-descricao').val($b.data('descricao'));
+    $('#equipe-inicio-turno').val($b.data('inicio-turno'));
+    $('#equipe-fim-turno').val($b.data('fim-turno'));
     ocultarErroModal('modal-equipe-erro');
     $('#equipe-status-grupo').show();
     carregarSelectAgendaEquipe($b.data('agenda'));
@@ -1298,18 +1328,23 @@ $(document).on('click', '.btn-excluir-equipe', function () {
 });
 
 $('#btn-salvar-equipe').on('click', function () {
-    var id        = $('#equipe-id').val();
-    var id_agenda = $('#equipe-agenda').val();
-    var nome      = $.trim($('#equipe-nome').val());
-    var descricao = $.trim($('#equipe-descricao').val());
-    var status    = $('#equipe-status').val();
+    var id           = $('#equipe-id').val();
+    var id_agenda    = $('#equipe-agenda').val();
+    var nome         = $.trim($('#equipe-nome').val());
+    var descricao    = $.trim($('#equipe-descricao').val());
+    var status       = id ? $('#equipe-status').val() : (_defaultStatusEquipeId || $('#equipe-status option:not([value=""])').first().val());
+    var inicio_turno = $('#equipe-inicio-turno').val();
+    var fim_turno    = $('#equipe-fim-turno').val();
 
     ocultarErroModal('modal-equipe-erro');
     if (!id_agenda)    { exibirErroModal('modal-equipe-erro', 'Selecione a agenda.'); return; }
     if (!nome)         { exibirErroModal('modal-equipe-erro', 'Informe o nome da equipe.'); return; }
+    if (!inicio_turno) { exibirErroModal('modal-equipe-erro', 'Informe o horário de início do turno.'); return; }
+    if (!fim_turno)    { exibirErroModal('modal-equipe-erro', 'Informe o horário de fim do turno.'); return; }
+    if (inicio_turno >= fim_turno) { exibirErroModal('modal-equipe-erro', 'O horário de início deve ser menor que o horário de fim.'); return; }
     if (id && !status) { exibirErroModal('modal-equipe-erro', 'Selecione o status.'); return; }
 
-    var dados = { nome: nome, descricao: descricao, id_status: status, id_agenda: id_agenda };
+    var dados = { nome: nome, descricao: descricao, id_status: status, id_agenda: id_agenda, inicio_turno: inicio_turno, fim_turno: fim_turno };
     if (id) dados.id = id;
 
     apiPost(id ? 'alterarEquipe' : 'incluirEquipe', dados).done(function (r) {
@@ -1328,13 +1363,12 @@ function carregarMembros(idEquipe) {
     api('listarMembrosPorEquipe', { id_equipe: idEquipe }).done(function (dados) {
         var html = '';
         if (!dados || !dados.length) {
-            html = '<tr><td colspan="4" class="text-center text-muted">Nenhum membro ativo.</td></tr>';
+            html = '<tr><td colspan="3" class="text-center text-muted">Nenhum membro ativo.</td></tr>';
         } else {
             $.each(dados, function (_, m) {
                 html += '<tr>'
                     + '<td>' + m.nome + ' ' + (m.sobrenome || '') + '</td>'
-                    + '<td>' + fmtTime(m.inicio_turno) + '</td>'
-                    + '<td>' + fmtTime(m.fim_turno) + '</td>'
+                    + '<td>' + fmtTime(m.inicio_turno) + ' – ' + fmtTime(m.fim_turno) + '</td>'
                     + '<td>'
                     + '<button class="btn btn-xs btn-warning btn-acao mr-xs btn-inativar-membro" data-id="' + m.id + '" title="Inativar"><i class="fa fa-ban"></i></button>'
                     + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-membro" data-id="' + m.id + '" title="Remover"><i class="fa fa-trash"></i></button>'
@@ -1343,15 +1377,38 @@ function carregarMembros(idEquipe) {
         }
         $('#tbody-membros').html(html);
     });
+
+    api('listarHistoricoMembrosPorEquipe', { id_equipe: idEquipe }).done(function (todos) {
+        var inativos = $.grep(todos || [], function (m) { return String(m.ativo) === '0'; });
+        if (!inativos.length) {
+            $('#btn-toggle-inativos').hide();
+            $('#secao-membros-inativos').hide();
+            return;
+        }
+        var html = '';
+        $.each(inativos, function (_, m) {
+            html += '<tr>'
+                + '<td>' + m.nome + ' ' + (m.sobrenome || '') + '</td>'
+                + '<td>'
+                + '<button class="btn btn-xs btn-success btn-acao btn-reativar-membro" data-id="' + m.id + '" title="Reativar"><i class="fa fa-check"></i></button>'
+                + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-membro" data-id="' + m.id + '" title="Remover"><i class="fa fa-trash"></i></button>'
+                + '</td></tr>';
+        });
+        $('#tbody-membros-inativos').html(html);
+        $('#btn-toggle-inativos').show();
+    });
 }
 
 $(document).on('click', '.btn-membros-equipe', function () {
     var id = $(this).data('id'), nome = $(this).data('nome');
     $('#membros-equipe-id').val(id);
     $('#membros-equipe-nome').text(nome);
-    $('#membro-inicio').val(''); $('#membro-fim').val('');
     ocultarErroModal('modal-membros-erro');
     ocultarErroModal('modal-membros-sucesso');
+    $('#secao-membros-inativos').hide();
+    $('#btn-toggle-inativos').hide();
+    $('#toggle-inativos-label').text('Ver inativos');
+    $('#btn-toggle-inativos .fa').removeClass('fa-chevron-up').addClass('fa-chevron-down');
     api('listarPessoas').done(function (dados) {
         var opts = '<option value="">Selecione uma pessoa</option>';
         $.each(dados, function (_, p) {
@@ -1367,22 +1424,16 @@ $(document).on('click', '.btn-membros-equipe', function () {
 $('#btn-adicionar-membro').on('click', function () {
     var idEquipe = $('#membros-equipe-id').val();
     var idPessoa = $('#membro-pessoa').val();
-    var inicio   = $('#membro-inicio').val();
-    var fim      = $('#membro-fim').val();
 
     ocultarErroModal('modal-membros-erro');
     if (!idPessoa) { exibirErroModal('modal-membros-erro', 'Selecione uma pessoa.'); return; }
-    if (!inicio)   { exibirErroModal('modal-membros-erro', 'Informe o horário de início do turno.'); return; }
-    if (!fim)      { exibirErroModal('modal-membros-erro', 'Informe o horário de fim do turno.'); return; }
-    if (inicio >= fim) { exibirErroModal('modal-membros-erro', 'O horário de início deve ser menor que o horário de fim.'); return; }
 
-    apiPost('incluirMembro', { id_equipe: idEquipe, id_pessoa: idPessoa, inicio_turno: inicio, fim_turno: fim })
+    apiPost('incluirMembro', { id_equipe: idEquipe, id_pessoa: idPessoa })
         .done(function (r) {
             ocultarErroModal('modal-membros-erro');
             $('#modal-membros-sucesso-texto').text(r.msg || 'Membro adicionado com sucesso.');
             $('#modal-membros-sucesso').show();
             $('#membro-pessoa').val('').trigger('change');
-            $('#membro-inicio').val(''); $('#membro-fim').val('');
             carregarMembros(idEquipe);
             carregarEquipes();
         })
@@ -1421,6 +1472,31 @@ $(document).on('click', '.btn-excluir-membro', function () {
             })
             .fail(function (xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao remover.';
+                exibirErroModal('modal-membros-erro', msg);
+            });
+    });
+});
+
+$(document).on('click', '#btn-toggle-inativos', function () {
+    var $sec = $('#secao-membros-inativos');
+    var aberto = $sec.is(':visible');
+    $sec.slideToggle(180);
+    $('#toggle-inativos-label').text(aberto ? 'Ver inativos' : 'Ocultar inativos');
+    $(this).find('.fa').toggleClass('fa-chevron-down', aberto).toggleClass('fa-chevron-up', !aberto);
+});
+
+$(document).on('click', '.btn-reativar-membro', function () {
+    var id = $(this).data('id'), idEquipe = $('#membros-equipe-id').val();
+    confirmar('Reativar este membro?', function () {
+        api('reativarMembro', { id: id })
+            .done(function (r) {
+                $('#modal-membros-sucesso-texto').text(r.msg || 'Membro reativado.');
+                $('#modal-membros-sucesso').show();
+                carregarMembros(idEquipe);
+                carregarEquipes();
+            })
+            .fail(function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao reativar.';
                 exibirErroModal('modal-membros-erro', msg);
             });
     });

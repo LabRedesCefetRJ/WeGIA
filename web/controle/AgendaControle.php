@@ -339,10 +339,12 @@ class AgendaControle
         header('Content-Type: application/json');
 
         try {
-            $nome      = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
-            $id_status = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
-            $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
-            $id_agenda = filter_input(INPUT_POST, 'id_agenda', FILTER_SANITIZE_NUMBER_INT);
+            $nome         = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+            $id_status    = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
+            $descricao    = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+            $id_agenda    = filter_input(INPUT_POST, 'id_agenda', FILTER_SANITIZE_NUMBER_INT);
+            $inicio_turno = filter_input(INPUT_POST, 'inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
+            $fim_turno    = filter_input(INPUT_POST, 'fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
 
             if (empty($nome))
                 throw new InvalidArgumentException('O nome da equipe não pode ser vazio.', 412);
@@ -353,11 +355,22 @@ class AgendaControle
             if (!$id_agenda || $id_agenda < 1)
                 throw new InvalidArgumentException('A agenda informada não é válida.', 412);
 
+            if (empty($inicio_turno))
+                throw new InvalidArgumentException('O horário de início do turno não pode ser vazio.', 412);
+
+            if (empty($fim_turno))
+                throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
+
+            if ($inicio_turno >= $fim_turno)
+                throw new InvalidArgumentException('O horário de início deve ser menor que o horário de fim.', 412);
+
             $equipe = new AgendaEquipe();
             $equipe->setNome($nome);
             $equipe->setId_status($id_status);
             $equipe->setDescricao($descricao);
             $equipe->setId_agenda($id_agenda);
+            $equipe->setInicio_turno($inicio_turno);
+            $equipe->setFim_turno($fim_turno);
 
             $dao = new AgendaDAO();
             $dao->incluirEquipe($equipe);
@@ -389,11 +402,13 @@ class AgendaControle
         header('Content-Type: application/json');
 
         try {
-            $id        = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
-            $nome      = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
-            $id_status = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
-            $descricao = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
-            $id_agenda = filter_input(INPUT_POST, 'id_agenda', FILTER_SANITIZE_NUMBER_INT);
+            $id           = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+            $nome         = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+            $id_status    = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
+            $descricao    = filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS);
+            $id_agenda    = filter_input(INPUT_POST, 'id_agenda', FILTER_SANITIZE_NUMBER_INT);
+            $inicio_turno = filter_input(INPUT_POST, 'inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
+            $fim_turno    = filter_input(INPUT_POST, 'fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
 
             if (!$id || $id < 1)
                 throw new InvalidArgumentException('O id informado não é válido.', 412);
@@ -404,12 +419,23 @@ class AgendaControle
             if (!$id_agenda || $id_agenda < 1)
                 throw new InvalidArgumentException('A agenda informada não é válida.', 412);
 
+            if (empty($inicio_turno))
+                throw new InvalidArgumentException('O horário de início do turno não pode ser vazio.', 412);
+
+            if (empty($fim_turno))
+                throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
+
+            if ($inicio_turno >= $fim_turno)
+                throw new InvalidArgumentException('O horário de início deve ser menor que o horário de fim.', 412);
+
             $equipe = new AgendaEquipe();
             $equipe->setId($id);
             $equipe->setNome($nome);
             $equipe->setId_status($id_status);
             $equipe->setDescricao($descricao);
             $equipe->setId_agenda($id_agenda);
+            $equipe->setInicio_turno($inicio_turno);
+            $equipe->setFim_turno($fim_turno);
 
             $dao = new AgendaDAO();
             $dao->alterarEquipe($equipe);
@@ -465,10 +491,8 @@ class AgendaControle
         header('Content-Type: application/json');
 
         try {
-            $id_equipe         = filter_input(INPUT_POST, 'id_equipe', FILTER_SANITIZE_NUMBER_INT);
-            $id_pessoa         = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
-            $inicio_turno = filter_input(INPUT_POST, 'inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
-            $fim_turno    = filter_input(INPUT_POST, 'fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
+            $id_equipe = filter_input(INPUT_POST, 'id_equipe', FILTER_SANITIZE_NUMBER_INT);
+            $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
 
             if (!$id_equipe || $id_equipe < 1)
                 throw new InvalidArgumentException('A equipe informada não é válida.', 412);
@@ -476,20 +500,9 @@ class AgendaControle
             if (!$id_pessoa || $id_pessoa < 1)
                 throw new InvalidArgumentException('A pessoa informada não é válida.', 412);
 
-            if (empty($inicio_turno))
-                throw new InvalidArgumentException('O horário de início do turno não pode ser vazio.', 412);
-
-            if (empty($fim_turno))
-                throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
-
-            if ($inicio_turno >= $fim_turno)
-                throw new InvalidArgumentException('O horário de início deve ser menor que o horário de fim.', 412);
-
             $membro = new AgendaEquipeMembro();
             $membro->setId_equipe($id_equipe);
             $membro->setId_pessoa($id_pessoa);
-            $membro->setInicio_turno($inicio_turno);
-            $membro->setFim_turno($fim_turno);
             $membro->setAtivo(1);
 
             $dao = new AgendaDAO();
