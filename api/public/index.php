@@ -16,6 +16,7 @@ use api\modules\Auth\AuthMiddleware;
 use api\modules\Auth\AuthService;
 use api\modules\Auth\UserRepository;
 use api\modules\Socio\SocioRepository;
+use api\modules\Socio\SocioMiddleware;
 use api\modules\Contribuicao\ContribuicaoController;
 use api\modules\Contribuicao\ContribuicaoService;
 use api\modules\Contribuicao\ContribuicaoRepository;
@@ -92,6 +93,9 @@ $container = new AppContainer([
     ContribuicaoController::class => function ($c) {
         return new ContribuicaoController($c->get(ContribuicaoService::class), $c->get(SocioRepository::class));
     },
+    SocioMiddleware::class => function ($c) {
+        return new SocioMiddleware($c->get(UserRepository::class), 4);
+    },
     CorsMiddleware::class => function ($c) {
         $origin = defined('CORS_ORIGIN') ? CORS_ORIGIN : '*';
         return new CorsMiddleware(
@@ -152,7 +156,9 @@ $app->get('/dashboard', function (Request $request, Response $response, $args) {
 
     $response->getBody()->write("Hello, $userName! Welcome to your dashboard.");
     return $response;
-})->add($container->get(AuthMiddleware::class));
+})
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
 
 $app->post('/login', [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
@@ -169,12 +175,16 @@ $app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
 $app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
 
 //aplicar middleware de autenticação e de permissão
-$app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf'])->add($container->get(AuthMiddleware::class));
+$app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf'])
+    ->add($container->get(AuthMiddleware::class));
 
 //Módulo Contribuição
-$app->get('/socios/{id}/contribuicoes', [ContribuicaoController::class, 'getContribuicoesBySocio'])->add($container->get(AuthMiddleware::class));
-$app->get('/socios/{id}/contribuicoes/filter', [ContribuicaoController::class, 'getContribuicoesBySocioAndStatus'])->add($container->get(AuthMiddleware::class));
-$app->get('/socios/{id}/contribuicoes/resume', [ContribuicaoController::class, 'getResumoContribuicoes'])->add($container->get(AuthMiddleware::class));
+$app->get('/socios/{id}/contribuicoes', [ContribuicaoController::class, 'getContribuicoesBySocio'])
+    ->add($container->get(AuthMiddleware::class));
+$app->get('/socios/{id}/contribuicoes/filter', [ContribuicaoController::class, 'getContribuicoesBySocioAndStatus'])
+    ->add($container->get(AuthMiddleware::class));
+$app->get('/socios/{id}/contribuicoes/resume', [ContribuicaoController::class, 'getResumoContribuicoes'])
+    ->add($container->get(AuthMiddleware::class));
 
 
 $app->run();
