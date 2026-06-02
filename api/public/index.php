@@ -79,7 +79,7 @@ $container = new AppContainer([
         return $c->get(PessoaService::class);
     },
     SocioController::class => function ($c) {
-        return new SocioController($c->get(SocioService::class), $c->get(PessoaServiceInterface::class), $c->get(AuthService::class), $c->get(EmailVerificationService::class), $c->get(SocioVerificationHelper::class));
+        return new SocioController($c->get(SocioService::class), $c->get(PessoaServiceInterface::class), $c->get(EmailVerificationService::class), $c->get(SocioVerificationHelper::class));
     },
     SocioVerificationHelper::class => function ($c) {
         return new SocioVerificationHelper($c->get(PessoaServiceInterface::class), $c->get(SocioService::class), $c->get(EmailVerificationService::class));
