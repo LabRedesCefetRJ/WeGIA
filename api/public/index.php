@@ -157,7 +157,7 @@ $app->get('/dashboard', function (Request $request, Response $response, $args) {
     $response->getBody()->write("Hello, $userName! Welcome to your dashboard.");
     return $response;
 })
-    ->add($container->get(SocioMiddleware::class))
+    /*->add($container->get(SocioMiddleware::class))*/
     ->add($container->get(AuthMiddleware::class));
 
 $app->post('/login', [AuthController::class, 'login']);

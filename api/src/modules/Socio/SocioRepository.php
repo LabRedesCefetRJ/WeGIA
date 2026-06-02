@@ -80,7 +80,7 @@ class SocioRepository
                     analysis_window_months, 
                     max_points_concurrent, 
                     value_per_point 
-                  FROM socio_benefit_rules
+                  FROM socio_benefit_rule
                   WHERE active = 1
                   LIMIT 1";
         $stmt = $this->db->query($query);
@@ -99,5 +99,4 @@ class SocioRepository
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
 }

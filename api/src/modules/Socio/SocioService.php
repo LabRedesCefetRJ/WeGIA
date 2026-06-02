@@ -34,6 +34,11 @@ class SocioService implements SocioServiceInterface
         throw new \Exception("Método obterSocioPorId ainda não implementado", 501);
     }
 
+    public function getIdPessoaByIdSocio(int $idSocio): ?int
+    {
+        return $this->socioRepository->getIdPessoaByIdSocio($idSocio);
+    }
+
     public function obterSocioPorPessoaId(int $idPessoa, PessoaInterface $pessoa): ?SocioInterface
     {
         $resultado = $this->socioRepository->findByPessoaId($idPessoa);

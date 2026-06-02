@@ -423,10 +423,11 @@ class SocioController
         try {
             $idSocio = (int)$args['id'];
 
+            $idPessoaSocio = $this->socioService->getIdPessoaByIdSocio($idSocio);
             
             // Validate socio ownership
-            $idPessoa = $request->getAttribute('user_id');
-            if (!$idPessoa || $idPessoa !== $idSocio) {
+            $idPessoaUser = $request->getAttribute('user_id');
+            if (!$idPessoaUser || $idPessoaUser !== $idPessoaSocio) {
                 $response->getBody()->write(json_encode([
                     'error' => 'Acesso negado. Você não tem permissão para acessar os dados de outro sócio.'
                 ]));
@@ -446,7 +447,7 @@ class SocioController
                     ->withHeader('Content-Type', 'application/json');
             }
 
-            $response->getBody()->write(json_encode($beneficios));
+            $response->getBody()->write(json_encode(['benefit_points' => $beneficios]));
 
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
