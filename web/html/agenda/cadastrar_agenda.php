@@ -393,7 +393,7 @@ require_once "../personalizacao_display.php";
                                         <div class="cal-toolbar-group">
                                             <span class="cal-toolbar-label"><i class="fa fa-list-alt mr-xs"></i>Agenda</span>
                                             <select class="form-control input-sm cal-toolbar-select" id="filtro-alocacao-agenda">
-                                                <option value="">Todas as agendas</option>
+                                                <option value=""></option>
                                             </select>
                                         </div>
                                         <div style="flex:1;"></div>
@@ -1561,13 +1561,13 @@ $('#btn-limpar-lembrete').on('click', function () {
 
 function carregarFiltroAlocacaoAgenda() {
     api('listarAgendas').done(function (agendas) {
-        var opts = '<option value="">Todas as agendas</option>';
+        var opts = '<option value=""></option>';
         $.each(agendas, function (_, a) {
             if (!a.status || a.status.toLowerCase() !== 'ativo') return;
             opts += '<option value="' + a.id + '">' + a.descricao + '</option>';
         });
         $('#filtro-alocacao-agenda').html(opts);
-        initSelect2('#filtro-alocacao-agenda', 'Todas as agendas');
+        initSelect2('#filtro-alocacao-agenda', 'Selecione a agenda...');
     });
 }
 
