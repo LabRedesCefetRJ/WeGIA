@@ -407,6 +407,7 @@ require_once "../personalizacao_display.php";
                                                 <th>Equipe</th>
                                                 <th style="width:120px;">Data início</th>
                                                 <th style="width:120px;">Data fim</th>
+                                                <th style="width:90px;" class="text-center">Intervalo</th>
                                                 <th style="width:150px;">Lembrete</th>
                                                 <th style="width:100px;" class="col-acoes">Ações</th>
                                             </tr>
@@ -637,20 +638,26 @@ require_once "../personalizacao_display.php";
                     <select class="form-control" id="alocacao-equipe"></select>
                 </div>
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-sm-5">
                         <div class="form-group">
                             <label class="control-label">Data de início <sup class="text-danger">*</sup></label>
                             <input type="date" class="form-control" id="alocacao-inicio">
                         </div>
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-sm-5">
                         <div class="form-group">
                             <label class="control-label">Data de fim <sup class="text-danger">*</sup></label>
                             <input type="date" class="form-control" id="alocacao-fim">
                         </div>
                     </div>
+                    <div class="col-sm-2">
+                        <div class="form-group">
+                            <label class="control-label">Intervalo <small>(1 dia)</small></label>
+                            <input type="number" class="form-control" id="alocacao-intervalo" min="0" value="0">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="margin-top:10px;">
                     <label class="control-label">Lembrete</label>
                     <input type="datetime-local" class="form-control" id="alocacao-lembrete">
                     <span class="help-block">Opcional. Data/hora para envio de lembrete.</span>
@@ -1010,6 +1017,7 @@ document.addEventListener('DOMContentLoaded', function () {
             $('#alocacao-inicio').val(startStr);
             $('#alocacao-fim').val(endStr);
             $('#alocacao-lembrete').val('');
+            $('#alocacao-intervalo').val('0');
             ocultarErroModal('modal-alocacao-erro');
             carregarSelectsAlocacao(null, null);
             $('#modal-alocacao').modal('show');
@@ -1579,10 +1587,12 @@ function carregarAlocacoes() {
             : (dados || []);
         var html = '';
         $.each(lista, function (_, al) {
+            var intervalo = parseInt(al.intervalo) || 0;
             html += '<tr>'
                 + '<td>' + al.equipe + '</td>'
                 + '<td>' + fmtDate(al.start) + '</td>'
                 + '<td>' + fmtDate(al.fim_display) + '</td>'
+                + '<td class="text-center">' + intervalo + (intervalo === 1 ? ' dia' : ' dias') + '</td>'
                 + '<td>' + fmtDatetime(al.lembrete) + '</td>'
                 + '<td class="col-acoes"><div class="acoes-grupo">'
                 + '<button class="btn btn-xs btn-info btn-acao btn-editar-alocacao"'
@@ -1590,6 +1600,7 @@ function carregarAlocacoes() {
                 + ' data-inicio="' + (al.start||'').substring(0,10) + '"'
                 + ' data-fim="'    + (al.fim_display||'').substring(0,10) + '"'
                 + ' data-lembrete="' + (al.lembrete||'').replace(' ','T').substring(0,16) + '"'
+                + ' data-intervalo="' + intervalo + '"'
                 + ' title="Editar"><i class="fa fa-pencil"></i></button>'
                 + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-alocacao" data-id="' + al.id + '" title="Excluir"><i class="fa fa-trash"></i></button>'
                 + '</div></td></tr>';
@@ -1643,7 +1654,8 @@ $(document).on('change', '#filtro-alocacao-agenda', carregarAlocacoes);
 
 $('#btn-nova-alocacao').on('click', function () {
     $('#modal-alocacao-titulo').text('Nova Alocação');
-    $('#alocacao-id').val(''); $('#alocacao-inicio').val(''); $('#alocacao-fim').val(''); $('#alocacao-lembrete').val('');
+    $('#alocacao-id').val(''); $('#alocacao-inicio').val(''); $('#alocacao-fim').val('');
+    $('#alocacao-lembrete').val(''); $('#alocacao-intervalo').val('0');
     ocultarErroModal('modal-alocacao-erro');
     carregarSelectsAlocacao(null, null);
     $('#modal-alocacao').modal('show');
@@ -1656,6 +1668,7 @@ $(document).on('click', '.btn-editar-alocacao', function () {
     $('#alocacao-inicio').val($b.data('inicio'));
     $('#alocacao-fim').val($b.data('fim'));
     $('#alocacao-lembrete').val($b.data('lembrete') || '');
+    $('#alocacao-intervalo').val($b.data('intervalo') || 0);
     ocultarErroModal('modal-alocacao-erro');
     carregarSelectsAlocacao($b.data('agenda'), $b.data('equipe'));
     $('#modal-alocacao').modal('show');
@@ -1684,8 +1697,8 @@ $('#btn-salvar-alocacao').on('click', function () {
     var inicio     = $('#alocacao-inicio').val();
     var fim        = $('#alocacao-fim').val();
     var lembrete   = $('#alocacao-lembrete').val();
-    /* capturado antes do modal fechar para uso no addEvent */
-    var agendaNome = $('#alocacao-agenda option[value="' + agenda + '"]').text();
+    var intervalo  = parseInt($('#alocacao-intervalo').val()) || 0;
+    if (intervalo < 0) intervalo = 0;
     var equipNome  = $('#alocacao-equipe option[value="' + equipe + '"]').text();
 
     ocultarErroModal('modal-alocacao-erro');
@@ -1697,9 +1710,10 @@ $('#btn-salvar-alocacao').on('click', function () {
 
     var dados = {
         id_agenda: agenda, id_equipe: equipe,
-        inicio:   inicio,
-        fim:      fim,
-        lembrete: lembrete ? lembrete.replace('T', ' ') : ''
+        inicio:    inicio,
+        fim:       fim,
+        intervalo: intervalo,
+        lembrete:  lembrete ? lembrete.replace('T', ' ') : ''
     };
     if (id) dados.id = id;
 
@@ -1709,26 +1723,28 @@ $('#btn-salvar-alocacao').on('click', function () {
             exibirMsgAba('msg-alocacoes', r.msg || 'Salvo com sucesso.', 'success');
             carregarAlocacoes();
             if (!id && r.id) {
-                /* Nova alocação: adiciona imediatamente no calendário.
-                   FC usa fim exclusivo em all-day, então +1 dia. */
-                var p    = fim.split('-');
-                var fcDt = new Date(+p[0], +p[1] - 1, +p[2] + 1);
-                _calAddEvent({
-                    id: String(r.id),
-                    title: equipNome,
-                    start: inicio,
-                    end: fcDt.getFullYear() + '-' + _pad(fcDt.getMonth() + 1) + '-' + _pad(fcDt.getDate()),
-                    allDay: true,
-                    extendedProps: {
-                        equipe:      equipNome,
-                        fim_display: fim,
-                        lembrete:    lembrete ? lembrete.replace('T', ' ') : null,
-                        id_agenda:   agenda,
-                        id_equipe:   equipe
-                    }
-                });
+                /* Com intervalo, o calendário precisa buscar do servidor para gerar os eventos corretos */
+                if (intervalo > 0) {
+                    _calRefetch();
+                } else {
+                    var p    = fim.split('-');
+                    var fcDt = new Date(+p[0], +p[1] - 1, +p[2] + 1);
+                    _calAddEvent({
+                        id: String(r.id),
+                        title: equipNome,
+                        start: inicio,
+                        end: fcDt.getFullYear() + '-' + _pad(fcDt.getMonth() + 1) + '-' + _pad(fcDt.getDate()),
+                        allDay: true,
+                        extendedProps: {
+                            equipe:      equipNome,
+                            fim_display: fim,
+                            lembrete:    lembrete ? lembrete.replace('T', ' ') : null,
+                            id_agenda:   agenda,
+                            id_equipe:   equipe
+                        }
+                    });
+                }
             } else {
-                /* Edição: sincroniza com o servidor (remove pendentes antes) */
                 _calRefetch();
             }
         })

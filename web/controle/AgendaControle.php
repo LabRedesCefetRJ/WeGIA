@@ -158,6 +158,7 @@ class AgendaControle
             $inicio           = filter_input(INPUT_POST, 'inicio', FILTER_SANITIZE_SPECIAL_CHARS);
             $fim              = filter_input(INPUT_POST, 'fim', FILTER_SANITIZE_SPECIAL_CHARS);
             $lembrete         = filter_input(INPUT_POST, 'lembrete', FILTER_SANITIZE_SPECIAL_CHARS);
+            $intervalo        = filter_input(INPUT_POST, 'intervalo', FILTER_SANITIZE_NUMBER_INT) ?? 0;
             $lembrete_enviado = 0;
 
             if (!$id_agenda || $id_agenda < 1)
@@ -182,6 +183,7 @@ class AgendaControle
             $alocacao->setFim($fim);
             $alocacao->setLembrete(!empty($lembrete) ? $lembrete : null);
             $alocacao->setLembrete_enviado($lembrete_enviado);
+            $alocacao->setIntervalo((int)$intervalo);
 
             $dao = new AgendaDAO();
             $id = $dao->incluirAlocacao($alocacao);
@@ -370,6 +372,7 @@ class AgendaControle
             $fim              = filter_input(INPUT_POST, 'fim', FILTER_SANITIZE_SPECIAL_CHARS);
             $lembrete         = filter_input(INPUT_POST, 'lembrete', FILTER_SANITIZE_SPECIAL_CHARS);
             $lembrete_enviado = filter_input(INPUT_POST, 'lembrete_enviado', FILTER_SANITIZE_NUMBER_INT);
+            $intervalo        = filter_input(INPUT_POST, 'intervalo', FILTER_SANITIZE_NUMBER_INT) ?? 0;
 
             if (!$id || $id < 1)
                 throw new InvalidArgumentException('O id informado não é válido.', 412);
@@ -385,6 +388,7 @@ class AgendaControle
             $alocacao->setFim($fim);
             $alocacao->setLembrete(!empty($lembrete) ? $lembrete : null);
             $alocacao->setLembrete_enviado($lembrete_enviado);
+            $alocacao->setIntervalo((int)$intervalo);
 
             $dao = new AgendaDAO();
             $dao->alterarAlocacao($alocacao);

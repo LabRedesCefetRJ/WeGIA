@@ -97,8 +97,8 @@ class AgendaDAO
 
     public function incluirAlocacao(AgendaAlocacao $alocacao)
     {
-        $sql = "INSERT INTO agenda_alocacao (id_agenda, id_equipe, inicio, fim, lembrete, lembrete_enviado)
-                VALUES (:id_agenda, :id_equipe, :inicio, :fim, :lembrete, :lembrete_enviado)";
+        $sql = "INSERT INTO agenda_alocacao (id_agenda, id_equipe, inicio, fim, lembrete, lembrete_enviado, intervalo)
+                VALUES (:id_agenda, :id_equipe, :inicio, :fim, :lembrete, :lembrete_enviado, :intervalo)";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_agenda',        $alocacao->getId_agenda(), PDO::PARAM_INT);
         $stmt->bindValue(':id_equipe',        $alocacao->getId_equipe(), PDO::PARAM_INT);
@@ -106,16 +106,16 @@ class AgendaDAO
         $stmt->bindValue(':fim',              $alocacao->getFim());
         $stmt->bindValue(':lembrete',         $alocacao->getLembrete());
         $stmt->bindValue(':lembrete_enviado', $alocacao->getLembrete_enviado(), PDO::PARAM_INT);
+        $stmt->bindValue(':intervalo',        $alocacao->getIntervalo(), PDO::PARAM_INT);
         $stmt->execute();
         return $this->pdo->lastInsertId();
     }
 
     public function listarAlocacoesPorAgenda(int $idAgenda)
     {
-        $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display, al.lembrete,
-                       al.id_agenda, al.id_equipe,
-                       a.descricao AS agenda, e.nome AS equipe,
-                       e.nome AS title
+        $sql = "SELECT al.id, DATE(al.inicio) AS inicio_raw, DATE(al.fim) AS fim_raw,
+                       al.lembrete, al.id_agenda, al.id_equipe, al.intervalo,
+                       a.descricao AS agenda, e.nome AS equipe, e.nome AS title
                 FROM agenda_alocacao al
                 INNER JOIN agenda a ON al.id_agenda = a.id
                 INNER JOIN agenda_equipe e ON al.id_equipe = e.id
@@ -124,7 +124,52 @@ class AgendaDAO
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_agenda', $idAgenda, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $events = [];
+        foreach ($rows as $row) {
+            $intervalo = (int)($row['intervalo'] ?? 0);
+            $inicio    = new DateTime($row['inicio_raw']);
+            $fim       = new DateTime($row['fim_raw']);
+
+            if ($intervalo <= 0) {
+                $endFC = (clone $fim)->modify('+1 day');
+                $events[] = [
+                    'id'          => $row['id'],
+                    'title'       => $row['title'],
+                    'start'       => $row['inicio_raw'],
+                    'end'         => $endFC->format('Y-m-d'),
+                    'fim_display' => $row['fim_raw'],
+                    'lembrete'    => $row['lembrete'],
+                    'id_agenda'   => $row['id_agenda'],
+                    'id_equipe'   => $row['id_equipe'],
+                    'agenda'      => $row['agenda'],
+                    'equipe'      => $row['equipe'],
+                    'intervalo'   => 0,
+                ];
+            } else {
+                $step    = $intervalo + 1;
+                $current = clone $inicio;
+                while ($current <= $fim) {
+                    $dayEnd = (clone $current)->modify('+1 day');
+                    $events[] = [
+                        'id'          => $row['id'],
+                        'title'       => $row['title'],
+                        'start'       => $current->format('Y-m-d'),
+                        'end'         => $dayEnd->format('Y-m-d'),
+                        'fim_display' => $current->format('Y-m-d'),
+                        'lembrete'    => $row['lembrete'],
+                        'id_agenda'   => $row['id_agenda'],
+                        'id_equipe'   => $row['id_equipe'],
+                        'agenda'      => $row['agenda'],
+                        'equipe'      => $row['equipe'],
+                        'intervalo'   => $intervalo,
+                    ];
+                    $current->modify('+' . $step . ' days');
+                }
+            }
+        }
+        return $events;
     }
 
     public function alterarAlocacao(AgendaAlocacao $alocacao)
@@ -135,7 +180,8 @@ class AgendaDAO
                     inicio           = :inicio,
                     fim              = :fim,
                     lembrete         = :lembrete,
-                    lembrete_enviado = :lembrete_enviado
+                    lembrete_enviado = :lembrete_enviado,
+                    intervalo        = :intervalo
                 WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_agenda',        $alocacao->getId_agenda(), PDO::PARAM_INT);
@@ -144,6 +190,7 @@ class AgendaDAO
         $stmt->bindValue(':fim',              $alocacao->getFim());
         $stmt->bindValue(':lembrete',         $alocacao->getLembrete());
         $stmt->bindValue(':lembrete_enviado', $alocacao->getLembrete_enviado(), PDO::PARAM_INT);
+        $stmt->bindValue(':intervalo',        $alocacao->getIntervalo(), PDO::PARAM_INT);
         $stmt->bindValue(':id',               $alocacao->getId(), PDO::PARAM_INT);
         $stmt->execute();
     }
@@ -158,10 +205,9 @@ class AgendaDAO
 
     public function listarTodasAlocacoes()
     {
-        $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display, al.lembrete,
-                       al.id_agenda, al.id_equipe,
-                       a.descricao AS agenda, e.nome AS equipe,
-                       e.nome AS title
+        $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display,
+                       al.lembrete, al.id_agenda, al.id_equipe, al.intervalo,
+                       a.descricao AS agenda, e.nome AS equipe, e.nome AS title
                 FROM agenda_alocacao al
                 INNER JOIN agenda a ON al.id_agenda = a.id
                 INNER JOIN agenda_equipe e ON al.id_equipe = e.id

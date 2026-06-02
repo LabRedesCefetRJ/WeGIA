@@ -7,6 +7,7 @@
         private $fim;
         private $lembrete;
         private $lembrete_enviado;
+        private $intervalo = 0;
 
         public function getId()
         {
@@ -73,6 +74,16 @@
         public function setLembrete_enviado($lembrete_enviado)
         {
             $this->lembrete_enviado = $lembrete_enviado;
+        }
+
+        public function getIntervalo()
+        {
+            return $this->intervalo;
+        }
+
+        public function setIntervalo($intervalo)
+        {
+            $this->intervalo = max(0, (int)$intervalo);
         }
     }
 ?>
