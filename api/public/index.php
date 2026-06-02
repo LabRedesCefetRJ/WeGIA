@@ -186,5 +186,9 @@ $app->get('/socios/{id}/contribuicoes/filter', [ContribuicaoController::class, '
 $app->get('/socios/{id}/contribuicoes/resume', [ContribuicaoController::class, 'getResumoContribuicoes'])
     ->add($container->get(AuthMiddleware::class));
 
+//Benefícios
+$app->get('/socios/{id}/beneficios', [SocioController::class, 'getBeneficiosBySocio'])
+    ->add($container->get(AuthMiddleware::class));
+
 
 $app->run();

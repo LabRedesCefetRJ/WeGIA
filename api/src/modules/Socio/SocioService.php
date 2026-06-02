@@ -21,7 +21,7 @@ class SocioService implements SocioServiceInterface
         $this->authService = $authService;
     }
 
-    public function criarSocio(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
+    public function criarSocio(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
     {
         $socio = new Socio($pessoa, $inicioContribuicao, $valorMensalidade, $idSocioStatus, $autoStatusContribuicao, $idSocioTipo);
         return $this->socioRepository->save($socio);
@@ -56,14 +56,53 @@ class SocioService implements SocioServiceInterface
     public function obterContatoSuporte(): ?array
     {
         $resultado = $this->socioRepository->findContatoInstituicaoById(1);
-        if(!$resultado) {
+        if (!$resultado) {
             return null;
         }
-        
+
         return ['contatct' => $resultado['contato'] ?? null];
     }
 
-    public function atualizarSocio(int $id, PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade,int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
+    public function obterBeneficiosPorSocio(int $idSocio): int
+    {
+        //pegar as regras de benefício.
+        $benefitRules = $this->socioRepository->getBenefitRules();
+
+        if (empty($benefitRules)) {
+            throw new \Exception("Benefit rules not defined", 500);
+        }
+
+        //meses
+        $tempoAnalise = $benefitRules['analysis_window_months'];
+        $maxPontos = $benefitRules['max_points_concurrent'];
+
+        //reais
+        $valorPonto = $benefitRules['value_per_point'];
+
+        //pegar as contribuições do sócio nos últimos X meses
+        $contribuicoes = $this->socioRepository->findContribuicoesBySocioIdAndDateRange($idSocio, $tempoAnalise);
+
+        if (empty($contribuicoes)) {
+            return 0;
+        }
+
+        //calcular os pontos
+        $pontos = 0;
+        $valorTotal = 0;
+
+        foreach ($contribuicoes as $contribuicao) {
+            $valorTotal += $contribuicao['valor'];
+        }
+
+        $pontos = floor($valorTotal / $valorPonto);
+
+        //limitar os pontos à quantidade máxima
+        $pontos = min($pontos, $maxPontos);
+
+        return (int)$pontos;
+    }
+
+    public function atualizarSocio(int $id, PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
     {
         // Lógica para atualizar um sócio existente
         // Exemplo: validar dados, atualizar o objeto Sócio e salvar as alterações no banco de dados
@@ -144,7 +183,6 @@ class SocioService implements SocioServiceInterface
                 'success' => true,
                 'message' => 'Password altered successfully'
             ];
-
         } catch (\Exception $e) {
             return [
                 'success' => false,

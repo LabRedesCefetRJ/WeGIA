@@ -3,7 +3,6 @@
 namespace api\modules\Socio;
 
 use api\contracts\services\PessoaServiceInterface;
-use api\modules\Auth\AuthService;
 use api\utils\Cpf;
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
@@ -12,17 +11,15 @@ class SocioController
 {
     private SocioService $socioService;
     private PessoaServiceInterface $pessoaService;
-    private AuthService $authService;
     private EmailVerificationService $emailVerificationService;
     private SocioVerificationHelper $verificationHelper;
 
-    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, AuthService $authService, EmailVerificationService $emailVerificationService, SocioVerificationHelper $verificationHelper = null)
+    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, EmailVerificationService $emailVerificationService, SocioVerificationHelper $verificationHelper = null)
     {
         $this->socioService = $socioService;
         $this->pessoaService = $pessoaService;
-        $this->authService = $authService;
         $this->emailVerificationService = $emailVerificationService;
-        
+
         // Initialize helper if not provided (backward compatibility)
         if ($verificationHelper === null) {
             $this->verificationHelper = new SocioVerificationHelper($pessoaService, $socioService, $emailVerificationService);
@@ -193,8 +190,10 @@ class SocioController
             $data = $request->getParsedBody();
 
             // Validate required data
-            if (empty($data['cpf']) || empty($data['senha']) || empty($data['confirmacao_senha']) || 
-                empty($data['codigo_verificacao'])) {
+            if (
+                empty($data['cpf']) || empty($data['senha']) || empty($data['confirmacao_senha']) ||
+                empty($data['codigo_verificacao'])
+            ) {
                 $response->getBody()->write(json_encode([
                     'success' => false,
                     'message' => 'cpf, senha, confirmacao_senha e codigo_verificacao são obrigatórios'
@@ -408,6 +407,52 @@ class SocioController
                 'success' => false,
                 'error' => $e->getMessage(),
                 'code' => 500
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    /**
+     * Get benefits points by socio id
+     * GET /socios/{id}/beneficios
+     */
+    public function getBeneficiosBySocio(Request $request, Response $response, array $args)
+    {
+        try {
+            $idSocio = (int)$args['id'];
+
+            
+            // Validate socio ownership
+            $idPessoa = $request->getAttribute('user_id');
+            if (!$idPessoa || $idPessoa !== $idSocio) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Acesso negado. Você não tem permissão para acessar os dados de outro sócio.'
+                ]));
+
+                return $response->withStatus(403)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $beneficios = $this->socioService->obterBeneficiosPorSocio($idSocio);
+
+            if ($beneficios === null) {
+                $response->getBody()->write(json_encode([
+                    'message' => 'Benefícios não localizados para o sócio.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($beneficios));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
             ]));
 
             return $response->withStatus(500)

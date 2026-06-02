@@ -74,4 +74,30 @@ class SocioRepository
         return $result === false ? null : $result;
     }
 
+    public function getBenefitRules(): array
+    {
+        $query = "SELECT 
+                    analysis_window_months, 
+                    max_points_concurrent, 
+                    value_per_point 
+                  FROM socio_benefit_rules
+                  WHERE active = 1
+                  LIMIT 1";
+        $stmt = $this->db->query($query);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? [] : $result;
+    }
+
+    public function findContribuicoesBySocioIdAndDateRange(int $idSocio, int $months): array
+    {
+        $query = "SELECT valor, data_pagamento FROM contribuicao_log WHERE id_socio = :id_socio AND status_pagamento=1 AND data_pagamento >= DATE_SUB(CURDATE(), INTERVAL :months MONTH)";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([
+            ':id_socio' => $idSocio,
+            ':months' => $months
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 }
