@@ -18,6 +18,7 @@ if (!$registro) {
 }
 
 $nome_socio = $registro['nome'];
+$socio_sobrenome = $registro['sobrenome'];
 $email = $registro['email'];
 $telefone = $registro['telefone'];
 $status = $registro['id_sociostatus'];
@@ -129,14 +130,14 @@ $valor_periodo = $registro['valor_periodo'];
 
               <div class="row">
                 <div class="form-group mb-2 col-xs-6">
-                  <label for="nome_cliente">Nome sócio</label>
+                  <label for="nome_cliente">Nome</label>
                   <input type="text" class="form-control" id="socio_nome" name="socio_nome" value="<?php echo htmlspecialchars($nome_socio); ?>" placeholder="" required>
                 </div>
 
                 <div class="form-group mb-2 col-xs-6">
                   <label for="socio_sobrenome">Sobrenome *</label>
                   <!-- Puxar sobrenome automaticamente -->
-                  <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" placeholder="" required>
+                  <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" value="<?php echo htmlspecialchars($socio_sobrenome); ?>" placeholder="" required>
                 </div>
               </div>
               <div class="row">
