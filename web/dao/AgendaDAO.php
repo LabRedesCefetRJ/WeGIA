@@ -133,6 +133,7 @@ class AgendaDAO
     {
         $sql = "SELECT al.id, DATE(al.inicio) AS inicio_raw, DATE(al.fim) AS fim_raw,
                        al.lembrete, al.id_agenda, al.id_equipe, al.intervalo,
+                       e.inicio_turno, e.fim_turno,
                        a.descricao AS agenda, e.nome AS equipe, e.nome AS title
                 FROM agenda_alocacao al
                 INNER JOIN agenda a ON al.id_agenda = a.id
@@ -146,49 +147,47 @@ class AgendaDAO
 
         $events = [];
         foreach ($rows as $row) {
-            $intervalo = (int)($row['intervalo'] ?? 0);
-            $inicio    = new DateTime($row['inicio_raw']);
-            $fim       = new DateTime($row['fim_raw']);
+            $intervalo   = (int)($row['intervalo'] ?? 0);
+            $inicioTurno = $row['inicio_turno'] ?: '00:00:00';
+            $fimTurno    = $row['fim_turno']    ?: '00:00:00';
+            // Quando o fim do turno é <= o início, o plantão vira o dia (ex.: 19:00 -> 07:00)
+            $overnight   = ($fimTurno <= $inicioTurno);
 
-            if ($intervalo <= 0) {
-                $endFC = (clone $fim)->modify('+1 day');
+            $step    = $intervalo > 0 ? $intervalo + 1 : 1;
+            $inicio  = new DateTime($row['inicio_raw']);
+            $fim     = new DateTime($row['fim_raw']);
+            $current = clone $inicio;
+
+            // Gera um evento por dia de plantão, com horário do turno da equipe.
+            // O plantão noturno termina no dia seguinte, ocupando os dois dias no calendário.
+            while ($current <= $fim) {
+                $startDt = new DateTime($current->format('Y-m-d') . ' ' . $inicioTurno);
+                $endDt   = new DateTime($current->format('Y-m-d') . ' ' . $fimTurno);
+                if ($overnight) {
+                    $endDt->modify('+1 day');
+                }
+
                 $events[] = [
                     'id'              => $row['id'],
                     'title'           => $row['title'],
-                    'start'           => $row['inicio_raw'],
-                    'end'             => $endFC->format('Y-m-d'),
-                    'fim_display'     => $row['fim_raw'],
+                    'start'           => $startDt->format('Y-m-d\TH:i:s'),
+                    'end'             => $endDt->format('Y-m-d\TH:i:s'),
+                    'allDay'          => false,
+                    'fim_display'     => $endDt->format('Y-m-d\TH:i:s'),
                     'inicio_original' => $row['inicio_raw'],
                     'fim_original'    => $row['fim_raw'],
+                    'inicio_turno'    => substr($inicioTurno, 0, 5),
+                    'fim_turno'       => substr($fimTurno, 0, 5),
+                    'overnight'       => $overnight,
                     'lembrete'        => $row['lembrete'],
                     'id_agenda'       => $row['id_agenda'],
                     'id_equipe'       => $row['id_equipe'],
                     'agenda'          => $row['agenda'],
                     'equipe'          => $row['equipe'],
-                    'intervalo'       => 0,
+                    'intervalo'       => $intervalo,
                 ];
-            } else {
-                $step    = $intervalo + 1;
-                $current = clone $inicio;
-                while ($current <= $fim) {
-                    $dayEnd = (clone $current)->modify('+1 day');
-                    $events[] = [
-                        'id'              => $row['id'],
-                        'title'           => $row['title'],
-                        'start'           => $current->format('Y-m-d'),
-                        'end'             => $dayEnd->format('Y-m-d'),
-                        'fim_display'     => $current->format('Y-m-d'),
-                        'inicio_original' => $row['inicio_raw'],
-                        'fim_original'    => $row['fim_raw'],
-                        'lembrete'        => $row['lembrete'],
-                        'id_agenda'       => $row['id_agenda'],
-                        'id_equipe'       => $row['id_equipe'],
-                        'agenda'          => $row['agenda'],
-                        'equipe'          => $row['equipe'],
-                        'intervalo'       => $intervalo,
-                    ];
-                    $current->modify('+' . $step . ' days');
-                }
+
+                $current->modify('+' . $step . ' days');
             }
         }
         return $events;
@@ -229,6 +228,7 @@ class AgendaDAO
     {
         $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display,
                        al.lembrete, al.id_agenda, al.id_equipe, al.intervalo,
+                       e.inicio_turno, e.fim_turno,
                        a.descricao AS agenda, e.nome AS equipe, e.nome AS title
                 FROM agenda_alocacao al
                 INNER JOIN agenda a ON al.id_agenda = a.id
@@ -485,16 +485,27 @@ class AgendaDAO
 
     public function listarPessoas(?int $idEquipe = null)
     {
-        $sql = "SELECT id_pessoa, CONCAT(nome, ' ', sobrenome) AS nome_completo
-                FROM pessoa
-                WHERE nome IS NOT NULL";
+        $sql = "SELECT p.id_pessoa,
+                       CONCAT(p.nome, ' ', p.sobrenome) AS nome_completo,
+                       CASE
+                           WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
+                           WHEN v.id_pessoa IS NOT NULL THEN 'Voluntário'
+                           WHEN a.pessoa_id_pessoa IS NOT NULL THEN 'Atendido'
+                           ELSE NULL
+                       END AS cargo
+                FROM pessoa p
+                LEFT JOIN funcionario f ON f.id_pessoa = p.id_pessoa
+                LEFT JOIN cargo c ON c.id_cargo = f.id_cargo
+                LEFT JOIN voluntario v ON v.id_pessoa = p.id_pessoa
+                LEFT JOIN atendido a ON a.pessoa_id_pessoa = p.id_pessoa
+                WHERE p.nome IS NOT NULL";
         if ($idEquipe) {
-            $sql .= " AND id_pessoa NOT IN (
+            $sql .= " AND p.id_pessoa NOT IN (
                           SELECT id_pessoa FROM agenda_equipe_membro
                           WHERE id_equipe = :id_equipe AND ativo = 1
                       )";
         }
-        $sql .= " ORDER BY nome, sobrenome";
+        $sql .= " ORDER BY p.nome, p.sobrenome";
         $stmt = $this->pdo->prepare($sql);
         if ($idEquipe) $stmt->bindValue(':id_equipe', $idEquipe, PDO::PARAM_INT);
         $stmt->execute();

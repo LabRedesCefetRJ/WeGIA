@@ -398,7 +398,7 @@ require_once "../personalizacao_display.php";
                                                 <th style="width:160px;">Nome</th>
                                                 <th>Descrição</th>
                                                 <th>Membros</th>
-                                                <th style="width:110px;">Turno</th>
+                                                <th style="width:110px;" class="text-center">Turno</th>
                                                 <th style="width:100px;" class="col-status">Status</th>
                                                 <th style="width:130px;" class="col-acoes">Ações</th>
                                             </tr>
@@ -435,6 +435,7 @@ require_once "../personalizacao_display.php";
                                                 <th>Equipe</th>
                                                 <th style="width:120px;">Data início</th>
                                                 <th style="width:120px;">Data fim</th>
+                                                <th style="width:110px;" class="text-center">Horário</th>
                                                 <th style="width:90px;" class="text-center">Intervalo</th>
                                                 <th style="width:150px;">Lembrete</th>
                                                 <th style="width:100px;" class="col-acoes">Ações</th>
@@ -602,7 +603,7 @@ require_once "../personalizacao_display.php";
                     <thead>
                         <tr>
                             <th>Nome</th>
-                            <th style="width:110px;">Turno</th>
+                            <th style="width:110px;" class="text-center">Turno</th>
                             <th style="width:100px;">Ações</th>
                         </tr>
                     </thead>
@@ -717,10 +718,13 @@ require_once "../personalizacao_display.php";
                 <input type="hidden" id="modal-evento-id-equipe">
                 <p><strong><i class="fa fa-calendar mr-xs"></i> Início:</strong> <span id="modal-evento-inicio"></span></p>
                 <p><strong><i class="fas fa-calendar-check mr-xs"></i> Fim:</strong> <span id="modal-evento-fim"></span></p>
-                <p style="margin-bottom:0;">
+                <p style="margin-bottom:6px;">
                     <strong><i class="fa fa-bell mr-xs"></i> Lembrete:</strong>
                     <span id="modal-evento-lembrete-texto" style="color:#555;"></span>
                 </p>
+                <hr style="margin:10px 0;">
+                <p style="margin-bottom:6px;"><strong><i class="fa fa-users mr-xs"></i> Pessoas na equipe:</strong></p>
+                <div id="modal-evento-membros" style="color:#555;"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
@@ -969,18 +973,25 @@ function ocultarMsg(id) {
     $('#' + id).hide();
 }
 
-var _erroModalTimers = {};
+var _alertModalTimers = {};
 
 function exibirErroModal(idErro, texto) {
     $('#' + idErro + '-texto').text(texto);
     $('#' + idErro).addClass('in');
-    clearTimeout(_erroModalTimers[idErro]);
-    _erroModalTimers[idErro] = setTimeout(function () { ocultarErroModal(idErro); }, 10000);
+    clearTimeout(_alertModalTimers[idErro]);
+    _alertModalTimers[idErro] = setTimeout(function () { ocultarErroModal(idErro); }, 10000);
 }
 
 function ocultarErroModal(id) {
-    clearTimeout(_erroModalTimers[id]);
+    clearTimeout(_alertModalTimers[id]);
     $('#' + id).removeClass('in');
+}
+
+function exibirSucessoModal(id, texto) {
+    $('#' + id + '-texto').text(texto);
+    $('#' + id).addClass('in');
+    clearTimeout(_alertModalTimers[id]);
+    _alertModalTimers[id] = setTimeout(function () { $('#' + id).removeClass('in'); }, 10000);
 }
 
 function confirmar(msg, cb) {
@@ -1006,6 +1017,17 @@ function fmtDate(str) {
 function fmtTime(str) {
     if (!str) return '—';
     return str.substring(0, 5); /* HH:MM */
+}
+
+/* Formata o turno com ícone: ☀ diurno (mesmo dia) ou 🌙 noturno (vira o dia).
+   iconeAbaixo=true coloca o ícone em uma linha própria, abaixo do horário. */
+function fmtTurno(inicio, fim, iconeAbaixo) {
+    if (!inicio || !fim) return '—';
+    var icone = fim <= inicio
+        ? '<i class="fa fa-moon-o text-muted" title="Vira o dia (termina no dia seguinte)"></i>'
+        : '<i class="fa fa-sun-o text-muted" title="Plantão diurno (mesmo dia)"></i>';
+    var separador = iconeAbaixo ? '<br>' : ' ';
+    return fmtTime(inicio) + ' – ' + fmtTime(fim) + separador + icone;
 }
 
 /* ── DataTables ──────────────────────────────────────────── */
@@ -1069,6 +1091,12 @@ document.addEventListener('DOMContentLoaded', function () {
         headerToolbar: { left:'prev,next today', center:'title', right:'dayGridMonth,timeGridWeek,timeGridDay,listMonth' },
         buttonText: { today:'Hoje', month:'Mês', week:'Semana', day:'Dia', list:'Lista' },
         navLinks: true,
+        /* Eventos como blocos sólidos: plantão noturno (ex.: 19h->07h) atravessa a meia-noite
+           e ocupa visualmente os dois dias. */
+        eventDisplay: 'block',
+        /* Esconde a hora que o FC colocava na frente do nome da equipe (a hora aparece
+           ao clicar no evento e nas tabelas). */
+        displayEventTime: false,
         editable: false,
         droppable: true,
         selectable: true,
@@ -1117,15 +1145,36 @@ document.addEventListener('DOMContentLoaded', function () {
             $('#modal-evento-id-agenda').val(p.id_agenda || '');
             $('#modal-evento-id-equipe').val(p.id_equipe || '');
             $('#modal-evento-titulo').text(e.title);
-            $('#modal-evento-inicio').text(fmtDate(e.startStr));
-            $('#modal-evento-fim').text(fmtDate(p.fim_display));
+            $('#modal-evento-inicio').text(fmtDatetime(e.startStr));
+            $('#modal-evento-fim').text(fmtDatetime(p.fim_display || e.endStr));
 
             if (p.lembrete) {
                 var dt = new Date(p.lembrete.replace(' ', 'T'));
                 var texto = dt.toLocaleDateString('pt-BR') + ' às ' + dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                $('#modal-evento-lembrete-texto').html('<i class="fa fa-clock-o mr-xs"></i>' + texto);
+                $('#modal-evento-lembrete-texto').text(texto);
             } else {
                 $('#modal-evento-lembrete-texto').html('<em style="color:#aaa;">Nenhum lembrete definido.</em>');
+            }
+
+            $('#modal-evento-membros').html('<em style="color:#aaa;">Carregando...</em>');
+            if (p.id_equipe) {
+                api('listarMembrosPorEquipe', { id_equipe: p.id_equipe }).done(function (membros) {
+                    if (!membros || !membros.length) {
+                        $('#modal-evento-membros').html('<em style="color:#aaa;">Nenhuma pessoa na equipe.</em>');
+                        return;
+                    }
+                    var html = '<ul style="margin:0; padding-left:18px;">';
+                    $.each(membros, function (_, m) {
+                        html += '<li>' + m.nome + ' ' + (m.sobrenome || '')
+                              + (m.cargo ? ' <small class="text-muted">- ' + m.cargo + '</small>' : '') + '</li>';
+                    });
+                    html += '</ul>';
+                    $('#modal-evento-membros').html(html);
+                }).fail(function () {
+                    $('#modal-evento-membros').html('<em class="text-danger">Erro ao carregar pessoas.</em>');
+                });
+            } else {
+                $('#modal-evento-membros').html('<em style="color:#aaa;">—</em>');
             }
 
             $('#modal-evento').modal('show');
@@ -1156,16 +1205,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 inicio:    inicio,
                 fim:       inicio
             }).done(function (r) {
-                /* Sincroniza o id com o servidor para que _calRefetch() possa remover corretamente */
-                event.setProp('id', String(r.id));
-                event.setExtendedProp('fim_display', inicio);
-                event.setExtendedProp('inicio_original', inicio);
-                event.setExtendedProp('fim_original', inicio);
-                event.setExtendedProp('id_agenda', idAgenda);
-                event.setExtendedProp('id_equipe', idEquipe);
-                var nomeEq = $('#sidebar-equipe-card').attr('data-nome') || '';
-                event.setExtendedProp('equipe', nomeEq);
-                _calPendingEvents.push(event);
+                /* Remove o evento otimista (all-day) e busca do servidor o evento já com
+                   o horário do turno — inclusive plantão noturno que ocupa os dois dias. */
+                event.remove();
+                _calRefetch();
                 exibirMsgAba('msg-calendario', 'Alocação criada com sucesso!', 'success');
                 carregarAlocacoes();
 
@@ -1357,7 +1400,7 @@ function renderTabelaEquipes(equipes, membros) {
             + '<td><strong>' + e.nome + '</strong></td>'
             + '<td>' + (e.descricao || '—') + '</td>'
             + '<td class="membros-cell">' + membrosHtml + '</td>'
-            + '<td>' + fmtTime(e.inicio_turno) + ' – ' + fmtTime(e.fim_turno) + '</td>'
+            + '<td class="text-center">' + fmtTurno(e.inicio_turno, e.fim_turno) + '</td>'
             + '<td class="col-status">' + badge + '</td>'
             + '<td class="col-acoes"><div class="acoes-grupo">'
             + '<button class="btn btn-xs btn-success btn-acao btn-membros-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" title="Membros"><i class="fa fa-users"></i></button>'
@@ -1498,7 +1541,7 @@ function carregarMembros(idEquipe) {
             $.each(dados, function (_, m) {
                 html += '<tr>'
                     + '<td>' + m.nome + ' ' + (m.sobrenome || '') + (m.cargo ? ' - ' + m.cargo : '') + '</td>'
-                    + '<td>' + fmtTime(m.inicio_turno) + ' – ' + fmtTime(m.fim_turno) + '</td>'
+                    + '<td class="text-center">' + fmtTurno(m.inicio_turno, m.fim_turno, true) + '</td>'
                     + '<td>'
                     + '<button class="btn btn-xs btn-warning btn-acao mr-xs btn-inativar-membro" data-id="' + m.id + '" title="Inativar"><i class="fa fa-ban"></i></button>'
                     + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-membro" data-id="' + m.id + '" title="Remover"><i class="fa fa-trash"></i></button>'
@@ -1554,8 +1597,7 @@ $('#btn-adicionar-membro').on('click', function () {
     apiPost('incluirMembro', { id_equipe: idEquipe, id_pessoa: idPessoa })
         .done(function (r) {
             ocultarErroModal('modal-membros-erro');
-            $('#modal-membros-sucesso-texto').text(r.msg || 'Membro adicionado com sucesso.');
-            $('#modal-membros-sucesso').addClass('in');
+            exibirSucessoModal('modal-membros-sucesso', r.msg || 'Membro adicionado com sucesso.');
             $('#membro-pessoa').val('').trigger('change');
             carregarMembros(idEquipe);
             _carregarSelectPessoas(idEquipe);
@@ -1572,8 +1614,7 @@ $(document).on('click', '.btn-inativar-membro', function () {
     confirmar('Inativar este membro?', function () {
         api('inativarMembro', { id: id })
             .done(function (r) {
-                $('#modal-membros-sucesso-texto').text(r.msg || 'Membro inativado.');
-                $('#modal-membros-sucesso').addClass('in');
+                exibirSucessoModal('modal-membros-sucesso', r.msg || 'Membro inativado.');
                 carregarMembros(idEquipe);
                 _carregarSelectPessoas(idEquipe);
                 carregarEquipes();
@@ -1590,8 +1631,7 @@ $(document).on('click', '.btn-excluir-membro', function () {
     confirmar('Remover este membro permanentemente?', function () {
         api('excluirMembro', { id: id })
             .done(function (r) {
-                $('#modal-membros-sucesso-texto').text(r.msg || 'Membro removido.');
-                $('#modal-membros-sucesso').addClass('in');
+                exibirSucessoModal('modal-membros-sucesso', r.msg || 'Membro removido.');
                 carregarMembros(idEquipe);
                 _carregarSelectPessoas(idEquipe);
                 carregarEquipes();
@@ -1616,8 +1656,7 @@ $(document).on('click', '.btn-reativar-membro', function () {
     confirmar('Reativar este membro?', function () {
         api('reativarMembro', { id: id })
             .done(function (r) {
-                $('#modal-membros-sucesso-texto').text(r.msg || 'Membro reativado.');
-                $('#modal-membros-sucesso').addClass('in');
+                exibirSucessoModal('modal-membros-sucesso', r.msg || 'Membro reativado.');
                 carregarMembros(idEquipe);
                 _carregarSelectPessoas(idEquipe);
                 carregarEquipes();
@@ -1633,7 +1672,8 @@ function _carregarSelectPessoas(idEquipe) {
     api('listarPessoas', { id_equipe: idEquipe }).done(function (dados) {
         var opts = '<option value="">Selecione uma pessoa</option>';
         $.each(dados, function (_, p) {
-            opts += '<option value="' + p.id_pessoa + '">' + p.nome_completo + '</option>';
+            var label = p.cargo ? p.nome_completo + ' - ' + p.cargo : p.nome_completo;
+            opts += '<option value="' + p.id_pessoa + '">' + label + '</option>';
         });
         $('#membro-pessoa').html(opts);
         initSelect2('#membro-pessoa', 'Selecione uma pessoa');
@@ -1736,10 +1776,12 @@ function carregarAlocacoes() {
         var html = '';
         $.each(lista, function (_, al) {
             var intervalo = parseInt(al.intervalo) || 0;
+            var turno = fmtTurno(al.inicio_turno, al.fim_turno);
             html += '<tr>'
                 + '<td>' + al.equipe + '</td>'
                 + '<td>' + fmtDate(al.start) + '</td>'
                 + '<td>' + fmtDate(al.fim_display) + '</td>'
+                + '<td class="text-center">' + turno + '</td>'
                 + '<td class="text-center">' + intervalo + (intervalo === 1 ? ' dia' : ' dias') + '</td>'
                 + '<td>' + fmtDatetime(al.lembrete) + '</td>'
                 + '<td class="col-acoes"><div class="acoes-grupo">'
@@ -1847,7 +1889,6 @@ $('#btn-salvar-alocacao').on('click', function () {
     var lembrete   = $('#alocacao-lembrete').val();
     var intervalo  = parseInt($('#alocacao-intervalo').val()) || 0;
     if (intervalo < 0) intervalo = 0;
-    var equipNome  = $('#alocacao-equipe option[value="' + equipe + '"]').text();
 
     ocultarErroModal('modal-alocacao-erro');
     if (!agenda) { exibirErroModal('modal-alocacao-erro', 'Selecione a agenda.'); return; }
@@ -1870,33 +1911,9 @@ $('#btn-salvar-alocacao').on('click', function () {
             $('#modal-alocacao').modal('hide');
             exibirMsgAba('msg-alocacoes', r.msg || 'Salvo com sucesso.', 'success');
             carregarAlocacoes();
-            if (!id && r.id) {
-                /* Com intervalo, o calendário precisa buscar do servidor para gerar os eventos corretos */
-                if (intervalo > 0) {
-                    _calRefetch();
-                } else {
-                    var p    = fim.split('-');
-                    var fcDt = new Date(+p[0], +p[1] - 1, +p[2] + 1);
-                    _calAddEvent({
-                        id: String(r.id),
-                        title: equipNome,
-                        start: inicio,
-                        end: fcDt.getFullYear() + '-' + _pad(fcDt.getMonth() + 1) + '-' + _pad(fcDt.getDate()),
-                        allDay: true,
-                        extendedProps: {
-                            equipe:           equipNome,
-                            fim_display:      fim,
-                            inicio_original:  inicio,
-                            fim_original:     fim,
-                            lembrete:         lembrete ? lembrete.replace('T', ' ') : null,
-                            id_agenda:        agenda,
-                            id_equipe:        equipe
-                        }
-                    });
-                }
-            } else {
-                _calRefetch();
-            }
+            /* O servidor gera os eventos com o horário do turno (inclusive plantão noturno
+               que ocupa dois dias), então buscamos do servidor em vez de montar localmente. */
+            _calRefetch();
         })
         .fail(function (xhr) {
             var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar.';
