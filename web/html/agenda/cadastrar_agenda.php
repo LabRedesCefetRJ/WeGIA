@@ -161,6 +161,9 @@ require_once "../personalizacao_display.php";
             height: 34px;
         }
 
+        /* Select2 v3 — anula o ::after do tema Porto que duplica o × no select simples */
+        .select2-container .select2-choice abbr.select2-search-choice-close:after { content: none; }
+
         /* ── Padrão de modal do sistema ── */
         .modal-header-padrao {
             background-color: #337ab7;
