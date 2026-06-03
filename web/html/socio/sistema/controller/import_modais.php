@@ -482,7 +482,7 @@ try {
 
 <!-- Modal aniversariantes -->
 <div class="modal fade" id="modal_aniversariantes" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -518,7 +518,7 @@ try {
 
                   $id = htmlspecialchars($resultado['socioid']);
                   $cpf_cnpj = htmlspecialchars($resultado['cpf']);
-                  $nome_s = htmlspecialchars($resultado['nome']);
+                  $nome_s = htmlspecialchars($resultado['nome'] . " " . $resultado['sobrenome']);
                   $email = htmlspecialchars($resultado['email']);
                   $telefone = htmlspecialchars($resultado['telefone']);
                   $data_nascimento = explode('-', $resultado['data_nascimento']);
