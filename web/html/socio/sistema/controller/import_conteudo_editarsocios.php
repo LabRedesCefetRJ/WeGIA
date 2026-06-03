@@ -88,12 +88,10 @@ $valor_periodo = $registro['valor_periodo'];
           <div class="box-body">
             <form id="frm_editar_socio" method="POST">
               <input type="hidden" id="id_socio" name="id_socio" value="<?= htmlspecialchars($id_socio) ?>">
+
               <div class="row">
-                <div class="form-group mb-2 col-xs-5">
-                  <label for="nome_cliente">Nome sócio</label>
-                  <input type="text" class="form-control" id="socio_nome" name="socio_nome" value="<?php echo htmlspecialchars($nome_socio); ?>" placeholder="" required>
-                </div>
-                <div class="form-group col-xs-3">
+
+                <div class="form-group col-xs-4">
                   <label for="pessoa">Pessoa</label>
                   <select class="form-control" name="pessoa" id="pessoa">
                     <?php
@@ -114,13 +112,31 @@ $valor_periodo = $registro['valor_periodo'];
                     ?>
                   </select>
                 </div>
-                <div class="form-group col-xs-4 cpf_div">
-                  <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="check_veri_cpf" checked>
-                    <label class="form-check-label" for="exampleCheck1">Deslig. Verif. Cpf</label>
-                  </div>
+                <div class="form-group col-xs-6 cpf_div">
                   <label id="label_cpf_cnpj" for="valor">CPF</label>
-                  <input type="text" class="form-control" value="<?php echo htmlspecialchars($cpf_cnpj); ?>" id="cpf_cnpj" name="cpf" required>
+
+                  <div class="inline-fields">
+                    <input type="text" class="form-control" value="<?php echo htmlspecialchars($cpf_cnpj); ?>" id="cpf_cnpj" name="cpf" required>
+
+                    <div class="form-check">
+                      <input type="checkbox" class="form-check-input" id="check_veri_cpf" checked>
+                      <label class="form-check-label" for="exampleCheck1">Desligar verificação de documento</label>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="row">
+                <div class="form-group mb-2 col-xs-6">
+                  <label for="nome_cliente">Nome sócio</label>
+                  <input type="text" class="form-control" id="socio_nome" name="socio_nome" value="<?php echo htmlspecialchars($nome_socio); ?>" placeholder="" required>
+                </div>
+
+                <div class="form-group mb-2 col-xs-6">
+                  <label for="socio_sobrenome">Sobrenome *</label>
+                  <!-- Puxar sobrenome automaticamente -->
+                  <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" placeholder="" required>
                 </div>
               </div>
               <div class="row">
