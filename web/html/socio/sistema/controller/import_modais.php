@@ -13,15 +13,10 @@ try {
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <!--<h5 class="modal-title" id="exampleModalLabel">Novo Sócio</h5>-->
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">×</span></button>
       </div>
       <div class="modal-body">
-        <!-- <div class="callout callout-info">
-                <h4>Adicione um novo sócio</h4>
-                <p>Preencha os dados corretamente para cadastrar um novo sócio.</p>
-              </div> -->
         <div class="box box-info box-solid socioModal">
           <div class="box-header">
             <h3 class="box-title"><i class="fa fa-user-plus"></i> Novo sócio</h3>

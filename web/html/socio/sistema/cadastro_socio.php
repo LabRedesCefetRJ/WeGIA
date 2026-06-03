@@ -56,6 +56,7 @@ function normalizarTagsSocio($tagsBrutas): array
 }
 
 $socio_nome = trim($_REQUEST['socio_nome']);
+$socio_sobrenome = trim($_REQUEST['socio_sobrenome']);
 $pessoa = trim($_REQUEST['pessoa']);
 $contribuinte = trim($_REQUEST['contribuinte']);
 $status = trim($_REQUEST['status']);
@@ -79,6 +80,11 @@ $auto_status_contribuicoes = isset($_REQUEST['auto_status_contribuicoes']) && !e
 if (!$socio_nome || empty($socio_nome)) {
     http_response_code(400);
     exit('O nome de um sócio não pode ser vazio.');
+}
+
+if (!$socio_sobrenome || empty($socio_sobrenome)) {
+    http_response_code(400);
+    exit('O sobrenome de um sócio não pode ser vazio.');
 }
 
 if ($pessoa !== 'fisica' && $pessoa !== 'juridica') {
@@ -138,10 +144,10 @@ if ($stmtBuscaSocio->execute()) {
     exit();
 }
 
-$stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, sobrenome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-$stmt->bind_param('sssssssssss', $cpf_cnpj, $socio_nome, $telefone, $data_nasc, $cep, $estado, $cidade, $bairro, $rua, $numero, $complemento);
+$stmt->bind_param('ssssssssssss', $cpf_cnpj, $socio_nome, $socio_sobrenome, $telefone, $data_nasc, $cep, $estado, $cidade, $bairro, $rua, $numero, $complemento);
 
 
 if ($stmt->execute()) {
