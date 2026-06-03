@@ -95,6 +95,24 @@ class AgendaDAO
     // AGENDA ALOCACAO
     // -------------------------------------------------------
 
+    public function existeAlocacaoSobreposta(int $idAgenda, int $idEquipe, string $inicio, string $fim, ?int $excludeId = null): bool
+    {
+        $sql = "SELECT COUNT(*) FROM agenda_alocacao
+                WHERE id_agenda = :id_agenda
+                  AND id_equipe = :id_equipe
+                  AND inicio   <= :fim
+                  AND fim      >= :inicio";
+        if ($excludeId) $sql .= " AND id != :exclude_id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_agenda', $idAgenda, PDO::PARAM_INT);
+        $stmt->bindValue(':id_equipe', $idEquipe, PDO::PARAM_INT);
+        $stmt->bindValue(':inicio',    $inicio);
+        $stmt->bindValue(':fim',       $fim);
+        if ($excludeId) $stmt->bindValue(':exclude_id', $excludeId, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     public function incluirAlocacao(AgendaAlocacao $alocacao)
     {
         $sql = "INSERT INTO agenda_alocacao (id_agenda, id_equipe, inicio, fim, lembrete, lembrete_enviado, intervalo)
@@ -135,17 +153,19 @@ class AgendaDAO
             if ($intervalo <= 0) {
                 $endFC = (clone $fim)->modify('+1 day');
                 $events[] = [
-                    'id'          => $row['id'],
-                    'title'       => $row['title'],
-                    'start'       => $row['inicio_raw'],
-                    'end'         => $endFC->format('Y-m-d'),
-                    'fim_display' => $row['fim_raw'],
-                    'lembrete'    => $row['lembrete'],
-                    'id_agenda'   => $row['id_agenda'],
-                    'id_equipe'   => $row['id_equipe'],
-                    'agenda'      => $row['agenda'],
-                    'equipe'      => $row['equipe'],
-                    'intervalo'   => 0,
+                    'id'              => $row['id'],
+                    'title'           => $row['title'],
+                    'start'           => $row['inicio_raw'],
+                    'end'             => $endFC->format('Y-m-d'),
+                    'fim_display'     => $row['fim_raw'],
+                    'inicio_original' => $row['inicio_raw'],
+                    'fim_original'    => $row['fim_raw'],
+                    'lembrete'        => $row['lembrete'],
+                    'id_agenda'       => $row['id_agenda'],
+                    'id_equipe'       => $row['id_equipe'],
+                    'agenda'          => $row['agenda'],
+                    'equipe'          => $row['equipe'],
+                    'intervalo'       => 0,
                 ];
             } else {
                 $step    = $intervalo + 1;
@@ -153,17 +173,19 @@ class AgendaDAO
                 while ($current <= $fim) {
                     $dayEnd = (clone $current)->modify('+1 day');
                     $events[] = [
-                        'id'          => $row['id'],
-                        'title'       => $row['title'],
-                        'start'       => $current->format('Y-m-d'),
-                        'end'         => $dayEnd->format('Y-m-d'),
-                        'fim_display' => $current->format('Y-m-d'),
-                        'lembrete'    => $row['lembrete'],
-                        'id_agenda'   => $row['id_agenda'],
-                        'id_equipe'   => $row['id_equipe'],
-                        'agenda'      => $row['agenda'],
-                        'equipe'      => $row['equipe'],
-                        'intervalo'   => $intervalo,
+                        'id'              => $row['id'],
+                        'title'           => $row['title'],
+                        'start'           => $current->format('Y-m-d'),
+                        'end'             => $dayEnd->format('Y-m-d'),
+                        'fim_display'     => $current->format('Y-m-d'),
+                        'inicio_original' => $row['inicio_raw'],
+                        'fim_original'    => $row['fim_raw'],
+                        'lembrete'        => $row['lembrete'],
+                        'id_agenda'       => $row['id_agenda'],
+                        'id_equipe'       => $row['id_equipe'],
+                        'agenda'          => $row['agenda'],
+                        'equipe'          => $row['equipe'],
+                        'intervalo'       => $intervalo,
                     ];
                     $current->modify('+' . $step . ' days');
                 }
@@ -306,6 +328,11 @@ class AgendaDAO
 
     public function excluirEquipe(int $id)
     {
+        $del = "DELETE FROM agenda_alocacao WHERE id_equipe = :id";
+        $stmt = $this->pdo->prepare($del);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
         $sql = "DELETE FROM agenda_equipe WHERE id = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);

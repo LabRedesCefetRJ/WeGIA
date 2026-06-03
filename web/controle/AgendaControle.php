@@ -186,6 +186,10 @@ class AgendaControle
             $alocacao->setIntervalo((int)$intervalo);
 
             $dao = new AgendaDAO();
+
+            if ($dao->existeAlocacaoSobreposta((int)$id_agenda, (int)$id_equipe, $inicio, $fim))
+                throw new InvalidArgumentException('Já existe uma alocação desta equipe no período informado.', 409);
+
             $id = $dao->incluirAlocacao($alocacao);
 
             http_response_code(200);
@@ -371,7 +375,7 @@ class AgendaControle
             $inicio           = filter_input(INPUT_POST, 'inicio', FILTER_SANITIZE_SPECIAL_CHARS);
             $fim              = filter_input(INPUT_POST, 'fim', FILTER_SANITIZE_SPECIAL_CHARS);
             $lembrete         = filter_input(INPUT_POST, 'lembrete', FILTER_SANITIZE_SPECIAL_CHARS);
-            $lembrete_enviado = filter_input(INPUT_POST, 'lembrete_enviado', FILTER_SANITIZE_NUMBER_INT);
+            $lembrete_enviado = (int)(filter_input(INPUT_POST, 'lembrete_enviado', FILTER_SANITIZE_NUMBER_INT) ?? 0);
             $intervalo        = filter_input(INPUT_POST, 'intervalo', FILTER_SANITIZE_NUMBER_INT) ?? 0;
 
             if (!$id || $id < 1)
@@ -391,6 +395,10 @@ class AgendaControle
             $alocacao->setIntervalo((int)$intervalo);
 
             $dao = new AgendaDAO();
+
+            if ($dao->existeAlocacaoSobreposta((int)$id_agenda, (int)$id_equipe, $inicio, $fim, (int)$id))
+                throw new InvalidArgumentException('Já existe uma alocação desta equipe no período informado.', 409);
+
             $dao->alterarAlocacao($alocacao);
 
             http_response_code(200);
