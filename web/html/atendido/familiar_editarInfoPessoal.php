@@ -94,11 +94,17 @@ if (!$telefone || empty($telefone)) {
     }
 }
 
-if (!$data_nascimento || empty($data_nascimento)) { //Posteriormente fazer validação do formato da data de nascimento quando o respectivo método for implementado na classe Util.php
-    $_SESSION['msg'] = 'Erro, a data de nascimento fornecida não está em um formato válido.';
-    $_SESSION['tipo'] = 'error';
-    header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
-    exit();
+if (!$data_nascimento || empty($data_nascimento)) {
+    $data_nascimento = null;
+} else {
+    try {
+        new DateTime($data_nascimento);
+    } catch (Exception $e) {
+        $_SESSION['msg'] = 'Erro, a data de nascimento fornecida não está em um formato válido.';
+        $_SESSION['tipo'] = 'error';
+        header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+        exit();
+    }
 }
 
 if ($data_nascimento && $id) {
