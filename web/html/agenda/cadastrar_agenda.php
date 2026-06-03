@@ -1536,14 +1536,7 @@ $(document).on('click', '.btn-membros-equipe', function () {
     $('#btn-toggle-inativos').hide();
     $('#toggle-inativos-label').text('Ver inativos');
     $('#btn-toggle-inativos .fa').removeClass('fa-chevron-up').addClass('fa-chevron-down');
-    api('listarPessoas').done(function (dados) {
-        var opts = '<option value="">Selecione uma pessoa</option>';
-        $.each(dados, function (_, p) {
-            opts += '<option value="' + p.id_pessoa + '">' + p.nome_completo + '</option>';
-        });
-        $('#membro-pessoa').html(opts);
-        initSelect2('#membro-pessoa', 'Selecione uma pessoa');
-    });
+    _carregarSelectPessoas(id);
     carregarMembros(id);
     $('#modal-membros').modal('show');
 });
@@ -1562,6 +1555,7 @@ $('#btn-adicionar-membro').on('click', function () {
             $('#modal-membros-sucesso').addClass('in');
             $('#membro-pessoa').val('').trigger('change');
             carregarMembros(idEquipe);
+            _carregarSelectPessoas(idEquipe);
             carregarEquipes();
         })
         .fail(function (xhr) {
@@ -1578,6 +1572,7 @@ $(document).on('click', '.btn-inativar-membro', function () {
                 $('#modal-membros-sucesso-texto').text(r.msg || 'Membro inativado.');
                 $('#modal-membros-sucesso').addClass('in');
                 carregarMembros(idEquipe);
+                _carregarSelectPessoas(idEquipe);
                 carregarEquipes();
             })
             .fail(function (xhr) {
@@ -1595,6 +1590,7 @@ $(document).on('click', '.btn-excluir-membro', function () {
                 $('#modal-membros-sucesso-texto').text(r.msg || 'Membro removido.');
                 $('#modal-membros-sucesso').addClass('in');
                 carregarMembros(idEquipe);
+                _carregarSelectPessoas(idEquipe);
                 carregarEquipes();
             })
             .fail(function (xhr) {
@@ -1620,6 +1616,7 @@ $(document).on('click', '.btn-reativar-membro', function () {
                 $('#modal-membros-sucesso-texto').text(r.msg || 'Membro reativado.');
                 $('#modal-membros-sucesso').addClass('in');
                 carregarMembros(idEquipe);
+                _carregarSelectPessoas(idEquipe);
                 carregarEquipes();
             })
             .fail(function (xhr) {
@@ -1628,6 +1625,17 @@ $(document).on('click', '.btn-reativar-membro', function () {
             });
     });
 });
+
+function _carregarSelectPessoas(idEquipe) {
+    api('listarPessoas', { id_equipe: idEquipe }).done(function (dados) {
+        var opts = '<option value="">Selecione uma pessoa</option>';
+        $.each(dados, function (_, p) {
+            opts += '<option value="' + p.id_pessoa + '">' + p.nome_completo + '</option>';
+        });
+        $('#membro-pessoa').html(opts);
+        initSelect2('#membro-pessoa', 'Selecione uma pessoa');
+    });
+}
 
 /* ── Detalhe do evento (somente visualização) ────────────── */
 

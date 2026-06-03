@@ -356,8 +356,9 @@ class AgendaControle
         header('Content-Type: application/json');
 
         try {
+            $idEquipe = filter_input(INPUT_GET, 'id_equipe', FILTER_SANITIZE_NUMBER_INT);
             $dao = new AgendaDAO();
-            echo json_encode($dao->listarPessoas());
+            echo json_encode($dao->listarPessoas($idEquipe ? (int)$idEquipe : null));
         } catch (Exception $e) {
             Util::tratarException($e);
         }

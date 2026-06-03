@@ -483,13 +483,20 @@ class AgendaDAO
         $stmt->execute();
     }
 
-    public function listarPessoas()
+    public function listarPessoas(?int $idEquipe = null)
     {
         $sql = "SELECT id_pessoa, CONCAT(nome, ' ', sobrenome) AS nome_completo
                 FROM pessoa
-                WHERE nome IS NOT NULL
-                ORDER BY nome, sobrenome";
+                WHERE nome IS NOT NULL";
+        if ($idEquipe) {
+            $sql .= " AND id_pessoa NOT IN (
+                          SELECT id_pessoa FROM agenda_equipe_membro
+                          WHERE id_equipe = :id_equipe AND ativo = 1
+                      )";
+        }
+        $sql .= " ORDER BY nome, sobrenome";
         $stmt = $this->pdo->prepare($sql);
+        if ($idEquipe) $stmt->bindValue(':id_equipe', $idEquipe, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
