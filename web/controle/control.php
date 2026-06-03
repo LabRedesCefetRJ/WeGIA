@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require_once __DIR__ . '/../config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
@@ -69,7 +72,8 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'UnidadeControle' => [22],
             'MemorandoControle' => [3],
             'DespachoControle' => [3],
-            'VoluntarioControle' => [11]
+            'VoluntarioControle' => [11],
+            'VisitanteControle' => [11]
         ];
 
         /*Por padrão o control.php irá recusar qualquer controladora informada,
