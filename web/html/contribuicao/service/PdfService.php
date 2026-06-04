@@ -159,7 +159,7 @@ class PdfService
 
             $mensagem = iconv('UTF-8', 'ISO-8859-1//TRANSLIT', sprintf(
                 "Agradecemos a %s (Código de Doador: %s) pela doação de R$ %s para %s no ano de %d. %s",
-                $socio->getNome(),
+                $socio->getFullName(),
                 $recibo->getCodigo(),
                 number_format($recibo->getValorTotal(), 2, ',', '.'),
                 $nomeInstituicao,

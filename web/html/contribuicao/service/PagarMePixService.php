@@ -40,7 +40,7 @@ class PagarMePixService implements ApiPixServiceInterface
                     ]
                 ],
                 'customer' => [
-                    'name' => $contribuicaoLog->getSocio()->getNome(),
+                    'name' => $contribuicaoLog->getSocio()->getFullName(),
                     'email' => $contribuicaoLog->getSocio()->getEmail(),
                     'type' => 'individual',
                     'document' => $cpfSemMascara,

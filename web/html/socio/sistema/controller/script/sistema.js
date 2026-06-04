@@ -859,6 +859,7 @@ $(document).ready(function () {
     });
 
     // Tabela contribuições
+    //Ajustar sobrenome
     $(document).ready(function () {
         $('#tabela-contribuicoes').DataTable({
             "processing": true,
@@ -866,7 +867,9 @@ $(document).ready(function () {
             "ajax": "../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=getContribuicoesLogJSON",
             "columns": [
                 { "data": "codigo" },
-                { "data": "nomeSocio" },
+                { "data": "nomeSocio" + " " + "sobrenomeSocio", "render": function (data, type, row) {
+                    return row.nomeSocio + " " + row.sobrenomeSocio;
+                }},
                 { "data": "plataforma" },
                 {
                     "data": "meio", "render": function (data, type, row) {
