@@ -425,3 +425,20 @@ iframe {
 
 /*//////////////////////////////////////////////////////////////////
 [ Responsive ]*/
+
+/*//////////////////////////////////////////////////////////////////
+[ Campos Bloqueados - Preenchimento Automático ]*/
+
+.campo-bloqueado {
+  background-color: #f0f0f0 !important;
+  color: #666666;
+  cursor: not-allowed !important;
+  opacity: 0.8;
+  border-color: #cccccc !important;
+}
+
+.campo-bloqueado:focus {
+  background-color: #f0f0f0 !important;
+  border-color: #cccccc !important;
+  box-shadow: none !important;
+}
