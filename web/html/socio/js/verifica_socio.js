@@ -1,9 +1,13 @@
 //Verificação de existência de um sócio no formulário de cadastro
+// Variável para armazenar o ID da pessoa encontrada
+let idPessoaEncontrada = null;
+
 document.getElementById('cpf_cnpj').addEventListener('blur', async function () {
     const documento = this.value.trim();
 
     if (documento === "") {
         desbloquearCamposPessoa(); // Desbloqueia os campos se o CPF for removido
+        idPessoaEncontrada = null; // Limpa o ID da pessoa
         return; // evita requisição vazia
     }
 
@@ -41,10 +45,14 @@ document.getElementById('cpf_cnpj').addEventListener('blur', async function () {
         // Se a pessoa não foi encontrada (404), não fazer nada
         if (responsePessoa.status === 404) {
             desbloquearCamposPessoa();
+            idPessoaEncontrada = null; // Limpa o ID se a pessoa não for encontrada
             return;
         }
 
         const jsonPessoa = await responsePessoa.json();
+
+        // Armazenar o ID da pessoa encontrada
+        idPessoaEncontrada = jsonPessoa.id_pessoa || null;
 
         // Preencher os campos do formulário com os dados encontrados
         if (jsonPessoa.nome) {
@@ -180,3 +188,36 @@ function desbloquearCamposPessoa() {
         }
     });
 }
+
+/**
+ * Listener para o envio do formulário de novo sócio
+ * Se uma pessoa foi encontrada, redireciona para um fluxo diferente
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    const formNoveSocio = document.getElementById('frm_novo_socio');
+    
+    if (formNoveSocio) {
+        formNoveSocio.addEventListener('submit', function(e) {
+            // Se uma pessoa foi encontrada, usar um fluxo diferente
+            if (idPessoaEncontrada !== null && idPessoaEncontrada !== undefined) {
+                e.preventDefault();
+                
+                // Criar um campo hidden para armazenar o ID da pessoa
+                let inputIdPessoa = document.getElementById('id_pessoa_encontrada');
+                
+                if (!inputIdPessoa) {
+                    inputIdPessoa = document.createElement('input');
+                    inputIdPessoa.type = 'hidden';
+                    inputIdPessoa.id = 'id_pessoa_encontrada';
+                    inputIdPessoa.name = 'id_pessoa_encontrada';
+                    formNoveSocio.appendChild(inputIdPessoa);
+                }
+                
+                inputIdPessoa.value = idPessoaEncontrada;
+                
+                // Enviar o formulário manualmente
+                formNoveSocio.submit();
+            }
+        });
+    }
+});
