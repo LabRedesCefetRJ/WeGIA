@@ -38,6 +38,7 @@ require_once "../personalizacao_display.php";
     <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <link rel="icon" href='<?php display_campo("Logo", 'file'); ?>' type="image/x-icon">
     <script src="../../assets/vendor/modernizr/modernizr.js"></script>
 
@@ -329,6 +330,13 @@ require_once "../personalizacao_display.php";
                                                 </div>
                                             </div>
                                             <span class="cal-sidebar-hint" id="sidebar-drag-hint" style="display:none;">arraste para o calendário</span>
+                                        </div>
+                                        <div class="cal-toolbar-divider"></div>
+                                        <div class="cal-toolbar-group">
+                                            <button class="btn btn-danger btn-sm" id="btn-download-mensal" type="button" title="Baixar relatório PDF da agenda deste mês" style="font-family: 'Montserrat', sans-serif; font-weight: 700;">
+                                                <i<i class="bi bi-file-pdf-fill"></i>
+                                                PDF
+                                            </button>
                                         </div>
                                     </div>
                                     <div id="calendar"></div>
@@ -1919,6 +1927,24 @@ $('#btn-salvar-alocacao').on('click', function () {
             var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar.';
             exibirErroModal('modal-alocacao-erro', msg);
         });
+});
+
+/*  Download do Relatório PDF */
+
+$(document).on('click', '#btn-download-mensal', function () {
+    var idAgenda = $('#sidebar-agenda-select').val();
+    if (!idAgenda) {
+        exibirMsgAba('msg-calendario', 'Selecione uma Agenda primeiro para baixar o relatório.', 'warning');
+        return;
+    }
+    
+    var dataView = window._calendar.getDate();
+    var mes = dataView.getMonth() + 1; 
+    var ano = dataView.getFullYear();
+    
+    var url = '../../service/relatorioGradeHorariosService.php?id_agenda=' + idAgenda + '&mes=' + mes + '&ano=' + ano;
+    
+    window.open(url, '_blank');
 });
 </script>
 </body>
