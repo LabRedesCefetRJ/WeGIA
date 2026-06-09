@@ -367,21 +367,21 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 								return;
 							}
 
-							conta = conta + 1;
+							conta = reindexarProdutosEntrada() + 1;
 
 							$("#conta").val(conta);
 
 							var markup = "<tr class='produtoRow'><td class='prod' style='width: 160px;'><input type='text' value='" + val + "' name='id" + conta + "' readonly='readonly'></td><td class='quant'><input type='text' class='number'  id='qtd' maxlength='2' size='2' class='form-control' min='1' value='" + quantidade + "' name='qtd" + conta + "' readonly='readonly'></td><td><input type='text' class='preco' value='" + preco + "' name='valor_unitario" + conta + "'  size='2' readonly='readonly'></td><th><input type='text' size='3' id='total' class='total' value='" + quantidade * preco + "' readonly='readonly'></th><td><button type='button' class='delete-row'>remover</button></td></tr>";
 							$("table tbody ").append(markup);
-							$("#valor_unitario").empty();
-							$("#input_produtos").val("");
-							var x = $("#total_total").val();
-							x = Number(x);
-							x += (quantidade * preco);
 
-							$("#total_total").val(x);
-							verificar++;
-							$("#verifica").val(verificar);
+							reindexarProdutosEntrada();
+
+							$("#valor_unitario").val("");
+							$("#input_produtos").val("");
+							$("#quantidade").val(1);
+
+							verificar = Number($("#verifica").val() || 0);
+							conta = Number($("#conta").val() || 0);
 
 						}
 					})
@@ -402,7 +402,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				xx = xx - valor_menos;
 				$("#total_total").val(xx);
 				$(this).closest('tr').remove();
-				verificar = verificar - 1;
+				reindexarProdutosEntrada();
 			});
 
 			// validar origem
@@ -492,6 +492,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					return false;
 				}
 
+				reindexarProdutosEntrada();
+
 				$.ajax({
 					url: $(this).attr('action'),
 					method: 'POST',
@@ -528,6 +530,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		const CHAVE = 'rascunho_cadastro_entrada';
 
 		function salvarRascunho() {
+			reindexarProdutosEntrada();
+
 			const dados = {
 				origem: $('#origens').val(),
 				almoxarifado: $('#almoxarifado').val(),
@@ -568,10 +572,45 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 						$('#almoxarifado').val(dados.almoxarifado);
 					}, 100);
 				}
+
+				reindexarProdutosEntrada();
 			} catch (e) {
 				console.error('Erro ao restaurar rascunho:', e);
 			}
 		}
+
+		function reindexarProdutosEntrada() {
+			let contador = 0;
+			let totalGeral = 0;
+
+			$('#lista-produtos tr.produtoRow').each(function () {
+				contador++;
+
+				const inputProduto = $(this).find("td.prod input");
+				const inputQtd = $(this).find("td.quant input");
+				const inputPreco = $(this).find("input.preco");
+				const inputTotal = $(this).find("input.total");
+
+				inputProduto.attr('name', 'id' + contador);
+				inputQtd.attr('name', 'qtd' + contador);
+				inputPreco.attr('name', 'valor_unitario' + contador);
+
+				const qtd = Number(inputQtd.val() || 0);
+				const preco = Number(inputPreco.val() || 0);
+				const subtotal = qtd * preco;
+
+				inputTotal.val(subtotal);
+				totalGeral += subtotal;
+			});
+
+			$('#conta').val(contador);
+			$('#verifica').val(contador);
+			$('#total_total').val(totalGeral);
+
+			return contador;
+		}
+
+		window.reindexarProdutosEntrada = reindexarProdutosEntrada;
 
 		function limparRascunho() {
 			localStorage.removeItem(CHAVE);
