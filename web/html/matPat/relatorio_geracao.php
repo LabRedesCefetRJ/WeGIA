@@ -33,7 +33,9 @@ if ($_POST['tipo_relatorio'] == 'entrada') {
 $post = [
 	$_POST['tipo_relatorio'] != '' ? $_POST['tipo_relatorio'] : null,
 	$o_d != '' ? $o_d : null,
-	$_POST['tipo'] != '' ? $_POST['tipo'] : null,
+	$_POST['tipo_relatorio'] == 'requisicao'
+	? ($_POST['categoria_produto'] != '' ? $_POST['categoria_produto'] : null)
+	: ($_POST['tipo'] != '' ? $_POST['tipo'] : null),
 	$_POST['responsavel'] != '' ? $_POST['responsavel'] : null,
 	[
 		'inicio' => $_POST['data_inicio'] != '' ? $_POST['data_inicio'] : null,
@@ -46,7 +48,9 @@ $post = [
 $item = new Item(
 	$_POST['tipo_relatorio'],
 	$o_d,
-	$_POST['tipo'],
+	$_POST['tipo_relatorio'] == 'requisicao'
+	? ($_POST['categoria_produto'] ?? null)
+	: ($_POST['tipo'] ?? null),
 	$_POST['responsavel'],
 	[
 		'inicio' => $_POST['data_inicio'],
@@ -167,6 +171,118 @@ function quickQuery($query, $parametro, $column)
 
 	<!-- javascript tab management script -->
 
+	<style>
+.folha-requisicao {
+    width: 100%;
+    max-width: 28.2cm;
+    margin: 0 auto 20px auto;
+    page-break-after: always;
+    font-family: Arial, sans-serif;
+}
+
+.cabecalho-requisicao {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.instrucao-requisicao {
+    text-align: center;
+    font-size: 9px;
+    margin-bottom: 8px;
+}
+
+.tabela-requisicao {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.tabela-requisicao td {
+    border: 1px solid #999;
+    padding: 2px;
+    vertical-align: top;
+}
+
+.produto-requisicao {
+    width: 9%;
+    font-size: 10px;
+    font-weight: bold;
+    vertical-align: middle !important;
+}
+
+.dia-requisicao {
+    width: 5.6875%;
+    height: 0.78cm;
+    font-size: 8px;
+    font-weight: bold;
+    text-align: left;
+    vertical-align: top;
+}
+
+.dia-azul {
+    background-color: #eaf5ff;
+}
+
+.total-requisicao {
+    background-color: #f2f2f2;
+}
+
+.rodape-requisicao {
+    text-align: right;
+    font-size: 8px;
+    color: #999;
+    margin-top: 4px;
+}
+
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 0.35cm;
+    }
+
+    .print-hide,
+    .descricao,
+    h4,
+    .print-button {
+        display: none !important;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .content-body,
+    .inner-wrapper,
+    .tab-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .folha-requisicao {
+        width: 28.2cm;
+        max-width: 28.2cm;
+        margin: 0 auto;
+        page-break-after: always;
+    }
+
+    .tabela-requisicao {
+        width: 28.2cm;
+    }
+
+    .produto-requisicao {
+        width: 2.43cm;
+    }
+
+    .dia-requisicao {
+        width: 1.61cm;
+    }
+}
+</style>
+
 </head>
 
 <body>
@@ -284,6 +400,12 @@ function quickQuery($query, $parametro, $column)
 						</p>
 						<button style="float: right;" class="mb-xs mt-xs mr-xs btn btn-default print-button" onclick="window.print();">Imprimir</button>
 					</div>
+					<?php if ($_POST['tipo_relatorio'] == 'requisicao') { ?>
+
+    					<?php $item->displayRequisicao(); ?>
+
+					<?php } else { ?>
+
 					<h4>Resultado</h4>
 
 					<table class="table table-striped">
@@ -317,6 +439,7 @@ function quickQuery($query, $parametro, $column)
 							?>
 						</tbody>
 					</table>
+					<?php } ?>
 				</div>
 				<!--end: page-->
 			</section>

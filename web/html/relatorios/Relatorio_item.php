@@ -205,13 +205,13 @@ class Item
 
             switch ($tipoMedia) {
                 case 'mes':
-                    $divisor = "TIMESTAMPDIFF(MONTH, $inicio, $fim)";
+                     $divisor = "GREATEST(ROUND((TIMESTAMPDIFF(DAY, $inicio, $fim) + 1) / 30), 1)";
                     break;
                 case 'ano':
-                    $divisor = "TIMESTAMPDIFF(YEAR, $inicio, $fim)";
+                    $divisor = "GREATEST(ROUND((TIMESTAMPDIFF(DAY, $inicio, $fim) + 1) / 365), 1)";
                     break;
                 case 'dia':
-                    $divisor = "TIMESTAMPDIFF(DAY, $inicio, $fim) + 1";
+                    $divisor = "GREATEST(TIMESTAMPDIFF(DAY, $inicio, $fim), 1)";
                     break;
             }
  
@@ -446,6 +446,9 @@ class Item
             case 'estoque':
                 $this->estoque();
                 break;
+            case 'requisicao':
+                $this->requisicao();
+                break;
         }
     }
 
@@ -557,6 +560,117 @@ class Item
                     <td>R$ ' . number_format($tot_val, 2) . '</td>
                 </tr>
             ');
+        }
+    }
+
+    private function requisicao()
+    {
+        $params = "WHERE p.oculto = false AND a.ativo = 1";
+        $cont = 1;
+
+        if ($this->getAlmoxarifado()) {
+            $params .= " AND e.id_almoxarifado = :idAlmoxarifado";
+            $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
+        }
+
+        if ($this->getTipo()) {
+		    $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
+		    $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
+	    }
+
+        if (!$this->getMostrarZerado()) {
+            $params .= " AND e.qtd > 0";
+        }
+
+        $this->setQuery("
+            SELECT
+                p.id_produto,
+                p.descricao,
+                c.descricao_categoria,
+                e.qtd
+            FROM produto p
+            INNER JOIN categoria_produto c 
+                ON c.id_categoria_produto = p.id_categoria_produto
+            INNER JOIN estoque e 
+                ON e.id_produto = p.id_produto
+            INNER JOIN almoxarifado a 
+                ON a.id_almoxarifado = e.id_almoxarifado
+            $params
+            ORDER BY c.descricao_categoria ASC, p.descricao ASC
+        ");
+    }
+
+    public function displayRequisicao()
+    {
+        $this->selecRelatorio();
+        $produtos = $this->query();
+
+        if (empty($produtos)) {
+            echo '<p>Nenhum produto encontrado para gerar o relatório de requisição.</p>';
+            return;
+        }
+
+        $produtosPorCategoria = [];
+
+        foreach ($produtos as $produto) {
+            $categoria = $produto['descricao_categoria'] ?: 'Sem categoria';
+            $produtosPorCategoria[$categoria][] = $produto;
+        }
+
+        $produtosPorFolha = 10;
+
+        foreach ($produtosPorCategoria as $categoria => $listaProdutos) {
+            $folhas = array_chunk($listaProdutos, $produtosPorFolha);
+            $totalFolhas = count($folhas);
+
+            foreach ($folhas as $indiceFolha => $produtosFolha) {
+                $numeroFolha = $indiceFolha + 1;
+
+                echo '<section class="folha-requisicao">';
+                echo '<div class="cabecalho-requisicao">';
+                echo htmlspecialchars(mb_strtoupper($categoria, 'UTF-8')) . ' &nbsp; | &nbsp; ';
+                echo 'FOLHA ' . $numeroFolha . '/' . $totalFolhas . ' &nbsp; | &nbsp; ';
+                echo 'MÊS/ANO: ____/________';
+                echo '</div>';
+
+                echo '<div class="instrucao-requisicao">';
+                echo 'Anote a quantidade retirada no quadrinho do dia. Se houver mais de uma saída no mesmo dia, escreva no mesmo espaço separando os números.';
+                echo '</div>';
+
+                echo '<table class="tabela-requisicao">';
+
+                foreach ($produtosFolha as $produto) {
+                    echo '<tr>';
+
+                    echo '<td class="produto-requisicao" rowspan="2">';
+                    echo htmlspecialchars($produto['descricao'], ENT_QUOTES, 'UTF-8');
+                    echo '</td>';
+
+                    for ($dia = 1; $dia <= 16; $dia++) {
+                        echo '<td class="dia-requisicao dia-azul">';
+                        echo str_pad($dia, 2, '0', STR_PAD_LEFT);
+                        echo '</td>';
+                    }
+
+                    echo '</tr>';
+
+                    echo '<tr>';
+
+                    for ($dia = 17; $dia <= 31; $dia++) {
+                        echo '<td class="dia-requisicao">';
+                        echo str_pad($dia, 2, '0', STR_PAD_LEFT);
+                        echo '</td>';
+                    }
+
+                    echo '<td class="dia-requisicao total-requisicao">TOT.</td>';
+
+                    echo '</tr>';
+                }
+
+                echo '</table>';
+                echo '<div class="rodape-requisicao">Controle mensal de requisição - modelo compacto</div>';
+                echo '</section>';
+            }
         }
     }
 
