@@ -484,6 +484,47 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 ---
 
+## 8. GET `/socios/{id}/beneficios`
+
+Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
+
+### Parâmetros
+- **id** (path parameter, obrigatório): ID do sócio
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+
+### Exemplos de Requisição
+```
+GET /socios/1/beneficios
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+### Resposta - 200 OK
+```json
+{
+  "benefit_points": 12
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `benefit_points` | integer | Quantidade de pontos de benefício calculada para o sócio |
+
+### Resposta - 403 Forbidden (Acesso Negado)
+```json
+{
+  "error": "Acesso negado. Você não tem permissão para acessar os dados de outro sócio."
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Mensagem de erro detalhada | Código do erro"
+}
+```
+
+---
+
 ## Observações Gerais
 
 1. **Content-Type**: Todas as respostas são em JSON com header `Content-Type: application/json`
@@ -507,20 +548,26 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 5. **Nota sobre Typos**: 
    - Campo `contatct` em `/socios/support-contact` contém um typo (deveria ser `contact`)
 
-6. **Fluxo para Solicitar um Novo Código de Verificação**:
+6. **Fluxo de Benefícios**:
+   - Cliente chama GET `/socios/{id}/beneficios` com token JWT válido
+   - O sistema valida se o `user_id` do token pertence ao sócio informado
+   - O sistema busca as regras de benefício e calcula os pontos com base nas contribuições dentro da janela de análise
+   - A resposta retorna o campo `benefit_points` com um valor inteiro
+
+7. **Fluxo para Solicitar um Novo Código de Verificação**:
    - Cliente chama GET `/socios/verify-code?cpf=12345678901` para solicitar um novo código
    - O sistema valida o CPF, localiza o sócio e envia um novo código para seu email
    - Qualquer código anterior é automaticamente invalidado
    - O cliente pode usar o novo código para validar na rota POST `/socios/verify-code` ou para alterar senha na rota POST `/socios/alter-password`
 
-7. **Fluxo Típico para Alterar Senha**:
+8. **Fluxo Típico para Alterar Senha**:
    - Cliente chama GET `/socios/verify-code?cpf=12345678901` para solicitar um código de verificação
    - Cliente recebe o código por email
    - Cliente chama POST `/socios/verify-code` com o código para validá-lo (opcional, para confirmação prévia)
    - Cliente chama POST `/socios/alter-password` com a nova senha e o código de verificação
    - O sistema valida novamente o código e atualiza a senha
 
-8. **Fluxo de Registro de Sócio**:
+9. **Fluxo de Registro de Sócio**:
    - Cliente chama POST `/socios/register` com os dados do novo sócio
    - O sistema verifica se a pessoa (por CPF) já existe no banco; se não, cria uma nova
    - O sistema verifica se a pessoa tem email; se não, retorna erro 400
@@ -528,7 +575,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
    - O sistema envia automaticamente um código de verificação por email (código com 6 dígitos, válido por 15 minutos)
    - A resposta inclui os dados do sócio criado e o resultado do envio do código de verificação
 
-9. **Validação de CPF**:
+10. **Validação de CPF**:
    - O CPF é usado como identificador único para verificar se a pessoa já existe
    - Se a pessoa já existe, os dados de `nome`, `sobrenome` etc. fornecidos no request são ignorados
 
