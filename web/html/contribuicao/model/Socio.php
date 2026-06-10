@@ -1,8 +1,10 @@
 <?php
 class Socio implements JsonSerializable{
+    //Adicionar validações dos atributos nos métodos setters
 
     private $id;
     private $nome;
+    private $sobrenome;
     private $dataNascimento;
     private $telefone;
     private $email;
@@ -25,6 +27,7 @@ class Socio implements JsonSerializable{
         return [
             'id' => $this->id,
             'nome' => $this->nome,
+            'sobrenome' => $this->sobrenome,
             'dataNascimento' => $this->dataNascimento,
             'telefone' => $this->telefone,
             'email' => $this->email,
@@ -38,6 +41,11 @@ class Socio implements JsonSerializable{
             'documento' => $this->documento,
             'tags' => $this->tags,
         ];
+    }
+
+    public function getFullName(): string
+    {
+        return $this->nome . ' ' . $this->sobrenome;
     }
 
     /**
@@ -56,6 +64,26 @@ class Socio implements JsonSerializable{
     public function setNome($nome)
     {
         $this->nome = $nome;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of sobrenome
+     */ 
+    public function getSobrenome()
+    {
+        return $this->sobrenome;
+    }
+
+    /**
+     * Set the value of sobrenome
+     *
+     * @return  self
+     */ 
+    public function setSobrenome($sobrenome)
+    {
+        $this->sobrenome = $sobrenome;
 
         return $this;
     }
