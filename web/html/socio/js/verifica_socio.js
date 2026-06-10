@@ -175,6 +175,7 @@ function desbloquearCamposPessoa() {
         'data_nasc',
         'cep',
         'bairro',
+        'rua',
         'estado',
         'cidade',
         'numero'
