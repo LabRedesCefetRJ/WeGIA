@@ -7,9 +7,21 @@ if (session_status() === PHP_SESSION_NONE)
 if (!isset($_SESSION['usuario'])) {
     http_response_code(401);
     header("Location: ../../../index.php");
+    exit();
 } else {
     session_regenerate_id(true);
 }
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+  http_response_code(412);
+  echo json_encode(['erro' => 'O id do funcionário não é válido.']);
+  exit();
+}
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($id_pessoa, 4, 7);
 
 if (!isset($_POST) or empty($_POST)) {
     $data = file_get_contents("php://input");
