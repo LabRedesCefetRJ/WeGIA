@@ -63,7 +63,6 @@ try {
         $nomeAgenda = $agendaInfo ? e($agendaInfo['descricao']) : "Agenda " . $idAgenda;
     }
 
-    // Nome seguro para arquivo
     $nomeAgendaArquivo = preg_replace('/[\\\\\/:*?"<>|]/', '-', html_entity_decode($nomeAgenda));
 
     $logoHtml = '';
@@ -287,15 +286,24 @@ try {
     $html .= "</tr></tbody></table>";
 
     $usuario = isset($_SESSION['nome']) ? e($_SESSION['nome']) : 'Usuário';
-    $html .= "
-        <div style='margin-top: 25px; width: 100%;'>
-            <table style='width:100%; border-collapse: collapse;'>
+
+    $htmlAssinatura = "
+        <div style='margin-top:40px; width:100%;'>
+            <table style='width:100%; border-collapse:collapse;'>
                 <tr>
-                    <td style='width:50%; text-align:left; font-size:9pt;'>
+                    <td style='width:50%; font-size:9pt;'>
                         <strong>Feito por:</strong> {$usuario}
                     </td>
-                    <td style='width:50%; text-align:center; font-size:9pt;'>
-                        ___________________________________<br>Assinatura
+
+                    <td style='width:35%; font-size:9pt;'>
+                        <table style='width:100%; border-collapse:collapse;'>
+                            <tr>
+                                <td style='width:60px; white-space:nowrap; font-size:9pt;'>
+                                    <strong>Assinatura:</strong>
+                                </td>
+                                <td style='border-bottom:1px solid #000;'></td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
             </table>
@@ -303,6 +311,10 @@ try {
     ";
 
     $mpdf->WriteHTML($html, HTMLParserMode::HTML_BODY);
+
+    if ($mpdf->page <= 1) {
+        $mpdf->WriteHTML($htmlAssinatura, HTMLParserMode::HTML_BODY);
+    }
 
     $nomeArquivo = "Agenda_{$nomeAgendaArquivo}_" . sprintf('%02d-%04d', $mesAlvo, $anoAlvo) . ".pdf";
     $mpdf->Output($nomeArquivo, 'I');
