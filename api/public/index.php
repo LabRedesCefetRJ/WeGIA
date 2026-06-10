@@ -11,6 +11,7 @@ use api\modules\Socio\SocioVerificationHelper;
 use api\contracts\services\PessoaServiceInterface;
 use api\modules\Pessoa\PessoaService;
 use api\modules\Pessoa\PessoaRepository;
+use api\modules\Pessoa\PessoaController;
 use api\modules\Auth\AuthController;
 use api\modules\Auth\AuthMiddleware;
 use api\modules\Auth\AuthService;
@@ -77,6 +78,9 @@ $container = new AppContainer([
     },
     PessoaServiceInterface::class => function ($c) {
         return $c->get(PessoaService::class);
+    },
+    PessoaController::class => function ($c) {
+        return new PessoaController($c->get(PessoaService::class));
     },
     SocioController::class => function ($c) {
         return new SocioController($c->get(SocioService::class), $c->get(PessoaServiceInterface::class), $c->get(EmailVerificationService::class), $c->get(SocioVerificationHelper::class));
@@ -164,6 +168,10 @@ $app->post('/login', [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
 $app->post('/refresh', [AuthController::class, 'refresh']);
 $app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de logout, os tokens são stateless, então não tem como invalidar o token, a única forma é ter uma blacklist de tokens ou usar um campo de "token_version" no banco de dados para invalidar os tokens antigos
+
+//Módulo Pessoa
+$app->put('/pessoas/profile', [PessoaController::class, 'updateProfile'])
+    ->add($container->get(AuthMiddleware::class));
 
 //Módulo Sócio
 $app->post('/socios/register', [SocioController::class, 'registerSocio']);

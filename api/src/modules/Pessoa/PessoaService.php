@@ -74,8 +74,54 @@ class PessoaService implements PessoaServiceInterface
 
     public function atualizarPessoa(int $id, string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf): PessoaInterface
     {
-        // Implementação para atualizar os dados de uma pessoa existente
-        throw new \Exception("Método atualizarPessoa ainda não implementado", 501);
+        // Validar CPF
+        if (!Cpf::validate($cpf)) {
+            throw new \Exception("CPF inválido", 400);
+        }
+
+        // Normaliza o CPF antes de atualizar
+        $cpf = Cpf::normalize($cpf);
+
+        // Verificar se a pessoa existe
+        $pessoaExistente = $this->pessoaRepository->findById((string)$id);
+        if (!$pessoaExistente) {
+            throw new \Exception("Pessoa não encontrada", 404);
+        }
+
+        // Preparar dados para atualização
+        $dados = [
+            'nome' => $nome,
+            'sobrenome' => $sobrenome,
+            'cpf' => $cpf,
+            'sexo' => $sexo,
+            'telefone' => $telefone,
+            'email' => $email,
+        ];
+
+        // Adicionar data_nascimento no formato correto se fornecida
+        if ($dataNascimento !== null) {
+            $dados['data_nascimento'] = $dataNascimento->format('Y-m-d');
+        }
+
+        // Realizar atualização
+        $resultado = $this->pessoaRepository->update($id, $dados);
+        
+        if (!$resultado) {
+            throw new \Exception("Erro ao atualizar pessoa", 500);
+        }
+
+        // Retornar objeto Pessoa atualizado
+        return new Pessoa(
+            $nome,
+            $sobrenome,
+            $cpf,
+            $dataNascimento,
+            $sexo,
+            $telefone,
+            $email,
+            null,
+            $id
+        );
     }
 
     public function deletarPessoa(int $id): bool

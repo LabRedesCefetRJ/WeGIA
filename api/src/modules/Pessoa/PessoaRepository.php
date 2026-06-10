@@ -53,4 +53,27 @@ class PessoaRepository
 
         return $result === false ? null : $result;
     }
+
+    public function update(int $id, array $dados): bool
+    {
+        $setClause = [];
+        $params = ['id' => $id];
+        $campos = ['nome', 'sobrenome', 'data_nascimento', 'sexo', 'telefone', 'email'];
+
+        foreach ($campos as $campo) {
+            if (isset($dados[$campo])) {
+                $setClause[] = "$campo = :$campo";
+                $params[$campo] = $dados[$campo];
+            }
+        }
+
+        if (empty($setClause)) {
+            return true;
+        }
+
+        $query = "UPDATE pessoa SET " . implode(', ', $setClause) . " WHERE id_pessoa = :id";
+        $stmt = $this->pdo->prepare($query);
+
+        return $stmt->execute($params);
+    }
 }
