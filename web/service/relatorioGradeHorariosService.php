@@ -51,15 +51,20 @@ try {
     // --- DEFINIÇÃO DA AGENDA ---
     if ($idAgenda <= 0) {
         $agendas = $agendaDAO->listarAgendas();
+
         if (empty($agendas)) {
             throw new Exception("Nenhuma agenda encontrada.");
         }
+
         $idAgenda   = $agendas[0]['id'];
         $nomeAgenda = e($agendas[0]['descricao']);
     } else {
         $agendaInfo = $agendaDAO->listarAgendaPorId($idAgenda);
         $nomeAgenda = $agendaInfo ? e($agendaInfo['descricao']) : "Agenda " . $idAgenda;
     }
+
+    // Nome seguro para arquivo
+    $nomeAgendaArquivo = preg_replace('/[\\\\\/:*?"<>|]/', '-', html_entity_decode($nomeAgenda));
 
     $logoHtml = '';
 
@@ -299,7 +304,8 @@ try {
 
     $mpdf->WriteHTML($html, HTMLParserMode::HTML_BODY);
 
-    $mpdf->Output("agenda_mensal_{$anoAlvo}_{$mesAlvo}.pdf", 'I');
+    $nomeArquivo = "Agenda_{$nomeAgendaArquivo}_" . sprintf('%02d-%04d', $mesAlvo, $anoAlvo) . ".pdf";
+    $mpdf->Output($nomeArquivo, 'I');
 
 } catch (Exception $e) {
     echo "
