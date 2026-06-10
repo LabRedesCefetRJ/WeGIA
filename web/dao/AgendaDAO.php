@@ -511,4 +511,12 @@ class AgendaDAO
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function obterLogo()
+    {
+        $sql  = "SELECT `imagem`, `tipo` FROM `imagem` WHERE `id_imagem` = 1 LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
