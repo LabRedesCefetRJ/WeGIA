@@ -1,5 +1,16 @@
 <?php
 require("../conexao.php");
+
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
+if (!isset($_SESSION['usuario'])) {
+    http_response_code(401);
+    header("Location: ../../../index.php");
+} else {
+    session_regenerate_id(true);
+}
+
 if (!isset($_POST) or empty($_POST)) {
     $data = file_get_contents("php://input");
     $data = json_decode($data, true);
