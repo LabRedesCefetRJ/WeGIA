@@ -198,4 +198,46 @@ class EntradaControle
         }
         exit;
     }
+
+    public function anular()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idEntrada = filter_input(INPUT_POST, 'id_entrada', FILTER_VALIDATE_INT);
+
+            if (!$idEntrada || $idEntrada < 1) {
+                throw new InvalidArgumentException("ID da entrada inválido.");
+            }
+
+            $entradaDAO = new EntradaDAO();
+            $resultado = $entradaDAO->anular($idEntrada);
+
+            if (!empty($resultado['produtos'])) {
+                require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'EstoqueService.php';
+
+                $estoqueService = new EstoqueService();
+
+                foreach ($resultado['produtos'] as $idProduto) {
+                    $estoqueService->verificarEstoqueMinimo(
+                        (int)$idProduto,
+                        (int)$resultado['id_almoxarifado']
+                    );
+                }
+            }
+
+            echo json_encode([
+                "sucesso" => true,
+                "mensagem" => "Entrada anulada com sucesso."
+            ]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => $e->getMessage()
+            ]);
+        }
+
+        exit;
+    }
 }

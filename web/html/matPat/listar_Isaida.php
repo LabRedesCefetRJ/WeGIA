@@ -194,6 +194,40 @@ require_once ROOT . "/html/personalizacao_display.php";
 				ordering: false
 			});
 		});
+
+		function anularSaida() {
+    		if (!confirm("Tem certeza que deseja anular esta saída? Os produtos serão devolvidos ao estoque.")) {
+        		return;
+    		}
+
+    		$.ajax({
+        		url: "<?= WWW ?>controle/control.php",
+        		method: "POST",
+        		dataType: "json",
+        		data: {
+            		nomeClasse: "SaidaControle",
+            		metodo: "anular",
+            		id_saida: <?= (int)$saida['id_saida'] ?>
+        		},
+        		success: function(resposta) {
+            		if (resposta.sucesso) {
+                		alert(resposta.mensagem);
+                		window.location.href = "<?= WWW ?>html/matPat/listar_saida.php";
+            		} else {
+                		alert(resposta.mensagem || "Erro ao anular saída.");
+            		}
+        		},
+        		error: function(xhr) {
+            		let mensagem = "Erro ao anular saída.";
+
+            		if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+                		mensagem = xhr.responseJSON.mensagem;
+            		}
+
+            		alert(mensagem);
+        		}
+    		});
+		}
 	</script>
 	<style>
 		.linha-informacao {
@@ -260,6 +294,18 @@ require_once ROOT . "/html/personalizacao_display.php";
 						<h2 class="panel-title">Saída Detalhada</h2>
 					</header>
 					<div class="panel-body">
+						<?php if ((int)$saida['ativo'] === 1): ?>
+    						<div style="margin-bottom: 15px;">
+        						<button type="button" class="btn btn-danger" onclick="anularSaida()">
+            						Anular saída
+        						</button>
+    						</div>
+						<?php else: ?>
+    						<div class="alert alert-warning">
+        						Esta saída foi anulada.
+    						</div>
+						<?php endif; ?>
+
 						<div id="containerInformacoesDeSaida" class="container"></div>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>

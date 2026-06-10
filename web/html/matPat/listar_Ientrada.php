@@ -199,6 +199,40 @@ require_once ROOT . "/html/personalizacao_display.php";
 				ordering: false
 			});
 		});
+
+		function anularEntrada() {
+    		if (!confirm("Tem certeza que deseja anular esta entrada? O estoque será ajustado.")) {
+        		return;
+    		}
+
+    		$.ajax({
+        		url: "<?= WWW ?>controle/control.php",
+        		method: "POST",
+        		dataType: "json",
+        		data: {
+            		nomeClasse: "EntradaControle",
+            		metodo: "anular",
+            		id_entrada: <?= (int)$entrada[0]['id_entrada'] ?>
+        		},
+        		success: function(resposta) {
+            		if (resposta.sucesso) {
+                		alert(resposta.mensagem);
+                		window.location.href = "<?= WWW ?>html/matPat/listar_entrada.php";
+            		} else {
+                		alert(resposta.mensagem || "Erro ao anular entrada.");
+            		}
+        		},
+        		error: function(xhr) {
+            		let mensagem = "Erro ao anular entrada.";
+
+            		if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+                		mensagem = xhr.responseJSON.mensagem;
+            		}
+
+            		alert(mensagem);
+        		}
+    		});
+		}
 	</script>
 	<style>
 		.linha-informacao {
@@ -266,6 +300,18 @@ require_once ROOT . "/html/personalizacao_display.php";
 						<h2 class="panel-title">Entrada Detalhada</h2>
 					</header>
 					<div class="panel-body">
+						<?php if ((int)$entrada[0]['ativo'] === 1): ?>
+    						<div style="margin-bottom: 15px;">
+        						<button type="button" class="btn btn-danger" onclick="anularEntrada()">
+            						Anular entrada
+        						</button>
+    						</div>
+						<?php else: ?>
+    						<div class="alert alert-warning">
+        						Esta entrada foi anulada.
+   							</div>
+						<?php endif; ?>
+
 						<div id="containerInformacoesDeEntrada" class="container"></div>
 
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">

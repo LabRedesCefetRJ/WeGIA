@@ -159,4 +159,44 @@ class SaidaControle
             ]);
         }
     }
+
+    public function anular()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idSaida = filter_input(INPUT_POST, 'id_saida', FILTER_VALIDATE_INT);
+
+            if (!$idSaida || $idSaida < 1) {
+                throw new InvalidArgumentException("ID da saída inválido.");
+            }
+
+            $saidaDAO = new SaidaDAO();
+            $resultado = $saidaDAO->anular($idSaida);
+
+            if (!empty($resultado['produtos'])) {
+                $estoqueService = new EstoqueService();
+
+                foreach ($resultado['produtos'] as $idProduto) {
+                    $estoqueService->verificarEstoqueMinimo(
+                        (int)$idProduto,
+                        (int)$resultado['id_almoxarifado']
+                    );
+                }
+            }
+
+            echo json_encode([
+                "sucesso" => true,
+                "mensagem" => "Saída anulada com sucesso."
+            ]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => $e->getMessage()
+            ]);
+        }
+
+        exit;
+    }
 }

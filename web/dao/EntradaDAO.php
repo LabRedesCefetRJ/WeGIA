@@ -126,7 +126,7 @@ class EntradaDAO
         try{
         $entradas=array();
         $pdo = Conexao::connect();
-        $sql = "SELECT e.id_entrada, o.nome_origem, a.descricao_almoxarifado, t.descricao, p.nome, e.data, e.hora, e.valor_total 
+        $sql = "SELECT e.id_entrada, e.ativo, o.nome_origem, a.descricao_almoxarifado, t.descricao, p.nome, e.data, e.hora, e.valor_total 
             FROM entrada e 
             INNER JOIN origem o ON o.id_origem = e.id_origem
             INNER JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
@@ -140,7 +140,7 @@ class EntradaDAO
         
         while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
             $data = new DateTime($linha['data']);
-            $entradas[]=array('id_entrada'=>$linha['id_entrada'],'nome_origem'=>$linha['nome_origem'],'descricao_almoxarifado'=>$linha['descricao_almoxarifado'],'descricao'=>$linha['descricao'],'nome'=>$linha['nome'],'data'=>$data->format('d/m/Y'),'hora'=>$linha['hora'],'valor_total'=>$linha['valor_total']);
+            $entradas[]=array('id_entrada'=>$linha['id_entrada'],'nome_origem'=>$linha['nome_origem'],'descricao_almoxarifado'=>$linha['descricao_almoxarifado'],'descricao'=>$linha['descricao'],'nome'=>$linha['nome'],'data'=>$data->format('d/m/Y'),'hora'=>$linha['hora'],'valor_total'=>$linha['valor_total'],'ativo' => $linha['ativo'],);
         }
         } catch (PDOException $e){
             echo 'Error:' . $e->getMessage();
@@ -178,6 +178,136 @@ class EntradaDAO
         }
 
         return $almoxarifados;
+    }
+
+    public function anular(int $idEntrada): array
+    {
+        $pdo = Conexao::connect();
+        $pdo->beginTransaction();
+
+        try {
+            $sqlEntrada = "
+                SELECT id_entrada, id_almoxarifado, ativo
+                FROM entrada
+                WHERE id_entrada = :id_entrada
+                FOR UPDATE
+            ";
+
+            $stmtEntrada = $pdo->prepare($sqlEntrada);
+            $stmtEntrada->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtEntrada->execute();
+
+            $entrada = $stmtEntrada->fetch(PDO::FETCH_ASSOC);
+
+            if (!$entrada) {
+                throw new Exception("Entrada não encontrada.");
+            }
+
+            if ((int)$entrada['ativo'] === 0) {
+                throw new Exception("Esta entrada já está anulada.");
+            }
+
+            $idAlmoxarifado = (int)$entrada['id_almoxarifado'];
+
+            $sqlItens = "
+                SELECT id_ientrada, id_produto, qtd
+                FROM ientrada
+                WHERE id_entrada = :id_entrada
+                    AND oculto = false
+            ";
+
+            $stmtItens = $pdo->prepare($sqlItens);
+            $stmtItens->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtItens->execute();
+
+            $itens = $stmtItens->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($itens)) {
+                throw new Exception("Esta entrada não possui itens ativos.");
+            }
+
+            foreach ($itens as $item) {
+                $idProduto = (int)$item['id_produto'];
+                $qtdEntrada = (int)$item['qtd'];
+
+                $sqlEstoque = "
+                    SELECT qtd
+                    FROM estoque
+                    WHERE id_produto = :id_produto
+                        AND id_almoxarifado = :id_almoxarifado
+                    FOR UPDATE
+                ";
+
+                $stmtEstoque = $pdo->prepare($sqlEstoque);
+                $stmtEstoque->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+                $stmtEstoque->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+                $stmtEstoque->execute();
+
+                $estoque = $stmtEstoque->fetch(PDO::FETCH_ASSOC);
+
+                if (!$estoque) {
+                    throw new Exception("Estoque não encontrado para um dos produtos da entrada.");
+                }
+
+                $qtdAtual = (int)$estoque['qtd'];
+
+                if ($qtdAtual < $qtdEntrada) {
+                    throw new Exception(
+                        "Não é possível anular esta entrada, pois parte dos produtos já foi utilizada em saídas posteriores."
+                    );
+                }
+            }
+
+            foreach ($itens as $item) {
+                $idProduto = (int)$item['id_produto'];
+                $qtdEntrada = (int)$item['qtd'];
+
+                $sqlBaixarEstoque = "
+                    UPDATE estoque
+                    SET qtd = qtd - :qtd
+                    WHERE id_produto = :id_produto
+                        AND id_almoxarifado = :id_almoxarifado
+                ";
+
+                $stmtBaixarEstoque = $pdo->prepare($sqlBaixarEstoque);
+                $stmtBaixarEstoque->bindValue(':qtd', $qtdEntrada, PDO::PARAM_INT);
+                $stmtBaixarEstoque->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+                $stmtBaixarEstoque->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+                $stmtBaixarEstoque->execute();
+            }
+
+            $sqlOcultarItens = "
+                UPDATE ientrada
+                SET oculto = true
+                WHERE id_entrada = :id_entrada
+            ";
+
+            $stmtOcultarItens = $pdo->prepare($sqlOcultarItens);
+            $stmtOcultarItens->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtOcultarItens->execute();
+
+            $sqlAnularEntrada = "
+                UPDATE entrada
+                SET ativo = 0
+                WHERE id_entrada = :id_entrada
+            ";
+
+            $stmtAnularEntrada = $pdo->prepare($sqlAnularEntrada);
+            $stmtAnularEntrada->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtAnularEntrada->execute();
+
+            $pdo->commit();
+
+            return [
+                'id_almoxarifado' => $idAlmoxarifado,
+                'produtos' => array_map(function ($item) {
+                    return (int)$item['id_produto'];
+                }, $itens)
+            ];
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 }
 ?>

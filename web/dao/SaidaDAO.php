@@ -97,7 +97,8 @@ class SaidaDAO
                 $pdo = Conexao::connect();
                 $consulta = $pdo->prepare("
                     SELECT 
-                        s.id_saida, 
+                        s.id_saida,
+                        s.ativo, 
                         d.nome_destino, 
                         a.descricao_almoxarifado, 
                         t.descricao, 
@@ -128,7 +129,8 @@ class SaidaDAO
                         'nome' => $linha['nome'],
                         'data' => $data->format('d/m/Y'),
                         'hora' => $linha['hora'],
-                        'valor_total' => $linha['valor_total']
+                        'valor_total' => $linha['valor_total'],
+                        'ativo' => $linha['ativo']
                     ];
 
                     return $saida;
@@ -187,6 +189,104 @@ class SaidaDAO
         }
 
         return $almoxarifados;
+    }
+
+    public function anular(int $idSaida): array
+    {
+        $pdo = Conexao::connect();
+        $pdo->beginTransaction();
+
+        try {
+            $sqlSaida = "
+                SELECT id_saida, id_almoxarifado, ativo
+                FROM saida
+                WHERE id_saida = :id_saida
+                FOR UPDATE
+            ";
+
+            $stmtSaida = $pdo->prepare($sqlSaida);
+            $stmtSaida->bindValue(':id_saida', $idSaida, PDO::PARAM_INT);
+            $stmtSaida->execute();
+
+            $saida = $stmtSaida->fetch(PDO::FETCH_ASSOC);
+
+            if (!$saida) {
+                throw new Exception("Saída não encontrada.");
+            }
+
+            if ((int)$saida['ativo'] === 0) {
+                throw new Exception("Esta saída já está anulada.");
+            }
+
+            $idAlmoxarifado = (int)$saida['id_almoxarifado'];
+
+            $sqlItens = "
+                SELECT id_isaida, id_produto, qtd
+                FROM isaida
+                WHERE id_saida = :id_saida
+                    AND oculto = false
+            ";
+
+            $stmtItens = $pdo->prepare($sqlItens);
+            $stmtItens->bindValue(':id_saida', $idSaida, PDO::PARAM_INT);
+            $stmtItens->execute();
+
+            $itens = $stmtItens->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($itens)) {
+                throw new Exception("Esta saída não possui itens ativos.");
+            }
+
+            foreach ($itens as $item) {
+                $idProduto = (int)$item['id_produto'];
+                $qtdSaida = (int)$item['qtd'];
+
+                $sqlDevolverEstoque = "
+                    UPDATE estoque
+                    SET qtd = qtd + :qtd
+                    WHERE id_produto = :id_produto
+                        AND id_almoxarifado = :id_almoxarifado
+                ";
+
+                $stmtDevolverEstoque = $pdo->prepare($sqlDevolverEstoque);
+                $stmtDevolverEstoque->bindValue(':qtd', $qtdSaida, PDO::PARAM_INT);
+                $stmtDevolverEstoque->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+                $stmtDevolverEstoque->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+                $stmtDevolverEstoque->execute();
+            }
+
+            $sqlOcultarItens = "
+                UPDATE isaida
+                SET oculto = true
+                WHERE id_saida = :id_saida
+            ";
+
+            $stmtOcultarItens = $pdo->prepare($sqlOcultarItens);
+            $stmtOcultarItens->bindValue(':id_saida', $idSaida, PDO::PARAM_INT);
+            $stmtOcultarItens->execute();
+
+            $sqlAnularSaida = "
+                UPDATE saida
+                SET ativo = 0
+                WHERE id_saida = :id_saida
+            ";
+
+            $stmtAnularSaida = $pdo->prepare($sqlAnularSaida);
+            $stmtAnularSaida->bindValue(':id_saida', $idSaida, PDO::PARAM_INT);
+            $stmtAnularSaida->execute();
+
+            $pdo->commit();
+
+            return [
+                'id_almoxarifado' => $idAlmoxarifado,
+                'produtos' => array_map(function ($item) {
+                    return (int)$item['id_produto'];
+                }, $itens)
+            ];
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 }
 ?>

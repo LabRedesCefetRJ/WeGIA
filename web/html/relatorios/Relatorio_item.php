@@ -60,7 +60,7 @@ class Item
     private function entrada()
     {
         if ($this->hasValue()) {
-            $params = "WHERE ientrada.qtd > 0 AND ientrada.oculto=false AND almoxarifado.ativo = 1";
+            $params = "WHERE ientrada.qtd > 0 AND ientrada.oculto=false AND entrada.ativo = 1 AND almoxarifado.ativo = 1";
             $cont = 2;
 
             if ($this->getOrigem()) {
@@ -139,7 +139,7 @@ class Item
                 LEFT JOIN tipo_entrada ON tipo_entrada.id_tipo = entrada.id_tipo
                 LEFT JOIN almoxarifado ON almoxarifado.id_almoxarifado = entrada.id_almoxarifado
                 LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
-                WHERE ientrada.qtd > 0 AND ientrada.oculto = false AND almoxarifado.ativo = 1
+                WHERE ientrada.qtd > 0 AND ientrada.oculto = false AND entrada.ativo = 1 AND almoxarifado.ativo = 1
                 GROUP BY 
                 ientrada.id_produto,
                 ientrada.valor_unitario,
@@ -154,7 +154,7 @@ class Item
     private function saida()
     {
         if ($this->hasValue()) {
-            $params = "WHERE isaida.qtd > 0 AND isaida.oculto = false AND almoxarifado.ativo = 1";
+            $params = "WHERE isaida.qtd > 0 AND isaida.oculto = false AND saida.ativo = 1 AND almoxarifado.ativo = 1";
             $cont = 2;
 
             if ($this->getDestino()) {
@@ -259,7 +259,7 @@ class Item
                 LEFT JOIN tipo_saida ON tipo_saida.id_tipo = saida.id_tipo
                 LEFT JOIN almoxarifado ON almoxarifado.id_almoxarifado = saida.id_almoxarifado
                 LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
-                WHERE isaida.qtd > 0 AND isaida.oculto = false AND almoxarifado.ativo = 1
+                WHERE isaida.qtd > 0 AND isaida.oculto = false AND saida.ativo = 1 AND almoxarifado.ativo = 1
                 GROUP BY
                 isaida.id_produto,
                 isaida.valor_unitario,
@@ -317,52 +317,60 @@ class Item
             $this->setDDL_cmd(
                 $table1[(int)$showZero] .
                     "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_entradas AS
-                SELECT 
-                    ientrada.id_produto,
-                    entrada.id_almoxarifado,
-                    SUM(ientrada.qtd) AS qtd_entrada,
-                    SUM(ientrada.qtd * ientrada.valor_unitario) AS valor_entrada
-                FROM ientrada
-                INNER JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
-                GROUP BY ientrada.id_produto, entrada.id_almoxarifado;
+                    SELECT 
+                        ientrada.id_produto,
+                        entrada.id_almoxarifado,
+                        SUM(ientrada.qtd) AS qtd_entrada,
+                        SUM(ientrada.qtd * ientrada.valor_unitario) AS valor_entrada
+                    FROM ientrada
+                    INNER JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
+                    WHERE entrada.ativo = 1
+                        AND ientrada.oculto = false
+                    GROUP BY ientrada.id_produto, entrada.id_almoxarifado;
 
-                CREATE TEMPORARY TABLE IF NOT EXISTS tabela_saidas AS
-                SELECT 
-                    isaida.id_produto,
-                    saida.id_almoxarifado,
-                    SUM(isaida.qtd) AS qtd_saida,
-                    SUM(isaida.qtd * isaida.valor_unitario) AS valor_saida
-                FROM isaida
-                INNER JOIN saida ON saida.id_saida = isaida.id_saida
-                GROUP BY isaida.id_produto, saida.id_almoxarifado;
+                    CREATE TEMPORARY TABLE IF NOT EXISTS tabela_saidas AS
+                    SELECT 
+                        isaida.id_produto,
+                        saida.id_almoxarifado,
+                        SUM(isaida.qtd) AS qtd_saida,
+                        SUM(isaida.qtd * isaida.valor_unitario) AS valor_saida
+                    FROM isaida
+                    INNER JOIN saida ON saida.id_saida = isaida.id_saida
+                    WHERE saida.ativo = 1
+                        AND isaida.oculto = false
+                    GROUP BY isaida.id_produto, saida.id_almoxarifado;
 
-                CREATE TEMPORARY TABLE IF NOT EXISTS estoque_com_preco_atualizado AS
-                SELECT
-                    p.id_produto,
-                    p.descricao,
-                    u.descricao_unidade AS unidade,
-                    a.id_almoxarifado,
-                    IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0) AS qtd,
-                    CASE
-                        WHEN (IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)) <= 0 THEN 0
-                        ELSE IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0)
-                    END AS Total,
-                    IFNULL(
-                        (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
-                        / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
-                        p.preco
-                    ) AS PrecoMedio,
-                    p.oculto,
-                    a.ativo
-                FROM produto p
-                LEFT JOIN unidade u ON u.id_unidade = p.id_unidade
-                LEFT JOIN tabela_entradas te ON te.id_produto = p.id_produto
-                LEFT JOIN tabela_saidas ts 
-                    ON ts.id_produto = p.id_produto
-                    AND ts.id_almoxarifado = te.id_almoxarifado
-                LEFT JOIN almoxarifado a ON a.id_almoxarifado = te.id_almoxarifado;
-                "
-            );
+                    CREATE TEMPORARY TABLE IF NOT EXISTS estoque_com_preco_atualizado AS
+                    SELECT
+                        p.id_produto,
+                        p.descricao,
+                        u.descricao_unidade AS unidade,
+                        a.id_almoxarifado,
+                        est.qtd AS qtd,
+                        est.qtd * IFNULL(
+                            (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
+                            / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
+                            p.preco
+                        ) AS Total,
+                        IFNULL(
+                            (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
+                            / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
+                            p.preco
+                        ) AS PrecoMedio,
+                        p.oculto,
+                        a.ativo
+                    FROM estoque est
+                    INNER JOIN produto p ON p.id_produto = est.id_produto
+                    INNER JOIN almoxarifado a ON a.id_almoxarifado = est.id_almoxarifado
+                    LEFT JOIN unidade u ON u.id_unidade = p.id_unidade
+                    LEFT JOIN tabela_entradas te 
+                        ON te.id_produto = est.id_produto
+                        AND te.id_almoxarifado = est.id_almoxarifado
+                    LEFT JOIN tabela_saidas ts 
+                        ON ts.id_produto = est.id_produto
+                        AND ts.id_almoxarifado = est.id_almoxarifado;
+                    "
+                );
 
             // Query principal segura
             $this->setQuery(
@@ -388,6 +396,8 @@ class Item
                     SUM(ientrada.qtd * ientrada.valor_unitario) AS valor_entrada
                 FROM ientrada
                 INNER JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
+                WHERE entrada.ativo = 1
+                    AND ientrada.oculto = false
                 GROUP BY ientrada.id_produto, entrada.id_almoxarifado;
 
                 CREATE TEMPORARY TABLE IF NOT EXISTS tabela_saidas AS
@@ -398,6 +408,8 @@ class Item
                     SUM(isaida.qtd * isaida.valor_unitario) AS valor_saida
                 FROM isaida
                 INNER JOIN saida ON saida.id_saida = isaida.id_saida
+                WHERE saida.ativo = 1
+                    AND isaida.oculto = false
                 GROUP BY isaida.id_produto, saida.id_almoxarifado;
 
                 CREATE TEMPORARY TABLE IF NOT EXISTS estoque_com_preco_atualizado AS
@@ -406,8 +418,12 @@ class Item
                     p.descricao,
                     u.descricao_unidade AS unidade,
                     a.id_almoxarifado,
-                    IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0) AS qtd,
-                    IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0) AS Total,
+                    est.qtd AS qtd,
+                    est.qtd * IFNULL(
+                        (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
+                        / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
+                        p.preco
+                    ) AS Total,
                     IFNULL(
                         (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
                         / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
@@ -415,14 +431,17 @@ class Item
                     ) AS PrecoMedio,
                     p.oculto,
                     a.ativo
-                FROM produto p
+                FROM estoque est
+                INNER JOIN produto p ON p.id_produto = est.id_produto
+                INNER JOIN almoxarifado a ON a.id_almoxarifado = est.id_almoxarifado
                 LEFT JOIN unidade u ON u.id_unidade = p.id_unidade
-                LEFT JOIN tabela_entradas te ON te.id_produto = p.id_produto
+                LEFT JOIN tabela_entradas te 
+                    ON te.id_produto = est.id_produto
+                    AND te.id_almoxarifado = est.id_almoxarifado
                 LEFT JOIN tabela_saidas ts 
-                    ON ts.id_produto = p.id_produto
-                    AND ts.id_almoxarifado = te.id_almoxarifado
-                LEFT JOIN almoxarifado a ON a.id_almoxarifado = te.id_almoxarifado;
-            ");
+                    ON ts.id_produto = est.id_produto
+                    AND ts.id_almoxarifado = est.id_almoxarifado;
+                ");
 
             $this->setQuery("
                 SELECT e.qtd AS qtd_total, e.descricao, e.Total AS valor_total, e.PrecoMedio, e.unidade
