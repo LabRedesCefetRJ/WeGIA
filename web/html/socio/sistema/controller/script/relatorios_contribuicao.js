@@ -25,7 +25,7 @@ function gerarTabela(data) {
         tdCodigo.innerText = element.codigo;
 
         const tdNome = document.createElement('td');
-        tdNome.innerText = element.nomeSocio;
+        tdNome.innerText = element.nomeSocio + " " + element.sobrenomeSocio;
 
         const tdDataGeracao = document.createElement('td');
         tdDataGeracao.innerText = formatarData(element.dataGeracao);
