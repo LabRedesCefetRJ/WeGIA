@@ -144,7 +144,7 @@ $id_pessoa = filter_var($id_pessoa, FILTER_SANITIZE_NUMBER_INT);
 if ($stmt) {
     // Bind dos parâmetros (tipos: 's' para string, 'i' para inteiro, 'd' para float/double)
     $stmt->bind_param(
-        'ssssssssssssi',
+        'sssssssssssssi',
         $cpf_cnpj,
         $socio_nome,
         $socio_sobrenome,
