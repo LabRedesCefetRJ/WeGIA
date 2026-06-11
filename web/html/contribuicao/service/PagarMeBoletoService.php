@@ -41,7 +41,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                     ]
                 ],
                 "customer" => [
-                    "name" => $contribuicaoLog->getSocio()->getNome(),
+                    "name" => $contribuicaoLog->getSocio()->getFullName(),
                     "email" => $contribuicaoLog->getSocio()->getEmail(),
                     "document_type" => "CPF",
                     "document" => $cpfSemMascara,

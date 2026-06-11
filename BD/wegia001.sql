@@ -3074,3 +3074,69 @@ CREATE TABLE IF NOT EXISTS `wegia`.`projeto_atendido` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_turma`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma` (
+  `id_turma`   INT          NOT NULL AUTO_INCREMENT,
+  `id_projeto` INT          NOT NULL,
+  `nome`       VARCHAR(150) NOT NULL,
+  PRIMARY KEY (`id_turma`),
+  UNIQUE INDEX `uq_turma_nome_projeto` (`id_projeto` ASC, `nome` ASC),
+  INDEX `fk_turma_projeto_idx` (`id_projeto` ASC),
+  CONSTRAINT `fk_turma_projeto`
+    FOREIGN KEY (`id_projeto`)
+    REFERENCES `wegia`.`projeto` (`id_projeto`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_turma_executante`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma_executante` (
+  `id`         INT NOT NULL AUTO_INCREMENT,
+  `id_turma`   INT NOT NULL,
+  `id_pessoa`  INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_turma_executante` (`id_turma` ASC, `id_pessoa` ASC),
+  INDEX `fk_te_turma_idx` (`id_turma` ASC),
+  INDEX `fk_te_pessoa_idx` (`id_pessoa` ASC),
+  CONSTRAINT `fk_te_turma`
+    FOREIGN KEY (`id_turma`)
+    REFERENCES `wegia`.`projeto_turma` (`id_turma`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_te_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`projeto_turma_atendido`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma_atendido` (
+  `id`          INT NOT NULL AUTO_INCREMENT,
+  `id_turma`    INT NOT NULL,
+  `id_atendido` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_turma_atendido` (`id_turma` ASC, `id_atendido` ASC),
+  INDEX `fk_ta_turma_idx` (`id_turma` ASC),
+  INDEX `fk_ta_atendido_idx` (`id_atendido` ASC),
+  CONSTRAINT `fk_ta_turma`
+    FOREIGN KEY (`id_turma`)
+    REFERENCES `wegia`.`projeto_turma` (`id_turma`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_ta_atendido`
+    FOREIGN KEY (`id_atendido`)
+    REFERENCES `wegia`.`atendido` (`idatendido`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;

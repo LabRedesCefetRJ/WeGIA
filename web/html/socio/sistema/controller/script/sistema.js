@@ -324,32 +324,34 @@ $(document).ready(function () {
     }
     $(document).on("submit", "#frm_novo_socio", function (e) {
         e.preventDefault();
-        var DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
-        var socio_nome = $("#socio_nome").val();
-        var pessoa_tipo = $("#pessoa").val();
-        var contribuinte = $("#contribuinte").val();
-        var status = $("#status").val();
-        var email = $("#email").val();
-        var telefone = $("#telefone").val();
-        var cpf_cnpj = $("#cpf_cnpj").val();
-        var rua = $("#rua").val();
-        var numero = $("#numero").val();
-        var complemento = $("#complemento").val();
-        var bairro = $("#bairro").val();
-        var estado = $("#estado").val();
-        var cidade = $("#cidade").val();
-        var tags = obterTagsSelecionadas();
-        var data_nasc = $("#data_nasc").val();
-        var cep = $("#cep").val();
-        var data_referencia = $("#data_referencia").val();
-        var valor_periodo = $("#valor_periodo").val();
-        var tipo_contribuicao = $("#tipo_contribuicao").val();
-        var auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
+        const DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
+        const socio_nome = $("#socio_nome").val();
+        const socio_sobrenome = $("#socio_sobrenome").val();
+        const pessoa_tipo = $("#pessoa").val();
+        const contribuinte = $("#contribuinte").val();
+        const status = $("#status").val();
+        const email = $("#email").val();
+        const telefone = $("#telefone").val();
+        const cpf_cnpj = $("#cpf_cnpj").val();
+        const rua = $("#rua").val();
+        const numero = $("#numero").val();
+        const complemento = $("#complemento").val();
+        const bairro = $("#bairro").val();
+        const estado = $("#estado").val();
+        const cidade = $("#cidade").val();
+        const tags = obterTagsSelecionadas();
+        const data_nasc = $("#data_nasc").val();
+        const cep = $("#cep").val();
+        const data_referencia = $("#data_referencia").val();
+        const valor_periodo = $("#valor_periodo").val();
+        const tipo_contribuicao = $("#tipo_contribuicao").val();
+        const auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
         const csrf = document.querySelector('input[name="csrf_token"]').value;
         // Requisição POST - AJAX
         if (valida_cpf_cnpj(cpf_cnpj)) {
             $.post("./cadastro_socio.php", {
                 "socio_nome": socio_nome,
+                "socio_sobrenome": socio_sobrenome,
                 "pessoa": pessoa_tipo,
                 "contribuinte": contribuinte,
                 "status": status,
@@ -403,6 +405,7 @@ $(document).ready(function () {
 
                 $.post("./cadastro_socio.php", {
                     "socio_nome": socio_nome,
+                    "socio_sobrenome": socio_sobrenome,
                     "pessoa": pessoa_tipo,
                     "contribuinte": contribuinte,
                     "status": status,
@@ -447,35 +450,38 @@ $(document).ready(function () {
         }
 
     });
+
     $(document).on("submit", "#frm_editar_socio", function (e) {
         e.preventDefault();
-        var DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
-        var id_socio = $("#id_socio").val();
-        var socio_nome = $("#socio_nome").val();
-        var pessoa_tipo = $("#pessoa").val();
-        var contribuinte = $("#contribuinte").val();
-        var status = $("#status").val();
-        var email = $("#email").val();
-        var telefone = $("#telefone").val();
-        var cpf_cnpj = $("#cpf_cnpj").val();
-        var rua = $("#rua").val();
-        var numero = $("#numero").val();
-        var complemento = $("#complemento").val();
-        var bairro = $("#bairro").val();
-        var tags = obterTagsSelecionadas();
-        var estado = $("#estado").val();
-        var cidade = $("#cidade").val();
-        var data_nasc = $("#data_nasc").val();
-        var cep = $("#cep").val();
-        var data_referencia = $("#data_referencia").val();
-        var valor_periodo = $("#valor_periodo").val();
-        var tipo_contribuicao = $("#tipo_contribuicao").val();
-        var auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
+        const DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
+        const id_socio = $("#id_socio").val();
+        const socio_nome = $("#socio_nome").val();
+        const socio_sobrenome = $("#socio_sobrenome").val();
+        const pessoa_tipo = $("#pessoa").val();
+        const contribuinte = $("#contribuinte").val();
+        const status = $("#status").val();
+        const email = $("#email").val();
+        const telefone = $("#telefone").val();
+        const cpf_cnpj = $("#cpf_cnpj").val();
+        const rua = $("#rua").val();
+        const numero = $("#numero").val();
+        const complemento = $("#complemento").val();
+        const bairro = $("#bairro").val();
+        const tags = obterTagsSelecionadas();
+        const estado = $("#estado").val();
+        const cidade = $("#cidade").val();
+        const data_nasc = $("#data_nasc").val();
+        const cep = $("#cep").val();
+        const data_referencia = $("#data_referencia").val();
+        const valor_periodo = $("#valor_periodo").val();
+        const tipo_contribuicao = $("#tipo_contribuicao").val();
+        const auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
         // Requisição POST - AJAX
         if (valida_cpf_cnpj(cpf_cnpj)) {
             $.post("./processa_edicao_socio.php", {
                 "id_socio": id_socio,
                 "socio_nome": socio_nome,
+                "socio_sobrenome": socio_sobrenome,
                 "pessoa": pessoa_tipo,
                 "contribuinte": contribuinte,
                 "status": status,
@@ -514,6 +520,7 @@ $(document).ready(function () {
                 $.post("./processa_edicao_socio.php", {
                     "id_socio": id_socio,
                     "socio_nome": socio_nome,
+                    "socio_sobrenome": socio_sobrenome,
                     "pessoa": pessoa_tipo,
                     "contribuinte": contribuinte,
                     "status": status,
@@ -852,6 +859,7 @@ $(document).ready(function () {
     });
 
     // Tabela contribuições
+    //Ajustar sobrenome
     $(document).ready(function () {
         $('#tabela-contribuicoes').DataTable({
             "processing": true,
@@ -859,7 +867,9 @@ $(document).ready(function () {
             "ajax": "../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=getContribuicoesLogJSON",
             "columns": [
                 { "data": "codigo" },
-                { "data": "nomeSocio" },
+                { "data": "nomeSocio" + " " + "sobrenomeSocio", "render": function (data, type, row) {
+                    return row.nomeSocio + " " + row.sobrenomeSocio;
+                }},
                 { "data": "plataforma" },
                 {
                     "data": "meio", "render": function (data, type, row) {
