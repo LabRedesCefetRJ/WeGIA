@@ -16,7 +16,7 @@ class VoluntarioControle
     {
         extract($_REQUEST);
 
-        $camposObrigatorios = ['nome', 'sobrenome', 'gender', 'nascimento', 'cpf', 'data_admissao', 'situacao'];
+        $camposObrigatorios = ['nome', 'sobrenome', 'gender', 'nascimento', 'cpf', 'data_admissao', 'situacao', 'cargo'];
 
         foreach ($camposObrigatorios as $campo) {
             if (!isset($$campo) || empty($$campo)) {
@@ -36,6 +36,8 @@ class VoluntarioControle
         $voluntario = new Voluntario($cpf, $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', $senha, $telefone ?? null, $imgperfil ?? '', $cep ?? '', $uf ?? '', $cidade ?? '', $bairro ?? '', $rua ?? '', $numero_residencia ?? '', $complemento ?? '', $ibge ?? '');
         $voluntario->setData_admissao($data_admissao);
         $voluntario->setId_situacao($situacao);
+        $voluntario->setId_cargo($cargo);
+
 
         return $voluntario;
     }
@@ -50,7 +52,7 @@ class VoluntarioControle
 
             $voluntarioDAO = new VoluntarioDAO();
             $resultado = $voluntarioDAO->selecionarCadastro($cpf);
-            
+
             if ($resultado === 'PESSOA_EXISTENTE') {
                 header('Location: ../html/voluntario/cadastro_voluntario_pessoa_existente.php?cpf=' . htmlspecialchars($cpf));
                 exit;
@@ -58,8 +60,7 @@ class VoluntarioControle
                 header('Location: ../html/voluntario/cadastro_voluntario.php?cpf=' . htmlspecialchars($cpf));
                 exit;
             }
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             if ($e->getMessage() === 'Erro, Voluntário já cadastrado no sistema.') {
                 header("Location: ../html/voluntario/pre_cadastro_voluntario.php?msg_e=" . urlencode($e->getMessage()));
                 exit;
@@ -87,8 +88,7 @@ class VoluntarioControle
             $_SESSION['tipo'] = "success";
 
             header("Location: ../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php");
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -99,12 +99,13 @@ class VoluntarioControle
             $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
             $data_admissao = filter_input(INPUT_POST, 'data_admissao', FILTER_SANITIZE_SPECIAL_CHARS);
             $situacao = filter_input(INPUT_POST, 'situacao', FILTER_SANITIZE_NUMBER_INT);
+            $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
 
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             $voluntarioDAO = new VoluntarioDAO();
-            $idVoluntario = $voluntarioDAO->incluirExistente($cpf, $situacao, $data_admissao);
+            $idVoluntario = $voluntarioDAO->incluirExistente($cpf, $situacao, $data_admissao, $cargo);
 
             if (!isset($idVoluntario))
                 throw new PDOException('Erro ao cadastrar o voluntário existente.', 500);
@@ -113,8 +114,7 @@ class VoluntarioControle
             $_SESSION['tipo'] = "success";
 
             header("Location: ../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php");
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -138,8 +138,7 @@ class VoluntarioControle
             }
             header('Location: ' . $nextPage);
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -159,8 +158,7 @@ class VoluntarioControle
 
             header('Location: ../html/voluntario/profile_voluntario.php?id_voluntario=' . urlencode($id));
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -188,8 +186,7 @@ class VoluntarioControle
 
             header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
             exit;
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -219,8 +216,7 @@ class VoluntarioControle
 
             header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -236,19 +232,19 @@ class VoluntarioControle
 
             if (!$id_voluntario || $id_voluntario < 1)
                 throw new InvalidArgumentException('O id do voluntário informado não é válido.', 412);
-            
+
             $voluntario = new Voluntario('', '', '', '', '', null, null, null, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
             $voluntario->setId_voluntario($id_voluntario);
             $voluntario->setData_admissao($data_admissao);
             $voluntario->setId_situacao($situacao);
+            $voluntario->setId_cargo($cargo);
 
             $voluntarioDAO = new VoluntarioDAO();
             $voluntarioDAO->alterarDetalhes($voluntario);
 
             header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
             exit();
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -269,8 +265,7 @@ class VoluntarioControle
 
             $voluntarioDAO->alterarImagem($id_voluntario, $img);
             header("Location: ../html/voluntario/profile_voluntario.php?id_voluntario=" . urlencode($id_voluntario));
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
@@ -282,8 +277,7 @@ class VoluntarioControle
             $cpfs = $voluntarioDAO->listarCPF();
             header('Content-Type: application/json');
             echo json_encode($cpfs ?: []);
-        }
-        catch (Exception $e) {
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }
