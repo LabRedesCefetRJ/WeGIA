@@ -15,6 +15,7 @@ require_once ROOT . "/classes/Agenda.php";
 require_once ROOT . "/classes/AgendaAlocacao.php";
 require_once ROOT . "/classes/AgendaEquipe.php";
 require_once ROOT . "/classes/AgendaEquipeMembro.php";
+require_once ROOT . "/classes/AgendaEquipeDivisao.php";
 
 class AgendaDAO
 {
@@ -518,5 +519,94 @@ class AgendaDAO
         $stmt->execute();
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    
+    // -------------------------------------------------------
+    // AGENDA EQUIPE DIVISAO
+    // -------------------------------------------------------
+
+    public function incluirDivisao(AgendaEquipeDivisao $divisao)
+    {
+        $sql = "INSERT INTO agenda_equipe_divisao (id_equipe, nome, ativo)
+                VALUES (:id_equipe, :nome, :ativo)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_equipe', $divisao->getId_equipe(), PDO::PARAM_INT);
+        $stmt->bindValue(':nome',      $divisao->getNome());
+        $stmt->bindValue(':ativo',     1, PDO::PARAM_INT);
+        $stmt->execute();
+        return $this->pdo->lastInsertId();
+    }
+
+    public function listarDivisoesPorEquipe(int $idEquipe)
+    {
+        $sql = "SELECT d.id, d.nome, d.ativo
+                FROM agenda_equipe_divisao d
+                WHERE d.id_equipe = :id_equipe
+                ORDER BY d.nome";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_equipe', $idEquipe, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function listarDivisaoPorId(int $id)
+    {
+        $sql = "SELECT d.id, d.id_equipe, d.nome, d.ativo
+                FROM agenda_equipe_divisao d
+                WHERE d.id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function listarMembrosPorDivisao(int $idDivisao)
+    {
+        $sql = "SELECT m.id, p.nome, p.sobrenome, m.ativo
+                FROM agenda_equipe_membro m
+                INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
+                WHERE m.id_divisao = :id_divisao
+                AND m.ativo = 1
+                ORDER BY p.nome";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_divisao', $idDivisao, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function alterarDivisao(AgendaEquipeDivisao $divisao)
+    {
+        $sql = "UPDATE agenda_equipe_divisao SET
+                    nome  = :nome,
+                    ativo = :ativo
+                WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':nome',  $divisao->getNome());
+        $stmt->bindValue(':ativo', $divisao->getAtivo(), PDO::PARAM_INT);
+        $stmt->bindValue(':id',    $divisao->getId(), PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function excluirDivisao(int $id)
+    {
+        // Desvincula membros da divisão antes de excluir
+        $sql = "UPDATE agenda_equipe_membro SET id_divisao = NULL WHERE id_divisao = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $sql = "DELETE FROM agenda_equipe_divisao WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function atribuirDivisaoMembro(int $idMembro, ?int $idDivisao)
+    {
+        $sql = "UPDATE agenda_equipe_membro SET id_divisao = :id_divisao WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_divisao', $idDivisao, PDO::PARAM_INT);
+        $stmt->bindValue(':id',         $idMembro,  PDO::PARAM_INT);
+        $stmt->execute();
     }
 }
