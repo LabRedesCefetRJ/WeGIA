@@ -115,6 +115,18 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
         });
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.css">
+
+    <style>
+        .inline-fields {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .inline-fields .form-control {
+            flex: 1;
+        }
+    </style>
 </head>
 
 <body>

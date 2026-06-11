@@ -39,7 +39,7 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
             'installments' => 1,
             'statement_descriptor' => substr($agradecimento, 0, 13),
             'customer' => [
-                'name' => $recorrencia->getSocio()->getNome(),
+                'name' => $recorrencia->getSocio()->getFullName(),
                 'email' => $recorrencia->getSocio()->getEmail(),
                 'type' => 'individual',
                 'document_type' => 'CPF',

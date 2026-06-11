@@ -13,13 +13,10 @@ try {
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Novo Sócio</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span></button>
       </div>
       <div class="modal-body">
-        <!-- <div class="callout callout-info">
-                <h4>Adicione um novo sócio</h4>
-                <p>Preencha os dados corretamente para cadastrar um novo sócio.</p>
-              </div> -->
         <div class="box box-info box-solid socioModal">
           <div class="box-header">
             <h3 class="box-title"><i class="fa fa-user-plus"></i> Novo sócio</h3>
@@ -28,25 +25,38 @@ try {
             <form id="frm_novo_socio" action="./cadastro_socio.php" method="POST">
               <?= Csrf::inputField() ?>
               <div class="row">
-                <div class="form-group mb-2 col-xs-5">
-                  <label for="nome_cliente">Nome sócio *</label>
-                  <input type="text" class="form-control" id="socio_nome" name="socio_nome" placeholder="" required>
-                </div>
                 <div class="form-group col-xs-3">
-                  <label for="pessoa">Pessoa</label>
+                  <label for="pessoa">Tipo de pessoa</label>
                   <select class="form-control" name="pessoa" id="pessoa">
                     <option value="fisica">Física</option>
                     <option value="juridica">Jurídica</option>
                   </select>
                 </div>
-                <div class="form-group col-xs-4 cpf_div">
+                <div class="form-group col-xs-8 cpf_div">
                   <label id="label_cpf_cnpj" for="valor">CPF *</label>
-                  <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="check_veri_cpf">
-                    <label class="form-check-label" for="exampleCheck1">Deslig. Verif. Cpf</label>
+
+                  <div class="inline-fields">
+                    <input type="text" class="form-control" id="cpf_cnpj" name="cpf">
+
+                    <div class="form-check">
+                      <input type="checkbox" class="form-check-input" id="check_veri_cpf">
+                      <label class="form-check-label" for="exampleCheck1">Desligar verificação de documento</label>
+                    </div>
                   </div>
-                  <input type="text" class="form-control" id="cpf_cnpj" name="cpf">
                 </div>
+
+              </div>
+              <div class="row">
+                <div class="form-group mb-2 col-xs-6">
+                  <label for="socio_nome">Nome *</label>
+                  <input type="text" class="form-control" id="socio_nome" name="socio_nome" placeholder="" required>
+                </div>
+
+                <div class="form-group mb-2 col-xs-6">
+                  <label for="socio_sobrenome">Sobrenome *</label>
+                  <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" placeholder="" required>
+                </div>
+
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
@@ -472,7 +482,7 @@ try {
 
 <!-- Modal aniversariantes -->
 <div class="modal fade" id="modal_aniversariantes" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -508,7 +518,7 @@ try {
 
                   $id = htmlspecialchars($resultado['socioid']);
                   $cpf_cnpj = htmlspecialchars($resultado['cpf']);
-                  $nome_s = htmlspecialchars($resultado['nome']);
+                  $nome_s = htmlspecialchars($resultado['nome'] . " " . $resultado['sobrenome']);
                   $email = htmlspecialchars($resultado['email']);
                   $telefone = htmlspecialchars($resultado['telefone']);
                   $data_nascimento = explode('-', $resultado['data_nascimento']);

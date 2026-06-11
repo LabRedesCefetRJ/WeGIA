@@ -28,9 +28,6 @@ class MercadoPagoPixService implements ApiPixServiceInterface
         $code = $contribuicaoLog->getCodigo();
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
         $telefone = Util::limpaTelefone($contribuicaoLog->getSocio()->getTelefone());
-        $nome = explode(" ", $contribuicaoLog->getSocio()->getNome());
-        $primeiroNome = $nome[0];
-        $ultimoNome = implode(" ", array_slice($nome, 1)) == "" ? " " : implode(" ", array_slice($nome, 1));
 
         /*
             'mobile_phone' => [
@@ -59,8 +56,8 @@ class MercadoPagoPixService implements ApiPixServiceInterface
             "transaction_amount": ' . $contribuicaoLog->getValor() . ',
             "payment_method_id": "pix",
             "payer": {
-                "first_name": "'.$primeiroNome.'",
-                "last_name": "'.$ultimoNome.'",
+                "first_name": "'.$contribuicaoLog->getSocio()->getNome().'",
+                "last_name": "'.$contribuicaoLog->getSocio()->getSobrenome().'",
                 "email": "'.$contribuicaoLog->getSocio()->getEmail().'",
                 "identification": {
                     "type": "CPF",

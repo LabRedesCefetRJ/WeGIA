@@ -26,13 +26,11 @@ if ($id_produto < 1) {
     header("Location: ". WWW ."html/matPat/restaurar_produto.php?id_produto=$id_produto&flag=error&msg=Id inválido: Deve ser maior do que 0");
 }
 
-extract($_REQUEST);
-
 try {
     $sql1 = "SELECT * FROM produto WHERE id_produto=:idProduto";
-    $sql2 = "UPDATE produto SET oculto=false WHERE id_produto=$id_produto;";
-    $sql3 = "UPDATE isaida SET oculto=false WHERE id_produto=$id_produto;";
-    $sql4 = "UPDATE ientrada SET oculto=false WHERE id_produto=$id_produto;";
+    $sql2 = "UPDATE produto SET oculto=false WHERE id_produto=:idProduto;";
+    $sql3 = "UPDATE isaida SET oculto=false WHERE id_produto=:idProduto;";
+    $sql4 = "UPDATE ientrada SET oculto=false WHERE id_produto=:idProduto;";
 
     $pdo = Conexao::connect();
 
