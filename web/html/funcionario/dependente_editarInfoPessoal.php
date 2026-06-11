@@ -83,15 +83,9 @@ try {
         throw new InvalidArgumentException('A data informada não é válida.', 400);
     }
 
-    if (!$nome_pai || strlen($nome_pai) < 1) {
-        throw new InvalidArgumentException('O nome do pai informado não é válido', 400);
-    }
-    Util::validarNomePessoaOuLancar($nome_pai, 'nome do pai', 400);
+    Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 400);
 
-    if (!$nome_mae || strlen($nome_mae) < 1) {
-        throw new InvalidArgumentException('O nome da mãe informado não é válido', 400);
-    }
-    Util::validarNomePessoaOuLancar($nome_mae, 'nome da mãe', 400);
+    Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 400);
 
     if (!$idatendido_familiares || $idatendido_familiares < 1) {
         throw new InvalidArgumentException('O id do familiar informado não é válido', 400);

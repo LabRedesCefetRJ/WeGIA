@@ -117,12 +117,28 @@ class Dependente
 
     public function setTelefone(string $telefone)
     {
-        $telefoneValidado = Util::validarTelefone($telefone);
+        $telefone = trim($telefone);
 
-        if ($telefoneValidado === false)
+        if ($telefone === '') {
+            $this->telefone = null;
+            return $this;
+        }
+
+        $telefoneNumerico = Util::limpaTelefone($telefone);
+        $tamanho = strlen($telefoneNumerico);
+
+        if ($tamanho !== 10 && $tamanho !== 11)
             throw new InvalidArgumentException('O telefone informado não está em um formato válido.', 412);
 
-        $this->telefone = $telefoneValidado;
+        $ddd = substr($telefoneNumerico, 0, 2);
+        $numero = substr($telefoneNumerico, 2);
+
+        if ($tamanho === 11) {
+            $this->telefone = sprintf('(%s)%s-%s', $ddd, substr($numero, 0, 5), substr($numero, 5, 4));
+            return $this;
+        }
+
+        $this->telefone = sprintf('(%s)%s-%s', $ddd, substr($numero, 0, 4), substr($numero, 4, 4));
         return $this;
     }
 
@@ -132,9 +148,9 @@ class Dependente
 
     public function setNomePai(string $nome)
     {
-        Util::validarNomePessoaOuLancar($nome, 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nome, 'nome do pai', 412);
 
-        if (strlen($nome) < 2)
+        if (trim($nome) !== '' && strlen($nome) < 2)
             throw new InvalidArgumentException('Nome do pai deve ter pelo menos 2 caracteres.', 412);
 
         $this->nomePai = $nome;
@@ -148,9 +164,9 @@ class Dependente
 
     public function setNomeMae(string $nome)
     {
-        Util::validarNomePessoaOuLancar($nome, 'nome da mãe', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nome, 'nome da mãe', 412);
 
-        if (strlen($nome) < 2)
+        if (trim($nome) !== '' && strlen($nome) < 2)
             throw new InvalidArgumentException('Nome da mãe deve ter pelo menos 2 caracteres.', 412);
 
         $this->nomeMae = $nome;
