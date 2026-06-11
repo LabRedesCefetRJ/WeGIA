@@ -152,6 +152,14 @@ $resultado = $stmtBuscaPessoa->get_result();
 
 if ($stmtBuscaPessoa->affected_rows > 0) {
     $id_pessoa = $resultado->fetch_assoc()['id_pessoa'];
+    //inserir e-mail na pessoa
+    $stmtEmail = $conexao->prepare("UPDATE pessoa SET email = ? WHERE id_pessoa = ?");
+    $stmtEmail->bind_param('si', $email, $id_pessoa);
+    if (!$stmtEmail->execute()) {
+        http_response_code(500);
+        echo json_encode(['erro' => 'erro ao atualizar o email da pessoa no banco de dados']);
+        exit();
+    }
 } else {
     // Criar uma nova pessoa
     $stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, sobrenome, telefone, email, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
