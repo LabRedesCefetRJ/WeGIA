@@ -117,7 +117,7 @@ class Pessoa implements PessoaInterface, \JsonSerializable
         return $this;
     }
 
-    public function setDataNascimento(DateTime $dataNascimento)
+    public function setDataNascimento(?DateTime $dataNascimento)
     {
         $this->dataNascimento = $dataNascimento;
         return $this;
@@ -153,7 +153,7 @@ class Pessoa implements PessoaInterface, \JsonSerializable
             'id' => $this->id,
             'nome' => $this->nome,
             'sobrenome' => $this->sobrenome,
-            'dataNascimento' => $this->dataNascimento ? $this->dataNascimento->format('Y-m-d') : null,
+            'data_nascimento' => $this->dataNascimento ? $this->dataNascimento->format('Y-m-d') : null,
             'sexo' => $this->sexo,
             'telefone' => $this->telefone,
             'email' => $this->email,
@@ -161,6 +161,7 @@ class Pessoa implements PessoaInterface, \JsonSerializable
             'endereco' => $this->endereco ? [
                 'logradouro' => $this->endereco->getLogradouro(),
                 'numero' => $this->endereco->getNumero(),
+                'complemento' => $this->endereco->getComplemento(),
                 'bairro' => $this->endereco->getBairro(),
                 'cidade' => $this->endereco->getCidade(),
                 'estado' => $this->endereco->getEstado(),

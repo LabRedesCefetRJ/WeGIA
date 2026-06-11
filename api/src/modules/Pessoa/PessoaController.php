@@ -69,6 +69,26 @@ class PessoaController
             $sexo = $body['sexo'] ?? null;
             $telefone = $body['telefone'] ?? null;
             $email = $body['email'] ?? null;
+            $endereco = null;
+
+            if (isset($body['endereco'])) {
+                if (!is_array($body['endereco'])) {
+                    $response->getBody()->write(json_encode([
+                        'error' => 'O campo endereco deve ser um objeto JSON'
+                    ]));
+                    return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+                }
+
+                $endereco = $body['endereco'];
+            } else {
+                $camposEndereco = ['cep', 'estado', 'cidade', 'bairro', 'logradouro', 'numero', 'numero_endereco', 'complemento', 'ibge'];
+                foreach ($camposEndereco as $campo) {
+                    if (array_key_exists($campo, $body)) {
+                        $endereco ??= [];
+                        $endereco[$campo] = $body[$campo];
+                    }
+                }
+            }
 
             // Atualizar a pessoa
             $pessoaAtualizada = $this->pessoaService->atualizarPessoa(
@@ -79,7 +99,8 @@ class PessoaController
                 $sexo,
                 $telefone,
                 $email,
-                $cpf
+                $cpf,
+                $endereco
             );
 
             $response->getBody()->write(json_encode([

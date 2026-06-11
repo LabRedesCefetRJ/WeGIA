@@ -58,10 +58,25 @@ class PessoaRepository
     {
         $setClause = [];
         $params = ['id' => $id];
-        $campos = ['nome', 'sobrenome', 'data_nascimento', 'sexo', 'telefone', 'email'];
+        $campos = [
+            'nome',
+            'sobrenome',
+            'data_nascimento',
+            'sexo',
+            'telefone',
+            'email',
+            'cep',
+            'estado',
+            'cidade',
+            'bairro',
+            'logradouro',
+            'numero_endereco',
+            'complemento',
+            'ibge'
+        ];
 
         foreach ($campos as $campo) {
-            if (isset($dados[$campo])) {
+            if (array_key_exists($campo, $dados)) {
                 $setClause[] = "$campo = :$campo";
                 $params[$campo] = $dados[$campo];
             }

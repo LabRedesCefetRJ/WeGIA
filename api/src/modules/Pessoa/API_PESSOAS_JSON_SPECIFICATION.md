@@ -21,7 +21,7 @@ Authorization: Bearer <seu_token_jwt>
 ```
 
 ### Descrição
-Atualiza os dados pessoais do perfil de um usuário autenticado. Apenas o proprietário dos dados pode fazer alterações em seu próprio perfil.
+Atualiza os dados pessoais e de endereço do perfil de um usuário autenticado. Apenas o proprietário dos dados pode fazer alterações em seu próprio perfil.
 
 ### Request Body
 
@@ -34,7 +34,16 @@ Atualiza os dados pessoais do perfil de um usuário autenticado. Apenas o propri
   "data_nascimento": "1990-05-15",
   "sexo": "M",
   "telefone": "(11) 98765-4321",
-  "email": "joao.silva@example.com"
+  "email": "joao.silva@example.com",
+  "endereco": {
+    "cep": "01001-000",
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Sé",
+    "logradouro": "Praça da Sé",
+    "numero": "100",
+    "complemento": "Apto 12"
+  }
 }
 ```
 
@@ -50,6 +59,21 @@ Atualiza os dados pessoais do perfil de um usuário autenticado. Apenas o propri
 | `sexo` | String | Não | Sexo da pessoa (ex: "M", "F", "O") |
 | `telefone` | String | Não | Telefone de contato com formatação (ex: "(11) 98765-4321") |
 | `email` | String | Não | Endereço de e-mail válido |
+| `endereco` | Object | Não | Dados de endereço salvos na tabela `pessoa` |
+
+Nota: para compatibilidade, os campos de endereço também podem ser enviados no nível raiz do JSON (`cep`, `estado`, `cidade`, `bairro`, `logradouro`, `numero`, `complemento`).
+
+### Campos de `endereco`
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `cep` | String | Não | CEP do endereço |
+| `estado` | String | Não | UF do endereço |
+| `cidade` | String | Não | Cidade |
+| `bairro` | String | Não | Bairro |
+| `logradouro` | String | Não | Logradouro |
+| `numero` | String | Não | Número do endereço |
+| `complemento` | String | Não | Complemento do endereço |
 
 ### Resposta com Sucesso (200 OK)
 
@@ -64,7 +88,16 @@ Atualiza os dados pessoais do perfil de um usuário autenticado. Apenas o propri
     "data_nascimento": "1990-05-15",
     "sexo": "M",
     "telefone": "(11) 98765-4321",
-    "email": "joao.silva@example.com"
+    "email": "joao.silva@example.com",
+    "endereco": {
+      "logradouro": "Praça da Sé",
+      "numero": "100",
+      "complemento": "Apto 12",
+      "bairro": "Sé",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "cep": "01001-000"
+    }
   }
 }
 ```
@@ -112,6 +145,13 @@ Nota: Um usuário não pode editar o perfil de outro usuário. Se o `id` forneci
 ```json
 {
   "error": "Pessoa não encontrada"
+}
+```
+
+#### 400 Bad Request - Endereço Inválido
+```json
+{
+  "error": "O campo endereco deve ser um objeto JSON"
 }
 ```
 
@@ -177,6 +217,10 @@ interface Endereco {
 - Aceita diferentes formatos
 - Recomendado: `(XX) 9XXXX-XXXX` para celular ou `(XX) XXXX-XXXX` para fixo
 
+### Validação de Endereço
+- O objeto `endereco` deve ser JSON válido quando informado
+- Os campos podem ser enviados parcialmente; apenas os informados são atualizados na tabela `pessoa`
+
 ---
 
 ## 4. Exemplos de Uso
@@ -195,7 +239,16 @@ curl -X PUT http://localhost:8000/pessoas/profile \
     "data_nascimento": "1990-05-15",
     "sexo": "M",
     "telefone": "(11) 98765-4321",
-    "email": "joao.silva@example.com"
+    "email": "joao.silva@example.com",
+    "endereco": {
+      "cep": "01001-000",
+      "estado": "SP",
+      "cidade": "São Paulo",
+      "bairro": "Sé",
+      "logradouro": "Praça da Sé",
+      "numero": "100",
+      "complemento": "Apto 12"
+    }
   }'
 ```
 
@@ -213,7 +266,16 @@ const dadosAtualizados = {
   data_nascimento: "1990-05-15",
   sexo: "M",
   telefone: "(11) 98765-4321",
-  email: "joao.silva@example.com"
+  email: "joao.silva@example.com",
+  endereco: {
+    cep: "01001-000",
+    estado: "SP",
+    cidade: "São Paulo",
+    bairro: "Sé",
+    logradouro: "Praça da Sé",
+    numero: "100",
+    complemento: "Apto 12"
+  }
 };
 
 fetch('http://localhost:8000/pessoas/profile', {
@@ -251,7 +313,16 @@ dados = {
     'data_nascimento': '1990-05-15',
     'sexo': 'M',
     'telefone': '(11) 98765-4321',
-    'email': 'joao.silva@example.com'
+    'email': 'joao.silva@example.com',
+    'endereco': {
+        'cep': '01001-000',
+        'estado': 'SP',
+        'cidade': 'São Paulo',
+        'bairro': 'Sé',
+        'logradouro': 'Praça da Sé',
+        'numero': '100',
+        'complemento': 'Apto 12'
+    }
 }
 
 response = requests.put(
