@@ -2,6 +2,7 @@
 class AgendaEquipeMembro {
     private $id;
     private $id_equipe;
+    private $id_divisao;
     private $id_pessoa;
     private $ativo;
 
@@ -11,6 +12,10 @@ class AgendaEquipeMembro {
 
     public function getId_equipe(){ 
         return $this->id_equipe; 
+    }
+
+    public function getId_divisao(){ 
+        return $this->id_divisao; 
     }
 
     public function getId_pessoa(){ 
@@ -30,6 +35,10 @@ class AgendaEquipeMembro {
 
     public function setId_equipe($id_equipe){ 
         $this->id_equipe = $id_equipe; 
+    }
+
+    public function setId_divisao($id_divisao){ 
+        $this->id_divisao = $id_divisao; 
     }
 
     public function setId_pessoa($id_pessoa){ 

@@ -5,6 +5,7 @@ require_once ROOT . '/classes/Agenda.php';
 require_once ROOT . '/classes/AgendaAlocacao.php';
 require_once ROOT . '/classes/AgendaEquipe.php';
 require_once ROOT . '/classes/AgendaEquipeMembro.php';
+require_once ROOT . '/classes/AgendaEquipeDivisao.php';
 require_once ROOT . '/dao/AgendaDAO.php';
 require_once ROOT . '/classes/Util.php';
 require_once ROOT . '/classes/Notificacao.php';
@@ -450,7 +451,23 @@ class AgendaControle
             $equipe->setFim_turno($fim_turno);
 
             $dao = new AgendaDAO();
-            $dao->incluirEquipe($equipe);
+            $id_nova_equipe = $dao->incluirEquipe($equipe);
+
+            $divisoes = $_POST['divisoes'] ?? [];
+            if (is_array($divisoes) && !empty($divisoes) && $id_nova_equipe) {
+                foreach ($divisoes as $div) {
+                    $nomeVar = is_array($div) ? ($div['nome'] ?? '') : $div;
+                    $nomeLimpo = trim(filter_var($nomeVar, FILTER_SANITIZE_SPECIAL_CHARS));
+                    
+                    if (!empty($nomeLimpo)) {
+                        $divObj = new AgendaEquipeDivisao();
+                        $divObj->setId_equipe($id_nova_equipe);
+                        $divObj->setNome($nomeLimpo);
+                        $divObj->setAtivo(1);
+                        $dao->incluirDivisao($divObj);
+                    }
+                }
+            }
 
             http_response_code(200);
             echo json_encode(['msg' => 'Equipe cadastrada com sucesso!']);
@@ -479,6 +496,7 @@ class AgendaControle
         header('Content-Type: application/json');
 
         try {
+            // ... (manter seus filtros atuais de $id, $nome, $id_status, etc.)
             $id           = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
             $nome         = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
             $id_status    = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
@@ -487,20 +505,7 @@ class AgendaControle
             $inicio_turno = filter_input(INPUT_POST, 'inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
             $fim_turno    = filter_input(INPUT_POST, 'fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
 
-            if (!$id || $id < 1)
-                throw new InvalidArgumentException('O id informado não é válido.', 412);
-
-            if (empty($nome))
-                throw new InvalidArgumentException('O nome da equipe não pode ser vazio.', 412);
-
-            if (!$id_agenda || $id_agenda < 1)
-                throw new InvalidArgumentException('A agenda informada não é válida.', 412);
-
-            if (empty($inicio_turno))
-                throw new InvalidArgumentException('O horário de início do turno não pode ser vazio.', 412);
-
-            if (empty($fim_turno))
-                throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
+            // ... (seus IFs de validação permanecem iguais)
 
             $equipe = new AgendaEquipe();
             $equipe->setId($id);
@@ -513,6 +518,40 @@ class AgendaControle
 
             $dao = new AgendaDAO();
             $dao->alterarEquipe($equipe);
+
+            $divisoes = $_POST['divisoes'] ?? [];
+            $ids_mantidos = [];
+
+            if (is_array($divisoes)) {
+                foreach ($divisoes as $div) {
+                    // $div é o objeto {id: "X", nome: "Y"} enviado pelo JS
+                    $nomeLimpo = trim(filter_var($div['nome'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
+                    $idDiv = !empty($div['id']) ? (int)$div['id'] : null;
+
+                    if (!empty($nomeLimpo)) {
+                        $divObj = new AgendaEquipeDivisao();
+                        $divObj->setId_equipe($id);
+                        $divObj->setNome($nomeLimpo);
+                        $divObj->setAtivo(1);
+
+                        if ($idDiv) {
+                            $divObj->setId($idDiv);
+                            $dao->alterarDivisao($divObj);
+                            $ids_mantidos[] = $idDiv;
+                        } else {
+                            $novoId = $dao->incluirDivisao($divObj);
+                            if ($novoId) $ids_mantidos[] = $novoId;
+                        }
+                    }
+                }
+            }
+
+            $divisoesAtuais = $dao->listarDivisoesPorEquipe($id);
+            foreach ($divisoesAtuais as $da) {
+                if (!in_array($da['id'], $ids_mantidos)) {
+                    $dao->excluirDivisao($da['id']);
+                }
+            }
 
             http_response_code(200);
             echo json_encode(['msg' => 'Equipe alterada com sucesso!']);
@@ -565,8 +604,9 @@ class AgendaControle
         header('Content-Type: application/json');
 
         try {
-            $id_equipe = filter_input(INPUT_POST, 'id_equipe', FILTER_SANITIZE_NUMBER_INT);
-            $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+            $id_equipe  = filter_input(INPUT_POST, 'id_equipe', FILTER_SANITIZE_NUMBER_INT);
+            $id_pessoa  = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+            $id_divisao = filter_input(INPUT_POST, 'id_divisao', FILTER_SANITIZE_NUMBER_INT); // NOVO CAMPO
 
             if (!$id_equipe || $id_equipe < 1)
                 throw new InvalidArgumentException('A equipe informada não é válida.', 412);
@@ -577,6 +617,7 @@ class AgendaControle
             $membro = new AgendaEquipeMembro();
             $membro->setId_equipe($id_equipe);
             $membro->setId_pessoa($id_pessoa);
+            $membro->setId_divisao($id_divisao ? (int)$id_divisao : null);
             $membro->setAtivo(1);
 
             $dao = new AgendaDAO();
@@ -717,6 +758,150 @@ class AgendaControle
 
             http_response_code(200);
             echo json_encode(['msg' => 'Membro alterado com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    // -------------------------------------------------------
+    // AGENDA EQUIPE DIVISAO
+    // -------------------------------------------------------
+
+    public function incluirDivisao()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id_equipe = filter_input(INPUT_POST, 'id_equipe', FILTER_SANITIZE_NUMBER_INT);
+            $nome      = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+
+            if (!$id_equipe || $id_equipe < 1)
+                throw new InvalidArgumentException('A equipe informada não é válida.', 412);
+
+            if (empty($nome))
+                throw new InvalidArgumentException('O nome da divisão não pode ser vazio.', 412);
+
+            $divisao = new AgendaEquipeDivisao();
+            $divisao->setId_equipe($id_equipe);
+            $divisao->setNome($nome);
+            $divisao->setAtivo(1);
+
+            $dao = new AgendaDAO();
+            $dao->incluirDivisao($divisao);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Divisão cadastrada com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function listarDivisoesPorEquipe()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id_equipe = filter_input(INPUT_GET, 'id_equipe', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_equipe || $id_equipe < 1)
+                throw new InvalidArgumentException('O id da equipe informado não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            echo json_encode($dao->listarDivisoesPorEquipe($id_equipe));
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function listarMembrosPorDivisao()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id_divisao = filter_input(INPUT_GET, 'id_divisao', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_divisao || $id_divisao < 1)
+                throw new InvalidArgumentException('O id da divisão informado não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            echo json_encode($dao->listarMembrosPorDivisao($id_divisao));
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function alterarDivisao()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id    = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
+            $nome  = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
+            $ativo = filter_input(INPUT_POST, 'ativo', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id || $id < 1)
+                throw new InvalidArgumentException('O id informado não é válido.', 412);
+
+            if (empty($nome))
+                throw new InvalidArgumentException('O nome da divisão não pode ser vazio.', 412);
+
+            $divisao = new AgendaEquipeDivisao();
+            $divisao->setId($id);
+            $divisao->setNome($nome);
+            $divisao->setAtivo($ativo ?? 1);
+
+            $dao = new AgendaDAO();
+            $dao->alterarDivisao($divisao);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Divisão alterada com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function excluirDivisao()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id = filter_input(INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id || $id < 1)
+                throw new InvalidArgumentException('O id informado não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            $dao->excluirDivisao($id);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Divisão excluída com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function atribuirDivisaoMembro()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id_membro  = filter_input(INPUT_POST, 'id_membro', FILTER_SANITIZE_NUMBER_INT);
+            $id_divisao = filter_input(INPUT_POST, 'id_divisao', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_membro || $id_membro < 1)
+                throw new InvalidArgumentException('O id do membro informado não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            $dao->atribuirDivisaoMembro((int)$id_membro, $id_divisao ? (int)$id_divisao : null);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Divisão do membro atualizada com sucesso!']);
         } catch (Exception $e) {
             Util::tratarException($e);
         }

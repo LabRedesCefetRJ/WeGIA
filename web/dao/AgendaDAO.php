@@ -350,12 +350,13 @@ class AgendaDAO
 
     public function incluirMembro(AgendaEquipeMembro $membro)
     {
-        $sql = "INSERT INTO agenda_equipe_membro (id_equipe, id_pessoa, ativo)
-                VALUES (:id_equipe, :id_pessoa, :ativo)";
+        $sql = "INSERT INTO agenda_equipe_membro (id_equipe, id_divisao, id_pessoa, ativo)
+                VALUES (:id_equipe, :id_divisao, :id_pessoa, :ativo)";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id_equipe', $membro->getId_equipe(), PDO::PARAM_INT);
-        $stmt->bindValue(':id_pessoa', $membro->getId_pessoa(), PDO::PARAM_INT);
-        $stmt->bindValue(':ativo',     1, PDO::PARAM_INT);
+        $stmt->bindValue(':id_equipe',  $membro->getId_equipe(), PDO::PARAM_INT);
+        $stmt->bindValue(':id_divisao', $membro->getId_divisao(), PDO::PARAM_INT);
+        $stmt->bindValue(':id_pessoa',  $membro->getId_pessoa(), PDO::PARAM_INT);
+        $stmt->bindValue(':ativo',      1, PDO::PARAM_INT);
         $stmt->execute();
         return $this->pdo->lastInsertId();
     }
@@ -363,7 +364,7 @@ class AgendaDAO
     // Lista apenas membros ativos da equipe
     public function listarMembrosPorEquipe(int $idEquipe)
     {
-        $sql = "SELECT m.id, p.nome, p.sobrenome, m.ativo,
+        $sql = "SELECT m.id, m.id_divisao, p.nome, p.sobrenome, m.ativo,
                        e.inicio_turno, e.fim_turno,
                        CASE
                            WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')

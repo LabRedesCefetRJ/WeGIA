@@ -548,6 +548,19 @@ require_once "../personalizacao_display.php";
                         </div>
                     </div>
                 </div>
+                <div class="row" style="margin-top: 15px;">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label class="control-label"><i class="fa fa-sitemap mr-xs"></i> Divisões</label>
+                            <div id="wrapper-divisoes-equipe" style="margin-bottom: 10px;">
+                                </div>
+                            <button type="button" class="btn btn-default btn-sm" id="btn-nova-divisao-input">
+                                <i class="fa fa-plus text-success"></i> Adicionar Divisão
+                            </button>
+                            <p class="help-block" style="font-size: 11px;">Permite organizar os membros em subgrupos</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group" id="equipe-status-grupo">
                     <label class="control-label">Status <sup class="text-danger">*</sup></label>
                     <select class="form-control" id="equipe-status"></select>
@@ -593,10 +606,18 @@ require_once "../personalizacao_display.php";
                 <div class="membros-panel mb-md">
                     <h5 style="margin-top:0; font-weight:700; color:#2d3a4a;">Adicionar Membro</h5>
                     <div class="row">
-                        <div class="col-sm-10">
+                        <div class="col-sm-6">
                             <div class="form-group">
                                 <label class="control-label">Pessoa <sup class="text-danger">*</sup></label>
                                 <select class="form-control" id="membro-pessoa"></select>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="form-group">
+                                <label class="control-label">Divisão</label>
+                                <select class="form-control" id="membro-divisao" disabled>
+                                    <option value="">Sem divisão</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-sm-2" style="padding-top:25px;">
@@ -612,11 +633,10 @@ require_once "../personalizacao_display.php";
                         <tr>
                             <th>Nome</th>
                             <th style="width:110px;" class="text-center">Turno</th>
-                            <th style="width:100px;">Ações</th>
-                        </tr>
+                            <th style="width:160px;">Divisão</th> <th style="width:120px;">Ações</th> </tr>
                     </thead>
                     <tbody id="tbody-membros">
-                        <tr><td colspan="3" class="text-center text-muted">Nenhum membro ativo.</td></tr>
+                        <tr><td colspan="4" class="text-center text-muted">Nenhum membro ativo.</td></tr>
                     </tbody>
                 </table>
 
@@ -835,10 +855,6 @@ require_once "../personalizacao_display.php";
 <script>
 var API = '../../controle/control.php';
 
-/* ── Helpers para calendar.addEvent() sem duplicatas ────────
-   Eventos criados otimisticamente são rastreados em
-   _calPendingEvents. _calRefetch() os remove antes de buscar
-   do servidor, evitando duplicatas no calendário.           */
 var _calPendingEvents = [];
 var _eventoAtual = null;
 function _pad(n) { return n < 10 ? '0' + n : '' + n; }
@@ -853,9 +869,37 @@ function _calRefetch() {
 
 /* ── Sidebar de equipes (drag-and-drop externo) ──────────── */
 
-var CORES_EQUIPE  = ['#337ab7','#5cb85c','#d9534f','#f0ad4e','#5bc0de','#777777'];
-var _equipeCorMap  = {};   /* id_equipe → cor; fonte única para toolbar e calendário */
+var CORES_EQUIPE = [
+    '#337ab7', '#5cb85c', '#d9534f', '#f0ad4e', '#5bc0de',
+    '#8e44ad', '#e67e22', '#1abc9c', '#2c3e50', '#e74c3c', 
+    '#34495e', '#9b59b6', '#16a085', '#27ae60', '#f39c12', 
+    '#d35400', '#c0392b', '#7f8c8d', '#ff9ff3', '#01a3a4'
+];
+
+var _equipeCorMap  = {};   
 var _draggableInst = null;
+
+function gerarCorEquipe(id) {
+    var index = id % CORES_EQUIPE.length;
+    return CORES_EQUIPE[index];
+}
+
+function preCarregarEquipesCores() {
+    api('listarEquipes').done(function (equipes) {
+        $.each(equipes, function (idx, e) {
+            if (!_equipeCorMap[String(e.id)]) {
+                // Chama a nossa nova função que usa o ID
+                _equipeCorMap[String(e.id)] = gerarCorEquipe(e.id);
+            }
+        });
+        if (window._calendar) {
+            window._calendar.getEvents().forEach(function (evt) {
+                var cor = _equipeCorMap[String(evt.extendedProps.id_equipe)];
+                if (cor) evt.setProp('color', cor);
+            });
+        }
+    });
+}
 
 function preCarregarEquipesCores() {
     api('listarEquipes').done(function (equipes) {
@@ -909,17 +953,21 @@ function carregarSidebarEquipes(idAgenda) {
     api('listarEquipes', { id_agenda: idAgenda }).done(function (equipes) {
         _equipeCorMap = {};
         var opts = '<option value="">Selecione uma equipe</option>';
-        var idx = 0;
+        
         $.each(equipes, function (_, e) {
             if (!e.status || e.status.toLowerCase() !== 'ativo') return;
-            var cor = CORES_EQUIPE[idx % CORES_EQUIPE.length];
+            
+            // Chama a função matemática usando o ID da equipe, sem depender da ordem (idx)
+            var cor = gerarCorEquipe(e.id);
+            
             _equipeCorMap[String(e.id)] = cor;
             opts += '<option value="' + e.id + '">' + e.nome + '</option>';
-            idx++;
         });
+        
         $('#sidebar-equipe-select').html(opts).prop('disabled', false);
         initSelect2('#sidebar-equipe-select', 'Selecione uma equipe...');
         atualizarCardEquipe(null);
+        
         /* Aplica cores nos eventos já renderizados */
         if (window._calendar) {
             $.each(window._calendar.getEvents(), function (_, evt) {
@@ -1027,7 +1075,7 @@ function fmtTime(str) {
     return str.substring(0, 5); /* HH:MM */
 }
 
-/* Formata o turno com ícone: ☀ diurno (mesmo dia) ou 🌙 noturno (vira o dia).
+/* Formata o turno com ícone: ☀ diurno (mesmo dia) ou noturno (vira o dia).
    iconeAbaixo=true coloca o ícone em uma linha própria, abaixo do horário. */
 function fmtTurno(inicio, fim, iconeAbaixo) {
     if (!inicio || !fim) return '—';
@@ -1102,8 +1150,6 @@ document.addEventListener('DOMContentLoaded', function () {
         /* Eventos como blocos sólidos: plantão noturno (ex.: 19h->07h) atravessa a meia-noite
            e ocupa visualmente os dois dias. */
         eventDisplay: 'block',
-        /* Esconde a hora que o FC colocava na frente do nome da equipe (a hora aparece
-           ao clicar no evento e nas tabelas). */
         displayEventTime: false,
         editable: false,
         droppable: true,
@@ -1476,6 +1522,7 @@ $('#btn-nova-equipe').on('click', function () {
     $('#equipe-inicio-turno').val(''); $('#equipe-fim-turno').val('');
     ocultarErroModal('modal-equipe-erro');
     $('#equipe-status-grupo').hide();
+    $('#wrapper-divisoes-equipe').empty();
     carregarSelectAgendaEquipe(null);
     carregarStatusEquipe(null, true);
     $('#modal-equipe').modal('show');
@@ -1483,8 +1530,10 @@ $('#btn-nova-equipe').on('click', function () {
 
 $(document).on('click', '.btn-editar-equipe', function () {
     var $b = $(this);
+    var idEquipe = $b.data('id'); // Pegamos o ID da equipe
+    
     $('#modal-equipe-titulo').text('Editar Equipe');
-    $('#equipe-id').val($b.data('id'));
+    $('#equipe-id').val(idEquipe);
     $('#equipe-nome').val($b.data('nome'));
     $('#equipe-descricao').val($b.data('descricao'));
     $('#equipe-inicio-turno').val($b.data('inicio-turno'));
@@ -1493,20 +1542,22 @@ $(document).on('click', '.btn-editar-equipe', function () {
     $('#equipe-status-grupo').show();
     carregarSelectAgendaEquipe($b.data('agenda'));
     carregarStatusEquipe($b.data('status'));
-    $('#modal-equipe').modal('show');
-});
 
-$(document).on('click', '.btn-excluir-equipe', function () {
-    var id = $(this).data('id');
-    confirmar('Excluir esta equipe? Todas as alocações vinculadas a ela também serão excluídas.', function () {
-        api('excluirEquipe', { id: id }).done(function (r) {
-            exibirMsgAba('msg-equipes', r.msg || 'Excluído com sucesso.', 'success');
-            carregarEquipes();
-        }).fail(function (xhr) {
-            var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao excluir.';
-            exibirMsgAba('msg-equipes', msg, 'danger');
+    $('#wrapper-divisoes-equipe').empty();
+    api('listarDivisoesPorEquipe', { id_equipe: idEquipe }).done(function(divisoes) {
+        $.each(divisoes || [], function(_, div) {
+            // Note que guardamos o ID da divisão no data-id
+            var html = '<div class="input-group mb-xs div-input-wrapper">' +
+                       '<input type="text" class="form-control input-sm input-nome-divisao" value="' + div.nome + '" data-id="' + div.id + '" placeholder="Nome da divisão">' +
+                       '<span class="input-group-btn">' +
+                       '<button class="btn btn-danger btn-sm btn-remover-divisao-input" type="button" title="Remover"><i class="fa fa-trash"></i></button>' +
+                       '</span>' +
+                       '</div>';
+            $('#wrapper-divisoes-equipe').append(html);
         });
     });
+
+    $('#modal-equipe').modal('show');
 });
 
 $('#btn-salvar-equipe').on('click', function () {
@@ -1525,7 +1576,27 @@ $('#btn-salvar-equipe').on('click', function () {
     if (!fim_turno)    { exibirErroModal('modal-equipe-erro', 'Informe o horário de fim do turno.'); return; }
     if (id && !status) { exibirErroModal('modal-equipe-erro', 'Selecione o status.'); return; }
 
-    var dados = { nome: nome, descricao: descricao, id_status: status, id_agenda: id_agenda, inicio_turno: inicio_turno, fim_turno: fim_turno };
+    var divisoesArray = [];
+    $('.input-nome-divisao').each(function() {
+        var $input = $(this);
+        var val = $.trim($input.val());
+        var idDiv = $input.data('id') || '';
+        
+        if(val) {
+            divisoesArray.push({ id: idDiv, nome: val });
+        }
+    });
+
+    var dados = { 
+        nome: nome, 
+        descricao: descricao, 
+        id_status: status, 
+        id_agenda: id_agenda, 
+        inicio_turno: inicio_turno, 
+        fim_turno: fim_turno,
+        divisoes: divisoesArray
+    };
+
     if (id) dados.id = id;
 
     apiPost(id ? 'alterarEquipe' : 'incluirEquipe', dados).done(function (r) {
@@ -1538,19 +1609,82 @@ $('#btn-salvar-equipe').on('click', function () {
     });
 });
 
-/* ── Membros ─────────────────────────────────────────────── */
+$('#btn-nova-divisao-input').on('click', function() {
+    var html = '<div class="input-group mb-xs div-input-wrapper">' +
+               '<input type="text" class="form-control input-sm input-nome-divisao" placeholder="Nome da divisão">' +
+               '<span class="input-group-btn">' +
+               '<button class="btn btn-danger btn-sm btn-remover-divisao-input" type="button" title="Remover"><i class="fa fa-trash"></i></button>' +
+               '</span>' +
+               '</div>';
+    $('#wrapper-divisoes-equipe').append(html);
+});
+
+$(document).on('click', '.btn-remover-divisao-input', function(e) {
+    e.preventDefault();
+    $(this).closest('.div-input-wrapper').remove();
+});
+
+/* ── Membros ─────────────────────────────────────────────── */    
+
+var _divisoesEquipeAtual = [];
+
+function carregarDivisoes(idEquipe) {
+    api('listarDivisoesPorEquipe', { id_equipe: idEquipe }).done(function(divisoes) {
+        _divisoesEquipeAtual = divisoes || [];
+        
+        var html = '';
+        if (_divisoesEquipeAtual.length === 0) {
+            html = '<span class="text-muted" style="font-size:12px;">Nenhuma divisão cadastrada.</span>';
+        } else {
+            $.each(_divisoesEquipeAtual, function(_, div) {
+                html += '<span class="badge badge-membro" style="font-size:12px; padding:6px 10px; background:#eaf4fb; color:#0088cc; border:1px solid #b3d9f0;">' + div.nome + 
+                        ' <a href="#" class="btn-excluir-divisao text-danger" data-id="' + div.id + '" style="margin-left:5px;" title="Excluir"><i class="fa fa-times"></i></a></span>';
+            });
+        }
+        $('#lista-divisoes').html(html);
+
+        var $selectDiv = $('#membro-divisao');
+        $selectDiv.empty().append('<option value="">Sem divisão</option>');
+
+        if (_divisoesEquipeAtual.length > 0) {
+            $.each(_divisoesEquipeAtual, function(_, div) {
+                $selectDiv.append('<option value="' + div.id + '">' + div.nome + '</option>');
+            });
+            $selectDiv.prop('disabled', false); // Habilita se a equipe tem divisões
+        } else {
+            $selectDiv.prop('disabled', true); // Mantém bloqueado
+        }
+        
+        initSelect2('#membro-divisao', 'Sem divisão');
+        
+        carregarMembros(idEquipe);
+    });
+}
 
 function carregarMembros(idEquipe) {
     api('listarMembrosPorEquipe', { id_equipe: idEquipe }).done(function (dados) {
         var html = '';
         if (!dados || !dados.length) {
-            html = '<tr><td colspan="3" class="text-center text-muted">Nenhum membro ativo.</td></tr>';
+            // Ajustado colspan para 4
+            html = '<tr><td colspan="4" class="text-center text-muted">Nenhum membro ativo.</td></tr>';
         } else {
             $.each(dados, function (_, m) {
+                // Descobre o nome da divisão atual baseado no ID que veio do banco
+                var nomeDivisao = 'Sem divisão';
+                if (m.id_divisao) {
+                    $.each(_divisoesEquipeAtual, function(_, d) {
+                        if (d.id == m.id_divisao) nomeDivisao = d.nome;
+                    });
+                }
+
                 html += '<tr>'
                     + '<td>' + m.nome + ' ' + (m.sobrenome || '') + (m.cargo ? ' - ' + m.cargo : '') + '</td>'
                     + '<td class="text-center">' + fmtTurno(m.inicio_turno, m.fim_turno, true) + '</td>'
+                    // Nova coluna da Divisão
+                    + '<td class="td-divisao" data-id-divisao="' + (m.id_divisao || '') + '">' + nomeDivisao + '</td>'
                     + '<td>'
+                    // Novo botão de Editar Divisão (Azul)
+                    + '<button class="btn btn-xs btn-info btn-acao mr-xs btn-editar-divisao-membro" data-id="' + m.id + '" title="Alterar Divisão"><i class="fa fa-sitemap"></i></button>'
                     + '<button class="btn btn-xs btn-warning btn-acao mr-xs btn-inativar-membro" data-id="' + m.id + '" title="Inativar"><i class="fa fa-ban"></i></button>'
                     + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-membro" data-id="' + m.id + '" title="Remover"><i class="fa fa-trash"></i></button>'
                     + '</td></tr>';
@@ -1559,6 +1693,7 @@ function carregarMembros(idEquipe) {
         $('#tbody-membros').html(html);
     });
 
+    // Histórico de inativos
     api('listarHistoricoMembrosPorEquipe', { id_equipe: idEquipe }).done(function (todos) {
         var inativos = $.grep(todos || [], function (m) { return String(m.ativo) === '0'; });
         if (!inativos.length) {
@@ -1591,30 +1726,97 @@ $(document).on('click', '.btn-membros-equipe', function () {
     $('#toggle-inativos-label').text('Ver inativos');
     $('#btn-toggle-inativos .fa').removeClass('fa-chevron-up').addClass('fa-chevron-down');
     _carregarSelectPessoas(id);
-    carregarMembros(id);
+    carregarDivisoes(id);
     $('#modal-membros').modal('show');
 });
 
 $('#btn-adicionar-membro').on('click', function () {
     var idEquipe = $('#membros-equipe-id').val();
     var idPessoa = $('#membro-pessoa').val();
+    var idDivisao = $('#membro-divisao').val(); 
 
     ocultarErroModal('modal-membros-erro');
     if (!idPessoa) { exibirErroModal('modal-membros-erro', 'Selecione uma pessoa.'); return; }
 
-    apiPost('incluirMembro', { id_equipe: idEquipe, id_pessoa: idPessoa })
-        .done(function (r) {
-            ocultarErroModal('modal-membros-erro');
-            exibirSucessoModal('modal-membros-sucesso', r.msg || 'Membro adicionado com sucesso.');
-            $('#membro-pessoa').val('').trigger('change');
-            carregarMembros(idEquipe);
-            _carregarSelectPessoas(idEquipe);
-            carregarEquipes();
-        })
-        .fail(function (xhr) {
-            var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao adicionar membro.';
-            exibirErroModal('modal-membros-erro', msg);
-        });
+    apiPost('incluirMembro', { 
+        id_equipe: idEquipe, 
+        id_pessoa: idPessoa,
+        id_divisao: idDivisao ? idDivisao : null 
+    })
+    .done(function (r) {
+        ocultarErroModal('modal-membros-erro');
+        exibirSucessoModal('modal-membros-sucesso', r.msg || 'Membro adicionado com sucesso.');
+        
+        $('#membro-pessoa').val('').trigger('change');
+        
+        $('#membro-divisao').val('').trigger('change'); 
+        
+        carregarMembros(idEquipe);
+        _carregarSelectPessoas(idEquipe);
+        carregarEquipes();
+    })
+    .fail(function (xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao adicionar membro.';
+        exibirErroModal('modal-membros-erro', msg);
+    });
+});
+// EVENTO: Transforma o texto da divisão em um Select2
+$(document).on('click', '.btn-editar-divisao-membro', function () {
+    var $btn = $(this);
+    var $tr = $btn.closest('tr');
+    var $tdDivisao = $tr.find('.td-divisao');
+    var idDivisaoAtual = $tdDivisao.attr('data-id-divisao');
+
+    $btn.removeClass('btn-info btn-editar-divisao-membro')
+        .addClass('btn-success btn-salvar-divisao-membro')
+        .attr('title', 'Salvar Divisão')
+        .html('<i class="fa fa-save"></i>');
+
+    var selectHtml = '<select class="form-control input-sm select-inline-divisao" style="width:100%;">';
+    selectHtml += '<option value="">Sem divisão</option>';
+    $.each(_divisoesEquipeAtual, function(_, div) {
+        var selected = (div.id == idDivisaoAtual) ? 'selected' : '';
+        selectHtml += '<option value="' + div.id + '" ' + selected + '>' + div.nome + '</option>';
+    });
+    selectHtml += '</select>';
+
+    // Joga o select na célula e inicia o plugin Select2
+    $tdDivisao.html(selectHtml);
+    $tdDivisao.find('.select-inline-divisao').select2({
+        dropdownParent: $('#modal-membros') 
+    }); 
+});
+
+$(document).on('click', '.btn-salvar-divisao-membro', function () {
+    var $btn = $(this);
+    var $tr = $btn.closest('tr');
+    var $tdDivisao = $tr.find('.td-divisao');
+    var idMembro = $btn.data('id');
+    var $select = $tdDivisao.find('select');
+    
+    var novaDivisaoId = $select.val();
+    var novaDivisaoNome = $select.find('option:selected').text();
+
+    apiPost('atribuirDivisaoMembro', { 
+        id_membro: idMembro, 
+        id_divisao: novaDivisaoId ? novaDivisaoId : null 
+    })
+    .done(function(r) {
+        exibirSucessoModal('modal-membros-sucesso', r.msg || 'Divisão atualizada!');
+        
+        $select.select2('destroy');
+        $tdDivisao.attr('data-id-divisao', novaDivisaoId).text(novaDivisaoNome);
+        
+        // Devolve o botão azul de edição
+        $btn.removeClass('btn-success btn-salvar-divisao-membro')
+            .addClass('btn-info btn-editar-divisao-membro')
+            .attr('title', 'Alterar Divisão')
+            .html('<i class="fa fa-sitemap"></i>');
+    })
+    .fail(function(xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao atualizar divisão.';
+        exibirErroModal('modal-membros-erro', msg);
+    });
 });
 
 $(document).on('click', '.btn-inativar-membro', function () {
@@ -1919,8 +2121,6 @@ $('#btn-salvar-alocacao').on('click', function () {
             $('#modal-alocacao').modal('hide');
             exibirMsgAba('msg-alocacoes', r.msg || 'Salvo com sucesso.', 'success');
             carregarAlocacoes();
-            /* O servidor gera os eventos com o horário do turno (inclusive plantão noturno
-               que ocupa dois dias), então buscamos do servidor em vez de montar localmente. */
             _calRefetch();
         })
         .fail(function (xhr) {
