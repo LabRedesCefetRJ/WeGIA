@@ -147,7 +147,7 @@ class VoluntarioDAO
         }
     }
 
-    public function incluirExistente($cpf, $situacao, $data_admissao)
+    public function incluirExistente($cpf, $situacao, $data_admissao, $cargo)
     {
         $this->pdo->beginTransaction();
 

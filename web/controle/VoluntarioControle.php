@@ -99,12 +99,13 @@ class VoluntarioControle
             $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
             $data_admissao = filter_input(INPUT_POST, 'data_admissao', FILTER_SANITIZE_SPECIAL_CHARS);
             $situacao = filter_input(INPUT_POST, 'situacao', FILTER_SANITIZE_NUMBER_INT);
+            $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
 
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             $voluntarioDAO = new VoluntarioDAO();
-            $idVoluntario = $voluntarioDAO->incluirExistente($cpf, $situacao, $data_admissao);
+            $idVoluntario = $voluntarioDAO->incluirExistente($cpf, $situacao, $data_admissao, $cargo);
 
             if (!isset($idVoluntario))
                 throw new PDOException('Erro ao cadastrar o voluntário existente.', 500);
