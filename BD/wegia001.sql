@@ -2450,21 +2450,45 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe` (
 ) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe_divisao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_divisao` (
+  `id`        INT           NOT NULL AUTO_INCREMENT,
+  `id_equipe` INT           NOT NULL,
+  `nome`      VARCHAR(100)  NOT NULL,
+  `ativo`     TINYINT(1)    NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  INDEX `fk_aed_equipe_idx` (`id_equipe` ASC),
+  CONSTRAINT `fk_aed_equipe`
+    FOREIGN KEY (`id_equipe`)
+    REFERENCES `wegia`.`agenda_equipe` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`agenda_equipe_membro`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_membro` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `id_equipe` INT NOT NULL,
-  `id_pessoa` INT NOT NULL,
-  `ativo` TINYINT(1) NOT NULL DEFAULT 1,
+  `id`         INT        NOT NULL AUTO_INCREMENT,
+  `id_equipe`  INT        NOT NULL,
+  `id_divisao` INT        NULL DEFAULT NULL,
+  `id_pessoa`  INT        NOT NULL,
+  `ativo`      TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `uq_equipe_pessoa` (`id_equipe` ASC, `id_pessoa` ASC),
-  INDEX `fk_aem_equipe_idx` (`id_equipe` ASC),
-  INDEX `fk_aem_pessoa_idx` (`id_pessoa` ASC),
+  INDEX `fk_aem_equipe_idx`  (`id_equipe`  ASC),
+  INDEX `fk_aem_divisao_idx` (`id_divisao` ASC),
+  INDEX `fk_aem_pessoa_idx`  (`id_pessoa`  ASC),
   CONSTRAINT `fk_aem_equipe`
     FOREIGN KEY (`id_equipe`)
     REFERENCES `wegia`.`agenda_equipe` (`id`)
     ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_aem_divisao`
+    FOREIGN KEY (`id_divisao`)
+    REFERENCES `wegia`.`agenda_equipe_divisao` (`id`)
+    ON DELETE SET NULL
     ON UPDATE CASCADE,
   CONSTRAINT `fk_aem_pessoa`
     FOREIGN KEY (`id_pessoa`)
