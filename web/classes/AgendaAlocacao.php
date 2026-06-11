@@ -51,26 +51,32 @@
 
             $this->id = $id;
         }
+
         public function  setId_agenda($id_agenda)
         {
             $this->id_agenda = $id_agenda;
-        }   
+        } 
+
         public function setId_equipe($id_equipe)
         {
             $this->id_equipe = $id_equipe;
         }
+
         public function setInicio($inicio)
         {
             $this->inicio = $inicio;
         }
+
         public function setFim($fim)
         {
             $this->fim = $fim;
         }
+
         public function setLembrete($lembrete)
         {               
             $this->lembrete = $lembrete;
         }
+        
         public function setLembrete_enviado($lembrete_enviado)
         {
             $this->lembrete_enviado = $lembrete_enviado;

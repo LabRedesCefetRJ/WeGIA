@@ -8,10 +8,12 @@ class Agenda {
     {
         return $this->id;
     }
+    
     public function getDescricao()
     {
         return $this->descricao;
     }
+
     public function getId_status()
     {
         return $this->id_status;
@@ -29,6 +31,7 @@ class Agenda {
     {
         $this->descricao = $descricao;
     }
+
     public function setId_status($id_status)
     {
         $this->id_status = $id_status;
