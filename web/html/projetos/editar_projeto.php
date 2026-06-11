@@ -90,6 +90,25 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       display: flex;
       justify-content: flex-end;
     }
+
+    .turmas-filtro-bar {
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: #f9f9f9;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .turmas-filtro-bar .filtro-label {
+      font-size: 12px;
+      color: #777;
+      margin-right: 6px;
+      white-space: nowrap;
+    }
   </style>
 </head>
 
@@ -116,6 +135,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
           <div class="tabs">
             <ul class="nav nav-tabs tabs-primary">
               <li class="active"><a href="#overview" data-toggle="tab">Dados do Projeto</a></li>
+              <li><a href="#turmas" data-toggle="tab">Turmas</a></li>
               <li><a href="#equipe" data-toggle="tab">Equipe do Projeto</a></li>
               <li><a href="#atendidos" data-toggle="tab">Atendidos</a></li>
             </ul>
@@ -212,7 +232,36 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                 </div>
               </div>
 
-              <!-- ABA 2: Equipe do Projeto -->
+              <!-- ABA 2: Turmas -->
+              <div id="turmas" class="tab-pane">
+                <div class="row">
+                  <div class="col-md-8">
+                    <section class="panel">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a href="#" class="fa fa-caret-down"></a>
+                        </div>
+                        <h2 class="panel-title">Turmas do Projeto</h2>
+                      </header>
+                      <div class="panel-body">
+                        <p class="text-muted" style="font-size:13px;">
+                          As turmas são opcionais. Use-as para agrupar executantes e atendidos dentro deste projeto.
+                          Ao filtrar por turma nas abas <strong>Equipe</strong> e <strong>Atendidos</strong>,
+                          você pode gerenciar os membros de cada turma individualmente.
+                        </p>
+                        <div id="turmas-lista" style="margin-bottom:16px;min-height:32px;">
+                          <p class="text-muted">Carregando...</p>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="adicionarTurma()">
+                          <i class="fa fa-plus"></i> Nova Turma
+                        </button>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ABA 3: Equipe do Projeto -->
               <div id="equipe" class="tab-pane">
                 <div class="row">
                   <div class="col-md-12">
@@ -224,6 +273,33 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         <h2 class="panel-title">Membros da Equipe</h2>
                       </header>
                       <div class="panel-body">
+
+                        <!-- Filtro por turma -->
+                        <div class="turmas-filtro-bar">
+                          <span class="filtro-label"><i class="fa fa-filter"></i> Filtrar por turma:</span>
+                          <div id="turmas-equipe-filtro" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;"></div>
+                          <button id="btn-limpar-turma-equipe" type="button" class="btn btn-xs btn-link"
+                            style="display:none;" onclick="limparFiltroEquipe()">
+                            <i class="fa fa-times"></i> Limpar filtros
+                          </button>
+                        </div>
+
+                        <!-- Painel: adicionar membro existente à turma ativa -->
+                        <div id="painel-adicionar-equipe-turma" style="display:none;margin-bottom:16px;">
+                          <div class="alert alert-info" style="margin-bottom:8px;padding:8px 12px;font-size:13px;">
+                            <i class="fa fa-info-circle"></i>
+                            Exibindo membros da turma selecionada. Adicione abaixo quem já está no projeto mas ainda não está nesta turma.
+                          </div>
+                          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <select id="select-executante-turma" class="form-control" style="max-width:300px;">
+                              <option selected disabled>Selecionar executante</option>
+                            </select>
+                            <button type="button" class="btn btn-success btn-sm" onclick="confirmarAdicionarExecutanteTurma()">
+                              <i class="fa fa-plus"></i> Adicionar à turma
+                            </button>
+                          </div>
+                        </div>
+
                         <h4>Adicionar Novo Membro</h4>
                         <form class="form-horizontal" role="form">
                           <div class="form-group">
@@ -269,7 +345,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                 <th>Executante</th>
                                 <th>CPF</th>
                                 <th>Cargo/Função</th>
-                                <th class="text-center" width="80">Ação</th>
+                                <th class="text-center" width="100">Ação</th>
                               </tr>
                             </thead>
                             <tbody id="equipe-tab">
@@ -303,7 +379,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                 </div>
               </div>
 
-              <!-- ABA 3: Atendidos do Projeto -->
+              <!-- ABA 4: Atendidos do Projeto -->
               <div id="atendidos" class="tab-pane">
                 <div class="row">
                   <div class="col-md-12">
@@ -315,6 +391,33 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         <h2 class="panel-title">Atendidos Vinculados</h2>
                       </header>
                       <div class="panel-body">
+
+                        <!-- Filtro por turma -->
+                        <div class="turmas-filtro-bar">
+                          <span class="filtro-label"><i class="fa fa-filter"></i> Filtrar por turma:</span>
+                          <div id="turmas-atendidos-filtro" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;"></div>
+                          <button id="btn-limpar-turma-atendidos" type="button" class="btn btn-xs btn-link"
+                            style="display:none;" onclick="limparFiltroAtendidos()">
+                            <i class="fa fa-times"></i> Limpar filtros
+                          </button>
+                        </div>
+
+                        <!-- Painel: adicionar atendido existente à turma ativa -->
+                        <div id="painel-adicionar-atendido-turma" style="display:none;margin-bottom:16px;">
+                          <div class="alert alert-info" style="margin-bottom:8px;padding:8px 12px;font-size:13px;">
+                            <i class="fa fa-info-circle"></i>
+                            Exibindo atendidos da turma selecionada. Adicione abaixo quem já está no projeto mas ainda não está nesta turma.
+                          </div>
+                          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <select id="select-atendido-turma" class="form-control" style="max-width:300px;">
+                              <option selected disabled>Selecionar atendido</option>
+                            </select>
+                            <button type="button" class="btn btn-success btn-sm" onclick="confirmarAdicionarAtendidoTurma()">
+                              <i class="fa fa-plus"></i> Adicionar à turma
+                            </button>
+                          </div>
+                        </div>
+
                         <h4>Vincular Novo Atendido</h4>
                         <form class="form-horizontal" role="form">
                           <div class="form-group">
@@ -381,6 +484,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   <script src="../../Functions/projetos_editar.js"></script>
   <script src="../../Functions/projetos_equipe.js"></script>
   <script src="../../Functions/projetos_atendido.js"></script>
+  <script src="../../Functions/projetos_turma.js"></script>
 
   <script type="text/javascript">
     $(function() {

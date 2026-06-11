@@ -78,6 +78,11 @@ if (file_exists($config_path)) {
     }
     require_once($config_path);
 }
-if (isset($_COOKIE['PHPSESSID'])) {
-    header("Set-Cookie: PHPSESSID=" . $_COOKIE["PHPSESSID"] . "; expires=" . (time() + 3600 * 0) . ";path=/; domain=" . DB_HOST . ";SameSite=Strict;HttpOnly=On;Secure");
-}
+session_set_cookie_params([
+    'lifetime' => 1800,
+    'path' => '/',
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Strict',
+]);
+session_start();

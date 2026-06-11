@@ -31,6 +31,7 @@ class SocioDAO
             ->setTelefone($socioArray['telefone'])
             ->setEmail($socioArray['email'])
             ->setEstado($socioArray['estado'])
+            ->setSobrenome($socioArray['sobrenome'])
             ->setTelefone($socioArray['telefone'])
             ->setCidade($socioArray['cidade'])
             ->setBairro($socioArray['bairro'])
@@ -49,23 +50,24 @@ class SocioDAO
         $this->pdo->beginTransaction();
 
         //criar pessoa
-        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, email, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :email, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
+        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, sobrenome, email, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :sobrenome, :email, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
 
         $stmtPessoa = $this->pdo->prepare($sqlPessoa);
 
-        $stmtPessoa->bindParam(':cpf', $socio->getDocumento());
-        $stmtPessoa->bindParam(':nome', $socio->getNome());
+        $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
+        $stmtPessoa->bindValue(':nome', $socio->getNome());
         $stmtPessoa->bindParam(':email', $socio->getEmail());
-        $stmtPessoa->bindParam(':telefone', $socio->getTelefone());
-        $stmtPessoa->bindParam(':dataNascimento', $socio->getDataNascimento());
-        $stmtPessoa->bindParam(':cep', $socio->getCep());
-        $stmtPessoa->bindParam(':estado', $socio->getEstado());
-        $stmtPessoa->bindParam(':cidade', $socio->getCidade());
-        $stmtPessoa->bindParam(':bairro', $socio->getBairro());
-        $stmtPessoa->bindParam(':logradouro', $socio->getLogradouro());
-        $stmtPessoa->bindParam(':numeroEndereco', $socio->getNumeroEndereco());
-        $stmtPessoa->bindParam(':complemento', $socio->getComplemento());
-        $stmtPessoa->bindParam(':ibge', $socio->getIbge());
+        $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
+        $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
+        $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
+        $stmtPessoa->bindValue(':cep', $socio->getCep());
+        $stmtPessoa->bindValue(':estado', $socio->getEstado());
+        $stmtPessoa->bindValue(':cidade', $socio->getCidade());
+        $stmtPessoa->bindValue(':bairro', $socio->getBairro());
+        $stmtPessoa->bindValue(':logradouro', $socio->getLogradouro());
+        $stmtPessoa->bindValue(':numeroEndereco', $socio->getNumeroEndereco());
+        $stmtPessoa->bindValue(':complemento', $socio->getComplemento());
+        $stmtPessoa->bindValue(':ibge', $socio->getIbge());
 
         $stmtPessoa->execute();
         $idPessoa = $this->pdo->lastInsertId();
@@ -86,7 +88,8 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindValue(':email', $socio->getEmail());
+        $stmtSocio->bindValue(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
 
         $stmtSocio->execute();
@@ -152,7 +155,8 @@ class SocioDAO
         $sqlAtualizarPessoa =
             'UPDATE pessoa 
         SET 
-            nome=:nome, 
+            nome=:nome,
+            sobrenome=:sobrenome,
             email=:email, 
             telefone=:telefone, 
             data_nascimento=:dataNascimento, 
@@ -168,19 +172,20 @@ class SocioDAO
 
         $stmtPessoa = $this->pdo->prepare($sqlAtualizarPessoa);
 
-        $stmtPessoa->bindParam(':nome', $socio->getNome());
+        $stmtPessoa->bindValue(':nome', $socio->getNome());
         $stmtPessoa->bindParam(':email', $socio->getEmail());
-        $stmtPessoa->bindParam(':telefone', $socio->getTelefone());
-        $stmtPessoa->bindParam(':dataNascimento', $socio->getDataNascimento());
-        $stmtPessoa->bindParam(':cep', $socio->getCep());
-        $stmtPessoa->bindParam(':estado', $socio->getEstado());
-        $stmtPessoa->bindParam(':cidade', $socio->getCidade());
-        $stmtPessoa->bindParam(':bairro', $socio->getBairro());
-        $stmtPessoa->bindParam(':logradouro', $socio->getLogradouro());
-        $stmtPessoa->bindParam(':numeroEndereco', $socio->getNumeroEndereco());
-        $stmtPessoa->bindParam(':complemento', $socio->getComplemento());
-        $stmtPessoa->bindParam(':ibge', $socio->getIbge());
-        $stmtPessoa->bindParam(':cpf', $socio->getDocumento());
+        $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
+        $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
+        $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
+        $stmtPessoa->bindValue(':cep', $socio->getCep());
+        $stmtPessoa->bindValue(':estado', $socio->getEstado());
+        $stmtPessoa->bindValue(':cidade', $socio->getCidade());
+        $stmtPessoa->bindValue(':bairro', $socio->getBairro());
+        $stmtPessoa->bindValue(':logradouro', $socio->getLogradouro());
+        $stmtPessoa->bindValue(':numeroEndereco', $socio->getNumeroEndereco());
+        $stmtPessoa->bindValue(':complemento', $socio->getComplemento());
+        $stmtPessoa->bindValue(':ibge', $socio->getIbge());
+        $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
 
         $stmtPessoa->execute();
 
@@ -236,6 +241,7 @@ class SocioDAO
             "SELECT 
             pessoa.id_pessoa, 
             pessoa.nome,
+            pessoa.sobrenome,
             pessoa.email,
             pessoa.data_nascimento, 
             pessoa.telefone, 
@@ -274,6 +280,7 @@ class SocioDAO
             "SELECT 
             pessoa.id_pessoa, 
             pessoa.nome,
+            pessoa.sobrenome,
             pessoa.email,
             pessoa.data_nascimento, 
             pessoa.telefone, 
@@ -392,7 +399,7 @@ class SocioDAO
         $socios = [];
 
         $sql = "
-            SELECT p.nome, p.email, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.valor_periodo 
+            SELECT p.nome, p.sobrenome, p.email, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.valor_periodo 
             FROM socio s JOIN pessoa p ON(s.id_pessoa=p.id_pessoa)
             ORDER BY nome ASC
         ";

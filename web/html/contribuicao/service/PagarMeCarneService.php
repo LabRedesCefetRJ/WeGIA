@@ -47,7 +47,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
                         ]
                     ],
                     "customer" => [
-                        "name" => $contribuicaoLog->getSocio()->getNome(),
+                        "name" => $contribuicaoLog->getSocio()->getFullName(),
                         "email" => $contribuicaoLog->getSocio()->getEmail(),
                         "document_type" => "CPF",
                         "document" => $cpfSemMascara,
