@@ -45,6 +45,7 @@ class SocioController
 
                 $socio
                     ->setNome($verificacaoExistenciaPessoa->getNome())
+                    ->setSobrenome($verificacaoExistenciaPessoa->getSobrenome())
                     ->setDataNascimento($verificacaoExistenciaPessoa->getDataNascimento())
                     ->setTelefone($verificacaoExistenciaPessoa->getTelefone())
                     ->setCidade($verificacaoExistenciaPessoa->getCidade())
@@ -58,6 +59,7 @@ class SocioController
             } else {
                 $socio
                     ->setNome($dados['nome'])
+                    ->setSobrenome($dados['sobrenome'])
                     ->setDataNascimento($dados['dataNascimento'])
                     ->setTelefone($dados['telefone'])
                     ->setEstado($dados['uf'])
@@ -107,6 +109,7 @@ class SocioController
             $socio = new Socio();
             $socio
                 ->setNome($dados['nome'])
+                ->setSobrenome($dados['sobrenome'])
                 ->setDataNascimento($dados['dataNascimento'])
                 ->setTelefone($dados['telefone'])
                 ->setEmail($dados['email'])
@@ -152,6 +155,7 @@ class SocioController
         //extrair dados da requisição (considerar separar em uma função própria)
         $documento = trim(filter_input(INPUT_POST, 'documento_socio'));
         $nome = trim(filter_input(INPUT_POST, 'nome'));
+        $sobrenome = trim(filter_input(INPUT_POST, 'sobrenome'));
         $telefone = trim(filter_input(INPUT_POST, 'telefone'));
         $dataNascimento = trim(filter_input(INPUT_POST, 'data_nascimento'));
         $cep = trim(filter_input(INPUT_POST, 'cep'));
@@ -244,6 +248,7 @@ class SocioController
             return [
                 'cpf' => $documento,
                 'nome' => $nome,
+                'sobrenome' => $sobrenome,
                 'telefone' => $telefone,
                 'dataNascimento' => $dataNascimento,
                 'cep' => $cep,
