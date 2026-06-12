@@ -163,6 +163,7 @@ class ContribuicaoLogDAO
             'SELECT 
             cl.codigo, 
             p.nome as nomeSocio, 
+            p.sobrenome as sobrenomeSocio,
             cl.data_geracao as dataGeracao, 
             cl.data_vencimento as dataVencimento, 
             cl.data_pagamento as dataPagamento, 
@@ -216,6 +217,7 @@ class ContribuicaoLogDAO
             cl.id,
             cl.codigo, 
             p.nome as nomeSocio, 
+            p.sobrenome as sobrenomeSocio,
             cl.data_geracao as dataGeracao, 
             cl.data_vencimento as dataVencimento, 
             cl.data_pagamento as dataPagamento, 

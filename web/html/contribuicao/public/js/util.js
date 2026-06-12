@@ -569,10 +569,11 @@ function verificarContato() {
  * Recebe como parâmetro um objeto do tipo Socio e preenche os campos do formulário automaticamente
  * @param {*} param0 
  */
-function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, documento, email, estado, id, logradouro, nome, numeroEndereco, telefone }) {
+function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, documento, email, estado, id, logradouro, nome, sobrenome, numeroEndereco, telefone }) {
 
     //Definir elementos do HTML
     const nomeObject = document.getElementById('nome');
+    const sobrenomeObject = document.getElementById('sobrenome');
     const dataNascimentoObject = document.getElementById('data_nascimento');
     const emailObject = document.getElementById('email');
     const telefoneObject = document.getElementById('telefone');
@@ -586,6 +587,7 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
 
     //Atribuir valor aos campos
     nomeObject.value = nome;
+    sobrenomeObject.value = sobrenome;
 
     if (dataNascimento != null && dataNascimento.length === 10)
         dataNascimentoObject.value = converterDataParaBR(dataNascimento);
@@ -642,6 +644,7 @@ function buscarSocio() {
                 const divAgradecimento = document.getElementById('div-agradecimento');
                 divAgradecimento.innerHTML = `<h3>Obrigado por contribuir mais uma vez, ${nomeSocio}!<h3>`;
             } else {
+                //necessário repensar, pois pode não existir um sócio mas existir a pessoa.
                 console.log(data.resultado);
                 acao = 'cadastrar';
                 alternarPaginas('pag3', 'pag2');

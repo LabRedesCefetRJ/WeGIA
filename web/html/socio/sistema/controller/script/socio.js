@@ -105,7 +105,7 @@ function deletar_socio_modal(del_obj){
 
 }
 
-function detalhar_socio(dados){
+function detalhar_socio(dados){ //<-- continuar daqui
   var dados_socio = null;
    $.post("get_detalhes_socio.php",{"id_socio": dados}).done(function(resultadoBusca){
     dados_socio = JSON.parse(resultadoBusca);
@@ -133,7 +133,7 @@ function detalhar_socio(dados){
         <div class="row">
         <div class="form-group mb-2 col-xs-4">
                   <label for="nome_cliente">Nome sócio</label>
-                  <input type="text" class="form-control" id="socio_nome" value="`+ dados_socio.nome +`" name="socio_nome" placeholder="" required disabled>
+                  <input type="text" class="form-control" id="socio_nome" value="`+ dados_socio.nome + " " + dados_socio.sobrenome +`" name="socio_nome" placeholder="" required disabled>
               </div>
        
         <div class="form-group col-xs-4 cpf_div">
