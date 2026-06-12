@@ -3,6 +3,7 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 require_once __DIR__ . '/../config.php';
+//declaração de util
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 Util::definirFusoHorario();
@@ -44,7 +45,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'ExameControle' => [5],
             'MedicoControle' => [5],
             'EntradaControle' => [23],
-            'EstoqueControle' => [22],
+            'EstoqueControle' => [21, 22],
             'FuncionarioControle' => [11, 91],
             'IentradaControle' => [23],
             'InformacaoAdicionalControle' => [11],
@@ -55,7 +56,8 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'OrigemControle' => [23],
             'PaArquivoControle' => [1, 12, 14],
             'PaStatusControle' => [12, 14],
-            'PessoaArquivoControle' => [1, 11, 12],
+            'PessoaArquivoControle' => [1, 11, 12, 13],
+            'PessoaControle' => [1, 4, 11, 12, 13],
             'ProdutoControle' => [22, 23, 24],
             'ProcessoAceitacaoControle' => [1, 12, 14],
             'ProjetoControle' => [8, 81, 82],
@@ -74,6 +76,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'DespachoControle' => [3],
             'VoluntarioControle' => [11],
             'VisitanteControle' => [11]
+            'NotificacaoControle' => [2, 5, 21, 22, 23, 24]
         ];
 
         /*Por padrão o control.php irá recusar qualquer controladora informada,

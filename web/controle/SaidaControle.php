@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'EstoqueService.php';
 include_once ROOT .'/classes/Saida.php';
 include_once ROOT .'/dao/SaidaDAO.php';
 include_once ROOT .'/classes/Destino.php';
@@ -63,10 +64,12 @@ class SaidaControle
             $destinoDAO = new DestinoDAO();
             $almoxarifadoDAO = new AlmoxarifadoDAO();
             $TipoSaidaDAO = new TipoSaidaDAO();
+            $estoqueService = new EstoqueService();
             $destino = explode("-", $destino);
             $destino = $destino[0];
             $destino = $destinoDAO->listarUm($destino);
             $almoxarifado = $almoxarifadoDAO->listarUm($almoxarifado);
+            $idAlmoxarifado = $almoxarifado->getId_almoxarifado();
             $TipoSaida =$TipoSaidaDAO->listarUm($tipo_saida);
 
             $saida->setId_destino($destino);
@@ -87,13 +90,17 @@ class SaidaControle
                     $isaida = new Isaida(${$qtdd.$x},${$valor_unitario.$x});
                     $isaidaDAO = new IsaidaDAO();
                     $produtoDAO = new ProdutoDAO();
-                    $produto = $produtoDAO->listarUm(${$id.$x});
+                    //$produto = $produtoDAO->listarUm(${$id.$x});
+                    $idProduto = (int) ${$id.$x};
+                    $produto = $produtoDAO->listarUm($idProduto);
                     $saida = $saidaDAO->listarUm($id_responsavel);
 
                     $isaida->setId_produto($produto->getId_produto());
                     $isaida->setId_saida($saida->getId_saida());
 
                     $isaida = $isaidaDAO->incluir($isaida);
+
+                    $estoqueService->verificarEstoqueMinimo($idProduto, (int) $idAlmoxarifado);
 
                 }
                 $x++;

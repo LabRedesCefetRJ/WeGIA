@@ -25,7 +25,7 @@ function gerarTabela(data) {
         tdCodigo.innerText = element.codigo;
 
         const tdNome = document.createElement('td');
-        tdNome.innerText = element.nomeSocio;
+        tdNome.innerText = element.nomeSocio + " " + element.sobrenomeSocio;
 
         const tdDataGeracao = document.createElement('td');
         tdDataGeracao.innerText = formatarData(element.dataGeracao);
@@ -49,7 +49,17 @@ function gerarTabela(data) {
         tdPlataforma.innerText = element.plataforma;
 
         const tdMeioPagamento = document.createElement('td');
-        tdMeioPagamento.innerText = element.meio == 'Carne' ? 'Carnê' : element.meio;
+        
+        switch(element.meio){
+            case 'Carne' : 
+                tdMeioPagamento.innerText = 'Carnê';
+                break;
+            case 'Recorrencia' :
+                tdMeioPagamento.innerText = 'Recorrência';
+                break;
+            default:
+                tdMeioPagamento.innerText = element.meio;
+        }
 
         tr.append(tdCodigo, tdNome, tdPlataforma, tdMeioPagamento, tdDataGeracao, tdDataVencimento, tdDataPagamento, tdValor, tdStatus);
         tBody.appendChild(tr);

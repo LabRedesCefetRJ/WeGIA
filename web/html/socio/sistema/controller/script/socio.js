@@ -49,7 +49,6 @@ function gerarTags(){
     var tags = response;
     $('#tags').empty();
     $('#tagsT').empty();
-    $('#tags').append('<option selected disabled>Selecionar Grupo</option>');
     $.each(tags,function(i,item){
       $('#tags').append('<option value="' + item.id_sociotag + '">' + item.tag + '</option>');
       $('#tagsT').append(`<tr><td>${item.id_sociotag}</td><td><input id='${item.id_sociotag}' type='text' value='${item.tag}'></td><td><a id='a_${item.id_sociotag}' class='btn btn-primary' href='salvar_tag.php?id_tag=${item.id_sociotag}&value=${item.tag}' disabled>Salvar</a><td><button class='btn btn-danger delete-tag' data-id='${item.id_sociotag}'>Deletar</button></td></tr>`); //substituir link href por form post
@@ -106,7 +105,7 @@ function deletar_socio_modal(del_obj){
 
 }
 
-function detalhar_socio(dados){
+function detalhar_socio(dados){ //<-- continuar daqui
   var dados_socio = null;
    $.post("get_detalhes_socio.php",{"id_socio": dados}).done(function(resultadoBusca){
     dados_socio = JSON.parse(resultadoBusca);
@@ -134,7 +133,7 @@ function detalhar_socio(dados){
         <div class="row">
         <div class="form-group mb-2 col-xs-4">
                   <label for="nome_cliente">Nome sócio</label>
-                  <input type="text" class="form-control" id="socio_nome" value="`+ dados_socio.nome +`" name="socio_nome" placeholder="" required disabled>
+                  <input type="text" class="form-control" id="socio_nome" value="`+ dados_socio.nome + " " + dados_socio.sobrenome +`" name="socio_nome" placeholder="" required disabled>
               </div>
        
         <div class="form-group col-xs-4 cpf_div">
@@ -176,8 +175,8 @@ function detalhar_socio(dados){
             <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" value="`+ dados_socio.valor_periodo +`" disabled>
           </div>
           <div style="margin-bottom: 1em" class="form-group col-xs-12">
-            <label for="valor">Tag</label>
-            <input type="text" class="form-control" id="tag" name="tag" value="`+ dados_socio.tag +`" disabled>
+            <label for="valor">Tags</label>
+            <input type="text" class="form-control" id="tag" name="tag" value="`+ (dados_socio.tags_texto || '') +`" disabled>
           </div>
         </div>
         <div class="box box-info endereco">

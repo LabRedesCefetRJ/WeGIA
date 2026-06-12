@@ -29,6 +29,7 @@ require_once ROOT . "/html/geral/msg.php";
 include_once ROOT . '/dao/Conexao.php';
 include_once ROOT . '/dao/CategoriaDAO.php';
 include_once ROOT . '/dao/UnidadeDAO.php';
+include_once ROOT . '/dao/ProdutoDAO.php';
 
 if (!isset($_SESSION['unidade'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
@@ -43,7 +44,10 @@ if (isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
 	unset($_SESSION['categoria']);
 }
 
-$dadosForm = $_SESSION['form_produto'];
+$dadosForm = $_SESSION['form_produto'] ?? [];
+
+$produtoDAO = new ProdutoDAO();
+$produtos = $produtoDAO->listarTodos();
 ?>
 
 <head>
@@ -132,6 +136,24 @@ $dadosForm = $_SESSION['form_produto'];
 			const id_categoria = document.getElementById("id_categoria").value;
 			const id_unidade = document.getElementById("id_unidade").value;
 			const valor = document.getElementById("valor-form").value;
+			const codigo = document.getElementById("codigo").value;
+
+			const produtos = <?php echo $produtos; ?>;
+
+			let codigoDuplicado = false;
+
+			$.each(produtos, function(i, item) {
+				if (codigo == item.codigo) {
+					codigoDuplicado = true;
+					return false;
+				}
+			});
+
+			if (codigoDuplicado) {
+				alert("O código do produto informado já existe. Por favor, informe um código diferente!");
+				document.getElementById("codigo").focus();
+				return false;
+			}
 
 			if (id_categoria == "blank") {
 				alert("Selecione uma categoria");

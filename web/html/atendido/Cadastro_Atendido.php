@@ -2,6 +2,7 @@
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 require_once "../personalizacao_display.php";
 require_once "../../classes/Atendido.php";
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'geral' . DIRECTORY_SEPARATOR . 'msg.php';
 
 if(session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -67,7 +68,9 @@ $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $intTipo = $mysqli->query("SELECT * FROM atendido_tipo");
 $intStatus = $mysqli->query("SELECT * FROM atendido_status");
 
-$cpf = $_GET['cpf'];
+$cpf = $_GET['cpf'] ?? $cpf;
+$oldInput = getSessionFormData();
+$fieldErrors = getSessionFormErrors();
 
 $dataNascimentoMaxima = Atendido::getDataNascimentoMaxima();
 $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
@@ -137,6 +140,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 	<script src="../../Functions/mascara.js"></script>
 	<script src="../../Functions/lista.js"></script>
 	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<script src="../../Functions/validacoes-cns.js"></script>
 
 	<!-- jquery functions -->
 	<script>
@@ -282,6 +286,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 					</div> -->
 
 				<div class="col-md-8 col-lg-12">
+					<?php sessionMsg(); ?>
 					<div class="tabs">
 						<ul class="nav nav-tabs tabs-primary">
 							<li class="active">
@@ -298,7 +303,10 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 									<div class="form-group">
 										<label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
 										<div class="col-md-6">
-											<input type="text" class="form-control" name="nome" id="nome" id="profileFirstName" onkeypress="return Onlychars(event)" required>
+											<input type="text" class="form-control<?= !empty($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+											<?php if (!empty($fieldErrors['nome'])): ?>
+												<p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') ?></p>
+											<?php endif; ?>
 										</div>
 									</div>
 										<div class="form-group">
@@ -311,21 +319,24 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 											<div class="col-md-6">
 											<input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)"
 												<?php if (!$semCpf) echo 'required'; ?>
-												value="<?php echo isset($sobrenome) ? htmlspecialchars($sobrenome) : ''; ?>">
+												value="<?= htmlspecialchars($oldInput['sobrenome'] ?? $sobrenome ?? '', ENT_QUOTES, 'UTF-8') ?>">
+											<?php if (!empty($fieldErrors['sobrenome'])): ?>
+												<p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') ?></p>
+											<?php endif; ?>
 											</div>
 										</div>
 									<div class="form-group">
 										<label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
 										<div class="col-md-6">
-											<input type="radio" name="sexo" id="radio1" value="m" style="margin-top: 10px; margin-left: 15px;" required><i class="fa fa-male" style="font-size: 20px;"></i>
-											<input type="radio" name="sexo" id="radio2" value="f" style="margin-top: 10px; margin-left: 15px;"><i class="fa fa-female" style="font-size: 20px;"></i>
+											<input type="radio" name="sexo" id="radio1" value="m" style="margin-top: 10px; margin-left: 15px;" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i>
+											<input type="radio" name="sexo" id="radio2" value="f" style="margin-top: 10px; margin-left: 15px;" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i>
 										</div>
 									</div>
 							</div>
 							<div class="form-horizontal form-group">
 								<label class="col-md-3 control-label" for="profileCompany">Telefone</label>
 								<div class="col-md-6">
-									<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" id="profileCompany" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+									<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 								</div>
 							</div>
 							<div class="form-horizontal form-group">
@@ -346,8 +357,18 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 										min="<?= $dataNascimentoMinima ?>" 
 										max="<?= $dataNascimentoMaxima ?>" 
 										<?php if (!$semCpf) echo 'required'; ?> 
-										value="<?php echo isset($nascimento) ? htmlspecialchars($nascimento) : ''; ?>"
+										value="<?= htmlspecialchars($oldInput['nascimento'] ?? $nascimento ?? '', ENT_QUOTES, 'UTF-8') ?>"
 									>
+									<?php if (!empty($fieldErrors['data_nascimento']) || !empty($fieldErrors['nascimento'])): ?>
+										<p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['data_nascimento'] ?? $fieldErrors['nascimento'], ENT_QUOTES, 'UTF-8') ?></p>
+									<?php endif; ?>
+								</div>
+							</div>
+							<div class="form-horizontal form-group">
+							<label class="col-md-3 control-label" for="cns">CNS</label>
+							<div class="col-md-6">
+								<input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+								<small class="form-text text-muted">Cadastro Nacional de Saúde</small>
 								</div>
 							</div>
 							<div class="form-horizontal form-group">
@@ -385,7 +406,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
 								<div class="col-md-4">
-									<input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= isset($cpf) ? htmlspecialchars($cpf) : '' ?>" disabled>
+									<input type="text" class="form-control<?= !empty($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? $cpf ?? '', ENT_QUOTES, 'UTF-8') ?>" disabled>
 								</div>
 
 							</div>
@@ -393,7 +414,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="profileCompany"></label>
 								<div class="col-md-6">
-									<p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+									<p id="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) ? 'block' : 'none' ?>; color: #b30000"><?= !empty($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
 								</div>
 							</div>
 
@@ -401,7 +422,7 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 								<div class="row">
 									<div class="col-md-9 col-md-offset-3">
 										<input type="hidden" name="nomeClasse" value="AtendidoControle">
-										<input type="hidden" name="cpf" value="<?= isset($cpf) ? htmlspecialchars($cpf) : '' ?>">
+										<input type="hidden" name="cpf" value="<?= htmlspecialchars($oldInput['cpf'] ?? $cpf ?? '', ENT_QUOTES, 'UTF-8') ?>">
 										<input type="hidden" name="metodo" value="incluir">
 										<input id="enviar" type="submit" class="btn btn-primary" value="Enviar" onclick="validarInterno()">
 										<input type="hidden" name="nomeClasse" value="AtendidoControle">

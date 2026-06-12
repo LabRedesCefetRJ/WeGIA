@@ -2,7 +2,7 @@
 require_once 'ApiBoletoServiceInterface.php';
 require_once '../model/ContribuicaoLog.php';
 require_once '../dao/GatewayPagamentoDAO.php';
-require_once '../helper/Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 class PagarMeBoletoService implements ApiBoletoServiceInterface
 {
     public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
@@ -41,7 +41,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                     ]
                 ],
                 "customer" => [
-                    "name" => $contribuicaoLog->getSocio()->getNome(),
+                    "name" => $contribuicaoLog->getSocio()->getFullName(),
                     "email" => $contribuicaoLog->getSocio()->getEmail(),
                     "document_type" => "CPF",
                     "document" => $cpfSemMascara,

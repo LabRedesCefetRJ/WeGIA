@@ -85,6 +85,9 @@ try {
   $cpf1 = new AtendidoControle;
   $cpf1->listarCPF();
   require_once "../geral/msg.php";
+  $oldInput = getSessionFormData();
+  $fieldErrors = getSessionFormErrors();
+  $openModal = getSessionOpenModal();
   $docfuncional = $pdo->prepare("SELECT * FROM funcionario_docs f JOIN funcionario_docfuncional docf ON f.id_docfuncional = docf.id_docfuncional WHERE id_funcionario =:idFuncionario");
 
   $docfuncional->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
@@ -180,7 +183,9 @@ try {
   <!-- Head Libs -->
   <script src="../../assets/vendor/modernizr/modernizr.js"></script>
   <script src="../../Functions/onlyNumbers.js"></script>
+  <script src="../../Functions/validacoes-cns.js"></script>
   <script src="../../Functions/onlyChars.js"></script>
+  <script src="../../Functions/valida_nome.js"></script>
   <script src="../../Functions/mascara.js"></script>
   <script src="../../Functions/lista.js"></script>
   <script src="../../Functions/funcionario_parentesco.js"></script>
@@ -271,6 +276,7 @@ try {
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
       $("#sangue").prop('disabled', false);
+      $("#cns").prop('disabled', false);
       $("#botaoEditarIP").html('Cancelar');
       $("#botaoSalvarIP").prop('disabled', false);
       $("#botaoEditarIP").removeAttr('onclick');
@@ -287,6 +293,7 @@ try {
       $("#pai").prop('disabled', true);
       $("#mae").prop('disabled', true);
       $("#sangue").prop('disabled', true);
+      $("#cns").prop('disabled', true);
       $("#botaoEditarIP").html('Editar');
       $("#botaoSalvarIP").prop('disabled', true);
       $("#botaoEditarIP").removeAttr('onclick');
@@ -418,6 +425,7 @@ try {
         $("#pai").val(item.nome_pai).prop('disabled', true);
         $("#mae").val(item.nome_mae).prop('disabled', true);
         $("#sangue").val(item.tipo_sanguineo).prop('disabled', true);
+        $("#cns").val(item.cns || '').prop('disabled', true);
         //Endereço
         $("#cep").val(item.cep).prop('disabled', true);
         $("#uf").val(item.estado).prop('disabled', true);
@@ -862,8 +870,8 @@ try {
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                         <div class="col-md-8">
-                          <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
-                          <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                          <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
+                          <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
                         </div>
                       </div>
                       <div class="form-group">
@@ -883,6 +891,13 @@ try {
                             id="nascimento"
                             min="<?= $dataNascimentoMinima ?>"
                             max="<?= $dataNascimentoMaxima ?>" required>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label class="col-md-3 control-label" for="cns">CNS</label>
+                        <div class="col-md-8">
+                          <input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+                          <small class="form-text text-muted">Cadastro Nacional de Saúde</small>
                         </div>
                       </div>
                       <div class="form-group">
@@ -994,7 +1009,7 @@ try {
                         </thead>
                         <tbody id="tabela_remuneracao"></tbody>
                       </table>
-                      <button id="excluir" type="button" class="btn btn-success" data-toggle="modal" data-target="#adicionar">Adicionar</button>
+                      <button id="excluir" type="button" class="btn btn-success" onclick="abrirModalRemuneracao(false)">Adicionar</button>
                     </div><br>
                     <div class="modal fade" id="adicionar" role="dialog">
                       <div class="modal-dialog">
@@ -1002,7 +1017,7 @@ try {
                         <div class="modal-content">
                           <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" id="closeRemuneracaoModal">×</button>
-                            <h3>Adicionar Remuneração</h3>
+                            <h3 id="remuneracaoModalTitle">Adicionar Remuneração</h3>
                           </div>
                           <div class="modal-body">
                             <fieldset id="formRemuneracao">
@@ -1043,6 +1058,8 @@ try {
                               <!-- Pegar id funcionário de variável sanitizada -->
                               <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                               <input type="hidden" name="action" value="remuneracao_adicionar">
+                              <input type="hidden" name="id_remuneracao" value="">
+                              <input type="hidden" name="id_funcionario_remuneracao" value="">
                               <button class="btn btn-primary" id="botaoSalvarRemuneracao" onclick="adicionarRemuneracao('formRemuneracao', console.log)">Salvar</button>
                             </fieldset>
                           </div>
@@ -1083,7 +1100,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" id="pis" name="pis" class="form-control" maxlength="14"
                               placeholder="123.45678.91-0"
-                              oninput="formatPIS(this)">
+                              oninput="formatPIS(this)"
+                              value="<?= htmlspecialchars($oldInput['pis'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123.45678.91-0</small>
                           </div>
                         </div>
@@ -1093,7 +1111,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" id="ctps" name="ctps" class="form-control" maxlength="12"
                               placeholder="1234567/8910"
-                              oninput="formatCTPS(this)">
+                              oninput="formatCTPS(this)"
+                              value="<?= htmlspecialchars($oldInput['ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 1234567/8910</small>
                           </div>
                         </div>
@@ -1102,7 +1121,7 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="uf">Estado CTPS</label>
                           <div class="col-md-6">
-                            <input type="text" name="uf_ctps" size="60" class="form-control" id="uf_ctps">
+                            <input type="text" name="uf_ctps" size="60" class="form-control" id="uf_ctps" value="<?= htmlspecialchars($oldInput['uf_ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                           </div>
                         </div>
 
@@ -1112,7 +1131,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="titulo_eleitor" id="titulo_eleitor" class="form-control"
                               pattern="\d{12}" maxlength="12" placeholder="123456789012"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['titulo_eleitor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123456789012</small>
                           </div>
                         </div>
@@ -1123,7 +1143,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="zona_eleitoral" id="zona_eleitoral" class="form-control"
                               pattern="\d{3}" maxlength="3" placeholder="123"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['zona_eleitoral'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123</small>
                           </div>
                         </div>
@@ -1134,7 +1155,8 @@ try {
                           <div class="col-md-6">
                             <input type="text" name="secao_titulo_eleitor" id="secao_titulo_eleitor" class="form-control"
                               pattern="\d{4}" maxlength="4" placeholder="1234"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['secao_titulo_eleitor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 1234</small>
                           </div>
                         </div>
@@ -1145,7 +1167,8 @@ try {
                             <input type="text" id="certificado_reservista_numero" name="certificado_reservista_numero"
                               class="form-control num_reservista" maxlength="9"
                               pattern="\d*" inputmode="numeric" placeholder="123456789"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['certificado_reservista_numero'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123456789</small>
                           </div>
                         </div>
@@ -1156,7 +1179,8 @@ try {
                             <input type="text" id="certificado_reservista_serie" name="certificado_reservista_serie"
                               class="form-control serie_reservista" maxlength="3"
                               pattern="\d*" inputmode="numeric" placeholder="001"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              value="<?= htmlspecialchars($oldInput['certificado_reservista_serie'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 001</small>
                           </div>
                         </div>
@@ -1164,28 +1188,35 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_admissao" id="data_admissao" max=<?php echo date('Y-m-d'); ?> required>
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>" name="data_admissao" id="data_admissao" max="<?= date('Y-m-d') ?>" required value="<?= htmlspecialchars($oldInput['data_admissao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                            <?php if (!empty($fieldErrors['data_admissao'])): ?>
+                              <div class="invalid-feedback"><?= htmlspecialchars($fieldErrors['data_admissao'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
 
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" style='text-align: right; margin-top: 10px;' for="situacao">Situação<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="situacao" id="situacao" required>
+                            <select class="form-control input-lg mb-md<?= !empty($fieldErrors['situacao']) ? ' is-invalid' : '' ?>" name="situacao" id="situacao" required>
                               <option value="" selected disabled>Selecionar</option>
                               <?php
                               foreach ($situacao as $row) {
-                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+                                $selected = isset($oldInput['situacao']) && ((string)$row[0] === (string)$oldInput['situacao']) ? ' selected' : '';
+                                echo "<option value=\"{$row[0]}\"{$selected}>" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
                             </select>
+                            <?php if (!empty($fieldErrors['situacao'])): ?>
+                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['situacao'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
                           <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;' for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="cargo" id="cargo" required>
+                            <select class="form-control input-lg mb-md<?= !empty($fieldErrors['cargo']) ? ' is-invalid' : '' ?>" name="cargo" id="cargo" required>
                               <option value="" selected disabled>Selecionar</option>
                               <?php
                               foreach ($cargo as $row) {
@@ -1193,10 +1224,14 @@ try {
                                 if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
                                     continue;
                                 }
-                                echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
+                                $selectedCargo = isset($oldInput['cargo']) && ((string)$row[0] === (string)$oldInput['cargo']) ? ' selected' : '';
+                                echo "<option value=\"{$row[0]}\"{$selectedCargo}>" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
                             </select>
+                            <?php if (!empty($fieldErrors['cargo'])): ?>
+                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['cargo'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
                           <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
@@ -1406,7 +1441,7 @@ try {
                       <h2 class="panel-title">Carga Horária</h2>
                     </header>
                     <div class="panel-body">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarCargaHoraria">
                         <div class="form-group">
                           <label class="col-md-3 control-label">Escala</label>
                           <div class="col-md-6">
@@ -1623,6 +1658,42 @@ try {
                     </div>
                   </section>
                 </div>
+                <!-- Modal de Validação Carga Horária -->
+                <div class="modal fade" id="modalValidacaoCargaHoraria" role="dialog">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title"><i class="fas fa-exclamation-circle" style="color: #d9534f;"></i> Validação de Carga Horária</h4>
+                      </div>
+                      <div class="modal-body">
+                        <p id="modalMensagem"></p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Entendi</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Modal de Sucesso Carga Horária -->
+                <div class="modal fade" id="modalSucessoCargaHoraria" role="dialog">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title"><i class="fas fa-check-circle" style="color: #5cb85c;"></i> Sucesso</h4>
+                      </div>
+                      <div class="modal-body">
+                        <p>Carga horária atualizada com sucesso!</p>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="location.reload()">Fechar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Aba de arquivos -->
                 <div id="arquivo" class="tab-pane">
                   <section class="panel">
@@ -1765,23 +1836,24 @@ try {
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
                                   <div class="col-md-6">
-                                    <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarDependente')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                                    <input type="text" class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarDependente')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required value="<?= $openModal === 'depFormModal' ? htmlspecialchars($oldInput['cpf'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
                                   </div>
                                 </div>
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="profileCompany"></label>
                                   <div class="col-md-6">
-                                    <p class="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+                                    <p class="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? 'block' : 'none' ?>; color: #b30000"><?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                   </div>
                                 </div>
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
                                   <div class="col-md-6" style="display: flex;">
-                                    <select name="id_parentesco" id="parentesco">
+                                    <select name="id_parentesco" id="parentesco" class="<?= !empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal' ? 'is-invalid' : '' ?>">
                                       <option selected disabled>Selecionar...</option>
                                       <?php
                                       foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                        echo ("<option value='" . $item["id_parentesco"] . "' >" . htmlspecialchars($item["descricao"]) . "</option>");
+                                        $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["id_parentesco"] ? ' selected' : '';
+                                        echo ("<option value='" . $item["id_parentesco"] . "'{$selected}>" . htmlspecialchars($item["descricao"]) . "</option>");
                                       }
                                       ?>
                                     </select>
@@ -1789,6 +1861,9 @@ try {
                                   </div>
                                 </div>
                                 <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?> readonly>
+                                <?php if (!empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal'): ?>
+                                  <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['id_parentesco'], ENT_QUOTES, 'UTF-8') ?></p>
+                                <?php endif; ?>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                                   <input id="enviarDependente" type="submit" value="Enviar" class="btn btn-primary">
@@ -1872,7 +1947,7 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
                           <div class="col-md-8">
-                            <input type="text" class="form-control" name="complemento" id="complemento" id="profileCompany">
+                            <input type="text" class="form-control" name="complemento" id="complemento">
                           </div>
                         </div>
                         <div class="form-group">
@@ -1926,7 +2001,18 @@ try {
       switch (idForm) {
         case "formRemuneracao":
           url = "remuneracao.php";
-          data_nova = "id_tipo=" + data[0] + "&valor=" + data[1] + "&inicio=" + data[2] + "&fim=" + data[3] + "&action=remuneracao_adicionar&id_funcionario=" + data[4];
+          var action = $("#" + idForm + " input[name='action']").val() || 'remuneracao_adicionar';
+          var idTipo = $("#" + idForm + " select[name='id_tipo']").val();
+          var valor = $("#" + idForm + " input[name='valor']").val();
+          var inicio = $("#" + idForm + " input[name='inicio']").val();
+          var fim = $("#" + idForm + " input[name='fim']").val();
+          var idFuncionario = $("#" + idForm + " input[name='id_funcionario']").val();
+          data_nova = "id_tipo=" + encodeURIComponent(idTipo) + "&valor=" + encodeURIComponent(valor) + "&inicio=" + encodeURIComponent(inicio) + "&fim=" + encodeURIComponent(fim) + "&action=" + encodeURIComponent(action) + "&id_funcionario=" + encodeURIComponent(idFuncionario);
+          if (action === 'remuneracao_editar') {
+            var idRemuneracao = $("#" + idForm + " input[name='id_remuneracao']").val();
+            var idFuncionarioRemuneracao = $("#" + idForm + " input[name='id_funcionario_remuneracao']").val();
+            data_nova += "&id_remuneracao=" + encodeURIComponent(idRemuneracao) + "&id_funcionario_remuneracao=" + encodeURIComponent(idFuncionarioRemuneracao);
+          }
           break;
         case "formInfoAdicional":
           url = "informacao_adicional.php";
@@ -2012,6 +2098,7 @@ try {
             .append($("<td>").text(item.fim))
             .append($("<td class='tabela'>").text(item.valor))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
+              .append($("<button onclick='abrirModalRemuneracao(true, " + item.id_remuneracao + ", " + item.id_tipo + ", \"" + item.inicio + "\", \"" + item.fim + "\", " + item.valor + ")' title='Editar' class='btn btn-primary'><i class='fas fa-edit'></i></button>"))
               .append($("<button onclick='removerRemuneracao(" + item.id_remuneracao + ")' title='Excluir' class='btn btn-danger'><i class='fas fa-trash-alt'></i></button>"))
             )
           );
@@ -2019,6 +2106,31 @@ try {
 
       $('.total').html(total);
       inicializarTabelaRemuneracao();
+    }
+
+    function abrirModalRemuneracao(isEdit, idRemuneracao, idTipo, inicio, fim, valor) {
+      $('#tipo_remuneracao').prop('selectedIndex', 0);
+      $('#valor_remuneracao, #inicio_remuneracao, #fim_remuneracao').val('');
+      $('#formRemuneracao input[name="id_remuneracao"]').val('');
+      $('#formRemuneracao input[name="id_funcionario_remuneracao"]').val('');
+      $('#formRemuneracao input[name="action"]').val('remuneracao_adicionar');
+      $('#botaoSalvarRemuneracao').text('Salvar');
+      $('#remuneracaoModalTitle').text('Adicionar Remuneração');
+      $('#erro_periodo_remuneracao').hide();
+
+      if (isEdit) {
+        $('#formRemuneracao input[name="action"]').val('remuneracao_editar');
+        $('#formRemuneracao input[name="id_remuneracao"]').val(idTipo);
+        $('#formRemuneracao input[name="id_funcionario_remuneracao"]').val(idRemuneracao);
+        $('#tipo_remuneracao').val(idTipo);
+        $('#valor_remuneracao').val(valor);
+        $('#inicio_remuneracao').val(inicio);
+        $('#fim_remuneracao').val(fim);
+        $('#botaoSalvarRemuneracao').text('Atualizar');
+        $('#remuneracaoModalTitle').text('Editar Remuneração');
+      }
+
+      $('#adicionar').modal('show');
     }
 
     function adicionarRemuneracao() {
@@ -2055,6 +2167,9 @@ try {
     }
 
     function removerRemuneracao(id) {
+      if (!confirm('Tem certeza que deseja excluir esta remuneração?')) {
+        return;
+      }
       var url = "remuneracao.php";
       var data = "action=remover&id_remuneracao=" + id + "&id_funcionario=<?= $idFuncionario ?>";
       post(url, data, listar_remuneracao);
@@ -2370,6 +2485,118 @@ try {
     inicializarValidacaoCepFormulario({
       formId: "formAlterarEndereco"
     });
+
+    // Função auxiliar para exibir modal de erro
+    function exibirErroValidacao(mensagem) {
+      document.getElementById('modalMensagem').textContent = mensagem;
+      $('#modalValidacaoCargaHoraria').modal('show');
+    }
+
+    // Function para converter HH:mm para minutos
+    function converterParaMinutos(hora) {
+      if (!hora) return null;
+      const [h, m] = hora.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    // Validação de Carga Horária
+    document.getElementById('formAlterarCargaHoraria').addEventListener('submit', function(event) {
+      event.preventDefault();
+      
+      let entrada1 = document.getElementById('entrada1_input').value;
+      let saida1 = document.getElementById('saida1_input').value;
+      let entrada2 = document.getElementById('entrada2_input').value;
+      let saida2 = document.getElementById('saida2_input').value;
+
+      // Validar primeiro período
+      if ((entrada1 && !saida1) || (!entrada1 && saida1)) {
+        exibirErroValidacao('Primeiro período: Entrada e saída devem ser preenchidas juntas.');
+        return false;
+      }
+
+      // Validar segundo período
+      if ((entrada2 && !saida2) || (!entrada2 && saida2)) {
+        exibirErroValidacao('Segundo período: Entrada e saída devem ser preenchidas juntas.');
+        return false;
+      }
+
+      // Validar horários do primeiro período
+      if (entrada1 && saida1) {
+        let entradaMin = converterParaMinutos(entrada1);
+        let saidaMin = converterParaMinutos(saida1);
+
+        if (entradaMin === saidaMin) {
+          exibirErroValidacao('Entrada e saída do primeiro período não podem ser iguais.');
+          return false;
+        }
+      }
+
+      // Validar horários do segundo período
+      if (entrada2 && saida2) {
+        let entradaMin = converterParaMinutos(entrada2);
+        let saidaMin = converterParaMinutos(saida2);
+
+        if (entradaMin === saidaMin) {
+          exibirErroValidacao('Entrada e saída do segundo período não podem ser iguais.');
+          return false;
+        }
+      }
+
+      // Validar que há pelo menos 1 dia trabalhado (exceto para plantão)
+      let diasTrabalhados = document.querySelectorAll('input[id^="diaTrabalhado_"]:not([id$="Plantão"]):checked');
+      let plantao = document.querySelector('input[name="plantao"]:checked');
+      let nenhum_dia_selecionado = diasTrabalhados.length === 0 && !plantao;
+
+      if (nenhum_dia_selecionado) {
+        exibirErroValidacao('É necessário selecionar pelo menos 1 dia trabalhado ou um plantão.');
+        return false;
+      }
+
+      // Validar que plantão não é combinado com outros dias
+      if (plantao && diasTrabalhados.length > 0) {
+        exibirErroValidacao('Plantão não pode ser combinado com outros dias trabalhados.');
+        return false;
+      }
+
+      // Se houve ao menos 1 horário preenchido, validar que não são todas folgas
+      let temHorario = (entrada1 && saida1) || (entrada2 && saida2);
+      if (!temHorario && !plantao) {
+        exibirErroValidacao('É necessário informar pelo menos um período de trabalho (entrada e saída).');
+        return false;
+      }
+
+      // Se passou em todas as validações, enviar via AJAX
+      enviarFormularioCargaHoraria();
+    });
+
+    // Função para enviar o formulário via AJAX
+    function enviarFormularioCargaHoraria() {
+      const form = document.getElementById('formAlterarCargaHoraria');
+      const formData = new FormData(form);
+
+      fetch('../../controle/control.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'sucesso') {
+          $('#modalSucessoCargaHoraria').modal('show');
+        } else if (data.status === 'erro') {
+          exibirErroValidacao(data.mensagem);
+        } else {
+          exibirErroValidacao('Erro desconhecido ao atualizar carga horária.');
+        }
+      })
+      .catch(error => {
+        exibirErroValidacao('Erro na comunicação com o servidor: ' + error);
+      });
+    }
+
+    <?php if ($openModal === 'depFormModal'): ?>
+      $('.nav-tabs a[href="#dependentes"]').tab('show');
+      $('#depFormModal').modal('show');
+    <?php endif; ?>
   </script>
   <div align="right">
     <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>

@@ -1,5 +1,28 @@
 <?php
 require("../conexao.php");
+
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
+if (!isset($_SESSION['usuario'])) {
+    http_response_code(401);
+    header("Location: ../../../index.php");
+    exit();
+} else {
+    session_regenerate_id(true);
+}
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+  http_response_code(412);
+  echo json_encode(['erro' => 'O id do funcionário não é válido.']);
+  exit();
+}
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($id_pessoa, 4, 7);
+
 if (!isset($_POST) or empty($_POST)) {
     $data = file_get_contents("php://input");
     $data = json_decode($data, true);
@@ -8,6 +31,31 @@ if (!isset($_POST) or empty($_POST)) {
     $_POST = json_decode($_POST, true);
 }
 $cadastrado =  false;
+
+function normalizarTagsSocio($tagsBrutas): array
+{
+    if (!is_array($tagsBrutas)) {
+        $tagsBrutas = [$tagsBrutas];
+    }
+
+    $tags = [];
+
+    foreach ($tagsBrutas as $tag) {
+        if ($tag === null || $tag === '' || $tag === 'none') {
+            continue;
+        }
+
+        if (!is_numeric($tag) || (int) $tag < 1) {
+            continue;
+        }
+
+        $tagId = (int) $tag;
+        $tags[$tagId] = $tagId;
+    }
+
+    return array_values($tags);
+}
+
 extract($_REQUEST);
 if (!isset($data_nasc)) {
     $data_nasc = null;
@@ -36,8 +84,12 @@ if (!isset($valor_periodo) or ($valor_periodo == null) or ($valor_periodo == "")
     $valor_periodo = null;
 } else $valor_periodo = $valor_periodo;
 
-if (!isset($tag) or ($tag == null) or ($tag == "none")) {
-    $tag = null;
+$tags = normalizarTagsSocio($_REQUEST['tags'] ?? $_REQUEST['tag'] ?? []);
+
+if (count($tags) < 1) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'Selecione ao menos uma tag válida para o sócio']);
+    exit();
 }
 
 $sqlBuscaIdPessoa = "SELECT id_pessoa FROM socio WHERE id_socio = ?";
@@ -58,7 +110,8 @@ if ($stmt->execute()) {
 
 $sqlUpdatePessoa = "UPDATE pessoa 
                     SET cpf = ?, 
-                        nome = ?, 
+                        nome = ?,
+                        sobrenome = ?,
                         telefone = ?, 
                         data_nascimento = ?, 
                         cep = ?, 
@@ -75,6 +128,7 @@ $stmt = mysqli_prepare($conexao, $sqlUpdatePessoa);
 //sanitização das entradas
 $cpf_cnpj = filter_var($cpf_cnpj,FILTER_SANITIZE_SPECIAL_CHARS);
 $socio_nome = filter_var($socio_nome, FILTER_SANITIZE_SPECIAL_CHARS);
+$socio_sobrenome = filter_var($socio_sobrenome, FILTER_SANITIZE_SPECIAL_CHARS);
 $telefone = filter_var($telefone, FILTER_SANITIZE_SPECIAL_CHARS);
 $cep = filter_var($cep, FILTER_SANITIZE_SPECIAL_CHARS);
 $estado = filter_var($estado, FILTER_SANITIZE_SPECIAL_CHARS);
@@ -88,9 +142,10 @@ $id_pessoa = filter_var($id_pessoa, FILTER_SANITIZE_NUMBER_INT);
 if ($stmt) {
     // Bind dos parâmetros (tipos: 's' para string, 'i' para inteiro, 'd' para float/double)
     $stmt->bind_param(
-        'sssssssssssi',
+        'ssssssssssssi',
         $cpf_cnpj,
         $socio_nome,
+        $socio_sobrenome,
         $telefone,
         $data_nasc,
         $cep,
@@ -209,7 +264,6 @@ if ($stmt) {
                        email = ?, 
                        data_referencia = ?, 
                        valor_periodo = ?, 
-                       id_sociotag = ?, 
                        auto_status_contribuicoes = ? 
                    WHERE id_socio = ?";
 
@@ -220,26 +274,43 @@ if ($stmt) {
         $email = filter_var($email, FILTER_SANITIZE_EMAIL);
         $data_referencia = filter_var($data_referencia, FILTER_SANITIZE_SPECIAL_CHARS);
         $valor_periodo = filter_var($valor_periodo, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-        $tag = filter_var($tag, FILTER_SANITIZE_NUMBER_INT);
         $id_socio = filter_var($id_socio, FILTER_SANITIZE_NUMBER_INT);
 
         if ($stmt) {
             // Bind dos parâmetros
             $stmt->bind_param(
-                'iissdiii',
+                'iissdii',
                 $status,               // Inteiro (id_sociostatus)
                 $id_sociotipo,         // Inteiro (id_sociotipo)
                 $email,                // String (email)
                 $data_referencia,      // String (data_referencia)
                 $valor_periodo,        // Double (valor_periodo)
-                $tag,                  // Inteiro (id_sociotag)
                 $auto_status_contribuicoes, // Inteiro (auto_status_contribuicoes)
                 $id_socio              // Inteiro (id_socio)
             );
 
             // Executa o statement
             if ($stmt->execute()) {
-                $cadastrado = true;
+                $stmtDeleteTags = $conexao->prepare("DELETE FROM socio_has_tag WHERE id_socio = ?");
+                $stmtDeleteTags->bind_param('i', $id_socio);
+
+                if ($stmtDeleteTags->execute()) {
+                    $stmtInsertTag = $conexao->prepare("INSERT INTO socio_has_tag (id_socio, id_sociotag) VALUES (?, ?)");
+
+                    if ($stmtInsertTag) {
+                        $cadastrado = true;
+                        foreach ($tags as $tagId) {
+                            $stmtInsertTag->bind_param('ii', $id_socio, $tagId);
+                            if (!$stmtInsertTag->execute()) {
+                                $cadastrado = false;
+                                break;
+                            }
+                        }
+                        $stmtInsertTag->close();
+                    }
+                }
+
+                $stmtDeleteTags->close();
             } 
         }
     }

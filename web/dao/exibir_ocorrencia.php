@@ -1,11 +1,18 @@
 <?php
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
 //Requisições necessárias
 require_once 'Conexao.php';
 require_once '../html/permissao/permissao.php';
 
 //Verifica se um usuário está logado e possui as permissões necessárias
-session_start();
-permissao($_SESSION['id_pessoa'], 11, 3);
+if (!isset($_SESSION['usuario'])) {
+    header('Location: ../index.php');
+    exit();
+}
+
+permissao($_SESSION['id_pessoa'], 12, 3);
 
 $pdo = Conexao::connect();
 
@@ -13,7 +20,7 @@ try {
     $sql = 'SELECT * FROM atendido_ocorrencia_tipos';
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
-    
+
     $resultado = array();
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $resultado[] = array('idatendido_ocorrencia_tipos' => $row['idatendido_ocorrencia_tipos'], 'descricao' => htmlspecialchars($row['descricao'], ENT_QUOTES, 'UTF-8'));

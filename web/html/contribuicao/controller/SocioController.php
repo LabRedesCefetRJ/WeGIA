@@ -6,9 +6,9 @@ require_once '../model/Socio.php';
 require_once '../model/ContribuicaoLogCollection.php';
 require_once '../dao/SocioDAO.php';
 require_once '../dao/ContribuicaoLogDAO.php';
-require_once '../helper/Util.php';
 require_once '../dao/ConexaoDAO.php';
 require_once '../../../dao/PessoaDAO.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
 
@@ -45,6 +45,7 @@ class SocioController
 
                 $socio
                     ->setNome($verificacaoExistenciaPessoa->getNome())
+                    ->setSobrenome($verificacaoExistenciaPessoa->getSobrenome())
                     ->setDataNascimento($verificacaoExistenciaPessoa->getDataNascimento())
                     ->setTelefone($verificacaoExistenciaPessoa->getTelefone())
                     ->setCidade($verificacaoExistenciaPessoa->getCidade())
@@ -58,6 +59,7 @@ class SocioController
             } else {
                 $socio
                     ->setNome($dados['nome'])
+                    ->setSobrenome($dados['sobrenome'])
                     ->setDataNascimento($dados['dataNascimento'])
                     ->setTelefone($dados['telefone'])
                     ->setEstado($dados['uf'])
@@ -73,9 +75,10 @@ class SocioController
 
             $socio
                 ->setEmail($dados['email'])
-                ->setValor($dados['valor']);
+                ->setValor($dados['valor'])
+                ->setTags($dados['tags']);
 
-            $socioDao = new SocioDAO();
+            $socioDao = new SocioDAO($this->pdo);
 
             if (!is_null($verificacaoExistenciaPessoa)) {
                 $socioDao->criarSocioPessoaPreExistente($socio, $verificacaoExistenciaPessoa->getIdpessoa());
@@ -106,6 +109,7 @@ class SocioController
             $socio = new Socio();
             $socio
                 ->setNome($dados['nome'])
+                ->setSobrenome($dados['sobrenome'])
                 ->setDataNascimento($dados['dataNascimento'])
                 ->setTelefone($dados['telefone'])
                 ->setEmail($dados['email'])
@@ -118,7 +122,8 @@ class SocioController
                 ->setLogradouro($dados['rua'])
                 ->setDocumento($dados['cpf'])
                 ->setIbge($dados['ibge'])
-                ->setValor($dados['valor']);
+                ->setValor($dados['valor'])
+                ->setTags($dados['tags']);
 
             $socioDao = new SocioDAO($this->pdo);
 
@@ -150,6 +155,7 @@ class SocioController
         //extrair dados da requisição (considerar separar em uma função própria)
         $documento = trim(filter_input(INPUT_POST, 'documento_socio'));
         $nome = trim(filter_input(INPUT_POST, 'nome'));
+        $sobrenome = trim(filter_input(INPUT_POST, 'sobrenome'));
         $telefone = trim(filter_input(INPUT_POST, 'telefone'));
         $dataNascimento = trim(filter_input(INPUT_POST, 'data_nascimento'));
         $cep = trim(filter_input(INPUT_POST, 'cep'));
@@ -167,6 +173,8 @@ class SocioController
 
         //validar dados (considerar separar em uma função própria)
         try {
+            $tags = $this->extrairTagsPost();
+
             //validação do documento
             if ($opcaoSelecionada == 'fisica' && !Util::validarCPF($documento)) {
                 throw new InvalidArgumentException('O CPF informado é inválido', 400);
@@ -240,6 +248,7 @@ class SocioController
             return [
                 'cpf' => $documento,
                 'nome' => $nome,
+                'sobrenome' => $sobrenome,
                 'telefone' => $telefone,
                 'dataNascimento' => $dataNascimento,
                 'cep' => $cep,
@@ -252,10 +261,52 @@ class SocioController
                 'ibge' => $ibge,
                 'email' => $email,
                 'valor' => $valor,
+                'tags' => $tags,
             ];
         } catch (InvalidArgumentException $e) {
             Util::tratarException($e);
         }
+    }
+
+    private function extrairTagsPost(): array
+    {
+        $tags = $_POST['tags'] ?? $_POST['tags_ids'] ?? $_POST['id_sociotag'] ?? [];
+
+        if (is_string($tags)) {
+            $tags = trim($tags);
+
+            if ($tags === '') {
+                return [];
+            }
+
+            $jsonTags = json_decode($tags, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($jsonTags)) {
+                $tags = $jsonTags;
+            } else {
+                $tags = explode(',', $tags);
+            }
+        }
+
+        if (!is_array($tags)) {
+            throw new InvalidArgumentException('As tags informadas são inválidas.', 400);
+        }
+
+        $tagsNormalizadas = [];
+
+        foreach ($tags as $tag) {
+            if ($tag === null || $tag === '') {
+                continue;
+            }
+
+            if (!is_numeric($tag) || (int) $tag < 1) {
+                throw new InvalidArgumentException('Todas as tags devem ser ids inteiros maiores que 0.', 400);
+            }
+
+            $tagId = (int) $tag;
+            $tagsNormalizadas[$tagId] = $tagId;
+        }
+
+        return array_values($tagsNormalizadas);
     }
 
     /**

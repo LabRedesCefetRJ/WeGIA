@@ -14,12 +14,22 @@ A versão atual do sistema conta com os módulos:
 Contato: [Prof. Nilson  Lazarin](https://bsi.cefet-rj.br/~lazarin/)
 <hr>
 
+## Saiba mais
+
+- [Vídeos no Youtube](https://www.youtube.com/watch?v=M_DEXS-fZ3w&list=PLvRT7K1j00AM7kUT9Lha5r-reSMvgbpt1)
+
+## Como testar?
+
+- Teste o WeGIA em [demo.wegia.org](https://demo.wegia.org/) (exclusivo para instituições ou usuários interessados no software).
+  
+Para testes de desenvolvimento ou de segurança use [dev.wegia.org](http://dev.wegia.org/) ou [sec.wegia.org](http://sec.wegia.org/)
+
 ## Como instalar?
 Em um terminal execute os comandos abaixo:
 ```
 apt update
-apt install wget dialog -y
-wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/instalador/install.sh
+apt install wget -y
+wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/web/instalador/install.sh
 chmod +x install.sh
 ./install.sh
 ```

@@ -37,6 +37,27 @@ class ProdutoDAO
 			exit;
 		}
 
+		if ($produto->getCodigo() !== null && $produto->getCodigo() !== '') {
+			
+			$sql = "SELECT id_produto
+				FROM produto
+				WHERE codigo = :codigo
+				AND oculto = 0";
+		
+			$stmtCodigo = $pdo->prepare($sql);
+
+			$codigo = $produto->getCodigo();
+
+			$stmtCodigo->bindValue(':codigo', $codigo, PDO::PARAM_STR);
+			$stmtCodigo->execute();
+
+			if ($stmtCodigo->fetch(PDO::FETCH_ASSOC)) {
+    			$_SESSION['erro_produto'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
+    			header("Location: " . WWW . "html/matPat/cadastro_produto.php");
+    			exit;
+			}
+		}
+
 		$sql = "INSERT INTO produto (id_categoria_produto, id_unidade, descricao, codigo, preco)
 					VALUES (:id_categoria_produto, :id_unidade, :descricao, :codigo, :preco)";
 		$stmt = $pdo->prepare($sql);
@@ -169,6 +190,26 @@ class ProdutoDAO
 	public function alterarProduto($produto)
 	{
 		$pdo = Conexao::connect();
+
+		if ($produto->getCodigo() !== null && $produto->getCodigo() !== '') {
+			$stmtCodigo = $pdo->prepare("
+				SELECT id_produto
+				FROM produto
+				WHERE codigo = :codigo
+				AND id_produto != :id_produto
+				AND oculto = false
+			");
+
+			$stmtCodigo->bindValue(':codigo', $produto->getCodigo(), PDO::PARAM_STR);
+			$stmtCodigo->bindValue(':id_produto', $produto->getId_produto(), PDO::PARAM_INT);
+			$stmtCodigo->execute();
+
+			if ($stmtCodigo->fetch(PDO::FETCH_ASSOC)) {
+				$_SESSION['erro_produto'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
+				header("Location: " . WWW . "html/matPat/alterar_produto.php");
+				exit;
+			}
+		}
 
 		$sql = 'UPDATE produto  set id_categoria_produto=:id_categoria_produto, id_unidade=:id_unidade, descricao=:descricao, codigo=:codigo, preco=:preco WHERE id_produto=:id_produto';
 		$sql = str_replace("'", "\'", $sql);

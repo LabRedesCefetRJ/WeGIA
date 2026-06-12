@@ -65,7 +65,19 @@ if (!isset($teste)) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php?id_fichamedica=' . $id . '&id=' . $id);
 }
 
-$stmtExibirMedicamento = $pdo->prepare("SELECT * FROM saude_medicacao sm JOIN saude_atendimento sa ON(sm.id_atendimento=sa.id_atendimento) JOIN saude_fichamedica sf ON(sa.id_fichamedica=sf.id_fichamedica) WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1 and sf.id_fichamedica=:idFichaMedica ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC");
+$stmtExibirMedicamento = $pdo->prepare("
+    SELECT sm.id_medicacao, sm.medicamento, sm.dosagem, sm.duracao,
+           sa.id_funcionario, sf.id_pessoa,
+           GROUP_CONCAT(TIME_FORMAT(smh.horario, '%H:%i') ORDER BY smh.horario SEPARATOR ', ') AS horarios
+    FROM saude_medicacao sm
+    JOIN saude_atendimento sa ON (sm.id_atendimento = sa.id_atendimento)
+    JOIN saude_fichamedica sf ON (sa.id_fichamedica = sf.id_fichamedica)
+    LEFT JOIN saude_medicacao_horario smh ON (smh.id_medicacao = sm.id_medicacao)
+    WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1
+      AND sf.id_fichamedica = :idFichaMedica
+    GROUP BY sm.id_medicacao, sm.medicamento, sm.dosagem, sm.duracao, sa.id_funcionario, sf.id_pessoa
+    ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC
+");
 
 $stmtExibirMedicamento->bindValue(':idFichaMedica', $id, PDO::PARAM_INT);
 $stmtExibirMedicamento->execute();
@@ -175,6 +187,16 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
   .col-md-3 {
     width: 10%;
   }
+
+  .responsive-table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .responsive-table-wrapper .table {
+    margin-bottom: 0;
+    min-width: 100%;
+  }
 </style>
 
 
@@ -217,6 +239,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
   <!-- JavaScript Functions -->
   <script src="../../Functions/enviar_dados.js"></script>
   <script src="../../Functions/mascara.js"></script>
+  <script src="../../Functions/validacoes_saude.js"></script>
 
   <script>
     $(function() {
@@ -291,7 +314,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 
         const td3 = document.createElement("td");
         td3.className = "txt-center";
-        td3.textContent = item.horario;
+        td3.textContent = item.horarios;
 
         const td4 = document.createElement("td");
         td4.className = "txt-center";
@@ -457,14 +480,101 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
       input_id_funcionario.value = id_funcionario;
     }
 
+    let _erroTimeoutId = null;
+
     function mostrarErro(mensagem) {
       const divErro = document.getElementById("msg_erro_modal");
-      if (divErro) {
-        divErro.innerText = mensagem;
-        divErro.style.display = "block";
-      } else {
-        alert(mensagem);
+      if (!divErro) return;
+
+      // Limpa timeout anterior se existir
+      if (_erroTimeoutId) {
+        clearTimeout(_erroTimeoutId);
       }
+
+      divErro.innerText = mensagem;
+      divErro.style.display = "block";
+      divErro.classList.remove("is-visible");
+      void divErro.offsetWidth;
+      divErro.classList.add("is-visible");
+
+      // Oculta o erro após 10 segundos
+      _erroTimeoutId = setTimeout(() => {
+        divErro.classList.remove("is-visible");
+        // Aguarda a transição terminar (350ms) e esconde o elemento
+        setTimeout(() => {
+          divErro.style.display = "none";
+        }, 350);
+      }, 10000);
+    }
+
+    let _sosTimeoutId = null;
+
+    function mostrarMensagemSOS(mensagem, tipo = "danger") {
+      const alerta = document.getElementById("msg-sos");
+      const texto = document.getElementById("msg-sos-texto");
+      if (!alerta || !texto) return;
+
+      // Limpa timeout anterior se existir
+      if (_sosTimeoutId) {
+        clearTimeout(_sosTimeoutId);
+      }
+
+      alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+      alerta.classList.add("alert-" + tipo);
+      texto.textContent = mensagem;
+      alerta.style.display = "block";
+      alerta.classList.remove("is-visible");
+      void alerta.offsetWidth;
+      alerta.classList.add("is-visible");
+
+      // Oculta a mensagem após 10 segundos
+      _sosTimeoutId = setTimeout(() => {
+        ocultarMensagemSOS();
+      }, 10000);
+    }
+
+    function ocultarMensagemSOS() {
+      const alerta = document.getElementById("msg-sos");
+      if (!alerta) return;
+      alerta.classList.remove("is-visible");
+      setTimeout(() => {
+        alerta.style.display = "none";
+      }, 350);
+    }
+
+    let _aplicacaoTimeoutId = null;
+
+    function mostrarMensagemAplicacao(mensagem, tipo = "success") {
+      const alerta = document.getElementById("msg-aplicacao");
+      const texto = document.getElementById("msg-aplicacao-texto");
+      if (!alerta || !texto) return;
+
+      // Limpa timeout anterior se existir
+      if (_aplicacaoTimeoutId) {
+        clearTimeout(_aplicacaoTimeoutId);
+      }
+
+      alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+      alerta.classList.add("alert-" + tipo);
+      texto.textContent = mensagem;
+      alerta.style.display = "block";
+      alerta.classList.remove("is-visible");
+      void alerta.offsetWidth;
+      alerta.classList.add("is-visible");
+
+      // Oculta a mensagem após 10 segundos
+      _aplicacaoTimeoutId = setTimeout(() => {
+        ocultarMensagemAplicacao();
+      }, 10000);
+    }
+
+    function ocultarMensagemAplicacao() {
+      const alerta = document.getElementById("msg-aplicacao");
+      if (!alerta) return;
+      alerta.classList.remove("is-visible");
+      setTimeout(() => {
+        alerta.style.display = "none";
+      }, 350);
     }
     async function enviarDataHoraAplicacaoMedicamento(event) {
       event.preventDefault();
@@ -595,7 +705,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
         })
         .catch(erro => {
           console.error('Erro ao enviar:', erro);
-          alert('Erro ao conectar com o servidor.');
+          mostrarErro('Erro ao conectar com o servidor.');
         });
     }
 
@@ -643,7 +753,25 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 
 
       if (!dadosForm.medicamento || !dadosForm.dosagem || !dadosForm.horario || !dadosForm.duracao) {
-        alert('Por favor, preencha todos os campos do Medicamento SOS.');
+        mostrarMensagemSOS('Por favor, preencha todos os campos do Medicamento SOS.');
+        return;
+      }
+
+      const validacaoNomeMed = SaudeValidator.validarNome(dadosForm.medicamento);
+      if (!validacaoNomeMed.valido) {
+        mostrarMensagemSOS('Medicamento: ' + validacaoNomeMed.mensagem);
+        return;
+      }
+
+      const validacaoDosagem = SaudeValidator.validarValorPositivo(dadosForm.dosagem, 'Dosagem');
+      if (!validacaoDosagem.valido) {
+        mostrarMensagemSOS(validacaoDosagem.mensagem);
+        return;
+      }
+
+      const validacaoDuracao = SaudeValidator.validarValorPositivo(dadosForm.duracao, 'Duração');
+      if (!validacaoDuracao.valido) {
+        mostrarMensagemSOS(validacaoDuracao.mensagem);
         return;
       }
       const payload = {
@@ -678,7 +806,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 
       } catch (error) {
         console.error('Erro ao cadastrar SOS:', error);
-        alert('Falha ao cadastrar: ' + error.message);
+        mostrarMensagemSOS('Falha ao cadastrar: ' + error.message);
       }
     }
 
@@ -688,7 +816,9 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
         botaoSOS.addEventListener('click', enviarMedicacaoSOS);
       }
 
-      $('#modalHorarioAplicacao').on('show.bs.modal', function(e) {
+      let _modalAutoCloseTimer = null;
+
+      $('#modalHorarioAplicacao').on('show.bs.modal', function() {
         const dataHoraInput = document.getElementById("dataHora");
         const nowString = getDataLocalAtual();
 
@@ -696,15 +826,21 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
           dataHoraInput.value = nowString;
         }
 
-        // Limpa a mensagem de erro ao abrir
         const divErro = document.getElementById("msg_erro_modal");
         if (divErro) {
           divErro.style.display = "none";
         }
       });
 
-      $('#modalHorarioAplicacao').on('hidden.bs.modal', function(e) {
-        // Garante que o campo esteja limpo ao fechar
+      $(document).on('shown.bs.modal', '#modalHorarioAplicacao', function() {
+        clearTimeout(_modalAutoCloseTimer);
+        _modalAutoCloseTimer = setTimeout(function() {
+          $('#modalHorarioAplicacao').modal('hide');
+        }, 10000);
+      });
+
+      $(document).on('hidden.bs.modal', '#modalHorarioAplicacao', function() {
+        clearTimeout(_modalAutoCloseTimer);
         limparInputDataTime();
       });
     });
@@ -721,6 +857,65 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 
     #form_medicacao_sos {
       padding: 10px;
+    }
+
+    #msg-sos,
+    #msg-aplicacao,
+    #msg_erro_modal {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+
+    #msg-sos.is-visible,
+    #msg-aplicacao.is-visible,
+    #msg_erro_modal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #modalHorarioAplicacao .modal-title {
+      font-weight: 500;
+      color: #fff;
+    }
+
+    #modalHorarioAplicacao .modal-header {
+      background-color: #337ab7;
+      border-bottom-color: #2e6da4;
+    }
+
+    #modalHorarioAplicacao .modal-header .close,
+    #modalHorarioAplicacao .modal-header .close span {
+      color: #fff;
+      opacity: 1;
+      text-shadow: none;
+    }
+
+    #modalHorarioAplicacao .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background-color: transparent;
+      filter: brightness(1);
+      transition: background-color 0.18s ease, filter 0.18s ease;
+    }
+
+    #modalHorarioAplicacao .modal-header .close:hover,
+    #modalHorarioAplicacao .modal-header .close:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      filter: brightness(1.08);
+      outline: none;
+    }
+
+    #modalHorarioAplicacao .modal-header .close:hover span,
+    #modalHorarioAplicacao .modal-header .close:focus span {
+      filter: brightness(1.08);
     }
 
     @media(max-width:768px) {
@@ -849,12 +1044,18 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-up" data-toggle="collapse"></a>
+                        <a href="#collapse-sos" class="fa fa-caret-up" data-toggle="collapse"></a>
                       </div>
                       <h2 class="panel-title">Cadastrar Medicamento SOS</h2>
                     </header>
 
-                    <div class="panel-body collapse">
+                    <div class="panel-body collapse in" id="collapse-sos">
+                      <div id="msg-sos" class="alert alert-danger alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemSOS(); return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="msg-sos-texto"></span>
+                      </div>
                       <form id="form_medicacao_sos" class="form-horizontal form-bordered" onsubmit="event.preventDefault();">
 
                         <div class="form-group" id="primeira_medicacao">
@@ -862,7 +1063,10 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                             Medicamento:<sup class="obrig">*</sup>
                           </label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao" required>
+                            <input type="text" class="form-control meddisabled" name="nome_medicacao" id="nome_medicacao"
+                              pattern="[A-Za-zÀ-ÿ\s\-'.']+"
+                              title="apenas letras, espaços e hífens (números não são permitidos)"
+                              required>
                           </div>
                         </div>
 
@@ -871,7 +1075,9 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                             Dosagem:<sup class="obrig">*</sup>
                           </label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="dosagem_sos" id="dosagem_sos" required>
+                            <input type="text" class="form-control" name="dosagem_sos" id="dosagem_sos"
+                              title="valor positivo (ex: 500mg, 2ml)"
+                              required>
                           </div>
                         </div>
 
@@ -889,7 +1095,9 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                             Duração:<sup class="obrig">*</sup>
                           </label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="duracao_medicacao_sos" id="duracao_medicacao_sos" required>
+                            <input type="text" class="form-control" name="duracao_medicacao_sos" id="duracao_medicacao_sos"
+                              title="valor positivo (ex: 7 dias, 2 semanas)"
+                              required>
                           </div>
                         </div>
 
@@ -927,6 +1135,13 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 
                         </tbody>
                       </table>
+
+                      <div id="msg-aplicacao" class="alert alert-success alert-dismissible" role="alert" style="display: none;">
+                        <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemAplicacao(); return false;">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                        <span id="msg-aplicacao-texto"></span>
+                      </div>
 
                       <div id="div-botao-aplicar-global" style="text-align: right; margin-top: 10px; margin-bottom: 20px;"></div>
 
@@ -969,18 +1184,20 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                       </div>
                       <br />
 
-                      <table class="table table-bordered table-striped mb-none" id="enf">
-                        <thead>
-                          <tr style="font-size:15px;">
-                            <th>Responsável pela aplicação</th>
-                            <th>Medicações aplicadas</th>
-                            <th>Horário da aplicação</th>
-                          </tr>
-                        </thead>
-                        <tbody id="exibiaplicacao" style="font-size:15px">
+                      <div class="responsive-table-wrapper">
+                        <table class="table table-bordered table-striped mb-none" id="enf">
+                          <thead>
+                            <tr style="font-size:15px;">
+                              <th>Responsável pela aplicação</th>
+                              <th>Medicações aplicadas</th>
+                              <th>Horário da aplicação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="exibiaplicacao" style="font-size:15px">
 
-                        </tbody>
-                      </table>
+                          </tbody>
+                        </table>
+                      </div>
 
                       <br>
                       <br>
@@ -1068,15 +1285,9 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
       </div>
 
       <script>
-        function aplicarMedicacao() {
-          if (!window.confirm("Tem certeza que deseja aplicar essa medicação?")) {
-            return false;
-          }
-        }
-
         function variosMed() {
           localStorage.setItem("currentTab", "2");
-          alert("Medicamento aplicado com sucesso!");
+          mostrarMensagemAplicacao("Medicamento aplicado com sucesso!");
         }
         carregarMedicamentosParaAplicar(false);
         const id_fichamedica = document.getElementById("id_fichamedica").value;

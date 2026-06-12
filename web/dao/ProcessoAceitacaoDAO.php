@@ -144,7 +144,7 @@ class ProcessoAceitacaoDAO
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function getIdPessoaByProcesso(int $idProcesso): int
+    public function getIdPessoaByProcesso(int $idProcesso): ?int
     {
         $sql = "SELECT id_pessoa
             FROM processo_aceitacao
@@ -157,14 +157,10 @@ class ProcessoAceitacaoDAO
 
         $idPessoa = $stmt->fetchColumn();
 
-        if (!$idPessoa) {
-            throw new RuntimeException('Processo não encontrado ou sem pessoa vinculada.');
-        }
-
-        return (int)$idPessoa;
+        return $idPessoa ? (int)$idPessoa : null;
     }
 
-    public function getByStatus(int $status)
+    public function getByStatus(int $status, string $searchName = '')
     {
         $query = 'SELECT 
             p.id_pessoa,
@@ -174,15 +170,29 @@ class ProcessoAceitacaoDAO
             s.descricao AS status,
             pa.id,
             pa.id_status,
-            pa.descricao 
+            pa.descricao,
+            COUNT(e.id) AS etapas_count
         FROM processo_aceitacao pa
         JOIN pessoa p ON pa.id_pessoa = p.id_pessoa
         JOIN pa_status s ON pa.id_status = s.id
-        WHERE pa.id_status = :idStatus
+        LEFT JOIN pa_etapa e ON e.id_processo_aceitacao = pa.id
+        WHERE pa.id_status = :idStatus';
+
+        if (trim($searchName) !== '') {
+            $query .= ' AND (LOWER(CONCAT(p.nome, " ", p.sobrenome)) LIKE :nomePesquisa OR LOWER(p.nome) LIKE :nomePesquisa OR LOWER(p.sobrenome) LIKE :nomePesquisa)';
+        }
+
+        $query .= ' GROUP BY p.id_pessoa, p.nome, p.sobrenome, p.cpf, s.descricao, pa.id, pa.id_status, pa.descricao
         ORDER BY p.nome ASC';
 
         $stmt = $this->pdo->prepare($query);
-        $stmt->bindParam(':idStatus', $status);
+        $stmt->bindParam(':idStatus', $status, PDO::PARAM_INT);
+
+        if (trim($searchName) !== '') {
+            $searchPattern = '%' . mb_strtolower(trim($searchName), 'UTF-8') . '%';
+            $stmt->bindParam(':nomePesquisa', $searchPattern, PDO::PARAM_STR);
+        }
+
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -165,16 +165,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 					</header>
 					<div class="panel-body">
 						<div style="margin-bottom: 15px;">
-							<a href="listar_almox.php?tipo=ativo">
-								<button <?= $tipo === 'ativo' ? 'style="font-weight:bold;"' : ''?>>
-									Ativos
-								</button>
+							<a href="listar_almox.php?tipo=ativo"
+								class="btn btn-default <?= $tipo === 'ativo' ? 'active' : ''?>">
+								Ativos
 							</a>
 
-							<a href="listar_almox.php?tipo=arquivado">
-								<button <?= $tipo === 'arquivado' ? 'style="font-weight:bold;"' : ''?>>
-									Arquivados
-								</button>
+							<a href="listar_almox.php?tipo=arquivado"
+								class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : ''?>">
+								Arquivados
 							</a>
 						</div>
 						<?php if(isset($_SESSION['erro'])): ?>
@@ -220,7 +218,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 										<td><?= htmlspecialchars($item['descricao_almoxarifado']) ?></td>
 										<td>
 											<?php if ($tipo==='ativo'):?>
-												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;" onsubmit="return confirm('Deseja excluir este almoxarifado?');">
         											<input type="hidden" name="metodo" value="excluir">
         											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
         											<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
@@ -230,7 +228,7 @@ require_once ROOT . "/html/personalizacao_display.php";
         											</button>
     											</form>
 
-												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">
+												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;" onsubmit="return confirm('Deseja arquivar este almoxarifado?');">
 													<input type="hidden" name="metodo" value="arquivar">
         											<input type="hidden" name="nomeClasse" value="AlmoxarifadoControle">
         											<input type="hidden" name="id_almoxarifado" value="<?= (int)$item['id_almoxarifado'] ?>">
@@ -246,6 +244,14 @@ require_once ROOT . "/html/personalizacao_display.php";
     											>
         											<i class="fas fa-pencil-alt"></i>
     											</button>
+
+												<a href="<?= WWW ?>controle/control.php?nomeClasse=EstoqueControle&metodo=listarProdutosPorAlmoxarifadoComLimite&id_almoxarifado=<?= (int)$item['id_almoxarifado']?>"
+													title="Limites de estoque"
+													style="margin-left:8px;">
+													<button type="button" style="border:none;background:none;cursor:pointer;">
+														<i class="fas fa-boxes" style="color: rgb(110,110,110);"></i>
+													</button>
+												</a>
 
 											<?php else: ?>
 												<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;">

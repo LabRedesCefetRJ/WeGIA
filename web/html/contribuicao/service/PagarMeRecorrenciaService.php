@@ -1,6 +1,6 @@
 <?php
 require_once 'ApiRecorrenciaServiceInterface.php';
-require_once '../helper/Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once '../dao/ContribuicaoLogDAO.php';
 require_once '../dao/GatewayPagamentoDAO.php';
 
@@ -39,7 +39,7 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
             'installments' => 1,
             'statement_descriptor' => substr($agradecimento, 0, 13),
             'customer' => [
-                'name' => $recorrencia->getSocio()->getNome(),
+                'name' => $recorrencia->getSocio()->getFullName(),
                 'email' => $recorrencia->getSocio()->getEmail(),
                 'type' => 'individual',
                 'document_type' => 'CPF',
