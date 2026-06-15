@@ -711,23 +711,17 @@ require_once ROOT . "/html/geral/msg.php";
 				</div>
 
 				<div class="row category-row-third">
-					<div id="cobrancas" class="removeIn collapse">
-						<a href="<?= WWW ?>html/socio/sistema/cobrancas.php">
+					<div id="contribuicoes" class="removeIn collapse">
+						<a href="<?= WWW ?>html/socio/sistema/psocio_geracao.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-chart-bar"></i>
-								<h4>Controle Cobranças (Antigo)</h4>
+								<i class="fa-solid fa-file-invoice-dollar"></i>
+								<h4>Gerar carnê/boleto para sócio</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/socio/sistema/contribuicoes.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-chart-bar"></i>
+								<i class="fa-solid fa-chart-line"></i>
 								<h4>Controle de Contribuições</h4>
-							</div>
-						</a>
-						<a href="<?= WWW ?>html/socio/sistema/psocio_geracao.php">
-							<div class="col-lg-2 col-md-8 i">
-								<i class="fas fa-hand-holding-usd"></i>
-								<h4>Gerar Boleto</h4>
 							</div>
 						</a>
 					</div>
