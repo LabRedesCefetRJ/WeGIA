@@ -429,7 +429,13 @@ require_once "../personalizacao_display.php";
                                         <div class="cal-toolbar-group">
                                             <span class="cal-toolbar-label"><i class="fa fa-list-alt mr-xs"></i>Agenda</span>
                                             <select class="form-control input-sm cal-toolbar-select" id="filtro-alocacao-agenda">
-                                                <option value=""></option>
+                                                <option value="">Selecione...</option>
+                                            </select>
+                                        </div>
+                                        <div class="cal-toolbar-group">
+                                            <span class="cal-toolbar-label"><i class="fa fa-users mr-xs"></i>Equipe</span>
+                                            <select class="form-control input-sm cal-toolbar-select" id="filtro-alocacao-equipe" disabled>
+                                                <option value="">Selecione a agenda...</option>
                                             </select>
                                         </div>
                                         <div style="flex:1;"></div>
@@ -437,6 +443,7 @@ require_once "../personalizacao_display.php";
                                             <i class="fa fa-plus mr-xs"></i> Nova Alocação
                                         </button>
                                     </div>
+
                                     <table class="table table-bordered table-striped table-hover mb-none" id="dt-alocacoes">
                                         <thead>
                                             <tr>
@@ -1434,31 +1441,57 @@ $('#btn-salvar-agenda').on('click', function () {
 /* ── Equipes ─────────────────────────────────────────────── */
 
 function renderTabelaEquipes(equipes, membros) {
-    var memPorEquipe = {};
-    $.each(membros || [], function (_, m) {
-        if (!memPorEquipe[m.id_equipe]) memPorEquipe[m.id_equipe] = [];
-        memPorEquipe[m.id_equipe].push(m);
-    });
     var html = '';
     $.each(equipes || [], function (_, e) {
+        var mems = $.grep(membros || [], function(m) { return String(m.id_equipe) === String(e.id); });
+        
+        var grupos = { 'Sem divisão': [] };
+        $.each(mems, function(_, m) {
+            var divNome = m.nome_divisao || 'Sem divisão'; 
+            if (!grupos[divNome]) grupos[divNome] = [];
+            
+            var cargoHtml = m.cargo ? ' <span style="color:#999; font-size:0.85em;">- ' + m.cargo + '</span>' : '';
+            var infoMembro = m.nome_completo.trim() + cargoHtml;
+            grupos[divNome].push(infoMembro);
+        });
+
+        var membrosHtml = '';
+        $.each(grupos, function(divNome, membrosInfo) {
+            if (membrosInfo.length > 0) {
+                if (divNome === 'Sem divisão') {
+                    membrosHtml += '<div style="margin-bottom:4px;">' + membrosInfo.join(' | ') + '</div>';
+                } else {
+                    membrosHtml += '<div style="margin-bottom:4px;">' +
+                                   '<small style="font-weight:700; color:#0088cc; text-transform:uppercase;">' + divNome + ':</small><br>' +
+                                   membrosInfo.join(' | ') + 
+                                   '</div>';
+                }
+            }
+        });
+
         var badge = e.status && e.status.toLowerCase() === 'ativo'
             ? '<span class="badge badge-ativo">' + e.status + '</span>'
             : '<span class="badge badge-inativo">' + (e.status || '—') + '</span>';
-        var mems = memPorEquipe[e.id] || [];
-        var membrosHtml = mems.length
-            ? $.map(mems, function (m) {
-                return m.nome_completo.trim() + (m.cargo ? ' - ' + m.cargo : '');
-              }).join(' | ')
-            : '<span class="text-muted">Nenhum membro</span>';
+
         html += '<tr>'
             + '<td><strong>' + e.nome + '</strong></td>'
             + '<td>' + (e.descricao || '—') + '</td>'
-            + '<td class="membros-cell">' + membrosHtml + '</td>'
+            + '<td class="membros-cell">' + (membrosHtml || '<span class="text-muted">Nenhum membro</span>') + '</td>'
             + '<td class="text-center">' + fmtTurno(e.inicio_turno, e.fim_turno) + '</td>'
             + '<td class="col-status">' + badge + '</td>'
             + '<td class="col-acoes"><div class="acoes-grupo">'
             + '<button class="btn btn-xs btn-success btn-acao btn-membros-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" title="Membros"><i class="fa fa-users"></i></button>'
-            + '<button class="btn btn-xs btn-info btn-acao btn-editar-equipe" data-id="' + e.id + '" data-nome="' + e.nome + '" data-descricao="' + (e.descricao||'') + '" data-status="' + (e.id_status||'') + '" data-agenda="' + (e.id_agenda||'') + '" data-inicio-turno="' + (e.inicio_turno||'') + '" data-fim-turno="' + (e.fim_turno||'') + '" title="Editar"><i class="fa fa-pencil"></i></button>'
+
+            + '<button class="btn btn-xs btn-info btn-acao btn-editar-equipe" '
+            + 'data-id="' + e.id + '" '
+            + 'data-nome="' + e.nome + '" '
+            + 'data-descricao="' + (e.descricao || '') + '" '
+            + 'data-status="' + (e.id_status || '') + '" '
+            + 'data-agenda="' + (e.id_agenda || '') + '" '
+            + 'data-inicio-turno="' + (e.inicio_turno ? e.inicio_turno.substring(0, 5) : '') + '" '
+            + 'data-fim-turno="' + (e.fim_turno ? e.fim_turno.substring(0, 5) : '') + '" '
+            + 'title="Editar"><i class="fa fa-pencil"></i></button>'
+            
             + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-equipe" data-id="' + e.id + '" title="Excluir"><i class="fa fa-trash"></i></button>'
             + '</div></td></tr>';
     });
@@ -1530,23 +1563,22 @@ $('#btn-nova-equipe').on('click', function () {
 
 $(document).on('click', '.btn-editar-equipe', function () {
     var $b = $(this);
-    var idEquipe = $b.data('id'); // Pegamos o ID da equipe
     
-    $('#modal-equipe-titulo').text('Editar Equipe');
-    $('#equipe-id').val(idEquipe);
+    $('#equipe-id').val($b.data('id'));
     $('#equipe-nome').val($b.data('nome'));
     $('#equipe-descricao').val($b.data('descricao'));
     $('#equipe-inicio-turno').val($b.data('inicio-turno'));
     $('#equipe-fim-turno').val($b.data('fim-turno'));
-    ocultarErroModal('modal-equipe-erro');
-    $('#equipe-status-grupo').show();
+    
     carregarSelectAgendaEquipe($b.data('agenda'));
     carregarStatusEquipe($b.data('status'));
-
+    
+    ocultarErroModal('modal-equipe-erro');
+    $('#equipe-status-grupo').show();
+    
     $('#wrapper-divisoes-equipe').empty();
-    api('listarDivisoesPorEquipe', { id_equipe: idEquipe }).done(function(divisoes) {
+    api('listarDivisoesPorEquipe', { id_equipe: $b.data('id') }).done(function(divisoes) {
         $.each(divisoes || [], function(_, div) {
-            // Note que guardamos o ID da divisão no data-id
             var html = '<div class="input-group mb-xs div-input-wrapper">' +
                        '<input type="text" class="form-control input-sm input-nome-divisao" value="' + div.nome + '" data-id="' + div.id + '" placeholder="Nome da divisão">' +
                        '<span class="input-group-btn">' +
@@ -1557,6 +1589,7 @@ $(document).on('click', '.btn-editar-equipe', function () {
         });
     });
 
+    // 5. Abre o modal
     $('#modal-equipe').modal('show');
 });
 
@@ -1606,6 +1639,23 @@ $('#btn-salvar-equipe').on('click', function () {
     }).fail(function (xhr) {
         var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar.';
         exibirErroModal('modal-equipe-erro', msg);
+    });
+});
+
+$(document).on('click', '.btn-excluir-equipe', function () {
+    var id = $(this).data('id');
+    
+    confirmar('Deseja realmente excluir esta equipe? Todas as alocações vinculadas a ela também serão removidas.', function () {
+        api('excluirEquipe', { id: id })
+            .done(function (r) {
+                exibirMsgAba('msg-equipes', r.msg || 'Equipe excluída com sucesso.', 'success');
+                carregarEquipes(); 
+                _calRefetch();
+            })
+            .fail(function (xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao excluir a equipe.';
+                exibirMsgAba('msg-equipes', msg, 'danger');
+            });
     });
 });
 
@@ -1665,11 +1715,9 @@ function carregarMembros(idEquipe) {
     api('listarMembrosPorEquipe', { id_equipe: idEquipe }).done(function (dados) {
         var html = '';
         if (!dados || !dados.length) {
-            // Ajustado colspan para 4
             html = '<tr><td colspan="4" class="text-center text-muted">Nenhum membro ativo.</td></tr>';
         } else {
             $.each(dados, function (_, m) {
-                // Descobre o nome da divisão atual baseado no ID que veio do banco
                 var nomeDivisao = 'Sem divisão';
                 if (m.id_divisao) {
                     $.each(_divisoesEquipeAtual, function(_, d) {
@@ -1680,10 +1728,8 @@ function carregarMembros(idEquipe) {
                 html += '<tr>'
                     + '<td>' + m.nome + ' ' + (m.sobrenome || '') + (m.cargo ? ' - ' + m.cargo : '') + '</td>'
                     + '<td class="text-center">' + fmtTurno(m.inicio_turno, m.fim_turno, true) + '</td>'
-                    // Nova coluna da Divisão
                     + '<td class="td-divisao" data-id-divisao="' + (m.id_divisao || '') + '">' + nomeDivisao + '</td>'
                     + '<td>'
-                    // Novo botão de Editar Divisão (Azul)
                     + '<button class="btn btn-xs btn-info btn-acao mr-xs btn-editar-divisao-membro" data-id="' + m.id + '" title="Alterar Divisão"><i class="fa fa-sitemap"></i></button>'
                     + '<button class="btn btn-xs btn-warning btn-acao mr-xs btn-inativar-membro" data-id="' + m.id + '" title="Inativar"><i class="fa fa-ban"></i></button>'
                     + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-membro" data-id="' + m.id + '" title="Remover"><i class="fa fa-trash"></i></button>'
@@ -1691,6 +1737,12 @@ function carregarMembros(idEquipe) {
             });
         }
         $('#tbody-membros').html(html);
+    });
+
+    $('#modal-membros').on('hidden.bs.modal', function () {
+        if ($('#abas-agenda a[href="#tab-equipes"]').parent().hasClass('active')) {
+            carregarEquipes();
+        }
     });
 
     // Histórico de inativos
@@ -1978,37 +2030,77 @@ function carregarFiltroAlocacaoAgenda() {
 }
 
 function carregarAlocacoes() {
+    var idAgenda = $('#filtro-alocacao-agenda').val();
+    var idEquipe = $('#filtro-alocacao-equipe').val();
+
+    if (!idAgenda || !idEquipe) {
+        var msgPlaceholder = !idAgenda ? 'Selecione uma agenda e uma equipe para visualizar as alocações.' : 'Selecione uma equipe para visualizar as alocações.';
+        $('#tbody-alocacoes').html('<tr><td colspan="7" class="text-center text-muted">' + msgPlaceholder + '</td></tr>');
+        dtInit('dt-alocacoes');
+        return; 
+    }
+
     api('listarTodasAlocacoes').done(function (dados) {
-        var filtroAgenda = $('#filtro-alocacao-agenda').val();
-        var lista = filtroAgenda
-            ? $.grep(dados || [], function (al) { return String(al.id_agenda) === String(filtroAgenda); })
-            : (dados || []);
-        var html = '';
-        $.each(lista, function (_, al) {
-            var intervalo = parseInt(al.intervalo) || 0;
-            var turno = fmtTurno(al.inicio_turno, al.fim_turno);
-            html += '<tr>'
-                + '<td>' + al.equipe + '</td>'
-                + '<td>' + fmtDate(al.start) + '</td>'
-                + '<td>' + fmtDate(al.fim_display) + '</td>'
-                + '<td class="text-center">' + turno + '</td>'
-                + '<td class="text-center">' + intervalo + (intervalo === 1 ? ' dia' : ' dias') + '</td>'
-                + '<td>' + fmtDatetime(al.lembrete) + '</td>'
-                + '<td class="col-acoes"><div class="acoes-grupo">'
-                + '<button class="btn btn-xs btn-info btn-acao btn-editar-alocacao"'
-                + ' data-id="' + al.id + '" data-agenda="' + al.id_agenda + '" data-equipe="' + al.id_equipe + '"'
-                + ' data-inicio="' + (al.start||'').substring(0,10) + '"'
-                + ' data-fim="'    + (al.fim_display||'').substring(0,10) + '"'
-                + ' data-lembrete="' + (al.lembrete||'').replace(' ','T').substring(0,16) + '"'
-                + ' data-intervalo="' + intervalo + '"'
-                + ' title="Editar"><i class="fa fa-pencil"></i></button>'
-                + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-alocacao" data-id="' + al.id + '" title="Excluir"><i class="fa fa-trash"></i></button>'
-                + '</div></td></tr>';
+        var lista = dados || [];
+        
+        lista = $.grep(lista, function(al) { 
+            return String(al.id_agenda) === String(idAgenda) && String(al.id_equipe) === String(idEquipe); 
         });
+
+        var html = '';
+        if (lista.length === 0) {
+            html = '<tr><td colspan="7" class="text-center text-muted">Nenhuma alocação encontrada para esta equipe.</td></tr>';
+        } else {
+            $.each(lista, function(_, al) {
+                var intervalo = parseInt(al.intervalo) || 0;
+                var turno = fmtTime(al.inicio_turno) + ' – ' + fmtTime(al.fim_turno);
+                
+                html += '<tr>'
+                    + '<td>' + al.equipe + '</td>'
+                    + '<td>' + fmtDate(al.start) + '</td>'
+                    + '<td>' + fmtDate(al.fim_display) + '</td>'
+                    + '<td class="text-center">' + turno + '</td>'
+                    + '<td class="text-center">' + intervalo + (intervalo === 1 ? ' dia' : ' dias') + '</td>'
+                    + '<td>' + fmtDatetime(al.lembrete) + '</td>'
+                    + '<td class="col-acoes"><div class="acoes-grupo">'
+                    + '<button class="btn btn-xs btn-info btn-acao btn-editar-alocacao" '
+                    + 'data-id="'+al.id+'" data-agenda="'+al.id_agenda+'" data-equipe="'+al.id_equipe+'" '
+                    + 'data-inicio="'+(al.start||'').substring(0,10)+'" data-fim="'+(al.fim_display||'').substring(0,10)+'" '
+                    + 'data-lembrete="'+(al.lembrete||'').replace(' ','T').substring(0,16)+'" data-intervalo="'+intervalo+'" '
+                    + 'title="Editar"><i class="fa fa-pencil"></i></button>'
+                    + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-alocacao" data-id="'+al.id+'" title="Excluir"><i class="fa fa-trash"></i></button>'
+                    + '</div></td></tr>';
+            });
+        }
         $('#tbody-alocacoes').html(html);
         dtInit('dt-alocacoes');
     });
 }
+
+$(document).on('change', '#filtro-alocacao-agenda', function () {
+    var idAgenda = $(this).val();
+    var $selEquipe = $('#filtro-alocacao-equipe');
+    
+    if (!idAgenda) {
+        $selEquipe.html('<option value="">Selecione a agenda...</option>').prop('disabled', true);
+        initSelect2('#filtro-alocacao-equipe', 'Selecione a agenda...');
+        carregarAlocacoes(); 
+        return;
+    }
+
+    api('listarEquipes', { id_agenda: idAgenda }).done(function (equipes) {
+        var opts = '<option value=""></option>'; 
+        $.each(equipes, function (_, e) {
+            if (e.status && e.status.toLowerCase() === 'ativo') {
+                opts += '<option value="' + e.id + '">' + e.nome + '</option>';
+            }
+        });
+        $selEquipe.html(opts).prop('disabled', false);
+        initSelect2('#filtro-alocacao-equipe', 'Selecione a equipe...');
+    });
+});
+
+$(document).on('change', '#filtro-alocacao-equipe', carregarAlocacoes);
 
 function carregarSelectEquipePorAgenda(idAgenda, selEquipe) {
     var $sel = $('#alocacao-equipe');

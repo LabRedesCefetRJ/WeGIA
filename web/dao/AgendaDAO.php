@@ -327,17 +327,27 @@ class AgendaDAO
         $stmt->execute();
     }
 
-    public function excluirEquipe(int $id)
+   public function excluirEquipe(int $id)
     {
-        $del = "DELETE FROM agenda_alocacao WHERE id_equipe = :id";
-        $stmt = $this->pdo->prepare($del);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $sqlMembros = "DELETE FROM agenda_equipe_membro WHERE id_equipe = :id";
+        $stmtMembros = $this->pdo->prepare($sqlMembros);
+        $stmtMembros->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmtMembros->execute();
 
-        $sql = "DELETE FROM agenda_equipe WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $sqlDivisao = "DELETE FROM agenda_equipe_divisao WHERE id_equipe = :id";
+        $stmtDivisao = $this->pdo->prepare($sqlDivisao);
+        $stmtDivisao->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmtDivisao->execute();
+
+        $sqlAlocacoes = "DELETE FROM agenda_alocacao WHERE id_equipe = :id";
+        $stmtAlocacoes = $this->pdo->prepare($sqlAlocacoes);
+        $stmtAlocacoes->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmtAlocacoes->execute();
+
+        $sqlEquipe = "DELETE FROM agenda_equipe WHERE id = :id";
+        $stmtEquipe = $this->pdo->prepare($sqlEquipe);
+        $stmtEquipe->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmtEquipe->execute();
     }
 
     public function listarEquipeStatus()
@@ -435,10 +445,10 @@ class AgendaDAO
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
     }
-
-    public function listarTodosMembrosAtivos()
+    
+    public function listarTodosMembrosAtivos()  
     {
-        $sql = "SELECT m.id, m.id_equipe, e.inicio_turno, e.fim_turno,
+        $sql = "SELECT m.id, m.id_equipe, d.nome AS nome_divisao, e.inicio_turno, e.fim_turno,
                        CONCAT(p.nome, ' ', COALESCE(p.sobrenome, '')) AS nome_completo,
                        CASE
                            WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
@@ -449,12 +459,14 @@ class AgendaDAO
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 INNER JOIN agenda_equipe e ON m.id_equipe = e.id
+                LEFT JOIN agenda_equipe_divisao d ON m.id_divisao = d.id
                 LEFT JOIN funcionario f ON f.id_pessoa = p.id_pessoa
                 LEFT JOIN cargo c ON c.id_cargo = f.id_cargo
                 LEFT JOIN voluntario v ON v.id_pessoa = p.id_pessoa
                 LEFT JOIN atendido a ON a.pessoa_id_pessoa = p.id_pessoa
                 WHERE m.ativo = 1
-                ORDER BY m.id_equipe, p.nome";
+                ORDER BY m.id_equipe, d.nome, p.nome";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -726,44 +726,7 @@ class AgendaControle
         }
         exit;
     }
-
-    public function alterarMembro()
-    {
-        header('Content-Type: application/json');
-
-        try {
-            $id                = filter_input(INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT);
-            $inicio_turno = filter_input(INPUT_POST, 'inicio_turno', FILTER_SANITIZE_SPECIAL_CHARS);
-            $fim_turno    = filter_input(INPUT_POST, 'fim_turno', FILTER_SANITIZE_SPECIAL_CHARS);
-
-            if (!$id || $id < 1)
-                throw new InvalidArgumentException('O id informado não é válido.', 412);
-
-            if (empty($inicio_turno))
-                throw new InvalidArgumentException('O horário de início do turno não pode ser vazio.', 412);
-
-            if (empty($fim_turno))
-                throw new InvalidArgumentException('O horário de fim do turno não pode ser vazio.', 412);
-
-            if ($inicio_turno >= $fim_turno)
-                throw new InvalidArgumentException('O horário de início deve ser menor que o horário de fim.', 412);
-
-            $membro = new AgendaEquipeMembro();
-            $membro->setId($id);
-            $membro->setInicio_turno($inicio_turno);
-            $membro->setFim_turno($fim_turno);
-
-            $dao = new AgendaDAO();
-            $dao->alterarMembro($membro);
-
-            http_response_code(200);
-            echo json_encode(['msg' => 'Membro alterado com sucesso!']);
-        } catch (Exception $e) {
-            Util::tratarException($e);
-        }
-        exit;
-    }
-
+    
     // -------------------------------------------------------
     // AGENDA EQUIPE DIVISAO
     // -------------------------------------------------------
