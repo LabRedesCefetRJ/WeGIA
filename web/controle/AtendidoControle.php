@@ -587,6 +587,10 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
+
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             $atendido = $this->verificar();
             $atendido->setidatendido($idatendido);
             $AtendidoDAO = new AtendidoDAO();
@@ -602,6 +606,9 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             $AtendidoDAO = new AtendidoDAO();
 
             $AtendidoDAO->excluir($idatendido);
@@ -624,6 +631,9 @@ class AtendidoControle
         }
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             $atendidoDAO = new AtendidoDAO();
             $pdo = Conexao::connect();
 
@@ -737,6 +747,9 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             if ($dataExpedicao && $idatendido) {
                 $pdo = Conexao::connect();
                 $sql_nascimento = "SELECT p.data_nascimento FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
@@ -810,6 +823,9 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             if (!$idatendido || $idatendido < 1)
                 throw new InvalidArgumentException('O id do atendido informado não é válido.', 412);
 
@@ -837,6 +853,9 @@ class AtendidoControle
             $numero_residencia = "null";
         }
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             if (!$idatendido || $idatendido < 1)
                 throw new InvalidArgumentException('O id do atendido informado não é válido.', 412);
 
@@ -869,6 +888,9 @@ class AtendidoControle
         $operacao = filter_input(INPUT_POST, 'operacao', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             if (!$id || $id < 1)
                 throw new InvalidArgumentException('O id informado não é válido.', 412);
 
