@@ -2,6 +2,8 @@
 
 namespace api\modules\Contribuicao;
 
+require_once dirname(__DIR__, 4) . '/web/html/contribuicao/service/PdfService.php';
+
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 
@@ -9,11 +11,17 @@ class ContribuicaoController
 {
     private ContribuicaoService $contribuicaoService;
     private \api\modules\Socio\SocioRepository $socioRepository;
+    private \api\modules\Pessoa\PessoaRepository $pessoaRepository;
 
-    public function __construct(ContribuicaoService $contribuicaoService, \api\modules\Socio\SocioRepository $socioRepository)
+    public function __construct(
+        ContribuicaoService $contribuicaoService,
+        \api\modules\Socio\SocioRepository $socioRepository,
+        \api\modules\Pessoa\PessoaRepository $pessoaRepository
+    )
     {
         $this->contribuicaoService = $contribuicaoService;
         $this->socioRepository = $socioRepository;
+        $this->pessoaRepository = $pessoaRepository;
     }
 
     /**
@@ -221,5 +229,80 @@ class ContribuicaoController
             return $response->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
         }
+    }
+
+    public function generateContribuicaoPdf(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $idSocio = (int)($args['id'] ?? 0);
+
+            if ($idSocio <= 0) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'ID do sócio inválido.'
+                ]));
+
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $validation = $this->validateSocioOwnership($request, $idSocio);
+            if ($validation instanceof Response) {
+                return $validation;
+            }
+
+            $contribuicoes = $this->contribuicaoService->obterContribuicoesPorSocio($idSocio);
+
+            if (empty($contribuicoes)) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Nenhuma contribuição encontrada para este sócio.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $idPessoa = (int)$request->getAttribute('user_id');
+            $pessoa = $this->pessoaRepository->findById((string)$idPessoa);
+
+            if (!$pessoa) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Dados do sócio não encontrados.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $pdfService = new \PdfService();
+            $pdf = $pdfService->gerarExtratoContribuicoes($contribuicoes, $pessoa);
+            $nomeArquivo = sprintf('extrato_contribuicoes_socio_%d.pdf', $idSocio);
+
+            $response->getBody()->write($pdf);
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/pdf')
+                ->withHeader('Content-Disposition', 'attachment; filename="' . $nomeArquivo . '"')
+                ->withHeader('Content-Length', (string)strlen($pdf));
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => 'Erro ao gerar PDF do extrato: ' . $e->getMessage()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function generateComprovantePdf(Request $request, Response $response, array $args):Response
+    {
+        // Implementação para gerar PDF do comprovante de pagamento de uma contribuição específica
+        // Validar socio ownership, obter dados da contribuição, formatar dados e gerar PDF
+        // Retornar PDF como resposta
+
+        $response->getBody()->write(json_encode([
+            'message' => 'Gerar PDF do comprovante de pagamento - implementação pendente.'
+        ]));
+        return $response->withStatus(501)
+            ->withHeader('Content-Type', 'application/json');
     }
 }

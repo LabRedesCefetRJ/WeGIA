@@ -292,6 +292,63 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 ---
 
+## 4. GET `/socios/{id}/contribuicoes/pdf`
+
+Gera e retorna um arquivo PDF com o extrato das contribuições de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode gerar o extrato do seu próprio sócio.
+
+### Parâmetros
+- **id** (path, obrigatório): ID do sócio
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+
+### Exemplos de Requisição
+```
+GET /socios/1/contribuicoes/pdf
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+### Resposta - 200 OK
+- **Content-Type:** `application/pdf`
+- **Content-Disposition:** `attachment; filename="extrato_contribuicoes_socio_1.pdf"`
+
+O corpo da resposta contém o arquivo PDF pronto para download.
+
+### Resposta - 400 Bad Request (ID Inválido)
+```json
+{
+  "error": "ID do sócio inválido."
+}
+```
+
+### Resposta - 401 Unauthorized (Token Não Fornecido)
+```json
+{
+  "error": "Token inválido"
+}
+```
+
+### Resposta - 403 Forbidden (Acesso Negado)
+```json
+{
+  "error": "Acesso negado. Você não tem permissão para acessar os dados de outro sócio."
+}
+```
+
+### Resposta - 404 Not Found (Sem Contribuições)
+```json
+{
+  "error": "Nenhuma contribuição encontrada para este sócio."
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Erro ao gerar PDF do extrato: <mensagem de erro>"
+}
+```
+
+---
+
 ## Estrutura de Dados - Contribuição
 
 Cada contribuição retornada possui a seguinte estrutura:

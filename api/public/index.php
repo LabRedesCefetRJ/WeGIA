@@ -95,7 +95,11 @@ $container = new AppContainer([
         return new ContribuicaoService($c->get(ContribuicaoRepository::class));
     },
     ContribuicaoController::class => function ($c) {
-        return new ContribuicaoController($c->get(ContribuicaoService::class), $c->get(SocioRepository::class));
+        return new ContribuicaoController(
+            $c->get(ContribuicaoService::class),
+            $c->get(SocioRepository::class),
+            $c->get(PessoaRepository::class)
+        );
     },
     SocioMiddleware::class => function ($c) {
         return new SocioMiddleware($c->get(UserRepository::class), 4);
@@ -192,6 +196,14 @@ $app->get('/socios/{id}/contribuicoes', [ContribuicaoController::class, 'getCont
 $app->get('/socios/{id}/contribuicoes/filter', [ContribuicaoController::class, 'getContribuicoesBySocioAndStatus'])
     ->add($container->get(AuthMiddleware::class));
 $app->get('/socios/{id}/contribuicoes/resume', [ContribuicaoController::class, 'getResumoContribuicoes'])
+    ->add($container->get(AuthMiddleware::class));
+
+//Gerar PDF do extrato de contribuições
+$app->get('/socios/{id}/contribuicoes/pdf', [ContribuicaoController::class, 'generateContribuicaoPdf'])
+    ->add($container->get(AuthMiddleware::class));
+
+//Gerar PDF do comprovante de pagamento de uma contribuição específica
+$app->get('/socios/{id}/contribuicoes/{contribuicao_id}/pdf', [ContribuicaoController::class, 'generateComprovantePdf'])
     ->add($container->get(AuthMiddleware::class));
 
 //Benefícios
