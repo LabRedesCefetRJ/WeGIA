@@ -294,6 +294,113 @@ class PdfService
     }
 
     /**
+     * Gerar comprovante em PDF para uma contribuição específica.
+     *
+     * @param array $contribuicao
+     * @param array $socio
+     * @param string|null $diretorio
+     * @return string
+     */
+    public function gerarComprovanteContribuicao(array $contribuicao, array $socio, $diretorio = null)
+    {
+        try {
+            if (isset($diretorio)) {
+                if (substr($diretorio, -1) !== DIRECTORY_SEPARATOR) {
+                    $diretorio .= DIRECTORY_SEPARATOR;
+                }
+
+                if (!is_dir($diretorio)) {
+                    mkdir($diretorio, 0755, true);
+                }
+            }
+
+            $pdf = new Fpdi();
+            $pdf->AddPage('P', 'A4');
+            $pdf->SetMargins(25, 25, 25);
+
+            $this->aplicarLogoInstitucional($pdf);
+
+            $corAzul = [0, 70, 160];
+            $codigo = (string)($contribuicao['codigo'] ?? '');
+            $valor = (float)($contribuicao['valor'] ?? 0);
+            $status = $this->formatarStatusPagamento($contribuicao['status_pagamento'] ?? ($contribuicao['statusPagamento'] ?? null));
+            $dataGeracao = $this->formatarDataContribuicao($contribuicao['data_geracao'] ?? ($contribuicao['dataGeracao'] ?? null));
+            $dataVencimento = $this->formatarDataContribuicao($contribuicao['data_vencimento'] ?? ($contribuicao['dataVencimento'] ?? null));
+            $dataPagamento = $this->formatarDataContribuicao($contribuicao['data_pagamento'] ?? ($contribuicao['dataPagamento'] ?? null));
+            $plataforma = (string)($contribuicao['plataforma'] ?? '-');
+            $meioPagamento = (string)($contribuicao['meioPagamento'] ?? $contribuicao['meio_pagamento'] ?? '-');
+
+            $pdf->SetTextColor(...$corAzul);
+            $pdf->SetFont('Arial', 'B', 22);
+            $pdf->Cell(0, 18, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'COMPROVANTE DE CONTRIBUIÇÃO'), 0, 1, 'C');
+            $pdf->Ln(2);
+
+            $pdf->SetDrawColor(...$corAzul);
+            $pdf->SetLineWidth(1.2);
+            $pdf->Line(25, $pdf->GetY(), 185, $pdf->GetY());
+            $pdf->Ln(12);
+
+            $pdf->SetFont('Arial', '', 13);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->MultiCell(
+                0,
+                8,
+                iconv(
+                    'UTF-8',
+                    'ISO-8859-1//TRANSLIT',
+                    sprintf(
+                        'Este documento confirma a contribuição vinculada a(o) doador(a) %s.',
+                        $this->obterNomeCompleto($socio)
+                    )
+                ),
+                0,
+                'C'
+            );
+            $pdf->Ln(6);
+
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Dados do(a) doador(a)'), 0, 1, 'L');
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Nome: ' . $this->obterNomeCompleto($socio)), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'CPF: ' . $this->formatarCPF($socio['cpf'] ?? '')), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'E-mail: ' . ($socio['email'] ?? '-')), 0, 1, 'L');
+            $pdf->Ln(4);
+
+            $pdf->SetFont('Arial', 'B', 12);
+            $pdf->Cell(0, 8, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Dados da contribuição'), 0, 1, 'L');
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Código: ' . $codigo), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Valor: R$ ' . number_format($valor, 2, ',', '.')), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Status: ' . $status), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Meio de pagamento: ' . $meioPagamento), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Plataforma: ' . $plataforma), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Data de geração: ' . $dataGeracao), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Data de vencimento: ' . $dataVencimento), 0, 1, 'L');
+            $pdf->Cell(0, 7, iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Data de pagamento: ' . $dataPagamento), 0, 1, 'L');
+            $pdf->Ln(8);
+
+            $pdf->SetFont('Arial', 'I', 10);
+            $pdf->MultiCell(
+                0,
+                6,
+                iconv('UTF-8', 'ISO-8859-1//TRANSLIT', 'Guarde este comprovante para fins de controle e conferência do pagamento realizado.'),
+                0,
+                'C'
+            );
+
+            if (isset($diretorio)) {
+                $nomeArquivo = 'comprovante_contribuicao_' . ($contribuicao['id'] ?? 'contribuicao') . '.pdf';
+                return $this->salvarPdf($pdf, $diretorio . $nomeArquivo);
+            }
+
+            return $pdf->Output('S');
+        } catch (Exception $e) {
+            error_log("Erro ao gerar PDF: " . $e->getMessage());
+            throw new Exception('Erro ao gerar PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Cria um arquivo pdf no destino informado
      */
     public function salvarPdf(Fpdi $pdf, string $path): string

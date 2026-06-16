@@ -349,6 +349,64 @@ O corpo da resposta contém o arquivo PDF pronto para download.
 
 ---
 
+## 5. GET `/socios/{id}/contribuicoes/{contribuicao_id}/pdf`
+
+Gera e retorna um arquivo PDF com o comprovante de uma contribuição específica do sócio. Requer autenticação via token JWT. O usuário autenticado só pode gerar o comprovante da própria contribuição vinculada ao seu sócio.
+
+### Parâmetros
+- **id** (path, obrigatório): ID do sócio
+- **contribuicao_id** (path, obrigatório): ID da contribuição
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+
+### Exemplos de Requisição
+```
+GET /socios/1/contribuicoes/10/pdf
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+### Resposta - 200 OK
+- **Content-Type:** `application/pdf`
+- **Content-Disposition:** `attachment; filename="comprovante_contribuicao_10.pdf"`
+
+O corpo da resposta contém o arquivo PDF pronto para download.
+
+### Resposta - 400 Bad Request (IDs Inválidos)
+```json
+{
+  "error": "ID do sócio ou da contribuição inválido."
+}
+```
+
+### Resposta - 401 Unauthorized (Token Não Fornecido)
+```json
+{
+  "error": "Token inválido"
+}
+```
+
+### Resposta - 403 Forbidden (Acesso Negado)
+```json
+{
+  "error": "Acesso negado. Você não tem permissão para acessar os dados de outro sócio."
+}
+```
+
+### Resposta - 404 Not Found (Contribuição Não Encontrada)
+```json
+{
+  "error": "Contribuição não encontrada para este sócio."
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Erro ao gerar PDF do comprovante: <mensagem de erro>"
+}
+```
+
+---
+
 ## Estrutura de Dados - Contribuição
 
 Cada contribuição retornada possui a seguinte estrutura:

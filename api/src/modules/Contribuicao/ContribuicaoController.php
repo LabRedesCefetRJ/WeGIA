@@ -295,14 +295,72 @@ class ContribuicaoController
 
     public function generateComprovantePdf(Request $request, Response $response, array $args):Response
     {
-        // Implementação para gerar PDF do comprovante de pagamento de uma contribuição específica
-        // Validar socio ownership, obter dados da contribuição, formatar dados e gerar PDF
-        // Retornar PDF como resposta
+        try {
+            $idSocio = (int)($args['id'] ?? 0);
+            $idContribuicao = (int)($args['contribuicao_id'] ?? 0);
 
-        $response->getBody()->write(json_encode([
-            'message' => 'Gerar PDF do comprovante de pagamento - implementação pendente.'
-        ]));
-        return $response->withStatus(501)
-            ->withHeader('Content-Type', 'application/json');
+            if ($idSocio <= 0 || $idContribuicao <= 0) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'ID do sócio ou da contribuição inválido.'
+                ]));
+
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $validation = $this->validateSocioOwnership($request, $idSocio);
+            if ($validation instanceof Response) {
+                return $validation;
+            }
+
+            $contribuicao = $this->contribuicaoService->obterContribuicaoPorId($idSocio, $idContribuicao);
+
+            if (!$contribuicao) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Contribuição não encontrada para este sócio.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $idPessoa = $this->socioRepository->getIdPessoaByIdSocio($idSocio);
+            if (!$idPessoa) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Dados do sócio não encontrados.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $pessoa = $this->pessoaRepository->findById((string)$idPessoa);
+            if (!$pessoa) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Dados do sócio não encontrados.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $pdfService = new \PdfService();
+            $pdf = $pdfService->gerarComprovanteContribuicao($contribuicao, $pessoa);
+            $nomeArquivo = sprintf('comprovante_contribuicao_%d.pdf', $idContribuicao);
+
+            $response->getBody()->write($pdf);
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/pdf')
+                ->withHeader('Content-Disposition', 'attachment; filename="' . $nomeArquivo . '"')
+                ->withHeader('Content-Length', (string)strlen($pdf));
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => 'Erro ao gerar PDF do comprovante: ' . $e->getMessage()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
     }
 }

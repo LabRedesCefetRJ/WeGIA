@@ -88,6 +88,43 @@ class ContribuicaoRepository
     }
 
     /**
+     * Find a single contribution by its ID and socio ID.
+     *
+     * @param int $idContribuicao
+     * @param int $idSocio
+     * @return array|null
+     */
+    public function findByIdAndSocioId(int $idContribuicao, int $idSocio): ?array
+    {
+        $query = "SELECT 
+                    cl.id,
+                    cl.id_socio,
+                    cl.codigo,
+                    cl.valor,
+                    cl.data_geracao as dataGeracao,
+                    cl.data_vencimento as dataVencimento,
+                    cl.data_pagamento as dataPagamento,
+                    cl.status_pagamento as statusPagamento,
+                    cg.plataforma as plataforma,
+                    cm.meio as meioPagamento
+                  FROM contribuicao_log cl
+                  LEFT JOIN contribuicao_gatewayPagamento cg ON cl.id_gateway = cg.id
+                  LEFT JOIN contribuicao_meioPagamento cm ON cl.id_meio_pagamento = cm.id
+                  WHERE cl.id = :id_contribuicao
+                    AND cl.id_socio = :id_socio
+                  LIMIT 1";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([
+            ':id_contribuicao' => $idContribuicao,
+            ':id_socio' => $idSocio
+        ]);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result === false ? null : $result;
+    }
+
+    /**
      * Get summary of contributions for a socio
      *
      * @param int $idSocio The socio ID

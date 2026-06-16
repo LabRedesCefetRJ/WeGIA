@@ -35,6 +35,18 @@ class ContribuicaoService
     }
 
     /**
+     * Get a specific contribution for a socio.
+     *
+     * @param int $idSocio
+     * @param int $idContribuicao
+     * @return array|null
+     */
+    public function obterContribuicaoPorId(int $idSocio, int $idContribuicao): ?array
+    {
+        return $this->contribuicaoRepository->findByIdAndSocioId($idContribuicao, $idSocio);
+    }
+
+    /**
      * Get contributions summary for a socio
      *
      * @param int $idSocio The socio ID
