@@ -2236,7 +2236,29 @@ $(document).on('click', '#btn-download-mensal', function () {
     
     var url = '../../service/relatorioGradeHorariosService.php?id_agenda=' + idAgenda + '&mes=' + mes + '&ano=' + ano;
     
-    window.open(url, '_blank');
+    var $btn = $(this);
+    var conteudoOriginal = $btn.html();
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> Gerando...').prop('disabled', true);
+
+    fetch(url)
+        .then(async response => {
+            if (!response.ok) {
+                const erroData = await response.json();
+                throw new Error(erroData.erro || erroData.msg || 'Erro desconhecido ao gerar a agenda.');
+            }
+            // Se for sucesso (status 200), converte a resposta para um arquivo PDF binário
+            return response.blob();
+        })
+        .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+        })
+        .catch(error => {
+            exibirMsgAba('msg-calendario', error.message, 'danger');
+        })
+        .finally(() => {
+            $btn.html(conteudoOriginal).prop('disabled', false);
+        });
 });
 </script>
 </body>

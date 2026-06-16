@@ -3,6 +3,7 @@
 $baseDir = dirname(__DIR__);
 
 require_once $baseDir . '/assets/vendor/setasign/fpdi/src/autoload.php';
+require_once $baseDir . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 spl_autoload_register(function ($class) use ($baseDir) {
     $map = [
@@ -320,10 +321,5 @@ try {
     $mpdf->Output($nomeArquivo, 'I');
 
 } catch (Exception $e) {
-    echo "
-        <div style='font-family: sans-serif; text-align: center; margin-top: 50px;'>
-            <h1 style='color: #e74c3c;'>Erro ao gerar agenda</h1>
-            <p style='color: #333;'>" . e($e->getMessage()) . "</p>
-        </div>
-    ";
+    Util::tratarException($e);
 }
