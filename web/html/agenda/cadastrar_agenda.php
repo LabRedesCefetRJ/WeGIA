@@ -2238,7 +2238,13 @@ $(document).on('click', '#btn-download-mensal', function () {
     
     var $btn = $(this);
     var conteudoOriginal = $btn.html();
-    $btn.html('<i class="fa fa-spinner fa-spin"></i> Gerando...').prop('disabled', true);
+    
+    $btn.css({
+        'width': $btn.outerWidth() + 'px',
+        'height': $btn.outerHeight() + 'px'
+    });
+
+    $btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
 
     fetch(url)
         .then(async response => {
@@ -2246,7 +2252,6 @@ $(document).on('click', '#btn-download-mensal', function () {
                 const erroData = await response.json();
                 throw new Error(erroData.erro || erroData.msg || 'Erro desconhecido ao gerar a agenda.');
             }
-            // Se for sucesso (status 200), converte a resposta para um arquivo PDF binário
             return response.blob();
         })
         .then(blob => {
@@ -2257,7 +2262,9 @@ $(document).on('click', '#btn-download-mensal', function () {
             exibirMsgAba('msg-calendario', error.message, 'danger');
         })
         .finally(() => {
-            $btn.html(conteudoOriginal).prop('disabled', false);
+            $btn.html(conteudoOriginal)
+                .prop('disabled', false)
+                .css({ 'width': '', 'height': '' });
         });
 });
 </script>
