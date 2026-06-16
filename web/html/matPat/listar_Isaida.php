@@ -26,11 +26,41 @@ require_once ROOT . "/html/personalizacao_display.php";
 	include_once ROOT . '/dao/Conexao.php';
 	include_once ROOT . '/dao/SaidaDAO.php';
 
+	$pdo = Conexao::connect();
+
+	$stmtDestinos = $pdo->query("
+    	SELECT id_destino, nome_destino
+    	FROM destino
+    	ORDER BY nome_destino
+	");
+	$destinos = $stmtDestinos->fetchAll(PDO::FETCH_ASSOC);
+
+	$stmtTiposSaida = $pdo->query("
+    	SELECT id_tipo, descricao
+    	FROM tipo_saida
+    	ORDER BY descricao
+	");
+	$tiposSaida = $stmtTiposSaida->fetchAll(PDO::FETCH_ASSOC);
+
 	if (!isset($_SESSION['isaida'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=' . WWW . 'html/matPat/listar_Isaida.php');
 	}
 	if (isset($_SESSION['isaida'])) {
-		$isaida = $_SESSION['isaida'];
+    	$dadosIsaida = $_SESSION['isaida'];
+
+    	if (is_string($dadosIsaida)) {
+        	$dadosIsaida = json_decode($dadosIsaida, true);
+
+        	if (is_string($dadosIsaida)) {
+            	$dadosIsaida = json_decode($dadosIsaida, true);
+        	}
+    	}
+
+    	if (!is_array($dadosIsaida)) {
+        	$dadosIsaida = [];
+    	}
+
+    	$isaida = json_encode($dadosIsaida);
 	}
 	if (!isset($_SESSION['saidaUnica'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=' . WWW . 'html/matPat/listar_Isaida.php');
@@ -164,6 +194,15 @@ require_once ROOT . "/html/personalizacao_display.php";
 							echo $isaida;
 							?>;
 
+			if (typeof isaida === 'string') {
+    			try {
+        			isaida = JSON.parse(isaida);
+    			} catch (e) {
+        			isaida = [];
+    			}
+			}
+
+
 			$.each(isaida, function(i, item) {
 
 				$('#tabela')
@@ -219,6 +258,141 @@ require_once ROOT . "/html/personalizacao_display.php";
         		},
         		error: function(xhr) {
             		let mensagem = "Erro ao anular saída.";
+
+            		if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+                		mensagem = xhr.responseJSON.mensagem;
+            		}
+
+            		alert(mensagem);
+        		}
+    		});
+		}
+
+		function dataBRParaInput(dataBR) {
+    		if (!dataBR) return '';
+
+    		const partes = dataBR.split('/');
+
+    		if (partes.length !== 3) {
+        		return dataBR;
+    		}
+
+    		return partes[2] + '-' + partes[1] + '-' + partes[0];
+		}
+
+		function abrirModalEditarSaida() {
+    		let saida = <?php echo json_encode($saida); ?>;
+    		let itens = <?php echo $isaida; ?>;
+
+    		if (typeof itens === 'string') {
+        		try {
+            		itens = JSON.parse(itens);
+        		} catch (e) {
+            		itens = [];
+        		}
+    		}
+
+    		$('#editar-data-saida').val(dataBRParaInput(saida.data));
+    		$('#editar-hora-saida').val((saida.hora || '').substring(0, 5));
+
+    		$('#editar-destino-saida').val(String(saida.id_destino));
+    		$('#editar-tipo-saida').val(String(saida.id_tipo));
+
+    		$('#editar-itens-saida').empty();
+
+    		$.each(itens, function(i, item) {
+        		$('#editar-itens-saida').append(`
+            		<tr>
+                		<td>${item.descricao}</td>
+                		<td>
+                    		<input 
+                        		type="number" 
+                        		step="1" 
+                        		min="1"
+                        		class="form-control qtd-item-saida"
+                        		data-id-isaida="${item.id_isaida}"
+                        		value="${item.qtd}"
+                    		>
+                		</td>
+                		<td>
+                   			<input 
+                        		type="number" 
+                        		step="0.01" 
+                        		min="0"
+                        		class="form-control valor-item-saida"
+                        		data-id-isaida="${item.id_isaida}"
+                        		value="${item.valor_unitario}"
+                    		>
+                		</td>
+                		<td>${item.unidade}</td>
+                		<td>R$ ${(Number(item.qtd) * Number(item.valor_unitario)).toFixed(2)}</td>
+            		</tr>
+        		`);
+    		});
+
+    		$('#modalEditarSaida').modal('show');
+		}
+
+		function salvarEdicaoSaida() {
+    		const itens = [];
+
+    		$('.qtd-item-saida').each(function() {
+        		const idIsaida = $(this).data('id-isaida');
+        		const qtd = $(this).val();
+        		const valorUnitario = $('.valor-item-saida[data-id-isaida="' + idIsaida + '"]').val();
+
+        		itens.push({
+            		id_isaida: idIsaida,
+            		qtd: qtd,
+            		valor_unitario: valorUnitario
+        		});
+    		});
+
+    		const idDestino = $('#editar-destino-saida').val();
+    		const idTipo = $('#editar-tipo-saida').val();
+
+    		if (!idDestino) {
+        		alert("Selecione um destino.");
+        		return;
+   			}
+
+    		if (!idTipo) {
+        		alert("Selecione um tipo de saída.");
+        		return;
+    		}
+
+    		if (itens.length === 0) {
+        		alert("Nenhum item informado para edição.");
+        		return;
+    		}
+
+    		$.ajax({
+        		url: "<?= WWW ?>controle/control.php",
+        		method: "POST",
+        		dataType: "json",
+        		data: {
+            		nomeClasse: "SaidaControle",
+            		metodo: "editar",
+            		id_saida: <?= (int)$saida['id_saida'] ?>,
+            		data: $('#editar-data-saida').val(),
+            		hora: $('#editar-hora-saida').val(),
+            		id_destino: idDestino,
+            		id_tipo: idTipo,
+            		itens: JSON.stringify(itens)
+        		},
+        		success: function(resposta) {
+            		if (resposta.sucesso) {
+                		alert(resposta.mensagem);
+                		location.reload();
+            		} else {
+                		alert(resposta.mensagem || "Erro ao editar saída.");
+            		}
+        		},
+        		error: function(xhr) {
+            		console.log("ERRO STATUS:", xhr.status);
+            		console.log("ERRO RESPOSTA:", xhr.responseText);
+
+            		let mensagem = "Erro ao editar saída.";
 
             		if (xhr.responseJSON && xhr.responseJSON.mensagem) {
                 		mensagem = xhr.responseJSON.mensagem;
@@ -296,6 +470,10 @@ require_once ROOT . "/html/personalizacao_display.php";
 					<div class="panel-body">
 						<?php if ((int)$saida['ativo'] === 1): ?>
     						<div style="margin-bottom: 15px;">
+        						<button type="button" class="btn btn-primary" onclick="abrirModalEditarSaida()">
+            						Editar saída
+        						</button>
+
         						<button type="button" class="btn btn-danger" onclick="anularSaida()">
             						Anular saída
         						</button>
@@ -346,6 +524,88 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
+	<div class="modal fade" id="modalEditarSaida" tabindex="-1" role="dialog" aria-labelledby="modalEditarSaidaLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="modalEditarSaidaLabel">Editar saída</h4>
+            </div>
+
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Data</label>
+                        <input type="date" id="editar-data-saida" class="form-control">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label>Hora</label>
+                        <input type="time" id="editar-hora-saida" class="form-control">
+                    </div>
+                </div>
+
+                <br>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Destino</label>
+                        <select id="editar-destino-saida" class="form-control">
+                            <?php foreach ($destinos as $destino): ?>
+                                <option value="<?= (int)$destino['id_destino'] ?>">
+                                    <?= htmlspecialchars($destino['nome_destino'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label>Tipo de saída</label>
+                        <select id="editar-tipo-saida" class="form-control">
+                            <?php foreach ($tiposSaida as $tipoSaida): ?>
+                                <option value="<?= (int)$tipoSaida['id_tipo'] ?>">
+                                    <?= htmlspecialchars($tipoSaida['descricao'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                            <th>Valor Unitário</th>
+                            <th>Unidade</th>
+                            <th>Total antigo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editar-itens-saida"></tbody>
+                </table>
+
+                <p class="text-muted">
+                    A edição altera apenas esta saída. O cadastro do produto não será alterado.
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn btn-primary" onclick="salvarEdicaoSaida()">
+                    Salvar alterações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 
 </html>
