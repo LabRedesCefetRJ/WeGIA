@@ -271,6 +271,7 @@ try {
       $("#sobrenomeForm").prop('disabled', false);
       $("#radioM").prop('disabled', false);
       $("#radioF").prop('disabled', false);
+      $("#emailForm").prop('disabled', false);
       $("#telefone").prop('disabled', false);
       $("#nascimento").prop('disabled', false);
       $("#pai").prop('disabled', false);
@@ -288,6 +289,7 @@ try {
       $("#sobrenomeForm").prop('disabled', true);
       $("#radioM").prop('disabled', true);
       $("#radioF").prop('disabled', true);
+      $("#emailForm").prop('disabled', true);
       $("#telefone").prop('disabled', true);
       $("#nascimento").prop('disabled', true);
       $("#pai").prop('disabled', true);
@@ -420,6 +422,7 @@ try {
           $("#radioM").prop('checked', false).prop('disabled', true)
           $("#radioF").prop('checked', true).prop('disabled', true);
         }
+        $("#emailForm").val(item.email || '').prop('disabled', true);
         $("#telefone").val(item.telefone).prop('disabled', true);
         $("#nascimento").val(alterardate(item.data_nascimento)).prop('disabled', true);
         $("#pai").val(item.nome_pai).prop('disabled', true);
@@ -872,6 +875,12 @@ try {
                         <div class="col-md-8">
                           <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
                           <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                        </div>
+                      </div>
+                    <div class="form-group">
+                        <label class="col-md-3 control-label" for="emailForm">E-mail</label>
+                        <div class="col-md-8">
+                          <input type="email" class="form-control" name="email" id="emailForm" placeholder="Ex: usuario@email.com">
                         </div>
                       </div>
                       <div class="form-group">

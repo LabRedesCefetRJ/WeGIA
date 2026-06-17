@@ -384,6 +384,10 @@ class FuncionarioControle
             exit();
         }
 
+        if ((!isset($email)) || (empty($email))) {
+            $email = 'null';
+        }
+
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
         }
@@ -532,7 +536,7 @@ class FuncionarioControle
         }
 
         $senha = '';
-        $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+        $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha,$email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
         $funcionario->setData_admissao($data_admissao);
         $funcionario->setPis($pis);
         $funcionario->setCtps($ctps);
@@ -566,6 +570,9 @@ class FuncionarioControle
         if ((!isset($cargo)) || (empty($cargo))) {
             $msg .= "Cargo do funcionario não informado. Por favor, informe um cargo!";
             header('Location: ../html/funcionario.html?msg=' . $msg);
+        }
+        if ((!isset($email)) || (empty($email))) {
+            $email = 'null';
         }
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
@@ -667,7 +674,7 @@ class FuncionarioControle
         }
 
         $senha = '';
-        $funcionario = $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+        $funcionario = $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
         $funcionario->setData_admissao($data_admissao);
         $funcionario->setPis($pis);
         $funcionario->setCtps($ctps);
@@ -1056,6 +1063,7 @@ class FuncionarioControle
             exit();
         }
         catch (PDOException $e) {
+            error_log("Erro ao cadastrar funcionário existente: " . $e->getFile() . ":" . $e->getLine() . " - " . $e->getMessage());
             $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
             setSessionFormData($_POST);
             setSessionFormErrorFromMessage($message, 'global');
@@ -1114,6 +1122,7 @@ class FuncionarioControle
             exit();
         }
         catch (PDOException $e) {
+            error_log("Erro ao cadastrar funcionário existente: " . $e->getFile() . ":" . $e->getLine() . " - " . $e->getMessage());
             $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
             setSessionFormData($_POST);
             setSessionFormErrorFromMessage($message, 'global');
@@ -1183,7 +1192,7 @@ class FuncionarioControle
             $funcionario = new Funcionario(
                 '', $nome, $sobrenome, $gender, $nascimentoFinal, '', '', '',
                 $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', '',
-                $telefone, '', '', '', '', '', '', '', '', '', ''
+                $email ?? '', $telefone, '', '', '', '', '', '', '', '', ''
                 );
             $funcionario->setId_funcionario($id_funcionario);
             $funcionario->setCns($cns !== '' ? $cns : null);
@@ -1312,7 +1321,7 @@ public function alterarOutros()
                 }
             }
 
-            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
             $funcionario->setId_funcionario($id_funcionario);
             $funcionario->setId_cargo($cargo);
             $funcionario->setPis($pis);
@@ -1416,7 +1425,7 @@ public function alterarOutros()
                 unset($_SESSION['data_nasc']);
             }
 
-            $funcionario = new Funcionario('', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $funcionario = new Funcionario('', '', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
             $funcionario->setId_funcionario($id_funcionario);
 
@@ -1482,7 +1491,7 @@ public function alterarOutros()
             if (strlen($ibge) != 0 && strlen(preg_replace('/\D/', '', $ibge)) != 7)
                 throw new InvalidArgumentException('O tamanho do código do IBGE informado não está correto.', 412);
 
-            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
             $funcionario->setId_funcionario($id_funcionario);
             $funcionarioDAO = new FuncionarioDAO();
 
