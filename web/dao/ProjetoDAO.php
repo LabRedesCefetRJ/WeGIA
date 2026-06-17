@@ -215,6 +215,25 @@ class ProjetoDAO
         }
     }
 
+    public function listarFuncionariosAtivos()
+    {
+        try {
+            $sql = "SELECT f.id_funcionario, p.id_pessoa, p.nome, p.sobrenome, p.cpf
+                    FROM funcionario f
+                    JOIN pessoa p ON f.id_pessoa = p.id_pessoa
+                    JOIN situacao s ON f.id_situacao = s.id_situacao
+                    WHERE s.id_situacao = 1
+                    ORDER BY p.nome ASC";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Erro ao listar funcionários ativos: " . $e->getMessage());
+            return [];
+        }
+    }
+
     public function listarFuncoesProjeto()
     {
         try {
@@ -579,7 +598,7 @@ class ProjetoDAO
     public function listarTurmasProjeto($projeto_id)
     {
         try {
-            $sql = "SELECT id_turma, nome FROM projeto_turma
+            $sql = "SELECT id_turma, nome, descricao FROM projeto_turma
                     WHERE id_projeto = :projeto_id
                     ORDER BY nome ASC";
             $stmt = $this->pdo->prepare($sql);
@@ -592,7 +611,91 @@ class ProjetoDAO
         }
     }
 
-    public function adicionarTurma($projeto_id, $nome)
+    public function listarUmaTurma($id_turma)
+    {
+        try {
+            $sql = "SELECT id_turma, id_projeto, nome, descricao FROM projeto_turma WHERE id_turma = :id_turma";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id_turma', $id_turma, PDO::PARAM_INT);
+            $stmt->execute();
+            $turma = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $turma ?: null;
+        } catch (Exception $e) {
+            error_log("Erro ao buscar turma: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function editarTurma($id_turma, $projeto_id, $nome, $descricao = null)
+    {
+        try {
+            $check = $this->pdo->prepare(
+                "SELECT id_turma FROM projeto_turma WHERE id_projeto = :projeto_id AND nome = :nome AND id_turma <> :id_turma"
+            );
+            $check->bindValue(':projeto_id', $projeto_id, PDO::PARAM_INT);
+            $check->bindValue(':nome', $nome);
+            $check->bindValue(':id_turma', $id_turma, PDO::PARAM_INT);
+            $check->execute();
+
+            if ($check->fetch()) {
+                throw new Exception('Já existe uma turma com este nome neste projeto.');
+            }
+
+            $sql = "UPDATE projeto_turma SET nome = :nome, descricao = :descricao
+                    WHERE id_turma = :id_turma AND id_projeto = :projeto_id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':nome', $nome);
+            $stmt->bindValue(':descricao', $descricao);
+            $stmt->bindValue(':id_turma', $id_turma, PDO::PARAM_INT);
+            $stmt->bindValue(':projeto_id', $projeto_id, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (Exception $e) {
+            throw new Exception("Erro ao editar turma: " . $e->getMessage());
+        }
+    }
+
+    public function listarExecutantesDaTurma($id_turma)
+    {
+        try {
+            $sql = "SELECT pte.id, pte.id_pessoa,
+                       p.nome, p.sobrenome, p.cpf
+                FROM projeto_turma_executante pte
+                JOIN pessoa p ON pte.id_pessoa = p.id_pessoa
+                WHERE pte.id_turma = :id_turma
+                ORDER BY p.nome ASC";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id_turma', $id_turma, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Erro ao listar executantes da turma: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listarAtendidosDaTurma($id_turma)
+    {
+        try {
+            $sql = "SELECT pta.id, pta.id_atendido,
+                       p.nome, p.sobrenome, p.cpf
+                FROM projeto_turma_atendido pta
+                JOIN atendido a ON pta.id_atendido = a.idatendido
+                JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa
+                WHERE pta.id_turma = :id_turma
+                ORDER BY p.nome ASC";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id_turma', $id_turma, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Erro ao listar atendidos da turma: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function adicionarTurma($projeto_id, $nome, $descricao = null)
     {
         try {
             $check = $this->pdo->prepare(
@@ -606,10 +709,11 @@ class ProjetoDAO
                 throw new Exception('Já existe uma turma com este nome neste projeto.');
             }
 
-            $sql = "INSERT INTO projeto_turma (id_projeto, nome) VALUES (:projeto_id, :nome)";
+            $sql = "INSERT INTO projeto_turma (id_projeto, nome, descricao) VALUES (:projeto_id, :nome, :descricao)";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':projeto_id', $projeto_id, PDO::PARAM_INT);
             $stmt->bindValue(':nome', $nome);
+            $stmt->bindValue(':descricao', $descricao);
             $stmt->execute();
 
             return (int) $this->pdo->lastInsertId();

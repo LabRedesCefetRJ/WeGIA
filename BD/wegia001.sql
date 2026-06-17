@@ -3081,6 +3081,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma` (
   `id_turma`   INT          NOT NULL AUTO_INCREMENT,
   `id_projeto` INT          NOT NULL,
   `nome`       VARCHAR(150) NOT NULL,
+  `descricao`  VARCHAR(255) NULL,
   PRIMARY KEY (`id_turma`),
   UNIQUE INDEX `uq_turma_nome_projeto` (`id_projeto` ASC, `nome` ASC),
   INDEX `fk_turma_projeto_idx` (`id_projeto` ASC),

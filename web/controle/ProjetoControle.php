@@ -475,7 +475,7 @@ class ProjetoControle
 
             $projeto_id  = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
             $id_atendido = filter_input(INPUT_POST, 'atendido_id', FILTER_SANITIZE_NUMBER_INT);
-            $id_status   = filter_input(INPUT_POST, 'status_id', FILTER_SANITIZE_NUMBER_INT);
+            $id_status   = 1; // Status "Ativo" fixo ao vincular um atendido ao projeto
 
             if (!$projeto_id || $projeto_id < 1) {
                 echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
@@ -484,11 +484,6 @@ class ProjetoControle
 
             if (!$id_atendido || $id_atendido < 1) {
                 echo json_encode(['success' => false, 'message' => 'Atendido inválido']);
-                return;
-            }
-
-            if (!$id_status || $id_status < 1) {
-                echo json_encode(['success' => false, 'message' => 'Status inválido']);
                 return;
             }
 
@@ -607,6 +602,25 @@ class ProjetoControle
         }
     }
 
+    public function listarExecutantesDaTurmaAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $turma_id = filter_input(INPUT_GET, 'turma_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$turma_id || $turma_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            $data = $this->projetoDAO->listarExecutantesDaTurma($turma_id);
+            echo json_encode(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
     public function listarAtendidosForaDaTurmaAjax()
     {
         try {
@@ -621,6 +635,25 @@ class ProjetoControle
             }
 
             $data = $this->projetoDAO->listarAtendidosForaDaTurma($projeto_id, $turma_id);
+            echo json_encode(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function listarAtendidosDaTurmaAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $turma_id = filter_input(INPUT_GET, 'turma_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$turma_id || $turma_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            $data = $this->projetoDAO->listarAtendidosDaTurma($turma_id);
             echo json_encode(['success' => true, 'data' => $data]);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
@@ -647,6 +680,70 @@ class ProjetoControle
         }
     }
 
+    public function listarUmaTurmaAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $id_turma = filter_input(INPUT_GET, 'id_turma', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_turma || $id_turma < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            $turma = $this->projetoDAO->listarUmaTurma($id_turma);
+
+            if (!$turma) {
+                echo json_encode(['success' => false, 'message' => 'Turma não encontrada']);
+                return;
+            }
+
+            echo json_encode(['success' => true, 'data' => $turma]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function editarTurma()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id_turma   = filter_input(INPUT_POST, 'id_turma', FILTER_SANITIZE_NUMBER_INT);
+            $projeto_id = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+            $nome       = trim(filter_var($_POST['nome'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
+            $descricao  = trim(filter_var($_POST['descricao'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
+
+            if (!$id_turma || $id_turma < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            if (!$projeto_id || $projeto_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
+                return;
+            }
+
+            if (empty($nome)) {
+                echo json_encode(['success' => false, 'message' => 'Nome da turma não informado']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->editarTurma($id_turma, $projeto_id, $nome, $descricao !== '' ? $descricao : null);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
     public function adicionarTurma()
     {
         try {
@@ -660,6 +757,7 @@ class ProjetoControle
 
             $projeto_id = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
             $nome       = trim(filter_var($_POST['nome'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
+            $descricao  = trim(filter_var($_POST['descricao'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
 
             if (!$projeto_id || $projeto_id < 1) {
                 echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
@@ -671,7 +769,7 @@ class ProjetoControle
                 return;
             }
 
-            $id_turma = $this->projetoDAO->adicionarTurma($projeto_id, $nome);
+            $id_turma = $this->projetoDAO->adicionarTurma($projeto_id, $nome, $descricao !== '' ? $descricao : null);
 
             echo json_encode(['success' => true, 'id_turma' => $id_turma]);
         } catch (Exception $e) {
