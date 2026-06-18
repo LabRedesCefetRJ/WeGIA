@@ -17,7 +17,8 @@ class PessoaDTOSocio extends Pessoa implements JsonSerializable{
             'cidade' => $this->getCidade(),
             'bairro' => $this->getBairro(),
             'logradouro' => $this->getLogradouro(),
-            'numero_endereco' => $this->getNumeroEndereco()
+            'numero_endereco' => $this->getNumeroEndereco(),
+            'complemento' => $this->getComplemento()
         ];
     }
 
