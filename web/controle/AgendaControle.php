@@ -666,6 +666,24 @@ class AgendaControle
         }
         exit;
     }
+    
+    public function listarMembrosPorPeriodo()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id_periodo = filter_input(INPUT_GET, 'id_periodo', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_periodo || $id_periodo < 1)
+                throw new InvalidArgumentException('O id do período informado não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            echo json_encode($dao->listarMembrosPorPeriodo($id_periodo));
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
 
     public function listarHistoricoMembrosPorEquipe()
     {

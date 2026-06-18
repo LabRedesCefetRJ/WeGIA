@@ -116,105 +116,151 @@ class AgendaDAO
 
     public function incluirAlocacao(AgendaAlocacao $alocacao)
     {
-        $sql = "INSERT INTO agenda_alocacao (id_agenda, id_equipe, inicio, fim, lembrete, lembrete_enviado, intervalo)
-                VALUES (:id_agenda, :id_equipe, :inicio, :fim, :lembrete, :lembrete_enviado, :intervalo)";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id_agenda',        $alocacao->getId_agenda(), PDO::PARAM_INT);
-        $stmt->bindValue(':id_equipe',        $alocacao->getId_equipe(), PDO::PARAM_INT);
-        $stmt->bindValue(':inicio',           $alocacao->getInicio());
-        $stmt->bindValue(':fim',              $alocacao->getFim());
-        $stmt->bindValue(':lembrete',         $alocacao->getLembrete());
-        $stmt->bindValue(':lembrete_enviado', $alocacao->getLembrete_enviado(), PDO::PARAM_INT);
-        $stmt->bindValue(':intervalo',        $alocacao->getIntervalo(), PDO::PARAM_INT);
-        $stmt->execute();
-        return $this->pdo->lastInsertId();
-    }
+        $this->pdo->beginTransaction();
+        try {
+            $sql = "INSERT INTO agenda_alocacao (id_agenda, id_equipe, inicio, fim, lembrete, lembrete_enviado, intervalo)
+                    VALUES (:id_agenda, :id_equipe, :inicio, :fim, :lembrete, :lembrete_enviado, :intervalo)";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id_agenda',        $alocacao->getId_agenda(), PDO::PARAM_INT);
+            $stmt->bindValue(':id_equipe',        $alocacao->getId_equipe(), PDO::PARAM_INT);
+            $stmt->bindValue(':inicio',           $alocacao->getInicio());
+            $stmt->bindValue(':fim',              $alocacao->getFim());
+            $stmt->bindValue(':lembrete',         $alocacao->getLembrete());
+            $stmt->bindValue(':lembrete_enviado', $alocacao->getLembrete_enviado(), PDO::PARAM_INT);
+            $stmt->bindValue(':intervalo',        $alocacao->getIntervalo(), PDO::PARAM_INT);
+            $stmt->execute();
+            $idAlocacao = $this->pdo->lastInsertId();
 
-    public function listarAlocacoesPorAgenda(int $idAgenda)
-    {
-        $sql = "SELECT al.id, DATE(al.inicio) AS inicio_raw, DATE(al.fim) AS fim_raw,
-                       al.lembrete, al.id_agenda, al.id_equipe, al.intervalo,
-                       e.inicio_turno, e.fim_turno,
-                       a.descricao AS agenda, e.nome AS equipe, e.nome AS title
-                FROM agenda_alocacao al
-                INNER JOIN agenda a ON al.id_agenda = a.id
-                INNER JOIN agenda_equipe e ON al.id_equipe = e.id
-                WHERE al.id_agenda = :id_agenda
-                ORDER BY al.inicio";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id_agenda', $idAgenda, PDO::PARAM_INT);
-        $stmt->execute();
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // 2. Prepara os dados para o Fatiamento (Busca horários e membros)
+            $stmtEq = $this->pdo->prepare("SELECT inicio_turno, fim_turno FROM agenda_equipe WHERE id = ?");
+            $stmtEq->execute([$alocacao->getId_equipe()]);
+            $equipe = $stmtEq->fetch(PDO::FETCH_ASSOC);
 
-        $events = [];
-        foreach ($rows as $row) {
-            $intervalo   = (int)($row['intervalo'] ?? 0);
-            $inicioTurno = $row['inicio_turno'] ?: '00:00:00';
-            $fimTurno    = $row['fim_turno']    ?: '00:00:00';
-            // Quando o fim do turno é <= o início, o plantão vira o dia (ex.: 19:00 -> 07:00)
-            $overnight   = ($fimTurno <= $inicioTurno);
+            $stmtMembros = $this->pdo->prepare("SELECT id_pessoa, id_divisao FROM agenda_equipe_membro WHERE id_equipe = ? AND ativo = 1");
+            $stmtMembros->execute([$alocacao->getId_equipe()]);
+            $membrosBase = $stmtMembros->fetchAll(PDO::FETCH_ASSOC);
 
-            $step    = $intervalo > 0 ? $intervalo + 1 : 1;
-            $inicio  = new DateTime($row['inicio_raw']);
-            $fim     = new DateTime($row['fim_raw']);
-            $current = clone $inicio;
+            $inicioDt = new DateTime($alocacao->getInicio());
+            $fimDt    = new DateTime($alocacao->getFim());
+            $step     = $alocacao->getIntervalo() > 0 ? $alocacao->getIntervalo() + 1 : 1;
 
-            // Gera um evento por dia de plantão, com horário do turno da equipe.
-            // O plantão noturno termina no dia seguinte, ocupando os dois dias no calendário.
-            while ($current <= $fim) {
-                $startDt = new DateTime($current->format('Y-m-d') . ' ' . $inicioTurno);
-                $endDt   = new DateTime($current->format('Y-m-d') . ' ' . $fimTurno);
-                if ($overnight) {
+            $sqlInPeriodo = "INSERT INTO agenda_alocacao_periodo (id_alocacao, data_inicio, data_fim) VALUES (?, ?, ?)";
+            $stmtPeriodo  = $this->pdo->prepare($sqlInPeriodo);
+
+            $sqlInEscala  = "INSERT INTO agenda_membro_periodo (id_periodo, id_pessoa, id_divisao) VALUES (?, ?, ?)";
+            $stmtEscala   = $this->pdo->prepare($sqlInEscala);
+
+            $current = clone $inicioDt;
+            while ($current <= $fimDt) {
+                $startDt = new DateTime($current->format('Y-m-d') . ' ' . $equipe['inicio_turno']);
+                $endDt   = new DateTime($current->format('Y-m-d') . ' ' . $equipe['fim_turno']);
+                
+                if ($equipe['fim_turno'] <= $equipe['inicio_turno']) {
                     $endDt->modify('+1 day');
                 }
 
-                $events[] = [
-                    'id'              => $row['id'],
-                    'title'           => $row['title'],
-                    'start'           => $startDt->format('Y-m-d\TH:i:s'),
-                    'end'             => $endDt->format('Y-m-d\TH:i:s'),
-                    'allDay'          => false,
-                    'fim_display'     => $endDt->format('Y-m-d\TH:i:s'),
-                    'inicio_original' => $row['inicio_raw'],
-                    'fim_original'    => $row['fim_raw'],
-                    'inicio_turno'    => substr($inicioTurno, 0, 5),
-                    'fim_turno'       => substr($fimTurno, 0, 5),
-                    'overnight'       => $overnight,
-                    'lembrete'        => $row['lembrete'],
-                    'id_agenda'       => $row['id_agenda'],
-                    'id_equipe'       => $row['id_equipe'],
-                    'agenda'          => $row['agenda'],
-                    'equipe'          => $row['equipe'],
-                    'intervalo'       => $intervalo,
-                ];
+                $stmtPeriodo->execute([$idAlocacao, $startDt->format('Y-m-d H:i:s'), $endDt->format('Y-m-d H:i:s')]);
+                $idPeriodo = $this->pdo->lastInsertId();
+
+                foreach ($membrosBase as $m) {
+                    $stmtEscala->execute([$idPeriodo, $m['id_pessoa'], $m['id_divisao']]);
+                }
 
                 $current->modify('+' . $step . ' days');
             }
+
+            $this->pdo->commit();
+            return $idAlocacao;
+
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
         }
-        return $events;
     }
 
     public function alterarAlocacao(AgendaAlocacao $alocacao)
     {
-        $sql = "UPDATE agenda_alocacao SET
-                    id_agenda        = :id_agenda,
-                    id_equipe        = :id_equipe,
-                    inicio           = :inicio,
-                    fim              = :fim,
-                    lembrete         = :lembrete,
-                    lembrete_enviado = :lembrete_enviado,
-                    intervalo        = :intervalo
-                WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id_agenda',        $alocacao->getId_agenda(), PDO::PARAM_INT);
-        $stmt->bindValue(':id_equipe',        $alocacao->getId_equipe(), PDO::PARAM_INT);
-        $stmt->bindValue(':inicio',           $alocacao->getInicio());
-        $stmt->bindValue(':fim',              $alocacao->getFim());
-        $stmt->bindValue(':lembrete',         $alocacao->getLembrete());
-        $stmt->bindValue(':lembrete_enviado', $alocacao->getLembrete_enviado(), PDO::PARAM_INT);
-        $stmt->bindValue(':intervalo',        $alocacao->getIntervalo(), PDO::PARAM_INT);
-        $stmt->bindValue(':id',               $alocacao->getId(), PDO::PARAM_INT);
-        $stmt->execute();
+        $this->pdo->beginTransaction();
+        try {
+            $stmtCheck = $this->pdo->prepare("SELECT inicio, fim, intervalo, id_equipe FROM agenda_alocacao WHERE id = ?");
+            $stmtCheck->execute([$alocacao->getId()]);
+            $old = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+            $regraMudou = (
+                $old['inicio'] != $alocacao->getInicio() ||
+                $old['fim'] != $alocacao->getFim() ||
+                (int)$old['intervalo'] != $alocacao->getIntervalo() ||
+                (int)$old['id_equipe'] != $alocacao->getId_equipe()
+            );
+
+            // Atualiza a capa
+            $sql = "UPDATE agenda_alocacao SET
+                        id_agenda        = :id_agenda,
+                        id_equipe        = :id_equipe,
+                        inicio           = :inicio,
+                        fim              = :fim,
+                        lembrete         = :lembrete,
+                        lembrete_enviado = :lembrete_enviado,
+                        intervalo        = :intervalo
+                    WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id_agenda',        $alocacao->getId_agenda(), PDO::PARAM_INT);
+            $stmt->bindValue(':id_equipe',        $alocacao->getId_equipe(), PDO::PARAM_INT);
+            $stmt->bindValue(':inicio',           $alocacao->getInicio());
+            $stmt->bindValue(':fim',              $alocacao->getFim());
+            $stmt->bindValue(':lembrete',         $alocacao->getLembrete());
+            $stmt->bindValue(':lembrete_enviado', $alocacao->getLembrete_enviado(), PDO::PARAM_INT);
+            $stmt->bindValue(':intervalo',        $alocacao->getIntervalo(), PDO::PARAM_INT);
+            $stmt->bindValue(':id',               $alocacao->getId(), PDO::PARAM_INT);
+            $stmt->execute();
+
+            // Se alterou a equipe, as datas ou intervalo, recria os blocos (Cuidado: reseta as edições diárias!)
+            if ($regraMudou) {
+                $stmtDel = $this->pdo->prepare("DELETE FROM agenda_alocacao_periodo WHERE id_alocacao = ?");
+                $stmtDel->execute([$alocacao->getId()]);
+
+                $stmtEq = $this->pdo->prepare("SELECT inicio_turno, fim_turno FROM agenda_equipe WHERE id = ?");
+                $stmtEq->execute([$alocacao->getId_equipe()]);
+                $equipe = $stmtEq->fetch(PDO::FETCH_ASSOC);
+
+                $stmtMembros = $this->pdo->prepare("SELECT id_pessoa, id_divisao FROM agenda_equipe_membro WHERE id_equipe = ? AND ativo = 1");
+                $stmtMembros->execute([$alocacao->getId_equipe()]);
+                $membrosBase = $stmtMembros->fetchAll(PDO::FETCH_ASSOC);
+
+                $inicioDt = new DateTime($alocacao->getInicio());
+                $fimDt    = new DateTime($alocacao->getFim());
+                $step     = $alocacao->getIntervalo() > 0 ? $alocacao->getIntervalo() + 1 : 1;
+
+                $sqlInPeriodo = "INSERT INTO agenda_alocacao_periodo (id_alocacao, data_inicio, data_fim) VALUES (?, ?, ?)";
+                $stmtPeriodo  = $this->pdo->prepare($sqlInPeriodo);
+
+                $sqlInEscala  = "INSERT INTO agenda_membro_periodo (id_periodo, id_pessoa, id_divisao) VALUES (?, ?, ?)";
+                $stmtEscala   = $this->pdo->prepare($sqlInEscala);
+
+                $current = clone $inicioDt;
+                while ($current <= $fimDt) {
+                    $startDt = new DateTime($current->format('Y-m-d') . ' ' . $equipe['inicio_turno']);
+                    $endDt   = new DateTime($current->format('Y-m-d') . ' ' . $equipe['fim_turno']);
+                    if ($equipe['fim_turno'] <= $equipe['inicio_turno']) {
+                        $endDt->modify('+1 day');
+                    }
+
+                    $stmtPeriodo->execute([$alocacao->getId(), $startDt->format('Y-m-d H:i:s'), $endDt->format('Y-m-d H:i:s')]);
+                    $idPeriodo = $this->pdo->lastInsertId();
+
+                    foreach ($membrosBase as $m) {
+                        $stmtEscala->execute([$idPeriodo, $m['id_pessoa'], $m['id_divisao']]);
+                    }
+
+                    $current->modify('+' . $step . ' days');
+                }
+            }
+
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     public function marcarLembreteEnviado(int $idAlocacao)
@@ -253,6 +299,77 @@ class AgendaDAO
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    public function listarAlocacoesPorAgenda(int $idAgenda)
+    {
+        // O Banco agora já tem os dias prontos, então cortamos o PHP While daqui!
+        $sql = "SELECT p.id as id_periodo, p.data_inicio, p.data_fim,
+                       al.id as id_alocacao, al.lembrete, al.id_agenda, al.id_equipe, al.intervalo,
+                       al.inicio as inicio_raw, al.fim as fim_raw,
+                       e.inicio_turno, e.fim_turno,
+                       a.descricao AS agenda, e.nome AS equipe, e.nome AS title
+                FROM agenda_alocacao_periodo p
+                INNER JOIN agenda_alocacao al ON p.id_alocacao = al.id
+                INNER JOIN agenda a ON al.id_agenda = a.id
+                INNER JOIN agenda_equipe e ON al.id_equipe = e.id
+                WHERE al.id_agenda = :id_agenda
+                ORDER BY p.data_inicio";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_agenda', $idAgenda, PDO::PARAM_INT);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $events = [];
+        foreach ($rows as $row) {
+            $overnight = ($row['fim_turno'] <= $row['inicio_turno']);
+
+            $events[] = [
+                'id'              => $row['id_alocacao'], // ID da Capa para o Modal editar
+                'id_periodo'      => $row['id_periodo'],  // Novo ID exato do dia
+                'title'           => $row['title'],
+                'start'           => str_replace(' ', 'T', $row['data_inicio']),
+                'end'             => str_replace(' ', 'T', $row['data_fim']),
+                'allDay'          => false,
+                'fim_display'     => str_replace(' ', 'T', $row['data_fim']),
+                'inicio_original' => $row['inicio_raw'],
+                'fim_original'    => $row['fim_raw'],
+                'inicio_turno'    => substr($row['inicio_turno'], 0, 5),
+                'fim_turno'       => substr($row['fim_turno'], 0, 5),
+                'overnight'       => $overnight,
+                'lembrete'        => $row['lembrete'],
+                'id_agenda'       => $row['id_agenda'],
+                'id_equipe'       => $row['id_equipe'],
+                'agenda'          => $row['agenda'],
+                'equipe'          => $row['equipe'],
+                'intervalo'       => $row['intervalo'],
+            ];
+        }
+        return $events;
+    }
+    
+    public function listarMembrosPorPeriodo(int $idPeriodo)
+    {
+        $sql = "SELECT m.id, m.id_divisao, d.nome AS nome_divisao, p.nome, p.sobrenome,
+                       CASE
+                           WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
+                           WHEN v.id_pessoa IS NOT NULL THEN 'Voluntário'
+                           WHEN a.pessoa_id_pessoa IS NOT NULL THEN 'Atendido'
+                           ELSE NULL
+                       END AS cargo
+                FROM agenda_membro_periodo m
+                INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
+                LEFT JOIN agenda_equipe_divisao d ON m.id_divisao = d.id
+                LEFT JOIN funcionario f ON f.id_pessoa = p.id_pessoa
+                LEFT JOIN cargo c ON c.id_cargo = f.id_cargo
+                LEFT JOIN voluntario v ON v.id_pessoa = p.id_pessoa
+                LEFT JOIN atendido a ON a.pessoa_id_pessoa = p.id_pessoa
+                WHERE m.id_periodo = :id_periodo
+                ORDER BY d.nome, p.nome";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_periodo', $idPeriodo, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // -------------------------------------------------------
@@ -525,6 +642,7 @@ class AgendaDAO
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    
     public function obterLogo()
     {
         $sql  = "SELECT `imagem`, `tipo` FROM `imagem` WHERE `id_imagem` = 1 LIMIT 1";
