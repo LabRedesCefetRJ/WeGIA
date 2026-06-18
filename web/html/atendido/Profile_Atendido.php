@@ -54,12 +54,13 @@ foreach ($docfuncional as $key => $value) {
 }
 $docfuncional = json_encode($docfuncional);
 
-$atend = $_SESSION['atendido'];
-
 if (!isset($teste)) {
-
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=AtendidoControle&nextPage=../html/atendido/Profile_Atendido.php?idatendido=' . $id . '&id=' . $id);
+  exit;
 }
+
+$_SESSION['atendido'] = $teste;
+$atend = $_SESSION['atendido'];
 $stmtDependente = $pdo->prepare("SELECT
       af.idatendido_familiares AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.parentesco AS parentesco
       FROM atendido_familiares af
@@ -264,6 +265,7 @@ $dependente = json_encode($dependente);
             $("#radioF").prop('checked', true);
           }
 
+          $("#email").val(item.email || '');
           $("#telefone").text("Telefone:" + item.telefone);
           $("#telefone").val(item.telefone);
           $("#cns").val(item.cns || '');
@@ -337,6 +339,7 @@ $dependente = json_encode($dependente);
       $("#sobrenome").prop('disabled', false);
       $("#radioM").prop('disabled', false);
       $("#radioF").prop('disabled', false);
+      $("#email").prop('disabled', false);
       $("#telefone").prop('disabled', false);
       $("#cns").prop('disabled', false);
       $("#data_nascimento").prop('disabled', false);
@@ -364,6 +367,7 @@ $dependente = json_encode($dependente);
       $("#sobrenome").prop('disabled', true);
       $("#radioM").prop('disabled', true);
       $("#radioF").prop('disabled', true);
+      $("#email").prop('disabled', true);
       $("#telefone").prop('disabled', true);
       $("#cns").prop('disabled', true);
       $("#data_nascimento").prop('disabled', true);
@@ -727,7 +731,7 @@ $dependente = json_encode($dependente);
                 }
                 ?>
 
-                <div class="thumb-info mb-md">
+                <div class="thumb-info mb-md"> 
                   <img id="imagem" style="margin-bottom: 15px;" alt="">
                   <i class="fas fa-camera-retro btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"></i>
                   <div class="container">
@@ -817,6 +821,12 @@ $dependente = json_encode($dependente);
                             <label><input type="radio" name="sexo" id="radioF" disabled value="f" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
                           </div>
                         </div>
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="email">E-mail</label>
+                          <div class="col-md-8">
+                            <input type="email" class="form-control" disabled name="email" id="email" placeholder="Ex: usuario@email.com">
+                        </div>
+                      </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                           <div class="col-md-8">
