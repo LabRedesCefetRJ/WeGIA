@@ -1217,22 +1217,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 $('#modal-evento-lembrete-texto').html('<em style="color:#aaa;">Nenhum lembrete definido.</em>');
             }
 
-            $('#modal-evento-membros').html('<em style="color:#aaa;">Carregando...</em>');
-            if (p.id_equipe) {
-                api('listarMembrosPorEquipe', { id_equipe: p.id_equipe }).done(function (membros) {
+            $('#modal-evento-membros').html('<em style="color:#aaa;">Carregando escala do dia...</em>');
+            
+            if (p.id_periodo) {
+                api('listarMembrosPorPeriodo', { id_periodo: p.id_periodo }).done(function (membros) {
                     if (!membros || !membros.length) {
-                        $('#modal-evento-membros').html('<em style="color:#aaa;">Nenhuma pessoa na equipe.</em>');
+                        $('#modal-evento-membros').html('<em style="color:#aaa;">Nenhuma pessoa escalada para este dia.</em>');
                         return;
                     }
                     var html = '<ul style="margin:0; padding-left:18px;">';
                     $.each(membros, function (_, m) {
+                        var infoExtra = '';
+                        if(m.cargo) infoExtra += m.cargo;
+                        if(m.nome_divisao) infoExtra += (infoExtra ? ' | ' : '') + m.nome_divisao;
+                        
                         html += '<li>' + m.nome + ' ' + (m.sobrenome || '')
-                              + (m.cargo ? ' <small class="text-muted">- ' + m.cargo + '</small>' : '') + '</li>';
+                              + (infoExtra ? ' <small class="text-muted">- ' + infoExtra + '</small>' : '') + '</li>';
                     });
                     html += '</ul>';
                     $('#modal-evento-membros').html(html);
                 }).fail(function () {
-                    $('#modal-evento-membros').html('<em class="text-danger">Erro ao carregar pessoas.</em>');
+                    $('#modal-evento-membros').html('<em class="text-danger">Erro ao carregar escala.</em>');
                 });
             } else {
                 $('#modal-evento-membros').html('<em style="color:#aaa;">—</em>');
