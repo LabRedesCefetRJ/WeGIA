@@ -25,12 +25,22 @@ require_once ROOT . "/html/personalizacao_display.php";
 include_once ROOT . '/dao/Conexao.php';
 include_once ROOT . '/dao/ProdutoDAO.php';
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+
+$tipo = $_GET['tipo'] ?? 'ativo';
+$tipo = in_array($tipo, ['ativo', 'arquivado'], true) ? $tipo : 'ativo';
+
 if (!isset($_SESSION['produtos'])) {
-	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/listar_produto.php');
-	exit();
+    if ($tipo === 'arquivado') {
+        header('Location: ' . WWW . 'controle/control.php?metodo=listarArquivados&nomeClasse=ProdutoControle');
+    } else {
+        header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/listar_produto.php?tipo=ativo');
+    }
+
+    exit();
 } else {
-	$produtos = $_SESSION['produtos'];
-	unset($_SESSION['produtos']);
+    $produtos = $_SESSION['produtos'];
+    unset($_SESSION['produtos']);
 }
 ?>
 <!doctype html>
@@ -98,58 +108,11 @@ if (!isset($_SESSION['produtos'])) {
 
 	<!-- jquery functions -->
 	<script>
-		function excluir(id) {
-			if(!window.confirm("Deseja excluir produto?")) return;
-
-			fetch('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=ProdutoControle&id_produto=' + id)
-			.then(res => res.json())
-			.then(data => {
-				alert(data.mensagem);
-
-				if(data.sucesso) {
-					document.getElementById('linha-' + id).remove();
-				}
-			})
-			.catch(() => {
-				alert("Erro ao excluir produto");
-			});
-		}
-
 		function clicar(id) {
-			window.location.replace('<?= WWW ?>html/matPat/alterar_produto.php?id_produto=' + id);
+    		window.location.replace('<?= WWW ?>html/matPat/alterar_produto.php?id_produto=' + id);
 		}
 	</script>
 	<script>
-		$(function() {
-			var produtos = <?php
-							echo $produtos;
-							?>;
-			console.log(produtos);
-			$.each(produtos, function(i, item) {
-
-				$('#tabela')
-					.append($('<tr />').attr('id', 'linha-' + item.id_produto)
-						.append($('<td />')
-							.text(item.codigo))
-						.append($('<td />')
-							.text(item.descricao))
-						.append($('<td />')
-							.text(item.descricao_categoria))
-						.append($('<td />')
-							.text(item.preco))
-						.append($('<td />')
-							.append($('<button />')
-								.html('<i class="fas fa-trash-alt"></i>')
-								.attr('onclick', 'excluir("' + item.id_produto + '")')
-							)
-							.append($('<button/>')
-								.html('<i class="fas fa-pencil-alt"></i>')
-								.attr('onclick', 'clicar(' + item.id_produto + ')')
-							)
-						)
-					);
-			});
-		});
 		$(function() {
 			$("#header").load("<?= WWW ?>html/header.php");
 			$(".menuu").load("<?= WWW ?>html/menu.php");
@@ -195,6 +158,59 @@ if (!isset($_SESSION['produtos'])) {
 					<h2 class="panel-title">Produto</h2>
 				</header>
 				<div class="panel-body">
+					<div style="margin-bottom: 15px;">
+    					<a href="listar_produto.php?tipo=ativo"
+        					class="btn btn-default <?= $tipo === 'ativo' ? 'active' : '' ?>">
+        					Ativos
+    					</a>
+
+    					<a href="listar_produto.php?tipo=arquivado"
+        					class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : '' ?>">
+        					Arquivados
+    					</a>
+					</div>
+
+					<?php if (isset($_SESSION['erro'])): ?>
+    					<div style="
+        					background:#fff3cd;
+        					border:1px solid #ffeeba;
+        					padding:15px;
+        					margin-bottom:15px;
+        					border-radius:5px;">
+        					<strong>Atenção:</strong><br>
+        					<?= $_SESSION['erro'] ?><br><br>
+
+        					<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;" onsubmit="return confirm('Atenção: ao arquivar este produto, ele será removido de entradas, saídas e relatórios. Movimentações que possuírem apenas este produto serão arquivadas automaticamente. Deseja continuar?');">
+            					<input type="hidden" name="metodo" value="arquivar">
+            					<input type="hidden" name="nomeClasse" value="ProdutoControle">
+            					<input type="hidden" name="id_produto" value="<?= (int)$_SESSION['id_arquivar'] ?>">
+            					<?= Csrf::inputField() ?>
+
+            					<button style="background:#007bff;color:white;border:none;padding:5px 10px;">
+                					Arquivar
+            					</button>
+        					</form>
+
+        					<form method="GET" action="listar_produto.php" style="display:inline;">
+            					<button style="background:#6c757d;color:white;border:none;padding:5px 10px;">
+                					Cancelar
+            					</button>
+        					</form>
+    					</div>
+					<?php
+					unset($_SESSION['erro']);
+					unset($_SESSION['id_arquivar']);
+					endif;
+					?>
+
+					<?php if (isset($_SESSION['msg'])): ?>
+    					<div class="alert alert-success">
+        					<?= $_SESSION['msg'] ?>
+    					</div>
+					<?php
+					unset($_SESSION['msg']);
+					endif;
+					?>
 					<table class="table table-bordered table-striped mb-none" id="datatable-default">
 						<thead>
 							<tr>
@@ -206,6 +222,59 @@ if (!isset($_SESSION['produtos'])) {
 							</tr>
 						</thead>
 						<tbody id="tabela">
+    						<?php foreach (json_decode($produtos, true) as $item): ?>
+        						<tr>
+            						<td><?= htmlspecialchars($item['codigo'] ?? '') ?></td>
+            						<td><?= htmlspecialchars($item['descricao']) ?></td>
+            						<td><?= htmlspecialchars($item['descricao_categoria']) ?></td>
+            						<td><?= htmlspecialchars($item['preco']) ?></td>
+            						<td>
+                						<?php if ($tipo === 'ativo'): ?>
+                    						<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;" onsubmit="return confirm('Deseja excluir este produto?');">
+                        						<input type="hidden" name="metodo" value="excluir">
+                        						<input type="hidden" name="nomeClasse" value="ProdutoControle">
+                        						<input type="hidden" name="id_produto" value="<?= (int)$item['id_produto'] ?>">
+                        						<?= Csrf::inputField() ?>
+
+                        						<button type="submit" style="border:none;background:none;cursor:pointer;" title="Excluir">
+                            						<i class="fas fa-trash-alt"></i>
+                        						</button>
+                    						</form>
+
+                    						<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;" onsubmit="return confirm('Atenção: ao arquivar este produto, ele será removido de entradas, saídas e relatórios. Movimentações que possuírem apenas este produto serão arquivadas automaticamente. Deseja continuar?');">
+                        						<input type="hidden" name="metodo" value="arquivar">
+                        						<input type="hidden" name="nomeClasse" value="ProdutoControle">
+                        						<input type="hidden" name="id_produto" value="<?= (int)$item['id_produto'] ?>">
+                        						<?= Csrf::inputField() ?>
+
+                        						<button type="submit" style="border:none;background:none;cursor:pointer;" title="Arquivar">
+                            						<i class="fa-solid fa-folder"></i>
+                        						</button>
+                    						</form>
+
+                    						<button
+                        						type="button"
+                        						onclick="clicar(<?= (int)$item['id_produto'] ?>)"
+                        						style="border:none;background:none;cursor:pointer;"
+                        						title="Editar"
+                    						>
+                        						<i class="fas fa-pencil-alt"></i>
+                    						</button>
+                						<?php else: ?>
+                    						<form method="POST" action="<?= WWW ?>controle/control.php" style="display:inline;" onsubmit="return confirm('Deseja restaurar este produto? As entradas e saídas ocultadas por este arquivamento serão restauradas.');">
+                        						<input type="hidden" name="metodo" value="desarquivar">
+                        						<input type="hidden" name="nomeClasse" value="ProdutoControle">
+                        						<input type="hidden" name="id_produto" value="<?= (int)$item['id_produto'] ?>">
+                        						<?= Csrf::inputField() ?>
+
+                        						<button title="Restaurar" style="border:none;background:none;cursor:pointer;">
+                            						<i class="fa-solid fa-folder-open"></i>
+                        						</button>
+                    						</form>
+                						<?php endif; ?>
+            						</td>
+        						</tr>
+    						<?php endforeach; ?>
 						</tbody>
 					</table>
 

@@ -60,7 +60,7 @@ class Item
     private function entrada()
     {
         if ($this->hasValue()) {
-            $params = "WHERE ientrada.qtd > 0 AND ientrada.oculto=false AND entrada.ativo = 1 AND almoxarifado.ativo = 1";
+            $params = "WHERE ientrada.qtd > 0 AND ientrada.oculto = false AND entrada.ativo = 1 AND almoxarifado.ativo = 1 AND produto.ativo = 1";
             $cont = 2;
 
             if ($this->getOrigem()) {
@@ -139,7 +139,7 @@ class Item
                 LEFT JOIN tipo_entrada ON tipo_entrada.id_tipo = entrada.id_tipo
                 LEFT JOIN almoxarifado ON almoxarifado.id_almoxarifado = entrada.id_almoxarifado
                 LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
-                WHERE ientrada.qtd > 0 AND ientrada.oculto = false AND entrada.ativo = 1 AND almoxarifado.ativo = 1
+                WHERE ientrada.qtd > 0 AND ientrada.oculto = false AND entrada.ativo = 1 AND almoxarifado.ativo = 1 AND produto.ativo = 1
                 GROUP BY 
                 ientrada.id_produto,
                 ientrada.valor_unitario,
@@ -154,7 +154,7 @@ class Item
     private function saida()
     {
         if ($this->hasValue()) {
-            $params = "WHERE isaida.qtd > 0 AND isaida.oculto = false AND saida.ativo = 1 AND almoxarifado.ativo = 1";
+            $params = "WHERE isaida.qtd > 0 AND isaida.oculto = false AND saida.ativo = 1 AND almoxarifado.ativo = 1 AND produto.ativo = 1";
             $cont = 2;
 
             if ($this->getDestino()) {
@@ -259,7 +259,7 @@ class Item
                 LEFT JOIN tipo_saida ON tipo_saida.id_tipo = saida.id_tipo
                 LEFT JOIN almoxarifado ON almoxarifado.id_almoxarifado = saida.id_almoxarifado
                 LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
-                WHERE isaida.qtd > 0 AND isaida.oculto = false AND saida.ativo = 1 AND almoxarifado.ativo = 1
+                WHERE isaida.qtd > 0 AND isaida.oculto = false AND saida.ativo = 1 AND almoxarifado.ativo = 1 AND produto.ativo = 1
                 GROUP BY
                 isaida.id_produto,
                 isaida.valor_unitario,
@@ -273,11 +273,11 @@ class Item
     private function estoque()
     {
         if ($this->hasValue()) {
-            $params = "WHERE oculto = false AND ativo = 1 ";
+            $params = "WHERE e.oculto = false AND e.ativo = 1 AND e.produto_ativo = 1 ";
             $cont = 1;
 
             if ($this->getAlmoxarifado()) {
-                $params = $this->param($params, $cont) . " id_almoxarifado = :idAlmoxarifado ";
+                $params = $this->param($params, $cont) . " e.id_almoxarifado = :idAlmoxarifado ";
                 $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
                 $cont++;
             }
@@ -358,6 +358,7 @@ class Item
                             p.preco
                         ) AS PrecoMedio,
                         p.oculto,
+                        p.ativo AS produto_ativo,
                         a.ativo
                     FROM estoque est
                     INNER JOIN produto p ON p.id_produto = est.id_produto
@@ -430,6 +431,7 @@ class Item
                         p.preco
                     ) AS PrecoMedio,
                     p.oculto,
+                    p.ativo AS produto_ativo,
                     a.ativo
                 FROM estoque est
                 INNER JOIN produto p ON p.id_produto = est.id_produto
@@ -446,7 +448,7 @@ class Item
             $this->setQuery("
                 SELECT e.qtd AS qtd_total, e.descricao, e.Total AS valor_total, e.PrecoMedio, e.unidade
                 FROM estoque_com_preco_atualizado e
-                WHERE qtd != 0 AND e.oculto = false AND (e.ativo IS NULL OR e.ativo = 1)
+                WHERE qtd != 0 AND e.oculto = false AND e.produto_ativo = 1 AND (e.ativo IS NULL OR e.ativo = 1)
                 ORDER BY e.descricao;
             ");
         }
@@ -584,7 +586,7 @@ class Item
 
     private function requisicao()
     {
-        $params = "WHERE p.oculto = false AND a.ativo = 1";
+        $params = "WHERE p.oculto = false AND p.ativo = 1 AND a.ativo = 1";
         $cont = 1;
 
         if ($this->getAlmoxarifado()) {

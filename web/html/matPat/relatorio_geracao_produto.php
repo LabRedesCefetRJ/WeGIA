@@ -187,12 +187,18 @@ function quickQuery($query, $column)
 							$dataFimFormatada = null;
 
 						$query = "
-							SELECT e.data
-							FROM entrada e
-							JOIN ientrada ie ON e.id_entrada = ie.id_entrada
-							JOIN produto p ON ie.id_produto = p.id_produto
-							WHERE p.id_produto = :id_produto
-							AND e.id_almoxarifado = :id_almoxarifado
+    						SELECT e.data
+    						FROM entrada e
+    						JOIN ientrada ie ON e.id_entrada = ie.id_entrada
+    						JOIN produto p ON ie.id_produto = p.id_produto
+    						JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
+    						WHERE p.id_produto = :id_produto
+    							AND e.id_almoxarifado = :id_almoxarifado
+    							AND p.ativo = 1
+    							AND p.oculto = false
+    							AND ie.oculto = false
+    							AND e.ativo = 1
+    							AND a.ativo = 1
 						";
 
 						if ($dataInicio && $dataFim) {
@@ -312,8 +318,13 @@ function quickQuery($query, $column)
 										estoque ON estoque.id_produto = produto.id_produto 
 										AND estoque.id_almoxarifado = almoxarifado.id_almoxarifado
 									WHERE 
-										almoxarifado.id_almoxarifado = :idAlmoxarifado
-										AND produto.id_produto = :idProduto";
+    									almoxarifado.id_almoxarifado = :idAlmoxarifado
+    									AND produto.id_produto = :idProduto
+    									AND produto.ativo = 1
+    									AND produto.oculto = false
+    									AND ientrada.oculto = false
+    									AND entrada.ativo = 1
+    									AND almoxarifado.ativo = 1";
 
 							if (!empty($datasArray)) {
 								$placeholders = implode(', ', array_map(function ($index) {
@@ -371,8 +382,13 @@ function quickQuery($query, $column)
 								LEFT JOIN 
 									tipo_saida ON saida.id_tipo = tipo_saida.id_tipo
 								WHERE 
-									almoxarifado.id_almoxarifado = :idAlmoxarifado
-									AND produto.id_produto = :idProduto";
+    								almoxarifado.id_almoxarifado = :idAlmoxarifado
+    								AND produto.id_produto = :idProduto
+    								AND produto.ativo = 1
+    								AND produto.oculto = false
+    								AND isaida.oculto = false
+    								AND saida.ativo = 1
+    								AND almoxarifado.ativo = 1";
 
 						if ($dataInicio && $dataFim) {
     						$query .= " AND saida.data BETWEEN :data_inicio AND :data_fim";
