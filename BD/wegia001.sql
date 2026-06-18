@@ -2524,6 +2524,55 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao` (
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_alocacao_periodo` 
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao_periodo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_alocacao` INT NOT NULL,
+  `data_inicio` DATETIME NOT NULL,
+  `data_fim` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_periodo_alocacao_idx` (`id_alocacao` ASC),
+  CONSTRAINT `fk_periodo_alocacao`
+    FOREIGN KEY (`id_alocacao`)
+    REFERENCES `wegia`.`agenda_alocacao` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_membro_periodo` 
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_membro_periodo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_periodo` INT NOT NULL,
+  `id_pessoa` INT NOT NULL,
+  `id_divisao` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_membro_periodo_pessoa` (`id_periodo` ASC, `id_pessoa` ASC),
+  INDEX `fk_amp_periodo_idx` (`id_periodo` ASC),
+  INDEX `fk_amp_pessoa_idx` (`id_pessoa` ASC),
+  INDEX `fk_amp_divisao_idx` (`id_divisao` ASC),
+  CONSTRAINT `fk_amp_periodo`
+    FOREIGN KEY (`id_periodo`)
+    REFERENCES `wegia`.`agenda_alocacao_periodo` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_amp_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_amp_divisao`
+    FOREIGN KEY (`id_divisao`)
+    REFERENCES `wegia`.`agenda_equipe_divisao` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+  
 -- ########################### PROCEDURES #################### --
 
 USE `wegia` ;
