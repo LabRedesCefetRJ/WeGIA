@@ -66,7 +66,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar projetos: " . $e->getMessage());
+            error_log("Erro ao listar projetos: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -229,7 +229,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar funcionários ativos: " . $e->getMessage());
+            error_log("Erro ao listar funcionários ativos: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -242,7 +242,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar funções: " . $e->getMessage());
+            error_log("Erro ao listar funções: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -264,8 +264,45 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar equipe do projeto: " . $e->getMessage());
+            error_log("Erro ao listar equipe do projeto: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
+        }
+    }
+
+    public function buscarMembroEquipe($id)
+    {
+        try {
+            $sql = "SELECT pe.id, pe.id_projeto, pe.id_pessoa, pe.id_funcao,
+                       p.nome, p.sobrenome, p.cpf,
+                       pf.descricao as funcao_descricao
+                FROM projeto_executante pe
+                JOIN pessoa p ON pe.id_pessoa = p.id_pessoa
+                LEFT JOIN projeto_funcao pf ON pe.id_funcao = pf.id_funcao
+                WHERE pe.id = :id";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $membro = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $membro ?: null;
+        } catch (Exception $e) {
+            error_log("Erro ao buscar membro da equipe: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
+            return null;
+        }
+    }
+
+    public function alterarFuncaoMembroEquipe($id, $projeto_id, $id_funcao)
+    {
+        try {
+            $sql = "UPDATE projeto_executante SET id_funcao = :id_funcao
+                    WHERE id = :id AND id_projeto = :projeto_id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id_funcao', $id_funcao, PDO::PARAM_INT);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':projeto_id', $projeto_id, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (Exception $e) {
+            throw new Exception("Erro ao alterar função do membro: " . $e->getMessage());
         }
     }
 
@@ -303,7 +340,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar equipe por turmas: " . $e->getMessage());
+            error_log("Erro ao listar equipe por turmas: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -384,7 +421,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar atendidos: " . $e->getMessage());
+            error_log("Erro ao listar atendidos: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -407,8 +444,31 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar atendidos do projeto: " . $e->getMessage());
+            error_log("Erro ao listar atendidos do projeto: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
+        }
+    }
+
+    public function buscarAtendidoProjeto($id)
+    {
+        try {
+            $sql = "SELECT pa.id, pa.id_projeto, pa.id_atendido, pa.id_status,
+                   p.nome, p.sobrenome, p.cpf, p.id_pessoa,
+                   pas.descricao as status_descricao
+            FROM projeto_atendido pa
+            JOIN atendido a ON pa.id_atendido = a.idatendido
+            JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa
+            LEFT JOIN projeto_atendido_status pas ON pa.id_status = pas.id_status
+            WHERE pa.id = :id";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $atendido = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $atendido ?: null;
+        } catch (Exception $e) {
+            error_log("Erro ao buscar atendido do projeto: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
+            return null;
         }
     }
 
@@ -447,7 +507,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar atendidos por turmas: " . $e->getMessage());
+            error_log("Erro ao listar atendidos por turmas: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -460,7 +520,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar status: " . $e->getMessage());
+            error_log("Erro ao listar status: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -505,13 +565,14 @@ class ProjetoDAO
         }
     }
 
-    public function atualizarStatusAtendidoProjeto($id, $id_status)
+    public function atualizarStatusAtendidoProjeto($id, $projeto_id, $id_status)
     {
         try {
-            $sql = "UPDATE projeto_atendido SET id_status = :id_status WHERE id = :id";
+            $sql = "UPDATE projeto_atendido SET id_status = :id_status WHERE id = :id AND id_projeto = :projeto_id";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':id_status', $id_status, PDO::PARAM_INT);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':projeto_id', $projeto_id, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (Exception $e) {
             throw new Exception("Erro ao atualizar status: " . $e->getMessage());
@@ -561,7 +622,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar executantes fora da turma: " . $e->getMessage());
+            error_log("Erro ao listar executantes fora da turma: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -590,7 +651,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar atendidos fora da turma: " . $e->getMessage());
+            error_log("Erro ao listar atendidos fora da turma: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -606,7 +667,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar turmas: " . $e->getMessage());
+            error_log("Erro ao listar turmas: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -621,7 +682,7 @@ class ProjetoDAO
             $turma = $stmt->fetch(PDO::FETCH_ASSOC);
             return $turma ?: null;
         } catch (Exception $e) {
-            error_log("Erro ao buscar turma: " . $e->getMessage());
+            error_log("Erro ao buscar turma: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return null;
         }
     }
@@ -669,7 +730,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar executantes da turma: " . $e->getMessage());
+            error_log("Erro ao listar executantes da turma: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }
@@ -690,7 +751,7 @@ class ProjetoDAO
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Erro ao listar atendidos da turma: " . $e->getMessage());
+            error_log("Erro ao listar atendidos da turma: " . $e->getMessage() . " | Código: " . $e->getCode() . " | Arquivo: " . $e->getFile() . " | Linha: " . $e->getLine());
             return [];
         }
     }

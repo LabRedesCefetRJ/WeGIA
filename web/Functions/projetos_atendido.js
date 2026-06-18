@@ -143,21 +143,24 @@ function atualizarTabelaAtendidos(dados) {
 
     dados.forEach(function(atendido) {
         const nomeCompleto = ((atendido.nome || '') + ' ' + (atendido.sobrenome || '')).trim();
-        const cpf          = atendido.cpf ? escapeHtml(atendido.cpf) : '--';
+        const cpf          = atendido.cpf || '--';
         const status       = atendido.status_descricao || '--';
 
-        let acoes = '<button type="button" onclick="removerAtendidoProjeto(' + atendido.id + ')" ' +
+        const acoes = '<button type="button" onclick="event.stopPropagation(); removerAtendidoProjeto(' + atendido.id + ')" ' +
                     'class="btn btn-danger btn-xs" title="Remover do projeto">' +
                     '<i class="fa fa-trash"></i></button>';
 
-        $tbody.append(
-            '<tr id="atendido-' + atendido.id + '">' +
-            '<td>' + escapeHtml(nomeCompleto) + '</td>' +
-            '<td>' + cpf + '</td>' +
-            '<td>' + escapeHtml(status) + '</td>' +
-            '<td class="actions text-center">' + acoes + '</td>' +
-            '</tr>'
-        );
+        $('<tr>')
+            .attr('id', 'atendido-' + atendido.id)
+            .css('cursor', 'pointer')
+            .on('click', function() {
+                window.location.href = 'editar_atendido_projeto.php?id=' + atendido.id;
+            })
+            .append($('<td>').text(nomeCompleto))
+            .append($('<td>').text(cpf))
+            .append($('<td>').text(status))
+            .append($('<td class="actions text-center">').html(acoes))
+            .appendTo($tbody);
     });
 },
 

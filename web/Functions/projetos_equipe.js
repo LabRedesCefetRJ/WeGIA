@@ -244,8 +244,7 @@ function renderizarPaginaEquipe() {
 }
 
 function atualizarTabelaEquipe(dados) {
-    const $tbody    = $('#equipe-tab');
-    const filtrando = equipeTurmasFiltro.length > 0;
+    const $tbody = $('#equipe-tab');
     $tbody.empty();
 
     if (!dados || dados.length === 0) {
@@ -258,24 +257,21 @@ function atualizarTabelaEquipe(dados) {
         const cpf          = membro.cpf || '--';
         const funcao       = membro.funcao_descricao || '--';
 
-        let acoes = '<button type="button" onclick="removerMembroEquipe(' + membro.id + ')" ' +
+        const acoes = '<button type="button" onclick="event.stopPropagation(); removerMembroEquipe(' + membro.id + ')" ' +
                     'id="btn-remover-' + membro.id + '" class="btn btn-danger btn-xs" title="Remover do projeto">' +
                     '<i class="fa fa-trash"></i></button>';
 
-        if (filtrando) {
-            acoes += ' <button type="button" onclick="removerExecutanteDaTurma(' + membro.id_pessoa + ')" ' +
-                     'class="btn btn-warning btn-xs" title="Remover da turma">' +
-                     '<i class="fa fa-minus"></i></button>';
-        }
-
-        $tbody.append(
-            '<tr id="equipe-' + membro.id + '">' +
-            '<td>' + escapeHtml(nomeCompleto) + '</td>' +
-            '<td>' + escapeHtml(cpf) + '</td>' +
-            '<td>' + escapeHtml(funcao) + '</td>' +
-            '<td class="actions text-center">' + acoes + '</td>' +
-            '</tr>'
-        );
+        $('<tr>')
+            .attr('id', 'equipe-' + membro.id)
+            .css('cursor', 'pointer')
+            .on('click', function() {
+                window.location.href = 'editar_executante_projeto.php?id=' + membro.id;
+            })
+            .append($('<td>').text(nomeCompleto))
+            .append($('<td>').text(cpf))
+            .append($('<td>').text(funcao))
+            .append($('<td class="actions text-center">').html(acoes))
+            .appendTo($tbody);
     });
 }
 
