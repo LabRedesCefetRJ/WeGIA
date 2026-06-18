@@ -1,10 +1,10 @@
 <?php
 //requisitar arquivo de conexão
-require_once '../dao/ConexaoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 
 //requisitar model
-require_once '../model/ContribuicaoLog.php';
-require_once '../model/ContribuicaoLogCollection.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLogCollection.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'StatusPagamento.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ConfiguracaoRelatorioContribuicoes.php';
 

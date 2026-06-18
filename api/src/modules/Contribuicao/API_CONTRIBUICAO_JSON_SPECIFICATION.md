@@ -439,6 +439,66 @@ Cada contribuição retornada possui a seguinte estrutura:
 
 ---
 
+## 4. POST `/contribuicoes/boleto`
+
+Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa o `user_id` do token para localizar o sócio e reaproveita os serviços de pagamento existentes.
+
+### Cabeçalhos
+- **Authorization** (obrigatório): `Bearer <token>`
+- **Content-Type** (obrigatório): `application/json`
+
+### Corpo da Requisição
+```json
+{
+  "valor": 50.0,
+  "dia": "2026-06-25"
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `valor` | number | sim | Valor do boleto em reais |
+| `dia` | string | não | Data de vencimento no formato `YYYY-MM-DD`; se omitida, a API usa `+7 dias` |
+
+### Resposta - 201 Created
+```json
+{
+  "link": "https://...",
+  "codigo": "codigo-retornado-pelo-gateway",
+  "contribuicao_id": 123
+}
+```
+
+### Resposta - 400 Bad Request
+```json
+{
+  "error": "Valor inválido."
+}
+```
+
+### Resposta - 401 Unauthorized
+```json
+{
+  "error": "Usuário não identificado."
+}
+```
+
+### Resposta - 404 Not Found
+```json
+{
+  "error": "Sócio não encontrado para o usuário autenticado."
+}
+```
+
+### Resposta - 502 Bad Gateway
+```json
+{
+  "error": "Não foi possível gerar o boleto."
+}
+```
+
+---
+
 ## Observações Gerais
 
 ### Headers Recomendados

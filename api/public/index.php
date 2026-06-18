@@ -98,7 +98,8 @@ $container = new AppContainer([
         return new ContribuicaoController(
             $c->get(ContribuicaoService::class),
             $c->get(SocioRepository::class),
-            $c->get(PessoaRepository::class)
+            $c->get(PessoaRepository::class),
+            $c->get(PDO::class)
         );
     },
     SocioMiddleware::class => function ($c) {
@@ -208,6 +209,9 @@ $app->get('/socios/{id}/contribuicoes/{contribuicao_id}/pdf', [ContribuicaoContr
 
 //Benefícios
 $app->get('/socios/{id}/beneficios', [SocioController::class, 'getBeneficiosBySocio'])
+    ->add($container->get(AuthMiddleware::class));
+
+$app->post('/contribuicoes/boleto', [ContribuicaoController::class, 'generateBoleto'])
     ->add($container->get(AuthMiddleware::class));
 
 
