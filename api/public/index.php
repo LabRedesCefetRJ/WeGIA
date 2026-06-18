@@ -214,5 +214,8 @@ $app->get('/socios/{id}/beneficios', [SocioController::class, 'getBeneficiosBySo
 $app->post('/contribuicoes/boleto', [ContribuicaoController::class, 'generateBoleto'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->post('/contribuicoes/carne', [ContribuicaoController::class, 'generateCarne'])
+    ->add($container->get(AuthMiddleware::class));
+
 
 $app->run();

@@ -1,9 +1,10 @@
 <?php
-require_once '../model/ContribuicaoLogCollection.php';
-require_once '../model/ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLogCollection.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
-require_once 'ApiCarneServiceInterface.php';
-require_once '../vendor/autoload.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiCarneServiceInterface.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 
 use setasign\Fpdi\Fpdi;
 
@@ -145,7 +146,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
     public function salvarTemp($pdf_links)
     {
         // Diretório onde os arquivos serão armazenados
-        $saveDir = '../pdfs/';
+        $saveDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR;
         $saveDirTemp = $saveDir . 'temp/';
 
         // Verifica se o diretório existe, se não, cria o diretório
@@ -211,7 +212,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
     public function removerTemp()
     {
-        $dir = '../pdfs/temp';
+        $dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . 'temp';
         // Verifica se o diretório existe
         if (!file_exists($dir)) {
             return false;
@@ -270,7 +271,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
         $ultimaDataVencimento = str_replace('-', '', $ultimaDataVencimento);
 
         // Salva o arquivo PDF unido
-        $pdf->Output('F', '../pdfs/' . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf');
+        $pdf->Output('F', dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf');
 
         return 'pdfs/' . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf';
     }

@@ -136,6 +136,63 @@ class ContribuicaoController
         return $dados['link'] ?? null;
     }
 
+    private function resolverIntervaloCarne(?string $tipoGeracao): int
+    {
+        if ($tipoGeracao === null || trim($tipoGeracao) === '') {
+            return 1;
+        }
+
+        $intervalosValidos = [
+            '1' => 1,
+            '2' => 2,
+            '3' => 3,
+            '6' => 6
+        ];
+
+        $tipoGeracao = trim((string)$tipoGeracao);
+
+        if (!isset($intervalosValidos[$tipoGeracao])) {
+            throw new \InvalidArgumentException('O tipo de geração é inválido.', 400);
+        }
+
+        return $intervalosValidos[$tipoGeracao];
+    }
+
+    private function gerarDatasVencimentoCarne(int $parcelas, int $diaVencimento, int $intervalo = 1): array
+    {
+        $diasPermitidos = [1, 5, 10, 15, 20, 25];
+        if (!in_array($diaVencimento, $diasPermitidos, true)) {
+            throw new \InvalidArgumentException('Dia de vencimento inválido.', 400);
+        }
+
+        $dataAtual = new \DateTime();
+        $dataGeracao = clone $dataAtual;
+
+        if ($diaVencimento <= (int)$dataAtual->format('d')) {
+            $dataGeracao->modify('first day of next month');
+        }
+
+        $datasVencimento = [];
+
+        for ($i = 0; $i < $parcelas; $i++) {
+            $dataVencimento = clone $dataGeracao;
+            $dataVencimento->modify('+' . ($intervalo * $i) . ' month');
+            $dataVencimento->setDate(
+                (int)$dataVencimento->format('Y'),
+                (int)$dataVencimento->format('m'),
+                $diaVencimento
+            );
+
+            if ((int)$dataVencimento->format('d') !== $diaVencimento) {
+                $dataVencimento->modify('last day of previous month');
+            }
+
+            $datasVencimento[] = $dataVencimento->format('Y-m-d');
+        }
+
+        return $datasVencimento;
+    }
+
     /**
      * Get all contributions for a specific socio
      *
@@ -565,6 +622,159 @@ class ContribuicaoController
 
             $response->getBody()->write(json_encode([
                 'error' => 'Erro ao gerar boleto: ' . $e->getMessage()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function generateCarne(Request $request, Response $response): Response
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            $idPessoa = (int)$request->getAttribute('user_id');
+
+            if ($idPessoa <= 0) {
+                return $this->jsonError($response, 'Usuário não identificado.', 401);
+            }
+
+            $valor = $data['valor'] ?? null;
+            if (!is_numeric($valor) || (float)$valor <= 0) {
+                return $this->jsonError($response, 'Valor inválido.', 400);
+            }
+
+            $parcelas = filter_var($data['parcelas'] ?? null, FILTER_VALIDATE_INT);
+            if ($parcelas === false || $parcelas < 2 || $parcelas > 12) {
+                return $this->jsonError($response, 'A quantidade de parcelas deve ser um número entre 2 e 12.', 400);
+            }
+
+            $diaVencimento = filter_var($data['dia'] ?? null, FILTER_VALIDATE_INT);
+            if ($diaVencimento === false) {
+                return $this->jsonError($response, 'Dia de vencimento inválido.', 400);
+            }
+
+            $socioApi = $this->socioRepository->findByPessoaId($idPessoa);
+            if (!$socioApi || empty($socioApi['id_socio'])) {
+                return $this->jsonError($response, 'Sócio não encontrado para o usuário autenticado.', 404);
+            }
+
+            $socioDao = new \SocioDAO($this->pdo);
+            $socio = $socioDao->buscarPorId((int)$socioApi['id_socio']);
+
+            if (!$socio) {
+                return $this->jsonError($response, 'Sócio não encontrado.', 404);
+            }
+
+            $meioPagamentoDao = new \MeioPagamentoDAO();
+            $meioPagamento = $meioPagamentoDao->buscarPorNome('Carne');
+
+            if (is_null($meioPagamento)) {
+                return $this->jsonError($response, 'Meio de pagamento não encontrado.', 404);
+            }
+
+            $regraPagamentoDao = new \RegraPagamentoDAO();
+            $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamentoPorIdMeioPagamento($meioPagamento->getId());
+            $erroRegra = $this->validarRegrasValor((float)$valor, $conjuntoRegrasPagamento);
+
+            if ($erroRegra !== null) {
+                return $this->jsonError($response, $erroRegra, 400);
+            }
+
+            $gatewayPagamentoDao = new \GatewayPagamentoDAO();
+            $gatewayPagamentoArray = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
+
+            if (!$gatewayPagamentoArray || count($gatewayPagamentoArray) < 1) {
+                return $this->jsonError($response, 'Gateway de pagamento não encontrado.', 404);
+            }
+
+            $gatewayPagamento = new \GatewayPagamento(
+                $gatewayPagamentoArray['plataforma'],
+                $gatewayPagamentoArray['endPoint'],
+                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['status']
+            );
+            $gatewayPagamento->setId($meioPagamento->getGatewayId());
+
+            $requisicaoServico = dirname(__DIR__, 4) . '/web/html/contribuicao/service/' . $gatewayPagamento->getNome() . 'CarneService.php';
+            if (!file_exists($requisicaoServico)) {
+                return $this->jsonError($response, 'Arquivo de serviço de pagamento não encontrado.', 500);
+            }
+
+            require_once $requisicaoServico;
+
+            $classeService = $gatewayPagamento->getNome() . 'CarneService';
+            if (!class_exists($classeService)) {
+                return $this->jsonError($response, 'Classe de serviço de pagamento não encontrada.', 500);
+            }
+
+            try {
+                $intervalo = $this->resolverIntervaloCarne($data['tipoGeracao'] ?? null);
+                $datasVencimento = $this->gerarDatasVencimentoCarne((int)$parcelas, (int)$diaVencimento, $intervalo);
+            } catch (\InvalidArgumentException $e) {
+                return $this->jsonError($response, $e->getMessage(), 400);
+            }
+
+            $servicoPagamento = new $classeService();
+            $contribuicaoLogDao = new \ContribuicaoLogDAO($this->pdo);
+            $agradecimento = $contribuicaoLogDao->getAgradecimento();
+            $contribuicaoLogCollection = new \ContribuicaoLogCollection();
+            $dataGeracao = (new \DateTimeImmutable('now'))->format('Y-m-d');
+
+            $this->pdo->beginTransaction();
+
+            foreach ($datasVencimento as $dataVencimento) {
+                $contribuicaoLog = new \ContribuicaoLog();
+                $contribuicaoLog
+                    ->setValor((float)$valor)
+                    ->setCodigo($contribuicaoLog->gerarCodigo())
+                    ->setDataGeracao($dataGeracao)
+                    ->setDataVencimento($dataVencimento)
+                    ->setSocio($socio)
+                    ->setGatewayPagamento($gatewayPagamento)
+                    ->setMeioPagamento($meioPagamento)
+                    ->setAgradecimento($agradecimento);
+
+                $contribuicaoLog = $contribuicaoLogDao->criar($contribuicaoLog);
+                $contribuicaoLogCollection->add($contribuicaoLog);
+            }
+
+            $ultimoLog = $contribuicaoLogCollection->getIterator()->current();
+            if (!$ultimoLog) {
+                $this->pdo->rollBack();
+                return $this->jsonError($response, 'Não foi possível preparar o carnê.', 500);
+            }
+
+            $socioDao->registrarLog($ultimoLog->getSocio(), 'Carnê gerado recentemente', \Util::getUserIp(), \Util::getUserAgent());
+
+            $resultado = $servicoPagamento->gerarCarne($contribuicaoLogCollection);
+            if (!$resultado || empty($resultado) || empty($resultado['link'])) {
+                $this->pdo->rollBack();
+                return $this->jsonError($response, 'Não foi possível gerar o carnê.', 502);
+            }
+
+            if (!empty($resultado['contribuicoes']) && is_iterable($resultado['contribuicoes'])) {
+                foreach ($resultado['contribuicoes'] as $contribuicao) {
+                    $contribuicaoLogDao->alterarCodigoPorId($contribuicao->getCodigo(), $contribuicao->getId());
+                }
+            }
+
+            $this->pdo->commit();
+
+            $response->getBody()->write(json_encode([
+                'link' => WWW . 'html/contribuicao/' . $resultado['link'],
+                'parcelas' => (int)$parcelas
+            ]));
+
+            return $response->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $response->getBody()->write(json_encode([
+                'error' => 'Erro ao gerar carnê: ' . $e->getMessage()
             ]));
 
             return $response->withStatus(500)

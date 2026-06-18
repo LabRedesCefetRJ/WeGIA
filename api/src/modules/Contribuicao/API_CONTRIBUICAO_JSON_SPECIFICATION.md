@@ -499,6 +499,69 @@ Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa 
 
 ---
 
+## 5. POST `/contribuicoes/carne`
+
+Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o `user_id` do token para localizar o sócio e cria uma coleção de parcelas com base no valor, na quantidade de parcelas e no dia de vencimento informados.
+
+### Cabeçalhos
+- **Authorization** (obrigatório): `Bearer <token>`
+- **Content-Type** (obrigatório): `application/json`
+
+### Corpo da Requisição
+```json
+{
+  "valor": 50.0,
+  "parcelas": 6,
+  "dia": 10,
+  "tipoGeracao": 1
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `valor` | number | sim | Valor de cada parcela em reais |
+| `parcelas` | integer | sim | Quantidade de parcelas, entre 2 e 12 |
+| `dia` | integer | sim | Dia de vencimento. Valores aceitos: 1, 5, 10, 15, 20 e 25 |
+| `tipoGeracao` | integer | não | Intervalo entre parcelas. Valores aceitos: 1, 2, 3 ou 6 meses |
+
+### Resposta - 201 Created
+```json
+{
+  "link": "http://localhost/~gabriel/WeGIA/web/html/contribuicao/pdfs/arquivo.pdf",
+  "parcelas": 6
+}
+```
+
+### Resposta - 400 Bad Request
+```json
+{
+  "error": "A quantidade de parcelas deve ser um número entre 2 e 12."
+}
+```
+
+### Resposta - 401 Unauthorized
+```json
+{
+  "error": "Usuário não identificado."
+}
+```
+
+### Resposta - 404 Not Found
+```json
+{
+  "error": "Sócio não encontrado para o usuário autenticado."
+}
+```
+
+### Resposta - 502 Bad Gateway
+```json
+{
+  "error": "Não foi possível gerar o carnê."
+}
+```
+
+---
+
 ## Observações Gerais
 
 ### Headers Recomendados
