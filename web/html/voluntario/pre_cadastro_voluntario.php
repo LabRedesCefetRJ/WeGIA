@@ -7,14 +7,13 @@ if (session_status() === PHP_SESSION_NONE)
 if (!isset($_SESSION['usuario'])) {
     header("Location: " . WWW . "html/index.php");
     exit();
-}
-else {
+} else {
     session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
-// Not checking specific permissions for this page, as volunteer forms don't always, but we could if we wanted.
+permissao($_SESSION['id_pessoa'], 13, 1);
 
 require_once ROOT . "/controle/VoluntarioControle.php";
 
@@ -204,19 +203,18 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                 <section class="panel">
                     <?php
-if (isset($_GET['msg_c'])) {
-    $msg = filter_input(INPUT_GET, 'msg_c', FILTER_SANITIZE_SPECIAL_CHARS);
-    echo ('<div class="alert alert-success" role="alert">
+                    if (isset($_GET['msg_c'])) {
+                        $msg = filter_input(INPUT_GET, 'msg_c', FILTER_SANITIZE_SPECIAL_CHARS);
+                        echo ('<div class="alert alert-success" role="alert">
 										' . htmlspecialchars($msg) . '
 									  </div>');
-}
-else if (isset($_GET['msg_e'])) {
-    $msg = filter_input(INPUT_GET, 'msg_e', FILTER_SANITIZE_SPECIAL_CHARS);
-    echo ('<div class="alert alert-danger" role="alert">
+                    } else if (isset($_GET['msg_e'])) {
+                        $msg = filter_input(INPUT_GET, 'msg_e', FILTER_SANITIZE_SPECIAL_CHARS);
+                        echo ('<div class="alert alert-danger" role="alert">
 										' . htmlspecialchars($msg) . '
 									  </div>');
-}
-?>
+                    }
+                    ?>
                     <header class="panel-heading">
                         <h2 class="panel-title">Digite seu CPF</h2>
                     </header>
