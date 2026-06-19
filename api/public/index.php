@@ -217,5 +217,7 @@ $app->post('/contribuicoes/boleto', [ContribuicaoController::class, 'generateBol
 $app->post('/contribuicoes/carne', [ContribuicaoController::class, 'generateCarne'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->post('/contribuicoes/pix', [ContribuicaoController::class, 'generatePix'])
+    ->add($container->get(AuthMiddleware::class));
 
 $app->run();

@@ -562,6 +562,65 @@ Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o
 
 ---
 
+## 6. POST `/contribuicoes/pix`
+
+Gera um QR Code Pix para o sócio autenticado via JWT. A rota usa o `user_id` do token para localizar o sócio e reaproveita os serviços de pagamento existentes.
+
+### Cabeçalhos
+- **Authorization** (obrigatório): `Bearer <token>`
+- **Content-Type** (obrigatório): `application/json`
+
+### Corpo da Requisição
+```json
+{
+  "valor": 50.0
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `valor` | number | sim | Valor do Pix em reais |
+
+### Resposta - 201 Created
+```json
+{
+  "qrcode": "base64-do-qrcode",
+  "copiaCola": "texto-pix-copia-e-cola",
+  "codigo": "codigo-retornado-pelo-gateway",
+  "contribuicao_id": 123
+}
+```
+
+### Resposta - 400 Bad Request
+```json
+{
+  "error": "Valor inválido."
+}
+```
+
+### Resposta - 401 Unauthorized
+```json
+{
+  "error": "Usuário não identificado."
+}
+```
+
+### Resposta - 404 Not Found
+```json
+{
+  "error": "Sócio não encontrado para o usuário autenticado."
+}
+```
+
+### Resposta - 502 Bad Gateway
+```json
+{
+  "error": "Não foi possível gerar o Pix."
+}
+```
+
+---
+
 ## Observações Gerais
 
 ### Headers Recomendados
