@@ -214,7 +214,6 @@ class AgendaDAO
             $stmt->bindValue(':id',               $alocacao->getId(), PDO::PARAM_INT);
             $stmt->execute();
 
-            // Se alterou a equipe, as datas ou intervalo, recria os blocos (Cuidado: reseta as edições diárias!)
             if ($regraMudou) {
                 $stmtDel = $this->pdo->prepare("DELETE FROM agenda_alocacao_periodo WHERE id_alocacao = ?");
                 $stmtDel->execute([$alocacao->getId()]);
@@ -303,7 +302,6 @@ class AgendaDAO
 
     public function listarAlocacoesPorAgenda(int $idAgenda)
     {
-        // O Banco agora já tem os dias prontos, então cortamos o PHP While daqui!
         $sql = "SELECT p.id as id_periodo, p.data_inicio, p.data_fim,
                        al.id as id_alocacao, al.lembrete, al.id_agenda, al.id_equipe, al.intervalo,
                        al.inicio as inicio_raw, al.fim as fim_raw,
@@ -350,7 +348,7 @@ class AgendaDAO
     
     public function listarMembrosPorPeriodo(int $idPeriodo)
     {
-        $sql = "SELECT m.id, m.id_divisao, d.nome AS nome_divisao, p.nome, p.sobrenome,
+        $sql = "SELECT m.id, m.id_divisao, d.nome AS nome_divisao, p.id_pessoa, p.nome, p.sobrenome,
                        CASE
                            WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
                            WHEN v.id_pessoa IS NOT NULL THEN 'Voluntário'
@@ -369,6 +367,65 @@ class AgendaDAO
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_periodo', $idPeriodo, PDO::PARAM_INT);
         $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function salvarDivisoesPeriodo(int $idPeriodo, array $membros)
+    {
+        $this->pdo->beginTransaction();
+        try {
+            $sql = "UPDATE agenda_membro_periodo 
+                    SET id_divisao = :id_divisao 
+                    WHERE id_periodo = :id_periodo AND id_pessoa = :id_pessoa";
+            $stmt = $this->pdo->prepare($sql);
+
+            foreach ($membros as $m) {
+                $idDivisao = !empty($m['id_divisao']) ? (int)$m['id_divisao'] : null;
+
+                $stmt->bindValue(':id_divisao', $idDivisao, PDO::PARAM_INT);
+                $stmt->bindValue(':id_periodo', $idPeriodo, PDO::PARAM_INT);
+                $stmt->bindValue(':id_pessoa',  (int)$m['id_pessoa'], PDO::PARAM_INT);
+                $stmt->execute();
+            }
+
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+    
+    public function incluirMembroPeriodo(int $idPeriodo, int $idPessoa, ?int $idDivisao)
+    {
+        $check = $this->pdo->prepare("SELECT COUNT(*) FROM agenda_membro_periodo WHERE id_periodo = ? AND id_pessoa = ?");
+        $check->execute([$idPeriodo, $idPessoa]);
+        if ($check->fetchColumn() > 0) {
+            throw new Exception('Esta pessoa já está escalada para este dia.', 409);
+        }
+
+        $sql = "INSERT INTO agenda_membro_periodo (id_periodo, id_pessoa, id_divisao) VALUES (?, ?, ?)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$idPeriodo, $idPessoa, $idDivisao]);
+    }
+
+    public function excluirMembroPeriodo(int $idPeriodo, int $idPessoa)
+    {
+        $sql = "DELETE FROM agenda_membro_periodo WHERE id_periodo = ? AND id_pessoa = ?";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$idPeriodo, $idPessoa]);
+    }
+
+    public function listarPeriodosPorAlocacao(int $idAlocacao)
+    {
+        $sql = "SELECT id as id_periodo, data_inicio, data_fim 
+                FROM agenda_alocacao_periodo 
+                WHERE id_alocacao = :id_alocacao 
+                ORDER BY data_inicio";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_alocacao', $idAlocacao, PDO::PARAM_INT);
+        $stmt->execute();
+        
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -477,21 +534,42 @@ class AgendaDAO
 
     public function incluirMembro(AgendaEquipeMembro $membro)
     {
-        $sql = "INSERT INTO agenda_equipe_membro (id_equipe, id_divisao, id_pessoa, ativo)
-                VALUES (:id_equipe, :id_divisao, :id_pessoa, :ativo)";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id_equipe',  $membro->getId_equipe(), PDO::PARAM_INT);
-        $stmt->bindValue(':id_divisao', $membro->getId_divisao(), PDO::PARAM_INT);
-        $stmt->bindValue(':id_pessoa',  $membro->getId_pessoa(), PDO::PARAM_INT);
-        $stmt->bindValue(':ativo',      1, PDO::PARAM_INT);
-        $stmt->execute();
-        return $this->pdo->lastInsertId();
+        $this->pdo->beginTransaction();
+        try {
+            // 1. Inclui o membro globalmente na Equipe
+            $sql = "INSERT INTO agenda_equipe_membro (id_equipe, id_divisao, id_pessoa, ativo)
+                    VALUES (:id_equipe, :id_divisao, :id_pessoa, :ativo)";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id_equipe',  $membro->getId_equipe(), PDO::PARAM_INT);
+            $stmt->bindValue(':id_divisao', $membro->getId_divisao(), PDO::PARAM_INT);
+            $stmt->bindValue(':id_pessoa',  $membro->getId_pessoa(), PDO::PARAM_INT);
+            $stmt->bindValue(':ativo',      1, PDO::PARAM_INT);
+            $stmt->execute();
+            $idMembro = $this->pdo->lastInsertId();
+
+            $sqlPropaga = "INSERT IGNORE INTO agenda_membro_periodo (id_periodo, id_pessoa, id_divisao)
+                           SELECT p.id, :id_pessoa, :id_divisao 
+                           FROM agenda_alocacao_periodo p
+                           INNER JOIN agenda_alocacao a ON p.id_alocacao = a.id
+                           WHERE a.id_equipe = :id_equipe";
+            $stmtPropaga = $this->pdo->prepare($sqlPropaga);
+            $stmtPropaga->bindValue(':id_pessoa',  $membro->getId_pessoa(), PDO::PARAM_INT);
+            $stmtPropaga->bindValue(':id_divisao', $membro->getId_divisao(), PDO::PARAM_INT);
+            $stmtPropaga->bindValue(':id_equipe',  $membro->getId_equipe(), PDO::PARAM_INT);
+            $stmtPropaga->execute();
+
+            $this->pdo->commit();
+            return $idMembro;
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     // Lista apenas membros ativos da equipe
     public function listarMembrosPorEquipe(int $idEquipe)
     {
-        $sql = "SELECT m.id, m.id_divisao, p.nome, p.sobrenome, m.ativo,
+        $sql = "SELECT m.id, m.id_divisao, d.nome AS nome_divisao, p.nome, p.sobrenome, m.ativo,
                        e.inicio_turno, e.fim_turno,
                        CASE
                            WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
@@ -502,16 +580,43 @@ class AgendaDAO
                 FROM agenda_equipe_membro m
                 INNER JOIN pessoa p ON m.id_pessoa = p.id_pessoa
                 INNER JOIN agenda_equipe e ON m.id_equipe = e.id
+                LEFT JOIN agenda_equipe_divisao d ON m.id_divisao = d.id
                 LEFT JOIN funcionario f ON f.id_pessoa = p.id_pessoa
                 LEFT JOIN cargo c ON c.id_cargo = f.id_cargo
                 LEFT JOIN voluntario v ON v.id_pessoa = p.id_pessoa
                 LEFT JOIN atendido a ON a.pessoa_id_pessoa = p.id_pessoa
                 WHERE m.id_equipe = :id_equipe
-                AND m.ativo = 1";
+                AND m.ativo = 1
+                ORDER BY d.nome, p.nome";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_equipe', $idEquipe, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function listarMembrosParaPeriodos(int $idAgenda, int $mes, int $ano): array
+    {
+        $sql = "SELECT mp.id_periodo, mp.id_divisao, d.nome AS nome_divisao, p.nome
+                FROM agenda_membro_periodo mp
+                INNER JOIN agenda_alocacao_periodo per ON mp.id_periodo = per.id
+                INNER JOIN agenda_alocacao al ON per.id_alocacao = al.id
+                INNER JOIN pessoa p ON mp.id_pessoa = p.id_pessoa
+                LEFT JOIN agenda_equipe_divisao d ON mp.id_divisao = d.id
+                WHERE al.id_agenda = :id_agenda
+                  AND MONTH(per.data_inicio) = :mes
+                  AND YEAR(per.data_inicio) = :ano
+                ORDER BY mp.id_periodo, d.nome, p.nome";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_agenda', $idAgenda, PDO::PARAM_INT);
+        $stmt->bindValue(':mes',       $mes,       PDO::PARAM_INT);
+        $stmt->bindValue(':ano',       $ano,       PDO::PARAM_INT);
+        $stmt->execute();
+
+        $grouped = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $grouped[(int)$row['id_periodo']][] = $row;
+        }
+        return $grouped;
     }
 
     // Lista membros do turno de hoje (horário vem da equipe)
@@ -545,22 +650,70 @@ class AgendaDAO
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Inativa membro
     public function inativarMembro(int $id)
     {
-        $sql = "UPDATE agenda_equipe_membro SET ativo = 0 WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->pdo->beginTransaction();
+        try {
+            $stmtBusca = $this->pdo->prepare("SELECT id_equipe, id_pessoa FROM agenda_equipe_membro WHERE id = :id");
+            $stmtBusca->execute([':id' => $id]);
+            $dados = $stmtBusca->fetch(PDO::FETCH_ASSOC);
+
+            $sql = "UPDATE agenda_equipe_membro SET ativo = 0 WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            if ($dados) {
+                $sqlRemove = "DELETE mp FROM agenda_membro_periodo mp 
+                              INNER JOIN agenda_alocacao_periodo p ON mp.id_periodo = p.id 
+                              INNER JOIN agenda_alocacao a ON p.id_alocacao = a.id 
+                              WHERE a.id_equipe = :id_equipe AND mp.id_pessoa = :id_pessoa";
+                $stmtRemove = $this->pdo->prepare($sqlRemove);
+                $stmtRemove->execute([
+                    ':id_equipe' => $dados['id_equipe'],
+                    ':id_pessoa' => $dados['id_pessoa']
+                ]);
+            }
+
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
-    // Reativa membro
     public function reativarMembro(int $id)
     {
-        $sql = "UPDATE agenda_equipe_membro SET ativo = 1 WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->pdo->beginTransaction();
+        try {
+            $sql = "UPDATE agenda_equipe_membro SET ativo = 1 WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $stmtBusca = $this->pdo->prepare("SELECT id_equipe, id_pessoa, id_divisao FROM agenda_equipe_membro WHERE id = :id");
+            $stmtBusca->execute([':id' => $id]);
+            $dados = $stmtBusca->fetch(PDO::FETCH_ASSOC);
+
+            if ($dados) {
+                $sqlPropaga = "INSERT IGNORE INTO agenda_membro_periodo (id_periodo, id_pessoa, id_divisao)
+                               SELECT p.id, :id_pessoa, :id_divisao 
+                               FROM agenda_alocacao_periodo p
+                               INNER JOIN agenda_alocacao a ON p.id_alocacao = a.id
+                               WHERE a.id_equipe = :id_equipe";
+                $stmtPropaga = $this->pdo->prepare($sqlPropaga);
+                $stmtPropaga->execute([
+                    ':id_pessoa'  => $dados['id_pessoa'],
+                    ':id_divisao' => $dados['id_divisao'],
+                    ':id_equipe'  => $dados['id_equipe']
+                ]);
+            }
+
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
     
     public function listarTodosMembrosAtivos()  
@@ -591,10 +744,34 @@ class AgendaDAO
 
     public function excluirMembro(int $id)
     {
-        $sql = "DELETE FROM agenda_equipe_membro WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->pdo->beginTransaction();
+        try {
+            $stmtBusca = $this->pdo->prepare("SELECT id_equipe, id_pessoa FROM agenda_equipe_membro WHERE id = :id");
+            $stmtBusca->execute([':id' => $id]);
+            $dados = $stmtBusca->fetch(PDO::FETCH_ASSOC);
+
+            if ($dados) {
+                $sqlRemove = "DELETE mp FROM agenda_membro_periodo mp 
+                              INNER JOIN agenda_alocacao_periodo p ON mp.id_periodo = p.id 
+                              INNER JOIN agenda_alocacao a ON p.id_alocacao = a.id 
+                              WHERE a.id_equipe = :id_equipe AND mp.id_pessoa = :id_pessoa";
+                $stmtRemove = $this->pdo->prepare($sqlRemove);
+                $stmtRemove->execute([
+                    ':id_equipe' => $dados['id_equipe'],
+                    ':id_pessoa' => $dados['id_pessoa']
+                ]);
+            }
+
+            $sql = "DELETE FROM agenda_equipe_membro WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     public function excluirAlocacao(int $id)
@@ -734,10 +911,36 @@ class AgendaDAO
 
     public function atribuirDivisaoMembro(int $idMembro, ?int $idDivisao)
     {
-        $sql = "UPDATE agenda_equipe_membro SET id_divisao = :id_divisao WHERE id = :id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id_divisao', $idDivisao, PDO::PARAM_INT);
-        $stmt->bindValue(':id',         $idMembro,  PDO::PARAM_INT);
-        $stmt->execute();
+        $this->pdo->beginTransaction();
+        try {
+            $sql = "UPDATE agenda_equipe_membro SET id_divisao = :id_divisao WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':id_divisao', $idDivisao, PDO::PARAM_INT);
+            $stmt->bindValue(':id',         $idMembro,  PDO::PARAM_INT);
+            $stmt->execute();
+
+            $stmtBusca = $this->pdo->prepare("SELECT id_equipe, id_pessoa FROM agenda_equipe_membro WHERE id = :id");
+            $stmtBusca->execute([':id' => $idMembro]);
+            $dados = $stmtBusca->fetch(PDO::FETCH_ASSOC);
+
+            if ($dados) {
+                $sqlPropaga = "UPDATE agenda_membro_periodo mp 
+                               INNER JOIN agenda_alocacao_periodo p ON mp.id_periodo = p.id 
+                               INNER JOIN agenda_alocacao a ON p.id_alocacao = a.id 
+                               SET mp.id_divisao = :id_divisao 
+                               WHERE a.id_equipe = :id_equipe AND mp.id_pessoa = :id_pessoa";
+                $stmtPropaga = $this->pdo->prepare($sqlPropaga);
+                $stmtPropaga->execute([
+                    ':id_divisao' => $idDivisao,
+                    ':id_equipe'  => $dados['id_equipe'],
+                    ':id_pessoa'  => $dados['id_pessoa']
+                ]);
+            }
+
+            $this->pdo->commit();
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 }
