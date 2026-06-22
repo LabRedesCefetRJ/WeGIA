@@ -360,7 +360,7 @@ $prontuariosDoHistorico = $saudeControle->listarProntuariosDoHistorico($id_pacie
       });
 
       const tdDescricao = document.getElementById('descricao_historico');
-      tdDescricao.innerHTML = descricaoCompleta;
+      tdDescricao.textContent = descricaoCompleta;
 
       const tableProntuario = document.getElementById('table-prontuario');
 

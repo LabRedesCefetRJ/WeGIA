@@ -103,7 +103,6 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
                 <div class="row">
                     <div class="col-md-10 col-md-offset-1">
-                        <h2><a href="forma_contribuicao.php">Clique aqui para acessar a página de Pagamento</a></h2>
                         <div class="panel panel-primary">
                             <div class="panel-heading">
                                 <h3 class="panel-title text-center">Cadastro de uma nova regra de pagamento</h3>

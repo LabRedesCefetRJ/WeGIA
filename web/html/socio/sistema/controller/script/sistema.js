@@ -710,29 +710,29 @@ $(document).ready(function () {
     // Configuração tabela sócios
     // Filtro customizado para desconsiderar caracteres antes do termo de busca
     $.fn.dataTable.ext.afnFiltering.push(
-        function(settings, data, dataIndex) {
+        function (settings, data, dataIndex) {
             // Aplica apenas à tabela #example
             if (settings.nTable.id !== 'example') {
                 return true;
             }
-            
+
             var searchTerm = settings.oPreviousSearch.sSearch.toLowerCase();
-            
+
             // Se não há termo de busca, retorna true (mostra a linha)
             if (!searchTerm) {
                 return true;
             }
-            
+
             // Procura em todas as colunas
             for (var i = 0; i < data.length; i++) {
                 var cellData = data[i].toLowerCase();
                 // Verifica se começa com o termo de busca ou aparece após espaço
-                if (cellData.indexOf(searchTerm) === 0 || 
+                if (cellData.indexOf(searchTerm) === 0 ||
                     cellData.indexOf(' ' + searchTerm) >= 0) {
                     return true;
                 }
             }
-            
+
             return false;
         }
     );
@@ -867,29 +867,33 @@ $(document).ready(function () {
             "ajax": "../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=getContribuicoesLogJSON",
             "columns": [
                 { "data": "codigo" },
-                { "data": "nomeSocio" + " " + "sobrenomeSocio", "render": function (data, type, row) {
-                    return row.nomeSocio + " " + row.sobrenomeSocio;
-                }},
+                {
+                    "data": "nomeSocio" + " " + "sobrenomeSocio", "render": function (data, type, row) {
+                        return row.nomeSocio + (row.sobrenomeSocio != null ? " " + row.sobrenomeSocio : "");
+                    }
+                },
                 { "data": "plataforma" },
                 {
                     "data": "meio", "render": function (data, type, row) {
-                        switch(data){
-            case 'Carne' : 
-                return 'Carnê';
-                break;
-            case 'Recorrencia' :
-                return 'Recorrência';
-                break;
-            default:
-                return data;
-        }
-                        return data == 'Carne' ? "Carnê" : data;
+                        switch (data) {
+                            case 'Carne':
+                                return 'Carnê';
+                                break;
+                            case 'Recorrencia':
+                                return 'Recorrência';
+                                break;
+                            case 'CartaoCredito':
+                                return 'Cartão de crédito';
+                                break;
+                            default:
+                                return data;
+                        }
                     }
                 },
                 { "data": "dataGeracao", "render": (data, type) => { return formataDataBr(data, type) } },
                 { "data": "dataVencimento", "render": (data, type) => { return formataDataBr(data, type) } },
                 { "data": "dataPagamento", "render": (data, type) => { return formataDataBr(data, type) } },
-                { "data": "valor" },
+                { "data": "valor", "render": (data, type) => { return parseFloat(data).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) } },
                 {
                     "data": "status", "render": function (data, type, row) {
                         return data == 1 ? "Pago" : "Pendente";

@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 Util::definirFusoHorario();
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
@@ -163,7 +164,7 @@ $dependente = json_encode($dependente);
       margin-bottom: 0;
     }
 
-    #tipoDocAtendidoFormError + .form-group {
+    #tipoDocAtendidoFormError+.form-group {
       margin-top: 15px;
     }
 
@@ -172,7 +173,6 @@ $dependente = json_encode($dependente);
       transform: translateY(0);
       pointer-events: auto;
     }
-
   </style>
   <!-- Theme CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
@@ -743,6 +743,7 @@ $dependente = json_encode($dependente);
                             <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
                               <input type="hidden" name="nomeClasse" value="AtendidoControle">
                               <input type="hidden" name="metodo" value="alterarImagem">
+                              <?= Csrf::inputField() ?>
                               <div class="form-group">
                                 <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
                                 <div class="col-md-8">
@@ -794,6 +795,7 @@ $dependente = json_encode($dependente);
                 <div class="tab-content">
                   <div id="overview" class="tab-pane active">
                     <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <?= Csrf::inputField() ?>
                       <input type="hidden" name="nomeClasse" value="AtendidoControle">
                       <input type="hidden" name="metodo" value="alterarInfPessoal">
                       <h4 class="mb-xlg">Informações Pessoais</h4>
@@ -864,7 +866,7 @@ $dependente = json_encode($dependente);
                               onblur="validarCPF(this.value)"
                               onkeypress="return Onlynumbers(event)"
                               onkeyup="mascara('###.###.###-##',this,event)">
-                              <?php if (!empty($fieldErrors['cpf']) && $openModal !== 'depFormModal'): ?>
+                            <?php if (!empty($fieldErrors['cpf']) && $openModal !== 'depFormModal'): ?>
                               <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') ?></div>
                             <?php endif; ?>
                           </div>
@@ -889,6 +891,7 @@ $dependente = json_encode($dependente);
                           elseif ($atend->status == 2):
                           ?>
                             <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post">
+                              <?= Csrf::inputField() ?>
                               <input type="hidden" name="idatendido" value=<?= $id ?>>
                               <input type="hidden" name="operacao" value='ativar'>
                               <button class="btn btn-primary" type="submit">Ativar</button>
@@ -910,6 +913,7 @@ $dependente = json_encode($dependente);
                           <div class="modal-body">
                             <p>Tem certeza que deseja desativar esse atendido?</p>
                             <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post" class="d-flex">
+                              <?= Csrf::inputField() ?>
                               <input type="hidden" name="idatendido" value=<?= $id ?>>
                               <input type="hidden" name="operacao" value='desativar'>
                               <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -939,6 +943,7 @@ $dependente = json_encode($dependente);
                         <form id="formAlterarEnderecoAtendido" class="form-horizontal" method="post" action="../../controle/control.php">
                           <input type="hidden" name="nomeClasse" value="AtendidoControle">
                           <input type="hidden" name="metodo" value="alterarEndereco">
+                          <?= Csrf::inputField() ?>
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="cep">CEP</label>
                             <div class="col-md-8">
@@ -1199,36 +1204,36 @@ $dependente = json_encode($dependente);
                         unset($modalUploadConfig, $tiposDocumentoAtendido, $uploadMaxFilesizeBytes, $converterTamanhoParaBytes);
                         ?>
 
-                      <div class="modal fade upload-modal" id="tipoDocAtendidoFormModal" tabindex="-1" role="dialog" aria-labelledby="tipoDocAtendidoFormModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                          <div class="modal-content">
-                            <div class="modal-header">
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                                <span aria-hidden="true">&times;</span>
-                              </button>
-                              <h4 class="modal-title" id="tipoDocAtendidoFormModalLabel">Adicionar tipo de arquivo</h4>
-                            </div>
-                            <div class="modal-body">
-                              <div id="tipoDocAtendidoFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
-                                <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalTipoDocAtendido(); return false;">
+                        <div class="modal fade upload-modal" id="tipoDocAtendidoFormModal" tabindex="-1" role="dialog" aria-labelledby="tipoDocAtendidoFormModalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                                   <span aria-hidden="true">&times;</span>
                                 </button>
-                                <span id="tipoDocAtendidoFormErrorText"></span>
+                                <h4 class="modal-title" id="tipoDocAtendidoFormModalLabel">Adicionar tipo de arquivo</h4>
                               </div>
-                              <div class="form-group">
-                                <label class="control-label" for="novoTipoDocAtendidoInput">
-                                  Descrição <sup class="obrig">*</sup>
-                                </label>
-                                <input type="text" class="form-control" id="novoTipoDocAtendidoInput" placeholder="Nome do tipo de arquivo" maxlength="100" />
+                              <div class="modal-body">
+                                <div id="tipoDocAtendidoFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
+                                  <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalTipoDocAtendido(); return false;">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <span id="tipoDocAtendidoFormErrorText"></span>
+                                </div>
+                                <div class="form-group">
+                                  <label class="control-label" for="novoTipoDocAtendidoInput">
+                                    Descrição <sup class="obrig">*</sup>
+                                  </label>
+                                  <input type="text" class="form-control" id="novoTipoDocAtendidoInput" placeholder="Nome do tipo de arquivo" maxlength="100" />
+                                </div>
                               </div>
-                            </div>
-                            <div class="modal-footer">
-                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                              <button type="button" class="btn btn-primary" onclick="confirmarAdicionarTipo()">Salvar</button>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" onclick="confirmarAdicionarTipo()">Salvar</button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
 
                     </section>
                   </div>
@@ -1254,10 +1259,10 @@ $dependente = json_encode($dependente);
                             <?php
                             $stmt = $pdo->prepare(
                               "SELECT ao.data, ao.descricao, ao.idatendido_ocorrencias, t.descricao AS tipo " .
-                              "FROM atendido_ocorrencia ao " .
-                              "LEFT JOIN atendido_ocorrencia_tipos t " .
-                              "ON ao.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = t.idatendido_ocorrencia_tipos " .
-                              "WHERE atendido_idatendido = :id ORDER BY ao.data DESC"
+                                "FROM atendido_ocorrencia ao " .
+                                "LEFT JOIN atendido_ocorrencia_tipos t " .
+                                "ON ao.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = t.idatendido_ocorrencia_tipos " .
+                                "WHERE atendido_idatendido = :id ORDER BY ao.data DESC"
                             );
                             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                             $stmt->execute();
@@ -1591,7 +1596,9 @@ $dependente = json_encode($dependente);
         try {
           const response = await fetch('../../dao/adicionar_tipo_docs_atendido.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
             body: 'tipo=' + encodeURIComponent(tipo)
           });
           if (!response.ok) throw new Error('Erro na requisição');
@@ -1630,7 +1637,10 @@ $dependente = json_encode($dependente);
         void alerta.offsetWidth;
         alerta.classList.add('is-visible');
         if (timeoutErroModalTipoDocAtendido) clearTimeout(timeoutErroModalTipoDocAtendido);
-        if (timeoutFecharAnimacaoErroTipoDocAtendido) { clearTimeout(timeoutFecharAnimacaoErroTipoDocAtendido); timeoutFecharAnimacaoErroTipoDocAtendido = null; }
+        if (timeoutFecharAnimacaoErroTipoDocAtendido) {
+          clearTimeout(timeoutFecharAnimacaoErroTipoDocAtendido);
+          timeoutFecharAnimacaoErroTipoDocAtendido = null;
+        }
         timeoutErroModalTipoDocAtendido = setTimeout(() => limparErroModalTipoDocAtendido(), 10000);
       }
 
@@ -1639,7 +1649,10 @@ $dependente = json_encode($dependente);
         const texto = document.getElementById('tipoDocAtendidoFormErrorText');
         if (!alerta || !texto) return;
         alerta.classList.remove('is-visible');
-        if (timeoutErroModalTipoDocAtendido) { clearTimeout(timeoutErroModalTipoDocAtendido); timeoutErroModalTipoDocAtendido = null; }
+        if (timeoutErroModalTipoDocAtendido) {
+          clearTimeout(timeoutErroModalTipoDocAtendido);
+          timeoutErroModalTipoDocAtendido = null;
+        }
         if (timeoutFecharAnimacaoErroTipoDocAtendido) clearTimeout(timeoutFecharAnimacaoErroTipoDocAtendido);
         timeoutFecharAnimacaoErroTipoDocAtendido = setTimeout(() => {
           alerta.style.display = 'none';
@@ -1648,17 +1661,17 @@ $dependente = json_encode($dependente);
         }, 350);
       }
 
-      $(document).on('show.bs.modal', '#tipoDocAtendidoFormModal', function () {
+      $(document).on('show.bs.modal', '#tipoDocAtendidoFormModal', function() {
         const abertos = $('.modal.in').length;
         if (abertos === 0) return;
         const zIndex = 1050 + 10 * abertos;
         $(this).css('z-index', zIndex);
-        setTimeout(function () {
+        setTimeout(function() {
           $('.modal-backdrop').not('.modal-stack').last().css('z-index', zIndex - 1).addClass('modal-stack');
         }, 0);
       });
 
-      $(document).on('hidden.bs.modal', '#tipoDocAtendidoFormModal', function () {
+      $(document).on('hidden.bs.modal', '#tipoDocAtendidoFormModal', function() {
         if ($('.modal.in').length) {
           $('body').addClass('modal-open');
         }
