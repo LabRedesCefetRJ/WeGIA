@@ -698,7 +698,7 @@ class AtendidoControle
                     $setClause[] = "p.`$campo` = :" . $campo;
                     $params[":$campo"] = $_POST[$campo];
                 }
-            }
+            } 
             // Validação de CNS
             $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
             if ($cns !== '' && !Util::validaCNS($cns)) {

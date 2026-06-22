@@ -4,11 +4,12 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Util.php';
 
 class Dependente
 {
-    private int $id;
+    private int $id; 
     private string $nome;
     private string $sobrenome;
     private string $sexo;
     private DateTime $nascimento;
+    private ?string $email = null;
     private ?string $telefone = null;
     private ?string $nomePai = null;
     private ?string $nomeMae = null;
@@ -21,6 +22,9 @@ class Dependente
         //dados opcionais
         if(isset($dto->id))
             $this->setId($dto->id);
+
+        if(isset($dto->email))
+            $this->setEmail($dto->email);
 
         if(isset($dto->telefone))
             $this->setTelefone($dto->telefone);
@@ -113,6 +117,30 @@ class Dependente
     public function getDataNascimento()
     {
         return $this->nascimento;
+    }
+
+    public function setEmail(?string $email)
+    {
+        $email = trim($email ?? '');
+
+        if ($email === '') {
+            $this->email = null;
+            return $this;
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('O e-mail informado não está em um formato válido.', 412);
+        }
+
+        // (ex: User@Email.com e user@email.com são o mesmo endereço)
+        $this->email = mb_strtolower($email, 'UTF-8');
+        
+        return $this;
+    }
+
+    public function getEmail()
+    {
+        return $this->email;
     }
 
     public function setTelefone(string $telefone)
