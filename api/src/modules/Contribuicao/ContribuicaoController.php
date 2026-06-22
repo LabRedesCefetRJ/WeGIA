@@ -9,7 +9,9 @@ require_once dirname(__DIR__, 4) . '/web/html/contribuicao/dao/MeioPagamentoDAO.
 require_once dirname(__DIR__, 4) . '/web/html/contribuicao/dao/GatewayPagamentoDAO.php';
 require_once dirname(__DIR__, 4) . '/web/html/contribuicao/dao/RegraPagamentoDAO.php';
 require_once dirname(__DIR__, 4) . '/web/html/contribuicao/dao/SocioDAO.php';
+require_once dirname(__DIR__, 4) . '/web/html/contribuicao/dao/RecorrenciaDAO.php';
 require_once dirname(__DIR__, 4) . '/web/html/contribuicao/model/GatewayPagamento.php';
+require_once dirname(__DIR__, 4) . '/web/html/contribuicao/model/Recorrencia.php';
 require_once dirname(__DIR__, 4) . '/web/classes/Util.php';
 
 use Slim\Psr7\Request;
@@ -1104,6 +1106,143 @@ class ContribuicaoController
 
             $response->getBody()->write(json_encode([
                 'error' => 'Erro ao processar cartão de crédito: ' . $e->getMessage()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function generateRecorrencia(Request $request, Response $response): Response
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            $idPessoa = (int)$request->getAttribute('user_id');
+
+            if ($idPessoa <= 0) {
+                return $this->jsonError($response, 'Usuário não identificado.', 401);
+            }
+
+            $valor = $data['valor'] ?? null;
+            if (!is_numeric($valor) || (float)$valor <= 0) {
+                return $this->jsonError($response, 'Valor inválido.', 400);
+            }
+
+            try {
+                $dadosCartao = $this->validarDadosCartaoCredito($data);
+            } catch (\InvalidArgumentException $e) {
+                return $this->jsonError($response, $e->getMessage(), 400);
+            }
+
+            $socioApi = $this->socioRepository->findByPessoaId($idPessoa);
+            if (!$socioApi || empty($socioApi['id_socio'])) {
+                return $this->jsonError($response, 'Sócio não encontrado para o usuário autenticado.', 404);
+            }
+
+            $socioDao = new \SocioDAO($this->pdo);
+            $socio = $socioDao->buscarPorId((int)$socioApi['id_socio']);
+            if (!$socio) {
+                return $this->jsonError($response, 'Sócio não encontrado.', 404);
+            }
+
+            $meioPagamentoDao = new \MeioPagamentoDAO();
+            $meioPagamento = $meioPagamentoDao->buscarPorNome('Recorrencia');
+            if (is_null($meioPagamento)) {
+                return $this->jsonError($response, 'Meio de pagamento não encontrado.', 404);
+            }
+
+            if (!$meioPagamento->getStatus()) {
+                return $this->jsonError($response, 'Meio de pagamento indisponível.', 400);
+            }
+
+            $regraPagamentoDao = new \RegraPagamentoDAO();
+            $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamentoPorIdMeioPagamento($meioPagamento->getId());
+            $erroRegra = $this->validarRegrasValor((float)$valor, $conjuntoRegrasPagamento);
+
+            if ($erroRegra !== null) {
+                return $this->jsonError($response, $erroRegra, 400);
+            }
+
+            $gatewayPagamentoDao = new \GatewayPagamentoDAO();
+            $gatewayPagamentoArray = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
+            if (!$gatewayPagamentoArray || count($gatewayPagamentoArray) < 1) {
+                return $this->jsonError($response, 'Gateway de pagamento não encontrado.', 404);
+            }
+
+            $gatewayPagamento = new \GatewayPagamento(
+                $gatewayPagamentoArray['plataforma'],
+                $gatewayPagamentoArray['endPoint'],
+                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['status']
+            );
+            $gatewayPagamento->setId($meioPagamento->getGatewayId());
+
+            $requisicaoServico = dirname(__DIR__, 4) . '/web/html/contribuicao/service/' . $gatewayPagamento->getNome() . 'RecorrenciaService.php';
+            if (!file_exists($requisicaoServico)) {
+                return $this->jsonError($response, 'Arquivo de serviço de pagamento não encontrado.', 500);
+            }
+
+            require_once $requisicaoServico;
+
+            $classeService = $gatewayPagamento->getNome() . 'RecorrenciaService';
+            if (!class_exists($classeService)) {
+                return $this->jsonError($response, 'Classe de serviço de pagamento não encontrada.', 500);
+            }
+
+            $contribuicaoLogDao = new \ContribuicaoLogDAO($this->pdo);
+            $agradecimento = $contribuicaoLogDao->getAgradecimento();
+
+            $recorrenciaDao = new \RecorrenciaDAO($this->pdo);
+            $recorrencia = new \Recorrencia($recorrenciaDao);
+            $recorrencia
+                ->setValor((float)$valor)
+                ->setCodigo((new \ContribuicaoLog())->gerarCodigo())
+                ->setInicio(new \DateTime('now'))
+                ->setSocio($socio)
+                ->setGatewayPagamento($gatewayPagamento)
+                ->setStatus(true);
+
+            $this->pdo->beginTransaction();
+
+            $recorrencia->create();
+            $recorrenciaId = (int)$this->pdo->lastInsertId();
+            if ($recorrenciaId <= 0) {
+                $this->pdo->rollBack();
+                return $this->jsonError($response, 'Não foi possível criar a recorrência.', 500);
+            }
+
+            $servicoPagamento = new $classeService();
+            $assinaturaId = $servicoPagamento->criarAssinatura($recorrencia, $dadosCartao);
+
+            if (!$assinaturaId) {
+                $this->pdo->rollBack();
+                return $this->jsonError($response, 'Não foi possível criar a assinatura.', 502);
+            }
+
+            $recorrenciaDao->alterarCodigoPorId($assinaturaId, $recorrenciaId);
+
+            $mensagem = 'Assinatura mensal criada - ID: ' . htmlspecialchars($assinaturaId);
+            $socioDao->registrarLog($socio, $mensagem, \Util::getUserIp(), \Util::getUserAgent());
+
+            $this->pdo->commit();
+
+            $diaCobranca = (new \DateTime('now'))->format('d');
+            $response->getBody()->write(json_encode([
+                'sucesso' => true,
+                'mensagem' => "Assinatura criada com sucesso! Cobranças mensais no dia $diaCobranca.",
+                'assinatura_id' => $assinaturaId,
+                'recorrencia_id' => $recorrenciaId
+            ]));
+
+            return $response->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $response->getBody()->write(json_encode([
+                'error' => 'Erro ao criar assinatura: ' . $e->getMessage()
             ]));
 
             return $response->withStatus(500)

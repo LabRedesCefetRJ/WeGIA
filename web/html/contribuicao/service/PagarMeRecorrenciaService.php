@@ -1,11 +1,13 @@
 <?php
-require_once 'ApiRecorrenciaServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiRecorrenciaServiceInterface.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
-require_once '../dao/ContribuicaoLogDAO.php';
-require_once '../dao/GatewayPagamentoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ContribuicaoLogDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'RecorrenciaDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'Recorrencia.php';
 
 class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
-    public function criarAssinatura(Recorrencia $recorrencia) {
+    public function criarAssinatura(Recorrencia $recorrencia, ?array $dadosCartao = null) {
         $contribuicaoLogDao = new ContribuicaoLogDAO();
         $agradecimento = $contribuicaoLogDao->getAgradecimento();
         
@@ -18,11 +20,11 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
         ];
 
         //Dados do cartão
-        $cardNumber = preg_replace('/\D/', '', filter_input(INPUT_POST, 'card_number'));
-        $cardExpMonth = filter_input(INPUT_POST, 'card_exp_month');
-        $cardExpYear = filter_input(INPUT_POST, 'card_exp_year');
-        $cardHolderName = filter_input(INPUT_POST, 'card_holder_name');
-        $cardCvv = filter_input(INPUT_POST, 'card_cvv');
+        $cardNumber = preg_replace('/\D/', '', (string)($dadosCartao['card_number'] ?? filter_input(INPUT_POST, 'card_number')));
+        $cardExpMonth = $dadosCartao['card_exp_month'] ?? filter_input(INPUT_POST, 'card_exp_month');
+        $cardExpYear = $dadosCartao['card_exp_year'] ?? filter_input(INPUT_POST, 'card_exp_year');
+        $cardHolderName = $dadosCartao['card_holder_name'] ?? filter_input(INPUT_POST, 'card_holder_name');
+        $cardCvv = $dadosCartao['card_cvv'] ?? filter_input(INPUT_POST, 'card_cvv');
         
         $code = $recorrencia->getCodigo();
         $cpfSemMascara = Util::limpaCpf($recorrencia->getSocio()->getDocumento());

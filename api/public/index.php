@@ -223,4 +223,7 @@ $app->post('/contribuicoes/pix', [ContribuicaoController::class, 'generatePix'])
 $app->post('/contribuicoes/credito', [ContribuicaoController::class, 'generateCredito'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->post('/contribuicoes/recorrencia', [ContribuicaoController::class, 'generateRecorrencia'])
+    ->add($container->get(AuthMiddleware::class));
+
 $app->run();
