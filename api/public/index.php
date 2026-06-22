@@ -220,4 +220,7 @@ $app->post('/contribuicoes/carne', [ContribuicaoController::class, 'generateCarn
 $app->post('/contribuicoes/pix', [ContribuicaoController::class, 'generatePix'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->post('/contribuicoes/credito', [ContribuicaoController::class, 'generateCredito'])
+    ->add($container->get(AuthMiddleware::class));
+
 $app->run();

@@ -156,6 +156,56 @@ class ContribuicaoController
         return $dados;
     }
 
+    private function validarDadosCartaoCredito(array $data): array
+    {
+        $camposObrigatorios = [
+            'card_number',
+            'card_exp_month',
+            'card_exp_year',
+            'card_holder_name',
+            'card_cvv'
+        ];
+
+        foreach ($camposObrigatorios as $campo) {
+            if (!isset($data[$campo]) || trim((string)$data[$campo]) === '') {
+                throw new \InvalidArgumentException('Os dados do cartão são obrigatórios.', 400);
+            }
+        }
+
+        $numeroCartao = preg_replace('/\D/', '', (string)$data['card_number']);
+        if (strlen($numeroCartao) < 13 || strlen($numeroCartao) > 19) {
+            throw new \InvalidArgumentException('Número de cartão inválido.', 400);
+        }
+
+        $mesExpiracao = filter_var($data['card_exp_month'], FILTER_VALIDATE_INT);
+        if ($mesExpiracao === false || $mesExpiracao < 1 || $mesExpiracao > 12) {
+            throw new \InvalidArgumentException('Mês de expiração inválido.', 400);
+        }
+
+        $anoExpiracao = preg_replace('/\D/', '', (string)$data['card_exp_year']);
+        if (strlen($anoExpiracao) !== 2 && strlen($anoExpiracao) !== 4) {
+            throw new \InvalidArgumentException('Ano de expiração inválido.', 400);
+        }
+
+        $nomeTitular = trim((string)$data['card_holder_name']);
+        if (strlen($nomeTitular) < 3) {
+            throw new \InvalidArgumentException('Nome do titular inválido.', 400);
+        }
+
+        $cvv = preg_replace('/\D/', '', (string)$data['card_cvv']);
+        if (strlen($cvv) < 3 || strlen($cvv) > 4) {
+            throw new \InvalidArgumentException('CVV inválido.', 400);
+        }
+
+        return [
+            'card_number' => $numeroCartao,
+            'card_exp_month' => $mesExpiracao,
+            'card_exp_year' => $anoExpiracao,
+            'card_holder_name' => $nomeTitular,
+            'card_cvv' => $cvv
+        ];
+    }
+
     private function resolverIntervaloCarne(?string $tipoGeracao): int
     {
         if ($tipoGeracao === null || trim($tipoGeracao) === '') {
@@ -924,6 +974,136 @@ class ContribuicaoController
 
             $response->getBody()->write(json_encode([
                 'error' => 'Erro ao gerar Pix: ' . $e->getMessage()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function generateCredito(Request $request, Response $response): Response
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            $idPessoa = (int)$request->getAttribute('user_id');
+
+            if ($idPessoa <= 0) {
+                return $this->jsonError($response, 'Usuário não identificado.', 401);
+            }
+
+            $valor = $data['valor'] ?? null;
+            if (!is_numeric($valor) || (float)$valor <= 0) {
+                return $this->jsonError($response, 'Valor inválido.', 400);
+            }
+
+            try {
+                $dadosCartao = $this->validarDadosCartaoCredito($data);
+            } catch (\InvalidArgumentException $e) {
+                return $this->jsonError($response, $e->getMessage(), 400);
+            }
+
+            $socioApi = $this->socioRepository->findByPessoaId($idPessoa);
+            if (!$socioApi || empty($socioApi['id_socio'])) {
+                return $this->jsonError($response, 'Sócio não encontrado para o usuário autenticado.', 404);
+            }
+
+            $socioDao = new \SocioDAO($this->pdo);
+            $socio = $socioDao->buscarPorId((int)$socioApi['id_socio']);
+
+            if (!$socio) {
+                return $this->jsonError($response, 'Sócio não encontrado.', 404);
+            }
+
+            $meioPagamentoDao = new \MeioPagamentoDAO();
+            $meioPagamento = $meioPagamentoDao->buscarPorNome('CartaoCredito');
+
+            if (is_null($meioPagamento)) {
+                return $this->jsonError($response, 'Meio de pagamento não encontrado.', 404);
+            }
+
+            $regraPagamentoDao = new \RegraPagamentoDAO();
+            $conjuntoRegrasPagamento = $regraPagamentoDao->buscaConjuntoRegrasPagamentoPorIdMeioPagamento($meioPagamento->getId());
+            $erroRegra = $this->validarRegrasValor((float)$valor, $conjuntoRegrasPagamento);
+
+            if ($erroRegra !== null) {
+                return $this->jsonError($response, $erroRegra, 400);
+            }
+
+            $gatewayPagamentoDao = new \GatewayPagamentoDAO();
+            $gatewayPagamentoArray = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
+
+            if (!$gatewayPagamentoArray || count($gatewayPagamentoArray) < 1) {
+                return $this->jsonError($response, 'Gateway de pagamento não encontrado.', 404);
+            }
+
+            $gatewayPagamento = new \GatewayPagamento(
+                $gatewayPagamentoArray['plataforma'],
+                $gatewayPagamentoArray['endPoint'],
+                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['status']
+            );
+            $gatewayPagamento->setId($meioPagamento->getGatewayId());
+
+            $requisicaoServico = dirname(__DIR__, 4) . '/web/html/contribuicao/service/' . $gatewayPagamento->getNome() . 'CartaoCreditoService.php';
+            if (!file_exists($requisicaoServico)) {
+                return $this->jsonError($response, 'Arquivo de serviço de pagamento não encontrado.', 500);
+            }
+
+            require_once $requisicaoServico;
+
+            $classeService = $gatewayPagamento->getNome() . 'CartaoCreditoService';
+            if (!class_exists($classeService)) {
+                return $this->jsonError($response, 'Classe de serviço de pagamento não encontrada.', 500);
+            }
+
+            $servicoPagamento = new $classeService();
+            $dataGeracao = (new \DateTimeImmutable('now'))->format('Y-m-d');
+
+            $contribuicaoLogDao = new \ContribuicaoLogDAO($this->pdo);
+            $agradecimento = $contribuicaoLogDao->getAgradecimento();
+
+            $contribuicaoLog = new \ContribuicaoLog();
+            $contribuicaoLog
+                ->setValor((float)$valor)
+                ->setCodigo($contribuicaoLog->gerarCodigo())
+                ->setDataGeracao($dataGeracao)
+                ->setDataVencimento($dataGeracao)
+                ->setSocio($socio)
+                ->setGatewayPagamento($gatewayPagamento)
+                ->setMeioPagamento($meioPagamento)
+                ->setAgradecimento($agradecimento);
+
+            $this->pdo->beginTransaction();
+
+            $contribuicaoLog = $contribuicaoLogDao->criar($contribuicaoLog);
+            $transacaoId = $servicoPagamento->processarCartaoCredito($contribuicaoLog, $dadosCartao);
+
+            if (!$transacaoId) {
+                $this->pdo->rollBack();
+                return $this->jsonError($response, 'Não foi possível processar o cartão de crédito.', 502);
+            }
+
+            $contribuicaoLogDao->alterarCodigoPorId($transacaoId, $contribuicaoLog->getId());
+            $socioDao->registrarLog($contribuicaoLog->getSocio(), 'Cartão de crédito processado recentemente', \Util::getUserIp(), \Util::getUserAgent());
+
+            $this->pdo->commit();
+
+            $response->getBody()->write(json_encode([
+                'sucesso' => true,
+                'mensagem' => 'Pagamento processado com sucesso!',
+                'transacao_id' => $transacaoId,
+                'contribuicao_id' => (int)$contribuicaoLog->getId()
+            ]));
+
+            return $response->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+
+            $response->getBody()->write(json_encode([
+                'error' => 'Erro ao processar cartão de crédito: ' . $e->getMessage()
             ]));
 
             return $response->withStatus(500)

@@ -621,6 +621,75 @@ Gera um QR Code Pix para o sócio autenticado via JWT. A rota usa o `user_id` do
 
 ---
 
+## 7. POST `/contribuicoes/credito`
+
+Processa um pagamento com cartão de crédito para o sócio autenticado via JWT. A rota usa o `user_id` do token para localizar o sócio e reaproveita os serviços de pagamento existentes.
+
+### Cabeçalhos
+- **Authorization** (obrigatório): `Bearer <token>`
+- **Content-Type** (obrigatório): `application/json`
+
+### Corpo da Requisição
+```json
+{
+  "valor": 50.0,
+  "card_number": "4111111111111111",
+  "card_exp_month": "12",
+  "card_exp_year": "2028",
+  "card_holder_name": "Nome do Titular",
+  "card_cvv": "123"
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `valor` | number | sim | Valor da contribuição em reais |
+| `card_number` | string | sim | Número do cartão de crédito |
+| `card_exp_month` | string\|integer | sim | Mês de expiração do cartão |
+| `card_exp_year` | string\|integer | sim | Ano de expiração do cartão |
+| `card_holder_name` | string | sim | Nome do titular do cartão |
+| `card_cvv` | string | sim | Código de segurança do cartão |
+
+### Resposta - 201 Created
+```json
+{
+  "sucesso": true,
+  "mensagem": "Pagamento processado com sucesso!",
+  "transacao_id": "tx_123",
+  "contribuicao_id": 123
+}
+```
+
+### Resposta - 400 Bad Request
+```json
+{
+  "error": "Número de cartão inválido."
+}
+```
+
+### Resposta - 401 Unauthorized
+```json
+{
+  "error": "Usuário não identificado."
+}
+```
+
+### Resposta - 404 Not Found
+```json
+{
+  "error": "Sócio não encontrado para o usuário autenticado."
+}
+```
+
+### Resposta - 502 Bad Gateway
+```json
+{
+  "error": "Não foi possível processar o cartão de crédito."
+}
+```
+
+---
+
 ## Observações Gerais
 
 ### Headers Recomendados
