@@ -24,6 +24,8 @@ require_once ROOT . "/html/relatorios/Relatorio_item.php";
 
 $tipoMedia = $_POST['tipo_media'] ?? 'dia';
 
+$mostrarZerados = isset($_POST['mostrarZerados']) && $_POST['mostrarZerados'] === 'on';
+
 $o_d = null;
 if ($_POST['tipo_relatorio'] == 'entrada') {
 	$o_d = $_POST['origem'];
@@ -33,22 +35,22 @@ if ($_POST['tipo_relatorio'] == 'entrada') {
 $post = [
 	$_POST['tipo_relatorio'] != '' ? $_POST['tipo_relatorio'] : null,
 	$o_d != '' ? $o_d : null,
-	$_POST['tipo_relatorio'] == 'requisicao'
-	? ($_POST['categoria_produto'] != '' ? $_POST['categoria_produto'] : null)
-	: ($_POST['tipo'] != '' ? $_POST['tipo'] : null),
+	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque'])
+	? (!empty($_POST['categoria_produto']) ? $_POST['categoria_produto'] : null)
+	: (!empty($_POST['tipo']) ? $_POST['tipo'] : null),
 	$_POST['responsavel'] != '' ? $_POST['responsavel'] : null,
 	[
 		'inicio' => $_POST['data_inicio'] != '' ? $_POST['data_inicio'] : null,
 		'fim' => $_POST['data_fim'] != '' ? $_POST['data_fim'] : null
 	],
 	$_POST['almoxarifado'] != '' ? $_POST['almoxarifado'] : null,
-	$_POST['mostrarZerados'] == "on" ?? false
+	$mostrarZerados
 ];
 
 $item = new Item(
 	$_POST['tipo_relatorio'],
 	$o_d,
-	$_POST['tipo_relatorio'] == 'requisicao'
+	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque'])
 	? ($_POST['categoria_produto'] ?? null)
 	: ($_POST['tipo'] ?? null),
 	$_POST['responsavel'],
@@ -57,7 +59,7 @@ $item = new Item(
 		'fim' => $_POST['data_fim']
 	],
 	$_POST['almoxarifado'],
-	$_POST['mostrarZerados'] == "on" ?? false,
+	$mostrarZerados,
 	$tipoMedia
 );
 

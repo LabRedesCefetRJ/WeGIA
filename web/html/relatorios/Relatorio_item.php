@@ -276,46 +276,25 @@ class Item
             $params = "WHERE e.oculto = false AND e.ativo = 1 AND e.produto_ativo = 1 ";
             $cont = 1;
 
-            if ($this->getAlmoxarifado()) {
-                $params = $this->param($params, $cont) . " e.id_almoxarifado = :idAlmoxarifado ";
-                $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
-                $cont++;
+            if (!$this->getMostrarZerado()) {
+	            $params = $this->param($params, $cont) . " e.qtd != 0 ";
+	            $cont++;
             }
 
-            $showZero = !!$this->getMostrarZerado();
+            if ($this->getAlmoxarifado()) {
+	            $params = $this->param($params, $cont) . " e.id_almoxarifado = :idAlmoxarifado ";
+	            $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
+	            $cont++;
+            }
 
-            $table1 = [
-                // Caso 0: não mostrar zerados
-                "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_produto_entrada 
-                SELECT produto.id_produto, produto.preco, SUM(ientrada.qtd) as somatorio, produto.descricao, unidade.descricao_unidade as unidade, SUM(ientrada.qtd * ientrada.valor_unitario) as Total, 
-                concat(ientrada.id_produto, valor_unitario) as kungfu 
-                FROM ientrada
-                INNER JOIN produto ON produto.id_produto = ientrada.id_produto
-                INNER JOIN unidade ON unidade.id_unidade = produto.id_unidade
-                LEFT JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
-                LEFT JOIN tipo_entrada ON tipo_entrada.id_tipo = entrada.id_tipo
-                WHERE ientrada.id_produto = produto.id_produto
-                GROUP BY kungfu 
-                ORDER BY produto.descricao;
-                ",
-
-                // Caso 1: mostrar zerados
-                "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_produto_entrada 
-                SELECT produto.id_produto, produto.descricao, produto.preco, IFNULL(SUM(ientrada.qtd), 0) as somatorio, IFNULL(SUM(ientrada.qtd * ientrada.valor_unitario), 0) as Total, 
-                concat(produto.id_produto, IFNULL(ientrada.valor_unitario, 0)) as kungfu 
-                FROM produto 
-                LEFT JOIN ientrada ON ientrada.id_produto = produto.id_produto 
-                LEFT JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
-                LEFT JOIN tipo_entrada ON tipo_entrada.id_tipo = entrada.id_tipo
-                LEFT JOIN unidade ON unidade.id_unidade = produto.id_unidade
-                GROUP BY kungfu 
-                ORDER BY produto.descricao;
-                "
-            ];
+            if ($this->getTipo()) {
+	            $params = $this->param($params, $cont) . " e.id_categoria_produto = :idCategoriaProduto ";
+	            $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
+	            $cont++;
+            }
 
             // DDL com tabelas temporárias
             $this->setDDL_cmd(
-                $table1[(int)$showZero] .
                     "CREATE TEMPORARY TABLE IF NOT EXISTS tabela_entradas AS
                     SELECT 
                         ientrada.id_produto,
@@ -343,18 +322,17 @@ class Item
                     CREATE TEMPORARY TABLE IF NOT EXISTS estoque_com_preco_atualizado AS
                     SELECT
                         p.id_produto,
+                        p.id_categoria_produto,
                         p.descricao,
                         u.descricao_unidade AS unidade,
                         a.id_almoxarifado,
                         est.qtd AS qtd,
                         est.qtd * IFNULL(
-                            (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
-                            / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
+                            te.valor_entrada / NULLIF(te.qtd_entrada, 0),
                             p.preco
                         ) AS Total,
                         IFNULL(
-                            (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
-                            / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
+                            te.valor_entrada / NULLIF(te.qtd_entrada, 0),
                             p.preco
                         ) AS PrecoMedio,
                         p.oculto,
@@ -376,13 +354,20 @@ class Item
             // Query principal segura
             $this->setQuery(
                 "SELECT 
-                    e.qtd AS qtd_total, 
+                    SUM(e.qtd) AS qtd_total, 
                     e.descricao, 
-                    e.Total AS valor_total, 
-                    e.PrecoMedio,
+                    SUM(e.Total) AS valor_total,
+                    CASE 
+                        WHEN SUM(e.qtd) != 0 THEN SUM(e.Total) / SUM(e.qtd)
+                        ELSE AVG(e.PrecoMedio)
+                    END AS PrecoMedio,
                     e.unidade
                 FROM estoque_com_preco_atualizado e 
                 $params
+                GROUP BY 
+                    e.id_produto,
+                    e.descricao,
+                    e.unidade
                 ORDER BY e.descricao;
                 "
             );
@@ -416,18 +401,17 @@ class Item
                 CREATE TEMPORARY TABLE IF NOT EXISTS estoque_com_preco_atualizado AS
                 SELECT
                     p.id_produto,
+                    p.id_categoria_produto,
                     p.descricao,
                     u.descricao_unidade AS unidade,
                     a.id_almoxarifado,
                     est.qtd AS qtd,
                     est.qtd * IFNULL(
-                        (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
-                        / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
+                        te.valor_entrada / NULLIF(te.qtd_entrada, 0),
                         p.preco
                     ) AS Total,
                     IFNULL(
-                        (IFNULL(te.valor_entrada, 0) - IFNULL(ts.valor_saida, 0))
-                        / NULLIF((IFNULL(te.qtd_entrada, 0) - IFNULL(ts.qtd_saida, 0)), 0),
+                        te.valor_entrada / NULLIF(te.qtd_entrada, 0),
                         p.preco
                     ) AS PrecoMedio,
                     p.oculto,
@@ -446,9 +430,24 @@ class Item
                 ");
 
             $this->setQuery("
-                SELECT e.qtd AS qtd_total, e.descricao, e.Total AS valor_total, e.PrecoMedio, e.unidade
+                SELECT 
+                    SUM(e.qtd) AS qtd_total,
+                    e.descricao,
+                    SUM(e.Total) AS valor_total,
+                    CASE 
+                        WHEN SUM(e.qtd) != 0 THEN SUM(e.Total) / SUM(e.qtd)
+                        ELSE AVG(e.PrecoMedio)
+                    END AS PrecoMedio,
+                    e.unidade
                 FROM estoque_com_preco_atualizado e
-                WHERE qtd != 0 AND e.oculto = false AND e.produto_ativo = 1 AND (e.ativo IS NULL OR e.ativo = 1)
+                WHERE e.qtd != 0 
+                    AND e.oculto = false 
+                    AND e.produto_ativo = 1 
+                    AND (e.ativo IS NULL OR e.ativo = 1)
+                GROUP BY 
+                    e.id_produto,
+                    e.descricao,
+                    e.unidade
                 ORDER BY e.descricao;
             ");
         }
@@ -587,7 +586,7 @@ class Item
     private function requisicao()
     {
         $params = "WHERE p.oculto = false AND p.ativo = 1 AND a.ativo = 1";
-        $cont = 1;
+        $having = "";
 
         if ($this->getAlmoxarifado()) {
             $params .= " AND e.id_almoxarifado = :idAlmoxarifado";
@@ -595,12 +594,12 @@ class Item
         }
 
         if ($this->getTipo()) {
-		    $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
-		    $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
-	    }
+            $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
+            $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
+        }
 
         if (!$this->getMostrarZerado()) {
-            $params .= " AND e.qtd > 0";
+            $having = "HAVING SUM(e.qtd) > 0";
         }
 
         $this->setQuery("
@@ -608,7 +607,7 @@ class Item
                 p.id_produto,
                 p.descricao,
                 c.descricao_categoria,
-                e.qtd
+                SUM(e.qtd) AS qtd
             FROM produto p
             INNER JOIN categoria_produto c 
                 ON c.id_categoria_produto = p.id_categoria_produto
@@ -617,6 +616,11 @@ class Item
             INNER JOIN almoxarifado a 
                 ON a.id_almoxarifado = e.id_almoxarifado
             $params
+            GROUP BY
+                p.id_produto,
+                p.descricao,
+                c.descricao_categoria
+            $having
             ORDER BY c.descricao_categoria ASC, p.descricao ASC
         ");
     }
