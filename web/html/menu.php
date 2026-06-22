@@ -462,29 +462,66 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 					<span>Contribuição</span>
 				</a>
 				<ul class="nav nav-children">
-					<li>
-						<a href="<?= WWW ?>html/contribuicao/view/gateway_pagamento.php">
-							<i class="fa-solid fa-building"></i>
-							Gateway de pagamento
+
+
+					<li class="nav-parent nav-active">
+						<a>
+							<i class="fa-solid fa-user-gear"></i>
+							<span>Gerenciamento</span>
 						</a>
+						<ul class="nav nav-children">
+							<li>
+								<a href="<?= WWW ?>html/contribuicao/view/gateway_pagamento.php">
+									<i class="fa-solid fa-building"></i>
+									Gateway de pagamento
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/contribuicao/view/meio_pagamento.php">
+									<i class="fa-regular fa-credit-card"></i>
+									Meio de pagamento
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/contribuicao/view/regra_pagamento.php">
+									<i class="fa-solid fa-circle-exclamation"></i>
+									Regras de pagamento
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
+									<i class="fa-solid fa-user-check"></i>
+									Captcha
+								</a>
+							</li>
+						</ul>
 					</li>
-					<li>
-						<a href="<?= WWW ?>html/contribuicao/view/meio_pagamento.php">
-							<i class="fa-regular fa-credit-card"></i>
-							Meio de pagamento
+
+					<li class="nav-parent nav-active">
+						<a>
+							<i class="fa-solid fa-link"></i>
+							<span>Links</span>
 						</a>
-					</li>
-					<li>
-						<a href="<?= WWW ?>html/contribuicao/view/regra_pagamento.php">
-							<i class="fa-solid fa-circle-exclamation"></i>
-							Regras de pagamento
-						</a>
-					</li>
-					<li>
-						<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
-							<i class="fa-solid fa-user-check"></i>
-							Captcha
-						</a>
+						<ul class="nav nav-children">
+							<li>
+								<a href="<?= WWW ?>html/contribuicao/view/forma_contribuicao.php">
+									<i class="fa-solid fa-hand-holding-dollar"></i>
+									<span>Formas de Contribuição</span>
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/contribuicao/view/segunda_via.php">
+									<i class="fa-regular fa-credit-card"></i>
+									<span>Segunda via</span>
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/contribuicao/view/gerar_comprovante.php">
+									<i class="fa-solid fa-file-invoice-dollar"></i>
+									<span>Comprovantes</span>
+								</a>
+							</li>
+						</ul>
 					</li>
 				</ul>
 			</li>
