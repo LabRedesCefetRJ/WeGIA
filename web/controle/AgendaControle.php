@@ -685,6 +685,89 @@ class AgendaControle
         exit;
     }
 
+    public function salvarDivisoesPeriodo()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id_periodo = filter_input(INPUT_POST, 'id_periodo', FILTER_SANITIZE_NUMBER_INT);
+            $membros = $_POST['membros'] ?? [];
+
+            if (!$id_periodo || $id_periodo < 1)
+                throw new InvalidArgumentException('O id do período informado não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            $dao->salvarDivisoesPeriodo((int)$id_periodo, $membros);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Divisões do período atualizadas com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function incluirMembroPeriodo()
+    {
+        header('Content-Type: application/json');
+        try {
+            $id_periodo = filter_input(INPUT_POST, 'id_periodo', FILTER_SANITIZE_NUMBER_INT);
+            $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+            $id_divisao = filter_input(INPUT_POST, 'id_divisao', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_periodo || !$id_pessoa)
+                throw new InvalidArgumentException('Dados inválidos para incluir pessoa no dia.', 412);
+
+            $dao = new AgendaDAO();
+            $dao->incluirMembroPeriodo((int)$id_periodo, (int)$id_pessoa, $id_divisao ? (int)$id_divisao : null);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Pessoa adicionada ao dia com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function excluirMembroPeriodo()
+    {
+        header('Content-Type: application/json');
+        try {
+            $id_periodo = filter_input(INPUT_POST, 'id_periodo', FILTER_SANITIZE_NUMBER_INT);
+            $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_periodo || !$id_pessoa)
+                throw new InvalidArgumentException('Dados inválidos para remover pessoa do dia.', 412);
+
+            $dao = new AgendaDAO();
+            $dao->excluirMembroPeriodo((int)$id_periodo, (int)$id_pessoa);
+
+            http_response_code(200);
+            echo json_encode(['msg' => 'Pessoa removida da escala do dia!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
+    public function listarPeriodosPorAlocacao()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $id_alocacao = filter_input(INPUT_GET, 'id_alocacao', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_alocacao || $id_alocacao < 1)
+                throw new InvalidArgumentException('O id da alocação não é válido.', 412);
+
+            $dao = new AgendaDAO();
+            echo json_encode($dao->listarPeriodosPorAlocacao($id_alocacao));
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
     public function listarHistoricoMembrosPorEquipe()
     {
         header('Content-Type: application/json');
