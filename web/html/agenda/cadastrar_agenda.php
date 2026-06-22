@@ -417,7 +417,6 @@ require_once "../personalizacao_display.php";
 
                                 <!-------- ALOCAÇÕES -------->
                                 <div class="tab-pane" id="tab-alocacoes">
-
                                     <div id="msg-alocacoes" class="alert alert-success alert-dismissible" role="alert" style="display:none;">
                                         <button type="button" class="close" aria-label="Fechar" onclick="ocultarMsg('msg-alocacoes'); return false;">
                                             <span aria-hidden="true">&times;</span>
@@ -458,8 +457,62 @@ require_once "../personalizacao_display.php";
                                         </thead>
                                         <tbody id="tbody-alocacoes"></tbody>
                                     </table>
-                                </div>
 
+                                    <div id="secao-escala-diaria" style="display: none; margin-top: 30px; border-top: 2px solid #e4e9ef; padding-top: 20px;">
+                                        <div class="clearfix mb-md">
+                                            <button class="btn btn-default btn-sm pull-right" id="btn-fechar-escala-diaria"><i class="fa fa-times"></i> Fechar Painel</button>
+                                            <h4 style="margin: 0; color: #0088cc; font-weight: bold;">
+                                                <i class="fa fa-calendar-check-o mr-xs"></i> Escala Diária (Alocação #<span id="label-escala-alocacao"></span>)
+                                            </h4>
+                                            <p class="text-muted" style="font-size: 13px;">Selecione o dia abaixo para editar a divisão de cada membro da equipe nesta data específica.</p>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-3 mb-md">
+                                                <div class="list-group" id="lista-periodos-alocacao" style="max-height: 400px; overflow-y: auto; border: 1px solid #d0dbe7; border-radius: 4px;">
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="col-md-9">
+                                                <div id="painel-edicao-dia" style="display: none; background: #f8fbff; border: 1px solid #b3d9f0; border-radius: 6px; padding: 15px;">
+                                                    <h5 id="titulo-edicao-dia" style="margin-top: 0; font-weight: bold; color: #2d3a4a; padding-bottom: 10px; border-bottom: 1px solid #d0dbe7;"></h5>
+                                                    
+                                                    <div style="background: #fdfdfd; padding: 12px; margin: 0 0 15px 0; border-radius: 4px; border: 1px solid #d0dbe7; display: flex; align-items: flex-end; gap: 10px;">
+                                                        <div style="flex: 5;">
+                                                            <label style="font-size: 11px; font-weight: bold; color: #333; margin-bottom: 4px; display: block;">Adicionar Pessoa ao Dia</label>
+                                                            <select class="form-control input-sm" id="novo-membro-dia-pessoa" style="width: 100%;"></select>
+                                                        </div>
+                                                        <div style="flex: 4;">
+                                                            <label style="font-size: 11px; font-weight: bold; color: #333; margin-bottom: 4px; display: block;">Divisão (Opcional)</label>
+                                                            <select class="form-control input-sm" id="novo-membro-dia-divisao" style="width: 100%;">
+                                                                <option value="">Sem divisão</option>
+                                                            </select>
+                                                        </div>
+                                                        <div style="flex: 3;">
+                                                            <button class="btn btn-success btn-block" id="btn-add-membro-dia" style="height: 34px; padding: 4px 12px; font-size: 13px; margin: 0; box-shadow: none;">
+                                                                <i class="fa fa-user-plus"></i> Incluir
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div id="conteudo-edicao-dia">
+                                                    </div>
+                                                    
+                                                    <div class="text-right mt-md">
+                                                        <button class="btn btn-primary btn-sm" id="btn-salvar-escala-diaria-tab">
+                                                            <i class="fa fa-save"></i> Salvar Escala Diária
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div id="painel-edicao-vazio" class="text-center text-muted" style="padding: 50px 20px; background: #fafcff; border: 1px dashed #d0dbe7; border-radius: 6px;">
+                                                    <i class="fa fa-hand-o-left fa-2x mb-sm text-primary" style="opacity: 0.5;"></i><br>
+                                                    <strong>Selecione uma data ao lado</strong> para carregar a escala da equipe.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div><!-- /tab-content -->
                         </div><!-- /panel-body -->
                     </section>
@@ -748,6 +801,12 @@ require_once "../personalizacao_display.php";
                 <h4 class="modal-title" id="modal-evento-titulo"></h4>
             </div>
             <div class="modal-body">
+                <div id="modal-evento-erro" class="alert alert-danger alert-dismissible modal-alert-animado" role="alert">
+                    <button type="button" class="close" aria-label="Fechar" onclick="ocultarErroModal('modal-evento-erro'); return false;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <span id="modal-evento-erro-texto"></span>
+                </div>
                 <input type="hidden" id="modal-evento-id">
                 <input type="hidden" id="modal-evento-id-agenda">
                 <input type="hidden" id="modal-evento-id-equipe">
@@ -761,19 +820,25 @@ require_once "../personalizacao_display.php";
                 <p style="margin-bottom:6px;"><strong><i class="fa fa-users mr-xs"></i> Pessoas na equipe:</strong></p>
                 <div id="modal-evento-membros" style="color:#555;"></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-info" id="btn-ir-equipes">
-                    <i class="fa fa-users mr-xs"></i> Editar na aba Equipes
+            <div class="modal-footer" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-salvar-periodo" style="display:none; margin: 0;">
+                    <i class="fa fa-save"></i> Salvar Escala
                 </button>
-                <button type="button" class="btn btn-info" id="btn-ir-alocacoes">
-                    <i class="fa fa-pencil mr-xs"></i> Editar na aba Alocações
+                
+                <button type="button" class="btn btn-info btn-sm" id="btn-ir-equipes" style="margin: 0;">
+                    <i class="fa fa-users"></i> Editar Equipe
                 </button>
+                
+                <button type="button" class="btn btn-info btn-sm" id="btn-ir-alocacoes" style="margin: 0;">
+                    <i class="fa fa-pencil"></i> Editar Alocação
+                </button>
+                <button type="button" class="btn btn-default btn-sm" data-dismiss="modal" style="margin: 0;">
+                    Fechar
+                </button>   
             </div>
         </div>
     </div>
 </div>
-
 <!-- ══════════════════════════════════════════
      MODAL — LEMBRETE RÁPIDO (pós-arrastar)
 ══════════════════════════════════════════ -->
@@ -789,6 +854,12 @@ require_once "../personalizacao_display.php";
                 </h4>
             </div>
             <div class="modal-body">
+                <div id="modal-lembrete-rapido-erro" class="alert alert-danger alert-dismissible modal-alert-animado" role="alert">
+                    <button type="button" class="close" aria-label="Fechar" onclick="ocultarErroModal('modal-lembrete-rapido-erro'); return false;">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <span id="modal-lembrete-rapido-erro-texto"></span>
+                </div>
                 <input type="hidden" id="lembrete-rapido-id">
                 <p style="color:#666; margin-bottom:12px;">Deseja definir um lembrete para esta alocação?</p>
                 <div class="form-group">
@@ -1219,22 +1290,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
             $('#modal-evento-membros').html('<em style="color:#aaa;">Carregando escala do dia...</em>');
             
+            // Oculta o botão de salvar caso ele ainda esteja no HTML
+            $('#btn-salvar-periodo').hide();
+
             if (p.id_periodo) {
                 api('listarMembrosPorPeriodo', { id_periodo: p.id_periodo }).done(function (membros) {
                     if (!membros || !membros.length) {
                         $('#modal-evento-membros').html('<em style="color:#aaa;">Nenhuma pessoa escalada para este dia.</em>');
                         return;
                     }
-                    var html = '<ul style="margin:0; padding-left:18px;">';
+
+                    // Agrupa por divisão (null/vazio = sem divisão)
+                    var grupos = {};
+                    var temDivisao = false;
                     $.each(membros, function (_, m) {
-                        var infoExtra = '';
-                        if(m.cargo) infoExtra += m.cargo;
-                        if(m.nome_divisao) infoExtra += (infoExtra ? ' | ' : '') + m.nome_divisao;
-                        
-                        html += '<li>' + m.nome + ' ' + (m.sobrenome || '')
-                              + (infoExtra ? ' <small class="text-muted">- ' + infoExtra + '</small>' : '') + '</li>';
+                        var chave = m.nome_divisao || '';
+                        if (chave) temDivisao = true;
+                        if (!grupos[chave]) grupos[chave] = [];
+                        grupos[chave].push(m);
                     });
-                    html += '</ul>';
+
+                    var html = '';
+                    if (!temDivisao) {
+                        html = '<ul style="margin:0; padding-left:18px;">';
+                        $.each(membros, function (_, m) {
+                            var cargo = m.cargo ? ' <small class="text-muted">— ' + m.cargo + '</small>' : '';
+                            html += '<li>' + m.nome + ' ' + (m.sobrenome || '') + cargo + '</li>';
+                        });
+                        html += '</ul>';
+                    } else {
+                        $.each(grupos, function (divNome, lista) {
+                            if (divNome) {
+                                html += '<div style="margin-top:6px; margin-bottom:2px;"><strong style="color:#0088cc; font-size:0.82em; text-transform:uppercase; letter-spacing:.04em;">' + divNome + '</strong></div>';
+                            } else if (Object.keys(grupos).length > 1) {
+                                html += '<div style="margin-top:6px; margin-bottom:2px;"><em style="color:#888; font-size:0.82em;">Sem divisão</em></div>';
+                            }
+                            html += '<ul style="margin:0 0 2px 0; padding-left:18px;">';
+                            $.each(lista, function (_, m) {
+                                var cargo = m.cargo ? ' <small class="text-muted">— ' + m.cargo + '</small>' : '';
+                                html += '<li>' + m.nome + ' ' + (m.sobrenome || '') + cargo + '</li>';
+                            });
+                            html += '</ul>';
+                        });
+                    }
+
                     $('#modal-evento-membros').html(html);
                 }).fail(function () {
                     $('#modal-evento-membros').html('<em class="text-danger">Erro ao carregar escala.</em>');
@@ -1991,6 +2090,39 @@ $('#btn-ir-alocacoes').on('click', function () {
     $('#modal-alocacao').modal('show');
 });
 
+/* ── Salvar Edição do Dia no Calendário ────────────────────── */
+$(document).on('click', '#btn-salvar-periodo', function () {
+    var idPeriodo = $(this).data('id-periodo');
+    var membrosPeriodo = [];
+
+    // Captura o valor de cada select gerado
+    $('.select-divisao-periodo').each(function() {
+        var idPessoa = $(this).data('id-pessoa');
+        var idDivisao = $(this).val();
+        membrosPeriodo.push({
+            id_pessoa: idPessoa,
+            id_divisao: idDivisao ? idDivisao : null
+        });
+    });
+
+    var $btn = $(this);
+    var htmlOriginal = $btn.html();
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> Salvando...').prop('disabled', true);
+
+    apiPost('salvarDivisoesPeriodo', {
+        id_periodo: idPeriodo,
+        membros: membrosPeriodo
+    }).done(function(r) {
+        exibirMsgAba('msg-calendario', r.msg || 'Escala do dia atualizada com sucesso!', 'success');
+        $('#modal-evento').modal('hide');
+    }).fail(function(xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar escala do dia.';
+        exibirErroModal('modal-evento-erro', msg);
+    }).always(function() {
+        $btn.html(htmlOriginal).prop('disabled', false);
+    });
+});
+
 /* ── Lembrete rápido (pós-arrastar) ─────────────────────── */
 
 $('#lembrete-rapido-pref').on('change', function () {
@@ -2016,7 +2148,7 @@ $('#btn-lembrete-rapido-salvar').on('click', function () {
         })
         .fail(function (xhr) {
             var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar lembrete.';
-            alert(msg);
+            exibirErroModal('modal-lembrete-rapido-erro', msg);
         });
 });
 
@@ -2068,6 +2200,7 @@ function carregarAlocacoes() {
                     + '<td class="text-center">' + intervalo + (intervalo === 1 ? ' dia' : ' dias') + '</td>'
                     + '<td>' + fmtDatetime(al.lembrete) + '</td>'
                     + '<td class="col-acoes"><div class="acoes-grupo">'
+                    + '<button class="btn btn-xs btn-warning btn-acao btn-gerenciar-dias" data-id="'+al.id+'" data-equipe="'+al.id_equipe+'" title="Gerenciar Escala Diária"><i class="fa fa-calendar-check-o"></i></button>'
                     + '<button class="btn btn-xs btn-info btn-acao btn-editar-alocacao" '
                     + 'data-id="'+al.id+'" data-agenda="'+al.id_agenda+'" data-equipe="'+al.id_equipe+'" '
                     + 'data-inicio="'+(al.start||'').substring(0,10)+'" data-fim="'+(al.fim_display||'').substring(0,10)+'" '
@@ -2179,13 +2312,15 @@ $(document).on('click', '.btn-excluir-alocacao', function () {
                 exibirMsgAba('msg-alocacoes', r.msg || 'Excluído com sucesso.', 'success');
                 carregarAlocacoes();
                 _calRefetch();
+                
+                $('#secao-escala-diaria').slideUp();
             })
             .fail(function (xhr) {
                 var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao excluir.';
                 exibirMsgAba('msg-alocacoes', msg, 'danger');
             });
     });
-});
+});     
 
 $('#btn-salvar-alocacao').on('click', function () {
     var id         = $('#alocacao-id').val();
@@ -2260,8 +2395,19 @@ $(document).on('click', '#btn-download-mensal', function () {
             return response.blob();
         })
         .then(blob => {
-            const blobUrl = window.URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
+            var nomeAgenda = $('#sidebar-agenda-select option:selected').text().trim()
+                .replace(/[\\\/:*?"<>|]/g, '-');
+            var mesStr = String(mes).padStart(2, '0');
+            var nomeArquivo = 'Agenda_' + nomeAgenda + '_' + mesStr + ano + '.pdf';
+
+            var blobUrl = window.URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = nomeArquivo;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function () { window.URL.revokeObjectURL(blobUrl); }, 1000);
         })
         .catch(error => {
             exibirMsgAba('msg-calendario', error.message, 'danger');
@@ -2271,6 +2417,208 @@ $(document).on('click', '#btn-download-mensal', function () {
                 .prop('disabled', false)
                 .css({ 'width': '', 'height': '' });
         });
+});
+
+/* ── Painel Interno de Edição da Escala Diária (Aba Alocações) ── */
+
+var _idEquipeEscalaAtual = null;
+
+$(document).on('click', '.btn-gerenciar-dias', function() {
+    var idAlocacao = $(this).data('id');
+    var idEquipe = $(this).data('equipe');
+    _idEquipeEscalaAtual = idEquipe;
+    
+    $('#label-escala-alocacao').text(idAlocacao);
+    $('#secao-escala-diaria').slideDown();
+    $('#painel-edicao-dia').hide();
+    $('#painel-edicao-vazio').show();
+    $('#lista-periodos-alocacao').html('<div class="list-group-item text-center text-muted py-md"><i class="fa fa-spinner fa-spin"></i> Carregando dias...</div>');
+    
+    $('html, body').animate({ scrollTop: $("#secao-escala-diaria").offset().top - 40 }, 500);
+
+    api('listarPeriodosPorAlocacao', { id_alocacao: idAlocacao }).done(function(periodos) {
+        var html = '';
+        if(!periodos || !periodos.length) {
+            html = '<div class="list-group-item text-muted">Nenhum dia encontrado.</div>';
+        } else {
+            $.each(periodos, function(_, p) {
+                var dtIni = new Date(p.data_inicio.replace(' ', 'T'));
+                var dtFim = new Date(p.data_fim.replace(' ', 'T'));
+                
+                var timeIni = dtIni.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                var timeFim = dtFim.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+                
+                var label = dtIni.toLocaleDateString('pt-BR') + ' (' + timeIni + ' às ' + timeFim + ')';
+                
+                html += '<a href="#" class="list-group-item item-periodo-alocacao" data-id-periodo="'+p.id_periodo+'" data-label="'+label+'" style="border-radius:0; border-left:0; border-right:0; margin-bottom:0;">';
+                html += '<i class="fa fa-calendar-o mr-xs text-primary"></i> ' + label + '</a>';
+            });
+        }
+        $('#lista-periodos-alocacao').html(html);
+    }).fail(function() {
+        $('#lista-periodos-alocacao').html('<div class="list-group-item text-danger">Erro ao carregar dias.</div>');
+    });
+});
+
+$(document).on('click', '#btn-fechar-escala-diaria', function() {
+    $('#secao-escala-diaria').slideUp();
+});
+
+// Ao clicar em uma data da lista
+$(document).on('click', '.item-periodo-alocacao', function(e) {
+    e.preventDefault();
+    $('.item-periodo-alocacao').removeClass('active');
+    $(this).addClass('active');
+    
+    var idPeriodo = $(this).data('id-periodo');
+    var label = $(this).data('label');
+    
+    $('#painel-edicao-vazio').hide();
+    $('#painel-edicao-dia').show();
+    $('#titulo-edicao-dia').html('<i class="fa fa-edit mr-xs"></i> Editando data: ' + label);
+    $('#conteudo-edicao-dia').html('<div class="text-muted"><i class="fa fa-spinner fa-spin"></i> Carregando membros...</div>');
+    $('#btn-salvar-escala-diaria-tab').data('id-periodo', idPeriodo);
+
+    // Carrega membros, divisões da equipe E todas as pessoas disponíveis no sistema
+    $.when(
+        api('listarDivisoesPorEquipe', { id_equipe: _idEquipeEscalaAtual }),
+        api('listarMembrosPorPeriodo', { id_periodo: idPeriodo }),
+        api('listarPessoas') 
+    ).done(function (resDiv, resMem, resPessoas) {
+        var divisoes = resDiv[0] || [];
+        var membros = resMem[0] || [];
+        var pessoas = resPessoas[0] || [];
+
+        // Popula o select de "Adicionar Pessoa"
+        var optPessoas = '<option value="">Selecione uma pessoa...</option>';
+        $.each(pessoas, function(_, p) {
+            var nomeDisplay = p.nome_completo || p.nome || 'Sem Nome';
+            optPessoas += '<option value="'+p.id_pessoa+'">'+nomeDisplay+ (p.cargo ? ' - '+p.cargo : '') +'</option>';
+        });
+        $('#novo-membro-dia-pessoa').html(optPessoas);
+        
+        try { initSelect2('#novo-membro-dia-pessoa', 'Buscar pessoa...'); } catch(e) {}
+
+        var optDiv = '<option value="">Sem divisão</option>';
+        $.each(divisoes, function(_, d) {
+            optDiv += '<option value="'+d.id+'">'+d.nome+'</option>';
+        });
+        $('#novo-membro-dia-divisao').html(optDiv);
+
+        var html = '<table class="table table-bordered table-striped table-condensed" style="margin-bottom:0;"><thead><tr style="background:#f0f4f8;"><th>Membro</th><th style="width:220px;">Divisão no Dia</th><th style="width:60px;" class="text-center">Ações</th></tr></thead><tbody>';
+
+        if (!membros.length) {
+            html += '<tr><td colspan="3" class="text-center text-muted py-md"><i class="fa fa-info-circle mr-xs"></i>Nenhuma pessoa escalada para este dia. Utilize o painel acima para incluir alguém.</td></tr>';
+        } else {
+            $.each(membros, function (_, m) {
+                var infoExtra = m.cargo ? m.cargo : '';
+                var selectDiv = '<select class="form-control input-sm select-divisao-tab" data-id-pessoa="' + m.id_pessoa + '" style="border-color:#b3d9f0;">';
+                selectDiv += '<option value="">Sem divisão</option>';
+                $.each(divisoes, function (_, d) {
+                    var sel = (m.id_divisao == d.id) ? 'selected' : '';
+                    selectDiv += '<option value="' + d.id + '" ' + sel + '>' + d.nome + '</option>';
+                });
+                selectDiv += '</select>';
+
+                html += '<tr>';
+                html += '<td style="vertical-align: middle;"><strong>' + m.nome + ' ' + (m.sobrenome || '') + '</strong>' + (infoExtra ? ' <small class="text-muted" style="display:block;">' + infoExtra + '</small>' : '') + '</td>';
+                html += '<td class="td-divisao" style="vertical-align: middle;">' + selectDiv + '</td>';
+                
+                html += '<td style="vertical-align: middle; text-align: center;">';
+                html += '<div style="display: flex; align-items: center; justify-content: center; height: 100%;">';
+                html += '<button class="btn btn-danger btn-sm btn-remover-membro-dia" data-id-pessoa="'+m.id_pessoa+'" title="Remover do dia" style="margin: 0; padding: 5px 10px;"><i class="fa fa-trash"></i></button>';
+                html += '</div></td>';
+                
+                html += '</tr>';
+            });
+        }
+
+        html += '</tbody></table>';
+
+        $('#conteudo-edicao-dia').html(html);
+        $('#btn-salvar-escala-diaria-tab').show();
+        
+    }).fail(function (xhr, status, error) {
+        console.error("Erro na API:", error);
+        $('#conteudo-edicao-dia').html('<div class="alert alert-danger" style="margin:0;"><i class="fa fa-exclamation-triangle mr-xs"></i> Erro de conexão ao carregar os dados. Recarregue a página e tente novamente.</div>');
+    });
+});
+
+// Ação: Incluir pessoa no dia
+$(document).on('click', '#btn-add-membro-dia', function() {
+    var idPeriodo = $('#btn-salvar-escala-diaria-tab').data('id-periodo');
+    var idPessoa = $('#novo-membro-dia-pessoa').val();
+    var idDivisao = $('#novo-membro-dia-divisao').val();
+
+    if(!idPessoa) { exibirMsgAba('msg-alocacoes', 'Selecione uma pessoa para incluir!', 'warning'); return; }
+
+    var $btn = $(this);
+    $btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
+
+    apiPost('incluirMembroPeriodo', {
+        id_periodo: idPeriodo,
+        id_pessoa: idPessoa,
+        id_divisao: idDivisao
+    }).done(function(r) {
+        exibirMsgAba('msg-alocacoes', r.msg || 'Pessoa adicionada com sucesso!', 'success');
+        $('.item-periodo-alocacao.active').click(); // Recarrega o dia para exibir a nova pessoa
+    }).fail(function(xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao incluir pessoa (ela já pode estar na escala).';
+        exibirMsgAba('msg-alocacoes', msg, 'danger');
+    }).always(function() {
+        $btn.html('<i class="fa fa-user-plus"></i> Incluir').prop('disabled', false);
+    });
+});
+
+// Ação: Remover pessoa do dia
+$(document).on('click', '.btn-remover-membro-dia', function() {
+    var idPeriodo = $('#btn-salvar-escala-diaria-tab').data('id-periodo');
+    var idPessoa = $(this).data('id-pessoa');
+    var $btn = $(this);
+
+    confirmar('Tem certeza que deseja remover esta pessoa da escala DESTE DIA específico?', function() {
+        $btn.html('<i class="fa fa-spinner fa-spin"></i>').prop('disabled', true);
+
+        apiPost('excluirMembroPeriodo', {
+            id_periodo: idPeriodo,
+            id_pessoa: idPessoa
+        }).done(function(r) {
+            $('.item-periodo-alocacao.active').click(); // Recarrega o dia
+        }).fail(function(xhr) {
+            var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao remover pessoa.';
+            exibirMsgAba('msg-alocacoes', msg, 'danger');
+            $btn.html('<i class="fa fa-trash"></i>').prop('disabled', false);
+        });
+    });
+});
+
+// Ação de Salvar o painel interno
+$(document).on('click', '#btn-salvar-escala-diaria-tab', function() {
+    var idPeriodo = $(this).data('id-periodo');
+    var membrosPeriodo = [];
+
+    $('.select-divisao-tab').each(function() {
+        membrosPeriodo.push({
+            id_pessoa: $(this).data('id-pessoa'),
+            id_divisao: $(this).val() ? $(this).val() : null
+        });
+    });
+
+    var $btn = $(this);
+    var htmlOriginal = $btn.html();
+    $btn.html('<i class="fa fa-spinner fa-spin"></i> Salvando...').prop('disabled', true);
+
+    apiPost('salvarDivisoesPeriodo', {
+        id_periodo: idPeriodo,
+        membros: membrosPeriodo
+    }).done(function(r) {
+        exibirMsgAba('msg-alocacoes', r.msg || 'Escala do dia atualizada com sucesso!', 'success');
+    }).fail(function(xhr) {
+        var msg = (xhr.responseJSON && xhr.responseJSON.erro) ? xhr.responseJSON.erro : 'Erro ao salvar escala.';
+        exibirMsgAba('msg-alocacoes', msg, 'danger');
+    }).always(function() {
+        $btn.html(htmlOriginal).prop('disabled', false);
+    });
 });
 </script>
 </body>

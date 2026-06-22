@@ -1,5 +1,7 @@
 <?php
 
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 $baseDir = dirname(__DIR__);
 
 require_once $baseDir . '/assets/vendor/setasign/fpdi/src/autoload.php';
@@ -83,7 +85,9 @@ try {
             />';
     }
 
-    $alocacoes      = $agendaDAO->listarAlocacoesPorAgenda($idAgenda);
+    $alocacoes         = $agendaDAO->listarAlocacoesPorAgenda($idAgenda);
+    $membrosPorPeriodo = $agendaDAO->listarMembrosParaPeriodos($idAgenda, $mesAlvo, $anoAlvo);
+
     $horariosEquipe = [];
     foreach ($alocacoes as $evento) {
         $idEq = $evento['id_equipe'];
@@ -102,19 +106,45 @@ try {
     $dadosEquipes    = [];
     $legendasEquipes = [];
     foreach ($equipes as $eq) {
-        $membros      = $agendaDAO->listarMembrosPorEquipe($eq['id']);
-        $nomesMembros = array_map(function ($m) {
-            $partesNome = explode(' ', $m['nome']);
-            return e($partesNome[0]);
-        }, $membros);
+        $membros = $agendaDAO->listarMembrosPorEquipe($eq['id']);
 
-        $membrosStr        = !empty($nomesMembros) ? implode(', ', $nomesMembros) : 'Sem membros';
-        $eq['membros_str'] = $membrosStr;
+        // Agrupa por divisão para a legenda
+        $gruposLegenda = [];
+        foreach ($membros as $m) {
+            $div = $m['nome_divisao'] ?? null;
+            $gruposLegenda[$div ?? ''][] = e($m['nome']);
+        }
+
+        $temDivisaoLegenda = count($gruposLegenda) > 1 || !array_key_exists('', $gruposLegenda);
+        if ($temDivisaoLegenda) {
+            $partes = [];
+            foreach ($gruposLegenda as $div => $nomes) {
+                $label  = $div !== '' ? "<em>{$div}:</em> " : '';
+                $partes[] = $label . implode(', ', $nomes);
+            }
+            $membrosStr = implode(' | ', $partes);
+        } else {
+            $membrosStr = !empty($gruposLegenda['']) ? implode(', ', $gruposLegenda['']) : 'Sem membros';
+        }
+
         $dadosEquipes[$eq['id']] = $eq;
+
+        // Rótulo NOTURNO/DIURNO calculado a partir do horário da equipe
+        $nomeEqLower = strtolower($eq['nome']);
+        if (strpos($nomeEqLower, 'noite') !== false || strpos($nomeEqLower, 'noturno') !== false) {
+            $rotuloTurnoEq = 'NOTURNO';
+        } elseif (strpos($nomeEqLower, 'dia') !== false || strpos($nomeEqLower, 'diurno') !== false) {
+            $rotuloTurnoEq = 'DIURNO';
+        } else {
+            $horaInicio    = (int)substr($eq['inicio_turno'] ?? '00:00:00', 0, 2);
+            $rotuloTurnoEq = ($horaInicio >= 17 || $horaInicio < 5) ? 'NOTURNO' : 'DIURNO';
+        }
 
         $nomeEquipeSafe = e($eq['nome']);
         $textoHorario   = isset($horariosEquipe[$eq['id']]) ? " <strong style='color:#007BFF;'>{$horariosEquipe[$eq['id']]}</strong>" : "";
-        $legendasEquipes[] = "<strong style='color:#1a365d;'>{$nomeEquipeSafe}:</strong> <span style='color:#333333;'>({$membrosStr})</span>{$textoHorario}";
+        $legendasEquipes[] = "<strong style='color:#1a365d;'>{$nomeEquipeSafe}</strong>"
+            . " <span style='color:#c0392b; font-size:6pt; font-weight:bold;'>({$rotuloTurnoEq})</span>:"
+            . " <span style='color:#333333;'>{$membrosStr}</span>{$textoHorario}";
     }
 
     $numeroDias    = cal_days_in_month(CAL_GREGORIAN, $mesAlvo, $anoAlvo);
@@ -124,24 +154,36 @@ try {
         if ($evStart->format('m') == $mesAlvo && $evStart->format('Y') == $anoAlvo) {
             $d = (int)$evStart->format('d');
             if ($d >= 1 && $d <= $numeroDias) {
-                $idEq      = $evento['id_equipe'];
-                $nomeEq    = isset($dadosEquipes[$idEq]) ? e($dadosEquipes[$idEq]['nome']) : 'Equipe';
-                $membrosEq = isset($dadosEquipes[$idEq]) ? e($dadosEquipes[$idEq]['membros_str']) : '';
+                $idEq   = $evento['id_equipe'];
+                $nomeEq = isset($dadosEquipes[$idEq]) ? e($dadosEquipes[$idEq]['nome']) : 'Equipe';
 
-                $nomeEqLower = strtolower($nomeEq);
-                if (strpos($nomeEqLower, 'noite') !== false || strpos($nomeEqLower, 'noturno') !== false) {
-                    $rotuloTurno = 'NOTURNO';
-                } elseif (strpos($nomeEqLower, 'dia') !== false || strpos($nomeEqLower, 'diurno') !== false) {
-                    $rotuloTurno = 'DIURNO';
+                // Membros reais deste dia, agrupados por divisão
+                $membrosNoDia = $membrosPorPeriodo[(int)$evento['id_periodo']] ?? [];
+                $gruposCelula = [];
+                foreach ($membrosNoDia as $m) {
+                    $div = $m['nome_divisao'] ?? null;
+                    $gruposCelula[$div ?? ''][] = e($m['nome']);
+                }
+
+                $temDivisaoCelula = count($gruposCelula) > 1 || !array_key_exists('', $gruposCelula);
+                $membrosHtml = '';
+                if (empty($gruposCelula)) {
+                    $membrosHtml = "<div style='color:#888; font-size:6pt; font-style:italic;'>Sem membros</div>";
+                } elseif ($temDivisaoCelula) {
+                    foreach ($gruposCelula as $div => $nomes) {
+                        $label = $div !== ''
+                            ? "<span style='color:#0057a8; font-weight:bold;'>{$div}:</span> "
+                            : '';
+                        $membrosHtml .= "<div style='font-size:6pt; line-height:1.25;'>{$label}" . implode(', ', $nomes) . "</div>";
+                    }
                 } else {
-                    $hora        = (int)$evStart->format('H');
-                    $rotuloTurno = ($hora >= 17 || $hora < 5) ? 'NOTURNO' : 'DIURNO';
+                    $membrosHtml = "<div style='color:#333; font-size:6.5pt; line-height:1.2;'>(" . implode(', ', $gruposCelula['']) . ")</div>";
                 }
 
                 $eventosPorDia[$d][] = "
-                    <div style='color:#000000; font-weight:bold; font-size: 8.5pt; line-height: 1.1;'>{$nomeEq}</div>
-                    <div style='font-size: 4pt; line-height: 4pt;'>&nbsp;</div>
-                    <div style='color:#333333; font-size: 6.5pt; line-height: 1.2;'>({$membrosEq}) - <strong style='color:#1a365d;'>{$rotuloTurno}</strong></div>
+                    <div style='color:#000; font-weight:bold; font-size:7pt; line-height:1.1;'>{$nomeEq}</div>
+                    <div style='font-size:3pt; line-height:3pt;'>&nbsp;</div>
+                    {$membrosHtml}
                 ";
             }
         }
@@ -286,7 +328,14 @@ try {
     }
     $html .= "</tr></tbody></table>";
 
-    $usuario = isset($_SESSION['nome']) ? e($_SESSION['nome']) : 'Usuário';
+    $idPessoaSession = (int)($_SESSION['id_pessoa'] ?? 0);
+    $usuario = 'Usuário';
+    if ($idPessoaSession > 0) {
+        $stmtPessoa = $pdo->prepare("SELECT CONCAT(nome, ' ', COALESCE(sobrenome, '')) AS nome_completo FROM pessoa WHERE id_pessoa = ?");
+        $stmtPessoa->execute([$idPessoaSession]);
+        $dadosPessoa = $stmtPessoa->fetch(PDO::FETCH_ASSOC);
+        if ($dadosPessoa) $usuario = e(trim($dadosPessoa['nome_completo']));
+    }
 
     $htmlAssinatura = "
         <div style='margin-top:40px; width:100%;'>
@@ -317,7 +366,7 @@ try {
         $mpdf->WriteHTML($htmlAssinatura, HTMLParserMode::HTML_BODY);
     }
 
-    $nomeArquivo = "Agenda_{$nomeAgendaArquivo}_" . sprintf('%02d-%04d', $mesAlvo, $anoAlvo) . ".pdf";
+    $nomeArquivo = "Agenda_{$nomeAgendaArquivo}_" . sprintf('%02d%04d', $mesAlvo, $anoAlvo) . ".pdf";
     $mpdf->Output($nomeArquivo, 'I');
 
 } catch (Exception $e) {
