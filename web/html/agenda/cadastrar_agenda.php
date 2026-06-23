@@ -248,6 +248,8 @@ require_once "../personalizacao_display.php";
             letter-spacing: .06em; color: #607080; white-space: nowrap;
         }
         .cal-toolbar-select { width: 180px !important; }
+        /* Botão "Nova Alocação" acompanha a altura dos selects (Select2) da mesma toolbar */
+        #btn-nova-alocacao { align-self: stretch; display: inline-flex; align-items: center; }
         .cal-toolbar-divider { width: 1px; height: 28px; background: #d0dbe7; margin: 0 4px; flex-shrink: 0; }
         .cal-sidebar-hint { font-size: 1rem; color: #8fa0b0; white-space: nowrap; }
         #sidebar-equipes-lista { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -460,9 +462,9 @@ require_once "../personalizacao_display.php";
 
                                     <div id="secao-escala-diaria" style="display: none; margin-top: 30px; border-top: 2px solid #e4e9ef; padding-top: 20px;">
                                         <div class="clearfix mb-md">
-                                            <button class="btn btn-default btn-sm pull-right" id="btn-fechar-escala-diaria"><i class="fa fa-times"></i> Fechar Painel</button>
+                                            <button class="btn btn-danger btn-sm pull-right" id="btn-fechar-escala-diaria" style="font-weight:600; letter-spacing:.02em;"><i class="bi bi-x-circle-fill" style="font-size:13px;"></i> Fechar Painel</button>
                                             <h4 style="margin: 0; color: #0088cc; font-weight: bold;">
-                                                <i class="fa fa-calendar-check-o mr-xs"></i> Escala Diária (Alocação #<span id="label-escala-alocacao"></span>)
+                                                <i class="bi bi-calendar2-week mr-xs"></i> Escala Diária
                                             </h4>
                                             <p class="text-muted" style="font-size: 13px;">Selecione o dia abaixo para editar a divisão de cada membro da equipe nesta data específica.</p>
                                         </div>
@@ -489,7 +491,7 @@ require_once "../personalizacao_display.php";
                                                             </select>
                                                         </div>
                                                         <div style="flex: 3;">
-                                                            <button class="btn btn-success btn-block" id="btn-add-membro-dia" style="height: 34px; padding: 4px 12px; font-size: 13px; margin: 0; box-shadow: none;">
+                                                            <button class="btn btn-success btn-block" id="btn-add-membro-dia" style="height: 30px; padding: 2px 12px; font-size: 13px; margin: 0; box-shadow: none; line-height: 1.5;">
                                                                 <i class="fa fa-user-plus"></i> Incluir
                                                             </button>
                                                         </div>
@@ -832,9 +834,12 @@ require_once "../personalizacao_display.php";
                 <button type="button" class="btn btn-info btn-sm" id="btn-ir-alocacoes" style="margin: 0;">
                     <i class="fa fa-pencil"></i> Editar Alocação
                 </button>
+                <button type="button" class="btn btn-warning btn-sm" id="btn-ir-editar-dia" style="margin: 0;">
+                    <i class="bi bi-calendar2-week"></i> Editar Dia
+                </button>
                 <button type="button" class="btn btn-default btn-sm" data-dismiss="modal" style="margin: 0;">
                     Fechar
-                </button>   
+                </button>
             </div>
         </div>
     </div>
@@ -2052,56 +2057,97 @@ $('#btn-ir-equipes').on('click', function () {
     if (!_eventoAtual) return;
     var idAgenda = _eventoAtual.p.id_agenda;
     var idEquipe = _eventoAtual.p.id_equipe;
-    $('#modal-evento').modal('hide');
-    $('#abas-agenda a[href="#tab-equipes"]').tab('show');
-    if (idAgenda) $('#filtro-equipe-agenda').val(idAgenda).trigger('change');
-    api('listarEquipes', idAgenda ? { id_agenda: idAgenda } : {}).done(function (equipes) {
-        var eq = null;
-        $.each(equipes, function (_, e) { if (String(e.id) === String(idEquipe)) { eq = e; return false; } });
-        if (!eq) return;
+
+    // Espera o modal do evento fechar por completo antes de abrir o próximo
+    $('#modal-evento').one('hidden.bs.modal', function () {
+        $('#abas-agenda a[href="#tab-equipes"]').tab('show');
+        if (idAgenda) $('#filtro-equipe-agenda').val(idAgenda).trigger('change');
+
         $('#modal-equipe-titulo').text('Editar Equipe');
-        $('#equipe-id').val(eq.id);
-        $('#equipe-nome').val(eq.nome);
-        $('#equipe-descricao').val(eq.descricao || '');
-        $('#equipe-inicio-turno').val(eq.inicio_turno || '');
-        $('#equipe-fim-turno').val(eq.fim_turno || '');
         ocultarErroModal('modal-equipe-erro');
         $('#equipe-status-grupo').show();
-        carregarSelectAgendaEquipe(eq.id_agenda);
-        carregarStatusEquipe(eq.id_status);
-
+        $('#equipe-id').val(idEquipe);
+        $('#equipe-nome').val('');
+        $('#equipe-descricao').val('');
+        $('#equipe-inicio-turno').val('');
+        $('#equipe-fim-turno').val('');
         $('#wrapper-divisoes-equipe').empty();
-        api('listarDivisoesPorEquipe', { id_equipe: eq.id }).done(function(divisoes) {
-            $.each(divisoes || [], function(_, div) {
-                var html = '<div class="input-group mb-xs div-input-wrapper">' +
-                           '<input type="text" class="form-control input-sm input-nome-divisao" value="' + div.nome + '" data-id="' + div.id + '" placeholder="Nome da divisão">' +
-                           '<span class="input-group-btn">' +
-                           '<button class="btn btn-danger btn-sm btn-remover-divisao-input" type="button" title="Remover"><i class="fa fa-trash"></i></button>' +
-                           '</span>' +
-                           '</div>';
-                $('#wrapper-divisoes-equipe').append(html);
-            });
+        $('#modal-equipe').modal('show');
+
+        // Popula os selects/campos de forma assíncrona
+        carregarSelectAgendaEquipe(idAgenda);
+
+        api('listarEquipes', idAgenda ? { id_agenda: idAgenda } : {}).done(function (equipes) {
+            var eq = null;
+            $.each(equipes, function (_, e) { if (String(e.id) === String(idEquipe)) { eq = e; return false; } });
+            if (!eq) return;
+            $('#equipe-nome').val(eq.nome);
+            $('#equipe-descricao').val(eq.descricao || '');
+            $('#equipe-inicio-turno').val(eq.inicio_turno || '');
+            $('#equipe-fim-turno').val(eq.fim_turno || '');
+            carregarSelectAgendaEquipe(eq.id_agenda);
+            carregarStatusEquipe(eq.id_status);
         });
 
-        $('#modal-equipe').modal('show');
+        api('listarDivisoesPorEquipe', { id_equipe: idEquipe }).done(function (divisoes) {
+            $('#wrapper-divisoes-equipe').empty();
+            $.each(divisoes || [], function (_, div) {
+                $('#wrapper-divisoes-equipe').append(
+                    '<div class="input-group mb-xs div-input-wrapper">' +
+                    '<input type="text" class="form-control input-sm input-nome-divisao" value="' + div.nome + '" data-id="' + div.id + '" placeholder="Nome da divisão">' +
+                    '<span class="input-group-btn">' +
+                    '<button class="btn btn-danger btn-sm btn-remover-divisao-input" type="button" title="Remover"><i class="fa fa-trash"></i></button>' +
+                    '</span></div>'
+                );
+            });
+        });
     });
+
+    $('#modal-evento').modal('hide');
 });
 
 $('#btn-ir-alocacoes').on('click', function () {
     if (!_eventoAtual) return;
     var ev = _eventoAtual, p = ev.p;
+
+    $('#modal-evento').one('hidden.bs.modal', function () {
+        // Vai para a aba Alocações já filtrada
+        irParaAlocacoes({ idAgenda: p.id_agenda, idEquipe: p.id_equipe });
+
+        $('#modal-alocacao-titulo').text('Editar Alocação');
+        ocultarErroModal('modal-alocacao-erro');
+        $('#modal-alocacao').modal('show');
+
+        var inicio  = String(p.inicio_original || ev.start || '');
+        var fim      = String(p.fim_original || p.fim_display || '');
+        var lembrete = p.lembrete ? String(p.lembrete).replace(' ', 'T').substring(0, 16) : '';
+        $('#alocacao-id').val(ev.id);
+        $('#alocacao-inicio').val(inicio.substring(0, 10));
+        $('#alocacao-fim').val(fim.substring(0, 10));
+        $('#alocacao-lembrete').val(lembrete);
+        $('#alocacao-intervalo').val(p.intervalo || 0);
+
+        carregarSelectsAlocacao(p.id_agenda, p.id_equipe);
+    });
+
     $('#modal-evento').modal('hide');
-    $('#abas-agenda a[href="#tab-alocacoes"]').tab('show');
-    if (p.id_agenda) $('#filtro-alocacao-agenda').val(p.id_agenda).trigger('change');
-    $('#modal-alocacao-titulo').text('Editar Alocação');
-    $('#alocacao-id').val(ev.id);
-    $('#alocacao-inicio').val((p.inicio_original || ev.start).substring(0, 10));
-    $('#alocacao-fim').val((p.fim_original || p.fim_display || '').substring(0, 10));
-    $('#alocacao-lembrete').val(p.lembrete ? p.lembrete.replace(' ', 'T').substring(0, 16) : '');
-    $('#alocacao-intervalo').val(p.intervalo || 0);
-    ocultarErroModal('modal-alocacao-erro');
-    carregarSelectsAlocacao(p.id_agenda, p.id_equipe);
-    $('#modal-alocacao').modal('show');
+});
+
+$('#btn-ir-editar-dia').on('click', function () {
+    if (!_eventoAtual) return;
+    var ev = _eventoAtual, p = ev.p;
+
+    $('#modal-evento').one('hidden.bs.modal', function () {
+        irParaAlocacoes({
+            idAgenda:   p.id_agenda,
+            idEquipe:   p.id_equipe,
+            idAlocacao: ev.id,
+            idPeriodo:  p.id_periodo,
+            abrirEscala: true
+        });
+    });
+
+    $('#modal-evento').modal('hide');
 });
 
 /* ── Salvar Edição do Dia no Calendário ────────────────────── */
@@ -2214,7 +2260,7 @@ function carregarAlocacoes() {
                     + '<td class="text-center">' + intervalo + (intervalo === 1 ? ' dia' : ' dias') + '</td>'
                     + '<td>' + fmtDatetime(al.lembrete) + '</td>'
                     + '<td class="col-acoes"><div class="acoes-grupo">'
-                    + '<button class="btn btn-xs btn-warning btn-acao btn-gerenciar-dias" data-id="'+al.id+'" data-equipe="'+al.id_equipe+'" title="Gerenciar Escala Diária"><i class="fa fa-calendar-check-o"></i></button>'
+                    + '<button class="btn btn-xs btn-warning btn-acao btn-gerenciar-dias" data-id="'+al.id+'" data-equipe="'+al.id_equipe+'" title="Gerenciar Escala Diária"><i class="bi bi-calendar2-week"></i></button>'
                     + '<button class="btn btn-xs btn-info btn-acao btn-editar-alocacao" '
                     + 'data-id="'+al.id+'" data-agenda="'+al.id_agenda+'" data-equipe="'+al.id_equipe+'" '
                     + 'data-inicio="'+(al.start||'').substring(0,10)+'" data-fim="'+(al.fim_display||'').substring(0,10)+'" '
@@ -2289,7 +2335,61 @@ $(document).on('change', '#alocacao-agenda', function () {
     carregarSelectEquipePorAgenda($(this).val() || null, null);
 });
 
+function aplicarFiltroAlocacoes(idAgenda, idEquipe, done) {
+    $.when(
+        api('listarAgendas'),
+        api('listarEquipes', idAgenda ? { id_agenda: idAgenda } : {})
+    ).done(function (agRes, eqRes) {
+        var agendas = agRes[0] || [];
+        var equipes = eqRes[0] || [];
+
+        var optsAg = '<option value=""></option>';
+        $.each(agendas, function (_, a) {
+            if (!a.status || a.status.toLowerCase() !== 'ativo') return;
+            optsAg += '<option value="' + a.id + '"' + (String(a.id) === String(idAgenda) ? ' selected' : '') + '>' + a.descricao + '</option>';
+        });
+        $('#filtro-alocacao-agenda').html(optsAg);
+        initSelect2('#filtro-alocacao-agenda', 'Selecione a agenda...');
+
+        var optsEq = '<option value=""></option>';
+        $.each(equipes, function (_, e) {
+            if (!e.status || e.status.toLowerCase() !== 'ativo') return;
+            optsEq += '<option value="' + e.id + '"' + (String(e.id) === String(idEquipe) ? ' selected' : '') + '>' + e.nome + '</option>';
+        });
+        $('#filtro-alocacao-equipe').html(optsEq).prop('disabled', false);
+        initSelect2('#filtro-alocacao-equipe', 'Selecione a equipe...');
+
+        carregarAlocacoes();
+        if (done) done();
+    });
+}
+
+
+var _filtroAlocacaoPendente = null;
+
+function irParaAlocacoes(opts) {
+    var executar = function () {
+        aplicarFiltroAlocacoes(opts.idAgenda, opts.idEquipe, function () {
+            if (opts.abrirEscala) abrirEscalaDiaria(opts.idAlocacao, opts.idEquipe, opts.idPeriodo);
+        });
+    };
+
+    var $tab = $('#abas-agenda a[href="#tab-alocacoes"]');
+    if ($tab.closest('li').hasClass('active')) {
+        executar();
+    } else {
+        _filtroAlocacaoPendente = executar;
+        $tab.tab('show');
+    }
+}
+
 $('#abas-agenda a[href="#tab-alocacoes"]').on('shown.bs.tab', function () {
+    if (_filtroAlocacaoPendente) {
+        var exec = _filtroAlocacaoPendente;
+        _filtroAlocacaoPendente = null;
+        exec();
+        return;
+    }
     carregarFiltroAlocacaoAgenda();
     carregarAlocacoes();
 });
@@ -2437,17 +2537,16 @@ $(document).on('click', '#btn-download-mensal', function () {
 
 var _idEquipeEscalaAtual = null;
 
-$(document).on('click', '.btn-gerenciar-dias', function() {
-    var idAlocacao = $(this).data('id');
-    var idEquipe = $(this).data('equipe');
+/* Abre o painel de Escala Diária para uma alocação. Se idPeriodoAuto for informado,
+   seleciona automaticamente aquele dia (deixa pronto para editar). */
+function abrirEscalaDiaria(idAlocacao, idEquipe, idPeriodoAuto) {
     _idEquipeEscalaAtual = idEquipe;
-    
-    $('#label-escala-alocacao').text(idAlocacao);
+
     $('#secao-escala-diaria').slideDown();
     $('#painel-edicao-dia').hide();
     $('#painel-edicao-vazio').show();
     $('#lista-periodos-alocacao').html('<div class="list-group-item text-center text-muted py-md"><i class="fa fa-spinner fa-spin"></i> Carregando dias...</div>');
-    
+
     $('html, body').animate({ scrollTop: $("#secao-escala-diaria").offset().top - 40 }, 500);
 
     api('listarPeriodosPorAlocacao', { id_alocacao: idAlocacao }).done(function(periodos) {
@@ -2458,20 +2557,30 @@ $(document).on('click', '.btn-gerenciar-dias', function() {
             $.each(periodos, function(_, p) {
                 var dtIni = new Date(p.data_inicio.replace(' ', 'T'));
                 var dtFim = new Date(p.data_fim.replace(' ', 'T'));
-                
+
                 var timeIni = dtIni.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
                 var timeFim = dtFim.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
-                
+
                 var label = dtIni.toLocaleDateString('pt-BR') + ' (' + timeIni + ' às ' + timeFim + ')';
-                
+
                 html += '<a href="#" class="list-group-item item-periodo-alocacao" data-id-periodo="'+p.id_periodo+'" data-label="'+label+'" style="border-radius:0; border-left:0; border-right:0; margin-bottom:0;">';
                 html += '<i class="fa fa-calendar-o mr-xs text-primary"></i> ' + label + '</a>';
             });
         }
         $('#lista-periodos-alocacao').html(html);
+
+        // Seleciona automaticamente o dia desejado e abre o editor desse dia
+        if (idPeriodoAuto) {
+            var $item = $('#lista-periodos-alocacao .item-periodo-alocacao[data-id-periodo="' + idPeriodoAuto + '"]');
+            if ($item.length) $item.trigger('click');
+        }
     }).fail(function() {
         $('#lista-periodos-alocacao').html('<div class="list-group-item text-danger">Erro ao carregar dias.</div>');
     });
+}
+
+$(document).on('click', '.btn-gerenciar-dias', function() {
+    abrirEscalaDiaria($(this).data('id'), $(this).data('equipe'), null);
 });
 
 $(document).on('click', '#btn-fechar-escala-diaria', function() {
