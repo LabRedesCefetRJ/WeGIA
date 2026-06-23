@@ -1,162 +1,199 @@
+.radio {
+	position: absolute;
+	opacity: 0;
+	cursor: pointer;
+}
 
-			.radio{
-    			position: absolute;
-    			opacity: 0;
-    			cursor:pointer;
-			}
-			input[type=radio]+label {
-				padding: 5px;
-    			font-weight: normal;
-			}
-			input[type=radio]:hover+label {
-				background-color: white;
-				border: 2px rgb(169,169,169) solid;
-			}
-			input[type=radio]+label {
-   			 	font-weight: normal;
-    			border: 2px solid lightgray;
-    			border-radius: 5px;
-    			background-color: lightgray ;
-			}
-			input[type=radio]:checked+label {
-				background-color: rgb(65,105,225);
-				border: 1px rgb(169,169,169) solid;
-   				font-weight: bold;
-			}
-			input[type=radio]:focus+label {
-				background-color: rgb(65,105,225);
-				border: 1px rgb(169,169,169) solid;
-    			/*border: 2px dotted #000;*/
-			}
-			#info_data 
-			{
-			    color: red;
-			    font-size: 15px;
-			}
-			#aviso_data
-			{
-				color: red;
-				font-size:15px;
-			}
-			#avisa_cpf
-			    {
-				color: red;
-				font-size: 20px;
-				font-family: 'Bitter', serif;
-			    }
-			#avisa_cnpj
-			    {
-				color: red;
-				font-size: 20px;
-				font-family: 'Bitter', serif;
-			    }
-			#avisa_valor, #avisa_valor_m, #avisa_parcelas
-			    {
-				color: red;
-				font-size: 20px;
-				font-family: 'Bitter', serif;
-			    }
-			#avisoPF
-			{	
-				font-size: 20px;
-				color: red;	
-			}
-			#avisoPJ
-			{
-				font-size: 15px;
-				color: red;	
-			}
-			#aviso
-			{
-				padding: 1%;
-				border: 1px solid gray;
-				border-radius: 3px;
-				margin: 10px;
-				font-size: 20px;
-				border-color: #e8273b;
-				color: #f5b2b2;
-				background-color: rgb(226, 67, 83);
-				
-			}
-            #avisa_valor2			    
-				{
-				color: red;
-				font-size: 20px;
-				font-family: 'Bitter', serif;
-			    }
-			#avisa_email			    
-			{
-				color: red;
-				font-size: 20px;
-				font-family: 'Bitter', serif;
-			}
-			
-			button{
-				border-radius: 5px;
-				border: 1px rgb(143,188,143) solid;
-				padding: 5px;
-				margin: 5px;
-			}
-			#trinta{
-				background-color: rgb(34,139,34); 
-			}
-			#quarenta{
-				background-color: rgb(139,0,0); 
-			}
-			#cinquenta{
-				background-color: rgb(255,140,0); 
-			}
-			#cem{
-				background-color: rgb(28,28,28); 
-			}
-			#cento50{
-				background-color: rgb(218,165,32); 
-			}
-			#duzentos{
-				background-color: rgb(160,82,45); 
-			}
-			#duzentos50{
-				background-color: rgb(165,42,42); 
-			}
-			#trezentos{
-				background-color: rgb(128,0,128); 
-			}
-			#quinhentos{
-				background-color: rgb(107,142,35); 
-			}
-			#mil{
-				background-color: rgb(139,0,0); 
-			}
-			#trinta:hover,#cinquenta:hover,#cem:hover,#cento50:hover,#duzentos:hover,#duzentos50:hover,#trezentos:hover,#quinhentos:hover,#mil:hover{
-				background-color: rgb(65,105,225);
-				border: 1px rgb(169,169,169) solid;
-				
-			}
-			#img_logo{
-				display: block;
-				margin-left: auto;
-				margin-right: auto;
-			}
-			a:hover{
-				color: white;
-				text-decoration:none;
-			}
-			a{ 
-				font-weight: normal;	
-				color: white;
+input[type=radio]+label {
+	padding: 5px;
+	font-weight: normal;
+}
 
-			}
-			.mala {
-				
-				background-color: rgb(65,105,225);
-				padding: .5rem 1rem;
-				border-radius: .3rem;
-			}
-			.ultima_div{
-				padding-left:120px;
-				align-content: center;
-			}
-			.botao{
-				color: white;
-				
-			}
+input[type=radio]:hover+label {
+	background-color: white;
+	border: 2px rgb(169, 169, 169) solid;
+}
+
+input[type=radio]+label {
+	font-weight: normal;
+	border: 2px solid lightgray;
+	border-radius: 5px;
+	background-color: lightgray;
+}
+
+input[type=radio]:checked+label {
+	background-color: rgb(65, 105, 225);
+	border: 1px rgb(169, 169, 169) solid;
+	font-weight: bold;
+}
+
+input[type=radio]:focus+label {
+	background-color: rgb(65, 105, 225);
+	border: 1px rgb(169, 169, 169) solid;
+	/*border: 2px dotted #000;*/
+}
+
+#info_data {
+	color: red;
+	font-size: 15px;
+}
+
+#aviso_data {
+	color: red;
+	font-size: 15px;
+}
+
+#avisa_cpf {
+	color: red;
+	font-size: 20px;
+	font-family: 'Bitter', serif;
+}
+
+#avisa_cnpj {
+	color: red;
+	font-size: 20px;
+	font-family: 'Bitter', serif;
+}
+
+#avisa_valor,
+#avisa_valor_m,
+#avisa_parcelas {
+	color: red;
+	font-size: 20px;
+	font-family: 'Bitter', serif;
+}
+
+#avisoPF {
+	font-size: 20px;
+	color: red;
+}
+
+#avisoPJ {
+	font-size: 15px;
+	color: red;
+}
+
+#aviso {
+	padding: 1%;
+	border: 1px solid gray;
+	border-radius: 3px;
+	margin: 10px;
+	font-size: 20px;
+	border-color: #e8273b;
+	color: #f5b2b2;
+	background-color: rgb(226, 67, 83);
+
+}
+
+#avisa_valor2 {
+	color: red;
+	font-size: 20px;
+	font-family: 'Bitter', serif;
+}
+
+#avisa_email {
+	color: red;
+	font-size: 20px;
+	font-family: 'Bitter', serif;
+}
+
+button {
+	border-radius: 5px;
+	border: 1px rgb(143, 188, 143) solid;
+	padding: 5px;
+	margin: 5px;
+}
+
+#trinta {
+	background-color: rgb(34, 139, 34);
+}
+
+#quarenta {
+	background-color: rgb(139, 0, 0);
+}
+
+#cinquenta {
+	background-color: rgb(255, 140, 0);
+}
+
+#cem {
+	background-color: rgb(28, 28, 28);
+}
+
+#cento50 {
+	background-color: rgb(218, 165, 32);
+}
+
+#duzentos {
+	background-color: rgb(160, 82, 45);
+}
+
+#duzentos50 {
+	background-color: rgb(165, 42, 42);
+}
+
+#trezentos {
+	background-color: rgb(128, 0, 128);
+}
+
+#quinhentos {
+	background-color: rgb(107, 142, 35);
+}
+
+#mil {
+	background-color: rgb(139, 0, 0);
+}
+
+#trinta:hover,
+#cinquenta:hover,
+#cem:hover,
+#cento50:hover,
+#duzentos:hover,
+#duzentos50:hover,
+#trezentos:hover,
+#quinhentos:hover,
+#mil:hover {
+	background-color: rgb(65, 105, 225);
+	border: 1px rgb(169, 169, 169) solid;
+
+}
+
+#img_logo {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+a:hover {
+	color: white;
+	text-decoration: none;
+}
+
+a {
+	font-weight: normal;
+	color: white;
+
+}
+
+.mala {
+
+	background-color: rgb(65, 105, 225);
+	padding: .5rem 1rem;
+	border-radius: .3rem;
+}
+
+.ultima_div {
+	padding-left: 120px;
+	align-content: center;
+}
+
+.botao {
+	color: white;
+
+}
+
+.campo-bloqueado {
+    background-color: #f5f5f5 !important;
+    color: #666 !important;
+    cursor: not-allowed;
+}

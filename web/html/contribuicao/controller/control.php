@@ -149,5 +149,6 @@ try {
 
 } catch (Throwable $e) {
     http_response_code(400);
+    error_log('ERRO: ' . $e->getCode() . ' file: ' . $e->getFile() . ' line: ' . $e->getLine() . ' message: ' . $e->getMessage());
     exit('Requisição inválida');
 }

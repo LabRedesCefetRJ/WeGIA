@@ -23,8 +23,6 @@ class SocioController
 
     public function criarSocio()
     {
-        $dados = $this->extrairPost();
-
         try {
             //captcha
             if (!isset($_SESSION['usuario'])) {
@@ -32,12 +30,12 @@ class SocioController
                 if (!$captchaGoogle->validate())
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
 
-                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time()+30];
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
             }
 
             $pessoaDao = new PessoaDAO($this->pdo);
 
-            $verificacaoExistenciaPessoa = $pessoaDao->verificarExistencia($dados['cpf']);
+            $verificacaoExistenciaPessoa = $pessoaDao->verificarExistencia(trim(filter_input(INPUT_POST, 'documento_socio')));
 
             $socio = new Socio();
 
@@ -55,8 +53,13 @@ class SocioController
                     ->setNumeroEndereco($verificacaoExistenciaPessoa->getNumeroEndereco())
                     ->setLogradouro($verificacaoExistenciaPessoa->getLogradouro())
                     ->setDocumento($verificacaoExistenciaPessoa->getCpf())
-                    ->setIbge($verificacaoExistenciaPessoa->getIbge());
+                    ->setIbge($verificacaoExistenciaPessoa->getIbge())
+                    ->setEmail($verificacaoExistenciaPessoa->getEmail())
+                    ->setValor(trim(filter_input(INPUT_POST, 'valor')))
+                    ->setTags($this->extrairTagsPost());
             } else {
+                $dados = $this->extrairPost();
+
                 $socio
                     ->setNome($dados['nome'])
                     ->setSobrenome($dados['sobrenome'])
@@ -70,13 +73,11 @@ class SocioController
                     ->setNumeroEndereco($dados['numero'])
                     ->setLogradouro($dados['rua'])
                     ->setDocumento($dados['cpf'])
-                    ->setIbge($dados['ibge']);
+                    ->setIbge($dados['ibge'])
+                    ->setEmail($dados['email'])
+                    ->setValor($dados['valor'])
+                    ->setTags($dados['tags']);
             }
-
-            $socio
-                ->setEmail($dados['email'])
-                ->setValor($dados['valor'])
-                ->setTags($dados['tags']);
 
             $socioDao = new SocioDAO($this->pdo);
 
@@ -102,7 +103,7 @@ class SocioController
                 if (!$captchaGoogle->validate())
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
 
-                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time()+30];
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
             }
 
             $dados = $this->extrairPost();
@@ -388,7 +389,7 @@ class SocioController
         }
     }
 
-    public function sincronizarStatusSocios()//Usar esse método para atualizar o status dos sócios 
+    public function sincronizarStatusSocios() //Usar esse método para atualizar o status dos sócios 
     {
         try {
             $socioDao = new SocioDAO($this->pdo);

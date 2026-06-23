@@ -13,6 +13,7 @@ async function decidirAcao() {
         case 'cartao-credito': processarCartaoCredito(); break;
         case 'cadastrar': await cadastrarSocio(); processarCartaoCredito(); break;
         case 'atualizar': await atualizarSocio(); processarCartaoCredito(); break;
+        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); gerarBoleto(); break;
         default: console.log('Ação indefinida');
     }
 }

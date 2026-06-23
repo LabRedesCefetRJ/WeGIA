@@ -13,6 +13,7 @@ async function decidirAcao() {
         case 'boleto': gerarBoleto(); break;
         case 'cadastrar': await cadastrarSocio(); gerarBoleto(); break;
         case 'atualizar': await atualizarSocio(); gerarBoleto(); break;
+        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); gerarBoleto(); break;
         default: console.log('Ação indefinida');
     }
 }

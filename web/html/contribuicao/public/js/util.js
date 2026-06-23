@@ -352,6 +352,38 @@ async function cadastrarSocio() {
     }
 }
 
+async function cadastrarSocioPessoaExistente() {
+    const form = document.getElementById('formulario');
+    const formData = new FormData(form);
+
+    const documento = pegarDocumento();
+
+    formData.append('nomeClasse', 'SocioController');
+    formData.append('metodo', 'criarSocio');
+    formData.append('documento_socio', documento);
+    
+    anexarTagsAoFormData(form, formData);
+
+    try {
+        const response = await fetch("../controller/control.php", {
+            method: "POST",
+            body: formData
+        });
+
+        const resposta = await response.json(); // Converte a resposta para JSON
+
+        if (resposta.mensagem) {
+            console.log(resposta.mensagem);
+        } else if (resposta.erro) {
+            alert("Erro: " + resposta.erro);
+        } else {
+            alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
+        }
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
 async function atualizarSocio() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
@@ -524,41 +556,64 @@ function dataValidaBR(dataStr) {
 }
 
 function verificarContato() {
-    const nome = document.getElementById('nome').value;
-    const dataNascimento = document.getElementById('data_nascimento').value;
-    const email = document.getElementById('email').value;
-    const telefone = document.getElementById('telefone').value;
 
-    if (!nome || nome.length < 3) {
-        alert('O nome não pode estar vazio.');
-        return false;
-    }
+    const nomeObject = document.getElementById('nome');
+    const dataNascimentoObject = document.getElementById('data_nascimento');
+    const emailObject = document.getElementById('email');
+    const telefoneObject = document.getElementById('telefone');
 
-    if (!dataNascimento) {
-        alert('A data de nascimento não pode estar vazia');
-        return false;
-    } else if (!dataValidaBR(dataNascimento)) {
-        alert('Informe uma data válida antes de prosseguir.');
-        return false;
-    }
+    if (!nomeObject.disabled && !nomeObject.readOnly) {
+        const nome = nomeObject.value;
 
-    if (!email) {
-        alert('O e-mail não pode estar vazio.');
-        return false;
-    }
-
-    if (!telefone) {
-        alert('O telefone não pode estar vazio.');
-        return false;
-    } else if (telefone.length != 14 && telefone.length != 15) {
-        alert('O telefone informado não está no formato correto.');
-        return false;
-    } else if (telefone.length === 15) {
-        const celularNumeros = telefone.replace(/\D/g, '');
-
-        if (celularNumeros[2] != 9) {
-            alert('O número de celular informado não é válido.');
+        if (!nome || nome.length < 3) {
+            alert('O nome não pode estar vazio.');
             return false;
+        }
+    }
+
+    if (!dataNascimentoObject.disabled && !dataNascimentoObject.readOnly) {
+        const dataNascimento = dataNascimentoObject.value;
+
+        if (!dataNascimento) {
+            alert('A data de nascimento não pode estar vazia');
+            return false;
+        }
+
+        if (!dataValidaBR(dataNascimento)) {
+            alert('Informe uma data válida antes de prosseguir.');
+            return false;
+        }
+    }
+
+    if (!emailObject.disabled && !emailObject.readOnly) {
+        const email = emailObject.value;
+
+        if (!email) {
+            alert('O e-mail não pode estar vazio.');
+            return false;
+        }
+    }
+
+    if (!telefoneObject.disabled && !telefoneObject.readOnly) {
+        const telefone = telefoneObject.value;
+
+        if (!telefone) {
+            alert('O telefone não pode estar vazio.');
+            return false;
+        }
+
+        if (telefone.length != 14 && telefone.length != 15) {
+            alert('O telefone informado não está no formato correto.');
+            return false;
+        }
+
+        if (telefone.length === 15) {
+            const celularNumeros = telefone.replace(/\D/g, '');
+
+            if (celularNumeros[2] != 9) {
+                alert('O número de celular informado não é válido.');
+                return false;
+            }
         }
     }
 
@@ -569,7 +624,7 @@ function verificarContato() {
  * Recebe como parâmetro um objeto do tipo Socio e preenche os campos do formulário automaticamente
  * @param {*} param0 
  */
-function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, documento, email, estado, id, logradouro, nome, sobrenome, numeroEndereco, telefone }) {
+function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, documento, email, estado, id, logradouro, nome, sobrenome, numeroEndereco, telefone }, blockField = false) {
 
     //Definir elementos do HTML
     const nomeObject = document.getElementById('nome');
@@ -586,21 +641,44 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
     const complementoObject = document.getElementById('complemento');
 
     //Atribuir valor aos campos
-    nomeObject.value = nome;
-    sobrenomeObject.value = sobrenome;
+    nomeObject.value = nome ?? '';
+    sobrenomeObject.value = sobrenome ?? '';
 
     if (dataNascimento != null && dataNascimento.length === 10)
         dataNascimentoObject.value = converterDataParaBR(dataNascimento);
 
-    emailObject.value = email;
-    telefoneObject.value = telefone;
-    cepObject.value = cep;
-    ruaObject.value = logradouro;
-    numeroEnderecoObject.value = numeroEndereco;
-    bairroObject.value = bairro;
-    ufObject.value = estado;
-    cidadeObject.value = cidade;
-    complementoObject.value = complemento;
+    emailObject.value = email ?? '';
+    telefoneObject.value = telefone ?? '';
+    cepObject.value = cep ?? '';
+    ruaObject.value = logradouro ?? '';
+    numeroEnderecoObject.value = numeroEndereco ?? '';
+    bairroObject.value = bairro ?? '';
+    ufObject.value = estado ?? '';
+    cidadeObject.value = cidade ?? '';
+    complementoObject.value = complemento ?? '';
+
+    if (blockField) {
+
+        const fields = [
+            nomeObject,
+            sobrenomeObject,
+            dataNascimentoObject,
+            emailObject,
+            telefoneObject,
+            cepObject,
+            ruaObject,
+            numeroEnderecoObject,
+            bairroObject,
+            ufObject,
+            cidadeObject,
+            complementoObject
+        ];
+
+        fields.forEach(field => {
+            field.disabled = true;
+            field.classList.add('campo-bloqueado');
+        });
+    }
 }
 
 function buscarSocio() {
@@ -623,40 +701,79 @@ function buscarSocio() {
             return response.json();
         })
         .then(data => {
-            // Manipula os dados recebidos do back-end
-            //verificar se existem elementos no data
-            if (data.resultado && typeof data.resultado === 'object') {
 
-                //Autocompletar campos do formulário
+            console.log('Resposta do sócio:', data);
+
+            const socioEncontrado =
+                typeof data.resultado === 'object' &&
+                data.resultado !== null;
+
+            if (socioEncontrado) {
+
                 if (!verificarSocio(data.resultado)) {
-                    //Exibir o sócio
-                    console.log(data);
                     formAutocomplete(data.resultado);
                     acao = 'atualizar';
                     alternarPaginas('pag3', 'pag2');
-                } else {//Enviar para a página de confirmação de geração de boletos
+                } else {
                     alternarPaginas('pag5', 'pag2');
                 }
 
-                //Pegar o nome do sócio e o exibir na página de confirmação de geração do boleto
-                let nomeSocio = data.resultado.nome;
+                const nomeSocio = data.resultado.nome;
 
-                const divAgradecimento = document.getElementById('div-agradecimento');
-                divAgradecimento.innerHTML = `<h3>Obrigado por contribuir mais uma vez, ${nomeSocio}!<h3>`;
-            } else {
-                //necessário repensar, pois pode não existir um sócio mas existir a pessoa.
-                console.log(data.resultado);
+                document.getElementById('div-agradecimento').innerHTML =
+                    `<h3>Obrigado por contribuir mais uma vez, ${nomeSocio}!</h3>`;
+
+                return;
+            }
+
+            console.log('Sócio não encontrado. Iniciando busca de pessoa.');
+
+            const buscaPessoaUrl =
+                `../../../controle/control.php?nomeClasse=PessoaControle&metodo=buscarPorDocumento&documento=${encodeURIComponent(documento)}`;
+
+            return fetch(buscaPessoaUrl);
+        })
+        .then(response => {
+
+            if (!response) {
+                return;
+            }
+
+            console.log('Resposta da busca de pessoa:', response.status);
+
+            if (response.status === 404) {
+
                 acao = 'cadastrar';
                 alternarPaginas('pag3', 'pag2');
 
-                const divAgradecimento = document.getElementById('div-agradecimento');
-                divAgradecimento.innerHTML = `<h3>Obrigado pela sua contribuição!<h3>`;
+                return;
             }
 
-            //alternarPaginas('pag2');
+            if (!response.ok) {
+                throw new Error('Erro na consulta da pessoa');
+            }
+
+            return response.json();
+        })
+        .then(pessoaData => {
+
+            if (!pessoaData) {
+                return;
+            }
+
+            console.log('Pessoa encontrada:', pessoaData);
+
+            pessoaData.dataNascimento = pessoaData.data_nascimento;
+            pessoaData.numeroEndereco = pessoaData.numero_endereco;
+
+            formAutocomplete(pessoaData, true);
+
+            acao = 'cadastrar_existente';
+
+            alternarPaginas('pag3', 'pag2');
         })
         .catch(error => {
-            console.error('Erro ao realizar a consulta:', error);
+            console.error(error);
         });
 
     console.log("Consulta realizada");

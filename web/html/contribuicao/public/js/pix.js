@@ -11,8 +11,9 @@ async function configurarRegrasDePagamento() {
 async function decidirAcao() {
     switch (acao) {
         case 'qrcode': gerarQRCode(); break;
-        case 'cadastrar': await cadastrarSocio(); gerarQRCode(); break;//colocar chamada para função de cadastrar sócio
-        case 'atualizar': await atualizarSocio(); gerarQRCode(); break;//colocar chamada para função de atualizar sócio
+        case 'cadastrar': await cadastrarSocio(); gerarQRCode(); break;
+        case 'atualizar': await atualizarSocio(); gerarQRCode(); break;
+        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); gerarBoleto(); break;
         default: console.log('Ação indefinida');
     }
 }
