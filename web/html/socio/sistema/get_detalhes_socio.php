@@ -18,7 +18,7 @@ $conexao->set_charset("utf8");
 extract($_REQUEST);
 
 // Segundo statement
-$sql2 = "SELECT p.nome, p.sobrenome, p.cpf, p.data_nascimento, p.cep, p.logradouro, p.numero_endereco, p.complemento, p.bairro, p.estado, p.cidade, s.email, p.telefone, st.tipo, ss.status, s.data_referencia, s.valor_periodo
+$sql2 = "SELECT p.nome, p.sobrenome, p.cpf, p.email, p.data_nascimento, p.cep, p.logradouro, p.numero_endereco, p.complemento, p.bairro, p.estado, p.cidade, p.telefone, st.tipo, ss.status, s.data_referencia, s.valor_periodo
 FROM pessoa as p
 JOIN socio s ON(p.id_pessoa=s.id_pessoa)
 JOIN socio_tipo st ON(st.id_sociotipo=s.id_sociotipo)

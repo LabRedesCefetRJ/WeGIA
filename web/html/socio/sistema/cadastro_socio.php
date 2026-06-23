@@ -152,12 +152,20 @@ $resultado = $stmtBuscaPessoa->get_result();
 
 if ($stmtBuscaPessoa->affected_rows > 0) {
     $id_pessoa = $resultado->fetch_assoc()['id_pessoa'];
+    //inserir e-mail na pessoa
+    $stmtEmail = $conexao->prepare("UPDATE pessoa SET email = ? WHERE id_pessoa = ?");
+    $stmtEmail->bind_param('si', $email, $id_pessoa);
+    if (!$stmtEmail->execute()) {
+        http_response_code(500);
+        echo json_encode(['erro' => 'erro ao atualizar o email da pessoa no banco de dados']);
+        exit();
+    }
 } else {
     // Criar uma nova pessoa
-    $stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, sobrenome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, sobrenome, telefone, email, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    $stmt->bind_param('ssssssssssss', $cpf_cnpj, $socio_nome, $socio_sobrenome, $telefone, $data_nasc, $cep, $estado, $cidade, $bairro, $rua, $numero, $complemento);
+    $stmt->bind_param('sssssssssssss', $cpf_cnpj, $socio_nome, $socio_sobrenome, $telefone, $email, $data_nasc, $cep, $estado, $cidade, $bairro, $rua, $numero, $complemento);
 
     if (!$stmt->execute()) {
         http_response_code(500);
@@ -267,9 +275,9 @@ switch ($pessoa) {
         break;
 }
 
-$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?, ?)");
-$stmt2->bind_param('iiisdsi', $id_pessoa, $status, $id_sociotipo, $email, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
-$stmt2->execute();
+    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt2->bind_param('iiidsi', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
+    $stmt2->execute();
 
 if ($stmt2->affected_rows > 0) {
     $id_socio = mysqli_insert_id($conexao);

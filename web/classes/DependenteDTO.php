@@ -6,7 +6,8 @@ class DependenteDTO
     public ?string $sobrenome = null;
     public ?string $sexo = null;
     public ?DateTime $nascimento = null;
-    public ?string $telefone = null;
+    public ?string $email = null;
+    public ?string $telefone = null; 
     public ?string $nomePai = null;
     public ?string $nomeMae = null;
 
@@ -26,6 +27,9 @@ class DependenteDTO
 
         if (key_exists('nascimento', $data) || key_exists('data_nascimento', $data))
             $this->nascimento = new DateTime($data['nascimento'] ?? $data['data_nascimento']);
+
+        if(key_exists('email', $data))
+            $this->email = $data['email']; 
 
         if(key_exists('telefone', $data))
             $this->telefone = $data['telefone'];

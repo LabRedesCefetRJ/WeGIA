@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE)
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
 	exit();
-} else {
+} else { 
 	session_regenerate_id();
 }
 
@@ -229,6 +229,17 @@ $fieldErrors = getSessionFormErrors();
 												<div class="col-md-8">
 													<label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
 													<label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+												</div>
+											</div>
+											<div class="form-group">
+												<label class="col-md-3 control-label" for="email">E-mail</label>
+												<div class="col-md-6">
+													<input
+														type="email"
+														class="form-control"
+														name="email"
+														id="email"
+														placeholder="Ex: usuario@email.com" >
 												</div>
 											</div>
 											<div class="form-group">
