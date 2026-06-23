@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `sobrenome` VARCHAR(100) NULL DEFAULT NULL,
   `sexo` CHAR(1) NULL DEFAULT NULL,
   `telefone` VARCHAR(25) NULL DEFAULT NULL,
+  `email` VARCHAR(256) NULL DEFAULT NULL,
   `data_nascimento` DATE NULL DEFAULT NULL,
   `imagem` LONGTEXT NULL DEFAULT NULL,
   `cep` VARCHAR(10) NULL DEFAULT NULL,
@@ -1105,7 +1106,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `id_pessoa` INT(11) NOT NULL,
   `id_sociostatus` INT NOT NULL,
   `id_sociotipo` INT NOT NULL,
-  `email` VARCHAR(256) NULL DEFAULT NULL,
   `valor_periodo` DECIMAL(10,2) NULL DEFAULT NULL,
   `data_referencia` DATE NULL DEFAULT NULL,
   `auto_status_contribuicoes` TINYINT(1) NOT NULL DEFAULT 1,
@@ -2427,7 +2427,7 @@ DELIMITER ;
 DELIMITER $$
 USE `wegia`$$
 CREATE PROCEDURE `cadfuncionario`(IN `nome` VARCHAR(100), IN `sobrenome` VARCHAR(100), IN `cpf` VARCHAR(40), 
-  IN `senha` VARCHAR(70), IN `sexo` CHAR(1), IN `telefone` VARCHAR(100), 
+  IN `senha` VARCHAR(70), IN `sexo` CHAR(1), IN `email` VARCHAR(100), IN `telefone` VARCHAR(100),
   IN `data_nascimento` DATE, IN `imagem` LONGTEXT, IN `cep` VARCHAR(100), 
   IN `estado` VARCHAR(50), IN `cidade` VARCHAR(40), IN `bairro` VARCHAR(40), 
   IN `logradouro` VARCHAR(40), IN `numero_endereco` VARCHAR(100), IN `complemento` VARCHAR(50), 
@@ -2442,9 +2442,9 @@ begin
 declare idP int;
 declare idF int;
 
-insert into pessoa(cpf, senha, nome, sobrenome, sexo, telefone,data_nascimento,imagem,cep ,estado,cidade, bairro, logradouro, numero_endereco,
+insert into pessoa(cpf, senha, nome, sobrenome, sexo, email, telefone,data_nascimento,imagem,cep ,estado,cidade, bairro, logradouro, numero_endereco,
 complemento,ibge,registro_geral,orgao_emissor,data_expedicao, nome_pai, nome_mae, tipo_sanguineo)
-values(cpf, senha, nome, sobrenome, sexo, telefone,data_nascimento,imagem, cep ,estado,cidade, bairro, logradouro, numero_endereco,
+values(cpf, senha, nome, sobrenome, sexo, email, telefone,data_nascimento,imagem, cep ,estado,cidade, bairro, logradouro, numero_endereco,
 complemento,ibge,registro_geral,orgao_emissor,data_expedicao, nome_pai, nome_mae, tipo_sanguineo);
 
 select max(id_pessoa) into idP FROM pessoa;

@@ -107,7 +107,7 @@ $tipoSocioMap = [
 $tipoSocioIds = $tipoSocioMap[$tipo_socio] ?? null;
 
 // SQL base
-$base = "SELECT p.nome, p.telefone, p.cpf, s.valor_periodo, s.email, st.tipo, ss.status,
+$base = "SELECT p.nome, p.telefone, p.cpf, p.email, s.valor_periodo, st.tipo, ss.status,
 GROUP_CONCAT(DISTINCT stag.tag ORDER BY stag.tag SEPARATOR ', ') AS tag
 FROM pessoa p
 JOIN socio s ON (p.id_pessoa = s.id_pessoa)
@@ -177,7 +177,7 @@ $sql = $base;
 if (count($whereClauses) > 0) {
     $sql .= ' WHERE ' . implode(' AND ', $whereClauses);
 }
-$sql .= ' GROUP BY s.id_socio, p.nome, p.telefone, p.cpf, s.valor_periodo, s.email, st.tipo, ss.status';
+$sql .= ' GROUP BY s.id_socio, p.nome, p.telefone, p.cpf, p.email, s.valor_periodo, st.tipo, ss.status';
 $sql .= ' ORDER BY p.nome';
 
 $stmt = $conexao->prepare($sql);
