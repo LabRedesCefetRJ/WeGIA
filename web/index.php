@@ -153,8 +153,8 @@ require_once "html/personalizacao_display.php";
 		</div>
 	</div>
 	<div align="right">
-		<iframe src="https://www.wegia.org/software/footer/index.html" width="200" height="60" style="border:none;"></iframe>
-	</div>
+        <iframe src="https://www.wegia.org/software/footer/index.html" width="200" height="60" style="border:none;" title="Rodapé do WeGIA"></iframe>
+    </div>
 	<div class="container-fluid">
 		<div class="footer row" style="background-color: black">
 			<div class="col-md-8">
