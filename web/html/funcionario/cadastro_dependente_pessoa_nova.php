@@ -199,7 +199,7 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
+                  <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor</label>
                   <div class="col-md-6">
                     <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
                   </div>
