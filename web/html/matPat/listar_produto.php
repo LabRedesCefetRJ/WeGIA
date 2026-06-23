@@ -119,6 +119,89 @@ if (!isset($_SESSION['produtos'])) {
 		});
 	</script>
 
+	<style>
+		.dataTables_length,
+		.dataTables_filter,
+		.dataTables_info {
+			display: none !important;
+		}
+
+		.dataTables_paginate {
+			margin-top: 15px;
+		}
+
+		.barra-produtos {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-end;
+			gap: 15px;
+			flex-wrap: wrap;
+			margin-bottom: 18px;
+			padding: 12px 14px;
+			background: #f7f7f7;
+			border: 1px solid #e5e5e5;
+			border-radius: 6px;
+		}
+
+		.abas-produtos {
+			display: flex;
+			gap: 6px;
+		}
+
+		.filtros-produtos {
+			display: flex;
+			gap: 12px;
+			align-items: flex-end;
+			flex-wrap: wrap;
+		}
+
+		.campo-filtro label {
+			display: block;
+			font-size: 12px;
+			color: #666;
+			margin-bottom: 4px;
+			font-weight: 600;
+		}
+
+		.campo-filtro select,
+		.campo-filtro input {
+			width: 220px;
+		}
+
+		#datatable-default thead th {
+			background: #fafafa;
+			font-size: 12px;
+			color: #666;
+		}
+
+		#datatable-default td {
+			vertical-align: middle;
+		}
+
+		.acoes-produto {
+			display: flex;
+			gap: 12px;
+			align-items: center;
+		}
+
+		.acoes-produto form {
+			margin: 0;
+			display: inline-block;
+		}
+
+		.acoes-produto button {
+			border: none;
+			background: none;
+			cursor: pointer;
+			padding: 0;
+			color: #666;
+		}
+
+		.acoes-produto button:hover {
+			color: #000;
+		}
+	</style>
+
 </head>
 
 <body>
@@ -158,16 +241,43 @@ if (!isset($_SESSION['produtos'])) {
 					<h2 class="panel-title">Produto</h2>
 				</header>
 				<div class="panel-body">
-					<div style="margin-bottom: 15px;">
-    					<a href="listar_produto.php?tipo=ativo"
-        					class="btn btn-default <?= $tipo === 'ativo' ? 'active' : '' ?>">
-        					Ativos
-    					</a>
+					<div class="barra-produtos">
+						<div class="abas-produtos">
+							<a href="listar_produto.php?tipo=ativo"
+								class="btn btn-default <?= $tipo === 'ativo' ? 'active' : '' ?>">
+								Ativos
+							</a>
 
-    					<a href="listar_produto.php?tipo=arquivado"
-        					class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : '' ?>">
-        					Arquivados
-    					</a>
+							<a href="listar_produto.php?tipo=arquivado"
+								class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : '' ?>">
+								Arquivados
+							</a>
+						</div>
+
+						<div class="filtros-produtos">
+							<div class="campo-filtro">
+								<label for="filtroCategoria">Categoria</label>
+								<select id="filtroCategoria" class="form-control">
+									<option value="">Todas</option>
+									<?php
+									$pdo = Conexao::connect();
+									$res = $pdo->query("SELECT descricao_categoria FROM categoria_produto ORDER BY descricao_categoria");
+									$categorias = $res->fetchAll(PDO::FETCH_ASSOC);
+
+									foreach ($categorias as $categoria) {
+										echo '<option value="' . htmlspecialchars($categoria['descricao_categoria'], ENT_QUOTES, 'UTF-8') . '">'
+											. htmlspecialchars($categoria['descricao_categoria'], ENT_QUOTES, 'UTF-8') .
+										'</option>';
+									}
+									?>
+								</select>
+							</div>
+
+							<div class="campo-filtro">
+								<label for="buscaProduto">Buscar</label>
+								<input type="text" id="buscaProduto" class="form-control" placeholder="Nome, código ou categoria">
+							</div>
+						</div>
 					</div>
 
 					<?php if (isset($_SESSION['erro'])): ?>
@@ -302,6 +412,24 @@ if (!isset($_SESSION['produtos'])) {
 			<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
 			<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 			<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+			<script>
+				$(document).ready(function () {
+					const tabelaProdutos = $('#datatable-default').dataTable().api();
+
+					$('#filtroCategoria').on('change', function () {
+						tabelaProdutos
+							.column(2)
+							.search(this.value)
+							.draw();
+					});
+
+					$('#buscaProduto').on('keyup change', function () {
+						tabelaProdutos
+							.search(this.value)
+							.draw();
+					});
+				});
+			</script>
 			<div align="right">
 				<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 			</div>
