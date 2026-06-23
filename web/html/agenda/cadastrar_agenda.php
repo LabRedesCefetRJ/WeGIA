@@ -2069,6 +2069,20 @@ $('#btn-ir-equipes').on('click', function () {
         $('#equipe-status-grupo').show();
         carregarSelectAgendaEquipe(eq.id_agenda);
         carregarStatusEquipe(eq.id_status);
+
+        $('#wrapper-divisoes-equipe').empty();
+        api('listarDivisoesPorEquipe', { id_equipe: eq.id }).done(function(divisoes) {
+            $.each(divisoes || [], function(_, div) {
+                var html = '<div class="input-group mb-xs div-input-wrapper">' +
+                           '<input type="text" class="form-control input-sm input-nome-divisao" value="' + div.nome + '" data-id="' + div.id + '" placeholder="Nome da divisão">' +
+                           '<span class="input-group-btn">' +
+                           '<button class="btn btn-danger btn-sm btn-remover-divisao-input" type="button" title="Remover"><i class="fa fa-trash"></i></button>' +
+                           '</span>' +
+                           '</div>';
+                $('#wrapper-divisoes-equipe').append(html);
+            });
+        });
+
         $('#modal-equipe').modal('show');
     });
 });
