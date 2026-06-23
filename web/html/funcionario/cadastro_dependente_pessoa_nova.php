@@ -100,7 +100,9 @@ $fieldErrors = getSessionFormErrors();
         <div class="right-wrapper pull-right">
           <ol class="breadcrumbs">
             <li>
-              <a href="../home.php">
+            <a href="../home.php" aria-label="Início">
+                <i class="fa fa-home"></i>
+            </a>
                 <i class="fa fa-home"></i>
               </a>
             </li>
