@@ -2388,6 +2388,196 @@ CREATE TABLE IF NOT EXISTS voluntario_docs (
  REFERENCES pessoa_arquivo (id))
  ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- -----------------------------------------------------
+-- Módulo Agenda
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_status`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_status` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC)
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` TEXT NOT NULL,
+  `id_status` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_agenda_status_idx` (`id_status` ASC),
+  CONSTRAINT `fk_agenda_status`
+    FOREIGN KEY (`id_status`)
+    REFERENCES `wegia`.`agenda_status` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe_status`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_status` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC)
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(150) NOT NULL,
+  `id_status` INT NOT NULL,
+  `descricao` TEXT NULL,
+  `id_agenda` INT NOT NULL,
+  `inicio_turno` TIME NOT NULL,
+  `fim_turno` TIME NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_agenda_equipe_status_idx` (`id_status` ASC),
+  INDEX `fk_agenda_equipe_agenda_idx` (`id_agenda` ASC),
+  CONSTRAINT `fk_agenda_equipe_status`
+    FOREIGN KEY (`id_status`)
+    REFERENCES `wegia`.`agenda_equipe_status` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_agenda_equipe_agenda`
+    FOREIGN KEY (`id_agenda`)
+    REFERENCES `wegia`.`agenda` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe_divisao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_divisao` (
+  `id`        INT           NOT NULL AUTO_INCREMENT,
+  `id_equipe` INT           NOT NULL,
+  `nome`      VARCHAR(100)  NOT NULL,
+  `ativo`     TINYINT(1)    NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  INDEX `fk_aed_equipe_idx` (`id_equipe` ASC),
+  CONSTRAINT `fk_aed_equipe`
+    FOREIGN KEY (`id_equipe`)
+    REFERENCES `wegia`.`agenda_equipe` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe_membro`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_membro` (
+  `id`         INT        NOT NULL AUTO_INCREMENT,
+  `id_equipe`  INT        NOT NULL,
+  `id_divisao` INT        NULL DEFAULT NULL,
+  `id_pessoa`  INT        NOT NULL,
+  `ativo`      TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_equipe_pessoa` (`id_equipe` ASC, `id_pessoa` ASC),
+  INDEX `fk_aem_equipe_idx`  (`id_equipe`  ASC),
+  INDEX `fk_aem_divisao_idx` (`id_divisao` ASC),
+  INDEX `fk_aem_pessoa_idx`  (`id_pessoa`  ASC),
+  CONSTRAINT `fk_aem_equipe`
+    FOREIGN KEY (`id_equipe`)
+    REFERENCES `wegia`.`agenda_equipe` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_aem_divisao`
+    FOREIGN KEY (`id_divisao`)
+    REFERENCES `wegia`.`agenda_equipe_divisao` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_aem_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_alocacao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_agenda` INT NOT NULL,
+  `id_equipe` INT NOT NULL,
+  `inicio` DATE NOT NULL,
+  `fim` DATE NOT NULL,
+  `lembrete` DATETIME NULL DEFAULT NULL,
+  `lembrete_enviado` TINYINT(1) NOT NULL DEFAULT 0,
+  `intervalo` INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  INDEX `fk_aa_agenda_idx` (`id_agenda` ASC),
+  INDEX `fk_aa_equipe_idx` (`id_equipe` ASC),
+  CONSTRAINT `fk_aa_agenda`
+    FOREIGN KEY (`id_agenda`)
+    REFERENCES `wegia`.`agenda` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_aa_equipe`
+    FOREIGN KEY (`id_equipe`)
+    REFERENCES `wegia`.`agenda_equipe` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_alocacao_periodo` 
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao_periodo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_alocacao` INT NOT NULL,
+  `data_inicio` DATETIME NOT NULL,
+  `data_fim` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_periodo_alocacao_idx` (`id_alocacao` ASC),
+  CONSTRAINT `fk_periodo_alocacao`
+    FOREIGN KEY (`id_alocacao`)
+    REFERENCES `wegia`.`agenda_alocacao` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_membro_periodo` 
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_membro_periodo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_periodo` INT NOT NULL,
+  `id_pessoa` INT NOT NULL,
+  `id_divisao` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_membro_periodo_pessoa` (`id_periodo` ASC, `id_pessoa` ASC),
+  INDEX `fk_amp_periodo_idx` (`id_periodo` ASC),
+  INDEX `fk_amp_pessoa_idx` (`id_pessoa` ASC),
+  INDEX `fk_amp_divisao_idx` (`id_divisao` ASC),
+  CONSTRAINT `fk_amp_periodo`
+    FOREIGN KEY (`id_periodo`)
+    REFERENCES `wegia`.`agenda_alocacao_periodo` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_amp_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_amp_divisao`
+    FOREIGN KEY (`id_divisao`)
+    REFERENCES `wegia`.`agenda_equipe_divisao` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+  
 -- ########################### PROCEDURES #################### --
 
 USE `wegia` ;
