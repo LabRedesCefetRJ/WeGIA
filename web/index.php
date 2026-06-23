@@ -79,7 +79,7 @@ require_once "html/personalizacao_display.php";
 		<div class="row cabecalho">
 			<div class="col-md-1 main-menu-logo">
 				<a class="logo pull-left">
-					<img src="<?php display_campo("Logo", "file"); ?>" height="50" />
+					<img src="<?php display_campo("Logo", "file"); ?>" height="50" alt="Logo Wegia"/>
 				</a>
 			</div>
 			<div class="col-md-4 descricao header-description">
