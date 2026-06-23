@@ -53,7 +53,7 @@ $fieldErrors = getSessionFormErrors();
 
 ?>
 <!DOCTYPE html>
-<html class="fixed">
+<html class="fixed" lang="pt-BR">
 
 <head>
 
