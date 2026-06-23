@@ -198,4 +198,122 @@ class EntradaControle
         }
         exit;
     }
+
+    public function anular()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idEntrada = filter_input(INPUT_POST, 'id_entrada', FILTER_VALIDATE_INT);
+
+            if (!$idEntrada || $idEntrada < 1) {
+                throw new InvalidArgumentException("ID da entrada inválido.");
+            }
+
+            $entradaDAO = new EntradaDAO();
+            $resultado = $entradaDAO->anular($idEntrada);
+
+            if (!empty($resultado['produtos'])) {
+                require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'EstoqueService.php';
+
+                $estoqueService = new EstoqueService();
+
+                foreach ($resultado['produtos'] as $idProduto) {
+                    $estoqueService->verificarEstoqueMinimo(
+                        (int)$idProduto,
+                        (int)$resultado['id_almoxarifado']
+                    );
+                }
+            }
+
+            echo json_encode([
+                "sucesso" => true,
+                "mensagem" => "Entrada anulada com sucesso."
+            ]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => $e->getMessage()
+            ]);
+        }
+
+        exit;
+    }
+
+    public function editar()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idEntrada = filter_input(INPUT_POST, 'id_entrada', FILTER_VALIDATE_INT);
+            $idOrigem = filter_input(INPUT_POST, 'id_origem', FILTER_VALIDATE_INT);
+            $idTipo = filter_input(INPUT_POST, 'id_tipo', FILTER_VALIDATE_INT);
+
+            $data = trim($_POST['data'] ?? '');
+            $hora = trim($_POST['hora'] ?? '');
+            $itensJson = $_POST['itens'] ?? '[]';
+
+            if (!$idEntrada || $idEntrada < 1) {
+                throw new InvalidArgumentException("ID da entrada inválido.");
+            }
+
+            if (!$idOrigem || $idOrigem < 1) {
+                throw new InvalidArgumentException("Origem inválida.");
+            }
+
+            if (!$idTipo || $idTipo < 1) {
+                throw new InvalidArgumentException("Tipo de entrada inválido.");
+            }
+
+            $dataValida = DateTime::createFromFormat('Y-m-d', $data);
+
+            if (!$dataValida || $dataValida->format('Y-m-d') !== $data) {
+                throw new InvalidArgumentException("Data inválida.");
+            }
+
+            if (!$hora) {
+                throw new InvalidArgumentException("Hora inválida.");
+            }
+
+            if (strlen($hora) === 5) {
+                $hora .= ':00';
+            }
+
+            if (!preg_match('/^\d{2}:\d{2}:\d{2}$/', $hora)) {
+                throw new InvalidArgumentException("Hora inválida.");
+            }
+
+            $itens = json_decode($itensJson, true);
+
+            if (!is_array($itens) || empty($itens)) {
+                throw new InvalidArgumentException("Nenhum item informado para edição.");
+            }
+
+            $entradaDAO = new EntradaDAO();
+            $entradaDAO->editarBasico($idEntrada, $data, $hora, $idOrigem, $idTipo, $itens);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $ientradaDAO = new IentradaDAO();
+
+            $_SESSION['ientrada'] = $ientradaDAO->listarId($idEntrada);
+            $_SESSION['entradaUnica'] = $entradaDAO->listarId($idEntrada);
+
+            echo json_encode([
+                "sucesso" => true,
+                "mensagem" => "Entrada atualizada com sucesso."
+            ]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => $e->getMessage()
+            ]);
+        }
+
+        exit;
+    }
 }
