@@ -161,17 +161,18 @@ require_once "html/personalizacao_display.php";
 				<p style="color: white; margin-left: 10px; margin-top: 8px;"><?php display_campo("Rodapé", "str"); ?></p>
 			</div>
 			<div class="col-md-4">
-				<div class="pull-right">
-					<a href="https://github.com/nilsonmori/WeGIA" target="_blank" aria-label="Visite nosso repositório no GitHub">
-    					<span class="fa fa-github-square" style="color: white"></span>
-					</a>
-					<a href="https://www.facebook.com/wegiasoftware" target="_blank">
-						<span class="fa fa-facebook-square" style="color: white"></span></a>
-					<a href="https://www.wegia.org" target="_blank">
-						<span class="fa fa-globe" style="color: white"></span></a>
-				</div>
-			</div>
-		</div>
+                <div class="pull-right">
+                    <a href="https://github.com/nilsonmori/WeGIA" target="_blank" aria-label="Visite nosso repositório no GitHub">
+                        <span class="fa fa-github-square" style="color: white"></span>
+                    </a>
+                    <a href="https://www.facebook.com/wegiasoftware" target="_blank" aria-label="Visite nosso Facebook">
+                        <span class="fa fa-facebook-square" style="color: white"></span>
+                    </a>
+                    <a href="https://www.wegia.org" target="_blank" aria-label="Visite nosso site">
+                        <span class="fa fa-globe" style="color: white"></span>
+                    </a>
+                </div>
+            </div>
 		<!-- Vendor -->
 		<script src="./assets/vendor/select2/select2.js"></script>
 		<script src="./assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
