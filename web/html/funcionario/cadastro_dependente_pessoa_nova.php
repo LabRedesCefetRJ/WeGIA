@@ -136,7 +136,7 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="sobrenome" >Sobrenome<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="text" class="form-control<?= !empty($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <?php if (!empty($fieldErrors['sobrenome'])): ?>
