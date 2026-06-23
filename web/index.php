@@ -162,8 +162,9 @@ require_once "html/personalizacao_display.php";
 			</div>
 			<div class="col-md-4">
 				<div class="pull-right">
-					<a href="https://github.com/nilsonmori/WeGIA" target="_blank">
-						<span class="fa fa-github-square" style="color: white"></span></a>
+					<a href="https://github.com/nilsonmori/WeGIA" target="_blank" aria-label="Visite nosso repositório no GitHub">
+    					<span class="fa fa-github-square" style="color: white"></span>
+					</a>
 					<a href="https://www.facebook.com/wegiasoftware" target="_blank">
 						<span class="fa fa-facebook-square" style="color: white"></span></a>
 					<a href="https://www.wegia.org" target="_blank">
