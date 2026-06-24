@@ -822,7 +822,11 @@ class AgendaDAO
     
     public function obterLogo()
     {
-        $sql  = "SELECT `imagem`, `tipo` FROM `imagem` WHERE `id_imagem` = 1 LIMIT 1";
+        $sql  = "SELECT imagem.imagem, imagem.tipo
+                 FROM imagem, campo_imagem, tabela_imagem_campo
+                 WHERE campo_imagem.id_campo = tabela_imagem_campo.id_campo
+                   AND imagem.id_imagem = tabela_imagem_campo.id_imagem
+                   AND campo_imagem.nome_campo = 'Logo'";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
 
