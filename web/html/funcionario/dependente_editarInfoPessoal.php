@@ -19,6 +19,7 @@ try {
     $nome = trim(filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS));
     $sobrenome = trim(filter_input(INPUT_POST, 'sobrenomeForm', FILTER_SANITIZE_SPECIAL_CHARS));
     $sexo = trim(filter_input(INPUT_POST, 'gender', FILTER_SANITIZE_SPECIAL_CHARS));
+    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL); 
     $telefone = trim(filter_input(INPUT_POST, 'telefone', FILTER_UNSAFE_RAW));
     $data_nascimento = trim(filter_input(INPUT_POST, 'nascimento', FILTER_UNSAFE_RAW));
     $nome_mae = trim(filter_input(INPUT_POST, 'nome_mae', FILTER_SANITIZE_SPECIAL_CHARS));
@@ -83,21 +84,15 @@ try {
         throw new InvalidArgumentException('A data informada não é válida.', 400);
     }
 
-    if (!$nome_pai || strlen($nome_pai) < 1) {
-        throw new InvalidArgumentException('O nome do pai informado não é válido', 400);
-    }
-    Util::validarNomePessoaOuLancar($nome_pai, 'nome do pai', 400);
+    Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 400);
 
-    if (!$nome_mae || strlen($nome_mae) < 1) {
-        throw new InvalidArgumentException('O nome da mãe informado não é válido', 400);
-    }
-    Util::validarNomePessoaOuLancar($nome_mae, 'nome da mãe', 400);
+    Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 400);
 
     if (!$idatendido_familiares || $idatendido_familiares < 1) {
         throw new InvalidArgumentException('O id do familiar informado não é válido', 400);
     }
 
-    $sql =  "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, telefone=:telefone, nome_mae=:nome_mae, nome_pai=:nome_pai WHERE id_pessoa = :id";
+    $sql =  "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, nome_mae=:nome_mae, nome_pai=:nome_pai WHERE id_pessoa = :id";
 
     require_once '../../dao/Conexao.php';
     $pdo = Conexao::connect();
@@ -107,6 +102,7 @@ try {
     $pessoa->bindParam(":nome", $nome, PDO::PARAM_STR);
     $pessoa->bindParam(":sobrenome", $sobrenome, PDO::PARAM_STR);
     $pessoa->bindParam(":sexo", $sexo, PDO::PARAM_STR);
+    $pessoa->bindParam(":email", $email, PDO::PARAM_STR);
     $pessoa->bindParam(":telefone", $telefone, PDO::PARAM_STR);
     $pessoa->bindParam(":data_nascimento", $data_nascimento, PDO::PARAM_STR);
     $pessoa->bindParam(":nome_mae", $nome_mae, PDO::PARAM_STR);
