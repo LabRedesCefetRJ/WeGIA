@@ -143,7 +143,22 @@ try {
         $metodo = filter_var($_REQUEST['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
         isset($_REQUEST['modulo']) ? $modulo = filter_var($_REQUEST['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
     }
-
+    if ($modulo) {
+        // Rejeita stream wrappers (phar://, file://, etc)
+        if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $modulo)) {
+            throw new Exception('Stream wrappers não são permitidos.', 400);
+        }
+        
+        // Rejeita path traversal (../ ou ..\)
+        if (preg_match('#\\.\\.' . preg_quote(DIRECTORY_SEPARATOR) . '#', $modulo)) {
+            throw new Exception('Path traversal não é permitido.', 400);
+        }
+        
+        // Rejeita caminhos absolutos
+        if (preg_match('#^[/\\\\]#', $modulo)) {
+            throw new Exception('Caminho absoluto não é permitido.', 400);
+        }
+    }
     processaRequisicao($nomeClasse, $metodo, $modulo);
 } catch (Exception $e) {
     $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? intval($e->getCode()) : 500;

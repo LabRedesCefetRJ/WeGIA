@@ -812,6 +812,9 @@ class FuncionarioControle
     public function adicionarPermissao()
     {
         try {
+            require_once ROOT . '/html/permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 91, 7);
+
             //adicionar csrf
             $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
             $acao = filter_input(INPUT_POST, 'acao', FILTER_SANITIZE_NUMBER_INT);
@@ -906,6 +909,9 @@ class FuncionarioControle
     public function excluirPermissao()
     {
         try {
+            require_once ROOT . '/html/permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 91, 7);
+
             $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
             $recurso = filter_input(INPUT_POST, 'recurso', FILTER_SANITIZE_NUMBER_INT);
 
@@ -935,6 +941,9 @@ class FuncionarioControle
     public function alterarPermissao()
     {
         try {
+            require_once ROOT . '/html/permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 91, 7);
+
             $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
             $acao = filter_input(INPUT_POST, 'acao', FILTER_SANITIZE_NUMBER_INT);
             $recurso = filter_input(INPUT_POST, 'recurso', FILTER_SANITIZE_NUMBER_INT);
