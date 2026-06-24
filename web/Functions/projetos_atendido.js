@@ -1,7 +1,33 @@
-const ATENDIDOS_POR_PAGINA = 10;
-let atendidosDados = [];
-let atendidosPaginaAtual = 1;
+// ================== DATATABLES ==================
+
+var tabelaAtendidos;
+var todosAtendidosData = [];
+
 // ================== FUNÇÕES ==================
+
+function carregarStatusAtendidos() {
+    $.ajax({
+        url: '../../controle/control.php',
+        type: 'GET',
+        data: { metodo: 'listarStatusAtendidosAjax', nomeClasse: 'ProjetoControle' },
+        dataType: 'json',
+        success: function(response) {
+            if (response.success && response.data) {
+                var select = $('#filtro_status_atendido');
+                select.empty();
+                $.each(response.data, function(i, status) {
+                    select.append('<option value="' + status.id_status + '">' + escapeHtml(status.descricao) + '</option>');
+                });
+                select.append('<option value="">Todos</option>');
+                select.val('1');
+                aplicarFiltroAtendidos();
+            } else {
+                console.error('Erro ao carregar status:', response.message);
+            }
+        },
+        error: function(xhr) { console.error('Erro ao carregar status:', xhr.responseText); }
+    });
+}
 
 function carregarAtendidosDisponiveis() {
     $.ajax({
@@ -91,105 +117,89 @@ function removerAtendidoProjeto(id) {
     });
 }
 
-$(document).ready(
-function() {
-    const projetoId = $('#id_projeto').val();
-    const params = {
-        metodo: 'listarAtendidosProjetoAjax',
-        nomeClasse: 'ProjetoControle',
-        projeto_id: projetoId
-    };
-
+function recarregarListaAtendidos() {
     $.ajax({
         url: '../../controle/control.php',
         type: 'GET',
-        data: params,
+        data: {
+            metodo: 'listarAtendidosProjetoAjax',
+            nomeClasse: 'ProjetoControle',
+            projeto_id: $('#id_projeto').val()
+        },
         dataType: 'json',
         success: function(response) {
-            if (response.success) {
-                atendidosDados = response.data;
-                atendidosPaginaAtual = 1;
-                renderizarPaginaAtendidos();
+            tabelaAtendidos.clear();
+            todosAtendidosData = [];
+            if (response.success && response.data) {
+                todosAtendidosData = response.data;
+                aplicarFiltroAtendidos();
             } else {
-                console.error('Erro ao carregar atendidos:', response.message);
-                $('#atendidos-tab').html('<tr><td colspan="4" class="text-center">Erro ao carregar atendidos.</td></tr>');
+                tabelaAtendidos.draw();
             }
         },
-        error: function(xhr) {
-            console.error('Erro ao carregar atendidos:', xhr.responseText);
-            $('#atendidos-tab').html('<tr><td colspan="4" class="text-center">Erro ao carregar atendidos.</td></tr>');
-        }
+        error: function(xhr) { console.error('Erro ao recarregar atendidos:', xhr.responseText); }
     });
-},
+}
 
-// ================== PAGINAÇÃO ==================
+function filtrarAtendidosPorStatus() {
+    aplicarFiltroAtendidos();
+}
 
-function renderizarPaginaAtendidos() {
-    const inicio       = (atendidosPaginaAtual - 1) * ATENDIDOS_POR_PAGINA;
-    const fim          = inicio + ATENDIDOS_POR_PAGINA;
-    const totalPaginas = Math.ceil(atendidosDados.length / ATENDIDOS_POR_PAGINA);
-    atualizarTabelaAtendidos(atendidosDados.slice(inicio, fim));
-    renderizarPaginacaoAtendidos(totalPaginas);
-},
-
-function atualizarTabelaAtendidos(dados) {
-    const $tbody = $('#atendidos-tab');
-    $tbody.empty();
-
-    if (!dados || dados.length === 0) {
-        $tbody.html('<tr><td colspan="4" class="text-center">Nenhum atendido encontrado.</td></tr>');
-        return;
+function aplicarFiltroAtendidos() {
+    const statusFiltro = $('#filtro_status_atendido').val();
+    tabelaAtendidos.clear();
+    let dadosFiltrados = todosAtendidosData;
+    if (statusFiltro !== '') {
+        dadosFiltrados = todosAtendidosData.filter(function(atendido) {
+            return String(atendido.id_status) === String(statusFiltro);
+        });
     }
-
-    dados.forEach(function(atendido) {
+    $.each(dadosFiltrados, function(i, atendido) {
         const nomeCompleto = ((atendido.nome || '') + ' ' + (atendido.sobrenome || '')).trim();
         const cpf          = atendido.cpf || '--';
         const status       = atendido.status_descricao || '--';
+        const acoes        =
+            '<button type="button"' +
+            ' onclick="event.stopPropagation(); removerAtendidoProjeto(' + atendido.id + ')"' +
+            ' class="btn btn-danger btn-xs" title="Remover do projeto">' +
+            '<i class="fa fa-trash"></i></button>';
 
-        const acoes = '<button type="button" onclick="event.stopPropagation(); removerAtendidoProjeto(' + atendido.id + ')" ' +
-                    'class="btn btn-danger btn-xs" title="Remover do projeto">' +
-                    '<i class="fa fa-trash"></i></button>';
-
-        $('<tr>')
-            .attr('id', 'atendido-' + atendido.id)
-            .css('cursor', 'pointer')
-            .on('click', function() {
-                window.location.href = 'editar_atendido_projeto.php?id=' + atendido.id;
-            })
-            .append($('<td>').text(nomeCompleto))
-            .append($('<td>').text(cpf))
-            .append($('<td>').text(status))
-            .append($('<td class="actions text-center">').html(acoes))
-            .appendTo($tbody);
+        tabelaAtendidos.row.add([
+            escapeHtml(nomeCompleto),
+            escapeHtml(cpf),
+            escapeHtml(status),
+            acoes
+        ]).nodes().to$().attr('id', 'atendido-' + atendido.id)
+                        .css('cursor', 'pointer')
+                        .on('click', (function(id) {
+                            return function() {
+                                window.location.href = 'editar_atendido_projeto.php?id=' + id;
+                            };
+                        })(atendido.id));
     });
-},
+    tabelaAtendidos.draw();
+}
 
-function renderizarPaginacaoAtendidos(totalPaginas) {
-    const $p = $('#atendidos-paginacao');
-    $p.empty();
-    if (totalPaginas <= 1) return;
-
-    $p.append('<li class="' + (atendidosPaginaAtual === 1 ? 'disabled' : '') + '">' +
-        '<a href="#" onclick="mudarPaginaAtendidos(' + (atendidosPaginaAtual - 1) + '); return false;">&laquo;</a></li>');
-
-    for (var i = 1; i <= totalPaginas; i++) {
-        $p.append('<li class="' + (i === atendidosPaginaAtual ? 'active' : '') + '">' +
-            '<a href="#" onclick="mudarPaginaAtendidos(' + i + '); return false;">' + i + '</a></li>');
-    }
-
-    $p.append('<li class="' + (atendidosPaginaAtual === totalPaginas ? 'disabled' : '') + '">' +
-        '<a href="#" onclick="mudarPaginaAtendidos(' + (atendidosPaginaAtual + 1) + '); return false;">&raquo;</a></li>');
-},
-
-function mudarPaginaAtendidos(pagina) {
-    const totalPaginas = Math.ceil(atendidosDados.length / ATENDIDOS_POR_PAGINA);
-    if (pagina < 1 || pagina > totalPaginas) return;
-    atendidosPaginaAtual = pagina;
-    renderizarPaginaAtendidos();
-},
-
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 $(document).ready(function() {
+    tabelaAtendidos = $('#atendidos-table').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/2.0.2/i18n/pt-BR.json'
+        },
+        columnDefs: [{ orderable: false, targets: -1 }],
+        pageLength: 10
+    });
+
+    carregarStatusAtendidos();
     carregarAtendidosDisponiveis();
     recarregarListaAtendidos();
-}))
+});

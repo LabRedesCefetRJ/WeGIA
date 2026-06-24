@@ -71,16 +71,11 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
   <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+  <link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
 
   <style>
     .obrig {
       color: rgb(255, 0, 0);
-    }
-
-    .pagination-container {
-      margin-top: 12px;
-      display: flex;
-      justify-content: flex-end;
     }
   </style>
 </head>
@@ -181,7 +176,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         </form>
                         <hr class="dotted short">
                         <div class="table-responsive">
-                          <table class="table table-bordered table-striped mb-none">
+                          <table class="table table-bordered table-striped mb-none" id="executantes-turma-table">
                             <thead>
                               <tr>
                                 <th>Executante</th>
@@ -190,14 +185,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                               </tr>
                             </thead>
                             <tbody id="executantes-turma-tab">
-                              <tr>
-                                <td colspan="3" class="text-center">Carregando...</td>
-                              </tr>
                             </tbody>
                           </table>
-                        </div>
-                        <div class="pagination-container">
-                          <ul class="pagination pagination-sm" id="executantes-turma-paginacao"></ul>
                         </div>
                       </div>
                     </section>
@@ -236,7 +225,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         </form>
                         <hr class="dotted short">
                         <div class="table-responsive">
-                          <table class="table table-bordered table-striped mb-none">
+                          <table class="table table-bordered table-striped mb-none" id="atendidos-turma-table">
                             <thead>
                               <tr>
                                 <th>Atendido</th>
@@ -245,14 +234,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                               </tr>
                             </thead>
                             <tbody id="atendidos-turma-tab">
-                              <tr>
-                                <td colspan="3" class="text-center">Carregando...</td>
-                              </tr>
                             </tbody>
                           </table>
-                        </div>
-                        <div class="pagination-container">
-                          <ul class="pagination pagination-sm" id="atendidos-turma-paginacao"></ul>
                         </div>
                       </div>
                     </section>
@@ -269,6 +252,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
   <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
+  <script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+  <script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
   <script src="../../Functions/projetos_turma_editar.js"></script>
 
   <script type="text/javascript">

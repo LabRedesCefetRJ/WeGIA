@@ -142,15 +142,20 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="id_status">Status<sup class="obrig">*</sup></label>
                         <div class="col-md-8">
-                          <select id="id_status" class="form-control" required>
-                            <option value="" disabled>Selecionar Status</option>
-                            <?php foreach ($statusList as $status): ?>
-                              <option value="<?= $status['id_status'] ?>"
-                                <?= ($status['id_status'] == $atendido['id_status']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($status['descricao']) ?>
-                              </option>
-                            <?php endforeach; ?>
-                          </select>
+                          <div style="display: flex; align-items: center;">
+                            <select id="id_status" class="form-control" required style="flex: 1;">
+                              <option value="" disabled>Selecionar Status</option>
+                              <?php foreach ($statusList as $status): ?>
+                                <option value="<?= $status['id_status'] ?>"
+                                  <?= ($status['id_status'] == $atendido['id_status']) ? 'selected' : '' ?>>
+                                  <?= htmlspecialchars($status['descricao']) ?>
+                                </option>
+                              <?php endforeach; ?>
+                            </select>
+                            <a onclick="adicionarNovoStatusAtendido()" style="cursor:pointer; margin-left: 8px; display: flex; align-items: center;">
+                              <i class="fas fa-plus" style="font-size: 20px; color: #007bff;"></i>
+                            </a>
+                          </div>
                         </div>
                       </div>
 

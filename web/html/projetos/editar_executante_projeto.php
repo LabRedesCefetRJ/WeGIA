@@ -142,15 +142,20 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="id_funcao">Função<sup class="obrig">*</sup></label>
                         <div class="col-md-8">
-                          <select id="id_funcao" class="form-control" required>
-                            <option value="" disabled>Selecionar Função</option>
-                            <?php foreach ($funcoes as $funcao): ?>
-                              <option value="<?= $funcao['id_funcao'] ?>"
-                                <?= ($funcao['id_funcao'] == $membro['id_funcao']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($funcao['descricao']) ?>
-                              </option>
-                            <?php endforeach; ?>
-                          </select>
+                          <div style="display: flex; align-items: center;">
+                            <select id="id_funcao" class="form-control" required style="flex: 1;">
+                              <option value="" disabled>Selecionar Função</option>
+                              <?php foreach ($funcoes as $funcao): ?>
+                                <option value="<?= $funcao['id_funcao'] ?>"
+                                  <?= ($funcao['id_funcao'] == $membro['id_funcao']) ? 'selected' : '' ?>>
+                                  <?= htmlspecialchars($funcao['descricao']) ?>
+                                </option>
+                              <?php endforeach; ?>
+                            </select>
+                            <a onclick="adicionarNovaFuncaoExecutante()" style="cursor:pointer; margin-left: 8px; display: flex; align-items: center;">
+                              <i class="fas fa-plus" style="font-size: 20px; color: #007bff;"></i>
+                            </a>
+                          </div>
                         </div>
                       </div>
 
