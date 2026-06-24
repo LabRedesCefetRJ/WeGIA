@@ -1158,8 +1158,7 @@ function fmtTime(str) {
     return str.substring(0, 5); /* HH:MM */
 }
 
-/* Formata o turno com ícone: ☀ diurno (mesmo dia) ou noturno (vira o dia).
-   iconeAbaixo=true coloca o ícone em uma linha própria, abaixo do horário. */
+/* Formata o turno com ícone: ☀ diurno (mesmo dia) ou noturno (vira o dia). */
 function fmtTurno(inicio, fim, iconeAbaixo) {
     if (!inicio || !fim) return '—';
     var icone = fim <= inicio
@@ -1195,9 +1194,17 @@ var dtOpts = {
 function dtInit(id) {
     var $t = $('#' + id);
     if ($.fn.DataTable.isDataTable($t)) {
-        $t.DataTable().destroy();
+        var oSettings = $t.DataTable().settings()[0];
+        if (oSettings && oSettings.nTableWrapper) {
+            $t.DataTable().destroy();
+        } else {
+            var idx = $.inArray(oSettings, $.fn.DataTable.settings);
+            if (idx !== -1) { $.fn.DataTable.settings.splice(idx, 1); }
+        }
     }
-    $t.dataTable($.extend(true, {}, dtOpts));
+    if ($t.is(':visible')) {
+        $t.dataTable($.extend(true, {}, dtOpts));
+    }
 }
 
 /* ── Select2 ─────────────────────────────────────────────── */
@@ -2232,9 +2239,17 @@ function carregarAlocacoes() {
 
     if (!idAgenda || !idEquipe) {
         var msgPlaceholder = !idAgenda ? 'Selecione uma agenda e uma equipe para visualizar as alocações.' : 'Selecione uma equipe para visualizar as alocações.';
+        if ($.fn.DataTable.isDataTable('#dt-alocacoes')) {
+            var oS = $('#dt-alocacoes').DataTable().settings()[0];
+            if (oS && oS.nTableWrapper) {
+                $('#dt-alocacoes').DataTable().destroy();
+            } else {
+                var idx = $.inArray(oS, $.fn.DataTable.settings);
+                if (idx !== -1) $.fn.DataTable.settings.splice(idx, 1);
+            }
+        }
         $('#tbody-alocacoes').html('<tr><td colspan="7" class="text-center text-muted">' + msgPlaceholder + '</td></tr>');
-        dtInit('dt-alocacoes');
-        return; 
+        return;
     }
 
     api('listarTodasAlocacoes').done(function (dados) {
