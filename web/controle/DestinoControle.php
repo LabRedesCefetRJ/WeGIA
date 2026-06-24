@@ -11,26 +11,22 @@ class DestinoControle
 {
     public function verificar()
     {
-        extract($_REQUEST);
-        if ((!isset($nome)) || (empty($nome))) {
-            $msg = "Nome do destino nÃ£o informado. Por favor, informe um nome!";
-            header('Location: ' . WWW . 'html/destino.html?msg=' . $msg);
-        }
-        if ((!isset($cnpj)) || (empty($cnpj))) {
-            $cnpj = '';
-        }
-        if ((!isset($cpf)) || (empty($cpf))) {
-            $cpf = '';
-        }
-        if ((!isset($telefone)) || (empty($telefone))) {
-            $msg .= "Telefone do destino não informado. Por favor, informe um telefone!";
-            header('Location: ../html/destino.html?msg=' . $msg);
+        $nome     = isset($_REQUEST['nome']) ? trim($_REQUEST['nome']) : '';
+        $telefone = isset($_REQUEST['telefone']) ? trim($_REQUEST['telefone']) : '';
+        $cpf      = isset($_REQUEST['cpf']) ? trim($_REQUEST['cpf']) : '';
+        $cnpj     = isset($_REQUEST['cnpj']) ? trim($_REQUEST['cnpj']) : '';
+
+        if (empty($nome)) {
+            $_SESSION['msg'] = "Nome do destino não informado. Por favor, informe um nome!";
+            header('Location: ' . WWW . 'html/matPat/cadastro_destino.php');
+            exit;
         }
 
-        $cpf = strlen($cpf) > 0 ? $cpf : null;
+        $cpf = $cpf !== '' ? $cpf : null;
+        $cnpj = $cnpj !== '' ? $cnpj : null;
+        $telefone = $telefone !== '' ? $telefone : null;
 
-        $destino = new Destino($nome, $cnpj, $cpf, $telefone);
-        return $destino;
+        return new Destino($nome, $cnpj, $cpf, $telefone);
     }
 
     public function listarTodos()

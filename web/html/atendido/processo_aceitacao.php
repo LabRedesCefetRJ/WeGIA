@@ -399,6 +399,11 @@ try {
                                 </div>
 
                                 <div class="form-group">
+                                    <label>E-mail</label>
+                                    <input type="email" name="email" id="edit_email" placeholder="usuario@email.com" class="form-control" />
+                                </div>
+
+                                <div class="form-group">
                                     <label>Telefone</label>
                                     <input type="tel" name="telefone" id="edit_telefone" maxlength="15" placeholder="(22) 99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##) #####-####',this,event)" class="form-control" />
                                 </div>
@@ -511,6 +516,14 @@ try {
                                         class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>"
                                         value="<?= htmlspecialchars(preg_replace('/^(\d{3})(\d{3})(\d{3})(\d{2})$/', '$1.$2.$3-$4', $oldInput['cpf'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
                                     <p id="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? 'block' : 'none' ?>; color: #b30000; font-size: 12px;"><?= !empty($fieldErrors['cpf']) && $openModal === 'modalNovoProcesso' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>E-mail</label>
+                                    <input type="email" name="email" id="email" placeholder="usuario@email.com" class="form-control<?= !empty($fieldErrors['email']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" value="<?= htmlspecialchars($oldInput['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+                                    <?php if (!empty($fieldErrors['email']) && $openModal === 'modalNovoProcesso'): ?>
+                                        <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['email'], ENT_QUOTES, 'UTF-8') ?></p>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div class="form-group">
@@ -692,6 +705,7 @@ try {
 					$('#edit_sobrenome').val(oldInput.sobrenome || '');
 					$('#edit_data_nascimento').val(oldInput.data_nascimento || '');
 					$('#edit_cpf').val(oldInput.cpf || '');
+					$('#edit_email').val(oldInput.email || '');
 					$('#edit_telefone').val(oldInput.telefone || '');
 					$('#edit_cep').val(oldInput.cep || '');
 					$('#edit_rua').val(oldInput.rua || '');
@@ -954,6 +968,7 @@ function formatCpfField(field) {
 
                     $('#nome').val(response.pessoa.nome || '');
                     $('#sobrenome').val(response.pessoa.sobrenome || '');
+                    $('#email').val(response.pessoa.email || '');
                     $('#telefone').val(response.pessoa.telefone || '');
                     $('#cep').val(response.pessoa.cep || '');
                     $('#rua').val(response.pessoa.logradouro || '');
@@ -1332,6 +1347,7 @@ function formatCpfField(field) {
 						$('#edit_data_nascimento').val(pessoa.data_nascimento);
 						$('#edit_cpf').val(pessoa.cpf);
 					formatCpfField(document.getElementById('edit_cpf'));
+						$('#edit_email').val(pessoa.email);
 						$('#edit_telefone').val(pessoa.telefone);
 						$('#edit_cep').val(pessoa.cep);
 						$('#edit_rua').val(pessoa.logradouro);

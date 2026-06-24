@@ -49,10 +49,40 @@ $dataHora = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 $safeName = $dataHora->format('YmdHis') . '-import' . '.dump.tar.gz';
 $destination = BKP_DIR . DIRECTORY_SEPARATOR . $safeName;
 
+// valida extensão
+if (!in_array(strtolower($fileExtension), ['gz', 'gzip', 'tar'])) {
+    http_response_code(400);
+    header("Location: " . REDIRECT . "?msg=error&err=Extensão de arquivo inválida");
+    exit();
+}
+
+// Validar tipo MIME
+$fileMimeType = mime_content_type($fileTmpPath);
+if (!in_array($fileMimeType, $allowedMimeTypes)) {
+    http_response_code(400);
+    header("Location: " . REDIRECT . "?msg=error&err=Tipo de arquivo inválido");
+    exit();
+}
+
+//  Validar que o arquivo está no diretório correto
+$uploadDir = realpath(BKP_DIR);
+if ($uploadDir === false) {
+    http_response_code(500);
+    header("Location: " . REDIRECT . "?msg=error&err=Diretório de backup inválido");
+    exit();
+}
 // move seguro
 if (!move_uploaded_file($fileTmpPath, $destination)) {
     http_response_code(500);
     header("Location: ./configuracao_geral.php?msg=error&err=Erro ao mover arquivo.");
+    exit();
+}
+// VALIDAR QUE O ARQUIVO FOI SALVO NO LOCAL CORRETO
+$uploadedFile = realpath($destination);
+if ($uploadedFile === false || strpos($uploadedFile, $uploadDir) !== 0) {
+    unlink($destination); // Remove arquivo se estiver em local errado
+    http_response_code(500);
+    header("Location: " . REDIRECT . "?msg=error&err=Arquivo salvo em local inválido");
     exit();
 }
 

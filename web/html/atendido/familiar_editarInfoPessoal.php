@@ -23,6 +23,7 @@ $idatendido_familiares = filter_input(INPUT_GET, 'idatendido_familiares', FILTER
 $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
 $sobrenome = filter_input(INPUT_POST, 'sobrenomeForm', FILTER_SANITIZE_SPECIAL_CHARS);
 $sexo = filter_input(INPUT_POST, 'gender', FILTER_SANITIZE_SPECIAL_CHARS);
+$email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
 
 $telefone = filter_input(
     INPUT_POST,
@@ -39,7 +40,7 @@ $data_nascimento = filter_input(
 $nome_mae = filter_input(INPUT_POST, 'nome_mae', FILTER_SANITIZE_SPECIAL_CHARS);
 $nome_pai = filter_input(INPUT_POST, 'nome_pai', FILTER_SANITIZE_SPECIAL_CHARS);
 
-define("ALTERAR_INFO_PESSOAL", "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, telefone=:telefone, nome_mae=:nome_mae, nome_pai=:nome_pai where id_pessoa = :id");
+define("ALTERAR_INFO_PESSOAL", "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, nome_mae=:nome_mae, nome_pai=:nome_pai where id_pessoa = :id");
 
 if (!$id || !is_numeric($id)) {
     $_SESSION['msg'] = 'Erro, o valor do id fornecido para uma pessoa não é válido.';
@@ -81,6 +82,18 @@ if ($sexo != 'm' && $sexo != 'f') {
     exit();
 }
 
+if (!empty($email)) {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $_SESSION['msg'] = 'Erro, o e-mail fornecido não está em um formato válido.';
+        $_SESSION['tipo'] = 'error';
+        header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+        exit();
+    }
+    $email = mb_strtolower($email, 'UTF-8');
+} else {
+    $email = null;
+}
+
 if (!$telefone || empty($telefone)) {
     $telefone = '';
 } else {
@@ -94,11 +107,17 @@ if (!$telefone || empty($telefone)) {
     }
 }
 
-if (!$data_nascimento || empty($data_nascimento)) { //Posteriormente fazer validação do formato da data de nascimento quando o respectivo método for implementado na classe Util.php
-    $_SESSION['msg'] = 'Erro, a data de nascimento fornecida não está em um formato válido.';
-    $_SESSION['tipo'] = 'error';
-    header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
-    exit();
+if (!$data_nascimento || empty($data_nascimento)) {
+    $data_nascimento = null;
+} else {
+    try {
+        new DateTime($data_nascimento);
+    } catch (Exception $e) {
+        $_SESSION['msg'] = 'Erro, a data de nascimento fornecida não está em um formato válido.';
+        $_SESSION['tipo'] = 'error';
+        header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+        exit();
+    }
 }
 
 if ($data_nascimento && $id) {
@@ -140,6 +159,7 @@ try {
     $pessoa->bindValue(":nome", $nome);
     $pessoa->bindValue(":sobrenome", $sobrenome);
     $pessoa->bindValue(":sexo", $sexo);
+    $pessoa->bindValue(":email", $email);
     $pessoa->bindValue(":telefone", $telefone);
     $pessoa->bindValue(":data_nascimento", $data_nascimento);
     $pessoa->bindValue(":nome_mae", $nome_mae);

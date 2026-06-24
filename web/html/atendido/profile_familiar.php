@@ -191,6 +191,7 @@ if ($id_dependente) {
                 formInfoPessoal: function(dep) {
                     $("#nomeForm").val(dep.nome);
                     $("#sobrenomeForm").val(dep.sobrenome);
+                    $("#email").val(dep.email);
                     $("#telefoneForm").val(dep.telefone);
                     $("#nascimentoForm").val(dep.data_nascimento);
                     $("#pai").val(dep.nome_pai);
@@ -650,6 +651,12 @@ if ($id_dependente) {
                                                     <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
                                                 </div>
                                             </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="email">E-mail</label>
+                                                <div class="col-md-8">
+                                                    <input type="email" class="form-control" name="email" id="email" placeholder="Ex: usuario@email.com">
+                                                </div> 
+                                            </div>                                            
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="telefone">Telefone</label>
                                                 <div class="col-md-8">

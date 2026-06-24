@@ -308,6 +308,13 @@ require_once ROOT . "/html/geral/msg.php";
 						</div>
 					</a>
 
+					<a id="home10" href="<?= WWW ?>html/agenda/cadastrar_agenda.php">
+						<div class="col-lg-2 col-md-8 i category-item">
+							<i class="fa fa-calendar"></i>
+							<h4>Agenda</h4>
+						</div>
+					</a>
+
 					<a class="visivel" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#configuracao">
 							<i class="fa fa-cogs"></i>
@@ -711,23 +718,17 @@ require_once ROOT . "/html/geral/msg.php";
 				</div>
 
 				<div class="row category-row-third">
-					<div id="cobrancas" class="removeIn collapse">
-						<a href="<?= WWW ?>html/socio/sistema/cobrancas.php">
+					<div id="contribuicoes" class="removeIn collapse">
+						<a href="<?= WWW ?>html/socio/sistema/psocio_geracao.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-chart-bar"></i>
-								<h4>Controle Cobranças (Antigo)</h4>
+								<i class="fa-solid fa-file-invoice-dollar"></i>
+								<h4>Gerar carnê/boleto para sócio</h4>
 							</div>
 						</a>
 						<a href="<?= WWW ?>html/socio/sistema/contribuicoes.php">
 							<div class="col-lg-2 col-md-8 i">
-								<i class="far fa-chart-bar"></i>
+								<i class="fa-solid fa-chart-line"></i>
 								<h4>Controle de Contribuições</h4>
-							</div>
-						</a>
-						<a href="<?= WWW ?>html/socio/sistema/psocio_geracao.php">
-							<div class="col-lg-2 col-md-8 i">
-								<i class="fas fa-hand-holding-usd"></i>
-								<h4>Gerar Boleto</h4>
 							</div>
 						</a>
 					</div>
@@ -805,8 +806,25 @@ require_once ROOT . "/html/geral/msg.php";
 				<!--fim da parte interna de #saude-->
 
 				<!--parte interna de #contribuicao-->
-				<div class="row">
+				<div class="row category-row-second">
 					<div id="contribuicao" class="collapse">
+						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#contribuicao_gerenciamento">
+								<i class="fa-solid fa-user-gear"></i>
+								<h4>Gerenciamento</h4>
+							</div>
+						</a>
+						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#contribuicao_links">
+								<i class="fa-solid fa-link"></i>
+								<h4>Links</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<div class="row category-row-third">
+					<div id="contribuicao_gerenciamento" class="removeIn collapse">
 						<a href="<?= WWW ?>html/contribuicao/view/gateway_pagamento.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa-solid fa-building"></i>
@@ -825,11 +843,33 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Regras de pagamento</h4>
 							</div>
 						</a>
-
 						<a href="<?= WWW ?>html/contribuicao/view/captcha.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa-solid fa-user-check"></i>
 								<h4>Captcha</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+
+				<div class="row category-row-third">
+					<div id="contribuicao_links" class="removeIn collapse">
+						<a href="<?= WWW ?>html/contribuicao/view/forma_contribuicao.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-hand-holding-dollar"></i>
+								<h4>Formas de Contribuição</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/contribuicao/view/segunda_via.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-regular fa-credit-card"></i>
+								<h4>Segunda via</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/contribuicao/view/gerar_comprovante.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-file-invoice-dollar"></i>
+								<h4>Comprovantes</h4>
 							</div>
 						</a>
 					</div>
