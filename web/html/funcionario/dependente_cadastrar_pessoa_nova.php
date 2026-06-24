@@ -33,7 +33,7 @@ function redirectNovoDependenteError(string $message, string $field = 'global'):
 if (!$id_funcionario || $id_funcionario < 1) {
     redirectNovoDependenteError('O id do funcionário informado não é válido.');
 }
-
+ 
 // Pessoa
 
     $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);

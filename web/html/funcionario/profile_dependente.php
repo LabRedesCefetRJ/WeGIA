@@ -126,6 +126,7 @@ try {
                 formInfoPessoal: function(dep) {
                     $("#nomeForm").val(dep.nome);
                     $("#sobrenomeForm").val(dep.sobrenome);
+                    $("#email").val(dep.email);
                     $("#telefone").val(dep.telefone);
                     $("#nascimento").val(dep.data_nascimento);
                     $("#pai").val(dep.nome_pai);
@@ -544,6 +545,12 @@ try {
                                                     <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-female" style="font-size: 20px;"></i></label>
                                                 </div>
                                             </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="email">E-mail</label>
+                                                <div class="col-md-8">
+                                                    <input type="email" class="form-control" disabled name="email" id="email" placeholder="Ex: usuario@email.com">
+                                                </div> 
+                                            </div> 
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="telefone">Telefone</label>
                                                 <div class="col-md-8">

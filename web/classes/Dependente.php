@@ -4,11 +4,12 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Util.php';
 
 class Dependente
 {
-    private int $id;
+    private int $id; 
     private string $nome;
     private string $sobrenome;
     private string $sexo;
     private DateTime $nascimento;
+    private ?string $email = null;
     private ?string $telefone = null;
     private ?string $nomePai = null;
     private ?string $nomeMae = null;
@@ -21,6 +22,9 @@ class Dependente
         //dados opcionais
         if(isset($dto->id))
             $this->setId($dto->id);
+
+        if(isset($dto->email))
+            $this->setEmail($dto->email);
 
         if(isset($dto->telefone))
             $this->setTelefone($dto->telefone);
@@ -115,14 +119,54 @@ class Dependente
         return $this->nascimento;
     }
 
+    public function setEmail(?string $email)
+    {
+        $email = trim($email ?? '');
+
+        if ($email === '') {
+            $this->email = null;
+            return $this;
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('O e-mail informado não está em um formato válido.', 412);
+        }
+
+        // (ex: User@Email.com e user@email.com são o mesmo endereço)
+        $this->email = mb_strtolower($email, 'UTF-8');
+        
+        return $this;
+    }
+
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
     public function setTelefone(string $telefone)
     {
-        $telefoneValidado = Util::validarTelefone($telefone);
+        $telefone = trim($telefone);
 
-        if ($telefoneValidado === false)
+        if ($telefone === '') {
+            $this->telefone = null;
+            return $this;
+        }
+
+        $telefoneNumerico = Util::limpaTelefone($telefone);
+        $tamanho = strlen($telefoneNumerico);
+
+        if ($tamanho !== 10 && $tamanho !== 11)
             throw new InvalidArgumentException('O telefone informado não está em um formato válido.', 412);
 
-        $this->telefone = $telefoneValidado;
+        $ddd = substr($telefoneNumerico, 0, 2);
+        $numero = substr($telefoneNumerico, 2);
+
+        if ($tamanho === 11) {
+            $this->telefone = sprintf('(%s)%s-%s', $ddd, substr($numero, 0, 5), substr($numero, 5, 4));
+            return $this;
+        }
+
+        $this->telefone = sprintf('(%s)%s-%s', $ddd, substr($numero, 0, 4), substr($numero, 4, 4));
         return $this;
     }
 
@@ -132,9 +176,9 @@ class Dependente
 
     public function setNomePai(string $nome)
     {
-        Util::validarNomePessoaOuLancar($nome, 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nome, 'nome do pai', 412);
 
-        if (strlen($nome) < 2)
+        if (trim($nome) !== '' && strlen($nome) < 2)
             throw new InvalidArgumentException('Nome do pai deve ter pelo menos 2 caracteres.', 412);
 
         $this->nomePai = $nome;
@@ -148,9 +192,9 @@ class Dependente
 
     public function setNomeMae(string $nome)
     {
-        Util::validarNomePessoaOuLancar($nome, 'nome da mãe', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nome, 'nome da mãe', 412);
 
-        if (strlen($nome) < 2)
+        if (trim($nome) !== '' && strlen($nome) < 2)
             throw new InvalidArgumentException('Nome da mãe deve ter pelo menos 2 caracteres.', 412);
 
         $this->nomeMae = $nome;

@@ -50,6 +50,7 @@ class ProcessoAceitacaoControle
         try {
             $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
             $descricao = $this->getPostValue('descricao');
+            $email = $this->getPostValue('email', FILTER_SANITIZE_EMAIL);
             $telefone = $this->getPostValue('telefone');
             $cep = $this->getPostValue('cep');
             $rua = $this->getPostValue('rua');
@@ -71,6 +72,7 @@ class ProcessoAceitacaoControle
                 $sobrenome = $existingPessoa->getSobrenome();
                 $sexo = $existingPessoa->getSexo();
                 $dataNascimento = $existingPessoa->getDataNascimento();
+                $email = $existingPessoa->getEmail();
                 $telefone = $existingPessoa->getTelefone();
                 $cep = $existingPessoa->getCep();
                 $rua = $existingPessoa->getLogradouro();
@@ -100,6 +102,7 @@ class ProcessoAceitacaoControle
             if ($dataNascimento !== null) {
                 $this->validarDataNascimento($dataNascimento);
             }
+            $this->validarEmail($email);
             $this->validarTelefone($telefone);
             $cep = $this->validarCep($cep);
             $this->validarEndereco([
@@ -121,6 +124,7 @@ class ProcessoAceitacaoControle
                     $cpf,
                     $nome,
                     $sobrenome,
+                    $email,
                     $telefone,
                     $cep,
                     $rua,
@@ -192,6 +196,17 @@ class ProcessoAceitacaoControle
         $digits = preg_replace('/\D+/', '', $telefone);
         if (!preg_match('/^\d{10,11}$/', $digits)) {
             throw new InvalidArgumentException('Telefone inválido. Informe DDD + número, com 10 ou 11 dígitos.', 400);
+        }
+    }
+
+    private function validarEmail(?string $email): void
+    {
+        if ($email === null) {
+            return;
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('E-mail inválido. Verifique o endereço informado.', 400);
         }
     }
 
@@ -333,6 +348,7 @@ class ProcessoAceitacaoControle
                     'sobrenome' => $existingPessoa->getSobrenome(),
                     'sexo' => $existingPessoa->getSexo(),
                     'data_nascimento' => $existingPessoa->getDataNascimento(),
+                    'email' => $existingPessoa->getEmail(),
                     'telefone' => $existingPessoa->getTelefone(),
                     'cep' => $existingPessoa->getCep(),
                     'logradouro' => $existingPessoa->getLogradouro(),
@@ -395,6 +411,7 @@ class ProcessoAceitacaoControle
             $sexo = $this->getPostValue('sexo');
             $dataNascimento = $this->getPostValue('data_nascimento');
             $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
+            $email = $this->getPostValue('email', FILTER_SANITIZE_EMAIL);
             $telefone = $this->getPostValue('telefone');
             $cep = $this->getPostValue('cep');
             $rua = $this->getPostValue('rua');
@@ -418,6 +435,7 @@ class ProcessoAceitacaoControle
             if ($dataNascimento !== null) {
                 $this->validarDataNascimento($dataNascimento);
             }
+            $this->validarEmail($email);
             $this->validarTelefone($telefone);
             $cep = $this->validarCep($cep);
             $this->validarEndereco([
@@ -453,6 +471,7 @@ class ProcessoAceitacaoControle
                 'sexo' => $sexo,
                 'data_nascimento' => empty($dataNascimento) ? null : $dataNascimento,
                 'cpf' => $cpf,
+                'email' => $email,
                 'telefone' => $telefone,
                 'cep' => $cep,
                 'logradouro' => $rua,
