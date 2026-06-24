@@ -57,6 +57,7 @@ class SocioDAO
         $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
         $stmtPessoa->bindValue(':nome', $socio->getNome());
         $stmtPessoa->bindParam(':email', $socio->getEmail());
+        $stmtPessoa->bindParam(':email', $socio->getEmail());
         $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
         $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
         $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
@@ -88,8 +89,7 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindValue(':email', $socio->getEmail());
-        $stmtSocio->bindValue(':valor', $socio->getValor());
+        $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
 
         $stmtSocio->execute();
@@ -156,6 +156,7 @@ class SocioDAO
             'UPDATE pessoa 
         SET 
             nome=:nome,
+            email=:email, 
             sobrenome=:sobrenome,
             email=:email, 
             telefone=:telefone, 
@@ -241,6 +242,7 @@ class SocioDAO
             "SELECT 
             pessoa.id_pessoa, 
             pessoa.nome,
+            pessoa.email,
             pessoa.sobrenome,
             pessoa.email,
             pessoa.data_nascimento, 
@@ -280,6 +282,7 @@ class SocioDAO
             "SELECT 
             pessoa.id_pessoa, 
             pessoa.nome,
+            pessoa.email,
             pessoa.sobrenome,
             pessoa.email,
             pessoa.data_nascimento, 

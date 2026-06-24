@@ -14,6 +14,7 @@ include_once ROOT . '/dao/EstoqueDAO.php';
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
 class ProdutoControle
 {
@@ -57,7 +58,7 @@ class ProdutoControle
     public function listarTodos()
     {
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
-        $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(listar_produto|remover_produto)\.php(\?id_produto=\d+)?)$#';
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(listar_produto|remover_produto)\.php(\?id_produto=\d+|\?tipo=ativo)?)$#';
 
         try {
             if (!filter_var($nextPage, FILTER_VALIDATE_URL))
@@ -155,75 +156,41 @@ class ProdutoControle
     public function excluir()
     {
         try {
-            $idProduto = filter_input(INPUT_GET, 'id_produto', FILTER_VALIDATE_INT);
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+            }
+
+            $idProduto = filter_input(INPUT_POST, 'id_produto', FILTER_VALIDATE_INT);
 
             if (!$idProduto || $idProduto < 1) {
                 throw new InvalidArgumentException('O id do produto informado não é válido.', 400);
             }
 
-            $stmtProduto = $this->pdo->prepare("SELECT qtd FROM estoque WHERE id_produto =:idProduto");
-            $stmtProduto->bindValue(':idProduto', $idProduto, PDO::PARAM_INT);
-            $stmtProduto->execute();
-            $produto = $stmtProduto->fetch(PDO::FETCH_ASSOC);
+            $produtoDAO = new ProdutoDAO();
 
-            $stmtSaidas = $this->pdo->prepare("SELECT * FROM isaida WHERE id_produto=:idProduto");
-            $stmtSaidas->bindValue(':idProduto', $idProduto, PDO::PARAM_INT);
-            $stmtSaidas->execute();
+            if ($produtoDAO->possuiHistoricoOuEstoque($idProduto)) {
+                $_SESSION['erro'] = "Não é possível excluir este produto, pois existem registros de entrada/saída ou estoque vinculados.";
+                $_SESSION['id_arquivar'] = $idProduto;
 
-            $stmtEntradas = $this->pdo->prepare("SELECT * FROM ientrada WHERE id_produto=:idProduto");
-            $stmtEntradas->bindValue(':idProduto', $idProduto, PDO::PARAM_INT);
-            $stmtEntradas->execute();
-
-            $registros = $stmtSaidas->fetchAll(PDO::FETCH_ASSOC) || $stmtEntradas->fetchAll(PDO::FETCH_ASSOC);
-
-            if ($produto) {
-                if (intval($produto['qtd']) < 0 && !$registros) {
-                    $produtoDAO = new ProdutoDAO();
-                    $produtoDAO->excluir($idProduto);
-                    header('Content-Type: application/json');
-
-                    echo json_encode([
-                        "sucesso" => true,
-                        "mensagem" => "Produto excluído com sucesso"
-                    ]);
-
-                    exit;
-                } else {
-                    header('Content-Type: application/json');
-
-                    echo json_encode([
-                        "sucesso" => false,
-                        "mensagem" => "Não foi possível excluir o produto, pois existem registros de entrada/saída.",
-                        "redirect" => WWW . "html/matPat/remover_produto.php?id_produto=" . $idProduto
-                    ]);
-
-                    exit;
-                }
-            } else {
-                if (!$registros) {
-
-                    $produtoDAO = new ProdutoDAO();
-                    $produtoDAO->excluir($idProduto);
-                    header('Content-Type: application/json');
-
-                    echo json_encode([
-                        "sucesso" => true,
-                        "mensagem" => "Produto excluído com sucesso"
-                    ]);
-
-                    exit;
-                } else {
-                    header('Content-Type: application/json');
-
-                    echo json_encode([
-                        "sucesso" => false,
-                        "mensagem" => "Não foi possível excluir o produto, pois existem registros de entrada/saída.",
-                        "redirect" => WWW . "html/matPat/remover_produto.php?id_produto=" . $idProduto
-                    ]);
-
-                    exit;
-                }
+                header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+                exit;
             }
+
+            $produtoDAO->excluir($idProduto);
+
+            $_SESSION['msg'] = "Produto excluído com sucesso.";
+            header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+            exit;
+        } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                $_SESSION['erro'] = "Não é possível excluir este produto, pois existem registros vinculados.";
+                $_SESSION['id_arquivar'] = $_POST['id_produto'] ?? null;
+
+                header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+                exit;
+            }
+
+            Util::tratarException($e);
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -302,5 +269,64 @@ class ProdutoControle
         } catch (Exception $e) {
             Util::tratarException($e);
         }
+    }
+
+    public function arquivar()
+    {
+        try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+            }
+
+            $idProduto = filter_input(INPUT_POST, 'id_produto', FILTER_VALIDATE_INT);
+
+            if (!$idProduto || $idProduto < 1) {
+                throw new InvalidArgumentException('ID inválido para arquivamento.', 400);
+            }
+
+            $produtoDAO = new ProdutoDAO();
+            $produtoDAO->arquivar($idProduto);
+
+            $_SESSION['msg'] = "Produto arquivado com sucesso.";
+
+            header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+            exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function desarquivar()
+    {
+        try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+            }
+
+            $idProduto = filter_input(INPUT_POST, 'id_produto', FILTER_VALIDATE_INT);
+
+            if (!$idProduto || $idProduto < 1) {
+                throw new InvalidArgumentException('ID inválido para restauração.', 400);
+            }
+
+            $produtoDAO = new ProdutoDAO();
+            $produtoDAO->desarquivar($idProduto);
+
+            $_SESSION['msg'] = "Produto restaurado com sucesso.";
+
+            header('Location: ' . WWW . 'html/matPat/listar_produto.php?tipo=arquivado');
+            exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function listarArquivados()
+    {
+        $produtoDAO = new ProdutoDAO();
+        $_SESSION['produtos'] = $produtoDAO->listarArquivados();
+
+        header('Location: ' . WWW . 'html/matPat/listar_produto.php?tipo=arquivado');
+        exit;
     }
 }

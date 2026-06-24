@@ -548,6 +548,22 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 				</ul>
 			</li>
 			<!--fim projetos-->
+			<!--agenda-->
+			<li class="nav-parent nav-active" id="10">
+				<a>
+					<i class="fa fa-calendar" aria-hidden="true"></i>
+					<span>Agenda</span>
+				</a>
+				<ul class="nav nav-children">
+					<li>
+						<a href="<?= WWW ?>html/agenda/cadastrar_agenda.php">
+							<i class="fa-solid fa-calendar-days"></i>
+							<span>Gerenciar Agenda</span>
+						</a>
+					</li>
+				</ul>
+			</li>
+			<!--fim agenda-->
 			<li class="nav-parent nav-active visivel">
 				<a>
 					<i class="fa fa-cog" aria-hidden="true"></i>
