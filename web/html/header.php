@@ -125,16 +125,15 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 			$notificacaoDAO = new NotificacaoDAO();
 			$totalNotificacoes = $notificacaoDAO->contarPendentes((int) $id_pessoa);
-			$paginaNotificacoes = WWW . 'html/matPat/listar_notificacoes.php';
+			$paginaNotificacoes = WWW . 'html/geral/listar_notificacoes.php';
 
-			echo '<a href="' . $paginaNotificacoes . '">
-        			Notificações <i class="fa fa-bell" aria-hidden="true"></i>
-        			<span 
-            			id="contador-notificacoes" 
-            			class="badge notify-intercorrencia" 
-            			style="' . ($totalNotificacoes > 0 ? '' : 'display:none;') . '"
-        			>' . ($totalNotificacoes > 0 ? $totalNotificacoes : '') . '</span>
-      			</a>';
+			echo '<a href="' . $paginaNotificacoes . '">Notificações <i class="fa fa-bell" aria-hidden="true"></i>';
+
+			if ($totalNotificacoes > 0) {
+    			echo '<span class="badge notify-intercorrencia">' . $totalNotificacoes . '</span>';
+			}
+
+			echo '</a>';
 			?>
 		</div>
 		<div id="userbox" class="userbox">
@@ -173,38 +172,3 @@ require_once ROOT . "/html/personalizacao_display.php";
 	</div>
 	<!-- end: search & user box -->
 </header>
-<script>
-(function () {
-	function atualizarContadorNotificacoes() {
-		$.ajax({
-			url: "<?= WWW ?>controle/control.php",
-			method: "GET",
-			dataType: "json",
-			data: {
-				nomeClasse: "NotificacaoControle",
-				metodo: "contarPendentes"
-			},
-			success: function (resposta) {
-				if (!resposta.sucesso) {
-					return;
-				}
-
-				var total = Number(resposta.total || 0);
-				var badge = $("#contador-notificacoes");
-
-				if (total > 0) {
-					badge.text(total).show();
-				} else {
-					badge.text("").hide();
-				}
-			}
-		});
-	}
-
-	atualizarContadorNotificacoes();
-
-	if (!window.intervaloContadorNotificacoes) {
-		window.intervaloContadorNotificacoes = setInterval(atualizarContadorNotificacoes, 1000);
-	}
-})();
-</script>
