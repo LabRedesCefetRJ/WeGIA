@@ -791,10 +791,32 @@ class AgendaDAO
         $stmt->execute();
     }
 
+    public function listarCargos()
+    {
+        $sql = "SELECT DISTINCT
+                       CASE
+                           WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
+                           WHEN v.id_pessoa IS NOT NULL THEN 'Voluntário'
+                           WHEN a.pessoa_id_pessoa IS NOT NULL THEN 'Atendido'
+                           ELSE NULL
+                       END AS cargo
+                FROM pessoa p
+                LEFT JOIN funcionario f ON f.id_pessoa = p.id_pessoa
+                LEFT JOIN cargo c ON c.id_cargo = f.id_cargo
+                LEFT JOIN voluntario v ON v.id_pessoa = p.id_pessoa
+                LEFT JOIN atendido a ON a.pessoa_id_pessoa = p.id_pessoa
+                WHERE p.nome IS NOT NULL
+                HAVING cargo IS NOT NULL
+                ORDER BY cargo";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+        return array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'cargo');
+    }
+
     public function listarPessoas(?int $idEquipe = null)
     {
         $sql = "SELECT p.id_pessoa,
-                       CONCAT(p.nome, ' ', p.sobrenome) AS nome_completo,
+                       CONCAT_WS(' ', p.nome, p.sobrenome) AS nome_completo,
                        CASE
                            WHEN f.id_pessoa IS NOT NULL THEN COALESCE(c.cargo, 'Funcionário')
                            WHEN v.id_pessoa IS NOT NULL THEN 'Voluntário'

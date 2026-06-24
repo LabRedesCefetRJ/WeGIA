@@ -480,6 +480,12 @@ require_once "../personalizacao_display.php";
                                                     <h5 id="titulo-edicao-dia" style="margin-top: 0; font-weight: bold; color: #2d3a4a; padding-bottom: 10px; border-bottom: 1px solid #d0dbe7;"></h5>
                                                     
                                                     <div style="background: #fdfdfd; padding: 12px; margin: 0 0 15px 0; border-radius: 4px; border: 1px solid #d0dbe7; display: flex; align-items: flex-end; gap: 10px;">
+                                                        <div style="flex: 3;">
+                                                            <label style="font-size: 11px; font-weight: bold; color: #333; margin-bottom: 4px; display: block;">Filtrar por Cargo</label>
+                                                            <select class="form-control input-sm" id="novo-membro-dia-filtro-cargo" style="width: 100%;">
+                                                                <option value="">Todos os cargos</option>
+                                                            </select>
+                                                        </div>
                                                         <div style="flex: 5;">
                                                             <label style="font-size: 11px; font-weight: bold; color: #333; margin-bottom: 4px; display: block;">Adicionar Pessoa ao Dia</label>
                                                             <select class="form-control input-sm" id="novo-membro-dia-pessoa" style="width: 100%;"></select>
@@ -668,7 +674,15 @@ require_once "../personalizacao_display.php";
                 <div class="membros-panel mb-md">
                     <h5 style="margin-top:0; font-weight:700; color:#2d3a4a;">Adicionar Membro</h5>
                     <div class="row">
-                        <div class="col-sm-6">
+                        <div class="col-sm-3">
+                            <div class="form-group">
+                                <label class="control-label">Filtrar por Cargo</label>
+                                <select class="form-control" id="membro-filtro-cargo">
+                                    <option value="">Todos os cargos</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-5">
                             <div class="form-group">
                                 <label class="control-label">Pessoa <sup class="text-danger">*</sup></label>
                                 <select class="form-control" id="membro-pessoa"></select>
@@ -2046,15 +2060,60 @@ $(document).on('click', '.btn-reativar-membro', function () {
     });
 });
 
+var _todasPessoasModal  = [];
+var _todasPessoasEscala = [];
+
+function _popularFiltrosCargo(cargos, filtroId) {
+    var opts = '<option value="">Todos os cargos</option>';
+    $.each(cargos, function(_, c) { opts += '<option value="' + c + '">' + c + '</option>'; });
+    $(filtroId).html(opts);
+}
+
+function _carregarCargos(filtroId) {
+    api('listarCargos').done(function(cargos) {
+        _popularFiltrosCargo(cargos || [], filtroId);
+    });
+}
+
+function _aplicarFiltroCargoModal() {
+    var cargo = $('#membro-filtro-cargo').val();
+    var opts = '<option value="">Selecione uma pessoa</option>';
+    $.each(_todasPessoasModal, function(_, p) {
+        if (cargo && p.cargo !== cargo) return;
+        opts += '<option value="' + p.id_pessoa + '">' + (p.cargo ? p.nome_completo + ' - ' + p.cargo : p.nome_completo) + '</option>';
+    });
+    $('#membro-pessoa').html(opts);
+    initSelect2('#membro-pessoa', 'Selecione uma pessoa');
+}
+
+function _aplicarFiltroCargoEscala() {
+    var cargo = $('#novo-membro-dia-filtro-cargo').val();
+    if (!cargo) {
+        $('#novo-membro-dia-pessoa').html('<option value="">Selecione um cargo primeiro...</option>').prop('disabled', true);
+        try { initSelect2('#novo-membro-dia-pessoa', 'Selecione um cargo primeiro...'); } catch(e) {}
+        return;
+    }
+    var opts = '<option value="">Selecione uma pessoa...</option>';
+    $.each(_todasPessoasEscala, function(_, p) {
+        if (p.cargo !== cargo) return;
+        opts += '<option value="' + p.id_pessoa + '">' + p.nome_completo + '</option>';
+    });
+    $('#novo-membro-dia-pessoa').html(opts).prop('disabled', false);
+    try { initSelect2('#novo-membro-dia-pessoa', 'Buscar pessoa...'); } catch(e) {}
+}
+
+$(document).on('change', '#membro-filtro-cargo', _aplicarFiltroCargoModal);
+$(document).on('change', '#novo-membro-dia-filtro-cargo', _aplicarFiltroCargoEscala);
+
 function _carregarSelectPessoas(idEquipe) {
-    api('listarPessoas', { id_equipe: idEquipe }).done(function (dados) {
-        var opts = '<option value="">Selecione uma pessoa</option>';
-        $.each(dados, function (_, p) {
-            var label = p.cargo ? p.nome_completo + ' - ' + p.cargo : p.nome_completo;
-            opts += '<option value="' + p.id_pessoa + '">' + label + '</option>';
-        });
-        $('#membro-pessoa').html(opts);
-        initSelect2('#membro-pessoa', 'Selecione uma pessoa');
+    $.when(
+        api('listarPessoas', { id_equipe: idEquipe }),
+        api('listarCargos')
+    ).done(function(resPessoas, resCargos) {
+        _todasPessoasModal = resPessoas[0] || [];
+        _popularFiltrosCargo(resCargos[0] || [], '#membro-filtro-cargo');
+        $('#membro-filtro-cargo').val('');
+        _aplicarFiltroCargoModal();
     });
 }
 
@@ -2617,25 +2676,24 @@ $(document).on('click', '.item-periodo-alocacao', function(e) {
     $('#conteudo-edicao-dia').html('<div class="text-muted"><i class="fa fa-spinner fa-spin"></i> Carregando membros...</div>');
     $('#btn-salvar-escala-diaria-tab').data('id-periodo', idPeriodo);
 
-    // Carrega membros, divisões da equipe E todas as pessoas disponíveis no sistema
+    // Carrega membros, divisões da equipe, todas as pessoas e cargos disponíveis no sistema
     $.when(
         api('listarDivisoesPorEquipe', { id_equipe: _idEquipeEscalaAtual }),
         api('listarMembrosPorPeriodo', { id_periodo: idPeriodo }),
-        api('listarPessoas') 
-    ).done(function (resDiv, resMem, resPessoas) {
+        api('listarPessoas'),
+        api('listarCargos')
+    ).done(function (resDiv, resMem, resPessoas, resCargos) {
         var divisoes = resDiv[0] || [];
         var membros = resMem[0] || [];
         var pessoas = resPessoas[0] || [];
+        var cargos  = resCargos[0] || [];
 
-        // Popula o select de "Adicionar Pessoa"
-        var optPessoas = '<option value="">Selecione uma pessoa...</option>';
-        $.each(pessoas, function(_, p) {
-            var nomeDisplay = p.nome_completo || p.nome || 'Sem Nome';
-            optPessoas += '<option value="'+p.id_pessoa+'">'+nomeDisplay+ (p.cargo ? ' - '+p.cargo : '') +'</option>';
-        });
-        $('#novo-membro-dia-pessoa').html(optPessoas);
-        
-        try { initSelect2('#novo-membro-dia-pessoa', 'Buscar pessoa...'); } catch(e) {}
+        // Popula o filtro de cargo; pessoa só carrega após selecionar cargo
+        _todasPessoasEscala = pessoas;
+        _popularFiltrosCargo(cargos, '#novo-membro-dia-filtro-cargo');
+        $('#novo-membro-dia-filtro-cargo').val('');
+        $('#novo-membro-dia-pessoa').html('<option value="">Selecione um cargo primeiro...</option>').prop('disabled', true);
+        try { initSelect2('#novo-membro-dia-pessoa', 'Selecione um cargo primeiro...'); } catch(e) {}
 
         var optDiv = '<option value="">Sem divisão</option>';
         $.each(divisoes, function(_, d) {

@@ -366,6 +366,19 @@ class AgendaControle
         exit;
     }
 
+    public function listarCargos()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $dao = new AgendaDAO();
+            echo json_encode($dao->listarCargos());
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+        exit;
+    }
+
     public function alterarAlocacao()
     {
         header('Content-Type: application/json');
