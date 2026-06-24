@@ -25,12 +25,21 @@ permissao($id_pessoa, 91, 1);
 
 try {
 	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
-	$sql = 'SELECT p.nome, p.id_pessoa as id_pessoa, c.cargo as nome_cargo from pessoa p join funcionario f on f.id_pessoa = p.id_pessoa join cargo c on f.id_cargo = c.id_cargo';
-
+	$sql = '
+		SELECT p.nome, p.id_pessoa as id_pessoa, c.cargo as nome_cargo 
+		FROM pessoa p 
+		JOIN funcionario f ON f.id_pessoa = p.id_pessoa 
+		JOIN cargo c ON f.id_cargo = c.id_cargo
+		UNION
+		SELECT p.nome, p.id_pessoa as id_pessoa, c.cargo as nome_cargo 
+		FROM pessoa p 
+		JOIN voluntario v ON v.id_pessoa = p.id_pessoa 
+		JOIN cargo c ON v.id_cargo = c.id_cargo
+	';
 	$pdo = Conexao::connect();
 
 	$query = $pdo->query($sql);
-	$funcionarios = $query->fetchAll(PDO::FETCH_ASSOC);
+	$pessoas = $query->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
 	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 	Util::tratarException($e);
@@ -52,7 +61,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<title>Alterar senha</title>
 	<!-- Mobile Metas -->
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light"
+		rel="stylesheet" type="text/css">
 	<!-- Vendor CSS -->
 	<link rel="stylesheet" href=<?= WWW . "assets/vendor/bootstrap/css/bootstrap.css" ?> />
 	<link rel="stylesheet" href=<?= WWW . "assets/vendor/font-awesome/css/font-awesome.css" ?> />
@@ -105,14 +115,14 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<script src=<?= WWW . "Functions/mascara.js" ?>></script>
 
 	<script type="text/javascript">
-		$(function() {
+		$(function () {
 			$("#header").load("<?php echo WWW; ?>html/header.php");
 			$(".menuu").load("<?php echo WWW; ?>html/menu.php");
 		});
 	</script>
 
 	<script>
-		$(function() {
+		$(function () {
 			const verificacao = '<?= isset($_GET['verificacao']) ? htmlspecialchars($_GET['verificacao']) : '0' ?>';
 
 			switch (verificacao) {
@@ -149,7 +159,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
 			<section role="main" class="content-body">
 				<header class="page-header">
-					<h2>Configurar senha funcionário</h2>
+					<h2>Configurar senha</h2>
 					<div class="right-wrapper pull-right">
 						<ol class="breadcrumbs">
 							<li>
@@ -179,19 +189,20 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 							<div class="tab-content">
 								<div id="overview" class="tab-pane active">
 									<div>
-										<h3 id="erro">Selecione um funcionário para modificar a senha</h3>
+										<h3 id="erro">Selecione uma pessoa para modificar a senha</h3>
 									</div>
-									<form class="form-horizontal" method="post" id="password-form" action="<?php echo (WWW . 'controle/control.php'); ?>">
+									<form class="form-horizontal" method="post" id="password-form"
+										action="<?php echo (WWW . 'controle/control.php'); ?>">
 										<fieldset>
 											<div class="form-group">
-												<label class="col-md-3 control-label">Funcionário:
+												<label class="col-md-3 control-label">Pessoa:
 												</label>
 												<div class="col-md-6">
 													<select name="id_pessoa" id="id_pessoa" class="form-control mb-md">
 														<option selected disabled>Selecionar</option>
 														<?php
-														foreach ($funcionarios as $funcionario) {
-															echo "<option value=" . htmlspecialchars($funcionario['id_pessoa']) . ">" . htmlspecialchars($funcionario['nome']) . " - " . htmlspecialchars($funcionario['nome_cargo']) . "</option>";
+														foreach ($pessoas as $pessoa) {
+															echo "<option value=" . htmlspecialchars($pessoa['id_pessoa']) . ">" . htmlspecialchars($pessoa['nome']) . " - " . htmlspecialchars($pessoa['nome_cargo']) . "</option>";
 														}
 														?>
 													</select>
@@ -203,7 +214,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Nova senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" id="nova_senha" name="nova_senha" class="form-control" required><br />
+													<input type="password" id="nova_senha" name="nova_senha"
+														class="form-control" required><br />
 													</label>
 													<div id="password-div"></div>
 												</div>
@@ -212,7 +224,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Confirmar senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" name="confirmar_senha" class="form-control" required><br />
+													<input type="password" name="confirmar_senha" class="form-control"
+														required><br />
 													</label>
 
 												</div>
@@ -249,12 +262,13 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<script src=<?= WWW . "assets/javascripts/theme.custom.js" ?>></script>
 
 	<!-- Theme Initialization Files -->
-	<script src=<?= WWW . "assets/javascripts/theme.init.js"?>></script>
+	<script src=<?= WWW . "assets/javascripts/theme.init.js" ?>></script>
 
-	<script src=<?= WWW . "Functions/password_policy.js"?>></script>
+	<script src=<?= WWW . "Functions/password_policy.js" ?>></script>
 
 	<div align="right">
-		<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60" style="border:none;"></iframe>
+		<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60"
+			style="border:none;"></iframe>
 	</div>
 
 </body>

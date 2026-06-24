@@ -101,6 +101,10 @@ document.getElementById('cpf_cnpj').addEventListener('blur', async function () {
             document.getElementById('numero').value = jsonPessoa.numero_endereco || "";
         }
 
+        if (jsonPessoa.complemento) {
+            document.getElementById('complemento').value = jsonPessoa.complemento || "";
+        }
+
         // Bloquear os campos que foram preenchidos com os dados da pessoa
         bloquearCamposPessoa();
 
@@ -151,7 +155,8 @@ function bloquearCamposPessoa() {
         'rua',
         'estado',
         'cidade',
-        'numero'
+        'numero',
+        'complemento'
     ];
 
     camposParaBloq.forEach(id => {
@@ -178,7 +183,8 @@ function desbloquearCamposPessoa() {
         'rua',
         'estado',
         'cidade',
-        'numero'
+        'numero',
+        'complemento'
     ];
 
     camposParaBloq.forEach(id => {
