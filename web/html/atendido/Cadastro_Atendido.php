@@ -16,7 +16,7 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 $config_path = "config.php";
-if (file_exists($config_path)) {
+if (file_exists($config_path)) { 
 	require_once($config_path);
 } else {
 	while (true) {
@@ -332,6 +332,16 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 											<input type="radio" name="sexo" id="radio2" value="f" style="margin-top: 10px; margin-left: 15px;" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i>
 										</div>
 									</div>
+							<div class="form-group">
+								<label class="col-md-3 control-label" for="email">E-mail</label>
+								<div class="col-md-6">
+									<input
+										type="email"
+										class="form-control"
+										name="email"
+										id="email"
+										placeholder="Ex: usuario@email.com" >
+								</div>
 							</div>
 							<div class="form-horizontal form-group">
 								<label class="col-md-3 control-label" for="profileCompany">Telefone</label>

@@ -16,6 +16,8 @@ abstract class Pessoa
 
     private $sexo;
 
+    private $email;
+
     private $telefone;
 
     private $dataNascimento;
@@ -52,7 +54,7 @@ abstract class Pessoa
 
     private $cns;
 
-    public function __construct($cpf,$nome,$sobrenome,$sexo,$dataNascimento,$registroGeral,$orgaoEmissor,$dataExpedicao,$nomeMae,$nomePai,$tipoSanguineo,$senha,$telefone,$imagem,$cep,$estado,$cidade,$bairro,$logradouro,$numeroEndereco,$complemento,$ibge)
+    public function __construct($cpf,$nome,$sobrenome,$sexo,$dataNascimento,$registroGeral,$orgaoEmissor,$dataExpedicao,$nomeMae,$nomePai,$tipoSanguineo,$senha,$email,$telefone,$imagem,$cep,$estado,$cidade,$bairro,$logradouro,$numeroEndereco,$complemento,$ibge)
     {
         $this->cpf = $cpf;
         if ($nome !== null && trim($nome) !== '') {
@@ -74,6 +76,7 @@ abstract class Pessoa
         $this->setNomePai($nomePai);
         $this->tipoSanguineo = $tipoSanguineo;
         $this->senha = $senha;
+        $this->email = $email;
         $this->telefone = $telefone;
         $this->imagem = $imagem;
         $this->cep = $cep;
@@ -132,6 +135,11 @@ abstract class Pessoa
     public function getSexo()
     {
         return $this->sexo;
+    }
+
+    public function getEmail()
+    {
+        return $this->email;
     }
 
     public function getTelefone()
@@ -241,10 +249,16 @@ abstract class Pessoa
         $this->sexo = $sexo;
     }
 
+    public function setEmail($email)
+    {
+        $this->email = $email;
+    }
+
     public function setTelefone($telefone)
     {
         $this->telefone = $telefone;
     }
+
 
     public function setDataNascimento($dataNascimento)
     {

@@ -27,12 +27,42 @@ require_once ROOT . "/html/personalizacao_display.php";
 	include_once ROOT . '/dao/Conexao.php';
 	include_once ROOT . '/dao/IentradaDAO.php';
 
+	$pdo = Conexao::connect();
+
+	$stmtOrigens = $pdo->query("
+    	SELECT id_origem, nome_origem
+    	FROM origem
+    	ORDER BY nome_origem
+	");
+	$origens = $stmtOrigens->fetchAll(PDO::FETCH_ASSOC);
+
+	$stmtTiposEntrada = $pdo->query("
+    	SELECT id_tipo, descricao
+    	FROM tipo_entrada
+    	ORDER BY descricao
+	");
+	$tiposEntrada = $stmtTiposEntrada->fetchAll(PDO::FETCH_ASSOC);
+
 
 	if (!isset($_SESSION['ientrada'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=' . WWW . 'html/matPat/listar_Ientrada.php');
 	}
 	if (isset($_SESSION['ientrada'])) {
-		$ientrada = $_SESSION['ientrada'];
+    	$dadosIentrada = $_SESSION['ientrada'];
+
+    	if (is_string($dadosIentrada)) {
+        	$dadosIentrada = json_decode($dadosIentrada, true);
+
+        	if (is_string($dadosIentrada)) {
+            	$dadosIentrada = json_decode($dadosIentrada, true);
+        	}
+    	}
+
+    	if (!is_array($dadosIentrada)) {
+        	$dadosIentrada = [];
+    	}
+
+    	$ientrada = json_encode($dadosIentrada);
 	}
 	if (!isset($_SESSION['entradaUnica'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=' . WWW . 'html/matPat/listar_Ientrada.php');
@@ -167,7 +197,13 @@ require_once ROOT . "/html/personalizacao_display.php";
 							echo $ientrada;
 							?>;
 
-			console.log(ientrada);
+			if (typeof ientrada === 'string') {
+    			try {
+        			ientrada = JSON.parse(ientrada);
+    			} catch (e) {
+        			ientrada = [];
+    			}
+			}
 
 			$.each(ientrada, function(i, item) {
 
@@ -199,6 +235,161 @@ require_once ROOT . "/html/personalizacao_display.php";
 				ordering: false
 			});
 		});
+
+		function anularEntrada() {
+    		if (!confirm("Tem certeza que deseja anular esta entrada? O estoque será ajustado.")) {
+        		return;
+    		}
+
+    		$.ajax({
+        		url: "<?= WWW ?>controle/control.php",
+        		method: "POST",
+        		dataType: "json",
+        		data: {
+            		nomeClasse: "EntradaControle",
+            		metodo: "anular",
+            		id_entrada: <?= (int)$entrada[0]['id_entrada'] ?>
+        		},
+        		success: function(resposta) {
+            		if (resposta.sucesso) {
+                		alert(resposta.mensagem);
+                		window.location.href = "<?= WWW ?>html/matPat/listar_entrada.php";
+            		} else {
+                		alert(resposta.mensagem || "Erro ao anular entrada.");
+            		}
+        		},
+        		error: function(xhr) {
+            		let mensagem = "Erro ao anular entrada.";
+
+            		if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+                		mensagem = xhr.responseJSON.mensagem;
+            		}
+
+            		alert(mensagem);
+        		}
+    		});
+		}
+
+		function dataBRParaInput(dataBR) {
+    		if (!dataBR) return '';
+
+    		const partes = dataBR.split('/');
+
+    		if (partes.length !== 3) {
+        		return dataBR;
+    		}
+
+    		return partes[2] + '-' + partes[1] + '-' + partes[0];
+		}
+
+		function abrirModalEditarEntrada() {
+    		let entrada = <?php echo json_encode($entrada); ?>;
+    		let itens = <?php echo $ientrada; ?>;
+
+			if (typeof itens === 'string') {
+    			try {
+        			itens = JSON.parse(itens);
+    			} catch (e) {
+        			itens = [];
+    			}
+			}
+
+    		entrada = entrada[0];
+
+    		$('#editar-data-entrada').val(dataBRParaInput(entrada.data));
+    		$('#editar-hora-entrada').val((entrada.hora || '').substring(0, 5));
+    		$('#editar-origem-entrada').val(entrada.id_origem);
+    		$('#editar-tipo-entrada').val(entrada.id_tipo);
+
+    		$('#editar-itens-entrada').empty();
+
+    		$.each(itens, function(i, item) {
+    			$('#editar-itens-entrada').append(`
+        			<tr>
+            			<td>${item.descricao}</td>
+            			<td>
+                			<input 
+                    			type="number" 
+                    			step="1" 
+                    			min="1"
+                    			class="form-control qtd-item-entrada"
+                    			data-id-ientrada="${item.id_ientrada}"
+                    			value="${item.qtd}"
+                			>
+            			</td>
+            			<td>
+                			<input 
+                    			type="number" 
+                    			step="0.01" 
+                    			min="0"
+                    			class="form-control valor-item-entrada"
+                    			data-id-ientrada="${item.id_ientrada}"
+                    			value="${item.valor_unitario}"
+                			>
+            			</td>
+            			<td>${item.unidade}</td>
+            			<td>R$ ${(Number(item.qtd) * Number(item.valor_unitario)).toFixed(2)}</td>
+        			</tr>
+    			`);
+			});
+
+    		$('#modalEditarEntrada').modal('show');
+		}
+
+		function salvarEdicaoEntrada() {
+    		const itens = [];
+
+    		$('.qtd-item-entrada').each(function() {
+        		const idIentrada = $(this).data('id-ientrada');
+        		const qtd = $(this).val();
+        		const valorUnitario = $('.valor-item-entrada[data-id-ientrada="' + idIentrada + '"]').val();
+
+        		itens.push({
+            		id_ientrada: idIentrada,
+            		qtd: qtd,
+            		valor_unitario: valorUnitario
+        		});
+    		});
+
+			console.log("ITENS ENVIADOS:", itens);
+			console.log("DATA:", $('#editar-data-entrada').val());
+			console.log("HORA:", $('#editar-hora-entrada').val());
+			console.log("ORIGEM:", $('#editar-origem-entrada').val());
+			console.log("TIPO:", $('#editar-tipo-entrada').val());
+
+    		$.ajax({
+        		url: "<?= WWW ?>controle/control.php",
+        		method: "POST",
+        		dataType: "json",
+        		data: {
+            		nomeClasse: "EntradaControle",
+            		metodo: "editar",
+            		id_entrada: <?= (int)$entrada[0]['id_entrada'] ?>,
+            		data: $('#editar-data-entrada').val(),
+            		hora: $('#editar-hora-entrada').val(),
+            		id_origem: $('#editar-origem-entrada').val(),
+            		id_tipo: $('#editar-tipo-entrada').val(),
+            		itens: JSON.stringify(itens)
+        		},
+        		success: function(resposta) {
+            		if (resposta.sucesso) {
+    					alert(resposta.mensagem);
+    					location.reload();
+					} else {
+                		alert(resposta.mensagem || "Erro ao editar entrada.");
+            		}
+        		},
+        		error: function(xhr) {
+            		let mensagem = "Erro ao editar entrada.";
+
+            		if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+                		mensagem = xhr.responseJSON.mensagem;
+            		}
+
+            		alert(mensagem);
+        		}
+    		});
+		}
 	</script>
 	<style>
 		.linha-informacao {
@@ -266,6 +457,22 @@ require_once ROOT . "/html/personalizacao_display.php";
 						<h2 class="panel-title">Entrada Detalhada</h2>
 					</header>
 					<div class="panel-body">
+						<?php if ((int)$entrada[0]['ativo'] === 1): ?>
+    						<div style="margin-bottom: 15px;">
+        						<button type="button" class="btn btn-primary" onclick="abrirModalEditarEntrada()">
+            						Editar entrada
+        						</button>
+
+        						<button type="button" class="btn btn-danger" onclick="anularEntrada()">
+            						Anular entrada
+       							 </button>
+    						</div>
+						<?php else: ?>
+    						<div class="alert alert-warning">
+        						Esta entrada foi anulada.
+   							</div>
+						<?php endif; ?>
+
 						<div id="containerInformacoesDeEntrada" class="container"></div>
 
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
@@ -307,6 +514,88 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 	<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
+	<div class="modal fade" id="modalEditarEntrada" tabindex="-1" role="dialog" aria-labelledby="modalEditarEntradaLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="modalEditarEntradaLabel">Editar entrada</h4>
+            </div>
+
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Data</label>
+                        <input type="date" id="editar-data-entrada" class="form-control">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label>Hora</label>
+                        <input type="time" id="editar-hora-entrada" class="form-control">
+                    </div>
+                </div>
+
+                <br>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Origem</label>
+                        <select id="editar-origem-entrada" class="form-control">
+                            <?php foreach ($origens as $origem): ?>
+                                <option value="<?= (int)$origem['id_origem'] ?>">
+                                    <?= htmlspecialchars($origem['nome_origem'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label>Tipo de entrada</label>
+                        <select id="editar-tipo-entrada" class="form-control">
+                            <?php foreach ($tiposEntrada as $tipoEntrada): ?>
+                                <option value="<?= (int)$tipoEntrada['id_tipo'] ?>">
+                                    <?= htmlspecialchars($tipoEntrada['descricao'], ENT_QUOTES, 'UTF-8') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                            <th>Valor Unitário</th>
+                            <th>Unidade</th>
+                            <th>Total antigo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="editar-itens-entrada"></tbody>
+                </table>
+
+                <p class="text-muted">
+                    A edição altera apenas esta entrada. O cadastro do produto e o estoque não serão alterados.
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn btn-primary" onclick="salvarEdicaoEntrada()">
+                    Salvar alterações
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 
 </html>

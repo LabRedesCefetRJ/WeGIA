@@ -130,11 +130,16 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('72', 'Gateways de Pagamento'),
 ('73', 'Meios de Pagamento'),
 ('74', 'Regras de Pagamento'),
-('9', 'Configurações'),
-('91', 'Permissões'),
 ('8', 'Módulo Projetos'),
 ('81', 'Projetos - Cadastrar'),
-('82', 'Projetos - Listar');
+('82', 'Projetos - Listar'),
+('9', 'Configurações'),
+('91', 'Permissões'),
+('10',  'Módulo Agenda'),
+('101', 'Gerenciar Agenda'),
+('102', 'Gerenciar Equipe'),
+('103', 'Visualizar Agenda');
+
 
 
 INSERT INTO `modulos_visiveis` (`id_recurso`, `visivel`) VALUES
@@ -145,7 +150,8 @@ INSERT INTO `modulos_visiveis` (`id_recurso`, `visivel`) VALUES
 (5, 1),
 (6, 1),
 (7, 1),
-(8, 1);
+(8, 1),
+(10, 1);
 
 INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 1),
@@ -328,5 +334,13 @@ INSERT IGNORE INTO `wegia`.`projeto_status` (`descricao`) VALUES
 ('Inativo');
 
 INSERT IGNORE INTO `wegia`.`projeto_atendido_status` (`descricao`) VALUES
-('Ativo'), 
+('Ativo'),
+('Inativo');
+
+INSERT IGNORE INTO `wegia`.`agenda_status` (`descricao`) VALUES
+('Ativo'),
+('Inativo');
+
+INSERT IGNORE INTO `wegia`.`agenda_equipe_status` (`descricao`) VALUES
+('Ativo'),
 ('Inativo');

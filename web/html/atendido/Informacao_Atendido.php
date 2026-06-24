@@ -124,6 +124,8 @@ require_once "../personalizacao_display.php";
 							.text(item.nome + ' ' + item.sobrenome))
 						.append($("<td id=cpf" + item.id + ">")
 							.text(item.cpf ? formatCpfDisplay(item.cpf) : 'Não informado'))
+						.append($("<td>")
+							.text(item.telefone || 'Não informado'))
 						.append($("<td />")
 							.attr('onclick', 'clicar("' + item.id + '")')
 							.html('<i class="glyphicon glyphicon-pencil"></i>')));
@@ -198,6 +200,7 @@ require_once "../personalizacao_display.php";
 								<tr>
 									<th>Nome</th>
 									<th>Cpf</th>
+									<th>Telefone</th>
 									<th>Ação</th>
 								</tr>
 							</thead>
