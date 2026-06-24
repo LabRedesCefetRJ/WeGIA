@@ -102,13 +102,14 @@ class AtendidoDAO
 
         $pdo->beginTransaction();
 
-        $sqlPessoa = "INSERT INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento, cns)
-                  VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :dataNascimento, :cns)";
+        $sqlPessoa = "INSERT INTO pessoa (cpf, nome, sobrenome, sexo, email, telefone, data_nascimento, cns)
+                  VALUES (:cpf, :nome, :sobrenome, :sexo, :email, :telefone, :dataNascimento, :cns)";
         $stmtPessoa = $pdo->prepare($sqlPessoa);
 
         $nome           = $atendido->getNome();
         $sobrenome      = $atendido->getSobrenome();
         $sexo           = $atendido->getSexo();
+        $email          = $atendido->getEmail();
         $telefone       = $atendido->getTelefone();
         $dataNascimento = $atendido->getDataNascimento();
         $cns            = $atendido->getCns();
@@ -120,10 +121,10 @@ class AtendidoDAO
         $stmtPessoa->bindValue(':nome',           $nome);
         $stmtPessoa->bindValue(':sobrenome',      $sobrenome);
         $stmtPessoa->bindValue(':sexo',           $sexo);
+        $stmtPessoa->bindValue(':email',          $email);
         $stmtPessoa->bindValue(':telefone',       $telefone);
         $stmtPessoa->bindValue(':dataNascimento', $dataNascimento);
         $stmtPessoa->bindValue(':cns',            $cns);
-
         $stmtPessoa->execute();
 
         $idPessoa = $pdo->lastInsertId();
@@ -333,7 +334,7 @@ class AtendidoDAO
     // Editar
     public function alterar($atendido)
     {
-        $sql = 'update pessoa as p inner join atendido as a on p.id_pessoa=a.pessoa_id_pessoa set p.senha=:senha,p.nome=:nome, p.sobrenome=:sobrenome,p.cpf=:cpf,p.sexo=:sexo,p.telefone=:telefone,data_nascimento=:data_nascimento,p.imagem=:imagem,p.cep=:cep,p.estado=:estado,p.cidade=:cidade,p.bairro=:bairro,p.logradouro=:logradouro,p.numero_endereco=:numero_endereco,p.complemento=:complemento,p.ibge=:ibge,p.registro_geral=:registro_geral,p.orgao_emissor=:orgao_emissor,p.data_expedicao=:data_expedicao,p.nome_pai=:nome_pai,p.nome_mae=:nome_mae,p.intTipo_sanguineo=:intTipo_sanguineo,i.nome_contato_urgente=:nome_contato_urgente,i.strTelefone_contato_urgente_1=:strTelefone_contato_urgente_1,i.strTelefone_contato_urgente_2=:strTelefone_contato_urgente_2,i.strTelefone_contato_urgente_3=:strTelefone_contato_urgente_3,i.observacao=:observacao,i.certidao_nascimento=:certidao,i.curatela=:curatela,i.inss=:inss,i.loas=:loas,i.bpc=:bpc,i.funrural=:funrural,i.saf=:saf,i.sus=:sus,i.certidao_casamento=:certidao_casamento,i.ctps=:ctps,i.titulo=:titulo where a.pessoa_id_pessoa=:id_pessoa';
+        $sql = 'update pessoa as p inner join atendido as a on p.id_pessoa=a.pessoa_id_pessoa set p.senha=:senha,p.nome=:nome, p.sobrenome=:sobrenome,p.cpf=:cpf,p.sexo=:sexo,p.email=:email,p.telefone=:telefone,data_nascimento=:data_nascimento,p.imagem=:imagem,p.cep=:cep,p.estado=:estado,p.cidade=:cidade,p.bairro=:bairro,p.logradouro=:logradouro,p.numero_endereco=:numero_endereco,p.complemento=:complemento,p.ibge=:ibge,p.registro_geral=:registro_geral,p.orgao_emissor=:orgao_emissor,p.data_expedicao=:data_expedicao,p.nome_pai=:nome_pai,p.nome_mae=:nome_mae,p.intTipo_sanguineo=:intTipo_sanguineo,i.nome_contato_urgente=:nome_contato_urgente,i.strTelefone_contato_urgente_1=:strTelefone_contato_urgente_1,i.strTelefone_contato_urgente_2=:strTelefone_contato_urgente_2,i.strTelefone_contato_urgente_3=:strTelefone_contato_urgente_3,i.observacao=:observacao,i.certidao_nascimento=:certidao,i.curatela=:curatela,i.inss=:inss,i.loas=:loas,i.bpc=:bpc,i.funrural=:funrural,i.saf=:saf,i.sus=:sus,i.certidao_casamento=:certidao_casamento,i.ctps=:ctps,i.titulo=:titulo where a.pessoa_id_pessoa=:id_pessoa';
 
         $sql = str_replace("'", "\'", $sql);
         $pdo = Conexao::connect();
@@ -343,6 +344,7 @@ class AtendidoDAO
         $sobrenome = $atendido->getSobrenome();
         $cpf = $atendido->getCpf();
         $sexo = $atendido->getSexo();
+        $email = $atendido->getEmail();
         $telefone = $atendido->getTelefone();
         $nascimento = $atendido->getDataNascimento();
 
@@ -352,6 +354,7 @@ class AtendidoDAO
         $stmt->bindValue(':sobrenome', $sobrenome);
         $stmt->bindValue(':cpf', $cpf);
         $stmt->bindValue(':sexo', $sexo);
+        $stmt->bindValue(':email', $email);
         $stmt->bindValue(':telefone', $telefone);
         $stmt->bindValue(':data_nascimento', $nascimento);
         $stmt->execute();
@@ -365,7 +368,7 @@ class AtendidoDAO
         $atendidos = array();
         $pdo = Conexao::connect();
 
-        $consulta = $pdo->prepare("SELECT p.nome,p.sobrenome,p.cpf,a.idatendido FROM pessoa p INNER JOIN atendido a 
+        $consulta = $pdo->prepare("SELECT p.nome,p.sobrenome,p.cpf,p.telefone,a.idatendido FROM pessoa p INNER JOIN atendido a 
             ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.atendido_status_idatendido_status = ?");
 
         $consulta->bindParam(1, $status, PDO::PARAM_INT);
@@ -373,10 +376,12 @@ class AtendidoDAO
 
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-            if ($linha['cpf'] === "Não informado") {
-                $atendidos[$x] = array('cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['id_pessoa']);
+            $telefone = (!empty($linha['telefone']) && $linha['telefone'] !== 'null') ? $linha['telefone'] : 'Não informado';
+
+            if ($linha['cpf'] === "Não informado" || $linha['cpf'] === null) {
+                $atendidos[$x] = array('cpf' => 'Não informado', 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'telefone' => $telefone, 'id' => $linha['idatendido']);
             } else {
-                $atendidos[$x] = array('cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['idatendido']);
+                $atendidos[$x] = array('cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'telefone' => $telefone, 'id' => $linha['idatendido']);
             }
             $x++;
         }
@@ -393,8 +398,8 @@ class AtendidoDAO
 
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-            if ($linha['cpf'] === "Não informado") {
-                $pessoas[$x] = array('cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['id_pessoa']);
+            if ($linha['cpf'] === "Não informado" || $linha['cpf'] === null) {
+                $pessoas[$x] = array('cpf' => 'Não informado', 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['id_pessoa']);
             } else {
                 $pessoas[$x] = array('cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['id_pessoa']);
             }
@@ -419,7 +424,7 @@ class AtendidoDAO
     {
         $pdo = Conexao::connect();
 
-        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.telefone,p.data_nascimento, p.cep,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,p.cns, a.atendido_status_idatendido_status FROM pessoa p LEFT JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.idatendido=:id";
+        $sql = "SELECT a.idatendido AS id, a.idatendido, a.pessoa_id_pessoa, p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.email, p.telefone,p.data_nascimento, p.cep,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,p.cns, a.atendido_status_idatendido_status FROM pessoa p LEFT JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.idatendido=:id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $id);
 
@@ -427,9 +432,9 @@ class AtendidoDAO
         $pessoa = array();
         while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
             if ($linha['cpf'] === "Não informado") {
-                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
+                $pessoa[] = array('id' => $linha['id'], 'idatendido' => $linha['idatendido'], 'id_pessoa' => $linha['pessoa_id_pessoa'], 'imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'email' => $linha['email'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'imgdoc' => $linha['imgdoc'] ?? null, 'descricao' => $linha['descricao'] ?? null, 'id_documento' => $linha['id_documento'] ?? null, 'status' => $linha['atendido_status_idatendido_status']);
             } else {
-                $pessoa[] = array('imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'idatendido' => $linha['pessoa_id_pessoa'], 'imgdoc' => $linha['imgdoc'], 'descricao' => $linha['descricao'], 'id_documento' => $linha['id_documento'], 'status' => $linha['atendido_status_idatendido_status']);
+                $pessoa[] = array('id' => $linha['id'], 'idatendido' => $linha['idatendido'], 'id_pessoa' => $linha['pessoa_id_pessoa'], 'imagem' => $linha['imagem'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'cpf' => $linha['cpf'], 'senha' => $linha['senha'], 'sexo' => $linha['sexo'], 'email' => $linha['email'], 'telefone' => $linha['telefone'], 'data_nascimento' => $linha['data_nascimento'], 'cep' => $linha['cep'], 'estado' => $linha['estado'], 'cidade' => $linha['cidade'], 'bairro' => $linha['bairro'], 'logradouro' => $linha['logradouro'], 'numero_endereco' => $linha['numero_endereco'], 'complemento' => $linha['complemento'], 'ibge' => $linha['ibge'], 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $linha['data_expedicao'], 'nome_pai' => $linha['nome_pai'], 'nome_mae' => $linha['nome_mae'], 'tipo_sanguineo' => $linha['tipo_sanguineo'], 'cns' => $linha['cns'], 'imgdoc' => $linha['imgdoc'] ?? null, 'descricao' => $linha['descricao'] ?? null, 'id_documento' => $linha['id_documento'] ?? null, 'status' => $linha['atendido_status_idatendido_status']);
             }
         }
 
@@ -477,6 +482,7 @@ class AtendidoDAO
             nome = :nome,
             sobrenome = :sobrenome,
             sexo = :sexo,
+            email = :email,
             telefone = :telefone,
             data_nascimento = :data_nascimento,
             nome_pai = :nome_pai,
@@ -488,6 +494,7 @@ class AtendidoDAO
             ':nome' => $atendido->getNome(),
             ':sobrenome' => $atendido->getSobrenome(),
             ':sexo' => $atendido->getSexo(),
+            ':email' => $atendido->getEmail(),
             ':telefone' => $atendido->getTelefone(),
             ':data_nascimento' => $atendido->getDataNascimento(),
             ':nome_pai' => $atendido->getNomePai(),
@@ -635,7 +642,7 @@ class AtendidoDAO
         try {
 
             $pdo = Conexao::connect();
-            $sql = "SELECT id_pessoa,nome,sobrenome,sexo,telefone,data_nascimento,cpf FROM `pessoa` WHERE cpf = :cpf";
+            $sql = "SELECT id_pessoa,nome,sobrenome,sexo,email,telefone,data_nascimento,cpf FROM `pessoa` WHERE cpf = :cpf";
             // $cpf = '577.153.780-20';
             // echo file_put_contents('ar.txt', $cpf);
             $stmt = $pdo->prepare($sql);
@@ -646,7 +653,7 @@ class AtendidoDAO
             $funcionario = array();
 
             while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                $funcionario[] = array('id_pessoa' => $linha['id_pessoa'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'telefone' => $linha['telefone']);
+                $funcionario[] = array('id_pessoa' => $linha['id_pessoa'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'email' => $linha['email'],'telefone' => $linha['telefone']);
             }
         } catch (PDOException $e) {
             Util::tratarException($e);

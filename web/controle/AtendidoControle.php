@@ -114,6 +114,9 @@ class AtendidoControle
         if ((!isset($ibge)) || (empty($ibge))) {
             $ibge = '';
         }
+        if ((!isset($email)) || (empty($email))) {
+            $email = "";
+        }
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
         }
@@ -129,7 +132,7 @@ class AtendidoControle
         }
 
         $senha = 'null';
-        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
+        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
         $atendido->setIntTipo($intTipo);
         $atendido->setIntStatus($intStatus);
         $atendido->setCns($cns);
@@ -207,8 +210,11 @@ class AtendidoControle
         if ((!isset($ibge)) || (empty($ibge))) {
             $ibge = '';
         }
+        if ((!isset($email)) || (empty($email))) {
+            $email = '';
+        }
         if ((!isset($telefone)) || (empty($telefone))) {
-            $telefone = 'null';
+            $telefone = '';
         }
         if ((!isset($cns)) || (empty($cns))) {
             $cns = null;
@@ -222,7 +228,7 @@ class AtendidoControle
         }
 
         $senha = 'null';
-        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
+        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
         $atendido->setIntTipo($intTipo);
         $atendido->setIntStatus($intStatus);
         $atendido->setCns($cns);
@@ -289,9 +295,10 @@ class AtendidoControle
                 $AtendidoDAO = new AtendidoDAO();
                 $infAtendido = $AtendidoDAO->listar($id);
 
-                $_SESSION['atendido'] = $infAtendido;
                 $cache->save($id, $infAtendido, '15 seconds');
             }
+
+            $_SESSION['atendido'] = $infAtendido;
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
         } catch (Exception $e) {
             Util::tratarException($e);
@@ -678,7 +685,7 @@ class AtendidoControle
                 }
             }
 
-            $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'telefone', 'nome_mae', 'nome_pai', 'tipo_sanguineo'];
+            $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'email', 'telefone', 'nome_mae', 'nome_pai', 'tipo_sanguineo'];
             $setClause = [];
             $params = [':idatendido' => $idatendido];
 
@@ -691,15 +698,15 @@ class AtendidoControle
                     $setClause[] = "p.`$campo` = :" . $campo;
                     $params[":$campo"] = $_POST[$campo];
                 }
-            }
+            } 
             // Validação de CNS
             $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
             if ($cns !== '' && !Util::validaCNS($cns)) {
                 throw new InvalidArgumentException("Erro, o CNS informado não é válido. Deve conter 15 dígitos.");
             }
 
-            // Popula objeto Atendido
-            $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $data_nascimento, '', '', '', $nome_mae, $nome_pai, $tipo_sanguineo, '', $telefone, '', '', '', '', '', '', '', '', '');
+            // Popula objeto Atendido 
+            $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $data_nascimento, '', '', '', $nome_mae, $nome_pai, $tipo_sanguineo, '', $email, $telefone, '', '', '', '', '', '', '', '', '');
             $atendido->setIdatendido($idatendido);
             $atendido->setCns($cns !== '' ? $cns : null);
 
@@ -765,7 +772,7 @@ class AtendidoControle
             }
 
             $pdo = Conexao::connect();
-            $sql_atual = "SELECT cpf, sexo, registro_geral, orgao_emissor, data_expedicao, telefone 
+            $sql_atual = "SELECT cpf, sexo, email, registro_geral, orgao_emissor, data_expedicao, telefone 
                       FROM pessoa p 
                       JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa 
                       WHERE a.idatendido = :idatendido";
@@ -777,9 +784,10 @@ class AtendidoControle
             $cpf_final = !empty($cpf) ? $cpf : $dados_atuais['cpf'];
             $sexo_final = $dados_atuais['sexo'];
             $telefone = $dados_atuais['telefone'] ?? '';
+            $email = $dados_atuais['email'] ?? '';
 
             $atendido = new Atendido(
-                $cpf_final,
+                $cpf_final, 
                 '',
                 '',
                 $sexo_final,
@@ -791,6 +799,7 @@ class AtendidoControle
                 '',
                 '',
                 'null',
+                $email,
                 $telefone,
                 '',
                 '',
@@ -863,7 +872,7 @@ class AtendidoControle
             if (strlen(trim((string)$cep)) !== 0 && (empty($estado) || empty($cidade) || empty($bairro) || empty($rua) || empty($ibge)))
                 throw new InvalidArgumentException('CEP inválido.', 412);
 
-            $atendido = new Atendido('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $estado, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+            $atendido = new Atendido('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $estado, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
             $atendido->setIdatendido($idatendido);
             $atendidoDAO = new AtendidoDAO();
 

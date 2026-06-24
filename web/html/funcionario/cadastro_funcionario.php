@@ -185,6 +185,13 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
+                      <label class="col-md-3 control-label" for="email">E-mail</label>
+                      <div class="col-md-6">
+                          <input type="email" class="form-control" name="email" id="email"
+                          placeholder="Ex: usuario@email.com">
+                      </div>
+                  </div>
+                  <div class="form-group">
                     <label class="col-md-3 control-label" for="telefone">Telefone<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
                       <input type="text" class="form-control<?= isset($fieldErrors['telefone']) ? ' is-invalid' : '' ?>" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">

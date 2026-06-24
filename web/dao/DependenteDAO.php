@@ -19,6 +19,7 @@ class DependenteDAO
                 p.sobrenome = :sobrenome,
                 p.sexo = :sexo,
                 p.data_nascimento = :nascimento,
+                p.email = :email,
                 p.telefone = :telefone,
                 p.nome_pai = :nome_pai,
                 p.nome_mae = :nome_mae
@@ -29,6 +30,7 @@ class DependenteDAO
         $stmt->bindValue(':sobrenome', $dependente->getSobrenome(), PDO::PARAM_STR);
         $stmt->bindValue(':sexo', $dependente->getSexo(), PDO::PARAM_STR_CHAR);
         $stmt->bindValue(':nascimento', $dependente->getDataNascimento()->format('Y-m-d'), PDO::PARAM_STR);
+        $stmt->bindValue(':email', $dependente->getEmail());
         $stmt->bindValue(':telefone', $dependente->getTelefone());
         $stmt->bindValue(':nome_pai', $dependente->getNomePai());
         $stmt->bindValue(':nome_mae', $dependente->getNomeMae());
@@ -40,8 +42,8 @@ class DependenteDAO
     public function buscarPorId(int $id_dependente): ?array
     {
         $sql = "SELECT fdep.*, 
-                   p.cpf, p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.nome_pai, p.nome_mae, 
-                   par.descricao AS parentesco,
+                   p.cpf, p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.email, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.nome_pai, p.nome_mae, 
+                   par.descricao AS parentesco, 
                    f2.nome AS nomefuncionario, f2.sobrenome AS sobrenomefuncionario
             FROM funcionario_dependentes fdep
             LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
