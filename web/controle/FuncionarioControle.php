@@ -385,7 +385,7 @@ class FuncionarioControle
         }
 
         if ((!isset($email)) || (empty($email))) {
-            $email = 'null';
+            $email = '';
         }
 
         if ((!isset($telefone)) || (empty($telefone))) {
@@ -572,7 +572,7 @@ class FuncionarioControle
             header('Location: ../html/funcionario.html?msg=' . $msg);
         }
         if ((!isset($email)) || (empty($email))) {
-            $email = 'null';
+            $email = '';
         }
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
