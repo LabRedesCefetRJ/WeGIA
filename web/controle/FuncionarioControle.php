@@ -1434,7 +1434,7 @@ public function alterarOutros()
                 unset($_SESSION['data_nasc']);
             }
 
-            $funcionario = new Funcionario('', '', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $funcionario = new Funcionario('', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
             $funcionario->setId_funcionario($id_funcionario);
 
