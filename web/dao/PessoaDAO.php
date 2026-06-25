@@ -52,6 +52,7 @@ class PessoaDAO
             $pessoaArray['nome_pai'],
             $pessoaArray['tipo_sanguineo'],
             null,
+            $pessoaArray['email'],
             $pessoaArray['telefone'],
             null,
             $pessoaArray['cep'],
@@ -70,19 +71,20 @@ class PessoaDAO
     }
 
 
-public function inserirPessoa($cpf, $nome, $sobrenome, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null, $sexo = null, $dataNascimento = null) 
+public function inserirPessoa($cpf, $nome, $sobrenome, $email = null, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null, $sexo = null, $dataNascimento = null) 
 {
     Util::validarNomePessoaOuLancar($nome, 'nome', 400);
     Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
 
-    $sql = "INSERT INTO pessoa (cpf, nome, sobrenome, telefone, cep, logradouro, bairro, cidade, estado, numero_endereco, complemento, ibge, sexo, data_nascimento) 
-            VALUES (:cpf, :nome, :sobrenome, :telefone, :cep, :rua, :bairro, :cidade, :uf, :numero, :complemento, :ibge, :sexo, :dataNascimento)";
+    $sql = "INSERT INTO pessoa (cpf, nome, sobrenome, email, telefone, cep, logradouro, bairro, cidade, estado, numero_endereco, complemento, ibge, sexo, data_nascimento) 
+            VALUES (:cpf, :nome, :sobrenome, :email, :telefone, :cep, :rua, :bairro, :cidade, :uf, :numero, :complemento, :ibge, :sexo, :dataNascimento)";
     
     $stmt = $this->pdo->prepare($sql);
     
     $stmt->bindValue(':cpf', $cpf);
     $stmt->bindValue(':nome', $nome);
     $stmt->bindValue(':sobrenome', $sobrenome);
+    $stmt->bindValue(':email', $email);
     $stmt->bindValue(':telefone', $telefone);
     $stmt->bindValue(':cep', $cep);
     $stmt->bindValue(':rua', $rua);

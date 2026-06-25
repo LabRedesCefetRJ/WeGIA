@@ -11,11 +11,22 @@ class IentradaDAO
         try {
             $pdo = Conexao::connect();
 
-            $sql = "SELECT i.id_ientrada, i.id_entrada, p.descricao, i.qtd, i.valor_unitario, u.descricao_unidade
+            $sql = "SELECT 
+                        i.id_ientrada,
+                        i.id_entrada,
+                        p.descricao,
+                        i.qtd,
+                        i.valor_unitario,
+                        u.descricao_unidade
                     FROM ientrada i
+                    INNER JOIN entrada e ON e.id_entrada = i.id_entrada
                     INNER JOIN produto p ON p.id_produto = i.id_produto
                     INNER JOIN unidade u ON u.id_unidade = p.id_unidade
-                    WHERE i.id_entrada = :id_entrada AND i.oculto = false";
+                    WHERE i.id_entrada = :id_entrada
+                        AND (
+                            i.oculto = false
+                            OR e.ativo = 0
+                        )";
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_entrada', $id_entrada, PDO::PARAM_INT);

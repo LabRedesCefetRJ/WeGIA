@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `sobrenome` VARCHAR(100) NULL DEFAULT NULL,
   `sexo` CHAR(1) NULL DEFAULT NULL,
   `telefone` VARCHAR(25) NULL DEFAULT NULL,
+  `email` VARCHAR(256) NULL DEFAULT NULL,
   `data_nascimento` DATE NULL DEFAULT NULL,
   `imagem` LONGTEXT NULL DEFAULT NULL,
   `cep` VARCHAR(10) NULL DEFAULT NULL,
@@ -456,6 +457,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`entrada` (
   `hora` TIME NULL DEFAULT NULL,
   `valor_total` DECIMAL(10,2) NULL DEFAULT NULL,
   `ativo` TINYINT(1) DEFAULT '1',
+  `arquivada_por_produto_inativo` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_entrada`),
   INDEX `id_origem` (`id_origem` ASC),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),
@@ -499,6 +501,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`produto` (
   `codigo` VARCHAR(15) NULL DEFAULT NULL,
   `preco` DECIMAL(10,2) NULL DEFAULT NULL,
   `oculto` TINYINT NULL DEFAULT FALSE,
+  `ativo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id_produto`),
   UNIQUE INDEX `descricao` (`descricao` ASC),
   UNIQUE INDEX `codigo_UNIQUE` (`codigo` ASC),
@@ -578,6 +581,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`ientrada` (
   `qtd` INT(11) NULL DEFAULT NULL,
   `valor_unitario` DECIMAL(10,2) NULL DEFAULT NULL,
   `oculto` TINYINT NULL DEFAULT FALSE,
+  `oculto_por_produto_inativo` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_ientrada`),
   INDEX `id_entrada` (`id_entrada` ASC),
   INDEX `id_produto` (`id_produto` ASC),
@@ -626,6 +630,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saida` (
   `hora` TIME NULL DEFAULT NULL,
   `valor_total` DECIMAL(10,2) NULL DEFAULT NULL,
   `ativo` TINYINT(1) DEFAULT '1',
+  `arquivada_por_produto_inativo` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_saida`),
   INDEX `id_destino` (`id_destino` ASC),
   INDEX `id_almoxarifado` (`id_almoxarifado` ASC),
@@ -658,6 +663,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`isaida` (
   `qtd` INT(11) NULL DEFAULT NULL,
   `valor_unitario` DECIMAL(10,2) NULL DEFAULT NULL,
   `oculto` TINYINT NULL DEFAULT FALSE,
+  `oculto_por_produto_inativo` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id_isaida`),
   INDEX `id_saida` (`id_saida` ASC),
   INDEX `id_produto` (`id_produto` ASC),
@@ -1105,7 +1111,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `id_pessoa` INT(11) NOT NULL,
   `id_sociostatus` INT NOT NULL,
   `id_sociotipo` INT NOT NULL,
-  `email` VARCHAR(256) NULL DEFAULT NULL,
   `valor_periodo` DECIMAL(10,2) NULL DEFAULT NULL,
   `data_referencia` DATE NULL DEFAULT NULL,
   `auto_status_contribuicoes` TINYINT(1) NOT NULL DEFAULT 1,
@@ -2385,6 +2390,196 @@ CREATE TABLE IF NOT EXISTS voluntario_docs (
  REFERENCES pessoa_arquivo (id))
  ENGINE = InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- -----------------------------------------------------
+-- Módulo Agenda
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_status`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_status` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC)
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` TEXT NOT NULL,
+  `id_status` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_agenda_status_idx` (`id_status` ASC),
+  CONSTRAINT `fk_agenda_status`
+    FOREIGN KEY (`id_status`)
+    REFERENCES `wegia`.`agenda_status` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe_status`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_status` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC)
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nome` VARCHAR(150) NOT NULL,
+  `id_status` INT NOT NULL,
+  `descricao` TEXT NULL,
+  `id_agenda` INT NOT NULL,
+  `inicio_turno` TIME NOT NULL,
+  `fim_turno` TIME NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_agenda_equipe_status_idx` (`id_status` ASC),
+  INDEX `fk_agenda_equipe_agenda_idx` (`id_agenda` ASC),
+  CONSTRAINT `fk_agenda_equipe_status`
+    FOREIGN KEY (`id_status`)
+    REFERENCES `wegia`.`agenda_equipe_status` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_agenda_equipe_agenda`
+    FOREIGN KEY (`id_agenda`)
+    REFERENCES `wegia`.`agenda` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe_divisao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_divisao` (
+  `id`        INT           NOT NULL AUTO_INCREMENT,
+  `id_equipe` INT           NOT NULL,
+  `nome`      VARCHAR(100)  NOT NULL,
+  `ativo`     TINYINT(1)    NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  INDEX `fk_aed_equipe_idx` (`id_equipe` ASC),
+  CONSTRAINT `fk_aed_equipe`
+    FOREIGN KEY (`id_equipe`)
+    REFERENCES `wegia`.`agenda_equipe` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_equipe_membro`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_equipe_membro` (
+  `id`         INT        NOT NULL AUTO_INCREMENT,
+  `id_equipe`  INT        NOT NULL,
+  `id_divisao` INT        NULL DEFAULT NULL,
+  `id_pessoa`  INT        NOT NULL,
+  `ativo`      TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_equipe_pessoa` (`id_equipe` ASC, `id_pessoa` ASC),
+  INDEX `fk_aem_equipe_idx`  (`id_equipe`  ASC),
+  INDEX `fk_aem_divisao_idx` (`id_divisao` ASC),
+  INDEX `fk_aem_pessoa_idx`  (`id_pessoa`  ASC),
+  CONSTRAINT `fk_aem_equipe`
+    FOREIGN KEY (`id_equipe`)
+    REFERENCES `wegia`.`agenda_equipe` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_aem_divisao`
+    FOREIGN KEY (`id_divisao`)
+    REFERENCES `wegia`.`agenda_equipe_divisao` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_aem_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_alocacao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_agenda` INT NOT NULL,
+  `id_equipe` INT NOT NULL,
+  `inicio` DATE NOT NULL,
+  `fim` DATE NOT NULL,
+  `lembrete` DATETIME NULL DEFAULT NULL,
+  `lembrete_enviado` TINYINT(1) NOT NULL DEFAULT 0,
+  `intervalo` INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  INDEX `fk_aa_agenda_idx` (`id_agenda` ASC),
+  INDEX `fk_aa_equipe_idx` (`id_equipe` ASC),
+  CONSTRAINT `fk_aa_agenda`
+    FOREIGN KEY (`id_agenda`)
+    REFERENCES `wegia`.`agenda` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_aa_equipe`
+    FOREIGN KEY (`id_equipe`)
+    REFERENCES `wegia`.`agenda_equipe` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_alocacao_periodo` 
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao_periodo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_alocacao` INT NOT NULL,
+  `data_inicio` DATETIME NOT NULL,
+  `data_fim` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_periodo_alocacao_idx` (`id_alocacao` ASC),
+  CONSTRAINT `fk_periodo_alocacao`
+    FOREIGN KEY (`id_alocacao`)
+    REFERENCES `wegia`.`agenda_alocacao` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`agenda_membro_periodo` 
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `wegia`.`agenda_membro_periodo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_periodo` INT NOT NULL,
+  `id_pessoa` INT NOT NULL,
+  `id_divisao` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `uq_membro_periodo_pessoa` (`id_periodo` ASC, `id_pessoa` ASC),
+  INDEX `fk_amp_periodo_idx` (`id_periodo` ASC),
+  INDEX `fk_amp_pessoa_idx` (`id_pessoa` ASC),
+  INDEX `fk_amp_divisao_idx` (`id_divisao` ASC),
+  CONSTRAINT `fk_amp_periodo`
+    FOREIGN KEY (`id_periodo`)
+    REFERENCES `wegia`.`agenda_alocacao_periodo` (`id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_amp_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_amp_divisao`
+    FOREIGN KEY (`id_divisao`)
+    REFERENCES `wegia`.`agenda_equipe_divisao` (`id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+  
 -- ########################### PROCEDURES #################### --
 
 USE `wegia` ;
@@ -2429,7 +2624,7 @@ DELIMITER ;
 DELIMITER $$
 USE `wegia`$$
 CREATE PROCEDURE `cadfuncionario`(IN `nome` VARCHAR(100), IN `sobrenome` VARCHAR(100), IN `cpf` VARCHAR(40), 
-  IN `senha` VARCHAR(70), IN `sexo` CHAR(1), IN `telefone` VARCHAR(100), 
+  IN `senha` VARCHAR(70), IN `sexo` CHAR(1), IN `email` VARCHAR(100), IN `telefone` VARCHAR(100),
   IN `data_nascimento` DATE, IN `imagem` LONGTEXT, IN `cep` VARCHAR(100), 
   IN `estado` VARCHAR(50), IN `cidade` VARCHAR(40), IN `bairro` VARCHAR(40), 
   IN `logradouro` VARCHAR(40), IN `numero_endereco` VARCHAR(100), IN `complemento` VARCHAR(50), 
@@ -2444,9 +2639,9 @@ begin
 declare idP int;
 declare idF int;
 
-insert into pessoa(cpf, senha, nome, sobrenome, sexo, telefone,data_nascimento,imagem,cep ,estado,cidade, bairro, logradouro, numero_endereco,
+insert into pessoa(cpf, senha, nome, sobrenome, sexo, email, telefone,data_nascimento,imagem,cep ,estado,cidade, bairro, logradouro, numero_endereco,
 complemento,ibge,registro_geral,orgao_emissor,data_expedicao, nome_pai, nome_mae, tipo_sanguineo)
-values(cpf, senha, nome, sobrenome, sexo, telefone,data_nascimento,imagem, cep ,estado,cidade, bairro, logradouro, numero_endereco,
+values(cpf, senha, nome, sobrenome, sexo, email, telefone,data_nascimento,imagem, cep ,estado,cidade, bairro, logradouro, numero_endereco,
 complemento,ibge,registro_geral,orgao_emissor,data_expedicao, nome_pai, nome_mae, tipo_sanguineo);
 
 select max(id_pessoa) into idP FROM pessoa;

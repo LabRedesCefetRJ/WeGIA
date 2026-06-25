@@ -32,8 +32,7 @@ class VoluntarioControle
             exit();
         }
 
-        $senha = '';
-        $voluntario = new Voluntario($cpf, $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', $senha, $telefone ?? null, $imgperfil ?? '', $cep ?? '', $uf ?? '', $cidade ?? '', $bairro ?? '', $rua ?? '', $numero_residencia ?? '', $complemento ?? '', $ibge ?? '');
+        $voluntario = new Voluntario($cpf, $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', '', '', $telefone ?? null, $imgperfil ?? '', $cep ?? '', $uf ?? '', $cidade ?? '', $bairro ?? '', $rua ?? '', $numero_residencia ?? '', $complemento ?? '', $ibge ?? '');
         $voluntario->setData_admissao($data_admissao);
         $voluntario->setId_situacao($situacao);
         $voluntario->setId_cargo($cargo);
@@ -178,7 +177,7 @@ class VoluntarioControle
             if (!empty($nascimento) && ($nascimento > Voluntario::getDataNascimentoMaxima() || $nascimento < Voluntario::getDataNascimentoMinima()))
                 throw new InvalidArgumentException('A data de nascimento não está dentro dos limites permitidos.', 412);
 
-            $voluntario = new Voluntario('', $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae, $nome_pai, $sangue, '', $telefone, '', '', '', '', '', '', '', '', '');
+            $voluntario = new Voluntario('', $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae, $nome_pai, $sangue, '', '', $telefone, '', '', '', '', '', '', '', '', '');
             $voluntario->setId_voluntario($id_voluntario);
 
             $voluntarioDAO = new VoluntarioDAO();
@@ -208,7 +207,7 @@ class VoluntarioControle
                 $numero_residencia = null;
             }
 
-            $voluntario = new Voluntario('', '', '', '', '', null, null, null, '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+            $voluntario = new Voluntario('', '', '', '', '', null, null, null, '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
             $voluntario->setId_voluntario($id_voluntario);
 
             $voluntarioDAO = new VoluntarioDAO();

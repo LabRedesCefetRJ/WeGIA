@@ -50,12 +50,13 @@ class SocioDAO
         $this->pdo->beginTransaction();
 
         //criar pessoa
-        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, sobrenome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :sobrenome, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
+        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, email, sobrenome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :email, :sobrenome, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
 
         $stmtPessoa = $this->pdo->prepare($sqlPessoa);
 
         $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
         $stmtPessoa->bindValue(':nome', $socio->getNome());
+        $stmtPessoa->bindParam(':email', $socio->getEmail());
         $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
         $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
         $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
@@ -76,7 +77,7 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :email, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -87,8 +88,7 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindValue(':email', $socio->getEmail());
-        $stmtSocio->bindValue(':valor', $socio->getValor());
+        $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
 
         $stmtSocio->execute();
@@ -117,7 +117,7 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :email, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -128,7 +128,6 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindParam(':email', $socio->getEmail());
         $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
 
@@ -156,6 +155,7 @@ class SocioDAO
             'UPDATE pessoa 
         SET 
             nome=:nome,
+            email=:email, 
             sobrenome=:sobrenome,
             telefone=:telefone, 
             data_nascimento=:dataNascimento, 
@@ -172,6 +172,7 @@ class SocioDAO
         $stmtPessoa = $this->pdo->prepare($sqlAtualizarPessoa);
 
         $stmtPessoa->bindValue(':nome', $socio->getNome());
+        $stmtPessoa->bindParam(':email', $socio->getEmail());
         $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
         $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
         $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
@@ -201,13 +202,11 @@ class SocioDAO
             'UPDATE socio s 
         JOIN pessoa p ON s.id_pessoa = p.id_pessoa
         SET 
-            s.email = :email, 
             s.valor_periodo = :valor
         WHERE p.cpf = :cpf';
 
         $stmtSocio = $this->pdo->prepare($sqlAtualizarSocio);
 
-        $stmtSocio->bindParam(':email', $socio->getEmail());
         $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':cpf', $socio->getDocumento());
 
@@ -241,6 +240,7 @@ class SocioDAO
             "SELECT 
             pessoa.id_pessoa, 
             pessoa.nome,
+            pessoa.email,
             pessoa.sobrenome,
             pessoa.data_nascimento, 
             pessoa.telefone, 
@@ -251,9 +251,8 @@ class SocioDAO
             pessoa.complemento, 
             pessoa.numero_endereco, 
             pessoa.logradouro, 
-            pessoa.cpf
-            socio.id_socio, 
-            socio.email 
+            pessoa.cpf,
+            socio.id_socio
         FROM pessoa, socio 
         WHERE pessoa.id_pessoa = socio.id_pessoa 
         AND socio.id_socio=:id";
@@ -280,6 +279,7 @@ class SocioDAO
             "SELECT 
             pessoa.id_pessoa, 
             pessoa.nome,
+            pessoa.email,
             pessoa.sobrenome,
             pessoa.data_nascimento, 
             pessoa.telefone, 
@@ -291,8 +291,7 @@ class SocioDAO
             pessoa.numero_endereco, 
             pessoa.logradouro, 
             pessoa.cpf,
-            socio.id_socio, 
-            socio.email 
+            socio.id_socio
         FROM pessoa, socio 
         WHERE pessoa.id_pessoa = socio.id_pessoa 
         AND pessoa.cpf=:documento";
@@ -399,7 +398,7 @@ class SocioDAO
         $socios = [];
 
         $sql = "
-            SELECT p.nome, p.sobrenome, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.email, s.valor_periodo 
+            SELECT p.nome, p.email, p.sobrenome, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.valor_periodo 
             FROM socio s JOIN pessoa p ON(s.id_pessoa=p.id_pessoa)
             ORDER BY nome ASC
         ";

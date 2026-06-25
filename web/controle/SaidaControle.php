@@ -116,7 +116,7 @@ class SaidaControle
                 "sucesso" => false,
                 "mensagem" => $e->getMessage()
             ]);
-        } catch (PDOExeption $e) {
+        } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode([
                 "sucesso" => false,
@@ -158,5 +158,121 @@ class SaidaControle
                 "mensagem" => "Erro ao listar saídas arquivadas"
             ]);
         }
+    }
+
+    public function anular()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idSaida = filter_input(INPUT_POST, 'id_saida', FILTER_VALIDATE_INT);
+
+            if (!$idSaida || $idSaida < 1) {
+                throw new InvalidArgumentException("ID da saída inválido.");
+            }
+
+            $saidaDAO = new SaidaDAO();
+            $resultado = $saidaDAO->anular($idSaida);
+
+            if (!empty($resultado['produtos'])) {
+                $estoqueService = new EstoqueService();
+
+                foreach ($resultado['produtos'] as $idProduto) {
+                    $estoqueService->verificarEstoqueMinimo(
+                        (int)$idProduto,
+                        (int)$resultado['id_almoxarifado']
+                    );
+                }
+            }
+
+            echo json_encode([
+                "sucesso" => true,
+                "mensagem" => "Saída anulada com sucesso."
+            ]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => $e->getMessage()
+            ]);
+        }
+
+        exit;
+    }
+
+    public function editar()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idSaida = filter_input(INPUT_POST, 'id_saida', FILTER_VALIDATE_INT);
+            $idDestino = filter_input(INPUT_POST, 'id_destino', FILTER_VALIDATE_INT);
+            $idTipo = filter_input(INPUT_POST, 'id_tipo', FILTER_VALIDATE_INT);
+
+            $data = trim($_POST['data'] ?? '');
+            $hora = trim($_POST['hora'] ?? '');
+            $itensJson = $_POST['itens'] ?? '[]';
+
+            if (!$idSaida || $idSaida < 1) {
+                throw new InvalidArgumentException("ID da saída inválido.");
+            }
+
+            if (!$idDestino || $idDestino < 1) {
+                throw new InvalidArgumentException("Destino inválido.");
+            }
+
+            if (!$idTipo || $idTipo < 1) {
+                throw new InvalidArgumentException("Tipo de saída inválido.");
+            }
+
+            $dataValida = DateTime::createFromFormat('Y-m-d', $data);
+
+            if (!$dataValida || $dataValida->format('Y-m-d') !== $data) {
+                throw new InvalidArgumentException("Data inválida.");
+            }
+
+            if (!$hora) {
+                throw new InvalidArgumentException("Hora inválida.");
+            }
+
+            if (strlen($hora) === 5) {
+                $hora .= ':00';
+            }
+
+            if (!preg_match('/^\d{2}:\d{2}:\d{2}$/', $hora)) {
+                throw new InvalidArgumentException("Hora inválida.");
+            }
+
+            $itens = json_decode($itensJson, true);
+
+            if (!is_array($itens) || empty($itens)) {
+                throw new InvalidArgumentException("Nenhum item informado para edição.");
+            }
+
+            $saidaDAO = new SaidaDAO();
+            $saidaDAO->editarBasico($idSaida, $data, $hora, $idDestino, $idTipo, $itens);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+
+            $isaidaDAO = new IsaidaDAO();
+
+            $_SESSION['isaida'] = $isaidaDAO->listarId($idSaida);
+            $_SESSION['saidaUnica'] = $saidaDAO->listarUmCompletoPorId($idSaida);
+
+            echo json_encode([
+                "sucesso" => true,
+                "mensagem" => "Saída atualizada com sucesso."
+            ]);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                "sucesso" => false,
+                "mensagem" => $e->getMessage()
+            ]);
+        }
+
+        exit;
     }
 }

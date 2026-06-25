@@ -61,6 +61,7 @@ if($sexo != 'm' && $sexo != 'f'){
     redirectNovoFamiliarError('O sexo informado não é válido no sistema.', 'sexo');
 }
 
+$email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_SPECIAL_CHARS);
 $telefone = filter_input(INPUT_POST, 'telefone', FILTER_SANITIZE_SPECIAL_CHARS);
 $data_nascimento = filter_input(INPUT_POST, 'nascimento', FILTER_SANITIZE_SPECIAL_CHARS);
 $id_parentesco = filter_input(INPUT_POST, 'id_parentesco', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -72,7 +73,7 @@ if ($cpf === '') {
     $cpf = null;
 }
 
-define("NOVA_PESSOA", "INSERT IGNORE INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento, registro_geral, orgao_emissor, data_expedicao) VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :data_nascimento, :registro_geral, :orgao_emissor, :data_expedicao)");
+define("NOVA_PESSOA", "INSERT IGNORE INTO pessoa (cpf, nome, sobrenome, sexo, email, telefone, data_nascimento, registro_geral, orgao_emissor, data_expedicao) VALUES (:cpf, :nome, :sobrenome, :sexo, :email, :telefone, :data_nascimento, :registro_geral, :orgao_emissor, :data_expedicao)");
 
 try {
     $pessoa = $pdo->prepare(NOVA_PESSOA);
@@ -80,6 +81,7 @@ try {
     $pessoa->bindValue(":nome", $nome);
     $pessoa->bindValue(":sobrenome", $sobrenome);
     $pessoa->bindValue(":sexo", $sexo);
+    $pessoa->bindValue(":email", $email);
     $pessoa->bindValue(":telefone", $telefone);
     $pessoa->bindValue(":data_nascimento", $data_nascimento);
     $pessoa->bindValue(":registro_geral", $registro_geral);

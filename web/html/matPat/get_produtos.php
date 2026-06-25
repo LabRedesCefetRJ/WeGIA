@@ -9,39 +9,54 @@ require_once $config_path;
 
 require_once ROOT . "/dao/Conexao.php";
 
-if (isset($_GET['id_almoxarifado'])) {
-    $id_almoxarifado = $_GET['id_almoxarifado'];
+header('Content-Type: application/json; charset=utf-8');
 
-    try {
-        // Conectar ao banco de dados
-        $pdo = Conexao::connect();
+$id_almoxarifado = filter_input(INPUT_GET, 'id_almoxarifado', FILTER_VALIDATE_INT);
 
-        // Preparar e executar a consulta
-        $sql = "
-            SELECT p.id_produto, p.descricao
-            FROM produto p
-            JOIN estoque e ON p.id_produto = e.id_produto
-            WHERE e.id_almoxarifado = :id_almoxarifado
-            ORDER BY p.descricao
-        ";
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':id_almoxarifado', $id_almoxarifado, PDO::PARAM_INT);
-        $stmt->execute();
+if (!$id_almoxarifado || $id_almoxarifado < 1) {
+    ob_clean();
+    echo json_encode(["error" => "id_almoxarifado inválido ou não fornecido"]);
+    exit;
+}
 
-        // Obter resultados
-        $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $pdo = Conexao::connect();
 
-        ob_clean();
+    $sql = "
+        SELECT DISTINCT 
+            p.id_produto, 
+            p.descricao
+        FROM produto p
+        INNER JOIN estoque e 
+            ON p.id_produto = e.id_produto
+        WHERE e.id_almoxarifado = :id_almoxarifado
+          AND p.oculto = false
+          AND p.ativo = 1
+          AND EXISTS (
+              SELECT 1
+              FROM ientrada ie
+              INNER JOIN entrada en 
+                  ON en.id_entrada = ie.id_entrada
+              WHERE ie.id_produto = p.id_produto
+                AND en.id_almoxarifado = e.id_almoxarifado
+                AND ie.oculto = false
+                AND en.ativo = 1
+          )
+        ORDER BY p.descricao
+    ";
 
-        if ($produtos) {
-            echo json_encode($produtos);
-        } else {
-            echo json_encode([]); // Nenhum produto encontrado
-        }
-    } catch (PDOException $e) {
-        echo json_encode(["error" => "Erro ao consultar o banco de dados: " . $e->getMessage()]);
-    }
-} else {
-    echo json_encode(["error" => "id_almoxarifado não fornecido"]);
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':id_almoxarifado', $id_almoxarifado, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $produtos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    ob_clean();
+    echo json_encode($produtos);
+    exit;
+} catch (PDOException $e) {
+    ob_clean();
+    echo json_encode(["error" => "Erro ao consultar o banco de dados: " . $e->getMessage()]);
+    exit;
 }
 ?>
