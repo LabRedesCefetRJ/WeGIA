@@ -66,6 +66,9 @@ require_once "html/personalizacao_display.php";
 			else if (erro === 'dados_invalidos') {
             	alert('Por favor, preencha todos os campos.');
         }
+			else if (erro === 'acesso_revogado') {
+            	alert('Atenção: Seu acesso foi revogado pelo administrador.');
+        }
 	</script>
 	<script>
 		$(document).ready(function() {
@@ -79,7 +82,7 @@ require_once "html/personalizacao_display.php";
 		});
 	</script>
 
-</head>
+</head>  
 
 <body>
 	<div class="container-fluid">
