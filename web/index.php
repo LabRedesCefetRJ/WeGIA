@@ -59,7 +59,13 @@ require_once "html/personalizacao_display.php";
 		const erro = '<?= htmlspecialchars($erro); ?>';
 		if (erro == 'erro') {
 			alert('Senha e/ou cpf inválido');
-		}
+		} 
+			else if (erro === 'usuario_inativo') {
+            	alert('Acesso negado: Este funcionário está inativo. Entre em contato com o administrador.');
+        } 
+			else if (erro === 'dados_invalidos') {
+            	alert('Por favor, preencha todos os campos.');
+        }
 	</script>
 	<script>
 		$(document).ready(function() {
