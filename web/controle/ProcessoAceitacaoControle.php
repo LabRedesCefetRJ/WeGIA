@@ -184,7 +184,15 @@ class ProcessoAceitacaoControle
         }
 
         $digits = preg_replace('/\D+/', '', $cpf);
-        return $digits === '' ? null : $digits;
+        if ($digits === ''){
+            return null;
+        }
+
+        if (strlen($digits) === 11) {
+            return preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $digits);
+        }
+        
+        return $digits;
     }
 
     private function validarTelefone(?string $telefone): void
