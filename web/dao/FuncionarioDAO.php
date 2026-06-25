@@ -601,4 +601,42 @@ class FuncionarioDAO
 
         return $stmt->fetch(PDO::FETCH_ASSOC)['senha'];
     }
+
+    public function listarPessoasComCargo($situacao)
+    {
+        $pessoas = array();
+
+        $sql = "
+            SELECT f.id_funcionario, p.nome, p.sobrenome, p.cpf, c.cargo, s.situacoes 
+            FROM pessoa p 
+            JOIN funcionario f ON p.id_pessoa = f.id_pessoa 
+            JOIN cargo c ON c.id_cargo = f.id_cargo 
+            JOIN situacao s ON f.id_situacao = s.id_situacao 
+            WHERE s.id_situacao = :situacao
+            UNION
+            SELECT v.id_voluntario as id_funcionario, p.nome, p.sobrenome, p.cpf, c.cargo, s.situacoes 
+            FROM pessoa p 
+            JOIN voluntario v ON p.id_pessoa = v.id_pessoa 
+            JOIN cargo c ON c.id_cargo = v.id_cargo 
+            JOIN situacao s ON v.id_situacao = s.id_situacao 
+            WHERE s.id_situacao = :situacao
+        ";
+
+        $consulta = $this->pdo->prepare($sql);
+        $consulta->bindParam(':situacao', $situacao);
+        $consulta->execute();
+
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $pessoas[] = array(
+                'id_funcionario' => htmlspecialchars($linha['id_funcionario']), 
+                'cpf' => htmlspecialchars($linha['cpf']), 
+                'nome' => htmlspecialchars($linha['nome']), 
+                'sobrenome' => htmlspecialchars($linha['sobrenome']), 
+                'situacao' => htmlspecialchars($linha['situacoes']), 
+                'cargo' => htmlspecialchars($linha['cargo'])
+            );
+        }
+
+        return $pessoas;
+    }
 }

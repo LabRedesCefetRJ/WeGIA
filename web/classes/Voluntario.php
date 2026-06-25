@@ -6,6 +6,7 @@ class Voluntario extends Pessoa
     private $id_voluntario;
     private $id_pessoa;
     private $id_situacao;
+    private $id_cargo;
     private $data_admissao;
 
     public function getId_voluntario()
@@ -21,6 +22,11 @@ class Voluntario extends Pessoa
     public function getId_situacao()
     {
         return $this->id_situacao;
+    }
+
+    public function getId_cargo()
+    {
+        return $this->id_cargo;
     }
 
     public function getData_admissao()
@@ -41,6 +47,11 @@ class Voluntario extends Pessoa
     public function setId_situacao($id_situacao)
     {
         $this->id_situacao = $id_situacao;
+    }
+
+    public function setId_cargo($id_cargo)
+    {
+        $this->id_cargo = $id_cargo;
     }
 
     public function setData_admissao($data_admissao)
