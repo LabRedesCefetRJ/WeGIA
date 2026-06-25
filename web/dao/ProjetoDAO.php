@@ -215,17 +215,26 @@ class ProjetoDAO
         }
     }
 
-    public function listarFuncionariosAtivos()
+    public function listarFuncionariosAtivos($termo = null)
     {
         try {
             $sql = "SELECT f.id_funcionario, p.id_pessoa, p.nome, p.sobrenome, p.cpf
                     FROM funcionario f
                     JOIN pessoa p ON f.id_pessoa = p.id_pessoa
                     JOIN situacao s ON f.id_situacao = s.id_situacao
-                    WHERE s.id_situacao = 1
-                    ORDER BY p.nome ASC";
+                    WHERE s.id_situacao = 1";
+
+            if (!empty($termo)) {
+                $sql .= " AND (p.nome LIKE :termo OR p.sobrenome LIKE :termo OR p.cpf LIKE :termo"
+                      . " OR CONCAT(p.nome, ' ', p.sobrenome) LIKE :termo)";
+            }
+
+            $sql .= " ORDER BY p.nome ASC LIMIT 20";
 
             $stmt = $this->pdo->prepare($sql);
+            if (!empty($termo)) {
+                $stmt->bindValue(':termo', '%' . $termo . '%');
+            }
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -403,7 +412,7 @@ class ProjetoDAO
         }
     }
 
-    public function listarTodosAtendidos()
+    public function listarTodosAtendidos($termo = null)
     {
         try {
             // CPF excluído intencionalmente: atendidos podem ser cadastrados sem CPF
@@ -414,10 +423,19 @@ class ProjetoDAO
                     FROM atendido a
                     INNER JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa
                     LEFT JOIN situacao s ON a.atendido_status_idatendido_status = s.id_situacao
-                    LEFT JOIN atendido_tipo at ON a.atendido_tipo_idatendido_tipo = at.idatendido_tipo
-                    ORDER BY p.nome ASC";
+                    LEFT JOIN atendido_tipo at ON a.atendido_tipo_idatendido_tipo = at.idatendido_tipo";
+
+            if (!empty($termo)) {
+                $sql .= " WHERE p.nome LIKE :termo OR p.sobrenome LIKE :termo"
+                      . " OR CONCAT(p.nome, ' ', p.sobrenome) LIKE :termo";
+            }
+
+            $sql .= " ORDER BY p.nome ASC LIMIT 20";
 
             $stmt = $this->pdo->prepare($sql);
+            if (!empty($termo)) {
+                $stmt->bindValue(':termo', '%' . $termo . '%');
+            }
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {

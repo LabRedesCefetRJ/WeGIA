@@ -51,9 +51,6 @@ $tipos         = $projetoControle->obterTipos();
 $locais        = $projetoControle->obterLocais();
 $statusProjeto = $projetoControle->obterStatus();
 
-$executanteDAO = new ProjetoDAO();
-$executantes   = $executanteDAO->listarFuncionariosAtivos();
-
 $projetoDAO = new ProjetoDAO();
 $funcoes    = $projetoDAO->listarFuncoesProjeto();
 
@@ -78,6 +75,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
   <link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+  <link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
+  <link rel="stylesheet" href="../../assets/vendor/select2/select2-bootstrap.css" />
 
   <style>
     .obrig {
@@ -230,14 +229,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                           <div class="form-group">
                             <label class="col-md-2 control-label" for="novo_funcionario">Executante<sup class="obrig">*</sup></label>
                             <div class="col-md-4">
-                              <select id="novo_funcionario" class="form-control">
-                                <option selected disabled>Selecionar Executante</option>
-                                <?php foreach ($executantes as $executante): ?>
-                                  <option value="<?= $executante['id_pessoa'] ?>">
-                                    <?= htmlspecialchars($executante['nome'] . ' ' . ($executante['sobrenome'] ?? '')) ?>
-                                  </option>
-                                <?php endforeach; ?>
-                              </select>
+                              <input type="hidden" id="novo_funcionario" style="width: 100%;">
                             </div>
                             <label class="col-md-2 control-label" for="nova_funcao">Cargo/Função<sup class="obrig">*</sup></label>
                             <div class="col-md-3">
@@ -313,9 +305,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                           <div class="form-group">
                             <label class="col-md-2 control-label" for="novo_atendido">Atendido<sup class="obrig">*</sup></label>
                             <div class="col-md-4">
-                              <select id="novo_atendido" class="form-control">
-                                <option selected disabled>Selecionar Atendido</option>
-                              </select>
+                              <input type="hidden" id="novo_atendido" style="width: 100%;">
                             </div>
                             <div class="col-md-1">
                               <button type="button" id="btn-adicionar-atendido" class="btn btn-primary" onclick="adicionarAtendidoProjeto()">
@@ -418,9 +408,16 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   </div>
 
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
+  <script>
+    $(function() {
+      $("#header").load("../header.php");
+      $(".menuu").load("../menu.php");
+    });
+  </script>
   <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
   <script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
   <script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+  <script src="../../assets/vendor/select2/select2.min.js"></script>
   <script src="../../Functions/projetos_editar.js"></script>
   <script src="../../Functions/projetos_equipe.js"></script>
   <script src="../../Functions/projetos_atendido.js"></script>

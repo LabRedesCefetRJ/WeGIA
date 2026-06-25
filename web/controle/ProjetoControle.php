@@ -373,6 +373,22 @@ class ProjetoControle
         }
     }
 
+    public function listarFuncionariosAtivosAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $termo = trim(filter_input(INPUT_GET, 'termo', FILTER_DEFAULT) ?? '');
+
+            $executantes = $this->projetoDAO->listarFuncionariosAtivos($termo !== '' ? $termo : null);
+
+            echo json_encode(['success' => true, 'data' => $executantes]);
+        } catch (Exception $e) {
+            $this->logErro($e);
+            echo json_encode(['success' => false, 'message' => 'Ocorreu um erro interno. Tente novamente.']);
+        }
+    }
+
     public function listarEquipeAjax()
     {
         try {
@@ -513,7 +529,8 @@ class ProjetoControle
     {
         try {
             header('Content-Type: application/json');
-            $atendidos = $this->projetoDAO->listarTodosAtendidos();
+            $termo     = trim(filter_input(INPUT_GET, 'termo', FILTER_DEFAULT) ?? '');
+            $atendidos = $this->projetoDAO->listarTodosAtendidos($termo !== '' ? $termo : null);
             echo json_encode(['success' => true, 'data' => $atendidos]);
         } catch (Exception $e) {
             $this->logErro($e);

@@ -29,28 +29,6 @@ function carregarStatusAtendidos() {
     });
 }
 
-function carregarAtendidosDisponiveis() {
-    $.ajax({
-        url: '../../controle/control.php',
-        type: 'GET',
-        data: { metodo: 'listarAtendidosAjax', nomeClasse: 'ProjetoControle' },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success && response.data) {
-                var select = $('#novo_atendido');
-                select.empty().append('<option selected disabled>Selecionar Atendido</option>');
-                $.each(response.data, function(i, atendido) {
-                    var nome = ((atendido.nome || '').trim() + ' ' + (atendido.sobrenome || '').trim()).trim();
-                    select.append('<option value="' + atendido.idatendido + '">' + escapeHtml(nome) + '</option>');
-                });
-            } else {
-                console.error('Erro ao carregar atendidos:', response.message);
-            }
-        },
-        error: function(xhr) { console.error('Erro ao carregar atendidos:', xhr.responseText); }
-    });
-}
-
 function adicionarAtendidoProjeto() {
     const atendidoId = $('#novo_atendido').val();
     const projetoId  = $('#id_projeto').val();
@@ -74,7 +52,7 @@ function adicionarAtendidoProjeto() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                $('#novo_atendido').prop('selectedIndex', 0);
+                $('#novo_atendido').select2('data', null);
                 recarregarListaAtendidos();
             } else {
                 alert('Erro: ' + (response.message || 'Tente novamente.'));
@@ -193,13 +171,42 @@ function escapeHtml(str) {
 $(document).ready(function() {
     tabelaAtendidos = $('#atendidos-table').DataTable({
         language: {
-            url: '//cdn.datatables.net/plug-ins/2.0.2/i18n/pt-BR.json'
+            url: '../../assets/vendor/jquery-datatables/i18n/pt-BR.json'
         },
         columnDefs: [{ orderable: false, targets: -1 }],
         pageLength: 10
     });
 
+    // Select2 v3.4.6 - sintaxe legada (ajax.data/results, não data/processResults)
+    $('#novo_atendido').select2({
+        placeholder: 'Digite o nome do atendido...',
+        minimumInputLength: 2,
+        allowClear: true,
+        ajax: {
+            url: '../../controle/control.php',
+            dataType: 'json',
+            quietMillis: 300, // debounce nativo do select2 v3
+            data: function(term) {
+                return {
+                    metodo: 'listarAtendidosAjax',
+                    nomeClasse: 'ProjetoControle',
+                    termo: term
+                };
+            },
+            results: function(response) {
+                if (!response.success) return { results: [] };
+                return {
+                    results: $.map(response.data, function(item) {
+                        return {
+                            id: item.idatendido,
+                            text: ((item.nome || '') + ' ' + (item.sobrenome || '')).trim()
+                        };
+                    })
+                };
+            }
+        }
+    });
+
     carregarStatusAtendidos();
-    carregarAtendidosDisponiveis();
     recarregarListaAtendidos();
 });

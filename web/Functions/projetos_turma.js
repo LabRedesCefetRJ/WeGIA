@@ -117,7 +117,7 @@ function recarregarListaTurmas() {
 $(document).ready(function() {
     tabelaTurmas = $('#turmas-table').DataTable({
         language: {
-            url: '//cdn.datatables.net/plug-ins/2.0.2/i18n/pt-BR.json'
+            url: '../../assets/vendor/jquery-datatables/i18n/pt-BR.json'
         },
         columnDefs: [{ orderable: false, targets: -1 }],
         pageLength: 10

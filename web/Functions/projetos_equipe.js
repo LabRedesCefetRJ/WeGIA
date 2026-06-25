@@ -108,7 +108,7 @@ function adicionarMembroEquipe() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
-                $('#novo_funcionario').prop('selectedIndex', 0);
+                $('#novo_funcionario').select2('data', null);
                 $('#nova_funcao').prop('selectedIndex', 0);
                 recarregarListaEquipe();
             } else {
@@ -234,10 +234,40 @@ function escapeHtml(str) {
 $(document).ready(function() {
     tabelaEquipe = $('#equipe-table').DataTable({
         language: {
-            url: '//cdn.datatables.net/plug-ins/2.0.2/i18n/pt-BR.json'
+            url: '../../assets/vendor/jquery-datatables/i18n/pt-BR.json'
         },
         columnDefs: [{ orderable: false, targets: -1 }],
         pageLength: 10
+    });
+
+    // Select2 v3.4.6 - sintaxe legada (ajax.data/results, não data/processResults)
+    $('#novo_funcionario').select2({
+        placeholder: 'Digite o nome do executante...',
+        minimumInputLength: 2,
+        allowClear: true,
+        ajax: {
+            url: '../../controle/control.php',
+            dataType: 'json',
+            quietMillis: 300, // debounce nativo do select2 v3
+            data: function(term) {
+                return {
+                    metodo: 'listarFuncionariosAtivosAjax',
+                    nomeClasse: 'ProjetoControle',
+                    termo: term
+                };
+            },
+            results: function(response) {
+                if (!response.success) return { results: [] };
+                return {
+                    results: $.map(response.data, function(item) {
+                        return {
+                            id: item.id_pessoa,
+                            text: ((item.nome || '') + ' ' + (item.sobrenome || '')).trim()
+                        };
+                    })
+                };
+            }
+        }
     });
 
     carregarFuncoesSelect();
