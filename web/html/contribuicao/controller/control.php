@@ -49,6 +49,9 @@ try {
         ],
         'RegraPagamentoController' => [
             'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento'
+        ],
+        'ContactController' => [
+            'getSupportContact'
         ]
     ];
 
