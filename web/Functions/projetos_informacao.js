@@ -51,4 +51,5 @@ function filtrarPorStatus() {
 // Carregar dados ao iniciar
 $(document).ready(function() {
   preencherTabela(projetos);
+  filtrarPorStatus();
 });
