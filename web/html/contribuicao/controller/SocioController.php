@@ -113,7 +113,6 @@ class SocioController
                 ->setSobrenome($dados['sobrenome'])
                 ->setDataNascimento($dados['dataNascimento'])
                 ->setTelefone($dados['telefone'])
-                ->setEmail($dados['email'])
                 ->setEstado($dados['uf'])
                 ->setCidade($dados['cidade'])
                 ->setBairro($dados['bairro'])
@@ -171,6 +170,7 @@ class SocioController
         $valor = trim(filter_input(INPUT_POST, 'valor'));
 
         $opcaoSelecionada = trim(filter_input(INPUT_POST, 'opcao', FILTER_SANITIZE_SPECIAL_CHARS));
+        $method = trim(filter_input(INPUT_POST, 'metodo', FILTER_SANITIZE_SPECIAL_CHARS));
 
         //validar dados (considerar separar em uma função própria)
         try {
@@ -242,7 +242,7 @@ class SocioController
             }
 
             //validação do email
-            if (!$email || empty($email)) {
+            if ($method != 'atualizarSocio' && (!$email || empty($email))) {
                 throw new InvalidArgumentException('O email informado não está em um formato válido.', 400);
             }
 

@@ -56,7 +56,7 @@ class SocioDAO
 
         $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
         $stmtPessoa->bindValue(':nome', $socio->getNome());
-        $stmtPessoa->bindParam(':email', $socio->getEmail());
+        $stmtPessoa->bindValue(':email', $socio->getEmail());
         $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
         $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
         $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
@@ -88,7 +88,7 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindValue(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
 
         $stmtSocio->execute();
@@ -128,7 +128,7 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindValue(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
 
         $stmtSocio->execute();
@@ -150,43 +150,50 @@ class SocioDAO
 
     public function atualizarSocio(Socio $socio)
     {
-        //atualizar os dados de pessoa
-        $sqlAtualizarPessoa =
-            'UPDATE pessoa 
-        SET 
-            nome=:nome,
-            email=:email, 
-            sobrenome=:sobrenome,
-            telefone=:telefone, 
-            data_nascimento=:dataNascimento, 
-            cep=:cep, 
-            estado=:estado, 
-            cidade=:cidade, 
-            bairro=:bairro, 
-            logradouro=:logradouro, 
-            numero_endereco=:numeroEndereco, 
-            complemento=:complemento, 
-            ibge=:ibge
-        WHERE cpf=:cpf';
+        // Mapeia as colunas da tabela para os valores do objeto
+        $camposPessoa = [
+            'nome'             => $socio->getNome(),
+            'email'            => $socio->getEmail(),
+            'sobrenome'        => $socio->getSobrenome(),
+            'telefone'         => $socio->getTelefone(),
+            'data_nascimento'  => $socio->getDataNascimento(),
+            'cep'              => $socio->getCep(),
+            'estado'           => $socio->getEstado(),
+            'cidade'           => $socio->getCidade(),
+            'bairro'           => $socio->getBairro(),
+            'logradouro'       => $socio->getLogradouro(),
+            'numero_endereco'  => $socio->getNumeroEndereco(),
+            'complemento'      => $socio->getComplemento(),
+            'ibge'             => $socio->getIbge(),
+        ];
 
-        $stmtPessoa = $this->pdo->prepare($sqlAtualizarPessoa);
+        $set = [];
+        $params = [];
 
-        $stmtPessoa->bindValue(':nome', $socio->getNome());
-        $stmtPessoa->bindParam(':email', $socio->getEmail());
-        $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
-        $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
-        $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
-        $stmtPessoa->bindValue(':cep', $socio->getCep());
-        $stmtPessoa->bindValue(':estado', $socio->getEstado());
-        $stmtPessoa->bindValue(':cidade', $socio->getCidade());
-        $stmtPessoa->bindValue(':bairro', $socio->getBairro());
-        $stmtPessoa->bindValue(':logradouro', $socio->getLogradouro());
-        $stmtPessoa->bindValue(':numeroEndereco', $socio->getNumeroEndereco());
-        $stmtPessoa->bindValue(':complemento', $socio->getComplemento());
-        $stmtPessoa->bindValue(':ibge', $socio->getIbge());
-        $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
+        foreach ($camposPessoa as $coluna => $valor) {
+            if ($valor !== null) {
+                $set[] = "{$coluna} = :{$coluna}";
+                $params[$coluna] = $valor;
+            }
+        }
 
-        $stmtPessoa->execute();
+        // Se houver algo para atualizar na tabela pessoa
+        if (!empty($set)) {
+            $sqlAtualizarPessoa = sprintf(
+                'UPDATE pessoa SET %s WHERE cpf = :cpf',
+                implode(",\n    ", $set)
+            );
+
+            $stmtPessoa = $this->pdo->prepare($sqlAtualizarPessoa);
+
+            foreach ($params as $param => $valor) {
+                $stmtPessoa->bindValue(":{$param}", $valor);
+            }
+
+            $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
+
+            $stmtPessoa->execute();
+        }
 
         //atualizar os dados de socio
 
@@ -207,8 +214,8 @@ class SocioDAO
 
         $stmtSocio = $this->pdo->prepare($sqlAtualizarSocio);
 
-        $stmtSocio->bindParam(':valor', $socio->getValor());
-        $stmtSocio->bindParam(':cpf', $socio->getDocumento());
+        $stmtSocio->bindValue(':valor', $socio->getValor());
+        $stmtSocio->bindValue(':cpf', $socio->getDocumento());
 
         $atualizado = $stmtSocio->execute();
 

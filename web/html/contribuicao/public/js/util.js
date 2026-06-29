@@ -285,9 +285,9 @@ function verificarSocio({ bairro, cep, cidade, complemento, documento, email, es
         return false;
     }
 
-    if (!email || email.length < 1) {
+    /*if (!email || email.length < 1) {
         return false;
-    }
+    }*/
 
     if (!estado || estado.length < 1) {
         return false;
@@ -713,6 +713,12 @@ function buscarSocio() {
                 if (!verificarSocio(data.resultado)) {
                     formAutocomplete(data.resultado);
                     acao = 'atualizar';
+
+                    //desabilitar edição do e-mail
+                    const emailObject = document.getElementById('email');
+                    emailObject.disabled = true;
+                    emailObject.classList.add('campo-bloqueado');
+
                     alternarPaginas('pag3', 'pag2');
                 } else {
                     alternarPaginas('pag5', 'pag2');
