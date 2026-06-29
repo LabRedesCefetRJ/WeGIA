@@ -433,6 +433,26 @@ CREATE TABLE IF NOT EXISTS `wegia`.`origem` (
   PRIMARY KEY (`id_origem`))
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `wegia`.`origem_almoxarifado`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`origem_almoxarifado` (
+  `id_origem_almoxarifado` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_origem` INT(11) NOT NULL,
+  `id_almoxarifado` INT(11) NOT NULL,
+  PRIMARY KEY (`id_origem_almoxarifado`),
+  UNIQUE KEY `uq_origem_almoxarifado` (`id_origem`, `id_almoxarifado`),
+  CONSTRAINT `fk_origem_almoxarifado_origem`
+    FOREIGN KEY (`id_origem`)
+    REFERENCES `wegia`.`origem` (`id_origem`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_origem_almoxarifado_almoxarifado`
+    FOREIGN KEY (`id_almoxarifado`)
+    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`tipo_entrada`
