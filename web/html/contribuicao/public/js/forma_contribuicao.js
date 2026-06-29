@@ -118,13 +118,6 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(error => {
             console.error(error);
-
-            contactContainer.innerHTML = `
-            <div class="alert alert-warning" role="alert">
-                <strong>Não foi possível carregar os canais de atendimento.</strong><br>
-                Tente novamente em alguns instantes. Se o problema persistir, entre em contato com a equipe de suporte.
-            </div>
-        `;
         });
 
 });
