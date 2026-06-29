@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const phone = supportContact.replace(/\D/g, '');
 
                 const message = encodeURIComponent(
-                    'Olá! Preciso de ajuda com o sistema.'
+                    'Olá! Preciso de ajuda para realizar uma contribuição financeira através do site institucional.'
                 );
 
                 link.href = `https://wa.me/${phone}?text=${message}`;
