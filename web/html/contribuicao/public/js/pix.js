@@ -13,7 +13,7 @@ async function decidirAcao() {
         case 'qrcode': gerarQRCode(); break;
         case 'cadastrar': await cadastrarSocio(); gerarQRCode(); break;
         case 'atualizar': await atualizarSocio(); gerarQRCode(); break;
-        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); gerarBoleto(); break;
+        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); gerarQRCode(); break;
         default: console.log('Ação indefinida');
     }
 }

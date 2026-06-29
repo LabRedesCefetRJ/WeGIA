@@ -11,7 +11,7 @@ async function decidirAcao() {
         case 'recorrencia': criarAssinatura(); break;
         case 'cadastrar': await cadastrarSocio(); criarAssinatura(); break;
         case 'atualizar': await atualizarSocio(); criarAssinatura(); break;
-        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); gerarBoleto(); break;
+        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); criarAssinatura(); break;
         default: console.log('Ação indefinida');
     }
 }
