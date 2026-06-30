@@ -36,40 +36,68 @@ require_once "html/personalizacao_display.php";
 	<link rel="stylesheet" href="./assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
 	<!---->
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-	<script src="./assets/vendor/jquery/jquery.min.js"></script>
 	<!-- Skin CSS -->
 	<link rel="stylesheet" href="./assets/stylesheets/skins/default.css" />
 	<!-- Theme Custom CSS -->
 	<link rel="stylesheet" href="./css/index-theme.css" />
+
 	<!-- Head Libs -->
 	<script src="./assets/vendor/modernizr/modernizr.js"></script>
+	<script src="./assets/vendor/jquery/jquery.min.js"></script>
+	<script src="./assets/vendor/bootstrap/js/bootstrap.min.js"></script>
 	<!-- jQuery Mask -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 	<?php
+	$erro = '';
+	$login_error_modal = null;
 	if (isset($_GET['erro'])) {
 		$erro = trim(filter_var($_GET['erro'], FILTER_SANITIZE_SPECIAL_CHARS));
-	} else {
-		$erro = "";
+	}
+
+	$login_error_map = [
+		'erro' => [
+			'type' => 'error',
+			'iconPrefix' => 'fa',
+			'icon' => 'fa-times-circle',
+			'title' => 'Falha no acesso',
+			'message' => 'CPF e/ou senha inválidos. Verifique os dados informados e tente novamente.',
+			'action' => 'Entendi',
+		],
+		'usuario_inativo' => [
+			'type' => 'warning',
+				'iconPrefix' => 'glyphicon',
+				'icon' => 'glyphicon-ban-circle',
+			'title' => 'Usuário inativo',
+				'message' => 'Este acesso pertence a um usuário inativo. A senha não foi validada porque o cadastro está bloqueado.',
+			'action' => 'Entendi',
+		],
+		'dados_invalidos' => [
+			'type' => 'warning',
+				'iconPrefix' => 'fa',
+			'icon' => 'fa-exclamation-triangle',
+			'title' => 'Campos obrigatórios',
+			'message' => 'Preencha todos os campos obrigatórios antes de continuar.',
+			'action' => 'Entendi',
+		],
+		'acesso_revogado' => [
+			'type' => 'error',
+				'iconPrefix' => 'fa',
+			'icon' => 'fa-ban',
+			'title' => 'Acesso revogado',
+			'message' => 'Seu acesso foi revogado pelo administrador. Caso isso pareça incorreto, solicite uma revisão do cadastro.',
+			'action' => 'Entendi',
+		],
+	];
+
+	if (isset($login_error_map[$erro])) {
+		$login_error_modal = $login_error_map[$erro];
 	}
 	?>
-	<script>
-		const erro = '<?= htmlspecialchars($erro); ?>';
-		if (erro == 'erro') {
-			alert('Senha e/ou cpf inválido');
-		} 
-			else if (erro === 'usuario_inativo') {
-            	alert('Acesso negado: Este funcionário está inativo. Entre em contato com o administrador.');
-        } 
-			else if (erro === 'dados_invalidos') {
-            	alert('Por favor, preencha todos os campos.');
-        }
-			else if (erro === 'acesso_revogado') {
-            	alert('Atenção: Seu acesso foi revogado pelo administrador.');
-        }
-	</script>
+	<?php if ($login_error_modal !== null) : ?>
+		<script>
+			window.loginErrorModalData = <?= json_encode($login_error_modal, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+		</script>
+	<?php endif; ?>
 	<script>
 		$(document).ready(function() {
 			$("#login").keypress(function(event) {
@@ -80,11 +108,53 @@ require_once "html/personalizacao_display.php";
 					$("#login").unmask();
 			})
 		});
+
+		$(function() {
+			if (window.loginErrorModalData) {
+				var $modal = $('#loginErrorModal');
+				$modal.addClass('login-error--' + window.loginErrorModalData.type);
+				$modal.find('.login-error-icon')
+					.attr('class', 'login-error-icon ' + (window.loginErrorModalData.iconPrefix || 'fa') + ' ' + window.loginErrorModalData.icon)
+					.empty();
+				$modal.find('.login-error-title').text(window.loginErrorModalData.title);
+				$modal.find('.login-error-message').text(window.loginErrorModalData.message);
+				$modal.find('.btn-login-error').text(window.loginErrorModalData.action || 'Entendi');
+				$modal.on('shown.bs.modal', function() {
+					$modal.find('.modal-close-button').trigger('focus');
+				});
+				$modal.modal({
+					backdrop: true,
+					keyboard: true,
+					show: true
+				});
+			}
+		});
 	</script>
 
 </head>  
 
 <body>
+	<div class="modal fade login-error-modal" id="loginErrorModal" tabindex="-1" role="dialog" aria-labelledby="loginErrorModalTitle" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="modal-close-button" data-dismiss="modal" aria-label="Fechar">
+						<span aria-hidden="true">&times;</span>
+					</button>
+					<div class="text-center login-error-top">
+						<div class="login-error-icon fa fa-exclamation-circle" aria-hidden="true"></div>
+						<h4 class="login-error-title" id="loginErrorModalTitle">Atenção</h4>
+					</div>
+				</div>
+				<div class="modal-body text-center">
+					<p class="login-error-message">Verifique as informações e tente novamente.</p>
+				</div>
+				<div class="modal-footer text-center">
+					<button type="button" class="btn btn-login-error" data-dismiss="modal">Entendi</button>
+				</div>
+			</div>
+		</div>
+	</div>
 	<div class="container-fluid">
 		<div class="row cabecalho">
 			<div class="col-md-1 main-menu-logo">
