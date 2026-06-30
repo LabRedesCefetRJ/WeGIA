@@ -203,7 +203,16 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Nova senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" id="nova_senha" name="nova_senha" class="form-control" required><br />
+													<div class="input-group">
+														<input type="password" id="nova_senha" name="nova_senha" class="form-control" required>
+
+														<span class="input-group-btn">
+															<button type="button" id="toggleNovaSenha" class="btn btn-default">
+																<i class="fa fa-eye"></i>
+															</button>
+														</span>
+													</div>
+													<br />
 													</label>
 													<div id="password-div"></div>
 												</div>
@@ -212,7 +221,16 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Confirmar senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" name="confirmar_senha" class="form-control" required><br />
+													<div class="input-group">
+														<input type="password" id="confirmar_senha" name="confirmar_senha" class="form-control" required>
+
+														<span class="input-group-btn">
+															<button type="button" id="toggleConfirmarSenha" class="btn btn-default">
+																<i class="fa fa-eye"></i>
+															</button>
+														</span>
+													</div>
+													<br />
 													</label>
 
 												</div>
@@ -236,6 +254,13 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 		</div>
 	</section>
 
+	<script>
+	$(document).ready(function() {
+		configurarOlhoSenha("#toggleNovaSenha", "#nova_senha");
+		configurarOlhoSenha("#toggleConfirmarSenha", "#confirmar_senha");
+	});
+	</script>
+
 	<!-- Vendor -->
 	<script src=<?= WWW . "assets/vendor/select2/select2.js" ?>></script>
 	<script src=<?= WWW . "assets/vendor/jquery-datatables/media/js/jquery.dataTables.js" ?>></script>
@@ -252,6 +277,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<script src=<?= WWW . "assets/javascripts/theme.init.js"?>></script>
 
 	<script src=<?= WWW . "Functions/password_policy.js"?>></script>
+
+	<script src="<?= WWW . 'Functions/togglePassword.js' ?>"></script>
 
 	<div align="right">
 		<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60" style="border:none;"></iframe>

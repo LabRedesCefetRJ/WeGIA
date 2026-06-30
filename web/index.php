@@ -47,6 +47,9 @@ require_once "html/personalizacao_display.php";
 	<script src="./assets/vendor/bootstrap/js/bootstrap.min.js"></script>
 	<!-- jQuery Mask -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
+
+	<script src="./Functions/togglePassword.js"></script>
+
 	<?php
 	$erro = '';
 	$login_error_modal = null;
@@ -107,6 +110,11 @@ require_once "html/personalizacao_display.php";
 				else
 					$("#login").unmask();
 			})
+
+			configurarOlhoSenha(
+				"#togglePasswordVisibility",
+				"#passwordInput"
+			);
 		});
 
 		$(function() {
@@ -184,7 +192,10 @@ require_once "html/personalizacao_display.php";
 			<div class="col col-md-3 formulario pass-form">
 				<div class="form-group mb-lg form-group-login"><!--login-->
 					<div class="input-group input-group-icon"><!--icone-->
-						<input name="pwd" type="password" class="form-control input-lg form-input-pass" placeholder="Senha" />
+						<input id="passwordInput" name="pwd" type="password" class="form-control input-lg form-input-pass" placeholder="Senha" />
+						<button type="button" id="togglePasswordVisibility" class="password-toggle-btn" aria-label="Mostrar senha" aria-pressed="false">
+							<i class="fa fa-eye"></i>
+						</button>
 						<span class="input-group-addon">
 							<span class="icon icon-lg">
 								<i class="fa fa-lock"></i>

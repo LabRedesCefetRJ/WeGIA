@@ -413,6 +413,52 @@
     color: #667085;
 }
 
+.password-field-wrap {
+    position: relative;
+}
+
+.password-field-wrap .form-control {
+    padding-right: 42px;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 22px;
+    height: 22px;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: #8a93a3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle-btn:hover,
+.password-toggle-btn:focus {
+    color: #6f7785;
+    outline: none;
+}
+
+.password-toggle-btn i {
+    font-size: 15px;
+    line-height: 1;
+}
+
+@media (max-width: 767px) {
+    .password-field-wrap .form-control {
+        padding-right: 38px;
+    }
+
+    .password-toggle-btn {
+        right: 10px;
+    }
+}
+
 .login-error-modal .modal-close-button {
     position: absolute;
     top: 12px;
@@ -482,3 +528,48 @@
         padding-right: 20px;
     }
 }
+		.pass-form .input-group.input-group-icon {
+			position: relative;
+		}
+
+		.pass-form .input-group.input-group-icon .form-control.form-input-pass {
+			padding-right: 72px;
+		}
+
+		.password-toggle-btn {
+			position: absolute;
+			top: 50%;
+			right: 48px;
+			transform: translateY(-50%);
+			z-index: 3;
+			width: 22px;
+			height: 22px;
+			border: 0;
+			background: transparent;
+			padding: 0;
+			color: #8a93a3;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.password-toggle-btn:hover,
+		.password-toggle-btn:focus {
+			color: #6f7785;
+			outline: none;
+		}
+
+		.password-toggle-btn i {
+			font-size: 15px;
+			line-height: 1;
+		}
+
+		@media (max-width: 767px) {
+			.pass-form .input-group.input-group-icon .form-control.form-input-pass {
+				padding-right: 68px;
+			}
+
+			.password-toggle-btn {
+				right: 44px;
+			}
+		}
