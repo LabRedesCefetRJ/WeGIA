@@ -312,19 +312,29 @@ class SocioController
     /**
      * Extraí o documento de um sócio da requisição e retorna os dados pertecentes a esse sócio.
      */
-    public function buscarPorDocumento()
+    public function buscarPorDocumento() //<-- Verificar trechos de código que usam esse método
     {
         $documento = filter_input(INPUT_GET, 'documento');
 
         try {
             if (!$documento || empty($documento))
-                throw new InvalidArgumentException('O documento informado não é válido.', 400);
+                throw new InvalidArgumentException('O documento informado é inválido.', 400);
 
             $socioDao = new SocioDAO();
             $socio = $socioDao->buscarPorDocumento($documento);
 
             if (!$socio || is_null($socio)) {
-                echo json_encode(['resultado' => 'Sócio não encontrado']);
+                http_response_code(404);
+
+                //informar se existe uma pessoa
+                $pessoaDao = new PessoaDAO($this->pdo);
+                $pessoaExists = $pessoaDao->verificarExistencia($documento);
+
+                echo json_encode([
+                    'resultado' => 'Sócio não encontrado',
+                    'pessoaExists' => $pessoaExists instanceof PessoaDTOSocio ? true : false,
+                ]);
+
                 exit();
             }
 

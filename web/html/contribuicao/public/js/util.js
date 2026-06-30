@@ -36,11 +36,11 @@ function configurarMudancaOpcao(funcao) {
  * @param {*} funcao 
  */
 function configurarConsulta(funcao) {
-    const btnConsulta = document.getElementById("consultar-btn");
-    btnConsulta.addEventListener("click", function (ev) {
-        ev.preventDefault();
-        funcao();
-    })
+    document.getElementById("consultar-btn")
+        .addEventListener("click", async (ev) => {
+            ev.preventDefault();
+            await funcao();
+        });
 }
 
 /**
@@ -674,106 +674,79 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
     }
 }
 
-function buscarSocio() {
-    let documento = pegarDocumento();
+async function buscarSocio() {
+    const documento = pegarDocumento();
 
     if (!validarDocumento(documento)) {
         alert("O documento informado não é válido");
         return;
     }
 
-    console.log("Buscando sócio ...");
+    console.log("Buscando sócio...");
 
     const url = `../controller/control.php?nomeClasse=SocioController&metodo=buscarPorDocumento&documento=${encodeURIComponent(documento)}`;
 
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Erro na consulta: ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
+    try {
+        const response = await fetch(url);
 
-            console.log('Resposta do sócio:', data);
+        let data = null;
 
-            const socioEncontrado =
-                typeof data.resultado === 'object' &&
-                data.resultado !== null;
+        // O controller sempre retorna JSON (200 ou 404)
+        try {
+            data = await response.json();
+        } catch (_) {
+            data = null;
+        }
 
-            if (socioEncontrado) {
+        console.log("Resposta:", data);
 
-                if (!verificarSocio(data.resultado)) {
-                    formAutocomplete(data.resultado);
-                    acao = 'atualizar';
+        if (response.ok) {
+            const socio = data.resultado;
 
-                    //desabilitar edição do e-mail
-                    const emailObject = document.getElementById('email');
-                    emailObject.disabled = true;
-                    emailObject.classList.add('campo-bloqueado');
+            if (!verificarSocio(socio)) {
+                formAutocomplete(socio);
+                acao = "atualizar";
 
-                    alternarPaginas('pag3', 'pag2');
-                } else {
-                    alternarPaginas('pag5', 'pag2');
-                }
+                // Desabilitar edição do e-mail
+                const emailObject = document.getElementById("email");
+                emailObject.disabled = true;
+                emailObject.classList.add("campo-bloqueado");
 
-                const nomeSocio = data.resultado.nome;
-
-                document.getElementById('div-agradecimento').innerHTML =
-                    `<h3>Obrigado por contribuir mais uma vez, ${nomeSocio}!</h3>`;
-
-                return;
+                alternarPaginas("pag3", "pag2");
+            } else {
+                alternarPaginas("pag5", "pag2");
             }
 
-            console.log('Sócio não encontrado. Iniciando busca de pessoa.');
+            document.getElementById("div-agradecimento").innerHTML =
+                `<h3>Obrigado por contribuir mais uma vez, ${socio.nome}!</h3>`;
 
-            const buscaPessoaUrl =
-                `../../../controle/control.php?nomeClasse=PessoaControle&metodo=buscarPorDocumento&documento=${encodeURIComponent(documento)}`;
+            return;
+        }
 
-            return fetch(buscaPessoaUrl);
-        })
-        .then(response => {
+        if (response.status === 404) {
+            if (data?.pessoaExists) {
+                console.log("Pessoa encontrada.");
 
-            if (!response) {
-                return;
+                // Caso futuramente queira preencher o formulário:
+                // formAutocomplete(data.pessoa, true);
+
+                acao = "cadastrar_existente";
+                alternarPaginas("pag5", "pag2");
+            } else {
+                console.log("Pessoa não encontrada.");
+
+                acao = "cadastrar";
+                alternarPaginas("pag3", "pag2");
             }
 
-            console.log('Resposta da busca de pessoa:', response.status);
+            return;
+        }
 
-            if (response.status === 404) {
+        throw new Error(data?.resultado || "Erro na consulta.");
 
-                acao = 'cadastrar';
-                alternarPaginas('pag3', 'pag2');
-
-                return;
-            }
-
-            if (!response.ok) {
-                throw new Error('Erro na consulta da pessoa');
-            }
-
-            return response.json();
-        })
-        .then(pessoaData => {
-
-            if (!pessoaData) {
-                return;
-            }
-
-            console.log('Pessoa encontrada:', pessoaData);
-
-            pessoaData.dataNascimento = pessoaData.data_nascimento;
-            pessoaData.numeroEndereco = pessoaData.numero_endereco;
-
-            formAutocomplete(pessoaData, true);
-
-            acao = 'cadastrar_existente';
-
-            alternarPaginas('pag3', 'pag2');
-        })
-        .catch(error => {
-            console.error(error);
-        });
+    } catch (error) {
+        console.error(error);
+    }
 
     console.log("Consulta realizada");
 }
