@@ -322,34 +322,31 @@ async function cadastrarSocio() {
 
     const documento = pegarDocumento();
 
-    const cep = formatarCEP(formData.get('cep'));
-    const dataNascimento = converterDataParaISO(formData.get('data_nascimento'));
-
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
-    formData.append('cep', cep);
-    formData.append('data_nascimento', dataNascimento);
+    formData.append('cep', formatarCEP(formData.get('cep')));
+    formData.append('data_nascimento', converterDataParaISO(formData.get('data_nascimento')));
+
     anexarTagsAoFormData(form, formData);
 
-    try {
-        const response = await fetch("../controller/control.php", {
-            method: "POST",
-            body: formData
-        });
+    const response = await fetch("../controller/control.php", {
+        method: "POST",
+        body: formData
+    });
 
-        const resposta = await response.json(); // Converte a resposta para JSON
+    const resposta = await response.json();
 
-        if (resposta.mensagem) {
-            console.log(resposta.mensagem);
-        } else if (resposta.erro) {
-            alert("Erro: " + resposta.erro);
-        } else {
-            alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
-        }
-    } catch (error) {
-        console.error("Erro:", error);
+    if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${resposta.erro}`);
     }
+
+    if (!resposta.mensagem) {
+        throw new Error("Resposta inválida do servidor.");
+    }
+
+    console.log(resposta.mensagem);
+    return true;
 }
 
 async function cadastrarSocioPessoaExistente() {
@@ -361,27 +358,26 @@ async function cadastrarSocioPessoaExistente() {
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
-    
+
     anexarTagsAoFormData(form, formData);
 
-    try {
-        const response = await fetch("../controller/control.php", {
-            method: "POST",
-            body: formData
-        });
+    const response = await fetch("../controller/control.php", {
+        method: "POST",
+        body: formData
+    });
 
-        const resposta = await response.json(); // Converte a resposta para JSON
+    const resposta = await response.json();
 
-        if (resposta.mensagem) {
-            console.log(resposta.mensagem);
-        } else if (resposta.erro) {
-            alert("Erro: " + resposta.erro);
-        } else {
-            alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
-        }
-    } catch (error) {
-        console.error("Erro:", error);
+    if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${resposta.erro}`);
     }
+
+    if (!resposta.mensagem) {
+        throw new Error("Resposta inválida do servidor.");
+    }
+
+    console.log(resposta.mensagem);
+    return true;
 }
 
 async function atualizarSocio() {
@@ -390,34 +386,31 @@ async function atualizarSocio() {
 
     const documento = pegarDocumento();
 
-    const cep = formatarCEP(formData.get('cep'));
-    const dataNascimento = converterDataParaISO(formData.get('data_nascimento'));
-
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'atualizarSocio');
     formData.append('documento_socio', documento);
-    formData.append('cep', cep);
-    formData.append('data_nascimento', dataNascimento);
+    formData.append('cep', formatarCEP(formData.get('cep')));
+    formData.append('data_nascimento', converterDataParaISO(formData.get('data_nascimento')));
+
     anexarTagsAoFormData(form, formData);
 
-    try {
-        const response = await fetch("../controller/control.php", {
-            method: "POST",
-            body: formData
-        });
+    const response = await fetch("../controller/control.php", {
+        method: "POST",
+        body: formData
+    });
 
-        const resposta = await response.json(); // Converte a resposta para JSON
+    const resposta = await response.json();
 
-        if (resposta.mensagem) {
-            console.log(resposta.mensagem);
-        } else if (resposta.erro) {
-            alert("Erro: " + resposta.erro);
-        } else {
-            alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
-        }
-    } catch (error) {
-        console.error("Erro:", error);
+    if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${resposta.erro}`);
     }
+
+    if (!resposta.mensagem) {
+        throw new Error("Resposta inválida do servidor.");
+    }
+
+    console.log(resposta.mensagem);
+    return true;
 }
 
 function anexarTagsAoFormData(form, formData) {

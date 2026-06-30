@@ -9,12 +9,33 @@ async function configurarRegrasDePagamento() {
 }
 
 async function decidirAcao() {
-    switch (acao) {
-        case 'cartao-credito': processarCartaoCredito(); break;
-        case 'cadastrar': await cadastrarSocio(); processarCartaoCredito(); break;
-        case 'atualizar': await atualizarSocio(); processarCartaoCredito(); break;
-        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); processarCartaoCredito(); break;
-        default: console.log('Ação indefinida');
+    try {
+        switch (acao) {
+            case 'cartao-credito':
+                await processarCartaoCredito();
+                break;
+
+            case 'cadastrar':
+                await cadastrarSocio();
+                await processarCartaoCredito();
+                break;
+
+            case 'atualizar':
+                await atualizarSocio();
+                await processarCartaoCredito();
+                break;
+
+            case 'cadastrar_existente':
+                await cadastrarSocioPessoaExistente();
+                await processarCartaoCredito();
+                break;
+
+            default:
+                console.log('Ação indefinida');
+        }
+    } catch (error) {
+        console.error(error.message);
+        alert(error.message);
     }
 }
 

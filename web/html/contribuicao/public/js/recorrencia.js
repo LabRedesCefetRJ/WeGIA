@@ -7,12 +7,33 @@ async function configurarRegrasDePagamento() {
 }
 
 async function decidirAcao() {
-    switch (acao) {
-        case 'recorrencia': criarAssinatura(); break;
-        case 'cadastrar': await cadastrarSocio(); criarAssinatura(); break;
-        case 'atualizar': await atualizarSocio(); criarAssinatura(); break;
-        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); criarAssinatura(); break;
-        default: console.log('Ação indefinida');
+    try {
+        switch (acao) {
+            case 'recorrencia':
+                await criarAssinatura();
+                break;
+
+            case 'cadastrar':
+                await cadastrarSocio();
+                await criarAssinatura();
+                break;
+
+            case 'atualizar':
+                await atualizarSocio();
+                await criarAssinatura();
+                break;
+
+            case 'cadastrar_existente':
+                await cadastrarSocioPessoaExistente();
+                await criarAssinatura();
+                break;
+
+            default:
+                console.log('Ação indefinida');
+        }
+    } catch (error) {
+        console.error(error.message);
+        alert(error.message);
     }
 }
 

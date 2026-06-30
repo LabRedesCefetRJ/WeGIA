@@ -9,12 +9,33 @@ async function configurarRegrasDePagamento() {
 }
 
 async function decidirAcao() {
-    switch (acao) {
-        case 'qrcode': gerarQRCode(); break;
-        case 'cadastrar': await cadastrarSocio(); gerarQRCode(); break;
-        case 'atualizar': await atualizarSocio(); gerarQRCode(); break;
-        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); gerarQRCode(); break;
-        default: console.log('Ação indefinida');
+    try {
+        switch (acao) {
+            case 'qrcode':
+                await gerarQRCode();
+                break;
+
+            case 'cadastrar':
+                await cadastrarSocio();
+                await gerarQRCode();
+                break;
+
+            case 'atualizar':
+                await atualizarSocio();
+                await gerarQRCode();
+                break;
+
+            case 'cadastrar_existente':
+                await cadastrarSocioPessoaExistente();
+                await gerarQRCode();
+                break;
+
+            default:
+                console.log('Ação indefinida');
+        }
+    } catch (error) {
+        console.error(error.message);
+        alert(error.message);
     }
 }
 

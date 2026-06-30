@@ -9,12 +9,33 @@ async function configurarRegrasDePagamento() {
 }
 
 async function decidirAcao() {
-    switch (acao) {
-        case 'mensalidade': gerarMensalidade(); break;
-        case 'cadastrar': await cadastrarSocio(); gerarMensalidade(); break;
-        case 'atualizar': await atualizarSocio(); gerarMensalidade(); break;
-        case 'cadastrar_existente': await cadastrarSocioPessoaExistente(); gerarMensalidade(); break;
-        default: console.log('Ação indefinida');
+    try {
+        switch (acao) {
+            case 'mensalidade':
+                await gerarMensalidade();
+                break;
+
+            case 'cadastrar':
+                await cadastrarSocio();
+                await gerarMensalidade();
+                break;
+
+            case 'atualizar':
+                await atualizarSocio();
+                await gerarMensalidade();
+                break;
+
+            case 'cadastrar_existente':
+                await cadastrarSocioPessoaExistente();
+                await gerarMensalidade();
+                break;
+
+            default:
+                console.log('Ação indefinida');
+        }
+    } catch (error) {
+        console.error(error.message);
+        alert(error.message);
     }
 }
 

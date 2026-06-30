@@ -152,7 +152,6 @@ class SocioController
      */
     function extrairPost()
     {
-        //extrair dados da requisição (considerar separar em uma função própria)
         $documento = trim(filter_input(INPUT_POST, 'documento_socio'));
         $nome = trim(filter_input(INPUT_POST, 'nome'));
         $sobrenome = trim(filter_input(INPUT_POST, 'sobrenome'));
@@ -166,7 +165,7 @@ class SocioController
         $complemento = trim(filter_input(INPUT_POST, 'complemento'));
         $numero = trim(filter_input(INPUT_POST, 'numero'));
         $ibge = trim(filter_input(INPUT_POST, 'ibge'));
-        $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
+        $email = isset($_POST['email']) ? trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL)) : null;
         $valor = trim(filter_input(INPUT_POST, 'valor'));
 
         $opcaoSelecionada = trim(filter_input(INPUT_POST, 'opcao', FILTER_SANITIZE_SPECIAL_CHARS));
