@@ -23,6 +23,19 @@ include_once ROOT . '/dao/Conexao.php';
 include_once ROOT . '/dao/SaidaDAO.php';
 
 $tipo = $_GET['tipo'] ?? 'ativo';
+
+$pdo = Conexao::connect();
+
+$filtroAtivoAlmoxarifado = $tipo === 'arquivado' ? '' : 'WHERE ativo = 1';
+
+$stmtAlmoxarifados = $pdo->query("
+	SELECT id_almoxarifado, descricao_almoxarifado
+	FROM almoxarifado
+	$filtroAtivoAlmoxarifado
+	ORDER BY descricao_almoxarifado
+");
+
+$almoxarifados = $stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!doctype html>
 <html class="fixed">
@@ -80,11 +93,6 @@ $tipo = $_GET['tipo'] ?? 'ativo';
 		function listarId(id) {
 			window.location.href = '<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=<?= WWW ?>html/matPat/listar_Isaida.php&id_saida=' + id;
 		}
-	</script>
-	<script>
-		function listarId(id) {
-			window.location.href = '<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=<?= WWW ?>html/matPat/listar_Isaida.php&id_saida=' + id;
-		}
 
 		let tabela = null;
 
@@ -114,6 +122,7 @@ $tipo = $_GET['tipo'] ?? 'ativo';
 						$('#tabela').append(
 							$('<tr style="cursor:pointer" />')
 								.attr('onclick', 'listarId("' + item.id_saida + '")')
+								.append($('<td />').text(item.id_almoxarifado ?? ''))
 								.append($('<td />').text(item.descricao_almoxarifado ?? ''))
 								.append($('<td />').text(item.nome_destino ?? ''))
 								.append($('<td />').text(item.descricao ?? ''))
@@ -126,8 +135,25 @@ $tipo = $_GET['tipo'] ?? 'ativo';
 
 					tabela = $('#datatable-default').DataTable({
 						destroy: true,
-						retrieve: true
+						pageLength: 10,
+						lengthChange: false,
+						searching: true,
+						ordering: true,
+						columnDefs: [
+							{
+								targets: 0,
+								visible: false,
+								searchable: true
+							}
+						]
 					});
+
+					const filtroAtual = $('#filtroAlmoxarifadoSaida').val();
+
+					tabela
+						.column(0)
+						.search(filtroAtual ? '^' + filtroAtual + '$' : '', true, false)
+						.draw();
 				},
 				error: function(xhr) {
 					let mensagem = 'Erro ao carregar saídas.';
@@ -143,6 +169,17 @@ $tipo = $_GET['tipo'] ?? 'ativo';
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
 			carregarSaidas();
+
+			$('#filtroAlmoxarifadoSaida').on('change', function() {
+				if (!tabela) {
+					return;
+				}
+
+				tabela
+					.column(0)
+					.search(this.value ? '^' + this.value + '$' : '', true, false)
+					.draw();
+			});
 		});
 
 	</script>
@@ -189,20 +226,35 @@ $tipo = $_GET['tipo'] ?? 'ativo';
 					<!-- start: page -->
 
 					<div class="panel-body">
-						<div style="margin-bottom: 15px;">
-							<a href="listar_saida.php?tipo=ativo"
-								class="btn btn-default <?= $tipo === 'ativo' ? 'active' : ''?>">
-								Ativos
-							</a>
+						<div class="barra-filtros" style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; gap: 15px; flex-wrap: wrap;">
+							<div>
+								<a href="listar_saida.php?tipo=ativo"
+									class="btn btn-default <?= $tipo === 'ativo' ? 'active' : ''?>">
+									Ativos
+								</a>
 
-							<a href="listar_saida.php?tipo=arquivado"
-								class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : ''?>">
-								Arquivados
-							</a>
+								<a href="listar_saida.php?tipo=arquivado"
+									class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : ''?>">
+									Arquivados
+								</a>
+							</div>
+
+							<div style="width: 260px;">
+								<label for="filtroAlmoxarifadoSaida">Almoxarifado</label>
+								<select id="filtroAlmoxarifadoSaida" class="form-control">
+									<option value="">Todos</option>
+									<?php foreach ($almoxarifados as $almoxarifado): ?>
+										<option value="<?= (int) $almoxarifado['id_almoxarifado'] ?>">
+											<?= htmlspecialchars($almoxarifado['descricao_almoxarifado'], ENT_QUOTES, 'UTF-8') ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+							</div>
 						</div>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>
+									<th>ID Almoxarifado</th>
 									<th>Almoxarifado</th>
 									<th>Destino</th>
 									<th>Tipo</th>
