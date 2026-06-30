@@ -249,8 +249,8 @@ $valor_periodo = $registro['valor_periodo'];
                   </div>
                   <div class="row">
                     <div class="form-group mb-2 col-xs-8">
-                      <label for="nome_cliente">Rua</label>
-                      <input type="text" class="form-control" id="rua" name="nome" value="<?php echo htmlspecialchars($logradouro); ?>" placeholder="">
+                      <label for="rua">Rua</label>
+                      <input type="text" class="form-control" id="rua" name="rua" value="<?php echo htmlspecialchars($logradouro); ?>" placeholder="">
                     </div>
                     <div class="form-group col-xs-4">
                       <label for="data_corte">Número</label>
