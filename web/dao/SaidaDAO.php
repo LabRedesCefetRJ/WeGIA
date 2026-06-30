@@ -9,8 +9,16 @@ class SaidaDAO
 
     try{
         $pdo = Conexao::connect();
-            $sql = "SELECT s.id_saida, d.nome_destino, a.descricao_almoxarifado, 
-                           t.descricao, p.nome, s.data, s.hora, s.valor_total 
+            $sql = "SELECT 
+                        s.id_saida,
+                        s.id_almoxarifado,
+                        d.nome_destino,
+                        a.descricao_almoxarifado,
+                        t.descricao,
+                        p.nome,
+                        s.data,
+                        s.hora,
+                        s.valor_total 
                     FROM saida s
                     INNER JOIN destino d ON d.id_destino = s.id_destino
                     INNER JOIN almoxarifado a ON a.id_almoxarifado = s.id_almoxarifado
@@ -24,6 +32,7 @@ class SaidaDAO
                 $data = new DateTime($linha['data']);
                 $saidas[] = [
                     'id_saida' => $linha['id_saida'],
+                    'id_almoxarifado' => $linha['id_almoxarifado'],
                     'nome_destino' => $linha['nome_destino'],
                     'descricao_almoxarifado' => $linha['descricao_almoxarifado'],
                     'descricao' => $linha['descricao'],
@@ -177,11 +186,11 @@ class SaidaDAO
 
     public function listarArquivados()
     {
-        $entradas = array();
+        $saidas = array();
         $pdo = Conexao::connect();
 
         $consulta = $pdo->query("
-            SELECT s.id_saida, d.nome_destino, a.descricao_almoxarifado, 
+            SELECT s.id_saida, s.id_almoxarifado, d.nome_destino, a.descricao_almoxarifado, 
                 t.descricao, p.nome, s.data, s.hora, s.valor_total 
                 FROM saida s
                 INNER JOIN destino d ON d.id_destino = s.id_destino
@@ -191,10 +200,10 @@ class SaidaDAO
         ");
 
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-            $almoxarifados[] = $linha;
+            $saidas[] = $linha;
         }
 
-        return $almoxarifados;
+        return $saidas;
     }
 
     public function anular(int $idSaida): array
