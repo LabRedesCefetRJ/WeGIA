@@ -21,6 +21,8 @@ use api\modules\Socio\SocioMiddleware;
 use api\modules\Contribuicao\ContribuicaoController;
 use api\modules\Contribuicao\ContribuicaoService;
 use api\modules\Contribuicao\ContribuicaoRepository;
+use api\modules\Contribuicao\PaymentRepository;
+use api\modules\Contribuicao\PaymentController;
 use api\middleware\CorsMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -101,6 +103,12 @@ $container = new AppContainer([
             $c->get(PessoaRepository::class),
             $c->get(PDO::class)
         );
+    },
+    PaymentRepository::class => function ($c) {
+        return new PaymentRepository($c->get(PDO::class));
+    },
+    PaymentController::class => function ($c) {
+        return new PaymentController($c->get(PaymentRepository::class));
     },
     SocioMiddleware::class => function ($c) {
         return new SocioMiddleware($c->get(UserRepository::class), 4);
@@ -224,6 +232,9 @@ $app->post('/contribuicoes/credito', [ContribuicaoController::class, 'generateCr
     ->add($container->get(AuthMiddleware::class));
 
 $app->post('/contribuicoes/recorrencia', [ContribuicaoController::class, 'generateRecorrencia'])
+    ->add($container->get(AuthMiddleware::class));
+
+$app->get('/contribuicoes/payments_rules', [PaymentController::class, 'getAllPaymentsRules'])
     ->add($container->get(AuthMiddleware::class));
 
 $app->run();
