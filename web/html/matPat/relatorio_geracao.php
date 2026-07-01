@@ -23,6 +23,7 @@ require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/html/relatorios/Relatorio_item.php";
 
 $tipoMedia = $_POST['tipo_media'] ?? 'dia';
+$modoRequisicao = $_POST['modo_requisicao'] ?? 'movimentados';
 
 $mostrarZerados = isset($_POST['mostrarZerados']) && $_POST['mostrarZerados'] === 'on';
 
@@ -60,7 +61,8 @@ $item = new Item(
 	],
 	$_POST['almoxarifado'],
 	$mostrarZerados,
-	$tipoMedia
+	$tipoMedia,
+	$modoRequisicao
 );
 
 function quickQuery($query, $parametro, $column)
@@ -212,6 +214,26 @@ function quickQuery($query, $parametro, $column)
     font-size: 10px;
     font-weight: bold;
     vertical-align: middle !important;
+    overflow-wrap: break-word;
+    word-break: normal;
+}
+
+.produto-requisicao-manual {
+    padding: 4px !important;
+    vertical-align: middle !important;
+}
+
+.texto-produto-manual {
+    font-size: 9px;
+    font-weight: bold;
+    line-height: 1.1;
+    margin-bottom: 8px;
+}
+
+.linha-produto-manual {
+    width: 100%;
+    height: 10px;
+    border-bottom: 1px solid #555;
 }
 
 .dia-requisicao {
@@ -391,10 +413,27 @@ function quickQuery($query, $parametro, $column)
 										echo ("<ul>Almoxarifado: Todos</ul>");
 									}
 
-									if ($post[6]) {
-										echo ("<ul>Mostrando produtos fora de estoque</ul>");
+									if ($post[0] === 'requisicao') {
+										$modelosRequisicao = [
+											'movimentados' => 'Produtos mais movimentados',
+											'completo' => 'Todos os produtos em estoque'
+										];
+
+										echo (
+											"<ul>Modelo da requisição: " .
+											htmlspecialchars($modelosRequisicao[$modoRequisicao] ?? 'Produtos mais movimentados') .
+											"</ul>"
+										);
+
+										if ($modoRequisicao === 'movimentados') {
+											echo ("<ul>Critério: produtos com saída total igual ou superior a 10 no período selecionado.</ul>");
+										}
 									} else {
-										echo ("<ul>Ocultando produtos fora de estoque</ul>");
+										if ($post[6]) {
+											echo ("<ul>Mostrando produtos fora de estoque</ul>");
+										} else {
+											echo ("<ul>Ocultando produtos fora de estoque</ul>");
+										}
 									}
 								}
 								?>
