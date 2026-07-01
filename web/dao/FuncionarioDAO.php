@@ -308,6 +308,15 @@ class FuncionarioDAO
         $stmt->execute();
     }
 
+    // reativar
+    public function reativar($id_funcionario)
+    {
+        $sql = 'UPDATE funcionario SET id_situacao = 1 WHERE id_funcionario = :id_funcionario';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id_funcionario', $id_funcionario, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
     // Editar
     public function alterarInfPessoal($funcionario)
     {

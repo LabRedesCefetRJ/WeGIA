@@ -384,7 +384,7 @@ class FuncionarioControle
             exit();
         }
 
-        if ((!isset($email)) || (empty($email))) {
+        if ((!isset($email)) || (empty($email))) { 
             $email = '';
         }
 
@@ -1579,6 +1579,24 @@ public function alterarOutros()
             header("Location:../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php");
         }
         catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function reativar()
+    {
+        try {
+            $idFuncionario = filter_input(INPUT_POST, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+            
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('Token inválido.', 403);
+
+            $funcionarioDAO = new FuncionarioDAO();
+            $funcionarioDAO->reativar($idFuncionario);
+
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
+            exit();
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }

@@ -964,10 +964,19 @@ try {
                     </div>
                   </div>
 
-                  <div class="panel-footer">
+<div class="panel-footer">
                     <div class="row">
                       <div class="col-md-9 col-md-offset-3">
-                        <button id="excluir" type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Demitir</button>
+                        <?php
+                        $funcData = json_decode($func, true)[0];
+                        $statusAtual = $funcData['id_situacao'];
+
+                        if ($statusAtual == 2) { 
+                            echo '<button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalReativar">Reativar</button>';
+                        } else { 
+                            echo '<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Inativar</button>';
+                        }
+                        ?>
                       </div>
                     </div>
                   </div>
@@ -976,11 +985,11 @@ try {
                       <!-- Modal content-->
                       <div class="modal-content">
                         <div class="modal-header">
-                          <button type="button" class="close" aba-dismiss="modal">×</button>
-                          <h3>Demitir um Funcionário</h3>
+                          <button type="button" class="close" data-dismiss="modal">×</button>
+                          <h3>Inativar um Funcionário</h3>
                         </div>
                         <div class="modal-body">
-                          <p> Tem certeza que deseja demitir esse funcionário? Essa ação não poderá ser desfeita e todas as informações referentes a esse funcionário serão perdidas!</p>
+                          <p> Tem certeza que deseja inativar esse funcionário? Essa ação não poderá ser desfeita e todas as informações referentes a esse funcionário serão perdidas!</p>
                           <!-- Pegar id funcionário de variável sanitizada -->
                           <form action="../../controle/control.php" method="POST">
                             <input type="hidden" name="metodo" value="excluir">
@@ -989,6 +998,29 @@ try {
                             <?= Csrf::inputField() ?>
                             <input type="submit" class="btn btn-success" value="Confirmar">
                             <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal fade" id="modalReativar" role="dialog">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal">&times;</button>
+                          <h3>Reativar Funcionário</h3>
+                        </div>
+                        <div class="modal-body">
+                          <p>Tem certeza que deseja reativar este funcionário?</p>
+                          <form action="../../controle/control.php" method="POST">
+                              <input type="hidden" name="metodo" value="reativar">
+                              <input type="hidden" name="nomeClasse" value="FuncionarioControle">
+                              <input type="hidden" name="id_funcionario" value="<?= htmlspecialchars($idFuncionario) ?>">
+                              
+                              <?= Csrf::inputField() ?>
+                              
+                              <input type="submit" class="btn btn-success" value="Confirmar Reativação">
+                              <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                           </form>
                         </div>
                       </div>
