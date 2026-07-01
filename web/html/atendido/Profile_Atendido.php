@@ -38,7 +38,9 @@ $cache = new Cache();
 $teste = $cache->read($id);
 
 require_once "../../dao/Conexao.php";
+require_once "../../dao/ProcessoAceitacaoDAO.php";
 $pdo = Conexao::connect();
+$processoAceitacaoDAO = new ProcessoAceitacaoDAO($pdo);
 
 $stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos JOIN pessoa_arquivo pa ON a.id_pessoa_arquivo=pa.id WHERE atendido_idatendido =:idAtendido");
 
@@ -75,6 +77,11 @@ $stmtDependente->execute();
 
 $dependente = $stmtDependente->fetchAll(PDO::FETCH_ASSOC);
 $dependente = json_encode($dependente);
+
+$atendidoDados = json_decode($atend, true) ?: [];
+$idPessoaAtendido = (int)($atendidoDados[0]['id_pessoa'] ?? 0);
+$processoAceitacao = $idPessoaAtendido > 0 ? $processoAceitacaoDAO->buscarProcessoAtivoPorPessoa($idPessoaAtendido) : null;
+$etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEtapasPorProcesso((int)$processoAceitacao['id']) : [];
 ?>
 
 <!doctype html>
@@ -794,10 +801,12 @@ $dependente = json_encode($dependente);
                 <li>
                   <a href="#ocorrencias" data-toggle="tab">Ocorrências</a>
                 </li>
+                  <li>
+                    <a href="#processo-aceitacao" data-toggle="tab">Processo de Aceitação</a>
+                  </li>
               </ul>
               <div class="tab-content">
-                <div class="tab-content">
-                  <div id="overview" class="tab-pane active">
+                    <div id="overview" class="tab-pane active">
                     <form class="form-horizontal" method="post" action="../../controle/control.php">
                       <?= Csrf::inputField() ?>
                       <input type="hidden" name="nomeClasse" value="AtendidoControle">
@@ -1329,6 +1338,60 @@ $dependente = json_encode($dependente);
                         <div>
                           <a href="cadastro_ocorrencia.php?atendido_id=<?= (int)$id ?>" class="btn btn-primary">Cadastrar Ocorrência</a>
                         </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  <div id="processo-aceitacao" class="tab-pane">
+                    <section class="panel">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a href="#" class="fa fa-caret-down"></a>
+                        </div>
+                        <h2 class="panel-title">Processo de Aceitação</h2>
+                      </header>
+                      <div class="panel-body">
+                        <?php if (empty($processoAceitacao)): ?>
+                          <div class="alert alert-warning">
+                            Nenhum processo de aceitação foi encontrado para este atendido.
+                          </div>
+                        <?php else: ?>
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-none">
+                              <thead>
+                                <tr>
+                                  <th>Título</th>                                 
+                                  <th>Status</th>
+                                  <th>Data de Início</th>
+                                  <th>Data de Conclusão</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <?php if (empty($etapasProcessoAceitacao)): ?>
+                                  <tr>
+                                    <td colspan="5" class="text-center text-muted">Nenhuma etapa cadastrada para este processo.</td>
+                                  </tr>
+                                <?php else: ?>
+                                  <?php foreach ($etapasProcessoAceitacao as $etapaProcessoAceitacao): ?>
+                                    <tr>
+                                      <td><?= htmlspecialchars($etapaProcessoAceitacao['titulo'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                                      <td><?= htmlspecialchars($etapaProcessoAceitacao['status_nome'] ?? 'Não informado', ENT_QUOTES, 'UTF-8') ?></td>                                   
+                                      <td><?= !empty($etapaProcessoAceitacao['data_inicio']) ? date('d/m/Y', strtotime($etapaProcessoAceitacao['data_inicio'])) : 'Não informada' ?></td>
+                                      <td><?= !empty($etapaProcessoAceitacao['data_fim']) ? date('d/m/Y', strtotime($etapaProcessoAceitacao['data_fim'])) : 'Em andamento' ?></td>
+                                      </td>
+                                    </tr>
+                                  <?php endforeach; ?>
+                                <?php endif; ?>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div class="text-left" style="margin-top: 20px;">
+                            <a class="btn btn-primary" href="etapa_processo.php?id=<?= (int)$processoAceitacao['id'] ?>">
+                              <i class="fa fa-external-link"></i> Abrir processo de aceitação
+                            </a>
+                          </div>
+                        <?php endif; ?>
                       </div>
                     </section>
                   </div>
