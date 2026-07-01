@@ -769,7 +769,14 @@ try {
                     if (isset($_SESSION['id_pessoa']) and !empty($_SESSION['id_pessoa'])) {
                       $foto = $pessoa['imagem'];
                       if ($foto != null and $foto != "") {
-                        $foto = 'data:image;base64,' . $foto;
+                        $imagemDecodificada = base64_decode($foto, true);
+                        if ($imagemDecodificada !== false) {
+                          $finfo = new finfo(FILEINFO_MIME_TYPE);
+                          $mimeType = $finfo->buffer($imagemDecodificada) ?: 'image/jpeg';
+                          $foto = 'data:' . $mimeType . ';base64,' . $foto;
+                        } else {
+                          $foto = WWW . "img/semfoto.png";
+                        }
                       } else {
                         $foto = WWW . "img/semfoto.png";
                       }

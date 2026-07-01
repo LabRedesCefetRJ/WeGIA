@@ -527,10 +527,19 @@ class FuncionarioControle
         }
 
 
-        if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
+        $imagemBase64 = filter_input(INPUT_POST, 'imagem_base64', FILTER_UNSAFE_RAW);
+        if (!empty($imagemBase64)) {
+            if (preg_match('#^data:image/[^;]+;base64,#i', $imagemBase64)) {
+                $imagemBase64 = preg_replace('#^data:image/[^;]+;base64,#i', '', $imagemBase64);
+            }
+
+            $imgperfil = base64_encode(base64_decode($imagemBase64, true) ?: '');
+            if ($imgperfil === '') {
+                $imgperfil = '';
+            }
+        } elseif ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
-        }
-        else {
+        } else {
             $imgperfil = base64_encode($_SESSION['imagem']);
             unset($_SESSION['imagem']);
         }

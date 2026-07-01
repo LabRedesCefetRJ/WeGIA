@@ -57,7 +57,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 <head>
   <!-- Basic -->
   <meta charset="UTF-8">
-  <title>Cadastro de Funcionário</title>
+  <title>Cadastro de Funcionário</title> 
   <!-- Mobile Metas -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
@@ -157,6 +157,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     <button type="button" class="close" onclick="$('#clientValidationAlert').hide()">&times;</button>
                     <span id="clientValidationAlertText"></span>
                   </div>
+                  <input type="hidden" name="imagem_base64" id="imagem_base64" value="">
                   <h4 class="mb-xlg">Informações Pessoais</h4>
                   <h5 class="obrig">Campos Obrigatórios(*)</h5>
                   <div class="form-group">
@@ -834,6 +835,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       const reader = new FileReader();
       reader.addEventListener('load', () => {
         uploaded_image = reader.result;
+        const imagemBase64Input = document.querySelector('#imagem_base64');
+        if (imagemBase64Input) {
+          imagemBase64Input.value = uploaded_image;
+        }
         document.querySelector("#display_image").style.backgroundImage = `url(${uploaded_image})`;
       });
       reader.readAsDataURL(this.files[0]);
