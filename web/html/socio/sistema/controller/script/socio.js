@@ -139,21 +139,21 @@ function detalhar_socio(dados) { //<-- continuar daqui
        
         <div class="form-group col-xs-4 cpf_div">
           <label id="label_cpf_cnpj" for="valor">CPF/CNPJ</label>
-          <input type="text"  class="form-control" id="cpf_cnpj" name="cpf" value="`+ dados_socio.cpf + `"  required disabled>
+          <input type="text"  class="form-control" id="cpf_cnpj" name="cpf" value="`+ (dados_socio.cpf ? dados_socio.cpf : '') + `"  required disabled>
         </div>
         <div class="form-group col-xs-4">
             <label for="valor">Data de nascimento</label>
-            <input type="date" class="form-control" id="data_nasc" value="`+ dados_socio.data_nascimento + `" name="data_nasc" required disabled>
+            <input type="date" class="form-control" id="data_nasc" value="`+ (dados_socio.data_nascimento ? dados_socio.data_nascimento : '') + `" name="data_nasc" required disabled>
           </div>
         </div>
         <div class="row">
         <div class="form-group col-xs-6">
           <label for="obs">E-mail</label>
-          <input type="email" class="form-control" id="email" name="email" value="`+ dados_socio.email + `" placeholder="" disabled>
+          <input type="email" class="form-control" id="email" name="email" value="`+ (dados_socio.email ? dados_socio.email : '') + `" placeholder="" disabled>
         </div>
         <div class="form-group col-xs-6">
           <label for="valor">Telefone</label>
-          <input type="tel" min="0"  class="form-control" id="telefone" value="`+ dados_socio.telefone + `" name="telefone" required disabled>
+          <input type="tel" min="0"  class="form-control" id="telefone" value="`+ (dados_socio.telefone ? dados_socio.telefone : '') + `" name="telefone" required disabled>
         </div>
         </div>
         <div class="row">
@@ -190,7 +190,7 @@ function detalhar_socio(dados) { //<-- continuar daqui
               <label for="cep">CEP</label>
               <div class="input-group">
                 <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                <input type="text" id="cep" value="`+ dados_socio.cep + `" class="form-control" placeholder="" required disabled>
+                <input type="text" id="cep" value="`+ (dados_socio.cep ? dados_socio.cep : '') + `" class="form-control" placeholder="" required disabled>
               </div>
               <div class="status_cep col-xs-12"></div>
               </div>
@@ -198,31 +198,31 @@ function detalhar_socio(dados) { //<-- continuar daqui
             <div class="row">
               <div class="form-group mb-2 col-xs-8">
                         <label for="nome_cliente">Rua</label>
-                        <input type="text" class="form-control" id="rua" value="`+ dados_socio.logradouro + `" name="nome" placeholder="" required disabled>
+                        <input type="text" class="form-control" id="rua" value="`+ (dados_socio.logradouro ? dados_socio.logradouro : '') + `" name="nome" placeholder="" required disabled>
                     </div>
               <div class="form-group col-xs-4">
                 <label for="data_corte">Número</label>
-                <input type="text" class="form-control" id="numero" value="`+ dados_socio.numero_endereco + `" name="numero" placeholder="" required disabled>
+                <input type="text" class="form-control" id="numero" value="`+ (dados_socio.numero_endereco ? dados_socio.numero_endereco : '') + `" name="numero" placeholder="" required disabled>
               </div>
             </div>
             <div class="row">
             <div class="form-group mb-2 col-xs-6">
                         <label for="nome_cliente">Complemento</label>
-                        <input type="text" class="form-control" id="complemento" value="`+ dados_socio.complemento + `" name="complemento" placeholder="" disabled>
+                        <input type="text" class="form-control" id="complemento" value="`+ (dados_socio.complemento ? dados_socio.complemento : '') + `" name="complemento" placeholder="" disabled>
                     </div>
               <div class="form-group col-xs-6">
                 <label for="data_corte">Bairro</label>
-                <input type="text" class="form-control" id="bairro" name="bairro" value="`+ dados_socio.bairro + `" placeholder="" required disabled>
+                <input type="text" class="form-control" id="bairro" name="bairro" value="`+ (dados_socio.bairro ? dados_socio.bairro : '') + `" placeholder="" required disabled>
               </div>
             </div>
             <div class="row">
             <div class="form-group mb-2 col-xs-6">
                         <label for="nome_cliente">Estado</label>
-                        <input type="text" class="form-control" id="estado" value="`+ dados_socio.estado + `" name="estado" placeholder="" required disabled>
+                        <input type="text" class="form-control" id="estado" value="`+ (dados_socio.estado ? dados_socio.estado : '') + `" name="estado" placeholder="" required disabled>
                     </div>
               <div class="form-group col-xs-6">
                 <label for="data_corte">Cidade</label>
-                <input type="text" class="form-control" id="cidade" name="cidade" value="`+ dados_socio.cidade + `" placeholder="" required disabled>
+                <input type="text" class="form-control" id="cidade" name="cidade" value="`+ (dados_socio.cidade ? dados_socio.cidade : '') + `" placeholder="" required disabled>
               </div>
             </div>
             </div>

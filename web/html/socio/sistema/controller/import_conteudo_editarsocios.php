@@ -117,7 +117,7 @@ $valor_periodo = $registro['valor_periodo'];
                   <label id="label_cpf_cnpj" for="valor">CPF</label>
 
                   <div class="inline-fields">
-                    <input type="text" class="form-control" value="<?php echo htmlspecialchars($cpf_cnpj); ?>" id="cpf_cnpj" name="cpf" required>
+                    <input type="text" class="form-control" value="<?php echo isset($cpf_cnpj) ? htmlspecialchars($cpf_cnpj) : ''; ?>" id="cpf_cnpj" name="cpf">
 
                     <div class="form-check">
                       <input type="checkbox" class="form-check-input" id="check_veri_cpf" checked>
@@ -131,23 +131,23 @@ $valor_periodo = $registro['valor_periodo'];
               <div class="row">
                 <div class="form-group mb-2 col-xs-6">
                   <label for="nome_cliente">Nome</label>
-                  <input type="text" class="form-control" id="socio_nome" name="socio_nome" value="<?php echo htmlspecialchars($nome_socio); ?>" placeholder="" required>
+                  <input type="text" class="form-control" id="socio_nome" name="socio_nome" value="<?php echo isset($nome_socio) ? htmlspecialchars($nome_socio) : ''; ?>" placeholder="" required>
                 </div>
 
                 <div class="form-group mb-2 col-xs-6">
                   <label for="socio_sobrenome">Sobrenome *</label>
                   <!-- Puxar sobrenome automaticamente -->
-                  <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" value="<?php echo htmlspecialchars($socio_sobrenome); ?>" placeholder="" required>
+                  <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" value="<?php echo isset($socio_sobrenome) ? htmlspecialchars($socio_sobrenome) : ''; ?>" placeholder="" required>
                 </div>
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="obs">E-mail</label>
-                  <input type="email" class="form-control" id="email" value="<?php echo htmlspecialchars($email); ?>" name="email" placeholder="">
+                  <input type="email" class="form-control" id="email" value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" name="email" placeholder="">
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Telefone</label>
-                  <input type="tel" min="0" class="form-control" id="telefone" value="<?php echo htmlspecialchars($telefone); ?>" name="telefone">
+                  <input type="tel" min="0" class="form-control" id="telefone" value="<?php echo isset($telefone) ? htmlspecialchars($telefone) : ''; ?>" name="telefone">
                 </div>
               </div>
 
@@ -165,7 +165,7 @@ $valor_periodo = $registro['valor_periodo'];
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Data de nascimento</label>
-                  <input type="date" class="form-control" id="data_nasc" value="<?php echo htmlspecialchars($data_nasc); ?>" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d') ?>">
+                  <input type="date" class="form-control" id="data_nasc" value="<?php echo isset($data_nasc) ? htmlspecialchars($data_nasc) : ''; ?>" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d') ?>">
                 </div>
               </div>
               <div class="row">
@@ -196,11 +196,11 @@ $valor_periodo = $registro['valor_periodo'];
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="valor">Data referência (ínicio contribuição)</label>
-                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" value="<?php echo htmlspecialchars($data_referencia); ?>" min="1900-01-01" max="<?= date('Y-m-d') ?>">
+                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" value="<?php echo isset($data_referencia) ? htmlspecialchars($data_referencia) : ''; ?>" min="1900-01-01" max="<?= date('Y-m-d') ?>">
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Valor/período em R$</label>
-                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" value="<?php echo htmlspecialchars($valor_periodo); ?>" min="0" step="0.01">
+                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" value="<?php echo isset($valor_periodo) ? htmlspecialchars($valor_periodo) : ''; ?>" min="0" step="0.01">
                 </div>
               </div>
               <div class="row">
@@ -242,7 +242,7 @@ $valor_periodo = $registro['valor_periodo'];
                       <label for="cep">CEP</label>
                       <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                        <input type="text" id="cep" class="form-control" value="<?php echo htmlspecialchars($cep); ?>" placeholder="">
+                        <input type="text" id="cep" class="form-control" value="<?php echo isset($cep) ? htmlspecialchars($cep) : ''; ?>" placeholder="">
                       </div>
                       <div class="status_cep col-xs-12"></div>
                     </div>
@@ -250,31 +250,31 @@ $valor_periodo = $registro['valor_periodo'];
                   <div class="row">
                     <div class="form-group mb-2 col-xs-8">
                       <label for="rua">Rua</label>
-                      <input type="text" class="form-control" id="rua" name="rua" value="<?php echo htmlspecialchars($logradouro); ?>" placeholder="">
+                      <input type="text" class="form-control" id="rua" name="rua" value="<?php echo isset($logradouro) ? htmlspecialchars($logradouro) : ''; ?>" placeholder="">
                     </div>
                     <div class="form-group col-xs-4">
                       <label for="data_corte">Número</label>
-                      <input type="text" class="form-control" id="numero" name="numero" value="<?php echo htmlspecialchars($numero); ?>" placeholder="">
+                      <input type="text" class="form-control" id="numero" name="numero" value="<?php echo isset($numero) ? htmlspecialchars($numero) : ''; ?>" placeholder="">
                     </div>
                   </div>
                   <div class="row">
                     <div class="form-group mb-2 col-xs-6">
                       <label for="nome_cliente">Complemento</label>
-                      <input type="text" class="form-control" id="complemento" name="complemento" value="<?php echo htmlspecialchars($complemento); ?>" placeholder="">
+                      <input type="text" class="form-control" id="complemento" name="complemento" value="<?php echo isset($complemento) ? htmlspecialchars($complemento) : ''; ?>" placeholder="">
                     </div>
                     <div class="form-group col-xs-6">
                       <label for="data_corte">Bairro</label>
-                      <input type="text" class="form-control" id="bairro" name="bairro" value="<?php echo htmlspecialchars($bairro); ?>" placeholder="">
+                      <input type="text" class="form-control" id="bairro" name="bairro" value="<?php echo isset($bairro) ? htmlspecialchars($bairro) : ''; ?>" placeholder="">
                     </div>
                   </div>
                   <div class="row">
                     <div class="form-group mb-2 col-xs-6">
                       <label for="nome_cliente">Estado</label>
-                      <input type="text" class="form-control" id="estado" name="estado" value="<?php echo htmlspecialchars($estado); ?>" placeholder="">
+                      <input type="text" class="form-control" id="estado" name="estado" value="<?php echo isset($estado) ? htmlspecialchars($estado) : ''; ?>" placeholder="">
                     </div>
                     <div class="form-group col-xs-6">
                       <label for="data_corte">Cidade</label>
-                      <input type="text" class="form-control" id="cidade" name="cidade" value="<?php echo htmlspecialchars($cidade); ?>" placeholder="">
+                      <input type="text" class="form-control" id="cidade" name="cidade" value="<?php echo isset($cidade) ? htmlspecialchars($cidade) : ''; ?>" placeholder="">
                     </div>
                   </div>
                   <div class="pull-right">

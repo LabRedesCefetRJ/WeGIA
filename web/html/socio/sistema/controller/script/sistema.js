@@ -332,7 +332,7 @@ $(document).ready(function () {
         const status = $("#status").val();
         const email = $("#email").val();
         const telefone = $("#telefone").val();
-        const cpf_cnpj = $("#cpf_cnpj").val();
+        let cpf_cnpj = $("#cpf_cnpj").val();
         const rua = $("#rua").val();
         const numero = $("#numero").val();
         const complemento = $("#complemento").val();
@@ -359,6 +359,7 @@ $(document).ready(function () {
                 "tags": tags,
                 "telefone": telefone,
                 "cpf_cnpj": cpf_cnpj,
+                "verificar_documento" : !DesabilitaverificaCpf,
                 "rua": rua,
                 "numero": numero,
                 "complemento": complemento,
@@ -395,12 +396,7 @@ $(document).ready(function () {
 
                 //adicionar verificação se cpf_cnpj está preenchido
                 if (!cpf_cnpj) {
-                    //gerar número de cpf_cnpj aleatório
-                    cpf_cnpj = '';
-                    for (let i = 0; i < 14; i++) {
-                        cpf_cnpj += Math.floor(Math.random() * 9).toString();
-                    }
-                    console.log('O documento é: ' + cpf_cnpj);
+                    cpf_cnpj = null;
                 }
 
                 $.post("./cadastro_socio.php", {
@@ -413,6 +409,7 @@ $(document).ready(function () {
                     "tags": tags,
                     "telefone": telefone,
                     "cpf_cnpj": cpf_cnpj,
+                    "verificar_documento" : !DesabilitaverificaCpf,
                     "rua": rua,
                     "numero": numero,
                     "complemento": complemento,
@@ -462,7 +459,7 @@ $(document).ready(function () {
         const status = $("#status").val();
         const email = $("#email").val();
         const telefone = $("#telefone").val();
-        const cpf_cnpj = $("#cpf_cnpj").val();
+        let cpf_cnpj = $("#cpf_cnpj").val();
         const rua = $("#rua").val();
         const numero = $("#numero").val();
         const complemento = $("#complemento").val();
@@ -488,6 +485,7 @@ $(document).ready(function () {
                 "email": email,
                 "telefone": telefone,
                 "cpf_cnpj": cpf_cnpj,
+                "verificar_documento" : !DesabilitaverificaCpf,
                 "rua": rua,
                 "tags": tags,
                 "numero": numero,
@@ -517,6 +515,12 @@ $(document).ready(function () {
             });
         } else {
             if (DesabilitaverificaCpf == true) {
+
+                //adicionar verificação se cpf_cnpj está preenchido
+                if (!cpf_cnpj) {
+                    cpf_cnpj = null;
+                }
+
                 $.post("./processa_edicao_socio.php", {
                     "id_socio": id_socio,
                     "socio_nome": socio_nome,
@@ -527,6 +531,7 @@ $(document).ready(function () {
                     "email": email,
                     "telefone": telefone,
                     "cpf_cnpj": cpf_cnpj,
+                    "verificar_documento" : !DesabilitaverificaCpf,
                     "rua": rua,
                     "tags": tags,
                     "numero": numero,
