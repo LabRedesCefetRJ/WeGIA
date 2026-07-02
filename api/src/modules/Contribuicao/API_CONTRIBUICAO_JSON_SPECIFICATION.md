@@ -757,6 +757,65 @@ Cria uma assinatura recorrente para o sócio autenticado via JWT. A rota usa o `
 }
 ```
 
+## GET /contribuicoes/payments_rules
+
+- Description: Retorna todas as formas de pagamento com suas regras (description, value).
+- Method: `GET`
+- Path: `/contribuicoes/payments_rules`
+- Authentication: Bearer token (via middleware de autenticação)
+
+### Success Response (200)
+Content-Type: `application/json`
+
+Example:
+
+```JSON
+{
+    "payment_methods": {
+        "boleto": {
+            "rules": [
+                {
+                    "description": "max_value",
+                    "value": 1000
+                }
+            ]
+        },
+        "pix": {
+            "rules": [
+                {
+                    "description": "min_value",
+                    "value": 10
+                }
+            ]
+        },
+        "cartao_credito": {
+            "rules": [
+                {
+                    "description": "min_value",
+                    "value": 1
+                }
+            ]
+        }
+    }
+}
+```
+
+### Error Response (500)
+Content-Type: `application/json`
+
+Example:
+
+```JSON
+{
+    "error": "Erro ao buscar regras de pagamento: <mensagem>"
+}
+```
+
+Notes:
+- `description` values are normalized to `snake_case` (ex: `max_value`, `min_value`).
+- Endpoint implemented in `api/src/modules/Contribuicao/PaymentController.php`.
+
+
 ---
 
 ## Observações Gerais

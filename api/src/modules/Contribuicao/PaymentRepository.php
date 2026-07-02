@@ -1,6 +1,6 @@
 <?php
 
-namespace api\Modules\Contribuicao;
+namespace api\modules\Contribuicao;
 
 use PDO;
 
