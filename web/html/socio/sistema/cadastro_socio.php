@@ -64,6 +64,7 @@ $email = trim($_REQUEST['email']);
 $tags = normalizarTagsSocio($_REQUEST['tags'] ?? $_REQUEST['tag'] ?? []);
 $telefone = trim($_REQUEST['telefone']);
 $cpf_cnpj = trim($_REQUEST['cpf_cnpj']);
+$verificar_documento = boolval(filter_var($_REQUEST['verificar_documento'], FILTER_VALIDATE_BOOLEAN));
 $rua = trim($_REQUEST['rua']);
 $numero = trim($_REQUEST['numero']);
 $complemento = trim($_REQUEST['complemento']);
@@ -102,7 +103,7 @@ if (count($tags) < 1) {
     exit('Selecione ao menos uma tag válida para o sócio.');
 }
 
-if (!$cpf_cnpj || empty($cpf_cnpj)) { //posteriormente adicionar validações de formato
+if ($verificar_documento && (!$cpf_cnpj || empty($cpf_cnpj))) { //posteriormente adicionar validações de formato
     http_response_code(400);
     exit('Um cpf/cpnj não pode ser vazio.');
 }
@@ -145,31 +146,83 @@ if ($stmtBuscaSocio->execute()) {
 }
 
 // Se uma pessoa foi encontrada e tem um ID válido, usar ela. Caso contrário, criar uma nova
-$stmtBuscaPessoa = $conexao->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = ?");
-$stmtBuscaPessoa->bind_param('s', $cpf_cnpj);
-$stmtBuscaPessoa->execute();
-$resultado = $stmtBuscaPessoa->get_result();
 
-if ($stmtBuscaPessoa->affected_rows > 0) {
-    $id_pessoa = $resultado->fetch_assoc()['id_pessoa'];
-    //inserir e-mail na pessoa
-    $stmtEmail = $conexao->prepare("UPDATE pessoa SET email = ? WHERE id_pessoa = ?");
-    $stmtEmail->bind_param('si', $email, $id_pessoa);
-    if (!$stmtEmail->execute()) {
-        http_response_code(500);
-        echo json_encode(['erro' => 'erro ao atualizar o email da pessoa no banco de dados']);
-        exit();
+$id_pessoa = null;
+
+if ($verificar_documento) {
+    // Trecho 1
+    $stmtBuscaPessoa = $conexao->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = ?");
+    $stmtBuscaPessoa->bind_param('s', $cpf_cnpj);
+    $stmtBuscaPessoa->execute();
+
+    $resultado = $stmtBuscaPessoa->get_result();
+
+    // Trecho 2
+    if ($resultado->num_rows > 0) {
+        $id_pessoa = $resultado->fetch_assoc()['id_pessoa'];
+
+        // Atualizar e-mail da pessoa
+        $stmtEmail = $conexao->prepare("UPDATE pessoa SET email = ? WHERE id_pessoa = ?");
+        $stmtEmail->bind_param('si', $email, $id_pessoa);
+
+        if (!$stmtEmail->execute()) {
+            http_response_code(500);
+            echo json_encode([
+                'erro' => 'Erro ao atualizar o email da pessoa no banco de dados'
+            ]);
+            exit();
+        }
     }
-} else {
-    // Criar uma nova pessoa
-    $stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, sobrenome, telefone, email, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+}
 
-    $stmt->bind_param('sssssssssssss', $cpf_cnpj, $socio_nome, $socio_sobrenome, $telefone, $email, $data_nasc, $cep, $estado, $cidade, $bairro, $rua, $numero, $complemento);
+// Trecho 3
+// Executa se:
+// - não for verificar documento; OU
+// - for verificar documento, mas a pessoa não existir.
+if (!$verificar_documento || $id_pessoa === null) {
+
+    $cpf_cnpj = $verificar_documento ? $cpf_cnpj : null;
+
+    $stmt = $conexao->prepare("
+        INSERT INTO pessoa (
+            cpf,
+            nome,
+            sobrenome,
+            telefone,
+            email,
+            data_nascimento,
+            cep,
+            estado,
+            cidade,
+            bairro,
+            logradouro,
+            numero_endereco,
+            complemento
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+
+    $stmt->bind_param(
+        'sssssssssssss',
+        $cpf_cnpj,
+        $socio_nome,
+        $socio_sobrenome,
+        $telefone,
+        $email,
+        $data_nasc,
+        $cep,
+        $estado,
+        $cidade,
+        $bairro,
+        $rua,
+        $numero,
+        $complemento
+    );
 
     if (!$stmt->execute()) {
         http_response_code(500);
-        echo json_encode(['erro' => 'erro ao inserir pessoa no banco de dados']);
+        echo json_encode([
+            'erro' => 'Erro ao inserir pessoa no banco de dados'
+        ]);
         exit();
     }
 
@@ -275,9 +328,9 @@ switch ($pessoa) {
         break;
 }
 
-    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt2->bind_param('iiidsi', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
-    $stmt2->execute();
+$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?)");
+$stmt2->bind_param('iiidsi', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
+$stmt2->execute();
 
 if ($stmt2->affected_rows > 0) {
     $id_socio = mysqli_insert_id($conexao);
