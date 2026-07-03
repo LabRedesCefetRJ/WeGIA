@@ -127,7 +127,8 @@ $sqlUpdatePessoa = "UPDATE pessoa
 $stmt = mysqli_prepare($conexao, $sqlUpdatePessoa);
 
 //sanitização das entradas
-$cpf_cnpj = filter_var($cpf_cnpj,FILTER_SANITIZE_SPECIAL_CHARS);
+$verificar_documento = boolval(filter_var($_REQUEST['verificar_documento'], FILTER_VALIDATE_BOOLEAN));
+$cpf_cnpj = $verificar_documento || $cpf_cnpj ? filter_var($cpf_cnpj, FILTER_SANITIZE_SPECIAL_CHARS) : null;
 $socio_nome = filter_var($socio_nome, FILTER_SANITIZE_SPECIAL_CHARS);
 $socio_sobrenome = filter_var($socio_sobrenome, FILTER_SANITIZE_SPECIAL_CHARS);
 $telefone = filter_var($telefone, FILTER_SANITIZE_SPECIAL_CHARS);
