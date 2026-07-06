@@ -53,7 +53,7 @@ $fieldErrors = getSessionFormErrors();
 
 ?>
 <!DOCTYPE html>
-<html class="fixed">
+<html class="fixed" lang="pt-BR">
 
 <head>
 
@@ -100,7 +100,9 @@ $fieldErrors = getSessionFormErrors();
         <div class="right-wrapper pull-right">
           <ol class="breadcrumbs">
             <li>
-              <a href="../home.php">
+            <a href="../home.php" aria-label="Início">
+                <i class="fa fa-home"></i>
+            </a>
                 <i class="fa fa-home"></i>
               </a>
             </li>
@@ -134,7 +136,7 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="sobrenome" >Sobrenome<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="text" class="form-control<?= !empty($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <?php if (!empty($fieldErrors['sobrenome'])): ?>
@@ -145,8 +147,8 @@ $fieldErrors = getSessionFormErrors();
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
                   <div class="col-md-8">
-                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                    <label for="radioM"><input type="radio" name="radioM" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                    <label for="radioF"><input type="radio" name="radioF" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
                   </div>
                 </div>
                 <div class="form-group">
@@ -208,7 +210,7 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
+                  <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor</label>
                   <div class="col-md-6">
                     <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
                   </div>
@@ -588,7 +590,7 @@ $fieldErrors = getSessionFormErrors();
   <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 
   <div align="right">
-    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé do WeGIA"></iframe>
   </div>
 </body>
 
