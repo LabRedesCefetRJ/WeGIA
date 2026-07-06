@@ -491,6 +491,27 @@ class SocioDAO
         return $this->pdo->exec($sql) !== false;
     }
 
+    public function softDeleteSocio(int $idSocio): bool
+    {
+        $this->pdo->beginTransaction();
+
+        try {
+            // Atualizar o status do sócio para inativo
+            $sqlAtualizarStatus = 'UPDATE socio SET deletado = 1 WHERE id_socio = :idSocio';
+            $stmtStatus = $this->pdo->prepare($sqlAtualizarStatus);
+            $stmtStatus->bindValue(':idSocio', $idSocio, PDO::PARAM_INT);
+            $stmtStatus->execute();
+
+            // Commit da transação
+            $this->pdo->commit();
+            return true;
+        } catch (Exception $e) {
+            // Rollback em caso de erro
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
     private function buscarIdSocioPorDocumento(string $documento): ?int
     {
         $sql = '

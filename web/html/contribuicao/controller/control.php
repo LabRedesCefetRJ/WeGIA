@@ -57,7 +57,8 @@ try {
 
     $rotasPrivadas = [
         'SocioController' => [
-            'sincronizarStatusSocios'
+            'sincronizarStatusSocios',
+            'deletarSocio'
         ],
         'GatewayPagamentoController' => [
             'cadastrar',

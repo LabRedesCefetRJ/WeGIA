@@ -410,4 +410,26 @@ class SocioController
             Util::tratarException($e);
         }
     }
+
+    /**
+     * Soft delete de um sócio, alterando o status para inativo.
+     */
+    public function deletarSocio()
+    {
+        try {
+            $idSocio = filter_input(INPUT_POST, 'id_socio', FILTER_VALIDATE_INT);
+
+            if (!$idSocio) {
+                throw new InvalidArgumentException('O ID do sócio é inválido.', 400);
+            }
+
+            $socioDao = new SocioDAO($this->pdo);
+            $socioDao->softDeleteSocio($idSocio);
+
+            http_response_code(200);
+            echo json_encode(['mensagem' => 'Sócio deletado com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }   
 }

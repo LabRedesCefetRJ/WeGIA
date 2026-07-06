@@ -10,34 +10,29 @@ function modalSimples(titulo, msg, tipo) {
   var html = '<div class="modal modal-' + cor + ' fade in" id="modal' + id + '" style="display: none; padding-right: 17px;"> <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title">' + titulo + '</h4> </div> <div class="modal-body text-center"><div class="overlay"> <i style="margin: 0 auto; font-size: 40px" class="fa fa-user-plus"></i> </div> <h3>' + msg + '</h3> </div> <div class="modal-footer"> <button type="button" class="btn btn-outline pull-left .btn_fecharModal' + id + '" data-dismiss="modal">Fechar</button> </div> </div> <!-- /.modal-content --> </div> <!-- /.modal-dialog --> </div>';
   $("body").append(html);
   $("#modal" + id).modal("toggle");
-  // if(tipo == "sucesso"){
-  //     setTimeout(function(){
-  //         location.reload();
-  //     },1000);
-  // }
 }
-function deletar_socio(id, pessoa) {
+function deletar_socio(id) {
   modalSimples('Comunicado', 'Funcionalidade indisponível no momento, aguardando revisões.', 'alerta');
-  /*$.ajax({
-      url: "processa_deletar_socio.php",
-      data: {"id_socio":id, "pessoa":pessoa},
-      type: "POST",
-          success: function (resp) {
-              var r = JSON.parse(resp);
-            if (r) {
-              modalSimples("Status", "Sócio deletado com sucesso.", "sucesso");
-              setTimeout(function(){
-                location.reload();
-              }, 1000);
-            } else {
-              modalSimples("Status", "Não foi possível deletar o sócio.", "erro");
-            }
-          },
-          error: function (e) {
-            modalSimples("Status", "Não foi possível deletar o sócio.", "erro")
-            console.dir(e);
-          }
-    });*/
+  $.ajax({
+    url: "../../contribuicao/controller/control.php",
+    data: { "id_socio": id, "nomeClasse": "SocioController", "metodo": "deletarSocio" },
+    type: "POST",
+    success: function (resp) {
+      var r = JSON.parse(resp);
+      if (r) {
+        modalSimples("Status", "Sócio deletado com sucesso.", "sucesso");
+        setTimeout(function () {
+          location.reload();
+        }, 1000);
+      } else {
+        modalSimples("Status", "Não foi possível deletar o sócio.", "erro");
+      }
+    },
+    error: function (e) {
+      modalSimples("Status", "Não foi possível deletar o sócio.", "erro")
+      console.dir(e);
+    }
+  });
 }
 function gerarTags() {
   url = 'exibir_tags.php';
@@ -95,7 +90,7 @@ function deletar_socio_modal(del_obj) {
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Não</button>
-          <button type="button" onclick="deletar_socio(`+ del_obj.id + `,` + `'` + del_obj.pessoa + `'` + `);" class="btn btn-primary">Sim</button>
+          <button type="button" onclick="deletar_socio(`+ del_obj.id + `);" class="btn btn-primary">Sim</button>
         </div>
       </div>
     </div>
