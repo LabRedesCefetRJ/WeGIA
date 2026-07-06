@@ -1452,6 +1452,12 @@ public function alterarOutros()
             $funcionarioDAO->alterarDocumentacao($funcionario);
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
         }
+        catch (InvalidArgumentException $e) {
+            $_SESSION['msg'] = $e->getMessage();
+            $_SESSION['tipo'] = "error";
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($_REQUEST['id_funcionario']));
+            exit;
+        }
         catch (Exception $e) {
             Util::tratarException($e);
         }
