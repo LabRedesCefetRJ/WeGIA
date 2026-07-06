@@ -211,6 +211,10 @@ $app->get('/socios/{id}/contribuicoes/resume', [ContribuicaoController::class, '
 $app->get('/socios/{id}/contribuicoes/pdf', [ContribuicaoController::class, 'generateContribuicaoPdf'])
     ->add($container->get(AuthMiddleware::class));
 
+//Download do PDF de uma contribuição a partir do nome do arquivo armazenado no diretório
+$app->get('/contribuicoes/{contribuicao_id}/pdf', [ContribuicaoController::class, 'downloadContribuicaoPdf'])
+    ->add($container->get(AuthMiddleware::class));
+
 //Gerar PDF do comprovante de pagamento de uma contribuição específica
 $app->get('/socios/{id}/contribuicoes/{contribuicao_id}/pdf', [ContribuicaoController::class, 'generateComprovantePdf'])
     ->add($container->get(AuthMiddleware::class));

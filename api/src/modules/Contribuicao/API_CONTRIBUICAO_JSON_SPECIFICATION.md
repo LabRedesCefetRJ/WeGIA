@@ -439,6 +439,61 @@ Cada contribuição retornada possui a seguinte estrutura:
 
 ---
 
+## 6. GET `/contribuicoes/{contribuicao_id}/pdf`
+
+Retorna o PDF de uma contribuição a partir do nome do arquivo armazenado em `/web/html/contribuicao/pdfs`. Requer autenticação via token JWT. O usuário autenticado só pode acessar o PDF quando o CPF extraído do nome do arquivo corresponder ao CPF da pessoa autenticada, após normalização e formatação. A implementação foi pensada para permitir a futura troca da leitura do diretório por uma busca no banco sem mudar a interface da rota.
+
+### Parâmetros
+- **contribuicao_id** (path, obrigatório): Nome do arquivo PDF no formato `codigo_cpf_data_valor.pdf`
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+
+### Exemplo de Requisição
+```
+GET /contribuicoes/or-abc123_12345678900_20260706_50.pdf
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+### Resposta - 200 OK
+- **Content-Type:** `application/pdf`
+- **Content-Disposition:** `attachment; filename="<nome_do_arquivo>.pdf"`
+
+### Resposta - 400 Bad Request (Identificador Inválido)
+```json
+{
+  "error": "Identificador da contribuição inválido."
+}
+```
+
+### Resposta - 401 Unauthorized (Token Não Fornecido)
+```json
+{
+  "error": "Token inválido"
+}
+```
+
+### Resposta - 403 Forbidden (Acesso Negado)
+```json
+{
+  "error": "Acesso negado. Você não tem permissão para acessar este arquivo."
+}
+```
+
+### Resposta - 404 Not Found (Arquivo Não Encontrado)
+```json
+{
+  "error": "Arquivo PDF não encontrado."
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Erro ao recuperar o PDF da contribuição: <mensagem de erro>"
+}
+```
+
+---
+
 ## 4. POST `/contribuicoes/boleto`
 
 Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa o `user_id` do token para localizar o sócio e reaproveita os serviços de pagamento existentes.

@@ -83,6 +83,61 @@ class ContribuicaoController
             ->withHeader('Content-Type', 'application/json');
     }
 
+    private function normalizarCpf(string $cpf): string
+    {
+        return preg_replace('/\D/', '', $cpf) ?? '';
+    }
+
+    private function mascararCpf(string $cpf): string
+    {
+        $cpf = $this->normalizarCpf($cpf);
+
+        if (strlen($cpf) !== 11) {
+            return $cpf;
+        }
+
+        return substr($cpf, 0, 3) . '.' . substr($cpf, 3, 3) . '.' . substr($cpf, 6, 3) . '-' . substr($cpf, 9, 2);
+    }
+
+    private function extrairCpfDoNomeArquivo(string $nomeArquivo): ?string
+    {
+        $nomeArquivo = basename($nomeArquivo);
+
+        if (!preg_match('/^(?P<codigo>.+)_(?P<cpf>\d{11})_(?P<data>\d{8})_(?P<valor>.+)\.pdf$/i', $nomeArquivo, $matches)) {
+            return null;
+        }
+
+        return $matches['cpf'] ?? null;
+    }
+
+    private function validarAcessoContribuicaoPorArquivo(Request $request, string $nomeArquivo): bool|Response
+    {
+        $idPessoa = $request->getAttribute('user_id');
+
+        if (!$idPessoa) {
+            return $this->jsonError(new Response(), 'Usuário não identificado.', 401);
+        }
+
+        $pessoa = $this->pessoaRepository->findById((string)$idPessoa);
+        if (!$pessoa || empty($pessoa['cpf'])) {
+            return $this->jsonError(new Response(), 'Dados do usuário não encontrados.', 404);
+        }
+
+        $cpfArquivo = $this->extrairCpfDoNomeArquivo($nomeArquivo);
+        if ($cpfArquivo === null) {
+            return $this->jsonError(new Response(), 'Nome de arquivo de contribuição inválido.', 400);
+        }
+
+        $cpfPessoa = $this->mascararCpf((string)($pessoa['cpf'] ?? ''));
+        $cpfEsperado = $this->mascararCpf($cpfArquivo);
+
+        if ($cpfPessoa !== $cpfEsperado) {
+            return $this->jsonError(new Response(), 'Acesso negado. Você não tem permissão para acessar este arquivo.', 403);
+        }
+
+        return true;
+    }
+
     private function validarRegrasValor(float $valor, array $regras): ?string
     {
         foreach ($regras as $regraPagamento) {
@@ -433,6 +488,48 @@ class ContribuicaoController
 
             return $response->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function downloadContribuicaoPdf(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $contribuicaoId = trim((string)($args['contribuicao_id'] ?? ''));
+
+            if ($contribuicaoId === '') {
+                return $this->jsonError($response, 'Identificador da contribuição inválido.', 400);
+            }
+
+            $nomeArquivo = basename($contribuicaoId);
+            if (!preg_match('/\.pdf$/i', $nomeArquivo)) {
+                $nomeArquivo .= '.pdf';
+            }
+
+            $validation = $this->validarAcessoContribuicaoPorArquivo($request, $nomeArquivo);
+            if ($validation instanceof Response) {
+                return $validation;
+            }
+
+            $diretorioPdf = dirname(__DIR__, 4) . '/web/html/contribuicao/pdfs';
+            $caminhoArquivo = $diretorioPdf . '/' . $nomeArquivo;
+
+            if (!is_file($caminhoArquivo) || !is_readable($caminhoArquivo)) {
+                return $this->jsonError($response, 'Arquivo PDF não encontrado.', 404);
+            }
+
+            $conteudoPdf = file_get_contents($caminhoArquivo);
+            if ($conteudoPdf === false) {
+                return $this->jsonError($response, 'Erro ao ler o arquivo PDF.', 500);
+            }
+
+            $response->getBody()->write($conteudoPdf);
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/pdf')
+                ->withHeader('Content-Disposition', 'attachment; filename="' . $nomeArquivo . '"')
+                ->withHeader('Content-Length', (string)strlen($conteudoPdf));
+        } catch (\Exception $e) {
+            return $this->jsonError($response, 'Erro ao recuperar o PDF da contribuição: ' . $e->getMessage(), 500);
         }
     }
 
