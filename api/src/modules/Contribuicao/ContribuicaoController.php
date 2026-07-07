@@ -29,8 +29,7 @@ class ContribuicaoController
         \api\modules\Socio\SocioRepository $socioRepository,
         \api\modules\Pessoa\PessoaRepository $pessoaRepository,
         \PDO $pdo
-    )
-    {
+    ) {
         $this->contribuicaoService = $contribuicaoService;
         $this->socioRepository = $socioRepository;
         $this->pessoaRepository = $pessoaRepository;
@@ -59,7 +58,7 @@ class ContribuicaoController
 
         // Get the pessoa ID associated with the requested socio ID
         $idPessoaFromSocio = $this->socioRepository->getIdPessoaByIdSocio($idSocioRequested);
-        
+
         // If the socio doesn't exist or doesn't belong to this pessoa, deny access
         if ($idPessoaFromSocio === null || $idPessoaFromSocio !== $idPessoa) {
             $response = new Response();
@@ -320,6 +319,14 @@ class ContribuicaoController
         return $datasVencimento;
     }
 
+    private function extrairNomeArquivo(string $link): string
+    {
+        // Remove parâmetros da URL, caso existam (?token=... etc.)
+        $caminho = parse_url($link, PHP_URL_PATH);
+
+        return basename($caminho);
+    }
+
     /**
      * Get all contributions for a specific socio
      *
@@ -366,7 +373,6 @@ class ContribuicaoController
 
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
-
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => 'Erro ao recuperar contribuições: ' . $e->getMessage()
@@ -389,7 +395,7 @@ class ContribuicaoController
     {
         try {
             $idSocio = (int)$args['id'];
-            
+
             // Get status from query parameter: 'paid' or 'pending', null for all
             $statusParam = $request->getQueryParams()['status'] ?? null;
             $statusPagamento = null;
@@ -433,7 +439,6 @@ class ContribuicaoController
 
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
-
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => 'Erro ao recuperar contribuições: ' . $e->getMessage()
@@ -480,7 +485,6 @@ class ContribuicaoController
 
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
-
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => 'Erro ao recuperar resumo de contribuições: ' . $e->getMessage()
@@ -595,7 +599,7 @@ class ContribuicaoController
         }
     }
 
-    public function generateComprovantePdf(Request $request, Response $response, array $args):Response
+    public function generateComprovantePdf(Request $request, Response $response, array $args): Response
     {
         try {
             $idSocio = (int)($args['id'] ?? 0);
@@ -779,7 +783,8 @@ class ContribuicaoController
             $response->getBody()->write(json_encode([
                 'link' => $linkBoleto,
                 'codigo' => $codigoApi,
-                'contribuicao_id' => (int)$contribuicaoLog->getId()
+                //'contribuicao_id' => (int)$contribuicaoLog->getId() voltar para o id do banco de dados quando for implementado o registro de contribuições no banco, por enquanto vamos usar o nome do arquivo como id
+                'contribuicao_id' => $this->extrairNomeArquivo($linkBoleto) //extrair do link de pagamento
             ]));
 
             return $response->withStatus(201)
@@ -932,7 +937,9 @@ class ContribuicaoController
 
             $response->getBody()->write(json_encode([
                 'link' => WWW . 'html/contribuicao/' . $resultado['link'],
-                'parcelas' => (int)$parcelas
+                'parcelas' => (int)$parcelas,
+                //'contribuicao_id' => (int)$contribuicaoLog->getId() voltar para o id do banco de dados quando for implementado o registro de contribuições no banco, por enquanto vamos usar o nome do arquivo como id
+                'contribuicao_id' => $this->extrairNomeArquivo($resultado['link']) //extrair do link de pagamento
             ]));
 
             return $response->withStatus(201)

@@ -520,7 +520,7 @@ Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa 
 {
   "link": "https://...",
   "codigo": "codigo-retornado-pelo-gateway",
-  "contribuicao_id": 123
+  "contribuicao_id": "ab-cd1234567890_efg.hij"
 }
 ```
 
@@ -583,7 +583,8 @@ Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o
 ```json
 {
   "link": "http://localhost/~gabriel/WeGIA/web/html/contribuicao/pdfs/arquivo.pdf",
-  "parcelas": 6
+  "parcelas": 6,
+  "contribuicao_id" : "ab-cd1234567890_efg.hij"
 }
 ```
 

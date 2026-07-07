@@ -108,10 +108,10 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
 
                 //armazena copia para segunda via
                 $contribuicaoLog->setCodigo($idPagarMe);
-                $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
+                $pdfInterno = $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
 
                 //envia resposta para o front-end
-                echo json_encode(['link' => $pdf_link]);
+                echo json_encode(['link' => WWW . $pdfInterno]); //pegar o link da segunda via do boleto para enviar para o front-end
             } else {
                 throw new LogicException("A API retornou o código de status HTTP $httpCode", $httpCode);
             }
@@ -138,7 +138,9 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
         $ultimaDataVencimento = $contribuicaoLog->getDataVencimento();
         $ultimaDataVencimento = str_replace('-', '', $ultimaDataVencimento);
         $codigo = str_replace('_', '-', $contribuicaoLog->getCodigo());
-        $nomeArquivo = $saveDir . $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
+        $nomeArquivo = $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
+
+        $caminhoFisico = $saveDir . $nomeArquivo;
 
         // Inicia uma sessão cURL
         $ch = curl_init($pdf_link);
@@ -168,7 +170,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                 // Verifica o tipo de conteúdo
                 if (strpos($headers, 'Content-Type: application/pdf') !== false) {
                     // Salva o conteúdo do arquivo no diretório especificado
-                    file_put_contents($nomeArquivo, $fileContent);
+                    file_put_contents($caminhoFisico, $fileContent);
                     //$arquivos []= $savePath;
                 } else {
                     //echo "Erro: O conteúdo da URL não é um PDF." . PHP_EOL;
@@ -181,5 +183,8 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
 
         // Fecha a sessão cURL
         curl_close($ch);
+
+        //retornar string
+        return 'html/contribuicao/pdfs/' . $nomeArquivo;
     }
 }
