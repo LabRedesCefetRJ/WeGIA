@@ -76,6 +76,9 @@ $stmtDependente->bindParam(':idAtendido', $id);
 $stmtDependente->execute();
 
 $dependente = $stmtDependente->fetchAll(PDO::FETCH_ASSOC);
+foreach ($dependente as $key => $value) {
+    $dependente[$key]['sobrenome'] = Util::primeiroSobrenome($value['sobrenome'] ?? '');
+}
 $dependente = json_encode($dependente);
 
 $atendidoDados = json_decode($atend, true) ?: [];

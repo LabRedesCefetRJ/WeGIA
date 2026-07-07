@@ -49,6 +49,22 @@ class Util
         self::validarNomePessoaOuLancar($nome, $campo, $codigo);
     }
 
+    public static function primeiroSobrenome(?string $sobrenome): string
+    {
+        if ($sobrenome === null || trim($sobrenome) === '') {
+            return "";
+        }
+
+        $partes = explode(" ", trim($sobrenome));
+        $preposicoes = ["de", "da", "do", "dos", "das"];
+
+        if (in_array(strtolower($partes[0]), $preposicoes) && count($partes) > 1) {
+            return $partes[0] . " " . $partes[1];
+        }
+
+        return $partes[0];
+    }
+
     /**
      * Valida se a ESTRUTURA de um CNPJ é válido
      */

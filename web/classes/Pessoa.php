@@ -134,18 +134,7 @@ abstract class Pessoa
 
     public function getPrimeiroSobrenome()
     {
-        if ($this->sobrenome === null || trim($this->sobrenome) === '') {
-            return "";
-        }
-
-        $partes = explode(" ", trim($this->sobrenome));
-        $preposicoes = ["de", "da", "do", "dos", "das"];
-
-        if (in_array(strtolower($partes[0]), $preposicoes) && count($partes) > 1) {
-            return $partes[0] . " " . $partes[1];
-        }
-
-        return $partes[0];
+        return Util::primeiroSobrenome($this->sobrenome);
     }
 
     public function getSexo()
