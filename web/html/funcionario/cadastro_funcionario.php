@@ -8,7 +8,7 @@ if (session_status() === PHP_SESSION_NONE)
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
   exit();
-} else {
+} else { 
   session_regenerate_id();
 }
 
@@ -83,6 +83,11 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   <!--JS Functions-->
   <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
 
+    <style type="text/css">
+      .obrig {
+          color: rgb(255, 0, 0);
+      }
+    </style>
 </head>
 
 <body>
