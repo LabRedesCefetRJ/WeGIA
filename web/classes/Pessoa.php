@@ -132,6 +132,22 @@ abstract class Pessoa
         return $this->sobrenome;
     }
 
+    public function getPrimeiroSobrenome()
+    {
+        if ($this->sobrenome === null || trim($this->sobrenome) === '') {
+            return "";
+        }
+
+        $partes = explode(" ", trim($this->sobrenome));
+        $preposicoes = ["de", "da", "do", "dos", "das"];
+
+        if (in_array(strtolower($partes[0]), $preposicoes) && count($partes) > 1) {
+            return $partes[0] . " " . $partes[1];
+        }
+
+        return $partes[0];
+    }
+
     public function getSexo()
     {
         return $this->sexo;

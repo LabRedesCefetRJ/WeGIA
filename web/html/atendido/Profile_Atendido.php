@@ -65,7 +65,7 @@ if (!isset($teste)) {
 $_SESSION['atendido'] = $teste;
 $atend = $_SESSION['atendido'];
 $stmtDependente = $pdo->prepare("SELECT
-      af.idatendido_familiares AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.parentesco AS parentesco
+      af.idatendido_familiares AS id_dependente, p.nome AS nome, p.sobrenome AS sobrenome, p.cpf AS cpf, p.telefone AS telefone, par.parentesco AS parentesco
       FROM atendido_familiares af
       LEFT JOIN atendido a ON a.idatendido = af.atendido_idatendido
       LEFT JOIN pessoa p ON p.id_pessoa = af.pessoa_id_pessoa
@@ -200,10 +200,28 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
     function listarDependentes(dependente) {
       $("#dep-tab").empty();
       $.each(dependente, function(i, dependente) {
+        
+        let sobrenome = dependente.sobrenome || "";
+
+        //Centralizar lógica do WhatsApp para uso em outras tabelas do sistema.
+        let colunaTelefone = $("<td>").text(dependente.telefone || "Não informado");
+        if (dependente.telefone) {
+          let numeroLimpo = dependente.telefone.replace(/\D/g, '');
+          if (numeroLimpo.length === 10 || numeroLimpo.length === 11) {
+            numeroLimpo = "55" + numeroLimpo;
+          }
+          let linkWhats = $("<a>", {
+            href: "https://wa.me/" + numeroLimpo,
+            target: "_blank",
+            title: "Entrar em contato via WhatsApp",
+            style: "color: #1fb657; font-weight: bold; text-decoration: none;"
+          }).html("<i class='fab fa-whatsapp'></i> " + dependente.telefone);
+          colunaTelefone = $("<td>").append(linkWhats);
+        }
         $("#dep-tab")
           .append($("<tr>")
-            .append($("<td>").text(dependente.nome))
-            .append($("<td>").text(dependente.cpf))
+            .append($("<td>").text(dependente.nome + " " + sobrenome))
+            .append($(colunaTelefone))
             .append($("<td>").text(dependente.parentesco))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
               .append($("<a href='profile_familiar.php?id_dependente=" + dependente.id_dependente + "' title='Editar'><button class='btn btn-primary'><i class='fas fa-user-edit'></i></button></a>"))
@@ -1038,7 +1056,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                           <thead>
                             <tr>
                               <th>Nome</th>
-                              <th>CPF</th>
+                              <th>Telefone</th>
                               <th>Parentesco</th>
                               <th>Ação</th>
                             </tr>
