@@ -1229,57 +1229,124 @@ class FuncionarioControle
      * Altera a chave de acesso ao sistema de determinado usuário, permite que administradores configurados possam alterar a senha de outras pessoas
      */
     public function alterarSenha()
-    {
-        $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
-        $nova_senha = filter_input(INPUT_POST, 'nova_senha');
-        $redir = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
+{
+    $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+    $nova_senha = filter_input(INPUT_POST, 'nova_senha');
+    $redir = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
 
-        try {
-            if (!Csrf::validateToken($_POST['csrf_token']))
-                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
-
-            if (!$id_pessoa || $id_pessoa < 1)
-                throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
-
-            $funcionarioDAO = new FuncionarioDAO();
-
-            if ($id_pessoa != $_SESSION['id_pessoa'] && !$funcionarioDAO->verificaAdm($_SESSION['id_pessoa']))
-                throw new LogicException('Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha', 401);
-
-            $minLength = 8;
-            $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
-
-            if (!preg_match($regex, $nova_senha))
-                throw new InvalidArgumentException('A senha informada não atende aos requisitos mínimos estabelecidos.', 412);
-
-            $nova_senha = LoginHelper::hashPassword($nova_senha);
-            if (isset($redir)) {
-                $page = $redir;
-                $verificacao = $this->verificarSenhaConfig();
-            }
-            else {
-                $verificacao = $this->verificarSenha();
-                $page = "alterar_senha.php";
-            }
-            if ($verificacao == 1 || $verificacao == 2) {
-                header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '?verificacao=' . htmlspecialchars($verificacao));
-                exit();
-            }
-            else {
-                $funcionarioDAO->alterarSenha($id_pessoa, $nova_senha);
-
-                $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-                $resultado = mysqli_query($conexao, "UPDATE pessoa set adm_configurado=1 where cpf='admin'");
-                $resultado = mysqli_query($conexao, "SELECT original from selecao_paragrafo where id_selecao = 1");
-                $registro = mysqli_fetch_array($resultado);
-
-                $registro['original'] == 1 ? header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '?verificacao=' . htmlspecialchars($verificacao) . "&redir_config=true") : header("Location: " . WWW . 'html/' . htmlspecialchars($page) . '.php?verificacao=' . htmlspecialchars($verificacao));
-            }
+    try {
+        if (!Csrf::validateToken($_POST['csrf_token'])) {
+            throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
         }
-        catch (Exception $e) {
-            Util::tratarException($e);
+
+        if (!$id_pessoa || $id_pessoa < 1) {
+            throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
         }
+
+        $funcionarioDAO = new FuncionarioDAO();
+
+        if ($id_pessoa != $_SESSION['id_pessoa'] &&
+            !$funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
+            throw new LogicException(
+                'Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha',
+                401
+            );
+        }
+
+        $minLength = 8;
+        $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
+
+        if (!preg_match($regex, $nova_senha)) {
+            throw new InvalidArgumentException(
+                'A senha informada não atende aos requisitos mínimos estabelecidos.',
+                412
+            );
+        }
+
+        $nova_senha = LoginHelper::hashPassword($nova_senha);
+
+        // Apenas páginas permitidas
+        $allowedPages = [
+            'logout.php',
+            'geral/configurar_senhas.php'
+        ];
+
+        if (!in_array($redir, $allowedPages, true)) {
+            throw new InvalidArgumentException('Fluxo de alteração de senha inválido.', 400);
+        }
+
+        $page = $redir;
+
+        if ($redir === 'logout.php' && $id_pessoa == $_SESSION['id_pessoa']) {
+            // Fluxo de auto-alteração de senha — acessível a QUALQUER funcionário, inclusive admin
+            $verificacao = $this->verificarSenha();
+        
+        } elseif (
+            $redir === 'geral/configurar_senhas.php' &&
+            $id_pessoa != $_SESSION['id_pessoa'] &&
+            $funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])
+        ) {
+            // Fluxo de redefinição de senha de OUTRO funcionário, feito pelo admin
+            $verificacao = $this->verificarSenhaConfig();
+        
+        } else {
+            // Cobre: admin tentando trocar a própria senha pela tela de config,
+            // ou qualquer outra combinação inválida de redir/id_pessoa.
+            header(
+                "Location: " . WWW .
+                "html/" . htmlspecialchars($redir) .
+                "?verificacao=4"
+            );
+            exit();
+        }
+
+        if ($verificacao == 1 || $verificacao == 2) {
+
+            header(
+                "Location: " . WWW .
+                "html/" . htmlspecialchars($page) .
+                "?verificacao=" . htmlspecialchars($verificacao)
+            );
+            exit();
+        }
+
+        $funcionarioDAO->alterarSenha($id_pessoa, $nova_senha);
+
+        $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
+
+        mysqli_query(
+            $conexao,
+            "UPDATE pessoa SET adm_configurado = 1 WHERE cpf='admin'"
+        );
+
+        $resultado = mysqli_query(
+            $conexao,
+            "SELECT original FROM selecao_paragrafo WHERE id_selecao = 1"
+        );
+
+        $registro = mysqli_fetch_array($resultado);
+
+        if ($registro['original'] == 1) {
+            header(
+                "Location: " . WWW .
+                "html/" . htmlspecialchars($page) .
+                "?verificacao=" . htmlspecialchars($verificacao) .
+                "&redir_config=true"
+            );
+        } else {
+            header(
+                "Location: " . WWW .
+                "html/" . htmlspecialchars($page) .
+                "?verificacao=" . htmlspecialchars($verificacao)
+            );
+        }
+
+        exit();
+
+    } catch (Exception $e) {
+        Util::tratarException($e);
     }
+}
 
 public function alterarOutros()
     {

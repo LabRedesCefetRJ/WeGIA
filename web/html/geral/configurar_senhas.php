@@ -111,27 +111,30 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 		});
 	</script>
 
-	<script>
-		$(function() {
-			const verificacao = '<?= isset($_GET['verificacao']) ? htmlspecialchars($_GET['verificacao']) : '0' ?>';
+<script>
+	$(function() {
+		const verificacao = '<?= isset($_GET['verificacao']) ? htmlspecialchars($_GET['verificacao']) : '0' ?>';
 
-			switch (verificacao) {
-				case '0':
-					break;
-				case '1':
-					alert("Confirmação de senha não coincide com nova senha");
-					break;
-				case '2':
-					alert("Senha antiga está errada");
-					break;
-				case '3':
-					alert("Senha alterada com sucesso!");
-					break;
-				default:
-					alert("O valor informado para a verificação não é válido.");
-			}
-		});
-	</script>
+		switch (verificacao) {
+			case '0':
+				break;
+			case '1':
+				alert("Confirmação de senha não coincide com nova senha");
+				break;
+			case '2':
+				alert("Senha antiga está errada");
+				break;
+			case '3':
+				alert("Senha alterada com sucesso!");
+				break;
+			case '4':
+				alert('Para alterar sua própria senha, utilize a tela "Alterar senha".');
+				break;
+			default:
+				alert("O valor informado para a verificação não é válido.");
+		}
+	});
+</script>
 
 </head>
 
