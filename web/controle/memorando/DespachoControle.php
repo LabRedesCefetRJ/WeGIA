@@ -85,7 +85,10 @@ class DespachoControle
 			$pessoa = new UsuarioDAO();
 
 			$id_pessoa = filter_var($pessoa->obterUsuario($cpf_usuario)['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
-			$destinatario = filter_var($_REQUEST['destinatario'], FILTER_SANITIZE_NUMBER_INT);
+			$destinatario = filter_input(INPUT_POST, 'destinatario', FILTER_SANITIZE_NUMBER_INT);
+			if (empty($destinatario)) {
+                throw new InvalidArgumentException("É obrigatório selecionar um destino para o memorando.");
+            }
 			$id_memorando = filter_var($_REQUEST['id_memorando'], FILTER_SANITIZE_NUMBER_INT);
 			$texto = filter_var($_REQUEST['texto'], FILTER_SANITIZE_SPECIAL_CHARS);
 
