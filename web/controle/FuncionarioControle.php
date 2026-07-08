@@ -379,9 +379,7 @@ class FuncionarioControle
         }
 
         if ((!isset($cargo)) || (empty($cargo))) {
-            http_response_code(412);
-            header('Location: ../html/funcionario.html?msg=Cargo do funcionario não informado. Por favor, informe um cargo!');
-            exit();
+            throw new InvalidArgumentException('Cargo do funcionário não informado. Por favor, informe um cargo.', 412);
         }
 
         if ((!isset($email)) || (empty($email))) { 
@@ -389,7 +387,7 @@ class FuncionarioControle
         }
 
         if ((!isset($telefone)) || (empty($telefone))) {
-            $telefone = 'null';
+            $telefone = '';
         }
 
         if ((!isset($nascimento)) || (empty($nascimento))) {
@@ -493,9 +491,7 @@ class FuncionarioControle
         }
 
         if ((!isset($situacao)) || (empty($situacao))) {
-            http_response_code(412);
-            header('Location: ../html/funcionario.html?msg=Situação do funcionario não informada. Por favor, informe a situação!');
-            exit();
+            throw new InvalidArgumentException('Situação do funcionário não informada. Por favor, informe a situação.', 412);
         }
 
         if ((!isset($certificado_reservista_numero)) || (empty($certificado_reservista_numero))) {
@@ -1025,10 +1021,13 @@ class FuncionarioControle
 
     public function incluir()
     {
+
+        $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
         try {
             $funcionario = $this->verificarFuncionario();
             $horario = $this->verificarHorario();
-            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            
 
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
@@ -1072,6 +1071,10 @@ class FuncionarioControle
                 $fieldErrors['data_admissao'] = $message;
             } elseif (stripos($message, 'nascimento') !== false) {
                 $fieldErrors['nascimento'] = $message;
+            } elseif (stripos($message, 'cargo') !== false) {
+                $fieldErrors['cargo'] = $message;
+            } elseif (stripos($message, 'situação') !== false) {
+                $fieldErrors['situacao'] = $message;
             } else {
                 $fieldErrors['global'] = $message;
             }
@@ -1434,7 +1437,7 @@ public function alterarOutros()
 
             $formatar = new Util();
 
-            if ($_SESSION['data_nasc']) {
+            if ($_SESSION['data_nasc']) { 
                 if (strtotime($data_expedicao) < strtotime($formatar->formatoDataYMD($_SESSION['data_nasc']))) {
                     echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
                     header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . urlencode($id_funcionario));

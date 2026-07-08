@@ -198,7 +198,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="telefone">Telefone<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="telefone">Telefone</label>
                     <div class="col-md-6">
                       <input type="text" class="form-control<?= isset($fieldErrors['telefone']) ? ' is-invalid' : '' ?>" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                       <p id="error_telefone" class="help-block text-danger" style="display: <?= isset($fieldErrors['telefone']) ? 'block' : 'none' ?>;">
@@ -306,7 +306,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     <label class="col-md-3 control-label" for="inputSuccess">Situação<sup class="obrig">*</sup></label>
                     <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                     <div class="col-md-6">
-                      <select class="form-control input-lg mb-md" name="situacao" id="situacao" required>
+                      <select class="form-control input-lg mb-md<?= isset($fieldErrors['situacao']) ? ' is-invalid' : '' ?>" name="situacao" id="situacao" required>
                         <option selected disabled>Selecionar</option>
                         <?php
                         while ($row = $situacao->fetch_array(MYSQLI_NUM)) {
@@ -314,13 +314,16 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                           echo "<option value=\"" . htmlspecialchars($row[0]) . "\"" . $selected . ">" . htmlspecialchars($row[1]) . "</option>";
                         }                            ?>
                       </select>
+                      <p id="error_situacao" class="help-block text-danger" style="display: <?= isset($fieldErrors['situacao']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['situacao']) ? htmlspecialchars($fieldErrors['situacao'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                     </div>
                   </div>
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
                     <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                     <div class="col-md-6">
-                      <select class="form-control input-lg mb-md" name="cargo" id="cargo" required>
+                      <select class="form-control input-lg mb-md<?= isset($fieldErrors['cargo']) ? ' is-invalid' : '' ?>" name="cargo" id="cargo" required>
                         <option selected disabled>Selecionar</option>
                         <?php
                         while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
@@ -329,9 +332,11 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         }
                         ?>
                       </select>
+                      <p id="error_cargo" class="help-block text-danger" style="display: <?= isset($fieldErrors['cargo']) ? 'block' : 'none' ?>;">
+                        <?= isset($fieldErrors['cargo']) ? htmlspecialchars($fieldErrors['cargo'], ENT_QUOTES, 'UTF-8') : '' ?>
+                      </p>
                     </div>
                   </div>
-
                   <div class="form-group">
                     <label class="col-md-3 control-label">Escala<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
