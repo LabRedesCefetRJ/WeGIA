@@ -232,7 +232,7 @@ class VoluntarioControle
             if (!$id_voluntario || $id_voluntario < 1)
                 throw new InvalidArgumentException('O id do voluntário informado não é válido.', 412);
 
-            $voluntario = new Voluntario('', '', '', '', '', null, null, null, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $voluntario = new Voluntario('', '', '', '', '', null, null, null, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
             $voluntario->setId_voluntario($id_voluntario);
             $voluntario->setData_admissao($data_admissao);
             $voluntario->setId_situacao($situacao);

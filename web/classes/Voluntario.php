@@ -66,9 +66,15 @@ class Voluntario extends Pessoa
         $this->id_cargo = $id_cargo;
     }
 
-    public function setData_admissao(date $data_admissao)
+    public function setData_admissao(string $data_admissao)
     {
-        if ($data_admissao > new DateTime()) {
+        $d = DateTime::createFromFormat("Y-m-d", $data_admissao);
+
+        if (!$d || $d->format('Y-m-d') !== $data_admissao) {
+            throw new InvalidArgumentException("A data deve estar no formato Y-m-d.", 412);
+        }
+
+        if ($d > new DateTime()) {
             throw new InvalidArgumentException("A data não pode ser futura.", 412);
         }
         $this->data_admissao = $data_admissao;
