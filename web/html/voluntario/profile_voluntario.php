@@ -603,6 +603,11 @@ try {
                                                     <select class="form-control mb-md" name="cargo" id="cargo" required>
                                                         <option value="" selected disabled>Selecionar</option>
                                                         <?php foreach ($cargo as $row) {
+                                                            // esconde a opção "Administrador" se o usuário logado não for adm (copiado de Funcionário)
+                                                            if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
+                                                                continue;
+                                                            }
+                                                            
                                                             echo "<option value=\"{$row[0]}\">" . htmlspecialchars($row[1]) . "</option>";
                                                         } ?>
                                                     </select>
