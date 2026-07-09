@@ -12,6 +12,20 @@ class Util
         return FusoHorarioSistema::definir($fusoHorario);
     }
 
+    public static function validarData(string $data): bool
+    {
+        $partes = explode('-', $data);
+
+        if (count($partes) !== 3) {
+            return false;
+        }
+
+        [$ano, $mes, $dia] = array_map('intval', $partes);
+
+        return checkdate($mes, $dia, $ano)
+            && $data === sprintf('%04d-%02d-%02d', $ano, $mes, $dia);
+    }
+
     public static function validarNomePessoa(?string $nome): bool
     {
         if (!is_string($nome)) {
@@ -107,7 +121,7 @@ class Util
     public static function validaCNS(?string $cns): bool
     {
         if ($cns === null || empty($cns)) {
-            return true; 
+            return true;
         }
 
         // Remove caracteres não numéricos
@@ -1216,20 +1230,20 @@ class Util
 
     public static function getClassePorTipo($tipo)
     {
-	    switch ($tipo) {
-		    case 'Compra':
-			    return 'bg-secondary';
-		    case 'Doação':
-			    return 'bg-success';
-		    case 'Troca':
-			    return 'bg-warning';
-		    case 'Vencido':
-			    return 'bg-secondary';
-		    case 'Consumo':
-			    return 'bg-success';
-		    default:
-			    return 'bg-info';
-	    }
+        switch ($tipo) {
+            case 'Compra':
+                return 'bg-secondary';
+            case 'Doação':
+                return 'bg-success';
+            case 'Troca':
+                return 'bg-warning';
+            case 'Vencido':
+                return 'bg-secondary';
+            case 'Consumo':
+                return 'bg-success';
+            default:
+                return 'bg-info';
+        }
     }
 
     /**
