@@ -34,6 +34,19 @@ if (!$id || $id < 0) {
   exit('O id do paciente informado não é válido');
 }
 
+require_once "../../dao/Conexao.php";
+$pdo = Conexao::connect();
+
+$stmtCheck = $pdo->prepare("SELECT idatendido FROM atendido WHERE idatendido = :id");
+$stmtCheck->execute([':id' => $id]);
+
+if (!$stmtCheck->fetch()) {
+    $_SESSION['msg'] = "Atendido não encontrado.";
+    $_SESSION['tipo'] = "error";
+    header('Location: ../../html/home.php');
+    exit();
+}
+
 $cache = new Cache();
 $teste = $cache->read($id);
 
@@ -63,6 +76,12 @@ if (!isset($teste)) {
 }
 
 $_SESSION['atendido'] = $teste;
+if (empty($_SESSION['atendido'])) {
+    $_SESSION['msg'] = "Atendido não encontrado.";
+    $_SESSION['tipo'] = "error";
+    header('Location: ../../html/home.php');
+    exit();
+}
 $atend = $_SESSION['atendido'];
 $stmtDependente = $pdo->prepare("SELECT
       af.idatendido_familiares AS id_dependente, p.nome AS nome, p.sobrenome AS sobrenome, p.cpf AS cpf, p.telefone AS telefone, par.parentesco AS parentesco

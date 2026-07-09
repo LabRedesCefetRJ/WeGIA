@@ -235,6 +235,13 @@ require_once ROOT . "/html/geral/msg.php";
         </div>
     </section>
     <script>
+        $(document).ready(function() {
+            $("#btnSemCpf").click(function() {
+                window.location.href = "Cadastro_Atendido.php?semCpf=1";
+            });
+        });
+    </script>
+    <script>
         
         document.getElementById('formCpf').addEventListener('submit', function(e) {
             var cpfInput = document.getElementById("cpf").value;
