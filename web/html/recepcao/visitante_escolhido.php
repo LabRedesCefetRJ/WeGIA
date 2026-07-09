@@ -1,8 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
@@ -15,6 +11,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once ROOT . "/controle/VisitanteControle.php";
 require_once ROOT . "/classes/Visitante.php";
 require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/dao/Conexao.php";
+
 $dataNascimentoMaxima = Visitante::getDataNascimentoMaxima();
 $dataNascimentoMinima = Visitante::getDataNascimentoMinima();
 
@@ -27,18 +25,33 @@ if (isset($_GET['msg'])) {
     $erro = $_GET['msg'];
 }
 
-$cpfPrefilled = '';
-if (isset($_GET['cpf'])) {
-    $cpfPrefilled = htmlspecialchars($_GET['cpf'], ENT_QUOTES, 'UTF-8');
+$cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
+if (!$cpf || strlen($cpf) < 1) {
+    http_response_code(400);
+    echo "O CPF informado não é válido.";
+    exit();
+}
+
+$pdo = Conexao::connect();
+
+$stmt = $pdo->prepare("SELECT * FROM visitante v INNER JOIN pessoa p ON p.id_pessoa = v.id_pessoa WHERE cpf = :cpf");
+$stmt->bindParam(':cpf', $cpf);
+$stmt->execute();
+$visitante = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$visitante) {
+    http_response_code(404);
+    echo "Pessoa não encontrada.";
+    exit();
 }
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-$situacao = $mysqli->query("SELECT * FROM situacao");
 require_once ROOT . '/classes/Csrf.php';
 ?>
 <!DOCTYPE html>
 <html class="fixed">
-    
+
 <head>
     <meta charset="UTF-8">
     <title>Cadastro de Visitante</title>
@@ -54,6 +67,33 @@ require_once ROOT . '/classes/Csrf.php';
     <script src="../../assets/javascripts/theme.js"></script>
     <script src="../../assets/javascripts/theme.custom.js"></script>
     <script src="../../assets/javascripts/theme.init.js"></script>
+    
+    <script>
+        $(function() {
+            var visitante = <?php echo json_encode($visitante); ?>;
+            $("#nome").val(visitante.nome).prop('readonly', true);
+            $("#sobrenome").val(visitante.sobrenome).prop('readonly', true);
+            $("#cpf").val(visitante.cpf).prop('readonly', true);
+            if (visitante.data_nascimento) {
+                var date = visitante.data_nascimento.split("/");
+                if (date.length === 3) {
+                    $("#nascimento").val(date[2] + "-" + date[1] + "-" + date[0]).prop('readonly', true);
+                } else {
+                    $("#nascimento").val(visitante.data_nascimento).prop('readonly', true);
+                }
+            }
+            if (visitante.sexo == "m") {
+                $("#radioM").prop('checked', true);
+                $("input[name=gender]").prop('disabled', true);
+                $("#hiddenGender").val('m');
+            } else if (visitante.sexo == "f") {
+                $("#radioF").prop('checked', true);
+                $("input[name=gender]").prop('disabled', true);
+                $("#hiddenGender").val('f');
+            }
+            $(".form-horizontal").attr("action", `./registro_entrada.php?idVisitante=${visitante.id_visitante}`);
+        });
+    </script>
 </head>
 
 <body>
@@ -73,54 +113,42 @@ require_once ROOT . '/classes/Csrf.php';
                     <?php
 endif; ?>
                     <div class="col-md-12 col-lg-12">
-                        <form class="form-horizontal" method="POST" action="../../controle/control.php">
+                        <form class="form-horizontal" method="POST">
                             <div class="panel-body">
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Nome *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="nome" required>
+                                    <label class="col-md-3 control-label">Nome</label>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="nome" id="nome" required readonly>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Sobrenome *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="sobrenome"
-                                            required></div>
+                                    <label class="col-md-3 control-label">Sobrenome</label>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="sobrenome" id="sobrenome"
+                                            required readonly></div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">CPF *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="cpf"
-                                            maxlength="14" value="<?= $cpfPrefilled ?>" required></div>
+                                    <label class="col-md-3 control-label">CPF</label>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="cpf" id="cpf"
+                                            maxlength="14" required readonly></div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Sexo *</label>
+                                    <label class="col-md-3 control-label">Sexo</label>
                                     <div class="col-md-6">
-                                        <input type="radio" name="gender" value="m" required> M
-                                        <input type="radio" name="gender" value="f" required> F
+                                        <input type="radio" name="gender" id="radioM" value="m" required disabled> M
+                                        <input type="radio" name="gender" id="radioF" value="f" required disabled> F
+                                        <input type="hidden" name="gender" id="hiddenGender" value="">
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Nascimento *</label>
-                                    <div class="col-md-6"><input type="date" class="form-control" name="nascimento"
+                                    <label class="col-md-3 control-label">Nascimento</label>
+                                    <div class="col-md-6"><input type="date" class="form-control" name="nascimento" id="nascimento"
                                             min="<?= $dataNascimentoMinima?>" max="<?= $dataNascimentoMaxima?>"
-                                            required></div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-md-3 control-label">Situação *</label>
-                                    <div class="col-md-6">
-                                        <select class="form-control" name="situacao" required>
-                                            <option selected disabled>Selecionar</option>
-                                            <?php while ($row = $situacao->fetch_array(MYSQLI_NUM)) {
-    echo "<option value=" . $row[0] . ">" . htmlspecialchars($row[1]) . "</option>";
-}?>
-                                        </select>
-                                    </div>
+                                            required readonly></div>
                                 </div>
                             </div>
                             <div class="panel-footer">
                                 <?= Csrf::inputField()?>
-                                <input type="hidden" name="nomeClasse" value="VisitanteControle">
-                                <input type="hidden" name="metodo" value="incluir">
-                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                <button type="submit" class="btn btn-primary" id="botaoRegistrarIP">Enviar</button>
                             </div>
                         </form>
                     </div>

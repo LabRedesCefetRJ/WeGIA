@@ -493,13 +493,13 @@ class FuncionarioDAO
         $id_usuario = $usuario->obterUsuario($_SESSION["usuario"])['id_pessoa'];
         $funcionarios = array();
 
-        $consulta = $this->pdo->prepare("SELECT p.id_pessoa, p.nome, p.sobrenome FROM funcionario f INNER JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE p.id_pessoa!=:idUsuario");
+        $consulta = $this->pdo->prepare("SELECT p.id_pessoa, p.nome, p.sobrenome, p.cpf FROM funcionario f INNER JOIN pessoa p ON f.id_pessoa = p.id_pessoa WHERE p.id_pessoa!=:idUsuario");
         $consulta->bindValue(':idUsuario', $id_usuario);
         $consulta->execute();
 
         $x = 0;
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-            $funcionarios[$x] = array('id_pessoa' => htmlspecialchars($linha['id_pessoa']), 'nome' => htmlspecialchars($linha['nome']), 'sobrenome' => htmlspecialchars($linha['sobrenome']));
+            $funcionarios[$x] = array('id_pessoa' => htmlspecialchars($linha['id_pessoa']), 'nome' => htmlspecialchars($linha['nome']), 'sobrenome' => htmlspecialchars($linha['sobrenome']), 'cpf' => htmlspecialchars($linha['cpf']));
             $x++;
         }
 

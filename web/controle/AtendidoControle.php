@@ -236,12 +236,12 @@ class AtendidoControle
 
     public function listarTodos2()
     {
-        extract($_REQUEST);
+        // extract($_REQUEST);
         try {
             $AtendidoDAO = new AtendidoDAO();
             $atendidos = $AtendidoDAO->listarTodos2();
 
-            $_SESSION['atendidos2'] = $atendidos;
+            $_SESSION['atendidos2'] = json_encode($atendidos);
         } catch (Exception $e) {
             Util::tratarException($e);
         }

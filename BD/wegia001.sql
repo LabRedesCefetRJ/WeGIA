@@ -2994,23 +2994,20 @@ CREATE TABLE IF NOT EXISTS `wegia`.`projeto_atendido` (
     ON UPDATE NO ACTION
 ) ENGINE = InnoDB;
 
--- -----------------------------------------------------
--- Table `wegia`.`visitante_tipo`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS visitante_tipo (
- id_visitante_tipo INT(11) AUTO_INCREMENT PRIMARY KEY,
- descricao VARCHAR(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- ------------------------------------------------------
+-- Table `wegia` . `visitante`
+-- ------------------------------------------------------
 
--- -----------------------------------------------------
--- Table `wegia`.`visitante`
--- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS visitante (
- id_visitante INT(11) AUTO_INCREMENT PRIMARY KEY,
- id_pessoa INT(11) NOT NULL,
- id_situacao INT(11) NOT NULL,
- -- id_visitante_tipo INT(11) NOT NULL,
- FOREIGN KEY (id_pessoa) REFERENCES pessoa(id_pessoa) ON DELETE CASCADE,
- FOREIGN KEY (id_situacao) REFERENCES situacao(id_situacao)
- -- FOREIGN KEY (id_visitante_tipo) REFERENCES visitante_tipo(id_visitante_tipo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+ id_visitante INT AUTO_INCREMENT PRIMARY KEY,
+ id_pessoa INT NOT NULL,
+ FOREIGN KEY (id_pessoa) REFERENCES pessoa(id_pessoa) ON DELETE CASCADE
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS visita (
+ id_visita INT AUTO_INCREMENT PRIMARY KEY,
+ id_visitante INT NOT NULL,
+ id_visitado INT NOT NULL,
+ FOREIGN KEY (id_visitante) REFERENCES visitante(id_visitante) ON DELETE CASCADE,
+ FOREIGN KEY (id_visitado) REFERENCES pessoa(id_pessoa) ON DELETE CASCADE
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

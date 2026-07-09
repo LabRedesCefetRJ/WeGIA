@@ -1,26 +1,22 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
-
-if (session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
+}
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: " . WWW . "html/index.php");
+    header("Location: ../../index.php");
     exit();
 }
-else {
-    session_regenerate_id();
-}
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
-require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
-// Not checking specific permissions for this page, as visitor forms don't always, but we could if we wanted.
-
-require_once ROOT . "/controle/VisitanteControle.php";
+//Verifica se o usuário possui as permissões necessárias para a função
+require_once '../permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 12, 7);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 ?>
+
 
 <!DOCTYPE html>
 
@@ -30,19 +26,18 @@ require_once ROOT . "/html/personalizacao_display.php";
     <!-- Basic -->
     <meta charset="UTF-8">
 
-    <title>Cadastro de Visitante</title>
+    <title>Pré-Registro de Entrada</title>
 
     <!-- Mobile Metas -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light"
-        rel="stylesheet" type="text/css">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
     <!-- Vendor CSS -->
     <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/font-awesome/css/font-awesome.css" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
     <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/magnific-popup/magnific-popup.css" />
     <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
-    <link rel="icon" href="<?php display_campo(" Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
+    <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
 
     <!-- Specific Page Vendor CSS -->
     <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/select2/select2.css" />
@@ -95,7 +90,7 @@ require_once ROOT . "/html/personalizacao_display.php";
     <!-- jquery functions -->
 
     <script>
-        $(function () {
+        $(function() {
             $("#header").load("<?php echo WWW; ?>html/header.php");
             $(".menuu").load("<?php echo WWW; ?>html/menu.php");
         });
@@ -175,6 +170,7 @@ require_once ROOT . "/html/personalizacao_display.php";
     </style>
 </head>
 
+
 <body>
     <section class="body">
         <!-- start: header -->
@@ -186,7 +182,7 @@ require_once ROOT . "/html/personalizacao_display.php";
             <!-- end: sidebar -->
             <section role="main" class="content-body">
                 <header class="page-header">
-                    <h2>Cadastro de Visitante</h2>
+                    <h2>Pré-Registro Entrada</h2>
                     <div class="right-wrapper pull-right">
                         <ol class="breadcrumbs">
                             <li>
@@ -202,36 +198,34 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                 <!-- start: page -->
 
+
                 <section class="panel">
                     <?php
-if (isset($_GET['msg_c'])) {
-    $msg = filter_input(INPUT_GET, 'msg_c', FILTER_SANITIZE_SPECIAL_CHARS);
-    echo ('<div class="alert alert-success" role="alert">
+                    if (isset($_GET['msg_c'])) {
+                        $msg = filter_input(INPUT_GET, 'msg_c', FILTER_SANITIZE_SPECIAL_CHARS);
+                        echo ('<div class="alert alert-success" role="alert">
 										' . htmlspecialchars($msg) . '
 									  </div>');
-}
-else if (isset($_GET['msg_e'])) {
-    $msg = filter_input(INPUT_GET, 'msg_e', FILTER_SANITIZE_SPECIAL_CHARS);
-    echo ('<div class="alert alert-danger" role="alert">
+                    } else if (isset($_GET['msg_e'])) {
+                        $msg = filter_input(INPUT_GET, 'msg_e', FILTER_SANITIZE_SPECIAL_CHARS);
+                        echo ('<div class="alert alert-danger" role="alert">
 										' . htmlspecialchars($msg) . '
 									  </div>');
-}
-?>
+                    }
+                    ?>
                     <header class="panel-heading">
                         <h2 class="panel-title">Digite seu CPF</h2>
                     </header>
-                    <div class="panel-body">.
+                    <div class="panel-body">
 
                         <form method="GET" action="../../controle/control.php">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22"
-                                maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)"
-                                onkeyup="mascara('###.###.###-##',this,event)" required>
+                            <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                             <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                             <br>
                             <input type="hidden" name="nomeClasse" value="VisitanteControle">
                             <input type="hidden" name="metodo" value="selecionarCadastro">
-                            <input type='submit' value='Enviar' name='enviar' id='enviar'
-                                class='mb-xs mt-xs mr-xs btn btn-primary'>
+                            <input type='submit' value='Enviar' name='enviar' id='enviar' class='mb-xs mt-xs mr-xs btn btn-primary'>
+                            <button type="button" id="btnSemCpf" class="btn btn-warning"> Cadastrar sem CPF</bottun>
                         </form>
                     </div>
                 </section>
@@ -251,6 +245,10 @@ else if (isset($_GET['msg_e'])) {
                 document.getElementById("enviar").disabled = false;
             }
         }
+        const url = '<?php echo WWW; ?>html/atendido/Cadastro_Atendido.php?semCpf=1';
+        document.getElementById('btnSemCpf').addEventListener('click', function() {
+            window.location.href = url;
+        });
     </script>
     <!-- end: page -->
     <!-- Vendor -->
@@ -260,8 +258,7 @@ else if (isset($_GET['msg_e'])) {
     <script src="../../Functions/lista.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/select2/select2.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-    <script
-        src="<?php echo WWW; ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
     <script src="<?php echo WWW; ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 
     <!-- Theme Base, Components and Settings -->
@@ -278,8 +275,7 @@ else if (isset($_GET['msg_e'])) {
     <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
     <div align="right">
-        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60"
-            style="border:none;"></iframe>
+        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
     </div>
 </body>
 

@@ -3,59 +3,40 @@ require_once 'Pessoa.php';
 
 class Visitante extends Pessoa
 {
-    private $idVisitante;
-    private $idPessoa;
-    private $idVisitanteTipo;
-    private $idSituacao;
+    private $id_visitante;
+    private $id_pessoa;
 
-    public function getIdVisitante()
+    public function getId_Visitante()
     {
-        return $this->idVisitante;
+        return $this->id_visitante;
     }
-    public function getIdPessoa()
+    public function getId_Pessoa()
     {
-        return $this->idPessoa;
+        return $this->id_pessoa;
     }
-    public function getIdVisitanteTipo()
+    
+    public function setId_Visitante($id_visitante)
     {
-        return $this->idVisitanteTipo;
+        $this->id_visitante = $id_visitante;
     }
-    public function getIdSituacao()
+    public function setId_Pessoa($id_pessoa)
     {
-        return $this->idSituacao;
-    }
-
-    public function setIdVisitante($idVisitante)
-    {
-        if(!$idVisitante || $idVisitante < 1)
-            throw new InvalidArgumentException('O ID do visitante fornecido não é válido.', 412);
-        $this->idVisitante = $idVisitante;
-    }
-    public function setIdPessoa($idPessoa)
-    {
-        $this->idPessoa = $idPessoa;
-    }
-    public function setIdVisitanteTipo($idVisitanteTipo)
-    {
-        $this->idVisitanteTipo = $idVisitanteTipo;
-    }
-    public function setIdSituacao($idSituacao)
-    {
-        $this->idSituacao = $idSituacao;
+        $this->id_pessoa = $id_pessoa;
     }
 
     /**
-     * Retorna a data mínima de nascimento permitida para um visitante ser cadastrado no sistema
+     * Retorna a data mínima de nascimento para o cadastro de um novo voluntário no sistema.
      */
     static public function getDataNascimentoMinima()
     {
-        $idadeMaxima = 170;
+        $idadeMaxima = 150;
         $data = date('Y-m-d', strtotime("-$idadeMaxima years"));
         return $data;
     }
 
     /**
-     * Retorna a data máxima de nascimento permitida para um visitante ser cadastrado no sistema
+     * Retorna a data máxima de nascimento para o cadastro de um novo voluntário no sistema.
+     * Pode ser ajustado conforme regra de negócio (ex: 14 anos).
      */
     static public function getDataNascimentoMaxima()
     {

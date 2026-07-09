@@ -89,7 +89,7 @@ class Util
         // Mensagem para o cliente
         if ($e instanceof PDOException) {
             echo json_encode([
-                'erro' => 'Erro interno ao acessar o banco de dados'
+                'erro' => $e->getMessage()
             ]);
         } else {
             echo json_encode([
