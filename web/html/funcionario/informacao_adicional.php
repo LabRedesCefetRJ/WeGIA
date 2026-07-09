@@ -16,7 +16,7 @@ require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
 if ($action == "adicionar_descricao") {
-    $descricao = trim(filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_STRING));
+    $descricao = trim(filter_input(INPUT_POST, 'descricao', FILTER_SANITIZE_SPECIAL_CHARS));
 
     if (!$descricao || strlen($descricao) == 0) {
         http_response_code(400);
