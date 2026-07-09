@@ -990,7 +990,11 @@ class FuncionarioControle
     public function selecionarCadastro()
     {
         try {
-            $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            $cpfInput = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);   
+
+            $cpfLimpo = preg_replace('/[^0-9]/', '', (string)$cpfInput);
+
+            $cpf = preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cpfLimpo);
 
             if (!Util::validarCPF($cpf))
                 throw new InvalidArgumentException("O CPF informado não é válido.", 412);
@@ -1021,8 +1025,9 @@ class FuncionarioControle
 
     public function incluir()
     {
-
-        $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cpfInput = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cpfLimpo = preg_replace('/[^0-9]/', '', (string)$cpfInput);
+        $cpf = preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cpfLimpo);
 
         try {
             $funcionario = $this->verificarFuncionario();
@@ -1102,7 +1107,9 @@ class FuncionarioControle
 
     public function incluirExistente()
     {
-        $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cpfInput = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cpfLimpo = preg_replace('/[^0-9]/', '', (string)$cpfInput);
+        $cpf = preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cpfLimpo);
 
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
