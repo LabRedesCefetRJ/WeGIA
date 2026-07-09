@@ -32,8 +32,12 @@ function permissaoUsuario ($id_pessoa, $id_recurso){
     $res = $pdo->query("
         SELECT p.id_acao 
         FROM permissao p 
-        INNER JOIN funcionario f ON f.id_pessoa = $id_pessoa 
-        WHERE p.id_cargo = f.id_cargo AND p.id_recurso = $id_recurso 
+        INNER JOIN (
+            SELECT id_pessoa, id_cargo FROM funcionario WHERE id_pessoa = $id_pessoa
+            UNION
+            SELECT id_pessoa, id_cargo FROM voluntario WHERE id_pessoa = $id_pessoa
+        ) f ON p.id_cargo = f.id_cargo 
+        WHERE p.id_recurso = $id_recurso 
         ;");
     $permissao = $res->fetch(PDO::FETCH_ASSOC);
     return (int) $permissao['id_acao'];

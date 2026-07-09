@@ -72,12 +72,12 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'UnidadeControle' => [22],
             'MemorandoControle' => [3],
             'DespachoControle' => [3],
-            'VoluntarioControle' => [11],
+            'VoluntarioControle' => [13],
             'NotificacaoControle' => [2, 5, 21, 22, 23, 24]
         ];
 
         /*Por padrão o control.php irá recusar qualquer controladora informada,
-		adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
+        adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
         if (!array_key_exists($nomeClasse, $controladorasRecursos))
             throw new InvalidArgumentException('Controladora inválida', 400);
 
@@ -175,7 +175,7 @@ try {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
-        if ($e->getCode() === 401){
+        if ($e->getCode() === 401) {
             header("Location: " . WWW . "html/home.php?msg_c=" . urlencode("Você não tem as permissões necessárias para essa página."));
             exit();
         }

@@ -832,7 +832,12 @@ class FuncionarioControle
                 '../html/geral/cadastrar_permissoes.php',
             ];
 
-            isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
+            if (count($whitePages) == 1) {
+                header('Location: ' . $whitePages[0]);
+            }
+            else {
+                isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
+            }
         }
         catch (Exception $e) {
             Util::tratarException($e);

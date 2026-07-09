@@ -22,9 +22,8 @@ if (!$id_pessoa || $id_pessoa < 1) {
     exit();
 }
 
-// TODO: update permission logic if needed
-// require_once "../permissao/permissao.php";
-// permissao($_SESSION['id_pessoa'], 11, 7);
+require_once "../permissao/permissao.php";
+permissao($_SESSION['id_pessoa'], 13, 1);
 
 extract($_REQUEST);
 
@@ -66,6 +65,27 @@ try {
 
     $dataNascimentoMaxima = Voluntario::getDataNascimentoMaxima();
     $dataNascimentoMinima = Voluntario::getDataNascimentoMinima();
+
+
+    // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0) (copiado de Funcionário)
+    $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
+    $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+    $stmt->execute();
+    $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+
+    // lógica de permissao para cargos
+    $stmtAlvo = $pdo->prepare('SELECT p.id_pessoa, p.adm_configurado FROM pessoa p JOIN voluntario v ON p.id_pessoa = v.id_pessoa WHERE v.id_voluntario = :idVoluntario');
+    $stmtAlvo->bindValue(':idVoluntario', $idVoluntario, PDO::PARAM_INT);
+    $stmtAlvo->execute();
+    $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+
+    $pode_editar_cargo = true;
+    if ($alvo['id_pessoa'] == $id_pessoa) {
+        $pode_editar_cargo = false;
+    }
+    if ($alvo['adm_configurado'] == 1 && $adm_configurado != 1) {
+        $pode_editar_cargo = false;
+    }
 
 } catch (Exception $e) {
     Util::tratarException($e);
@@ -219,9 +239,13 @@ try {
         }
 
         function editar_outros() {
+            let pode_editar_cargo = <?php echo $pode_editar_cargo ? 'true' : 'false'; ?>;
+
             $("#situacao").prop('disabled', false);
             $("#data_admissao").prop('disabled', false);
-            $("#cargo").prop('disabled', false);
+            if(pode_editar_cargo) {
+                $("#cargo").prop('disabled', false);
+            }
             $("#botaoEditarOutros").html('Cancelar');
             $("#botaoSalvarOutros").prop('disabled', false);
             $("#botaoEditarOutros").removeAttr('onclick');
@@ -579,6 +603,11 @@ try {
                                                     <select class="form-control mb-md" name="cargo" id="cargo" required>
                                                         <option value="" selected disabled>Selecionar</option>
                                                         <?php foreach ($cargo as $row) {
+                                                            // esconde a opção "Administrador" se o usuário logado não for adm (copiado de Funcionário)
+                                                            if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
+                                                                continue;
+                                                            }
+                                                            
                                                             echo "<option value=\"{$row[0]}\">" . htmlspecialchars($row[1]) . "</option>";
                                                         } ?>
                                                     </select>

@@ -23,23 +23,11 @@ if (!$id_pessoa || $id_pessoa < 1) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($id_pessoa, 91, 1);
 
-try {
-	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
-	$sql = '
-		SELECT p.nome, p.id_pessoa as id_pessoa, c.cargo as nome_cargo 
-		FROM pessoa p 
-		JOIN funcionario f ON f.id_pessoa = p.id_pessoa 
-		JOIN cargo c ON f.id_cargo = c.id_cargo
-		UNION
-		SELECT p.nome, p.id_pessoa as id_pessoa, c.cargo as nome_cargo 
-		FROM pessoa p 
-		JOIN voluntario v ON v.id_pessoa = p.id_pessoa 
-		JOIN cargo c ON v.id_cargo = c.id_cargo
-	';
-	$pdo = Conexao::connect();
 
-	$query = $pdo->query($sql);
-	$pessoas = $query->fetchAll(PDO::FETCH_ASSOC);
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'PessoaDAO.php';
+try {
+	$pessoaDAO = new PessoaDAO();
+	$pessoas = $pessoaDAO->buscarPessoasComCargo();
 } catch (Exception $e) {
 	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 	Util::tratarException($e);
