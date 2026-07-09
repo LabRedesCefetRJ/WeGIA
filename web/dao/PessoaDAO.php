@@ -71,38 +71,38 @@ class PessoaDAO
     }
 
 
-public function inserirPessoa($cpf, $nome, $sobrenome, $email = null, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null, $sexo = null, $dataNascimento = null) 
-{
-    Util::validarNomePessoaOuLancar($nome, 'nome', 400);
-    Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
+    public function inserirPessoa($cpf, $nome, $sobrenome, $email = null, $telefone = null, $cep = null, $rua = null, $bairro = null, $cidade = null, $uf = null, $numero = null, $complemento = null, $ibge = null, $sexo = null, $dataNascimento = null)
+    {
+        Util::validarNomePessoaOuLancar($nome, 'nome', 400);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
 
-    $sql = "INSERT INTO pessoa (cpf, nome, sobrenome, email, telefone, cep, logradouro, bairro, cidade, estado, numero_endereco, complemento, ibge, sexo, data_nascimento) 
+        $sql = "INSERT INTO pessoa (cpf, nome, sobrenome, email, telefone, cep, logradouro, bairro, cidade, estado, numero_endereco, complemento, ibge, sexo, data_nascimento) 
             VALUES (:cpf, :nome, :sobrenome, :email, :telefone, :cep, :rua, :bairro, :cidade, :uf, :numero, :complemento, :ibge, :sexo, :dataNascimento)";
-    
-    $stmt = $this->pdo->prepare($sql);
-    
-    $stmt->bindValue(':cpf', $cpf);
-    $stmt->bindValue(':nome', $nome);
-    $stmt->bindValue(':sobrenome', $sobrenome);
-    $stmt->bindValue(':email', $email);
-    $stmt->bindValue(':telefone', $telefone);
-    $stmt->bindValue(':cep', $cep);
-    $stmt->bindValue(':rua', $rua);
-    $stmt->bindValue(':bairro', $bairro); 
-    $stmt->bindValue(':cidade', $cidade);
-    $stmt->bindValue(':uf', $uf);
-    $stmt->bindValue(':numero', $numero);
-    $stmt->bindValue(':complemento', $complemento);
-    $stmt->bindValue(':ibge', $ibge);
-    $stmt->bindValue(':sexo', $sexo);
-    $stmt->bindValue(':dataNascimento', $dataNascimento);
 
-    if ($stmt->execute()) {
-        return $this->pdo->lastInsertId();
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->bindValue(':cpf', $cpf);
+        $stmt->bindValue(':nome', $nome);
+        $stmt->bindValue(':sobrenome', $sobrenome);
+        $stmt->bindValue(':email', $email);
+        $stmt->bindValue(':telefone', $telefone);
+        $stmt->bindValue(':cep', $cep);
+        $stmt->bindValue(':rua', $rua);
+        $stmt->bindValue(':bairro', $bairro);
+        $stmt->bindValue(':cidade', $cidade);
+        $stmt->bindValue(':uf', $uf);
+        $stmt->bindValue(':numero', $numero);
+        $stmt->bindValue(':complemento', $complemento);
+        $stmt->bindValue(':ibge', $ibge);
+        $stmt->bindValue(':sexo', $sexo);
+        $stmt->bindValue(':dataNascimento', $dataNascimento);
+
+        if ($stmt->execute()) {
+            return $this->pdo->lastInsertId();
+        }
+
+        throw new Exception("Erro ao inserir pessoa.");
     }
-    
-    throw new Exception("Erro ao inserir pessoa.");
-}
 
     public function buscarPessoaPorId(int $id_pessoa): ?array
     {
@@ -110,7 +110,7 @@ public function inserirPessoa($cpf, $nome, $sobrenome, $email = null, $telefone 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':id_pessoa', $id_pessoa, PDO::PARAM_INT);
         $stmt->execute();
-        
+
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result ? $result : null;
     }
@@ -127,20 +127,40 @@ public function inserirPessoa($cpf, $nome, $sobrenome, $email = null, $telefone 
 
         $setParts = [];
         $params = [];
-        
+
         foreach ($dados as $key => $value) {
             $setParts[] = "$key = :$key";
             $params[":$key"] = $value;
         }
-        
+
         if (empty($setParts)) {
             return false;
         }
-        
+
         $params[':id_pessoa'] = $id_pessoa;
         $sql = "UPDATE pessoa SET " . implode(', ', $setParts) . " WHERE id_pessoa = :id_pessoa";
-        
+
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute($params);
     }
+
+    public function buscarPessoasComCargo(): array
+    {
+        $sql = '
+            SELECT p.nome, p.id_pessoa as id_pessoa, c.cargo as nome_cargo 
+            FROM pessoa p 
+            JOIN funcionario f ON f.id_pessoa = p.id_pessoa 
+            JOIN cargo c ON f.id_cargo = c.id_cargo
+            UNION
+            SELECT p.nome, p.id_pessoa as id_pessoa, c.cargo as nome_cargo 
+            FROM pessoa p 
+            JOIN voluntario v ON v.id_pessoa = p.id_pessoa 
+            JOIN cargo c ON v.id_cargo = c.id_cargo
+        ';
+
+        $query = $this->pdo->query($sql);
+        $pessoas = $query->fetchAll(PDO::FETCH_ASSOC);
+        return $pessoas;
+    }
+
 }
