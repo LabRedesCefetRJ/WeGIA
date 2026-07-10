@@ -23,10 +23,15 @@ class IsaidaDAO
                     i.qtd,
                     i.valor_unitario,
                     u.descricao_unidade
-                FROM isaida i 
-                RIGHT JOIN produto p ON p.id_produto = i.id_produto 
+                FROM isaida i
+                INNER JOIN saida s ON s.id_saida = i.id_saida
+                INNER JOIN produto p ON p.id_produto = i.id_produto 
                 INNER JOIN unidade u ON u.id_unidade = p.id_unidade
-                WHERE i.id_saida = :id_saida AND i.oculto = false
+                WHERE i.id_saida = :id_saida
+                    AND (
+                        i.oculto = false
+                        OR s.ativo = 0
+                    )
             ";
 
             $stmt = $pdo->prepare($sql);

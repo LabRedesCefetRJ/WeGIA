@@ -126,6 +126,7 @@ try {
                 formInfoPessoal: function(dep) {
                     $("#nomeForm").val(dep.nome);
                     $("#sobrenomeForm").val(dep.sobrenome);
+                    $("#email").val(dep.email);
                     $("#telefone").val(dep.telefone);
                     $("#nascimento").val(dep.data_nascimento);
                     $("#pai").val(dep.nome_pai);
@@ -545,6 +546,12 @@ try {
                                                 </div>
                                             </div>
                                             <div class="form-group">
+                                                <label class="col-md-3 control-label" for="email">E-mail</label>
+                                                <div class="col-md-8">
+                                                    <input type="email" class="form-control" disabled name="email" id="email" placeholder="Ex: usuario@email.com">
+                                                </div> 
+                                            </div> 
+                                            <div class="form-group">
                                                 <label class="col-md-3 control-label" for="telefone">Telefone</label>
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeydown="mascara('(##)#####-####',this,event)" disabled>
@@ -758,7 +765,7 @@ try {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="complemento" id="complemento" id="profileCompany">
+                                                    <input type="text" class="form-control" name="complemento" id="complemento">
                                                 </div>
                                             </div>
                                             <div class="form-group">

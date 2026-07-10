@@ -265,8 +265,22 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
       });
     });
 
+    let _sinalVitalPendente = null;
+    let _linhaSinalVitalPendente = null;
+
     function removerSinVit(sinal, linha) {
-      if (!window.confirm("Deseja excluir esse registro da tabela?")) return false;
+      _sinalVitalPendente = sinal;
+      _linhaSinalVitalPendente = linha;
+      $('#modalConfirmarExcluirSinalVital').modal('show');
+    }
+
+    function confirmarExcluirSinalVital() {
+      const sinal = _sinalVitalPendente;
+      const linha = _linhaSinalVitalPendente;
+      _sinalVitalPendente = null;
+      _linhaSinalVitalPendente = null;
+      $('#modalConfirmarExcluirSinalVital').modal('hide');
+
       $.ajax({
         url: "sinais_vitais_excluir.php",
         type: "POST",
@@ -369,6 +383,44 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
       }
     }
 
+    let _sinaisVitaisTimeoutId = null;
+
+    function mostrarMensagemSinaisVitais(mensagem, tipo = "danger") {
+      const wrapper = document.getElementById("msg-sinais-vitais-wrapper");
+      const alerta = document.getElementById("msg-sinais-vitais");
+      const texto = document.getElementById("msg-sinais-vitais-texto");
+      if (!wrapper || !alerta || !texto) return;
+
+      // Limpa timeout anterior se existir
+      if (_sinaisVitaisTimeoutId) {
+        clearTimeout(_sinaisVitaisTimeoutId);
+      }
+
+      alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
+      alerta.classList.add("alert-" + tipo);
+      texto.textContent = mensagem;
+      wrapper.style.display = "block";
+      alerta.classList.remove("is-visible");
+      void alerta.offsetWidth;
+      alerta.classList.add("is-visible");
+      wrapper.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Oculta a mensagem após 10 segundos
+      _sinaisVitaisTimeoutId = setTimeout(() => {
+        ocultarMensagemSinaisVitais();
+      }, 10000);
+    }
+
+    function ocultarMensagemSinaisVitais() {
+      const wrapper = document.getElementById("msg-sinais-vitais-wrapper");
+      const alerta = document.getElementById("msg-sinais-vitais");
+      if (!alerta) return;
+      alerta.classList.remove("is-visible");
+      setTimeout(() => {
+        if (wrapper) wrapper.style.display = "none";
+      }, 350);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       const form = document.querySelector("form");
       const dataInput = document.getElementById("data_afericao");
@@ -400,7 +452,7 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
         if (!dataValue) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          alert("Por favor, preencha a data da aferição.");
+          mostrarMensagemSinaisVitais("Por favor, preencha a data da aferição.");
           return;
         }
 
@@ -414,7 +466,7 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
         if (!temAlgumSinal) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          alert("Informe ao menos um sinal vital ou observação.");
+          mostrarMensagemSinaisVitais("Informe ao menos um sinal vital ou observação.");
           return;
         }
 
@@ -424,7 +476,7 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
         if (dataDigitada < dataNascimento) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          alert("Data inválida: não pode ser anterior à data de nascimento (" + formatador.format(dataNascimento) + "). Data informada: " + dataInformada + ".");
+          mostrarMensagemSinaisVitais("Data inválida: não pode ser anterior à data de nascimento (" + formatador.format(dataNascimento) + "). Data informada: " + dataInformada + ".");
           return;
         }
 
@@ -432,7 +484,7 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
         if (dataDigitada > dataAgora) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          alert("A data da aferição não pode ser no futuro. Ajuste para a data atual: " + formatadorDataHora.format(dataAgora) + ".");
+          mostrarMensagemSinaisVitais("A data da aferição não pode ser no futuro. Ajuste para a data atual: " + formatadorDataHora.format(dataAgora) + ".");
         }
       });
     });
@@ -444,6 +496,19 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
 
     #btn-cadastrar-emergencia {
       margin-top: 10px;
+    }
+
+    #msg-sinais-vitais {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+
+    #msg-sinais-vitais.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
     }
 
     .custom-input {
@@ -471,6 +536,48 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
       display: flex;
       flex-direction: row;
       justify-content: flex-end;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-title {
+      font-weight: 500;
+      color: #fff;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header {
+      background-color: #337ab7;
+      border-bottom-color: #2e6da4;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header .close,
+    #modalConfirmarExcluirSinalVital .modal-header .close span {
+      color: #fff;
+      opacity: 1;
+      text-shadow: none;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header .close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      margin-top: -6px;
+      border-radius: 999px;
+      background-color: transparent;
+      filter: brightness(1);
+      transition: background-color 0.18s ease, filter 0.18s ease;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header .close:hover,
+    #modalConfirmarExcluirSinalVital .modal-header .close:focus {
+      background-color: rgba(255, 255, 255, 0.1);
+      filter: brightness(1.08);
+      outline: none;
+    }
+
+    #modalConfirmarExcluirSinalVital .modal-header .close:hover span,
+    #modalConfirmarExcluirSinalVital .modal-header .close:focus span {
+      filter: brightness(1.08);
     }
   </style>
 
@@ -531,6 +638,15 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
                     </header>
 
                     <form action="../../controle/control.php" method="post" enctype='multipart/form-data'>
+                      <div class="form-group" id="msg-sinais-vitais-wrapper" style="display: none; width: 100%; margin-bottom: 15px; margin-top: 20px;">
+                        <div id="msg-sinais-vitais" class="alert alert-danger alert-dismissible" role="alert">
+                          <button type="button" class="close" aria-label="Fechar" onclick="ocultarMensagemSinaisVitais(); return false;">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                          <span id="msg-sinais-vitais-texto"></span>
+                        </div>
+                      </div>
+
                       <div class="form-group">
                         <div class="col-md-6">
                           <h5 class="obrig">Campos Obrigatórios(*)</h5>
@@ -681,6 +797,26 @@ $data_nasc_atendido = $stmtAtendido->fetchColumn() ?: '1900-01-01';
     <!-- importante para a aba de exames -->
     <script src="../geral/post.js"></script>
     <script src="../geral/formulario.js"></script>
+
+    <div class="modal fade" id="modalConfirmarExcluirSinalVital" tabindex="-1" role="dialog" aria-labelledby="modalExcluirSinalVitalLabel" aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="modalExcluirSinalVitalLabel">Excluir sinal vital</h4>
+          </div>
+          <div class="modal-body">
+            <p>Deseja excluir esse registro da tabela?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" onclick="confirmarExcluirSinalVital()">Excluir</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div align="right">
       <iframe src="https://www.wegia.org/software/footer/saude.html" width="200" height="60" style="border:none;"></iframe>

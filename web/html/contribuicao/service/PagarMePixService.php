@@ -1,6 +1,6 @@
 <?php
 require_once 'ApiPixServiceInterface.php';
-require_once '../helper/Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 class PagarMePixService implements ApiPixServiceInterface
 {
     /**Recebe um objeto do tipo ContribuicaoLog e realiza os procedimentos necessários para registrar um pedido do tipo Pix na API da plataforma de pagamente PagarMe */
@@ -40,7 +40,7 @@ class PagarMePixService implements ApiPixServiceInterface
                     ]
                 ],
                 'customer' => [
-                    'name' => $contribuicaoLog->getSocio()->getNome(),
+                    'name' => $contribuicaoLog->getSocio()->getFullName(),
                     'email' => $contribuicaoLog->getSocio()->getEmail(),
                     'type' => 'individual',
                     'document' => $cpfSemMascara,

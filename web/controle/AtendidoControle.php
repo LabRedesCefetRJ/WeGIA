@@ -11,6 +11,7 @@ require_once ROOT . '/dao/DocumentoDAO.php';
 require_once ROOT . '/controle/DocumentoControle.php';
 include_once ROOT . '/classes/Cache.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/html/geral/msg.php';
 include_once ROOT . "/dao/Conexao.php";
 
 require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
@@ -18,6 +19,7 @@ require_once ROOT . '/dao/PaArquivoDAO.php';
 require_once ROOT . '/dao/AtendidoDocumentacaoMySql.php';
 require_once ROOT . '/classes/AtendidoDocumentacao.php';
 
+require_once ROOT . '/classes/Csrf.php';
 
 class AtendidoControle
 {
@@ -36,8 +38,10 @@ class AtendidoControle
      */
     public function verificar()
     {
-        extract($_REQUEST);
-        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf = '0')) {
+        // Extrair GET e POST explicitamente para garantir que todas as variáveis sejam capturadas
+        extract($_GET);
+        extract($_POST);
+        if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf == '0')) {
             $msg .= "cpf do atendido não informado. Por favor, informe o cpf!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -48,12 +52,16 @@ class AtendidoControle
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = "";
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
         if ((!isset($sexo)) || (empty($sexo))) {
             $msg .= "Sexo do atendido não informado. Por favor, informe o sexo!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
         }
-        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf = '0')) {
+        if ((!isset($nascimento) || empty($nascimento)) && (!isset($semCpf) || $semCpf == '0')) {
             $msg .= "Nascimento do atendido não informado. Por favor, informe a data!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
             exit();
@@ -106,8 +114,14 @@ class AtendidoControle
         if ((!isset($ibge)) || (empty($ibge))) {
             $ibge = '';
         }
+        if ((!isset($email)) || (empty($email))) {
+            $email = "";
+        }
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
+        }
+        if ((!isset($cns)) || (empty($cns))) {
+            $cns = null;
         }
 
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
@@ -118,24 +132,30 @@ class AtendidoControle
         }
 
         $senha = 'null';
-        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
+        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
         $atendido->setIntTipo($intTipo);
         $atendido->setIntStatus($intStatus);
+        $atendido->setCns($cns);
         return $atendido;
     }
 
     public function verificarExistente()
     {
-        extract($_REQUEST);
+        extract($_GET);
+        extract($_POST);
         if ((!isset($cpf)) || (empty($cpf))) {
             $cpf = "";
         }
         if ((!isset($nome)) || (empty($nome))) {
-            $nome = '';
+            $nome = 'Pessoa existente';
         }
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = '';
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
         if ((!isset($sexo)) || (empty($sexo))) {
             $sexo = '';
         }
@@ -190,8 +210,14 @@ class AtendidoControle
         if ((!isset($ibge)) || (empty($ibge))) {
             $ibge = '';
         }
+        if ((!isset($email)) || (empty($email))) {
+            $email = '';
+        }
         if ((!isset($telefone)) || (empty($telefone))) {
-            $telefone = 'null';
+            $telefone = '';
+        }
+        if ((!isset($cns)) || (empty($cns))) {
+            $cns = null;
         }
 
         if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
@@ -202,9 +228,10 @@ class AtendidoControle
         }
 
         $senha = 'null';
-        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
+        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
         $atendido->setIntTipo($intTipo);
         $atendido->setIntStatus($intStatus);
+        $atendido->setCns($cns);
         return $atendido;
     }
 
@@ -268,9 +295,10 @@ class AtendidoControle
                 $AtendidoDAO = new AtendidoDAO();
                 $infAtendido = $AtendidoDAO->listar($id);
 
-                $_SESSION['atendido'] = $infAtendido;
                 $cache->save($id, $infAtendido, '15 seconds');
             }
+
+            $_SESSION['atendido'] = $infAtendido;
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
         } catch (Exception $e) {
             Util::tratarException($e);
@@ -366,6 +394,14 @@ class AtendidoControle
                 }
             }
 
+            // Valida CNS se fornecido
+            $cns = $atendido->getCns();
+            if (!empty($cns)) {
+                if (!$validador->validaCNS($cns)) {
+                    throw new InvalidArgumentException('Erro, o CNS informado não é válido. Deve conter 15 dígitos.', 400);
+                }
+            }
+
             $intDAO     = new AtendidoDAO();
             $idAtendido = $intDAO->incluir($atendido, $cpf);
 
@@ -374,8 +410,19 @@ class AtendidoControle
 
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . (int)$idAtendido);
             exit;
+        } catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($e->getMessage());
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=" . urlencode($cpf ?? ''));
+            exit;
         } catch (PDOException $e) {
-            Util::tratarException($e);
+            $message = $e->getCode() == 23000 ? 'Erro: CPF já cadastrado no sistema.' : 'Erro ao cadastrar atendido.';
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($message);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=" . urlencode($cpf ?? ''));
+            exit;
         }
     }
 
@@ -404,101 +451,111 @@ class AtendidoControle
     }
 
 
-  public function incluirExistenteDoProcesso()
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
-
-    $idProcesso = (int)($_GET['id_processo'] ?? 0);
-    $tipo   = (int)($_GET['intTipo'] ?? 1);
-    $status = (int)($_GET['intStatus'] ?? 1);
-
-    if ($idProcesso <= 0) {
-        $_SESSION['mensagem_erro'] = 'Processo inválido.';
-        header("Location: ../html/atendido/processo_aceitacao.php");
-        exit;
-    }
-
-    $pdo = Conexao::connect();
-
-    try {
-        $pdo->beginTransaction();
-
-        $processoDao = new ProcessoAceitacaoDAO($pdo);
-
-        if (!$processoDao->buscarPorIdConcluido($idProcesso)) {
-            throw new RuntimeException('Não é possível criar atendido: processo ainda não está CONCLUÍDO.');
+    public function incluirExistenteDoProcesso()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
 
-        $idPessoa = $processoDao->getIdPessoaByProcesso($idProcesso);
+        $idProcesso = (int)($_GET['id_processo'] ?? 0);
+        $tipo   = (int)($_GET['intTipo'] ?? 1);
+        $status = (int)($_GET['intStatus'] ?? 1);
 
-        $atendidoDao = new AtendidoDAO($pdo);
-        $idAtendido = $atendidoDao->criarPorPessoa($idPessoa, $tipo, $status);
+        if ($idProcesso <= 0) {
+            $_SESSION['mensagem_erro'] = 'Processo inválido.';
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
+        }
 
-        $paDao = new PaArquivoDAO($pdo);
-        
-        $arquivosProcesso = $paDao->listarComTipoPorProcesso($idProcesso);
+        $pdo = Conexao::connect();
 
-        $atDocDao = new AtendidoDocumentacaoMySql($pdo);
+        try {
+            $pdo->beginTransaction();
 
-        foreach ($arquivosProcesso as $arquivo) {
-            $idPessoaArquivo = (int)$arquivo['id_pessoa_arquivo'];
-            $idTipoDoc = (int)($arquivo['id_tipo_documentacao'] ?? null);
+            $processoDao = new ProcessoAceitacaoDAO($pdo);
 
-            if ($idTipoDoc <= 0) {
-                $idTipoDoc = 1; 
+            $processo = $processoDao->buscarPorIdConcluido($idProcesso);
+            if (!$processo) {
+                throw new RuntimeException('Não é possível criar atendido: processo ainda não está CONCLUÍDO.');
             }
 
-            $dto = new AtendidoDocumentacaoDTO([
-                'id_atendido' => $idAtendido,
-                'id_tipo_documentacao' => $idTipoDoc, 
-                'id_pessoa_arquivo' => $idPessoaArquivo
-            ]);
+            $idPessoa = $processo['id_pessoa'];
 
-            $obj = new AtendidoDocumentacao($dto, $atDocDao);
-            if ($obj->create() === false) {
-                throw new RuntimeException('Falha ao vincular documentação ao atendido.');
+            $atendidoDao = new AtendidoDAO($pdo);
+            $idAtendido = $atendidoDao->criarPorPessoa($idPessoa, $tipo, $status);
+
+            $paDao = new PaArquivoDAO($pdo);
+
+            $arquivosProcesso = $paDao->listarComTipoPorProcesso($idProcesso);
+
+            $atDocDao = new AtendidoDocumentacaoMySql($pdo);
+
+            foreach ($arquivosProcesso as $arquivo) {
+                $idPessoaArquivo = (int)$arquivo['id_pessoa_arquivo'];
+                $idTipoDoc = (int)($arquivo['id_tipo_documentacao'] ?? null);
+
+                if ($idTipoDoc <= 0) {
+                    $idTipoDoc = 1;
+                }
+
+                $dto = new AtendidoDocumentacaoDTO([
+                    'id_atendido' => $idAtendido,
+                    'id_tipo_documentacao' => $idTipoDoc,
+                    'id_pessoa_arquivo' => $idPessoaArquivo
+                ]);
+
+                $obj = new AtendidoDocumentacao($dto, $atDocDao);
+                if ($obj->create() === false) {
+                    throw new RuntimeException('Falha ao vincular documentação ao atendido.');
+                }
             }
+
+            $pdo->commit();
+
+            $_SESSION['msg'] = 'Atendido criado e documentos reaproveitados com sucesso.';
+            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido);
+            exit;
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            if ($e->getCode() == 23000 && strpos($e->getMessage(), 'Duplicate entry') !== false) {
+                $_SESSION['mensagem_erro'] = 'Já existe um atendido cadastrado para esta pessoa. Não é possível criar um segundo atendido com o mesmo CPF.';
+            } else {
+                $_SESSION['mensagem_erro'] = 'Erro ao processar: ' . $e->getMessage();
+            }
+
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $_SESSION['mensagem_erro'] = $e->getMessage();
+            header("Location: ../html/atendido/processo_aceitacao.php");
+            exit;
         }
-
-        $pdo->commit();
-
-        $_SESSION['msg'] = 'Atendido criado e documentos reaproveitados com sucesso.';
-        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idAtendido);
-        exit;
-
-    } catch (PDOException $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-
-        if ($e->getCode() == 23000 && strpos($e->getMessage(), 'Duplicate entry') !== false) {
-            $_SESSION['mensagem_erro'] = 'Já existe um atendido cadastrado para esta pessoa. Não é possível criar um segundo atendido com o mesmo CPF.';
-        } else {
-            $_SESSION['mensagem_erro'] = 'Erro ao processar: ' . $e->getMessage();
-        }
-        
-        header("Location: ../html/atendido/processo_aceitacao.php");
-        exit;
-
-    } catch (Exception $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        $_SESSION['mensagem_erro'] = $e->getMessage();
-        header("Location: ../html/atendido/processo_aceitacao.php");
-        exit;
     }
-}
 
     public function incluirExistente()
     {
-        $atendido = $this->verificarExistente();
         $idPessoa = (int)($_GET['id_pessoa'] ?? 0);
-        $sobrenome = $_GET['sobrenome'] ?? '';
-
+        $cpf = $_GET['cpf'] ?? '';
         try {
+            $atendido = $this->verificarExistente();
+            $sobrenome = $_GET['sobrenome'] ?? '';
+
+            $validador = new Util();
+
+            // Valida CNS se fornecido
+            $cns = $atendido->getCns();
+            if (!empty($cns)) {
+                if (!$validador->validaCNS($cns)) {
+                    throw new InvalidArgumentException('Erro, o CNS informado não é válido. Deve conter 15 dígitos.', 400);
+                }
+            }
+
             $atendidoDAO = new AtendidoDAO();
             $atendidoDAO->incluirExistente($atendido, $idPessoa, $sobrenome);
 
@@ -512,8 +569,18 @@ class AtendidoControle
             $_SESSION['mensagem_erro'] = $e->getMessage();
             header("Location: ../html/atendido/processo_aceitacao.php");
             exit;
+        } catch (InvalidArgumentException $e) {
+            setSessionFormData($_GET);
+            setSessionFormErrorFromMessage($e->getMessage());
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=" . urlencode($cpf) . "&id_pessoa=" . urlencode((string)$idPessoa));
+            exit;
         } catch (PDOException $e) {
-            Util::tratarException($e);
+            $message = $e->getCode() == 23000 ? 'Erro: CPF já cadastrado no sistema.' : 'Erro ao cadastrar atendido.';
+            setSessionFormData($_GET);
+            setSessionFormErrorFromMessage($message);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=" . urlencode($cpf) . "&id_pessoa=" . urlencode((string)$idPessoa));
             exit;
         } catch (Exception $e) {
             Util::tratarException($e);
@@ -526,6 +593,10 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
+
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             $atendido = $this->verificar();
             $atendido->setidatendido($idatendido);
             $AtendidoDAO = new AtendidoDAO();
@@ -541,6 +612,9 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             $AtendidoDAO = new AtendidoDAO();
 
             $AtendidoDAO->excluir($idatendido);
@@ -563,8 +637,13 @@ class AtendidoControle
         }
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
+            $atendidoDAO = new AtendidoDAO();
             $pdo = Conexao::connect();
 
+            // Validação de data de nascimento vs expedição
             if (!empty($data_nascimento)) {
                 $sql_expedicao = "SELECT p.data_expedicao FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
                 $stmt_expedicao = $pdo->prepare($sql_expedicao);
@@ -573,26 +652,16 @@ class AtendidoControle
                 $atendido_doc = $stmt_expedicao->fetch(PDO::FETCH_ASSOC);
 
                 if ($atendido_doc && !empty($atendido_doc['data_expedicao'])) {
-                    try {
-                        $data_nascimento_obj = new DateTime($data_nascimento);
-                        $data_expedicao_obj = new DateTime($atendido_doc['data_expedicao']);
+                    $data_nascimento_obj = new DateTime($data_nascimento);
+                    $data_expedicao_obj = new DateTime($atendido_doc['data_expedicao']);
 
-                        if ($data_nascimento_obj > $data_expedicao_obj) {
-                            $_SESSION['msg'] = "Erro: Data de nascimento posterior à expedição do documento!";
-                            $_SESSION['tipo'] = "error";
-                            header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-                            exit;
-                        }
-                    } catch (Exception $e) {
-                        error_log("Erro DateTime validação: " . $e->getMessage());
-                        $_SESSION['msg'] = "Formato de data inválido!";
-                        $_SESSION['tipo'] = "error";
-                        header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
-                        exit;
+                    if ($data_nascimento_obj > $data_expedicao_obj) {
+                        throw new InvalidArgumentException("Erro: Data de nascimento posterior à expedição do documento!");
                     }
                 }
             }
 
+            // Validação de CPF
             $cpf = trim($_POST['cpf'] ?? '');
             if (!empty($cpf)) {
                 $sql_cpf_atual = "SELECT p.cpf FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
@@ -601,11 +670,8 @@ class AtendidoControle
                 $stmt_cpf->execute();
                 $cpfAtual = $stmt_cpf->fetchColumn();
 
-                if ($cpfAtual !== null && $cpfAtual !== '') {
-                    $_POST['cpf'] = '';
-                } else {
-                    $validador = new Util();
-                    if (!$validador->validarCPF($cpf)) {
+                if ($cpfAtual === null || $cpfAtual === '') {
+                    if (!Util::validarCPF($cpf)) {
                         throw new InvalidArgumentException("CPF inválido!");
                     }
 
@@ -614,54 +680,67 @@ class AtendidoControle
                     if ($stmt_unico->fetchColumn() > 0) {
                         throw new InvalidArgumentException("CPF já cadastrado em outro atendido!");
                     }
+                } else {
+                    $cpf = $cpfAtual; // Mantém o atual se já existir
                 }
             }
 
-            $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'telefone', 'nome_mae', 'nome_pai', 'tipo_sanguineo'];
+            $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'email', 'telefone', 'nome_mae', 'nome_pai', 'tipo_sanguineo'];
             $setClause = [];
             $params = [':idatendido' => $idatendido];
 
             foreach ($campos as $campo) {
                 if (isset($_POST[$campo]) && $_POST[$campo] !== '') {
+                    if (in_array($campo, ['nome', 'sobrenome', 'nome_mae', 'nome_pai'], true)) {
+                        $nomeCampo = $campo === 'sobrenome' ? 'sobrenome' : str_replace('_', ' ', $campo);
+                        Util::validarNomePessoaOuLancar($_POST[$campo], $nomeCampo, 400);
+                    }
                     $setClause[] = "p.`$campo` = :" . $campo;
                     $params[":$campo"] = $_POST[$campo];
                 }
+            } 
+            // Validação de CNS
+            $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
+            if ($cns !== '' && !Util::validaCNS($cns)) {
+                throw new InvalidArgumentException("Erro, o CNS informado não é válido. Deve conter 15 dígitos.");
             }
 
-            if (empty($setClause)) {
-                throw new InvalidArgumentException("Nenhum dado para atualizar!");
-            }       
+            // Popula objeto Atendido 
+            $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $data_nascimento, '', '', '', $nome_mae, $nome_pai, $tipo_sanguineo, '', $email, $telefone, '', '', '', '', '', '', '', '', '');
+            $atendido->setIdatendido($idatendido);
+            $atendido->setCns($cns !== '' ? $cns : null);
 
-            $sql_update = "
-            UPDATE pessoa p 
-            JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa 
-            SET " . implode(', ', $setClause) . " 
-            WHERE a.idatendido = :idatendido
-        ";
-
-            $stmt = $pdo->prepare($sql_update);
-            $stmt->execute($params);
+            // Chama DAO para atualizar
+            $atendidoDAO->alterarInfPessoal($atendido);
 
             $_SESSION['msg'] = "Informações pessoais atualizadas com sucesso!";
             $_SESSION['tipo'] = "success";
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
-
         } catch (InvalidArgumentException $e) {
-            $_SESSION['msg'] = $e->getMessage();
-            $_SESSION['tipo'] = "error";
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'CPF') !== false) {
+                $fieldErrors['cpf'] = $message;
+            } elseif (stripos($message, 'data de nascimento') !== false || stripos($message, 'Formato de data') !== false) {
+                $fieldErrors['data_nascimento'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($message, 'err');
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
-
         } catch (PDOException $e) {
             error_log("Erro DAO alterarInfPessoal: " . $e->getMessage());
-            $_SESSION['msg'] = "Erro no banco de dados: " . $e->getMessage();
+            $_SESSION['msg'] = "Erro no banco de dados!";
             $_SESSION['tipo'] = "error";
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
         } catch (Exception $e) {
             error_log("Erro alterarInfPessoal: " . $e->getMessage());
-            $_SESSION['msg'] = "Erro ao atualizar informações pessoais!"; // Mensagem de erro padrão
+            $_SESSION['msg'] = $e->getMessage();
             $_SESSION['tipo'] = "error";
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . $idatendido);
             exit;
@@ -669,12 +748,13 @@ class AtendidoControle
     }
 
 
-
-
     public function alterarDocumentacao()
     {
         extract($_REQUEST);
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             if ($dataExpedicao && $idatendido) {
                 $pdo = Conexao::connect();
                 $sql_nascimento = "SELECT p.data_nascimento FROM atendido a JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE a.idatendido = :idatendido";
@@ -692,7 +772,7 @@ class AtendidoControle
             }
 
             $pdo = Conexao::connect();
-            $sql_atual = "SELECT cpf, sexo, registro_geral, orgao_emissor, data_expedicao, telefone 
+            $sql_atual = "SELECT cpf, sexo, email, registro_geral, orgao_emissor, data_expedicao, telefone 
                       FROM pessoa p 
                       JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa 
                       WHERE a.idatendido = :idatendido";
@@ -704,9 +784,10 @@ class AtendidoControle
             $cpf_final = !empty($cpf) ? $cpf : $dados_atuais['cpf'];
             $sexo_final = $dados_atuais['sexo'];
             $telefone = $dados_atuais['telefone'] ?? '';
+            $email = $dados_atuais['email'] ?? '';
 
             $atendido = new Atendido(
-                $cpf_final,
+                $cpf_final, 
                 '',
                 '',
                 $sexo_final,
@@ -718,6 +799,7 @@ class AtendidoControle
                 '',
                 '',
                 'null',
+                $email,
                 $telefone,
                 '',
                 '',
@@ -748,6 +830,9 @@ class AtendidoControle
     {
         extract($_REQUEST);
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             if (!$idatendido || $idatendido < 1)
                 throw new InvalidArgumentException('O id do atendido informado não é válido.', 412);
 
@@ -775,6 +860,9 @@ class AtendidoControle
             $numero_residencia = "null";
         }
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             if (!$idatendido || $idatendido < 1)
                 throw new InvalidArgumentException('O id do atendido informado não é válido.', 412);
 
@@ -784,7 +872,7 @@ class AtendidoControle
             if (strlen(trim((string)$cep)) !== 0 && (empty($estado) || empty($cidade) || empty($bairro) || empty($rua) || empty($ibge)))
                 throw new InvalidArgumentException('CEP inválido.', 412);
 
-            $atendido = new Atendido('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $estado, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+            $atendido = new Atendido('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $estado, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
             $atendido->setIdatendido($idatendido);
             $atendidoDAO = new AtendidoDAO();
 
@@ -807,6 +895,9 @@ class AtendidoControle
         $operacao = filter_input(INPUT_POST, 'operacao', FILTER_SANITIZE_SPECIAL_CHARS);
 
         try {
+            if (!Csrf::validateToken($_POST['csrf_token'])) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
             if (!$id || $id < 1)
                 throw new InvalidArgumentException('O id informado não é válido.', 412);
 

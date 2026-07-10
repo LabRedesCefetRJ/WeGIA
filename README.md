@@ -4,22 +4,34 @@ WeGIA: Web Gerenciador para Instituições Assistenciais
 O WeGIA é um software livre desenvolvido pela Extensão Universitária do Cefet/RJ para melhorar a gestão, o controle e a transparência de instituições do terceiro setor no Brasil.
 
 A versão atual do sistema conta com os módulos: 
-1) Pessoas, para cadastro de funcionários e atendidos; 
+1) Pessoas, para cadastro de funcionários, voluntários e atendidos; 
 2) Material e Patrimônio, para controle de almoxarifado e doações; 
 3) Memorando, para troca de mensagens institucionais entre os diversos setores, diminuindo o fluxo de papel; 
-4) Contribuição, para captação de recursos através de doações via cartão de crédito ou boleto bancário;
+4) Sócios & Contribuição, para captação de recursos através de doações via cartão de crédito, pix ou boleto bancário;
 5) Saúde, para gerenciamento do prontuário médico e controle de medicação dos atendidos e também funcionários;
 6) Pet, para cadastro de animais atendidos.
+7) Agenda, para a organização de equipes em escalas e definição de lembretes.
+8) Projetos, para o gerenciamento de projetos institucionais.
 
 Contato: [Prof. Nilson  Lazarin](https://bsi.cefet-rj.br/~lazarin/)
 <hr>
+
+## Saiba mais
+
+- [Vídeos no Youtube](https://www.youtube.com/watch?v=M_DEXS-fZ3w&list=PLvRT7K1j00AM7kUT9Lha5r-reSMvgbpt1)
+
+## Como testar?
+
+- Teste o WeGIA em [demo.wegia.org](https://demo.wegia.org/) (exclusivo para instituições ou usuários interessados no software).
+  
+Para testes de desenvolvimento ou de segurança use [dev.wegia.org](http://dev.wegia.org/) ou [sec.wegia.org](http://sec.wegia.org/)
 
 ## Como instalar?
 Em um terminal execute os comandos abaixo:
 ```
 apt update
-apt install wget dialog -y
-wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/instalador/install.sh
+apt install wget -y
+wget https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/web/instalador/install.sh
 chmod +x install.sh
 ./install.sh
 ```

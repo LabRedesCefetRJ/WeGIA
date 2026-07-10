@@ -25,7 +25,7 @@ class Atendido extends Pessoa
     {
         return $this->intTipo;
     }
-   
+
     public function setIdatendido(int $idatendido)
     {
         if(!$idatendido || $idatendido < 1)

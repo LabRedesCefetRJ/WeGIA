@@ -10,7 +10,19 @@ class Saude extends Atendido
     private $texto;
     private $enfermidade;
     private $data_diagnostico;
+    private $id_pessoa;
     
+    
+    public function SetIdPessoa($id_pessoa)
+    {
+        $this->id_pessoa = $id_pessoa;
+    }
+
+    public function getIdPessoa()
+    {
+        return $this->id_pessoa;
+    }
+
     public function getTexto()
     {
         return $this->texto;

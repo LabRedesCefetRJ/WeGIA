@@ -1,7 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE)
-    if (session_status() === PHP_SESSION_NONE)
-        session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
@@ -30,6 +30,21 @@ class FuncionarioControle
         $dataAmericana = $dataArray[2] . '-' . $dataArray[1] . '-' . $dataArray[0];
 
         return $dataAmericana;
+    }
+
+    private function validarDataAdmissao(string $dataNascimento, string $dataAdmissao): void
+    {
+        $nascimento = new DateTime($dataNascimento);
+        $admissao = new DateTime($dataAdmissao);
+
+        if ($admissao <= $nascimento) {
+            throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
+        }
+
+        $nascimentoMais14 = (clone $nascimento)->add(new DateInterval('P14Y'));
+        if ($admissao < $nascimentoMais14) {
+            throw new InvalidArgumentException('A data de admissão deve respeitar a idade mínima de 14 anos do funcionário.', 412);
+        }
     }
 
     /**
@@ -63,35 +78,111 @@ class FuncionarioControle
 
     /**
      * Recebe como parâmetros as horas de entrada e saida do expediente no formato HH:mm e retorna o total de tempo entre elas.
+     * Suporta turnos noturnos (quando a saída é menor que a entrada, considera próximo dia).
+     * 
+     * @param string $entrada Hora em formato HH:mm
+     * @param string $saida Hora em formato HH:mm
+     * @param bool $permitirTurnoNoturno Se true, permite turnos noturnos; se false, valida horário direto
+     * @return string Tempo em formato HH:mm ou mensagem de erro
      */
-    function calcularHora($entrada, $saida)
+    function calcularHora($entrada, $saida, $permitirTurnoNoturno = true)
     {
-        $hora1 = explode(":", $entrada);
-        $hora2 = explode(":", $saida);
-        if (sizeof($hora1) > 1 && sizeof($hora2) > 1) {
-            $horaTotal = ((intval($hora2[0]) * 60) + intval($hora2[1])) - ((intval($hora1[0]) * 60) + intval($hora1[1]));
-
-            $horaTotall = floor($horaTotal / 60);
-            $minutoTotal = $horaTotal % 60;
-
-            if (strlen($minutoTotal) == 1) {
-                $minutoTotal = "0" . $minutoTotal;
-            }
-
-            if (strlen($horaTotall) == 1) {
-                $horaTotal = "0" . $horaTotal;
-            }
-
-            $final = $horaTotall . ":" . $minutoTotal;
-            return $final;
+        // Se ambas as horas estão vazias, retorna vazio (intervalo opcional)
+        if (empty($entrada) && empty($saida)) {
+            return '00:00';
         }
 
-        return '';
+        // Se só uma está preenchida, é inválido
+        if ((empty($entrada) && !empty($saida)) || (!empty($entrada) && empty($saida))) {
+            throw new InvalidArgumentException('Entrada e saída devem ser preenchidas juntas.');
+        }
+
+        $hora1 = explode(":", $entrada);
+        $hora2 = explode(":", $saida);
+
+        if (sizeof($hora1) < 2 || sizeof($hora2) < 2) {
+            throw new InvalidArgumentException('Formato de hora inválido. Use HH:mm.');
+        }
+
+        $entrada_minutos = intval($hora1[0]) * 60 + intval($hora1[1]);
+        $saida_minutos = intval($hora2[0]) * 60 + intval($hora2[1]);
+
+        // Validar intervalo válido de minutos (0-1439)
+        if ($entrada_minutos < 0 || $entrada_minutos > 1439 || $saida_minutos < 0 || $saida_minutos > 1439) {
+            throw new InvalidArgumentException('Horas inválidas. Use valores entre 00:00 e 23:59.');
+        }
+
+        $horaTotal = $saida_minutos - $entrada_minutos;
+
+        // Se for negativo, é um turno noturno (passa de um dia para outro)
+        if ($horaTotal < 0) {
+            if (!$permitirTurnoNoturno) {
+                throw new InvalidArgumentException('Horário de saída não pode ser anterior ao de entrada.');
+            }
+            // Adiciona 24 horas para turnos noturnos
+            $horaTotal += 1440; // 24 * 60 minutos
+        }
+
+        // Validação extra: se a carga horária calculada é 0, é inválido
+        if ($horaTotal == 0) {
+            throw new InvalidArgumentException('Entrada e saída não podem ser iguais.');
+        }
+
+        $horaTotalHoras = floor($horaTotal / 60);
+        $minutoTotal = $horaTotal % 60;
+
+        if (strlen($minutoTotal) == 1) {
+            $minutoTotal = "0" . $minutoTotal;
+        }
+
+        if (strlen($horaTotalHoras) == 1) {
+            $horaTotalHoras = "0" . $horaTotalHoras;
+        }
+
+        return $horaTotalHoras . ":" . $minutoTotal;
     }
 
     public function verificarHorario()
     {
         extract($_REQUEST);
+
+        $horarioCampos = [
+            'escala',
+            'tipoCargaHoraria',
+            'entrada1',
+            'saida1',
+            'entrada2',
+            'saida2',
+            'folgaSeg',
+            'folgaTer',
+            'folgaQua',
+            'folgaQui',
+            'folgaSex',
+            'folgaSab',
+            'folgaDom',
+            'folgaAlternado',
+            'trabSeg',
+            'trabTer',
+            'trabQua',
+            'trabQui',
+            'trabSex',
+            'trabSab',
+            'trabDom',
+            'plantao'
+        ];
+
+        $temHorario = false;
+        foreach ($horarioCampos as $campo) {
+            if (array_key_exists($campo, $_REQUEST) && $_REQUEST[$campo] !== null && $_REQUEST[$campo] !== '') {
+                $temHorario = true;
+                break;
+            }
+        }
+
+        if (!$temHorario) {
+            return new QuadroHorario();
+        }
+
         if ((!isset($escala)) || (empty($escala))) {
             $escala = null;
         }
@@ -111,21 +202,54 @@ class FuncionarioControle
             $saida2 = '';
         }
 
-        $subtotal1 = $this->calcularHora($entrada1, $saida1);
-        $subtotal2 = $this->calcularHora($entrada2, $saida2);
-        $total = $this->somarHoras($subtotal1, $subtotal2);
+        $hasHorarioData = !empty($entrada1) || !empty($saida1) || !empty($entrada2) || !empty($saida2);
+        $hasDiaTrabalhado = isset($trabSeg) || isset($trabTer) || isset($trabQua) || isset($trabQui) || isset($trabSex) || isset($trabSab) || isset($trabDom);
+        $hasFolga = isset($folgaSeg) || isset($folgaTer) || isset($folgaQua) || isset($folgaQui) || isset($folgaSex) || isset($folgaSab) || isset($folgaDom) || isset($folgaAlternado);
+
+        // If only schedule type/escala were provided without actual period/day details, accept an empty schedule.
+        if (!$hasHorarioData && !$hasDiaTrabalhado && !$hasFolga && !isset($plantao)) {
+            $horario = new QuadroHorario();
+            $horario->setEscala($escala);
+            $horario->setTipo($tipoCargaHoraria);
+            $horario->setCarga_horaria(null);
+            $horario->setEntrada1('');
+            $horario->setSaida1('');
+            $horario->setEntrada2('');
+            $horario->setSaida2('');
+            $horario->setTotal('');
+            $horario->setDias_trabalhados(null);
+            $horario->setFolga('');
+            return $horario;
+        }
+
+        // Calcula as horas com validação de turnos noturnos
+        try {
+            $subtotal1 = $this->calcularHora($entrada1, $saida1);
+            $subtotal2 = $this->calcularHora($entrada2, $saida2);
+            $total = $this->somarHoras($subtotal1, $subtotal2);
+        } catch (InvalidArgumentException $e) {
+            throw new InvalidArgumentException('Erro na validação de horários: ' . $e->getMessage(), 400);
+        }
+
+        // Se não houver nenhuma hora preenchida, valida que existe formação de horário
+        if (empty($total) || $total === '00:00') {
+            if (isset($plantao)) {
+                $total = '00:00';
+            } else {
+                throw new InvalidArgumentException('É necessário informar pelo menos um período de trabalho (entrada e saída).', 400);
+            }
+        }
 
         $diasTrabalhados = array();
         $folgas = array();
 
-
+        // Coleta dias de folga
         if (isset($folgaSeg)) {
             array_push($folgas, $folgaSeg);
         }
         if (isset($folgaTer)) {
             array_push($folgas, $folgaTer);
         }
-
         if (isset($folgaQua)) {
             array_push($folgas, $folgaQua);
         }
@@ -147,13 +271,13 @@ class FuncionarioControle
 
         $folga = implode(",", $folgas);
 
+        // Coleta dias trabalhados
         if (isset($trabSeg)) {
             array_push($diasTrabalhados, $trabSeg);
         }
         if (isset($trabTer)) {
             array_push($diasTrabalhados, $trabTer);
         }
-
         if (isset($trabQua)) {
             array_push($diasTrabalhados, $trabQua);
         }
@@ -171,6 +295,17 @@ class FuncionarioControle
         }
 
         $diasMultiplicados = count($diasTrabalhados);
+
+        // Validação: Deve existir pelo menos 1 dia trabalhado
+        // EXCETO se for Plantão 12/36
+        if ($diasMultiplicados === 0 && !isset($plantao)) {
+            throw new InvalidArgumentException('É necessário selecionar pelo menos 1 dia trabalhado.', 400);
+        }
+
+        // Validação: Se platão, deve ser único
+        if (isset($plantao) && $diasMultiplicados > 0) {
+            throw new InvalidArgumentException('Plantão não pode ser combinado com outros dias trabalhados.', 400);
+        }
 
         if ($total) {
             $arrayHorasDiarias = explode(":", $total);
@@ -191,7 +326,6 @@ class FuncionarioControle
 
             $carga_horaria = $horaTotal . ":" . $minutoTotal;
 
-
             if (isset($plantao)) {
                 $dias_trabalhados = $plantao;
                 $carga_horaria = 174;
@@ -203,7 +337,6 @@ class FuncionarioControle
         }
 
         $dias_trabalhados = implode(",", $diasTrabalhados);
-
 
         $horario = new QuadroHorario();
 
@@ -237,6 +370,8 @@ class FuncionarioControle
             header('Location: ../html/funcionario.html?msg=Sobrenome do funcionario não informado. Por favor, informe um sobrenome!');
             exit();
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
         if ((!isset($gender)) || (empty($gender))) {
             http_response_code(412);
             header('Location: ../html/funcionario.html?msg=Sexo do funcionario não informado. Por favor, informe um sexo!');
@@ -247,6 +382,10 @@ class FuncionarioControle
             http_response_code(412);
             header('Location: ../html/funcionario.html?msg=Cargo do funcionario não informado. Por favor, informe um cargo!');
             exit();
+        }
+
+        if ((!isset($email)) || (empty($email))) {
+            $email = 'null';
         }
 
         if ((!isset($telefone)) || (empty($telefone))) {
@@ -266,6 +405,8 @@ class FuncionarioControle
         if ((!isset($nome_mae)) || (empty($nome_mae))) {
             $nome_mae = '';
         }
+        Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 412);
 
         if ((!isset($sangue)) || (empty($sangue))) {
             $sangue = '';
@@ -365,6 +506,13 @@ class FuncionarioControle
             $certificado_reservista_serie = '';
         }
 
+        $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
+        if ($cns !== '' && !Util::validaCNS($cns)) {
+            http_response_code(412);
+            header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf ?? '') . '&msg=O CNS informado não é válido. Deve conter 15 dígitos.');
+            exit();
+        }
+
         if (!Util::validarCPF($cpf)) {
             http_response_code(412);
             header('Location: ../html/funcionario.html?msg=O CPF informado é inválido.');
@@ -388,7 +536,7 @@ class FuncionarioControle
         }
 
         $senha = '';
-        $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+        $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha,$email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
         $funcionario->setData_admissao($data_admissao);
         $funcionario->setPis($pis);
         $funcionario->setCtps($ctps);
@@ -400,6 +548,7 @@ class FuncionarioControle
         $funcionario->setCertificado_reservista_serie($certificado_reservista_serie);
         $funcionario->setId_situacao($situacao);
         $funcionario->setId_cargo($cargo);
+        $funcionario->setCns($cns !== '' ? $cns : null);
 
         return $funcionario;
     }
@@ -408,17 +557,22 @@ class FuncionarioControle
     {
         extract($_REQUEST);
         if ((!isset($nome)) || (empty($nome))) {
-            $nome = '';
+            $nome = 'Pessoa existente';
         }
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = '';
         }
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
         if ((!isset($gender)) || (empty($gender))) {
             $gender = '';
         }
         if ((!isset($cargo)) || (empty($cargo))) {
             $msg .= "Cargo do funcionario não informado. Por favor, informe um cargo!";
             header('Location: ../html/funcionario.html?msg=' . $msg);
+        }
+        if ((!isset($email)) || (empty($email))) {
+            $email = 'null';
         }
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
@@ -432,6 +586,8 @@ class FuncionarioControle
         if ((!isset($nome_mae)) || (empty($nome_mae))) {
             $nome_mae = '';
         }
+        Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 412);
+        Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 412);
         if ((!isset($sangue)) || (empty($sangue))) {
             $sangue = '';
         }
@@ -518,7 +674,7 @@ class FuncionarioControle
         }
 
         $senha = '';
-        $funcionario = $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+        $funcionario = $funcionario = new Funcionario($cpf, $nome, $sobrenome, $gender, $nascimento, $rg, $orgao_emissor, $data_expedicao, $nome_mae, $nome_pai, $sangue, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
         $funcionario->setData_admissao($data_admissao);
         $funcionario->setPis($pis);
         $funcionario->setCtps($ctps);
@@ -663,6 +819,9 @@ class FuncionarioControle
     public function adicionarPermissao()
     {
         try {
+            require_once ROOT . '/html/permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 91, 7);
+
             //adicionar csrf
             $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
             $acao = filter_input(INPUT_POST, 'acao', FILTER_SANITIZE_NUMBER_INT);
@@ -757,6 +916,9 @@ class FuncionarioControle
     public function excluirPermissao()
     {
         try {
+            require_once ROOT . '/html/permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 91, 7);
+
             $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
             $recurso = filter_input(INPUT_POST, 'recurso', FILTER_SANITIZE_NUMBER_INT);
 
@@ -786,6 +948,9 @@ class FuncionarioControle
     public function alterarPermissao()
     {
         try {
+            require_once ROOT . '/html/permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 91, 7);
+
             $cargo = filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_NUMBER_INT);
             $acao = filter_input(INPUT_POST, 'acao', FILTER_SANITIZE_NUMBER_INT);
             $recurso = filter_input(INPUT_POST, 'recurso', FILTER_SANITIZE_NUMBER_INT);
@@ -870,11 +1035,7 @@ class FuncionarioControle
             $dataNascimento = $funcionario->getDataNascimento();
 
             if (!empty($dataAdmissao) && !empty($dataNascimento)) {
-                $nascimento = new DateTime($dataNascimento);
-                $admissao = new DateTime($dataAdmissao);
-                if ($admissao <= $nascimento) {
-                    throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
-                }
+                $this->validarDataAdmissao($dataNascimento, $dataAdmissao);
             }
 
             $funcionarioDAO = new FuncionarioDAO();
@@ -892,6 +1053,33 @@ class FuncionarioControle
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
         }
+        catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'cpf') !== false) {
+                $fieldErrors['cpf'] = $message;
+            } elseif (stripos($message, 'data de admissão') !== false || stripos($message, 'idade mínima') !== false || stripos($message, 'admissão') !== false) {
+                $fieldErrors['data_admissao'] = $message;
+            } elseif (stripos($message, 'nascimento') !== false) {
+                $fieldErrors['nascimento'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/funcionario/cadastro_funcionario.php?cpf=" . urlencode($cpf));
+            exit();
+        }
+        catch (PDOException $e) {
+            error_log("Erro ao cadastrar funcionário existente: " . $e->getFile() . ":" . $e->getLine() . " - " . $e->getMessage());
+            $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($message, 'global');
+            setSessionMsg($message, 'err');
+            header("Location: ../html/funcionario/cadastro_funcionario.php?cpf=" . urlencode($cpf));
+            exit();
+        }
         catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -902,6 +1090,8 @@ class FuncionarioControle
 
     public function incluirExistente()
     {
+        $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
@@ -914,11 +1104,7 @@ class FuncionarioControle
             $dataNascimento = $funcionario->getDataNascimento();
 
             if (!empty($dataAdmissao) && !empty($dataNascimento)) {
-                $nascimento = new DateTime($dataNascimento);
-                $admissao = new DateTime($dataAdmissao);
-                if ($admissao <= $nascimento) {
-                    throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
-                }
+                $this->validarDataAdmissao($dataNascimento, $dataAdmissao);
             }
 
             $funcionarioDAO = new FuncionarioDAO();
@@ -927,6 +1113,31 @@ class FuncionarioControle
             $_SESSION['proxima'] = "Cadastrar outro funcionario";
             $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
             header("Location: ../html/funcionario/informacao_funcionario.php");
+        }
+        catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'data de admissão') !== false || stripos($message, 'idade mínima') !== false || stripos($message, 'admissão') !== false) {
+                $fieldErrors['data_admissao'] = $message;
+            } elseif (stripos($message, 'cpf') !== false) {
+                $fieldErrors['cpf'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=" . urlencode($cpf));
+            exit();
+        }
+        catch (PDOException $e) {
+            error_log("Erro ao cadastrar funcionário existente: " . $e->getFile() . ":" . $e->getLine() . " - " . $e->getMessage());
+            $message = $e->getCode() == 23000 ? 'CPF já cadastrado no sistema.' : 'Erro ao cadastrar funcionário.';
+            setSessionFormData($_POST);
+            setSessionFormErrorFromMessage($message, 'global');
+            setSessionMsg($message, 'err');
+            header("Location: ../html/funcionario/cadastro_funcionario_pessoa_existente.php?cpf=" . urlencode($cpf));
+            exit();
         }
         catch (Exception $e) {
             Util::tratarException($e);
@@ -951,11 +1162,7 @@ class FuncionarioControle
 
             $dataAdmissao = $_POST['data_admissao'] ?? '';
             if (!empty($dataAdmissao) && !empty($nascimento)) {
-                $nascimentoObj = new DateTime($nascimento);
-                $admissaoObj = new DateTime($dataAdmissao);
-                if ($admissaoObj <= $nascimentoObj) {
-                    throw new InvalidArgumentException('Data de admissão deve ser posterior à data de nascimento.', 412);
-                }
+                $this->validarDataAdmissao($nascimento, $dataAdmissao);
             }
 
             $erros = [];
@@ -963,6 +1170,14 @@ class FuncionarioControle
                 $erros[] = "Nome do funcionário não pode ser vazio.";
             if (!isset($sobrenome) || trim($sobrenome) === '')
                 $erros[] = "Sobrenome do funcionário não pode ser vazio.";
+            if (isset($nome) && trim($nome) !== '' && !Util::validarNomePessoa($nome))
+                $erros[] = Util::MENSAGEM_NOME_INVALIDO;
+            if (isset($sobrenome) && trim($sobrenome) !== '' && !Util::validarNomePessoa($sobrenome))
+                $erros[] = Util::MENSAGEM_SOBRENOME_INVALIDO;
+            if (isset($nome_pai))
+                Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 412);
+            if (isset($nome_mae))
+                Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 412);
             if (!isset($gender) || ($gender !== 'm' && $gender !== 'f'))
                 $erros[] = "Sexo do funcionário é obrigatório.";
             if (!isset($nascimento) || trim($nascimento) === '')
@@ -978,17 +1193,28 @@ class FuncionarioControle
 
             $nascimentoFinal = ($nascimento === '') ? null : $nascimento;
 
+            $cns = isset($_POST['cns']) ? trim($_POST['cns']) : '';
+            if ($cns !== '' && !Util::validaCNS($cns)) {
+                throw new InvalidArgumentException('Erro, o CNS informado não é válido. Deve conter 15 dígitos.', 400);
+            }
+
             $funcionario = new Funcionario(
                 '', $nome, $sobrenome, $gender, $nascimentoFinal, '', '', '',
                 $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', '',
-                $telefone, '', '', '', '', '', '', '', '', '', ''
+                $email ?? '', $telefone, '', '', '', '', '', '', '', '', ''
                 );
             $funcionario->setId_funcionario($id_funcionario);
+            $funcionario->setCns($cns !== '' ? $cns : null);
 
             $funcionarioDAO = new FuncionarioDAO();
             $funcionarioDAO->alterarInfPessoal($funcionario);
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        }
+        catch (InvalidArgumentException $e) {
+            setSessionMsg($e->getMessage(), 'err');
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+            exit();
         }
         catch (Exception $e) {
             Util::tratarException($e);
@@ -1081,7 +1307,7 @@ public function alterarOutros()
             $stmtAlvo->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
             $stmtAlvo->execute();
             $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
-            
+
             if ($alvo['id_pessoa'] == $idPessoa && $alvo['id_cargo'] != $novoCargo) {
                 throw new InvalidArgumentException("Acesso negado: Você não pode alterar o seu próprio cargo.", 403);
             }
@@ -1092,7 +1318,19 @@ public function alterarOutros()
                 throw new InvalidArgumentException("Acesso negado: Apenas administradores podem conceder o cargo de Administrador.", 403);
             }
 
-            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            if (!empty($data_admissao)) {
+                $pdo = Conexao::connect();
+                $stmt = $pdo->prepare('SELECT p.data_nascimento FROM funcionario f JOIN pessoa p ON p.id_pessoa = f.id_pessoa WHERE f.id_funcionario = :idFuncionario');
+                $stmt->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
+                $stmt->execute();
+                $pessoa = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($pessoa && !empty($pessoa['data_nascimento'])) {
+                    $this->validarDataAdmissao($pessoa['data_nascimento'], $data_admissao);
+                }
+            }
+
+            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
             $funcionario->setId_funcionario($id_funcionario);
             $funcionario->setId_cargo($cargo);
             $funcionario->setPis($pis);
@@ -1107,8 +1345,26 @@ public function alterarOutros()
             $funcionario->setData_admissao($data_admissao);
             $funcionarioDAO = new FuncionarioDAO();
             $funcionarioDAO->alterarOutros($funcionario);
-            
+
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        }
+        catch (InvalidArgumentException $e) {
+            setSessionFormData($_POST);
+            $fieldErrors = [];
+            $message = $e->getMessage();
+            if (stripos($message, 'data de admissão') !== false || stripos($message, 'idade mínima') !== false || stripos($message, 'admissão') !== false) {
+                $fieldErrors['data_admissao'] = $message;
+            } elseif (stripos($message, 'cargo') !== false) {
+                $fieldErrors['cargo'] = $message;
+            } elseif (stripos($message, 'situação') !== false || stripos($message, 'situacao') !== false) {
+                $fieldErrors['situacao'] = $message;
+            } else {
+                $fieldErrors['global'] = $message;
+            }
+            setSessionFormErrors($fieldErrors);
+            setSessionMsg($message, 'err');
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+            exit();
         }
         catch (Exception $e) {
             Util::tratarException($e);
@@ -1178,7 +1434,7 @@ public function alterarOutros()
                 unset($_SESSION['data_nasc']);
             }
 
-            $funcionario = new Funcionario('', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $funcionario = new Funcionario('', '', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
             $funcionario->setId_funcionario($id_funcionario);
 
@@ -1244,7 +1500,7 @@ public function alterarOutros()
             if (strlen($ibge) != 0 && strlen(preg_replace('/\D/', '', $ibge)) != 7)
                 throw new InvalidArgumentException('O tamanho do código do IBGE informado não está correto.', 412);
 
-            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
+            $funcionario = new Funcionario('', '', '', '', '', '', '', '', '', '', '', '', '', '', '', $cep, $uf, $cidade, $bairro, $rua, $numero_residencia, $complemento, $ibge);
             $funcionario->setId_funcionario($id_funcionario);
             $funcionarioDAO = new FuncionarioDAO();
 
@@ -1281,13 +1537,24 @@ public function alterarOutros()
 
             $quadroHorarioDAO->alterar($carga_horaria, $id_funcionario);
 
-            $_SESSION['msg'] = "Informações do funcionário alteradas com sucesso!";
-            $_SESSION['proxima'] = "Ver lista de funcionario";
-            $_SESSION['link'] = "../html/funcionario/informacao_funcionario.php";
-            header("Location: ../html/sucesso.php");
+            // Retorna JSON para requisições AJAX
+            header('Content-Type: application/json');
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'sucesso',
+                'mensagem' => 'Carga horária atualizada com sucesso!'
+            ]);
+            exit();
         }
         catch (Exception $e) {
-            Util::tratarException($e);
+            // Retorna JSON com erro
+            header('Content-Type: application/json');
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'erro',
+                'mensagem' => $e->getMessage()
+            ]);
+            exit();
         }
     }
 
@@ -1316,3 +1583,4 @@ public function alterarOutros()
         }
     }
 }
+

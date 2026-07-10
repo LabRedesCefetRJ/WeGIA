@@ -141,7 +141,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li cla ss="active">
-									<a href="#overview" data-toggle="tab">Cadastro de Doação</a>
+									<a href="#overview" data-toggle="tab">Registro de entrada</a>
 								</li>
 							</ul>
 							<div class="tab-content">
@@ -200,7 +200,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 															</datalist> -->
 																</td>
 																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
-																<td><input id="valor_unitario" type="number" name="quantidade" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">incluir</button>
 																</td>
@@ -245,9 +245,9 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="col-md-9 col-md-offset-3">
 												<input type="hidden" name="nomeClasse" value="EntradaControle">
 												<input type="hidden" name="metodo" value="incluir">
-												<input type="submit" class="btn btn-primary">
+												<input type="submit" class="btn btn-primary" value="Registrar entrada"> 
 											</div>
-										</div>ll
+										</div>
 									</form>
 								</div>
 							</div>
@@ -352,21 +352,36 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 							var quantidade = $("#quantidade").val();
 							var preco = parseFloat($("#valor_unitario").val());
 
-							conta = conta + 1;
+							quantidade = Number(quantidade);
+							preco = Number(preco);
+
+							if(!Number.isFinite(quantidade) || quantidade <= 0) {
+								alert("A quantidade deve ser um número positivo.");
+								$("#quantidade").focus();
+								return;
+							}
+
+							if(!Number.isFinite(preco) || preco < 0) {
+								alert("O valor unitário deve ser um número válido e não negativo.");
+								$("#valor_unitario").focus();
+								return;
+							}
+
+							conta = reindexarProdutosEntrada() + 1;
 
 							$("#conta").val(conta);
 
 							var markup = "<tr class='produtoRow'><td class='prod' style='width: 160px;'><input type='text' value='" + val + "' name='id" + conta + "' readonly='readonly'></td><td class='quant'><input type='text' class='number'  id='qtd' maxlength='2' size='2' class='form-control' min='1' value='" + quantidade + "' name='qtd" + conta + "' readonly='readonly'></td><td><input type='text' class='preco' value='" + preco + "' name='valor_unitario" + conta + "'  size='2' readonly='readonly'></td><th><input type='text' size='3' id='total' class='total' value='" + quantidade * preco + "' readonly='readonly'></th><td><button type='button' class='delete-row'>remover</button></td></tr>";
 							$("table tbody ").append(markup);
-							$("#valor_unitario").empty();
-							$("#input_produtos").val("");
-							var x = $("#total_total").val();
-							x = Number(x);
-							x += (quantidade * preco);
 
-							$("#total_total").val(x);
-							verificar++;
-							$("#verifica").val(verificar);
+							reindexarProdutosEntrada();
+
+							$("#valor_unitario").val("");
+							$("#input_produtos").val("");
+							$("#quantidade").val(1);
+
+							verificar = Number($("#verifica").val() || 0);
+							conta = Number($("#conta").val() || 0);
 
 						}
 					})
@@ -387,7 +402,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				xx = xx - valor_menos;
 				$("#total_total").val(xx);
 				$(this).closest('tr').remove();
-				verificar = verificar - 1;
+				reindexarProdutosEntrada();
 			});
 
 			// validar origem
@@ -426,6 +441,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			var almox = document.getElementById("almoxarifado");
 			var tipo = document.getElementById("tipo_entrada");
 			var verificar = document.getElementById("verifica");
+			var erro = false;
+
 			if (almox.value == "blank") {
 				alert("Selecione um almoxarifado");
 				almox.focus();
@@ -437,6 +454,27 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			} else if (verificar.value == 0 && !$('#input_produtos').is(':focus')) {
 				alert("Nenhum produto inserido");
 				document.getElementById("input_produtos").focus();
+				return false;
+			}
+
+			$("#lista-produtos tr").each(function () {
+				const quantidade = Number($(this).find("input[name^='qtd']").val());
+				const valorUnitario = Number($(this).find("input[name^='valor_unitario']").val());
+
+				if(!Number.isFinite(quantidade) || quantidade <= 0) {
+					alert("Existe um produto com quantidade inválida na lista.");
+					erro = true;
+					return false;
+				}
+
+				if(!Number.isFinite(valorUnitario) || valorUnitario < 0) {
+					alert("Existe um produto com valor unitário inválido na lista.");
+					erro = true;
+					return false;
+				}
+			});
+
+			if(erro) {
 				return false;
 			}
 		}
@@ -453,6 +491,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				if (validar() === false) {
 					return false;
 				}
+
+				reindexarProdutosEntrada();
 
 				$.ajax({
 					url: $(this).attr('action'),
@@ -490,6 +530,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		const CHAVE = 'rascunho_cadastro_entrada';
 
 		function salvarRascunho() {
+			reindexarProdutosEntrada();
+
 			const dados = {
 				origem: $('#origens').val(),
 				almoxarifado: $('#almoxarifado').val(),
@@ -503,11 +545,11 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				tabela: $('#lista-produtos').html()
 			};
 
-			sessionStorage.setItem(CHAVE, JSON.stringify(dados));
+			localStorage.setItem(CHAVE, JSON.stringify(dados));
 		}
 
 		function restaurarRascunho() {
-			const bruto = sessionStorage.getItem(CHAVE);
+			const bruto = localStorage.getItem(CHAVE);
 			if (!bruto) return;
 
 			try {
@@ -530,13 +572,48 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 						$('#almoxarifado').val(dados.almoxarifado);
 					}, 100);
 				}
+
+				reindexarProdutosEntrada();
 			} catch (e) {
 				console.error('Erro ao restaurar rascunho:', e);
 			}
 		}
 
+		function reindexarProdutosEntrada() {
+			let contador = 0;
+			let totalGeral = 0;
+
+			$('#lista-produtos tr.produtoRow').each(function () {
+				contador++;
+
+				const inputProduto = $(this).find("td.prod input");
+				const inputQtd = $(this).find("td.quant input");
+				const inputPreco = $(this).find("input.preco");
+				const inputTotal = $(this).find("input.total");
+
+				inputProduto.attr('name', 'id' + contador);
+				inputQtd.attr('name', 'qtd' + contador);
+				inputPreco.attr('name', 'valor_unitario' + contador);
+
+				const qtd = Number(inputQtd.val() || 0);
+				const preco = Number(inputPreco.val() || 0);
+				const subtotal = qtd * preco;
+
+				inputTotal.val(subtotal);
+				totalGeral += subtotal;
+			});
+
+			$('#conta').val(contador);
+			$('#verifica').val(contador);
+			$('#total_total').val(totalGeral);
+
+			return contador;
+		}
+
+		window.reindexarProdutosEntrada = reindexarProdutosEntrada;
+
 		function limparRascunho() {
-			sessionStorage.removeItem(CHAVE);
+			localStorage.removeItem(CHAVE);
 		}
 
 		$('#btn-novo-doador, #btn-novo-almoxarifado, #btn-novo-tipo-entrada, #btn-novo-produto').on('click', function () {

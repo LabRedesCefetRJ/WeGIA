@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config.php';
+//declaração de util
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 Util::definirFusoHorario();
@@ -15,6 +16,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
         //Controladoras permitidas
         $controladorasRecursos = [
             'AdocaoControle' => [6, 64],
+            'AgendaControle' => [10, 101, 102, 103, 5],
             'AlergiaControle' => [5],
             'AlmoxarifadoControle' => [2, 21, 22, 23, 24, 91],
             'AlmoxarifeControle' => [91],
@@ -41,7 +43,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'ExameControle' => [5],
             'MedicoControle' => [5],
             'EntradaControle' => [23],
-            'EstoqueControle' => [22],
+            'EstoqueControle' => [21, 22],
             'FuncionarioControle' => [11, 91],
             'IentradaControle' => [23],
             'InformacaoAdicionalControle' => [11],
@@ -52,7 +54,8 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'OrigemControle' => [23],
             'PaArquivoControle' => [1, 12, 14],
             'PaStatusControle' => [12, 14],
-            'PessoaArquivoControle' => [1, 11, 12],
+            'PessoaArquivoControle' => [1, 11, 12, 13],
+            'PessoaControle' => [1, 4, 11, 12, 13],
             'ProdutoControle' => [22, 23, 24],
             'ProcessoAceitacaoControle' => [1, 12, 14],
             'ProjetoControle' => [8, 81, 82],
@@ -142,7 +145,22 @@ try {
         $metodo = filter_var($_REQUEST['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
         isset($_REQUEST['modulo']) ? $modulo = filter_var($_REQUEST['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
     }
-
+    if ($modulo) {
+        // Rejeita stream wrappers (phar://, file://, etc)
+        if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $modulo)) {
+            throw new Exception('Stream wrappers não são permitidos.', 400);
+        }
+        
+        // Rejeita path traversal (../ ou ..\)
+        if (preg_match('#\\.\\.' . preg_quote(DIRECTORY_SEPARATOR) . '#', $modulo)) {
+            throw new Exception('Path traversal não é permitido.', 400);
+        }
+        
+        // Rejeita caminhos absolutos
+        if (preg_match('#^[/\\\\]#', $modulo)) {
+            throw new Exception('Caminho absoluto não é permitido.', 400);
+        }
+    }
     processaRequisicao($nomeClasse, $metodo, $modulo);
 } catch (Exception $e) {
     $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? intval($e->getCode()) : 500;

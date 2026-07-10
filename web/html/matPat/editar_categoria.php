@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE)
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
-if (!isset($_SESSION['usuario'])) {
+if (!isset($_SESSION['usuario'], $_SESSION['id_pessoa'])) {
 	header("Location: " . WWW . "html/index.php");
 	exit();
 } else {

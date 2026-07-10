@@ -11,7 +11,7 @@ class DescricaoControle
      */
     public function incluir(string $texto)
     {
-        $idPessoa = trim($_POST['nome']);
+        $idPessoa = trim($_POST['idPessoa']);
 
         if (!$idPessoa || !is_numeric($idPessoa)) {
             http_response_code(400);

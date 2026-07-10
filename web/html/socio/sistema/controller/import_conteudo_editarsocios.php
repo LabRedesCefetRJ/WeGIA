@@ -18,6 +18,7 @@ if (!$registro) {
 }
 
 $nome_socio = $registro['nome'];
+$socio_sobrenome = $registro['sobrenome'];
 $email = $registro['email'];
 $telefone = $registro['telefone'];
 $status = $registro['id_sociostatus'];
@@ -25,9 +26,15 @@ $data_nasc = $registro['data_nascimento'];
 $cpf_cnpj = $registro['cpf'];
 $logradouro = $registro['logradouro'];
 $numero = $registro['numero_endereco'];
-if ($registro['id_sociotag'] == null || $registro['id_sociotag'] == "") {
-  $tag = "";
-} else $tag = $registro['id_sociotag'];
+$tagsSelecionadas = [];
+$stmt_tags_socio = $conexao->prepare("SELECT id_sociotag FROM socio_has_tag WHERE id_socio = ?");
+$stmt_tags_socio->bind_param("i", $id_socio);
+$stmt_tags_socio->execute();
+$resultado_tags_socio = $stmt_tags_socio->get_result();
+
+while ($row_tag_socio = $resultado_tags_socio->fetch_assoc()) {
+  $tagsSelecionadas[] = (int) $row_tag_socio['id_sociotag'];
+}
 $complemento = $registro['complemento'];
 $cep = $registro['cep'];
 $socio_tipo = $registro['id_sociotipo'];
@@ -82,12 +89,10 @@ $valor_periodo = $registro['valor_periodo'];
           <div class="box-body">
             <form id="frm_editar_socio" method="POST">
               <input type="hidden" id="id_socio" name="id_socio" value="<?= htmlspecialchars($id_socio) ?>">
+
               <div class="row">
-                <div class="form-group mb-2 col-xs-5">
-                  <label for="nome_cliente">Nome sócio</label>
-                  <input type="text" class="form-control" id="socio_nome" name="socio_nome" value="<?php echo htmlspecialchars($nome_socio); ?>" placeholder="" required>
-                </div>
-                <div class="form-group col-xs-3">
+
+                <div class="form-group col-xs-4">
                   <label for="pessoa">Pessoa</label>
                   <select class="form-control" name="pessoa" id="pessoa">
                     <?php
@@ -108,23 +113,41 @@ $valor_periodo = $registro['valor_periodo'];
                     ?>
                   </select>
                 </div>
-                <div class="form-group col-xs-4 cpf_div">
-                  <div class="form-check">
-                    <input type="checkbox" class="form-check-input" id="check_veri_cpf" checked>
-                    <label class="form-check-label" for="exampleCheck1">Deslig. Verif. Cpf</label>
-                  </div>
+                <div class="form-group col-xs-6 cpf_div">
                   <label id="label_cpf_cnpj" for="valor">CPF</label>
-                  <input type="text" class="form-control" value="<?php echo htmlspecialchars($cpf_cnpj); ?>" id="cpf_cnpj" name="cpf" required>
+
+                  <div class="inline-fields">
+                    <input type="text" class="form-control" value="<?php echo isset($cpf_cnpj) ? htmlspecialchars($cpf_cnpj) : ''; ?>" id="cpf_cnpj" name="cpf">
+
+                    <div class="form-check">
+                      <input type="checkbox" class="form-check-input" id="check_veri_cpf" checked>
+                      <label class="form-check-label" for="exampleCheck1">Desligar verificação de documento</label>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="row">
+                <div class="form-group mb-2 col-xs-6">
+                  <label for="nome_cliente">Nome</label>
+                  <input type="text" class="form-control" id="socio_nome" name="socio_nome" value="<?php echo isset($nome_socio) ? htmlspecialchars($nome_socio) : ''; ?>" placeholder="" required>
+                </div>
+
+                <div class="form-group mb-2 col-xs-6">
+                  <label for="socio_sobrenome">Sobrenome *</label>
+                  <!-- Puxar sobrenome automaticamente -->
+                  <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" value="<?php echo isset($socio_sobrenome) ? htmlspecialchars($socio_sobrenome) : ''; ?>" placeholder="" required>
                 </div>
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="obs">E-mail</label>
-                  <input type="email" class="form-control" id="email" value="<?php echo htmlspecialchars($email); ?>" name="email" placeholder="">
+                  <input type="email" class="form-control" id="email" value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" name="email" placeholder="">
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Telefone</label>
-                  <input type="tel" min="0" class="form-control" id="telefone" value="<?php echo htmlspecialchars($telefone); ?>" name="telefone">
+                  <input type="tel" min="0" class="form-control" id="telefone" value="<?php echo isset($telefone) ? htmlspecialchars($telefone) : ''; ?>" name="telefone">
                 </div>
               </div>
 
@@ -142,7 +165,7 @@ $valor_periodo = $registro['valor_periodo'];
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Data de nascimento</label>
-                  <input type="date" class="form-control" id="data_nasc" value="<?php echo htmlspecialchars($data_nasc); ?>" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d') ?>">
+                  <input type="date" class="form-control" id="data_nasc" value="<?php echo isset($data_nasc) ? htmlspecialchars($data_nasc) : ''; ?>" name="data_nasc" min="1900-01-01" max="<?= date('Y-m-d') ?>">
                 </div>
               </div>
               <div class="row">
@@ -173,11 +196,11 @@ $valor_periodo = $registro['valor_periodo'];
               <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="valor">Data referência (ínicio contribuição)</label>
-                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" value="<?php echo htmlspecialchars($data_referencia); ?>" min="1900-01-01" max="<?= date('Y-m-d') ?>">
+                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" value="<?php echo isset($data_referencia) ? htmlspecialchars($data_referencia) : ''; ?>" min="1900-01-01" max="<?= date('Y-m-d') ?>">
                 </div>
                 <div class="form-group col-xs-6">
                   <label for="valor">Valor/período em R$</label>
-                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" value="<?php echo htmlspecialchars($valor_periodo); ?>" min="0" step="0.01">
+                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" value="<?php echo isset($valor_periodo) ? htmlspecialchars($valor_periodo) : ''; ?>" min="0" step="0.01">
                 </div>
               </div>
               <div class="row">
@@ -192,18 +215,16 @@ $valor_periodo = $registro['valor_periodo'];
               </div>
               <div class="row">
                 <div style="margin-bottom:  1em" class="form-group col-xs-12 mb-2">
-                  <label for="valor">Grupo</label>
+                  <label for="valor">Grupos</label>
                   <a onclick="adicionar_tag()">
                     <i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
                   </a>
-                  <select class="form-control" name="tags" id="tags">
-                    <option value="none">Selecionar Grupo</option>
+                  <select class="form-control" name="tags[]" id="tags" multiple size="6">
                     <?php
                     $tags = mysqli_query($conexao, "SELECT * FROM socio_tag");
                     while ($row = $tags->fetch_array(MYSQLI_NUM)) {
-                      if ($row[0] == $tag) {
-                        echo ("<option value=" . htmlspecialchars($row[0]) . " selected>" . htmlspecialchars($row[1]) . "</option>");
-                      } else echo ("<option value=" . htmlspecialchars($row[0]) . ">" . htmlspecialchars($row[1]) . "</option>");
+                      $selected = in_array((int) $row[0], $tagsSelecionadas, true) ? ' selected' : '';
+                      echo ('<option value="' . htmlspecialchars($row[0]) . '"' . $selected . '>' . htmlspecialchars($row[1]) . '</option>');
                     }
 
                     ?>
@@ -221,39 +242,39 @@ $valor_periodo = $registro['valor_periodo'];
                       <label for="cep">CEP</label>
                       <div class="input-group">
                         <span class="input-group-addon"><i class="fa fa-search"></i></span>
-                        <input type="text" id="cep" class="form-control" value="<?php echo htmlspecialchars($cep); ?>" placeholder="">
+                        <input type="text" id="cep" class="form-control" value="<?php echo isset($cep) ? htmlspecialchars($cep) : ''; ?>" placeholder="">
                       </div>
                       <div class="status_cep col-xs-12"></div>
                     </div>
                   </div>
                   <div class="row">
                     <div class="form-group mb-2 col-xs-8">
-                      <label for="nome_cliente">Rua</label>
-                      <input type="text" class="form-control" id="rua" name="nome" value="<?php echo htmlspecialchars($logradouro); ?>" placeholder="">
+                      <label for="rua">Rua</label>
+                      <input type="text" class="form-control" id="rua" name="rua" value="<?php echo isset($logradouro) ? htmlspecialchars($logradouro) : ''; ?>" placeholder="">
                     </div>
                     <div class="form-group col-xs-4">
                       <label for="data_corte">Número</label>
-                      <input type="text" class="form-control" id="numero" name="numero" value="<?php echo htmlspecialchars($numero); ?>" placeholder="">
+                      <input type="text" class="form-control" id="numero" name="numero" value="<?php echo isset($numero) ? htmlspecialchars($numero) : ''; ?>" placeholder="">
                     </div>
                   </div>
                   <div class="row">
                     <div class="form-group mb-2 col-xs-6">
                       <label for="nome_cliente">Complemento</label>
-                      <input type="text" class="form-control" id="complemento" name="complemento" value="<?php echo htmlspecialchars($complemento); ?>" placeholder="">
+                      <input type="text" class="form-control" id="complemento" name="complemento" value="<?php echo isset($complemento) ? htmlspecialchars($complemento) : ''; ?>" placeholder="">
                     </div>
                     <div class="form-group col-xs-6">
                       <label for="data_corte">Bairro</label>
-                      <input type="text" class="form-control" id="bairro" name="bairro" value="<?php echo htmlspecialchars($bairro); ?>" placeholder="">
+                      <input type="text" class="form-control" id="bairro" name="bairro" value="<?php echo isset($bairro) ? htmlspecialchars($bairro) : ''; ?>" placeholder="">
                     </div>
                   </div>
                   <div class="row">
                     <div class="form-group mb-2 col-xs-6">
                       <label for="nome_cliente">Estado</label>
-                      <input type="text" class="form-control" id="estado" name="estado" value="<?php echo htmlspecialchars($estado); ?>" placeholder="">
+                      <input type="text" class="form-control" id="estado" name="estado" value="<?php echo isset($estado) ? htmlspecialchars($estado) : ''; ?>" placeholder="">
                     </div>
                     <div class="form-group col-xs-6">
                       <label for="data_corte">Cidade</label>
-                      <input type="text" class="form-control" id="cidade" name="cidade" value="<?php echo htmlspecialchars($cidade); ?>" placeholder="">
+                      <input type="text" class="form-control" id="cidade" name="cidade" value="<?php echo isset($cidade) ? htmlspecialchars($cidade) : ''; ?>" placeholder="">
                     </div>
                   </div>
                   <div class="pull-right">
@@ -275,9 +296,8 @@ $valor_periodo = $registro['valor_periodo'];
   var sociotipo = <?php echo htmlspecialchars($socio_tipo); ?>;
   var status = <?php echo htmlspecialchars($status); ?>;
 
-  var tag = <?php if ($tag != "" && $tag != null) echo htmlspecialchars($tag);
-            else echo ("''"); ?>;
-  $("#tags").val(tag);
+  var tagsSelecionadas = <?php echo json_encode($tagsSelecionadas); ?>;
+  $("#tags").val(tagsSelecionadas);
 
   $("#status").val(status);
   if (status == 4) {

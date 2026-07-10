@@ -26,30 +26,23 @@ class OrigemControle
             exit;
         }
 
-        if (empty($telefone)) {
-            $msg = urlencode("Telefone da origem não informado. Por favor, informe um telefone!");
-            header('Location: ../html/origem.html?msg=' . $msg);
+        if ($cpf !== '' && !Util::validarCPF($cpf)) {
+            $_SESSION['msg'] = "CPF inválido!";
+            header('Location: ' . WWW . 'html/matPat/cadastro_doador.php');
             exit;
         }
 
-        // Validação de CPF e CNPJ
-        if (strlen($cpf) > 0 && !Util::validarCPF($cpf)) {
-            $msg = urlencode("CPF inválido!");
-            header('Location: ../html/origem.html?msg=' . $msg);
+        if ($cnpj !== '' && !Util::validaCnpj($cnpj)) {
+            $_SESSION['msg'] = "CNPJ inválido!";
+            header('Location: ' . WWW . 'html/matPat/cadastro_doador.php');
             exit;
         }
 
-        if (strlen($cnpj) > 0 && (!Util::validaCnpj($cnpj))) {
-            $msg = urlencode("CNPJ inválido!");
-            header('Location: ../html/origem.html?msg=' . $msg);
-            exit;
-        }
+        $cpf = $cpf !== '' ? $cpf : null;
+        $cnpj = $cnpj !== '' ? $cnpj : null;
+        $telefone = $telefone !== '' ? $telefone : null;
 
-        // Criação do objeto de forma segura
-        $cpf = strlen($cpf) > 0 ? $cpf : null;
-        $origem = new Origem($nome, $cnpj, $cpf, $telefone);
-
-        return $origem;
+        return new Origem($nome, $cnpj, $cpf, $telefone);
     }
 
     public function listarTodos()

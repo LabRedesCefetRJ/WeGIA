@@ -20,6 +20,10 @@ class SaudeControle
     {
         extract($_REQUEST);
 
+        if ((!isset($idPessoa)) || (empty($idPessoa))) {
+            $idPessoa = "";
+        }
+
         if ((!isset($texto)) || (empty($texto))) {
             $msg .= "Descricao do paciente não informada. Por favor, informe a descricao!";
             header('Location: ../html/saude/cadastro_ficha_medica.php?msg=' . $msg);
@@ -93,14 +97,12 @@ class SaudeControle
             $imagem = base64_encode($_SESSION['imagem']);
             unset($_SESSION['imagem']);
         }
-        $senha = 'null';
-        $saude = new Saude($cpf, $nome, $sobrenome, $sexo, $dataNascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $telefone, $imagem, $cep, $estado, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
+        
+        $saude = new Saude($cpf, $nome, $sobrenome, $sexo, $dataNascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, '', '', $telefone, $imagem, $cep, $estado, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
 
         // $saude->setNome($nome);
+        $saude->setIdPessoa($idPessoa);
         $saude->setTexto($texto);
-        $saude->setEnfermidade($enfermidade);
-        $saude->setData_diagnostico($data_diagnostico);
-        $saude->setIntStatus($intStatus);
         return $saude;
     }
 
@@ -141,9 +143,9 @@ class SaudeControle
             if (!$infSaude) {
                 $SaudeDAO = new SaudeDAO();
                 $infSaude = $SaudeDAO->listar($id);
-                $_SESSION['id_fichamedica'] = $infSaude;
                 $cache->save($id, $infSaude, '1 seconds');
             }
+            $_SESSION['id_fichamedica'] = $infSaude;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
         } catch (Exception $e) {
@@ -201,7 +203,7 @@ class SaudeControle
             if (!$idFichamedica || $idFichamedica < 1)
                 throw new InvalidArgumentException('O id da ficha médica fornecido é inválido.', 422);
 
-            $paciente = new Saude('', '', '', '', '', '', '', '', '', '', $tipoSanguineo, '', '', '', '', '', '', '', '', '', '', '');
+            $paciente = new Saude('', '', '', '', '', '', '', '', '', '', $tipoSanguineo, '', '','', '', '', '', '', '', '', '', '', '');
             $paciente->setId_pessoa($idFichamedica);
             $SaudeDAO = new SaudeDAO();
 

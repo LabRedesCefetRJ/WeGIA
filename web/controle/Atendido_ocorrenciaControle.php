@@ -91,23 +91,56 @@ class Atendido_ocorrenciaControle
 				$stmt_nascimento->execute();
 				$atendido_nasc = $stmt_nascimento->fetch(PDO::FETCH_ASSOC);
 
+				try {
+					$data_ocorrencia_obj = new DateTime($data);
+				} catch (Exception $e) {
+					error_log("Erro DateTime em ocorrência: " . $e->getMessage());
+					header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-formato-invalido");
+					exit;
+				}
+
 				if (
 					$atendido_nasc &&
 					!empty($atendido_nasc['data_nascimento']) &&
 					$atendido_nasc['data_nascimento'] !== '0000-00-00'
 				) {
-
 					try {
 						$data_nascimento_obj = new DateTime($atendido_nasc['data_nascimento']);
-						$data_ocorrencia_obj = new DateTime($data);
 					} catch (Exception $e) {
-						error_log("Erro DateTime em ocorrência: " . $e->getMessage());
+						error_log("Erro DateTime em nascimento: " . $e->getMessage());
 						header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-formato-invalido");
 						exit;
 					}
 
 					if ($data_ocorrencia_obj < $data_nascimento_obj) {
 						header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-anterior-nascimento");
+						exit;
+					}
+				}
+
+				if ((int)($id_tipos_ocorrencia ?? 0) === 2) {
+					$stmt_acolhimento = $pdo->prepare(
+						"SELECT data FROM atendido_ocorrencia WHERE atendido_idatendido = :id AND atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = 1 ORDER BY data DESC LIMIT 1"
+					);
+					$stmt_acolhimento->bindValue(':id', $atendido_idatendido, PDO::PARAM_INT);
+					$stmt_acolhimento->execute();
+					$acolhimento_data = $stmt_acolhimento->fetchColumn();
+
+					if (!$acolhimento_data) {
+						header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=falecimento-sem-acolhimento");
+						exit;
+					}
+
+					try {
+						$data_acolhimento_obj = new DateTime($acolhimento_data);
+					} catch (Exception $e) {
+						error_log("Erro DateTime em acolhimento: " . $e->getMessage());
+						header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-formato-invalido");
+						exit;
+					}
+
+					if ($data_ocorrencia_obj < $data_acolhimento_obj) {
+						header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=data-anterior-acolhimento");
 						exit;
 					}
 				}

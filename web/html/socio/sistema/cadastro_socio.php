@@ -24,21 +24,47 @@ if (!isset($_POST) or empty($_POST)) {
     $_POST = json_decode($_POST, true);
 }
 
-if(!Csrf::validateToken($_POST['csrf_token'])){
+if (!Csrf::validateToken($_POST['csrf_token'])) {
     http_response_code(401);
     exit('Token CSRF inválido ou ausente.');
 }
 
 $cadastrado =  false;
 
+function normalizarTagsSocio($tagsBrutas): array
+{
+    if (!is_array($tagsBrutas)) {
+        $tagsBrutas = [$tagsBrutas];
+    }
+
+    $tags = [];
+
+    foreach ($tagsBrutas as $tag) {
+        if ($tag === null || $tag === '' || $tag === 'none') {
+            continue;
+        }
+
+        if (!is_numeric($tag) || (int) $tag < 1) {
+            continue;
+        }
+
+        $tagId = (int) $tag;
+        $tags[$tagId] = $tagId;
+    }
+
+    return array_values($tags);
+}
+
 $socio_nome = trim($_REQUEST['socio_nome']);
+$socio_sobrenome = trim($_REQUEST['socio_sobrenome']);
 $pessoa = trim($_REQUEST['pessoa']);
 $contribuinte = trim($_REQUEST['contribuinte']);
 $status = trim($_REQUEST['status']);
 $email = trim($_REQUEST['email']);
-$tag = trim($_REQUEST['tags'] ?? $_REQUEST['tag'] ?? '');
+$tags = normalizarTagsSocio($_REQUEST['tags'] ?? $_REQUEST['tag'] ?? []);
 $telefone = trim($_REQUEST['telefone']);
 $cpf_cnpj = trim($_REQUEST['cpf_cnpj']);
+$verificar_documento = boolval(filter_var($_REQUEST['verificar_documento'], FILTER_VALIDATE_BOOLEAN));
 $rua = trim($_REQUEST['rua']);
 $numero = trim($_REQUEST['numero']);
 $complemento = trim($_REQUEST['complemento']);
@@ -57,6 +83,11 @@ if (!$socio_nome || empty($socio_nome)) {
     exit('O nome de um sócio não pode ser vazio.');
 }
 
+if (!$socio_sobrenome || empty($socio_sobrenome)) {
+    http_response_code(400);
+    exit('O sobrenome de um sócio não pode ser vazio.');
+}
+
 if ($pessoa !== 'fisica' && $pessoa !== 'juridica') {
     http_response_code(400);
     exit('O tipo de pessoa informado não é válido.');
@@ -67,12 +98,12 @@ if (!$contribuinte || empty($contribuinte)) {
     exit('O tipo do contribuinte não pode ser vazio.');
 }
 
-if (!$tag || !is_numeric($tag) || $tag < 1) {
+if (count($tags) < 1) {
     http_response_code(400);
-    exit('O id de uma tag deve ser um inteiro maior ou igual a 1.');
+    exit('Selecione ao menos uma tag válida para o sócio.');
 }
 
-if (!$cpf_cnpj || empty($cpf_cnpj)) { //posteriormente adicionar validações de formato
+if ($verificar_documento && (!$cpf_cnpj || empty($cpf_cnpj))) { //posteriormente adicionar validações de formato
     http_response_code(400);
     exit('Um cpf/cpnj não pode ser vazio.');
 }
@@ -114,121 +145,221 @@ if ($stmtBuscaSocio->execute()) {
     exit();
 }
 
-$stmt = $conexao->prepare("INSERT INTO pessoa (cpf, nome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+// Se uma pessoa foi encontrada e tem um ID válido, usar ela. Caso contrário, criar uma nova
 
-$stmt->bind_param('sssssssssss', $cpf_cnpj, $socio_nome, $telefone, $data_nasc, $cep, $estado, $cidade, $bairro, $rua, $numero, $complemento);
+$id_pessoa = null;
 
+if ($verificar_documento) {
+    // Trecho 1
+    $stmtBuscaPessoa = $conexao->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = ?");
+    $stmtBuscaPessoa->bind_param('s', $cpf_cnpj);
+    $stmtBuscaPessoa->execute();
 
-if ($stmt->execute()) {
-    $id_pessoa = mysqli_insert_id($conexao);
-    switch ($pessoa) {
-        case "juridica":
-            if ($contribuinte == "mensal") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 23;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 43;
-                } else {
-                    $id_sociotipo = 3;
-                }
-            } else if ($contribuinte == "casual") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 21;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 41;
-                } else {
-                    $id_sociotipo = 1;
-                }
-            } else if ($contribuinte == "bimestral") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 25;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 45;
-                } else {
-                    $id_sociotipo = 7;
-                }
-            } else if ($contribuinte == "trimestral") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 27;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 47;
-                } else {
-                    $id_sociotipo = 9;
-                }
-            } else if ($contribuinte == "semestral") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 29;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 49;
-                } else {
-                    $id_sociotipo = 11;
-                }
-            }
+    $resultado = $stmtBuscaPessoa->get_result();
 
-            if ($contribuinte == null || $contribuinte == "si" || $contribuinte == "") {
-                $id_sociotipo = 5;
-            }
-            break;
+    // Trecho 2
+    if ($resultado->num_rows > 0) {
+        $id_pessoa = $resultado->fetch_assoc()['id_pessoa'];
 
-        case "fisica":
-            if ($contribuinte == "mensal") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 22;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 42;
-                } else {
-                    $id_sociotipo = 2;
-                }
-            } else if ($contribuinte == "casual") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 20;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 40;
-                } else {
-                    $id_sociotipo = 0;
-                }
-            } else if ($contribuinte == "bimestral") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 24;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 44;
-                } else {
-                    $id_sociotipo = 6;
-                }
-            } else if ($contribuinte == "trimestral") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 26;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 46;
-                } else {
-                    $id_sociotipo = 8;
-                }
-            } else if ($contribuinte == "semestral") {
-                if ($tipo_contribuicao == 2) {
-                    $id_sociotipo = 28;
-                } else if ($tipo_contribuicao == 3) {
-                    $id_sociotipo = 48;
-                } else {
-                    $id_sociotipo = 10;
-                }
-            }
+        // Atualizar e-mail da pessoa
+        $stmtEmail = $conexao->prepare("UPDATE pessoa SET email = ? WHERE id_pessoa = ?");
+        $stmtEmail->bind_param('si', $email, $id_pessoa);
 
-
-            if ($contribuinte == null || $contribuinte == "si" || $contribuinte == "") {
-                $id_sociotipo = 4;
-            }
-            break;
+        if (!$stmtEmail->execute()) {
+            http_response_code(500);
+            echo json_encode([
+                'erro' => 'Erro ao atualizar o email da pessoa no banco de dados'
+            ]);
+            exit();
+        }
     }
-
-    $stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, email, valor_periodo, data_referencia, id_sociotag, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt2->bind_param('iiisdssi', $id_pessoa, $status, $id_sociotipo, $email, $valor_periodo, $data_referencia, $tag, $auto_status_contribuicoes);
-    $stmt2->execute();
-
-    if ($stmt2->affected_rows > 0) $cadastrado = true;
 }
 
-$stmt->close();
-$stmt2->close();
+// Trecho 3
+// Executa se:
+// - não for verificar documento; OU
+// - for verificar documento, mas a pessoa não existir.
+if (!$verificar_documento || $id_pessoa === null) {
+
+    $cpf_cnpj = $verificar_documento ? $cpf_cnpj : null;
+
+    $stmt = $conexao->prepare("
+        INSERT INTO pessoa (
+            cpf,
+            nome,
+            sobrenome,
+            telefone,
+            email,
+            data_nascimento,
+            cep,
+            estado,
+            cidade,
+            bairro,
+            logradouro,
+            numero_endereco,
+            complemento
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ");
+
+    $stmt->bind_param(
+        'sssssssssssss',
+        $cpf_cnpj,
+        $socio_nome,
+        $socio_sobrenome,
+        $telefone,
+        $email,
+        $data_nasc,
+        $cep,
+        $estado,
+        $cidade,
+        $bairro,
+        $rua,
+        $numero,
+        $complemento
+    );
+
+    if (!$stmt->execute()) {
+        http_response_code(500);
+        echo json_encode([
+            'erro' => 'Erro ao inserir pessoa no banco de dados'
+        ]);
+        exit();
+    }
+
+    $id_pessoa = mysqli_insert_id($conexao);
+}
+
+switch ($pessoa) {
+    case "juridica":
+        if ($contribuinte == "mensal") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 23;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 43;
+            } else {
+                $id_sociotipo = 3;
+            }
+        } else if ($contribuinte == "casual") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 21;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 41;
+            } else {
+                $id_sociotipo = 1;
+            }
+        } else if ($contribuinte == "bimestral") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 25;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 45;
+            } else {
+                $id_sociotipo = 7;
+            }
+        } else if ($contribuinte == "trimestral") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 27;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 47;
+            } else {
+                $id_sociotipo = 9;
+            }
+        } else if ($contribuinte == "semestral") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 29;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 49;
+            } else {
+                $id_sociotipo = 11;
+            }
+        }
+
+        if ($contribuinte == null || $contribuinte == "si" || $contribuinte == "") {
+            $id_sociotipo = 5;
+        }
+        break;
+
+    case "fisica":
+        if ($contribuinte == "mensal") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 22;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 42;
+            } else {
+                $id_sociotipo = 2;
+            }
+        } else if ($contribuinte == "casual") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 20;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 40;
+            } else {
+                $id_sociotipo = 0;
+            }
+        } else if ($contribuinte == "bimestral") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 24;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 44;
+            } else {
+                $id_sociotipo = 6;
+            }
+        } else if ($contribuinte == "trimestral") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 26;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 46;
+            } else {
+                $id_sociotipo = 8;
+            }
+        } else if ($contribuinte == "semestral") {
+            if ($tipo_contribuicao == 2) {
+                $id_sociotipo = 28;
+            } else if ($tipo_contribuicao == 3) {
+                $id_sociotipo = 48;
+            } else {
+                $id_sociotipo = 10;
+            }
+        }
+
+
+        if ($contribuinte == null || $contribuinte == "si" || $contribuinte == "") {
+            $id_sociotipo = 4;
+        }
+        break;
+}
+
+$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?)");
+$stmt2->bind_param('iiidsi', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
+$stmt2->execute();
+
+if ($stmt2->affected_rows > 0) {
+    $id_socio = mysqli_insert_id($conexao);
+    $stmtTag = $conexao->prepare("INSERT INTO socio_has_tag (id_socio, id_sociotag) VALUES (?, ?)");
+
+    if (!$stmtTag) {
+        http_response_code(500);
+        echo json_encode(['erro' => 'Erro ao preparar o vínculo das tags do sócio']);
+        exit();
+    }
+
+    $cadastrado = true;
+    foreach ($tags as $tagId) {
+        $stmtTag->bind_param('ii', $id_socio, $tagId);
+        if (!$stmtTag->execute()) {
+            $cadastrado = false;
+            break;
+        }
+    }
+
+    $stmtTag->close();
+}
+
+// Fechar statements conforme necessário
+if (isset($stmt)) {
+    $stmt->close();
+}
+if (isset($stmt2)) {
+    $stmt2->close();
+}
 
 echo (json_encode($cadastrado));

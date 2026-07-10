@@ -11,11 +11,22 @@ class IentradaDAO
         try {
             $pdo = Conexao::connect();
 
-            $sql = "SELECT i.id_ientrada, i.id_entrada, p.descricao, i.qtd, i.valor_unitario, u.descricao_unidade
+            $sql = "SELECT 
+                        i.id_ientrada,
+                        i.id_entrada,
+                        p.descricao,
+                        i.qtd,
+                        i.valor_unitario,
+                        u.descricao_unidade
                     FROM ientrada i
+                    INNER JOIN entrada e ON e.id_entrada = i.id_entrada
                     INNER JOIN produto p ON p.id_produto = i.id_produto
                     INNER JOIN unidade u ON u.id_unidade = p.id_unidade
-                    WHERE i.id_entrada = :id_entrada AND i.oculto = false";
+                    WHERE i.id_entrada = :id_entrada
+                        AND (
+                            i.oculto = false
+                            OR e.ativo = 0
+                        )";
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_entrada', $id_entrada, PDO::PARAM_INT);
@@ -61,6 +72,14 @@ class IentradaDAO
             $qtd = $ientrada->getQtd();
             $valor_unitario = $ientrada->getValor_unitario();
 
+            // Validação dos valores
+            if (!is_numeric($qtd) || $qtd <= 0) {
+                throw new InvalidArgumentException("A quantidade deve ser um número positivo.");
+            }
+            if (!is_numeric($valor_unitario) || $valor_unitario < 0) {
+                throw new InvalidArgumentException("O valor unitário deve ser um número válido.");
+            }
+
             // Bind com tipos corretos
             $stmt->bindParam(':id_entrada', $id_entrada, PDO::PARAM_INT);
             $stmt->bindParam(':id_produto', $id_produto, PDO::PARAM_INT);
@@ -70,14 +89,14 @@ class IentradaDAO
             $stmt->execute();
 
             return json_encode([
-                'success' => true,
-                'message' => 'Item de entrada incluído com sucesso.'
+                'sucesso' => true,
+                'mensagem' => 'Item de entrada incluído com sucesso.'
             ]);
 
         } catch (PDOException $e) {
             return json_encode([
-                'error' => true,
-                'message' => 'Erro ao incluir item de entrada: ' . $e->getMessage()
+                'sucesso' => false,
+                'mensagem' => 'Erro ao incluir item de entrada: ' . $e->getMessage()
             ]);
         }
     }

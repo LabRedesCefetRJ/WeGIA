@@ -9,7 +9,20 @@ if(session_status() === PHP_SESSION_NONE)
 $config_path = '../../config.php';
 require_once $config_path;
 require_once ROOT . '/html/permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 91);
+
+if(!isset($_SESSION['usuario'], $_SESSION['id_pessoa'])) {
+	header("Location: ../index.php");
+	exit();
+}
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
+
+if(!$id_pessoa) {
+	header("Location: ../index.php");
+	exit();
+}
+
+permissao($id_pessoa, 91);
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
@@ -28,6 +41,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	if (!isset($_SESSION['almoxarife'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifeControle&nextPage=' . WWW . 'html/matPat/listar_almoxarife.php');
+		exit();
 	} else {
 		$almoxarife = $_SESSION['almoxarife'];
 		unset($_SESSION['almoxarife']);
@@ -151,9 +165,18 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<tr>
 										<td><?= htmlspecialchars($item['descricao_funcionario']) ?></td>
 										<td><?= htmlspecialchars($item['descricao_almoxarifado']) ?></td>
-										<td><?php $dataRegistro = new DateTime($item['data_registro']); echo $dataRegistro->format('d/m/Y à\s H:i');?></td>
 										<td>
-											<form method="POST" action="<?= WWW ?>controle/control.php">
+											<?php 
+												if (!empty($item['data_registro'])) {
+													$dataRegistro = new DateTime($item['data_registro']); 
+													echo $dataRegistro->format('d/m/Y à\s H:i');
+												} else {
+													echo 'Não registrado';
+												}
+											?>
+										</td>
+										<td>
+											<form method="POST" action="<?= WWW ?>controle/control.php" onsubmit="return confirm('Deseja excluir este almoxarife?');">
 												<input type="hidden" name="metodo" value="excluir">
 												<input type="hidden" name="nomeClasse" value="AlmoxarifeControle">
 												<input type="hidden" name="id_almoxarife" value="<?= (int)$item['id_almoxarife'] ?>">
@@ -170,9 +193,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 					</div><br>
 				</section>
 				<!-- end: page -->
-
-				<!-- Vendor -->
-
 
 				<!-- Specific Page Vendor -->
 				<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>

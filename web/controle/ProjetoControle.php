@@ -15,7 +15,7 @@ class ProjetoControle
 
     public function __construct()
     {
-        $this->projetoDAO  = new ProjetoDAO();
+        $this->projetoDAO    = new ProjetoDAO();
         $this->projetoClasse = new ProjetoClasse();
     }
 
@@ -88,7 +88,7 @@ class ProjetoControle
     private function obterDadosRequisicao(): array
     {
         $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
-        $isJson = strpos($contentType, 'application/json') !== false;
+        $isJson      = strpos($contentType, 'application/json') !== false;
 
         if ($isJson) {
             $json = file_get_contents('php://input');
@@ -188,7 +188,7 @@ class ProjetoControle
     public function listarTodos()
     {
         try {
-            $projetos = $this->projetoDAO->listarTodos();
+            $projetos             = $this->projetoDAO->listarTodos();
             $_SESSION['projetos'] = json_encode($projetos);
         } catch (Exception $e) {
             Util::tratarException($e);
@@ -349,13 +349,20 @@ class ProjetoControle
             header('Content-Type: application/json');
 
             $projeto_id = filter_input(INPUT_GET, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+            $turma_ids  = isset($_GET['turma_ids']) && is_array($_GET['turma_ids'])
+                ? array_filter(array_map('intval', $_GET['turma_ids']), fn($v) => $v > 0)
+                : [];
 
             if (!$projeto_id || $projeto_id < 1) {
                 echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
                 return;
             }
 
-            $equipe = $this->projetoDAO->listarEquipeProjeto($projeto_id);
+            if (!empty($turma_ids)) {
+                $equipe = $this->projetoDAO->listarEquipeProjetoPorTurmas($projeto_id, array_values($turma_ids));
+            } else {
+                $equipe = $this->projetoDAO->listarEquipeProjeto($projeto_id);
+            }
 
             echo json_encode(['success' => true, 'data' => $equipe]);
         } catch (Exception $e) {
@@ -408,7 +415,6 @@ class ProjetoControle
     {
         try {
             header('Content-Type: application/json');
-            // Delegado ao DAO — sem acesso direto ao pdo, sem dependência de CPF
             $atendidos = $this->projetoDAO->listarTodosAtendidos();
             echo json_encode(['success' => true, 'data' => $atendidos]);
         } catch (Exception $e) {
@@ -422,13 +428,20 @@ class ProjetoControle
             header('Content-Type: application/json');
 
             $projeto_id = filter_input(INPUT_GET, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+            $turma_ids  = isset($_GET['turma_ids']) && is_array($_GET['turma_ids'])
+                ? array_filter(array_map('intval', $_GET['turma_ids']), fn($v) => $v > 0)
+                : [];
 
             if (!$projeto_id || $projeto_id < 1) {
                 echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
                 return;
             }
 
-            $atendidos = $this->projetoDAO->listarAtendidosProjeto($projeto_id);
+            if (!empty($turma_ids)) {
+                $atendidos = $this->projetoDAO->listarAtendidosProjetoPorTurmas($projeto_id, array_values($turma_ids));
+            } else {
+                $atendidos = $this->projetoDAO->listarAtendidosProjeto($projeto_id);
+            }
 
             echo json_encode(['success' => true, 'data' => $atendidos]);
         } catch (Exception $e) {
@@ -565,6 +578,245 @@ class ProjetoControle
             }
 
             $resultado = $this->projetoDAO->adicionarStatusAtendidoProjeto($descricao);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    // ================== FUNÇÕES PARA TURMAS ==================
+
+    public function listarExecutantesForaDaTurmaAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $projeto_id = filter_input(INPUT_GET, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+            $turma_id   = filter_input(INPUT_GET, 'turma_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$projeto_id || $projeto_id < 1 || !$turma_id || $turma_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Parâmetros inválidos']);
+                return;
+            }
+
+            $data = $this->projetoDAO->listarExecutantesForaDaTurma($projeto_id, $turma_id);
+            echo json_encode(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function listarAtendidosForaDaTurmaAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $projeto_id = filter_input(INPUT_GET, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+            $turma_id   = filter_input(INPUT_GET, 'turma_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$projeto_id || $projeto_id < 1 || !$turma_id || $turma_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Parâmetros inválidos']);
+                return;
+            }
+
+            $data = $this->projetoDAO->listarAtendidosForaDaTurma($projeto_id, $turma_id);
+            echo json_encode(['success' => true, 'data' => $data]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function listarTurmasAjax()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $projeto_id = filter_input(INPUT_GET, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$projeto_id || $projeto_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
+                return;
+            }
+
+            $turmas = $this->projetoDAO->listarTurmasProjeto($projeto_id);
+
+            echo json_encode(['success' => true, 'data' => $turmas]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function adicionarTurma()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $projeto_id = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+            $nome       = trim(filter_var($_POST['nome'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
+
+            if (!$projeto_id || $projeto_id < 1) {
+                echo json_encode(['success' => false, 'message' => 'Projeto inválido']);
+                return;
+            }
+
+            if (empty($nome)) {
+                echo json_encode(['success' => false, 'message' => 'Nome da turma não informado']);
+                return;
+            }
+
+            $id_turma = $this->projetoDAO->adicionarTurma($projeto_id, $nome);
+
+            echo json_encode(['success' => true, 'id_turma' => $id_turma]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function removerTurma()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id_turma   = filter_input(INPUT_POST, 'id_turma', FILTER_SANITIZE_NUMBER_INT);
+            $projeto_id = filter_input(INPUT_POST, 'projeto_id', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_turma || $id_turma < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->removerTurma($id_turma, $projeto_id);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function adicionarExecutanteTurma()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id_turma  = filter_input(INPUT_POST, 'id_turma', FILTER_SANITIZE_NUMBER_INT);
+            $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_turma || $id_turma < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            if (!$id_pessoa || $id_pessoa < 1) {
+                echo json_encode(['success' => false, 'message' => 'Executante inválido']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->adicionarExecutanteTurma($id_turma, $id_pessoa);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function removerExecutanteTurma()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id_turma  = filter_input(INPUT_POST, 'id_turma', FILTER_SANITIZE_NUMBER_INT);
+            $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_turma || $id_turma < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->removerExecutanteTurma($id_turma, $id_pessoa);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function adicionarAtendidoTurma()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id_turma    = filter_input(INPUT_POST, 'id_turma', FILTER_SANITIZE_NUMBER_INT);
+            $id_atendido = filter_input(INPUT_POST, 'id_atendido', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_turma || $id_turma < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            if (!$id_atendido || $id_atendido < 1) {
+                echo json_encode(['success' => false, 'message' => 'Atendido inválido']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->adicionarAtendidoTurma($id_turma, $id_atendido);
+
+            echo json_encode(['success' => $resultado]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function removerAtendidoTurma()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id_turma    = filter_input(INPUT_POST, 'id_turma', FILTER_SANITIZE_NUMBER_INT);
+            $id_atendido = filter_input(INPUT_POST, 'id_atendido', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_turma || $id_turma < 1) {
+                echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->removerAtendidoTurma($id_turma, $id_atendido);
 
             echo json_encode(['success' => $resultado]);
         } catch (Exception $e) {

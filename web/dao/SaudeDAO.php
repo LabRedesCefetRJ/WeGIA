@@ -19,28 +19,15 @@ class SaudeDAO
 {
     public function incluir($saude)
     {
-        try {
-            $sql = "INSERT INTO saude_fichamedica(id_pessoa) VALUES (:id_pessoa)"; //continuar daqui...
-            $pdo = Conexao::connect();
+        $sql = "INSERT INTO saude_fichamedica(id_pessoa) VALUES (:idPessoa)"; //continuar daqui...
+        $pdo = Conexao::connect();
 
-            $pdo->beginTransaction();
+        $stmt = $pdo->prepare($sql);
 
-            $stmt = $pdo->prepare($sql);
+        $idPessoa = $saude->getIdPessoa();
+        $stmt->bindParam(':idPessoa', $idPessoa);
 
-            $idPessoa = $saude->getNome();
-            $stmt->bindParam(':id_pessoa', $idPessoa);
-
-            if ($stmt->execute()) {
-                $pdo->commit();
-            } else {
-                $pdo->rollBack();
-            }
-
-        } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela pessoas = ' . $sql . '</b> <br /><br />' . $e->getMessage();
-        } finally {
-            $pdo = null;
-        }
+        $stmt->execute();
     }
     public function alterarImagem($id_fichamedica, $imagem)
     {
@@ -102,11 +89,11 @@ class SaudeDAO
 
     public function listar($id)
     {
-        echo $id;
         $pdo = Conexao::connect();
 
-        $sql = "SELECT p.nome,p.sobrenome,p.imagem,p.sexo,p.data_nascimento,p.tipo_sanguineo FROM pessoa p 
-        JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa 
+        $sql = "SELECT p.nome, p.sobrenome, p.imagem, p.sexo, p.data_nascimento, p.tipo_sanguineo, p.cns
+        FROM pessoa p
+        JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa
         WHERE sf.id_fichamedica=:id";
 
         $stmt = $pdo->prepare($sql);
@@ -115,7 +102,15 @@ class SaudeDAO
         $stmt->execute();
         $paciente = array();
         while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $paciente[] = array('nome' => $linha['nome'], 'imagem' => $linha['imagem'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $linha['data_nascimento'], 'tipo_sanguineo' => $linha['tipo_sanguineo']);
+            $paciente[] = array(
+                'nome' => $linha['nome'],
+                'imagem' => $linha['imagem'],
+                'sobrenome' => $linha['sobrenome'],
+                'sexo' => $linha['sexo'],
+                'data_nascimento' => $linha['data_nascimento'],
+                'tipo_sanguineo' => $linha['tipo_sanguineo'],
+                'cns' => $linha['cns']
+            );
         }
         return json_encode($paciente);
     }

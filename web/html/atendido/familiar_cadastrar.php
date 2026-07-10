@@ -19,28 +19,36 @@ $pdo = Conexao::connect();
 // Pessoa
 require_once '../../Functions/ValidarDependente.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'geral' . DIRECTORY_SEPARATOR . 'msg.php';
 
 $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 $id_parentesco = filter_input(INPUT_POST, 'id_parentesco', FILTER_SANITIZE_NUMBER_INT);
 $idatendido = filter_input(INPUT_POST, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
 
+$redirectProfile = "Profile_Atendido.php?idatendido=" . urlencode((string)$idatendido);
+
+function redirectFamiliarError(string $message, string $field = 'global'): void
+{
+    global $redirectProfile;
+    setSessionFormData($_POST);
+    setSessionFormErrors([$field => $message]);
+    setSessionOpenModal('depFormModal');
+    setSessionMsg($message, 'err');
+    header("Location: $redirectProfile");
+    exit();
+}
+
 $util = new Util();
 if($cpf && !$util->validarCPF($cpf)){
-    http_response_code(400);
-    echo json_encode(['erro' => 'O CPF informado não é válido.']);
-    exit();
+    redirectFamiliarError('O CPF informado não é válido.', 'cpf');
 }
 
 if(!$id_parentesco || $id_parentesco < 1){
-    http_response_code(400);
-    echo json_encode(['erro' => 'O id do parentesco não é válido.']);
-    exit();
+    redirectFamiliarError('O parentesco informado não é válido.', 'id_parentesco');
 }
 
 if(!$idatendido || $idatendido < 1){
-    http_response_code(400);
-    echo json_encode(['erro' => 'O id do atendido não é válido.']);
-    exit();
+    redirectFamiliarError('O id do atendido não é válido.');
 }
 
 //Verfica CPF da pessoa e compara com o digitado.
@@ -48,20 +56,20 @@ try {
     $stmt1 = $pdo->prepare("SELECT * FROM pessoa WHERE cpf = :cpf");
     $stmt1->bindParam(":cpf", $cpf);
     $stmt1->execute();
-    $id_pessoa = $stmt1->fetch(PDO::FETCH_ASSOC)["id_pessoa"];
+    $pessoa = $stmt1->fetch(PDO::FETCH_ASSOC);
+    $id_pessoa = $pessoa["id_pessoa"] ?? null;
 
     $stmt2 = $pdo->prepare("SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = :id_atendido");
     $stmt2->bindParam(":id_atendido", $idatendido);
     $stmt2->execute();
-    $id_pessoa_atendido = $stmt2->fetch(PDO::FETCH_ASSOC)["pessoa_id_pessoa"];
+    $atendido = $stmt2->fetch(PDO::FETCH_ASSOC);
+    $id_pessoa_atendido = $atendido["pessoa_id_pessoa"] ?? null;
 } catch (PDOException $th) {
-    echo "Um erro ocorreu na validação do CPF " . $th;
-    die();
+    redirectFamiliarError('Erro ao validar o CPF informado.', 'cpf');
 }
 
 if ($id_pessoa == $id_pessoa_atendido) {
-    echo "Você está adicionando um cpf do próprio atendido.";
-    die();
+    redirectFamiliarError('Você está adicionando o CPF do próprio atendido.', 'cpf');
 } else {
     //Se a pessoa já está cadastrada no BD
     if ($id_pessoa) {
@@ -70,10 +78,10 @@ if ($id_pessoa == $id_pessoa_atendido) {
             $stmt1->bindParam(":id", $id_pessoa);
             $stmt1->bindParam(":atendido", $idatendido);
             $stmt1->execute();
-            $pessoaJaCadastrada = $stmt1->fetch(PDO::FETCH_ASSOC)["idatendido_familiares"];
+            $familiar = $stmt1->fetch(PDO::FETCH_ASSOC);
+            $pessoaJaCadastrada = $familiar["idatendido_familiares"] ?? null;
         } catch (PDOException $th) {
-            echo "Um erro ocorreu na validação do parentesco";
-            die();
+            redirectFamiliarError('Erro ao validar o parentesco informado.', 'id_parentesco');
         }
         //Pessoa ainda não foi cadastrada como dependente
         if ($pessoaJaCadastrada === NULL) {
@@ -86,18 +94,16 @@ if ($id_pessoa == $id_pessoa_atendido) {
                 $stmt2->bindParam(":id_parentesco", $id_parentesco);
                 $stmt2->execute();
             } catch (PDOException $th) {
-                echo "Houve um erro ao adicionar o dependente ao banco de dados:";
-                die();
+                redirectFamiliarError('Erro ao adicionar o familiar ao banco de dados.');
             }
         } else {
-            echo "Essa pessoa já foi cadastrada";
-            die();
+            redirectFamiliarError('Essa pessoa já foi cadastrada como familiar deste atendido.', 'cpf');
         }
     } else {
         $_SESSION['cpf_digitado'] = $cpf;
         $_SESSION['parentesco_previo'] = $id_parentesco;
         header("Location: cadastro_atendido_parentesco_pessoa_nova.php?idatendido=$idatendido");
-        die();
+        exit();
     }
 }
 header("Location: Profile_Atendido.php?idatendido=$idatendido");

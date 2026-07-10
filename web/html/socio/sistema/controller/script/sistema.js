@@ -62,6 +62,12 @@ function chamaModal(tr) {
     })
 
 }
+function obterTagsSelecionadas() {
+    return ($("#tags").val() || []).filter(function (tagId) {
+        return tagId !== null && tagId !== "" && tagId !== "none";
+    });
+}
+
 function criarBotoes() {
     return `<button id="manageBtn" type="button" onclick="chamaModal($(this).closest('tr'))" class="btn btn-success btn-xs"><i class="far fa-address-card"></i> +Informações</button>`;
 }
@@ -318,39 +324,42 @@ $(document).ready(function () {
     }
     $(document).on("submit", "#frm_novo_socio", function (e) {
         e.preventDefault();
-        var DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
-        var socio_nome = $("#socio_nome").val();
-        var pessoa_tipo = $("#pessoa").val();
-        var contribuinte = $("#contribuinte").val();
-        var status = $("#status").val();
-        var email = $("#email").val();
-        var telefone = $("#telefone").val();
-        var cpf_cnpj = $("#cpf_cnpj").val();
-        var rua = $("#rua").val();
-        var numero = $("#numero").val();
-        var complemento = $("#complemento").val();
-        var bairro = $("#bairro").val();
-        var estado = $("#estado").val();
-        var cidade = $("#cidade").val();
-        var tag = $("#tags").val();
-        var data_nasc = $("#data_nasc").val();
-        var cep = $("#cep").val();
-        var data_referencia = $("#data_referencia").val();
-        var valor_periodo = $("#valor_periodo").val();
-        var tipo_contribuicao = $("#tipo_contribuicao").val();
-        var auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
+        const DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
+        const socio_nome = $("#socio_nome").val();
+        const socio_sobrenome = $("#socio_sobrenome").val();
+        const pessoa_tipo = $("#pessoa").val();
+        const contribuinte = $("#contribuinte").val();
+        const status = $("#status").val();
+        const email = $("#email").val();
+        const telefone = $("#telefone").val();
+        let cpf_cnpj = $("#cpf_cnpj").val();
+        const rua = $("#rua").val();
+        const numero = $("#numero").val();
+        const complemento = $("#complemento").val();
+        const bairro = $("#bairro").val();
+        const estado = $("#estado").val();
+        const cidade = $("#cidade").val();
+        const tags = obterTagsSelecionadas();
+        const data_nasc = $("#data_nasc").val();
+        const cep = $("#cep").val();
+        const data_referencia = $("#data_referencia").val();
+        const valor_periodo = $("#valor_periodo").val();
+        const tipo_contribuicao = $("#tipo_contribuicao").val();
+        const auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
         const csrf = document.querySelector('input[name="csrf_token"]').value;
         // Requisição POST - AJAX
         if (valida_cpf_cnpj(cpf_cnpj)) {
             $.post("./cadastro_socio.php", {
                 "socio_nome": socio_nome,
+                "socio_sobrenome": socio_sobrenome,
                 "pessoa": pessoa_tipo,
                 "contribuinte": contribuinte,
                 "status": status,
                 "email": email,
-                "tag": tag,
+                "tags": tags,
                 "telefone": telefone,
                 "cpf_cnpj": cpf_cnpj,
+                "verificar_documento" : !DesabilitaverificaCpf,
                 "rua": rua,
                 "numero": numero,
                 "complemento": complemento,
@@ -387,23 +396,20 @@ $(document).ready(function () {
 
                 //adicionar verificação se cpf_cnpj está preenchido
                 if (!cpf_cnpj) {
-                    //gerar número de cpf_cnpj aleatório
-                    cpf_cnpj = '';
-                    for (let i = 0; i < 14; i++) {
-                        cpf_cnpj += Math.floor(Math.random() * 9).toString();
-                    }
-                    console.log('O documento é: ' + cpf_cnpj);
+                    cpf_cnpj = null;
                 }
 
                 $.post("./cadastro_socio.php", {
                     "socio_nome": socio_nome,
+                    "socio_sobrenome": socio_sobrenome,
                     "pessoa": pessoa_tipo,
                     "contribuinte": contribuinte,
                     "status": status,
                     "email": email,
-                    "tag": tag,
+                    "tags": tags,
                     "telefone": telefone,
                     "cpf_cnpj": cpf_cnpj,
+                    "verificar_documento" : !DesabilitaverificaCpf,
                     "rua": rua,
                     "numero": numero,
                     "complemento": complemento,
@@ -441,43 +447,47 @@ $(document).ready(function () {
         }
 
     });
+
     $(document).on("submit", "#frm_editar_socio", function (e) {
         e.preventDefault();
-        var DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
-        var id_socio = $("#id_socio").val();
-        var socio_nome = $("#socio_nome").val();
-        var pessoa_tipo = $("#pessoa").val();
-        var contribuinte = $("#contribuinte").val();
-        var status = $("#status").val();
-        var email = $("#email").val();
-        var telefone = $("#telefone").val();
-        var cpf_cnpj = $("#cpf_cnpj").val();
-        var rua = $("#rua").val();
-        var numero = $("#numero").val();
-        var complemento = $("#complemento").val();
-        var bairro = $("#bairro").val();
-        var tag = $("#tags").val();
-        var estado = $("#estado").val();
-        var cidade = $("#cidade").val();
-        var data_nasc = $("#data_nasc").val();
-        var cep = $("#cep").val();
-        var data_referencia = $("#data_referencia").val();
-        var valor_periodo = $("#valor_periodo").val();
-        var tipo_contribuicao = $("#tipo_contribuicao").val();
-        var auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
+        const DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
+        const id_socio = $("#id_socio").val();
+        const socio_nome = $("#socio_nome").val();
+        const socio_sobrenome = $("#socio_sobrenome").val();
+        const pessoa_tipo = $("#pessoa").val();
+        const contribuinte = $("#contribuinte").val();
+        const status = $("#status").val();
+        const email = $("#email").val();
+        const telefone = $("#telefone").val();
+        let cpf_cnpj = $("#cpf_cnpj").val();
+        const rua = $("#rua").val();
+        const numero = $("#numero").val();
+        const complemento = $("#complemento").val();
+        const bairro = $("#bairro").val();
+        const tags = obterTagsSelecionadas();
+        const estado = $("#estado").val();
+        const cidade = $("#cidade").val();
+        const data_nasc = $("#data_nasc").val();
+        const cep = $("#cep").val();
+        const data_referencia = $("#data_referencia").val();
+        const valor_periodo = $("#valor_periodo").val();
+        const tipo_contribuicao = $("#tipo_contribuicao").val();
+        const auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
         // Requisição POST - AJAX
         if (valida_cpf_cnpj(cpf_cnpj)) {
             $.post("./processa_edicao_socio.php", {
                 "id_socio": id_socio,
                 "socio_nome": socio_nome,
+                "socio_sobrenome": socio_sobrenome,
                 "pessoa": pessoa_tipo,
                 "contribuinte": contribuinte,
                 "status": status,
                 "email": email,
                 "telefone": telefone,
                 "cpf_cnpj": cpf_cnpj,
+                "verificar_documento" : !DesabilitaverificaCpf,
                 "rua": rua,
-                "tag": tag,
+                "tags": tags,
                 "numero": numero,
                 "complemento": complemento,
                 "bairro": bairro,
@@ -505,17 +515,25 @@ $(document).ready(function () {
             });
         } else {
             if (DesabilitaverificaCpf == true) {
+
+                //adicionar verificação se cpf_cnpj está preenchido
+                if (!cpf_cnpj) {
+                    cpf_cnpj = null;
+                }
+
                 $.post("./processa_edicao_socio.php", {
                     "id_socio": id_socio,
                     "socio_nome": socio_nome,
+                    "socio_sobrenome": socio_sobrenome,
                     "pessoa": pessoa_tipo,
                     "contribuinte": contribuinte,
                     "status": status,
                     "email": email,
                     "telefone": telefone,
                     "cpf_cnpj": cpf_cnpj,
+                    "verificar_documento" : !DesabilitaverificaCpf,
                     "rua": rua,
-                    "tag": tag,
+                    "tags": tags,
                     "numero": numero,
                     "complemento": complemento,
                     "bairro": bairro,
@@ -695,6 +713,35 @@ $(document).ready(function () {
         $(this).val(currentValue);
     });
     // Configuração tabela sócios
+    // Filtro customizado para desconsiderar caracteres antes do termo de busca
+    $.fn.dataTable.ext.afnFiltering.push(
+        function (settings, data, dataIndex) {
+            // Aplica apenas à tabela #example
+            if (settings.nTable.id !== 'example') {
+                return true;
+            }
+
+            var searchTerm = settings.oPreviousSearch.sSearch.toLowerCase();
+
+            // Se não há termo de busca, retorna true (mostra a linha)
+            if (!searchTerm) {
+                return true;
+            }
+
+            // Procura em todas as colunas
+            for (var i = 0; i < data.length; i++) {
+                var cellData = data[i].toLowerCase();
+                // Verifica se começa com o termo de busca ou aparece após espaço
+                if (cellData.indexOf(searchTerm) === 0 ||
+                    cellData.indexOf(' ' + searchTerm) >= 0) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    );
+
     $(document).ready(function () {
         $('#example').DataTable({
             "processing": true,
@@ -817,6 +864,7 @@ $(document).ready(function () {
     });
 
     // Tabela contribuições
+    //Ajustar sobrenome
     $(document).ready(function () {
         $('#tabela-contribuicoes').DataTable({
             "processing": true,
@@ -824,17 +872,33 @@ $(document).ready(function () {
             "ajax": "../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=getContribuicoesLogJSON",
             "columns": [
                 { "data": "codigo" },
-                { "data": "nomeSocio" },
+                {
+                    "data": "nomeSocio" + " " + "sobrenomeSocio", "render": function (data, type, row) {
+                        return row.nomeSocio + (row.sobrenomeSocio != null ? " " + row.sobrenomeSocio : "");
+                    }
+                },
                 { "data": "plataforma" },
                 {
                     "data": "meio", "render": function (data, type, row) {
-                        return data == 'Carne' ? "Carnê" : data;
+                        switch (data) {
+                            case 'Carne':
+                                return 'Carnê';
+                                break;
+                            case 'Recorrencia':
+                                return 'Recorrência';
+                                break;
+                            case 'CartaoCredito':
+                                return 'Cartão de crédito';
+                                break;
+                            default:
+                                return data;
+                        }
                     }
                 },
                 { "data": "dataGeracao", "render": (data, type) => { return formataDataBr(data, type) } },
                 { "data": "dataVencimento", "render": (data, type) => { return formataDataBr(data, type) } },
                 { "data": "dataPagamento", "render": (data, type) => { return formataDataBr(data, type) } },
-                { "data": "valor" },
+                { "data": "valor", "render": (data, type) => { return parseFloat(data).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) } },
                 {
                     "data": "status", "render": function (data, type, row) {
                         return data == 1 ? "Pago" : "Pendente";

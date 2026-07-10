@@ -89,8 +89,14 @@ async function adicionar_enfermidade() {
     const nome_enfermidade = nomeEnfermidadeInput ? nomeEnfermidadeInput.value.trim() : "";
     const cid_enfermidade = cidEnfermidadeInput ? cidEnfermidadeInput.value.trim().toUpperCase() : "";
 
-    if (!nome_enfermidade || !cid_enfermidade) {
-        exibirErroModalEnfermidade("Preencha o nome e o CID da comorbidade.");
+    if (!cid_enfermidade) {
+        exibirErroModalEnfermidade("Preencha o CID da comorbidade.");
+        return;
+    }
+
+    const validacaoNomeEnfermidade = SaudeValidator.validarNome(nome_enfermidade);
+    if (!validacaoNomeEnfermidade.valido) {
+        exibirErroModalEnfermidade("Nome da comorbidade: " + validacaoNomeEnfermidade.mensagem);
         return;
     }
 
@@ -265,13 +271,8 @@ function mostrarMensagemCadastroEnfermidade(mensagem, tipo = "success") {
     }
 
     alerta.classList.remove("alert-success", "alert-danger", "alert-warning");
-    if (tipo === "danger") {
-        alerta.classList.add("alert-danger");
-    } else if (tipo === "warning") {
-        alerta.classList.add("alert-warning");
-    } else {
-        alerta.classList.add("alert-success");
-    }
+    alerta.classList.add("alert-" + tipo);
+
     texto.textContent = mensagem;
     alerta.style.display = "block";
     alerta.classList.remove("is-visible");
@@ -471,21 +472,28 @@ async function gerarEnfermidadesDoPaciente() {
     await gerarEnfermidade();
 }
 
-//Essa função serve para remover uma enfermidade da ficha de um paciente
-async function removerEnfermidade(id_enfermidade) {
-    if (!window.confirm("Tem certeza que deseja inativar essa enfermidade?")) {
-        return false;
-    }
+let _idEnfermidadePendente = null;
+
+function removerEnfermidade(id_enfermidade) {
+    _idEnfermidadePendente = id_enfermidade;
+    $('#modalConfirmarInativarEnfermidade').modal('show');
+}
+
+async function confirmarInativarEnfermidade() {
+    const id_enfermidade = _idEnfermidadePendente;
+    _idEnfermidadePendente = null;
+    $('#modalConfirmarInativarEnfermidade').modal('hide');
+
     const url = `../../controle/control.php?nomeClasse=${encodeURIComponent("EnfermidadeControle")}&metodo=${encodeURIComponent("tornarEnfermidadeInativa")}&id_enfermidade=${encodeURIComponent(id_enfermidade)}`;
-    try{
+    try {
         const resposta = await fetch(url);
 
-        if(resposta.ok){
+        if (resposta.ok) {
             await gerarEnfermidadesDoPaciente();
-        }else{
-            window.alert("Aconteceu algum problema ao remover uma enfermidade");
+        } else {
+            mostrarMensagemCadastroEnfermidade("Aconteceu algum problema ao remover uma enfermidade.", "danger");
         }
-    }catch(e){
-        window.alert("Aconteceu algum problema ao remover uma enfermidade");
+    } catch(e) {
+        mostrarMensagemCadastroEnfermidade("Aconteceu algum problema ao remover uma enfermidade.", "danger");
     }
 }

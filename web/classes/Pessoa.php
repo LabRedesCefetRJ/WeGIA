@@ -1,4 +1,6 @@
 <?php
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Util.php';
+
 abstract class Pessoa
 {
 
@@ -13,6 +15,8 @@ abstract class Pessoa
     private $sobrenome;
 
     private $sexo;
+
+    private $email;
 
     private $telefone;
 
@@ -48,30 +52,41 @@ abstract class Pessoa
     
     private $tipoSanguineo;
 
-    public function __construct($cpf,$nome,$sobrenome,$sexo,$dataNascimento,$registroGeral,$orgaoEmissor,$dataExpedicao,$nomeMae,$nomePai,$tipoSanguineo,$senha,$telefone,$imagem,$cep,$estado,$cidade,$bairro,$logradouro,$numeroEndereco,$complemento,$ibge)
+    private $cns;
+
+    public function __construct($cpf,$nome,$sobrenome,$sexo,$dataNascimento,$registroGeral,$orgaoEmissor,$dataExpedicao,$nomeMae,$nomePai,$tipoSanguineo,$senha,$email,$telefone,$imagem,$cep,$estado,$cidade,$bairro,$logradouro,$numeroEndereco,$complemento,$ibge)
     {
-        $this->cpf=$cpf;
-        $this->nome=$nome;
-        $this->sobrenome=$sobrenome;
-        $this->sexo=$sexo;
-        $this->dataNascimento=$dataNascimento;
-        $this->registroGeral=$registroGeral;
-        $this->orgaoEmissor=$orgaoEmissor;
-        $this->dataExpedicao=$dataExpedicao;
-        $this->nomeMae=$nomeMae;
-        $this->nomePai=$nomePai;
-        $this->tipoSanguineo=$tipoSanguineo;
-        $this->senha=$senha;
-        $this->telefone=$telefone;
-        $this->imagem=$imagem;
-        $this->cep=$cep;
-        $this->estado=$estado;
-        $this->cidade=$cidade;
-        $this->bairro=$bairro;
-        $this->logradouro=$logradouro;
-        $this->numeroEndereco=$numeroEndereco;
-        $this->complemento=$complemento;
-        $this->ibge=$ibge;
+        $this->cpf = $cpf;
+        if ($nome !== null && trim($nome) !== '') {
+            $this->setNome($nome);
+        } else {
+            $this->nome = $nome;
+        }
+        if ($sobrenome !== null && trim($sobrenome) !== '') {
+            $this->setSobrenome($sobrenome);
+        } else {
+            $this->sobrenome = $sobrenome;
+        }
+        $this->sexo = $sexo;
+        $this->dataNascimento = $dataNascimento;
+        $this->registroGeral = $registroGeral;
+        $this->orgaoEmissor = $orgaoEmissor;
+        $this->dataExpedicao = $dataExpedicao;
+        $this->setNomeMae($nomeMae);
+        $this->setNomePai($nomePai);
+        $this->tipoSanguineo = $tipoSanguineo;
+        $this->senha = $senha;
+        $this->email = $email;
+        $this->telefone = $telefone;
+        $this->imagem = $imagem;
+        $this->cep = $cep;
+        $this->estado = $estado;
+        $this->cidade = $cidade;
+        $this->bairro = $bairro;
+        $this->logradouro = $logradouro;
+        $this->numeroEndereco = $numeroEndereco;
+        $this->complemento = $complemento;
+        $this->ibge = $ibge;
     }
     
     public function getEstado()
@@ -120,6 +135,11 @@ abstract class Pessoa
     public function getSexo()
     {
         return $this->sexo;
+    }
+
+    public function getEmail()
+    {
+        return $this->email;
     }
 
     public function getTelefone()
@@ -214,11 +234,13 @@ abstract class Pessoa
 
     public function setNome($nome)
     {
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
         $this->nome = $nome;
     }
 
     public function setSobrenome($sobrenome)
     {
+        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
         $this->sobrenome = $sobrenome;
     }
 
@@ -227,10 +249,16 @@ abstract class Pessoa
         $this->sexo = $sexo;
     }
 
+    public function setEmail($email)
+    {
+        $this->email = $email;
+    }
+
     public function setTelefone($telefone)
     {
         $this->telefone = $telefone;
     }
+
 
     public function setDataNascimento($dataNascimento)
     {
@@ -289,16 +317,28 @@ abstract class Pessoa
 
     public function setNomeMae($nomeMae)
     {
+        Util::validarNomePessoaOpcionalOuLancar($nomeMae, 'nome da mãe', 412);
         $this->nomeMae = $nomeMae;
     }
 
     public function setNomePai($nomePai)
     {
+        Util::validarNomePessoaOpcionalOuLancar($nomePai, 'nome do pai', 412);
         $this->nomePai = $nomePai;
     }
 
     public function setTipoSanguineo($tipoSanguineo)
     {
         $this->tipoSanguineo = $tipoSanguineo;
+    }
+
+    public function getCns()
+    {
+        return $this->cns;
+    }
+
+    public function setCns(?string $cns)
+    {
+        $this->cns = $cns;
     }
 }

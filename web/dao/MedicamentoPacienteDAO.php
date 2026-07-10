@@ -137,25 +137,42 @@ class MedicamentoPacienteDAO
     /**
      * Cadastra o medicamento SOS associado a um atendimento.
      * @throws PDOException
+     * @return int ID da medicacao inserida
      */
-    public function cadastrarMedicamentoSos($id_atendimento, $medicamento, $dosagem, $horario, $duracao, $status_id)
+    public function cadastrarMedicamentoSos($id_atendimento, $medicamento, $dosagem, $duracao, $status_id)
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO saude_medicacao (
-                id_atendimento, medicamento, dosagem, horario, duracao,
+                id_atendimento, medicamento, dosagem, duracao,
                 saude_medicacao_status_idsaude_medicacao_status
             ) VALUES (
-                :id_atendimento, :medicamento, :dosagem, :horario, :duracao, :status_id
+                :id_atendimento, :medicamento, :dosagem, :duracao, :status_id
             )
         ");
         $stmt->execute([
             ':id_atendimento' => $id_atendimento,
             ':medicamento'    => $medicamento,
             ':dosagem'        => $dosagem,
-            ':horario'        => $horario,
             ':duracao'        => $duracao,
             ':status_id'      => $status_id
         ]);
-        return true;
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Insere múltiplos horários na tabela saude_medicacao_horario.
+     * @throws PDOException
+     */
+    public function inserirHorariosMedicacao(int $id_medicacao, array $horarios): void
+    {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO saude_medicacao_horario (id_medicacao, horario)
+            VALUES (:id_medicacao, :horario)
+        ");
+        foreach ($horarios as $horario) {
+            if (!empty($horario)) {
+                $stmt->execute([':id_medicacao' => $id_medicacao, ':horario' => $horario]);
+            }
+        }
     }
 }

@@ -126,13 +126,25 @@ class EntradaDAO
         try{
         $entradas=array();
         $pdo = Conexao::connect();
-        $sql = "SELECT e.id_entrada, o.nome_origem, a.descricao_almoxarifado, t.descricao, p.nome, e.data, e.hora, e.valor_total 
-            FROM entrada e 
-            INNER JOIN origem o ON o.id_origem = e.id_origem
-            INNER JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
-            INNER JOIN tipo_entrada t ON t.id_tipo = e.id_tipo
-            INNER JOIN pessoa p ON p.id_pessoa = e.id_responsavel
-            WHERE e.id_entrada = :id_entrada";
+        $sql = "SELECT 
+            e.id_entrada,
+            e.id_origem,
+            e.id_almoxarifado,
+            e.id_tipo,
+            e.ativo,
+            o.nome_origem,
+            a.descricao_almoxarifado,
+            t.descricao,
+            p.nome,
+            e.data,
+            e.hora,
+            e.valor_total 
+        FROM entrada e 
+        INNER JOIN origem o ON o.id_origem = e.id_origem
+        INNER JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
+        INNER JOIN tipo_entrada t ON t.id_tipo = e.id_tipo
+        INNER JOIN pessoa p ON p.id_pessoa = e.id_responsavel
+        WHERE e.id_entrada = :id_entrada";
         $consulta = $pdo->prepare($sql);
         $consulta->execute(array(
             ':id_entrada' => $id_entrada
@@ -140,7 +152,20 @@ class EntradaDAO
         
         while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
             $data = new DateTime($linha['data']);
-            $entradas[]=array('id_entrada'=>$linha['id_entrada'],'nome_origem'=>$linha['nome_origem'],'descricao_almoxarifado'=>$linha['descricao_almoxarifado'],'descricao'=>$linha['descricao'],'nome'=>$linha['nome'],'data'=>$data->format('d/m/Y'),'hora'=>$linha['hora'],'valor_total'=>$linha['valor_total']);
+            $entradas[] = array(
+                'id_entrada' => $linha['id_entrada'],
+                'id_origem' => $linha['id_origem'],
+                'id_almoxarifado' => $linha['id_almoxarifado'],
+                'id_tipo' => $linha['id_tipo'],
+                'ativo' => $linha['ativo'],
+                'nome_origem' => $linha['nome_origem'],
+                'descricao_almoxarifado' => $linha['descricao_almoxarifado'],
+                'descricao' => $linha['descricao'],
+                'nome' => $linha['nome'],
+                'data' => $data->format('d/m/Y'),
+                'hora' => $linha['hora'],
+                'valor_total' => $linha['valor_total']
+            );
         }
         } catch (PDOException $e){
             echo 'Error:' . $e->getMessage();
@@ -178,6 +203,326 @@ class EntradaDAO
         }
 
         return $almoxarifados;
+    }
+
+    public function anular(int $idEntrada): array
+    {
+        $pdo = Conexao::connect();
+        $pdo->beginTransaction();
+
+        try {
+            $sqlEntrada = "
+                SELECT id_entrada, id_almoxarifado, ativo
+                FROM entrada
+                WHERE id_entrada = :id_entrada
+                FOR UPDATE
+            ";
+
+            $stmtEntrada = $pdo->prepare($sqlEntrada);
+            $stmtEntrada->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtEntrada->execute();
+
+            $entrada = $stmtEntrada->fetch(PDO::FETCH_ASSOC);
+
+            if (!$entrada) {
+                throw new Exception("Entrada não encontrada.");
+            }
+
+            if ((int)$entrada['ativo'] === 0) {
+                throw new Exception("Esta entrada já está anulada.");
+            }
+
+            $idAlmoxarifado = (int)$entrada['id_almoxarifado'];
+
+            $sqlItens = "
+                SELECT id_ientrada, id_produto, qtd
+                FROM ientrada
+                WHERE id_entrada = :id_entrada
+                    AND oculto = false
+            ";
+
+            $stmtItens = $pdo->prepare($sqlItens);
+            $stmtItens->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtItens->execute();
+
+            $itens = $stmtItens->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($itens)) {
+                throw new Exception("Esta entrada não possui itens ativos.");
+            }
+
+            foreach ($itens as $item) {
+                $idProduto = (int)$item['id_produto'];
+                $qtdEntrada = (int)$item['qtd'];
+
+                $sqlEstoque = "
+                    SELECT qtd
+                    FROM estoque
+                    WHERE id_produto = :id_produto
+                        AND id_almoxarifado = :id_almoxarifado
+                    FOR UPDATE
+                ";
+
+                $stmtEstoque = $pdo->prepare($sqlEstoque);
+                $stmtEstoque->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+                $stmtEstoque->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+                $stmtEstoque->execute();
+
+                $estoque = $stmtEstoque->fetch(PDO::FETCH_ASSOC);
+
+                if (!$estoque) {
+                    throw new Exception("Estoque não encontrado para um dos produtos da entrada.");
+                }
+
+                $qtdAtual = (int)$estoque['qtd'];
+
+                if ($qtdAtual < $qtdEntrada) {
+                    throw new Exception(
+                        "Não é possível anular esta entrada, pois parte dos produtos já foi utilizada em saídas posteriores."
+                    );
+                }
+            }
+
+            foreach ($itens as $item) {
+                $idProduto = (int)$item['id_produto'];
+                $qtdEntrada = (int)$item['qtd'];
+
+                $sqlBaixarEstoque = "
+                    UPDATE estoque
+                    SET qtd = qtd - :qtd
+                    WHERE id_produto = :id_produto
+                        AND id_almoxarifado = :id_almoxarifado
+                ";
+
+                $stmtBaixarEstoque = $pdo->prepare($sqlBaixarEstoque);
+                $stmtBaixarEstoque->bindValue(':qtd', $qtdEntrada, PDO::PARAM_INT);
+                $stmtBaixarEstoque->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+                $stmtBaixarEstoque->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+                $stmtBaixarEstoque->execute();
+            }
+
+            $sqlOcultarItens = "
+                UPDATE ientrada
+                SET oculto = true
+                WHERE id_entrada = :id_entrada
+            ";
+
+            $stmtOcultarItens = $pdo->prepare($sqlOcultarItens);
+            $stmtOcultarItens->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtOcultarItens->execute();
+
+            $sqlAnularEntrada = "
+                UPDATE entrada
+                SET ativo = 0
+                WHERE id_entrada = :id_entrada
+            ";
+
+            $stmtAnularEntrada = $pdo->prepare($sqlAnularEntrada);
+            $stmtAnularEntrada->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtAnularEntrada->execute();
+
+            $pdo->commit();
+
+            return [
+                'id_almoxarifado' => $idAlmoxarifado,
+                'produtos' => array_map(function ($item) {
+                    return (int)$item['id_produto'];
+                }, $itens)
+            ];
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    public function editarBasico(int $idEntrada, string $data, string $hora, int $idOrigem, int $idTipo, array $itens): void {
+        $pdo = Conexao::connect();
+        $pdo->beginTransaction();
+
+        try {
+            $sqlEntrada = "
+                SELECT id_entrada, id_almoxarifado, ativo
+                FROM entrada
+                WHERE id_entrada = :id_entrada
+                FOR UPDATE
+            ";
+
+            $stmtEntrada = $pdo->prepare($sqlEntrada);
+            $stmtEntrada->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtEntrada->execute();
+
+            $entrada = $stmtEntrada->fetch(PDO::FETCH_ASSOC);
+
+            if (!$entrada) {
+                throw new Exception("Entrada não encontrada.");
+            }
+
+            if ((int)$entrada['ativo'] === 0) {
+                throw new Exception("Não é possível editar uma entrada anulada.");
+            }
+
+            $idAlmoxarifado = (int)$entrada['id_almoxarifado'];
+
+            $stmtOrigem = $pdo->prepare("SELECT id_origem FROM origem WHERE id_origem = :id_origem");
+            $stmtOrigem->bindValue(':id_origem', $idOrigem, PDO::PARAM_INT);
+            $stmtOrigem->execute();
+
+            if (!$stmtOrigem->fetch(PDO::FETCH_ASSOC)) {
+                throw new Exception("Origem inválida.");
+            }
+
+            $stmtTipo = $pdo->prepare("SELECT id_tipo FROM tipo_entrada WHERE id_tipo = :id_tipo");
+            $stmtTipo->bindValue(':id_tipo', $idTipo, PDO::PARAM_INT);
+            $stmtTipo->execute();
+
+            if (!$stmtTipo->fetch(PDO::FETCH_ASSOC)) {
+                throw new Exception("Tipo de entrada inválido.");
+            }
+
+            $sqlAtualizarEntrada = "
+                UPDATE entrada
+                SET data = :data,
+                    hora = :hora,
+                    id_origem = :id_origem,
+                    id_tipo = :id_tipo
+                WHERE id_entrada = :id_entrada
+            ";
+
+            $stmtAtualizarEntrada = $pdo->prepare($sqlAtualizarEntrada);
+            $stmtAtualizarEntrada->bindValue(':data', $data);
+            $stmtAtualizarEntrada->bindValue(':hora', $hora);
+            $stmtAtualizarEntrada->bindValue(':id_origem', $idOrigem, PDO::PARAM_INT);
+            $stmtAtualizarEntrada->bindValue(':id_tipo', $idTipo, PDO::PARAM_INT);
+            $stmtAtualizarEntrada->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+            $stmtAtualizarEntrada->execute();
+
+            foreach ($itens as $item) {
+                $idIentrada = isset($item['id_ientrada']) ? (int)$item['id_ientrada'] : 0;
+                $novaQtd = isset($item['qtd']) ? (int)$item['qtd'] : 0;
+                $novoValorUnitario = isset($item['valor_unitario']) ? (float)$item['valor_unitario'] : -1;
+
+                if ($idIentrada < 1) {
+                    throw new Exception("Item de entrada inválido.");
+                }
+
+                if ($novaQtd <= 0) {
+                    throw new Exception("Quantidade da entrada inválida.");
+                }
+
+                if ($novoValorUnitario < 0) {
+                    throw new Exception("Valor unitário inválido.");
+                }
+
+                $sqlItemAtual = "
+                    SELECT id_ientrada, id_produto, qtd
+                    FROM ientrada
+                    WHERE id_ientrada = :id_ientrada
+                        AND id_entrada = :id_entrada
+                        AND oculto = false
+                    FOR UPDATE
+                ";
+
+                $stmtItemAtual = $pdo->prepare($sqlItemAtual);
+                $stmtItemAtual->bindValue(':id_ientrada', $idIentrada, PDO::PARAM_INT);
+                $stmtItemAtual->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+                $stmtItemAtual->execute();
+
+                $itemAtual = $stmtItemAtual->fetch(PDO::FETCH_ASSOC);
+
+                if (!$itemAtual) {
+                    throw new Exception("Um dos itens da entrada não foi encontrado.");
+                }
+
+                $idProduto = (int)$itemAtual['id_produto'];
+                $qtdAntiga = (int)$itemAtual['qtd'];
+                $diferenca = $novaQtd - $qtdAntiga;
+
+                if ($diferenca < 0) {
+                    $qtdParaRemover = abs($diferenca);
+
+                    $sqlEstoque = "
+                        SELECT qtd
+                        FROM estoque
+                        WHERE id_produto = :id_produto
+                            AND id_almoxarifado = :id_almoxarifado
+                        FOR UPDATE
+                    ";
+
+                    $stmtEstoque = $pdo->prepare($sqlEstoque);
+                    $stmtEstoque->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+                    $stmtEstoque->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+                    $stmtEstoque->execute();
+
+                    $estoque = $stmtEstoque->fetch(PDO::FETCH_ASSOC);
+
+                    if (!$estoque) {
+                        throw new Exception("Estoque não encontrado para um dos produtos.");
+                    }
+
+                    if ((int)$estoque['qtd'] < $qtdParaRemover) {
+                        throw new Exception(
+                            "Não é possível diminuir a quantidade desta entrada, pois parte dos produtos já foi utilizada."
+                        );
+                    }
+                }
+
+                if ($diferenca !== 0) {
+                    $sqlAtualizarEstoque = "
+                        UPDATE estoque
+                        SET qtd = qtd + :diferenca
+                        WHERE id_produto = :id_produto
+                            AND id_almoxarifado = :id_almoxarifado
+                    ";
+
+                    $stmtAtualizarEstoque = $pdo->prepare($sqlAtualizarEstoque);
+                    $stmtAtualizarEstoque->bindValue(':diferenca', $diferenca, PDO::PARAM_INT);
+                    $stmtAtualizarEstoque->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
+                    $stmtAtualizarEstoque->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+                    $stmtAtualizarEstoque->execute();
+                }
+
+                $sqlAtualizarItem = "
+                    UPDATE ientrada
+                    SET qtd = :qtd,
+                        valor_unitario = :valor_unitario
+                    WHERE id_ientrada = :id_ientrada
+                        AND id_entrada = :id_entrada
+                        AND oculto = false
+                ";
+
+                $stmtAtualizarItem = $pdo->prepare($sqlAtualizarItem);
+                $stmtAtualizarItem->bindValue(':qtd', $novaQtd, PDO::PARAM_INT);
+                $stmtAtualizarItem->bindValue(':valor_unitario', $novoValorUnitario);
+                $stmtAtualizarItem->bindValue(':id_ientrada', $idIentrada, PDO::PARAM_INT);
+                $stmtAtualizarItem->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+                $stmtAtualizarItem->execute();
+            }
+
+            $this->recalcularValorTotalEntrada($idEntrada, $pdo);
+
+            $pdo->commit();
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private function recalcularValorTotalEntrada(int $idEntrada, PDO $pdo): void
+    {
+        $sql = "
+            UPDATE entrada
+            SET valor_total = (
+                SELECT IFNULL(SUM(qtd * valor_unitario), 0)
+                FROM ientrada
+                WHERE id_entrada = :id_entrada
+                    AND oculto = false
+            )
+            WHERE id_entrada = :id_entrada
+        ";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
+        $stmt->execute();
     }
 }
 ?>

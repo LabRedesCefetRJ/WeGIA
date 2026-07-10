@@ -136,7 +136,7 @@
 							$socios = array();
 							$resultado = mysqli_query($conexao, "SELECT *, s.id_socio as socioid FROM socio AS s LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa LEFT JOIN socio_tipo AS st ON s.id_sociotipo = st.id_sociotipo");
 							while ($registro = mysqli_fetch_assoc($resultado)) {
-								$socios[] = $registro['nome'] . '|' . $registro['cpf'] . '|' . $registro['socioid'];
+								$socios[] = htmlspecialchars($registro['nome'] . ' ' . $registro['sobrenome'] . '|' . $registro['cpf'] . '|' . $registro['socioid']);
 							}
 							?>
 							<script>

@@ -161,6 +161,18 @@ if (!$id_socio || $id_socio < 1) {
             $(".menuu").load("<?php echo WWW; ?>html/menu.php");
         });
     </script>
+
+    <style>
+        .inline-fields {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .inline-fields .form-control {
+            flex: 1;
+        }
+    </style>
 </head>
 
 <body>

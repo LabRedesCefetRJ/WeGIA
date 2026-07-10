@@ -176,10 +176,13 @@ class AtendimentoPacienteControle
 
             $medicamento = trim((string)($medicacao['nome_medicacao'] ?? ''));
             $dosagem = trim((string)($medicacao['dosagem'] ?? ''));
-            $horario = trim((string)($medicacao['horario'] ?? ''));
+            $horarios = $medicacao['horarios'] ?? [];
+            if (is_string($horarios)) {
+                $horarios = array_filter(array_map('trim', explode(',', $horarios)));
+            }
             $duracao = trim((string)($medicacao['tempo'] ?? ''));
 
-            if ($medicamento === '' || $dosagem === '' || $horario === '' || $duracao === '') {
+            if ($medicamento === '' || $dosagem === '' || empty($horarios) || $duracao === '') {
                 throw new InvalidArgumentException('Campos da medicação estão incompletos.', 400);
             }
         }

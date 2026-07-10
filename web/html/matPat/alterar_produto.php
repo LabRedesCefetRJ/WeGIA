@@ -19,6 +19,9 @@ permissao($_SESSION['id_pessoa'], 22, 3);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
+// Adiciona Função de mensagem
+require_once ROOT . "/html/geral/msg.php";
+
 include_once ROOT . '/dao/Conexao.php';
 include_once ROOT . '/dao/CategoriaDAO.php';
 include_once ROOT . '/dao/UnidadeDAO.php';
@@ -46,6 +49,9 @@ if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESS
 	unset($_SESSION['categoria']);
 	unset($_SESSION['unidade']);
 }
+
+$produtoDAO = new ProdutoDAO();
+$todosProdutos = $produtoDAO->listarTodos();
 ?>
 <!doctype html>
 <html class="fixed">
@@ -91,6 +97,11 @@ if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESS
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 	<script type="text/javascript">
+		var produtos = <?php echo $produto; ?>;
+		var todosProdutos = <?php echo $todosProdutos; ?>;
+		var categoria = <?php echo $categoria; ?>;
+		var unidade = <?php echo $unidade; ?>;
+		
 		function editar_produto() {
 
 			$("#produto").prop('disabled', false);
@@ -107,6 +118,13 @@ if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESS
 		}
 
 		function cancelar_produto() {
+			const produtoOriginal = produtos[0];
+
+			$("#produto").val(produtoOriginal.descricao);
+			$("#codigo").val(produtoOriginal.codigo);
+			$("#id_categoria").val(produtoOriginal.id_categoria_produto);
+			$("#id_unidade").val(produtoOriginal.id_unidade);
+			$("#valor").val(produtoOriginal.preco);
 
 			$("#produto").prop('disabled', true);
 			$("#id_categoria").prop('disabled', true);
@@ -124,9 +142,10 @@ if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESS
 			$("#header").load("<?= WWW ?>html/header.php");
 			$(".menuu").load("<?= WWW ?>html/menu.php");
 
-			var produtos = <?php echo $produto; ?>;
+			/*var produtos = <?php echo $produto; ?>;
+			var todosProdutos = <?php echo $todosProdutos; ?>;
 			var categoria = <?php echo $categoria; ?>;
-			var unidade = <?php echo $unidade; ?>;
+			var unidade = <?php echo $unidade; ?>;*/
 
 			$("#produto").prop('disabled', true);
 			$("#id_categoria").prop('disabled', true);
@@ -176,6 +195,28 @@ if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESS
 				}
 			})
 		});
+
+		function validarAlteracao() {
+			const idProdutoAtual = $("#id_produto").val();
+			const codigoDigitado = $("#codigo").val();
+
+			let codigoDuplicado = false;
+
+			$.each(todosProdutos, function(i, item) {
+				if (codigoDigitado == item.codigo && idProdutoAtual != item.id_produto) {
+					codigoDuplicado = true;
+					return false;
+				}
+			});
+
+			if (codigoDuplicado) {
+				alert("O código do produto informado já existe. Por favor, informe um código diferente!");
+				$("#codigo").focus();
+				return false;
+			}
+
+			return true;
+		}
 	</script>
 
 </head>
@@ -191,6 +232,7 @@ if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESS
 			<header class="page-header">
 				<h2>Alterar Produto</h2>
 				<div class="right-wrapper pull-right">
+					<?php getMsg(); ?>
 					<ol class="breadcrumbs">
 						<li>
 							<a href="<?= WWW ?>html/home.php">
@@ -257,7 +299,7 @@ if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESS
 							</div>
 
 							<div id="edit" class="tab-pane">
-								<form id="formulario" action="<?= WWW ?>controle/control.php">
+								<form id="formulario" action="<?= WWW ?>controle/control.php" onsubmit="return validarAlteracao()">
 									<input type="hidden" name="nomeClasse" value="ProdutoControle">
 									<input type="hidden" name="metodo" value="alterarProduto">
 									<input type="hidden" name="id_produto" id="id_produto">
@@ -311,6 +353,7 @@ if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESS
 													<button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_produto()">Editar</button>
 													<input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
 													<input type="reset" class="btn btn-default">
+													<a href="<?= WWW ?>html/matPat/listar_produto.php" class="btn btn-info">Voltar</a>
 												</div>
 											</div>
 										</div>

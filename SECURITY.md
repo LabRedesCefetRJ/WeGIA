@@ -23,16 +23,27 @@ To test WeGIA’s code during the design phase, clone the repository and use sta
 
 You can use a virtual machine with WeGIA pre-installed to run your security tests.
 
-- **VirtualBox**
-  - Prerequisite: Install [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
-  - Download the [WeGIA Virtual Machine](https://www.wegia.org/vm/)
-    - **Username**: `wegia`  
-    - **Password**: `wegia`
-  - Watch the [WeGIA VM tutorial on YouTube](https://youtu.be/mGayZb2snqk)
+#### **LXC Container**
+ ```
+ sudo apt update
+sudo apt install lxc lxc-templates
+sudo lxc-create -n wegiaLXC -t download -- --dist debian --release bookworm --arch amd64
+sudo lxc-start  -n wegiaLXC
+sudo lxc-attach -n wegiaLXC -- bash -c "
+  apt update && \
+  apt install wget -y && \
+  wget -O /tmp/install.sh https://raw.githubusercontent.com/LabRedesCefetRJ/WeGIA/refs/heads/master/web/instalador/install.sh && \
+  chmod +x /tmp/install.sh && \
+  /tmp/install.sh
+"
+ ```
 
-- **Local Installation**
-
-  Follow the [ installation instructions](https://github.com/LabRedesCefetRJ/WeGIA?tab=readme-ov-file#como-instalar)
+#### **VirtualBox**
+- Prerequisite: Install [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+- Download the [WeGIA Virtual Machine](https://www.wegia.org/vm/)
+  - **Username**: `wegia`  
+  - **Password**: `wegia`
+- Watch the [WeGIA VM tutorial on YouTube](https://youtu.be/mGayZb2snqk)
 
 ---
 
@@ -50,10 +61,10 @@ The following table indicates which versions of WeGIA receive security updates:
 
 | Version | Supported |
 |---------|-----------|
-| ≥ 3.7   | ✅ Yes     |
-| < 3.7   | ❌ No      |
+| ≥ 3.8   | ✅ Yes     |
+| < 3.8   | ❌ No      |
 
-> Only versions 3.4 and above are actively maintained for security.
+> Only versions 3.8 and above are actively maintained for security.
 
 ---
 

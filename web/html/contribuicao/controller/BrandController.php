@@ -2,7 +2,7 @@
 require_once dirname(__DIR__).'/dao/ConexaoDAO.php';
 require_once dirname(__DIR__).'/dao/BrandDAO.php';
 require_once dirname(__DIR__).'/model/Brand.php';
-require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'helper' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 class BrandController
 {

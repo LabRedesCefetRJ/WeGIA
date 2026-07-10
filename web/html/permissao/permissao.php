@@ -35,10 +35,10 @@ function permissao($id_pessoa, $id_recurso, $id_acao = 1): void
 		$permissao = $stmt->fetch(PDO::FETCH_ASSOC);
 
 		if (!$permissao)
-			throw new LogicException('', 403);
+			throw new LogicException("Usuário não possui permissão para acessar o recurso {$id_recurso}", 403);
 
 		if ($permissao['id_acao'] < $id_acao)
-			throw new LogicException('', 403);
+			throw new LogicException("Usuário não possui permissão para realizar a ação {$id_acao} no recurso {$id_recurso}", 403);
 	} catch (Exception $e) {
 		//Armazena exceção em um arquivo de log
 		error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");

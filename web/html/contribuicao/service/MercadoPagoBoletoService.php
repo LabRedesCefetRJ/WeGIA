@@ -2,7 +2,7 @@
 require_once 'ApiBoletoServiceInterface.php';
 require_once '../model/ContribuicaoLog.php';
 require_once '../dao/GatewayPagamentoDAO.php';
-require_once '../helper/Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 class MercadoPagoBoletoService implements ApiBoletoServiceInterface
 {
     public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
@@ -30,10 +30,6 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
         $dateOfExpiration = $contribuicaoLog->getDataVencimento() . 'T12:59:59.000-04:00';
         //"date_of_expiration": "2025-06-01T12:59:59.000-04:00",
 
-        $nome = explode(" ", $contribuicaoLog->getSocio()->getNome());
-        $primeiroNome = $nome[0];
-        $ultimoNome = implode(" ", array_slice($nome, 1)) == "" ? " " : implode(" ", array_slice($nome, 1));
-
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
@@ -51,8 +47,8 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
             "payment_method_id": "bolbradesco",
             "date_of_expiration": "'. $dateOfExpiration .'",
             "payer": {
-                "first_name": "'.$primeiroNome.'",
-                "last_name": "'.$ultimoNome.'",
+                "first_name": "'.$contribuicaoLog->getSocio()->getNome().'",
+                "last_name": "'.$contribuicaoLog->getSocio()->getSobrenome().'",
                 "email": "'.$contribuicaoLog->getSocio()->getEmail().'",
                 "identification": {
                     "type": "CPF",

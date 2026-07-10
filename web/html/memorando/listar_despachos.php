@@ -193,7 +193,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							.text(item.data.substr(8, 2) + "/" + item.data.substr(5, 2) + "/" + item.data.substr(0, 4) + " " + item.data.substr(10))))
 					.append($("<tr>")
 						.append($("<td colspan=4 id=texto" + item.id + ">")
-							.html(item.texto))));
+							.text(item.texto))));
 		});
 		$.each(despachoAnexo, function(i, item) {
 			$("#" + item.id_despacho)

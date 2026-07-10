@@ -26,6 +26,10 @@ permissao($id_pessoa, 11, 3);
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once ROOT . "/html/geral/msg.php";
+
+$oldInput = getSessionFormData();
+$fieldErrors = getSessionFormErrors();
 
 require_once ROOT . "/controle/FuncionarioControle.php";
 require_once ROOT . "/controle/AtendidoControle.php";
@@ -36,11 +40,19 @@ require_once "../personalizacao_display.php";
 require_once "../../dao/Conexao.php";
 $pdo = Conexao::connect();
 
+$informacoesFunc = '[]';
+$id_pessoaForm = null;
+$sobrenome = '';
+$situacoes = [];
+$cargos = [];
+$tipos = [];
+$escala = [];
+
 $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
 
 if (!$cpf || strlen($cpf) < 1) {
-  http_response_code(400);
-  echo json_encode(['erro' => 'O CPF informado não é válido.']);
+  setSessionMsg('O CPF informado não é válido.', 'err');
+  header('Location: pre_cadastro_funcionario.php');
   exit();
 }
 
@@ -58,7 +70,9 @@ try {
   $tipos = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
   $escala = $pdo->query("SELECT * FROM escala_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
-  Util::tratarException($e);
+  setSessionMsg('Erro ao carregar os dados da pessoa existente.', 'err');
+  header('Location: pre_cadastro_funcionario.php');
+  exit();
 }
 ?>
 <!DOCTYPE html>
@@ -163,6 +177,7 @@ try {
         </div>
       </header>
 
+      <?php sessionMsg(); ?>
       <div class="col-md-8 col-lg-12">
         <div class="tabs">
           <ul class="nav nav-tabs tabs-primary">
@@ -172,7 +187,11 @@ try {
           </ul>
           <div class="tab-content">
             <div id="overview" class="tab-pane active">
-              <form class="form-horizontal" method="POST" action="../../controle/control.php">
+              <form class="form-horizontal" method="POST" action="../../controle/control.php" onsubmit="return validarFuncionarioExistente()">
+                <div id="clientValidationAlert" class="alert alert-danger alert-dismissible" style="display:none;">
+                  <button type="button" class="close" onclick="$('#clientValidationAlert').hide()">&times;</button>
+                  <span id="clientValidationAlertText"></span>
+                </div>
                 <h4 class="mb-xlg">Informações Pessoais</h4>
                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                 <div class="form-group">
@@ -211,25 +230,37 @@ try {
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                    <input type="text" class="form-control<?= isset($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? ($cpf ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                    <p id="error_cpf" class="help-block text-danger" style="display: <?= isset($fieldErrors['cpf']) ? 'block' : 'none' ?>;">
+                      <?= isset($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : '' ?>
+                    </p>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileCompany">Número do RG<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
+                    <input type="text" class="form-control<?= isset($fieldErrors['rg']) ? ' is-invalid' : '' ?>" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required value="<?= htmlspecialchars($oldInput['rg'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    <p id="error_rg" class="help-block text-danger" style="display: <?= isset($fieldErrors['rg']) ? 'block' : 'none' ?>;">
+                      <?= isset($fieldErrors['rg']) ? htmlspecialchars($fieldErrors['rg'], ENT_QUOTES, 'UTF-8') : '' ?>
+                    </p>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
+                    <input type="text" class="form-control<?= isset($fieldErrors['orgao_emissor']) ? ' is-invalid' : '' ?>" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['orgao_emissor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    <p id="error_orgao_emissor" class="help-block text-danger" style="display: <?= isset($fieldErrors['orgao_emissor']) ? 'block' : 'none' ?>;">
+                      <?= isset($fieldErrors['orgao_emissor']) ? htmlspecialchars($fieldErrors['orgao_emissor'], ENT_QUOTES, 'UTF-8') : '' ?>
+                    </p>
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileCompany">Data de expedição<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
+                    <input type="date" class="form-control<?= isset($fieldErrors['data_expedicao']) ? ' is-invalid' : '' ?>" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required value="<?= htmlspecialchars($oldInput['data_expedicao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    <p id="error_data_expedicao" class="help-block text-danger" style="display: <?= isset($fieldErrors['data_expedicao']) ? 'block' : 'none' ?>;">
+                      <?= isset($fieldErrors['data_expedicao']) ? htmlspecialchars($fieldErrors['data_expedicao'], ENT_QUOTES, 'UTF-8') : '' ?>
+                    </p>
                   </div>
                 </div>
                 <div class="form-group">
@@ -241,7 +272,10 @@ try {
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_admissao" id="data_admissao" id="profileCompany" max=<?php echo date('Y-m-d'); ?> required>
+                    <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>" name="data_admissao" id="data_admissao" max=<?php echo date('Y-m-d'); ?> required value="<?= htmlspecialchars($oldInput['data_admissao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                    <p id="error_data_admissao" class="help-block text-danger" style="display: <?= isset($fieldErrors['data_admissao']) ? 'block' : 'none' ?>;">
+                      <?= isset($fieldErrors['data_admissao']) ? htmlspecialchars($fieldErrors['data_admissao'], ENT_QUOTES, 'UTF-8') : '' ?>
+                    </p>
                   </div>
                 </div>
                 <div class="form-group">
@@ -252,7 +286,8 @@ try {
                       <option selected disabled>Selecionar</option>
                       <?php
                       foreach ($situacoes as $situacao) {
-                        echo "<option value=" . htmlspecialchars($situacao['id_situacao']) . ">" . htmlspecialchars($situacao['situacoes']) . "</option>";
+                        $selected = isset($oldInput['situacao']) && $oldInput['situacao'] == $situacao['id_situacao'] ? ' selected' : '';
+                        echo "<option value=\"" . htmlspecialchars($situacao['id_situacao']) . "\"" . $selected . ">" . htmlspecialchars($situacao['situacoes']) . "</option>";
                       }
                       ?>
                     </select>
@@ -266,7 +301,8 @@ try {
                       <option selected disabled>Selecionar</option>
                       <?php
                       foreach ($cargos as $cargo) {
-                        echo "<option value=" . htmlspecialchars($cargo['id_cargo']) . ">" . htmlspecialchars($cargo['cargo']) . "</option>";
+                        $selected = isset($oldInput['cargo']) && $oldInput['cargo'] == $cargo['id_cargo'] ? ' selected' : '';
+                        echo "<option value=\"" . htmlspecialchars($cargo['id_cargo']) . "\"" . $selected . ">" . htmlspecialchars($cargo['cargo']) . "</option>";
                       }
                       ?>
                     </select>
@@ -280,7 +316,8 @@ try {
                       <option selected disabled value="">Selecionar</option>
                       <?php
                       foreach ($escala as $key => $value) {
-                        echo ("<option value=" . htmlspecialchars($value["id_escala"]) . ">" . htmlspecialchars($value["descricao"]) . "</option>");
+                        $selected = isset($oldInput['escala']) && $oldInput['escala'] == $value['id_escala'] ? ' selected' : '';
+                        echo ("<option value=\"" . htmlspecialchars($value['id_escala']) . "\"" . $selected . ">" . htmlspecialchars($value['descricao']) . "</option>");
                       }
                       ?>
                     </select>
@@ -294,7 +331,8 @@ try {
                       <option selected disabled value="">Selecionar</option>
                       <?php
                       foreach ($tipos as $tipo) {
-                        echo "<option value=" . htmlspecialchars($tipo['id_tipo']) . ">" . htmlspecialchars($tipo['descricao']) . "</option>";
+                        $selected = isset($oldInput['tipoCargaHoraria']) && $oldInput['tipoCargaHoraria'] == $tipo['id_tipo'] ? ' selected' : '';
+                        echo "<option value=\"" . htmlspecialchars($tipo['id_tipo']) . "\"" . $selected . ">" . htmlspecialchars($tipo['descricao']) . "</option>";
                       }
                       ?>
                     </select>
@@ -322,7 +360,7 @@ try {
                       <input type="hidden" name="id_pessoa" value="<?php echo $id_pessoaForm ?>">
                       <input type="hidden" name="sobrenome" value="<?php echo $sobrenome ?>">
                       <input type="hidden" name="metodo" value="incluirExistente">
-                      <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="validarFuncionario()">
+                      <input id="enviar" type="submit" class="btn btn-primary" value="Salvar" onclick="return validarFuncionarioExistente()">
                       <input type="reset" class="btn btn-default">
                     </div>
                   </div>
@@ -502,6 +540,50 @@ try {
 
         document.getElementById("enviar").disabled = false;
       }
+    }
+
+    function clearValidationFeedbackExistente() {
+      $('.form-control').removeClass('is-invalid');
+      $('.help-block.text-danger').hide();
+      $('#clientValidationAlert').hide();
+      $('#clientValidationAlertText').text('');
+    }
+
+    function showClientAlertExistente(message) {
+      $('#clientValidationAlertText').text(message);
+      $('#clientValidationAlert').show();
+    }
+
+    function showFieldErrorExistente(fieldId, message) {
+      $('#' + fieldId).addClass('is-invalid');
+      $('#error_' + fieldId).text(message).show();
+    }
+
+    function validarFuncionarioExistente() {
+      clearValidationFeedbackExistente();
+      var dt_nasc = document.getElementById('nascimento').value;
+      var dt_admissao = document.getElementById('data_admissao').value;
+      if (dt_nasc && dt_admissao) {
+        var nascimentoObj = new Date(dt_nasc);
+        var admissaoObj = new Date(dt_admissao);
+        var minAdmissao = new Date(nascimentoObj);
+        minAdmissao.setFullYear(minAdmissao.getFullYear() + 14);
+
+        if (admissaoObj < minAdmissao) {
+          showClientAlertExistente('A data de admissão deve respeitar a idade mínima de 14 anos do funcionário.');
+          showFieldErrorExistente('data_admissao', 'Data de admissão deve respeitar 14 anos mínimos.');
+          return false;
+        }
+      }
+
+      var data_expedicao = document.getElementById('data_expedicao').value;
+      if (dt_nasc && data_expedicao && data_expedicao < dt_nasc) {
+        showClientAlertExistente('A data de expedição não pode ser anterior à data de nascimento.');
+        showFieldErrorExistente('data_expedicao', 'Data de expedição deve ser posterior à data de nascimento.');
+        return false;
+      }
+
+      return true;
     }
 
     function gerarSituacao() {

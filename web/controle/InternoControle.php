@@ -32,6 +32,8 @@ class InternoControle
     }
     public function verificar()
     {
+        require_once '../../permissao/permissao.php';
+        permissao($_SESSION['id_pessoa'], 12, 3);
         extract($_REQUEST);
 
         if ((!isset($nome)) || (empty($nome))) {
@@ -76,64 +78,6 @@ class InternoControle
         return $interno;
     }
 
-    public function listarTodos($redirect = true)
-    {
-        try {
-            $internoDAO = new InternoDAO();
-            $internos = $internoDAO->listarTodos();
-
-            $_SESSION['internos'] = $internos;
-            if ($redirect) {
-                header('Location: ' . '../html/informacao_interno.php');
-            }
-        } catch (Exception $e) {
-            Util::tratarException($e);
-        }
-    }
-
-    public function listarTodos2()
-    {
-        try {
-            $internoDAO = new InternoDAO();
-            $internos = $internoDAO->listarTodos2();
-
-            $_SESSION['internos2'] = $internos;
-        } catch (Exception $e) {
-            Util::tratarException($e);
-        }
-    }
-
-    public function listarUm()
-    {
-        extract($_REQUEST);
-        $cache = new Cache();
-        $infInterno = $cache->read($id);
-        if (!$infInterno) {
-            try {
-                $internoDAO = new InternoDAO();
-                $infInterno = $internoDAO->listar($id);
-
-                $_SESSION['interno'] = $infInterno;
-                $cache->save($id, $infInterno, '15 seconds');
-                header('Location:' . '../html/informacao_interno.php');
-            } catch (Exception $e) {
-                Util::tratarException($e);
-            }
-        } else {
-            header('Location:' . '../html/informacao_interno.php');
-        }
-    }
-
-    public function listarCpf()
-    {
-        try {
-            $internosDAO = new InternoDAO();
-            $internoscpf = $internosDAO->listarCPF();
-            $_SESSION['cpf_interno'] = $internoscpf;
-        } catch (Exception $e) {
-            Util::tratarException($e);
-        }
-    }
 
     public function comprimir($documParaCompressao)
     {
@@ -144,6 +88,8 @@ class InternoControle
     public function incluir()
     {
         try {
+            require_once '../../permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 12, 3);
             $interno = $this->verificar();
             $intDAO = new AtendidoDAO();
             $docDAO = new DocumentoDAO();
@@ -159,6 +105,8 @@ class InternoControle
     public function alterar()
     {
         try {
+            require_once '../../permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 12, 3);
             extract($_REQUEST);
             $interno = $this->verificar();
             $interno->setIdInterno($idInterno);
@@ -174,6 +122,8 @@ class InternoControle
     public function excluir()
     {
         try {
+            require_once '../../permissao/permissao.php';
+            permissao($_SESSION['id_pessoa'], 12, 3);
             extract($_REQUEST);
             $AtendidoDAO = new AtendidoDAO();
 

@@ -59,8 +59,8 @@ async function buscarFaturas() {
         alert(`${error.message}`);
         console.error(error.message);
     } finally {
-        syncBtn.innerHTML = 'Carregar faturas de recorrências';
-        syncBtn.disabled = false;
+        faturaBtn.innerHTML = 'Carregar faturas de recorrências';
+        faturaBtn.disabled = false;
     }
 }
 

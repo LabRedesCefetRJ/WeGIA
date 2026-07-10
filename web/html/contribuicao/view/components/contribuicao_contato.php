@@ -1,6 +1,10 @@
 <div class="wrap-input100">
   <label for="nome" class="label-input100">Nome <span class="obrigatorio">*</span></label>
-  <input type="text" class="input100" name="nome" id="nome" placeholder="Informe seu nome completo">
+  <input type="text" class="input100" name="nome" id="nome" placeholder="Informe seu nome">
+</div>
+<div class="wrap-input100">
+  <label for="sobrenome" class="label-input100">Sobrenome <span class="obrigatorio">*</span></label>
+  <input type="text" class="input100" name="sobrenome" id="sobrenome" placeholder="Informe seu sobrenome">
 </div>
 <div class="wrap-input100">
   <label for="data_nascimento" class="label-input100">Data de Nascimento <span class="obrigatorio">*</span></label>

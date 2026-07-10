@@ -137,11 +137,12 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="type">Tipo de Relatório <span class="obrig">*</span></label>
 								<div class="col-md-8">
-									<select name="tipo_relatorio" oninput="changeType(this.value)" id="tipo-relat" required>
+									<select name="tipo_relatorio" oninput="changeType(this.value); controlarCampoMediaSaida();" id="tipo-relat" required>
 										<option value="entrada">Relatório de Entrada</option>
 										<option value="estoque">Relatório de Estoque</option>
 										<option value="saida">Relatório de Saída</option>
 										<option value="produto">Relatório de Produtos</option>
+										<option value="requisicao">Relatório de Requisição</option>
 									</select>
 								</div>
 							</div>
@@ -163,6 +164,17 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" id="data_inicio" name="data_inicio" max="9999-12-31">
 									<br>
 									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" id="data_fim" name="data_fim" max="9999-12-31">
+								</div>
+							</div>
+
+							<div class="form-group" id="media-saida">
+								<label class="col-md-3 control-label"> Média de saída</label>
+								<div class="col-md-8">
+									<select name="tipo_media">
+										<option value="dia">Por dia</option>
+										<option value="mes">Por mês</option>
+										<option value="ano">Por ano</option>
+									</select>
 								</div>
 							</div>
 
@@ -226,7 +238,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group" id='tipo-saida' style="display: none;">
 								<label class="col-md-3 control-label">Tipo de Saida</label>
 								<div class="col-md-8">
-									<select name="">
+									<select name="tipo">
 										<option value="">Todas as Opções</option>
 										<?php
 										$pdo = Conexao::connect();
@@ -255,6 +267,24 @@ require_once ROOT . "/html/personalizacao_display.php";
 											echo ('
 												<option value="' . $value['id_pessoa'] . '">' . $value['nome'] . ' ' . $value['sobrenome'] . '</option>
 												');
+										}
+										?>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group" id="categoria-relat" style="display: none;">
+								<label class="col-md-3 control-label">Categoria</label>
+								<div class="col-md-8">
+									<select name="categoria_produto" id="categoriaProduto">
+										<option value="">Todas as Categorias</option>
+										<?php
+										$pdo = Conexao::connect();
+										$res = $pdo->query("SELECT id_categoria_produto, descricao_categoria FROM categoria_produto ORDER BY descricao_categoria;");
+										$categorias = $res->fetchAll(PDO::FETCH_ASSOC);
+
+										foreach ($categorias as $categoria) {
+											echo '<option value="' . $categoria['id_categoria_produto'] . '">' . htmlspecialchars($categoria['descricao_categoria']) . '</option>';
 										}
 										?>
 									</select>
@@ -630,6 +660,63 @@ require_once ROOT . "/html/personalizacao_display.php";
 			document.getElementById('produtoSelect').innerHTML = '<option value="">Selecione um Produto</option>';
 		}
 	});
+
+	function controlarCampoMediaSaida() {
+		const tipoRelatorio = document.getElementById('tipo-relat').value;
+
+		const campoMedia = document.getElementById('media-saida');
+		const categoriaProduto = document.getElementById('categoria-relat');
+
+		campoMedia.style.display = tipoRelatorio === 'saida' ? 'block' : 'none';
+
+		if (categoriaProduto) {
+			categoriaProduto.style.display = (tipoRelatorio === 'requisicao' || tipoRelatorio === 'estoque') ? 'block' : 'none';
+		}
+
+		if (tipoRelatorio === 'estoque') {
+			document.getElementById('per').style.display = 'none';
+			document.getElementById('orig').style.display = 'none';
+			document.getElementById('dest').style.display = 'none';
+			document.getElementById('tipo-entrada').style.display = 'none';
+			document.getElementById('tipo-saida').style.display = 'none';
+			document.getElementById('resp').style.display = 'none';
+
+			document.getElementById('almoxarifado').style.display = 'block';
+			document.getElementById('panel-mostrarZerados').style.display = 'block';
+			document.getElementById('gerar').style.display = 'block';
+
+			document.getElementById('per2').style.display = 'none';
+			document.getElementById('produto').style.display = 'none';
+			document.getElementById('almoxarifado2').style.display = 'none';
+			document.getElementById('gerar2').style.display = 'none';
+			document.getElementById('gerar3').style.display = 'none';
+
+			return;
+		}
+
+		if (tipoRelatorio === 'requisicao') {
+			document.getElementById('per').style.display = 'none';
+			document.getElementById('orig').style.display = 'none';
+			document.getElementById('dest').style.display = 'none';
+			document.getElementById('tipo-entrada').style.display = 'none';
+			document.getElementById('tipo-saida').style.display = 'none';
+			document.getElementById('resp').style.display = 'none';
+
+			document.getElementById('almoxarifado').style.display = 'block';
+			document.getElementById('panel-mostrarZerados').style.display = 'block';
+			document.getElementById('gerar').style.display = 'block';
+
+			document.getElementById('per2').style.display = 'none';
+			document.getElementById('produto').style.display = 'none';
+			document.getElementById('almoxarifado2').style.display = 'none';
+			document.getElementById('gerar2').style.display = 'none';
+			document.getElementById('gerar3').style.display = 'none';
+
+			return;
+		}
+	}
+
+	document.addEventListener('DOMContentLoaded', controlarCampoMediaSaida);
 </script>
 <script src="<?= WWW ?>html/relatorios/relatorio.js" defer></script>
 

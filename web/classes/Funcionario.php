@@ -145,7 +145,7 @@ class Funcionario extends Pessoa
     {
         $this->id_situacao = $id_situacao;
     }
-
+ 
     /**
      * Retorna a data máxima de nascimento para o cadastro de um novo funcionário no sistema.
      */

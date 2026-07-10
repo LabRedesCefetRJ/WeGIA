@@ -14,14 +14,15 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 12, 7);
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'geral' . DIRECTORY_SEPARATOR . 'msg.php';
 
 $util = new Util();
 
-$cpf = trim($_GET['cpf']);
+$cpf = trim($_GET['cpf'] ?? '');
 
 if (!$util->validarCPF($cpf)) {
-	http_response_code(400);
-	header("Location: " . WWW . "html/home.php?msg_c=CPF Inválido");
+	setSessionMsg('CPF inválido.', 'err');
+	header("Location: pre_cadastro_atendido.php");
 	exit();
 }
 
@@ -35,6 +36,8 @@ $atendido = new AtendidoDAO;
 $informacoesFunc = $atendido->listarPessoaExistente($cpf);
 $id_pessoaForm = $atendido->listarIdPessoa($cpf);
 $sobrenome = $atendido->listarSobrenome($cpf);
+$oldInput = getSessionFormData();
+$fieldErrors = getSessionFormErrors();
 ?>
 <!doctype html>
 <html class="fixed">
@@ -100,6 +103,7 @@ $sobrenome = $atendido->listarSobrenome($cpf);
 	<script src="../../Functions/mascara.js"></script>
 	<script src="../../Functions/lista.js"></script>
 	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<script src="../../Functions/validacoes-cns.js"></script>
 
 	<script>
 		$(function() {
@@ -291,6 +295,7 @@ $sobrenome = $atendido->listarSobrenome($cpf);
 					</div> -->
 
 				<div class="col-md-8 col-lg-12">
+					<?php sessionMsg(); ?>
 					<div class="tabs">
 						<ul class="nav nav-tabs tabs-primary">
 							<li class="active">
@@ -307,7 +312,10 @@ $sobrenome = $atendido->listarSobrenome($cpf);
 									<div class="form-group">
 										<label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
 										<div class="col-md-8">
-											<input type="text" class="form-control" name="nome" id="nome" id="profileFirstName" onkeypress="return Onlychars(event)" required>
+											<input type="text" class="form-control<?= !empty($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+											<?php if (!empty($fieldErrors['nome'])): ?>
+												<p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') ?></p>
+											<?php endif; ?>
 										</div>
 									</div>
 									<div class="form-group">
@@ -327,15 +335,22 @@ $sobrenome = $atendido->listarSobrenome($cpf);
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="profileCompany">Telefone</label>
 								<div class="col-md-8">
-									<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" id="profileCompany" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+									<input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
 								</div>
 							</div>
 
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
 								<div class="col-md-8">
-									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?> required>
+									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?> required value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
 								</div>
+							</div>
+							<div class="form-group">
+							<label class="col-md-3 control-label" for="cns">CNS</label>
+							<div class="col-md-8">
+								<input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+								<small class="form-text text-muted">Cadastro Nacional de Saúde</small>
+							</div>
 							</div>
 
 							<div class="form-group">
@@ -372,14 +387,14 @@ $sobrenome = $atendido->listarSobrenome($cpf);
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
 								<div class="col-md-6">
-									<input type="text" class="form-control" id="cpf" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+									<input type="text" class="form-control<?= !empty($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? $cpf, ENT_QUOTES, 'UTF-8') ?>">
 								</div>
 							</div>
 
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="profileCompany"></label>
 								<div class="col-md-6">
-									<p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+									<p id="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) ? 'block' : 'none' ?>; color: #b30000"><?= !empty($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
 								</div>
 							</div>
 

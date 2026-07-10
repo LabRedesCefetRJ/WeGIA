@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 Util::definirFusoHorario();
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
@@ -22,6 +23,9 @@ include_once '../../classes/Cache.php';
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
 require_once "../geral/msg.php";
+$oldInput = getSessionFormData();
+$fieldErrors = getSessionFormErrors();
+$openModal = getSessionOpenModal();
 
 $id = filter_input(INPUT_GET, 'idatendido', FILTER_SANITIZE_NUMBER_INT);
 
@@ -51,12 +55,13 @@ foreach ($docfuncional as $key => $value) {
 }
 $docfuncional = json_encode($docfuncional);
 
-$atend = $_SESSION['atendido'];
-
 if (!isset($teste)) {
-
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=AtendidoControle&nextPage=../html/atendido/Profile_Atendido.php?idatendido=' . $id . '&id=' . $id);
+  exit;
 }
+
+$_SESSION['atendido'] = $teste;
+$atend = $_SESSION['atendido'];
 $stmtDependente = $pdo->prepare("SELECT
       af.idatendido_familiares AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.parentesco AS parentesco
       FROM atendido_familiares af
@@ -102,6 +107,7 @@ $dependente = json_encode($dependente);
 
   <!-- JavaScript Functions -->
   <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+  <script src="<?php echo WWW; ?>Functions/validacoes-cns.js"></script>
 
   <style type="text/css">
     .btn span.fa-check {
@@ -150,7 +156,24 @@ $dependente = json_encode($dependente);
       opacity: 1;
       visibility: visible;
     }
-    
+
+    #tipoDocAtendidoFormError {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+      margin-bottom: 0;
+    }
+
+    #tipoDocAtendidoFormError+.form-group {
+      margin-top: 15px;
+    }
+
+    #tipoDocAtendidoFormError.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
   </style>
   <!-- Theme CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
@@ -198,6 +221,17 @@ $dependente = json_encode($dependente);
       return date[2] + "/" + date[1] + "/" + date[0];
     }
 
+    function formatCpfDisplay(cpf) {
+      if (!cpf || typeof cpf !== 'string') {
+        return cpf || '';
+      }
+      var digits = cpf.replace(/\D/g, '');
+      if (digits.length !== 11) {
+        return cpf;
+      }
+      return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+
     function excluirimg(id) {
       $("#excluirimg").modal('show');
       $('input[name="id_documento"]').val(id);
@@ -231,8 +265,10 @@ $dependente = json_encode($dependente);
             $("#radioF").prop('checked', true);
           }
 
+          $("#email").val(item.email || '');
           $("#telefone").text("Telefone:" + item.telefone);
           $("#telefone").val(item.telefone);
+          $("#cns").val(item.cns || '');
 
 
           $("#tipoSanguineoSelecionado").text(item.tipo_sanguineo);
@@ -253,12 +289,14 @@ $dependente = json_encode($dependente);
 
           $('#orgaoEmissor').text("Orgão emissor: " + item.orgao_emissor);
           $("#orgaoEmissor").val(item.orgao_emissor);
-          if (item.cpf.indexOf("ni") != -1) {
+          if (typeof item.cpf !== 'string' || item.cpf.indexOf("ni") != -1 || item.cpf.trim() === '') {
             $("#cpf").text("Não informado");
             $("#cpf").val("Não informado");
           } else {
-            $("#cpf").text(item.cpf);
-            $("#cpf").val(item.cpf);
+            // Formatar CPF: 12345678901 -> 123.456.789-01
+            let cpfFormatado = item.cpf.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4");
+            $("#cpf").text(cpfFormatado);
+            $("#cpf").val(cpfFormatado);
           }
 
           $("#inss").text("INSS: " + item.inss);
@@ -275,7 +313,7 @@ $dependente = json_encode($dependente);
 
           $("#saf").text("SAF: " + item.saf);
 
-          $("#sus").text("SUS: " + item.sus);
+          $("#cns").text("CNS: " + item.cns);
 
           $("#bpc").text("BPC: " + item.bpc);
 
@@ -301,7 +339,9 @@ $dependente = json_encode($dependente);
       $("#sobrenome").prop('disabled', false);
       $("#radioM").prop('disabled', false);
       $("#radioF").prop('disabled', false);
+      $("#email").prop('disabled', false);
       $("#telefone").prop('disabled', false);
+      $("#cns").prop('disabled', false);
       $("#data_nascimento").prop('disabled', false);
       $("#pai").prop('disabled', false);
       $("#mae").prop('disabled', false);
@@ -327,7 +367,9 @@ $dependente = json_encode($dependente);
       $("#sobrenome").prop('disabled', true);
       $("#radioM").prop('disabled', true);
       $("#radioF").prop('disabled', true);
+      $("#email").prop('disabled', true);
       $("#telefone").prop('disabled', true);
+      $("#cns").prop('disabled', true);
       $("#data_nascimento").prop('disabled', true);
       $("#pai").prop('disabled', true);
       $("#mae").prop('disabled', true);
@@ -689,7 +731,7 @@ $dependente = json_encode($dependente);
                 }
                 ?>
 
-                <div class="thumb-info mb-md">
+                <div class="thumb-info mb-md"> 
                   <img id="imagem" style="margin-bottom: 15px;" alt="">
                   <i class="fas fa-camera-retro btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"></i>
                   <div class="container">
@@ -705,6 +747,7 @@ $dependente = json_encode($dependente);
                             <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
                               <input type="hidden" name="nomeClasse" value="AtendidoControle">
                               <input type="hidden" name="metodo" value="alterarImagem">
+                              <?= Csrf::inputField() ?>
                               <div class="form-group">
                                 <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
                                 <div class="col-md-8">
@@ -756,6 +799,7 @@ $dependente = json_encode($dependente);
                 <div class="tab-content">
                   <div id="overview" class="tab-pane active">
                     <form class="form-horizontal" method="post" action="../../controle/control.php">
+                      <?= Csrf::inputField() ?>
                       <input type="hidden" name="nomeClasse" value="AtendidoControle">
                       <input type="hidden" name="metodo" value="alterarInfPessoal">
                       <h4 class="mb-xlg">Informações Pessoais</h4>
@@ -780,15 +824,31 @@ $dependente = json_encode($dependente);
                           </div>
                         </div>
                         <div class="form-group">
+                          <label class="col-md-3 control-label" for="email">E-mail</label>
+                          <div class="col-md-8">
+                            <input type="email" class="form-control" disabled name="email" id="email" placeholder="Ex: usuario@email.com">
+                        </div>
+                      </div>
+                        <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                           <div class="col-md-8">
-                            <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" disabled placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                            <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" disabled placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" value="<?= htmlspecialchars($oldInput['telefone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                           <div class="col-md-8">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_nascimento" disabled id="data_nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()">
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control<?= !empty($fieldErrors['data_nascimento']) && $openModal !== 'depFormModal' ? ' is-invalid' : '' ?>" name="data_nascimento" disabled id="data_nascimento" max="<?php echo date('Y-m-d'); ?>" onchange="validarDataNascimento()" value="<?= $openModal !== 'depFormModal' ? htmlspecialchars($oldInput['data_nascimento'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
+                            <?php if (!empty($fieldErrors['data_nascimento']) && $openModal !== 'depFormModal'): ?>
+                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['data_nascimento'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="cns">CNS</label>
+                          <div class="col-md-8">
+                            <input type="text" class="form-control" maxlength="15" name="cns" id="cns" disabled placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+                            <small class="form-text text-muted">Cadastro Nacional de Saúde</small>
                           </div>
                         </div>
                         <div class="form-group">
@@ -810,12 +870,15 @@ $dependente = json_encode($dependente);
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" disabled
+                            <input type="text" class="form-control<?= !empty($fieldErrors['cpf']) && $openModal !== 'depFormModal' ? ' is-invalid' : '' ?>" id="cpf" name="cpf" disabled
                               placeholder="Ex: 222.222.222-22" maxlength="14"
-                              value="<?= htmlspecialchars($atend->cpf ?? '') ?>"
+                              value="<?= htmlspecialchars($openModal !== 'depFormModal' ? ($oldInput['cpf'] ?? $atend->cpf ?? '') : ($atend->cpf ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                               onblur="validarCPF(this.value)"
                               onkeypress="return Onlynumbers(event)"
                               onkeyup="mascara('###.###.###-##',this,event)">
+                            <?php if (!empty($fieldErrors['cpf']) && $openModal !== 'depFormModal'): ?>
+                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
                           </div>
                         </div>
                         <input type="hidden" name="idatendido" value=<?= $id ?>>
@@ -838,6 +901,7 @@ $dependente = json_encode($dependente);
                           elseif ($atend->status == 2):
                           ?>
                             <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post">
+                              <?= Csrf::inputField() ?>
                               <input type="hidden" name="idatendido" value=<?= $id ?>>
                               <input type="hidden" name="operacao" value='ativar'>
                               <button class="btn btn-primary" type="submit">Ativar</button>
@@ -859,6 +923,7 @@ $dependente = json_encode($dependente);
                           <div class="modal-body">
                             <p>Tem certeza que deseja desativar esse atendido?</p>
                             <form action="../../controle/control.php?metodo=alterarStatus&nomeClasse=AtendidoControle" method="post" class="d-flex">
+                              <?= Csrf::inputField() ?>
                               <input type="hidden" name="idatendido" value=<?= $id ?>>
                               <input type="hidden" name="operacao" value='desativar'>
                               <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -888,6 +953,7 @@ $dependente = json_encode($dependente);
                         <form id="formAlterarEnderecoAtendido" class="form-horizontal" method="post" action="../../controle/control.php">
                           <input type="hidden" name="nomeClasse" value="AtendidoControle">
                           <input type="hidden" name="metodo" value="alterarEndereco">
+                          <?= Csrf::inputField() ?>
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="cep">CEP</label>
                             <div class="col-md-8">
@@ -932,7 +998,7 @@ $dependente = json_encode($dependente);
                           <div class="form-group">
                             <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
                             <div class="col-md-8">
-                              <input type="text" class="form-control" name="complemento" id="complemento" id="profileCompany">
+                              <input type="text" class="form-control" name="complemento" id="complemento">
                             </div>
                           </div>
                           <div class="form-group">
@@ -995,19 +1061,19 @@ $dependente = json_encode($dependente);
                                   <div class="form-group">
                                     <label class="col-md-3 control-label" for="cpf">CPF</label>
                                     <div class="col-md-6">
-                                      <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)">
+                                      <input type="text" class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" value="<?= $openModal === 'depFormModal' ? htmlspecialchars($oldInput['cpf'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
                                     </div>
                                   </div>
                                   <div class="form-group">
                                     <label class="col-md-3 control-label" for="profileCompany"></label>
                                     <div class="col-md-6">
-                                      <p id="cpfFamiliarInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
+                                      <p id="cpfFamiliarInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? 'block' : 'none' ?>; color: #b30000"><?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
                                     </div>
                                   </div>
                                   <div class="form-group">
                                     <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
                                     <div class="col-md-6" style="display: flex;">
-                                      <select name="id_parentesco" id="parentesco">
+                                      <select name="id_parentesco" id="parentesco" class="<?= !empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal' ? 'is-invalid' : '' ?>">
                                         <option selected disabled>Selecionar...</option>
                                         <?php
                                         $parentescosAtendido = [];
@@ -1020,8 +1086,9 @@ $dependente = json_encode($dependente);
                                         }
 
                                         foreach ($parentescosAtendido as $item) {
+                                          $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["idatendido_parentesco"] ? ' selected' : '';
                                           echo ("
-                                            <option value='" . $item["idatendido_parentesco"] . "' >" . htmlspecialchars($item["parentesco"]) . "</option>
+                                            <option value='" . $item["idatendido_parentesco"] . "'{$selected}>" . htmlspecialchars($item["parentesco"]) . "</option>
                                             ");
                                         }
                                         ?>
@@ -1030,6 +1097,9 @@ $dependente = json_encode($dependente);
                                     </div>
                                   </div>
                                   <input type="hidden" name="idatendido" value="<?= $id ?>" readonly>
+                                  <?php if (!empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal'): ?>
+                                    <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['id_parentesco'], ENT_QUOTES, 'UTF-8') ?></p>
+                                  <?php endif; ?>
                                   <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                                     <input type="submit" id="cadastrarFamiliar" value="Enviar" class="btn btn-primary">
@@ -1143,6 +1213,38 @@ $dependente = json_encode($dependente);
                         require dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'modal_upload_arquivo.php';
                         unset($modalUploadConfig, $tiposDocumentoAtendido, $uploadMaxFilesizeBytes, $converterTamanhoParaBytes);
                         ?>
+
+                        <div class="modal fade upload-modal" id="tipoDocAtendidoFormModal" tabindex="-1" role="dialog" aria-labelledby="tipoDocAtendidoFormModalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                                <h4 class="modal-title" id="tipoDocAtendidoFormModalLabel">Adicionar tipo de arquivo</h4>
+                              </div>
+                              <div class="modal-body">
+                                <div id="tipoDocAtendidoFormError" class="alert alert-danger alert-dismissible fade" style="display: none;" role="alert">
+                                  <button type="button" class="close" aria-label="Fechar" onclick="limparErroModalTipoDocAtendido(); return false;">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                  <span id="tipoDocAtendidoFormErrorText"></span>
+                                </div>
+                                <div class="form-group">
+                                  <label class="control-label" for="novoTipoDocAtendidoInput">
+                                    Descrição <sup class="obrig">*</sup>
+                                  </label>
+                                  <input type="text" class="form-control" id="novoTipoDocAtendidoInput" placeholder="Nome do tipo de arquivo" maxlength="100" />
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" onclick="confirmarAdicionarTipo()">Salvar</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                     </section>
                   </div>
                   <div id="ocorrencias" class="tab-pane">
@@ -1158,19 +1260,26 @@ $dependente = json_encode($dependente);
                           <thead>
                             <tr>
                               <th>Data</th>
+                              <th>Tipo</th>
                               <th>Informações</th>
                               <th style="width: 120px;">Ações</th>
                             </tr>
                           </thead>
                           <tbody id="doc-tabl">
                             <?php
-                            $stmt = $pdo->prepare("SELECT data, descricao, idatendido_ocorrencias FROM atendido_ocorrencia WHERE atendido_idatendido = :id ORDER BY data DESC");
+                            $stmt = $pdo->prepare(
+                              "SELECT ao.data, ao.descricao, ao.idatendido_ocorrencias, t.descricao AS tipo " .
+                                "FROM atendido_ocorrencia ao " .
+                                "LEFT JOIN atendido_ocorrencia_tipos t " .
+                                "ON ao.atendido_ocorrencia_tipos_idatendido_ocorrencia_tipos = t.idatendido_ocorrencia_tipos " .
+                                "WHERE atendido_idatendido = :id ORDER BY ao.data DESC"
+                            );
                             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                             $stmt->execute();
                             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                             if (empty($resultados)) {
-                              echo '<tr><td colspan="3" class="text-center text-muted">Nenhuma ocorrência cadastrada</td></tr>';
+                              echo '<tr><td colspan="4" class="text-center text-muted">Nenhuma ocorrência cadastrada</td></tr>';
                             }
 
                             foreach ($resultados as $item) {
@@ -1178,6 +1287,7 @@ $dependente = json_encode($dependente);
                             ?>
                               <tr style="cursor: pointer;" onclick="clicar(<?= (int)$item['idatendido_ocorrencias'] ?>)">
                                 <td><?= $data[2] . "/" . $data[1] . "/" . $data[0] ?></td>
+                                <td><?= htmlspecialchars($item['tipo'] ?? 'Não informado', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td>
                                   <?= htmlspecialchars(
                                     strip_tags(
@@ -1478,28 +1588,37 @@ $dependente = json_encode($dependente);
       }
 
       function adicionar_tipo() {
-        url = '../../dao/adicionar_tipo_docs_atendido.php';
-        var tipo = window.prompt("Cadastre um Novo Tipo:");
+        const input = document.getElementById('novoTipoDocAtendidoInput');
+        if (input) input.value = '';
+        limparErroModalTipoDocAtendido();
+        $('#tipoDocAtendidoFormModal').modal('show');
+      }
+
+      async function confirmarAdicionarTipo() {
+        const input = document.getElementById('novoTipoDocAtendidoInput');
+        const tipo = input ? input.value.trim() : '';
+
         if (!tipo) {
-          return
-        }
-        tipo = tipo.trim();
-        if (tipo == '') {
-          return
+          exibirErroModalTipoDocAtendido('O nome do tipo de arquivo é obrigatório.');
+          return;
         }
 
-        data = 'tipo=' + tipo;
-
-        console.log(data);
-        $.ajax({
-          type: "POST",
-          url: url,
-          data: data,
-          success: function(response) {
-            gerarTipo();
-          },
-          dataType: 'text'
-        })
+        try {
+          const response = await fetch('../../dao/adicionar_tipo_docs_atendido.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: 'tipo=' + encodeURIComponent(tipo)
+          });
+          if (!response.ok) throw new Error('Erro na requisição');
+          await response.text();
+          $('#tipoDocAtendidoFormModal').modal('hide');
+          gerarTipo();
+        } catch (error) {
+          exibirErroModalTipoDocAtendido('Não foi possível salvar o tipo de arquivo. Tente novamente.');
+          console.error('Erro ao enviar dados:', error);
+        }
       }
 
       function validarCPF(strCPF) {
@@ -1514,6 +1633,59 @@ $dependente = json_encode($dependente);
           document.getElementById("cadastrarFamiliar").disabled = false;
         }
       }
+
+      let timeoutErroModalTipoDocAtendido = null;
+      let timeoutFecharAnimacaoErroTipoDocAtendido = null;
+
+      function exibirErroModalTipoDocAtendido(mensagem) {
+        const alerta = document.getElementById('tipoDocAtendidoFormError');
+        const texto = document.getElementById('tipoDocAtendidoFormErrorText');
+        if (!alerta || !texto) return;
+        texto.textContent = mensagem;
+        alerta.style.display = 'block';
+        alerta.classList.remove('is-visible');
+        void alerta.offsetWidth;
+        alerta.classList.add('is-visible');
+        if (timeoutErroModalTipoDocAtendido) clearTimeout(timeoutErroModalTipoDocAtendido);
+        if (timeoutFecharAnimacaoErroTipoDocAtendido) {
+          clearTimeout(timeoutFecharAnimacaoErroTipoDocAtendido);
+          timeoutFecharAnimacaoErroTipoDocAtendido = null;
+        }
+        timeoutErroModalTipoDocAtendido = setTimeout(() => limparErroModalTipoDocAtendido(), 10000);
+      }
+
+      function limparErroModalTipoDocAtendido() {
+        const alerta = document.getElementById('tipoDocAtendidoFormError');
+        const texto = document.getElementById('tipoDocAtendidoFormErrorText');
+        if (!alerta || !texto) return;
+        alerta.classList.remove('is-visible');
+        if (timeoutErroModalTipoDocAtendido) {
+          clearTimeout(timeoutErroModalTipoDocAtendido);
+          timeoutErroModalTipoDocAtendido = null;
+        }
+        if (timeoutFecharAnimacaoErroTipoDocAtendido) clearTimeout(timeoutFecharAnimacaoErroTipoDocAtendido);
+        timeoutFecharAnimacaoErroTipoDocAtendido = setTimeout(() => {
+          alerta.style.display = 'none';
+          texto.textContent = '';
+          timeoutFecharAnimacaoErroTipoDocAtendido = null;
+        }, 350);
+      }
+
+      $(document).on('show.bs.modal', '#tipoDocAtendidoFormModal', function() {
+        const abertos = $('.modal.in').length;
+        if (abertos === 0) return;
+        const zIndex = 1050 + 10 * abertos;
+        $(this).css('z-index', zIndex);
+        setTimeout(function() {
+          $('.modal-backdrop').not('.modal-stack').last().css('z-index', zIndex - 1).addClass('modal-stack');
+        }, 0);
+      });
+
+      $(document).on('hidden.bs.modal', '#tipoDocAtendidoFormModal', function() {
+        if ($('.modal.in').length) {
+          $('body').addClass('modal-open');
+        }
+      });
 
       let timeoutErroModalDocumento = null;
 
@@ -1635,6 +1807,10 @@ $dependente = json_encode($dependente);
           formId: 'formAlterarEnderecoAtendido',
           estadoIds: ['estado']
         });
+
+        <?php if ($openModal === 'depFormModal'): ?>
+          $('#depFormModal').modal('show');
+        <?php endif; ?>
       });
     </script>
 

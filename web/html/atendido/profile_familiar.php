@@ -191,6 +191,7 @@ if ($id_dependente) {
                 formInfoPessoal: function(dep) {
                     $("#nomeForm").val(dep.nome);
                     $("#sobrenomeForm").val(dep.sobrenome);
+                    $("#email").val(dep.email);
                     $("#telefoneForm").val(dep.telefone);
                     $("#nascimentoForm").val(dep.data_nascimento);
                     $("#pai").val(dep.nome_pai);
@@ -646,10 +647,16 @@ if ($id_dependente) {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                                                 <div class="col-md-8">
-                                                    <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                                    <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                                                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
+                                                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
                                                 </div>
                                             </div>
+                                            <div class="form-group">
+                                                <label class="col-md-3 control-label" for="email">E-mail</label>
+                                                <div class="col-md-8">
+                                                    <input type="email" class="form-control" name="email" id="email" placeholder="Ex: usuario@email.com">
+                                                </div> 
+                                            </div>                                            
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="telefone">Telefone</label>
                                                 <div class="col-md-8">
@@ -850,7 +857,7 @@ if ($id_dependente) {
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
                                                 <div class="col-md-8">
-                                                    <input type="text" class="form-control" name="complemento" id="complemento" id="profileCompany">
+                                                    <input type="text" class="form-control" name="complemento" id="complemento">
                                                 </div>
                                             </div>
                                             <div class="form-group">
