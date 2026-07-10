@@ -6,10 +6,41 @@ function modalSimples(titulo, msg, tipo) {
     case "sucesso": cor = "success"; break;
     case "normal": cor = ""; break;
   }
-  var id = Math.floor(Math.random() * 10);
-  var html = '<div class="modal modal-' + cor + ' fade in" id="modal' + id + '" style="display: none; padding-right: 17px;"> <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title">' + titulo + '</h4> </div> <div class="modal-body text-center"><div class="overlay"> <i style="margin: 0 auto; font-size: 40px" class="fa fa-user-plus"></i> </div> <h3>' + msg + '</h3> </div> <div class="modal-footer"> <button type="button" class="btn btn-outline pull-left .btn_fecharModal' + id + '" data-dismiss="modal">Fechar</button> </div> </div> <!-- /.modal-content --> </div> <!-- /.modal-dialog --> </div>';
-  $("body").append(html);
-  $("#modal" + id).modal("toggle");
+  var id = "modal_" + Date.now() + "_" + Math.floor(Math.random() * 1000000);
+  var html = '<div class="modal modal-' + cor + ' fade" id="' + id + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+    ' <div class="modal-dialog">' +
+    '  <div class="modal-content">' +
+    '   <div class="modal-header">' +
+    '    <h4 class="modal-title">' + titulo + '</h4>' +
+    '   </div>' +
+    '   <div class="modal-body text-center">' +
+    '    <div class="overlay"><i style="margin: 0 auto; font-size: 40px" class="fa fa-user-plus"></i></div>' +
+    '    <h3>' + msg + '</h3>' +
+    '   </div>' +
+    '   <div class="modal-footer">' +
+    '    <button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Fechar</button>' +
+    '   </div>' +
+    '  </div>' +
+    ' </div>' +
+    '</div>';
+  var $modal = $(html);
+
+  $modal.on("hidden.bs.modal", function () {
+    $(this).remove();
+
+    if ($(".modal.in").length > 0) {
+      $("body").addClass("modal-open");
+    } else {
+      $("body").removeClass("modal-open").css({
+        overflow: "",
+        paddingRight: ""
+      });
+      $(".modal-backdrop").remove();
+    }
+  });
+
+  $("body").append($modal);
+  $modal.modal("show");
 }
 function deletar_socio(id) {
   modalSimples('Comunicado', 'Funcionalidade indisponível no momento, aguardando revisões.', 'alerta');
