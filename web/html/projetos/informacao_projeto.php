@@ -53,8 +53,7 @@ $msg = isset($_GET['msg']) ? htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8')
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
 
   <style>
-    .table tbody tr { cursor: pointer; transition: background-color 0.2s; }
-    .table tbody tr:hover { background-color: #f5f5f5 !important; }
+    .table tbody tr { transition: background-color 0.2s; }
   </style>
 </head>
 
@@ -109,7 +108,7 @@ $msg = isset($_GET['msg']) ? htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8')
                 <table class="table table-bordered table-striped mb-none">
                   <thead>
                     <tr>
-                      <th>Nome</th><th>Tipo</th><th>Local</th><th>Status</th><th>Descrição</th>
+                      <th>Nome</th><th>Tipo</th><th>Local</th><th>Status</th><th>Descrição</th><th class="text-center" width="80">Ação</th>
                     </tr>
                   </thead>
                   <tbody id="tbody-projetos"></tbody>

@@ -14,6 +14,24 @@ class ProjetoDAO
         }
     }
 
+    /**
+     * Escapa os caracteres coringa do LIKE ('%', '_') e o próprio caractere de escape ('\')
+     * para que sejam tratados como texto literal, e não como coringas de padrão.
+     *
+     * Sem isso, um usuário poderia digitar "%" ou "_" em um campo de busca e obter
+     * resultados muito mais amplos do que o pretendido (enumeração indevida de dados).
+     *
+     * Sempre usar em conjunto com a cláusula "ESCAPE '\\'" no SQL.
+     */
+    private function escaparCuringasLike(string $valor, string $escape = '\\'): string
+    {
+        return str_replace(
+            [$escape, '%', '_'],
+            [$escape . $escape, $escape . '%', $escape . '_'],
+            $valor
+        );
+    }
+
     public function adicionarProjeto($nome, $descricao, $id_tipo, $id_local, $id_status, $data_inicio, $data_fim)
     {
         try {
@@ -218,6 +236,10 @@ class ProjetoDAO
     public function listarFuncionariosAtivos($termo = null)
     {
         try {
+            if ($termo !== null && !is_string($termo)) {
+                throw new InvalidArgumentException("O parâmetro 'termo' deve ser uma string ou nulo.");
+            }
+
             $sql = "SELECT f.id_funcionario, p.id_pessoa, p.nome, p.sobrenome, p.cpf
                     FROM funcionario f
                     JOIN pessoa p ON f.id_pessoa = p.id_pessoa
@@ -225,15 +247,15 @@ class ProjetoDAO
                     WHERE s.id_situacao = 1";
 
             if (!empty($termo)) {
-                $sql .= " AND (p.nome LIKE :termo OR p.sobrenome LIKE :termo OR p.cpf LIKE :termo"
-                      . " OR CONCAT(p.nome, ' ', p.sobrenome) LIKE :termo)";
+                $sql .= " AND (p.nome LIKE :termo ESCAPE '\\\\' OR p.sobrenome LIKE :termo ESCAPE '\\\\' OR p.cpf LIKE :termo ESCAPE '\\\\'"
+                      . " OR CONCAT(p.nome, ' ', p.sobrenome) LIKE :termo ESCAPE '\\\\')";
             }
 
             $sql .= " ORDER BY p.nome ASC LIMIT 20";
 
             $stmt = $this->pdo->prepare($sql);
             if (!empty($termo)) {
-                $stmt->bindValue(':termo', '%' . $termo . '%');
+                $stmt->bindValue(':termo', '%' . $this->escaparCuringasLike($termo) . '%');
             }
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -415,6 +437,10 @@ class ProjetoDAO
     public function listarTodosAtendidos($termo = null)
     {
         try {
+            if ($termo !== null && !is_string($termo)) {
+                throw new InvalidArgumentException("O parâmetro 'termo' deve ser uma string ou nulo.");
+            }
+
             // CPF excluído intencionalmente: atendidos podem ser cadastrados sem CPF
             $sql = "SELECT a.idatendido, a.pessoa_id_pessoa,
                            p.nome, p.sobrenome,
@@ -426,15 +452,15 @@ class ProjetoDAO
                     LEFT JOIN atendido_tipo at ON a.atendido_tipo_idatendido_tipo = at.idatendido_tipo";
 
             if (!empty($termo)) {
-                $sql .= " WHERE p.nome LIKE :termo OR p.sobrenome LIKE :termo"
-                      . " OR CONCAT(p.nome, ' ', p.sobrenome) LIKE :termo";
+                $sql .= " WHERE p.nome LIKE :termo ESCAPE '\\\\' OR p.sobrenome LIKE :termo ESCAPE '\\\\'"
+                      . " OR CONCAT(p.nome, ' ', p.sobrenome) LIKE :termo ESCAPE '\\\\'";
             }
 
             $sql .= " ORDER BY p.nome ASC LIMIT 20";
 
             $stmt = $this->pdo->prepare($sql);
             if (!empty($termo)) {
-                $stmt->bindValue(':termo', '%' . $termo . '%');
+                $stmt->bindValue(':termo', '%' . $this->escaparCuringasLike($termo) . '%');
             }
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
