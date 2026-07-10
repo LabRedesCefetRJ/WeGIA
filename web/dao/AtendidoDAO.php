@@ -390,7 +390,7 @@ class AtendidoDAO
     }
 
 
-    public function listarTodos2()
+    /* public function listarTodos2()
     {
         $pessoas = array();
         $pdo = Conexao::connect();
@@ -407,6 +407,26 @@ class AtendidoDAO
         }
 
         return $pessoas;
+    } */
+
+    public function listarTodos2()
+    {
+        require_once ROOT . "/dao/memorando/UsuarioDAO.php";
+        $usuario = new UsuarioDAO();
+        $id_usuario = $usuario->obterUsuario($_SESSION["usuario"])['id_pessoa'];
+        $atendidos = array();
+
+        $consulta = $this->pdo->prepare("SELECT p.id_pessoa, p.nome, p.sobrenome, p.cpf FROM atendido a INNER JOIN pessoa p ON a.pessoa_id_pessoa = p.id_pessoa WHERE p.id_pessoa!=:idUsuario");
+        $consulta->bindValue(':idUsuario', $id_usuario);
+        $consulta->execute();
+
+        $x = 0;
+        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
+            $atendidos[$x] = array('id_pessoa' => htmlspecialchars($linha['id_pessoa']), 'nome' => htmlspecialchars($linha['nome']), 'sobrenome' => htmlspecialchars($linha['sobrenome']), 'cpf' => htmlspecialchars($linha['cpf']));
+            $x++;
+        }
+
+        return $atendidos;
     }
 
     public function getIdPessoaByIdAtendido(int $idAtendido): int
