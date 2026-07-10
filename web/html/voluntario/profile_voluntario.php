@@ -67,17 +67,13 @@ try {
     $dataNascimentoMinima = Voluntario::getDataNascimentoMinima();
 
 
-    // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0) (copiado de Funcionário)
-    $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
-    $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
-    $stmt->execute();
-    $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+    // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
+    require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'PessoaDAO.php';
+    $pessoaDAO = new PessoaDAO();
+    $adm_configurado = $pessoaDAO->verificaAdmConfigurado($id_pessoa);
 
     // lógica de permissao para cargos
-    $stmtAlvo = $pdo->prepare('SELECT p.id_pessoa, p.adm_configurado FROM pessoa p JOIN voluntario v ON p.id_pessoa = v.id_pessoa WHERE v.id_voluntario = :idVoluntario');
-    $stmtAlvo->bindValue(':idVoluntario', $idVoluntario, PDO::PARAM_INT);
-    $stmtAlvo->execute();
-    $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+    $alvo = $pessoaDAO->getAlvoVoluntario($idVoluntario);
 
     $pode_editar_cargo = true;
     if ($alvo['id_pessoa'] == $id_pessoa) {
@@ -243,7 +239,7 @@ try {
 
             $("#situacao").prop('disabled', false);
             $("#data_admissao").prop('disabled', false);
-            if(pode_editar_cargo) {
+            if (pode_editar_cargo) {
                 $("#cargo").prop('disabled', false);
             }
             $("#botaoEditarOutros").html('Cancelar');
@@ -607,7 +603,7 @@ try {
                                                             if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
                                                                 continue;
                                                             }
-                                                            
+
                                                             echo "<option value=\"{$row[0]}\">" . htmlspecialchars($row[1]) . "</option>";
                                                         } ?>
                                                     </select>

@@ -29,17 +29,30 @@ function isAlmoxarife($id_pessoa, $id_almoxarifado){
 
 function permissaoUsuario ($id_pessoa, $id_recurso){
     $pdo = Conexao::connect();
-    $res = $pdo->query("
-        SELECT p.id_acao 
+    // Versão antiga, sujeita a SQL Injection
+    // $res = $pdo->query("
+    //     SELECT p.id_acao 
+    //     FROM permissao p 
+    //     INNER JOIN (
+    //         SELECT id_pessoa, id_cargo FROM funcionario WHERE id_pessoa = $id_pessoa
+    //         UNION
+    //         SELECT id_pessoa, id_cargo FROM voluntario WHERE id_pessoa = $id_pessoa
+    //     ) f ON p.id_cargo = f.id_cargo 
+    //     WHERE p.id_recurso = $id_recurso 
+    //     ;");
+    $sql = "SELECT p.id_acao 
         FROM permissao p 
         INNER JOIN (
-            SELECT id_pessoa, id_cargo FROM funcionario WHERE id_pessoa = $id_pessoa
+            SELECT id_pessoa, id_cargo FROM funcionario WHERE id_pessoa = :ID_PESSOA
             UNION
-            SELECT id_pessoa, id_cargo FROM voluntario WHERE id_pessoa = $id_pessoa
+            SELECT id_pessoa, id_cargo FROM voluntario WHERE id_pessoa = :ID_PESSOA
         ) f ON p.id_cargo = f.id_cargo 
-        WHERE p.id_recurso = $id_recurso 
-        ;");
-    $permissao = $res->fetch(PDO::FETCH_ASSOC);
+        WHERE p.id_recurso = :ID_RECURSO;";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(":ID_PESSOA", $id_pessoa, PDO::PARAM_INT);
+    $stmt->bindParam(":ID_RECURSO", $id_recurso, PDO::PARAM_INT);
+    $stmt->execute();
+    $permissao = $stmt->fetch(PDO::FETCH_ASSOC);
     return (int) $permissao['id_acao'];
 }
 

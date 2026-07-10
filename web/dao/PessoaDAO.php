@@ -163,4 +163,21 @@ class PessoaDAO
         return $pessoas;
     }
 
+    public function verificaAdmConfigurado(int $id_pessoa): int
+    {
+        $stmt = $this->pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
+        $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
+        $stmt->execute();
+        $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+        return $adm_configurado;
+    }
+
+    public function getAlvoVoluntario(int $idVoluntario): array
+    {
+        $stmtAlvo = $this->pdo->prepare('SELECT p.id_pessoa, p.adm_configurado FROM pessoa p JOIN voluntario v ON p.id_pessoa = v.id_pessoa WHERE v.id_voluntario = :idVoluntario');
+        $stmtAlvo->bindValue(':idVoluntario', $idVoluntario, PDO::PARAM_INT);
+        $stmtAlvo->execute();
+        $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+        return $alvo;
+    }
 }
