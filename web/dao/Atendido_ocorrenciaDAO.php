@@ -209,6 +209,22 @@ class Atendido_ocorrenciaDAO
         return $anexo;
     }
 
+    public function inativarAtendidoPorFalecimento(int $idAtendido): bool
+    {
+        try {
+            $pdo = Conexao::connect();
+            $sql = "UPDATE atendido SET atendido_status_idatendido_status = 2 WHERE idatendido = :id";
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $idAtendido, PDO::PARAM_INT);
+
+            return $stmt->execute();
+        } catch (Exception $erroInativacao) {
+            error_log("Erro ao inativar atendido no falecimento: " . $erroInativacao->getMessage());
+            return false;
+        }
+    }
+
     public function listar($id)
     {
         try {

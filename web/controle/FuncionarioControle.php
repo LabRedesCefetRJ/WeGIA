@@ -379,17 +379,15 @@ class FuncionarioControle
         }
 
         if ((!isset($cargo)) || (empty($cargo))) {
-            http_response_code(412);
-            header('Location: ../html/funcionario.html?msg=Cargo do funcionario não informado. Por favor, informe um cargo!');
-            exit();
+            throw new InvalidArgumentException('Cargo do funcionário não informado. Por favor, informe um cargo.', 412);
         }
 
-        if ((!isset($email)) || (empty($email))) {
-            $email = 'null';
+        if ((!isset($email)) || (empty($email))) { 
+            $email = '';
         }
 
         if ((!isset($telefone)) || (empty($telefone))) {
-            $telefone = 'null';
+            $telefone = '';
         }
 
         if ((!isset($nascimento)) || (empty($nascimento))) {
@@ -493,9 +491,7 @@ class FuncionarioControle
         }
 
         if ((!isset($situacao)) || (empty($situacao))) {
-            http_response_code(412);
-            header('Location: ../html/funcionario.html?msg=Situação do funcionario não informada. Por favor, informe a situação!');
-            exit();
+            throw new InvalidArgumentException('Situação do funcionário não informada. Por favor, informe a situação.', 412);
         }
 
         if ((!isset($certificado_reservista_numero)) || (empty($certificado_reservista_numero))) {
@@ -527,10 +523,19 @@ class FuncionarioControle
         }
 
 
-        if ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
+        $imagemBase64 = filter_input(INPUT_POST, 'imagem_base64', FILTER_UNSAFE_RAW);
+        if (!empty($imagemBase64)) {
+            if (preg_match('#^data:image/[^;]+;base64,#i', $imagemBase64)) {
+                $imagemBase64 = preg_replace('#^data:image/[^;]+;base64,#i', '', $imagemBase64);
+            }
+
+            $imgperfil = base64_encode(base64_decode($imagemBase64, true) ?: '');
+            if ($imgperfil === '') {
+                $imgperfil = '';
+            }
+        } elseif ((!isset($_SESSION['imagem'])) || (empty($_SESSION['imagem']))) {
             $imgperfil = '';
-        }
-        else {
+        } else {
             $imgperfil = base64_encode($_SESSION['imagem']);
             unset($_SESSION['imagem']);
         }
@@ -572,7 +577,7 @@ class FuncionarioControle
             header('Location: ../html/funcionario.html?msg=' . $msg);
         }
         if ((!isset($email)) || (empty($email))) {
-            $email = 'null';
+            $email = '';
         }
         if ((!isset($telefone)) || (empty($telefone))) {
             $telefone = 'null';
@@ -985,7 +990,8 @@ class FuncionarioControle
     public function selecionarCadastro()
     {
         try {
-            $cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            $cpfInput = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            $cpf = Util::limpaCpf($cpfInput);
 
             if (!Util::validarCPF($cpf))
                 throw new InvalidArgumentException("O CPF informado não é válido.", 412);
@@ -1016,10 +1022,13 @@ class FuncionarioControle
 
     public function incluir()
     {
+        $cpfInput = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cpf = Util::limpaCpf($cpfInput);
+
         try {
             $funcionario = $this->verificarFuncionario();
             $horario = $this->verificarHorario();
-            $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+            
 
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
@@ -1063,6 +1072,10 @@ class FuncionarioControle
                 $fieldErrors['data_admissao'] = $message;
             } elseif (stripos($message, 'nascimento') !== false) {
                 $fieldErrors['nascimento'] = $message;
+            } elseif (stripos($message, 'cargo') !== false) {
+                $fieldErrors['cargo'] = $message;
+            } elseif (stripos($message, 'situação') !== false) {
+                $fieldErrors['situacao'] = $message;
             } else {
                 $fieldErrors['global'] = $message;
             }
@@ -1090,7 +1103,8 @@ class FuncionarioControle
 
     public function incluirExistente()
     {
-        $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cpfInput = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cpf = Util::limpaCpf($cpfInput);
 
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
@@ -1425,7 +1439,7 @@ public function alterarOutros()
 
             $formatar = new Util();
 
-            if ($_SESSION['data_nasc']) {
+            if ($_SESSION['data_nasc']) { 
                 if (strtotime($data_expedicao) < strtotime($formatar->formatoDataYMD($_SESSION['data_nasc']))) {
                     echo 'A data de expedição é anterior à do nascimento. Por favor, informe uma data válida!';
                     header("Location: ../html/funcionario/profile_funcionario.php?&id_funcionario=" . urlencode($id_funcionario));
@@ -1434,7 +1448,7 @@ public function alterarOutros()
                 unset($_SESSION['data_nasc']);
             }
 
-            $funcionario = new Funcionario('', '', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '');
+            $funcionario = new Funcionario('', '', '', '', '', $rg, $orgao_emissor, $data_expedicao, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
 
             $funcionario->setId_funcionario($id_funcionario);
 
@@ -1442,6 +1456,12 @@ public function alterarOutros()
 
             $funcionarioDAO->alterarDocumentacao($funcionario);
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+        }
+        catch (InvalidArgumentException $e) {
+            $_SESSION['msg'] = $e->getMessage();
+            $_SESSION['tipo'] = "error";
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($_REQUEST['id_funcionario']));
+            exit;
         }
         catch (Exception $e) {
             Util::tratarException($e);
@@ -1579,6 +1599,24 @@ public function alterarOutros()
             header("Location:../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php");
         }
         catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function reativar()
+    {
+        try {
+            $idFuncionario = filter_input(INPUT_POST, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
+            
+            if (!Csrf::validateToken($_POST['csrf_token']))
+                throw new InvalidArgumentException('Token inválido.', 403);
+
+            $funcionarioDAO = new FuncionarioDAO();
+            $funcionarioDAO->reativar($idFuncionario);
+
+            header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
+            exit();
+        } catch (Exception $e) {
             Util::tratarException($e);
         }
     }

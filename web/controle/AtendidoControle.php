@@ -52,8 +52,18 @@ class AtendidoControle
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = "";
         }
+
+        $isSemCpf = (isset($semCpf) && $semCpf == '1');
+
         Util::validarNomePessoaOuLancar($nome, 'nome', 412);
-        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+
+        if ($isSemCpf) {
+            Util::validarNomePessoaOpcionalOuLancar($sobrenome, 'sobrenome', 412);
+        } else {
+            Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+        }
+
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
         Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
         Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
         if ((!isset($sexo)) || (empty($sexo))) {
