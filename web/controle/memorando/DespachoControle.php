@@ -87,7 +87,7 @@ class DespachoControle
 			$id_pessoa = filter_var($pessoa->obterUsuario($cpf_usuario)['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 			$destinatario = filter_input(INPUT_POST, 'destinatario', FILTER_SANITIZE_NUMBER_INT);
 			if (empty($destinatario)) {
-                throw new InvalidArgumentException("É obrigatório selecionar um destino para o memorando.");
+                throw new InvalidArgumentException("É obrigatório selecionar um destino para o memorando.", 400);
             }
 			$id_memorando = filter_var($_REQUEST['id_memorando'], FILTER_SANITIZE_NUMBER_INT);
 			$texto = filter_var($_REQUEST['texto'], FILTER_SANITIZE_SPECIAL_CHARS);
@@ -104,7 +104,7 @@ class DespachoControle
 	{
 		try {
 			if ($id < 1) {
-				throw new InvalidArgumentException('O id de um despacho não pode ser menor que 1.');
+				throw new InvalidArgumentException('O id de um despacho não pode ser menor que 1.', 400);
 			}
 
 			$despachoDAO = new DespachoDAO();
