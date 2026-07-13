@@ -153,18 +153,9 @@ class Atendido_ocorrenciaControle
 			$arquivos = $_FILES["arquivos"];
 			$ocorrenciaDAO->incluirArquivos($arquivos);
 
-            if ((int)($id_tipos_ocorrencia ?? 0) === 2) {
-                try {
-                    $pdoUpdate = Conexao::connect();
-                    $sqlInativar = "UPDATE atendido SET atendido_status_idatendido_status = 2 WHERE idatendido = :id";
-                    
-                    $stmtInativar = $pdoUpdate->prepare($sqlInativar);
-                    $stmtInativar->bindValue(':id', $atendido_idatendido, PDO::PARAM_INT);
-                    $stmtInativar->execute();
-                } catch (Exception $erroInativacao) {
-                    error_log("Erro ao inativar atendido no falecimento: " . $erroInativacao->getMessage());
-                }
-            }
+			if ((int)($id_tipos_ocorrencia ?? 0) === 2) {
+				$ocorrenciaDAO->inativarAtendidoPorFalecimento($atendido_idatendido);
+			}
 				
 			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-sucesso");
 		} catch (PDOException $e) {
