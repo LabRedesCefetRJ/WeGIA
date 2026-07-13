@@ -35,12 +35,10 @@ if (!$id || $id < 0) {
 }
 
 require_once "../../dao/Conexao.php";
-$pdo = Conexao::connect();
+require_once "../../dao/AtendidoDAO.php";
+$atendidoDAO = new AtendidoDAO();
 
-$stmtCheck = $pdo->prepare("SELECT idatendido FROM atendido WHERE idatendido = :id");
-$stmtCheck->execute([':id' => $id]);
-
-if (!$stmtCheck->fetch()) {
+if (!$atendidoDAO->existeAtendido($id)) {
     $_SESSION['msg'] = "Atendido não encontrado.";
     $_SESSION['tipo'] = "error";
     header('Location: ../../html/home.php');
@@ -55,16 +53,9 @@ require_once "../../dao/ProcessoAceitacaoDAO.php";
 $pdo = Conexao::connect();
 $processoAceitacaoDAO = new ProcessoAceitacaoDAO($pdo);
 
-$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos JOIN pessoa_arquivo pa ON a.id_pessoa_arquivo=pa.id WHERE atendido_idatendido =:idAtendido");
-
-$stmtDocFuncional->bindParam(':idAtendido', $id);
-$stmtDocFuncional->execute();
-
-$docfuncional = $stmtDocFuncional->fetchAll(PDO::FETCH_ASSOC);
+$docfuncional = $atendidoDAO->listarDocumentacaoFuncional($id);
 foreach ($docfuncional as $key => $value) {
   $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
-
-  //formatar data
   $data = new DateTime($value['data']);
   $docfuncional[$key]['data'] = $data->format('d/m/Y');
 }
