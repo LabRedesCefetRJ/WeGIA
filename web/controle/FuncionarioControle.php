@@ -690,40 +690,88 @@ class FuncionarioControle
         return $funcionario;
     }
 
-    public function verificarSenha()
-    {
+   public function verificarSenha($nova_senha, $confirmar_senha, $id_pessoa, $senha_antiga) {
         try {
-            extract($_REQUEST);
-            if ($nova_senha != $confirmar_senha) {
-                return 1;
+            if (empty($nova_senha) || empty($confirmar_senha) || empty($senha_antiga)) {
+                return 1; // campos obrigatórios ausentes
             }
-            else {
-                $funcionarioDAO = new FuncionarioDAO();
-                $senha = $funcionarioDAO->getSenhaByIdPessoa((int) $id_pessoa);
-                $passwordCheck = LoginHelper::verifyAndMigrate($senha_antiga, $senha);
 
-                if (!$passwordCheck['valid']) {
-                    return 2;
-                }
-
-                if ($passwordCheck['updated_hash'] !== null) {
-                    $funcionarioDAO->alterarSenha((int) $id_pessoa, $passwordCheck['updated_hash']);
-                }
+            if ($nova_senha !== $confirmar_senha) {
+                return 2; // nova senha e confirmação não conferem
             }
-            return 3;
-        }
-        catch (Exception $e) {
-            Util::tratarException($e);
+
+            $funcionarioDAO = new FuncionarioDAO();
+            $senha_armazenada = $funcionarioDAO->getSenhaByIdPessoa((int) $id_pessoa);
+
+            // Verifica se a NOVA senha é igual à senha atual (não pode repetir)
+            $checkIgual = LoginHelper::verifyAndMigrate($nova_senha, $senha_armazenada);
+            if ($checkIgual['valid']) {
+                return 4; // nova senha igual à atual — bloqueado
+            }
+
+            // Verifica se a senha ATUAL informada realmente bate com o hash salvo
+            $checkAtual = LoginHelper::verifyAndMigrate($senha_antiga, $senha_armazenada);
+            if (!$checkAtual['valid']) {
+                return 3; // senha atual informada está incorreta
+            }
+
+            $minLength = 8;
+            $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
+
+            if (!preg_match($regex, $nova_senha)) {
+                throw new InvalidArgumentException(
+                    'A senha informada não atende aos requisitos mínimos estabelecidos.',
+                    412
+                );
+            }
+
+            
+
+            $hashNovaSenha = LoginHelper::hashPassword($nova_senha);
+            $funcionarioDAO->alterarSenha((int) $id_pessoa, $hashNovaSenha);
+
+            return 5; // sucesso
+        } catch (InvalidArgumentException $e) {
+            throw $e;
         }
     }
-    public function verificarSenhaConfig()
-    {
-        extract($_REQUEST);
-        if ($nova_senha != $confirmar_senha) {
-            return 1;
-        }
-        else {
-            return 3;
+    public function verificarSenhaConfig($nova_senha, $confirmar_senha, $id_pessoa){
+        try {
+            if (empty($nova_senha) || empty($confirmar_senha)) {
+                return 1; // campos obrigatórios ausentes
+            }
+
+            if ($nova_senha !== $confirmar_senha) {
+                return 2; // nova senha e confirmação não conferem
+            }
+
+            $minLength = 8;
+            $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
+
+            if (!preg_match($regex, $nova_senha)) {
+                throw new InvalidArgumentException(
+                    'A senha informada não atende aos requisitos mínimos estabelecidos.',
+                    412
+                );
+            }
+
+            $funcionarioDAO = new FuncionarioDAO();
+            $senha_armazenada = $funcionarioDAO->getSenhaByIdPessoa((int) $id_pessoa);
+
+            // Impede definir a mesma senha que já está cadastrada (se houver uma)
+            if ($senha_armazenada !== null) {
+                $check = LoginHelper::verifyAndMigrate($nova_senha, $senha_armazenada);
+                if ($check['valid']) {
+                    return 4; // nova senha igual à atual — bloqueado
+                }
+            }
+
+            $hashNovaSenha = LoginHelper::hashPassword($nova_senha);
+            $funcionarioDAO->alterarSenha((int) $id_pessoa, $hashNovaSenha);
+
+            return 4; // sucesso
+        } catch (InvalidArgumentException $e) {
+            throw $e;
         }
     }
 
@@ -1225,128 +1273,84 @@ class FuncionarioControle
 
 
 
-    /**
-     * Altera a chave de acesso ao sistema de determinado usuário, permite que administradores configurados possam alterar a senha de outras pessoas
-     */
     public function alterarSenha()
-{
-    $id_pessoa = filter_input(INPUT_POST, 'id_pessoa', FILTER_SANITIZE_NUMBER_INT);
-    $nova_senha = filter_input(INPUT_POST, 'nova_senha');
-    $redir = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
+    {
+        $id_pessoa       = filter_input(INPUT_POST, 'id_pessoa', FILTER_VALIDATE_INT);
+        $nova_senha      = filter_input(INPUT_POST, 'nova_senha');
+        $confirmar_senha = filter_input(INPUT_POST, 'confirmar_senha');
+        $senha_antiga    = filter_input(INPUT_POST, 'senha_antiga');
+        $redir           = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
 
-    try {
-        if (!Csrf::validateToken($_POST['csrf_token'])) {
-            throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
-        }
+        try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? '')) {
+                throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
+            }
 
-        if (!$id_pessoa || $id_pessoa < 1) {
-            throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
-        }
+            if ($id_pessoa === false || $id_pessoa === null || $id_pessoa < 1) {
+                throw new InvalidArgumentException('O id da pessoa informado não é válido.', 400);
+            }
 
-        $funcionarioDAO = new FuncionarioDAO();
+            if (!isset($_SESSION['id_pessoa'])) {
+                throw new LogicException('Sessão inválida ou expirada.', 401);
+            }
 
-        if ($id_pessoa != $_SESSION['id_pessoa'] &&
-            !$funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
-            throw new LogicException(
-                'Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha',
-                401
-            );
-        }
+            if ($nova_senha === null || $confirmar_senha === null) {
+                throw new InvalidArgumentException('Os campos de senha são obrigatórios.', 400);
+            }
 
-        $minLength = 8;
-        $regex = "/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{" . $minLength . ",}$/";
+            $funcionarioDAO = new FuncionarioDAO();
 
-        if (!preg_match($regex, $nova_senha)) {
-            throw new InvalidArgumentException(
-                'A senha informada não atende aos requisitos mínimos estabelecidos.',
-                412
-            );
-        }
+            if ($id_pessoa != $_SESSION['id_pessoa'] && !$funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
+                throw new LogicException('Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha', 401);
+            }
 
-        $nova_senha = LoginHelper::hashPassword($nova_senha);
+            $isConfigAdm = false;
 
-        // Apenas páginas permitidas
-        $allowedPages = [
-            'logout.php',
-            'geral/configurar_senhas.php'
-        ];
+            if($id_pessoa == $_SESSION['id_pessoa'] && $funcionarioDAO->verificaAdm($_SESSION['id_pessoa']) && "geral/configurar_senhas.php" === $redir) {
+                header("Location: " . WWW . "html/geral/configurar_senhas.php?verificacao=6");
+                exit();
+            }
 
-        if (!in_array($redir, $allowedPages, true)) {
-            throw new InvalidArgumentException('Fluxo de alteração de senha inválido.', 400);
-        }
+            // --- Fluxo: usuário trocando a própria senha ---
+            if ($id_pessoa == $_SESSION['id_pessoa']) {
 
-        $page = $redir;
+                if ($senha_antiga === null || $senha_antiga === '') {
+                    throw new InvalidArgumentException('A senha atual é obrigatória.', 400);
+                }
 
-        if ($redir === 'logout.php' && $id_pessoa == $_SESSION['id_pessoa']) {
-            // Fluxo de auto-alteração de senha — acessível a QUALQUER funcionário, inclusive admin
-            $verificacao = $this->verificarSenha();
-        
-        } elseif (
-            $redir === 'geral/configurar_senhas.php' &&
-            $id_pessoa != $_SESSION['id_pessoa'] &&
-            $funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])
-        ) {
-            // Fluxo de redefinição de senha de OUTRO funcionário, feito pelo admin
-            $verificacao = $this->verificarSenhaConfig();
-        
-        } else {
-            // Cobre: admin tentando trocar a própria senha pela tela de config,
-            // ou qualquer outra combinação inválida de redir/id_pessoa.
-            header(
-                "Location: " . WWW .
-                "html/" . htmlspecialchars($redir) .
-                "?verificacao=4"
-            );
+                $page        = "logout.php";
+                $verificacao = $this->verificarSenha($nova_senha, $confirmar_senha, $id_pessoa, $senha_antiga);
+                $sucesso     = 5;
+
+            }
+            // --- Fluxo: admin configurando senha de outro usuário ---
+            elseif ($redir === "geral/configurar_senhas.php" && $funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
+
+                $isConfigAdm = true;
+                $page        = $redir;
+                $verificacao = $this->verificarSenhaConfig($nova_senha, $confirmar_senha, $id_pessoa);
+                $sucesso     = 4;
+
+            }
+            else {
+                throw new LogicException('Rota de alteração de senha não reconhecida para este usuário.', 400);
+            }
+
+            // Monta a URL de redirecionamento
+            $url = WWW . 'html/' . htmlspecialchars($page) . '?verificacao=' . htmlspecialchars($verificacao);
+
+            // Só o fluxo de admin usa o parâmetro extra, e só em caso de sucesso
+            if ($isConfigAdm && $verificacao == $sucesso) {
+                $url .= '&redir_config=true';
+            }
+
+            header("Location: " . $url);
             exit();
+
+        } catch (Exception $e) {
+            Util::tratarException($e);
         }
-
-        if ($verificacao == 1 || $verificacao == 2) {
-
-            header(
-                "Location: " . WWW .
-                "html/" . htmlspecialchars($page) .
-                "?verificacao=" . htmlspecialchars($verificacao)
-            );
-            exit();
-        }
-
-        $funcionarioDAO->alterarSenha($id_pessoa, $nova_senha);
-
-        $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-
-        mysqli_query(
-            $conexao,
-            "UPDATE pessoa SET adm_configurado = 1 WHERE cpf='admin'"
-        );
-
-        $resultado = mysqli_query(
-            $conexao,
-            "SELECT original FROM selecao_paragrafo WHERE id_selecao = 1"
-        );
-
-        $registro = mysqli_fetch_array($resultado);
-
-        if ($registro['original'] == 1) {
-            header(
-                "Location: " . WWW .
-                "html/" . htmlspecialchars($page) .
-                "?verificacao=" . htmlspecialchars($verificacao) .
-                "&redir_config=true"
-            );
-        } else {
-            header(
-                "Location: " . WWW .
-                "html/" . htmlspecialchars($page) .
-                "?verificacao=" . htmlspecialchars($verificacao)
-            );
-        }
-
-        exit();
-
-    } catch (Exception $e) {
-        Util::tratarException($e);
     }
-}
 
 public function alterarOutros()
     {
