@@ -1,0 +1,514 @@
+body {
+    background: linear-gradient(180deg, #f7fbff 0%, #eef5fb 100%);
+    min-height: 100vh;
+}
+
+main,
+footer {
+    background: transparent;
+}
+
+main {
+    min-height: calc(90vh);
+    padding: 32px 0 48px;
+}
+
+.validar-socio-page {
+    max-width: 1120px;
+}
+
+.validar-hero {
+    padding: 12px 0 28px;
+}
+
+.validar-hero__icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(38, 90, 155, 0.1);
+    color: #1f5fa7;
+    font-size: 34px;
+}
+
+.validar-hero h1 {
+    margin: 0 0 10px;
+    color: #173a63;
+    font-weight: 700;
+    font-size: 38px;
+    letter-spacing: -0.02em;
+}
+
+.validar-hero p {
+    margin: 0;
+    color: #5f738a;
+    font-size: 16px;
+}
+
+.buscar-socio-card,
+.socio-resumo-card {
+    background: #fff;
+    border: 1px solid rgba(23, 58, 99, 0.08);
+    border-radius: 22px;
+    box-shadow: 0 18px 45px rgba(27, 56, 91, 0.08);
+    padding: 24px;
+}
+
+.buscar-socio-card {
+    margin-bottom: 24px;
+}
+
+.buscar-socio-card__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.buscar-socio-card__header h2 {
+    margin: 0 0 8px;
+    color: #173a63;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.buscar-socio-card__header p {
+    margin: 0;
+    color: #61758c;
+}
+
+.buscar-socio-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: #eef5ff;
+    color: #245ea8;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.buscar-socio-form {
+    display: grid;
+    grid-template-columns: 220px 1fr auto;
+    align-items: center;
+    gap: 16px;
+}
+
+.buscar-socio-form__scan {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #23415f;
+}
+
+.scan-icone {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: rgba(31, 95, 167, 0.1);
+    color: #1f5fa7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex: 0 0 auto;
+}
+
+.buscar-socio-form__scan strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.buscar-socio-form__scan span {
+    display: block;
+    color: #6d7e8f;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.buscar-socio-form__field .form-control {
+    height: 58px;
+    border-radius: 14px;
+    border: 1px solid #c9d9ea;
+    box-shadow: none;
+    padding: 0 18px;
+    font-size: 16px;
+}
+
+.buscar-socio-form__field .form-control:focus {
+    border-color: #2f6fb1;
+    box-shadow: 0 0 0 3px rgba(47, 111, 177, 0.12);
+}
+
+.btn-consultar {
+    height: 58px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #18579c 0%, #2f7bd4 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-consultar:hover,
+.btn-consultar:focus {
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(24, 87, 156, 0.2);
+}
+
+.socio-resumo-card {
+    display: grid;
+    gap: 22px;
+}
+
+.socio-resumo-card[hidden] {
+    display: none !important;
+}
+
+.socio-resumo-card__topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 18px 22px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(24, 87, 156, 0.08), rgba(255, 255, 255, 0.95));
+}
+
+.socio-resumo-card__status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.socio-resumo-card__status-icone {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: rgba(40, 137, 71, 0.12);
+    color: #2b8b47;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    flex: 0 0 auto;
+}
+
+.socio-resumo-card__status h2 {
+    margin: 0 0 6px;
+    color: #22622f;
+    font-weight: 700;
+    font-size: 30px;
+    text-transform: uppercase;
+}
+
+.socio-resumo-card__status p {
+    margin: 0;
+    color: #54705d;
+}
+
+.socio-resumo-card__codigo {
+    min-width: 220px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(23, 58, 99, 0.12);
+    background: rgba(255, 255, 255, 0.75);
+    text-align: left;
+}
+
+.socio-resumo-card__codigo span {
+    display: block;
+    color: #5d738c;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.socio-resumo-card__codigo strong {
+    color: #173a63;
+    font-size: 18px;
+    letter-spacing: 0.02em;
+}
+
+.socio-resumo-card__dados {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 24px;
+    align-items: center;
+}
+
+.socio-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e6eef8 0%, #cfdceb 100%);
+    color: #385875;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+}
+
+.socio-dados-principais h3 {
+    margin: 0 0 16px;
+    color: #173a63;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.socio-dados-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+}
+
+.socio-dados-grid p {
+    margin: 0;
+    color: #415b73;
+}
+
+.socio-dados-grid span {
+    color: #6c7f92;
+}
+
+.socio-resumo-card__metas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.meta-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid #d9e6f3;
+    background: #f8fbff;
+}
+
+.meta-box__icone,
+.beneficio-icone {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-size: 24px;
+    color: #1f5fa7;
+    background: rgba(31, 95, 167, 0.12);
+}
+
+.meta-box span {
+    display: block;
+    color: #65798e;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.meta-box strong {
+    display: block;
+    color: #173a63;
+    font-size: 18px;
+}
+
+.socio-resumo-card__beneficios {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 4px;
+}
+
+.beneficio-conteudo {
+    flex: 1;
+}
+
+.beneficio-conteudo span {
+    display: block;
+    color: #65798e;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.beneficio-conteudo strong {
+    display: block;
+    color: #173a63;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.beneficio-conteudo p {
+    margin: 0;
+    color: #66798d;
+}
+
+.btn-saiba-mais {
+    border-radius: 12px;
+    border: 1px solid #c6d7ea;
+    color: #245ea8;
+    background: #fff;
+    padding: 10px 18px;
+    text-decoration: none;
+}
+
+.btn-saiba-mais:hover,
+.btn-saiba-mais:focus {
+    color: #173a63;
+    text-decoration: none;
+    background: #f3f8fe;
+}
+
+.navbar-brand {
+    height: 50px;
+    padding: 5px 15px;
+}
+
+.navbar-brand img {
+    height: 40px;
+    display: block;
+}
+
+.navbar-toggle {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+.navbar.navbar-default,
+footer p {
+    margin-bottom: 0;
+}
+
+.beneficio-icone{
+    margin-left: 18px;
+}
+
+.beneficio-descricao{
+    margin-bottom: 0px;
+}
+
+@media (max-width: 991px) {
+    .buscar-socio-form {
+        grid-template-columns: 1fr;
+    }
+
+    .buscar-socio-form__scan {
+        padding-bottom: 4px;
+    }
+
+    .socio-resumo-card__topo,
+    .socio-resumo-card__dados,
+    .socio-resumo-card__metas,
+    .socio-resumo-card__beneficios {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+
+    .socio-resumo-card__status {
+        align-items: flex-start;
+    }
+
+    .socio-resumo-card__codigo {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    main {
+        padding-top: 20px;
+    }
+
+    .validar-hero h1 {
+        font-size: 30px;
+    }
+
+    .buscar-socio-card,
+    .socio-resumo-card {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .buscar-socio-card__header {
+        flex-direction: column;
+    }
+
+    .socio-dados-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .socio-resumo-card__topo {
+        padding: 16px;
+    }
+
+    .socio-resumo-card__status {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .socio-resumo-card__status h2 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 767px) {
+    .navbar-nav.navbar-right {
+        float: none !important;
+        margin: 10px 0;
+    }
+
+    .navbar-nav>li {
+        float: none;
+    }
+
+    .navbar-nav>li>a {
+        text-align: center;
+        padding: 15px;
+    }
+
+    .socio-avatar {
+        justify-self: center;
+    }
+
+    .socio-resumo-card__beneficios {
+        grid-template-columns: auto 1fr;
+        grid-template-areas:
+            "icone conteudo"
+            "descricao descricao"
+            "botao botao";
+    }
+
+    .beneficio-icone {
+        grid-area: icone;
+        justify-self: start;
+    }
+
+    .beneficio-conteudo {
+        grid-area: conteudo;
+    }
+
+    .beneficio-conteudo strong {
+        font-size: 20px;
+    }
+
+    .beneficio-descricao { grid-area: descricao; }
+
+    .btn-saiba-mais {
+        grid-area: botao;
+        justify-self: center;
+    }
+}
