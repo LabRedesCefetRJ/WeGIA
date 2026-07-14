@@ -1108,6 +1108,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `id_socio` INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid` BINARY(16) UNIQUE NOT NULL,
   `id_pessoa` INT(11) NOT NULL,
   `id_sociostatus` INT NOT NULL,
   `id_sociotipo` INT NOT NULL,
