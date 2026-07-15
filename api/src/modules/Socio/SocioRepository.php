@@ -1,6 +1,7 @@
 <?php
 namespace api\modules\Socio;
 
+use api\utils\UuidGenerator;
 use PDO;
 
 class SocioRepository
@@ -14,7 +15,7 @@ class SocioRepository
 
     public function save(Socio $socio): Socio|false
     {
-        $query = "INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (:id_pessoa, :id_sociostatus, :id_sociotipo, :valor_periodo, :data_referencia, :auto_status_contribuicoes)";
+        $query = "INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes, uuid) VALUES (:id_pessoa, :id_sociostatus, :id_sociotipo, :valor_periodo, :data_referencia, :auto_status_contribuicoes, :uuid)";
         $stmt = $this->db->prepare($query);
         $resultado = $stmt->execute([
             ':id_pessoa' => $socio->getPessoa()->getId(),
@@ -22,7 +23,8 @@ class SocioRepository
             ':id_sociotipo' => $socio->getIdSocioTipo(),
             ':valor_periodo' => $socio->getValorMensalidade(),
             ':data_referencia' => $socio->getInicioContribuicao()->format('Y-m-d'),
-            ':auto_status_contribuicoes' => $socio->getAutoStatusContribuicao() ? 1 : 0
+            ':auto_status_contribuicoes' => $socio->getAutoStatusContribuicao() ? 1 : 0,
+            ':uuid' => UuidGenerator::generateBinary()
         ]);
 
         if (!$resultado || !$this->db->lastInsertId()) {

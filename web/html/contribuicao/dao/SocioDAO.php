@@ -5,6 +5,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPA
 
 //requisitar model
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model/Socio.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'utils' . DIRECTORY_SEPARATOR . 'UuidGenerator.php';
 class SocioDAO
 {
     private $pdo;
@@ -78,7 +80,7 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, uuid) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia, :uuid)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -91,6 +93,7 @@ class SocioDAO
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
         $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+        $stmtSocio->bindValue(':uuid', \api\utils\UuidGenerator::generateBinary(), PDO::PARAM_LOB);
 
         $stmtSocio->execute();
 
@@ -118,7 +121,7 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, uuid) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia, :uuid)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -131,6 +134,7 @@ class SocioDAO
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
         $stmtSocio->bindParam(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+        $stmtSocio->bindValue(':uuid', \api\utils\UuidGenerator::generateBinary(), PDO::PARAM_LOB);
 
         $stmtSocio->execute();
 
