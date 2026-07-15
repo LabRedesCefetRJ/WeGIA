@@ -25,8 +25,6 @@ if (!$id_pessoa || $id_pessoa < 1) {
 require_once "../permissao/permissao.php";
 permissao($_SESSION['id_pessoa'], 11, 7);
 
-extract($_REQUEST);
-
 //Sanitizar entrada do id_funcionario
 $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_SANITIZE_NUMBER_INT);
 
