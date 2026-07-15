@@ -36,11 +36,11 @@ function configurarMudancaOpcao(funcao) {
  * @param {*} funcao 
  */
 function configurarConsulta(funcao) {
-    const btnConsulta = document.getElementById("consultar-btn");
-    btnConsulta.addEventListener("click", function (ev) {
-        ev.preventDefault();
-        funcao();
-    })
+    document.getElementById("consultar-btn")
+        .addEventListener("click", async (ev) => {
+            ev.preventDefault();
+            await funcao();
+        });
 }
 
 /**
@@ -285,9 +285,9 @@ function verificarSocio({ bairro, cep, cidade, complemento, documento, email, es
         return false;
     }
 
-    if (!email || email.length < 1) {
+    /*if (!email || email.length < 1) {
         return false;
-    }
+    }*/
 
     if (!estado || estado.length < 1) {
         return false;
@@ -322,34 +322,62 @@ async function cadastrarSocio() {
 
     const documento = pegarDocumento();
 
-    const cep = formatarCEP(formData.get('cep'));
-    const dataNascimento = converterDataParaISO(formData.get('data_nascimento'));
+    formData.append('nomeClasse', 'SocioController');
+    formData.append('metodo', 'criarSocio');
+    formData.append('documento_socio', documento);
+    formData.append('cep', formatarCEP(formData.get('cep')));
+    formData.append('data_nascimento', converterDataParaISO(formData.get('data_nascimento')));
+
+    anexarTagsAoFormData(form, formData);
+
+    const response = await fetch("../controller/control.php", {
+        method: "POST",
+        body: formData
+    });
+
+    const resposta = await response.json();
+
+    if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${resposta.erro}`);
+    }
+
+    if (!resposta.mensagem) {
+        throw new Error("Resposta inválida do servidor.");
+    }
+
+    console.log(resposta.mensagem);
+    return true;
+}
+
+async function cadastrarSocioPessoaExistente() {
+    const form = document.getElementById('formulario');
+    const formData = new FormData(form);
+
+    const documento = pegarDocumento();
 
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
-    formData.append('cep', cep);
-    formData.append('data_nascimento', dataNascimento);
+
     anexarTagsAoFormData(form, formData);
 
-    try {
-        const response = await fetch("../controller/control.php", {
-            method: "POST",
-            body: formData
-        });
+    const response = await fetch("../controller/control.php", {
+        method: "POST",
+        body: formData
+    });
 
-        const resposta = await response.json(); // Converte a resposta para JSON
+    const resposta = await response.json();
 
-        if (resposta.mensagem) {
-            console.log(resposta.mensagem);
-        } else if (resposta.erro) {
-            alert("Erro: " + resposta.erro);
-        } else {
-            alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
-        }
-    } catch (error) {
-        console.error("Erro:", error);
+    if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${resposta.erro}`);
     }
+
+    if (!resposta.mensagem) {
+        throw new Error("Resposta inválida do servidor.");
+    }
+
+    console.log(resposta.mensagem);
+    return true;
 }
 
 async function atualizarSocio() {
@@ -358,34 +386,31 @@ async function atualizarSocio() {
 
     const documento = pegarDocumento();
 
-    const cep = formatarCEP(formData.get('cep'));
-    const dataNascimento = converterDataParaISO(formData.get('data_nascimento'));
-
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'atualizarSocio');
     formData.append('documento_socio', documento);
-    formData.append('cep', cep);
-    formData.append('data_nascimento', dataNascimento);
+    formData.append('cep', formatarCEP(formData.get('cep')));
+    formData.append('data_nascimento', converterDataParaISO(formData.get('data_nascimento')));
+
     anexarTagsAoFormData(form, formData);
 
-    try {
-        const response = await fetch("../controller/control.php", {
-            method: "POST",
-            body: formData
-        });
+    const response = await fetch("../controller/control.php", {
+        method: "POST",
+        body: formData
+    });
 
-        const resposta = await response.json(); // Converte a resposta para JSON
+    const resposta = await response.json();
 
-        if (resposta.mensagem) {
-            console.log(resposta.mensagem);
-        } else if (resposta.erro) {
-            alert("Erro: " + resposta.erro);
-        } else {
-            alert("Ops! Ocorreu um problema durante o seu cadastro, se o erro persistir contate o suporte.");
-        }
-    } catch (error) {
-        console.error("Erro:", error);
+    if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${resposta.erro}`);
     }
+
+    if (!resposta.mensagem) {
+        throw new Error("Resposta inválida do servidor.");
+    }
+
+    console.log(resposta.mensagem);
+    return true;
 }
 
 function anexarTagsAoFormData(form, formData) {
@@ -524,41 +549,64 @@ function dataValidaBR(dataStr) {
 }
 
 function verificarContato() {
-    const nome = document.getElementById('nome').value;
-    const dataNascimento = document.getElementById('data_nascimento').value;
-    const email = document.getElementById('email').value;
-    const telefone = document.getElementById('telefone').value;
 
-    if (!nome || nome.length < 3) {
-        alert('O nome não pode estar vazio.');
-        return false;
-    }
+    const nomeObject = document.getElementById('nome');
+    const dataNascimentoObject = document.getElementById('data_nascimento');
+    const emailObject = document.getElementById('email');
+    const telefoneObject = document.getElementById('telefone');
 
-    if (!dataNascimento) {
-        alert('A data de nascimento não pode estar vazia');
-        return false;
-    } else if (!dataValidaBR(dataNascimento)) {
-        alert('Informe uma data válida antes de prosseguir.');
-        return false;
-    }
+    if (!nomeObject.disabled && !nomeObject.readOnly) {
+        const nome = nomeObject.value;
 
-    if (!email) {
-        alert('O e-mail não pode estar vazio.');
-        return false;
-    }
-
-    if (!telefone) {
-        alert('O telefone não pode estar vazio.');
-        return false;
-    } else if (telefone.length != 14 && telefone.length != 15) {
-        alert('O telefone informado não está no formato correto.');
-        return false;
-    } else if (telefone.length === 15) {
-        const celularNumeros = telefone.replace(/\D/g, '');
-
-        if (celularNumeros[2] != 9) {
-            alert('O número de celular informado não é válido.');
+        if (!nome || nome.length < 3) {
+            alert('O nome não pode estar vazio.');
             return false;
+        }
+    }
+
+    if (!dataNascimentoObject.disabled && !dataNascimentoObject.readOnly) {
+        const dataNascimento = dataNascimentoObject.value;
+
+        if (!dataNascimento) {
+            alert('A data de nascimento não pode estar vazia');
+            return false;
+        }
+
+        if (!dataValidaBR(dataNascimento)) {
+            alert('Informe uma data válida antes de prosseguir.');
+            return false;
+        }
+    }
+
+    if (!emailObject.disabled && !emailObject.readOnly) {
+        const email = emailObject.value;
+
+        if (!email) {
+            alert('O e-mail não pode estar vazio.');
+            return false;
+        }
+    }
+
+    if (!telefoneObject.disabled && !telefoneObject.readOnly) {
+        const telefone = telefoneObject.value;
+
+        if (!telefone) {
+            alert('O telefone não pode estar vazio.');
+            return false;
+        }
+
+        if (telefone.length != 14 && telefone.length != 15) {
+            alert('O telefone informado não está no formato correto.');
+            return false;
+        }
+
+        if (telefone.length === 15) {
+            const celularNumeros = telefone.replace(/\D/g, '');
+
+            if (celularNumeros[2] != 9) {
+                alert('O número de celular informado não é válido.');
+                return false;
+            }
         }
     }
 
@@ -569,7 +617,7 @@ function verificarContato() {
  * Recebe como parâmetro um objeto do tipo Socio e preenche os campos do formulário automaticamente
  * @param {*} param0 
  */
-function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, documento, email, estado, id, logradouro, nome, sobrenome, numeroEndereco, telefone }) {
+function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, documento, email, estado, id, logradouro, nome, sobrenome, numeroEndereco, telefone }, blockField = false) {
 
     //Definir elementos do HTML
     const nomeObject = document.getElementById('nome');
@@ -586,78 +634,119 @@ function formAutocomplete({ bairro, cep, cidade, complemento, dataNascimento, do
     const complementoObject = document.getElementById('complemento');
 
     //Atribuir valor aos campos
-    nomeObject.value = nome;
-    sobrenomeObject.value = sobrenome;
+    nomeObject.value = nome ?? '';
+    sobrenomeObject.value = sobrenome ?? '';
 
     if (dataNascimento != null && dataNascimento.length === 10)
         dataNascimentoObject.value = converterDataParaBR(dataNascimento);
 
-    emailObject.value = email;
-    telefoneObject.value = telefone;
-    cepObject.value = cep;
-    ruaObject.value = logradouro;
-    numeroEnderecoObject.value = numeroEndereco;
-    bairroObject.value = bairro;
-    ufObject.value = estado;
-    cidadeObject.value = cidade;
-    complementoObject.value = complemento;
+    emailObject.value = email ?? '';
+    telefoneObject.value = telefone ?? '';
+    cepObject.value = cep ?? '';
+    ruaObject.value = logradouro ?? '';
+    numeroEnderecoObject.value = numeroEndereco ?? '';
+    bairroObject.value = bairro ?? '';
+    ufObject.value = estado ?? '';
+    cidadeObject.value = cidade ?? '';
+    complementoObject.value = complemento ?? '';
+
+    if (blockField) {
+
+        const fields = [
+            nomeObject,
+            sobrenomeObject,
+            dataNascimentoObject,
+            emailObject,
+            telefoneObject,
+            cepObject,
+            ruaObject,
+            numeroEnderecoObject,
+            bairroObject,
+            ufObject,
+            cidadeObject,
+            complementoObject
+        ];
+
+        fields.forEach(field => {
+            field.disabled = true;
+            field.classList.add('campo-bloqueado');
+        });
+    }
 }
 
-function buscarSocio() {
-    let documento = pegarDocumento();
+async function buscarSocio() {
+    const documento = pegarDocumento();
 
     if (!validarDocumento(documento)) {
         alert("O documento informado não é válido");
         return;
     }
 
-    console.log("Buscando sócio ...");
+    console.log("Buscando sócio...");
 
     const url = `../controller/control.php?nomeClasse=SocioController&metodo=buscarPorDocumento&documento=${encodeURIComponent(documento)}`;
 
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Erro na consulta: ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Manipula os dados recebidos do back-end
-            //verificar se existem elementos no data
-            if (data.resultado && typeof data.resultado === 'object') {
+    try {
+        const response = await fetch(url);
 
-                //Autocompletar campos do formulário
-                if (!verificarSocio(data.resultado)) {
-                    //Exibir o sócio
-                    console.log(data);
-                    formAutocomplete(data.resultado);
-                    acao = 'atualizar';
-                    alternarPaginas('pag3', 'pag2');
-                } else {//Enviar para a página de confirmação de geração de boletos
-                    alternarPaginas('pag5', 'pag2');
-                }
+        let data = null;
 
-                //Pegar o nome do sócio e o exibir na página de confirmação de geração do boleto
-                let nomeSocio = data.resultado.nome;
+        // O controller sempre retorna JSON (200 ou 404)
+        try {
+            data = await response.json();
+        } catch (_) {
+            data = null;
+        }
 
-                const divAgradecimento = document.getElementById('div-agradecimento');
-                divAgradecimento.innerHTML = `<h3>Obrigado por contribuir mais uma vez, ${nomeSocio}!<h3>`;
+        console.log("Resposta:", data);
+
+        if (response.ok) {
+            const socio = data.resultado;
+
+            if (!verificarSocio(socio)) {
+                formAutocomplete(socio);
+                acao = "atualizar";
+
+                // Desabilitar edição do e-mail
+                const emailObject = document.getElementById("email");
+                emailObject.disabled = true;
+                emailObject.classList.add("campo-bloqueado");
+
+                alternarPaginas("pag3", "pag2");
             } else {
-                //necessário repensar, pois pode não existir um sócio mas existir a pessoa.
-                console.log(data.resultado);
-                acao = 'cadastrar';
-                alternarPaginas('pag3', 'pag2');
-
-                const divAgradecimento = document.getElementById('div-agradecimento');
-                divAgradecimento.innerHTML = `<h3>Obrigado pela sua contribuição!<h3>`;
+                alternarPaginas("pag5", "pag2");
             }
 
-            //alternarPaginas('pag2');
-        })
-        .catch(error => {
-            console.error('Erro ao realizar a consulta:', error);
-        });
+            document.getElementById("div-agradecimento").innerHTML =
+                `<h3>Obrigado por contribuir mais uma vez, ${socio.nome}!</h3>`;
+
+            return;
+        }
+
+        if (response.status === 404) {
+            if (data?.pessoaExists) {
+                console.log("Pessoa encontrada.");
+
+                // Caso futuramente queira preencher o formulário:
+                // formAutocomplete(data.pessoa, true);
+
+                acao = "cadastrar_existente";
+                alternarPaginas("pag5", "pag2");
+            } else {
+                console.log("Pessoa não encontrada.");
+
+                acao = "cadastrar";
+                alternarPaginas("pag3", "pag2");
+            }
+
+            return;
+        }
+
+        throw new Error(data?.resultado || "Erro na consulta.");
+
+    } catch (error) {
+        console.error(error);
+    }
 
     console.log("Consulta realizada");
 }

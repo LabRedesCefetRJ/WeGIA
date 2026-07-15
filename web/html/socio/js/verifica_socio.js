@@ -6,106 +6,109 @@ document.getElementById('cpf_cnpj').addEventListener('blur', async function () {
     const documento = this.value.trim();
 
     if (documento === "") {
-        desbloquearCamposPessoa(); // Desbloqueia os campos se o CPF for removido
-        idPessoaEncontrada = null; // Limpa o ID da pessoa
-        return; // evita requisição vazia
+        desbloquearCamposPessoa();
+        idPessoaEncontrada = null;
+        return;
     }
 
-    //Ir para o controller
     try {
-        const urlSocio = "../../contribuicao/controller/control.php" +
+
+        const urlSocio =
+            "../../contribuicao/controller/control.php" +
             "?nomeClasse=SocioController&metodo=buscarPorDocumento" +
             "&documento=" + encodeURIComponent(documento);
 
         const responseSocio = await fetch(urlSocio, { method: "GET" });
+        const jsonSocio = await responseSocio.json();
 
-        if (!responseSocio.ok) {
-            console.error("Erro ao consultar sócio:", responseSocio.status);
+        // Documento já pertence a um sócio
+        if (responseSocio.ok) {
+            alert("⚠️ Este CPF/CNPJ já pertence a um sócio cadastrado!");
             return;
         }
 
-        const jsonSocio = await responseSocio.json();
-
-        if (jsonSocio.resultado !== "Sócio não encontrado") {
-            alert("⚠️ Este CPF/CNPJ já pertence a um sócio cadastrado!");
+        // Erro inesperado
+        if (responseSocio.status !== 404) {
+            console.error(
+                "Erro ao consultar sócio:",
+                jsonSocio?.resultado || responseSocio.statusText
+            );
+            return;
         }
 
-        //pesquisar se existe alguma pessoa no sistema com o documento informado, se sim, preencher os campos do formulário com os dados encontrados, caso contrário, deixar os campos em branco para o usuário preencher
-        const urlPessoa = "../../../controle/control.php" +
+        // Não existe pessoa cadastrada, não consultar PessoaController
+        if (!jsonSocio.pessoaExists) {
+            desbloquearCamposPessoa();
+            idPessoaEncontrada = null;
+            return;
+        }
+
+        // Existe uma pessoa cadastrada, buscar seus dados
+        const urlPessoa =
+            "../../../controle/control.php" +
             "?nomeClasse=PessoaControle&metodo=buscarPorDocumento" +
             "&documento=" + encodeURIComponent(documento);
 
         const responsePessoa = await fetch(urlPessoa, { method: "GET" });
 
-        if (!responsePessoa.ok && responsePessoa.status !== 404) { // 404 é esperado quando a pessoa não é encontrada
+        if (!responsePessoa.ok) {
             console.error("Erro ao consultar pessoa:", responsePessoa.status);
-            return;
-        }
-
-        // Se a pessoa não foi encontrada (404), não fazer nada
-        if (responsePessoa.status === 404) {
-            desbloquearCamposPessoa();
-            idPessoaEncontrada = null; // Limpa o ID se a pessoa não for encontrada
             return;
         }
 
         const jsonPessoa = await responsePessoa.json();
 
-        // Armazenar o ID da pessoa encontrada
         idPessoaEncontrada = jsonPessoa.id_pessoa || null;
 
-        // Preencher os campos do formulário com os dados encontrados
         if (jsonPessoa.nome) {
-            document.getElementById('socio_nome').value = jsonPessoa.nome || "";
+            document.getElementById('socio_nome').value = jsonPessoa.nome;
         }
 
         if (jsonPessoa.sobrenome) {
-            document.getElementById('socio_sobrenome').value = jsonPessoa.sobrenome || "";
+            document.getElementById('socio_sobrenome').value = jsonPessoa.sobrenome;
         }
 
         if (jsonPessoa.email) {
-            document.getElementById('email').value = jsonPessoa.email || "";
+            document.getElementById('email').value = jsonPessoa.email;
         }
 
         if (jsonPessoa.telefone) {
-            document.getElementById('telefone').value = jsonPessoa.telefone || "";
+            document.getElementById('telefone').value = jsonPessoa.telefone;
         }
 
         if (jsonPessoa.data_nascimento) {
-            // Formatar a data de nascimento para o formato esperado pelo input date (YYYY-MM-DD)
-            const dataNasc = formatarDataParaInput(jsonPessoa.data_nascimento);
-            document.getElementById('data_nasc').value = dataNasc;
+            document.getElementById('data_nasc').value =
+                formatarDataParaInput(jsonPessoa.data_nascimento);
         }
 
         if (jsonPessoa.cep) {
-            document.getElementById('cep').value = jsonPessoa.cep || "";
+            document.getElementById('cep').value = jsonPessoa.cep;
         }
 
         if (jsonPessoa.bairro) {
-            document.getElementById('bairro').value = jsonPessoa.bairro || "";
+            document.getElementById('bairro').value = jsonPessoa.bairro;
         }
 
-        if(jsonPessoa.logradouro) {
-            document.getElementById('rua').value = jsonPessoa.logradouro || "";
+        if (jsonPessoa.logradouro) {
+            document.getElementById('rua').value = jsonPessoa.logradouro;
         }
 
         if (jsonPessoa.estado) {
-            document.getElementById('estado').value = jsonPessoa.estado || "";
+            document.getElementById('estado').value = jsonPessoa.estado;
         }
 
         if (jsonPessoa.cidade) {
-            document.getElementById('cidade').value = jsonPessoa.cidade || "";
+            document.getElementById('cidade').value = jsonPessoa.cidade;
         }
 
         if (jsonPessoa.numero_endereco) {
-            document.getElementById('numero').value = jsonPessoa.numero_endereco || "";
+            document.getElementById('numero').value = jsonPessoa.numero_endereco;
         }
 
         if (jsonPessoa.complemento) {
-            document.getElementById('complemento').value = jsonPessoa.complemento || "";
+            document.getElementById('complemento').value = jsonPessoa.complemento;
         }
 
-        // Bloquear os campos que foram preenchidos com os dados da pessoa
         bloquearCamposPessoa();
 
     } catch (e) {

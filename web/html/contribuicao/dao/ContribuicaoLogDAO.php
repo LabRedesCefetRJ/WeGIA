@@ -25,7 +25,7 @@ class ContribuicaoLogDAO
                     id_meio_pagamento,
                     ";
 
-        if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
+        if (!is_null($contribuicaoLog->getRecorrenciaDTO())) {
             $sqlInserirContribuicaoLog .= 'id_recorrencia,';
         }
 
@@ -41,11 +41,11 @@ class ContribuicaoLogDAO
                     :idGateway,
                     :idMeioPagamento,
                     ";
-                    
-        if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
+
+        if (!is_null($contribuicaoLog->getRecorrenciaDTO())) {
             $sqlInserirContribuicaoLog .= ':idRecorrencia,';
         }
-        
+
         $sqlInserirContribuicaoLog .= ":codigo, 
                     :valor, 
                     :dataGeracao, 
@@ -57,18 +57,18 @@ class ContribuicaoLogDAO
         $stmt->bindValue(':idGateway', $contribuicaoLog->getGatewayPagamento()->getId());
         $stmt->bindValue(':idMeioPagamento', $contribuicaoLog->getMeioPagamento()->getId());
 
-        if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
+        if (!is_null($contribuicaoLog->getRecorrenciaDTO())) {
             $stmt->bindValue(':idRecorrencia', $contribuicaoLog->getRecorrenciaDTO()->id);
         }
 
         $stmt->bindValue(':codigo', $contribuicaoLog->getCodigo());
 
-        if(!is_null($contribuicaoLog->getRecorrenciaDTO())){
+        if (!is_null($contribuicaoLog->getRecorrenciaDTO())) {
             $stmt->bindValue(':valor', $contribuicaoLog->getRecorrenciaDTO()->valor);
-        }else{
+        } else {
             $stmt->bindValue(':valor', $contribuicaoLog->getValor());
         }
-        
+
         $stmt->bindValue(':dataGeracao', $contribuicaoLog->getDataGeracao());
         $stmt->bindValue(':dataVencimento', $contribuicaoLog->getDataVencimento());
         $stmt->bindValue(':statusPagamento', $contribuicaoLog->getStatusPagamento());
@@ -231,12 +231,13 @@ class ContribuicaoLogDAO
         JOIN contribuicao_gatewayPagamento as cg ON (cg.id=cl.id_gateway) 
         JOIN contribuicao_meioPagamento as cm ON (cm.id=cl.id_meio_pagamento) ';
 
-        if ($configuracao->getPeriodo() != 1) {
+        if ($configuracao->getPeriodo() !== 1) {
             $dataInicio = null;
             $dataFim = null;
             $agora = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 
-            switch ($configuracao->getPeriodo()) {
+            $periodo = $configuracao->getPeriodo(); 
+            switch ($periodo) {
                 case 2: // Mês atual
                     $dataInicio = (clone $agora)->modify('first day of this month')->setTime(0, 0, 0);
                     $dataFim    = (clone $agora)->modify('last day of this month')->setTime(23, 59, 59);
@@ -294,10 +295,13 @@ class ContribuicaoLogDAO
                     $dataInicio = new DateTime("$anoPassado-01-01", new DateTimeZone(date_default_timezone_get()));
                     $dataFim    = new DateTime("$anoPassado-12-31 23:59:59", new DateTimeZone(date_default_timezone_get()));
                     break;
+                case is_array($periodo): //Período específico
+                    $dataInicio = $periodo['inicio'];
+                    $dataFim = $periodo['fim'];
+                    break;
             }
         }
 
-        // Exemplo de uso:
         if ((isset($dataInicio) && !is_null($dataInicio)) && (isset($dataFim) && !is_null($dataFim))) {
             switch ($configuracao->getStatus()) {
                 case 1: // Todos (qualquer uma das datas no intervalo)
@@ -317,8 +321,8 @@ class ContribuicaoLogDAO
             }
 
             // Parâmetros para bind
-            $params[':data_inicio'] = $dataInicio->format('Y-m-d H:i:s');
-            $params[':data_fim']    = $dataFim->format('Y-m-d H:i:s');
+            $params[':data_inicio'] = $dataInicio->format('Y-m-d');
+            $params[':data_fim']    = $dataFim->format('Y-m-d');
         } else if ($configuracao->getStatus() === 4) {
             $conditions[] = 'cl.status_pagamento=1';
         }
@@ -335,12 +339,16 @@ class ContribuicaoLogDAO
             $where = 'WHERE ' . implode(' AND ', $conditions);
         }
 
-        if($configuracao->getStatus()!=1 && $configuracao->getStatus()!=2){
-            switch($configuracao->getStatus()){
-                case 3: $sql .= $where . ' ORDER BY cl.data_vencimento DESC';break;
-                case 4: $sql .= $where . ' ORDER BY cl.data_pagamento DESC';break;
+        if ($configuracao->getStatus() != 1 && $configuracao->getStatus() != 2) {
+            switch ($configuracao->getStatus()) {
+                case 3:
+                    $sql .= $where . ' ORDER BY cl.data_vencimento DESC';
+                    break;
+                case 4:
+                    $sql .= $where . ' ORDER BY cl.data_pagamento DESC';
+                    break;
             }
-        }else{
+        } else {
             $sql .= $where . ' ORDER BY cl.data_geracao DESC';
         }
 
@@ -357,18 +365,19 @@ class ContribuicaoLogDAO
         return $resultados;
     }
 
-    public function getContribuicoesPorSocioEPeriodo($idSocio, $dataInicio, $dataFim) {
+    public function getContribuicoesPorSocioEPeriodo($idSocio, $dataInicio, $dataFim)
+    {
         $sql = "SELECT cl.codigo, cl.data_geracao, cl.data_pagamento, cl.valor, cmp.meio FROM contribuicao_log cl JOIN contribuicao_meioPagamento cmp ON (cl.id_meio_pagamento=cmp.id)
                 WHERE id_socio = :idSocio 
                 AND status_pagamento = 1 
                 AND data_pagamento BETWEEN :dataInicio AND :dataFim";
-        
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':idSocio', $idSocio, PDO::PARAM_INT);
         $stmt->bindParam(':dataInicio', $dataInicio);
         $stmt->bindParam(':dataFim', $dataFim);
         $stmt->execute();
-        
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

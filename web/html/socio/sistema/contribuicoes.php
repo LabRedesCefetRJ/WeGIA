@@ -287,8 +287,16 @@ try {
                     <option value="6">Semestre</option>
                     <option value="7">Ano atual</option>
                     <option value="8">Ano passado</option>
-                    <!--<option value="9">Específico</option> Adicionar futuramente-->
+                    <option value="9">Específico</option>
                   </select>
+                </div>
+
+                <div class="form-group me-5 hidden" id="specific-period-container">
+                  <label for="data-inicio">Início:&nbsp;</label>
+                  <input class="form-control" type="date" name="data-inicio" id="data-inicio" min="1900-01-01">
+
+                  <label for="data-fim">Fim:&nbsp;</label>
+                  <input class="form-control" type="date" name="data-fim" id="data-fim" max="<?= date('Y-m-d') ?>">
                 </div>
 
                 <div class="form-group me-5">
