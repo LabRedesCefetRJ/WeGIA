@@ -11,7 +11,7 @@ async function configurarRegrasDePagamento() {
 async function decidirAcao() {
     try {
         switch (acao) {
-            case 'qrcode':
+            case 'boleto':
                 await gerarBoleto();
                 break;
 
