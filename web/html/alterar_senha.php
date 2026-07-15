@@ -66,25 +66,33 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<script src="../Functions/lista.js"></script>
 	<script>
 		$(function() {
-			var verificacao = <?= htmlspecialchars(filter_input(INPUT_GET, 'verificacao', FILTER_SANITIZE_NUMBER_INT)); ?>;
-			var redir_config = <?= htmlspecialchars(filter_input(INPUT_GET, 'redir_config', FILTER_SANITIZE_SPECIAL_CHARS)); ?>;
-			console.log(verificacao);
+		const verificacao = '<?= isset($_GET['verificacao']) ? htmlspecialchars($_GET['verificacao']) : '0' ?>';
 
-			if (verificacao == '1') {
-				$('#erro').text('Confirmação de senha não coincide com nova senha');
-			} else if (verificacao == '2') {
-				$('#erro').text('Senha antiga está errada');
-			} else if (verificacao == '3') {
-				$('#erro').text('Senha alterada com sucesso!');
-				if (redir_config) {
-					$('#erro').text('Senha alterada com sucesso! Você será redirecionado para a próxima configuração.');
-					setTimeout(function() {
-						window.location.href = "./personalizacao.php";
-					}, 3000);
-
-				}
-			}
-		});
+		switch (verificacao) {
+			case '0':
+				break;
+			case '1':
+				alert("Campos obrigatórios ausentes ou inválidos");
+				break;
+			case '2':
+				alert("Nova senha e confirmação não conferem");
+				break;
+			case '3':
+				alert("Senha atual informada está incorreta");
+				break;
+			case '4':
+				alert('Senha alterada com sucesso!');
+				break;
+			case '5':
+				alert('Senha alterada com sucesso!');
+				break;
+				case '6':
+				alert('Operação negada: Administradores não podem alterar a própria senha pelo painel de configuração de senhas. Por favor, utilize a opção de alteração de senha no menu do usuário.');
+				break;
+			default:
+				alert("O valor informado para a verificação não é válido.");
+		}
+	});
 	</script>
 	<script type="text/javascript">
 		$(function() {
