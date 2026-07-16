@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PaymentServiceException.php';
+
 class Util
 {
     public const MENSAGEM_NOME_INVALIDO = 'O nome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
@@ -161,14 +163,8 @@ class Util
      */
     public static function tratarException(Throwable $e): void
     {
-        // Log interno
-        error_log(sprintf(
-            "[ERRO: %d] %s em %s:%d",
-            $e->getCode(),
-            $e->getMessage(),
-            $e->getFile(),
-            $e->getLine()
-        ));
+        // Log interno com o rastreio completo da exceção
+        error_log($e->__toString());
 
         // Garante JSON SEMPRE
         if (!headers_sent()) {
@@ -183,7 +179,11 @@ class Util
         http_response_code($httpCode);
 
         // Mensagem para o cliente
-        if ($e instanceof PDOException) {
+        if ($e instanceof PaymentServiceException) {
+            echo json_encode([
+                'erro' => $e->getMensagemCliente()
+            ]);
+        } elseif ($e instanceof PDOException) {
             echo json_encode([
                 'erro' => 'Erro interno ao acessar o banco de dados'
             ]);
