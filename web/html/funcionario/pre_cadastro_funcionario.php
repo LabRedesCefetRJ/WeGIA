@@ -232,7 +232,7 @@ require_once ROOT . "/html/geral/msg.php";
                             <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                             <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                             <br>
-                            <input type="hidden" name="nomeClasse" value="FuncionarioControle">
+                            <input type="hidden" name="nomeClasse" value="FuncionarioControle"> 
                             <input type="hidden" name="metodo" value="selecionarCadastro">
                             <input type='submit' value='Enviar' name='enviar' id='enviar' class='mb-xs mt-xs mr-xs btn btn-primary'>
                         </form>

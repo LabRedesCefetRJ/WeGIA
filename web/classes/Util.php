@@ -1013,7 +1013,7 @@ class Util
     public static function validarCPF(string $cpf)
     {
         //Limpar formatação
-        $cpfLimpo = preg_replace('/[^0-9]/', '', $cpf);
+        $cpfLimpo = self::limpaCpf($cpf);
 
         //Validação do tamanho da string informada
         if (strlen($cpfLimpo) != 11) {

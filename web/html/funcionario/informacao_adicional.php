@@ -104,11 +104,11 @@ function listar(PDO $pdo)
         
         //evitar XSS
         foreach ($informacoes as $index => $informacao) {
-            $informacoes[$index]['dados'] = htmlspecialchars($informacao['dados']);
-            $informacoes[$index]['descricao'] = htmlspecialchars($informacao['descricao']);
+            $informacoes[$index]['dados'] = htmlspecialchars($informacao['dados'] ?? '');
+            $informacoes[$index]['descricao'] = htmlspecialchars($informacao['descricao'] ?? '');
         }
         
-        echo json_encode($informacoes);
+        echo json_encode([$informacoes]);
     } catch (PDOException $th) {
         echo json_encode($th);
     }
