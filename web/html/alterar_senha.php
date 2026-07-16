@@ -156,7 +156,16 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Senha antiga:
 												</label>
 												<div class="col-md-6">
-													<input type="password" name="senha_antiga" class="form-control" required><br />
+													<div class="input-group">
+														<input type="password" id="senha_antiga" name="senha_antiga" class="form-control" required>
+
+														<span class="input-group-btn">
+															<button type="button" id="toggleSenhaAntiga" class="btn btn-default">
+																<i class="fa fa-eye"></i>
+															</button>
+														</span>
+													</div>
+													<br />
 													</label>
 
 												</div>
@@ -165,8 +174,16 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Nova senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" id="nova_senha" name="nova_senha" class="form-control" required><br />
-													</label>
+													<div class="input-group">
+														<input type="password" id="nova_senha" name="nova_senha" class="form-control" required>
+
+														<span class="input-group-btn">
+															<button type="button" id="toggleNovaSenha" class="btn btn-default">
+																<i class="fa fa-eye"></i>
+															</button>
+														</span>
+													</div>
+													<br />
 													<div id="password-div"></div>
 												</div>
 											</div>
@@ -174,9 +191,16 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Confirmar senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" name="confirmar_senha" class="form-control" required><br />
-													</label>
+													<div class="input-group">
+														<input type="password" id="confirmar_senha" name="confirmar_senha" class="form-control" required>
 
+														<span class="input-group-btn">
+															<button type="button" id="toggleConfirmarSenha" class="btn btn-default">
+																<i class="fa fa-eye"></i>
+															</button>
+														</span>
+													</div>
+													<br />
 												</div>
 											</div>
 										</fieldset>
@@ -197,6 +221,14 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 			</section>
 		</div>
 	</section>
+
+	<script>
+	$(document).ready(function() {
+		configurarOlhoSenha("#toggleSenhaAntiga", "#senha_antiga");
+		configurarOlhoSenha("#toggleNovaSenha", "#nova_senha");
+		configurarOlhoSenha("#toggleConfirmarSenha", "#confirmar_senha");
+	});
+	</script>
 
 	<!-- Vendor -->
 	<script src="../assets/vendor/select2/select2.js"></script>
@@ -220,6 +252,8 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<script src="../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
 	<script src="../Functions/password_policy.js"></script>
+
+	<script src="../Functions/togglePassword.js"></script>
 </body>
 
 </html>

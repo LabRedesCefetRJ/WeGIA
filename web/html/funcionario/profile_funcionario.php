@@ -135,10 +135,10 @@ try {
 
   $pode_editar_cargo = true;
   if ($alvo['id_pessoa'] == $id_pessoa) {
-      $pode_editar_cargo = false;
+    $pode_editar_cargo = false;
   }
   if ($alvo['adm_configurado'] == 1 && $adm_configurado != 1) {
-      $pode_editar_cargo = false;
+    $pode_editar_cargo = false;
   }
 
   $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
@@ -767,7 +767,14 @@ try {
                     if (isset($_SESSION['id_pessoa']) and !empty($_SESSION['id_pessoa'])) {
                       $foto = $pessoa['imagem'];
                       if ($foto != null and $foto != "") {
-                        $foto = 'data:image;base64,' . $foto;
+                        $imagemDecodificada = base64_decode($foto, true);
+                        if ($imagemDecodificada !== false) {
+                          $finfo = new finfo(FILEINFO_MIME_TYPE);
+                          $mimeType = $finfo->buffer($imagemDecodificada) ?: 'image/jpeg';
+                          $foto = 'data:' . $mimeType . ';base64,' . $foto;
+                        } else {
+                          $foto = WWW . "img/semfoto.png";
+                        }
                       } else {
                         $foto = WWW . "img/semfoto.png";
                       }
@@ -875,7 +882,7 @@ try {
                           <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
                         </div>
                       </div>
-                    <div class="form-group">
+                      <div class="form-group">
                         <label class="col-md-3 control-label" for="emailForm">E-mail</label>
                         <div class="col-md-8">
                           <input type="email" class="form-control" name="email" id="emailForm" placeholder="Ex: usuario@email.com">
@@ -965,7 +972,16 @@ try {
                   <div class="panel-footer">
                     <div class="row">
                       <div class="col-md-9 col-md-offset-3">
-                        <button id="excluir" type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Demitir</button>
+                        <?php
+                        $funcData = json_decode($func, true)[0];
+                        $statusAtual = $funcData['id_situacao'];
+
+                        if ($statusAtual == 2) {
+                          echo '<button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalReativar">Reativar</button>';
+                        } else {
+                          echo '<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#exclusao">Inativar</button>';
+                        }
+                        ?>
                       </div>
                     </div>
                   </div>
@@ -974,11 +990,11 @@ try {
                       <!-- Modal content-->
                       <div class="modal-content">
                         <div class="modal-header">
-                          <button type="button" class="close" aba-dismiss="modal">×</button>
-                          <h3>Demitir um Funcionário</h3>
+                          <button type="button" class="close" data-dismiss="modal">×</button>
+                          <h3>Inativar um Funcionário</h3>
                         </div>
                         <div class="modal-body">
-                          <p> Tem certeza que deseja demitir esse funcionário? Essa ação não poderá ser desfeita e todas as informações referentes a esse funcionário serão perdidas!</p>
+                          <p> Tem certeza que deseja inativar esse funcionário? Essa ação não poderá ser desfeita e todas as informações referentes a esse funcionário serão perdidas!</p>
                           <!-- Pegar id funcionário de variável sanitizada -->
                           <form action="../../controle/control.php" method="POST">
                             <input type="hidden" name="metodo" value="excluir">
@@ -987,6 +1003,29 @@ try {
                             <?= Csrf::inputField() ?>
                             <input type="submit" class="btn btn-success" value="Confirmar">
                             <button button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal fade" id="modalReativar" role="dialog">
+                    <div class="modal-dialog">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <button type="button" class="close" data-dismiss="modal">&times;</button>
+                          <h3>Reativar Funcionário</h3>
+                        </div>
+                        <div class="modal-body">
+                          <p>Tem certeza que deseja reativar este funcionário?</p>
+                          <form action="../../controle/control.php" method="POST">
+                            <input type="hidden" name="metodo" value="reativar">
+                            <input type="hidden" name="nomeClasse" value="FuncionarioControle">
+                            <input type="hidden" name="id_funcionario" value="<?= htmlspecialchars($idFuncionario) ?>">
+
+                            <?= Csrf::inputField() ?>
+
+                            <input type="submit" class="btn btn-success" value="Confirmar Reativação">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                           </form>
                         </div>
                       </div>
@@ -1087,7 +1126,6 @@ try {
                     if (value.length > 11) value = value.substring(0, 11);
                     input.value = value.replace(/(\d{7})(\d{4})/, '$1/$2');
                   }
-
                 </script>
                 <div id="outros" class="tab-pane">
                   <section class="panel">
@@ -1229,7 +1267,7 @@ try {
                               foreach ($cargo as $row) {
                                 // esconde a opção "Administrador" se o usuário logado não for adm
                                 if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
-                                    continue;
+                                  continue;
                                 }
                                 $selectedCargo = isset($oldInput['cargo']) && ((string)$row[0] === (string)$oldInput['cargo']) ? ' selected' : '';
                                 echo "<option value=\"{$row[0]}\"{$selectedCargo}>" . htmlspecialchars($row[1]) . "</option>";
@@ -1386,7 +1424,7 @@ try {
                                   post(url, data, listarInfoAdicional);
                                   $("#" + 'informacao' + id_descricao + "").remove();
                                 }
-                                
+
                                 //Refazer lógica abaixo
                                 function listarInfoAdicional(lista) {
                                   //Pegar id funcionário de variável sanitizada
@@ -1480,11 +1518,28 @@ try {
                             <script>
                               $(document).ready(function() {
                                 $("#tipoCargaHoraria_input").on('change', function() {
-                                  var selectValor = $(this).val();
+                                  let selectValor = $(this).val();
                                   if (selectValor == 1) {
+                                    //marcar dias trabalhados de segunda a sexta e dias de folga sábado e domingo
                                     $("#diaTrabalhado").hide();
+                                    $("#diaFolga").hide();
+                                    $("#diaTrabalhado_Seg").prop("checked", true);
+                                    $("#diaTrabalhado_Ter").prop("checked", true);
+                                    $("#diaTrabalhado_Qua").prop("checked", true);
+                                    $("#diaTrabalhado_Qui").prop("checked", true);
+                                    $("#diaTrabalhado_Sex").prop("checked", true);
+                                    $("#diaFolga_Sab").prop("checked", true);
+                                    $("#diaFolga_Dom").prop("checked", true);
                                   } else if (selectValor == 2) {
+                                    $("#diaTrabalhado_Seg").prop("checked", false);
+                                    $("#diaTrabalhado_Ter").prop("checked", false);
+                                    $("#diaTrabalhado_Qua").prop("checked", false);
+                                    $("#diaTrabalhado_Qui").prop("checked", false);
+                                    $("#diaTrabalhado_Sex").prop("checked", false);
+                                    $("#diaFolga_Sab").prop("checked", false);
+                                    $("#diaFolga_Dom").prop("checked", false);
                                     $("#diaTrabalhado").show();
+                                    $("#diaFolga").show();
                                   }
                                 });
                               });
@@ -1554,7 +1609,7 @@ try {
                             </div>
                           </div>
                         </div>
-                        <div class="text-center">
+                        <div class="text-center" id="diaFolga">
                           <h3 class="col-md-12">Dias de Folga</h3>
                           <div class="btn-group ">
                             <label class="btn btn-primary ">
@@ -2509,7 +2564,7 @@ try {
     // Validação de Carga Horária
     document.getElementById('formAlterarCargaHoraria').addEventListener('submit', function(event) {
       event.preventDefault();
-      
+
       let entrada1 = document.getElementById('entrada1_input').value;
       let saida1 = document.getElementById('saida1_input').value;
       let entrada2 = document.getElementById('entrada2_input').value;
@@ -2582,22 +2637,22 @@ try {
       const formData = new FormData(form);
 
       fetch('../../controle/control.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'sucesso') {
-          $('#modalSucessoCargaHoraria').modal('show');
-        } else if (data.status === 'erro') {
-          exibirErroValidacao(data.mensagem);
-        } else {
-          exibirErroValidacao('Erro desconhecido ao atualizar carga horária.');
-        }
-      })
-      .catch(error => {
-        exibirErroValidacao('Erro na comunicação com o servidor: ' + error);
-      });
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'sucesso') {
+            $('#modalSucessoCargaHoraria').modal('show');
+          } else if (data.status === 'erro') {
+            exibirErroValidacao(data.mensagem);
+          } else {
+            exibirErroValidacao('Erro desconhecido ao atualizar carga horária.');
+          }
+        })
+        .catch(error => {
+          exibirErroValidacao('Erro na comunicação com o servidor: ' + error);
+        });
     }
 
     <?php if ($openModal === 'depFormModal'): ?>

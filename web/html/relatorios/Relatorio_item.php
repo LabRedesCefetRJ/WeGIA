@@ -17,10 +17,11 @@ class Item
     private $mostrarZerado;
     private $DDL_cmd;
     private $tipoMedia;
+    private $modoRequisicao;
 
     // Constructor
 
-    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false, $tipoMedia = 'dia')
+    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false, $tipoMedia = 'dia', $modoRequisicao = 'movimentados')
     {
         $this
             ->setRelatorio($relat)
@@ -32,6 +33,7 @@ class Item
             ->setAlmoxarifado($a)
             ->setMostrarZerado($z)
             ->setTipoMedia($tipoMedia)
+            ->setModoRequisicao($modoRequisicao)
         ;
     }
 
@@ -585,44 +587,112 @@ class Item
 
     private function requisicao()
     {
-        $params = "WHERE p.oculto = false AND p.ativo = 1 AND a.ativo = 1";
-        $having = "";
+	    if ($this->getModoRequisicao() === 'completo') {
+		    $this->requisicaoCompleta();
+		    return;
+	    }
 
-        if ($this->getAlmoxarifado()) {
-            $params .= " AND e.id_almoxarifado = :idAlmoxarifado";
-            $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
-        }
+	    $params = "
+		    WHERE isaida.qtd > 0
+		    AND isaida.oculto = false
+		    AND saida.ativo = 1
+		    AND p.oculto = false
+		    AND p.ativo = 1
+		    AND a.ativo = 1
+	    ";
 
-        if ($this->getTipo()) {
-            $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
-            $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
-        }
+	    if ($this->getAlmoxarifado()) {
+		    $params .= " AND saida.id_almoxarifado = :idAlmoxarifado";
+		    $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
+	    }
 
-        if (!$this->getMostrarZerado()) {
-            $having = "HAVING SUM(e.qtd) > 0";
-        }
+	    if ($this->getTipo()) {
+		    $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
+		    $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
+	    }
 
-        $this->setQuery("
-            SELECT
-                p.id_produto,
-                p.descricao,
-                c.descricao_categoria,
-                SUM(e.qtd) AS qtd
-            FROM produto p
-            INNER JOIN categoria_produto c 
-                ON c.id_categoria_produto = p.id_categoria_produto
-            INNER JOIN estoque e 
-                ON e.id_produto = p.id_produto
-            INNER JOIN almoxarifado a 
-                ON a.id_almoxarifado = e.id_almoxarifado
-            $params
-            GROUP BY
-                p.id_produto,
-                p.descricao,
-                c.descricao_categoria
-            $having
-            ORDER BY c.descricao_categoria ASC, p.descricao ASC
-        ");
+	    if ($this->getPeriodo()['inicio']) {
+		    $params .= " AND saida.data >= :dataInicio";
+		    $this->paramsExternos[':dataInicio'] = $this->getPeriodo()['inicio'];
+	    }
+
+	    if ($this->getPeriodo()['fim']) {
+		    $params .= " AND saida.data <= :dataFim";
+		    $this->paramsExternos[':dataFim'] = $this->getPeriodo()['fim'];
+	    }
+
+	    if (!$this->getPeriodo()['inicio'] && !$this->getPeriodo()['fim']) {
+		    $params .= " AND saida.data >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)";
+	    }
+
+	    $this->setQuery("
+		    SELECT
+			    p.id_produto,
+			    p.descricao,
+			    c.descricao_categoria,
+			    SUM(isaida.qtd) AS qtd_saida
+		    FROM isaida
+		    INNER JOIN saida 
+			    ON saida.id_saida = isaida.id_saida
+		    INNER JOIN produto p 
+			    ON p.id_produto = isaida.id_produto
+		    INNER JOIN categoria_produto c 
+			    ON c.id_categoria_produto = p.id_categoria_produto
+		    INNER JOIN almoxarifado a 
+			    ON a.id_almoxarifado = saida.id_almoxarifado
+		    $params
+		    GROUP BY
+			    p.id_produto,
+			    p.descricao,
+			    c.descricao_categoria
+            HAVING SUM(isaida.qtd) >= 10
+		    ORDER BY
+			    c.descricao_categoria ASC,
+			    qtd_saida DESC,
+			    p.descricao ASC
+	    ");
+    }
+
+    private function requisicaoCompleta()
+    {
+    	$params = "WHERE p.oculto = false AND p.ativo = 1 AND a.ativo = 1";
+	    $having = "";
+
+	    if ($this->getAlmoxarifado()) {
+		    $params .= " AND e.id_almoxarifado = :idAlmoxarifado";
+		    $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
+	    }
+
+	    if ($this->getTipo()) {
+		    $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
+		    $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
+	    }
+
+	    if (!$this->getMostrarZerado()) {
+		    $having = "HAVING SUM(e.qtd) > 0";
+	    }
+
+	    $this->setQuery("
+		    SELECT
+			    p.id_produto,
+			    p.descricao,
+			    c.descricao_categoria,
+			    SUM(e.qtd) AS qtd
+		    FROM produto p
+		    INNER JOIN categoria_produto c 
+			    ON c.id_categoria_produto = p.id_categoria_produto
+		    INNER JOIN estoque e 
+			    ON e.id_produto = p.id_produto
+		    INNER JOIN almoxarifado a 
+			    ON a.id_almoxarifado = e.id_almoxarifado
+		    $params
+		    GROUP BY
+			    p.id_produto,
+			    p.descricao,
+			    c.descricao_categoria
+		    $having
+		    ORDER BY c.descricao_categoria ASC, p.descricao ASC
+	    ");
     }
 
     public function displayRequisicao()
@@ -645,7 +715,20 @@ class Item
         $produtosPorFolha = 10;
 
         foreach ($produtosPorCategoria as $categoria => $listaProdutos) {
-            $folhas = array_chunk($listaProdutos, $produtosPorFolha);
+	        if ($this->getModoRequisicao() === 'movimentados') {
+		        $listaProdutos = array_slice($listaProdutos, 0, 8);
+
+		        for ($i = 1; $i <= 2; $i++) {
+	                $listaProdutos[] = [
+		                'id_produto' => null,
+		                'descricao' => '',
+		                'descricao_categoria' => $categoria,
+		                'linha_manual' => true
+	                ];
+                }
+	        }
+
+	        $folhas = array_chunk($listaProdutos, $produtosPorFolha);
             $totalFolhas = count($folhas);
 
             foreach ($folhas as $indiceFolha => $produtosFolha) {
@@ -667,8 +750,17 @@ class Item
                 foreach ($produtosFolha as $produto) {
                     echo '<tr>';
 
-                    echo '<td class="produto-requisicao" rowspan="2">';
-                    echo htmlspecialchars($produto['descricao'], ENT_QUOTES, 'UTF-8');
+                    $isLinhaManual = !empty($produto['linha_manual']);
+
+                    echo '<td class="produto-requisicao' . ($isLinhaManual ? ' produto-requisicao-manual' : '') . '" rowspan="2">';
+
+                    if ($isLinhaManual) {
+	                    echo '<div class="texto-produto-manual">OUTRO PRODUTO:</div>';
+	                    echo '<div class="linha-produto-manual"></div>';
+                    } else {
+	                    echo htmlspecialchars($produto['descricao'], ENT_QUOTES, 'UTF-8');
+                    }
+
                     echo '</td>';
 
                     for ($dia = 1; $dia <= 16; $dia++) {
@@ -838,5 +930,23 @@ class Item
         $this->tipoMedia = $tipoMedia;
 
         return $this;
+    }
+
+    public function getModoRequisicao()
+    {
+	    return $this->modoRequisicao;
+    }
+
+    public function setModoRequisicao($modoRequisicao)
+    {
+	    $modosPermitidos = ['movimentados', 'completo'];
+
+	    if (!in_array($modoRequisicao, $modosPermitidos, true)) {
+		    $modoRequisicao = 'movimentados';
+	    }
+
+	    $this->modoRequisicao = $modoRequisicao;
+
+	    return $this;
     }
 }

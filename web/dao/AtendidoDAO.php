@@ -269,6 +269,28 @@ class AtendidoDAO
         }
     }
 
+    public function existeAtendido(int $id): bool
+    {
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare("SELECT idatendido FROM atendido WHERE idatendido = :id");
+        $stmt->execute([':id' => $id]);
+        return (bool) $stmt->fetch();
+    }
+
+    public function listarDocumentacaoFuncional(int $idAtendido): array
+    {
+        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare(
+            "SELECT * FROM atendido_documentacao a 
+            JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos = doca.idatendido_docs_atendidos 
+            JOIN pessoa_arquivo pa ON a.id_pessoa_arquivo = pa.id 
+            WHERE atendido_idatendido = :idAtendido"
+        );
+        $stmt->bindParam(':idAtendido', $idAtendido, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     //reformular o método, não deve ser possível deletar um atendido da base de dados.
     public function excluir($id)
     {
