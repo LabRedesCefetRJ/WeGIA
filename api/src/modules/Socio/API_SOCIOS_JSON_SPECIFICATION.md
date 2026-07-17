@@ -312,7 +312,72 @@ Valida um código de verificação enviado por email.
 
 ---
 
-## 6. POST `/socios/alter-password`
+## 6. GET `/socios/{uuid}/validar_beneficios`
+
+Valida a situação do sócio pelo UUID v7 armazenado em binário no banco e retorna os dados necessários para a liberação de benefícios de parceiros institucionais.
+
+### Parâmetros
+- **uuid** (path parameter, obrigatório): UUID v7 do sócio em formato textual
+
+### Exemplo de Requisição
+```
+GET /socios/018f3c30-3c0f-7b3f-8a53-b7b8a9f3f2f1/validar_beneficios
+```
+
+### Resposta - 200 OK
+```json
+{
+  "nome": "João",
+  "sobrenome": "Silva",
+  "dataNascimento": "15/**/**90",
+  "cpf": "***.***.***-01",
+  "dataReferenciaContribuicao": "2024-01-01",
+  "dataUltimaContribuicao": "2024-06-15",
+  "benefit_points": 12
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `nome` | string | Nome do sócio |
+| `sobrenome` | string | Sobrenome do sócio |
+| `dataNascimento` | string \| null | Data de nascimento parcialmente censurada, exibindo apenas o dia e os dois últimos dígitos do ano |
+| `cpf` | string \| null | CPF parcialmente censurado, exibindo apenas os dois últimos dígitos |
+| `dataReferenciaContribuicao` | string \| null | Data de referência da contribuição do sócio no formato `YYYY-MM-DD` |
+| `dataUltimaContribuicao` | string \| null | Data da última contribuição paga no formato `YYYY-MM-DD` |
+| `benefit_points` | integer | Total de pontos de benefício calculados para o sócio |
+
+### Resposta - 400 Bad Request
+```json
+{
+  "message": "UUID inválido."
+}
+```
+
+Se o UUID estiver em formato válido, mas não for v7, a resposta de erro será:
+```json
+{
+  "message": "UUID v7 inválido."
+}
+```
+
+### Resposta - 404 Not Found
+```json
+{
+  "message": "Sócio não localizado."
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Mensagem de erro detalhada | Código do erro"
+}
+```
+
+---
+
+## 7. POST `/socios/alter-password`
 
 Altera a senha de um sócio utilizando um código de verificação.
 

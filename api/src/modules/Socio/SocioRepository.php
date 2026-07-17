@@ -63,6 +63,37 @@ class SocioRepository
         return $result === false ? null : $result;
     }
 
+    public function findByUuidBinary(string $uuidBinary): ?array
+    {
+        $query = "SELECT
+                    s.id_socio,
+                    s.id_pessoa,
+                    s.data_referencia,
+                    s.uuid,
+                    p.nome,
+                    p.sobrenome,
+                    p.cpf,
+                    p.data_nascimento,
+                    (
+                        SELECT MAX(cl.data_pagamento)
+                        FROM contribuicao_log cl
+                        WHERE cl.id_socio = s.id_socio
+                          AND cl.status_pagamento = 1
+                    ) AS data_ultima_contribuicao
+                  FROM socio s
+                  LEFT JOIN pessoa p ON p.id_pessoa = s.id_pessoa
+                  WHERE s.uuid = :uuid
+                  LIMIT 1";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':uuid', $uuidBinary, PDO::PARAM_LOB);
+        $stmt->execute();
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : $result;
+    }
+
     public function findContatoInstituicaoById(int $id): ?array
     {
         $query = "SELECT id, descricao, contato

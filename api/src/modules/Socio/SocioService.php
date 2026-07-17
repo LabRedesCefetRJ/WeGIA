@@ -7,6 +7,7 @@ use api\contracts\entities\SocioInterface;
 use api\contracts\services\SocioServiceInterface;
 use api\modules\Auth\AuthService;
 use DateTime;
+use Ramsey\Uuid\Uuid;
 
 class SocioService implements SocioServiceInterface
 {
@@ -107,6 +108,38 @@ class SocioService implements SocioServiceInterface
         return (int)$pontos;
     }
 
+    public function validarBeneficiosPorUuid(string $uuid): ?array
+    {
+        try {
+            $uuidObj = Uuid::fromString($uuid);
+        } catch (\Throwable $e) {
+            throw new \InvalidArgumentException('UUID inválido.', 400);
+        }
+
+        if ($uuidObj->getVersion() !== 7) {
+            throw new \InvalidArgumentException('UUID v7 inválido.', 400);
+        }
+
+        $resultado = $this->socioRepository->findByUuidBinary($uuidObj->getBytes());
+
+        if (!$resultado) {
+            return null;
+        }
+
+        $idSocio = (int)$resultado['id_socio'];
+        $pontosBeneficios = $this->obterBeneficiosPorSocio($idSocio);
+
+        return [
+            'nome' => $resultado['nome'] ?? '',
+            'sobrenome' => $resultado['sobrenome'] ?? '',
+            'dataNascimento' => $this->censurarDataNascimento($resultado['data_nascimento'] ?? null),
+            'cpf' => $this->censurarCpf($resultado['cpf'] ?? null),
+            'dataReferenciaContribuicao' => $this->normalizarData($resultado['data_referencia'] ?? null),
+            'dataUltimaContribuicao' => $this->normalizarData($resultado['data_ultima_contribuicao'] ?? null),
+            'benefit_points' => $pontosBeneficios
+        ];
+    }
+
     public function atualizarSocio(int $id, PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0): SocioInterface
     {
         // Lógica para atualizar um sócio existente
@@ -194,5 +227,51 @@ class SocioService implements SocioServiceInterface
                 'message' => 'Error altering password: ' . $e->getMessage()
             ];
         }
+    }
+
+    private function censurarCpf(?string $cpf): ?string
+    {
+        if (empty($cpf)) {
+            return null;
+        }
+
+        $cpfNumerico = preg_replace('/\D/', '', $cpf);
+
+        if (strlen($cpfNumerico) !== 11) {
+            return null;
+        }
+
+        return '***.***.***-' . substr($cpfNumerico, -2);
+    }
+
+    private function censurarDataNascimento(?string $dataNascimento): ?string
+    {
+        $data = $this->normalizarData($dataNascimento);
+        if ($data === null) {
+            return null;
+        }
+
+        $dataTime = DateTime::createFromFormat('Y-m-d', $data);
+        if ($dataTime === false) {
+            return null;
+        }
+
+        return $dataTime->format('d') . '/**/**' . $dataTime->format('y');
+    }
+
+    private function normalizarData(?string $data): ?string
+    {
+        if (empty($data)) {
+            return null;
+        }
+
+        $baseData = explode(' ', trim($data))[0] ?? '';
+        $dataTime = DateTime::createFromFormat('Y-m-d', $baseData);
+
+        if ($dataTime === false) {
+            return null;
+        }
+
+        return $dataTime->format('Y-m-d');
     }
 }
