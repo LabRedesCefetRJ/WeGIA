@@ -153,6 +153,10 @@ class Atendido_ocorrenciaControle
 			$arquivos = $_FILES["arquivos"];
 			$ocorrenciaDAO->incluirArquivos($arquivos);
 
+			if ((int)($id_tipos_ocorrencia ?? 0) === 2) {
+				$ocorrenciaDAO->inativarAtendidoPorFalecimento($atendido_idatendido);
+			}
+				
 			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-sucesso");
 		} catch (PDOException $e) {
 			Util::tratarException($e);
