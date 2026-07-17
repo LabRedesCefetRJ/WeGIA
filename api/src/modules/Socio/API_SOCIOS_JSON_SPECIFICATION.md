@@ -22,7 +22,8 @@ Registra um novo sócio no sistema. Se a pessoa com o CPF fornecido já existe, 
   "valorMensalidade": 50.00,
   "status": 1,
   "autoStatusContribuicao": true,
-  "idSocioTipo": 0
+  "idSocioTipo": 0,
+  "uuid": "019f7118-9242-70ba-b2d5-54a360512623"
 }
 ```
 
@@ -518,6 +519,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 | `status` | integer | Status do sócio |
 | `autoStatusContribuicao` | boolean | Atualiza status automaticamente conforme contribuição |
 | `idSocioTipo` | integer | ID do tipo de sócio |
+| `uuid` | string \| null | UUID v7 do sócio em formato textual |
 
 ### Resposta - 401 Unauthorized (Token Não Fornecido)
 ```json

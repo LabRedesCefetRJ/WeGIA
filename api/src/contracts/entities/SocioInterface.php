@@ -11,7 +11,7 @@ use DateTime;
  */
 interface SocioInterface
 {
-    public function __construct(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null);
+    public function __construct(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null, ?string $uuid = null);
 
     /**
      * Obtém o ID do sócio

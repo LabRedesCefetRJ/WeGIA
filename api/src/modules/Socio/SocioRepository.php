@@ -2,6 +2,7 @@
 namespace api\modules\Socio;
 
 use api\utils\UuidGenerator;
+use Ramsey\Uuid\Uuid;
 use PDO;
 
 class SocioRepository
@@ -15,6 +16,7 @@ class SocioRepository
 
     public function save(Socio $socio): Socio|false
     {
+        $uuidBinary = UuidGenerator::generateBinary();
         $query = "INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes, uuid) VALUES (:id_pessoa, :id_sociostatus, :id_sociotipo, :valor_periodo, :data_referencia, :auto_status_contribuicoes, :uuid)";
         $stmt = $this->db->prepare($query);
         $resultado = $stmt->execute([
@@ -24,7 +26,7 @@ class SocioRepository
             ':valor_periodo' => $socio->getValorMensalidade(),
             ':data_referencia' => $socio->getInicioContribuicao()->format('Y-m-d'),
             ':auto_status_contribuicoes' => $socio->getAutoStatusContribuicao() ? 1 : 0,
-            ':uuid' => UuidGenerator::generateBinary()
+            ':uuid' => $uuidBinary
         ]);
 
         if (!$resultado || !$this->db->lastInsertId()) {
@@ -32,6 +34,7 @@ class SocioRepository
         }
         $socioId = (int)$this->db->lastInsertId();
         $socio->setId($socioId);
+        $socio->setUuid(Uuid::fromBytes($uuidBinary)->toString());
         return $socio;
     }
 
@@ -52,15 +55,23 @@ class SocioRepository
                     id_sociotipo,
                     valor_periodo,
                     data_referencia,
-                    auto_status_contribuicoes
+                    auto_status_contribuicoes,
+                    uuid
                   FROM socio
                   WHERE id_pessoa = :id_pessoa
                   LIMIT 1";
         $stmt = $this->db->prepare($query);
         $stmt->execute([':id_pessoa' => $idPessoa]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result === false) {
+            return null;
+        }
 
-        return $result === false ? null : $result;
+        $result['uuid'] = isset($result['uuid']) && $result['uuid'] !== null
+            ? Uuid::fromBytes($result['uuid'])->toString()
+            : null;
+
+        return $result;
     }
 
     public function findByUuidBinary(string $uuidBinary): ?array
@@ -90,8 +101,15 @@ class SocioRepository
         $stmt->execute();
 
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result === false) {
+            return null;
+        }
 
-        return $result === false ? null : $result;
+        $result['uuid'] = isset($result['uuid']) && $result['uuid'] !== null
+            ? Uuid::fromBytes($result['uuid'])->toString()
+            : null;
+
+        return $result;
     }
 
     public function findContatoInstituicaoById(int $id): ?array

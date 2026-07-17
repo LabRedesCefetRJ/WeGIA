@@ -16,8 +16,9 @@ class Socio implements SocioInterface, JsonSerializable
     private bool $autoStatusContribuicao;
     private float $valorMensalidade;
     private DateTime $inicioContribuicao;
+    private ?string $uuid = null;
 
-    public function __construct(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade = 10.0, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null)
+    public function __construct(PessoaInterface $pessoa, DateTime $inicioContribuicao, float $valorMensalidade = 10.0, int $idSocioStatus = 1, bool $autoStatusContribuicao = true, int $idSocioTipo = 0, ?int $id = null, ?string $uuid = null)
     {
         if ($id !== null)
             $this->id = $id;
@@ -28,6 +29,7 @@ class Socio implements SocioInterface, JsonSerializable
         $this->autoStatusContribuicao = $autoStatusContribuicao;
         $this->valorMensalidade = $valorMensalidade;
         $this->inicioContribuicao = $inicioContribuicao;
+        $this->uuid = $uuid;
     }
 
     public function getId(): int
@@ -100,6 +102,16 @@ class Socio implements SocioInterface, JsonSerializable
         $this->pessoa = $pessoa;
     }
 
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): void
+    {
+        $this->uuid = $uuid;
+    }
+
     public function jsonSerialize(): array
     {
         return [
@@ -109,7 +121,8 @@ class Socio implements SocioInterface, JsonSerializable
             'autoStatusContribuicao' => $this->autoStatusContribuicao,
             'valorMensalidade' => $this->valorMensalidade,
             'inicioContribuicao' => $this->inicioContribuicao->format('Y-m-d'),
-            'pessoa' => $this->pessoa
+            'pessoa' => $this->pessoa,
+            'uuid' => $this->uuid
         ];
     }
 }

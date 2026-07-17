@@ -55,7 +55,8 @@ class SocioService implements SocioServiceInterface
             (int)$resultado['id_sociostatus'],
             (bool)$resultado['auto_status_contribuicoes'],
             (int)$resultado['id_sociotipo'],
-            (int)$resultado['id_socio']
+            (int)$resultado['id_socio'],
+            $resultado['uuid'] ?? null
         );
     }
 
