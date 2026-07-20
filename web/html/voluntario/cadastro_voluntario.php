@@ -101,6 +101,16 @@ require_once ROOT . '/classes/Csrf.php';
         }
     </script>
 
+    <script src="../../Functions/onlyNumbers.js"></script>
+    <script src="../../Functions/onlyChars.js"></script>
+    <script src="../../Functions/mascara.js"></script>
+    <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+
+    <style type="text/css">
+    .obrig {
+        color: rgb(255, 0, 0);
+    }
+    </style>
 </head>
 
 <body>
@@ -123,44 +133,59 @@ require_once ROOT . '/classes/Csrf.php';
                         <form class="form-horizontal" method="POST" action="../../controle/control.php">
                             <div class="panel-body">
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
+                                <h5 class="obrig">Campos Obrigatórios(*)</h5>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Nome *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="nome" required>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-md-3 control-label">Sobrenome *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="sobrenome"
-                                            required></div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-md-3 control-label">CPF *</label>
-                                    <div class="col-md-6"><input type="text" class="form-control" name="cpf"
-                                            maxlength="14" value="<?= $cpfPrefilled ?>" required></div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-md-3 control-label">Sexo *</label>
+                                    <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                        <input type="radio" name="gender" value="m" required> M
-                                        <input type="radio" name="gender" value="f" required> F
+                                    <input type="text" class="form-control<?= isset($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                    <p id="error_nome" class="help-block text-danger" style="display: <?= isset($fieldErrors['nome']) ? 'block' : 'none' ?>;">
+                                        <?= isset($fieldErrors['nome']) ? htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                    </p>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Nascimento *</label>
-                                    <div class="col-md-6"><input type="date" class="form-control" name="nascimento"
-                                            min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>"
-                                            required></div>
+                                    <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
+                                    <div class="col-md-6">
+                                    <input type="text" class="form-control<?= isset($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                    <p id="error_sobrenome" class="help-block text-danger" style="display: <?= isset($fieldErrors['sobrenome']) ? 'block' : 'none' ?>;">
+                                        <?= isset($fieldErrors['sobrenome']) ? htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                    </p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
+                                    <div class="col-md-6">
+                                    <input type="text" class="form-control<?= isset($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? ($cpf ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
+                                    <p id="error_cpf" class="help-block text-danger" style="display: <?= isset($fieldErrors['cpf']) ? 'block' : 'none' ?>;">
+                                        <?= isset($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                    </p>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                                    <div class="col-md-6">
+                                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
+                                    <div class="col-md-6">
+                                    <input type="date" name="nascimento" id="nascimento" class="form-control<?= isset($fieldErrors['nascimento']) ? ' is-invalid' : '' ?>" min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>" required value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                    <p id="error_nascimento" class="help-block text-danger" style="display: <?= isset($fieldErrors['nascimento']) ? 'block' : 'none' ?>;">
+                                        <?= isset($fieldErrors['nascimento']) ? htmlspecialchars($fieldErrors['nascimento'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                    </p>
+                                    </div>
                                 </div>
                                 <hr>
                                 <h4 class="mb-xlg">Detalhes do Voluntariado</h4>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Data de Admissão *</label>
+                                    <label class="col-md-3 control-label">Data de Admissão<sup class="obrig">*</sup></label>
                                     <div class="col-md-6"><input type="date" class="form-control" name="data_admissao"
                                             required></div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Situação *</label>
-                                    <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge"style="margin-top: 0.75vw"></i></a>
+                                    <label class="col-md-3 control-label">Situação<sup class="obrig">*</sup></label>
                                     <div class="col-md-6">
                                         <select class="form-control" name="situacao" required>
                                             <option selected disabled>Selecionar</option>

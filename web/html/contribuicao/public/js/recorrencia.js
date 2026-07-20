@@ -7,11 +7,33 @@ async function configurarRegrasDePagamento() {
 }
 
 async function decidirAcao() {
-    switch (acao) {
-        case 'recorrencia': criarAssinatura(); break;
-        case 'cadastrar': await cadastrarSocio(); criarAssinatura(); break;
-        case 'atualizar': await atualizarSocio(); criarAssinatura(); break;
-        default: console.log('Ação indefinida');
+    try {
+        switch (acao) {
+            case 'recorrencia':
+                await criarAssinatura();
+                break;
+
+            case 'cadastrar':
+                await cadastrarSocio();
+                await criarAssinatura();
+                break;
+
+            case 'atualizar':
+                await atualizarSocio();
+                await criarAssinatura();
+                break;
+
+            case 'cadastrar_existente':
+                await cadastrarSocioPessoaExistente();
+                await criarAssinatura();
+                break;
+
+            default:
+                console.log('Ação indefinida');
+        }
+    } catch (error) {
+        console.error(error.message);
+        alert(error.message);
     }
 }
 
@@ -51,6 +73,7 @@ function criarAssinatura() {
                 document.getElementById("error-message").classList.add("hidden");
             } else {
                 document.getElementById("error-message").classList.remove("hidden");
+                document.getElementById("success-message").classList.add("hidden");
                 document.getElementById("error-text").textContent = resposta.erro || "Erro ao criar assinatura";
             }
         })
@@ -58,6 +81,7 @@ function criarAssinatura() {
             console.error("Erro:", error);
             document.getElementById("loading").classList.add("hidden");
             document.getElementById("payment-result").classList.remove("hidden");
+            document.getElementById("success-message").classList.add("hidden");
             document.getElementById("error-message").classList.remove("hidden");
             document.getElementById("error-text").textContent = error.message || "Erro ao processar assinatura";
         });

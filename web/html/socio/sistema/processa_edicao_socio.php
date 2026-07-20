@@ -15,13 +15,14 @@ if (!isset($_SESSION['usuario'])) {
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 
 if (!$id_pessoa || $id_pessoa < 1) {
-  http_response_code(412);
-  echo json_encode(['erro' => 'O id do funcionário não é válido.']);
-  exit();
+    http_response_code(412);
+    echo json_encode(['erro' => 'O id do funcionário não é válido.']);
+    exit();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($id_pessoa, 4, 7);
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 if (!isset($_POST) or empty($_POST)) {
     $data = file_get_contents("php://input");
@@ -71,13 +72,34 @@ if (!isset($auto_status_contribuicoes) || empty($auto_status_contribuicoes)) {
     $auto_status_contribuicoes = 1;
 }
 
-if (!isset($data_referencia) or ($data_referencia == null) or ($data_referencia == "") or empty($data_referencia) or ($data_referencia == "imp")) {
-    $data_referencia = null;
-} else $data_referencia = $data_referencia;
-
-if (!isset($data_nasc) or ($data_nasc == null) or ($data_nasc == "") or empty($data_nasc) or ($data_nasc == "imp")) {
+// Data de nascimento (opcional)
+if (empty($data_nasc)) {
     $data_nasc = null;
-} else $data_nasc = $data_nasc;
+} elseif (!Util::validarData($data_nasc)) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'A data de nascimento informada é inválida.']);
+    exit();
+}
+
+// Data de referência (obrigatória)
+if (empty($data_referencia)) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'A data de referência não pode ser vazia.']);
+    exit();
+}
+
+if (!Util::validarData($data_referencia)) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'A data de referência informada é inválida.']);
+    exit();
+}
+
+// Regra de negócio
+if ($data_nasc !== null && $data_referencia < $data_nasc) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'A data de referência não pode ser anterior à data de nascimento.']);
+    exit();
+}
 
 
 if (!isset($valor_periodo) or ($valor_periodo == null) or ($valor_periodo == "") or empty($valor_periodo) or ($valor_periodo == "imp")) {
@@ -127,7 +149,8 @@ $sqlUpdatePessoa = "UPDATE pessoa
 $stmt = mysqli_prepare($conexao, $sqlUpdatePessoa);
 
 //sanitização das entradas
-$cpf_cnpj = filter_var($cpf_cnpj,FILTER_SANITIZE_SPECIAL_CHARS);
+$verificar_documento = boolval(filter_var($_REQUEST['verificar_documento'], FILTER_VALIDATE_BOOLEAN));
+$cpf_cnpj = $verificar_documento || $cpf_cnpj ? filter_var($cpf_cnpj, FILTER_SANITIZE_SPECIAL_CHARS) : null;
 $socio_nome = filter_var($socio_nome, FILTER_SANITIZE_SPECIAL_CHARS);
 $socio_sobrenome = filter_var($socio_sobrenome, FILTER_SANITIZE_SPECIAL_CHARS);
 $telefone = filter_var($telefone, FILTER_SANITIZE_SPECIAL_CHARS);
@@ -311,7 +334,7 @@ if ($stmt) {
                 }
 
                 $stmtDeleteTags->close();
-            } 
+            }
         }
     }
 

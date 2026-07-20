@@ -38,6 +38,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 	include_once ROOT . '/dao/EntradaDAO.php';
 
 	$tipo = $_GET['tipo'] ?? 'ativo';
+
+	$pdo = Conexao::connect();
+
+	$filtroAtivoAlmoxarifado = $tipo === 'arquivado' ? '' : 'WHERE ativo = 1';
+
+	$stmtAlmoxarifados = $pdo->query("
+		SELECT id_almoxarifado, descricao_almoxarifado
+		FROM almoxarifado
+		$filtroAtivoAlmoxarifado
+		ORDER BY descricao_almoxarifado
+"	);
+
+	$almoxarifados = $stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC);
 	?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
@@ -89,13 +102,10 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<!-- jquery functions -->
 	<script>
 		function listarId(id) {
-			window.location.href = '<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=<?= WWW ?>html/matPat/listar_Ientrada.php&id_entrada=' + id;
-		}
-	</script>
-	<script>
-		function listarId(id) {
         	window.location.href = '<?= WWW ?>controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=<?= WWW ?>html/matPat/listar_Ientrada.php&id_entrada=' + id;
     	}
+
+		let tabelaEntradas = null;
 
     	function carregarEntradas() {
         	const tipo = '<?= $tipo ?>';
@@ -123,6 +133,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                     	$('#tabela').append(
                         	$('<tr style="cursor:pointer"/>')
                             	.attr('onclick', 'listarId("' + item.id_entrada + '")')
+								.append($('<td />').text(item.id_almoxarifado ?? ''))
                             	.append($('<td />').text(item.descricao_almoxarifado ?? ''))
                             	.append($('<td />').text(item.nome_origem ?? ''))
                             	.append($('<td />').text(item.descricao ?? ''))
@@ -133,12 +144,27 @@ require_once ROOT . "/html/personalizacao_display.php";
                     	);
                 	});
 
-					$('#datatable-default').DataTable({
+					tabelaEntradas = $('#datatable-default').DataTable({
+						destroy: true,
 						pageLength: 10,
 						lengthChange: false,
 						searching: true,
-						ordering: true
+						ordering: true,
+						columnDefs: [
+							{
+								targets: 0,
+								visible: false,
+								searchable: true
+							}
+						]
 					});
+
+					const filtroAtual = $('#filtroAlmoxarifadoEntrada').val();
+
+					tabelaEntradas
+						.column(0)
+						.search(filtroAtual ? '^' + filtroAtual + '$' : '', true, false)
+						.draw();
             	},
             	error: function(xhr) {
                 	let mensagem = 'Erro ao carregar entradas.';
@@ -151,7 +177,18 @@ require_once ROOT . "/html/personalizacao_display.php";
     	}
 
     	$(function() {
-        	carregarEntradas();
+			carregarEntradas();
+
+			$('#filtroAlmoxarifadoEntrada').on('change', function() {
+				if (!tabelaEntradas) {
+					return;
+				}
+
+				tabelaEntradas
+					.column(0)
+					.search(this.value ? '^' + this.value + '$' : '', true, false)
+					.draw();
+			});
 
         	$("#header").load("<?= WWW ?>html/header.php");
         	$(".menuu").load("<?= WWW ?>html/menu.php");
@@ -199,20 +236,35 @@ require_once ROOT . "/html/personalizacao_display.php";
 						<span style="color:red">Para mais informações, clique em uma entrada(*)</span>
 					</header>
 					<div class="panel-body">
-						<div style="margin-bottom: 15px;">
-							<a href="listar_entrada.php?tipo=ativo"
-								class="btn btn-default <?= $tipo === 'ativo' ? 'active' : ''?>">
-								Ativos
-							</a>
+						<div class="barra-filtros" style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; gap: 15px; flex-wrap: wrap;">
+							<div>
+								<a href="listar_entrada.php?tipo=ativo"
+									class="btn btn-default <?= $tipo === 'ativo' ? 'active' : ''?>">
+									Ativos
+								</a>
 
-							<a href="listar_entrada.php?tipo=arquivado"
-								class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : ''?>">
-								Arquivados
-							</a>
+								<a href="listar_entrada.php?tipo=arquivado"
+									class="btn btn-default <?= $tipo === 'arquivado' ? 'active' : ''?>">
+									Arquivados
+								</a>
+							</div>
+
+							<div style="width: 260px;">
+								<label for="filtroAlmoxarifadoEntrada">Almoxarifado</label>
+								<select id="filtroAlmoxarifadoEntrada" class="form-control">
+									<option value="">Todos</option>
+									<?php foreach ($almoxarifados as $almoxarifado): ?>
+										<option value="<?= (int) $almoxarifado['id_almoxarifado'] ?>">
+											<?= htmlspecialchars($almoxarifado['descricao_almoxarifado'], ENT_QUOTES, 'UTF-8') ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+							</div>
 						</div>
 						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>
+									<th>ID Almoxarifado</th>
 									<th>Almoxarifado</th>
 									<th>Origem</th>
 									<th>Tipo</th>

@@ -93,7 +93,11 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
 
         if (curl_errno($ch)) {
             error_log("Erro de conexão: " . curl_error($ch));
-            throw new Exception("Erro de conexão: " . curl_error($ch));
+            throw new PaymentServiceException(
+                'Não foi possível criar a assinatura no momento.',
+                'Erro cURL ao criar assinatura na API Pagar.me: ' . curl_error($ch),
+                502
+            );
         }
         curl_close($ch);
 
@@ -101,7 +105,11 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
 
         if ($httpCode === 200 || $httpCode === 201) {
             if (empty($responseData['id'])) {
-                throw new Exception("ID da assinatura não retornado pela API");
+                throw new PaymentServiceException(
+                    'Não foi possível criar a assinatura no momento.',
+                    'ID da assinatura não retornado pela API Pagar.me.',
+                    502
+                );
             }
             return (string)$responseData['id'];
         } else {
@@ -119,13 +127,13 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                 if (isset($error['code'])) {
                     switch ($error['code']) {
                         case 'invalid_card':
-                            throw new Exception("Cartão inválido. Verifique os dados e tente novamente.");
+                            throw new PaymentServiceException('Não foi possível criar a assinatura no momento.', 'Cartão inválido. Verifique os dados e tente novamente.', 400);
                         case 'card_declined':
-                            throw new Exception("Cartão recusado. Entre em contato com seu banco.");
+                            throw new PaymentServiceException('Não foi possível criar a assinatura no momento.', 'Cartão recusado. Entre em contato com seu banco.', 400);
                         case 'insufficient_funds':
-                            throw new Exception("Saldo insuficiente no cartão.");
+                            throw new PaymentServiceException('Não foi possível criar a assinatura no momento.', 'Saldo insuficiente no cartão.', 400);
                         case 'expired_card':
-                            throw new Exception("Cartão expirado.");
+                            throw new PaymentServiceException('Não foi possível criar a assinatura no momento.', 'Cartão expirado.', 400);
                         default:
                             $errorMsg .= " - " . ($error['message'] ?? 'Erro desconhecido');
                     }
@@ -175,6 +183,10 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
             $errorMsg .= " - " . $responseData['message'];
         }
         
-        throw new Exception($errorMsg);
+        throw new PaymentServiceException(
+            'Não foi possível criar a assinatura no momento.',
+            $errorMsg,
+            502
+        );
     }
 }

@@ -23,8 +23,6 @@ class SocioController
 
     public function criarSocio()
     {
-        $dados = $this->extrairPost();
-
         try {
             //captcha
             if (!isset($_SESSION['usuario'])) {
@@ -32,12 +30,12 @@ class SocioController
                 if (!$captchaGoogle->validate())
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
 
-                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time()+30];
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
             }
 
             $pessoaDao = new PessoaDAO($this->pdo);
 
-            $verificacaoExistenciaPessoa = $pessoaDao->verificarExistencia($dados['cpf']);
+            $verificacaoExistenciaPessoa = $pessoaDao->verificarExistencia(trim(filter_input(INPUT_POST, 'documento_socio')));
 
             $socio = new Socio();
 
@@ -55,8 +53,13 @@ class SocioController
                     ->setNumeroEndereco($verificacaoExistenciaPessoa->getNumeroEndereco())
                     ->setLogradouro($verificacaoExistenciaPessoa->getLogradouro())
                     ->setDocumento($verificacaoExistenciaPessoa->getCpf())
-                    ->setIbge($verificacaoExistenciaPessoa->getIbge());
+                    ->setIbge($verificacaoExistenciaPessoa->getIbge())
+                    ->setEmail($verificacaoExistenciaPessoa->getEmail())
+                    ->setValor(trim(filter_input(INPUT_POST, 'valor')))
+                    ->setTags($this->extrairTagsPost());
             } else {
+                $dados = $this->extrairPost();
+
                 $socio
                     ->setNome($dados['nome'])
                     ->setSobrenome($dados['sobrenome'])
@@ -70,13 +73,11 @@ class SocioController
                     ->setNumeroEndereco($dados['numero'])
                     ->setLogradouro($dados['rua'])
                     ->setDocumento($dados['cpf'])
-                    ->setIbge($dados['ibge']);
+                    ->setIbge($dados['ibge'])
+                    ->setEmail($dados['email'])
+                    ->setValor($dados['valor'])
+                    ->setTags($dados['tags']);
             }
-
-            $socio
-                ->setEmail($dados['email'])
-                ->setValor($dados['valor'])
-                ->setTags($dados['tags']);
 
             $socioDao = new SocioDAO($this->pdo);
 
@@ -102,7 +103,7 @@ class SocioController
                 if (!$captchaGoogle->validate())
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
 
-                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time()+30];
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
             }
 
             $dados = $this->extrairPost();
@@ -112,7 +113,6 @@ class SocioController
                 ->setSobrenome($dados['sobrenome'])
                 ->setDataNascimento($dados['dataNascimento'])
                 ->setTelefone($dados['telefone'])
-                ->setEmail($dados['email'])
                 ->setEstado($dados['uf'])
                 ->setCidade($dados['cidade'])
                 ->setBairro($dados['bairro'])
@@ -152,7 +152,6 @@ class SocioController
      */
     function extrairPost()
     {
-        //extrair dados da requisição (considerar separar em uma função própria)
         $documento = trim(filter_input(INPUT_POST, 'documento_socio'));
         $nome = trim(filter_input(INPUT_POST, 'nome'));
         $sobrenome = trim(filter_input(INPUT_POST, 'sobrenome'));
@@ -166,10 +165,11 @@ class SocioController
         $complemento = trim(filter_input(INPUT_POST, 'complemento'));
         $numero = trim(filter_input(INPUT_POST, 'numero'));
         $ibge = trim(filter_input(INPUT_POST, 'ibge'));
-        $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
+        $email = isset($_POST['email']) ? trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL)) : null;
         $valor = trim(filter_input(INPUT_POST, 'valor'));
 
         $opcaoSelecionada = trim(filter_input(INPUT_POST, 'opcao', FILTER_SANITIZE_SPECIAL_CHARS));
+        $method = trim(filter_input(INPUT_POST, 'metodo', FILTER_SANITIZE_SPECIAL_CHARS));
 
         //validar dados (considerar separar em uma função própria)
         try {
@@ -241,7 +241,7 @@ class SocioController
             }
 
             //validação do email
-            if (!$email || empty($email)) {
+            if ($method != 'atualizarSocio' && (!$email || empty($email))) {
                 throw new InvalidArgumentException('O email informado não está em um formato válido.', 400);
             }
 
@@ -312,19 +312,29 @@ class SocioController
     /**
      * Extraí o documento de um sócio da requisição e retorna os dados pertecentes a esse sócio.
      */
-    public function buscarPorDocumento()
+    public function buscarPorDocumento() //<-- Verificar trechos de código que usam esse método
     {
         $documento = filter_input(INPUT_GET, 'documento');
 
         try {
             if (!$documento || empty($documento))
-                throw new InvalidArgumentException('O documento informado não é válido.', 400);
+                throw new InvalidArgumentException('O documento informado é inválido.', 400);
 
             $socioDao = new SocioDAO();
             $socio = $socioDao->buscarPorDocumento($documento);
 
             if (!$socio || is_null($socio)) {
-                echo json_encode(['resultado' => 'Sócio não encontrado']);
+                http_response_code(404);
+
+                //informar se existe uma pessoa
+                $pessoaDao = new PessoaDAO($this->pdo);
+                $pessoaExists = $pessoaDao->verificarExistencia($documento);
+
+                echo json_encode([
+                    'resultado' => 'Sócio não encontrado',
+                    'pessoaExists' => $pessoaExists instanceof PessoaDTOSocio ? true : false,
+                ]);
+
                 exit();
             }
 
@@ -388,7 +398,7 @@ class SocioController
         }
     }
 
-    public function sincronizarStatusSocios()//Usar esse método para atualizar o status dos sócios 
+    public function sincronizarStatusSocios() //Usar esse método para atualizar o status dos sócios 
     {
         try {
             $socioDao = new SocioDAO($this->pdo);
@@ -400,4 +410,26 @@ class SocioController
             Util::tratarException($e);
         }
     }
+
+    /**
+     * Soft delete de um sócio, alterando o status para inativo.
+     */
+    public function deletarSocio()
+    {
+        try {
+            $idSocio = filter_input(INPUT_POST, 'id_socio', FILTER_VALIDATE_INT);
+
+            if (!$idSocio) {
+                throw new InvalidArgumentException('O ID do sócio é inválido.', 400);
+            }
+
+            $socioDao = new SocioDAO($this->pdo);
+            $socioDao->softDeleteSocio($idSocio);
+
+            http_response_code(200);
+            echo json_encode(['mensagem' => 'Sócio deletado com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }   
 }

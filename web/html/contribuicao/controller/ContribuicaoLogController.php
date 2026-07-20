@@ -759,9 +759,17 @@ class ContribuicaoLogController
 
             $configuracaoRelatorio = new ConfiguracaoRelatorioContribuicoes();
             $configuracaoRelatorio
-                ->setPeriodo($periodo)
                 ->setSocioId($socioId)
                 ->setStatus($status);
+
+            if(intval($periodo) === 9){
+                $dataInicio = filter_input(INPUT_GET, 'data-inicio', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+                $dataFim = filter_input(INPUT_GET, 'data-fim', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+                $configuracaoRelatorio->setPeriodo(['inicio' => $dataInicio, 'fim' => $dataFim]);
+            }else{
+                $configuracaoRelatorio->setPeriodo($periodo);
+            }
 
             $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
             $relatorio = $contribuicaoLogDao->getRelatorio($configuracaoRelatorio);
