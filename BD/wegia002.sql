@@ -334,7 +334,7 @@ INSERT IGNORE INTO `wegia`.`projeto_status` (`descricao`) VALUES
 ('Inativo');
 
 INSERT IGNORE INTO `wegia`.`projeto_atendido_status` (`descricao`) VALUES
-('Ativo'), 
+('Ativo'),
 ('Inativo');
 -- -----------------------------------------------------
 -- Adiciona coluna descricao em projeto_turma
@@ -351,8 +351,6 @@ SET @s = (SELECT IF(
 PREPARE stmt FROM @s;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
-('Ativo'),
-('Inativo');
 
 INSERT IGNORE INTO `wegia`.`agenda_status` (`descricao`) VALUES
 ('Ativo'),
