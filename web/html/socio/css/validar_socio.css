@@ -48,6 +48,16 @@ main {
     font-size: 16px;
 }
 
+.mensagens-usuario {
+    margin-bottom: 24px;
+}
+
+.mensagens-usuario .alert {
+    margin-bottom: 0;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(23, 58, 99, 0.08);
+}
+
 .buscar-socio-card,
 .socio-resumo-card {
     background: #fff;
