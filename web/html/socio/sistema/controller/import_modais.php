@@ -26,14 +26,14 @@ try {
               <?= Csrf::inputField() ?>
               <div class="row">
                 <div class="form-group col-xs-3">
-                  <label for="pessoa">Tipo de pessoa</label>
-                  <select class="form-control" name="pessoa" id="pessoa">
+                  <label for="pessoa">Tipo de pessoa <span class="text-danger">*</span></label>
+                  <select class="form-control" name="pessoa" id="pessoa" required>
                     <option value="fisica">Física</option>
                     <option value="juridica">Jurídica</option>
                   </select>
                 </div>
                 <div class="form-group col-xs-8 cpf_div">
-                  <label id="label_cpf_cnpj" for="valor">CPF *</label>
+                  <label id="label_cpf_cnpj" for="valor">CPF <span class="text-danger">*</span></label>
 
                   <div class="inline-fields">
                     <input type="text" class="form-control" id="cpf_cnpj" name="cpf">
@@ -48,12 +48,12 @@ try {
               </div>
               <div class="row">
                 <div class="form-group mb-2 col-xs-6">
-                  <label for="socio_nome">Nome *</label>
+                  <label for="socio_nome">Nome <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="socio_nome" name="socio_nome" placeholder="" required>
                 </div>
 
                 <div class="form-group mb-2 col-xs-6">
-                  <label for="socio_sobrenome">Sobrenome *</label>
+                  <label for="socio_sobrenome">Sobrenome <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" placeholder="" required>
                 </div>
 
@@ -70,8 +70,8 @@ try {
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
-                  <label for="pessoa">Periodiciade (Contribuinte)</label>
-                  <select class="form-control" name="contribuinte" id="contribuinte">
+                  <label for="pessoa">Periodiciade (Contribuinte) <span class="text-danger">*</span></label>
+                  <select class="form-control" name="contribuinte" id="contribuinte" required>
                     <option value="mensal">Mensal</option>
                     <option value="bimestral">Bimestral</option>
                     <option value="trimestral">Trimestral</option>
@@ -86,7 +86,7 @@ try {
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
-                  <label for="pessoa">Status</label>
+                  <label for="pessoa">Status <span class="text-danger">*</span></label>
                   <select class="form-control" name="status" id="status" required>
                     <option value="" disabled selected>Selecionar Status</option>
                     <?php
@@ -112,18 +112,18 @@ try {
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
-                  <label for="valor">Data referência (ínicio contribuição)</label>
-                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" min="1900-01-01" max="<?= date('Y-m-d') ?>">
+                  <label for="valor">Data referência (ínicio contribuição) <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" min="1900-01-01" max="<?= date('Y-m-d') ?>" required>
                 </div>
                 <div class="form-group col-xs-6">
-                  <label for="valor">Valor/período em R$</label>
-                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" onkeypress="return Onlynumbers(event)" min="0" step="0.01">
+                  <label for="valor">Valor/período em R$ <span class="text-danger">*</span></label>
+                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" onkeypress="return Onlynumbers(event)" min="0" step="0.01" required>
                 </div>
               </div>
               <div class="row">
                 <div class="form-group col-xs-12">
-                  <label for="valor">Tipo de contribuição</label>
-                  <select class="form-control" name="tipo_contribuicao" id="tipo_contribuicao">
+                  <label for="valor">Tipo de contribuição <span class="text-danger">*</span></label>
+                  <select class="form-control" name="tipo_contribuicao" id="tipo_contribuicao" required>
                     <option value="1">Boleto</option>
                     <option value="2">Cartão de crédito</option>
                     <option value="3">Outros</option>
@@ -132,11 +132,11 @@ try {
               </div>
               <div class="row">
                 <div style="margin-bottom:  1em" class="form-group col-xs-12 mb-2">
-                  <label for="valor">Grupos</label>
+                  <label for="valor">Grupos <span class="text-danger">*</span></label>
                   <a onclick="adicionar_tag()">
                     <i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
                   </a>
-                  <select class="form-control" name="tags[]" id="tags" multiple required size="6">
+                  <select class="form-control" name="tags[]" id="tags" multiple required size="6" required>
                     <?php
                     $stmt = $conexao->prepare("SELECT * FROM socio_tag");
                     $stmt->execute();

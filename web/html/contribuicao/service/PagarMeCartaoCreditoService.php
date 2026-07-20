@@ -86,7 +86,11 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if (curl_errno($ch)) {
-            throw new Exception("Erro cURL: " . curl_error($ch));
+            throw new PaymentServiceException(
+                'Não foi possível processar o pagamento com cartão de crédito no momento.',
+                'Erro cURL ao processar cartão na API Pagar.me: ' . curl_error($ch),
+                502
+            );
         }
         curl_close($ch);
 
@@ -94,7 +98,11 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
 
         if ($httpCode === 200 || $httpCode === 201) {
             if (empty($responseData['id'])) {
-                throw new Exception("ID da transação não encontrado na resposta");
+                throw new PaymentServiceException(
+                    'Não foi possível processar o pagamento com cartão de crédito no momento.',
+                    'ID da transação não encontrado na resposta da API Pagar.me.',
+                    502
+                );
             }
             return (string)$responseData['id'];
         } else {
@@ -112,13 +120,13 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                 if (isset($error['code'])) {
                     switch ($error['code']) {
                         case 'invalid_card':
-                            throw new Exception("Cartão inválido. Verifique os dados e tente novamente.");
+                            throw new PaymentServiceException('Não foi possível processar o pagamento com cartão de crédito no momento.', 'Cartão inválido. Verifique os dados e tente novamente.', 400);
                         case 'card_declined':
-                            throw new Exception("Cartão recusado. Entre em contato com seu banco.");
+                            throw new PaymentServiceException('Não foi possível processar o pagamento com cartão de crédito no momento.', 'Cartão recusado. Entre em contato com seu banco.', 400);
                         case 'insufficient_funds':
-                            throw new Exception("Saldo insuficiente no cartão.");
+                            throw new PaymentServiceException('Não foi possível processar o pagamento com cartão de crédito no momento.', 'Saldo insuficiente no cartão.', 400);
                         case 'expired_card':
-                            throw new Exception("Cartão expirado.");
+                            throw new PaymentServiceException('Não foi possível processar o pagamento com cartão de crédito no momento.', 'Cartão expirado.', 400);
                         default:
                             $errorMsg .= " - " . ($error['message'] ?? 'Erro desconhecido');
                     }
@@ -168,6 +176,10 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
             $errorMsg .= " - " . $responseData['message'];
         }
         
-        throw new Exception($errorMsg);
+        throw new PaymentServiceException(
+            'Não foi possível processar o pagamento com cartão de crédito no momento.',
+            $errorMsg,
+            502
+        );
     }
 }

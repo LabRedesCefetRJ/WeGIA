@@ -291,6 +291,21 @@ require_once ROOT . "/html/personalizacao_display.php";
 								</div>
 							</div>
 
+							<div class="form-group" id="modo-requisicao" style="display: none;">
+								<label class="col-md-3 control-label">Modelo da Requisição</label>
+								<div class="col-md-8">
+									<select name="modo_requisicao">
+										<option value="movimentados" selected>Produtos mais movimentados</option>
+										<option value="completo">Todos os produtos</option>
+									</select>
+									<br>
+									<small>
+										O modelo "Produtos mais movimentados" lista os produtos com maior saída no período selecionado.
+										Produtos menos frequentes podem ser anotados nas linhas em branco.
+									</small>
+								</div>
+							</div>
+
 							<div class="form-group" id="almoxarifado">
 								<label class="col-md-3 control-label">Almoxarifado</label>
 								<div class="col-md-8">
@@ -666,11 +681,16 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 		const campoMedia = document.getElementById('media-saida');
 		const categoriaProduto = document.getElementById('categoria-relat');
+		const modoRequisicao = document.getElementById('modo-requisicao');
 
 		campoMedia.style.display = tipoRelatorio === 'saida' ? 'block' : 'none';
 
 		if (categoriaProduto) {
 			categoriaProduto.style.display = (tipoRelatorio === 'requisicao' || tipoRelatorio === 'estoque') ? 'block' : 'none';
+		}
+
+		if (modoRequisicao) {
+			modoRequisicao.style.display = tipoRelatorio === 'requisicao' ? 'block' : 'none';
 		}
 
 		if (tipoRelatorio === 'estoque') {
@@ -695,7 +715,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 		}
 
 		if (tipoRelatorio === 'requisicao') {
-			document.getElementById('per').style.display = 'none';
+			document.getElementById('per').style.display = 'block';
 			document.getElementById('orig').style.display = 'none';
 			document.getElementById('dest').style.display = 'none';
 			document.getElementById('tipo-entrada').style.display = 'none';
@@ -703,7 +723,10 @@ require_once ROOT . "/html/personalizacao_display.php";
 			document.getElementById('resp').style.display = 'none';
 
 			document.getElementById('almoxarifado').style.display = 'block';
-			document.getElementById('panel-mostrarZerados').style.display = 'block';
+			document.getElementById('categoria-relat').style.display = 'block';
+			document.getElementById('modo-requisicao').style.display = 'block';
+
+			document.getElementById('panel-mostrarZerados').style.display = 'none';
 			document.getElementById('gerar').style.display = 'block';
 
 			document.getElementById('per2').style.display = 'none';

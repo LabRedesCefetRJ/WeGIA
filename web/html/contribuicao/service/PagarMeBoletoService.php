@@ -89,7 +89,11 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
             // Verifica por erros no cURL
             if (curl_errno($ch)) {
                 curl_close($ch);
-                throw new LogicException(curl_error($ch), 500);
+                throw new PaymentServiceException(
+                    'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
+                    'Erro cURL ao gerar boleto na API Pagar.me: ' . curl_error($ch),
+                    502
+                );
             }
 
             // Obtém o código de status HTTP
@@ -113,13 +117,25 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                 //envia resposta para o front-end
                 echo json_encode(['link' => WWW . $pdfInterno]); //pegar o link da segunda via do boleto para enviar para o front-end
             } else {
-                throw new LogicException("A API retornou o código de status HTTP $httpCode", $httpCode);
+                throw new PaymentServiceException(
+                    'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
+                    "A API Pagar.me retornou o código de status HTTP $httpCode",
+                    $httpCode
+                );
             }
 
             return $idPagarMe;
-        } catch (Exception $e) {
-            Util::tratarException($e);
-            return false;
+        } catch (Throwable $e) {
+            if ($e instanceof PaymentServiceException) {
+                throw $e;
+            }
+
+            throw new PaymentServiceException(
+                'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
+                'Falha inesperada ao gerar boleto na API Pagar.me: ' . $e->getMessage(),
+                502,
+                $e
+            );
         }
     }
     public function guardarSegundaVia($pdf_link, ContribuicaoLog $contribuicaoLog)
@@ -155,8 +171,11 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
 
         // Verifica se ocorreu algum erro durante a execução do cURL
         if (curl_errno($ch)) {
-            echo json_encode('Erro ao baixar o arquivo.'); //. curl_error($ch) . PHP_EOL;
-            exit();
+            throw new PaymentServiceException(
+                'Não foi possível concluir a emissão do boleto no momento.',
+                'Erro ao baixar o PDF do boleto: ' . curl_error($ch),
+                502
+            );
         } else {
             // Verifica o código de resposta HTTP
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -176,8 +195,11 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                     //echo "Erro: O conteúdo da URL não é um PDF." . PHP_EOL;
                 }
             } else {
-                echo json_encode("Erro ao baixar o arquivo: HTTP $httpCode");
-                exit();
+                throw new PaymentServiceException(
+                    'Não foi possível concluir a emissão do boleto no momento.',
+                    "Erro ao baixar o PDF do boleto: HTTP $httpCode",
+                    $httpCode
+                );
             }
         }
 
