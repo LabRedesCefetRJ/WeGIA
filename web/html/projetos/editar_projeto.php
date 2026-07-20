@@ -31,7 +31,6 @@ if (!$id_projeto || $id_projeto < 1) {
 }
 
 require_once ROOT . "/dao/ProjetoDAO.php";
-require_once ROOT . "/dao/FuncionarioDAO.php";
 require_once ROOT . "/controle/ProjetoControle.php";
 
 $projetoControle = new ProjetoControle();
@@ -52,12 +51,8 @@ $tipos         = $projetoControle->obterTipos();
 $locais        = $projetoControle->obterLocais();
 $statusProjeto = $projetoControle->obterStatus();
 
-$executanteDAO = new FuncionarioDAO();
-$executantes   = $executanteDAO->listarTodos(1);
-
 $projetoDAO = new ProjetoDAO();
 $funcoes    = $projetoDAO->listarFuncoesProjeto();
-$equipe     = $projetoDAO->listarEquipeProjeto($id_projeto);
 
 require_once ROOT . "/html/personalizacao_display.php";
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
@@ -79,6 +74,9 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
   <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+  <link rel="stylesheet" href="../../assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+  <link rel="stylesheet" href="../../assets/vendor/select2/select2.css" />
+  <link rel="stylesheet" href="../../assets/vendor/select2/select2-bootstrap.css" />
 
   <style>
     .obrig {
@@ -89,25 +87,6 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       margin-top: 12px;
       display: flex;
       justify-content: flex-end;
-    }
-
-    .turmas-filtro-bar {
-      margin-bottom: 12px;
-      padding: 8px 12px;
-      background: #f9f9f9;
-      border: 1px solid #e5e5e5;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-
-    .turmas-filtro-bar .filtro-label {
-      font-size: 12px;
-      color: #777;
-      margin-right: 6px;
-      white-space: nowrap;
     }
   </style>
 </head>
@@ -135,9 +114,9 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
           <div class="tabs">
             <ul class="nav nav-tabs tabs-primary">
               <li class="active"><a href="#overview" data-toggle="tab">Dados do Projeto</a></li>
-              <li><a href="#turmas" data-toggle="tab">Turmas</a></li>
               <li><a href="#equipe" data-toggle="tab">Equipe do Projeto</a></li>
               <li><a href="#atendidos" data-toggle="tab">Atendidos</a></li>
+              <li><a href="#turmas" data-toggle="tab">Turmas</a></li>
             </ul>
             <div class="tab-content">
 
@@ -232,36 +211,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                 </div>
               </div>
 
-              <!-- ABA 2: Turmas -->
-              <div id="turmas" class="tab-pane">
-                <div class="row">
-                  <div class="col-md-8">
-                    <section class="panel">
-                      <header class="panel-heading">
-                        <div class="panel-actions">
-                          <a href="#" class="fa fa-caret-down"></a>
-                        </div>
-                        <h2 class="panel-title">Turmas do Projeto</h2>
-                      </header>
-                      <div class="panel-body">
-                        <p class="text-muted" style="font-size:13px;">
-                          As turmas são opcionais. Use-as para agrupar executantes e atendidos dentro deste projeto.
-                          Ao filtrar por turma nas abas <strong>Equipe</strong> e <strong>Atendidos</strong>,
-                          você pode gerenciar os membros de cada turma individualmente.
-                        </p>
-                        <div id="turmas-lista" style="margin-bottom:16px;min-height:32px;">
-                          <p class="text-muted">Carregando...</p>
-                        </div>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="adicionarTurma()">
-                          <i class="fa fa-plus"></i> Nova Turma
-                        </button>
-                      </div>
-                    </section>
-                  </div>
-                </div>
-              </div>
-
-              <!-- ABA 3: Equipe do Projeto -->
+              <!-- ABA 2: Equipe do Projeto -->
               <div id="equipe" class="tab-pane">
                 <div class="row">
                   <div class="col-md-12">
@@ -274,45 +224,12 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       </header>
                       <div class="panel-body">
 
-                        <!-- Filtro por turma -->
-                        <div class="turmas-filtro-bar">
-                          <span class="filtro-label"><i class="fa fa-filter"></i> Filtrar por turma:</span>
-                          <div id="turmas-equipe-filtro" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;"></div>
-                          <button id="btn-limpar-turma-equipe" type="button" class="btn btn-xs btn-link"
-                            style="display:none;" onclick="limparFiltroEquipe()">
-                            <i class="fa fa-times"></i> Limpar filtros
-                          </button>
-                        </div>
-
-                        <!-- Painel: adicionar membro existente à turma ativa -->
-                        <div id="painel-adicionar-equipe-turma" style="display:none;margin-bottom:16px;">
-                          <div class="alert alert-info" style="margin-bottom:8px;padding:8px 12px;font-size:13px;">
-                            <i class="fa fa-info-circle"></i>
-                            Exibindo membros da turma selecionada. Adicione abaixo quem já está no projeto mas ainda não está nesta turma.
-                          </div>
-                          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <select id="select-executante-turma" class="form-control" style="max-width:300px;">
-                              <option selected disabled>Selecionar executante</option>
-                            </select>
-                            <button type="button" class="btn btn-success btn-sm" onclick="confirmarAdicionarExecutanteTurma()">
-                              <i class="fa fa-plus"></i> Adicionar à turma
-                            </button>
-                          </div>
-                        </div>
-
                         <h4>Adicionar Novo Membro</h4>
                         <form class="form-horizontal" role="form">
                           <div class="form-group">
                             <label class="col-md-2 control-label" for="novo_funcionario">Executante<sup class="obrig">*</sup></label>
                             <div class="col-md-4">
-                              <select id="novo_funcionario" class="form-control">
-                                <option selected disabled>Selecionar Executante</option>
-                                <?php foreach ($executantes as $executante): ?>
-                                  <option value="<?= $executante['id_funcionario'] ?>">
-                                    <?= htmlspecialchars($executante['nome'] . ' ' . ($executante['sobrenome'] ?? '')) ?>
-                                  </option>
-                                <?php endforeach; ?>
-                              </select>
+                              <input type="hidden" id="novo_funcionario" style="width: 100%;">
                             </div>
                             <label class="col-md-2 control-label" for="nova_funcao">Cargo/Função<sup class="obrig">*</sup></label>
                             <div class="col-md-3">
@@ -337,9 +254,21 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                             </div>
                           </div>
                         </form>
+
                         <hr class="dotted short">
+                        <div class="row">
+                          <div class="col-md-12">
+                            <div class="form-group">
+                              <label for="filtro_funcao_equipe" class="control-label" style="font-weight: normal;">Filtrar por Cargo/Função:</label>
+                              <select id="filtro_funcao_equipe" class="form-control input-sm" style="width: 250px; display: inline-block;" onchange="filtrarEquipePorFuncao()">
+                                <!-- Será preenchido dinamicamente -->
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
                         <div class="table-responsive">
-                          <table class="table table-bordered table-striped mb-none">
+                          <table class="table table-bordered table-striped mb-none" id="equipe-table">
                             <thead>
                               <tr>
                                 <th>Executante</th>
@@ -349,29 +278,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                               </tr>
                             </thead>
                             <tbody id="equipe-tab">
-                              <?php if ($equipe && count($equipe) > 0): ?>
-                                <?php foreach ($equipe as $membro): ?>
-                                  <tr id="equipe-<?= $membro['id'] ?>">
-                                    <td><?= htmlspecialchars($membro['nome'] . ' ' . ($membro['sobrenome'] ?? '')) ?></td>
-                                    <td><?= htmlspecialchars($membro['cpf'] ?? '--') ?></td>
-                                    <td><?= htmlspecialchars($membro['funcao_descricao'] ?? '--') ?></td>
-                                    <td class="actions text-center">
-                                      <button type="button" onclick="removerMembroEquipe(<?= $membro['id'] ?>)" id="btn-remover-<?= $membro['id'] ?>" class="btn btn-danger btn-xs" title="Remover">
-                                        <i class="fa fa-trash"></i>
-                                      </button>
-                                    </td>
-                                  </tr>
-                                <?php endforeach; ?>
-                              <?php else: ?>
-                                <tr>
-                                  <td colspan="4" class="text-center">Nenhum membro cadastrado nesta equipe.</td>
-                                </tr>
-                              <?php endif; ?>
                             </tbody>
                           </table>
-                        </div>
-                        <div class="pagination-container">
-                          <ul class="pagination pagination-sm" id="equipe-paginacao"></ul>
                         </div>
                       </div>
                     </section>
@@ -379,7 +287,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                 </div>
               </div>
 
-              <!-- ABA 4: Atendidos do Projeto -->
+              <!-- ABA 3: Atendidos do Projeto -->
               <div id="atendidos" class="tab-pane">
                 <div class="row">
                   <div class="col-md-12">
@@ -392,51 +300,12 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       </header>
                       <div class="panel-body">
 
-                        <!-- Filtro por turma -->
-                        <div class="turmas-filtro-bar">
-                          <span class="filtro-label"><i class="fa fa-filter"></i> Filtrar por turma:</span>
-                          <div id="turmas-atendidos-filtro" style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:4px;"></div>
-                          <button id="btn-limpar-turma-atendidos" type="button" class="btn btn-xs btn-link"
-                            style="display:none;" onclick="limparFiltroAtendidos()">
-                            <i class="fa fa-times"></i> Limpar filtros
-                          </button>
-                        </div>
-
-                        <!-- Painel: adicionar atendido existente à turma ativa -->
-                        <div id="painel-adicionar-atendido-turma" style="display:none;margin-bottom:16px;">
-                          <div class="alert alert-info" style="margin-bottom:8px;padding:8px 12px;font-size:13px;">
-                            <i class="fa fa-info-circle"></i>
-                            Exibindo atendidos da turma selecionada. Adicione abaixo quem já está no projeto mas ainda não está nesta turma.
-                          </div>
-                          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <select id="select-atendido-turma" class="form-control" style="max-width:300px;">
-                              <option selected disabled>Selecionar atendido</option>
-                            </select>
-                            <button type="button" class="btn btn-success btn-sm" onclick="confirmarAdicionarAtendidoTurma()">
-                              <i class="fa fa-plus"></i> Adicionar à turma
-                            </button>
-                          </div>
-                        </div>
-
                         <h4>Vincular Novo Atendido</h4>
                         <form class="form-horizontal" role="form">
                           <div class="form-group">
                             <label class="col-md-2 control-label" for="novo_atendido">Atendido<sup class="obrig">*</sup></label>
                             <div class="col-md-4">
-                              <select id="novo_atendido" class="form-control">
-                                <option selected disabled>Selecionar Atendido</option>
-                              </select>
-                            </div>
-                            <label class="col-md-2 control-label" for="status_atendido">Status<sup class="obrig">*</sup></label>
-                            <div class="col-md-3">
-                              <div style="display: flex; align-items: center;">
-                                <select id="status_atendido" class="form-control" style="flex: 1;">
-                                  <option selected disabled>Selecionar Status</option>
-                                </select>
-                                <a onclick="adicionarNovoStatusAtendido()" style="cursor:pointer; margin-left: 8px; display: flex; align-items: center;">
-                                  <i class="fas fa-plus" style="font-size: 20px; color: #007bff;"></i>
-                                </a>
-                              </div>
+                              <input type="hidden" id="novo_atendido" style="width: 100%;">
                             </div>
                             <div class="col-md-1">
                               <button type="button" id="btn-adicionar-atendido" class="btn btn-primary" onclick="adicionarAtendidoProjeto()">
@@ -445,9 +314,23 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                             </div>
                           </div>
                         </form>
+
                         <hr class="dotted short">
+
+                        <!-- FILTRO POR STATUS -->
+                        <div class="row">
+                          <div class="col-md-12">
+                            <div class="form-group">
+                              <label for="filtro_status_atendido" class="control-label" style="font-weight: normal;">Filtrar por Status:</label>
+                              <select id="filtro_status_atendido" class="form-control input-sm" style="width: 250px; display: inline-block;" onchange="filtrarAtendidosPorStatus()">
+                                <!-- Será preenchido dinamicamente -->
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
                         <div class="table-responsive">
-                          <table class="table table-bordered table-striped mb-none">
+                          <table class="table table-bordered table-striped mb-none" id="atendidos-table">
                             <thead>
                               <tr>
                                 <th>Atendido</th>
@@ -457,14 +340,59 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                               </tr>
                             </thead>
                             <tbody id="atendidos-tab">
-                              <tr>
-                                <td colspan="4" class="text-center">Carregando...</td>
-                              </tr>
                             </tbody>
                           </table>
                         </div>
-                        <div class="pagination-container">
-                          <ul class="pagination pagination-sm" id="atendidos-paginacao"></ul>
+                      </div>
+                    </section>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ABA 4: Turmas -->
+              <div id="turmas" class="tab-pane">
+                <div class="row">
+                  <div class="col-md-12">
+                    <section class="panel">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a href="#" class="fa fa-caret-down"></a>
+                        </div>
+                        <h2 class="panel-title">Turmas do Projeto</h2>
+                      </header>
+                      <div class="panel-body">
+
+                        <h4>Nova Turma</h4>
+                        <form class="form-horizontal" role="form">
+                          <div class="form-group">
+                            <label class="col-md-2 control-label" for="nova_turma_nome">Nome<sup class="obrig">*</sup></label>
+                            <div class="col-md-4">
+                              <input type="text" id="nova_turma_nome" class="form-control" maxlength="150" placeholder="Nome da turma">
+                            </div>
+                            <label class="col-md-1 control-label" for="nova_turma_descricao">Descrição</label>
+                            <div class="col-md-4">
+                              <input type="text" id="nova_turma_descricao" class="form-control" maxlength="255" placeholder="Descrição (opcional)">
+                            </div>
+                            <div class="col-md-1">
+                              <button type="button" id="btn-adicionar-turma" class="btn btn-primary" onclick="adicionarTurma()">
+                                <i class="fa fa-plus"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </form>
+                        <hr class="dotted short">
+                        <div class="table-responsive">
+                          <table class="table table-bordered table-striped mb-none" id="turmas-table">
+                            <thead>
+                              <tr>
+                                <th>Nome</th>
+                                <th>Descrição</th>
+                                <th class="text-center" width="100">Ação</th>
+                              </tr>
+                            </thead>
+                            <tbody id="turmas-tab">
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     </section>
@@ -480,18 +408,20 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
   </div>
 
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
-  <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
-  <script src="../../Functions/projetos_editar.js"></script>
-  <script src="../../Functions/projetos_equipe.js"></script>
-  <script src="../../Functions/projetos_atendido.js"></script>
-  <script src="../../Functions/projetos_turma.js"></script>
-
-  <script type="text/javascript">
+  <script>
     $(function() {
       $("#header").load("../header.php");
       $(".menuu").load("../menu.php");
     });
   </script>
+  <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
+  <script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+  <script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+  <script src="../../assets/vendor/select2/select2.min.js"></script>
+  <script src="../../Functions/projetos_editar.js"></script>
+  <script src="../../Functions/projetos_equipe.js"></script>
+  <script src="../../Functions/projetos_atendido.js"></script>
+  <script src="../../Functions/projetos_turma.js"></script>
 </body>
 
 </html>
