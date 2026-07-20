@@ -359,4 +359,3 @@ INSERT IGNORE INTO `wegia`.`agenda_status` (`descricao`) VALUES
 INSERT IGNORE INTO `wegia`.`agenda_equipe_status` (`descricao`) VALUES
 ('Ativo'),
 ('Inativo');
->>>>>>> 9594137082d98b5769e8b0ab77151e9ee7417619
