@@ -22,7 +22,8 @@ Registra um novo sócio no sistema. Se a pessoa com o CPF fornecido já existe, 
   "valorMensalidade": 50.00,
   "status": 1,
   "autoStatusContribuicao": true,
-  "idSocioTipo": 0
+  "idSocioTipo": 0,
+  "uuid": "019f7118-9242-70ba-b2d5-54a360512623"
 }
 ```
 
@@ -312,7 +313,76 @@ Valida um código de verificação enviado por email.
 
 ---
 
-## 6. POST `/socios/alter-password`
+## 6. GET `/socios/{uuid}/validar_beneficios`
+
+Valida a situação do sócio pelo UUID v7 armazenado em binário no banco e retorna os dados necessários para a liberação de benefícios de parceiros institucionais e para exibição do resumo na página pública.
+
+### Parâmetros
+- **uuid** (path parameter, obrigatório): UUID v7 do sócio em formato textual
+
+### Exemplo de Requisição
+```
+GET /socios/018f3c30-3c0f-7b3f-8a53-b7b8a9f3f2f1/validar_beneficios
+```
+
+### Resposta - 200 OK
+```json
+{
+  "nome": "João",
+  "sobrenome": "Silva",
+  "email": "joao@example.com",
+  "telefone": "11987654321",
+  "dataNascimento": "15/**/**90",
+  "cpf": "***.***.***-01",
+  "dataReferenciaContribuicao": "2024-01-01",
+  "dataUltimaContribuicao": "2024-06-15",
+  "benefit_points": 12
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `nome` | string | Nome do sócio |
+| `sobrenome` | string | Sobrenome do sócio |
+| `email` | string \| null | E-mail cadastrado do sócio, sem censura, para exibição no resumo público |
+| `telefone` | string \| null | Telefone cadastrado do sócio, sem censura, para exibição no resumo público |
+| `dataNascimento` | string \| null | Data de nascimento parcialmente censurada, exibindo apenas o dia e os dois últimos dígitos do ano |
+| `cpf` | string \| null | CPF parcialmente censurado, exibindo apenas os dois últimos dígitos |
+| `dataReferenciaContribuicao` | string \| null | Data de referência da contribuição do sócio no formato `YYYY-MM-DD` |
+| `dataUltimaContribuicao` | string \| null | Data da última contribuição paga no formato `YYYY-MM-DD` |
+| `benefit_points` | integer | Total de pontos de benefício calculados para o sócio |
+
+### Resposta - 400 Bad Request
+```json
+{
+  "message": "UUID inválido."
+}
+```
+
+Se o UUID estiver em formato válido, mas não for v7, a resposta de erro será:
+```json
+{
+  "message": "UUID v7 inválido."
+}
+```
+
+### Resposta - 404 Not Found
+```json
+{
+  "message": "Sócio não localizado."
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Mensagem de erro detalhada | Código do erro"
+}
+```
+
+---
+
+## 7. POST `/socios/alter-password`
 
 Altera a senha de um sócio utilizando um código de verificação.
 
@@ -453,6 +523,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 | `status` | integer | Status do sócio |
 | `autoStatusContribuicao` | boolean | Atualiza status automaticamente conforme contribuição |
 | `idSocioTipo` | integer | ID do tipo de sócio |
+| `uuid` | string \| null | UUID v7 do sócio em formato textual |
 
 ### Resposta - 401 Unauthorized (Token Não Fornecido)
 ```json

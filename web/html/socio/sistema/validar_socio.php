@@ -31,8 +31,16 @@ require_once ROOT . "/html/personalizacao_display.php";
     <!-- Page CSS -->
     <link rel="stylesheet" href="../css/validar_socio.css">
 
+    <!-- Page script -->
+    <script src="controller/script/validar_socio.js" defer></script>
+
     <!-- Favicon -->
     <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon">
+    <script>
+        window.WEGIA_VALIDAR_SOCIO_CONFIG = <?php echo json_encode([
+            'apiBaseUrl' => defined('API_BASE_URL') ? API_BASE_URL : '',
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+    </script>
 </head>
 
 <body>
@@ -63,7 +71,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                 <div class="collapse navbar-collapse" id="menu-principal">
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#"><i class="fa fa-phone"></i> Contato</a></li>
+                        <li><a href="#" id="link_contato_suporte" rel="noopener noreferrer"><i class="fa fa-phone"></i> Contato</a></li>
                         <li><a href="../../contribuicao/view/forma_contribuicao.php"><i class="fa fa-usd"></i> Doe já</a></li>
                     </ul>
                 </div>
@@ -78,8 +86,10 @@ require_once ROOT . "/html/personalizacao_display.php";
                     <i class="fa fa-shield"></i>
                 </div>
                 <h1>Validação de Sócio</h1>
-                <p>Consulte a situação de um sócio por QR Code ou código de identificação.</p>
+                <p>Consulte a situação de um sócio por QR Code ou UUID de identificação.</p>
             </section>
+
+            <div id="mensagens_usuario" class="mensagens-usuario" aria-live="polite" aria-atomic="true"></div>
 
             <section class="buscar-socio-card">
                 <div class="buscar-socio-card__header">
@@ -106,8 +116,8 @@ require_once ROOT . "/html/personalizacao_display.php";
                             id="codigo_socio"
                             name="codigo_socio"
                             class="form-control"
-                            placeholder="Digite o código do sócio"
-                            aria-label="Digite o código do sócio">
+                            placeholder="Digite o UUID do sócio"
+                            aria-label="Digite o UUID do sócio">
                     </div>
 
                     <button type="submit" class="btn btn-consultar">
@@ -117,7 +127,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                 </form>
             </section>
 
-            <section class="socio-resumo-card" id="resumo_socio" aria-hidden="true">
+            <section class="socio-resumo-card" id="resumo_socio" hidden aria-hidden="true">
                 <div class="socio-resumo-card__topo">
                     <div class="socio-resumo-card__status">
                         <div class="socio-resumo-card__status-icone" aria-hidden="true">
@@ -131,11 +141,22 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                     <div class="socio-resumo-card__codigo">
                         <span>Código de validação</span>
-                        <strong id="codigo_validacao">--</strong>
+                        <div class="codigo-validacao-wrap">
+                            <strong id="codigo_validacao">--</strong>
+                            <button
+                                type="button"
+                                class="btn btn-default btn-copy-codigo"
+                                id="btn_copy_codigo"
+                                aria-label="Copiar código de validação"
+                                title="Copiar código de validação">
+                                <i class="fa fa-files-o" aria-hidden="true"></i>
+                                <span class="btn-copy-codigo__text">Copiar</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="socio-resumo-card__dados">
+                    <div class="socio-resumo-card__dados">
                     <div class="socio-avatar" aria-hidden="true">
                         <i class="fa fa-user"></i>
                     </div>
@@ -185,7 +206,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                     <p class="beneficio-descricao">
                         Use seus pontos nos estabelecimentos parceiros.
                     </p>
-                    
+
                     <button type="button" class="btn btn-link btn-saiba-mais">Saiba mais</button>
                 </div>
             </section>

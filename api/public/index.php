@@ -192,6 +192,7 @@ $app->post('/socios/register', [SocioController::class, 'registerSocio']);
 $app->get('/socios/exists/{cpf}', [SocioController::class, 'checkSocioExistsByCpf']);
 $app->get('/socios/verify-code', [SocioController::class, 'sendVerificationCodeByCpf']);
 $app->get('/socios/support-contact', [SocioController::class, 'getSupportContact']);
+$app->get('/socios/{uuid}/validar_beneficios', [SocioController::class, 'validarBeneficiosPorUuid']);
 $app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
 $app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
 

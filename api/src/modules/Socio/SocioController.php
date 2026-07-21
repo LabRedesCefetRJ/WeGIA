@@ -461,6 +461,52 @@ class SocioController
         }
     }
 
+    public function validarBeneficiosPorUuid(Request $request, Response $response, array $args)
+    {
+        try {
+            $uuid = trim($args['uuid'] ?? '');
+
+            if ($uuid === '') {
+                $response->getBody()->write(json_encode([
+                    'message' => 'UUID é obrigatório.'
+                ]));
+
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $resultado = $this->socioService->validarBeneficiosPorUuid($uuid);
+
+            if (!$resultado) {
+                $response->getBody()->write(json_encode([
+                    'message' => 'Sócio não localizado.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($resultado));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\InvalidArgumentException $e) {
+            $response->getBody()->write(json_encode([
+                'message' => $e->getMessage()
+            ]));
+
+            return $response->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     private function buscarSocioPorCpf(string $cpf): array
     {
         // Validar CPF
