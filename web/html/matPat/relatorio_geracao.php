@@ -26,6 +26,7 @@ $tipoMedia = $_POST['tipo_media'] ?? 'dia';
 $modoRequisicao = $_POST['modo_requisicao'] ?? 'movimentados';
 
 $mostrarZerados = isset($_POST['mostrarZerados']) && $_POST['mostrarZerados'] === 'on';
+$itensCompra = isset($_POST['itensCompra']) && $_POST['itensCompra'] === 'on';
 
 $o_d = null;
 if ($_POST['tipo_relatorio'] == 'entrada') {
@@ -45,8 +46,14 @@ $post = [
 		'fim' => $_POST['data_fim'] != '' ? $_POST['data_fim'] : null
 	],
 	$_POST['almoxarifado'] != '' ? $_POST['almoxarifado'] : null,
-	$mostrarZerados
+	$mostrarZerados,
+	$itensCompra
 ];
+
+if ($itensCompra && empty($_POST['almoxarifado'])) {
+	echo "<script>alert('Por favor, selecione um almoxarifado antes de marcar a opção \"Listar produtos para compra\".'); window.history.back();</script>";
+	exit();
+}
 
 $item = new Item(
 	$_POST['tipo_relatorio'],
@@ -61,6 +68,7 @@ $item = new Item(
 	],
 	$_POST['almoxarifado'],
 	$mostrarZerados,
+	$itensCompra,
 	$tipoMedia,
 	$modoRequisicao
 );
@@ -429,10 +437,17 @@ function quickQuery($query, $parametro, $column)
 											echo ("<ul>Critério: produtos com saída total igual ou superior a 10 no período selecionado.</ul>");
 										}
 									} else {
-										if ($post[6]) {
-											echo ("<ul>Mostrando produtos fora de estoque</ul>");
-										} else {
-											echo ("<ul>Ocultando produtos fora de estoque</ul>");
+										if ($post[0] === 'estoque') {
+											if ($post[6]) {
+												echo ("<ul>Mostrando produtos fora de estoque</ul>");
+											} else {
+												echo ("<ul>Ocultando produtos fora de estoque</ul>");
+											}
+											if($post[7]) {
+												echo ("<ul>Listando itens de compra</ul>");
+											} else {
+												echo ("<ul>Ocultando itens de compra</ul>");
+											}
 										}
 									}
 								}
@@ -468,6 +483,9 @@ function quickQuery($query, $parametro, $column)
 									echo ('<th scope="col" width="12%">Data de Registro</th>');
 									echo ('<th scope="col" width="12%">Valor Unitário</th>');
 								} else {
+									if($itensCompra) {
+										echo('<th scope="col" width="14%">Quantidade crítica</th>');
+									}
 									echo ('<th scope="col" width="14%">Preço Médio</th>');
 								} ?>
 								<th scope="col" width="14%" class="tot">Tipo de Unidade</th>

@@ -15,13 +15,14 @@ class Item
     private $query;
     private $paramsExternos = [];
     private $mostrarZerado;
+    private $itensCompra;
     private $DDL_cmd;
     private $tipoMedia;
     private $modoRequisicao;
 
     // Constructor
 
-    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false, $tipoMedia = 'dia', $modoRequisicao = 'movimentados')
+    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false, $i = false, $tipoMedia = 'dia', $modoRequisicao = 'movimentados')
     {
         $this
             ->setRelatorio($relat)
@@ -32,6 +33,7 @@ class Item
             ->setPeriodo($p)
             ->setAlmoxarifado($a)
             ->setMostrarZerado($z)
+            ->setItensCompra($i)
             ->setTipoMedia($tipoMedia)
             ->setModoRequisicao($modoRequisicao)
         ;
@@ -48,6 +50,7 @@ class Item
             || $this->getPeriodo()['fim']
             || $this->getAlmoxarifado()
             || $this->getMostrarZerado()
+            || $this->getItensCompra()
         );
     }
 
@@ -283,6 +286,11 @@ class Item
 	            $cont++;
             }
 
+            if ($this->getItensCompra()) {
+                $params = $this->param($params, $cont) . " e.qtd <= e.qtd_minima ";
+                $cont++;
+            }
+
             if ($this->getAlmoxarifado()) {
 	            $params = $this->param($params, $cont) . " e.id_almoxarifado = :idAlmoxarifado ";
 	            $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
@@ -329,6 +337,7 @@ class Item
                         u.descricao_unidade AS unidade,
                         a.id_almoxarifado,
                         est.qtd AS qtd,
+                        est.qtd_minima AS qtd_minima,
                         est.qtd * IFNULL(
                             te.valor_entrada / NULLIF(te.qtd_entrada, 0),
                             p.preco
@@ -356,7 +365,8 @@ class Item
             // Query principal segura
             $this->setQuery(
                 "SELECT 
-                    SUM(e.qtd) AS qtd_total, 
+                    SUM(e.qtd) AS qtd_total,
+                    e.qtd_minima AS qtd_minima, 
                     e.descricao, 
                     SUM(e.Total) AS valor_total,
                     CASE 
@@ -369,7 +379,8 @@ class Item
                 GROUP BY 
                     e.id_produto,
                     e.descricao,
-                    e.unidade
+                    e.unidade,
+                    e.qtd_minima
                 ORDER BY e.descricao;
                 "
             );
@@ -408,6 +419,7 @@ class Item
                     u.descricao_unidade AS unidade,
                     a.id_almoxarifado,
                     est.qtd AS qtd,
+                    est.qtd_minima AS qtd_minima,
                     est.qtd * IFNULL(
                         te.valor_entrada / NULLIF(te.qtd_entrada, 0),
                         p.preco
@@ -434,6 +446,7 @@ class Item
             $this->setQuery("
                 SELECT 
                     SUM(e.qtd) AS qtd_total,
+                    e.qtd_minima AS qtd_minima,
                     e.descricao,
                     SUM(e.Total) AS valor_total,
                     CASE 
@@ -449,7 +462,8 @@ class Item
                 GROUP BY 
                     e.id_produto,
                     e.descricao,
-                    e.unidade
+                    e.unidade,
+                    e.qtd_minima
                 ORDER BY e.descricao;
             ");
         }
@@ -507,15 +521,28 @@ class Item
                     $class = 'class="table-danger"';
                 }
 
-                echo ('
-                <tr ' . $class . '>
-                    <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
-                    <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
-                    <td>R$ ' . number_format($item['PrecoMedio'], 2) . '</td>
-                    <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
-                    <td>R$ ' . number_format($item['valor_total'], 2) . '</td>
-                </tr>
-            ');
+                if($this->getItensCompra()) {
+                    echo ('
+                        <tr ' . $class . '>
+                            <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
+                            <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
+                            <td>' . htmlspecialchars($item['qtd_minima'], ENT_QUOTES, 'UTF-8') . '</td>
+                            <td>R$ ' . number_format($item['PrecoMedio'], 2) . '</td>
+                            <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
+                            <td>R$ ' . number_format($item['valor_total'], 2) . '</td>
+                        </tr>
+                    ');
+                } else {
+                    echo ('
+                        <tr ' . $class . '>
+                            <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
+                            <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
+                            <td>R$ ' . number_format($item['PrecoMedio'], 2) . '</td>
+                            <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
+                            <td>R$ ' . number_format($item['valor_total'], 2) . '</td>
+                        </tr>
+                    ');
+                }
             } else {
                 $util = new Util();
                 $tipo_label = !empty($item['tipo']) ? htmlspecialchars($item['tipo'], ENT_QUOTES, 'UTF-8') : 'N/A';
@@ -562,12 +589,21 @@ class Item
         }
 
         if ($this->getRelatorio() == 'estoque') {
-            echo ('
-                <tr class="table-info">
-                    <td scope="row" colspan="4">Valor total:</td>
-                    <td>R$ ' . number_format($tot_val, 2) . '</td>
-                </tr>
-            ');
+            if($this->getItensCompra()) {
+                echo ('
+                    <tr class="table-info">
+                        <td scope="row" colspan="5">Valor total:</td>
+                        <td>R$ ' . number_format($tot_val, 2) . '</td>
+                    </tr>
+                ');
+            } else {
+                echo ('
+                    <tr class="table-info">
+                        <td scope="row" colspan="4">Valor total:</td>
+                        <td>R$ ' . number_format($tot_val, 2) . '</td>
+                    </tr>
+                ');
+            }
         } else if ($this->getRelatorio() == 'saida') {
             echo ('
                 <tr class="table-info">
@@ -910,6 +946,18 @@ class Item
     public function setMostrarZerado($mostrarZerado)
     {
         $this->mostrarZerado = $mostrarZerado;
+
+        return $this;
+    }
+
+    public function getItensCompra()
+    {
+        return $this->itensCompra;
+    }
+
+    public function setItensCompra($itensCompra)
+    {
+        $this->itensCompra = $itensCompra;
 
         return $this;
     }

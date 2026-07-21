@@ -309,7 +309,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group" id="almoxarifado">
 								<label class="col-md-3 control-label">Almoxarifado</label>
 								<div class="col-md-8">
-									<select name="almoxarifado">
+									<select name="almoxarifado" id="almoxarifadoSelect2">
 										<option value="">Todas as Opções</option>
 										<?php
 										$pdo = Conexao::connect();
@@ -331,6 +331,13 @@ require_once ROOT . "/html/personalizacao_display.php";
 								<label for="mostrarZerados" class="col-md-3 control-label">Mostrar produtos sem movimentação</label>
 								<div class="col-md-8">
 									<input id="mostrarZerados" type="checkbox" name="mostrarZerados" style="margin: 10px 0;">
+								</div>
+							</div>
+
+							<div class="form-group" id="panel-itensCompra">
+								<label for="itensCompra" class="col-md-3 control-label">Listar produtos para compra</label>
+								<div class="col-md-8">
+									<input id="itensCompra" type="checkbox" oninput="validarAlmoxarifado()" name="itensCompra" style="margin: 10px 0;">
 								</div>
 							</div>
 
@@ -676,14 +683,29 @@ require_once ROOT . "/html/personalizacao_display.php";
 		}
 	});
 
+	function validarAlmoxarifado() {
+		const almoxarifadoSelect = document.getElementById('almoxarifadoSelect2');
+		const itensCompraCheckbox = document.getElementById('itensCompra');
+
+		if (itensCompraCheckbox.checked && almoxarifadoSelect.value === '') {
+			alert('Por favor, selecione um almoxarifado antes de marcar a opção "Listar produtos para compra".');
+			itensCompraCheckbox.checked = false;
+		}
+	}
+
 	function controlarCampoMediaSaida() {
 		const tipoRelatorio = document.getElementById('tipo-relat').value;
 
 		const campoMedia = document.getElementById('media-saida');
 		const categoriaProduto = document.getElementById('categoria-relat');
 		const modoRequisicao = document.getElementById('modo-requisicao');
+		const itensCompra = document.getElementById('panel-itensCompra');
 
 		campoMedia.style.display = tipoRelatorio === 'saida' ? 'block' : 'none';
+
+		if (itensCompra) {
+			itensCompra.style.display = tipoRelatorio === 'estoque' ? 'block' : 'none';
+		}
 
 		if (categoriaProduto) {
 			categoriaProduto.style.display = (tipoRelatorio === 'requisicao' || tipoRelatorio === 'estoque') ? 'block' : 'none';
@@ -692,6 +714,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 		if (modoRequisicao) {
 			modoRequisicao.style.display = tipoRelatorio === 'requisicao' ? 'block' : 'none';
 		}
+
+
 
 		if (tipoRelatorio === 'estoque') {
 			document.getElementById('per').style.display = 'none';
