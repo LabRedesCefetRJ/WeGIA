@@ -85,6 +85,8 @@ class SocioRepository
                     p.sobrenome,
                     p.cpf,
                     p.data_nascimento,
+                    p.telefone,
+                    p.email,
                     (
                         SELECT MAX(cl.data_pagamento)
                         FROM contribuicao_log cl

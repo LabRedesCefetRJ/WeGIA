@@ -253,6 +253,40 @@ main {
     letter-spacing: 0.02em;
 }
 
+.codigo-validacao-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-copy-codigo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border-color: #c7d6e7;
+    color: #245ea8;
+    white-space: nowrap;
+}
+
+.btn-copy-codigo:hover,
+.btn-copy-codigo:focus,
+.btn-copy-codigo:active,
+.btn-copy-codigo.is-copied {
+    color: #173a63;
+    background: #f4f8fc;
+    border-color: #aec3da;
+}
+
+.btn-copy-codigo.is-copied {
+    color: #2b8b47;
+    border-color: rgba(43, 139, 71, 0.28);
+    background: rgba(43, 139, 71, 0.08);
+}
+
 .socio-resumo-card__dados {
     display: grid;
     grid-template-columns: 120px 1fr;
@@ -436,6 +470,15 @@ footer p {
     .socio-resumo-card__codigo {
         min-width: 0;
     }
+
+    .codigo-validacao-wrap {
+        align-items: stretch;
+    }
+
+    .btn-copy-codigo {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 767px) {
@@ -468,10 +511,20 @@ footer p {
     .socio-resumo-card__status {
         flex-direction: column;
         align-items: flex-start;
+        justify-content: center;
+        text-align: center;
     }
 
     .socio-resumo-card__status h2 {
         font-size: 24px;
+    }
+
+    .socio-resumo-card__status-icone {
+        margin: 0 auto;
+    }
+
+    .socio-resumo-card__codigo strong {
+        font-size: 16px;
     }
 }
 

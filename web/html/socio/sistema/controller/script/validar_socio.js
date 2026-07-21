@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const resumoSocio = document.getElementById('resumo_socio');
     const alertContainer = document.getElementById('mensagens_usuario');
     const contatoSuporteLink = document.getElementById('link_contato_suporte');
+    const btnCopiarCodigo = document.getElementById('btn_copy_codigo');
 
     if (!form || !codigoInput || !resumoSocio || !alertContainer) {
         return;
@@ -73,11 +74,56 @@ document.addEventListener('DOMContentLoaded', function () {
     function hideResumo() {
         resumoSocio.hidden = true;
         resumoSocio.setAttribute('aria-hidden', 'true');
+        toggleCopyButtonState(false, 'Copiar');
     }
 
     function showResumo() {
         resumoSocio.hidden = false;
         resumoSocio.setAttribute('aria-hidden', 'false');
+    }
+
+    function toggleCopyButtonState(enabled, text = 'Copiar') {
+        if (!btnCopiarCodigo) {
+            return;
+        }
+
+        btnCopiarCodigo.disabled = !enabled;
+        btnCopiarCodigo.classList.toggle('is-copied', text === 'Copiado');
+
+        const label = btnCopiarCodigo.querySelector('.btn-copy-codigo__text');
+        if (label) {
+            label.textContent = text;
+        }
+    }
+
+    async function copyToClipboard(text) {
+        const value = String(text || '').trim();
+
+        if (!value) {
+            throw new Error('Código de validação indisponível.');
+        }
+
+        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            await navigator.clipboard.writeText(value);
+            return;
+        }
+
+        const fallbackInput = document.createElement('textarea');
+        fallbackInput.value = value;
+        fallbackInput.setAttribute('readonly', 'true');
+        fallbackInput.style.position = 'fixed';
+        fallbackInput.style.left = '-9999px';
+        fallbackInput.style.top = '0';
+        document.body.appendChild(fallbackInput);
+        fallbackInput.select();
+        fallbackInput.setSelectionRange(0, fallbackInput.value.length);
+
+        const copied = document.execCommand('copy');
+        document.body.removeChild(fallbackInput);
+
+        if (!copied) {
+            throw new Error('Falha ao copiar o código.');
+        }
     }
 
     function setTextContent(element, value) {
@@ -192,16 +238,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function preencherResumo(data, uuid) {
         const nomeCompleto = [data.nome, data.sobrenome].filter(Boolean).join(' ').trim();
+        const codigoFormatado = String(uuid || '').trim();
 
         setTextContent(resumoFields.nome, nomeCompleto || 'Sócio localizado');
         setTextContent(resumoFields.cpf, data.cpf || 'Não informado');
         setTextContent(resumoFields.dataNascimento, formatDate(data.dataNascimento));
-        setTextContent(resumoFields.telefone, 'Não informado');
-        setTextContent(resumoFields.email, 'Não informado');
+        setTextContent(resumoFields.telefone, data.telefone || 'Não informado');
+        setTextContent(resumoFields.email, data.email || 'Não informado');
         setTextContent(resumoFields.inicioContribuicao, formatDate(data.dataReferenciaContribuicao));
         setTextContent(resumoFields.ultimaContribuicao, formatDate(data.dataUltimaContribuicao));
         setTextContent(resumoFields.pontosBeneficios, String(data.benefit_points ?? 0));
-        setTextContent(resumoFields.codigoValidacao, uuid);
+        setTextContent(resumoFields.codigoValidacao, codigoFormatado || '--');
+        toggleCopyButtonState(Boolean(codigoFormatado));
 
         showResumo();
         clearAlerts();
@@ -273,6 +321,27 @@ document.addEventListener('DOMContentLoaded', function () {
         consultarSocio(codigoInput.value);
     });
 
+    if (btnCopiarCodigo) {
+        btnCopiarCodigo.addEventListener('click', async function () {
+            const codigo = resumoFields.codigoValidacao ? resumoFields.codigoValidacao.textContent : '';
+
+            try {
+                await copyToClipboard(codigo);
+                const originalLabel = 'Copiar';
+                toggleCopyButtonState(true, 'Copiado');
+                window.setTimeout(() => toggleCopyButtonState(true, originalLabel), 1600);
+                clearAlerts();
+                showAlert('success', 'Código de validação copiado para a área de transferência.', {
+                    dismissible: true
+                });
+            } catch (error) {
+                console.error(error);
+                clearAlerts();
+                showAlert('warning', 'Não foi possível copiar automaticamente. Selecione e copie o código manualmente.');
+            }
+        });
+    }
+
     const params = new URLSearchParams(window.location.search);
     const codigoQuery = params.get('codigo');
 
@@ -285,4 +354,6 @@ document.addEventListener('DOMContentLoaded', function () {
         carregarContatoSuporte().catch(() => undefined);
         hideResumo();
     }
+
+    toggleCopyButtonState(false, 'Copiar');
 });

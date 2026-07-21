@@ -141,7 +141,18 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                     <div class="socio-resumo-card__codigo">
                         <span>Código de validação</span>
-                        <strong id="codigo_validacao">--</strong>
+                        <div class="codigo-validacao-wrap">
+                            <strong id="codigo_validacao">--</strong>
+                            <button
+                                type="button"
+                                class="btn btn-default btn-copy-codigo"
+                                id="btn_copy_codigo"
+                                aria-label="Copiar código de validação"
+                                title="Copiar código de validação">
+                                <i class="fa fa-files-o" aria-hidden="true"></i>
+                                <span class="btn-copy-codigo__text">Copiar</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
