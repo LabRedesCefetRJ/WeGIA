@@ -510,7 +510,8 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
   "valorMensalidade": 50.00,
   "status": 1,
   "autoStatusContribuicao": true,
-  "idSocioTipo": 0
+  "idSocioTipo": 0,
+  "uuid": "019f7118-9242-70ba-b2d5-54a360512623"
 }
 ```
 
