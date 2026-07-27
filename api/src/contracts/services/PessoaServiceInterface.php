@@ -12,4 +12,6 @@ interface PessoaServiceInterface
     public function obterPessoaPorCpf(string $cpf): ?PessoaInterface;
     public function atualizarPessoa(int $id, string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf, ?array $endereco = null): PessoaInterface;
     public function deletarPessoa(int $id): bool;
+
+    public function criarPessoaJuridica(string $cnpj, string $razaoSocial, ?string $telefone, ?string $email, ?array $endereco = null): PessoaInterface;
 }

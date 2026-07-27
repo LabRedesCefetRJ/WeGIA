@@ -152,4 +152,20 @@ class SocioRepository
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function insertSocioParceiro(ParceiroInstitucional $parceiro): bool
+    {
+        //adaptar query
+
+        $query = "INSERT INTO socio_parceiro_institucional (id_socio_benefit_rule, id_pessoa, divulgacao, localizacao, created_at, updated_at) VALUES (:idSocioBenefitRule, :idPessoa, :divulgacao, :localizacao, :created_at, :updated_at)";
+        $stmt = $this->db->prepare($query);
+        return $stmt->execute([
+            ':idSocioBenefitRule' => 1, //temporariamente fixo
+            ':idPessoa' => $parceiro->getPessoa()->getId(),
+            ':divulgacao' => $parceiro->getDivulgacao(),
+            ':localizacao' => $parceiro->getLocalizacao(),
+            ':created_at' => date('Y-m-d H:i:s'),
+            ':updated_at' => date('Y-m-d H:i:s')
+        ]);
+    }
 }

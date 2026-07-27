@@ -4,7 +4,7 @@ namespace api\modules\Pessoa;
 
 use api\contracts\entities\PessoaInterface;
 use api\contracts\services\PessoaServiceInterface;
-use api\utils\Cpf;
+use api\utils\Util;
 use DateTime;
 
 class PessoaService implements PessoaServiceInterface
@@ -19,12 +19,12 @@ class PessoaService implements PessoaServiceInterface
     public function criarPessoa(string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf): PessoaInterface
     {
         // Validar CPF
-        if (!Cpf::validate($cpf)) {
+        if (!Util::validateCpf($cpf)) {
             throw new \Exception("CPF inválido", 400);
         }
 
         // Normaliza o CPF antes de criar
-        $cpf = Cpf::normalize($cpf);
+        $cpf = Util::normalizeCpf($cpf);
         
         $pessoa = new Pessoa($nome, $sobrenome, $cpf, $dataNascimento, $sexo, $telefone, $email);
         $idPessoa = $this->pessoaRepository->create($pessoa);
@@ -46,12 +46,12 @@ class PessoaService implements PessoaServiceInterface
     public function obterPessoaPorCpf(string $cpf): ?PessoaInterface
     {
         // Validar CPF
-        if (!Cpf::validate($cpf)) {
+        if (!Util::validateCpf($cpf)) {
             return null;
         }
 
         // Normaliza o CPF (remove máscara e formata)
-        $cpf = Cpf::normalize($cpf);
+        $cpf = Util::normalizeCpf($cpf);
         
         $resultado = $this->pessoaRepository->findByCpf($cpf);
 
@@ -75,12 +75,12 @@ class PessoaService implements PessoaServiceInterface
     public function atualizarPessoa(int $id, string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf, ?array $endereco = null): PessoaInterface
     {
         // Validar CPF
-        if (!Cpf::validate($cpf)) {
+        if (!Util::validateCpf($cpf)) {
             throw new \Exception("CPF inválido", 400);
         }
 
         // Normaliza o CPF antes de atualizar
-        $cpf = Cpf::normalize($cpf);
+        $cpf = Util::normalizeCpf($cpf);
 
         // Verificar se a pessoa existe
         $pessoaExistente = $this->pessoaRepository->findById((string)$id);
@@ -160,6 +160,27 @@ class PessoaService implements PessoaServiceInterface
     {
         // Implementação para deletar uma pessoa por ID
         throw new \Exception("Método deletarPessoa ainda não implementado", 501);
+    }
+
+    public function criarPessoaJuridica(string $cnpj, string $razaoSocial, ?string $telefone, ?string $email, ?array $endereco = null): PessoaInterface
+    {
+        // Validar CNPJ
+        if (!Util::validateCnpj($cnpj)) {
+            throw new \Exception("CNPJ inválido", 400);
+        }
+
+        // Normaliza o CNPJ antes de criar
+        $cnpj = Util::normalizeCnpj($cnpj);
+        
+        $pessoa = new Pessoa($razaoSocial, '', $cnpj, null, null, $telefone, $email, Endereco::buildFromArray($endereco)); //reorganizar ordem dos parâmetros conforme necessário
+        $idPessoa = $this->pessoaRepository->createJuridica($pessoa);
+
+        if (!$idPessoa) {
+            throw new \Exception("Erro ao criar pessoa jurídica");
+        }
+
+        $pessoa->setId($idPessoa);
+        return $pessoa;
     }
 
     private function criarPessoaDoResultado(array $resultado): Pessoa

@@ -91,4 +91,31 @@ class PessoaRepository
 
         return $stmt->execute($params);
     }
+
+    public function createJuridica(Pessoa $pessoa): int|false
+    {
+        $query = "INSERT INTO pessoa (nome, cpf, telefone, email, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
+                  VALUES (:razao_social, :cnpj, :telefone, :email, :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento)";
+        $stmt = $this->pdo->prepare($query);
+
+        $resultado = $stmt->execute([
+            ':razao_social' => $pessoa->getNome(),
+            ':cnpj' => $pessoa->getCpf(),
+            ':telefone' => $pessoa->getTelefone(),
+            ':email' => $pessoa->getEmail(),
+            ':cep' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getCep() : null,
+            ':estado' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getEstado() : null,
+            ':cidade' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getCidade() : null,
+            ':bairro' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getBairro() : null,
+            ':logradouro' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getLogradouro() : null,
+            ':numero_endereco' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getNumero() : null,
+            ':complemento' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getComplemento() : null
+        ]);
+
+        if (!$resultado || !$this->pdo->lastInsertId()) {
+            return false;
+        }
+
+        return (int)$this->pdo->lastInsertId();
+    }
 }

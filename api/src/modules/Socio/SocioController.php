@@ -3,7 +3,8 @@
 namespace api\modules\Socio;
 
 use api\contracts\services\PessoaServiceInterface;
-use api\utils\Cpf;
+use api\utils\Util;
+use api\modules\Socio\ParceiroInstitucional;
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 
@@ -34,7 +35,7 @@ class SocioController
             $data = $request->getParsedBody();
 
             // Validar CPF
-            if (empty($data['cpf']) || !Cpf::validate($data['cpf'])) {
+            if (empty($data['cpf']) || !Util::validateCpf($data['cpf'])) {
                 $response->getBody()->write(json_encode([
                     'error' => 'CPF inválido.'
                 ]));
@@ -424,7 +425,7 @@ class SocioController
             $idSocio = (int)$args['id'];
 
             $idPessoaSocio = $this->socioService->getIdPessoaByIdSocio($idSocio);
-            
+
             // Validate socio ownership
             $idPessoaUser = $request->getAttribute('user_id');
             if (!$idPessoaUser || $idPessoaUser !== $idPessoaSocio) {
@@ -510,7 +511,7 @@ class SocioController
     private function buscarSocioPorCpf(string $cpf): array
     {
         // Validar CPF
-        if (!Cpf::validate($cpf)) {
+        if (!Util::validateCpf($cpf)) {
             return [
                 'pessoa' => null,
                 'socio' => null,
@@ -518,7 +519,7 @@ class SocioController
             ];
         }
 
-        $cpf = Cpf::normalize($cpf);
+        $cpf = Util::normalizeCpf($cpf);
         $pessoa = $this->pessoaService->obterPessoaPorCpf($cpf);
 
         if (!$pessoa) {
@@ -544,5 +545,59 @@ class SocioController
             'socio' => $socio,
             'message' => null
         ];
+    }
+
+    public function insertSocioParceiro(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            $cnpj = trim((string)($data['cnpj'] ?? ''));
+            $razaoSocial = trim((string)($data['razao_social'] ?? ''));
+
+            // Validate required data
+            if ($cnpj === '' || $razaoSocial === '') {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'CNPJ e razão social são obrigatórios'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Create socio parceiro
+            $socioParceiro = $this->socioService->insertSocioParceiro(
+                new ParceiroInstitucional(
+                    $this->pessoaService->criarPessoaJuridica(
+                        $cnpj,
+                        $razaoSocial,
+                        $data['telefone'] ?? null,
+                        $data['email'] ?? null,
+                        $data['endereco'] ?? null,
+                    ),
+                    $data['localizacao'] ?? '',
+                    $data['divulgacao'] ?? ''
+                )
+            );
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'socio_parceiro' => $socioParceiro
+            ]));
+
+            return $response->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
     }
 }

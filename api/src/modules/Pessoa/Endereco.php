@@ -123,4 +123,18 @@ class Endereco
         $this->cep = $cep;
         return $this;
     }
+
+    //behavior methods
+    public static function buildFromArray(array $data): Endereco
+    {
+        return new Endereco(
+            $data['logradouro'] ?? null,
+            $data['numero'] ?? null,
+            $data['bairro'] ?? null,
+            $data['cidade'] ?? null,
+            $data['estado'] ?? null,
+            $data['cep'] ?? null,
+            $data['complemento'] ?? null
+        );
+    }
 }

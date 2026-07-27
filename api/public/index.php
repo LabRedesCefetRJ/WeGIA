@@ -197,6 +197,10 @@ $app->post('/socios/verify-code', [SocioController::class, 'verifyCode']);
 $app->post('/socios/alter-password', [SocioController::class, 'alterPassword']);
 
 //aplicar middleware de autenticação e de permissão
+$app->post('/socios/parceiros', [SocioController::class, 'insertSocioParceiro'])
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
+
 $app->get('/socios/{cpf}', [SocioController::class, 'getSocioByCpf'])
     ->add($container->get(AuthMiddleware::class));
 

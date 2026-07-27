@@ -232,6 +232,29 @@ class SocioService implements SocioServiceInterface
         }
     }
 
+    public function insertSocioParceiro(ParceiroInstitucional $parceiro): array
+    {
+        try {
+            $result = $this->socioRepository->insertSocioParceiro($parceiro);
+            if ($result) {
+                return [
+                    'success' => true,
+                    'message' => 'Socio parceiro inserted successfully'
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to insert socio parceiro'
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error inserting socio parceiro: ' . $e->getMessage()
+            ];
+        }
+    }
+
     private function censurarCpf(?string $cpf): ?string
     {
         if (empty($cpf)) {

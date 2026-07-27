@@ -3,7 +3,7 @@
 namespace api\modules\Socio;
 
 use api\contracts\services\PessoaServiceInterface;
-use api\utils\Cpf;
+use api\utils\Util;
 
 /**
  * Helper class for common socio verification operations
@@ -40,7 +40,7 @@ class SocioVerificationHelper
     public function findSocioByCpf(string $cpf): array
     {
         // Validate CPF
-        if (!Cpf::validate($cpf)) {
+        if (!Util::validateCpf($cpf)) {
             return [
                 'pessoa' => null,
                 'socio' => null,
@@ -48,7 +48,7 @@ class SocioVerificationHelper
             ];
         }
 
-        $cpf = Cpf::normalize($cpf);
+        $cpf = Util::normalizeCpf($cpf);
         $pessoa = $this->pessoaService->obterPessoaPorCpf($cpf);
 
         if (!$pessoa) {
@@ -92,7 +92,7 @@ class SocioVerificationHelper
             ];
         }
 
-        if (!Cpf::validate($cpf)) {
+        if (!Util::validateCpf($cpf)) {
             return [
                 'success' => false,
                 'message' => 'CPF inválido.'

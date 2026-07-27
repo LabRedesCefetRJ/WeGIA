@@ -556,7 +556,98 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 ---
 
-## 8. GET `/socios/{id}/beneficios`
+## 8. POST `/socios/parceiros`
+
+Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa jurídica e depois o registro de sócio parceiro. Requer autenticação via token JWT e permissão de acesso ao recurso de sócios.
+
+### Parâmetros
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+- **Content-Type** (header, obrigatório): `application/json`
+
+### Requisição
+```json
+{
+  "cnpj": "12345678000195",
+  "razao_social": "Empresa Exemplo LTDA",
+  "email": "contato@empresa.com.br",
+  "telefone": "1133334444",
+  "endereco": {
+    "cep": "01000-000",
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "logradouro": "Rua Exemplo",
+    "numero": "100",
+    "complemento": "Sala 1"
+  },
+  "localizacao": "São Paulo - SP",
+  "divulgacao": "Presencial"
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `cnpj` | string | Sim | CNPJ da instituição parceiro |
+| `razao_social` | string | Sim | Razão social da instituição |
+| `email` | string | Não | E-mail de contato |
+| `telefone` | string | Não | Telefone de contato |
+| `endereco` | object | Não | Objeto com dados de endereço |
+| `localizacao` | string | Não | Localização do parceiro |
+| `divulgacao` | string | Não | Forma de divulgação |
+
+### Resposta - 201 Created (Sucesso)
+```json
+{
+  "success": true,
+  "socio_parceiro": {
+    "success": true,
+    "message": "Socio parceiro inserted successfully"
+  }
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Indica sucesso do cadastro |
+| `socio_parceiro` | object | Resultado do registro do parceiro |
+
+### Resposta - 400 Bad Request (Dados Obrigatórios Ausentes)
+```json
+{
+  "success": false,
+  "message": "CNPJ e razão social são obrigatórios"
+}
+```
+
+### Resposta - 400 Bad Request (CNPJ Inválido)
+```json
+{
+  "success": false,
+  "error": "CNPJ inválido",
+  "code": 400
+}
+```
+
+### Resposta - 403 Forbidden (Sem Permissão)
+```json
+{
+  "error": "Usuário não possui permissão para acessar este recurso",
+  "status": "forbidden"
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "success": false,
+  "error": "Mensagem de erro detalhada",
+  "code": 500
+}
+```
+
+---
+
+## 9. GET `/socios/{id}/beneficios`
 
 Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
 
@@ -598,6 +689,18 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 ---
 
 ## Observações Gerais
+
+1. **Autenticação da rota de parceiros**: 
+   - A rota POST `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
+   - Em ambiente de desenvolvimento, o teste deve ser feito com um usuário que tenha acesso ao recurso configurado no middleware.
+
+2. **Validação de dados**:
+   - O endpoint exige `cnpj` e `razao_social` como campos mínimos.
+   - O CNPJ é validado pela regra interna da API antes da criação da pessoa jurídica.
+
+3. **Persistência**:
+   - A rota cria uma pessoa jurídica e, em seguida, registra o cadastro na tabela de parceiros institucionais.
+   - O valor de `idSocioBenefitRule` está atualmente fixado no repositório, então esse ponto deve ser revisado em uma segunda fase.
 
 1. **Content-Type**: Todas as respostas são em JSON com header `Content-Type: application/json`
 
