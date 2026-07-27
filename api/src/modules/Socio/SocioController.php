@@ -600,4 +600,42 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         }
     }
+
+    public function getSocioParceiros(Request $request, Response $response)
+    {
+        try {
+            $resultado = $this->socioService->getSocioParceiros();
+
+            if (!($resultado['success'] ?? false)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'error' => $resultado['message'] ?? 'Erro ao buscar parceiros institucionais',
+                    'code' => 500
+                ]));
+
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'socio_parceiros' => $resultado['data'] ?? []
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

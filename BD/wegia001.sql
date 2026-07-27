@@ -1230,6 +1230,48 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio_verification_code` (
 ) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`socio_parceiro_institucional`
+-- -----------------------------------------------------
+CREATE TABLE socio_parceiro_institucional (
+    id INT NOT NULL AUTO_INCREMENT,
+
+    id_socio_benefit_rule INT UNSIGNED NOT NULL,
+    id_pessoa INT NOT NULL,
+
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+
+    localizacao VARCHAR(512) NULL,
+    divulgacao VARCHAR(512) NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT uq_socio_parceiro_institucional
+        UNIQUE (id_pessoa, id_socio_benefit_rule),
+
+    INDEX idx_spi_pessoa (id_pessoa),
+    INDEX idx_spi_benefit_rule (id_socio_benefit_rule),
+
+    CONSTRAINT fk_spi_pessoa
+        FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa (id_pessoa)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_spi_benefit_rule
+        FOREIGN KEY (id_socio_benefit_rule)
+        REFERENCES socio_benefit_rule (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- -----------------------------------------------------
 -- Table `wegia`.`endereco_instituicao`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`endereco_instituicao` (

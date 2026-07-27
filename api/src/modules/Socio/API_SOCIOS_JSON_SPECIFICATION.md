@@ -647,7 +647,72 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
 
 ---
 
-## 9. GET `/socios/{id}/beneficios`
+## 9. GET `/socios/parceiros`
+
+Lista os parceiros institucionais cadastrados no sistema.
+
+### Parâmetros
+Nenhum
+
+### Requisição
+Não há corpo de requisição.
+
+### Resposta - 200 OK
+```json
+{
+  "success": true,
+  "socio_parceiros": [
+    {
+      "id": 1,
+      "divulgacao": "Presencial",
+      "localizacao": "São Paulo - SP",
+      "razao_social": "Empresa Exemplo LTDA",
+      "cnpj": "12345678000195",
+      "telefone": "1133334444",
+      "email": "contato@empresa.com.br",
+      "cep": "01000-000",
+      "estado": "SP",
+      "cidade": "São Paulo",
+      "bairro": "Centro",
+      "logradouro": "Rua Exemplo",
+      "numero_endereco": "100",
+      "complemento": "Sala 1"
+    }
+  ]
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Indica que a listagem foi concluída com sucesso |
+| `socio_parceiros` | array<object> | Lista de parceiros institucionais cadastrados |
+| `socio_parceiros[].id` | integer | ID do registro do parceiro na tabela de parceiros institucionais |
+| `socio_parceiros[].divulgacao` | string | Forma de divulgação do parceiro |
+| `socio_parceiros[].localizacao` | string | Localização informada para o parceiro |
+| `socio_parceiros[].razao_social` | string | Razão social da pessoa jurídica cadastrada |
+| `socio_parceiros[].cnpj` | string | CNPJ do parceiro, armazenado no campo `cpf` da tabela `pessoa` |
+| `socio_parceiros[].telefone` | string | Telefone de contato |
+| `socio_parceiros[].email` | string | E-mail de contato |
+| `socio_parceiros[].cep` | string | CEP do endereço cadastrado |
+| `socio_parceiros[].estado` | string | Estado do endereço cadastrado |
+| `socio_parceiros[].cidade` | string | Cidade do endereço cadastrado |
+| `socio_parceiros[].bairro` | string | Bairro do endereço cadastrado |
+| `socio_parceiros[].logradouro` | string | Logradouro do endereço cadastrado |
+| `socio_parceiros[].numero_endereco` | string | Número do endereço cadastrado |
+| `socio_parceiros[].complemento` | string | Complemento do endereço cadastrado |
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "success": false,
+  "error": "Mensagem de erro detalhada",
+  "code": 500
+}
+```
+
+---
+
+## 10. GET `/socios/{id}/beneficios`
 
 Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
 
@@ -690,9 +755,10 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 ## Observações Gerais
 
-1. **Autenticação da rota de parceiros**: 
+1. **Autenticação das rotas de parceiros**: 
    - A rota POST `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
-   - Em ambiente de desenvolvimento, o teste deve ser feito com um usuário que tenha acesso ao recurso configurado no middleware.
+   - A rota GET `/socios/parceiros` é pública e não exige autenticação.
+   - Em ambiente de desenvolvimento, o teste da rota protegida deve ser feito com um usuário que tenha acesso ao recurso configurado no middleware.
 
 2. **Validação de dados**:
    - O endpoint exige `cnpj` e `razao_social` como campos mínimos.

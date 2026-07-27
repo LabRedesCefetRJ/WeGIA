@@ -168,4 +168,27 @@ class SocioRepository
             ':updated_at' => date('Y-m-d H:i:s')
         ]);
     }
+
+    public function getSociosParceiros(): array
+    {
+        $query = "SELECT 
+                    spi.id,
+                    spi.divulgacao,
+                    spi.localizacao,
+                    p.nome as razao_social,
+                    p.cpf as cnpj,
+                    p.telefone,
+                    p.email,
+                    p.cep,
+                    p.estado,
+                    p.cidade,
+                    p.bairro,
+                    p.logradouro,
+                    p.numero_endereco,
+                    p.complemento
+                  FROM socio_parceiro_institucional spi
+                  JOIN pessoa p ON spi.id_pessoa = p.id_pessoa";
+        $stmt = $this->db->query($query);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

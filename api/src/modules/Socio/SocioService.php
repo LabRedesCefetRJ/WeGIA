@@ -255,6 +255,22 @@ class SocioService implements SocioServiceInterface
         }
     }
 
+    public function getSocioParceiros(): array
+    {
+        try {
+            $result = $this->socioRepository->getSociosParceiros();
+            return [
+                'success' => true,
+                'data' => $result
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error fetching socio parceiros: ' . $e->getMessage()
+            ];
+        }
+    }
+
     private function censurarCpf(?string $cpf): ?string
     {
         if (empty($cpf)) {
