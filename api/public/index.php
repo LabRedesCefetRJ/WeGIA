@@ -24,6 +24,7 @@ use api\modules\Contribuicao\ContribuicaoRepository;
 use api\modules\Contribuicao\PaymentRepository;
 use api\modules\Contribuicao\PaymentController;
 use api\middleware\CorsMiddleware;
+use api\Infrastructure\RepositoryConnection;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -35,12 +36,7 @@ require __DIR__ . '/../../web/classes/LoginHelper.php';
 //dividir container em arquivos separados para cada módulo
 $container = new AppContainer([
     PDO::class => function () {
-        $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET);
-        $pdo = new PDO($dsn, DB_USER, DB_PASSWORD, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-        return $pdo;
+        return RepositoryConnection::getConnection();
     },
     UserRepository::class => function ($c) {
         return new UserRepository($c->get(PDO::class));
