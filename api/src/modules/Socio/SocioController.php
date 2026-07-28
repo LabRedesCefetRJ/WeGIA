@@ -695,4 +695,76 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         }
     }
+
+    public function updateSocioParceiro(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            $idSocioParceiro = (int)($data['id_socio_parceiro'] ?? 0);
+
+            if ($idSocioParceiro <= 0) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do sócio parceiro é obrigatório'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'endereco'];
+            $temAlteracao = false;
+            foreach ($camposAtualizaveis as $campo) {
+                if (array_key_exists($campo, $data)) {
+                    $temAlteracao = true;
+                    break;
+                }
+            }
+
+            if (!$temAlteracao) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Informe ao menos um campo para atualização'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $resultado = $this->socioService->atualizarSocioParceiro($idSocioParceiro, $data);
+
+            if (!($resultado['success'] ?? false)) {
+                $statusCode = (int)($resultado['code'] ?? 500);
+                $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'error' => $resultado['message'] ?? 'Erro ao atualizar parceiro institucional',
+                    'code' => $statusCode
+                ]));
+
+                return $response->withStatus($statusCode)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => $resultado['message'] ?? 'Socio parceiro updated successfully',
+                'socio_parceiro' => $resultado['data'] ?? []
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

@@ -6,6 +6,7 @@ use api\contracts\entities\PessoaInterface;
 use api\contracts\entities\SocioInterface;
 use api\contracts\services\SocioServiceInterface;
 use api\modules\Auth\AuthService;
+use api\utils\Util;
 use DateTime;
 use Ramsey\Uuid\Uuid;
 
@@ -290,6 +291,100 @@ class SocioService implements SocioServiceInterface
             return [
                 'success' => false,
                 'message' => 'Error updating status of socio parceiro: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    public function atualizarSocioParceiro(int $id, array $dados): array
+    {
+        try {
+            $atual = $this->socioRepository->findSocioParceiroById($id);
+            if (!$atual) {
+                return [
+                    'success' => false,
+                    'message' => 'Socio parceiro não localizado',
+                    'code' => 404
+                ];
+            }
+
+            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'endereco'];
+            $temAlteracao = false;
+            foreach ($camposAtualizaveis as $campo) {
+                if (array_key_exists($campo, $dados)) {
+                    $temAlteracao = true;
+                    break;
+                }
+            }
+
+            if (!$temAlteracao) {
+                return [
+                    'success' => false,
+                    'message' => 'Nenhum dado foi informado para atualização',
+                    'code' => 400
+                ];
+            }
+
+            $cnpj = array_key_exists('cnpj', $dados) ? trim((string)$dados['cnpj']) : (string)$atual['cnpj'];
+            if ($cnpj !== '' && !Util::validateCnpj($cnpj)) {
+                return [
+                    'success' => false,
+                    'message' => 'CNPJ inválido',
+                    'code' => 400
+                ];
+            }
+
+            if ($cnpj !== '') {
+                $cnpj = Util::normalizeCnpj($cnpj);
+            }
+
+            $enderecoAtual = [
+                'cep' => $atual['cep'] ?? null,
+                'estado' => $atual['estado'] ?? null,
+                'cidade' => $atual['cidade'] ?? null,
+                'bairro' => $atual['bairro'] ?? null,
+                'logradouro' => $atual['logradouro'] ?? null,
+                'numero_endereco' => $atual['numero_endereco'] ?? null,
+                'complemento' => $atual['complemento'] ?? null
+            ];
+
+            $enderecoEntrada = [];
+            if (isset($dados['endereco']) && is_array($dados['endereco'])) {
+                $enderecoEntrada = $dados['endereco'];
+            }
+
+            if (array_key_exists('numero', $enderecoEntrada) && !array_key_exists('numero_endereco', $enderecoEntrada)) {
+                $enderecoEntrada['numero_endereco'] = $enderecoEntrada['numero'];
+            }
+
+            $dadosAtualizados = [
+                'razao_social' => array_key_exists('razao_social', $dados) ? trim((string)$dados['razao_social']) : $atual['razao_social'],
+                'cnpj' => $cnpj,
+                'telefone' => array_key_exists('telefone', $dados) ? $dados['telefone'] : $atual['telefone'],
+                'email' => array_key_exists('email', $dados) ? $dados['email'] : $atual['email'],
+                'localizacao' => array_key_exists('localizacao', $dados) ? trim((string)$dados['localizacao']) : $atual['localizacao'],
+                'divulgacao' => array_key_exists('divulgacao', $dados) ? trim((string)$dados['divulgacao']) : $atual['divulgacao'],
+                'endereco' => array_merge($enderecoAtual, $enderecoEntrada)
+            ];
+
+            $resultado = $this->socioRepository->updateSocioParceiro($id, $dadosAtualizados);
+            if (!$resultado) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to update socio parceiro',
+                    'code' => 500
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Socio parceiro updated successfully',
+                'data' => $resultado
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Error updating socio parceiro: ' . $e->getMessage(),
+                'code' => 500
             ];
         }
     }

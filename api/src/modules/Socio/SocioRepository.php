@@ -173,6 +173,8 @@ class SocioRepository
     {
         $query = "SELECT 
                     spi.id,
+                    spi.id_pessoa,
+                    spi.ativo,
                     spi.divulgacao,
                     spi.localizacao,
                     p.nome as razao_social,
@@ -190,6 +192,99 @@ class SocioRepository
                   JOIN pessoa p ON spi.id_pessoa = p.id_pessoa";
         $stmt = $this->db->query($query);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function findSocioParceiroById(int $id): ?array
+    {
+        $query = "SELECT 
+                    spi.id,
+                    spi.id_pessoa,
+                    spi.id_socio_benefit_rule,
+                    spi.ativo,
+                    spi.divulgacao,
+                    spi.localizacao,
+                    p.nome as razao_social,
+                    p.cpf as cnpj,
+                    p.telefone,
+                    p.email,
+                    p.cep,
+                    p.estado,
+                    p.cidade,
+                    p.bairro,
+                    p.logradouro,
+                    p.numero_endereco,
+                    p.complemento
+                  FROM socio_parceiro_institucional spi
+                  JOIN pessoa p ON spi.id_pessoa = p.id_pessoa
+                  WHERE spi.id = :id
+                  LIMIT 1";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([':id' => $id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : $result;
+    }
+
+    public function updateSocioParceiro(int $id, array $dados): ?array
+    {
+        $atual = $this->findSocioParceiroById($id);
+        if (!$atual) {
+            return null;
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            $queryPessoa = "UPDATE pessoa SET 
+                                nome = :nome,
+                                cpf = :cpf,
+                                telefone = :telefone,
+                                email = :email,
+                                cep = :cep,
+                                estado = :estado,
+                                cidade = :cidade,
+                                bairro = :bairro,
+                                logradouro = :logradouro,
+                                numero_endereco = :numero_endereco,
+                                complemento = :complemento
+                            WHERE id_pessoa = :id_pessoa";
+            $stmtPessoa = $this->db->prepare($queryPessoa);
+            $stmtPessoa->execute([
+                ':nome' => $dados['razao_social'] ?? $atual['razao_social'],
+                ':cpf' => $dados['cnpj'] ?? $atual['cnpj'],
+                ':telefone' => $dados['telefone'] ?? $atual['telefone'],
+                ':email' => $dados['email'] ?? $atual['email'],
+                ':cep' => $dados['endereco']['cep'] ?? $atual['cep'],
+                ':estado' => $dados['endereco']['estado'] ?? $atual['estado'],
+                ':cidade' => $dados['endereco']['cidade'] ?? $atual['cidade'],
+                ':bairro' => $dados['endereco']['bairro'] ?? $atual['bairro'],
+                ':logradouro' => $dados['endereco']['logradouro'] ?? $atual['logradouro'],
+                ':numero_endereco' => $dados['endereco']['numero_endereco'] ?? $atual['numero_endereco'],
+                ':complemento' => $dados['endereco']['complemento'] ?? $atual['complemento'],
+                ':id_pessoa' => $atual['id_pessoa']
+            ]);
+
+            $querySocioParceiro = "UPDATE socio_parceiro_institucional SET 
+                                        localizacao = :localizacao,
+                                        divulgacao = :divulgacao
+                                    WHERE id = :id";
+            $stmtSocioParceiro = $this->db->prepare($querySocioParceiro);
+            $stmtSocioParceiro->execute([
+                ':localizacao' => $dados['localizacao'] ?? $atual['localizacao'],
+                ':divulgacao' => $dados['divulgacao'] ?? $atual['divulgacao'],
+                ':id' => $id
+            ]);
+
+            $this->db->commit();
+
+            return $this->findSocioParceiroById($id);
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            throw $e;
+        }
     }
 
     public function alterStatusSocioParceiro(int $id, int $status): bool

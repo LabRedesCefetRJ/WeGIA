@@ -664,6 +664,8 @@ Não há corpo de requisição.
   "socio_parceiros": [
     {
       "id": 1,
+      "id_pessoa": 10,
+      "ativo": 1,
       "divulgacao": "Presencial",
       "localizacao": "São Paulo - SP",
       "razao_social": "Empresa Exemplo LTDA",
@@ -687,6 +689,8 @@ Não há corpo de requisição.
 | `success` | boolean | Indica que a listagem foi concluída com sucesso |
 | `socio_parceiros` | array<object> | Lista de parceiros institucionais cadastrados |
 | `socio_parceiros[].id` | integer | ID do registro do parceiro na tabela de parceiros institucionais |
+| `socio_parceiros[].id_pessoa` | integer | ID da pessoa jurídica vinculada ao parceiro |
+| `socio_parceiros[].ativo` | integer | Indica se o parceiro está ativo (`1`) ou inativo (`0`) |
 | `socio_parceiros[].divulgacao` | string | Forma de divulgação do parceiro |
 | `socio_parceiros[].localizacao` | string | Localização informada para o parceiro |
 | `socio_parceiros[].razao_social` | string | Razão social da pessoa jurídica cadastrada |
@@ -712,7 +716,133 @@ Não há corpo de requisição.
 
 ---
 
-## 10. PATCH `/socios/parceiros`
+## 10. PUT `/socios/parceiros`
+
+Atualiza os dados cadastrais de um parceiro institucional.
+
+### Parâmetros
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+- **Content-Type** (header, obrigatório): `application/json`
+
+### Requisição
+```json
+{
+  "id_socio_parceiro": 1,
+  "razao_social": "Empresa Exemplo LTDA",
+  "cnpj": "12345678000195",
+  "telefone": "1133334444",
+  "email": "contato@empresa.com.br",
+  "endereco": {
+    "cep": "01000-000",
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "logradouro": "Rua Exemplo",
+    "numero_endereco": "100",
+    "complemento": "Sala 1"
+  },
+  "localizacao": "São Paulo - SP",
+  "divulgacao": "Presencial"
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id_socio_parceiro` | integer | Sim | ID do parceiro institucional |
+| `razao_social` | string | Não | Razão social da pessoa jurídica associada |
+| `cnpj` | string | Não | CNPJ da pessoa jurídica associada |
+| `telefone` | string | Não | Telefone de contato |
+| `email` | string | Não | E-mail de contato |
+| `endereco` | object | Não | Objeto com os dados de endereço da pessoa jurídica |
+| `endereco.cep` | string | Não | CEP do endereço |
+| `endereco.estado` | string | Não | Estado do endereço |
+| `endereco.cidade` | string | Não | Cidade do endereço |
+| `endereco.bairro` | string | Não | Bairro do endereço |
+| `endereco.logradouro` | string | Não | Logradouro do endereço |
+| `endereco.numero_endereco` | string | Não | Número do endereço |
+| `endereco.complemento` | string | Não | Complemento do endereço |
+| `localizacao` | string | Não | Localização exibida do parceiro |
+| `divulgacao` | string | Não | Forma de divulgação do parceiro |
+
+### Resposta - 200 OK
+```json
+{
+  "success": true,
+  "message": "Socio parceiro updated successfully",
+  "socio_parceiro": {
+    "id": 1,
+    "id_pessoa": 10,
+    "id_socio_benefit_rule": 1,
+    "ativo": 1,
+    "divulgacao": "Presencial",
+    "localizacao": "São Paulo - SP",
+    "razao_social": "Empresa Exemplo LTDA",
+    "cnpj": "12345678000195",
+    "telefone": "1133334444",
+    "email": "contato@empresa.com.br",
+    "cep": "01000-000",
+    "estado": "SP",
+    "cidade": "São Paulo",
+    "bairro": "Centro",
+    "logradouro": "Rua Exemplo",
+    "numero_endereco": "100",
+    "complemento": "Sala 1"
+  }
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Indica que a atualização foi concluída com sucesso |
+| `message` | string | Mensagem descritiva do resultado |
+| `socio_parceiro` | object | Dados atualizados do parceiro institucional |
+| `socio_parceiro.id` | integer | ID do registro do parceiro |
+| `socio_parceiro.id_pessoa` | integer | ID da pessoa jurídica vinculada |
+| `socio_parceiro.id_socio_benefit_rule` | integer | ID da regra de benefício vinculada |
+| `socio_parceiro.ativo` | integer | Status atual do parceiro |
+| `socio_parceiro.divulgacao` | string | Forma de divulgação do parceiro |
+| `socio_parceiro.localizacao` | string | Localização do parceiro |
+| `socio_parceiro.razao_social` | string | Razão social atualizada |
+| `socio_parceiro.cnpj` | string | CNPJ atualizada |
+| `socio_parceiro.telefone` | string | Telefone atualizado |
+| `socio_parceiro.email` | string | E-mail atualizado |
+| `socio_parceiro.cep` | string | CEP atualizado |
+| `socio_parceiro.estado` | string | Estado atualizado |
+| `socio_parceiro.cidade` | string | Cidade atualizada |
+| `socio_parceiro.bairro` | string | Bairro atualizado |
+| `socio_parceiro.logradouro` | string | Logradouro atualizado |
+| `socio_parceiro.numero_endereco` | string | Número atualizado |
+| `socio_parceiro.complemento` | string | Complemento atualizado |
+
+### Resposta - 400 Bad Request
+```json
+{
+  "success": false,
+  "message": "Informe ao menos um campo para atualização"
+}
+```
+
+### Resposta - 404 Not Found
+```json
+{
+  "success": false,
+  "error": "Socio parceiro não localizado",
+  "code": 404
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "success": false,
+  "error": "Mensagem de erro detalhada",
+  "code": 500
+}
+```
+
+---
+
+## 11. PATCH `/socios/parceiros`
 
 Atualiza o status de um parceiro institucional.
 
@@ -779,7 +909,7 @@ Atualiza o status de um parceiro institucional.
 
 ---
 
-## 11. GET `/socios/{id}/beneficios`
+## 12. GET `/socios/{id}/beneficios`
 
 Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
 
@@ -824,6 +954,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 1. **Autenticação das rotas de parceiros**: 
    - A rota POST `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
+   - A rota PUT `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
    - A rota PATCH `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
    - A rota GET `/socios/parceiros` é pública e não exige autenticação.
    - Em ambiente de desenvolvimento, o teste da rota protegida deve ser feito com um usuário que tenha acesso ao recurso configurado no middleware.
@@ -831,6 +962,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 2. **Validação de dados**:
    - O endpoint exige `cnpj` e `razao_social` como campos mínimos.
    - O CNPJ é validado pela regra interna da API antes da criação da pessoa jurídica.
+   - Na rota PUT `/socios/parceiros`, ao menos um campo editável deve ser enviado junto com `id_socio_parceiro`.
 
 3. **Persistência**:
    - A rota cria uma pessoa jurídica e, em seguida, registra o cadastro na tabela de parceiros institucionais.
