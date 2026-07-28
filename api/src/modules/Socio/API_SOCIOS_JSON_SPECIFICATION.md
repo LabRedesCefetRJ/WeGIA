@@ -712,7 +712,74 @@ Não há corpo de requisição.
 
 ---
 
-## 10. GET `/socios/{id}/beneficios`
+## 10. PATCH `/socios/parceiros`
+
+Atualiza o status de um parceiro institucional.
+
+### Parâmetros
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+- **Content-Type** (header, obrigatório): `application/json`
+
+### Requisição
+```json
+{
+  "id_socio_parceiro": 1,
+  "novo_status": 0
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id_socio_parceiro` | integer | Sim | ID do registro em `socio_parceiro_institucional` |
+| `novo_status` | integer | Sim | Novo status do parceiro, onde `1` representa ativo e `0` representa inativo |
+
+### Resposta - 200 OK
+```json
+{
+  "success": true,
+  "message": "Status of socio parceiro updated successfully",
+  "socio_parceiro": {
+    "id": 1,
+    "ativo": 0
+  }
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Indica que a atualização foi concluída com sucesso |
+| `message` | string | Mensagem descritiva do resultado |
+| `socio_parceiro` | object | Resumo do parceiro atualizado |
+| `socio_parceiro.id` | integer | ID do parceiro atualizado |
+| `socio_parceiro.ativo` | integer | Novo valor do status persistido |
+
+### Resposta - 400 Bad Request
+```json
+{
+  "success": false,
+  "message": "ID do sócio parceiro e novo status válidos são obrigatórios"
+}
+```
+
+### Resposta - 403 Forbidden
+```json
+{
+  "error": "Usuário não possui permissão para acessar este recurso"
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "success": false,
+  "error": "Mensagem de erro detalhada",
+  "code": 500
+}
+```
+
+---
+
+## 11. GET `/socios/{id}/beneficios`
 
 Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
 
@@ -757,6 +824,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 
 1. **Autenticação das rotas de parceiros**: 
    - A rota POST `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
+   - A rota PATCH `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
    - A rota GET `/socios/parceiros` é pública e não exige autenticação.
    - Em ambiente de desenvolvimento, o teste da rota protegida deve ser feito com um usuário que tenha acesso ao recurso configurado no middleware.
 

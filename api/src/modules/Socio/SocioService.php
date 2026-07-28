@@ -12,10 +12,10 @@ use Ramsey\Uuid\Uuid;
 class SocioService implements SocioServiceInterface
 {
     private SocioRepository $socioRepository;
-    private EmailVerificationService $emailVerificationService;
-    private AuthService $authService;
+    private ?EmailVerificationService $emailVerificationService;
+    private ?AuthService $authService;
 
-    public function __construct(SocioRepository $socioRepository, EmailVerificationService $emailVerificationService = null, AuthService $authService = null)
+    public function __construct(SocioRepository $socioRepository, ?EmailVerificationService $emailVerificationService = null, ?AuthService $authService = null)
     {
         $this->socioRepository = $socioRepository;
         $this->emailVerificationService = $emailVerificationService;
@@ -267,6 +267,29 @@ class SocioService implements SocioServiceInterface
             return [
                 'success' => false,
                 'message' => 'Error fetching socio parceiros: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    public function alterStatusSocioParceiro(int $id, int $novoStatus): array
+    {
+        try {
+            $result = $this->socioRepository->alterStatusSocioParceiro($id, $novoStatus);
+            if ($result) {
+                return [
+                    'success' => true,
+                    'message' => 'Status of socio parceiro updated successfully'
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to update status of socio parceiro'
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error updating status of socio parceiro: ' . $e->getMessage()
             ];
         }
     }

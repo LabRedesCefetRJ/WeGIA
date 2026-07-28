@@ -638,4 +638,61 @@ class SocioController
                 ->withHeader('Content-Type', 'application/json');
         }
     }
+
+    public function alterStatusSocioParceiro(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            $idSocioParceiro = (int)($data['id_socio_parceiro'] ?? 0);
+            $novoStatus = (int)($data['novo_status'] ?? 0);
+
+            // Validate required data
+            if ($idSocioParceiro <= 0 || !in_array($novoStatus, [0, 1], true)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do sócio parceiro e novo status válidos são obrigatórios'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Alter status of socio parceiro
+            $resultado = $this->socioService->alterStatusSocioParceiro($idSocioParceiro, $novoStatus);
+
+            if (!($resultado['success'] ?? false)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'error' => $resultado['message'] ?? 'Erro ao alterar status do sócio parceiro',
+                    'code' => 500
+                ]));
+
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => $resultado['message'] ?? 'Status do sócio parceiro atualizado com sucesso',
+                'socio_parceiro' => [
+                    'id' => $idSocioParceiro,
+                    'ativo' => $novoStatus
+                ]
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

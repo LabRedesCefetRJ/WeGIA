@@ -191,4 +191,14 @@ class SocioRepository
         $stmt = $this->db->query($query);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function alterStatusSocioParceiro(int $id, int $status): bool
+    {
+        $query = "UPDATE socio_parceiro_institucional SET ativo = :status WHERE id = :id";
+        $stmt = $this->db->prepare($query);
+        return $stmt->execute([
+            ':status' => $status,
+            ':id' => $id
+        ]);
+    }
 }
