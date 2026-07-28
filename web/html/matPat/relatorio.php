@@ -143,6 +143,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 										<option value="saida">Relatório de Saída</option>
 										<option value="produto">Relatório de Produtos</option>
 										<option value="requisicao">Relatório de Requisição</option>
+										<option value="itens_compra">Relatório de Itens de Compra</option>
 									</select>
 								</div>
 							</div>
@@ -152,6 +153,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group" id="per" style="text-align: center;">
 								<button type="button" id="btn-7dias" class="btn btn-primary" style="width: fit-content;" onclick="botao7Dias()">Últimos 7 dias</button>
 								<button type="button" id="btn-30dias" class="btn btn-primary" style="width: fit-content;" onclick="botao30Dias()">Últimos 30 dias</button>
+								<button type="button" id="btn-3meses" class="btn btn-primary" style="width: fit-content;" onclick="botao3Meses()">Últimos 3 meses</button>
 								<button type="button" id="btn-180dias" class="btn btn-primary" style="width: fit-content;" onclick="botao180Dias()">Últimos 180 dias</button>
 								<button type="button" id="btn-365dias" class="btn btn-primary" style="width: fit-content;" onclick="botao365Dias()">Últimos 365 dias</button>
 								<br><br>
@@ -309,7 +311,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group" id="almoxarifado">
 								<label class="col-md-3 control-label">Almoxarifado</label>
 								<div class="col-md-8">
-									<select name="almoxarifado" id="almoxarifadoSelect2">
+									<select name="almoxarifado" id="almoxarifado1">
 										<option value="">Todas as Opções</option>
 										<?php
 										$pdo = Conexao::connect();
@@ -331,13 +333,6 @@ require_once ROOT . "/html/personalizacao_display.php";
 								<label for="mostrarZerados" class="col-md-3 control-label">Mostrar produtos sem movimentação</label>
 								<div class="col-md-8">
 									<input id="mostrarZerados" type="checkbox" name="mostrarZerados" style="margin: 10px 0;">
-								</div>
-							</div>
-
-							<div class="form-group" id="panel-itensCompra">
-								<label for="itensCompra" class="col-md-3 control-label">Listar produtos para compra</label>
-								<div class="col-md-8">
-									<input id="itensCompra" type="checkbox" oninput="validarAlmoxarifado()" name="itensCompra" style="margin: 10px 0;">
 								</div>
 							</div>
 
@@ -482,6 +477,35 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = data30DiasAtras;
+		});
+	}
+
+	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 3 MESES
+	function botao3Meses() {
+		let dataInicio = document.querySelectorAll("#data_inicio");
+		let dataFim = document.querySelectorAll("#data_fim");
+
+		//Pega a data atual
+		var dataAtual = new Date();
+		var ano = dataAtual.getFullYear();
+		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		var dia = String(dataAtual.getDate()).padStart(2, '0');
+
+		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
+
+		dataFim.forEach(function(dataFim) {
+			dataFim.value = dataAtualFormatada;
+		});
+
+		// Calcula a data de 3 meses atrás
+		dataAtual.setMonth(dataAtual.getMonth() - 3);
+		ano = dataAtual.getFullYear();
+		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		dia = String(dataAtual.getDate()).padStart(2, '0');
+		const data3MesesAtras = `${ano}-${mes}-${dia}`;
+
+		dataInicio.forEach(function(dataInicio) {
+			dataInicio.value = data3MesesAtras;
 		});
 	}
 
@@ -683,39 +707,31 @@ require_once ROOT . "/html/personalizacao_display.php";
 		}
 	});
 
-	function validarAlmoxarifado() {
-		const almoxarifadoSelect = document.getElementById('almoxarifadoSelect2');
-		const itensCompraCheckbox = document.getElementById('itensCompra');
-
-		if (itensCompraCheckbox.checked && almoxarifadoSelect.value === '') {
-			alert('Por favor, selecione um almoxarifado antes de marcar a opção "Listar produtos para compra".');
-			itensCompraCheckbox.checked = false;
-		}
-	}
-
 	function controlarCampoMediaSaida() {
 		const tipoRelatorio = document.getElementById('tipo-relat').value;
 
 		const campoMedia = document.getElementById('media-saida');
 		const categoriaProduto = document.getElementById('categoria-relat');
 		const modoRequisicao = document.getElementById('modo-requisicao');
-		const itensCompra = document.getElementById('panel-itensCompra');
+		const almoxarifadoPrincipal = document.getElementById('almoxarifado1');
+		const almoxarifadoObrigatorio = tipoRelatorio === 'itens_compra';
 
-		campoMedia.style.display = tipoRelatorio === 'saida' ? 'block' : 'none';
+		almoxarifadoPrincipal.required = almoxarifadoObrigatorio;
 
-		if (itensCompra) {
-			itensCompra.style.display = tipoRelatorio === 'estoque' ? 'block' : 'none';
-		}
+		almoxarifadoPrincipal.options[0].text =
+    		almoxarifadoObrigatorio
+        		? 'Selecionar almoxarifado'
+        		: 'Todas as Opções';
+
+		campoMedia.style.display = tipoRelatorio === 'saida' || tipoRelatorio === 'itens_compra'? 'block' : 'none';
 
 		if (categoriaProduto) {
-			categoriaProduto.style.display = (tipoRelatorio === 'requisicao' || tipoRelatorio === 'estoque') ? 'block' : 'none';
+			categoriaProduto.style.display = (tipoRelatorio === 'requisicao' || tipoRelatorio === 'estoque' || tipoRelatorio === 'itens_compra') ? 'block' : 'none';
 		}
 
 		if (modoRequisicao) {
 			modoRequisicao.style.display = tipoRelatorio === 'requisicao' ? 'block' : 'none';
 		}
-
-
 
 		if (tipoRelatorio === 'estoque') {
 			document.getElementById('per').style.display = 'none';
@@ -750,6 +766,27 @@ require_once ROOT . "/html/personalizacao_display.php";
 			document.getElementById('categoria-relat').style.display = 'block';
 			document.getElementById('modo-requisicao').style.display = 'block';
 
+			document.getElementById('panel-mostrarZerados').style.display = 'none';
+			document.getElementById('gerar').style.display = 'block';
+
+			document.getElementById('per2').style.display = 'none';
+			document.getElementById('produto').style.display = 'none';
+			document.getElementById('almoxarifado2').style.display = 'none';
+			document.getElementById('gerar2').style.display = 'none';
+			document.getElementById('gerar3').style.display = 'none';
+
+			return;
+		}
+
+		if (tipoRelatorio === 'itens_compra') {
+			document.getElementById('per').style.display = 'block';
+			document.getElementById('orig').style.display = 'none';
+			document.getElementById('dest').style.display = 'none';
+			document.getElementById('tipo-entrada').style.display = 'none';
+			document.getElementById('tipo-saida').style.display = 'none';
+			document.getElementById('resp').style.display = 'none';
+
+			document.getElementById('almoxarifado').style.display = 'block';
 			document.getElementById('panel-mostrarZerados').style.display = 'none';
 			document.getElementById('gerar').style.display = 'block';
 
