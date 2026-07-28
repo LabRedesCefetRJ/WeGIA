@@ -5,8 +5,10 @@ namespace api\modules\Socio;
 use api\contracts\services\PessoaServiceInterface;
 use api\utils\Util;
 use api\modules\Socio\ParceiroInstitucional;
+use api\Infrastructure\RepositoryConnection;
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
+use PDO;
 
 class SocioController
 {
@@ -14,8 +16,9 @@ class SocioController
     private PessoaServiceInterface $pessoaService;
     private EmailVerificationService $emailVerificationService;
     private SocioVerificationHelper $verificationHelper;
+    private PDO $pdo;
 
-    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, EmailVerificationService $emailVerificationService, SocioVerificationHelper $verificationHelper = null)
+    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, EmailVerificationService $emailVerificationService, ?SocioVerificationHelper $verificationHelper = null)
     {
         $this->socioService = $socioService;
         $this->pessoaService = $pessoaService;
@@ -27,6 +30,8 @@ class SocioController
         } else {
             $this->verificationHelper = $verificationHelper;
         }
+
+        $this->pdo = RepositoryConnection::getConnection();
     }
 
     public function registerSocio(Request $request, Response $response)
@@ -45,6 +50,9 @@ class SocioController
             }
 
             //verificar se existe uma pessoa com o CPF fornecido, se não existir, criar uma nova pessoa, caso contrário, usar a pessoa existente para criar o sócio
+
+            $this->pdo->beginTransaction();
+
             $pessoa = $this->pessoaService->obterPessoaPorCpf($data['cpf']);
 
             if (!$pessoa) {
@@ -99,9 +107,14 @@ class SocioController
 
             $response->getBody()->write(json_encode($responseData));
 
+            $this->pdo->commit();
+
             return $response->withStatus(201)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
+            if($this->pdo->inTransaction())
+                $this->pdo->rollBack();
+
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage() . ' | ' . $e->getCode()
             ]));
@@ -565,6 +578,8 @@ class SocioController
             }
 
             // Create socio parceiro
+            $this->pdo->beginTransaction();
+
             $socioParceiro = $this->socioService->insertSocioParceiro(
                 new ParceiroInstitucional(
                     $this->pessoaService->criarPessoaJuridica(
@@ -584,9 +599,13 @@ class SocioController
                 'socio_parceiro' => $socioParceiro
             ]));
 
+            $this->pdo->commit();
             return $response->withStatus(201)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
+            if($this->pdo->inTransaction())
+                $this->pdo->rollBack();
+
             $statusCode = (int)($e->getCode() ?: 500);
             $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
 
