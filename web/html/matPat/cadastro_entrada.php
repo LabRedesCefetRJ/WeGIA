@@ -151,24 +151,25 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="origens">Origem</label>
-													<a href="<?= WWW ?>html/matPat/cadastro_doador.php" id="btn-novo-doador"><i class="fas fa-plus w3-xlarge"></i></a>
+													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
+													<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
-														<select class="form-control " name="origem" id="origens">
+														<select class="form-control " name="almoxarifado" id="almoxarifado">
 															<option selected disabled value="blank">Selecionar</option>
 														</select>
 													</div>
 												</div>
 
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
-													<a href="<?= WWW ?>html/matPat/adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
+													<label class="col-md-3 control-label" for="origens">Origem</label>
+													<a href="<?= WWW ?>html/matPat/cadastro_doador.php" id="btn-novo-doador"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
-														<select class="form-control " name="almoxarifado" id="almoxarifado">
+														<select class="form-control " name="origem" id="origens">
 															<option selected disabled value="blank">Selecionar</option>
 														</select>
 													</div>
 												</div>
+
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="tipo_entrada">Tipo</label>
 													<a href="<?= WWW ?>html/matPat/adicionar_tipoEntrada.php" id="btn-novo-tipo-entrada"><i class="fas fa-plus w3-xlarge"></i></a>
