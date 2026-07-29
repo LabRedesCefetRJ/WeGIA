@@ -748,6 +748,12 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Regras de benefícios</h4>
 							</div>
 						</a>
+						<a href="<?= WWW ?>html/socio/sistema/parceiros.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa fa-handshake"></i>
+								<h4>Parceiros Institucionais</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 				<!--fim da parte interna de #socios-->

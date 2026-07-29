@@ -398,6 +398,11 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 									<span>Regras de benefícios</span>
 								</a>
 							</li>
+							<li>
+								<a href="<?= WWW ?>html/socio/sistema/parceiros.php">
+									<span>Parceiros institucionais</span>
+								</a>
+							</li>
 						</ul>
 					</li>
 				</ul>

@@ -1,0 +1,669 @@
+<?php
+//Página de benefícios para sócios, onde o administrador pode criar, editar e deletar regras de benefícios
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ../erros/login_erro/");
+    exit();
+} else {
+    session_regenerate_id();
+}
+
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'config.php';
+
+require("../conexao.php");
+// Adiciona a Função display_campo($nome_campo, $tipo_campo)
+require_once ROOT . "/html/personalizacao_display.php";
+
+?>
+
+<!DOCTYPE html>
+<html class="fixed">
+
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Gerencie as parcerias</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <!-- Bootstrap 3.3.7 -->
+    <link rel="stylesheet" href="controller/bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="controller/bower_components/font-awesome/css/font-awesome.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="controller/dist/css/AdminLTE.min.css">
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+       folder instead of downloading all of them to reduce the load. -->
+    <link rel="stylesheet" href="controller/dist/css/skins/_all-skins.min.css">
+    <!-- Morris chart -->
+    <link rel="stylesheet" href="controller/bower_components/morris.js/morris.css">
+    <!-- jvectormap -->
+    <link rel="stylesheet" href="controller/bower_components/jvectormap/jquery-jvectormap.css">
+    <!-- Date Picker -->
+    <link rel="stylesheet" href="controller/bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css">
+    <!-- Daterange picker -->
+    <link rel="stylesheet" href="controller/bower_components/bootstrap-daterangepicker/daterangepicker.css">
+    <!-- bootstrap wysihtml5 - text editor -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&display=swap" rel="stylesheet">
+    <!-- Google Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/font-awesome/css/font-awesome.css" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+    <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/magnific-popup/magnific-popup.css" />
+    <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+    <!--<link rel="icon" href="<?php //display_campo("Logo",'file');
+                                ?>" type="image/x-icon">-->
+
+    <!-- Specific Page Vendor CSS -->
+    <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/select2/select2.css" />
+    <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/jquery-datatables-bs3/assets/css/datatables.css" />
+
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="<?php echo WWW; ?>assets/stylesheets/theme.css" />
+
+    <!-- Skin CSS -->
+    <link rel="stylesheet" href="<?php echo WWW; ?>assets/stylesheets/skins/default.css" />
+
+    <!-- Theme Custom CSS -->
+    <link rel="stylesheet" href="<?php echo WWW; ?>assets/stylesheets/theme-custom.css">
+
+    <!-- Head Libs -->
+    <script src="<?php echo WWW; ?>assets/vendor/modernizr/modernizr.js"></script>
+
+    <!-- Vendor -->
+    <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/nanoscroller/nanoscroller.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
+    <script src="<?php echo WWW; ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+
+    <!-- Specific Page Vendor -->
+    <script src="<?php echo WWW; ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
+
+    <!-- Theme Base, Components and Settings -->
+    <script src="<?php echo WWW; ?>assets/javascripts/theme.js"></script>
+
+    <!-- Theme Custom -->
+    <script src="<?php echo WWW; ?>assets/javascripts/theme.custom.js"></script>
+
+    <!-- Theme Initialization Files -->
+    <script src="<?php echo WWW; ?>assets/javascripts/theme.init.js"></script>
+
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <!-- javascript functions -->
+
+    <script type="text/javascript">
+        $(function() {
+            $("#header").load("<?php echo WWW; ?>html/header.php");
+            $(".menuu").load("<?php echo WWW; ?>html/menu.php");
+        });
+    </script>
+
+    <style>
+        .hidden {
+            display: none;
+        }
+
+        .obrig {
+            color: red;
+        }
+
+        .box-body {
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <section class="body">
+
+        <!-- start: header -->
+        <header id="header" class="header print-hide">
+
+            <!-- end: search & user box -->
+        </header>
+
+        <!-- end: header -->
+        <div class="inner-wrapper">
+            <!-- start: sidebar -->
+            <aside id="sidebar-left" class="sidebar-left menuu"></aside>
+            <!-- end: sidebar -->
+
+            <section role="main" class="content-body">
+                <header class="page-header">
+                    <h2>Parceiros Institucionais</h2>
+
+                    <div class="right-wrapper pull-right">
+                        <ol class="breadcrumbs">
+                            <li>
+                                <a href="../../home.php">
+                                    <i class="fa fa-home"></i>
+                                </a>
+                            </li>
+                            <li><span>Páginas</span></li>
+                            <li><span>Parceiros Institucionais</span></li>
+                        </ol>
+
+                        <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+                    </div>
+                </header>
+
+                <!-- start: page -->
+
+                <!-- Container para alertas -->
+                <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999; width: 400px; max-width: 90vw;"></div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <section class="panel panel-featured panel-featured-primary">
+                            <header class="panel-heading">
+                                <div class="panel-actions">
+                                    <a href="#" class="panel-action panel-action-toggle" data-panel-toggle></a>
+                                </div>
+
+                                <h2 class="panel-title">Lista de Parceiros Associados</h2>
+                            </header>
+                            <div class="panel-body">
+                                <p class="text-muted">Gerencie as informações das instituições parceiras da sua organização.</p>
+
+                                <div class="mb-3" style="margin-bottom: 20px;">
+                                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCriarParceiro">
+                                        <i class="fa fa-plus"></i> Nova parceria
+                                    </button>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover" id="tabelaRegras">
+                                        <thead>
+                                            <tr>
+                                                <th width="5%" class="text-center">#</th>
+                                                <th>Logo</th>
+                                                <th width="15%" class="text-center">CNPJ</th>
+                                                <th width="15%" class="text-center">Razão Social</th>
+                                                <th width="10%" class="text-center">Status</th>
+                                                <th width="25%" class="text-center">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="corpoTabela">
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted">
+                                                    <i class="fa fa-spinner fa-spin"></i> Carregando parceiros...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Modal Criar Parceiro -->
+                <div class="modal fade" id="modalCriarParceiro" tabindex="-1" role="dialog" aria-labelledby="modalCriarParceiroLabel">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" id="modalCriarParceiroLabel">Nova parceria</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form id="formularioCriarParceiro">
+                                    <div class="form-group">
+                                        <label for="logo">Logo</label>
+                                        <input type="file" class="form-control" id="logo" name="logo">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cnpj">CNPJ <span class="obrig">*</span></label>
+                                        <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="12.345.678/9000-00" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="razao_social">Razão Social <span class="obrig">*</span></label>
+                                        <input type="text" class="form-control" id="razao_social" name="razao_social" placeholder="Insira o nome da instituição parceira" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="telefone">Telefone</label>
+                                        <input type="text" class="form-control" id="telefone" name="telefone" placeholder="(22) 91234-5678">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="email">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" placeholder="parceiro@email.com">
+                                    </div>
+
+                                    <!-- Site/redes sociais para divulgação-->
+                                    <div class="form-group">
+                                        <label for="divulgacao">Divulgação <i class="fa-solid fa-globe"></i> <i class="fa-brands fa-instagram"></i></label>
+                                        <input type="text" class="form-control" id="divulgacao" name="divulgacao" placeholder="https://site.parceiro.com.br">
+                                    </div>
+
+                                    <h4>Endereço</h4>
+                                    <div class="box-body">
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-6">
+                                                <label for="cep">CEP</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                                                    <input type="text" id="cep" class="form-control" placeholder="" name="cep">
+                                                </div>
+                                                <div class="status_cep col-xs-12"></div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-8">
+                                                <label for="rua">Rua</label>
+                                                <input type="text" class="form-control" id="rua" name="rua" placeholder="">
+                                            </div>
+                                            <div class="form-group col-xs-4">
+                                                <label for="numero_endereco">Número</label>
+                                                <input type="number" class="form-control" min="0" id="numero_endereco" name="numero_endereco" placeholder="">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-6">
+                                                <label for="complemento">Complemento</label>
+                                                <input type="text" class="form-control" id="complemento" name="complemento" placeholder="">
+                                            </div>
+                                            <div class="form-group col-xs-6">
+                                                <label for="bairro">Bairro</label>
+                                                <input type="text" class="form-control" id="bairro" name="bairro" placeholder="">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-6">
+                                                <label for="estado">Estado</label>
+                                                <input type="text" class="form-control" id="estado" name="estado" placeholder="">
+                                            </div>
+                                            <div class="form-group col-xs-6">
+                                                <label for="cidade">Cidade</label>
+                                                <input type="text" class="form-control" id="cidade" name="cidade" placeholder="">
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-12">
+                                                <label for="localizacao">Localização - Google Maps <i class="fa-solid fa-location-dot"></i></label>
+                                                <input type="text" class="form-control" name="localizacao" id="localizacao" placeholder="https://www.google.com/maps/place/endereco+da+instituicao">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="btnSalvarNovaRegra">
+                                    <i class="fa fa-save"></i> Cadastrar parceria
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Editar Regra -->
+                <div class="modal fade" id="modalEditarParceiro" tabindex="-1" role="dialog" aria-labelledby="modalEditarParceiroLabel">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header bg-info">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" id="modalEditarParceiroLabel">Editar dados do parceiro</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form id="formularioEditarParceiro">
+                                    <input type="hidden" id="idParceiro" name="id">
+                                    <div class="form-group">
+                                        <label for="logo">Logo</label>
+                                        <input type="file" class="form-control" id="logo" name="logo">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cnpj">CNPJ <span class="obrig">*</span></label>
+                                        <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="12.345.678/9000-00" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="razao_social">Razão Social <span class="obrig">*</span></label>
+                                        <input type="text" class="form-control" id="razao_social" name="razao_social" placeholder="Insira o nome da instituição parceira" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="telefoneEditar">Telefone</label>
+                                        <input type="text" class="form-control" id="telefoneEditar" name="telefone" placeholder="(22) 91234-5678">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="emailEditar">Email</label>
+                                        <input type="email" class="form-control" id="emailEditar" name="email" placeholder="parceiro@email.com">
+                                    </div>
+
+                                    <!-- Site/redes sociais para divulgação-->
+                                    <div class="form-group">
+                                        <label for="divulgacaoEditar">Divulgação <i class="fa-solid fa-globe"></i> <i class="fa-brands fa-instagram"></i></label>
+                                        <input type="text" class="form-control" id="divulgacaoEditar" name="divulgacao" placeholder="https://site.parceiro.com.br">
+                                    </div>
+
+                                    <h4>Endereço</h4>
+                                    <div class="box-body">
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-6">
+                                                <label for="cepEditar">CEP</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-addon"><i class="fa fa-search"></i></span>
+                                                    <input type="text" id="cepEditar" class="form-control" placeholder="" name="cep">
+                                                </div>
+                                                <div class="status_cep col-xs-12"></div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-8">
+                                                <label for="ruaEditar">Rua</label>
+                                                <input type="text" class="form-control" id="ruaEditar" name="rua" placeholder="">
+                                            </div>
+                                            <div class="form-group col-xs-4">
+                                                <label for="numero_enderecoEditar">Número</label>
+                                                <input type="number" class="form-control" min="0" id="numero_enderecoEditar" name="numero_endereco" placeholder="">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-6">
+                                                <label for="complementoEditar">Complemento</label>
+                                                <input type="text" class="form-control" id="complementoEditar" name="complemento" placeholder="">
+                                            </div>
+                                            <div class="form-group col-xs-6">
+                                                <label for="bairroEditar">Bairro</label>
+                                                <input type="text" class="form-control" id="bairroEditar" name="bairro" placeholder="">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-6">
+                                                <label for="estadoEditar">Estado</label>
+                                                <input type="text" class="form-control" id="estadoEditar" name="estado" placeholder="">
+                                            </div>
+                                            <div class="form-group col-xs-6">
+                                                <label for="cidadeEditar">Cidade</label>
+                                                <input type="text" class="form-control" id="cidadeEditar" name="cidade" placeholder="">
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="form-group mb-2 col-xs-12">
+                                                <label for="localizacaoEditar">Localização - Google Maps <i class="fa-solid fa-location-dot"></i></label>
+                                                <input type="text" class="form-control" name="localizacao" id="localizacaoEditar" placeholder="https://www.google.com/maps/place/endereco+da+instituicao">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-info" id="btnAtualizarParceiro">
+                                    <i class="fa fa-refresh"></i> Atualizar Parceiro
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Confirmar Exclusão -->
+                <div class="modal fade" id="modalConfirmarDelecao" tabindex="-1" role="dialog" aria-labelledby="modalConfirmarDelecaoLabel">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" id="modalConfirmarDelecaoLabel">Confirmar Exclusão</h4>
+                            </div>
+                            <div class="modal-body">
+                                <p>Tem certeza que deseja deletar este parceiro associado? <strong>Esta ação não pode ser desfeita.</strong></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-danger" id="btnConfirmarDelecao">
+                                    <i class="fa fa-trash"></i> Deletar Regra
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    let regraParaDeletar = null;
+
+                    //Alterar scripts para parceiros institucionais
+                    $(document).ready(function() {
+                        carregarRegras();
+
+                        // Evento: Salvar nova regra
+                        $('#btnSalvarNovaRegra').click(function() {
+                            const dados = {
+                                nomeClasse: 'SocioBenefitControle',
+                                metodo: 'createBenefitRule',
+                                valuePerPoint: parseFloat($('#valuePerPoint').val()),
+                                maxPointsConcurrent: parseInt($('#maxPointsConcurrent').val()),
+                                durationPointMonths: parseInt($('#durationPointMonths').val()),
+                                analysisWindowMonths: parseInt($('#analysisWindowMonths').val()),
+                                active: $('#activeCriar').is(':checked')
+                            };
+
+                            requisicaoAjax(dados, function() {
+                                $('#modalCriarParceiro').modal('hide');
+                                $('#formularioCriarParceiro')[0].reset();
+                                carregarRegras();
+                                mostrarNotificacao('Regra criada com sucesso!', 'success', 3000);
+                            });
+                        });
+
+                        // Evento: Atualizar regra
+                        $('#btnAtualizarRegra').click(function() {
+                            const dados = {
+                                nomeClasse: 'SocioBenefitControle',
+                                metodo: 'updateBenefitRule',
+                                id: parseInt($('#idRegra').val()),
+                                valuePerPoint: parseFloat($('#valuePerPointEditar').val()),
+                                maxPointsConcurrent: parseInt($('#maxPointsConcurrentEditar').val()),
+                                durationPointMonths: parseInt($('#durationPointMonthsEditar').val()),
+                                analysisWindowMonths: parseInt($('#analysisWindowMonthsEditar').val()),
+                                active: $('#activeEditar').is(':checked')
+                            };
+
+                            requisicaoAjax(dados, function() {
+                                $('#modalEditarParceiro').modal('hide');
+                                carregarRegras();
+                                mostrarNotificacao('Regra atualizada com sucesso!', 'success', 3000);
+                            });
+                        });
+
+                        // Evento: Confirmar deleção
+                        $('#btnConfirmarDelecao').click(function() {
+                            if (regraParaDeletar) {
+                                const dados = {
+                                    nomeClasse: 'SocioBenefitControle',
+                                    metodo: 'deleteBenefitRule',
+                                    id: regraParaDeletar
+                                };
+
+                                requisicaoAjax(dados, function() {
+                                    $('#modalConfirmarDelecao').modal('hide');
+                                    regraParaDeletar = null;
+                                    carregarRegras();
+                                    mostrarNotificacao('Regra deletada com sucesso!', 'success', 3000);
+                                });
+                            }
+                        });
+                    });
+
+                    function carregarRegras() {
+                        $.ajax({
+                            type: 'POST',
+                            url: '<?php echo WWW; ?>controle/control.php',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                nomeClasse: 'SocioBenefitControle',
+                                metodo: 'getBenefitRules'
+                            }),
+                            dataType: 'json',
+                            success: function(data) {
+                                renderizarTabela(data);
+                            },
+                            error: function(xhr) {
+                                const response = xhr.responseJSON || {};
+
+                                // Trata caso especial: nenhuma regra encontrada (não é erro, é informação)
+                                if (response.error === 'Nenhuma regra de benefício encontrada.') {
+                                    $('#corpoTabela').html('<tr><td colspan="7" class="text-center text-muted"><i class="fa fa-info-circle"></i> ' + response.error + '</td></tr>');
+                                } else {
+                                    mostrarNotificacao(response.error || 'Erro ao carregar regras', 'error');
+                                    $('#corpoTabela').html('<tr><td colspan="7" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Erro ao carregar regras</td></tr>');
+                                }
+                            }
+                        });
+                    }
+
+                    function renderizarTabela(regras) {
+                        let html = '';
+
+                        if (!Array.isArray(regras) || regras.length === 0) {
+                            html = '<tr><td colspan="7" class="text-center text-muted">Nenhuma regra encontrada</td></tr>';
+                        } else {
+                            regras.forEach(function(regra, index) {
+                                const statusBadge = regra.active ?
+                                    '<span class="label label-success" style="font-size: 13px; padding: 6px 10px;">Ativo</span>' :
+                                    '<span class="label label-danger" style="font-size: 13px; padding: 6px 10px;">Inativo</span>';
+
+                                const botaoToggleStatus = regra.active ?
+                                    `<button class="btn btn-sm btn-warning" onclick="alternarStatus(${regra.id}, false)" title="Desativar"><i class="fa fa-toggle-on"></i> Desativar</button>` :
+                                    `<button class="btn btn-sm btn-success" onclick="alternarStatus(${regra.id}, true)" title="Ativar"><i class="fa fa-toggle-off"></i> Ativar</button>`;
+
+                                html += `
+                                    <tr>
+                                        <td class="text-center">${regra.id}</td>
+                                        <td class="text-center">${regra.maxPointsConcurrent}</td>
+                                        <td class="text-center">${regra.durationPointMonths}</td>
+                                        <td class="text-center">${regra.analysisWindowMonths}</td>
+                                        <td class="text-center">${statusBadge}</td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-info" onclick="editarRegra(${regra.id})" title="Editar"><i class="fa fa-edit"></i></button>
+                                            ${botaoToggleStatus}
+                                            <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${regra.id})" title="Deletar"><i class="fa fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                        }
+
+                        $('#corpoTabela').html(html);
+                    }
+
+                    function editarRegra(id) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '<?php echo WWW; ?>controle/control.php',
+                            contentType: 'application/json',
+                            data: JSON.stringify({
+                                nomeClasse: 'SocioBenefitControle',
+                                metodo: 'getBenefitRules'
+                            }),
+                            dataType: 'json',
+                            success: function(regras) {
+                                const regra = regras.find(r => r.id === id);
+                                if (regra) {
+                                    $('#idRegra').val(regra.id);
+                                    $('#valuePerPointEditar').val(regra.valuePerPoint);
+                                    $('#maxPointsConcurrentEditar').val(regra.maxPointsConcurrent);
+                                    $('#durationPointMonthsEditar').val(regra.durationPointMonths);
+                                    $('#analysisWindowMonthsEditar').val(regra.analysisWindowMonths);
+                                    $('#activeEditar').prop('checked', regra.active);
+                                    $('#modalEditarParceiro').modal('show');
+                                }
+                            }
+                        });
+                    }
+
+                    function alternarStatus(id, ativar) {
+                        const metodo = ativar ? 'activateBenefitRule' : 'deactivateBenefitRule';
+                        const dados = {
+                            nomeClasse: 'SocioBenefitControle',
+                            metodo: metodo,
+                            id: id
+                        };
+
+                        requisicaoAjax(dados, function() {
+                            carregarRegras();
+                            const msg = ativar ? 'Parceiro ativado com sucesso!' : 'Parceiro desativado com sucesso!';
+                            mostrarNotificacao(msg, 'success', 3000);
+                        });
+                    }
+
+                    function confirmarDelecao(id) {
+                        regraParaDeletar = id;
+                        $('#modalConfirmarDelecao').modal('show');
+                    }
+
+                    function requisicaoAjax(dados, callbackSucesso) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '<?php echo WWW; ?>controle/control.php',
+                            contentType: 'application/json',
+                            data: JSON.stringify(dados),
+                            dataType: 'json',
+                            success: function(response) {
+                                callbackSucesso();
+                            },
+                            error: function(xhr) {
+                                const response = xhr.responseJSON || {};
+                                mostrarNotificacao(response.mensagem || 'Erro na operação', 'error', 5000);
+                            }
+                        });
+                    }
+
+                    function mostrarNotificacao(mensagem, tipo, duracao = 5000) {
+                        const tipoClasse = tipo === 'success' ? 'alert-success' : 'alert-danger';
+                        const icone = tipo === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+                        const alertaHtml = `
+                            <div class="alert ${tipoClasse} alert-dismissible fade in" role="alert" style="margin: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <i class="fa ${icone}" style="margin-right: 8px;"></i> <strong>${mensagem}</strong>
+                            </div>
+                        `;
+
+                        const $alerta = $(alertaHtml);
+                        $('#alertContainer').append($alerta);
+
+                        // Auto-fechar após o tempo especificado
+                        if (duracao > 0) {
+                            setTimeout(function() {
+                                $alerta.fadeOut('slow', function() {
+                                    $(this).remove();
+                                });
+                            }, duracao);
+                        }
+                    }
+                </script>
+
+                <!-- end: page -->
+            </section>
+        </div>
+
+        <div align="right">
+            <iframe src="https://www.wegia.org/software/footer/socio.html" width="200" height="60" style="border:none;"></iframe>
+        </div>
+    </section>
+
+    <!-- Bootstrap JS -->
+    <script src="controller/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+</body>
+
+</html>
