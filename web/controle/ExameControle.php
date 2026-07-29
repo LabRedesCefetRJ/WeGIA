@@ -114,8 +114,19 @@ class ExameControle
         $extensoes_permitidas = ['jpg', 'jpeg', 'png', 'pdf'];
 
         if ($arquivo['error'] !== UPLOAD_ERR_OK) {
+
+        switch($arquivo['erro']){
+            case UPLOAD_ERR_INI_SIZE:
+                $menssagem = "O arquivo selecionado excede o tamanho máximo permitido. Por favor, escolha um arquivo menor e tente novamente.";
+
+            case UPLOAD_ERR_FORM_SIZE:
+                $menssagem = "O arquivo selecionado excede o tamanho máximo permitido. Por favor, escolha um arquivo menor e tente novamente.";
+        
+            default:
+                $menssagem = "Erro no upload do arquivo.";
+        }
             http_response_code(400);
-            echo json_encode(["erro" => "Erro no upload do arquivo. Código: " . $arquivo['error']]);
+            echo json_encode(["erro" => $menssagem . " Código: " . $arquivo['error']]);
             exit;
         }
 
