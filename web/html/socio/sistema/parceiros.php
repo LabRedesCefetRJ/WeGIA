@@ -443,7 +443,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                     //Alterar scripts para parceiros institucionais
                     $(document).ready(function() {
-                        carregarRegras();
+                        carregarParceiros();
 
                         // Evento: Salvar nova regra
                         $('#btnSalvarNovaRegra').click(function() {
@@ -460,7 +460,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             requisicaoAjax(dados, function() {
                                 $('#modalCriarParceiro').modal('hide');
                                 $('#formularioCriarParceiro')[0].reset();
-                                carregarRegras();
+                                carregarParceiros();
                                 mostrarNotificacao('Regra criada com sucesso!', 'success', 3000);
                             });
                         });
@@ -480,7 +480,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
                             requisicaoAjax(dados, function() {
                                 $('#modalEditarParceiro').modal('hide');
-                                carregarRegras();
+                                carregarParceiros();
                                 mostrarNotificacao('Regra atualizada com sucesso!', 'success', 3000);
                             });
                         });
@@ -497,66 +497,61 @@ require_once ROOT . "/html/personalizacao_display.php";
                                 requisicaoAjax(dados, function() {
                                     $('#modalConfirmarDelecao').modal('hide');
                                     regraParaDeletar = null;
-                                    carregarRegras();
+                                    carregarParceiros();
                                     mostrarNotificacao('Regra deletada com sucesso!', 'success', 3000);
                                 });
                             }
                         });
                     });
 
-                    function carregarRegras() {
+                    function carregarParceiros() {
                         $.ajax({
-                            type: 'POST',
-                            url: '<?php echo WWW; ?>controle/control.php',
-                            contentType: 'application/json',
-                            data: JSON.stringify({
-                                nomeClasse: 'SocioBenefitControle',
-                                metodo: 'getBenefitRules'
-                            }),
-                            dataType: 'json',
+                            type: 'GET',
+                            url: '<?=API_BASE_URL . 'socios/parceiros'?>',
                             success: function(data) {
-                                renderizarTabela(data);
+                                console.log(data);
+                                renderizarTabela(data.socio_parceiros);
                             },
                             error: function(xhr) {
                                 const response = xhr.responseJSON || {};
 
-                                // Trata caso especial: nenhuma regra encontrada (não é erro, é informação)
-                                if (response.error === 'Nenhuma regra de benefício encontrada.') {
+                                // Trata caso especial: nenhum parceiro encontrado (não é erro, é informação)
+                                if (response.error === 'Nenhuma parceiro institucional encontrado.') {
                                     $('#corpoTabela').html('<tr><td colspan="7" class="text-center text-muted"><i class="fa fa-info-circle"></i> ' + response.error + '</td></tr>');
                                 } else {
-                                    mostrarNotificacao(response.error || 'Erro ao carregar regras', 'error');
-                                    $('#corpoTabela').html('<tr><td colspan="7" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Erro ao carregar regras</td></tr>');
+                                    mostrarNotificacao(response.error || 'Erro ao carregar parceiros', 'error');
+                                    $('#corpoTabela').html('<tr><td colspan="7" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Erro ao carregar parceiros</td></tr>');
                                 }
                             }
                         });
                     }
 
-                    function renderizarTabela(regras) {
+                    function renderizarTabela(parceiros) {
                         let html = '';
 
-                        if (!Array.isArray(regras) || regras.length === 0) {
+                        if (!Array.isArray(parceiros) || parceiros.length === 0) {
                             html = '<tr><td colspan="7" class="text-center text-muted">Nenhuma regra encontrada</td></tr>';
                         } else {
-                            regras.forEach(function(regra, index) {
-                                const statusBadge = regra.active ?
+                            parceiros.forEach(function(parceiro, index) {
+                                const statusBadge = parceiro.ativo ?
                                     '<span class="label label-success" style="font-size: 13px; padding: 6px 10px;">Ativo</span>' :
                                     '<span class="label label-danger" style="font-size: 13px; padding: 6px 10px;">Inativo</span>';
 
-                                const botaoToggleStatus = regra.active ?
-                                    `<button class="btn btn-sm btn-warning" onclick="alternarStatus(${regra.id}, false)" title="Desativar"><i class="fa fa-toggle-on"></i> Desativar</button>` :
-                                    `<button class="btn btn-sm btn-success" onclick="alternarStatus(${regra.id}, true)" title="Ativar"><i class="fa fa-toggle-off"></i> Ativar</button>`;
+                                const botaoToggleStatus = parceiro.ativo ?
+                                    `<button class="btn btn-sm btn-warning" onclick="alternarStatus(${parceiro.id}, false)" title="Desativar"><i class="fa fa-toggle-on"></i> Desativar</button>` :
+                                    `<button class="btn btn-sm btn-success" onclick="alternarStatus(${parceiro.id}, true)" title="Ativar"><i class="fa fa-toggle-off"></i> Ativar</button>`;
 
                                 html += `
                                     <tr>
-                                        <td class="text-center">${regra.id}</td>
-                                        <td class="text-center">${regra.maxPointsConcurrent}</td>
-                                        <td class="text-center">${regra.durationPointMonths}</td>
-                                        <td class="text-center">${regra.analysisWindowMonths}</td>
+                                        <td class="text-center">${parceiro.id}</td>
+                                        <td class="text-center">${parceiro.logo}</td>
+                                        <td class="text-center">${parceiro.cnpj}</td>
+                                        <td class="text-center">${parceiro.razao_social}</td>
                                         <td class="text-center">${statusBadge}</td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-info" onclick="editarRegra(${regra.id})" title="Editar"><i class="fa fa-edit"></i></button>
+                                            <button class="btn btn-sm btn-info" onclick="editarRegra(${parceiro.id})" title="Editar"><i class="fa fa-edit"></i></button>
                                             ${botaoToggleStatus}
-                                            <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${regra.id})" title="Deletar"><i class="fa fa-trash"></i></button>
+                                            <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar"><i class="fa fa-trash"></i></button>
                                         </td>
                                     </tr>
                                 `;
@@ -600,7 +595,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                         };
 
                         requisicaoAjax(dados, function() {
-                            carregarRegras();
+                            carregarParceiros();
                             const msg = ativar ? 'Parceiro ativado com sucesso!' : 'Parceiro desativado com sucesso!';
                             mostrarNotificacao(msg, 'success', 3000);
                         });
