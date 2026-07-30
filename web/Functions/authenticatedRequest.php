@@ -27,7 +27,7 @@
             return response;
         }
 
-        if (body.error !== 'Token expirado') {
+        if (body.error !== 'Token expirado' && body.error !== 'Token inválido') {
             return response;
         }
 
