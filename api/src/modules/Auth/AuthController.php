@@ -20,22 +20,53 @@ class AuthController
     {
         $data = $request->getParsedBody();
 
+        // web | mobile
+        $clientType = strtolower($request->getHeaderLine('X-Client-Type'));
+
         try {
             $result = $this->authService->login(
                 $data['login'] ?? '',
                 $data['senha'] ?? ''
             );
 
-            $response->getBody()->write(json_encode($result));
-            return $response->withHeader('Content-Type', 'application/json');
+            if ($clientType === 'web') {
 
+                // Access Token
+                setcookie('access_token', $result['access_token'], [
+                    'expires'  => time() + 900,
+                    'path'      => '/',
+                    'secure'    => ENV_APP === 'development' ? false : true,
+                    'httponly'  => true,
+                    'samesite'  => 'Strict'
+                ]);
+
+                // Refresh Token
+                setcookie('refresh_token', $result['refresh_token'], [
+                    'expires'   => time() + (60 * 60 * 24 * 30),
+                    'path'      => '/refresh',
+                    'secure'    => ENV_APP === 'development' ? false : true,
+                    'httponly'  => true,
+                    'samesite'  => 'Strict'
+                ]);
+
+                $response->getBody()->write(json_encode([
+                    'success' => true
+                ]));
+            } else {
+
+                // Mobile
+                $response->getBody()->write(json_encode($result));
+            }
+
+            return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
 
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage()
             ]));
 
-            return $response->withStatus(401)
+            return $response
+                ->withStatus(401)
                 ->withHeader('Content-Type', 'application/json');
         }
     }
@@ -52,7 +83,6 @@ class AuthController
 
             $response->getBody()->write(json_encode($result));
             return $response->withHeader('Content-Type', 'application/json');
-
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage()
@@ -82,7 +112,6 @@ class AuthController
 
             $response->getBody()->write(json_encode($result));
             return $response->withHeader('Content-Type', 'application/json');
-
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage()
@@ -113,7 +142,6 @@ class AuthController
 
             $response->getBody()->write(json_encode($result));
             return $response->withHeader('Content-Type', 'application/json');
-
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage()

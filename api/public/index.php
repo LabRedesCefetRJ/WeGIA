@@ -114,7 +114,7 @@ $container = new AppContainer([
         return new CorsMiddleware(
             $origin,
             ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-            ['Content-Type', 'Authorization', 'X-Requested-With'],
+            ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Client-Type'],
             true,
             86400
         );
