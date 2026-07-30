@@ -21,6 +21,9 @@ require("../conexao.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
+
+// Requisição autenticada para serviços da API
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTORY_SEPARATOR . 'authenticatedRequest.php';
 ?>
 
 <!DOCTYPE html>
@@ -308,7 +311,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn btn-primary" id="btnSalvarNovaRegra">
+                                <button type="button" class="btn btn-primary" id="btnSalvarNovaParceria">
                                     <i class="fa fa-save"></i> Cadastrar parceria
                                 </button>
                             </div>
@@ -445,24 +448,81 @@ require_once ROOT . "/html/personalizacao_display.php";
                     $(document).ready(function() {
                         carregarParceiros();
 
-                        // Evento: Salvar nova regra
-                        $('#btnSalvarNovaRegra').click(function() {
-                            const dados = {
-                                nomeClasse: 'SocioBenefitControle',
-                                metodo: 'createBenefitRule',
-                                valuePerPoint: parseFloat($('#valuePerPoint').val()),
-                                maxPointsConcurrent: parseInt($('#maxPointsConcurrent').val()),
-                                durationPointMonths: parseInt($('#durationPointMonths').val()),
-                                analysisWindowMonths: parseInt($('#analysisWindowMonths').val()),
-                                active: $('#activeCriar').is(':checked')
+                        // Evento: Salvar nova parceria
+                        $('#btnSalvarNovaParceria').click(async function() {
+
+                            const form = document.getElementById('formularioCriarParceiro');
+
+                            // Validação HTML5
+                            if (!form.checkValidity()) {
+                                form.reportValidity();
+                                return;
+                            }
+
+                            const payload = {
+                                cnpj: $('#cnpj').val().replace(/\D/g, ''),
+                                razao_social: $('#razao_social').val().trim(),
+                                email: $('#email').val().trim(),
+                                telefone: $('#telefone').val().replace(/\D/g, ''),
+                                endereco: {
+                                    cep: $('#cep').val().trim(),
+                                    estado: $('#estado').val().trim(),
+                                    cidade: $('#cidade').val().trim(),
+                                    bairro: $('#bairro').val().trim(),
+                                    logradouro: $('#rua').val().trim(),
+                                    numero: $('#numero_endereco').val().trim(),
+                                    complemento: $('#complemento').val().trim()
+                                },
+                                localizacao: $('#localizacao').val().trim(),
+                                divulgacao: $('#divulgacao').val().trim()
                             };
 
-                            requisicaoAjax(dados, function() {
+                            try {
+
+                                const response = await authenticatedRequest(() =>
+                                    fetch(`${apiServer}socios/parceiros`, {
+                                        method: 'POST',
+                                        credentials: 'include',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-Client-Type': 'web'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    })
+                                );
+
+                                const result = await response.json();
+
+                                if (!response.ok) {
+                                    mostrarNotificacao(
+                                        result.error || 'Erro ao cadastrar parceiro.',
+                                        'error',
+                                        5000
+                                    );
+                                    return;
+                                }
+
+                                // Executar apenas em caso de sucesso
                                 $('#modalCriarParceiro').modal('hide');
-                                $('#formularioCriarParceiro')[0].reset();
+                                form.reset();
                                 carregarParceiros();
-                                mostrarNotificacao('Regra criada com sucesso!', 'success', 3000);
-                            });
+
+                                mostrarNotificacao(
+                                    'Parceiro cadastrado com sucesso!',
+                                    'success',
+                                    3000
+                                );
+
+                            } catch (e) {
+
+                                mostrarNotificacao(
+                                    'Não foi possível conectar à API.',
+                                    'error',
+                                    5000
+                                );
+
+                            }
+
                         });
 
                         // Evento: Atualizar regra
@@ -507,7 +567,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                     function carregarParceiros() {
                         $.ajax({
                             type: 'GET',
-                            url: '<?=API_BASE_URL . 'socios/parceiros'?>',
+                            url: '<?= API_BASE_URL . 'socios/parceiros' ?>',
                             success: function(data) {
                                 console.log(data);
                                 renderizarTabela(data.socio_parceiros);
