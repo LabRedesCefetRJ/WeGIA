@@ -332,15 +332,15 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                     <input type="hidden" id="idParceiro" name="id">
                                     <div class="form-group">
                                         <label for="logo">Logo</label>
-                                        <input type="file" class="form-control" id="logo" name="logo">
+                                        <input type="file" class="form-control" id="logoEditar" name="logo">
                                     </div>
                                     <div class="form-group">
                                         <label for="cnpj">CNPJ <span class="obrig">*</span></label>
-                                        <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="12.345.678/9000-00" required>
+                                        <input type="text" class="form-control" id="cnpjEditar" name="cnpj" placeholder="12.345.678/9000-00" disabled required>
                                     </div>
                                     <div class="form-group">
                                         <label for="razao_social">Razão Social <span class="obrig">*</span></label>
-                                        <input type="text" class="form-control" id="razao_social" name="razao_social" placeholder="Insira o nome da instituição parceira" required>
+                                        <input type="text" class="form-control" id="razao_socialEditar" name="razao_social" placeholder="Insira o nome da instituição parceira" required>
                                     </div>
                                     <div class="form-group">
                                         <label for="telefoneEditar">Telefone</label>
@@ -609,7 +609,28 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                         <td class="text-center">${parceiro.razao_social}</td>
                                         <td class="text-center">${statusBadge}</td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-info" onclick="editarRegra(${parceiro.id})" title="Editar"><i class="fa fa-edit"></i></button>
+                                            <button
+                                                class="btn btn-sm btn-info btn-editar"
+                                                title="Editar"
+
+                                                data-id="${parceiro.id}"
+                                                data-cnpj="${parceiro.cnpj}"
+                                                data-razao-social="${parceiro.razao_social}"
+                                                data-telefone="${parceiro.telefone}"
+                                                data-email="${parceiro.email}"
+                                                data-divulgacao="${parceiro.divulgacao}"
+
+                                                data-cep="${parceiro.cep}"
+                                                data-rua="${parceiro.logradouro}"
+                                                data-numero-endereco="${parceiro.numero_endereco}"
+                                                data-complemento="${parceiro.complemento}"
+                                                data-bairro="${parceiro.bairro}"
+                                                data-estado="${parceiro.estado}"
+                                                data-cidade="${parceiro.cidade}"
+                                                data-localizacao="${parceiro.localizacao}">
+
+                                                <i class="fa fa-edit"></i>
+                                            </button>
                                             ${botaoToggleStatus}
                                             <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar"><i class="fa fa-trash"></i></button>
                                         </td>
@@ -619,31 +640,43 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         }
 
                         $('#corpoTabela').html(html);
+
+                        $('#corpoTabela').on('click', '.btn-editar', function() {
+                            editarParceiro(this);
+                        });
                     }
 
-                    function editarRegra(id) {
-                        $.ajax({
-                            type: 'POST',
-                            url: '<?php echo WWW; ?>controle/control.php',
-                            contentType: 'application/json',
-                            data: JSON.stringify({
-                                nomeClasse: 'SocioBenefitControle',
-                                metodo: 'getBenefitRules'
-                            }),
-                            dataType: 'json',
-                            success: function(regras) {
-                                const regra = regras.find(r => r.id === id);
-                                if (regra) {
-                                    $('#idRegra').val(regra.id);
-                                    $('#valuePerPointEditar').val(regra.valuePerPoint);
-                                    $('#maxPointsConcurrentEditar').val(regra.maxPointsConcurrent);
-                                    $('#durationPointMonthsEditar').val(regra.durationPointMonths);
-                                    $('#analysisWindowMonthsEditar').val(regra.analysisWindowMonths);
-                                    $('#activeEditar').prop('checked', regra.active);
-                                    $('#modalEditarParceiro').modal('show');
-                                }
-                            }
-                        });
+                    function editarParceiro(botao) {
+                        const $botao = $(botao);
+
+                        // Limpa o formulário
+                        $('#formularioEditarParceiro')[0].reset();
+
+                        // Identificação
+                        $('#idParceiro').val($botao.data('id'));
+
+                        // Dados principais
+                        $('#cnpjEditar').val($botao.data('cnpj'));
+                        $('#razao_socialEditar').val($botao.data('razao-social'));
+                        $('#telefoneEditar').val($botao.data('telefone'));
+                        $('#emailEditar').val($botao.data('email'));
+                        $('#divulgacaoEditar').val($botao.data('divulgacao'));
+
+                        // Endereço
+                        $('#cepEditar').val($botao.data('cep'));
+                        $('#ruaEditar').val($botao.data('rua'));
+                        $('#numero_enderecoEditar').val($botao.data('numero-endereco'));
+                        $('#complementoEditar').val($botao.data('complemento'));
+                        $('#bairroEditar').val($botao.data('bairro'));
+                        $('#estadoEditar').val($botao.data('estado'));
+                        $('#cidadeEditar').val($botao.data('cidade'));
+                        $('#localizacaoEditar').val($botao.data('localizacao'));
+
+                        // Limpa o campo de upload de arquivo
+                        $('#logoEditar').val('');
+
+                        // Abre o modal
+                        $('#modalEditarParceiro').modal('show');
                     }
 
                     function alternarStatus(id, ativar) {
