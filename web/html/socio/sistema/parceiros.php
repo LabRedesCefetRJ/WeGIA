@@ -319,7 +319,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                     </div>
                 </div>
 
-                <!-- Modal Editar Regra -->
+                <!-- Modal Editar Parceiro -->
                 <div class="modal fade" id="modalEditarParceiro" tabindex="-1" role="dialog" aria-labelledby="modalEditarParceiroLabel">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
@@ -525,24 +525,81 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
 
                         });
 
-                        // Evento: Atualizar regra
-                        $('#btnAtualizarRegra').click(function() {
-                            const dados = {
-                                nomeClasse: 'SocioBenefitControle',
-                                metodo: 'updateBenefitRule',
-                                id: parseInt($('#idRegra').val()),
-                                valuePerPoint: parseFloat($('#valuePerPointEditar').val()),
-                                maxPointsConcurrent: parseInt($('#maxPointsConcurrentEditar').val()),
-                                durationPointMonths: parseInt($('#durationPointMonthsEditar').val()),
-                                analysisWindowMonths: parseInt($('#analysisWindowMonthsEditar').val()),
-                                active: $('#activeEditar').is(':checked')
+                        // Evento: Atualizar parceiro
+                        $('#btnAtualizarParceiro').click(async function() {
+
+                            const form = document.getElementById('formularioEditarParceiro');
+
+                            // Validação HTML5
+                            if (!form.checkValidity()) {
+                                form.reportValidity();
+                                return;
+                            }
+
+                            const payload = {
+                                id_socio_parceiro: parseInt($('#idParceiro').val(), 10),
+                                razao_social: $('#razao_socialEditar').val().trim(),
+                                cnpj: $('#cnpjEditar').val().replace(/\D/g, ''),
+                                telefone: $('#telefoneEditar').val().replace(/\D/g, ''),
+                                email: $('#emailEditar').val().trim(),
+                                endereco: {
+                                    cep: $('#cepEditar').val().trim(),
+                                    estado: $('#estadoEditar').val().trim(),
+                                    cidade: $('#cidadeEditar').val().trim(),
+                                    bairro: $('#bairroEditar').val().trim(),
+                                    logradouro: $('#ruaEditar').val().trim(),
+                                    numero_endereco: $('#numero_enderecoEditar').val().trim(),
+                                    complemento: $('#complementoEditar').val().trim()
+                                },
+                                localizacao: $('#localizacaoEditar').val().trim(),
+                                divulgacao: $('#divulgacaoEditar').val().trim()
                             };
 
-                            requisicaoAjax(dados, function() {
+                            try {
+
+                                const response = await authenticatedRequest(() =>
+                                    fetch(`${apiServer}/socios/parceiros`, {
+                                        method: 'PUT',
+                                        credentials: 'include',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-Client-Type': 'web'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    })
+                                );
+
+                                const result = await response.json();
+
+                                if (!response.ok) {
+                                    mostrarNotificacao(
+                                        result.error || 'Erro ao atualizar parceiro.',
+                                        'error',
+                                        5000
+                                    );
+                                    return;
+                                }
+
+                                // Executar apenas em caso de sucesso
                                 $('#modalEditarParceiro').modal('hide');
                                 carregarParceiros();
-                                mostrarNotificacao('Regra atualizada com sucesso!', 'success', 3000);
-                            });
+
+                                mostrarNotificacao(
+                                    'Parceiro atualizado com sucesso!',
+                                    'success',
+                                    3000
+                                );
+
+                            } catch (e) {
+
+                                mostrarNotificacao(
+                                    'Não foi possível conectar à API.',
+                                    'error',
+                                    5000
+                                );
+
+                            }
+
                         });
 
                         // Evento: Confirmar deleção
