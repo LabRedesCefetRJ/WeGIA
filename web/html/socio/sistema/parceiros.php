@@ -736,19 +736,57 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         $('#modalEditarParceiro').modal('show');
                     }
 
-                    function alternarStatus(id, ativar) {
-                        const metodo = ativar ? 'activateBenefitRule' : 'deactivateBenefitRule';
-                        const dados = {
-                            nomeClasse: 'SocioBenefitControle',
-                            metodo: metodo,
-                            id: id
+                    async function alternarStatus(id, ativar) {
+
+                        const payload = {
+                            id_socio_parceiro: id,
+                            novo_status: ativar ? 1 : 0
                         };
 
-                        requisicaoAjax(dados, function() {
+                        try {
+
+                            const response = await authenticatedRequest(() =>
+                                fetch(`${apiServer}/socios/parceiros`, {
+                                    method: 'PATCH',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Client-Type': 'web'
+                                    },
+                                    body: JSON.stringify(payload)
+                                })
+                            );
+
+                            const result = await response.json();
+
+                            if (!response.ok) {
+                                mostrarNotificacao(
+                                    result.error || result.message || 'Erro ao alterar o status do parceiro.',
+                                    'error',
+                                    5000
+                                );
+                                return;
+                            }
+
                             carregarParceiros();
-                            const msg = ativar ? 'Parceiro ativado com sucesso!' : 'Parceiro desativado com sucesso!';
-                            mostrarNotificacao(msg, 'success', 3000);
-                        });
+
+                            mostrarNotificacao(
+                                ativar ?
+                                'Parceiro ativado com sucesso!' :
+                                'Parceiro desativado com sucesso!',
+                                'success',
+                                3000
+                            );
+
+                        } catch (e) {
+
+                            mostrarNotificacao(
+                                'Não foi possível conectar à API.',
+                                'error',
+                                5000
+                            );
+
+                        }
                     }
 
                     function confirmarDelecao(id) {
