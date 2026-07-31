@@ -2298,7 +2298,6 @@ try {
                                 title="apenas letras, espaços e hífens (números não são permitidos)"
                                 required>
                             </div>
-
                             <div class="form-group">
                               <label class="control-label" for="crmMedicoModal">
                                 CRM <sup class="obrig">*</sup>
@@ -2309,6 +2308,7 @@ try {
                                 name="crm_medico"
                                 id="crmMedicoModal"
                                 maxlength="30"
+                                onkeypress="return Onlynumbers(event)"
                                 required>
                             </div>
                           </div>
