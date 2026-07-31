@@ -2773,7 +2773,8 @@ try {
           });
 
           if (!requisicao.ok) {
-            throw new Error("Erro na requisição");
+            const resposta = await requisicao.json();
+            throw new Error(resposta.erro || resposta.mensagem || "Erro na requisição");
           }
 
           documentos.value = '';
@@ -2781,7 +2782,7 @@ try {
           fecharModalExameEMostrarMensagem("Exame adicionado com sucesso!");
           gerarExames();
         } catch (e) {
-          fecharModalExameEMostrarMensagem("Erro ao adicionar exame.", "danger");
+          fecharModalExameEMostrarMensagem(e.message, "danger");
         }
       }
 
