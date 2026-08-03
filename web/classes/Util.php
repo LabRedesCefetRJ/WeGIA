@@ -1374,12 +1374,20 @@ class Util
      * atributos (inclusive style e event handlers). Tags fora da allowlist são
      * desembrulhadas (mantém o conteúdo/texto), exceto tags perigosas
      * (script, style, iframe, object, embed), que são removidas por completo.
+     *
+     * Faz um html_entity_decode() antes de sanitizar para recuperar registros
+     * gravados entre 2026-04-06 e a correção deste método, quando o texto do
+     * despacho era erroneamente gravado já com "<" e ">" convertidos em
+     * entidades numéricas (ex.: "&#60;p&#62;"), fazendo com que a formatação
+     * original aparecesse como texto literal em vez de ser renderizada.
      */
     public static function sanitizarHtmlRico(?string $html): string
     {
         if (!is_string($html) || $html === '') {
             return '';
         }
+
+        $html = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
 
         $tagsPermitidas = ['p', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'];
         $tagsRemoverConteudo = ['script', 'style', 'iframe', 'object', 'embed', 'noscript'];
