@@ -2303,7 +2303,7 @@ try {
                                 CRM <sup class="obrig">*</sup>
                               </label>
                               <input
-                                type="number"
+                                type="text"
                                 class="form-control"
                                 name="crm_medico"
                                 id="crmMedicoModal"
