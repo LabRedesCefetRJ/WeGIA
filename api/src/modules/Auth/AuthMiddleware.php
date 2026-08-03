@@ -17,19 +17,27 @@ class AuthMiddleware
 
     public function __invoke(Request $request, $handler): Response
     {
-        $authHeader = $request->getHeaderLine('Authorization');
+        // Tenta obter o token do cookie (Web)
+        $token = $_COOKIE['access_token'] ?? null;
 
-        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            return $this->unauthorized();
+        // Caso não exista, tenta obter do cabeçalho Authorization (Mobile/API)
+        if ($token === null || empty($token)) {
+            $authHeader = $request->getHeaderLine('Authorization');
+
+            if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+                $token = substr($authHeader, 7);
+            }
         }
 
-        $token = str_replace('Bearer ', '', $authHeader);
+        // Nenhum token encontrado
+        if ($token === null || empty($token)) {
+            return $this->unauthorized();
+        }
 
         try {
             $decoded = $this->authService->validateToken($token);
 
             $request = $request->withAttribute('user_id', $decoded->sub);
-
         } catch (\Exception $e) {
             return $this->unauthorized($e->getMessage());
         }

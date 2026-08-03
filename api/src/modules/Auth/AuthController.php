@@ -26,16 +26,30 @@ class AuthController
                 $data['senha'] ?? ''
             );
 
-            $response->getBody()->write(json_encode($result));
-            return $response->withHeader('Content-Type', 'application/json');
+            if ($this->isWebClient($request)) {
 
+                $this->setAuthCookies(
+                    $result['access_token'],
+                    $result['refresh_token']
+                );
+
+                $response->getBody()->write(json_encode([
+                    'success' => true
+                ]));
+            } else {
+
+                $response->getBody()->write(json_encode($result));
+            }
+
+            return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
 
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage()
             ]));
 
-            return $response->withStatus(401)
+            return $response
+                ->withStatus(401)
                 ->withHeader('Content-Type', 'application/json');
         }
     }
@@ -52,7 +66,6 @@ class AuthController
 
             $response->getBody()->write(json_encode($result));
             return $response->withHeader('Content-Type', 'application/json');
-
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage()
@@ -65,30 +78,51 @@ class AuthController
 
     public function refresh(Request $request, Response $response): Response
     {
-        $data = $request->getParsedBody();
-        $refreshToken = $data['refresh_token'] ?? null;
+        if ($this->isWebClient($request)) {
+            $refreshToken = $_COOKIE['refresh_token'] ?? null;
+        } else {
+            $data = $request->getParsedBody();
+            $refreshToken = $data['refresh_token'] ?? null;
+        }
 
-        if (!$refreshToken) {
+        if (empty($refreshToken)) {
             $response->getBody()->write(json_encode([
                 'error' => 'Refresh token é obrigatório'
             ]));
 
-            return $response->withStatus(400)
+            return $response
+                ->withStatus(400)
                 ->withHeader('Content-Type', 'application/json');
         }
 
         try {
+
             $result = $this->authService->refreshToken($refreshToken);
 
-            $response->getBody()->write(json_encode($result));
-            return $response->withHeader('Content-Type', 'application/json');
+            if ($this->isWebClient($request)) {
 
+                $this->setAuthCookies(
+                    $result['access_token'],
+                    $result['refresh_token'] ?? null
+                );
+
+                $response->getBody()->write(json_encode([
+                    'success' => true
+                ]));
+            } else {
+
+                $response->getBody()->write(json_encode($result));
+            }
+
+            return $response->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
+
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage()
             ]));
 
-            return $response->withStatus(401)
+            return $response
+                ->withStatus(401)
                 ->withHeader('Content-Type', 'application/json');
         }
     }
@@ -113,7 +147,6 @@ class AuthController
 
             $response->getBody()->write(json_encode($result));
             return $response->withHeader('Content-Type', 'application/json');
-
         } catch (\Exception $e) {
             $response->getBody()->write(json_encode([
                 'error' => $e->getMessage()
@@ -121,6 +154,32 @@ class AuthController
 
             return $response->withStatus(401)
                 ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    private function isWebClient(Request $request): bool
+    {
+        return strtolower($request->getHeaderLine('X-Client-Type')) === 'web';
+    }
+
+    private function setAuthCookies(string $accessToken, ?string $refreshToken = null): void
+    {
+        setcookie('access_token', $accessToken, [
+            'expires'   => time() + 900, // 15 minutos
+            'path'      => '/',
+            'secure'    => true,
+            'httponly'  => true,
+            'samesite'  => 'Strict'
+        ]);
+
+        if ($refreshToken !== null) {
+            setcookie('refresh_token', $refreshToken, [
+                'expires'   => time() + (60 * 60 * 24 * 30), // 30 dias
+                'path'      => '/refresh',
+                'secure'    => true,
+                'httponly'  => true,
+                'samesite'  => 'Strict'
+            ]);
         }
     }
 }

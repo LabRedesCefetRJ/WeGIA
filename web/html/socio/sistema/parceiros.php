@@ -21,6 +21,9 @@ require("../conexao.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
+
+// Requisição autenticada para serviços da API
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTORY_SEPARATOR . 'authenticatedRequest.php';
 ?>
 
 <!DOCTYPE html>
@@ -308,7 +311,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                                <button type="button" class="btn btn-primary" id="btnSalvarNovaRegra">
+                                <button type="button" class="btn btn-primary" id="btnSalvarNovaParceria">
                                     <i class="fa fa-save"></i> Cadastrar parceria
                                 </button>
                             </div>
@@ -316,7 +319,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                     </div>
                 </div>
 
-                <!-- Modal Editar Regra -->
+                <!-- Modal Editar Parceiro -->
                 <div class="modal fade" id="modalEditarParceiro" tabindex="-1" role="dialog" aria-labelledby="modalEditarParceiroLabel">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
@@ -329,15 +332,15 @@ require_once ROOT . "/html/personalizacao_display.php";
                                     <input type="hidden" id="idParceiro" name="id">
                                     <div class="form-group">
                                         <label for="logo">Logo</label>
-                                        <input type="file" class="form-control" id="logo" name="logo">
+                                        <input type="file" class="form-control" id="logoEditar" name="logo">
                                     </div>
                                     <div class="form-group">
                                         <label for="cnpj">CNPJ <span class="obrig">*</span></label>
-                                        <input type="text" class="form-control" id="cnpj" name="cnpj" placeholder="12.345.678/9000-00" required>
+                                        <input type="text" class="form-control" id="cnpjEditar" name="cnpj" placeholder="12.345.678/9000-00" disabled required>
                                     </div>
                                     <div class="form-group">
                                         <label for="razao_social">Razão Social <span class="obrig">*</span></label>
-                                        <input type="text" class="form-control" id="razao_social" name="razao_social" placeholder="Insira o nome da instituição parceira" required>
+                                        <input type="text" class="form-control" id="razao_socialEditar" name="razao_social" placeholder="Insira o nome da instituição parceira" required>
                                     </div>
                                     <div class="form-group">
                                         <label for="telefoneEditar">Telefone</label>
@@ -445,44 +448,158 @@ require_once ROOT . "/html/personalizacao_display.php";
                     $(document).ready(function() {
                         carregarParceiros();
 
-                        // Evento: Salvar nova regra
-                        $('#btnSalvarNovaRegra').click(function() {
-                            const dados = {
-                                nomeClasse: 'SocioBenefitControle',
-                                metodo: 'createBenefitRule',
-                                valuePerPoint: parseFloat($('#valuePerPoint').val()),
-                                maxPointsConcurrent: parseInt($('#maxPointsConcurrent').val()),
-                                durationPointMonths: parseInt($('#durationPointMonths').val()),
-                                analysisWindowMonths: parseInt($('#analysisWindowMonths').val()),
-                                active: $('#activeCriar').is(':checked')
+                        // Evento: Salvar nova parceria
+                        $('#btnSalvarNovaParceria').click(async function() {
+
+                            const form = document.getElementById('formularioCriarParceiro');
+
+                            // Validação HTML5
+                            if (!form.checkValidity()) {
+                                form.reportValidity();
+                                return;
+                            }
+
+                            const payload = {
+                                cnpj: $('#cnpj').val().replace(/\D/g, ''),
+                                razao_social: $('#razao_social').val().trim(),
+                                email: $('#email').val().trim(),
+                                telefone: $('#telefone').val().replace(/\D/g, ''),
+                                endereco: {
+                                    cep: $('#cep').val().trim(),
+                                    estado: $('#estado').val().trim(),
+                                    cidade: $('#cidade').val().trim(),
+                                    bairro: $('#bairro').val().trim(),
+                                    logradouro: $('#rua').val().trim(),
+                                    numero: $('#numero_endereco').val().trim(),
+                                    complemento: $('#complemento').val().trim()
+                                },
+                                localizacao: $('#localizacao').val().trim(),
+                                divulgacao: $('#divulgacao').val().trim()
                             };
 
-                            requisicaoAjax(dados, function() {
+                            try {
+
+                                const response = await authenticatedRequest(() =>
+                                    fetch(`${apiServer}socios/parceiros`, {
+                                        method: 'POST',
+                                        credentials: 'include',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-Client-Type': 'web'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    })
+                                );
+
+                                const result = await response.json();
+
+                                if (!response.ok) {
+                                    mostrarNotificacao(
+                                        result.error || 'Erro ao cadastrar parceiro.',
+                                        'error',
+                                        5000
+                                    );
+                                    return;
+                                }
+
+                                // Executar apenas em caso de sucesso
                                 $('#modalCriarParceiro').modal('hide');
-                                $('#formularioCriarParceiro')[0].reset();
+                                form.reset();
                                 carregarParceiros();
-                                mostrarNotificacao('Regra criada com sucesso!', 'success', 3000);
-                            });
+
+                                mostrarNotificacao(
+                                    'Parceiro cadastrado com sucesso!',
+                                    'success',
+                                    3000
+                                );
+
+                            } catch (e) {
+
+                                mostrarNotificacao(
+                                    'Não foi possível conectar à API.',
+                                    'error',
+                                    5000
+                                );
+
+                            }
+
                         });
 
-                        // Evento: Atualizar regra
-                        $('#btnAtualizarRegra').click(function() {
-                            const dados = {
-                                nomeClasse: 'SocioBenefitControle',
-                                metodo: 'updateBenefitRule',
-                                id: parseInt($('#idRegra').val()),
-                                valuePerPoint: parseFloat($('#valuePerPointEditar').val()),
-                                maxPointsConcurrent: parseInt($('#maxPointsConcurrentEditar').val()),
-                                durationPointMonths: parseInt($('#durationPointMonthsEditar').val()),
-                                analysisWindowMonths: parseInt($('#analysisWindowMonthsEditar').val()),
-                                active: $('#activeEditar').is(':checked')
+                        // Evento: Atualizar parceiro
+                        $('#btnAtualizarParceiro').click(async function() {
+
+                            const form = document.getElementById('formularioEditarParceiro');
+
+                            // Validação HTML5
+                            if (!form.checkValidity()) {
+                                form.reportValidity();
+                                return;
+                            }
+
+                            const payload = {
+                                id_socio_parceiro: parseInt($('#idParceiro').val(), 10),
+                                razao_social: $('#razao_socialEditar').val().trim(),
+                                cnpj: $('#cnpjEditar').val().replace(/\D/g, ''),
+                                telefone: $('#telefoneEditar').val().replace(/\D/g, ''),
+                                email: $('#emailEditar').val().trim(),
+                                endereco: {
+                                    cep: $('#cepEditar').val().trim(),
+                                    estado: $('#estadoEditar').val().trim(),
+                                    cidade: $('#cidadeEditar').val().trim(),
+                                    bairro: $('#bairroEditar').val().trim(),
+                                    logradouro: $('#ruaEditar').val().trim(),
+                                    numero_endereco: $('#numero_enderecoEditar').val().trim(),
+                                    complemento: $('#complementoEditar').val().trim()
+                                },
+                                localizacao: $('#localizacaoEditar').val().trim(),
+                                divulgacao: $('#divulgacaoEditar').val().trim()
                             };
 
-                            requisicaoAjax(dados, function() {
+                            try {
+
+                                const response = await authenticatedRequest(() =>
+                                    fetch(`${apiServer}/socios/parceiros`, {
+                                        method: 'PUT',
+                                        credentials: 'include',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-Client-Type': 'web'
+                                        },
+                                        body: JSON.stringify(payload)
+                                    })
+                                );
+
+                                const result = await response.json();
+
+                                if (!response.ok) {
+                                    mostrarNotificacao(
+                                        result.error || 'Erro ao atualizar parceiro.',
+                                        'error',
+                                        5000
+                                    );
+                                    return;
+                                }
+
+                                // Executar apenas em caso de sucesso
                                 $('#modalEditarParceiro').modal('hide');
                                 carregarParceiros();
-                                mostrarNotificacao('Regra atualizada com sucesso!', 'success', 3000);
-                            });
+
+                                mostrarNotificacao(
+                                    'Parceiro atualizado com sucesso!',
+                                    'success',
+                                    3000
+                                );
+
+                            } catch (e) {
+
+                                mostrarNotificacao(
+                                    'Não foi possível conectar à API.',
+                                    'error',
+                                    5000
+                                );
+
+                            }
+
                         });
 
                         // Evento: Confirmar deleção
@@ -507,7 +624,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                     function carregarParceiros() {
                         $.ajax({
                             type: 'GET',
-                            url: '<?=API_BASE_URL . 'socios/parceiros'?>',
+                            url: '<?= API_BASE_URL . 'socios/parceiros' ?>',
                             success: function(data) {
                                 console.log(data);
                                 renderizarTabela(data.socio_parceiros);
@@ -549,7 +666,28 @@ require_once ROOT . "/html/personalizacao_display.php";
                                         <td class="text-center">${parceiro.razao_social}</td>
                                         <td class="text-center">${statusBadge}</td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-info" onclick="editarRegra(${parceiro.id})" title="Editar"><i class="fa fa-edit"></i></button>
+                                            <button
+                                                class="btn btn-sm btn-info btn-editar"
+                                                title="Editar"
+
+                                                data-id="${parceiro.id}"
+                                                data-cnpj="${parceiro.cnpj}"
+                                                data-razao-social="${parceiro.razao_social}"
+                                                data-telefone="${parceiro.telefone}"
+                                                data-email="${parceiro.email}"
+                                                data-divulgacao="${parceiro.divulgacao}"
+
+                                                data-cep="${parceiro.cep}"
+                                                data-rua="${parceiro.logradouro}"
+                                                data-numero-endereco="${parceiro.numero_endereco}"
+                                                data-complemento="${parceiro.complemento}"
+                                                data-bairro="${parceiro.bairro}"
+                                                data-estado="${parceiro.estado}"
+                                                data-cidade="${parceiro.cidade}"
+                                                data-localizacao="${parceiro.localizacao}">
+
+                                                <i class="fa fa-edit"></i>
+                                            </button>
                                             ${botaoToggleStatus}
                                             <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar"><i class="fa fa-trash"></i></button>
                                         </td>
@@ -559,46 +697,96 @@ require_once ROOT . "/html/personalizacao_display.php";
                         }
 
                         $('#corpoTabela').html(html);
-                    }
 
-                    function editarRegra(id) {
-                        $.ajax({
-                            type: 'POST',
-                            url: '<?php echo WWW; ?>controle/control.php',
-                            contentType: 'application/json',
-                            data: JSON.stringify({
-                                nomeClasse: 'SocioBenefitControle',
-                                metodo: 'getBenefitRules'
-                            }),
-                            dataType: 'json',
-                            success: function(regras) {
-                                const regra = regras.find(r => r.id === id);
-                                if (regra) {
-                                    $('#idRegra').val(regra.id);
-                                    $('#valuePerPointEditar').val(regra.valuePerPoint);
-                                    $('#maxPointsConcurrentEditar').val(regra.maxPointsConcurrent);
-                                    $('#durationPointMonthsEditar').val(regra.durationPointMonths);
-                                    $('#analysisWindowMonthsEditar').val(regra.analysisWindowMonths);
-                                    $('#activeEditar').prop('checked', regra.active);
-                                    $('#modalEditarParceiro').modal('show');
-                                }
-                            }
+                        $('#corpoTabela').on('click', '.btn-editar', function() {
+                            editarParceiro(this);
                         });
                     }
 
-                    function alternarStatus(id, ativar) {
-                        const metodo = ativar ? 'activateBenefitRule' : 'deactivateBenefitRule';
-                        const dados = {
-                            nomeClasse: 'SocioBenefitControle',
-                            metodo: metodo,
-                            id: id
+                    function editarParceiro(botao) {
+                        const $botao = $(botao);
+
+                        // Limpa o formulário
+                        $('#formularioEditarParceiro')[0].reset();
+
+                        // Identificação
+                        $('#idParceiro').val($botao.data('id'));
+
+                        // Dados principais
+                        $('#cnpjEditar').val($botao.data('cnpj'));
+                        $('#razao_socialEditar').val($botao.data('razao-social'));
+                        $('#telefoneEditar').val($botao.data('telefone'));
+                        $('#emailEditar').val($botao.data('email'));
+                        $('#divulgacaoEditar').val($botao.data('divulgacao'));
+
+                        // Endereço
+                        $('#cepEditar').val($botao.data('cep'));
+                        $('#ruaEditar').val($botao.data('rua'));
+                        $('#numero_enderecoEditar').val($botao.data('numero-endereco'));
+                        $('#complementoEditar').val($botao.data('complemento'));
+                        $('#bairroEditar').val($botao.data('bairro'));
+                        $('#estadoEditar').val($botao.data('estado'));
+                        $('#cidadeEditar').val($botao.data('cidade'));
+                        $('#localizacaoEditar').val($botao.data('localizacao'));
+
+                        // Limpa o campo de upload de arquivo
+                        $('#logoEditar').val('');
+
+                        // Abre o modal
+                        $('#modalEditarParceiro').modal('show');
+                    }
+
+                    async function alternarStatus(id, ativar) {
+
+                        const payload = {
+                            id_socio_parceiro: id,
+                            novo_status: ativar ? 1 : 0
                         };
 
-                        requisicaoAjax(dados, function() {
+                        try {
+
+                            const response = await authenticatedRequest(() =>
+                                fetch(`${apiServer}/socios/parceiros`, {
+                                    method: 'PATCH',
+                                    credentials: 'include',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-Client-Type': 'web'
+                                    },
+                                    body: JSON.stringify(payload)
+                                })
+                            );
+
+                            const result = await response.json();
+
+                            if (!response.ok) {
+                                mostrarNotificacao(
+                                    result.error || result.message || 'Erro ao alterar o status do parceiro.',
+                                    'error',
+                                    5000
+                                );
+                                return;
+                            }
+
                             carregarParceiros();
-                            const msg = ativar ? 'Parceiro ativado com sucesso!' : 'Parceiro desativado com sucesso!';
-                            mostrarNotificacao(msg, 'success', 3000);
-                        });
+
+                            mostrarNotificacao(
+                                ativar ?
+                                'Parceiro ativado com sucesso!' :
+                                'Parceiro desativado com sucesso!',
+                                'success',
+                                3000
+                            );
+
+                        } catch (e) {
+
+                            mostrarNotificacao(
+                                'Não foi possível conectar à API.',
+                                'error',
+                                5000
+                            );
+
+                        }
                     }
 
                     function confirmarDelecao(id) {
