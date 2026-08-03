@@ -1367,4 +1367,81 @@ class Util
         }
         return $datasVencimento;
     }
+
+    /**
+     * Sanitiza HTML de conteúdo rico (ex: texto de despacho vindo do CKEditor),
+     * mantendo apenas tags de formatação em uma allowlist e removendo todos os
+     * atributos (inclusive style e event handlers). Tags fora da allowlist são
+     * desembrulhadas (mantém o conteúdo/texto), exceto tags perigosas
+     * (script, style, iframe, object, embed), que são removidas por completo.
+     */
+    public static function sanitizarHtmlRico(?string $html): string
+    {
+        if (!is_string($html) || $html === '') {
+            return '';
+        }
+
+        $tagsPermitidas = ['p', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'];
+        $tagsRemoverConteudo = ['script', 'style', 'iframe', 'object', 'embed', 'noscript'];
+
+        $dom = new DOMDocument();
+        $erroAnterior = libxml_use_internal_errors(true);
+        $dom->loadHTML(
+            '<?xml encoding="utf-8" ?><div>' . $html . '</div>',
+            LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($erroAnterior);
+
+        $raiz = $dom->getElementsByTagName('div')->item(0);
+
+        if (!$raiz) {
+            return '';
+        }
+
+        self::sanitizarNoHtml($raiz, $tagsPermitidas, $tagsRemoverConteudo);
+
+        $resultado = '';
+        foreach (iterator_to_array($raiz->childNodes) as $filho) {
+            $resultado .= $dom->saveHTML($filho);
+        }
+
+        return $resultado;
+    }
+
+    private static function sanitizarNoHtml(DOMNode $no, array $tagsPermitidas, array $tagsRemoverConteudo): void
+    {
+        foreach (iterator_to_array($no->childNodes) as $filho) {
+            if ($filho->nodeType === XML_COMMENT_NODE) {
+                $no->removeChild($filho);
+                continue;
+            }
+
+            if ($filho->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($filho->nodeName);
+
+            if (in_array($tag, $tagsRemoverConteudo, true)) {
+                $no->removeChild($filho);
+                continue;
+            }
+
+            if ($filho->hasAttributes()) {
+                foreach (iterator_to_array($filho->attributes) as $atributo) {
+                    $filho->removeAttribute($atributo->nodeName);
+                }
+            }
+
+            self::sanitizarNoHtml($filho, $tagsPermitidas, $tagsRemoverConteudo);
+
+            if (!in_array($tag, $tagsPermitidas, true)) {
+                while ($filho->firstChild) {
+                    $no->insertBefore($filho->firstChild, $filho);
+                }
+                $no->removeChild($filho);
+            }
+        }
+    }
 }
