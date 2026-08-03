@@ -1,4 +1,5 @@
 <?php
+
 namespace api\modules\Socio;
 
 use api\utils\UuidGenerator;
@@ -153,13 +154,13 @@ class SocioRepository
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function insertSocioParceiro(ParceiroInstitucional $parceiro): bool
+    public function insertSocioParceiro(ParceiroInstitucional $parceiro): int|false
     {
         //adaptar query
 
         $query = "INSERT INTO socio_parceiro_institucional (id_socio_benefit_rule, id_pessoa, divulgacao, localizacao, created_at, updated_at) VALUES (:idSocioBenefitRule, :idPessoa, :divulgacao, :localizacao, :created_at, :updated_at)";
         $stmt = $this->db->prepare($query);
-        return $stmt->execute([
+        $stmt->execute([
             ':idSocioBenefitRule' => 1, //temporariamente fixo
             ':idPessoa' => $parceiro->getPessoa()->getId(),
             ':divulgacao' => $parceiro->getDivulgacao(),
@@ -167,6 +168,8 @@ class SocioRepository
             ':created_at' => date('Y-m-d H:i:s'),
             ':updated_at' => date('Y-m-d H:i:s')
         ]);
+
+        return $this->db->lastInsertId() ? (int)$this->db->lastInsertId() : false;
     }
 
     public function getSociosParceiros(): array
@@ -295,5 +298,54 @@ class SocioRepository
             ':status' => $status,
             ':id' => $id
         ]);
+    }
+
+    public function uploadLogoSocioParceiro(int $id, \Psr\Http\Message\UploadedFileInterface $uploadedFile): bool
+    {
+        $query = "
+            UPDATE pessoa
+            SET imagem = :imagem
+            WHERE id_pessoa = (
+                SELECT id_pessoa
+                FROM socio_parceiro_institucional
+                WHERE id = :id
+            )
+        ";
+
+        $stmt = $this->db->prepare($query);
+
+        $conteudo = $uploadedFile->getStream()->getContents();
+        $mime = $uploadedFile->getClientMediaType();
+
+        //modelo padrão de armazenamento de imagens no banco de dados do projeto
+        $imagem = sprintf(
+            'data:%s;base64,%s',
+            $mime,
+            base64_encode($conteudo)
+        );
+
+        $stmt->bindValue(':imagem', $imagem, \PDO::PARAM_STR);
+        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
+    public function getLogoSocioParceiro(int $id): ?array
+    {
+        $query = "
+            SELECT p.imagem
+            FROM pessoa p
+            JOIN socio_parceiro_institucional spi ON spi.id_pessoa = p.id_pessoa
+            WHERE spi.id = :id
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($query);
+        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $result ?? null;
     }
 }

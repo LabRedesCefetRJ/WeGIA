@@ -233,27 +233,15 @@ class SocioService implements SocioServiceInterface
         }
     }
 
-    public function insertSocioParceiro(ParceiroInstitucional $parceiro): array
+    public function insertSocioParceiro(ParceiroInstitucional $parceiro): array|false
     {
-        try {
-            $result = $this->socioRepository->insertSocioParceiro($parceiro);
-            if ($result) {
-                return [
-                    'success' => true,
-                    'message' => 'Socio parceiro inserted successfully'
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Failed to insert socio parceiro'
-                ];
-            }
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Error inserting socio parceiro: ' . $e->getMessage()
-            ];
+        $result = $this->socioRepository->insertSocioParceiro($parceiro);
+
+        if ($result === false || $result < 1) {
+            return false;
         }
+
+        return ['id' => $result];
     }
 
     public function getSocioParceiros(): array
@@ -387,6 +375,34 @@ class SocioService implements SocioServiceInterface
                 'code' => 500
             ];
         }
+    }
+
+    public function uploadLogoSocioParceiro(int $id, \Psr\Http\Message\UploadedFileInterface $uploadedFile): bool
+    {
+        return $this->socioRepository->uploadLogoSocioParceiro($id, $uploadedFile);
+    }
+
+    public function getLogoSocioParceiro(int $id): ?array
+    {
+        $result = $this->socioRepository->getLogoSocioParceiro($id);
+
+        if (!$result || empty($result['imagem'])) {
+            return null;
+        }
+
+        // Se armazenou como Data URI
+        if (preg_match('/^data:(.+);base64,(.+)$/', $result['imagem'], $matches)) {
+            return [
+                'mime' => $matches[1],
+                'conteudo' => base64_decode($matches[2]),
+            ];
+        }
+
+        // Compatibilidade: Base64 puro
+        return [
+            'mime' => 'image/png', // ajuste se necessário
+            'conteudo' => base64_decode($result['imagem']),
+        ];
     }
 
     private function censurarCpf(?string $cpf): ?string

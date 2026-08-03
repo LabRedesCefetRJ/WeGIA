@@ -129,6 +129,16 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
         .box-body {
             padding: 0;
         }
+
+        .logo-parceiro {
+            width: 48px;
+            height: 48px;
+            object-fit: contain;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 2px;
+        }
     </style>
 </head>
 
@@ -196,9 +206,9 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                         <thead>
                                             <tr>
                                                 <th width="5%" class="text-center">#</th>
-                                                <th>Logo</th>
+                                                <th style="width: 60px;" class="text-center">Logo</th>
                                                 <th width="15%" class="text-center">CNPJ</th>
-                                                <th width="15%" class="text-center">Razão Social</th>
+                                                <th class="text-center">Razão Social</th>
                                                 <th width="10%" class="text-center">Status</th>
                                                 <th width="25%" class="text-center">Ações</th>
                                             </tr>
@@ -503,6 +513,35 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                 }
 
                                 // Executar apenas em caso de sucesso
+
+                                //caso exista logo, enviar para o endpoint de upload
+                                const logoFile = $('#logo')[0].files[0];
+                                if (logoFile) {
+                                    const formData = new FormData();
+                                    formData.append('logo', logoFile);
+                                    formData.append('id_socio_parceiro', result.socio_parceiro.id);
+
+                                    try {
+                                        await authenticatedRequest(() =>
+                                            fetch(`${apiServer}socios/parceiros/logo`, {
+                                                method: 'POST',
+                                                credentials: 'include',
+                                                headers: {
+                                                    'X-Client-Type': 'web'
+                                                },
+                                                body: formData
+                                            })
+                                        );
+                                    } catch (e) {
+                                        console.error('Erro ao enviar o logo:', e);
+                                        mostrarNotificacao(
+                                            'Não foi possível enviar o logo.',
+                                            'error',
+                                            5000
+                                        );
+                                    }
+                                }
+
                                 $('#modalCriarParceiro').modal('hide');
                                 form.reset();
                                 carregarParceiros();
@@ -581,6 +620,35 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                 }
 
                                 // Executar apenas em caso de sucesso
+
+                                //caso exista logo, enviar para o endpoint de upload
+                                const logoFile = $('#logoEditar')[0].files[0];
+                                if (logoFile) {
+                                    const formData = new FormData();
+                                    formData.append('logo', logoFile);
+                                    formData.append('id_socio_parceiro', payload.id_socio_parceiro);
+
+                                    try {
+                                        await authenticatedRequest(() =>
+                                            fetch(`${apiServer}socios/parceiros/logo`, {
+                                                method: 'POST',
+                                                credentials: 'include',
+                                                headers: {
+                                                    'X-Client-Type': 'web'
+                                                },
+                                                body: formData
+                                            })
+                                        );
+                                    } catch (e) {
+                                        console.error('Erro ao enviar o logo:', e);
+                                        mostrarNotificacao(
+                                            'Não foi possível enviar o logo.',
+                                            'error',
+                                            5000
+                                        );
+                                    }
+                                }
+
                                 $('#modalEditarParceiro').modal('hide');
                                 carregarParceiros();
 
@@ -651,48 +719,41 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         } else {
                             parceiros.forEach(function(parceiro, index) {
                                 const statusBadge = parceiro.ativo ?
-                                    '<span class="label label-success" style="font-size: 13px; padding: 6px 10px;">Ativo</span>' :
-                                    '<span class="label label-danger" style="font-size: 13px; padding: 6px 10px;">Inativo</span>';
+                                    `
+                                        <div style="display:flex;justify-content:center;align-items:center;">
+                                            <span class="label label-success" style="font-size:13px;padding:6px 10px;">
+                                                Ativo
+                                            </span>
+                                        </div>
+                                    ` :
+                                                                    `
+                                        <div style="display:flex;justify-content:center;align-items:center;">
+                                            <span class="label label-danger" style="font-size:13px;padding:6px 10px;">
+                                                Inativo
+                                            </span>
+                                        </div>
+                                    `;
 
                                 const botaoToggleStatus = parceiro.ativo ?
                                     `<button class="btn btn-sm btn-warning" onclick="alternarStatus(${parceiro.id}, false)" title="Desativar"><i class="fa fa-toggle-on"></i> Desativar</button>` :
                                     `<button class="btn btn-sm btn-success" onclick="alternarStatus(${parceiro.id}, true)" title="Ativar"><i class="fa fa-toggle-off"></i> Ativar</button>`;
 
                                 html += `
-                                    <tr>
-                                        <td class="text-center">${parceiro.id}</td>
-                                        <td class="text-center">${parceiro.logo}</td>
-                                        <td class="text-center">${parceiro.cnpj}</td>
-                                        <td class="text-center">${parceiro.razao_social}</td>
-                                        <td class="text-center">${statusBadge}</td>
-                                        <td class="text-center">
-                                            <button
-                                                class="btn btn-sm btn-info btn-editar"
-                                                title="Editar"
-
-                                                data-id="${parceiro.id}"
-                                                data-cnpj="${parceiro.cnpj}"
-                                                data-razao-social="${parceiro.razao_social}"
-                                                data-telefone="${parceiro.telefone}"
-                                                data-email="${parceiro.email}"
-                                                data-divulgacao="${parceiro.divulgacao}"
-
-                                                data-cep="${parceiro.cep}"
-                                                data-rua="${parceiro.logradouro}"
-                                                data-numero-endereco="${parceiro.numero_endereco}"
-                                                data-complemento="${parceiro.complemento}"
-                                                data-bairro="${parceiro.bairro}"
-                                                data-estado="${parceiro.estado}"
-                                                data-cidade="${parceiro.cidade}"
-                                                data-localizacao="${parceiro.localizacao}">
-
-                                                <i class="fa fa-edit"></i>
-                                            </button>
-                                            ${botaoToggleStatus}
-                                            <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar"><i class="fa fa-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                `;
+                                        <tr>
+                                            <td class="text-center">${parceiro.id}</td>
+                                            <td class="text-center" style="width: 60px;">
+                                                <img
+                                                    src="${apiServer}/socios/parceiros/${parceiro.id}/logo"
+                                                    alt="Logo"
+                                                    class="logo-parceiro"
+                                                    onerror="this.outerHTML='<div class=&quot;text-muted&quot; style=&quot;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:11px;&quot;>Sem logo</div>';">
+                                            </td>
+                                            <td class="text-center">${parceiro.cnpj}</td>
+                                            <td class="text-center">${parceiro.razao_social}</td>
+                                            <td class="text-center">${statusBadge}</td> 
+                                            <td class="text-center"> <button class="btn btn-sm btn-info btn-editar" title="Editar" data-id="${parceiro.id}" data-cnpj="${parceiro.cnpj}" data-razao-social="${parceiro.razao_social}" data-telefone="${parceiro.telefone}" data-email="${parceiro.email}" data-divulgacao="${parceiro.divulgacao}" data-cep="${parceiro.cep}" data-rua="${parceiro.logradouro}" data-numero-endereco="${parceiro.numero_endereco}" data-complemento="${parceiro.complemento}" data-bairro="${parceiro.bairro}" data-estado="${parceiro.estado}" data-cidade="${parceiro.cidade}" data-localizacao="${parceiro.localizacao}"> <i class="fa fa-edit"></i> </button> ${botaoToggleStatus} <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar"><i class="fa fa-trash"></i></button> </td>
+                                        </tr>
+                                    `;
                             });
                         }
 

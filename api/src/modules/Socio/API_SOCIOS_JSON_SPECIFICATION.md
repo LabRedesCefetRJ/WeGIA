@@ -600,8 +600,7 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
 {
   "success": true,
   "socio_parceiro": {
-    "success": true,
-    "message": "Socio parceiro inserted successfully"
+    "id": 1
   }
 }
 ```

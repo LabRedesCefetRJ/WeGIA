@@ -112,7 +112,7 @@ class SocioController
             return $response->withStatus(201)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            if($this->pdo->inTransaction())
+            if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
 
             $response->getBody()->write(json_encode([
@@ -563,7 +563,7 @@ class SocioController
     public function insertSocioParceiro(Request $request, Response $response)
     {
         try {
-            $data = $request->getParsedBody() ?? [];
+            $data = $request->getParsedBody() ?? []; //mudar para multipart/form-data se for necessário enviar arquivos
             $cnpj = trim((string)($data['cnpj'] ?? ''));
             $razaoSocial = trim((string)($data['razao_social'] ?? ''));
 
@@ -594,6 +594,16 @@ class SocioController
                 )
             );
 
+            if(!$socioParceiro) {
+                $this->pdo->rollBack();
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao criar sócio parceiro'
+                ]));
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
             $response->getBody()->write(json_encode([
                 'success' => true,
                 'socio_parceiro' => $socioParceiro
@@ -603,7 +613,7 @@ class SocioController
             return $response->withStatus(201)
                 ->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
-            if($this->pdo->inTransaction())
+            if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
 
             $statusCode = (int)($e->getCode() ?: 500);
@@ -616,6 +626,117 @@ class SocioController
             ]));
 
             return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function uploadLogoSocioParceiro(Request $request, Response $response)
+    {
+        try {
+            $uploadedFiles = $request->getUploadedFiles();
+            $uploadedFile = $uploadedFiles['logo'] ?? null;
+
+            if (!$uploadedFile || $uploadedFile->getError() !== UPLOAD_ERR_OK) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao fazer upload do arquivo de logo.'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $parceiroId = (int)($request->getParsedBody()['id_socio_parceiro'] ?? 0);
+
+            if ($parceiroId <= 0) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do sócio parceiro é obrigatório'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            if (!$this->socioService->uploadLogoSocioParceiro($parceiroId, $uploadedFile)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao salvar o arquivo de logo.'
+                ]));
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Return success response with the file path or URL
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => 'Logo uploaded successfully.',
+                'file_path' => API_BASE_URL . 'socios/parceiros/logo/' . $parceiroId,
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function getLogoSocioParceiro(Request $request, Response $response, array $args)
+    {
+        try {
+            $idSocioParceiro = (int)($args['id'] ?? 0);
+
+            if ($idSocioParceiro <= 0) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do sócio parceiro é obrigatório'
+                ]));
+
+                return $response
+                    ->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $logo = $this->socioService->getLogoSocioParceiro($idSocioParceiro);
+
+            if ($logo === null) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Logo do sócio parceiro não encontrada'
+                ]));
+
+                return $response
+                    ->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write($logo['conteudo']);
+
+            return $response
+                ->withHeader('Content-Type', $logo['mime'])
+                ->withHeader('Content-Length', (string) strlen($logo['conteudo']))
+                ->withHeader('Content-Disposition', 'inline')
+                ->withStatus(200);
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = ($statusCode >= 100 && $statusCode < 600) ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response
+                ->withStatus($statusCode)
                 ->withHeader('Content-Type', 'application/json');
         }
     }
