@@ -202,10 +202,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 						.text("Anexos")));
 		});
 		$.each(arquivo, function(i, item) {
+			var linkAnexo = $("<a>")
+				.attr("href", "<?php echo WWW; ?>html/memorando/exibe_anexo.php?id_anexo=" + encodeURIComponent(item.id_anexo) + "&extensao=" + encodeURIComponent(item.extensao) + "&nome=" + encodeURIComponent(item.nome))
+				.text(item.nome + "." + item.extensao);
+
 			$("#" + item.id_despacho)
 				.append($("<tr id=link>")
 					.append($("<td colspan=4>")
-						.html("<a href='<?php echo WWW; ?>html/memorando/exibe_anexo.php?id_anexo=" + item.id_anexo + "&extensao=" + item.extensao + "&nome=" + item.nome + "'>" + item.nome + "." + item.extensao + "</a>")));
+						.append(linkAnexo)));
 		});
 
 		$("#header").load("<?php echo WWW; ?>html/header.php");
