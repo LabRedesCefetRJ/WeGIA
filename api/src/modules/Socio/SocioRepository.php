@@ -348,4 +348,11 @@ class SocioRepository
 
         return $result ?? null;
     }
+
+    public function deleteSocioParceiro(int $id): bool
+    {
+        $query = "DELETE FROM socio_parceiro_institucional WHERE id = :id";
+        $stmt = $this->db->prepare($query);
+        return $stmt->execute([':id' => $id]);
+    }
 }

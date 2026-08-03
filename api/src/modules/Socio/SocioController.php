@@ -630,6 +630,52 @@ class SocioController
         }
     }
 
+    public function deleteSocioParceiro(Request $request, Response $response, array $args)
+    {
+        try {
+            $idSocioParceiro = (int)($args['id'] ?? 0);
+
+            if ($idSocioParceiro <= 0) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do parceiro institucional é obrigatório'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $result = $this->socioService->deleteSocioParceiro($idSocioParceiro);
+            if (!$result['success']) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => $result['message']
+                ]));
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => 'Parceiro institucional deletado com sucesso.'
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     public function uploadLogoSocioParceiro(Request $request, Response $response)
     {
         try {

@@ -452,7 +452,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                 </div>
 
                 <script>
-                    let regraParaDeletar = null;
+                    let parceiroParaDeletar = null;
 
                     //Alterar scripts para parceiros institucionais
                     $(document).ready(function() {
@@ -671,21 +671,57 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         });
 
                         // Evento: Confirmar deleção
-                        $('#btnConfirmarDelecao').click(function() {
-                            if (regraParaDeletar) {
-                                const dados = {
-                                    nomeClasse: 'SocioBenefitControle',
-                                    metodo: 'deleteBenefitRule',
-                                    id: regraParaDeletar
-                                };
+                        $('#btnConfirmarDelecao').click(async function() {
 
-                                requisicaoAjax(dados, function() {
-                                    $('#modalConfirmarDelecao').modal('hide');
-                                    regraParaDeletar = null;
-                                    carregarParceiros();
-                                    mostrarNotificacao('Regra deletada com sucesso!', 'success', 3000);
-                                });
+                            if (!parceiroParaDeletar) {
+                                return;
                             }
+
+                            try {
+
+                                const response = await authenticatedRequest(() =>
+                                    fetch(`${apiServer}/socios/parceiros/${parceiroParaDeletar}`, {
+                                        method: 'DELETE',
+                                        credentials: 'include',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-Client-Type': 'web'
+                                        }
+                                    })
+                                );
+
+                                const result = await response.json();
+
+                                if (!response.ok) {
+                                    mostrarNotificacao(
+                                        result.error || result.message || 'Erro ao excluir parceiro.',
+                                        'error',
+                                        5000
+                                    );
+                                    return;
+                                }
+
+                                $('#modalConfirmarDelecao').modal('hide');
+                                parceiroParaDeletar = null;
+
+                                carregarParceiros();
+
+                                mostrarNotificacao(
+                                    'Parceiro excluído com sucesso!',
+                                    'success',
+                                    3000
+                                );
+
+                            } catch (e) {
+
+                                mostrarNotificacao(
+                                    'Não foi possível conectar à API.',
+                                    'error',
+                                    5000
+                                );
+
+                            }
+
                         });
                     });
 
@@ -726,7 +762,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                             </span>
                                         </div>
                                     ` :
-                                                                    `
+                                    `
                                         <div style="display:flex;justify-content:center;align-items:center;">
                                             <span class="label label-danger" style="font-size:13px;padding:6px 10px;">
                                                 Inativo
@@ -851,7 +887,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                     }
 
                     function confirmarDelecao(id) {
-                        regraParaDeletar = id;
+                        parceiroParaDeletar = id;
                         $('#modalConfirmarDelecao').modal('show');
                     }
 

@@ -244,6 +244,29 @@ class SocioService implements SocioServiceInterface
         return ['id' => $result];
     }
 
+    public function deleteSocioParceiro(int $id): array
+    {
+        try {
+            $result = $this->socioRepository->deleteSocioParceiro($id);
+            if ($result) {
+                return [
+                    'success' => true,
+                    'message' => 'Socio parceiro deleted successfully'
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to delete socio parceiro'
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error deleting socio parceiro: ' . $e->getMessage()
+            ];
+        }
+    }
+
     public function getSocioParceiros(): array
     {
         try {

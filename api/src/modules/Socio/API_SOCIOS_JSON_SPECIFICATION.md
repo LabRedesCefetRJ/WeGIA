@@ -906,9 +906,55 @@ Atualiza o status de um parceiro institucional.
 }
 ```
 
+## 12. DELETE `/socios/parceiros/{id}`
+
+Exclui um parceiro institucional.
+
+### Parâmetros
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+- **Content-Type** (header, obrigatório): `application/json`
+
+
+### Resposta - 200 OK
+```json
+{
+  "success": true,
+  "message": "Parceiro institucional deletado com sucesso."
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Indica que a exclusão foi concluída com sucesso |
+| `message` | string | Mensagem descritiva do resultado |
+
+### Resposta - 400 Bad Request
+```json
+{
+  "success": false,
+  "message": "ID do parceiro institucional é obrigatório"
+}
+```
+
+### Resposta - 403 Forbidden
+```json
+{
+  "error": "Usuário não possui permissão para acessar este recurso"
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "success": false,
+  "error": "Mensagem de erro detalhada",
+  "code": 500
+}
+```
+
 ---
 
-## 12. GET `/socios/{id}/beneficios`
+## 13. GET `/socios/{id}/beneficios`
 
 Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
 

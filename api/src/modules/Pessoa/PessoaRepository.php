@@ -1,13 +1,15 @@
 <?php
 
 namespace api\modules\Pessoa;
+
 use PDO;
 
 class PessoaRepository
 {
     private PDO $pdo;
 
-    public function __construct(PDO $pdo){
+    public function __construct(PDO $pdo)
+    {
         $this->pdo = $pdo;
     }
 
@@ -94,28 +96,72 @@ class PessoaRepository
 
     public function createJuridica(Pessoa $pessoa): int|false
     {
-        $query = "INSERT INTO pessoa (nome, cpf, telefone, email, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
+        try {
+
+            $query = "INSERT INTO pessoa (nome, cpf, telefone, email, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento) 
                   VALUES (:razao_social, :cnpj, :telefone, :email, :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento)";
-        $stmt = $this->pdo->prepare($query);
+            $stmt = $this->pdo->prepare($query);
 
-        $resultado = $stmt->execute([
-            ':razao_social' => $pessoa->getNome(),
-            ':cnpj' => $pessoa->getCpf(),
-            ':telefone' => $pessoa->getTelefone(),
-            ':email' => $pessoa->getEmail(),
-            ':cep' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getCep() : null,
-            ':estado' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getEstado() : null,
-            ':cidade' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getCidade() : null,
-            ':bairro' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getBairro() : null,
-            ':logradouro' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getLogradouro() : null,
-            ':numero_endereco' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getNumero() : null,
-            ':complemento' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getComplemento() : null
-        ]);
+            $resultado = $stmt->execute([
+                ':razao_social' => $pessoa->getNome(),
+                ':cnpj' => $pessoa->getCpf(),
+                ':telefone' => $pessoa->getTelefone(),
+                ':email' => $pessoa->getEmail(),
+                ':cep' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getCep() : null,
+                ':estado' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getEstado() : null,
+                ':cidade' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getCidade() : null,
+                ':bairro' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getBairro() : null,
+                ':logradouro' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getLogradouro() : null,
+                ':numero_endereco' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getNumero() : null,
+                ':complemento' => $pessoa->getEndereco() ? $pessoa->getEndereco()->getComplemento() : null
+            ]);
 
-        if (!$resultado || !$this->pdo->lastInsertId()) {
-            return false;
+            if (!$resultado || !$this->pdo->lastInsertId()) {
+                return false;
+            }
+
+            return (int)$this->pdo->lastInsertId();
+        } catch (\Exception $e) {
+
+            if ($e->getCode() === '23000') { // Código de erro para violação de chave única
+                $stmt = $this->pdo->prepare("SELECT id_pessoa FROM pessoa WHERE cpf = :cpf LIMIT 1");
+                $stmt->execute([':cpf' => $pessoa->getCpf()]);
+                $id = $stmt->fetchColumn();
+
+                $stmt = $this->pdo->prepare("
+                    UPDATE pessoa
+                    SET
+                        nome = COALESCE(NULLIF(nome, ''), :nome),
+                        telefone = COALESCE(NULLIF(telefone, ''), :telefone),
+                        email = COALESCE(NULLIF(email, ''), :email),
+                        cep = COALESCE(NULLIF(cep, ''), :cep),
+                        estado = COALESCE(NULLIF(estado, ''), :estado),
+                        cidade = COALESCE(NULLIF(cidade, ''), :cidade),
+                        bairro = COALESCE(NULLIF(bairro, ''), :bairro),
+                        logradouro = COALESCE(NULLIF(logradouro, ''), :logradouro),
+                        numero_endereco = COALESCE(NULLIF(numero_endereco, ''), :numero_endereco),
+                        complemento = COALESCE(NULLIF(complemento, ''), :complemento)
+                    WHERE id_pessoa = :id
+                ");
+
+                $stmt->execute([
+                    ':id' => $id,
+                    ':nome' => $pessoa->getNome(),
+                    ':telefone' => $pessoa->getTelefone(),
+                    ':email' => $pessoa->getEmail(),
+                    ':cep' => $pessoa->getEndereco()?->getCep(),
+                    ':estado' => $pessoa->getEndereco()?->getEstado(),
+                    ':cidade' => $pessoa->getEndereco()?->getCidade(),
+                    ':bairro' => $pessoa->getEndereco()?->getBairro(),
+                    ':logradouro' => $pessoa->getEndereco()?->getLogradouro(),
+                    ':numero_endereco' => $pessoa->getEndereco()?->getNumero(),
+                    ':complemento' => $pessoa->getEndereco()?->getComplemento(),
+                ]);
+
+                return $id !== false ? (int) $id : false;
+            }
+
+            throw new \Exception("Erro ao criar pessoa jurídica: " . $e->getMessage(), 500);
         }
-
-        return (int)$this->pdo->lastInsertId();
     }
 }
