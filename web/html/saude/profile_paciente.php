@@ -2303,14 +2303,12 @@ try {
                                 CRM <sup class="obrig">*</sup>
                               </label>
                               <input
-                                type="text"
+                                type="number"
                                 class="form-control"
                                 name="crm_medico"
                                 id="crmMedicoModal"
                                 maxlength="30"
                                 onkeypress="return Onlynumbers(event)"
-                                pattern="[1-10]+"
-                                title="apenas números são permitidos"
                                 required>
                             </div>
                           </div>
