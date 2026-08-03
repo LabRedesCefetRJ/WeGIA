@@ -2309,6 +2309,8 @@ try {
                                 id="crmMedicoModal"
                                 maxlength="30"
                                 onkeypress="return Onlynumbers(event)"
+                                pattern="[1-10]+"
+                                title="apenas números são permitidos"
                                 required>
                             </div>
                           </div>
