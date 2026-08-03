@@ -2309,6 +2309,7 @@ try {
                                 id="crmMedicoModal"
                                 maxlength="30"
                                 onkeypress="return Onlynumbers(event)"
+                                oninput="this.value =  this.value.replace(/\D/g,'')"
                                 required>
                             </div>
                           </div>
