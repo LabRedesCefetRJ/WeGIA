@@ -581,7 +581,8 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
     "complemento": "Sala 1"
   },
   "localizacao": "São Paulo - SP",
-  "divulgacao": "Presencial"
+  "divulgacao": "Presencial",
+  "descricao": "Descreva os benefícios da parceria"
 }
 ```
 
@@ -594,6 +595,7 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
 | `endereco` | object | Não | Objeto com dados de endereço |
 | `localizacao` | string | Não | Localização do parceiro |
 | `divulgacao` | string | Não | Forma de divulgação |
+| `descricao` | string | Não | Descrição da parceria |
 
 ### Resposta - 201 Created (Sucesso)
 ```json
@@ -650,6 +652,7 @@ Não há corpo de requisição.
       "ativo": 1,
       "divulgacao": "Presencial",
       "localizacao": "São Paulo - SP",
+      "descricao": "Descrição da parceria",
       "razao_social": "Empresa Exemplo LTDA",
       "cnpj": "12345678000195",
       "telefone": "1133334444",
@@ -724,7 +727,8 @@ Atualiza os dados cadastrais de um parceiro institucional.
     "complemento": "Sala 1"
   },
   "localizacao": "São Paulo - SP",
-  "divulgacao": "Presencial"
+  "divulgacao": "Presencial",
+  "descricao": "Descreva os benefícios da parceria"
 }
 ```
 
@@ -745,6 +749,7 @@ Atualiza os dados cadastrais de um parceiro institucional.
 | `endereco.complemento` | string | Não | Complemento do endereço |
 | `localizacao` | string | Não | Localização exibida do parceiro |
 | `divulgacao` | string | Não | Forma de divulgação do parceiro |
+| `descricao` | string | Não | Descrição da parceria |
 
 > Observação: o campo `numero` pode ser enviado dentro de `endereco` e será mapeado para `numero_endereco` durante a atualização.
 
@@ -759,6 +764,7 @@ Atualiza os dados cadastrais de um parceiro institucional.
     "ativo": 1,
     "divulgacao": "Presencial",
     "localizacao": "São Paulo - SP",
+    "descricao": "Descrição da parceria",
     "razao_social": "Empresa Exemplo LTDA",
     "cnpj": "12345678000195",
     "telefone": "1133334444",
@@ -784,6 +790,7 @@ Atualiza os dados cadastrais de um parceiro institucional.
 | `socio_parceiro.ativo` | integer | Status atual do parceiro |
 | `socio_parceiro.divulgacao` | string | Forma de divulgação do parceiro |
 | `socio_parceiro.localizacao` | string | Localização do parceiro |
+| `socio_parceiro.descricao` | string | Não | Descrição da parceria |
 | `socio_parceiro.razao_social` | string | Razão social atualizada |
 | `socio_parceiro.cnpj` | string | CNPJ atualizado |
 | `socio_parceiro.telefone` | string | Telefone atualizado |

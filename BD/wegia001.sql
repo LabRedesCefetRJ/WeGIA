@@ -1232,19 +1232,20 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio_verification_code` (
 -- -----------------------------------------------------
 -- Table `wegia`.`socio_parceiro_institucional`
 -- -----------------------------------------------------
-CREATE TABLE socio_parceiro_institucional (
-    id INT NOT NULL AUTO_INCREMENT,
+CREATE TABLE `wegia`.`socio_parceiro_institucional` (
+    `id` INT NOT NULL AUTO_INCREMENT,
 
-    id_socio_benefit_rule INT UNSIGNED NOT NULL,
-    id_pessoa INT NOT NULL,
+    `id_socio_benefit_rule` INT UNSIGNED NOT NULL,
+    `id_pessoa` INT NOT NULL,
 
-    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    `ativo` BOOLEAN NOT NULL DEFAULT TRUE,
 
-    localizacao VARCHAR(512) NULL,
-    divulgacao VARCHAR(512) NULL,
+    `localizacao` VARCHAR(512) NULL,
+    `divulgacao` VARCHAR(512) NULL,
+    `descricao` TEXT NULL,
 
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
@@ -1257,13 +1258,13 @@ CREATE TABLE socio_parceiro_institucional (
 
     CONSTRAINT fk_spi_pessoa
         FOREIGN KEY (id_pessoa)
-        REFERENCES pessoa (id_pessoa)
+        REFERENCES `wegia`.`pessoa` (id_pessoa)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
 
     CONSTRAINT fk_spi_benefit_rule
         FOREIGN KEY (id_socio_benefit_rule)
-        REFERENCES socio_benefit_rule (id)
+        REFERENCES `wegia`.`socio_benefit_rule` (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE
 

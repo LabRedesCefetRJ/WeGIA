@@ -9,8 +9,9 @@ class ParceiroInstitucional
     private PessoaInterface $pessoa;
     private string $localizacao;
     private string $divulgacao;
+    private ?string $descricao;
 
-    public function __construct(PessoaInterface $pessoa, string $localizacao, string $divulgacao, ?int $id = null)
+    public function __construct(PessoaInterface $pessoa, string $localizacao, string $divulgacao, ?string $descricao = null, ?int $id = null)
     {
         if ($id !== null)
             $this->id = $id;
@@ -18,6 +19,7 @@ class ParceiroInstitucional
         $this->pessoa = $pessoa;
         $this->localizacao = $localizacao;
         $this->divulgacao = $divulgacao;
+        $this->descricao = $descricao;
     }
 
     public function getId(): int
@@ -38,5 +40,10 @@ class ParceiroInstitucional
     public function getDivulgacao(): string
     {
         return $this->divulgacao;
+    }
+
+    public function getDescricao(): ?string
+    {
+        return $this->descricao;
     }
 }

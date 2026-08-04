@@ -590,7 +590,8 @@ class SocioController
                         $data['endereco'] ?? null,
                     ),
                     $data['localizacao'] ?? '',
-                    $data['divulgacao'] ?? ''
+                    $data['divulgacao'] ?? '',
+                    $data['descricao'] ?? ''
                 )
             );
 
@@ -897,7 +898,7 @@ class SocioController
                     ->withHeader('Content-Type', 'application/json');
             }
 
-            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'endereco'];
+            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'descricao', 'endereco'];
             $temAlteracao = false;
             foreach ($camposAtualizaveis as $campo) {
                 if (array_key_exists($campo, $data)) {

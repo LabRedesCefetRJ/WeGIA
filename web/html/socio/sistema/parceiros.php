@@ -266,6 +266,11 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                         <input type="text" class="form-control" id="divulgacao" name="divulgacao" placeholder="https://site.parceiro.com.br">
                                     </div>
 
+                                    <div class="form-group">
+                                        <label for="descricao">Descrição</label>
+                                        <textarea class="form-control" id="descricao" name="descricao" placeholder="Descrição da parceria" rows="3"></textarea>
+                                    </div>
+
                                     <h4>Endereço</h4>
                                     <div class="box-body">
                                         <div class="row">
@@ -366,6 +371,11 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                     <div class="form-group">
                                         <label for="divulgacaoEditar">Divulgação <i class="fa-solid fa-globe"></i> <i class="fa-brands fa-instagram"></i></label>
                                         <input type="text" class="form-control" id="divulgacaoEditar" name="divulgacao" placeholder="https://site.parceiro.com.br">
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="descricaoEditar">Descrição</label>
+                                        <textarea class="form-control" id="descricaoEditar" name="descricao" placeholder="Descrição da parceria" rows="3"></textarea>
                                     </div>
 
                                     <h4>Endereço</h4>
@@ -484,7 +494,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                     complemento: $('#complemento').val().trim()
                                 },
                                 localizacao: $('#localizacao').val().trim(),
-                                divulgacao: $('#divulgacao').val().trim()
+                                divulgacao: $('#divulgacao').val().trim(),
+                                descricao: $('#descricao').val().trim()
                             };
 
                             try {
@@ -591,7 +602,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                     complemento: $('#complementoEditar').val().trim()
                                 },
                                 localizacao: $('#localizacaoEditar').val().trim(),
-                                divulgacao: $('#divulgacaoEditar').val().trim()
+                                divulgacao: $('#divulgacaoEditar').val().trim(),
+                                descricao: $('#descricaoEditar').val().trim()
                             };
 
                             try {
@@ -787,7 +799,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                             <td class="text-center">${parceiro.cnpj}</td>
                                             <td class="text-center">${parceiro.razao_social}</td>
                                             <td class="text-center">${statusBadge}</td> 
-                                            <td class="text-center"> <button class="btn btn-sm btn-info btn-editar" title="Editar" data-id="${parceiro.id}" data-cnpj="${parceiro.cnpj}" data-razao-social="${parceiro.razao_social}" data-telefone="${parceiro.telefone}" data-email="${parceiro.email}" data-divulgacao="${parceiro.divulgacao}" data-cep="${parceiro.cep}" data-rua="${parceiro.logradouro}" data-numero-endereco="${parceiro.numero_endereco}" data-complemento="${parceiro.complemento}" data-bairro="${parceiro.bairro}" data-estado="${parceiro.estado}" data-cidade="${parceiro.cidade}" data-localizacao="${parceiro.localizacao}"> <i class="fa fa-edit"></i> </button> ${botaoToggleStatus} <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar"><i class="fa fa-trash"></i></button> </td>
+                                            <td class="text-center"> <button class="btn btn-sm btn-info btn-editar" title="Editar" data-id="${parceiro.id}" data-cnpj="${parceiro.cnpj}" data-razao-social="${parceiro.razao_social}" data-telefone="${parceiro.telefone}" data-email="${parceiro.email}" data-divulgacao="${parceiro.divulgacao}" data-descricao="${parceiro.descricao}" data-cep="${parceiro.cep}" data-rua="${parceiro.logradouro}" data-numero-endereco="${parceiro.numero_endereco}" data-complemento="${parceiro.complemento}" data-bairro="${parceiro.bairro}" data-estado="${parceiro.estado}" data-cidade="${parceiro.cidade}" data-localizacao="${parceiro.localizacao}"> <i class="fa fa-edit"></i> </button> ${botaoToggleStatus} <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar"><i class="fa fa-trash"></i></button> </td>
                                         </tr>
                                     `;
                             });
@@ -815,6 +827,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         $('#telefoneEditar').val($botao.data('telefone'));
                         $('#emailEditar').val($botao.data('email'));
                         $('#divulgacaoEditar').val($botao.data('divulgacao'));
+                        $('#descricaoEditar').val($botao.data('descricao'));
 
                         // Endereço
                         $('#cepEditar').val($botao.data('cep'));

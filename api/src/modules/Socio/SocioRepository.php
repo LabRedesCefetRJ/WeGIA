@@ -158,13 +158,14 @@ class SocioRepository
     {
         //adaptar query
 
-        $query = "INSERT INTO socio_parceiro_institucional (id_socio_benefit_rule, id_pessoa, divulgacao, localizacao, created_at, updated_at) VALUES (:idSocioBenefitRule, :idPessoa, :divulgacao, :localizacao, :created_at, :updated_at)";
+        $query = "INSERT INTO socio_parceiro_institucional (id_socio_benefit_rule, id_pessoa, divulgacao, localizacao, descricao, created_at, updated_at) VALUES (:idSocioBenefitRule, :idPessoa, :divulgacao, :localizacao, :descricao, :created_at, :updated_at)";
         $stmt = $this->db->prepare($query);
         $stmt->execute([
             ':idSocioBenefitRule' => 1, //temporariamente fixo
             ':idPessoa' => $parceiro->getPessoa()->getId(),
             ':divulgacao' => $parceiro->getDivulgacao(),
             ':localizacao' => $parceiro->getLocalizacao(),
+            ':descricao' => $parceiro->getDescricao(),
             ':created_at' => date('Y-m-d H:i:s'),
             ':updated_at' => date('Y-m-d H:i:s')
         ]);
@@ -180,6 +181,7 @@ class SocioRepository
                     spi.ativo,
                     spi.divulgacao,
                     spi.localizacao,
+                    spi.descricao,
                     p.nome as razao_social,
                     p.cpf as cnpj,
                     p.telefone,
@@ -206,6 +208,7 @@ class SocioRepository
                     spi.ativo,
                     spi.divulgacao,
                     spi.localizacao,
+                    spi.descricao,
                     p.nome as razao_social,
                     p.cpf as cnpj,
                     p.telefone,
@@ -269,12 +272,14 @@ class SocioRepository
 
             $querySocioParceiro = "UPDATE socio_parceiro_institucional SET 
                                         localizacao = :localizacao,
-                                        divulgacao = :divulgacao
+                                        divulgacao = :divulgacao,
+                                        descricao = :descricao
                                     WHERE id = :id";
             $stmtSocioParceiro = $this->db->prepare($querySocioParceiro);
             $stmtSocioParceiro->execute([
                 ':localizacao' => $dados['localizacao'] ?? $atual['localizacao'],
                 ':divulgacao' => $dados['divulgacao'] ?? $atual['divulgacao'],
+                ':descricao' => $dados['descricao'] ?? $atual['descricao'],
                 ':id' => $id
             ]);
 

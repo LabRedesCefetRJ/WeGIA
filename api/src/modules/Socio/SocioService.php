@@ -318,7 +318,7 @@ class SocioService implements SocioServiceInterface
                 ];
             }
 
-            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'endereco'];
+            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'descricao', 'endereco'];
             $temAlteracao = false;
             foreach ($camposAtualizaveis as $campo) {
                 if (array_key_exists($campo, $dados)) {
@@ -374,6 +374,7 @@ class SocioService implements SocioServiceInterface
                 'email' => array_key_exists('email', $dados) ? $dados['email'] : $atual['email'],
                 'localizacao' => array_key_exists('localizacao', $dados) ? trim((string)$dados['localizacao']) : $atual['localizacao'],
                 'divulgacao' => array_key_exists('divulgacao', $dados) ? trim((string)$dados['divulgacao']) : $atual['divulgacao'],
+                'descricao' => array_key_exists('descricao', $dados) ? trim((string)$dados['descricao']) : $atual['descricao'],
                 'endereco' => array_merge($enderecoAtual, $enderecoEntrada)
             ];
 
