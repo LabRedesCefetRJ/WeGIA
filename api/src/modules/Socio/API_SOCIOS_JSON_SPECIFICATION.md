@@ -618,23 +618,6 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
 }
 ```
 
-### Resposta - 400 Bad Request (CNPJ Inválido)
-```json
-{
-  "success": false,
-  "error": "CNPJ inválido",
-  "code": 400
-}
-```
-
-### Resposta - 403 Forbidden (Sem Permissão)
-```json
-{
-  "error": "Usuário não possui permissão para acessar este recurso",
-  "status": "forbidden"
-}
-```
-
 ### Resposta - 500 Internal Server Error
 ```json
 {
@@ -763,6 +746,8 @@ Atualiza os dados cadastrais de um parceiro institucional.
 | `localizacao` | string | Não | Localização exibida do parceiro |
 | `divulgacao` | string | Não | Forma de divulgação do parceiro |
 
+> Observação: o campo `numero` pode ser enviado dentro de `endereco` e será mapeado para `numero_endereco` durante a atualização.
+
 ### Resposta - 200 OK
 ```json
 {
@@ -771,7 +756,6 @@ Atualiza os dados cadastrais de um parceiro institucional.
   "socio_parceiro": {
     "id": 1,
     "id_pessoa": 10,
-    "id_socio_benefit_rule": 1,
     "ativo": 1,
     "divulgacao": "Presencial",
     "localizacao": "São Paulo - SP",
@@ -797,12 +781,11 @@ Atualiza os dados cadastrais de um parceiro institucional.
 | `socio_parceiro` | object | Dados atualizados do parceiro institucional |
 | `socio_parceiro.id` | integer | ID do registro do parceiro |
 | `socio_parceiro.id_pessoa` | integer | ID da pessoa jurídica vinculada |
-| `socio_parceiro.id_socio_benefit_rule` | integer | ID da regra de benefício vinculada |
 | `socio_parceiro.ativo` | integer | Status atual do parceiro |
 | `socio_parceiro.divulgacao` | string | Forma de divulgação do parceiro |
 | `socio_parceiro.localizacao` | string | Localização do parceiro |
 | `socio_parceiro.razao_social` | string | Razão social atualizada |
-| `socio_parceiro.cnpj` | string | CNPJ atualizada |
+| `socio_parceiro.cnpj` | string | CNPJ atualizado |
 | `socio_parceiro.telefone` | string | Telefone atualizado |
 | `socio_parceiro.email` | string | E-mail atualizado |
 | `socio_parceiro.cep` | string | CEP atualizado |
@@ -814,6 +797,14 @@ Atualiza os dados cadastrais de um parceiro institucional.
 | `socio_parceiro.complemento` | string | Complemento atualizado |
 
 ### Resposta - 400 Bad Request
+```json
+{
+  "success": false,
+  "message": "ID do sócio parceiro é obrigatório"
+}
+```
+
+### Resposta - 400 Bad Request (Nenhum Campo Informado)
 ```json
 {
   "success": false,
@@ -890,10 +881,93 @@ Atualiza o status de um parceiro institucional.
 }
 ```
 
-### Resposta - 403 Forbidden
+### Resposta - 500 Internal Server Error
 ```json
 {
-  "error": "Usuário não possui permissão para acessar este recurso"
+  "success": false,
+  "error": "Mensagem de erro detalhada",
+  "code": 500
+}
+```
+
+---
+
+## 12. POST `/socios/parceiros/logo`
+
+Realiza o upload da logo associada a um parceiro institucional.
+
+### Parâmetros
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+- **Content-Type** (header, obrigatório): `multipart/form-data`
+
+### Requisição
+```text
+multipart/form-data
+logo: <arquivo de imagem>
+id_socio_parceiro: 1
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `logo` | file | Sim | Arquivo de imagem a ser armazenado |
+| `id_socio_parceiro` | integer | Sim | ID do parceiro institucional associado |
+
+### Resposta - 200 OK
+```json
+{
+  "success": true,
+  "message": "Logo uploaded successfully.",
+  "file_path": "http://<base-url>/socios/parceiros/logo/1"
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Indica que o upload foi concluído com sucesso |
+| `message` | string | Mensagem descritiva do resultado |
+| `file_path` | string | URL do recurso de imagem associado ao parceiro |
+
+### Resposta - 400 Bad Request
+```json
+{
+  "success": false,
+  "message": "Erro ao fazer upload do arquivo de logo."
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "success": false,
+  "message": "Erro ao salvar o arquivo de logo."
+}
+```
+
+---
+
+## 13. GET `/socios/parceiros/{id}/logo`
+
+Recupera a logo de um parceiro institucional em formato binário.
+
+### Parâmetros
+- **id** (path parameter, obrigatório): ID do parceiro institucional
+
+### Resposta - 200 OK
+Retorna o conteúdo da imagem com o tipo MIME correspondente (por exemplo, `image/png` ou `image/jpeg`).
+
+### Resposta - 400 Bad Request
+```json
+{
+  "success": false,
+  "message": "ID do sócio parceiro é obrigatório"
+}
+```
+
+### Resposta - 404 Not Found
+```json
+{
+  "success": false,
+  "message": "Logo do sócio parceiro não encontrada"
 }
 ```
 
@@ -906,14 +980,15 @@ Atualiza o status de um parceiro institucional.
 }
 ```
 
-## 12. DELETE `/socios/parceiros/{id}`
+---
+
+## 14. DELETE `/socios/parceiros/{id}`
 
 Exclui um parceiro institucional.
 
 ### Parâmetros
 - **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
 - **Content-Type** (header, obrigatório): `application/json`
-
 
 ### Resposta - 200 OK
 ```json
@@ -936,13 +1011,6 @@ Exclui um parceiro institucional.
 }
 ```
 
-### Resposta - 403 Forbidden
-```json
-{
-  "error": "Usuário não possui permissão para acessar este recurso"
-}
-```
-
 ### Resposta - 500 Internal Server Error
 ```json
 {
@@ -954,7 +1022,7 @@ Exclui um parceiro institucional.
 
 ---
 
-## 13. GET `/socios/{id}/beneficios`
+## 15. GET `/socios/{id}/beneficios`
 
 Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
 
