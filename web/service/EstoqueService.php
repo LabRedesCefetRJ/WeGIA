@@ -46,16 +46,13 @@ class EstoqueService
 
         $responsaveis = $this->estoqueDAO->buscarResponsaveisAlmoxarifado($idAlmoxarifado);
 
-        foreach ($responsaveis as $idPessoa) {
-            if ($this->notificacaoDAO->existePendente(
-                (int) $idPessoa,
+        $this->notificacaoDAO->marcarPendentesComoVisualizadasPorReferencia(
                 self::RECURSO_MATERIAL_PATRIMONIO,
                 self::TIPO_ESTOQUE_BAIXO,
                 $link
-            )) {
-                continue;
-            }
+        );
 
+        foreach ($responsaveis as $idPessoa) {
             $mensagem = sprintf(
                 'O produto %s atingiu o estoque mínimo no almoxarifado "%s". Quantidade atual: %d. Quantidade mínima: %d.',
                 $dados['produto'],
