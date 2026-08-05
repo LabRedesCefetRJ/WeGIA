@@ -677,6 +677,7 @@ Não há corpo de requisição.
 | `socio_parceiros[].id_pessoa` | integer | ID da pessoa jurídica vinculada ao parceiro |
 | `socio_parceiros[].ativo` | integer | Indica se o parceiro está ativo (`1`) ou inativo (`0`) |
 | `socio_parceiros[].divulgacao` | string | Forma de divulgação do parceiro |
+| `descricao` | string | Descrição da parceria |
 | `socio_parceiros[].localizacao` | string | Localização informada para o parceiro |
 | `socio_parceiros[].razao_social` | string | Razão social da pessoa jurídica cadastrada |
 | `socio_parceiros[].cnpj` | string | CNPJ do parceiro, armazenado no campo `cpf` da tabela `pessoa` |
