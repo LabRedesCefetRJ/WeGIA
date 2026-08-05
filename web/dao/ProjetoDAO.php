@@ -180,7 +180,7 @@ class ProjetoDAO
     public function listarStatusProjeto()
     {
         try {
-            $sql = "SELECT * FROM projeto_status ORDER BY descricao";
+            $sql = "SELECT * FROM projeto_status ORDER BY id_status";
             $stmt = $this->pdo->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
