@@ -89,6 +89,11 @@ class Campo {
 
     //Começar por aqui
     public function display_txt(){
+
+        $textoDecodificado = html_entity_decode((string)$this->getConteudo(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $textoFormatado = nl2br(htmlspecialchars($textoDecodificado, ENT_QUOTES, 'UTF-8'));
+
          // Caso o tipo seja um Texto
          echo('
          <form action="personalizacao_upload.php" method="post">
@@ -100,7 +105,7 @@ class Campo {
                      </div>
                  </td>
                  <td class="v-center"><div>' . $this->getNome() . '</div></td>
-                 <td>' . htmlspecialchars($this->getConteudo()) . '</td>
+                 <td>' . $textoFormatado . '</td>
                  <td style="display: none;"><textarea name="txt" class="text-area" rows="5"></textarea><input style="display: none;" name="id" value="' . $this->getId() . '" readonly></td>
              </tr>
          </form>');

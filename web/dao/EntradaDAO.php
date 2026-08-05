@@ -58,7 +58,16 @@ class EntradaDAO
     try{
         $entradas=array();
         $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT e.id_entrada, o.nome_origem, a.descricao_almoxarifado, t.descricao, p.nome, e.data, e.hora, e.valor_total 
+        $consulta = $pdo->query("SELECT 
+                e.id_entrada,
+                e.id_almoxarifado,
+                o.nome_origem,
+                a.descricao_almoxarifado,
+                t.descricao,
+                p.nome,
+                e.data,
+                e.hora,
+                e.valor_total 
             FROM entrada e 
             INNER JOIN origem o ON o.id_origem = e.id_origem
             INNER JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
@@ -68,7 +77,17 @@ class EntradaDAO
         while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
             //formatar data
             $data = new DateTime($linha['data']);
-            $entradas[$x]=array('id_entrada'=>$linha['id_entrada'],'nome_origem'=>$linha['nome_origem'],'descricao_almoxarifado'=>$linha['descricao_almoxarifado'],'descricao'=>$linha['descricao'],'nome'=>$linha['nome'],'data'=>$data->format('d/m/Y'),'hora'=>$linha['hora'],'valor_total'=>$linha['valor_total']);
+            $entradas[$x] = array(
+                'id_entrada' => $linha['id_entrada'],
+                'id_almoxarifado' => $linha['id_almoxarifado'],
+                'nome_origem' => $linha['nome_origem'],
+                'descricao_almoxarifado' => $linha['descricao_almoxarifado'],
+                'descricao' => $linha['descricao'],
+                'nome' => $linha['nome'],
+                'data' => $data->format('d/m/Y'),
+                'hora' => $linha['hora'],
+                'valor_total' => $linha['valor_total']
+            );
             $x++;
         }
         } catch (PDOException $e){
@@ -190,7 +209,7 @@ class EntradaDAO
         $pdo = Conexao::connect();
 
         $consulta = $pdo->query("
-            SELECT e.id_entrada, o.nome_origem, a.descricao_almoxarifado, t.descricao, p.nome, e.data, e.hora, e.valor_total 
+            SELECT e.id_entrada, e.id_almoxarifado, o.nome_origem, a.descricao_almoxarifado, t.descricao, p.nome, e.data, e.hora, e.valor_total 
             FROM entrada e 
             INNER JOIN origem o ON o.id_origem = e.id_origem
             INNER JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
@@ -199,10 +218,10 @@ class EntradaDAO
         ");
 
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-            $almoxarifados[] = $linha;
+            $entradas[] = $linha;
         }
 
-        return $almoxarifados;
+        return $entradas;
     }
 
     public function anular(int $idEntrada): array

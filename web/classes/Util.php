@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PaymentServiceException.php';
+
 class Util
 {
     public const MENSAGEM_NOME_INVALIDO = 'O nome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
@@ -10,6 +12,20 @@ class Util
         require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
 
         return FusoHorarioSistema::definir($fusoHorario);
+    }
+
+    public static function validarData(string $data): bool
+    {
+        $partes = explode('-', $data);
+
+        if (count($partes) !== 3) {
+            return false;
+        }
+
+        [$ano, $mes, $dia] = array_map('intval', $partes);
+
+        return checkdate($mes, $dia, $ano)
+            && $data === sprintf('%04d-%02d-%02d', $ano, $mes, $dia);
     }
 
     public static function validarNomePessoa(?string $nome): bool
@@ -47,6 +63,22 @@ class Util
         }
 
         self::validarNomePessoaOuLancar($nome, $campo, $codigo);
+    }
+
+    public static function primeiroSobrenome(?string $sobrenome): string
+    {
+        if ($sobrenome === null || trim($sobrenome) === '') {
+            return "";
+        }
+
+        $partes = explode(" ", trim($sobrenome));
+        $preposicoes = ["de", "da", "do", "dos", "das"];
+
+        if (in_array(strtolower($partes[0]), $preposicoes) && count($partes) > 1) {
+            return $partes[0] . " " . $partes[1];
+        }
+
+        return $partes[0];
     }
 
     /**
@@ -107,7 +139,7 @@ class Util
     public static function validaCNS(?string $cns): bool
     {
         if ($cns === null || empty($cns)) {
-            return true; 
+            return true;
         }
 
         // Remove caracteres não numéricos
@@ -131,14 +163,8 @@ class Util
      */
     public static function tratarException(Throwable $e): void
     {
-        // Log interno
-        error_log(sprintf(
-            "[ERRO: %d] %s em %s:%d",
-            $e->getCode(),
-            $e->getMessage(),
-            $e->getFile(),
-            $e->getLine()
-        ));
+        // Log interno com o rastreio completo da exceção
+        error_log($e->__toString());
 
         // Garante JSON SEMPRE
         if (!headers_sent()) {
@@ -153,7 +179,11 @@ class Util
         http_response_code($httpCode);
 
         // Mensagem para o cliente
-        if ($e instanceof PDOException) {
+        if ($e instanceof PaymentServiceException) {
+            echo json_encode([
+                'erro' => $e->getMensagemCliente()
+            ]);
+        } elseif ($e instanceof PDOException) {
             echo json_encode([
                 'erro' => 'Erro interno ao acessar o banco de dados'
             ]);
@@ -983,7 +1013,7 @@ class Util
     public static function validarCPF(string $cpf)
     {
         //Limpar formatação
-        $cpfLimpo = preg_replace('/[^0-9]/', '', $cpf);
+        $cpfLimpo = self::limpaCpf($cpf);
 
         //Validação do tamanho da string informada
         if (strlen($cpfLimpo) != 11) {
@@ -1216,20 +1246,20 @@ class Util
 
     public static function getClassePorTipo($tipo)
     {
-	    switch ($tipo) {
-		    case 'Compra':
-			    return 'bg-secondary';
-		    case 'Doação':
-			    return 'bg-success';
-		    case 'Troca':
-			    return 'bg-warning';
-		    case 'Vencido':
-			    return 'bg-secondary';
-		    case 'Consumo':
-			    return 'bg-success';
-		    default:
-			    return 'bg-info';
-	    }
+        switch ($tipo) {
+            case 'Compra':
+                return 'bg-secondary';
+            case 'Doação':
+                return 'bg-success';
+            case 'Troca':
+                return 'bg-warning';
+            case 'Vencido':
+                return 'bg-secondary';
+            case 'Consumo':
+                return 'bg-success';
+            default:
+                return 'bg-info';
+        }
     }
 
     /**

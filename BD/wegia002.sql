@@ -336,6 +336,24 @@ INSERT IGNORE INTO `wegia`.`projeto_status` (`descricao`) VALUES
 INSERT IGNORE INTO `wegia`.`projeto_atendido_status` (`descricao`) VALUES
 ('Ativo'),
 ('Inativo');
+<<<<<<< HEAD
+=======
+-- -----------------------------------------------------
+-- Adiciona coluna descricao em projeto_turma
+-- (instalações já existentes podem não ter a coluna criada pelo CREATE TABLE)
+-- -----------------------------------------------------
+SET @s = (SELECT IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'projeto_turma'
+       AND COLUMN_NAME = 'descricao') = 0,
+    'ALTER TABLE `projeto_turma` ADD COLUMN `descricao` VARCHAR(255) NULL AFTER `nome`',
+    'SELECT 1'
+));
+PREPARE stmt FROM @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+>>>>>>> fd4f45ca1526092be374cf761db60f1640dde887
 
 INSERT IGNORE INTO `wegia`.`agenda_status` (`descricao`) VALUES
 ('Ativo'),

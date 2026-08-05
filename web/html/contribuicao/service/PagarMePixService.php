@@ -83,9 +83,12 @@ class PagarMePixService implements ApiPixServiceInterface
 
             // Verifica por erros no cURL
             if (curl_errno($ch)) {
-                echo json_encode(['erro' => curl_error($ch)]);
                 curl_close($ch);
-                return false;
+                throw new PaymentServiceException(
+                    'Não foi possível gerar o QR code de pagamento no momento.',
+                    'Erro cURL ao gerar Pix na API Pagar.me: ' . curl_error($ch),
+                    502
+                );
             }
 
             // Obtém o código de status HTTP
@@ -98,8 +101,11 @@ class PagarMePixService implements ApiPixServiceInterface
             if ($httpCode === 200 || $httpCode === 201) {
                 $responseData = json_decode($response, true);
             } else {
-                echo json_encode(['erro' => 'A API retornou o código de status HTTP ' . htmlspecialchars($httpCode)]);
-                return false;
+                throw new PaymentServiceException(
+                    'Não foi possível gerar o QR code de pagamento no momento.',
+                    'A API Pagar.me retornou o código de status HTTP ' . htmlspecialchars($httpCode),
+                    $httpCode
+                );
             }
 
             //Verifica se o status é 'pending'
@@ -114,14 +120,25 @@ class PagarMePixService implements ApiPixServiceInterface
                 echo json_encode(['qrcode' => base64_encode($qr_code_url), 'copiaCola' => $qr_code]);
                 return $idPedido;
             } else {
-                echo json_encode(["erro" => "Houve um erro ao gerar o QR CODE de pagamento. Verifique se as informações fornecidas são válidas."]);
-                return false;
+                throw new PaymentServiceException(
+                    'Não foi possível gerar o QR code de pagamento no momento.',
+                    'Houve um erro ao gerar o QR CODE de pagamento. Verifique se as informações fornecidas são válidas.',
+                    502
+                );
             }
 
             return true;
-        } catch (Exception $e) {
-            Util::tratarException($e);
-            return false;
+        } catch (Throwable $e) {
+            if ($e instanceof PaymentServiceException) {
+                throw $e;
+            }
+
+            throw new PaymentServiceException(
+                'Não foi possível gerar o QR code de pagamento no momento.',
+                'Falha inesperada ao gerar Pix na API Pagar.me: ' . $e->getMessage(),
+                502,
+                $e
+            );
         }
     }
 }

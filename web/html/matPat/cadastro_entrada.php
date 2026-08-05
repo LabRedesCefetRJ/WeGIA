@@ -284,16 +284,30 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
 			})
 
-			$.each(origem, function(i, item) {
-				$('#origens').append('<option value="' + item.id_origem + '">' + item.nome_origem + '</option>');
-			})
-
 			let produtos_autocomplete = [];
 			let prods = [];
 
 			$('#almoxarifado').on('change', function() {
 
 				let almoxarifadoId = $(this).val();
+
+				$('#origens').empty();
+				$('#origens').append('<option selected disabled value="blank">Carregando...</option>');
+
+				$.getJSON('<?= WWW ?>controle/control.php', {
+    				nomeClasse: 'OrigemControle',
+    				metodo: 'listarPorAlmoxarifado',
+    				id_almoxarifado: almoxarifadoId
+				}, function(origens) {
+    				$('#origens').empty();
+    				$('#origens').append('<option selected disabled value="blank">Selecionar</option>');
+
+    				$.each(origens, function(i, item) {
+        				$('#origens').append(
+            				'<option value="' + item.id_origem + '">' + item.nome_origem + '</option>'
+        				);
+    				});
+				});
 
 				$.getJSON('<?= WWW ?>controle/control.php', {
 					nomeClasse: 'ProdutoControle',
