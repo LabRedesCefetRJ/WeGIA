@@ -46,12 +46,6 @@ class EstoqueService
 
         $responsaveis = $this->estoqueDAO->buscarResponsaveisAlmoxarifado($idAlmoxarifado);
 
-        $this->notificacaoDAO->marcarPendentesComoVisualizadasPorReferencia(
-                self::RECURSO_MATERIAL_PATRIMONIO,
-                self::TIPO_ESTOQUE_BAIXO,
-                $link
-        );
-
         foreach ($responsaveis as $idPessoa) {
             $mensagem = sprintf(
                 'O produto %s atingiu o estoque mínimo no almoxarifado "%s". Quantidade atual: %d. Quantidade mínima: %d.',
@@ -69,7 +63,18 @@ class EstoqueService
                 $link
             );
 
-            $this->notificacaoDAO->criar($notificacao, [(int) $idPessoa]);
+            $idNotificacao = $this->notificacaoDAO->existePendente(
+                (int) $idPessoa,
+                self::RECURSO_MATERIAL_PATRIMONIO,
+                self::TIPO_ESTOQUE_BAIXO,
+                $link
+            );
+
+            if ($idNotificacao!== null) {
+                $this->notificacaoDAO->atualizarNotificacao($notificacao, $idNotificacao);
+            } else {
+                $this->notificacaoDAO->criar($notificacao, [(int) $idPessoa]);
+            }
         }
     }
 }
