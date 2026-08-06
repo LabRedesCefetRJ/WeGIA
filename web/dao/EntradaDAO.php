@@ -415,6 +415,8 @@ class EntradaDAO
             $stmtAtualizarEntrada->bindValue(':id_entrada', $idEntrada, PDO::PARAM_INT);
             $stmtAtualizarEntrada->execute();
 
+            $produtosAlterados = [];
+
             foreach ($itens as $item) {
                 $idIentrada = isset($item['id_ientrada']) ? (int)$item['id_ientrada'] : 0;
                 $novaQtd = isset($item['qtd']) ? (int)$item['qtd'] : 0;
@@ -455,6 +457,8 @@ class EntradaDAO
                 $idProduto = (int)$itemAtual['id_produto'];
                 $qtdAntiga = (int)$itemAtual['qtd'];
                 $diferenca = $novaQtd - $qtdAntiga;
+
+                $produtosAlterados[$idProduto] = true;
 
                 if ($diferenca < 0) {
                     $qtdParaRemover = abs($diferenca);
@@ -525,10 +529,12 @@ class EntradaDAO
 
             $estoqueService = new EstoqueService();
 
-            $estoqueService->verificarEstoqueMinimo(
-                (int)$idProduto,
-                (int)$idAlmoxarifado
-            );
+            foreach (array_keys($produtosAlterados) as $idProdutoAlterado) {
+                $estoqueService->verificarEstoqueMinimo(
+                    (int)$idProdutoAlterado,
+                    (int)$idAlmoxarifado
+                );
+            }
         } catch (Exception $e) {
             $pdo->rollBack();
             throw $e;
