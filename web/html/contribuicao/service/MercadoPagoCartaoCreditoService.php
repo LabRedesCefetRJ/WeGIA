@@ -1,0 +1,286 @@
+<?php
+require_once 'ApiCartaoCreditoServiceInterface.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once '../model/ContribuicaoLog.php';
+require_once '../dao/GatewayPagamentoDAO.php';
+
+/**
+ * Implementação do processamento de cartão de crédito via API do Mercado Pago.
+ *
+ * Fluxo (Checkout API / Core Methods):
+ *  1) Gera um card_token a partir dos dados do cartão (POST /v1/card_tokens);
+ *  2) Cria o pagamento usando o token gerado (POST /v1/payments), no mesmo
+ *     endPoint já cadastrado para o gateway (o mesmo utilizado pelo Pix/Boleto).
+ *
+ * IMPORTANTE (segurança): o ideal, recomendado pelo próprio Mercado Pago, é
+ * gerar o card_token no FRONT-END com o SDK MercadoPago.js / Secure Fields,
+ * para que o número do cartão e o CVV nunca trafeguem pelo seu servidor
+ * (reduz o escopo de PCI-DSS). Esta implementação segue o mesmo padrão já
+ * usado em PagarMeCartaoCreditoService.php (dados brutos do cartão chegam
+ * via POST ao backend) para manter compatibilidade com o formulário atual
+ * (view/components/contribuicao_cartao.php). Se possível, migre para
+ * tokenização no front-end futuramente.
+ */
+class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterface
+{
+    private const URL_CARD_TOKENS = 'https://api.mercadopago.com/v1/card_tokens';
+
+    public function processarCartaoCredito(ContribuicaoLog $contribuicaoLog)
+    {
+        $gatewayPagamentoDao = new GatewayPagamentoDAO();
+        $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($contribuicaoLog->getGatewayPagamento()->getId());
+
+        if (!$gatewayPagamento) {
+            throw new PaymentServiceException(
+                'Não foi possível processar o pagamento com cartão de crédito no momento.',
+                'Gateway de pagamento Mercado Pago não encontrado ou inativo.',
+                502
+            );
+        }
+
+        $accessToken = $gatewayPagamento['token'];
+        $endpoint = $gatewayPagamento['endPoint']; // ex: https://api.mercadopago.com/v1/payments
+
+        // Dados do cartão informados no formulário
+        $cardNumber = preg_replace('/\D/', '', (string) filter_input(INPUT_POST, 'card_number'));
+        $cardExpMonth = filter_input(INPUT_POST, 'card_exp_month');
+        $cardExpYear = filter_input(INPUT_POST, 'card_exp_year');
+        $cardHolderName = filter_input(INPUT_POST, 'card_holder_name');
+        $cardCvv = filter_input(INPUT_POST, 'card_cvv');
+
+        if (!$cardNumber || !$cardExpMonth || !$cardExpYear || !$cardHolderName || !$cardCvv) {
+            throw new PaymentServiceException(
+                'Não foi possível processar o pagamento com cartão de crédito no momento.',
+                'Dados do cartão de crédito incompletos.',
+                400
+            );
+        }
+
+        $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
+        $anoExpiracao = strlen((string) $cardExpYear) === 2 ? '20' . $cardExpYear : (string) $cardExpYear;
+
+        // 1) Gerar o token do cartão. A API de pagamentos do Mercado Pago não aceita
+        // o número do cartão em texto puro; é obrigatório usar um token.
+        $cardTokenId = $this->criarCardToken(
+            $accessToken,
+            $cardNumber,
+            (int) $cardExpMonth,
+            (int) $anoExpiracao,
+            $cardCvv,
+            $cardHolderName,
+            $cpfSemMascara
+        );
+
+        // 2) Identificar a bandeira pelo BIN, exigida no payment_method_id da cobrança
+        $paymentMethodId = $this->identificarBandeira($cardNumber);
+
+        // 3) Criar o pagamento propriamente dito
+        $data = [
+            'transaction_amount' => (float) $contribuicaoLog->getValor(),
+            'token' => $cardTokenId,
+            'description' => $contribuicaoLog->getAgradecimento() ?: 'Doação',
+            'installments' => 1,
+            'payment_method_id' => $paymentMethodId,
+            'payer' => [
+                'email' => $contribuicaoLog->getSocio()->getEmail(),
+                'first_name' => $contribuicaoLog->getSocio()->getNome(),
+                'last_name' => $contribuicaoLog->getSocio()->getSobrenome(),
+                'identification' => [
+                    'type' => 'CPF',
+                    'number' => $cpfSemMascara
+                ]
+            ],
+            'external_reference' => $contribuicaoLog->getCodigo(),
+            'notification_url' => 'https://wegia.org'
+        ];
+
+        $headers = [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $accessToken,
+            'X-Idempotency-Key: ' . $contribuicaoLog->getCodigo()
+        ];
+
+        [$httpCode, $responseData, $curlError] = $this->post($endpoint, $data, $headers);
+
+        if ($curlError) {
+            throw new PaymentServiceException(
+                'Não foi possível processar o pagamento com cartão de crédito no momento.',
+                'Erro cURL ao processar cartão na API Mercado Pago: ' . $curlError,
+                502
+            );
+        }
+
+        if ($httpCode !== 200 && $httpCode !== 201) {
+            $this->tratarErroApi($responseData, $httpCode);
+        }
+
+        $status = $responseData['status'] ?? null;
+
+        // approved: aprovado | in_process/pending: em análise | qualquer outro: recusado
+        if (!in_array($status, ['approved', 'authorized', 'in_process', 'pending'], true)) {
+            $this->tratarPagamentoRecusado($responseData);
+        }
+
+        if (empty($responseData['id'])) {
+            throw new PaymentServiceException(
+                'Não foi possível processar o pagamento com cartão de crédito no momento.',
+                'ID da transação não encontrado na resposta da API Mercado Pago.',
+                502
+            );
+        }
+
+        return (string) $responseData['id'];
+    }
+
+    /**
+     * Gera um token de cartão (POST /v1/card_tokens), pré-requisito para criar
+     * a cobrança sem trafegar o número do cartão diretamente em /v1/payments.
+     */
+    private function criarCardToken($accessToken, $cardNumber, $expMonth, $expYear, $cvv, $holderName, $cpf)
+    {
+        $data = [
+            'card_number' => $cardNumber,
+            'expiration_month' => $expMonth,
+            'expiration_year' => $expYear,
+            'security_code' => $cvv,
+            'cardholder' => [
+                'name' => $holderName,
+                'identification' => [
+                    'type' => 'CPF',
+                    'number' => $cpf
+                ]
+            ]
+        ];
+
+        $headers = [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $accessToken
+        ];
+
+        [$httpCode, $responseData, $curlError] = $this->post(self::URL_CARD_TOKENS, $data, $headers);
+
+        if ($curlError) {
+            throw new PaymentServiceException(
+                'Não foi possível processar o pagamento com cartão de crédito no momento.',
+                'Erro cURL ao gerar o token do cartão na API Mercado Pago: ' . $curlError,
+                502
+            );
+        }
+
+        if (($httpCode !== 200 && $httpCode !== 201) || empty($responseData['id'])) {
+            throw new PaymentServiceException(
+                'Não foi possível processar o pagamento com cartão de crédito no momento.',
+                'Falha ao gerar o token do cartão. Verifique os dados informados. HTTP ' . $httpCode . ' - ' . json_encode($responseData),
+                400
+            );
+        }
+
+        return $responseData['id'];
+    }
+
+    /**
+     * Executa um POST em JSON e devolve [httpCode, responseDataAssoc, curlErrorOuNull]
+     */
+    private function post($url, array $data, array $headers)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+        $response = curl_exec($ch);
+        $curlError = curl_errno($ch) ? curl_error($ch) : null;
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $responseData = json_decode((string) $response, true);
+
+        return [$httpCode, is_array($responseData) ? $responseData : [], $curlError];
+    }
+
+    /**
+     * Identifica a bandeira do cartão a partir do BIN (primeiros dígitos do número),
+     * necessária para o campo payment_method_id exigido pela API do Mercado Pago.
+     */
+    private function identificarBandeira($cardNumber)
+    {
+        $bin = substr($cardNumber, 0, 6);
+
+        if (preg_match('/^4/', $bin)) {
+            return 'visa';
+        }
+        if (preg_match('/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/', $bin)) {
+            return 'master';
+        }
+        if (preg_match('/^3[47]/', $bin)) {
+            return 'amex';
+        }
+        if (preg_match('/^(4011|4312|4389|4514|4573|6277|6362|6363|650[3-9]|6516|6550)/', $bin)) {
+            return 'elo';
+        }
+        if (preg_match('/^(606282|3841)/', $bin)) {
+            return 'hipercard';
+        }
+
+        throw new PaymentServiceException(
+            'Não foi possível processar o pagamento com cartão de crédito no momento.',
+            'Não foi possível identificar a bandeira do cartão informado.',
+            400
+        );
+    }
+
+    /**
+     * Traduz o status_detail de um pagamento recusado em uma mensagem amigável
+     */
+    private function tratarPagamentoRecusado($responseData)
+    {
+        $statusDetail = $responseData['status_detail'] ?? '';
+
+        $mensagens = [
+            'cc_rejected_insufficient_amount'     => 'Saldo insuficiente no cartão.',
+            'cc_rejected_bad_filled_card_number'  => 'Número do cartão inválido.',
+            'cc_rejected_bad_filled_date'         => 'Data de validade inválida.',
+            'cc_rejected_bad_filled_security_code' => 'Código de segurança (CVV) inválido.',
+            'cc_rejected_bad_filled_other'        => 'Dados do cartão inválidos.',
+            'cc_rejected_call_for_authorize'      => 'Pagamento não autorizado. Entre em contato com o banco emissor do cartão.',
+            'cc_rejected_card_disabled'           => 'Cartão desabilitado. Entre em contato com o banco emissor.',
+            'cc_rejected_duplicated_payment'      => 'Já existe um pagamento com os mesmos dados. Aguarde alguns instantes.',
+            'cc_rejected_high_risk'               => 'O pagamento foi recusado por segurança.',
+            'cc_rejected_max_attempts'            => 'Limite de tentativas de pagamento atingido.',
+            'cc_rejected_card_type_not_allowed'   => 'Este tipo de cartão não é aceito.',
+            'cc_rejected_invalid_installments'    => 'Número de parcelas inválido.',
+        ];
+
+        $mensagemCliente = $mensagens[$statusDetail] ?? 'O pagamento com cartão de crédito foi recusado.';
+
+        throw new PaymentServiceException(
+            $mensagemCliente,
+            'Pagamento recusado pela API Mercado Pago. status: ' . ($responseData['status'] ?? '') . ' status_detail: ' . $statusDetail,
+            400
+        );
+    }
+
+    private function tratarErroApi($responseData, $httpCode)
+    {
+        $errorMsg = "Erro HTTP $httpCode";
+
+        if (!empty($responseData['message'])) {
+            $errorMsg .= ' - ' . $responseData['message'];
+        }
+
+        if (!empty($responseData['cause']) && is_array($responseData['cause'])) {
+            foreach ($responseData['cause'] as $cause) {
+                $errorMsg .= "\n" . (is_array($cause) ? ($cause['description'] ?? json_encode($cause)) : $cause);
+            }
+        }
+
+        throw new PaymentServiceException(
+            'Não foi possível processar o pagamento com cartão de crédito no momento.',
+            $errorMsg,
+            502
+        );
+    }
+}

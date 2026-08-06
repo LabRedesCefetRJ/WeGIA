@@ -62,7 +62,7 @@ function gerarMensalidade() {
                 // Redirecionar o usuário para o link do boleto em uma nova aba
                 window.open(resposta.link, '_blank');
             } else if (resposta.erro) {
-                alert('Erro: ' + resposta.erro);
+                alert('Erro: ' + resposta.erro + '\n\nDEBUG: ' + (resposta.debug || 'sem detalhe'));
             } else {
                 alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
             }
