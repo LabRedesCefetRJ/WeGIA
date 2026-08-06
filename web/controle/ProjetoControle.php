@@ -112,6 +112,38 @@ class ProjetoControle
         exit();
     }
 
+    public function removerStatus()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id_status = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_status || $id_status < 1) {
+                echo json_encode(['success' => false, 'message' => 'Status inválido']);
+                return;
+            }
+
+            if ($this->projetoDAO->statusEmUso($id_status)) {
+                echo json_encode(['success' => false, 'message' => 'Não é possível excluir: este status está sendo utilizado por um ou mais projetos.']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->removerStatusProjeto($id_status);
+
+            echo json_encode(['success' => $resultado, 'status' => $this->projetoDAO->listarStatusProjeto()]);
+        } catch (Exception $e) {
+            $this->logErro($e);
+            echo json_encode(['success' => false, 'message' => 'Ocorreu um erro interno. Tente novamente.']);
+        }
+    }
+
     private function obterDadosRequisicao(): array
     {
         $contentType = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';

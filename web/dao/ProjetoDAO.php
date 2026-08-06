@@ -233,6 +233,21 @@ class ProjetoDAO
         }
     }
 
+    public function statusEmUso($id_status)
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM projeto WHERE id_status = :id_status");
+        $stmt->bindValue(':id_status', $id_status, PDO::PARAM_INT);
+        $stmt->execute();
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function removerStatusProjeto($id_status)
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM projeto_status WHERE id_status = :id_status");
+        $stmt->bindValue(':id_status', $id_status, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
     public function listarFuncionariosAtivos($termo = null)
     {
         try {

@@ -50,6 +50,41 @@ function filtrarPorStatus() {
   }
 }
 
+// Função para excluir um status
+function excluirStatus() {
+  var idStatus = $('#filtro_status').val();
+
+  if (!idStatus) {
+    alert('Selecione um status específico para excluir.');
+    return;
+  }
+
+  alert('Atenção: só é possível excluir status que não estejam sendo utilizados por nenhum projeto.');
+
+  $.ajax({
+    url: '../../controle/control.php',
+    type: 'POST',
+    data: {
+      metodo: 'removerStatus',
+      nomeClasse: 'ProjetoControle',
+      id_status: idStatus,
+      csrf_token: $('#csrf_token').val()
+    },
+    dataType: 'json',
+    success: function(response) {
+      if (response.success) {
+        alert('Status excluído com sucesso.');
+        location.reload();
+      } else {
+        alert('Erro: ' + (response.message || 'Tente novamente.'));
+      }
+    },
+    error: function() {
+      alert('Erro ao conectar com o servidor.');
+    }
+  });
+}
+
 // Carregar dados ao iniciar
 $(document).ready(function() {
   preencherTabela(projetos);
