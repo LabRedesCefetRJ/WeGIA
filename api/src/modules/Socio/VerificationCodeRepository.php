@@ -137,5 +137,21 @@ class VerificationCodeRepository
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['email'] ?? null;
     }
+
+    /**
+     * Get the email from name for sending emails
+     */
+    public function getEmailFromName(): string
+    {
+        $query = "SELECT smtp_from_name FROM smtp_config LIMIT 1";
+        $stmt = $this->db->query($query);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($result) {
+            return $result['smtp_from_name'];
+        }
+        
+        return 'WeGIA'; // Default name, can be customized if needed
+    }
 }
 ?>

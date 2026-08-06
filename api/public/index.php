@@ -57,7 +57,7 @@ $container = new AppContainer([
         return new VerificationCodeRepository($c->get(PDO::class));
     },
     EmailVerificationService::class => function ($c) {
-        return new EmailVerificationService($c->get(VerificationCodeRepository::class), 15, 'WeGIA');
+        return new EmailVerificationService($c->get(VerificationCodeRepository::class), 15);
     },
     EmailVerificationServiceInterface::class => function ($c) {
         return $c->get(EmailVerificationService::class);

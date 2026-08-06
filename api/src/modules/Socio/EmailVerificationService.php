@@ -8,14 +8,15 @@ use DateTime;
 class EmailVerificationService implements EmailVerificationServiceInterface
 {
     private VerificationCodeRepository $repository;
-    private string $emailFromName = 'WeGIA';
+    private string $emailFromName;
     private int $codeValidityMinutes = 15; // Default validity: 15 minutes
 
-    public function __construct(VerificationCodeRepository $repository, int $codeValidityMinutes = 15, string $emailFromName = 'WeGIA')
+    public function __construct(VerificationCodeRepository $repository, int $codeValidityMinutes = 15, ?string $emailFromName = null)
     {
         $this->repository = $repository;
         $this->codeValidityMinutes = $codeValidityMinutes;
-        $this->emailFromName = $emailFromName;
+
+        $this->emailFromName = !is_null($emailFromName) ? $emailFromName : $repository->getEmailFromName();
     }
 
     /**
@@ -101,21 +102,21 @@ class EmailVerificationService implements EmailVerificationServiceInterface
         $codeFormatted = implode(' ', str_split($code));
         
         return "
-        <p>Hello,</p>
+        <p>Olá,</p>
         
-        <p>Your verification code is:</p>
+        <p>Seu código de verificação é:</p>
         
         <h2 style='text-align: center; letter-spacing: 5px; color: #2657dcff;'>
             {$codeFormatted}
         </h2>
         
-        <p>This code is valid for {$this->codeValidityMinutes} minutes.</p>
+        <p>Esse código é válido por {$this->codeValidityMinutes} minutos.</p>
         
-        <p><strong>Do not share this code with anyone.</strong></p>
+        <p><strong>Não compartilhe ele com mais ninguém.</strong></p>
         
-        <p>If you did not request this code, ignore this email.</p>
+        <p>Se você não pediu esse código, ignore o e-mail.</p>
         
-        <p>Best regards,<br>Team {$this->emailFromName}</p>
+        <p>Atenciosamente,<br>Equipe {$this->emailFromName}</p>
         ";
     }
 
