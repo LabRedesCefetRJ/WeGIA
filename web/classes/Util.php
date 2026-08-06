@@ -1389,7 +1389,7 @@ class Util
 
         $html = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
 
-        $tagsPermitidas = ['p', 'span', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'];
+        $tagsPermitidas = ['p', 'span', 'a', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'];
         $tagsRemoverConteudo = ['script', 'style', 'iframe', 'object', 'embed', 'noscript'];
 
         $dom = new DOMDocument();
@@ -1447,8 +1447,32 @@ class Util
                         }
                     }
 
+                    if ($tag === 'a' && $atributo->nodeName === 'href') {
+                        $hrefSeguro = self::sanitizarAtributoHref($atributo->nodeValue);
+
+                        if ($hrefSeguro !== null) {
+                            $filho->setAttribute('href', $hrefSeguro);
+                            continue;
+                        }
+                    }
+
+                    if ($tag === 'a' && $atributo->nodeName === 'target') {
+                        $targetsPermitidos = ['_blank', '_self', '_parent', '_top'];
+
+                        if (in_array($atributo->nodeValue, $targetsPermitidos, true)) {
+                            $filho->setAttribute('target', $atributo->nodeValue);
+                            continue;
+                        }
+                    }
+
                     $filho->removeAttribute($atributo->nodeName);
                 }
+            }
+
+            if ($tag === 'a' && $filho->getAttribute('target') === '_blank') {
+                // Evita reverse tabnabbing: a página aberta em nova aba não deve
+                // conseguir controlar window.opener da página original.
+                $filho->setAttribute('rel', 'noopener noreferrer');
             }
 
             self::sanitizarNoHtml($filho, $tagsPermitidas, $tagsRemoverConteudo);
@@ -1460,6 +1484,38 @@ class Util
                 $no->removeChild($filho);
             }
         }
+    }
+
+    /**
+     * Valida o href de um link, permitindo apenas URLs relativas (sem scheme)
+     * ou com scheme http/https/mailto. Bloqueia javascript:, data:, vbscript:
+     * e qualquer outro scheme, inclusive variantes ofuscadas com caracteres de
+     * controle embutidos (ex.: "java\tscript:"), que navegadores ignoram ao
+     * interpretar o scheme. Retorna null se o valor não for seguro.
+     */
+    private static function sanitizarAtributoHref(string $href): ?string
+    {
+        $href = preg_replace('/[\x00-\x1F\x7F]+/', '', $href);
+        $href = trim($href);
+
+        if ($href === '') {
+            return null;
+        }
+
+        $scheme = parse_url($href, PHP_URL_SCHEME);
+
+        if ($scheme === null) {
+            // Sem scheme: URL relativa (ex.: "pagina.php", "/caminho", "#ancora") — segura
+            return $href;
+        }
+
+        $schemesPermitidos = ['http', 'https', 'mailto'];
+
+        if (!in_array(strtolower($scheme), $schemesPermitidos, true)) {
+            return null;
+        }
+
+        return $href;
     }
 
     /**
