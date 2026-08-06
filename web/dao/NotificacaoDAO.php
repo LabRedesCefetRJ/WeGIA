@@ -139,7 +139,7 @@ class NotificacaoDAO
         $stmt->execute();
     }
 
-    public function existePendente(int $idPessoa, int $idRecurso, string $tipo, string $link): bool
+    public function existePendente(int $idPessoa, int $idRecurso, string $tipo, string $link): ?int
     {
         $sql = "
             SELECT n.id_notificacao
@@ -160,7 +160,13 @@ class NotificacaoDAO
         $stmt->bindValue(':link', $link, PDO::PARAM_STR);
         $stmt->execute();
 
-        return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
+        $resultado = $stmt->fetchColumn();
+
+        if ($resultado === false) {
+            return null;
+        }
+
+        return (int) $resultado;
     }
 
     public function marcarPendentesComoVisualizadasPorReferencia(int $idRecurso, string $tipo, string $link): void
@@ -180,6 +186,27 @@ class NotificacaoDAO
         $stmt->bindValue(':id_recurso', $idRecurso, PDO::PARAM_INT);
         $stmt->bindValue(':tipo', $tipo, PDO::PARAM_STR);
         $stmt->bindValue(':link', $link, PDO::PARAM_STR);
+        $stmt->execute();
+    }
+
+    public function atualizarNotificacao(Notificacao $notificacao, int $idNotificacao): void
+    {
+        $sql = "
+            UPDATE notificacao
+            SET titulo = :titulo,
+                mensagem = :mensagem,
+                tipo = :tipo,
+                link = :link,
+                data_criacao = NOW()
+            WHERE id_notificacao = :id_notificacao 
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':titulo', $notificacao->getTitulo(), PDO::PARAM_STR);
+        $stmt->bindValue(':mensagem', $notificacao->getMensagem(), PDO::PARAM_STR);
+        $stmt->bindValue(':tipo', $notificacao->getTipo(), PDO::PARAM_STR);
+        $stmt->bindValue(':link', $notificacao->getLink(), PDO::PARAM_STR);
+        $stmt->bindValue(':id_notificacao', $idNotificacao, PDO::PARAM_INT);
         $stmt->execute();
     }
 }

@@ -468,6 +468,15 @@ class SaidaDAO
             $this->recalcularValorTotalSaida($idSaida, $pdo);
 
             $pdo->commit();
+
+            require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'EstoqueService.php';
+
+            $estoqueService = new EstoqueService();
+
+            $estoqueService->verificarEstoqueMinimo(
+                (int)$idProduto,
+                (int)$idAlmoxarifado
+            );
         } catch (Exception $e) {
             $pdo->rollBack();
             throw $e;

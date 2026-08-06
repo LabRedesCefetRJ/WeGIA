@@ -226,6 +226,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				$("#total_total").val(xx);
 				$(this).closest('tr').remove();
 				verificar = verificar - 1;
+				$("#verifica").val(verificar);
 			});
 
 			// validar origem
@@ -454,7 +455,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 							</ul>
 							<div class="tab-content">
 								<div id="overview" class="tab-pane active">
-									<form class="form-horizontal" method="post" id="formulario" onsubmit="return validar()" action="<?= WWW ?>controle/control.php" autocomplete="off">
+									<form class="form-horizontal" method="post" id="formulario" action="<?= WWW ?>controle/control.php" autocomplete="off">
 										<fieldset>
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
@@ -554,7 +555,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="col-md-9 col-md-offset-3">
 												<input type="hidden" name="nomeClasse" value="SaidaControle">
 												<input type="hidden" name="metodo" value="incluir">
-												<input type="submit" class="btn btn-primary" value="Registrar saída">
+												<input type="submit" onclick="return validar()" class="btn btn-primary" value="Registrar saída">
 											</div>
 										</div>
 									</form>
