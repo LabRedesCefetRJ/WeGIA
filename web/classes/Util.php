@@ -1389,7 +1389,7 @@ class Util
 
         $html = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
 
-        $tagsPermitidas = ['p', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'];
+        $tagsPermitidas = ['p', 'span', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'];
         $tagsRemoverConteudo = ['script', 'style', 'iframe', 'object', 'embed', 'noscript'];
 
         $dom = new DOMDocument();
@@ -1438,6 +1438,15 @@ class Util
 
             if ($filho->hasAttributes()) {
                 foreach (iterator_to_array($filho->attributes) as $atributo) {
+                    if ($atributo->nodeName === 'style') {
+                        $styleSeguro = self::sanitizarAtributoStyle($atributo->nodeValue);
+
+                        if ($styleSeguro !== null) {
+                            $filho->setAttribute('style', $styleSeguro);
+                            continue;
+                        }
+                    }
+
                     $filho->removeAttribute($atributo->nodeName);
                 }
             }
@@ -1451,5 +1460,61 @@ class Util
                 $no->removeChild($filho);
             }
         }
+    }
+
+    /**
+     * Filtra um atributo style, mantendo apenas as declarações de color e
+     * background-color cujo valor bate com um formato seguro conhecido
+     * (nome de cor, hexadecimal ou rgb()/rgba()). Qualquer outra propriedade
+     * ou valor fora desse formato é descartado — nunca copia o valor bruto
+     * do cliente para a saída. Retorna null se nenhuma declaração sobrar.
+     */
+    private static function sanitizarAtributoStyle(string $style): ?string
+    {
+        $propriedadesPermitidas = ['color', 'background-color'];
+        $declaracoesSeguras = [];
+
+        foreach (explode(';', $style) as $declaracao) {
+            $partes = explode(':', $declaracao, 2);
+
+            if (count($partes) !== 2) {
+                continue;
+            }
+
+            $propriedade = strtolower(trim($partes[0]));
+            $valor = trim($partes[1]);
+
+            if (!in_array($propriedade, $propriedadesPermitidas, true) || !self::valorCssDeCorEhSeguro($valor)) {
+                continue;
+            }
+
+            $declaracoesSeguras[] = "$propriedade: $valor";
+        }
+
+        if (empty($declaracoesSeguras)) {
+            return null;
+        }
+
+        return implode('; ', $declaracoesSeguras);
+    }
+
+    private static function valorCssDeCorEhSeguro(string $valor): bool
+    {
+        // Nome de cor (ex.: red, cornflowerblue) — só letras, sem parênteses/dois-pontos/barras
+        if (preg_match('/^[a-zA-Z]+$/', $valor)) {
+            return true;
+        }
+
+        // Hexadecimal (#fff ou #ffffff)
+        if (preg_match('/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/', $valor)) {
+            return true;
+        }
+
+        // rgb()/rgba()
+        if (preg_match('/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(?:,\s*(?:0|1|0?\.\d+)\s*)?\)$/', $valor)) {
+            return true;
+        }
+
+        return false;
     }
 }
