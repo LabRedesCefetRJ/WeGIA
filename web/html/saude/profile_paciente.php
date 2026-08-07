@@ -1178,12 +1178,8 @@ try {
                 $middleware = new MiddlewareDAO();
                 if($middleware->verificarPermissao($_SESSION['id_pessoa'],'AtendidoControle',$controladorasRecursos)):
               ?> 
-              <div class="panel-footer">
-                <div class="row">
-                  <div class="col-md-9">
-                    <a href="../atendido/Profile_Atendido.php?idatendido=<?=$id_fichamedica;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP">Acessar Perfil</a>
-                  </div>
-                </div>
+              <div class="panel-footer text-center">
+                <a href="../atendido/Profile_Atendido.php?idatendido=<?=$id_fichamedica;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP" title="Acesso rápido a página de Perfil de Atendido">Acessar Perfil</a>
               </div>  
               <?php endif; ?>
             </section>

@@ -814,17 +814,26 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
               <?php
                require_once "../../dao/MiddlewareDAO.php";
                 $controladorasRecursos =[
-                  'SaudeControle' => [5],
+                  'SaudeControle' => [5]
                 ];   
                 $middleware = new MiddlewareDAO();
-                if($middleware->verificarPermissao($_SESSION['id_pessoa'],'SaudeControle',$controladorasRecursos)):
+                $permissao = $middleware->verificarPermissao($_SESSION['id_pessoa'],'SaudeControle',$controladorasRecursos);
+                $fichaMedicaExistente = false;
+                try{
+                  $pdo = isset($pdo)?$pdo:Conexao::connect();
+                  $stmtFicha = $pdo->prepare("SELECT COUNT(*) FROM atendido a JOIN saude_fichamedica sf ON(a.pessoa_id_pessoa=sf.id_pessoa) WHERE a.idatendido=:id");
+                  $stmtFicha->bindValue(':id', $id, PDO::PARAM_INT);
+                  $stmtFicha->execute();
+      
+                  $possuiFichaMedica = ((int) $stmtFicha->fetchColumn()) > 0;
+                } catch (PDOException $e) {
+                  error_log("Erro ao verificar ficha médica do atendido ID {$id}: " . $e->getMessage());
+                  $possuiFichaMedica = false;
+                }
+                if($permissao && $possuiFichaMedica):
               ?>  
-              <div class="panel-footer">
-                <div class="row">
-                <div class="col-md-9">
-                  <a href="../saude/profile_paciente.php?id_fichamedica=<?=$id;?>" type="button" class="btn btn-primary" id="botaoAcessarFichaIP">Acessar Ficha Médica</a>
-                </div>
-                </div>
+              <div class="panel-footer text-center">
+                <a href="../saude/profile_paciente.php?id_fichamedica=<?=$id;?>" type="button" class="btn btn-primary" id="botaoAcessarFichaIP" title="Acesso rápido a página da Ficha Médica do Paciente">Acessar Ficha Médica</a>
               </div> 
               <?php endif; ?>     
             </section>
