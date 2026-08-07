@@ -365,6 +365,8 @@ class SaidaDAO
             $stmtAtualizarSaida->bindValue(':id_saida', $idSaida, PDO::PARAM_INT);
             $stmtAtualizarSaida->execute();
 
+            $produtosAlterados = [];
+
             foreach ($itens as $item) {
                 $idIsaida = isset($item['id_isaida']) ? (int)$item['id_isaida'] : 0;
                 $novaQtd = isset($item['qtd']) ? (int)$item['qtd'] : 0;
@@ -405,6 +407,8 @@ class SaidaDAO
                 $idProduto = (int)$itemAtual['id_produto'];
                 $qtdAntiga = (int)$itemAtual['qtd'];
                 $diferenca = $novaQtd - $qtdAntiga;
+
+                $produtosAlterados[$idProduto] = true;
 
                 if ($diferenca > 0) {
                     $sqlEstoque = "
@@ -468,6 +472,17 @@ class SaidaDAO
             $this->recalcularValorTotalSaida($idSaida, $pdo);
 
             $pdo->commit();
+
+            require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'EstoqueService.php';
+
+            $estoqueService = new EstoqueService();
+
+            foreach (array_keys($produtosAlterados) as $idProdutoAlterado) {
+                $estoqueService->verificarEstoqueMinimo(
+                    (int)$idProdutoAlterado,
+                    (int)$idAlmoxarifado
+                );
+            }
         } catch (Exception $e) {
             $pdo->rollBack();
             throw $e;
