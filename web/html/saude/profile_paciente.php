@@ -230,7 +230,6 @@ try {
   $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
   $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
-
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -1169,7 +1168,23 @@ try {
                 <div class="thumb-info mb-md">
                   <img id="imagem" alt="John Doe">
                 </div>
+                <?php
+                  require_once "../../dao/MiddlewareDAO.php";
+                  $controladorasRecursos =[
+                    'AtendidoControle' => [12],
+                  ];   
+                  $middleware = new MiddlewareDAO();
+                  if($middleware->verificarPermissao($_SESSION['id_pessoa'],'AtendidoControle',$controladorasRecursos)):
+                ?> 
+                <div class="panel-footer">
+                  <div class="row">
+                    <div class="col-md-9">
+                      <a href="../atendido/Profile_Atendido.php?idatendido=<?=$id_fichamedica;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP">Acessar Perfil</a>
+                    </div>
+                  </div>
+                </div>  
               </div>
+              <?php endif; ?>
             </section>
           </div>
           <div class="col-md-8 col-lg-8">
@@ -2298,6 +2313,7 @@ try {
                                 title="apenas letras, espaços e hífens (números não são permitidos)"
                                 required>
                             </div>
+
                             <div class="form-group">
                               <label class="control-label" for="crmMedicoModal">
                                 CRM <sup class="obrig">*</sup>
@@ -2308,8 +2324,6 @@ try {
                                 name="crm_medico"
                                 id="crmMedicoModal"
                                 maxlength="30"
-                                onkeypress="return Onlynumbers(event)"
-                                oninput="this.value =  this.value.replace(/\D/g,'')"
                                 required>
                             </div>
                           </div>
@@ -2774,8 +2788,7 @@ try {
           });
 
           if (!requisicao.ok) {
-            const resposta = await requisicao.json();
-            throw new Error(resposta.erro || resposta.mensagem || "Erro na requisição");
+            throw new Error("Erro na requisição");
           }
 
           documentos.value = '';
@@ -2783,7 +2796,7 @@ try {
           fecharModalExameEMostrarMensagem("Exame adicionado com sucesso!");
           gerarExames();
         } catch (e) {
-          fecharModalExameEMostrarMensagem(e.message, "danger");
+          fecharModalExameEMostrarMensagem("Erro ao adicionar exame.", "danger");
         }
       }
 

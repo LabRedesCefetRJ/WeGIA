@@ -6,7 +6,6 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTOR
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
 if (!isset($_SESSION['usuario'])) {
   header("Location: " . "../../index.php");
   exit(401);
@@ -812,6 +811,22 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                   </div>
                 </div>
               </div>
+              <?php
+               require_once "../../dao/MiddlewareDAO.php";
+                $controladorasRecursos =[
+                  'SaudeControle' => [5],
+                ];   
+                $middleware = new MiddlewareDAO();
+                if($middleware->verificarPermissao($_SESSION['id_pessoa'],'SaudeControle',$controladorasRecursos)):
+              ?>  
+              <div class="panel-footer">
+                <div class="row">
+                <div class="col-md-9">
+                  <a href="../saude/profile_paciente.php?id_fichamedica=<?=$id;?>" type="button" class="btn btn-primary" id="botaoAcessarFichaIP">Acessar Ficha Médica</a>
+                </div>
+                </div>
+              </div> 
+              <?php endif; ?>     
             </section>
           </div>
           <div class="col-md-8 col-lg-6">
