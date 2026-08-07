@@ -230,6 +230,7 @@ try {
   $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
   $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
+
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -1168,22 +1169,22 @@ try {
                 <div class="thumb-info mb-md">
                   <img id="imagem" alt="John Doe">
                 </div>
-                <?php
-                  require_once "../../dao/MiddlewareDAO.php";
-                  $controladorasRecursos =[
-                    'AtendidoControle' => [12],
-                  ];   
-                  $middleware = new MiddlewareDAO();
-                  if($middleware->verificarPermissao($_SESSION['id_pessoa'],'AtendidoControle',$controladorasRecursos)):
-                ?> 
-                <div class="panel-footer">
-                  <div class="row">
-                    <div class="col-md-9">
-                      <a href="../atendido/Profile_Atendido.php?idatendido=<?=$id_fichamedica;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP">Acessar Perfil</a>
-                    </div>
-                  </div>
-                </div>  
               </div>
+              <?php
+                require_once "../../dao/MiddlewareDAO.php";
+                $controladorasRecursos =[
+                 'AtendidoControle' => [12],
+                ];   
+                $middleware = new MiddlewareDAO();
+                if($middleware->verificarPermissao($_SESSION['id_pessoa'],'AtendidoControle',$controladorasRecursos)):
+              ?> 
+              <div class="panel-footer">
+                <div class="row">
+                  <div class="col-md-9">
+                    <a href="../atendido/Profile_Atendido.php?idatendido=<?=$id_fichamedica;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP">Acessar Perfil</a>
+                  </div>
+                </div>
+              </div>  
               <?php endif; ?>
             </section>
           </div>
