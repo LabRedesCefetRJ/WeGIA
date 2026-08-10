@@ -73,6 +73,115 @@ class MercadoPagoContribuicoesService implements ApiContribuicoesServiceInterfac
     }
 
     /**
+     * Retorna as faturas de recorrência do gateway de pagamento. True em objectReturn faz com
+     * que seja retornado um objeto do tipo ContribuicaoLogCollection (mesma assinatura de
+     * PagarMeContribuicoesService::getInvoices()).
+     *
+     * No Mercado Pago, uma assinatura (preapproval) gera cobranças automáticas — cada uma
+     * registrada como um "authorized payment". É esse o equivalente às "faturas" que o
+     * PagarMe expõe explicitamente antes da cobrança acontecer.
+     */
+    public function getInvoices(GatewayPagamento $gatewayPagamento, ?bool $objectReturn = false): array|ContribuicaoLogCollection
+    {
+        $faturas = $this->buscarFaturas($gatewayPagamento);
+
+        if (!$objectReturn) {
+            return $faturas;
+        }
+
+        $contribuicaoLogCollection = new ContribuicaoLogCollection();
+
+        foreach ($faturas as $fatura) {
+            if (empty($fatura['id']) || empty($fatura['preapproval_id']) || empty($fatura['date_created'])) {
+                continue;
+            }
+
+            $dataGeracao = DateTime::createFromFormat(DateTime::ATOM, $fatura['date_created']);
+
+            if (!$dataGeracao instanceof DateTime) {
+                continue;
+            }
+
+            $contribuicaoLog = new ContribuicaoLog();
+            $contribuicaoLog
+                ->setCodigo((string) $fatura['id'])
+                ->setDataGeracao($dataGeracao->format('Y-m-d H:i:s'))
+                ->setDataVencimento($dataGeracao->format('Y-m-d H:i:s'))
+                ->setRecorrenciaDTO(new RecorrenciaDTO((string) $fatura['preapproval_id']));
+
+            $contribuicaoLogCollection->add($contribuicaoLog);
+        }
+
+        return $contribuicaoLogCollection;
+    }
+
+    /**
+     * Consulta GET /authorized_payments/search paginando até obter todos os resultados.
+     * authorized_payments é o recurso da API do Mercado Pago que lista as cobranças geradas
+     * por assinaturas (preapproval) — o equivalente às "faturas" de recorrência.
+     */
+    private function buscarFaturas(GatewayPagamento $gatewayPagamento): array
+    {
+        $host = parse_url($gatewayPagamento->getEndpoint(), PHP_URL_HOST) ?: 'api.mercadopago.com';
+        $searchUrl = 'https://' . $host . '/authorized_payments/search';
+
+        $limit = 50;
+        $offset = 0;
+        $total = 0;
+        $faturas = [];
+
+        do {
+            $query = [
+                'limit' => $limit,
+                'offset' => $offset,
+            ];
+
+            $url = $searchUrl . '?' . http_build_query($query);
+
+            $headers = [
+                'Authorization: Bearer ' . $gatewayPagamento->getToken(),
+            ];
+
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+            $response = curl_exec($ch);
+
+            if (curl_errno($ch)) {
+                $erro = curl_error($ch);
+                curl_close($ch);
+                throw new PaymentServiceException(
+                    'Não foi possível buscar as faturas de recorrência no momento.',
+                    'Erro cURL ao consultar authorized_payments na API Mercado Pago: ' . $erro,
+                    502
+                );
+            }
+
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            $data = json_decode((string) $response, true);
+
+            if ($httpCode !== 200 || !is_array($data) || !isset($data['results'])) {
+                throw new PaymentServiceException(
+                    'Não foi possível buscar as faturas de recorrência no momento.',
+                    "A API Mercado Pago retornou o código de status HTTP $httpCode ao consultar authorized_payments.",
+                    $httpCode
+                );
+            }
+
+            $faturas = array_merge($faturas, $data['results']);
+            $total = $data['paging']['total'] ?? count($faturas);
+            $offset += $limit;
+        } while ($offset < $total);
+
+        return $faturas;
+    }
+
+    /**
      * Consulta GET /v1/payments/search paginando até obter todos os resultados
      */
     private function buscarPagamentos(GatewayPagamento $gatewayPagamento, ?string $status, string $dataInicio, string $dataFim): array
