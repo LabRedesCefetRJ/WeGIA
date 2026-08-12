@@ -164,7 +164,98 @@ Nota: Um usuário não pode editar o perfil de outro usuário. Se o `id` forneci
 
 ---
 
-## 2. Modelos de Dados
+## 3. Atualizar Foto de Perfil
+
+### Endpoint
+```
+POST /pessoas/profile/photo
+```
+
+### Autenticação
+**Obrigatório** - Bearer Token (JWT)
+
+```
+Authorization: Bearer <seu_token_jwt>
+```
+
+### Descrição
+Atualiza a foto de perfil do usuário autenticado. Apenas o proprietário do perfil pode alterar sua própria imagem.
+
+### Request
+- Content-Type: `multipart/form-data`
+- Campos:
+  - `id` (Integer, opcional) — deve ser igual ao ID do usuário autenticado quando presente.
+  - `photo` (File, obrigatório) — arquivo de imagem enviado no formulário.
+
+### Campos
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `id` | Integer | Não | ID da pessoa que recebe a foto; quando informado, deve coincidir com o usuário autenticado |
+| `photo` | File | Sim | Arquivo da foto de perfil a ser enviada |
+
+### Resposta com Sucesso (200 OK)
+
+```json
+{
+  "message": "Foto de perfil atualizada com sucesso"
+}
+```
+
+### Respostas de Erro
+
+#### 400 Bad Request - Nenhuma foto enviada
+```json
+{
+  "error": "Nenhuma foto enviada"
+}
+```
+
+#### 400 Bad Request - Erro ao enviar a foto
+```json
+{
+  "error": "Erro ao enviar a foto"
+}
+```
+
+#### 401 Unauthorized - Sem Autenticação
+```json
+{
+  "error": "Usuário não autenticado"
+}
+```
+
+#### 403 Forbidden - Sem Permissão
+```json
+{
+  "error": "Você não tem permissão para editar este perfil"
+}
+```
+
+#### 404 Not Found - Usuário Não Encontrado
+```json
+{
+  "error": "Pessoa não encontrada"
+}
+```
+
+#### 500 Internal Server Error
+```json
+{
+  "error": "Erro ao atualizar pessoa"
+}
+```
+
+### Exemplo de Uso cURL
+
+```bash
+curl -X POST http://localhost:8000/pessoas/profile/photo \
+  -H "Authorization: Bearer seu_token_jwt_aqui" \
+  -F "photo=@/caminho/para/foto.jpg" \
+  -F "id=1"
+```
+
+## 3. Modelos de Dados
 
 ### Pessoa
 
@@ -199,7 +290,7 @@ interface Endereco {
 
 ---
 
-## 3. Validações
+## 4. Validações
 
 ### Validação de CPF
 - O CPF é validado usando o algoritmo oficial de check-digit
@@ -223,7 +314,7 @@ interface Endereco {
 
 ---
 
-## 4. Exemplos de Uso
+## 5. Exemplos de Uso
 
 ### cURL
 
@@ -337,7 +428,7 @@ print(response.json())
 
 ---
 
-## 5. Segurança e Permissões
+## 6. Segurança e Permissões
 
 ### Autenticação (AuthMiddleware)
 - Todas as requisições para `/pessoas/profile` requerem um token JWT válido
@@ -355,7 +446,7 @@ print(response.json())
 
 ---
 
-## 6. Fluxo de Requisição
+## 7. Fluxo de Requisição
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -420,7 +511,7 @@ print(response.json())
 
 ---
 
-## 7. Status HTTP
+## 8. Status HTTP
 
 | Status | Descrição |
 |--------|-----------|
@@ -433,7 +524,7 @@ print(response.json())
 
 ---
 
-## 8. Estrutura de Código
+## 9. Estrutura de Código
 
 ### Hierarquia de Arquivos
 ```
@@ -464,7 +555,7 @@ api/modules/Auth/
 
 ---
 
-## 9. Tabela de Banco de Dados
+## 10. Tabela de Banco de Dados
 
 ```sql
 CREATE TABLE pessoa (
@@ -483,7 +574,7 @@ CREATE TABLE pessoa (
 
 ---
 
-## 10. Notas Importantes
+## 11. Notas Importantes
 
 - **Imutabilidade do CPF**: O CPF é um identificador único e não deve ser alterado após a criação da pessoa
 - **Validação de Dados**: Todos os dados são validados tanto no controller quanto no serviço
@@ -493,7 +584,7 @@ CREATE TABLE pessoa (
 
 ---
 
-## 11. Changelog
+## 12. Changelog
 
 | Data | Versão | Alteração |
 |------|--------|-----------|
@@ -501,6 +592,6 @@ CREATE TABLE pessoa (
 
 ---
 
-## 12. Contato e Suporte
+## 13. Contato e Suporte
 
 Para questões sobre esta API, consulte a documentação principal do projeto WeGIA ou entre em contato com a equipe de desenvolvimento.

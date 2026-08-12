@@ -182,6 +182,9 @@ $app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de l
 $app->put('/pessoas/profile', [PessoaController::class, 'updateProfile'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->post('/pessoas/profile/photo', [PessoaController::class, 'updateProfilePhoto'])
+    ->add($container->get(AuthMiddleware::class));
+
 //Módulo Sócio
 $app->post('/socios/register', [SocioController::class, 'registerSocio']);
 

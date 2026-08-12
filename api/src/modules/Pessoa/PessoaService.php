@@ -6,6 +6,7 @@ use api\contracts\entities\PessoaInterface;
 use api\contracts\services\PessoaServiceInterface;
 use api\utils\Util;
 use DateTime;
+use Psr\Http\Message\UploadedFileInterface;
 
 class PessoaService implements PessoaServiceInterface
 {
@@ -181,6 +182,18 @@ class PessoaService implements PessoaServiceInterface
 
         $pessoa->setId($idPessoa);
         return $pessoa;
+    }
+
+    public function atualizarFotoPerfil(int $idPessoa, UploadedFileInterface $foto): bool
+    {
+        // Verificar se a pessoa existe
+        $pessoaExistente = $this->pessoaRepository->findById((string)$idPessoa);
+        if (!$pessoaExistente) {
+            throw new \Exception("Pessoa não encontrada", 404);
+        }
+
+        // Atualizar foto no banco de dados
+        return $this->pessoaRepository->updateProfilePhoto($idPessoa, $foto);
     }
 
     private function criarPessoaDoResultado(array $resultado): Pessoa

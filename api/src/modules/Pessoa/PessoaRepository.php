@@ -3,6 +3,7 @@
 namespace api\modules\Pessoa;
 
 use PDO;
+use Psr\Http\Message\UploadedFileInterface;
 
 class PessoaRepository
 {
@@ -163,5 +164,27 @@ class PessoaRepository
 
             throw new \Exception("Erro ao criar pessoa jurídica: " . $e->getMessage(), 500);
         }
+    }
+
+    public function updateProfilePhoto(int $idPessoa, UploadedFileInterface $foto): bool
+    {
+        //armazenar a foto no banco de dados como base64
+        $conteudo = $foto->getStream()->getContents();
+        $mime = $foto->getClientMediaType();
+
+        //modelo padrão de armazenamento de imagens no banco de dados do projeto
+        $imagem = sprintf(
+            'data:%s;base64,%s',
+            $mime,
+            base64_encode($conteudo)
+        );
+
+        $query = "UPDATE pessoa SET imagem = :foto_perfil WHERE id_pessoa = :id";
+        $stmt = $this->pdo->prepare($query);
+        
+        return $stmt->execute([
+            'foto_perfil' => $imagem,
+            'id' => $idPessoa
+        ]);
     }
 }

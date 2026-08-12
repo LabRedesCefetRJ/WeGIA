@@ -108,7 +108,72 @@ class PessoaController
                 'data' => $pessoaAtualizada
             ]));
             return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)$e->getCode() ?: 500;
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage()
+            ]));
+            return $response->withStatus($statusCode)->withHeader('Content-Type', 'application/json');
+        }
+    }
 
+    public function updateProfilePhoto(Request $request, Response $response): Response
+    {
+        try {
+            // Obter o ID do usuário autenticado do token
+            $userId = $request->getAttribute('user_id');
+
+            if (!$userId) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Usuário não autenticado'
+                ]));
+                return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
+            }
+
+            // Validar que o usuário está editando seu próprio perfil
+            $body = $request->getParsedBody();
+            if (isset($body['id']) && (int)$body['id'] !== (int)$userId) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Você não tem permissão para editar este perfil'
+                ]));
+                return $response->withStatus(403)->withHeader('Content-Type', 'application/json');
+            }
+
+            // Obter os arquivos enviados
+            $uploadedFiles = $request->getUploadedFiles();
+
+            if (!isset($uploadedFiles['photo'])) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Nenhuma foto enviada'
+                ]));
+
+                return $response
+                    ->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $photo = $uploadedFiles['photo'];
+
+            // Validar se o arquivo foi enviado corretamente
+            if ($photo->getError() !== UPLOAD_ERR_OK) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Erro ao enviar a foto'
+                ]));
+
+                return $response
+                    ->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // A partir daqui, o arquivo está disponível em $photo
+
+            // Atualizar a foto do perfil
+            $this->pessoaService->atualizarFotoPerfil((int)$userId, $photo);
+
+            $response->getBody()->write(json_encode([
+                'message' => 'Foto de perfil atualizada com sucesso'
+            ]));
+            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
         } catch (\Exception $e) {
             $statusCode = (int)$e->getCode() ?: 500;
             $response->getBody()->write(json_encode([
