@@ -182,4 +182,44 @@ class PessoaController
             return $response->withStatus($statusCode)->withHeader('Content-Type', 'application/json');
         }
     }
+
+    public function getProfilePhoto(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $idPessoa = (int)$args['id'];
+
+            //verificar se o usuário autenticado tem permissão para acessar a foto do perfil
+            $userId = $request->getAttribute('user_id');
+            if ($userId !== $idPessoa) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Você não tem permissão para acessar esta foto de perfil'
+                ]));
+                return $response->withStatus(403)->withHeader('Content-Type', 'application/json');
+            }
+
+            // Obter a foto do perfil da pessoa
+            $foto = $this->pessoaService->getProfilePhoto($idPessoa);
+
+            if (!$foto) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Foto de perfil não encontrada'
+                ]));
+                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write($foto['conteudo']);
+
+            return $response
+                ->withHeader('Content-Type', $foto['mime'])
+                ->withHeader('Content-Length', (string) strlen($foto['conteudo']))
+                ->withHeader('Content-Disposition', 'inline')
+                ->withStatus(200);
+        } catch (\Exception $e) {
+            $statusCode = (int)$e->getCode() ?: 500;
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage()
+            ]));
+            return $response->withStatus($statusCode)->withHeader('Content-Type', 'application/json');
+        }
+    }
 }

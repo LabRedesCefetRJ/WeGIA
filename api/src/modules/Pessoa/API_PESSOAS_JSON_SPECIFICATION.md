@@ -255,6 +255,77 @@ curl -X POST http://localhost:8000/pessoas/profile/photo \
   -F "id=1"
 ```
 
+## 2. Obter Foto de Perfil
+
+### Endpoint
+```
+GET /pessoas/{id}/profile/photo
+```
+
+### Autenticação
+**Obrigatório** - Bearer Token (JWT)
+
+```
+Authorization: Bearer <seu_token_jwt>
+```
+
+### Descrição
+Retorna a foto de perfil do usuário autenticado identificado por `id`. O usuário só pode acessar a própria foto de perfil.
+
+### Parâmetros
+- `id` (Integer, obrigatório) — ID da pessoa cujo perfil está sendo solicitado.
+
+### Resposta
+- `200 OK` — corpo da resposta contém os bytes da imagem.
+- Headers de resposta:
+  - `Content-Type`: tipo MIME da imagem (`image/jpeg`, `image/png`, etc.)
+  - `Content-Length`: tamanho da imagem em bytes
+  - `Content-Disposition`: `inline`
+
+### Resposta com Sucesso (200 OK)
+- Corpo: imagem de perfil em bytes
+- Exemplo de headers:
+  - `Content-Type: image/jpeg`
+  - `Content-Disposition: inline`
+
+### Respostas de Erro
+
+#### 401 Unauthorized - Sem Autenticação
+```json
+{
+  "error": "Usuário não autenticado"
+}
+```
+
+#### 403 Forbidden - Sem Permissão
+```json
+{
+  "error": "Você não tem permissão para acessar esta foto de perfil"
+}
+```
+
+#### 404 Not Found - Foto de perfil não encontrada
+```json
+{
+  "error": "Foto de perfil não encontrada"
+}
+```
+
+#### 500 Internal Server Error
+```json
+{
+  "error": "Erro ao recuperar foto de perfil"
+}
+```
+
+### Exemplo de Uso cURL
+
+```bash
+curl -X GET http://localhost:8000/pessoas/1/profile/photo \
+  -H "Authorization: Bearer seu_token_jwt_aqui" \
+  --output foto_perfil.jpg
+```
+
 ## 3. Modelos de Dados
 
 ### Pessoa

@@ -181,10 +181,20 @@ class PessoaRepository
 
         $query = "UPDATE pessoa SET imagem = :foto_perfil WHERE id_pessoa = :id";
         $stmt = $this->pdo->prepare($query);
-        
+
         return $stmt->execute([
             'foto_perfil' => $imagem,
             'id' => $idPessoa
         ]);
+    }
+
+    public function getProfilePhoto(int $idPessoa): ?string
+    {
+        $query = "SELECT imagem FROM pessoa WHERE id_pessoa = :id";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute(['id' => $idPessoa]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : $result['imagem'];
     }
 }

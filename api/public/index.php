@@ -185,6 +185,9 @@ $app->put('/pessoas/profile', [PessoaController::class, 'updateProfile'])
 $app->post('/pessoas/profile/photo', [PessoaController::class, 'updateProfilePhoto'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->get('/pessoas/{id}/profile/photo', [PessoaController::class, 'getProfilePhoto'])
+    ->add($container->get(AuthMiddleware::class));
+
 //Módulo Sócio
 $app->post('/socios/register', [SocioController::class, 'registerSocio']);
 

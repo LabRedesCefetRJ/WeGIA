@@ -26,7 +26,7 @@ class PessoaService implements PessoaServiceInterface
 
         // Normaliza o CPF antes de criar
         $cpf = Util::normalizeCpf($cpf);
-        
+
         $pessoa = new Pessoa($nome, $sobrenome, $cpf, $dataNascimento, $sexo, $telefone, $email);
         $idPessoa = $this->pessoaRepository->create($pessoa);
 
@@ -53,10 +53,10 @@ class PessoaService implements PessoaServiceInterface
 
         // Normaliza o CPF (remove máscara e formata)
         $cpf = Util::normalizeCpf($cpf);
-        
+
         $resultado = $this->pessoaRepository->findByCpf($cpf);
 
-        if(!$resultado) {
+        if (!$resultado) {
             return null;
         }
 
@@ -144,7 +144,7 @@ class PessoaService implements PessoaServiceInterface
 
         // Realizar atualização
         $resultado = $this->pessoaRepository->update($id, $dados);
-        
+
         if (!$resultado) {
             throw new \Exception("Erro ao atualizar pessoa", 500);
         }
@@ -172,7 +172,7 @@ class PessoaService implements PessoaServiceInterface
 
         // Normaliza o CNPJ antes de criar
         $cnpj = Util::normalizeCnpj($cnpj);
-        
+
         $pessoa = new Pessoa($razaoSocial, '', $cnpj, null, null, $telefone, $email, Endereco::buildFromArray($endereco)); //reorganizar ordem dos parâmetros conforme necessário
         $idPessoa = $this->pessoaRepository->createJuridica($pessoa);
 
@@ -194,6 +194,37 @@ class PessoaService implements PessoaServiceInterface
 
         // Atualizar foto no banco de dados
         return $this->pessoaRepository->updateProfilePhoto($idPessoa, $foto);
+    }
+
+    public function getProfilePhoto(int $idPessoa): ?array
+    {
+        // Verificar se a pessoa existe
+        $pessoaExistente = $this->pessoaRepository->findById((string)$idPessoa);
+        if (!$pessoaExistente) {
+            throw new \Exception("Pessoa não encontrada", 404);
+        }
+
+        // Obter a foto do perfil da pessoa
+        $fotoBase64 = $this->pessoaRepository->getProfilePhoto($idPessoa);
+
+        if(!$fotoBase64) {
+            return null;
+        }
+
+        // Extrair o tipo MIME e os dados da imagem
+        // Se armazenou como Data URI
+        if (preg_match('/^data:(.+);base64,(.+)$/', $fotoBase64, $matches)) {
+            return [
+                'mime' => $matches[1],
+                'conteudo' => base64_decode($matches[2]),
+            ];
+        }
+
+        // Compatibilidade: Base64 puro
+        return [
+            'mime' => 'image/png', // ajuste se necessário
+            'conteudo' => base64_decode($fotoBase64),
+        ];
     }
 
     private function criarPessoaDoResultado(array $resultado): Pessoa
