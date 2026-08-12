@@ -581,7 +581,7 @@ class ContribuicaoController
 
             $pdfService = new \PdfService();
             $pdf = $pdfService->gerarExtratoContribuicoes($contribuicoes, $pessoa);
-            $nomeArquivo = sprintf('extrato_contribuicoes_socio_%d.pdf', $idSocio);
+            $nomeArquivo = sprintf('extrato_contribuicoes_%d', $idSocio);
 
             $response->getBody()->write($pdf);
 
