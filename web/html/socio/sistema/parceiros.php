@@ -1,5 +1,5 @@
 <?php
-//Página de benefícios para sócios, onde o administrador pode criar, editar e deletar regras de benefícios
+//Página de gerenciamento de parceiros institucionais
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
 if (session_status() === PHP_SESSION_NONE)
@@ -202,7 +202,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                 </div>
 
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-hover" id="tabelaRegras">
+                                    <table class="table table-bordered table-striped table-hover" id="tabelaParceiros">
                                         <thead>
                                             <tr>
                                                 <th width="5%" class="text-center">#</th>
@@ -454,7 +454,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                                 <button type="button" class="btn btn-danger" id="btnConfirmarDelecao">
-                                    <i class="fa fa-trash"></i> Deletar Regra
+                                    <i class="fa fa-trash"></i> Deletar parceiro
                                 </button>
                             </div>
                         </div>
@@ -763,7 +763,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         let html = '';
 
                         if (!Array.isArray(parceiros) || parceiros.length === 0) {
-                            html = '<tr><td colspan="7" class="text-center text-muted">Nenhuma regra encontrada</td></tr>';
+                            html = '<tr><td colspan="7" class="text-center text-muted">Nenhum parceiro encontrado</td></tr>';
                         } else {
                             parceiros.forEach(function(parceiro, index) {
                                 const statusBadge = parceiro.ativo ?
