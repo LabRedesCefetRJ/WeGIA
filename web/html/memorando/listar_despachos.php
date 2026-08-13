@@ -193,7 +193,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							.text(item.data.substr(8, 2) + "/" + item.data.substr(5, 2) + "/" + item.data.substr(0, 4) + " " + item.data.substr(10))))
 					.append($("<tr>")
 						.append($("<td colspan=4 id=texto" + item.id + ">")
-							.text(item.texto))));
+							.html(item.texto))));
 		});
 		$.each(despachoAnexo, function(i, item) {
 			$("#" + item.id_despacho)
@@ -202,10 +202,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 						.text("Anexos")));
 		});
 		$.each(arquivo, function(i, item) {
+			var linkAnexo = $("<a>")
+				.attr("href", "<?php echo WWW; ?>html/memorando/exibe_anexo.php?id_anexo=" + encodeURIComponent(item.id_anexo) + "&extensao=" + encodeURIComponent(item.extensao) + "&nome=" + encodeURIComponent(item.nome))
+				.text(item.nome + "." + item.extensao);
+
 			$("#" + item.id_despacho)
 				.append($("<tr id=link>")
 					.append($("<td colspan=4>")
-						.html("<a href='<?php echo WWW; ?>html/memorando/exibe_anexo.php?id_anexo=" + item.id_anexo + "&extensao=" + item.extensao + "&nome=" + item.nome + "'>" + item.nome + "." + item.extensao + "</a>")));
+						.append(linkAnexo)));
 		});
 
 		$("#header").load("<?php echo WWW; ?>html/header.php");

@@ -90,7 +90,10 @@ class DespachoControle
                 throw new InvalidArgumentException("É obrigatório selecionar um destino para o memorando.", 400);
             }
 			$id_memorando = filter_var($_REQUEST['id_memorando'], FILTER_SANITIZE_NUMBER_INT);
-			$texto = filter_var($_REQUEST['texto'], FILTER_SANITIZE_SPECIAL_CHARS);
+			$texto = $_REQUEST['texto'] ?? '';
+			if (!is_string($texto)) {
+				throw new InvalidArgumentException('O texto de um despacho não pode ser vazio.', 400);
+			}
 
 			$despacho = new Despacho($texto, $id_pessoa, $destinatario, $id_memorando);
 			return $despacho;

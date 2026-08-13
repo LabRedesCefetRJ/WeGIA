@@ -470,9 +470,9 @@ function quickQuery($query, $column)
 								<th scope="col" colspan="4" style="font-size: large;">ENTRADAS</th>
 							</tr>
 							<tr>
-								<th scope="col" style="font-weight: 600;">DATA</th>
-								<th scope="col" style="font-weight: 600;">TIPO</th>
-								<th scope="col" style="font-weight: 600;">QTD</th>
+								<th scope="col" style="font-weight: 600; width: 45%">DATA</th>
+								<th scope="col" style="font-weight: 600; width: 45%">TIPO</th>
+								<th scope="col" style="font-weight: 600; width: 45%">QTD</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -497,9 +497,9 @@ function quickQuery($query, $column)
 								<th scope="col" colspan="4" style="font-size: large;">SAÍDAS</th>
 							</tr>
 							<tr>
-								<th scope="col" style="font-weight: 600;">DATA</th>
-								<th scope="col" style="font-weight: 600;">TIPO</th>
-								<th scope="col" style="font-weight: 600;">QTD</th>
+								<th scope="col" style="font-weight: 600; width: 45%">DATA</th>
+								<th scope="col" style="font-weight: 600; width: 45%">TIPO</th>
+								<th scope="col" style="font-weight: 600; width: 45%">QTD</th>
 							</tr>
 						</thead>
 						<tbody>

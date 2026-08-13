@@ -207,6 +207,13 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 			$.each(ientrada, function(i, item) {
 
+				const totalItem = item.valor_unitario * item.qtd;
+
+				const totalFormatado = new Intl.NumberFormat('pt-BR', {
+        			style: 'currency',
+        			currency: 'BRL'
+    			}).format(totalItem);
+
 				$('#tabela')
 					.append($('<tr />')
 						.append($('<td />')
@@ -218,7 +225,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 						.append($('<td />')
 							.text(item.unidade))
 						.append($('<td />')
-							.text(item.valor_unitario * item.qtd)))
+							.text(totalFormatado)))
 			});
 		});
 		$(function() {
