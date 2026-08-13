@@ -34,22 +34,28 @@ if (!$id || $id < 0) {
   exit('O id do paciente informado não é válido');
 }
 
+require_once "../../dao/Conexao.php";
+require_once "../../dao/AtendidoDAO.php";
+$atendidoDAO = new AtendidoDAO();
+
+if (!$atendidoDAO->existeAtendido($id)) {
+    $_SESSION['msg'] = "Atendido não encontrado.";
+    $_SESSION['tipo'] = "error";
+    header('Location: ../../html/home.php');
+    exit();
+}
+
 $cache = new Cache();
 $teste = $cache->read($id);
 
 require_once "../../dao/Conexao.php";
+require_once "../../dao/ProcessoAceitacaoDAO.php";
 $pdo = Conexao::connect();
+$processoAceitacaoDAO = new ProcessoAceitacaoDAO($pdo);
 
-$stmtDocFuncional = $pdo->prepare("SELECT * FROM atendido_documentacao a JOIN atendido_docs_atendidos doca ON a.atendido_docs_atendidos_idatendido_docs_atendidos  = doca.idatendido_docs_atendidos JOIN pessoa_arquivo pa ON a.id_pessoa_arquivo=pa.id WHERE atendido_idatendido =:idAtendido");
-
-$stmtDocFuncional->bindParam(':idAtendido', $id);
-$stmtDocFuncional->execute();
-
-$docfuncional = $stmtDocFuncional->fetchAll(PDO::FETCH_ASSOC);
+$docfuncional = $atendidoDAO->listarDocumentacaoFuncional($id);
 foreach ($docfuncional as $key => $value) {
   $docfuncional[$key]["arquivo"] = gzuncompress($value["arquivo"]);
-
-  //formatar data
   $data = new DateTime($value['data']);
   $docfuncional[$key]['data'] = $data->format('d/m/Y');
 }
@@ -61,9 +67,15 @@ if (!isset($teste)) {
 }
 
 $_SESSION['atendido'] = $teste;
+if (empty($_SESSION['atendido'])) {
+    $_SESSION['msg'] = "Atendido não encontrado.";
+    $_SESSION['tipo'] = "error";
+    header('Location: ../../html/home.php');
+    exit();
+}
 $atend = $_SESSION['atendido'];
 $stmtDependente = $pdo->prepare("SELECT
-      af.idatendido_familiares AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.parentesco AS parentesco
+      af.idatendido_familiares AS id_dependente, p.nome AS nome, p.sobrenome AS sobrenome, p.cpf AS cpf, p.telefone AS telefone, par.parentesco AS parentesco
       FROM atendido_familiares af
       LEFT JOIN atendido a ON a.idatendido = af.atendido_idatendido
       LEFT JOIN pessoa p ON p.id_pessoa = af.pessoa_id_pessoa
@@ -74,7 +86,15 @@ $stmtDependente->bindParam(':idAtendido', $id);
 $stmtDependente->execute();
 
 $dependente = $stmtDependente->fetchAll(PDO::FETCH_ASSOC);
+foreach ($dependente as $key => $value) {
+    $dependente[$key]['sobrenome'] = Util::primeiroSobrenome($value['sobrenome'] ?? '');
+}
 $dependente = json_encode($dependente);
+
+$atendidoDados = json_decode($atend, true) ?: [];
+$idPessoaAtendido = (int)($atendidoDados[0]['id_pessoa'] ?? 0);
+$processoAceitacao = $idPessoaAtendido > 0 ? $processoAceitacaoDAO->buscarProcessoAtivoPorPessoa($idPessoaAtendido) : null;
+$etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEtapasPorProcesso((int)$processoAceitacao['id']) : [];
 ?>
 
 <!doctype html>
@@ -193,10 +213,28 @@ $dependente = json_encode($dependente);
     function listarDependentes(dependente) {
       $("#dep-tab").empty();
       $.each(dependente, function(i, dependente) {
+        
+        let sobrenome = dependente.sobrenome || "";
+
+        //Centralizar lógica do WhatsApp para uso em outras tabelas do sistema.
+        let colunaTelefone = $("<td>").text(dependente.telefone || "Não informado");
+        if (dependente.telefone) {
+          let numeroLimpo = dependente.telefone.replace(/\D/g, '');
+          if (numeroLimpo.length === 10 || numeroLimpo.length === 11) {
+            numeroLimpo = "55" + numeroLimpo;
+          }
+          let linkWhats = $("<a>", {
+            href: "https://wa.me/" + numeroLimpo,
+            target: "_blank",
+            title: "Entrar em contato via WhatsApp",
+            style: "color: #1fb657; font-weight: bold; text-decoration: none;"
+          }).html("<i class='fab fa-whatsapp'></i> " + dependente.telefone);
+          colunaTelefone = $("<td>").append(linkWhats);
+        }
         $("#dep-tab")
           .append($("<tr>")
-            .append($("<td>").text(dependente.nome))
-            .append($("<td>").text(dependente.cpf))
+            .append($("<td>").text(dependente.nome + " " + sobrenome))
+            .append($(colunaTelefone))
             .append($("<td>").text(dependente.parentesco))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
               .append($("<a href='profile_familiar.php?id_dependente=" + dependente.id_dependente + "' title='Editar'><button class='btn btn-primary'><i class='fas fa-user-edit'></i></button></a>"))
@@ -794,10 +832,12 @@ $dependente = json_encode($dependente);
                 <li>
                   <a href="#ocorrencias" data-toggle="tab">Ocorrências</a>
                 </li>
+                  <li>
+                    <a href="#processo-aceitacao" data-toggle="tab">Processo de Aceitação</a>
+                  </li>
               </ul>
               <div class="tab-content">
-                <div class="tab-content">
-                  <div id="overview" class="tab-pane active">
+                    <div id="overview" class="tab-pane active">
                     <form class="form-horizontal" method="post" action="../../controle/control.php">
                       <?= Csrf::inputField() ?>
                       <input type="hidden" name="nomeClasse" value="AtendidoControle">
@@ -1029,7 +1069,7 @@ $dependente = json_encode($dependente);
                           <thead>
                             <tr>
                               <th>Nome</th>
-                              <th>CPF</th>
+                              <th>Telefone</th>
                               <th>Parentesco</th>
                               <th>Ação</th>
                             </tr>
@@ -1329,6 +1369,60 @@ $dependente = json_encode($dependente);
                         <div>
                           <a href="cadastro_ocorrencia.php?atendido_id=<?= (int)$id ?>" class="btn btn-primary">Cadastrar Ocorrência</a>
                         </div>
+                      </div>
+                    </section>
+                  </div>
+
+                  <div id="processo-aceitacao" class="tab-pane">
+                    <section class="panel">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a href="#" class="fa fa-caret-down"></a>
+                        </div>
+                        <h2 class="panel-title">Processo de Aceitação</h2>
+                      </header>
+                      <div class="panel-body">
+                        <?php if (empty($processoAceitacao)): ?>
+                          <div class="alert alert-warning">
+                            Nenhum processo de aceitação foi encontrado para este atendido.
+                          </div>
+                        <?php else: ?>
+                          <div class="table-responsive">
+                            <table class="table table-bordered table-striped mb-none">
+                              <thead>
+                                <tr>
+                                  <th>Título</th>                                 
+                                  <th>Status</th>
+                                  <th>Data de Início</th>
+                                  <th>Data de Conclusão</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <?php if (empty($etapasProcessoAceitacao)): ?>
+                                  <tr>
+                                    <td colspan="5" class="text-center text-muted">Nenhuma etapa cadastrada para este processo.</td>
+                                  </tr>
+                                <?php else: ?>
+                                  <?php foreach ($etapasProcessoAceitacao as $etapaProcessoAceitacao): ?>
+                                    <tr>
+                                      <td><?= htmlspecialchars($etapaProcessoAceitacao['titulo'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                                      <td><?= htmlspecialchars($etapaProcessoAceitacao['status_nome'] ?? 'Não informado', ENT_QUOTES, 'UTF-8') ?></td>                                   
+                                      <td><?= !empty($etapaProcessoAceitacao['data_inicio']) ? date('d/m/Y', strtotime($etapaProcessoAceitacao['data_inicio'])) : 'Não informada' ?></td>
+                                      <td><?= !empty($etapaProcessoAceitacao['data_fim']) ? date('d/m/Y', strtotime($etapaProcessoAceitacao['data_fim'])) : 'Em andamento' ?></td>
+                                      </td>
+                                    </tr>
+                                  <?php endforeach; ?>
+                                <?php endif; ?>
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div class="text-left" style="margin-top: 20px;">
+                            <a class="btn btn-primary" href="etapa_processo.php?id=<?= (int)$processoAceitacao['id'] ?>">
+                              <i class="fa fa-external-link"></i> Abrir processo de aceitação
+                            </a>
+                          </div>
+                        <?php endif; ?>
                       </div>
                     </section>
                   </div>

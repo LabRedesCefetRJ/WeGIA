@@ -13,7 +13,7 @@ if (!isset($_SESSION['usuario'])) {
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
-permissao($_SESSION['id_pesssoa'], 23, 5);
+permissao($_SESSION['id_pessoa'], 23, 5);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";

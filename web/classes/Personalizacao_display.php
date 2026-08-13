@@ -80,30 +80,43 @@ class Display_campo{
     //Começar por aqui
     public function display_txt(){
         $result = $this->getQuery("select * from selecao_paragrafo where nome_campo='" . $this->getCampo() . "';");
+        
         if (count($result) == 1){
             $this->setConteudo($result[0]['paragrafo']);
-            echo('
-            <div><h1>' . $this->getCampo() . '</h1></div>
-            <p>' . nl2br(htmlspecialchars($this->getConteudo())) . '</p>
-            ');
-        }else{
+        } else {
             $this->setConteudo(NO_DATA);
-            echo('
-            <div><h1>' . $this->getCampo() . '</h1></div>
-            <p>' . nl2br(htmlspecialchars($this->getConteudo())) . '</p>
-            ');
         }
+
+        $texto = (string)$this->getConteudo();
+        $texto = str_replace(['&amp;#13;&amp;#10;', '&amp;#13;', '&amp;#10;'], "\n", $texto);
+        $texto = str_replace(['&#13;&#10;', '&#13;', '&#10;'], "\n", $texto);
+        
+        $textoDecodificado = html_entity_decode($texto, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $textoFormatado = nl2br(htmlspecialchars($textoDecodificado, ENT_QUOTES, 'UTF-8'));
+
+        echo('
+        <div><h1>' . $this->getCampo() . '</h1></div>
+        <p>' . $textoFormatado . '</p>
+        ');
     }
 
     public function display_str(){
         $result = $this->getQuery("select * from selecao_paragrafo where nome_campo='" . $this->getCampo() . "';");
+        
         if (count($result) == 1){
             $this->setConteudo($result[0]['paragrafo']);
-            echo(nl2br(htmlspecialchars($this->getConteudo())));
-        }else{
+        } else {
             $this->setConteudo(NO_DATA);
-            echo(nl2br(htmlspecialchars($this->getConteudo())));
         }
+
+        $texto = (string)$this->getConteudo();
+        
+        $texto = str_replace(['&amp;#13;&amp;#10;', '&amp;#13;', '&amp;#10;'], "\n", $texto);
+        $texto = str_replace(['&#13;&#10;', '&#13;', '&#10;'], "\n", $texto);
+        
+        $textoDecodificado = html_entity_decode($texto, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        
+        echo(nl2br(htmlspecialchars($textoDecodificado, ENT_QUOTES, 'UTF-8')));
     }
 
     public function display_file(){

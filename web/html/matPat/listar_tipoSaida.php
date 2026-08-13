@@ -20,6 +20,7 @@ include_once ROOT . '/dao/TipoSaidaDAO.php';
 
 if (!isset($_SESSION['tipo_saida'])) {
    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=' . WWW . 'html/matPat/listar_tipoSaida.php');
+   exit();
 } else {
    $tipo = $_SESSION['tipo_saida'];
    unset($_SESSION['tipo_saida']);

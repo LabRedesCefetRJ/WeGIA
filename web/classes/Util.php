@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PaymentServiceException.php';
+
 class Util
 {
     public const MENSAGEM_NOME_INVALIDO = 'O nome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
@@ -10,6 +12,20 @@ class Util
         require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
 
         return FusoHorarioSistema::definir($fusoHorario);
+    }
+
+    public static function validarData(string $data): bool
+    {
+        $partes = explode('-', $data);
+
+        if (count($partes) !== 3) {
+            return false;
+        }
+
+        [$ano, $mes, $dia] = array_map('intval', $partes);
+
+        return checkdate($mes, $dia, $ano)
+            && $data === sprintf('%04d-%02d-%02d', $ano, $mes, $dia);
     }
 
     public static function validarNomePessoa(?string $nome): bool
@@ -47,6 +63,22 @@ class Util
         }
 
         self::validarNomePessoaOuLancar($nome, $campo, $codigo);
+    }
+
+    public static function primeiroSobrenome(?string $sobrenome): string
+    {
+        if ($sobrenome === null || trim($sobrenome) === '') {
+            return "";
+        }
+
+        $partes = explode(" ", trim($sobrenome));
+        $preposicoes = ["de", "da", "do", "dos", "das"];
+
+        if (in_array(strtolower($partes[0]), $preposicoes) && count($partes) > 1) {
+            return $partes[0] . " " . $partes[1];
+        }
+
+        return $partes[0];
     }
 
     /**
@@ -107,7 +139,7 @@ class Util
     public static function validaCNS(?string $cns): bool
     {
         if ($cns === null || empty($cns)) {
-            return true; 
+            return true;
         }
 
         // Remove caracteres não numéricos
@@ -131,14 +163,8 @@ class Util
      */
     public static function tratarException(Throwable $e): void
     {
-        // Log interno
-        error_log(sprintf(
-            "[ERRO: %d] %s em %s:%d",
-            $e->getCode(),
-            $e->getMessage(),
-            $e->getFile(),
-            $e->getLine()
-        ));
+        // Log interno com o rastreio completo da exceção
+        error_log($e->__toString());
 
         // Garante JSON SEMPRE
         if (!headers_sent()) {
@@ -153,7 +179,11 @@ class Util
         http_response_code($httpCode);
 
         // Mensagem para o cliente
-        if ($e instanceof PDOException) {
+        if ($e instanceof PaymentServiceException) {
+            echo json_encode([
+                'erro' => $e->getMensagemCliente()
+            ]);
+        } elseif ($e instanceof PDOException) {
             echo json_encode([
                 'erro' => 'Erro interno ao acessar o banco de dados'
             ]);
@@ -983,7 +1013,7 @@ class Util
     public static function validarCPF(string $cpf)
     {
         //Limpar formatação
-        $cpfLimpo = preg_replace('/[^0-9]/', '', $cpf);
+        $cpfLimpo = self::limpaCpf($cpf);
 
         //Validação do tamanho da string informada
         if (strlen($cpfLimpo) != 11) {
@@ -1216,20 +1246,20 @@ class Util
 
     public static function getClassePorTipo($tipo)
     {
-	    switch ($tipo) {
-		    case 'Compra':
-			    return 'bg-secondary';
-		    case 'Doação':
-			    return 'bg-success';
-		    case 'Troca':
-			    return 'bg-warning';
-		    case 'Vencido':
-			    return 'bg-secondary';
-		    case 'Consumo':
-			    return 'bg-success';
-		    default:
-			    return 'bg-info';
-	    }
+        switch ($tipo) {
+            case 'Compra':
+                return 'bg-secondary';
+            case 'Doação':
+                return 'bg-success';
+            case 'Troca':
+                return 'bg-warning';
+            case 'Vencido':
+                return 'bg-secondary';
+            case 'Consumo':
+                return 'bg-success';
+            default:
+                return 'bg-info';
+        }
     }
 
     /**
@@ -1336,5 +1366,211 @@ class Util
             $datasVencimento[] = $dataVencimento->format('Y-m-d');
         }
         return $datasVencimento;
+    }
+
+    /**
+     * Sanitiza HTML de conteúdo rico (ex: texto de despacho vindo do CKEditor),
+     * mantendo apenas tags de formatação em uma allowlist e removendo todos os
+     * atributos (inclusive style e event handlers). Tags fora da allowlist são
+     * desembrulhadas (mantém o conteúdo/texto), exceto tags perigosas
+     * (script, style, iframe, object, embed), que são removidas por completo.
+     *
+     * Faz um html_entity_decode() antes de sanitizar para recuperar registros
+     * gravados entre 2026-04-06 e a correção deste método, quando o texto do
+     * despacho era erroneamente gravado já com "<" e ">" convertidos em
+     * entidades numéricas (ex.: "&#60;p&#62;"), fazendo com que a formatação
+     * original aparecesse como texto literal em vez de ser renderizada.
+     */
+    public static function sanitizarHtmlRico(?string $html): string
+    {
+        if (!is_string($html) || $html === '') {
+            return '';
+        }
+
+        $html = html_entity_decode($html, ENT_QUOTES, 'UTF-8');
+
+        $tagsPermitidas = ['p', 'span', 'a', 'br', 'b', 'strong', 'i', 'em', 'u', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'];
+        $tagsRemoverConteudo = ['script', 'style', 'iframe', 'object', 'embed', 'noscript'];
+
+        $dom = new DOMDocument();
+        $erroAnterior = libxml_use_internal_errors(true);
+        $dom->loadHTML(
+            '<?xml encoding="utf-8" ?><div>' . $html . '</div>',
+            LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_HTML_NODEFDTD | LIBXML_HTML_NOIMPLIED
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($erroAnterior);
+
+        $raiz = $dom->getElementsByTagName('div')->item(0);
+
+        if (!$raiz) {
+            return '';
+        }
+
+        self::sanitizarNoHtml($raiz, $tagsPermitidas, $tagsRemoverConteudo);
+
+        $resultado = '';
+        foreach (iterator_to_array($raiz->childNodes) as $filho) {
+            $resultado .= $dom->saveHTML($filho);
+        }
+
+        return $resultado;
+    }
+
+    private static function sanitizarNoHtml(DOMNode $no, array $tagsPermitidas, array $tagsRemoverConteudo): void
+    {
+        foreach (iterator_to_array($no->childNodes) as $filho) {
+            if ($filho->nodeType === XML_COMMENT_NODE) {
+                $no->removeChild($filho);
+                continue;
+            }
+
+            if ($filho->nodeType !== XML_ELEMENT_NODE) {
+                continue;
+            }
+
+            $tag = strtolower($filho->nodeName);
+
+            if (in_array($tag, $tagsRemoverConteudo, true)) {
+                $no->removeChild($filho);
+                continue;
+            }
+
+            if ($filho->hasAttributes()) {
+                foreach (iterator_to_array($filho->attributes) as $atributo) {
+                    if ($atributo->nodeName === 'style') {
+                        $styleSeguro = self::sanitizarAtributoStyle($atributo->nodeValue);
+
+                        if ($styleSeguro !== null) {
+                            $filho->setAttribute('style', $styleSeguro);
+                            continue;
+                        }
+                    }
+
+                    if ($tag === 'a' && $atributo->nodeName === 'href') {
+                        $hrefSeguro = self::sanitizarAtributoHref($atributo->nodeValue);
+
+                        if ($hrefSeguro !== null) {
+                            $filho->setAttribute('href', $hrefSeguro);
+                            continue;
+                        }
+                    }
+
+                    if ($tag === 'a' && $atributo->nodeName === 'target') {
+                        $targetsPermitidos = ['_blank', '_self', '_parent', '_top'];
+
+                        if (in_array($atributo->nodeValue, $targetsPermitidos, true)) {
+                            $filho->setAttribute('target', $atributo->nodeValue);
+                            continue;
+                        }
+                    }
+
+                    $filho->removeAttribute($atributo->nodeName);
+                }
+            }
+
+            if ($tag === 'a' && $filho->getAttribute('target') === '_blank') {
+                // Evita reverse tabnabbing: a página aberta em nova aba não deve
+                // conseguir controlar window.opener da página original.
+                $filho->setAttribute('rel', 'noopener noreferrer');
+            }
+
+            self::sanitizarNoHtml($filho, $tagsPermitidas, $tagsRemoverConteudo);
+
+            if (!in_array($tag, $tagsPermitidas, true)) {
+                while ($filho->firstChild) {
+                    $no->insertBefore($filho->firstChild, $filho);
+                }
+                $no->removeChild($filho);
+            }
+        }
+    }
+
+    /**
+     * Valida o href de um link, permitindo apenas URLs relativas (sem scheme)
+     * ou com scheme http/https/mailto. Bloqueia javascript:, data:, vbscript:
+     * e qualquer outro scheme, inclusive variantes ofuscadas com caracteres de
+     * controle embutidos (ex.: "java\tscript:"), que navegadores ignoram ao
+     * interpretar o scheme. Retorna null se o valor não for seguro.
+     */
+    private static function sanitizarAtributoHref(string $href): ?string
+    {
+        $href = preg_replace('/[\x00-\x1F\x7F]+/', '', $href);
+        $href = trim($href);
+
+        if ($href === '') {
+            return null;
+        }
+
+        $scheme = parse_url($href, PHP_URL_SCHEME);
+
+        if ($scheme === null) {
+            // Sem scheme: URL relativa (ex.: "pagina.php", "/caminho", "#ancora") — segura
+            return $href;
+        }
+
+        $schemesPermitidos = ['http', 'https', 'mailto'];
+
+        if (!in_array(strtolower($scheme), $schemesPermitidos, true)) {
+            return null;
+        }
+
+        return $href;
+    }
+
+    /**
+     * Filtra um atributo style, mantendo apenas as declarações de color e
+     * background-color cujo valor bate com um formato seguro conhecido
+     * (nome de cor, hexadecimal ou rgb()/rgba()). Qualquer outra propriedade
+     * ou valor fora desse formato é descartado — nunca copia o valor bruto
+     * do cliente para a saída. Retorna null se nenhuma declaração sobrar.
+     */
+    private static function sanitizarAtributoStyle(string $style): ?string
+    {
+        $propriedadesPermitidas = ['color', 'background-color'];
+        $declaracoesSeguras = [];
+
+        foreach (explode(';', $style) as $declaracao) {
+            $partes = explode(':', $declaracao, 2);
+
+            if (count($partes) !== 2) {
+                continue;
+            }
+
+            $propriedade = strtolower(trim($partes[0]));
+            $valor = trim($partes[1]);
+
+            if (!in_array($propriedade, $propriedadesPermitidas, true) || !self::valorCssDeCorEhSeguro($valor)) {
+                continue;
+            }
+
+            $declaracoesSeguras[] = "$propriedade: $valor";
+        }
+
+        if (empty($declaracoesSeguras)) {
+            return null;
+        }
+
+        return implode('; ', $declaracoesSeguras);
+    }
+
+    private static function valorCssDeCorEhSeguro(string $valor): bool
+    {
+        // Nome de cor (ex.: red, cornflowerblue) — só letras, sem parênteses/dois-pontos/barras
+        if (preg_match('/^[a-zA-Z]+$/', $valor)) {
+            return true;
+        }
+
+        // Hexadecimal (#fff ou #ffffff)
+        if (preg_match('/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/', $valor)) {
+            return true;
+        }
+
+        // rgb()/rgba()
+        if (preg_match('/^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(?:,\s*(?:0|1|0?\.\d+)\s*)?\)$/', $valor)) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -433,6 +433,26 @@ CREATE TABLE IF NOT EXISTS `wegia`.`origem` (
   PRIMARY KEY (`id_origem`))
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `wegia`.`origem_almoxarifado`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`origem_almoxarifado` (
+  `id_origem_almoxarifado` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_origem` INT(11) NOT NULL,
+  `id_almoxarifado` INT(11) NOT NULL,
+  PRIMARY KEY (`id_origem_almoxarifado`),
+  UNIQUE KEY `uq_origem_almoxarifado` (`id_origem`, `id_almoxarifado`),
+  CONSTRAINT `fk_origem_almoxarifado_origem`
+    FOREIGN KEY (`id_origem`)
+    REFERENCES `wegia`.`origem` (`id_origem`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_origem_almoxarifado_almoxarifado`
+    FOREIGN KEY (`id_almoxarifado`)
+    REFERENCES `wegia`.`almoxarifado` (`id_almoxarifado`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`tipo_entrada`
@@ -1114,6 +1134,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `valor_periodo` DECIMAL(10,2) NULL DEFAULT NULL,
   `data_referencia` DATE NULL DEFAULT NULL,
   `auto_status_contribuicoes` TINYINT(1) NOT NULL DEFAULT 1,
+  `deletado` TINYINT(1) NOT NULL DEFAULT 0,
   UNIQUE INDEX (`id_pessoa` ASC),
   PRIMARY KEY (`id_socio`),
   INDEX `fk_socio_socio_status1_idx` (`id_sociostatus` ASC),
@@ -3278,6 +3299,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`projeto_turma` (
   `id_turma`   INT          NOT NULL AUTO_INCREMENT,
   `id_projeto` INT          NOT NULL,
   `nome`       VARCHAR(150) NOT NULL,
+  `descricao`  VARCHAR(255) NULL,
   PRIMARY KEY (`id_turma`),
   UNIQUE INDEX `uq_turma_nome_projeto` (`id_projeto` ASC, `nome` ASC),
   INDEX `fk_turma_projeto_idx` (`id_projeto` ASC),
