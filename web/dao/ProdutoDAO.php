@@ -67,12 +67,17 @@ class ProdutoDAO
 			}
 		}
 
-		$sql = "INSERT INTO produto (id_categoria_produto, id_unidade, descricao, codigo, preco)
-					VALUES (:id_categoria_produto, :id_unidade, :descricao, :codigo, :preco)";
+		$sql = "INSERT INTO produto (id_categoria_produto, id_unidade, id_grupo_produto, descricao, codigo, preco)
+					VALUES (:id_categoria_produto, :id_unidade, :id_grupo_produto, :descricao, :codigo, :preco)";
 		$stmt = $pdo->prepare($sql);
 
 		$stmt->bindValue(':id_categoria_produto', $produto->get_categoria_produto(), PDO::PARAM_INT);
 		$stmt->bindValue(':id_unidade', $produto->get_unidade(), PDO::PARAM_INT);
+		if($produto->get_grupo_produto() === null) {
+			$stmt->bindValue(':id_grupo_produto', null, PDO::PARAM_NULL);
+		} else {
+			$stmt->bindValue(':id_grupo_produto', $produto->get_grupo_produto(), PDO::PARAM_INT);
+		}
 		$stmt->bindValue(':descricao', preg_replace('/\s+/', ' ', trim($produto->getDescricao())), PDO::PARAM_STR);
 		$stmt->bindValue(':codigo', $produto->getCodigo(), PDO::PARAM_STR);
 		$stmt->bindValue(':preco', $produto->getPreco(), PDO::PARAM_STR);
@@ -93,8 +98,9 @@ class ProdutoDAO
 	{
 		$produtos = array();
 		$pdo = Conexao::connect();
-		$consulta = $pdo->query("SELECT p.id_produto,p.preco,p.descricao,p.codigo,c.descricao_categoria,u.descricao_unidade 
+		$consulta = $pdo->query("SELECT p.id_produto,p.preco,p.descricao,p.codigo, p.id_grupo_produto,c.descricao_categoria, g.descricao_grupo,u.descricao_unidade 
 				FROM produto p 
+				LEFT JOIN grupo_produto g ON p.id_grupo_produto = g.id_grupo_produto
 				INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto
 				INNER JOIN unidade u ON u.id_unidade = p.id_unidade
 				WHERE oculto=false
@@ -102,7 +108,7 @@ class ProdutoDAO
 				ORDER BY p.descricao");
 		$x = 0;
 		while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-			$produtos[$x] = array('id_produto' => $linha['id_produto'], 'preco' => $linha['preco'], 'descricao' => $linha['descricao'], 'codigo' => $linha['codigo'], 'descricao_categoria' => $linha['descricao_categoria'], 'descricao_unidade' => $linha['descricao_unidade']);
+			$produtos[$x] = array('id_produto' => $linha['id_produto'], 'preco' => $linha['preco'], 'descricao' => $linha['descricao'], 'codigo' => $linha['codigo'], 'id_grupo_produto' => $linha['id_grupo_produto'], 'descricao_categoria' => $linha['descricao_categoria'], 'descricao_grupo' => $linha['descricao_grupo'], 'descricao_unidade' => $linha['descricao_unidade']);
 			$x++;
 		}
 
@@ -113,9 +119,10 @@ class ProdutoDAO
 	public function listarId($id_produto)
 	{
 		$pdo = Conexao::connect();
-		$sql = "SELECT p.id_produto,p.preco,p.descricao,p.codigo,p.id_categoria_produto, c.descricao_categoria, p.id_unidade, u.descricao_unidade FROM produto p 
+		$sql = "SELECT p.id_produto,p.preco,p.descricao,p.codigo,p.id_categoria_produto, p.id_grupo_produto, g.descricao_grupo, c.descricao_categoria, p.id_unidade, u.descricao_unidade FROM produto p 
 	        		INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto 
 	        		INNER JOIN unidade u ON p.id_unidade = u.id_unidade 
+	        		LEFT JOIN grupo_produto g ON p.id_grupo_produto = g.id_grupo_produto
 	        		WHERE p.id_produto = :id_produto";
 		$stmt = $pdo->prepare($sql);
 		$stmt->bindParam(':id_produto', $id_produto);
@@ -123,7 +130,7 @@ class ProdutoDAO
 		$stmt->execute();
 		$produtos = array();
 		while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$produtos[] = array('id_produto' => $linha['id_produto'], 'preco' => $linha['preco'], 'descricao' => $linha['descricao'], 'codigo' => $linha['codigo'], 'id_categoria_produto' => $linha['id_categoria_produto'], 'descricao_categoria' => $linha['descricao_categoria'], 'id_unidade' => $linha['id_unidade'], 'descricao_unidade' => $linha['descricao_unidade']);
+			$produtos[] = array('id_produto' => $linha['id_produto'], 'preco' => $linha['preco'], 'descricao' => $linha['descricao'], 'codigo' => $linha['codigo'], 'id_categoria_produto' => $linha['id_categoria_produto'], 'id_grupo_produto' => $linha['id_grupo_produto'], 'descricao_grupo' => $linha['descricao_grupo'], 'descricao_categoria' => $linha['descricao_categoria'], 'id_unidade' => $linha['id_unidade'], 'descricao_unidade' => $linha['descricao_unidade']);
 		}
 
 		return json_encode($produtos);
@@ -237,7 +244,7 @@ class ProdutoDAO
 			}
 		}
 
-		$sql = 'UPDATE produto  set id_categoria_produto=:id_categoria_produto, id_unidade=:id_unidade, descricao=:descricao, codigo=:codigo, preco=:preco WHERE id_produto=:id_produto';
+		$sql = 'UPDATE produto  set id_categoria_produto=:id_categoria_produto, id_unidade=:id_unidade, id_grupo_produto=:id_grupo_produto, descricao=:descricao, codigo=:codigo, preco=:preco WHERE id_produto=:id_produto';
 		$sql = str_replace("'", "\'", $sql);
 
 		$stmt = $pdo->prepare($sql);
@@ -245,6 +252,7 @@ class ProdutoDAO
 
 		$id_categoria_produto = $produto->get_categoria_produto();
 		$id_unidade = $produto->get_unidade();
+		$id_grupo_produto = $produto->get_grupo_produto();
 		$descricao = $produto->getDescricao();
 		$codigo = $produto->getCodigo();
 		$preco = $produto->getPreco();
@@ -252,6 +260,19 @@ class ProdutoDAO
 
 		$stmt->bindParam(':id_categoria_produto', $id_categoria_produto);
 		$stmt->bindParam(':id_unidade', $id_unidade);
+		if ($id_grupo_produto === null) {
+    		$stmt->bindValue(
+        		':id_grupo_produto',
+        		null,
+        		PDO::PARAM_NULL
+    		);
+		} else {
+    		$stmt->bindValue(
+        		':id_grupo_produto',
+        		$id_grupo_produto,
+        		PDO::PARAM_INT
+    		);
+		}
 		$stmt->bindParam(':descricao', $descricao);
 		$stmt->bindParam(':codigo', $codigo);
 		$stmt->bindParam(':preco', $preco);
@@ -299,10 +320,12 @@ class ProdutoDAO
             	p.descricao,
             	p.codigo,
             	c.descricao_categoria,
+				g.descricao_grupo,
             	u.descricao_unidade 
         	FROM produto p 
         	INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto
         	INNER JOIN unidade u ON u.id_unidade = p.id_unidade
+        	LEFT JOIN grupo_produto g ON p.id_grupo_produto = g.id_grupo_produto
         	WHERE p.oculto = false
           		AND p.ativo = 0
         	ORDER BY p.descricao
@@ -315,6 +338,7 @@ class ProdutoDAO
             	'descricao' => $linha['descricao'],
             	'codigo' => $linha['codigo'],
             	'descricao_categoria' => $linha['descricao_categoria'],
+            	'descricao_grupo' => $linha['descricao_grupo'],
             	'descricao_unidade' => $linha['descricao_unidade']
         	);
     	}

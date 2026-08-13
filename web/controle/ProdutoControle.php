@@ -140,10 +140,19 @@ class ProdutoControle
             $produto = $this->verificar();
             $id_categoria = filter_var($_REQUEST['id_categoria'], FILTER_SANITIZE_NUMBER_INT);
             $id_unidade = filter_var($_REQUEST['id_unidade'], FILTER_SANITIZE_NUMBER_INT);
+            $id_grupo_produto = $_REQUEST['id_grupo_produto'] ?? null;
+            
+            if($id_grupo_produto !== '' && $id_grupo_produto !== null) {
+                $id_grupo_produto = filter_var($id_grupo_produto, FILTER_SANITIZE_NUMBER_INT);
+            } else {
+                $id_grupo_produto = null;
+            }
+
             $produtoDAO = new ProdutoDAO($this->pdo);
 
             $produto->set_categoria_produto($id_categoria);
             $produto->set_unidade($id_unidade);
+            $produto->set_grupo_produto($id_grupo_produto);
 
             $produtoDAO->incluir($produto);
 
@@ -214,20 +223,31 @@ class ProdutoControle
     public function alterarProduto()
     {
         extract($_REQUEST);
+
+        $id_grupo_produto = $_REQUEST['id_grupo_produto'] ?? null;
+
+        if ($id_grupo_produto !== '' && $id_grupo_produto !== null) {
+            $id_grupo_produto = filter_var(
+                $id_grupo_produto,
+                FILTER_SANITIZE_NUMBER_INT
+            );
+        } else {
+            $id_grupo_produto = null;
+        }
+
         $produto = new Produto($descricao, $codigo, $preco);
         $produtoDAO = new ProdutoDAO();
-        $catDAO = new CategoriaDAO();
-        $uniDAO = new UnidadeDAO();
-
-        $categoria = $catDAO->listarUm($id_categoria);
-        $unidade = $uniDAO->listarUm($id_unidade);
 
         try {
             $produto->setId_produto($id_produto);
             $produto->set_categoria_produto($id_categoria);
             $produto->set_unidade($id_unidade);
+            $produto->set_grupo_produto($id_grupo_produto);
+
             $produtoDAO->alterarProduto($produto);
+
             header('Location: ' . $nextPage);
+            exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -262,7 +282,7 @@ class ProdutoControle
 
             foreach ($produtos as $produto) {
                 $produto['qtd'] = isset($aux[$produto['id_produto']]) ? $aux[$produto['id_produto']]['qtd'] : 0;
-                $produtosDTO[] = new ProdutoDTOCadastro($produto['id_produto'], $produto['descricao'], $produto['qtd'], $produto['codigo'], $produto['preco']);
+                $produtosDTO[] = new ProdutoDTOCadastro($produto['id_produto'], $produto['descricao'], $produto['qtd'], $produto['codigo'], $produto['preco'], $produto['id_grupo_produto'], $produto['descricao_grupo']);
             }
 
             echo json_encode($produtosDTO);

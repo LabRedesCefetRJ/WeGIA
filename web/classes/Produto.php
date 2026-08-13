@@ -5,6 +5,7 @@ class Produto
     private $id_produto;
     private $id_categoria_produto;
     private $id_unidade;
+    private $id_grupo_produto;
     private $descricao;
     private $preco;
     private $codigo;
@@ -29,6 +30,11 @@ class Produto
     public function get_unidade()
     {
         return $this->id_unidade;
+    }
+    
+    public function get_grupo_produto()
+    {
+        return $this->id_grupo_produto;
     }
 
     public function getPreco()
@@ -70,11 +76,27 @@ class Produto
         $this->id_unidade = $id_unidade;
     }
 
+    public function set_grupo_produto($id_grupo_produto)
+    {
+        if ($id_grupo_produto === null || $id_grupo_produto === '') {
+            $this->id_grupo_produto = null;
+            return;
+        }
+
+        if (!is_numeric($id_grupo_produto) || $id_grupo_produto < 1) {
+            throw new InvalidArgumentException(
+                'O id de um grupo de produto deve ser um inteiro maior ou igual a 1.'
+            );
+        }
+
+        $this->id_grupo_produto = (int) $id_grupo_produto;
+    }
+
     public function setPreco($preco)
     {
         $preco = str_replace(',', '.', $preco);
 
-        if (!$preco || !is_numeric($preco) || $preco < 0) {
+        if (!$preco || !is_numeric($preco) || (float) $preco < 0) {
             throw new InvalidArgumentException('O preço de um produto deve ser um número positivo.');
         }
         $this->preco = $preco;

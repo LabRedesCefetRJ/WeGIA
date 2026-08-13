@@ -201,7 +201,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 															</datalist> -->
 																</td>
 																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
-																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" min="0.01" class="form-control"></td>
 																<td>
 																	<button id="incluir" type="button" class="add-row">incluir</button>
 																</td>
@@ -286,7 +286,76 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			})
 
 			let produtos_autocomplete = [];
-			let prods = [];
+			let gruposProdutos = {};
+			let grupoAberto = null;
+
+			function normalizar(texto) {
+    			return String(texto ?? '')
+        			.normalize('NFD')
+        			.replace(/[\u0300-\u036f]/g, '')
+        			.toLowerCase()
+        			.trim();
+			}
+
+			function valorProduto(produto) {
+    			return [
+        			produto.id_produto,
+        			produto.descricao,
+        			produto.qtd,
+        			produto.codigo ?? ''
+    			].join('|');
+			}
+
+			function montarGrupos(produtos) {
+    			const grupos = {};
+
+    			produtos.forEach(produto => {
+        			const chave = produto.id_grupo_produto ?? 'sem_grupo';
+
+        			if (!grupos[chave]) {
+            			grupos[chave] = {
+                			nome: produto.descricao_grupo ?? 'Sem grupo',
+                			produtos: []
+            			};
+        			}
+
+        			grupos[chave].produtos.push(produto);
+    			});
+
+    			return grupos;
+			}
+
+			function itemProduto(produto) {
+    			const codigo = produto.codigo || 'Sem código';
+    			const preco = Number(produto.preco).toFixed(2).replace('.', ',');
+
+    			return {
+        			label:
+            			produto.descricao +
+            			' | Cód: ' + codigo +
+            			' | Qtd: ' + produto.qtd +
+            			' | R$ ' + preco,
+
+        			value: valorProduto(produto),
+        			tipo: 'produto',
+        			produto: produto
+    			};
+			}
+
+			function itemGrupo(chave, grupo) {
+    			const quantidade = grupo.produtos.length;
+
+    			return {
+        			label:
+            			'📁 ' + grupo.nome +
+            			' — ' + quantidade +
+            			(quantidade === 1 ? ' produto' : ' produtos'),
+
+        			value: grupo.nome,
+        			tipo: 'grupo',
+        			chaveGrupo: chave
+    			};
+			}
 
 			$('#almoxarifado').on('change', function() {
 
@@ -315,36 +384,165 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					metodo: 'getProdutosParaCadastrarEntradaOuSaidaPorAlmoxarifado',
 					almoxarifado: almoxarifadoId
 				}, function(produtos) {
-					produtos_autocomplete = produtos;
-					$.each(produtos_autocomplete, function(i, item) {
-						prods[i] = item.id_produto + '|' + item.descricao + '|' + item.qtd + '|' + item.codigo;
-					});
 
-					console.log(prods); // Apenas para verificar se os dados foram carregados corretamente
+    				produtos_autocomplete = produtos;
+    				gruposProdutos = montarGrupos(produtos);
+    				grupoAberto = null;
+
 				}).fail(function(jqXHR, textStatus, errorThrown) {
-					console.error("Erro na requisição: " + textStatus, errorThrown);
+    				console.error(
+        				"Erro na requisição: " + textStatus,
+        				errorThrown
+    				);
 				});
 
 				$("#input_produtos").autocomplete({
-					source: prods,
-					response: function(event, ui) {
-						if (ui.content.length == 1) {
-							ui.item = ui.content[0];
-							$(this).val(ui.item.value)
-							$(this).data('ui-autocomplete')._trigger('select', 'autocompleteselect', ui);
-						}
-					}
+
+    				minLength: 0,
+
+    				source: function(request, response) {
+
+        				const termo = normalizar(request.term);
+        				const resultados = [];
+
+        				/*
+        				 * Se o usuário clicou em um grupo,
+        				 * mostra os produtos daquele grupo.
+        				 */
+        				if (grupoAberto !== null) {
+
+            				const grupo = gruposProdutos[grupoAberto];
+
+            				if (grupo) {
+                				const nomeGrupo = normalizar(grupo.nome);
+
+                				if (
+                    				termo === nomeGrupo ||
+                    				termo.startsWith(nomeGrupo + ' ')
+                				) {
+                    				const busca = normalizar(
+                        				termo.substring(nomeGrupo.length)
+                    				);
+
+                    				const produtos = grupo.produtos
+                        				.filter(produto => {
+                            				return (
+                                				normalizar(produto.descricao).includes(busca) ||
+                                				normalizar(produto.codigo).includes(busca)
+                            				);
+                        				})
+                        				.map(itemProduto);
+
+                    				response(produtos);
+                    				return;
+                				}
+            				}
+
+            				grupoAberto = null;
+        				}
+
+        				/*
+        				 * Pesquisa específica:
+        				 * "papel c" → produtos do grupo Papel contendo "c".
+        				 */
+        				for (const [chave, grupo] of Object.entries(gruposProdutos)) {
+
+            				const nomeGrupo = normalizar(grupo.nome);
+
+            				if (termo.startsWith(nomeGrupo + ' ')) {
+
+                				const busca = normalizar(
+                    				termo.substring(nomeGrupo.length)
+                				);
+
+                				const produtos = grupo.produtos
+                    				.filter(produto => {
+                        				return (
+                            				normalizar(produto.descricao).includes(busca) ||
+                            				normalizar(produto.codigo).includes(busca)
+                        				);
+                    				})
+                    				.map(itemProduto);
+
+                				response(produtos);
+                				return;
+            				}
+        				}
+
+        				/*
+        				 * Pesquisa normal:
+        				 * vazio ou "pap" → grupos.
+        				 */
+        				for (const [chave, grupo] of Object.entries(gruposProdutos)) {
+
+            				if (
+                				termo === '' ||
+                				normalizar(grupo.nome).includes(termo)
+            				) {
+                				resultados.push(
+                    				itemGrupo(chave, grupo)
+                				);
+            				}
+        				}
+
+        				response(resultados);
+    				},
+
+    				select: function(event, ui) {
+
+        				/*
+        				 * Clicou em um grupo.
+        				 */
+        				if (ui.item.tipo === 'grupo') {
+
+            				event.preventDefault();
+
+            				grupoAberto = ui.item.chaveGrupo;
+
+            				const grupo = gruposProdutos[grupoAberto];
+            				const input = this;
+            				const termo = grupo.nome + ' ';
+
+            				$(input).val(termo);
+
+            				setTimeout(function() {
+                				$(input).autocomplete('search', termo);
+            				}, 0);
+
+            				return false;
+        				}
+
+        				/*
+        				 * Clicou em um produto.
+        				 */
+        				if (ui.item.tipo === 'produto') {
+
+            				event.preventDefault();
+
+            				grupoAberto = null;
+
+            				$(this).val(
+                				valorProduto(ui.item.produto)
+            				);
+
+            				$("#valor_unitario").val(
+                				ui.item.produto.preco
+            				);
+
+            				$("#quantidade").focus();
+
+            				return false;
+        				}
+    				}
 				});
+	
 			});
 
-			$('#input_produtos').on('change', function() {
-				var teste = this.value.split('|');
-				$.each(produtos_autocomplete, function(i, item) {
-					if (teste[0] == item.id_produto && teste[1] == item.descricao) {
-						$("#valor_unitario").val(item.preco);
-						$("#quantidade").focus();
-					}
-				})
+			$("#input_produtos").on('focus', function() {
+
+    			if ($(this).val().trim() === '') {
+        			$(this).autocomplete('search', '');
+    			}
 
 			});
 
@@ -352,62 +550,92 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			var conta = 0;
 			var verificar = 0;
 			$(".add-row").click(function() {
-				var val = $("#input_produtos").val();
 
-				var obj = prods.find(prod => prod === val);
+    			const valorSelecionado = $("#input_produtos").val();
 
-				var produto = $("#input_produtos").val();
+    			const produto = produtos_autocomplete.find(
+        			item => valorProduto(item) === valorSelecionado
+    			);
 
-				produto = produto.split("|");
+    			if (!produto) {
+        			alert("Selecione um produto válido.");
+        			$("#input_produtos").val("").focus();
+        			$("#valor_unitario").val("");
+        			return;
+    			}
 
-				if (obj != null && obj.length > 0) {
+    			const quantidade = Number($("#quantidade").val());
+    			const preco = Number($("#valor_unitario").val());
 
-					$.each(produtos_autocomplete, function(i, item) {
-						if (produto[0] == item.id_produto && produto[1] == item.descricao) {
-							var quantidade = $("#quantidade").val();
-							var preco = parseFloat($("#valor_unitario").val());
+    			if (!Number.isFinite(quantidade) || quantidade <= 0) {
+        			alert("A quantidade deve ser maior que zero.");
+        			$("#quantidade").focus();
+        			return;
+    			}
 
-							quantidade = Number(quantidade);
-							preco = Number(preco);
+    			if (!Number.isFinite(preco) || preco <= 0) {
+        			alert("Informe um valor unitário maior que zero.");
+        			$("#valor_unitario").focus();
+        			return;
+    			}
 
-							if(!Number.isFinite(quantidade) || quantidade <= 0) {
-								alert("A quantidade deve ser um número positivo.");
-								$("#quantidade").focus();
-								return;
-							}
+    			const conta = reindexarProdutosEntrada() + 1;
 
-							if(!Number.isFinite(preco) || preco < 0) {
-								alert("O valor unitário deve ser um número válido e não negativo.");
-								$("#valor_unitario").focus();
-								return;
-							}
+    			const markup =
+    				"<tr class='produtoRow'>" +
 
-							conta = reindexarProdutosEntrada() + 1;
+        				"<td class='prod' style='width: 160px;'>" +
+            				"<input type='text' " +
+            				"value='" + valorSelecionado + "' " +
+            				"name='id" + conta + "' " +
+            				"readonly='readonly'>" +
+        				"</td>" +
 
-							$("#conta").val(conta);
+        				"<td class='quant'>" +
+            				"<input type='text' " +
+            				"class='number form-control' " +
+            				"maxlength='2' " +
+            				"size='2' " +
+            				"min='1' " +
+            				"value='" + quantidade + "' " +
+            				"name='qtd" + conta + "' " +
+            				"readonly='readonly'>" +
+        				"</td>" +
 
-							var markup = "<tr class='produtoRow'><td class='prod' style='width: 160px;'><input type='text' value='" + val + "' name='id" + conta + "' readonly='readonly'></td><td class='quant'><input type='text' class='number'  id='qtd' maxlength='2' size='2' class='form-control' min='1' value='" + quantidade + "' name='qtd" + conta + "' readonly='readonly'></td><td><input type='text' class='preco' value='" + preco + "' name='valor_unitario" + conta + "'  size='2' readonly='readonly'></td><th><input type='text' size='3' id='total' class='total' value='" + quantidade * preco + "' readonly='readonly'></th><td><button type='button' class='delete-row'>remover</button></td></tr>";
-							$("table tbody ").append(markup);
+        				"<td>" +
+            				"<input type='text' " +
+            				"class='preco' " +
+            				"value='" + preco + "' " +
+            				"name='valor_unitario" + conta + "' " +
+            				"size='2' " +
+            				"readonly='readonly'>" +
+        				"</td>" +
 
-							reindexarProdutosEntrada();
+        				"<th>" +
+            				"<input type='text' " +
+            				"size='3' " +
+            				"class='total' " +
+            				"value='" + (quantidade * preco) + "' " +
+            				"readonly='readonly'>" +
+        				"</th>" +
 
-							$("#valor_unitario").val("");
-							$("#input_produtos").val("");
-							$("#quantidade").val(1);
+        				"<td>" +
+            				"<button type='button' class='delete-row'>" +
+                				"remover" +
+            				"</button>" +
+        				"</td>" +
 
-							verificar = Number($("#verifica").val() || 0);
-							conta = Number($("#conta").val() || 0);
+    				"</tr>";
 
-						}
-					})
-				} else {
-					alert("Produto inválido!");
-					$("#input_produtos").val("");
-					$("#input_produtos").focus();
-					$("#valor_unitario").empty();
-					verificar--;
-					$("#verifica").val(verificar);
-				}
+    			$("#lista-produtos").append(markup);
+
+    			reindexarProdutosEntrada();
+
+    			$("#input_produtos").val("");
+    			$("#valor_unitario").val("");
+    			$("#quantidade").val(1);
+
+    			grupoAberto = null;
 			});
 
 			//remover tabela

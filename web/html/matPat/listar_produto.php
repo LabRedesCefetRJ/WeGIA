@@ -274,6 +274,25 @@ if (!isset($_SESSION['produtos'])) {
 							</div>
 
 							<div class="campo-filtro">
+								<label for="filtroGrupo">Grupo</label>
+								<select id="filtroGrupo" class="form-control">
+									<option value="">Todos</option>
+									<option value="Sem grupo">Sem grupo</option>
+									<?php
+									$pdo = Conexao::connect();
+									$res = $pdo->query("SELECT descricao_grupo FROM grupo_produto ORDER BY descricao_grupo");
+									$grupos = $res->fetchAll(PDO::FETCH_ASSOC);
+
+									foreach ($grupos as $grupo) {
+										echo '<option value="' . htmlspecialchars($grupo['descricao_grupo'], ENT_QUOTES, 'UTF-8') . '">'
+											. htmlspecialchars($grupo['descricao_grupo'], ENT_QUOTES, 'UTF-8') .
+										'</option>';
+									}
+									?>
+								</select>
+							</div>
+
+							<div class="campo-filtro">
 								<label for="buscaProduto">Buscar</label>
 								<input type="text" id="buscaProduto" class="form-control" placeholder="Nome, código ou categoria">
 							</div>
@@ -326,6 +345,7 @@ if (!isset($_SESSION['produtos'])) {
 							<tr>
 								<th width="12%">Código</th>
 								<th>Nome</th>
+								<th>Grupo</th>
 								<th width="18%">Tipo</th>
 								<th width="12%">Preço</th>
 								<th width="12%">Ação</th>
@@ -336,6 +356,7 @@ if (!isset($_SESSION['produtos'])) {
         						<tr>
             						<td><?= htmlspecialchars($item['codigo'] ?? '') ?></td>
             						<td><?= htmlspecialchars($item['descricao']) ?></td>
+									<td><?= htmlspecialchars($item['descricao_grupo'] ?? 'Sem grupo') ?></td>
             						<td><?= htmlspecialchars($item['descricao_categoria']) ?></td>
             						<td><?= htmlspecialchars($item['preco']) ?></td>
             						<td>
@@ -417,6 +438,13 @@ if (!isset($_SESSION['produtos'])) {
 					const tabelaProdutos = $('#datatable-default').dataTable().api();
 
 					$('#filtroCategoria').on('change', function () {
+						tabelaProdutos
+							.column(3)
+							.search(this.value)
+							.draw();
+					});
+
+					$('#filtroGrupo').on('change', function () {
 						tabelaProdutos
 							.column(2)
 							.search(this.value)
