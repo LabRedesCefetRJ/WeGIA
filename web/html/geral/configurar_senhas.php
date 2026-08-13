@@ -109,27 +109,36 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 		});
 	</script>
 
-	<script>
-		$(function () {
-			const verificacao = '<?= isset($_GET['verificacao']) ? htmlspecialchars($_GET['verificacao']) : '0' ?>';
+<script>
+	$(function() {
+		const verificacao = '<?= isset($_GET['verificacao']) ? htmlspecialchars($_GET['verificacao']) : '0' ?>';
 
-			switch (verificacao) {
-				case '0':
-					break;
-				case '1':
-					alert("Confirmação de senha não coincide com nova senha");
-					break;
-				case '2':
-					alert("Senha antiga está errada");
-					break;
-				case '3':
-					alert("Senha alterada com sucesso!");
-					break;
-				default:
-					alert("O valor informado para a verificação não é válido.");
-			}
-		});
-	</script>
+		switch (verificacao) {
+			case '0':
+				break;
+			case '1':
+				alert("Campos obrigatórios ausentes ou inválidos");
+				break;
+			case '2':
+				alert("Nova senha e confirmação não conferem");
+				break;
+			case '3':
+				alert("Senha atual informada está incorreta");
+				break;
+			case '4':
+				alert('Senha alterada com sucesso!');
+				break;
+			case '5':
+				alert('Senha alterada com sucesso!');
+				break;
+				case '6':
+				alert('Operação negada: Administradores não podem alterar a própria senha pelo painel de configuração de senhas. Por favor, utilize a opção de alteração de senha no menu do usuário.');
+				break;
+			default:
+				alert("O valor informado para a verificação não é válido.");
+		}
+	});
+</script>
 
 </head>
 
@@ -202,8 +211,16 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Nova senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" id="nova_senha" name="nova_senha"
-														class="form-control" required><br />
+													<div class="input-group">
+														<input type="password" id="nova_senha" name="nova_senha" class="form-control" required>
+
+														<span class="input-group-btn">
+															<button type="button" id="toggleNovaSenha" class="btn btn-default">
+																<i class="fa fa-eye"></i>
+															</button>
+														</span>
+													</div>
+													<br />
 													</label>
 													<div id="password-div"></div>
 												</div>
@@ -212,8 +229,16 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 												<label class="col-md-3 control-label">Confirmar senha:
 												</label>
 												<div class="col-md-6">
-													<input type="password" name="confirmar_senha" class="form-control"
-														required><br />
+													<div class="input-group">
+														<input type="password" id="confirmar_senha" name="confirmar_senha" class="form-control" required>
+
+														<span class="input-group-btn">
+															<button type="button" id="toggleConfirmarSenha" class="btn btn-default">
+																<i class="fa fa-eye"></i>
+															</button>
+														</span>
+													</div>
+													<br />
 													</label>
 
 												</div>
@@ -237,6 +262,13 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 		</div>
 	</section>
 
+	<script>
+	$(document).ready(function() {
+		configurarOlhoSenha("#toggleNovaSenha", "#nova_senha");
+		configurarOlhoSenha("#toggleConfirmarSenha", "#confirmar_senha");
+	});
+	</script>
+
 	<!-- Vendor -->
 	<script src=<?= WWW . "assets/vendor/select2/select2.js" ?>></script>
 	<script src=<?= WWW . "assets/vendor/jquery-datatables/media/js/jquery.dataTables.js" ?>></script>
@@ -253,6 +285,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 	<script src=<?= WWW . "assets/javascripts/theme.init.js" ?>></script>
 
 	<script src=<?= WWW . "Functions/password_policy.js" ?>></script>
+
+	<script src="<?= WWW . 'Functions/togglePassword.js' ?>"></script>
 
 	<div align="right">
 		<iframe src="https://www.wegia.org/software/footer/conf.html" width="200" height="60"

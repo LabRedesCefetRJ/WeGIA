@@ -68,16 +68,31 @@
                 $mensal = 0;
                 $casual = 0;
                 $si_contrib = 0;
-                $stmt = $conexao->prepare("SELECT *, s.id_socio AS socioid, sl.descricao AS ultima_descricao_log, sl.data AS ultima_data_socio_log, ss.status AS status_socio
-                          FROM socio AS s
-                          LEFT JOIN socio_status AS ss ON s.id_sociostatus = ss.id_sociostatus
-                          LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa
-                          LEFT JOIN socio_tipo AS st ON s.id_sociotipo = st.id_sociotipo
-                          LEFT JOIN (
-                              SELECT sl.id_socio, sl.descricao, sl.data
-                              FROM socio_log AS sl
-                              WHERE sl.id IN (SELECT MAX(id) FROM socio_log GROUP BY id_socio)
-                          ) AS sl ON sl.id_socio = s.id_socio;");
+                $stmt = $conexao->prepare("SELECT *,
+                  s.id_socio AS socioid,
+                  sl.descricao AS ultima_descricao_log,
+                  sl.data AS ultima_data_socio_log,
+                  ss.status AS status_socio
+                FROM socio AS s
+                LEFT JOIN socio_status AS ss
+                  ON s.id_sociostatus = ss.id_sociostatus
+                LEFT JOIN pessoa AS p
+                  ON s.id_pessoa = p.id_pessoa
+                LEFT JOIN socio_tipo AS st
+                  ON s.id_sociotipo = st.id_sociotipo
+                LEFT JOIN (
+                  SELECT sl.id_socio,
+                      sl.descricao,
+                      sl.data
+                  FROM socio_log AS sl
+                  WHERE sl.id IN (
+                    SELECT MAX(id)
+                    FROM socio_log
+                    GROUP BY id_socio
+                  )
+                ) AS sl
+                  ON sl.id_socio = s.id_socio
+                  WHERE s.deletado = 0;");
                 $stmt->execute();
                 $query = $stmt->get_result();
                 while ($resultado = mysqli_fetch_array($query)) {

@@ -43,6 +43,18 @@ try {
         exit;
     }
 
+    // Verifica se a pessoa é funcionária e se está inativa (id 2)
+    $stmtStatus = $pdo->prepare("SELECT id_situacao FROM funcionario WHERE id_pessoa = :id_pessoa");
+    $stmtStatus->bindValue(':id_pessoa', $usuario['id_pessoa'], PDO::PARAM_INT);
+    $stmtStatus->execute();
+    $situacao = $stmtStatus->fetchColumn();
+
+    // Se o funcionário existir na tabela e o ID for 2, bloqueia
+    if ($situacao !== false && (int)$situacao === 2) {
+        header("Location: ../index.php?erro=usuario_inativo");
+        exit;
+    }
+
     $passwordCheck = LoginHelper::verifyAndMigrate($senha, $usuario['senha'] ?? null);
 
     if (!$passwordCheck['valid']) {

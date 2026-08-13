@@ -132,6 +132,11 @@ abstract class Pessoa
         return $this->sobrenome;
     }
 
+    public function getPrimeiroSobrenome()
+    {
+        return Util::primeiroSobrenome($this->sobrenome);
+    }
+
     public function getSexo()
     {
         return $this->sexo;
