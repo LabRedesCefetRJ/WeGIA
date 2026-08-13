@@ -7,6 +7,8 @@ if (!isset($_SESSION['usuario'])) {
     exit();
 }
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 13, 3);
 
 require_once ROOT . "/controle/VoluntarioControle.php";
 require_once ROOT . "/classes/Voluntario.php";

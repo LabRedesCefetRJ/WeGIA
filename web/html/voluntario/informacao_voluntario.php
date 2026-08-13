@@ -12,6 +12,9 @@ if (!isset($_SESSION['voluntarios'])) {
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 13, 5);
+
 require_once ROOT . "/html/personalizacao_display.php";
 ?>
 <!DOCTYPE html>
