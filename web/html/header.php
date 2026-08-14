@@ -41,8 +41,7 @@ $sqlCargo = "
 ";
 
 $stmtCargo = $conexao->prepare($sqlCargo);
-$stmtCargo->bind_param("i", $id_pessoa);
-// $stmtCargo->bind_param("ii", $id_pessoa, $id_pessoa);
+$stmtCargo->bind_param("ii", $id_pessoa, $id_pessoa);
 $stmtCargo->execute();
 
 $resultCargo = $stmtCargo->get_result();
