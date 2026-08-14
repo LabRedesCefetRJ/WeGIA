@@ -174,7 +174,7 @@ require_once ROOT . '/classes/Csrf.php';
                         <form class="form-horizontal" method="POST" action="../../controle/control.php">
                             <div class="panel-body">
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
-                                <h5 class="obrig">Campos Obrigatórios(*)</h5>
+                                <h5 class="obrig">Campos Obrigatórios (*)</h5>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
                                     <div class="col-md-6">
