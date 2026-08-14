@@ -280,7 +280,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                                     <span class="input-group-addon"><i class="fa fa-search"></i></span>
                                                     <input type="text" id="cep" class="form-control" placeholder="" name="cep">
                                                 </div>
-                                                <div class="status_cep col-xs-12"></div>
+                                                <div class="status_cep col-xs-12" id="statusCepCriar"></div>
                                             </div>
                                         </div>
                                         <div class="row">
@@ -387,7 +387,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                                     <span class="input-group-addon"><i class="fa fa-search"></i></span>
                                                     <input type="text" id="cepEditar" class="form-control" placeholder="" name="cep">
                                                 </div>
-                                                <div class="status_cep col-xs-12"></div>
+                                                <div class="status_cep col-xs-12" id="statusCepEditar"></div>
                                             </div>
                                         </div>
                                         <div class="row">
@@ -464,8 +464,125 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                 <script>
                     let parceiroParaDeletar = null;
 
+                    const CEP_FORMULARIOS = {
+                        criar: '',
+                        editar: 'Editar'
+                    };
+
+                    function obterSeletoresEndereco(sufixo) {
+                        return {
+                            cep: `#cep${sufixo}`,
+                            rua: `#rua${sufixo}`,
+                            bairro: `#bairro${sufixo}`,
+                            estado: `#estado${sufixo}`,
+                            cidade: `#cidade${sufixo}`,
+                            status: `#statusCep${sufixo}`
+                        };
+                    }
+
+                    function limparEnderecoCep(sufixo, manterCep = false) {
+                        const seletores = obterSeletoresEndereco(sufixo);
+
+                        $(seletores.rua).val('');
+                        $(seletores.bairro).val('');
+                        $(seletores.estado).val('');
+                        $(seletores.cidade).val('');
+                        $(seletores.status).html('');
+
+                        if (!manterCep) {
+                            $(seletores.cep).val('');
+                        }
+                    }
+
+                    function exibirStatusCep(sufixo, mensagem, tipo = 'info') {
+                        const seletores = obterSeletoresEndereco(sufixo);
+                        const classe = tipo === 'success' ? 'text-success' : tipo === 'warning' ? 'text-warning' : tipo === 'danger' ? 'text-danger' : 'text-muted';
+                        const icone = tipo === 'success' ? 'fa-check-circle' : tipo === 'warning' ? 'fa-exclamation-triangle' : tipo === 'danger' ? 'fa-times-circle' : 'fa-info-circle';
+
+                        $(seletores.status).html(`
+                            <small class="${classe}">
+                                <i class="fa ${icone}"></i> ${mensagem}
+                            </small>
+                        `);
+                    }
+
+                    async function pesquisarEnderecoPorCep(valor, sufixo) {
+                        const seletores = obterSeletoresEndereco(sufixo);
+                        const cep = String(valor || '').replace(/\D/g, '');
+
+                        if (!cep) {
+                            limparEnderecoCep(sufixo);
+                            return;
+                        }
+
+                        if (!/^[0-9]{8}$/.test(cep)) {
+                            limparEnderecoCep(sufixo, true);
+                            exibirStatusCep(sufixo, 'CEP inválido. Informe um CEP com 8 dígitos.', 'danger');
+                            mostrarNotificacao('CEP inválido. Verifique o número informado.', 'error', 5000);
+                            return;
+                        }
+
+                        exibirStatusCep(sufixo, 'Consultando CEP...', 'info');
+
+                        try {
+                            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
+                                method: 'GET'
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`Erro HTTP ${response.status}`);
+                            }
+
+                            const dados = await response.json();
+
+                            if (dados.erro) {
+                                limparEnderecoCep(sufixo, true);
+                                exibirStatusCep(sufixo, 'CEP não encontrado.', 'danger');
+                                mostrarNotificacao('CEP não encontrado. Verifique o número informado.', 'error', 5000);
+                                return;
+                            }
+
+                            $(seletores.rua).val(dados.logradouro || '');
+                            $(seletores.bairro).val(dados.bairro || '');
+                            $(seletores.estado).val(dados.uf || '');
+                            $(seletores.cidade).val(dados.localidade || '');
+
+                            exibirStatusCep(sufixo, 'Endereço preenchido automaticamente.', 'success');
+                        } catch (erro) {
+                            limparEnderecoCep(sufixo, true);
+                            exibirStatusCep(sufixo, 'Não foi possível consultar o CEP agora.', 'danger');
+                            mostrarNotificacao('Não foi possível consultar o CEP no momento. Tente novamente.', 'error', 5000);
+                            console.error('Erro ao consultar o ViaCEP:', erro);
+                        }
+                    }
+
+                    function vincularBuscaCep(sufixo) {
+                        const seletores = obterSeletoresEndereco(sufixo);
+
+                        $(document).on('input', seletores.cep, function() {
+                            if (!this.value.trim()) {
+                                limparEnderecoCep(sufixo);
+                            }
+                        });
+
+                        $(document).on('blur', seletores.cep, function() {
+                            pesquisarEnderecoPorCep(this.value, sufixo);
+                        });
+                    }
+
                     //Alterar scripts para parceiros institucionais
                     $(document).ready(function() {
+                        vincularBuscaCep(CEP_FORMULARIOS.criar);
+                        vincularBuscaCep(CEP_FORMULARIOS.editar);
+
+                        $('#modalCriarParceiro').on('hidden.bs.modal', function() {
+                            limparEnderecoCep(CEP_FORMULARIOS.criar);
+                        });
+
+                        $('#modalEditarParceiro').on('hidden.bs.modal', function() {
+                            limparEnderecoCep(CEP_FORMULARIOS.editar);
+                        });
+
                         carregarParceiros();
 
                         // Evento: Salvar nova parceria
@@ -857,6 +974,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         $('#estadoEditar').val($botao.data('estado'));
                         $('#cidadeEditar').val($botao.data('cidade'));
                         $('#localizacaoEditar').val($botao.data('localizacao'));
+                        $('#statusCepEditar').html('');
 
                         // Limpa o campo de upload de arquivo
                         $('#logoEditar').val('');
