@@ -824,7 +824,26 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         // Dados principais
                         $('#cnpjEditar').val($botao.data('cnpj'));
                         $('#razao_socialEditar').val($botao.data('razao-social'));
-                        $('#telefoneEditar').val($botao.data('telefone'));
+
+                        //formata telefone
+                        const telefone = String($botao.data('telefone') || '').replace(/\D/g, '');
+
+                        let telefoneFormatado = telefone;
+
+                        if (telefone.length === 11) {
+                            telefoneFormatado = telefone.replace(
+                                /^(\d{2})(\d{5})(\d{4})$/,
+                                '($1) $2-$3'
+                            );
+                        } else if (telefone.length === 10) {
+                            telefoneFormatado = telefone.replace(
+                                /^(\d{2})(\d{4})(\d{4})$/,
+                                '($1) $2-$3'
+                            );
+                        }
+
+                        $('#telefoneEditar').val(telefoneFormatado);
+
                         $('#emailEditar').val($botao.data('email'));
                         $('#divulgacaoEditar').val($botao.data('divulgacao'));
                         $('#descricaoEditar').val($botao.data('descricao'));
@@ -944,6 +963,95 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                             }, duracao);
                         }
                     }
+
+                    function aplicarMascara(input, tipo) {
+                        let isDeleting = false;
+
+                        input.addEventListener('beforeinput', function(e) {
+                            isDeleting = e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward';
+                        });
+
+                        input.addEventListener('input', function() {
+                            let cursorPos = input.selectionStart;
+                            let value = input.value;
+                            let especiais = tipo === 'telefone' ? ['(', ')', '-', ' '] : ['/'];
+
+                            if (isDeleting && especiais.includes(value[cursorPos - 1])) {
+                                const before = value.slice(0, cursorPos - 1);
+                                const after = value.slice(cursorPos);
+                                value = before + after;
+                                cursorPos--;
+                            }
+
+                            let raw = value.replace(/\D/g, '');
+                            let masked = '';
+                            let count = 0;
+
+                            if (tipo === 'telefone') {
+                                if (raw.length > 11) raw = raw.slice(0, 11);
+
+                                if (raw.length <= 10) {
+                                    masked = raw.replace(/^(\d{0,2})(\d{0,4})(\d{0,4})/, function(_, ddd, part1, part2) {
+                                        let result = '';
+                                        if (ddd) {
+                                            result += '(' + ddd;
+                                            count += 1;
+                                        }
+                                        if (ddd.length === 2) {
+                                            result += ') ';
+                                            count += 2;
+                                        }
+                                        if (part1) result += part1;
+                                        if (part1.length === 4) {
+                                            result += '-';
+                                            count += 1;
+                                        }
+                                        if (part2) result += part2;
+                                        return result;
+                                    });
+                                } else {
+                                    masked = raw.replace(/^(\d{0,2})(\d{0,5})(\d{0,4})/, function(_, ddd, part1, part2) {
+                                        let result = '';
+                                        if (ddd) {
+                                            result += '(' + ddd;
+                                            count += 1;
+                                        }
+                                        if (ddd.length === 2) {
+                                            result += ') ';
+                                            count += 2;
+                                        }
+                                        if (part1) result += part1;
+                                        if (part1.length === 5) {
+                                            result += '-';
+                                            count += 1;
+                                        }
+                                        if (part2) result += part2;
+                                        return result;
+                                    });
+                                }
+                            }
+
+                            input.value = masked;
+
+                            if (!isDeleting) {
+                                cursorPos += count;
+                            }
+
+                            setTimeout(() => {
+                                input.setSelectionRange(cursorPos, cursorPos);
+                            }, 0);
+
+                            isDeleting = false;
+                        });
+                    }
+
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const telefoneCadastro = document.getElementById('telefone');
+                        const telefoneEdicao = document.getElementById('telefoneEditar');
+
+                        if (telefoneCadastro) aplicarMascara(telefoneCadastro, 'telefone');
+                        if (telefoneEdicao) aplicarMascara(telefoneEdicao, 'telefone');
+                    });
                 </script>
 
                 <!-- end: page -->
