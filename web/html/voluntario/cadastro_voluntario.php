@@ -13,6 +13,8 @@ permissao($_SESSION['id_pessoa'], 13, 3);
 require_once ROOT . "/controle/VoluntarioControle.php";
 require_once ROOT . "/classes/Voluntario.php";
 require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/dao/Conexao.php";
+
 $dataNascimentoMaxima = Voluntario::getDataNascimentoMaxima();
 $dataNascimentoMinima = Voluntario::getDataNascimentoMinima();
 
@@ -56,6 +58,7 @@ require_once ROOT . '/classes/Csrf.php';
     <script src="../../assets/javascripts/theme.custom.js"></script>
     <script src="../../assets/javascripts/theme.init.js"></script>
     <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
+
     <script>
         function gerarSituacao() {
             url = '../../dao/exibir_situacao.php';
@@ -197,7 +200,7 @@ require_once ROOT . '/classes/Csrf.php';
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="inputSuccess">Cargo *</label>
+                                    <label class="col-md-3 control-label" for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
                                     <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge"style="margin-top: 0.75vw"></i></a>
                                     <div class="col-md-6">
                                         <select class="form-control" name="cargo" id="cargo" required>
