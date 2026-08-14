@@ -11,17 +11,18 @@
                 $this->setId_tipo_registro($id);
             }
             if($status){
-                $this->setStatus($staus);
+                $this->setStatus($status);
             }
         }
 
-        public function jsonSerialize(): mixed
-        {
-            return [
-                'id_registro_profissional_tipo' => $this->id_tipo_registro,
-                'descricao' => $this->descricao
-            ];
-        }
+        public function jsonSerialize(): array
+    {
+        return [
+            'id_registro_profissional_tipo' => $this->id_tipo_registro,
+            'descricao' => $this->descricao,
+            'status' => $this->status
+        ];
+    }
 
         public function getID_tipo_registro()
         {

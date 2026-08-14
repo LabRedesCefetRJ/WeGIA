@@ -68,6 +68,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'SinaisVitaisControle' => [5],
             'SocioTagController' => [4],
             'TipoEntradaControle' => [23],
+            'TipoRegistroProfissionalControle' => [11],
             'TipoSaidaControle' => [22, 24],
             'UnidadeControle' => [22],
             'MemorandoControle' => [3],
