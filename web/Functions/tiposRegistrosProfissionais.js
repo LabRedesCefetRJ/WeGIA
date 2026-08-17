@@ -29,14 +29,16 @@ function carregarTabelaTiposRegistros() {
                     : '<span class="label label-danger">Inativo</span>';
 
                 var acaoStatusBtn = (statusItem == 1)
-                    ? '<button class="btn btn-xs btn-warning" onclick="alterarStatus(' + id + ', \'desativar\')"><i class="fa fa-ban"></i> Desativar</button>'
-                    : '<button class="btn btn-xs btn-success" onclick="alterarStatus(' + id + ', \'ativar\')"><i class="fa fa-check"></i> Ativar</button>';
+                    ? '<button class="btn btn-xs btn-warning" onclick="alterarStatus(' + id + ', \'desativar\')"> Desativar</button>'
+                    : '<button class="btn btn-xs btn-success" onclick="alterarStatus(' + id + ', \'ativar\')"> Ativar</button>';
+
+                var acaoExcluirBtn = '<button class="btn btn-xs btn-danger" onclick=excluirTipoRegistro('+ id +')> Excluir </button>';
 
                 var tr = '<tr>' +
                     '<td>' + id + '</td>' +
                     '<td>' + descricao + '</td>' +
                     '<td>' + badgeStatus + '</td>' +
-                    '<td>' + acaoStatusBtn + '</td>' +
+                    '<td>' + acaoStatusBtn + '&nbsp;' + acaoExcluirBtn + '</td>' +
                     '</tr>';
 
                 $tbody.append(tr);
@@ -48,11 +50,42 @@ function carregarTabelaTiposRegistros() {
         }
     });
 }
+function excluirTipoRegistro(id){
+    if(!confirm("Tem certeza deseja excluir permanentemente esse tipo de registro?")){
+        return;
+    }
+    var url = '../../controle/control.php';
+    var data = {
+        nomeClasse: 'TipoRegistroProfissionalControle',
+        metodo: 'excluir',
+        id_tipo_registro_profissional: id
+    };
+    $.ajax({
+        type: "POST",
+        url: url,
+        data: $.param(data),
+        contentType: "application/x-www-form-urlencoded; charset=utf-8",
+        dataType: 'json',
+        success: function (response) {
+            alert(response.mensagem || "Registro excluído com sucesso!");
+            carregarTabelaTiposRegistros();
+        },
+        error: function (xhr) {
+            var mensagem = "Não foi possível excluir o registro.";
+            if (xhr.responseJSON && xhr.responseJSON.mensagem) {
+                mensagem = xhr.responseJSON.mensagem;
+            }
+            alert(mensagem);
+        }
+    });
+}
 
-function adicionar_tipoRegistro() {
+function adicionarTipoRegistro() {
     var descricao = window.prompt("Cadastre um Novo Tipo de Registro Profissional (ex: CRM, OAB):");
     
+    descricao=descricao.trim();
     if (!descricao) {
+        alert("A descrição não pode ser vazia");
         return;
     }
     
@@ -76,7 +109,8 @@ function adicionar_tipoRegistro() {
         contentType: "application/json; charset=utf-8",
         dataType: 'json',
         success: function (response) {
-            carregarTabelaTiposRegistros();
+            alert(response.mensagem || "Registro cadastrado com sucesso!");
+            carregarTabelaTiposRegistros(); 
         },
         error: function (xhr) {
             var mensagem = "Erro ao incluir registro.";

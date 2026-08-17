@@ -20,13 +20,13 @@ class TipoRegistroProfissionalDAO
         try {
             $sql = "INSERT INTO registro_profissional_tipo(descricao) VALUES (:registro)";
             $stmt = $this->pdo->prepare($sql);
-            $registro = $registro->getDescricao();
-            $stmt->bindParam(':registro',$registro);
+            $descricao = $registro->getDescricao();
+            $stmt->bindParam(':registro', $descricao);
             $stmt->execute();
-        }catch (PDOException $e){
-            echo 'Error: <b> na tabela registro_profissional_tipo = ' . $sql . '</b> <br /> <br />' . $e->getMessage();
+        } catch (PDOException $e) {
+            throw new Exception("Erro ao inserir o registro profissional no banco de dados: " . $e->getMessage());
         }  
-    } 
+    }
 
     public function listarUm($id_registro)
     {
@@ -51,14 +51,14 @@ class TipoRegistroProfissionalDAO
     {
         try{
             $tiposRegistrosProfissionais = array();
-            $sql = "SELECT id_registro_profissional_tipo, descricao FROM registro_profissional_tipo WHERE status= :status";
+            $sql = "SELECT id_registro_profissional_tipo, descricao, status FROM registro_profissional_tipo WHERE status= :status";
             $consulta = $this->pdo->prepare($sql);
             $consulta->bindParam(':status',$status, PDO::PARAM_INT);
             $consulta->execute();
             $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
             if($resultados){
                 foreach($resultados as $resultado){
-                    $tipoRegistroProfissional = new TipoRegistroProfissional($resultado['descricao'], $resultado['id_registro_profissional_tipo']);
+                    $tipoRegistroProfissional = new TipoRegistroProfissional($resultado['descricao'], $resultado['id_registro_profissional_tipo'], $resultado['status']);
                     $tiposRegistrosProfissionais[] = $tipoRegistroProfissional;
                 }
             }

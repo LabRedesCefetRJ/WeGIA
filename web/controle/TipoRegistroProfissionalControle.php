@@ -5,33 +5,35 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
 class TipoRegistroProfissionalControle
 {
-    // ... manter o restante dos métodos exatamente como já estão
-        public function incluir()
-        {
-            if(isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
-                $json = file_get_contents('php://input');
-                $data = json_decode($json, true);
-
-                $descricaoBruta = filter_var($data['descricao'] ?? '', FILTER_UNSAFE_RAW);
-            }else {
-                $descricaoBruta = filter_input(INPUT_POST, 'descricao', FILTER_UNSAFE_RAW) ?? '';
-            }
-                $tipoRegistroDescricao = mb_strtoupper(trim(strip_tags($descricaoBruta)), 'UTF-8');
-
-            try {
-                $tipoRegistroProfissional = new TipoRegistroProfissional((string)($tipoRegistroDescricao));
-
-                $tipoRegistroProfissionalDAO = new TipoRegistroProfissionalDAO();
-                $tipoRegistroProfissionalDAO->incluir($tipoRegistroProfissional);
-            } catch (Exception $e) {
-                Util::tratarException($e);
-            }
+    public function incluir()
+    {
+        if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
+            $json = file_get_contents('php://input');
+            $data = json_decode($json, true);
+            $descricaoBruta = filter_var($data['descricao'] ?? '', FILTER_UNSAFE_RAW);
+        } else {
+            $descricaoBruta = filter_input(INPUT_POST, 'descricao', FILTER_UNSAFE_RAW) ?? '';
         }
+        $tipoRegistroDescricao = mb_strtoupper(trim(strip_tags($descricaoBruta)), 'UTF-8');
+
+        try {
+            $tipoRegistroProfissional = new TipoRegistroProfissional((string)$tipoRegistroDescricao);
+            $tipoRegistroProfissionalDAO = new TipoRegistroProfissionalDAO();
+            $tipoRegistroProfissionalDAO->incluir($tipoRegistroProfissional);
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'sucesso' => true,
+                'mensagem' => 'Tipo de registro cadastrado com sucesso!'
+            ]);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
 
        public function listarTodos()
     {
         try {
-            // Captura o status enviado via GET (1 por padrão)
             $status = isset($_GET['status']) ? intval($_GET['status']) : 1;
 
             $tipoRegistroProfissionalDAO = new TipoRegistroProfissionalDAO();
@@ -120,21 +122,5 @@ class TipoRegistroProfissionalControle
                 Util::tratarException($e);
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 ?>

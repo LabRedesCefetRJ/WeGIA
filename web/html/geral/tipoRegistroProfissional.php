@@ -123,7 +123,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             </table>
                         </div>
                         <div class="panel-footer clearfix">
-                            <button onclick="adicionar_tipoRegistro()" class="btn btn-primary pull-right">
+                            <button onclick="adicionarTipoRegistro()" class="btn btn-primary pull-right">
                                 <i class="fa fa-plus"></i> Adicionar Tipo de Registro Profissional
                             </button>
                         </div>
