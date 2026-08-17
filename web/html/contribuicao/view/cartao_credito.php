@@ -90,11 +90,15 @@ $tipoContribuicao = 'Cartão de Crédito';
     </div>
 </div>
 
+<!-- Device Fingerprint do Mercado Pago: sem isso, o antifraude deles avalia a
+     cobrança sem nenhum sinal sobre o dispositivo do pagador, o que aumenta
+     bastante a chance de rejeição por "cc_rejected_high_risk". -->
+<script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 <script src="../vendor/select2/select2.min.js"></script>
 <script src="../public/js/util.js"></script>
-<script src="../public/js/cartao_credito.js"></script>
+<script src="../public/js/cartao_credito.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/cartao_credito.js') ?>"></script>
 <!--Busca cep-->
 <script src="../../../Functions/busca_cep.js"></script>
 <?php

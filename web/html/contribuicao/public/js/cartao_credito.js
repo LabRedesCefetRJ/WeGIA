@@ -48,6 +48,13 @@ function processarCartaoCredito() {
     formData.append("metodo", "processarCartaoCredito");
     formData.append("documento_socio", documento);
 
+    // Gerado pelo script de Device Fingerprint do Mercado Pago (security.js).
+    // Enviado como header X-meli-session-id ao criar o pagamento, ajuda o
+    // antifraude deles a não tratar a cobrança como suspeita por padrão.
+    if (typeof MP_DEVICE_SESSION_ID !== "undefined") {
+        formData.append("device_id", MP_DEVICE_SESSION_ID);
+    }
+
     // Mostrar loading
     document.getElementById("pag5").classList.add("hidden");
     document.getElementById("pag6").classList.remove("hidden");

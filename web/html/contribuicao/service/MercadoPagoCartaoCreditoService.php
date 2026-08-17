@@ -3,11 +3,14 @@ require_once 'ApiCartaoCreditoServiceInterface.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once '../model/ContribuicaoLog.php';
 require_once '../dao/GatewayPagamentoDAO.php';
+require_once 'MercadoPagoCardTokenTrait.php';
 
 /**
  * Implementação do processamento de cartão de crédito via API do Mercado Pago.
  *
- * Fluxo (Checkout API / Core Methods):
+ * Fluxo (Checkout API / Core Methods), ambas as chamadas no mesmo host do
+ * endPoint cadastrado para o gateway — nada de URL fixa no código, igual ao
+ * restante do sistema:
  *  1) Gera um card_token a partir dos dados do cartão (POST /v1/card_tokens);
  *  2) Cria o pagamento usando o token gerado (POST /v1/payments), no mesmo
  *     endPoint já cadastrado para o gateway (o mesmo utilizado pelo Pix/Boleto).
@@ -23,7 +26,7 @@ require_once '../dao/GatewayPagamentoDAO.php';
  */
 class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterface
 {
-    private const URL_CARD_TOKENS = 'https://api.mercadopago.com/v1/card_tokens';
+    use MercadoPagoCardTokenTrait;
 
     public function processarCartaoCredito(ContribuicaoLog $contribuicaoLog)
     {
@@ -40,6 +43,11 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
 
         $accessToken = $gatewayPagamento['token'];
         $endpoint = $gatewayPagamento['endPoint']; // ex: https://api.mercadopago.com/v1/payments
+
+        // Mesmo host do endPoint cadastrado para o gateway, igual ao padrão usado em
+        // MercadoPagoContribuicoesService.php — não fica fixo em api.mercadopago.com.
+        $host = parse_url($endpoint, PHP_URL_HOST) ?: 'api.mercadopago.com';
+        $urlCardTokens = 'https://' . $host . '/v1/card_tokens';
 
         // Dados do cartão informados no formulário
         $cardNumber = preg_replace('/\D/', '', (string) filter_input(INPUT_POST, 'card_number'));
@@ -62,17 +70,63 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
         // 1) Gerar o token do cartão. A API de pagamentos do Mercado Pago não aceita
         // o número do cartão em texto puro; é obrigatório usar um token.
         $cardTokenId = $this->criarCardToken(
+            $urlCardTokens,
             $accessToken,
             $cardNumber,
             (int) $cardExpMonth,
             (int) $anoExpiracao,
             $cardCvv,
             $cardHolderName,
-            $cpfSemMascara
+            $cpfSemMascara,
+            'Não foi possível processar o pagamento com cartão de crédito no momento.'
         );
 
         // 2) Identificar a bandeira pelo BIN, exigida no payment_method_id da cobrança
         $paymentMethodId = $this->identificarBandeira($cardNumber);
+
+        // Endereço e telefone do sócio: a API aceita o pagamento sem esses dados,
+        // mas o Mercado Pago recomenda enviá-los (payer.address, payer.phone e
+        // additional_info) para dar mais contexto ao antifraude e reduzir
+        // rejeições por cc_rejected_high_risk.
+        $socio = $contribuicaoLog->getSocio();
+        $telefoneSomenteDigitos = preg_replace('/\D/', '', (string) $socio->getTelefone());
+        $ddd = substr($telefoneSomenteDigitos, 0, 2);
+        $numeroTelefone = substr($telefoneSomenteDigitos, 2);
+
+        // Só monta o objeto de telefone se o sócio de fato tiver um cadastrado —
+        // {"area_code":"","number":""} é um valor malformado pro Mercado Pago e
+        // pode derrubar uma cobrança que, sem o campo, seria aceita normalmente.
+        $telefone = ($ddd !== '' && $numeroTelefone !== '')
+            ? ['area_code' => $ddd, 'number' => $numeroTelefone]
+            : null;
+
+        $endereco = [
+            'zip_code' => preg_replace('/\D/', '', (string) $socio->getCep()),
+            'street_name' => $socio->getLogradouro(),
+            'street_number' => (string) $socio->getNumeroEndereco()
+        ];
+
+        $payer = [
+            'email' => $socio->getEmail(),
+            'first_name' => $socio->getNome(),
+            'last_name' => $socio->getSobrenome(),
+            'identification' => [
+                'type' => 'CPF',
+                'number' => $cpfSemMascara
+            ],
+            'address' => $endereco
+        ];
+
+        $additionalInfoPayer = [
+            'first_name' => $socio->getNome(),
+            'last_name' => $socio->getSobrenome(),
+            'address' => $endereco
+        ];
+
+        if ($telefone !== null) {
+            $payer['phone'] = $telefone;
+            $additionalInfoPayer['phone'] = $telefone;
+        }
 
         // 3) Criar o pagamento propriamente dito
         $data = [
@@ -81,14 +135,18 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
             'description' => $contribuicaoLog->getAgradecimento() ?: 'Doação',
             'installments' => 1,
             'payment_method_id' => $paymentMethodId,
-            'payer' => [
-                'email' => $contribuicaoLog->getSocio()->getEmail(),
-                'first_name' => $contribuicaoLog->getSocio()->getNome(),
-                'last_name' => $contribuicaoLog->getSocio()->getSobrenome(),
-                'identification' => [
-                    'type' => 'CPF',
-                    'number' => $cpfSemMascara
-                ]
+            'payer' => $payer,
+            'additional_info' => [
+                'items' => [[
+                    'id' => $contribuicaoLog->getCodigo(),
+                    'title' => $contribuicaoLog->getAgradecimento() ?: 'Doação',
+                    'description' => 'Contribuição via cartão de crédito',
+                    'category_id' => 'donations',
+                    'quantity' => 1,
+                    'unit_price' => (float) $contribuicaoLog->getValor()
+                ]],
+                'payer' => $additionalInfoPayer,
+                'ip_address' => Util::getUserIp()
             ],
             'external_reference' => $contribuicaoLog->getCodigo(),
             'notification_url' => 'https://wegia.org'
@@ -99,6 +157,14 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
             'Authorization: Bearer ' . $accessToken,
             'X-Idempotency-Key: ' . $contribuicaoLog->getCodigo()
         ];
+
+        // Device Fingerprint (gerado pelo security.js no front-end): sinaliza pro
+        // antifraude do Mercado Pago informações do dispositivo do pagador. Sem
+        // isso, cobranças legítimas ficam mais propensas a cair em cc_rejected_high_risk.
+        $deviceId = filter_input(INPUT_POST, 'device_id');
+        if (!empty($deviceId)) {
+            $headers[] = 'X-meli-session-id: ' . $deviceId;
+        }
 
         [$httpCode, $responseData, $curlError] = $this->post($endpoint, $data, $headers);
 
@@ -130,75 +196,6 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
         }
 
         return (string) $responseData['id'];
-    }
-
-    /**
-     * Gera um token de cartão (POST /v1/card_tokens), pré-requisito para criar
-     * a cobrança sem trafegar o número do cartão diretamente em /v1/payments.
-     */
-    private function criarCardToken($accessToken, $cardNumber, $expMonth, $expYear, $cvv, $holderName, $cpf)
-    {
-        $data = [
-            'card_number' => $cardNumber,
-            'expiration_month' => $expMonth,
-            'expiration_year' => $expYear,
-            'security_code' => $cvv,
-            'cardholder' => [
-                'name' => $holderName,
-                'identification' => [
-                    'type' => 'CPF',
-                    'number' => $cpf
-                ]
-            ]
-        ];
-
-        $headers = [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $accessToken
-        ];
-
-        [$httpCode, $responseData, $curlError] = $this->post(self::URL_CARD_TOKENS, $data, $headers);
-
-        if ($curlError) {
-            throw new PaymentServiceException(
-                'Não foi possível processar o pagamento com cartão de crédito no momento.',
-                'Erro cURL ao gerar o token do cartão na API Mercado Pago: ' . $curlError,
-                502
-            );
-        }
-
-        if (($httpCode !== 200 && $httpCode !== 201) || empty($responseData['id'])) {
-            throw new PaymentServiceException(
-                'Não foi possível processar o pagamento com cartão de crédito no momento.',
-                'Falha ao gerar o token do cartão. Verifique os dados informados. HTTP ' . $httpCode . ' - ' . json_encode($responseData),
-                400
-            );
-        }
-
-        return $responseData['id'];
-    }
-
-    /**
-     * Executa um POST em JSON e devolve [httpCode, responseDataAssoc, curlErrorOuNull]
-     */
-    private function post($url, array $data, array $headers)
-    {
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
-        $response = curl_exec($ch);
-        $curlError = curl_errno($ch) ? curl_error($ch) : null;
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        $responseData = json_decode((string) $response, true);
-
-        return [$httpCode, is_array($responseData) ? $responseData : [], $curlError];
     }
 
     /**
