@@ -52,6 +52,11 @@ function criarAssinatura() {
     formData.append("card_exp_year", document.getElementById('card_exp_year').value);
     formData.append("card_cvv", document.getElementById('card_cvv').value);
 
+    // Gerado pelo script de Device Fingerprint do Mercado Pago (security.js).
+    if (typeof MP_DEVICE_SESSION_ID !== "undefined") {
+        formData.append("device_id", MP_DEVICE_SESSION_ID);
+    }
+
     document.getElementById("pag5").classList.add("hidden");
     document.getElementById("pag6").classList.remove("hidden");
     document.getElementById("loading").classList.remove("hidden");
