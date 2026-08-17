@@ -108,13 +108,16 @@ class EstoqueDAO
                 e.qtd_minima,
                 p.codigo,
                 p.descricao,
+                p.ativo,
                 c.descricao_categoria,
                 u.descricao_unidade
             FROM estoque e
             INNER JOIN produto p ON p.id_produto = e.id_produto
             INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto
             INNER JOIN unidade u ON p.id_unidade = u.id_unidade
-            WHERE e.id_almoxarifado = :id_almoxarifado
+            WHERE e.id_almoxarifado = :id_almoxarifado 
+            AND p.ativo = 1
+            AND p.oculto = false
             ORDER BY p.descricao
         ";
 
