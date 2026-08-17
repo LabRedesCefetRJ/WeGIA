@@ -43,6 +43,15 @@ class MercadoPagoContribuicoesService implements ApiContribuicoesServiceInterfac
             $dataFim = (new DateTime())->format('Y-m-d\TH:i:s.000P');
 
             foreach ($gatewaysPagamento as $gatewayPagamento) {
+                // buscarPorPlataforma('MercadoPago') também devolve o gateway de assinaturas
+                // (/preapproval, usado por MercadoPagoRecorrenciaService) — ele não expõe o
+                // recurso /v1/payments/search, então não pode passar por buscarPagamentos().
+                // Cobranças de assinatura são sincronizadas à parte, via getInvoices()
+                // (/authorized_payments). Aqui processamos só o(s) gateway(s) de pagamento avulso.
+                if (!str_ends_with(rtrim($gatewayPagamento->getEndpoint(), '/'), '/v1/payments')) {
+                    continue;
+                }
+
                 $pagamentos = $this->buscarPagamentos($gatewayPagamento, $statusMercadoPago, $dataInicio, $dataFim);
 
                 foreach ($pagamentos as $pagamento) {
@@ -50,9 +59,12 @@ class MercadoPagoContribuicoesService implements ApiContribuicoesServiceInterfac
                         continue;
                     }
 
-                    $dataPagamento = DateTime::createFromFormat(DateTime::ATOM, $pagamento['date_approved']);
-
-                    if (!$dataPagamento instanceof DateTime) {
+                    // A API Mercado Pago retorna datas ISO 8601 com milissegundos
+                    // (ex: "2024-01-15T10:30:00.000-04:00"), formato que DateTime::ATOM
+                    // não reconhece via createFromFormat(); o construtor lida com ambos.
+                    try {
+                        $dataPagamento = new DateTime($pagamento['date_approved']);
+                    } catch (Exception $e) {
                         continue;
                     }
 
@@ -96,9 +108,11 @@ class MercadoPagoContribuicoesService implements ApiContribuicoesServiceInterfac
                 continue;
             }
 
-            $dataGeracao = DateTime::createFromFormat(DateTime::ATOM, $fatura['date_created']);
-
-            if (!$dataGeracao instanceof DateTime) {
+            // Mesmo detalhe de formato de data do getContribuicoes(): a API retorna
+            // milissegundos, que DateTime::ATOM não reconhece via createFromFormat().
+            try {
+                $dataGeracao = new DateTime($fatura['date_created']);
+            } catch (Exception $e) {
                 continue;
             }
 
