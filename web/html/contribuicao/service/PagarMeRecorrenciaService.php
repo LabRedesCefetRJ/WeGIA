@@ -18,7 +18,7 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
         ];
 
         //Dados do cartão
-        $cardId = filter_input(INPUT_POST, 'card_id', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_id'] ?? null;
+        $cardId = filter_input(INPUT_POST, 'card_token', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_token'] ?? null;
         
         $code = $recorrencia->getCodigo();
         $cpfSemMascara = Util::limpaCpf($recorrencia->getSocio()->getDocumento());

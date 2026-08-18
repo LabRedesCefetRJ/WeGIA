@@ -15,7 +15,7 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
         ];
 
         //Dados do cartão
-        $cardId = filter_input(INPUT_POST, 'card_id', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_id'] ?? null;
+        $cardId = filter_input(INPUT_POST, 'card_token', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_token'] ?? null;
 
         $code = $contribuicaoLog->getCodigo();
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
