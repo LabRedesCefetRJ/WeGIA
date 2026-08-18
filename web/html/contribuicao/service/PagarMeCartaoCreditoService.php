@@ -50,7 +50,7 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                     'credit_card' => [
                         'installments' => 1,
                         'statement_descriptor' => substr($contribuicaoLog->getAgradecimento(), 0, 13),
-                        'card_id' => $cardId
+                        'card_token' => $cardId
                     ]
                 ]
             ]
