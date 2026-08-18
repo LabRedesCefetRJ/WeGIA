@@ -61,7 +61,7 @@ try {
     }
     Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
 
-    if (!$sexo || ($sexo != 'm' && $sexo != 'f')) {
+    if (!Util::validarGenero($sexo)) {
         throw new InvalidArgumentException('O gênero informado não é válido.', 400);
     }
 

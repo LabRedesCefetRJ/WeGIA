@@ -59,8 +59,8 @@ if (!$id_funcionario || $id_funcionario < 1) {
         redirectNovoDependenteError('O CPF informado não é válido.', 'cpf');
     }
 
-    if ($sexo !== 'm' && $sexo !== 'f') {
-        redirectNovoDependenteError('O sexo informado não é válido.', 'sexo');
+    if (!Util::validarGenero($sexo)) {
+        redirectNovoDependenteError('O gênero informado não é válido.', 'sexo');
     }
 
     if (!$id_parentesco || $id_parentesco < 1) {

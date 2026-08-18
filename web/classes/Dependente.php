@@ -84,10 +84,8 @@ class Dependente
 
     public function setSexo(string $sexo)
     {
-        $genders = ['m', 'f'];
-
-        if (!in_array($sexo, $genders))
-            throw new InvalidArgumentException('O sexo informado não é válido.', 412);
+        if (!Util::validarGenero($sexo))
+            throw new InvalidArgumentException('O gênero informado não é válido.', 412);
 
         $this->sexo = $sexo;
         return $this;
