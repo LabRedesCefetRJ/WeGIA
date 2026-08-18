@@ -82,7 +82,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
   <!--JS Functions-->
   <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
-
+  <script src="<?php echo WWW; ?>Functions/tiposRegistrosProfissionais.js"></script>
     <style type="text/css">
       .obrig {
           color: rgb(255, 0, 0);
@@ -380,13 +380,13 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         $pdo = Conexao::connect();
                         $tipo = $pdo->query("SELECT * FROM registro_profissional_tipo;")->fetchAll(PDO::FETCH_ASSOC);
                         foreach ($tipo as $key => $value) {
-                          $selected = isset($oldInput['registroProfissionalTipo']) && $oldInput['registroProfissionalTipo'] == $value['id_tipoRegistroProfissional'] ? ' selected' : '';
-                          echo ("<option value=\"" . htmlspecialchars($value['id_tipoRegistroProfissional']) . "\"" . $selected . ">" . htmlspecialchars($value['descricao']) . "</option>");
+                          $selected = isset($oldInput['registroProfissionalTipo']) && $oldInput['registroProfissionalTipo'] == $value['id_registro_profissional_tipo'] ? ' selected' : '';
+                          echo ("<option value=\"" . htmlspecialchars($value['id_registro_profissional_tipo']) . "\"" . $selected . ">" . htmlspecialchars($value['descricao']) . "</option>");
                         }
                         ?>
                       </select>
                     </div>
-                    <a onclick="adicionar_tipo_registro_profissional()" title="adicionar tipo de registro profissional"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                    <a onclick="adicionarTipoRegistro()" title="adicionar tipo de registro profissional"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                   </div>
                   <div class="form-group" id="numeroRegistroProfissional" style="display: none">
                     <label class="col-md-3 control-label">Número do Registro Profissional <sup class="obrig">*</sup></label>
@@ -394,6 +394,37 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       <input type="text" name="registro_profissional_numero" class="form-control serie_reservista"
                         pattern="\d*" inputmode="numeric" maxlength="20" placeholder="123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
                         <small>Formato: 123456789</small>
+
+                        <select class="form-control input-lg mb-md" name="uf_RegistroProfissional" id="registroProfissional_uf_select">
+                         <option value="">Selecione um estado</option> 
+                         <option value="AC">AC - Acre</option>
+                          <option value="AL">AL - Alagoas</option>
+                          <option value="AP">AP - Amapá</option>
+                          <option value="AM">AM - Amazonas</option>
+                          <option value="BA">BA - Bahia</option>
+                          <option value="CE">CE - Ceará</option>
+                          <option value="DF">DF - Distrito Federal</option>
+                          <option value="ES">ES - Espírito Santo</option>
+                          <option value="GO">GO - Goiás</option>
+                          <option value="MA">MA - Maranhão</option>
+                          <option value="MT">MT - Mato Grosso</option>
+                          <option value="MS">MS - Mato Grosso do Sul</option>
+                          <option value="MG">MG - Minas Gerais</option>
+                          <option value="PA">PA - Pará</option>
+                          <option value="PB">PB - Paraíba</option>
+                          <option value="PR">PR - Paraná</option>
+                          <option value="PE">PE - Pernambuco</option>
+                          <option value="PI">PI - Piauí</option>
+                          <option value="RJ">RJ - Rio de Janeiro</option>
+                          <option value="RN">RN - Rio Grande do Norte</option>
+                          <option value="RS">RS - Rio Grande do Sul</option>
+                          <option value="RO">RO - Rondônia</option>
+                          <option value="RR">RR - Roraima</option>
+                          <option value="SC">SC - Santa Catarina</option>
+                          <option value="SP">SP - São Paulo</option>
+                          <option value="SE">SE - Sergipe</option>
+                          <option value="TO">TO - Tocantins</option>
+                        </select> 
                     </div>
                   </div>
                   <div class="form-group" id="reservista1" style="display: none">

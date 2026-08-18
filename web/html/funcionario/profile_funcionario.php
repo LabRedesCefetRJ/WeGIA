@@ -376,6 +376,9 @@ try {
       if (pode_editar_cargo) {
         $("#cargo").prop('disabled', false);
       }
+      $("#tipo_registro").prop('disabled', false);   
+      $("#numero_registro").prop('disabled', false);
+      $("#uf_registro").prop('disabled', false);
 
       $("#botaoEditarOutros").html('Cancelar');
       $("#botaoSalvarOutros").prop('disabled', false);
@@ -460,6 +463,9 @@ try {
         $("#certificado_reservista_serie").val(item.certificado_reservista_serie).prop('disabled', true);
         $("#situacao").val(item.id_situacao).prop('disabled', true);
         $("#cargo").val(item.id_cargo).prop('disabled', true);
+        $("#tipo_registro").val(item.tipo_registro || '').prop('disabled', true);
+        $("#numero_registro").val(item.numero_registro || '').prop('disabled', true);
+        $("#uf_registro").val(item.uf_registro || '').prop('disabled', true);
         //CARGA HORÁRIA
         $("#dias_trabalhados").text("Dias trabalhados: " + (item.dias_trabalhados || "Sem informação"));
         if (item.dias_trabalhados == "Plantão") {
@@ -1280,6 +1286,28 @@ try {
                           </div>
                           <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="tipo_registro">Tipo de Registro</label>
+                          <div class="col-md-6">
+                            <input type="text" class="form-control" name="tipo_registro" id="tipo_registro"disabled>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="numero_registro">Número do Registro</label>
+                          <div class="col-md-6">
+                            <input type="text" class="form-control" name="numero_registro" id="numero_registro"disabled>
+                          </div>
+                        </div>
+
+                        <div class="form-group">
+                          <label class="col-md-3 control-label" for="uf_registro">UF do Registro</label>
+                          <div class="col-md-6">
+                            <input type="text" class="form-control" name="uf_registro" id="uf_registro" maxlength="2" disabled>
+                          </div>
+                        </div>
+
                         <!-- Pegar id funcionário de variável sanitizada -->
                         <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarOutros" onclick="return editar_outros()">Editar</button>
