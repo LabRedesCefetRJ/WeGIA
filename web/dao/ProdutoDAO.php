@@ -281,6 +281,41 @@ class ProdutoDAO
 		$stmt->execute();
 	}
 
+	public function atribuirGrupoEmMassa(array $idsProdutos, int $idGrupo): int
+	{
+    	if (empty($idsProdutos)) {
+        	throw new InvalidArgumentException(
+            	'Nenhum produto foi informado.'
+        	);
+    	}
+
+    	$placeholders = implode(',', array_fill(0, count($idsProdutos), '?'));
+
+    	$sql = "
+        	UPDATE produto
+        	SET id_grupo_produto = ?
+        	WHERE id_produto IN ($placeholders)
+        	AND oculto = false
+        	AND ativo = 1
+    	";
+
+    	$stmt = $this->pdo->prepare($sql);
+
+    	$parametros = array_merge([$idGrupo], $idsProdutos);
+
+    	foreach ($parametros as $indice => $valor) {
+        	$stmt->bindValue(
+            	$indice + 1,
+            	(int)$valor,
+            	PDO::PARAM_INT
+        	);
+    	}
+
+    	$stmt->execute();
+
+    	return $stmt->rowCount();
+	}
+
 	public function getProdutosPorAlmoxarifado(int $almoxarifadoId)
 	{
     	$sql = "

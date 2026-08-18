@@ -253,6 +253,70 @@ class ProdutoControle
         }
     }
 
+    public function atribuirGrupoEmMassa()
+    {
+        try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+                throw new InvalidArgumentException(
+                    'Token CSRF inválido ou ausente.',
+                    401
+                );
+            }
+
+            $idGrupo = filter_input(INPUT_POST, 'id_grupo_produto', FILTER_VALIDATE_INT);
+
+            if (!$idGrupo || $idGrupo < 1) {
+                throw new InvalidArgumentException(
+                    'O grupo informado é inválido.',
+                    400
+                );
+            }
+
+            $produtosJson = $_POST['produtos_json'] ?? '';
+
+            $produtos = json_decode($produtosJson, true);
+
+            if (!is_array($produtos) || empty($produtos)) {
+                throw new InvalidArgumentException(
+                    'Nenhum produto foi selecionado.',
+                    400
+                );
+            }
+
+            $idsProdutos = [];
+
+            foreach ($produtos as $idProduto) {
+                $idProduto = filter_var($idProduto, FILTER_VALIDATE_INT);
+
+                if ($idProduto === false || $idProduto < 1) {
+                    throw new InvalidArgumentException(
+                        'Foi informado um produto inválido.',
+                        400
+                    );
+                }
+
+                $idsProdutos[$idProduto] = $idProduto;
+            }
+
+            $idsProdutos = array_values($idsProdutos);
+
+            $produtoDAO = new ProdutoDAO($this->pdo);
+
+            $quantidadeAlterada = $produtoDAO->atribuirGrupoEmMassa($idsProdutos, $idGrupo);
+
+            $_SESSION['msg'] =
+                $quantidadeAlterada .
+                ($quantidadeAlterada === 1
+                    ? ' produto foi atribuído ao grupo com sucesso.'
+                    : ' produtos foram atribuídos ao grupo com sucesso.');
+
+            header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+            exit;
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
     /**
      * Retorna uma lista dos produtos disponíveis no sistema e suas respectivas quantidades no almoxarifado especificado
      */
