@@ -75,8 +75,8 @@ try {
     exit();
 }
 
-if ($sexo != 'm' && $sexo != 'f') {
-    $_SESSION['msg'] = 'Erro, a opção de sexo fornecida não é válida.';
+if (!Util::validarGenero($sexo)) {
+    $_SESSION['msg'] = 'Erro, a opção de gênero fornecida não é válida.';
     $_SESSION['tipo'] = 'error';
     header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
     exit();

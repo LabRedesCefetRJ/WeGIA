@@ -57,8 +57,8 @@ try {
     redirectNovoFamiliarError($e->getMessage(), getSessionFormErrors(false) ? array_key_first(getSessionFormErrors(false)) : 'global');
 }
 
-if($sexo != 'm' && $sexo != 'f'){
-    redirectNovoFamiliarError('O sexo informado não é válido no sistema.', 'sexo');
+if(!Util::validarGenero($sexo)){
+    redirectNovoFamiliarError('O gênero informado não é válido no sistema.', 'sexo');
 }
 
 $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_SPECIAL_CHARS);
