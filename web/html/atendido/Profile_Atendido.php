@@ -296,12 +296,17 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
             $("#imagem").attr("src", "../../img/semfoto.png");
           }
           if (item.sexo == "m") {
-            $("#sexo").html("Sexo: <i class='fa fa-male'></i>");
-            $("#radioM").prop('checked', true);
+            $("#sexo").html("Gênero: Masculino");
           } else if (item.sexo == "f") {
-            $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
-            $("#radioF").prop('checked', true);
+            $("#sexo").html("Gênero: Feminino");
+          } else if (item.sexo == "o") {
+            $("#sexo").text("Gênero: Outro");
+          } else if (item.sexo == "n") {
+            $("#sexo").text("Gênero: Prefiro não informar");
+          } else {
+            $("#sexo").text("Gênero: Não informado");
           }
+          $("#genero").val(item.sexo || '');
 
           $("#email").val(item.email || '');
           $("#telefone").text("Telefone:" + item.telefone);
@@ -375,8 +380,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
       console.log("Edição liberada");
       $("#nome").prop('disabled', false);
       $("#sobrenome").prop('disabled', false);
-      $("#radioM").prop('disabled', false);
-      $("#radioF").prop('disabled', false);
+      $("#genero").prop('disabled', false);
       $("#email").prop('disabled', false);
       $("#telefone").prop('disabled', false);
       $("#cns").prop('disabled', false);
@@ -403,8 +407,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
 
       $("#nome").prop('disabled', true);
       $("#sobrenome").prop('disabled', true);
-      $("#radioM").prop('disabled', true);
-      $("#radioF").prop('disabled', true);
+      $("#genero").prop('disabled', true);
       $("#email").prop('disabled', true);
       $("#telefone").prop('disabled', true);
       $("#cns").prop('disabled', true);
@@ -857,10 +860,15 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
+                          <label class="col-md-3 control-label" for="genero">Gênero</label>
                           <div class="col-md-8">
-                            <label><input type="radio" name="sexo" id="radioM" disabled value="m" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-male" style="font-size: 20px;"> </i></label>
-                            <label><input type="radio" name="sexo" id="radioF" disabled value="f" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
+                            <select class="form-control" name="sexo" id="genero" disabled>
+                              <option value="">Não informado</option>
+                              <option value="m">Masculino</option>
+                              <option value="f">Feminino</option>
+                              <option value="o">Outro</option>
+                              <option value="n">Prefiro não informar</option>
+                            </select>
                           </div>
                         </div>
                         <div class="form-group">

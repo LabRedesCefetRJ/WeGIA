@@ -225,10 +225,11 @@ $fieldErrors = getSessionFormErrors();
 												</div>
 											</div>
 											<div class="form-group">
-												<label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+														<label class="col-md-3 control-label" for="genero">Gênero<sup class="obrig">*</sup></label>
 												<div class="col-md-8">
-													<label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
-													<label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+															<select class="form-control" name="sexo" id="genero" required>
+														<option value="" selected disabled>Selecionar</option><option value="m">Masculino</option><option value="f">Feminino</option><option value="o">Outro</option><option value="n">Prefiro não informar</option>
+															</select>
 												</div>
 											</div>
 											<div class="form-group">
