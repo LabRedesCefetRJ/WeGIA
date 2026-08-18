@@ -132,8 +132,7 @@ try {
                     $("#pai").val(dep.nome_pai);
                     $("#mae").val(dep.nome_mae);
                     if (dep.sexo) {
-                        let radio = $("input:radio[name=sexo]");
-                        radio.filter('[value=' + dep.sexo + ']').prop('checked', true);
+                        $("select[name=sexo]").val(dep.sexo);
                     }
                 },
                 formEndereco: function(dep) {
@@ -539,10 +538,11 @@ try {
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
+                                                <label class="col-md-3 control-label" for="genero">Gênero</label>
                                                 <div class="col-md-8">
-                                                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" disabled><i class="fa fa-female" style="font-size: 20px;"></i></label>
+                                                    <select class="form-control" name="sexo" id="genero" disabled>
+                                                      <option value="">Não informado</option><option value="m">Masculino</option><option value="f">Feminino</option><option value="o">Outro</option><option value="n">Prefiro não informar</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="form-group">

@@ -184,10 +184,15 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="genero">Gênero<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                      <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                      <select class="form-control" name="gender" id="genero" required onchange="return this.value === 'm' ? exibir_reservista() : esconder_reservista()">
+                        <option value="" selected disabled>Selecionar</option>
+                        <option value="m" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'selected' : '' ?>>Masculino</option>
+                        <option value="f" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'selected' : '' ?>>Feminino</option>
+                        <option value="o" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'o' ? 'selected' : '' ?>>Outro</option>
+                        <option value="n" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'n' ? 'selected' : '' ?>>Prefiro não informar</option>
+                      </select>
                     </div>
                   </div>
                   <div class="form-group">
@@ -563,7 +568,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
         return false;
       }
 
-      var sexo = document.querySelector('input[name="gender"]:checked');
+      var sexo = document.querySelector('select[name="gender"]');
       if (!sexo) {
         showClientAlert('O sexo do funcionário é obrigatório.');
         return false;
