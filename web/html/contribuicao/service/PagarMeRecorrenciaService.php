@@ -20,11 +20,7 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
         ];
 
         //Dados do cartão
-        $cardNumber = preg_replace('/\D/', '', (string)($dadosCartao['card_number'] ?? filter_input(INPUT_POST, 'card_number')));
-        $cardExpMonth = $dadosCartao['card_exp_month'] ?? filter_input(INPUT_POST, 'card_exp_month');
-        $cardExpYear = $dadosCartao['card_exp_year'] ?? filter_input(INPUT_POST, 'card_exp_year');
-        $cardHolderName = $dadosCartao['card_holder_name'] ?? filter_input(INPUT_POST, 'card_holder_name');
-        $cardCvv = $dadosCartao['card_cvv'] ?? filter_input(INPUT_POST, 'card_cvv');
+        $cardId = filter_input(INPUT_POST, 'card_id', FILTER_SANITIZE_SPECIAL_CHARS);
         
         $code = $recorrencia->getCodigo();
         $cpfSemMascara = Util::limpaCpf($recorrencia->getSocio()->getDocumento());
@@ -54,20 +50,7 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                     ]
                 ]
             ],
-            'card' => [
-                'number' => $cardNumber,
-                'holder_name' => $cardHolderName,
-                'exp_month' => (int)$cardExpMonth,
-                'exp_year' => (int)$cardExpYear,
-                'cvv' => $cardCvv,
-                'billing_address' => [
-                    'line_1' => $recorrencia->getSocio()->getLogradouro() . ", " . $recorrencia->getSocio()->getNumeroEndereco(),
-                    'zip_code' => preg_replace('/\D/', '', $recorrencia->getSocio()->getCep()),
-                    'city' => $recorrencia->getSocio()->getCidade(),
-                    'state' => $recorrencia->getSocio()->getEstado(),
-                    'country' => 'BR'
-                ]
-            ],
+            'card_id' => $cardId,
             'items' => [
                 [
                     'description' => $agradecimento,

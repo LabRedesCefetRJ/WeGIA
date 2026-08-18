@@ -15,11 +15,7 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
         ];
 
         //Dados do cartão
-        $cardNumber = preg_replace('/\D/', '', (string)($dadosCartao['card_number'] ?? filter_input(INPUT_POST, 'card_number')));
-        $cardExpMonth = $dadosCartao['card_exp_month'] ?? filter_input(INPUT_POST, 'card_exp_month');
-        $cardExpYear = $dadosCartao['card_exp_year'] ?? filter_input(INPUT_POST, 'card_exp_year');
-        $cardHolderName = $dadosCartao['card_holder_name'] ?? filter_input(INPUT_POST, 'card_holder_name');
-        $cardCvv = $dadosCartao['card_cvv'] ?? filter_input(INPUT_POST, 'card_cvv');
+        $cardId = filter_input(INPUT_POST, 'card_id', FILTER_SANITIZE_SPECIAL_CHARS);
 
         $code = $contribuicaoLog->getCodigo();
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
@@ -54,20 +50,7 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                     'credit_card' => [
                         'installments' => 1,
                         'statement_descriptor' => substr($contribuicaoLog->getAgradecimento(), 0, 13),
-                        'card' => [
-                            'number' => $cardNumber,
-                            'holder_name' => $cardHolderName,
-                            'exp_month' => (int)$cardExpMonth,
-                            'exp_year' => (int)$cardExpYear,
-                            'cvv' => $cardCvv,
-                            'billing_address' => [
-                                'line_1' => $contribuicaoLog->getSocio()->getLogradouro() . ", " . $contribuicaoLog->getSocio()->getNumeroEndereco(),
-                                'zip_code' => $contribuicaoLog->getSocio()->getCep(),
-                                'city' => $contribuicaoLog->getSocio()->getCidade(),
-                                'state' => $contribuicaoLog->getSocio()->getEstado(),
-                                'country' => 'BR'
-                            ]
-                        ]
+                        'card_id' => $cardId
                     ]
                 ]
             ]
