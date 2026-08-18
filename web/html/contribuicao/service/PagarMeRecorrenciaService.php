@@ -13,12 +13,12 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
         $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($recorrencia->getGatewayPagamento()->getId());
 
         $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+            'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
             'Content-Type: application/json;charset=UTF-8'
         ];
 
         //Dados do cartão
-        $cardId = filter_input(INPUT_POST, 'card_id', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cardId = filter_input(INPUT_POST, 'card_id', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_id'] ?? null;
         
         $code = $recorrencia->getCodigo();
         $cpfSemMascara = Util::limpaCpf($recorrencia->getSocio()->getDocumento());
@@ -48,7 +48,7 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                     ]
                 ]
             ],
-            'card_id' => $cardId,
+            'card_token' => $cardId,
             'items' => [
                 [
                     'description' => $agradecimento,

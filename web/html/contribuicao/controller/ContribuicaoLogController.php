@@ -794,7 +794,7 @@ class ContribuicaoLogController
             $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
 
             //tem que de alguma forma enviar os parâmetros da URL
-            $gatewayPagamentoObject = new GatewayPagamento($gatewayPagamento['plataforma'], $gatewayPagamento['endPoint'], $gatewayPagamento['token'], $gatewayPagamento['status']);
+            $gatewayPagamentoObject = new GatewayPagamento($gatewayPagamento['plataforma'], $gatewayPagamento['endPoint'], $gatewayPagamento['private_token'], $gatewayPagamento['public_token'], $gatewayPagamento['status']);
             $gatewayPagamentoObject->setId($gatewayPagamento['id']);
 
             //instanciar serviço do gateway de pagamento

@@ -10,12 +10,12 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
         $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($contribuicaoLog->getGatewayPagamento()->getId());
 
         $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+            'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
             'Content-Type: application/json;charset=utf-8',
         ];
 
         //Dados do cartão
-        $cardId = filter_input(INPUT_POST, 'card_id', FILTER_SANITIZE_SPECIAL_CHARS);
+        $cardId = filter_input(INPUT_POST, 'card_id', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_id'] ?? null;
 
         $code = $contribuicaoLog->getCodigo();
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
