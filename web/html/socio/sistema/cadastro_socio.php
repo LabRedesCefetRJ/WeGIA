@@ -58,6 +58,7 @@ function normalizarTagsSocio($tagsBrutas): array
 
 $socio_nome = trim($_REQUEST['socio_nome']);
 $socio_sobrenome = trim($_REQUEST['socio_sobrenome']);
+$genero = trim($_REQUEST['genero'] ?? '');
 $pessoa = trim($_REQUEST['pessoa']);
 $contribuinte = trim($_REQUEST['contribuinte']);
 $status = trim($_REQUEST['status']);
@@ -78,6 +79,11 @@ $data_referencia = trim($_REQUEST['data_referencia']);
 $valor_periodo = trim($_REQUEST['valor_periodo']);
 $tipo_contribuicao = trim($_REQUEST['tipo_contribuicao']);
 $auto_status_contribuicoes = isset($_REQUEST['auto_status_contribuicoes']) && !empty($_REQUEST['auto_status_contribuicoes']) ? 1 : 0;
+
+if ($genero !== '' && !Util::validarGenero($genero)) {
+    http_response_code(422);
+    exit('O gênero informado não é válido.');
+}
 
 if (!$socio_nome || empty($socio_nome)) {
     http_response_code(400);
@@ -179,8 +185,8 @@ if ($verificar_documento) {
         $id_pessoa = $resultado->fetch_assoc()['id_pessoa'];
 
         // Atualizar e-mail da pessoa
-        $stmtEmail = $conexao->prepare("UPDATE pessoa SET email = ? WHERE id_pessoa = ?");
-        $stmtEmail->bind_param('si', $email, $id_pessoa);
+        $stmtEmail = $conexao->prepare("UPDATE pessoa SET email = ?, sexo = COALESCE(NULLIF(?, ''), sexo) WHERE id_pessoa = ?");
+        $stmtEmail->bind_param('ssi', $email, $genero, $id_pessoa);
 
         if (!$stmtEmail->execute()) {
             http_response_code(500);
@@ -207,6 +213,7 @@ if (!$verificar_documento || $id_pessoa === null) {
             sobrenome,
             telefone,
             email,
+            sexo,
             data_nascimento,
             cep,
             estado,
@@ -215,16 +222,17 @@ if (!$verificar_documento || $id_pessoa === null) {
             logradouro,
             numero_endereco,
             complemento
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $stmt->bind_param(
-        'sssssssssssss',
+        'ssssssssssssss',
         $cpf_cnpj,
         $socio_nome,
         $socio_sobrenome,
         $telefone,
         $email,
+        $genero,
         $data_nasc,
         $cep,
         $estado,

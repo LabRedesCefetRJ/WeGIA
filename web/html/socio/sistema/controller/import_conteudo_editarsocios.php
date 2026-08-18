@@ -141,6 +141,18 @@ $valor_periodo = $registro['valor_periodo'];
                 </div>
               </div>
               <div class="row">
+                <div class="form-group mb-2 col-xs-6">
+                  <label for="genero">Gênero</label>
+                  <select class="form-control" id="genero" name="genero">
+                    <option value="" disabled <?= empty($registro['sexo']) ? 'selected' : '' ?>>Selecionar</option>
+                    <option value="m" <?= ($registro['sexo'] ?? '') === 'm' ? 'selected' : '' ?>>Masculino</option>
+                    <option value="f" <?= ($registro['sexo'] ?? '') === 'f' ? 'selected' : '' ?>>Feminino</option>
+                    <option value="o" <?= ($registro['sexo'] ?? '') === 'o' ? 'selected' : '' ?>>Outro</option>
+                    <option value="n" <?= ($registro['sexo'] ?? '') === 'n' ? 'selected' : '' ?>>Prefiro não informar</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="obs">E-mail</label>
                   <input type="email" class="form-control" id="email" value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" name="email" placeholder="">

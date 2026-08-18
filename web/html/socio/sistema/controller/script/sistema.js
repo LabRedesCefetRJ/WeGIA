@@ -360,6 +360,7 @@ function modalSimples(titulo, msg, tipo) {
 
         const socio_nome = $("#socio_nome").val();
         const socio_sobrenome = $("#socio_sobrenome").val();
+        const genero = $("#genero").val() || '';
         const pessoa_tipo = $("#pessoa").val();
         const contribuinte = $("#contribuinte").val();
         const status = $("#status").val();
@@ -422,6 +423,7 @@ function modalSimples(titulo, msg, tipo) {
         $.post("./cadastro_socio.php", {
             socio_nome,
             socio_sobrenome,
+            genero,
             pessoa: pessoa_tipo,
             contribuinte,
             status,
@@ -481,6 +483,7 @@ function modalSimples(titulo, msg, tipo) {
         const id_socio = $("#id_socio").val();
         const socio_nome = $("#socio_nome").val();
         const socio_sobrenome = $("#socio_sobrenome").val();
+        const genero = $("#genero").val() || '';
         const pessoa_tipo = $("#pessoa").val();
         const contribuinte = $("#contribuinte").val();
         const status = $("#status").val();
@@ -543,6 +546,7 @@ function modalSimples(titulo, msg, tipo) {
             id_socio,
             socio_nome,
             socio_sobrenome,
+            genero,
             pessoa: pessoa_tipo,
             contribuinte,
             status,
