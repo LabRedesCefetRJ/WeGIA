@@ -689,22 +689,14 @@ Processa um pagamento com cartão de crédito para o sócio autenticado via JWT.
 ```json
 {
   "valor": 50.0,
-  "card_number": "4111111111111111",
-  "card_exp_month": "12",
-  "card_exp_year": "2028",
-  "card_holder_name": "Nome do Titular",
-  "card_cvv": "123"
+  "card_id": "token_card_plataform_241wsdf"
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `valor` | number | sim | Valor da contribuição em reais |
-| `card_number` | string | sim | Número do cartão de crédito |
-| `card_exp_month` | string\|integer | sim | Mês de expiração do cartão |
-| `card_exp_year` | string\|integer | sim | Ano de expiração do cartão |
-| `card_holder_name` | string | sim | Nome do titular do cartão |
-| `card_cvv` | string | sim | Código de segurança do cartão |
+| `valor` | number | sim | Valor da contribuição em reais ||
+| `card_id` | string | sim | Identificador do cartão na plataforma de pagamento |
 
 ### Resposta - 201 Created
 ```json
@@ -758,22 +750,14 @@ Cria uma assinatura recorrente para o sócio autenticado via JWT. A rota usa o `
 ```json
 {
   "valor": 50.0,
-  "card_number": "4111111111111111",
-  "card_exp_month": "12",
-  "card_exp_year": "2028",
-  "card_holder_name": "Nome do Titular",
-  "card_cvv": "123"
+  "card_id": "token_card_plataform_241wsdf"
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
 | `valor` | number | sim | Valor da assinatura em reais |
-| `card_number` | string | sim | Número do cartão de crédito |
-| `card_exp_month` | string\|integer | sim | Mês de expiração do cartão |
-| `card_exp_year` | string\|integer | sim | Ano de expiração do cartão |
-| `card_holder_name` | string | sim | Nome do titular do cartão |
-| `card_cvv` | string | sim | Código de segurança do cartão |
+| `card_id` | string | sim | Identificador do cartão na plataforma de pagamento |
 
 ### Resposta - 201 Created
 ```json
