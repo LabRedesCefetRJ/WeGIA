@@ -67,7 +67,10 @@ abstract class Pessoa
         } else {
             $this->sobrenome = $sobrenome;
         }
+        // Permite registros antigos/incompletos, mas valida qualquer gênero informado.
         $this->sexo = $sexo;
+        if ($sexo !== null && $sexo !== '')
+            $this->setSexo($sexo);
         $this->dataNascimento = $dataNascimento;
         $this->registroGeral = $registroGeral;
         $this->orgaoEmissor = $orgaoEmissor;
@@ -251,7 +254,11 @@ abstract class Pessoa
 
     public function setSexo($sexo)
     {
+        if (!Util::validarGenero($sexo))
+            throw new InvalidArgumentException('O gênero informado não é válido.', 412);
+
         $this->sexo = $sexo;
+        return $this;
     }
 
     public function setEmail($email)

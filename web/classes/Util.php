@@ -4,6 +4,11 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PaymentServiceException.
 
 class Util
 {
+    /** Valores aceitos para o gênero de uma pessoa (m/f são mantidos por compatibilidade). */
+    public static function validarGenero(?string $genero): bool
+    {
+        return in_array($genero, ['m', 'f', 'o', 'n'], true);
+    }
     public const MENSAGEM_NOME_INVALIDO = 'O nome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
     public const MENSAGEM_SOBRENOME_INVALIDO = 'O sobrenome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
 

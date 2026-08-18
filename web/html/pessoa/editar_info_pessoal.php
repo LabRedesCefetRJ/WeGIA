@@ -48,8 +48,8 @@ try {
         throw new InvalidArgumentException('O nome da mãe informado não contém a quantidade mínima de caracteres necessária.', 422);
     Util::validarNomePessoaOuLancar($nome_mae, 'nome da mãe', 422);
 
-    if($sexo != 'm' && $sexo !='f')
-        throw new InvalidArgumentException('O sexo informado não é válido.', 422);
+    if(!Util::validarGenero($sexo))
+        throw new InvalidArgumentException('O gênero informado não é válido.', 422);
 
     if($data_nascimento < Atendido::getDataNascimentoMinima())
         throw new InvalidArgumentException('A data de nascimento informada não é válida.', 422) ;
