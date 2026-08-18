@@ -689,14 +689,14 @@ Processa um pagamento com cartão de crédito para o sócio autenticado via JWT.
 ```json
 {
   "valor": 50.0,
-  "card_id": "token_card_plataform_241wsdf"
+  "card_token": "token_card_plataform_241wsdf"
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
 | `valor` | number | sim | Valor da contribuição em reais ||
-| `card_id` | string | sim | Identificador do cartão na plataforma de pagamento |
+| `card_token` | string | sim | Identificador do cartão na plataforma de pagamento |
 
 ### Resposta - 201 Created
 ```json
@@ -750,14 +750,14 @@ Cria uma assinatura recorrente para o sócio autenticado via JWT. A rota usa o `
 ```json
 {
   "valor": 50.0,
-  "card_id": "token_card_plataform_241wsdf"
+  "card_token": "token_card_plataform_241wsdf"
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
 | `valor` | number | sim | Valor da assinatura em reais |
-| `card_id` | string | sim | Identificador do cartão na plataforma de pagamento |
+| `card_token` | string | sim | Identificador do cartão na plataforma de pagamento |
 
 ### Resposta - 201 Created
 ```json

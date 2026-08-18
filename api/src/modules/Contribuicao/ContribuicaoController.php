@@ -215,7 +215,7 @@ class ContribuicaoController
     private function validarDadosCartaoCredito(array $data): array
     {
         $camposObrigatorios = [
-            'card_id'
+            'card_token'
         ];
 
         foreach ($camposObrigatorios as $campo) {
@@ -225,7 +225,7 @@ class ContribuicaoController
         }
 
         return [
-            'card_id' => $data['card_id']
+            'card_token' => $data['card_token']
         ];
     }
 
