@@ -22,8 +22,7 @@ try {
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL); 
     $telefone = trim(filter_input(INPUT_POST, 'telefone', FILTER_UNSAFE_RAW));
     $data_nascimento = trim(filter_input(INPUT_POST, 'nascimento', FILTER_UNSAFE_RAW));
-    $nome_mae = trim(filter_input(INPUT_POST, 'nome_mae', FILTER_SANITIZE_SPECIAL_CHARS));
-    $nome_pai = trim(filter_input(INPUT_POST, 'nome_pai', FILTER_SANITIZE_SPECIAL_CHARS));
+    $filiacao = trim(filter_input(INPUT_POST, 'filiacao', FILTER_SANITIZE_SPECIAL_CHARS));
     $idatendido_familiares = filter_input(INPUT_GET, 'idatendido_familiares', FILTER_VALIDATE_INT);
 
     if ($data_nascimento) {
@@ -84,15 +83,15 @@ try {
         throw new InvalidArgumentException('A data informada não é válida.', 400);
     }
 
-    Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 400);
-
-    Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 400);
+    if (strlen($filiacao) > 256) {
+        throw new InvalidArgumentException('A filiação não pode ultrapassar 256 caracteres.', 400);
+    }
 
     if (!$idatendido_familiares || $idatendido_familiares < 1) {
         throw new InvalidArgumentException('O id do familiar informado não é válido', 400);
     }
 
-    $sql =  "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, nome_mae=:nome_mae, nome_pai=:nome_pai WHERE id_pessoa = :id";
+    $sql =  "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, filiacao=:filiacao WHERE id_pessoa = :id";
 
     require_once '../../dao/Conexao.php';
     $pdo = Conexao::connect();
@@ -105,8 +104,7 @@ try {
     $pessoa->bindParam(":email", $email, PDO::PARAM_STR);
     $pessoa->bindParam(":telefone", $telefone, PDO::PARAM_STR);
     $pessoa->bindParam(":data_nascimento", $data_nascimento, PDO::PARAM_STR);
-    $pessoa->bindParam(":nome_mae", $nome_mae, PDO::PARAM_STR);
-    $pessoa->bindParam(":nome_pai", $nome_pai, PDO::PARAM_STR);
+    $pessoa->bindParam(":filiacao", $filiacao, PDO::PARAM_STR);
 
     if (!$pessoa->execute()) {
         throw new PDOException('Falha ao executar a consulta', 500);

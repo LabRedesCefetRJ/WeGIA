@@ -132,7 +132,7 @@ class FuncionarioDAO
 
     public function incluir($funcionario, $cpf)
     {
-        $sql = 'call cadfuncionario(:nome,:sobrenome,:cpf,:senha,:sexo,:email,:telefone,:data_nascimento,:imagem,:cep,:estado,:cidade,:bairro,:logradouro,:numero_endereco,:complemento,:ibge,:registro_geral,:orgao_emissor,:data_expedicao,:nome_pai,:nome_mae,:tipo_sangue,:data_admissao,:pis,:ctps,:uf_ctps,:numero_titulo,:zona,:secao,:certificado_reservista_numero,:certificado_reservista_serie,:id_situacao,:id_cargo)';
+        $sql = 'call cadfuncionario(:nome,:sobrenome,:cpf,:senha,:sexo,:email,:telefone,:data_nascimento,:imagem,:cep,:estado,:cidade,:bairro,:logradouro,:numero_endereco,:complemento,:ibge,:registro_geral,:orgao_emissor,:data_expedicao,:filiacao,:tipo_sangue,:data_admissao,:pis,:ctps,:uf_ctps,:numero_titulo,:zona,:secao,:certificado_reservista_numero,:certificado_reservista_serie,:id_situacao,:id_cargo)';
 
         $sql = str_replace("'", "\'", $sql);
 
@@ -162,8 +162,7 @@ class FuncionarioDAO
         $orgaoEmissor = empty($orgaoEmissor) ? null : $orgaoEmissor;
         $dataExpedicao = empty($dataExpedicao) ? null : $dataExpedicao;
 
-        $nomePai = $funcionario->getNomePai();
-        $nomeMae = $funcionario->getNomeMae();
+        $filiacao = $funcionario->getFiliacao();
         $sangue = $funcionario->getTipoSanguineo();
         $dataAdmissao = $funcionario->getData_admissao();
         $pis = $funcionario->getPis();
@@ -197,8 +196,7 @@ class FuncionarioDAO
         $stmt->bindParam(':ibge', $ibge);
         $stmt->bindParam(':registro_geral', $rg);
         $stmt->bindParam(':orgao_emissor', $orgaoEmissor);
-        $stmt->bindParam(':nome_pai', $nomePai);
-        $stmt->bindParam(':nome_mae', $nomeMae);
+        $stmt->bindParam(':filiacao', $filiacao);
         $stmt->bindParam(':tipo_sangue', $sangue);
         $stmt->bindParam(':data_admissao', $dataAdmissao);
         $stmt->bindParam(':pis', $pis);
@@ -320,7 +318,7 @@ class FuncionarioDAO
     // Editar
     public function alterarInfPessoal($funcionario)
     {
-        $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set nome=:nome,sobrenome=:sobrenome,sexo=:sexo,email=:email,telefone=:telefone,data_nascimento=:data_nascimento,nome_pai=:nome_pai,nome_mae=:nome_mae,tipo_sanguineo=:tipo_sanguineo,cns=:cns where id_funcionario=:id_funcionario';
+        $sql = 'update pessoa as p inner join funcionario as f on p.id_pessoa=f.id_pessoa set nome=:nome,sobrenome=:sobrenome,sexo=:sexo,email=:email,telefone=:telefone,data_nascimento=:data_nascimento,filiacao=:filiacao,tipo_sanguineo=:tipo_sanguineo,cns=:cns where id_funcionario=:id_funcionario';
 
         $stmt = $this->pdo->prepare($sql);
         $nome = $funcionario->getNome();
@@ -330,8 +328,7 @@ class FuncionarioDAO
         $email = $funcionario->getEmail();
         $telefone = $funcionario->getTelefone();
         $nascimento = $funcionario->getDataNascimento();
-        $nomePai = $funcionario->getNomePai();
-        $nomeMae = $funcionario->getNomeMae();
+        $filiacao = $funcionario->getFiliacao();
         $sangue = $funcionario->getTipoSanguineo();
         $cns = $funcionario->getCns();
 
@@ -342,8 +339,7 @@ class FuncionarioDAO
         $stmt->bindParam(':email', $email);        
         $stmt->bindParam(':telefone', $telefone);
         $stmt->bindParam(':data_nascimento', $nascimento);
-        $stmt->bindParam(':nome_pai', $nomePai);
-        $stmt->bindParam(':nome_mae', $nomeMae);
+        $stmt->bindParam(':filiacao', $filiacao);
         $stmt->bindParam(':tipo_sanguineo', $sangue);
         $stmt->bindValue(':cns', $cns);
         $stmt->execute();
@@ -544,7 +540,7 @@ class FuncionarioDAO
     //Consultar um utilizando o id
     public function listar($id_funcionario)
     {
-        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf,p.sexo,p.email,p.telefone,p.data_nascimento,p.cep,p.ibge,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,p.cns,f.id_funcionario,f.data_admissao,f.pis,f.ctps,f.uf_ctps,f.numero_titulo,f.zona,f.secao,f.certificado_reservista_numero,f.certificado_reservista_serie,s.id_situacao,s.situacoes,c.id_cargo,c.cargo,qh.escala,qh.tipo,qh.carga_horaria,qh.entrada1,qh.saida1,qh.entrada2,qh.saida2,qh.total,qh.dias_trabalhados,qh.folga
+        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf,p.sexo,p.email,p.telefone,p.data_nascimento,p.cep,p.ibge,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.filiacao,p.filiacao AS nome_mae,p.filiacao AS nome_pai,p.tipo_sanguineo,p.cns,f.id_funcionario,f.data_admissao,f.pis,f.ctps,f.uf_ctps,f.numero_titulo,f.zona,f.secao,f.certificado_reservista_numero,f.certificado_reservista_serie,s.id_situacao,s.situacoes,c.id_cargo,c.cargo,qh.escala,qh.tipo,qh.carga_horaria,qh.entrada1,qh.saida1,qh.entrada2,qh.saida2,qh.total,qh.dias_trabalhados,qh.folga
             FROM pessoa p 
             INNER JOIN funcionario f ON p.id_pessoa = f.id_pessoa 
             LEFT JOIN quadro_horario_funcionario qh ON qh.id_funcionario = f.id_funcionario 

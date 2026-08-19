@@ -105,12 +105,16 @@ if (!$id_funcionario || $id_funcionario < 1) {
         if(!is_numeric($id_funcionario) || !is_numeric($id_pessoa) || !is_numeric($id_parentesco)){
             redirectNovoDependenteError('Os parâmetros informados não correspondem a um tipo válido de ID.');
         }
-        $sql = "INSERT IGNORE INTO funcionario_dependentes (id_funcionario, id_pessoa, id_parentesco) VALUES (:id_funcionario, :id_pessoa, :id_parentesco)";
+        $stmtFiliacao = $pdo->prepare('INSERT INTO filiacao (id_pessoa, id_filiado, id_parentesco) SELECT f.id_pessoa, :id_pessoa, :id_parentesco FROM funcionario f WHERE f.id_funcionario = :id_funcionario');
+        $stmtFiliacao->execute([
+            ':id_parentesco' => $id_parentesco,
+            ':id_pessoa' => $id_pessoa,
+            ':id_funcionario' => $id_funcionario,
+        ]);
+        $id_filiacao = $pdo->lastInsertId();
+        $sql = "INSERT IGNORE INTO funcionario_dependentes (id_funcionario, id_pessoa, id_filiacao) VALUES (:id_funcionario, :id_pessoa, :id_filiacao)";
         $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':id_funcionario', $id_funcionario);
-        $stmt->bindParam(':id_pessoa', $id_pessoa);
-        $stmt->bindParam(':id_parentesco', $id_parentesco);
-        $stmt->execute();
+        $stmt->execute([':id_funcionario' => $id_funcionario, ':id_pessoa' => $id_pessoa, ':id_filiacao' => $id_filiacao]);
     } catch (PDOException $th) {
         redirectNovoDependenteError('Erro ao adicionar o dependente ao banco de dados.');
     }

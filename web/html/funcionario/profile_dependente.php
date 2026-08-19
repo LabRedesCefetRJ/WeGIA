@@ -33,7 +33,8 @@ try {
     $sql = 'SELECT *, par.descricao AS parentesco, p2.nome as nome_funcionario, p2.sobrenome as sobrenome_funcionario
     FROM funcionario_dependentes fdep
     LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-    LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
+    INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
+    INNER JOIN parentesco par ON par.id_parentesco = fil.id_parentesco
     JOIN funcionario f ON (fdep.id_funcionario=f.id_funcionario) JOIN pessoa p2 ON (f.id_pessoa=p2.id_pessoa)
     WHERE fdep.id_dependente = :id_dependente';
 
@@ -129,8 +130,7 @@ try {
                     $("#email").val(dep.email);
                     $("#telefone").val(dep.telefone);
                     $("#nascimento").val(dep.data_nascimento);
-                    $("#pai").val(dep.nome_pai);
-                    $("#mae").val(dep.nome_mae);
+                    $("#filiacao").val(dep.filiacao);
                     if (dep.sexo) {
                         $("select[name=sexo]").val(dep.sexo);
                     }
@@ -570,20 +570,10 @@ try {
                                                 }
                                             </script>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="pai">Nome do pai</label>
+                                                <label class="col-md-3 control-label" for="filiacao">Filiação</label>
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control"
-                                                        name="nome_pai" id="pai"
-                                                        onkeypress="return Onlychars(event)"
-                                                        disabled>
-
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="col-md-3 control-label" for="mae">Nome da mãe</label>
-                                                <div class="col-md-8">
-                                                    <input type="text" class="form-control"
-                                                        name="nome_mae" id="mae"
+                                                        name="filiacao" id="filiacao" maxlength="256"
                                                         onkeypress="return Onlychars(event)"
                                                         disabled>
 

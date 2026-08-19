@@ -21,8 +21,7 @@ class DependenteDAO
                 p.data_nascimento = :nascimento,
                 p.email = :email,
                 p.telefone = :telefone,
-                p.nome_pai = :nome_pai,
-                p.nome_mae = :nome_mae
+                p.filiacao = :filiacao
             WHERE fd.id_dependente = :id_dependente;
         ");
 
@@ -32,8 +31,7 @@ class DependenteDAO
         $stmt->bindValue(':nascimento', $dependente->getDataNascimento()->format('Y-m-d'), PDO::PARAM_STR);
         $stmt->bindValue(':email', $dependente->getEmail());
         $stmt->bindValue(':telefone', $dependente->getTelefone());
-        $stmt->bindValue(':nome_pai', $dependente->getNomePai());
-        $stmt->bindValue(':nome_mae', $dependente->getNomeMae());
+        $stmt->bindValue(':filiacao', $dependente->getFiliacao());
         $stmt->bindValue(':id_dependente', $dependente->getId(), PDO::PARAM_INT);
 
         return $stmt->execute();
@@ -42,12 +40,13 @@ class DependenteDAO
     public function buscarPorId(int $id_dependente): ?array
     {
         $sql = "SELECT fdep.*, 
-                   p.cpf, p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.email, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.nome_pai, p.nome_mae, 
-                   par.descricao AS parentesco, 
+                   p.cpf, p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.email, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.filiacao, p.filiacao AS nome_pai, '' AS nome_mae,
+                   pfil.descricao AS parentesco,
                    f2.nome AS nomefuncionario, f2.sobrenome AS sobrenomefuncionario
             FROM funcionario_dependentes fdep
             LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-            LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
+            INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
+            INNER JOIN parentesco pfil ON pfil.id_parentesco = fil.id_parentesco
             JOIN funcionario f ON fdep.id_funcionario = f.id_funcionario
             JOIN pessoa f2 ON f.id_pessoa = f2.id_pessoa
             WHERE fdep.id_dependente = :id_dependente"; //pegar restante das informações

@@ -10,6 +10,7 @@ class DependenteDTO
     public ?string $telefone = null; 
     public ?string $nomePai = null;
     public ?string $nomeMae = null;
+    public ?string $filiacao = null;
 
     public function __construct(array $data)
     {
@@ -39,5 +40,7 @@ class DependenteDTO
 
         if(key_exists('nome_mae', $data))
             $this->nomeMae = $data['nome_mae'];
+        if(key_exists('filiacao', $data))
+            $this->filiacao = $data['filiacao'];
     }
 }

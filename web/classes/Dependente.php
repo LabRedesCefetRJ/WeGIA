@@ -13,6 +13,7 @@ class Dependente
     private ?string $telefone = null;
     private ?string $nomePai = null;
     private ?string $nomeMae = null;
+    private ?string $filiacao = null;
 
     public function __construct(DependenteDTO $dto)
     {
@@ -34,6 +35,9 @@ class Dependente
 
         if(isset($dto->nomeMae))
             $this->setNomeMae($dto->nomeMae);
+
+        if(isset($dto->filiacao))
+            $this->setFiliacao($dto->filiacao);
     }
 
     public function setId(int $id)
@@ -48,6 +52,20 @@ class Dependente
     public function getId()
     {
         return $this->id;
+    }
+
+    public function getFiliacao(): ?string
+    {
+        return $this->filiacao ?? trim(implode(' / ', array_filter([$this->nomePai, $this->nomeMae])));
+    }
+
+    public function setFiliacao(?string $filiacao): self
+    {
+        if ($filiacao !== null && strlen($filiacao) > 256) {
+            throw new InvalidArgumentException('A filiação não pode ultrapassar 256 caracteres.', 412);
+        }
+        $this->filiacao = trim((string)($filiacao ?? ''));
+        return $this;
     }
 
     public function setNome(string $nome)
