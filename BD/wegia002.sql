@@ -211,6 +211,15 @@ INSERT INTO `funcionario_dependente_parentesco` (`id_parentesco`, `descricao`) V
 (8, 'Pais'),
 (9, 'Outra relação de dependência');
 
+INSERT IGNORE INTO `parentesco` (`descricao`) VALUES
+('Avô'),
+('Avó'),
+('Pai'),
+('Mãe'),
+('Tio'),
+('Tia'),
+('Outro');
+
 INSERT INTO `funcionario_docdependentes` (id_docdependentes,nome_docdependente) VALUES 
 (1, 'Certidão de Casamento'),
 (2, 'Certidão de Nascimento'),
