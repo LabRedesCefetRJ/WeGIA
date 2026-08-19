@@ -863,7 +863,7 @@ Notes:
 - Authentication: Bearer token (via middleware de autenticação)
 
 ### Parâmetros
-- `payment_method` (path, obrigatório): Meio de pagamento cadastrado no sistema, como `boleto`, `pix` ou `cartao_credito`
+- `payment_method` (path, obrigatório): Meio de pagamento cadastrado no sistema, como `Boleto`, `Pix`, `Carne`, `Recorrencia` ou `CartaoCredito`
 
 ### Success Response (200)
 Content-Type: `application/json`
