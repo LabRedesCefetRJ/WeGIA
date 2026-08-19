@@ -1,5 +1,5 @@
 <?php
-require_once '../classes/TipoRegistroProfissional.php';
+require_once __DIR__ . '/../classes/TipoRegistroProfissional.php';
 require_once  'Conexao.php';
 
 class TipoRegistroProfissionalDAO

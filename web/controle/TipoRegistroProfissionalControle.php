@@ -59,7 +59,7 @@ class TipoRegistroProfissionalControle
                 $tipoRegistroProfissional = $tipoRegistroProfissionalDAO->listarUm($idTipoRegistro);
 
                 header('Content-Type: application/json; charset=utf-8');
-                echo json_encode($tipoRegistro);
+                echo json_encode($tipoRegistroProfissional);
             }catch (Exception $e){
                 Util::tratarException($e);
             }
