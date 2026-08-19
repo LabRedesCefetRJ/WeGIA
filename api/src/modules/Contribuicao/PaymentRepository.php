@@ -21,4 +21,27 @@ class PaymentRepository{
         $stmt = $this->db->query($query);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getPaymentGatewayByPaymentMethod(string $paymentMethod): ?PaymentGateway {
+        $query = 'SELECT * FROM contribuicao_gatewayPagamento cgp JOIN contribuicao_meioPagamento cmp ON (cgp.id = cmp.id_plataforma) WHERE cmp.meio = :paymentMethod AND cgp.status = 1';
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':paymentMethod', $paymentMethod);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
+            return new PaymentGateway(
+                $row['plataforma'],
+                $row['endPoint'],
+                $row['private_token'],
+                $row['public_token'],
+                (bool)$row['status'],
+                $row['id']
+            );
+        }
+
+        return null;
+    }
 }

@@ -267,4 +267,7 @@ $app->post('/contribuicoes/recorrencia', [ContribuicaoController::class, 'genera
 $app->get('/contribuicoes/payments_rules', [PaymentController::class, 'getAllPaymentsRules'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->get('/contribuicoes/payments_gateway/{payment_method}', [PaymentController::class, 'getPaymentGatewayByPaymentMethod'])
+    ->add($container->get(AuthMiddleware::class));
+
 $app->run();

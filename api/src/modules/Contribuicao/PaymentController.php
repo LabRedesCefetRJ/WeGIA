@@ -65,6 +65,40 @@ class PaymentController
         }
     }
 
+    public function getPaymentGatewayByPaymentMethod(Request $request, Response $response, $args)
+    {
+        try {
+            $paymentMethod = $args['payment_method'] ?? null;
+
+            if (!$paymentMethod) {
+                throw new \InvalidArgumentException("Payment method is required.");
+            }
+
+            $paymentGateway = $this->paymentMethodRepository->getPaymentGatewayByPaymentMethod($paymentMethod);
+
+            if (!$paymentGateway) {
+                throw new \RuntimeException("No payment gateway found for the specified payment method.");
+            }
+
+            $response->getBody()->write(json_encode([
+                'payment_gateway' => $paymentGateway->getPublicData()
+            ]));
+
+            return $response
+                ->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+
+            $response->getBody()->write(json_encode([
+                'error' => 'Erro ao buscar token público: ' . $e->getMessage()
+            ]));
+
+            return $response
+                ->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     /**
      * Converte CamelCase ou UPPER_CASE para snake_case.
      */

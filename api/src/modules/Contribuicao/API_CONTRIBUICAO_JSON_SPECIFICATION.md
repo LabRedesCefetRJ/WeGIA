@@ -855,6 +855,69 @@ Notes:
 - `description` values are normalized to `snake_case` (ex: `max_value`, `min_value`).
 - Endpoint implemented in `api/src/modules/Contribuicao/PaymentController.php`.
 
+## GET /contribuicoes/payments_gateway/{payment_method}
+
+- Description: Retorna os dados públicos da plataforma de pagamento associada ao meio de pagamento informado.
+- Method: `GET`
+- Path: `/contribuicoes/payments_gateway/{payment_method}`
+- Authentication: Bearer token (via middleware de autenticação)
+
+### Parâmetros
+- `payment_method` (path, obrigatório): Meio de pagamento cadastrado no sistema, como `boleto`, `pix` ou `cartao_credito`
+
+### Success Response (200)
+Content-Type: `application/json`
+
+Example:
+
+```JSON
+{
+    "payment_gateway": {
+        "id": 1,
+        "description": "PagSeguro",
+        "endpoint": "https://api.pagseguro.com",
+        "publicToken": "pub_123456789",
+        "status": true
+    }
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `payment_gateway` | object | Dados públicos da plataforma de pagamento encontrada |
+| `payment_gateway.id` | integer \| null | ID da plataforma de pagamento |
+| `payment_gateway.description` | string | Nome/descrição da plataforma |
+| `payment_gateway.endpoint` | string | Endpoint da plataforma de pagamento |
+| `payment_gateway.publicToken` | string | Token público exposto para integração |
+| `payment_gateway.status` | boolean | Status da plataforma de pagamento |
+
+### Resposta - 401 Unauthorized
+Content-Type: `application/json`
+
+Example:
+
+```JSON
+{
+    "error": "Token inválido"
+}
+```
+
+### Resposta - 500 Internal Server Error
+Content-Type: `application/json`
+
+Example:
+
+```JSON
+{
+    "error": "Erro ao buscar token público: No payment gateway found for the specified payment method."
+}
+```
+
+Notes:
+- A rota é protegida pelo `AuthMiddleware`, então a ausência ou invalidez do token resulta em `401`.
+- O controller retorna `500` para qualquer exceção ao buscar a plataforma de pagamento, incluindo quando não há gateway ativo para o meio informado.
+- Endpoint implementado em `api/src/modules/Contribuicao/PaymentController.php`.
+
 
 ---
 
