@@ -356,6 +356,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group" id='per2' style="text-align: center;">
 								<button type="button" id="btn-7dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao7Dias()">Últimos 7 dias</button>
 								<button type="button" id="btn-30dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao30Dias()">Últimos 30 dias</button>
+								<button type="button" id="btn-3meses2" class="btn btn-primary" style="width: fit-content;" onclick="botao3Meses()">Últimos 3 meses</button>
 								<button type="button" id="btn-180dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao180Dias()">Últimos 180 dias</button>
 								<button type="button" id="btn-365dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao365Dias()">Últimos 365 dias</button>
 								<br><br>
