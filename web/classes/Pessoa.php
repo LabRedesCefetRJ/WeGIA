@@ -49,6 +49,8 @@ abstract class Pessoa
     private $nomeMae;
 
     private $nomePai;
+
+    private $filiacao;
     
     private $tipoSanguineo;
 
@@ -77,6 +79,9 @@ abstract class Pessoa
         $this->dataExpedicao = $dataExpedicao;
         $this->setNomeMae($nomeMae);
         $this->setNomePai($nomePai);
+        $this->setFiliacao(trim(implode(' / ', array_filter([$nomePai, $nomeMae], static function ($nome) {
+            return $nome !== null && trim((string)$nome) !== '';
+        }))));
         $this->tipoSanguineo = $tipoSanguineo;
         $this->senha = $senha;
         $this->email = $email;
@@ -220,6 +225,11 @@ abstract class Pessoa
         return $this->nomePai;
     }
 
+    public function getFiliacao()
+    {
+        return $this->filiacao;
+    }
+
     public function getTipoSanguineo()
     {
         return $this->tipoSanguineo;
@@ -337,6 +347,14 @@ abstract class Pessoa
     {
         Util::validarNomePessoaOpcionalOuLancar($nomePai, 'nome do pai', 412);
         $this->nomePai = $nomePai;
+    }
+
+    public function setFiliacao($filiacao)
+    {
+        if ($filiacao !== null && strlen((string)$filiacao) > 256) {
+            throw new InvalidArgumentException('A filiação não pode ultrapassar 256 caracteres.', 412);
+        }
+        $this->filiacao = trim((string)($filiacao ?? ''));
     }
 
     public function setTipoSanguineo($tipoSanguineo)

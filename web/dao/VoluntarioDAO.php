@@ -25,7 +25,7 @@ class VoluntarioDAO
             $idPessoa = $buscaPessoa->fetchColumn();
 
             if (!$idPessoa) {
-                $sqlPessoa = "INSERT INTO pessoa (nome, sobrenome, cpf, sexo, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge, registro_geral, orgao_emissor, data_expedicao, nome_pai, nome_mae, tipo_sanguineo) VALUES (:nome, :sobrenome, :cpf, :sexo, :telefone, :data_nascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento, :ibge, :registro_geral, :orgao_emissor, :data_expedicao, :nome_pai, :nome_mae, :tipo_sanguineo)";
+                $sqlPessoa = "INSERT INTO pessoa (nome, sobrenome, cpf, sexo, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge, registro_geral, orgao_emissor, data_expedicao, filiacao, tipo_sanguineo) VALUES (:nome, :sobrenome, :cpf, :sexo, :telefone, :data_nascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento, :ibge, :registro_geral, :orgao_emissor, :data_expedicao, :filiacao, :tipo_sanguineo)";
 
                 $stmtPessoa = $this->pdo->prepare($sqlPessoa);
 
@@ -66,8 +66,8 @@ class VoluntarioDAO
                 $stmtPessoa->bindParam(':registro_geral', $rg);
                 $stmtPessoa->bindParam(':orgao_emissor', $orgaoEmissor);
                 $stmtPessoa->bindParam(':data_expedicao', $dataExpedicao);
-                $stmtPessoa->bindParam(':nome_pai', $nomePai);
-                $stmtPessoa->bindParam(':nome_mae', $nomeMae);
+                $filiacao = trim(implode(' / ', array_filter([$nomePai, $nomeMae])));
+                $stmtPessoa->bindParam(':filiacao', $filiacao);
                 $stmtPessoa->bindParam(':tipo_sanguineo', $sangue);
 
                 $stmtPessoa->execute();
@@ -75,7 +75,7 @@ class VoluntarioDAO
                 $idPessoa = $this->pdo->lastInsertId();
             } else {
                 // Atualiza pessoa existente
-                $sqlPessoa = "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, telefone=:telefone, data_nascimento=:data_nascimento, cep=:cep, estado=:estado, cidade=:cidade, bairro=:bairro, logradouro=:logradouro, numero_endereco=:numero_endereco, complemento=:complemento, ibge=:ibge, registro_geral=:registro_geral, orgao_emissor=:orgao_emissor, data_expedicao=:data_expedicao, nome_pai=:nome_pai, nome_mae=:nome_mae, tipo_sanguineo=:tipo_sanguineo WHERE id_pessoa=:id_pessoa";
+                $sqlPessoa = "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, telefone=:telefone, data_nascimento=:data_nascimento, cep=:cep, estado=:estado, cidade=:cidade, bairro=:bairro, logradouro=:logradouro, numero_endereco=:numero_endereco, complemento=:complemento, ibge=:ibge, registro_geral=:registro_geral, orgao_emissor=:orgao_emissor, data_expedicao=:data_expedicao, filiacao=:filiacao, tipo_sanguineo=:tipo_sanguineo WHERE id_pessoa=:id_pessoa";
 
                 $stmtPessoa = $this->pdo->prepare($sqlPessoa);
 
@@ -115,8 +115,8 @@ class VoluntarioDAO
                 $stmtPessoa->bindParam(':registro_geral', $rg);
                 $stmtPessoa->bindParam(':orgao_emissor', $orgaoEmissor);
                 $stmtPessoa->bindParam(':data_expedicao', $dataExpedicao);
-                $stmtPessoa->bindParam(':nome_pai', $nomePai);
-                $stmtPessoa->bindParam(':nome_mae', $nomeMae);
+                $filiacao = trim(implode(' / ', array_filter([$nomePai, $nomeMae])));
+                $stmtPessoa->bindParam(':filiacao', $filiacao);
                 $stmtPessoa->bindParam(':tipo_sanguineo', $sangue);
                 $stmtPessoa->bindParam(':id_pessoa', $idPessoa);
 
@@ -259,7 +259,7 @@ class VoluntarioDAO
         $this->pdo->beginTransaction();
         try {
             $sql = "UPDATE voluntario v JOIN pessoa p ON v.id_pessoa = p.id_pessoa 
-                    SET p.nome = :nome, p.sobrenome = :sobrenome, p.sexo = :sexo, p.telefone = :telefone, p.data_nascimento = :data_nascimento, p.tipo_sanguineo = :tipo_sanguineo, p.nome_pai = :nome_pai, p.nome_mae = :nome_mae 
+                    SET p.nome = :nome, p.sobrenome = :sobrenome, p.sexo = :sexo, p.telefone = :telefone, p.data_nascimento = :data_nascimento, p.tipo_sanguineo = :tipo_sanguineo, p.filiacao = :filiacao
                     WHERE v.id_voluntario = :id";
             $stmt = $this->pdo->prepare($sql);
 
@@ -280,8 +280,8 @@ class VoluntarioDAO
             $stmt->bindParam(':telefone', $telefone);
             $stmt->bindParam(':data_nascimento', $nascimento);
             $stmt->bindParam(':tipo_sanguineo', $sangue);
-            $stmt->bindParam(':nome_pai', $nomePai);
-            $stmt->bindParam(':nome_mae', $nomeMae);
+            $filiacao = trim(implode(' / ', array_filter([$nomePai, $nomeMae])));
+            $stmt->bindParam(':filiacao', $filiacao);
 
             $stmt->execute();
             $this->pdo->commit();

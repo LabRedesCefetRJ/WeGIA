@@ -25,8 +25,7 @@ $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS
 $telefone = filter_input(INPUT_POST, 'telefone', FILTER_SANITIZE_SPECIAL_CHARS);
 $sexo = filter_input(INPUT_POST, 'sexo', FILTER_SANITIZE_SPECIAL_CHARS);
 $data_nascimento = filter_input(INPUT_POST, 'data_nascimento', FILTER_SANITIZE_SPECIAL_CHARS);
-$nome_pai = filter_input(INPUT_POST, 'nome_pai', FILTER_SANITIZE_SPECIAL_CHARS);
-$nome_mae = filter_input(INPUT_POST, 'nome_mae', FILTER_SANITIZE_SPECIAL_CHARS);
+$filiacao = filter_input(INPUT_POST, 'filiacao', FILTER_SANITIZE_SPECIAL_CHARS);
 
 try {
     if(!$id_pessoa || $id_pessoa < 1)
@@ -40,13 +39,8 @@ try {
         throw new InvalidArgumentException('O sobrenome informado não contém a quantidade mínima de caracteres necessária.', 422);
     Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 422);
 
-    if(!$nome_pai || strlen($nome_pai) < 3)
-        throw new InvalidArgumentException('O nome do pai informado não contém a quantidade mínima de caracteres necessária.', 422);
-    Util::validarNomePessoaOuLancar($nome_pai, 'nome do pai', 422);
-
-    if(!$nome_mae || strlen($nome_mae) < 3)
-        throw new InvalidArgumentException('O nome da mãe informado não contém a quantidade mínima de caracteres necessária.', 422);
-    Util::validarNomePessoaOuLancar($nome_mae, 'nome da mãe', 422);
+    if(strlen($filiacao) > 256)
+        throw new InvalidArgumentException('A filiação não pode ultrapassar 256 caracteres.', 422);
 
     if(!Util::validarGenero($sexo))
         throw new InvalidArgumentException('O gênero informado não é válido.', 422);
@@ -78,7 +72,7 @@ try {
         }
     }
 
-    $sql = "UPDATE pessoa SET nome = :nome, sobrenome = :sobrenome, telefone = :telefone, sexo = :sexo, nome_pai = :nome_pai, nome_mae = :nome_mae, data_nascimento = :data_nascimento WHERE id_pessoa = :id_pessoa";
+    $sql = "UPDATE pessoa SET nome = :nome, sobrenome = :sobrenome, telefone = :telefone, sexo = :sexo, filiacao = :filiacao, data_nascimento = :data_nascimento WHERE id_pessoa = :id_pessoa";
 
     $pdo = Conexao::connect();
 
@@ -89,8 +83,7 @@ try {
     $stmt->bindParam(':telefone', $telefone, PDO::PARAM_STR);
     $stmt->bindParam(':sexo', $sexo, PDO::PARAM_STR);
     $stmt->bindParam(':data_nascimento', $data_nascimento, PDO::PARAM_STR);
-    $stmt->bindParam(':nome_pai', $nome_pai, PDO::PARAM_STR);
-    $stmt->bindParam(':nome_mae', $nome_mae, PDO::PARAM_STR);
+    $stmt->bindParam(':filiacao', $filiacao, PDO::PARAM_STR);
 
     $stmt->execute();
     echo json_encode("Dados atualizados com sucesso");
