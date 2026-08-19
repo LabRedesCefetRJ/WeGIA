@@ -138,7 +138,7 @@ class InternoDAO
     // Editar
     public function alterar($interno)
     {
-        $sql = 'update pessoa as p inner join interno as i on p.id_pessoa=i.id_pessoa set p.senha=:senha,p.nome=:nome, p.sobrenome=:sobrenome,p.cpf=:cpf,p.sexo=:sexo,p.telefone=:telefone,p.data_nascimento=:data_nascimento,p.imagem=:imagem,p.cep=:cep,p.estado=:estado,p.cidade=:cidade,p.bairro=:bairro,p.logradouro=:logradouro,p.numero_endereco=:numero_endereco,p.complemento=:complemento,p.ibge=:ibge,p.registro_geral=:registro_geral,p.orgao_emissor=:orgao_emissor,p.data_expedicao=:data_expedicao,p.nome_pai=:nome_pai,p.nome_mae=:nome_mae,p.tipo_sanguineo=:tipo_sanguineo,i.nome_contato_urgente=:nome_contato_urgente,i.telefone_contato_urgente_1=:telefone_contato_urgente_1,i.telefone_contato_urgente_2=:telefone_contato_urgente_2,i.telefone_contato_urgente_3=:telefone_contato_urgente_3,i.observacao=:observacao,i.certidao_nascimento=:certidao,i.curatela=:curatela,i.inss=:inss,i.loas=:loas,i.bpc=:bpc,i.funrural=:funrural,i.saf=:saf,i.sus=:sus,i.certidao_casamento=:certidao_casamento,i.ctps=:ctps,i.titulo=:titulo where i.id_interno=:id_interno';
+        $sql = 'update pessoa as p inner join interno as i on p.id_pessoa=i.id_pessoa set p.senha=:senha,p.nome=:nome, p.sobrenome=:sobrenome,p.cpf=:cpf,p.sexo=:sexo,p.telefone=:telefone,p.data_nascimento=:data_nascimento,p.imagem=:imagem,p.cep=:cep,p.estado=:estado,p.cidade=:cidade,p.bairro=:bairro,p.logradouro=:logradouro,p.numero_endereco=:numero_endereco,p.complemento=:complemento,p.ibge=:ibge,p.registro_geral=:registro_geral,p.orgao_emissor=:orgao_emissor,p.data_expedicao=:data_expedicao,p.filiacao=:filiacao,p.tipo_sanguineo=:tipo_sanguineo,i.nome_contato_urgente=:nome_contato_urgente,i.telefone_contato_urgente_1=:telefone_contato_urgente_1,i.telefone_contato_urgente_2=:telefone_contato_urgente_2,i.telefone_contato_urgente_3=:telefone_contato_urgente_3,i.observacao=:observacao,i.certidao_nascimento=:certidao,i.curatela=:curatela,i.inss=:inss,i.loas=:loas,i.bpc=:bpc,i.funrural=:funrural,i.saf=:saf,i.sus=:sus,i.certidao_casamento=:certidao_casamento,i.ctps=:ctps,i.titulo=:titulo where i.id_interno=:id_interno';
 
         $sql = str_replace("'", "\'", $sql);
         $pdo = Conexao::connect();
@@ -163,8 +163,7 @@ class InternoDAO
         $complemento = $interno->getComplemento();
         $rg = $interno->getRegistroGeral();
         $orgaoEmissor = $interno->getOrgaoEmissor();
-        $nomePai = $interno->getNomePai();
-        $nomeMae = $interno->getNomeMae();
+        $filiacao = $interno->getFiliacao();
         $sangue = $interno->getTipoSanguineo();
         $nomeContatoUrgente = $interno->getNomeContatoUrgente();
         $telefone1 = $interno->getTelefoneContatoUrgente1();
@@ -203,8 +202,7 @@ class InternoDAO
         $stmt->bindParam(':registro_geral', $rg);
         $stmt->bindParam(':orgao_emissor', $orgaoEmissor);
         $stmt->bindParam(':data_expedicao', $dataExpedicao);
-        $stmt->bindParam(':nome_pai', $nomePai);
-        $stmt->bindParam(':nome_mae', $nomeMae);
+        $stmt->bindParam(':filiacao', $filiacao);
         $stmt->bindParam(':tipo_sanguineo', $sangue);
         $stmt->bindParam(':nome_contato_urgente', $nomeContatoUrgente);
         $stmt->bindParam(':telefone_contato_urgente_1', $telefone1);
@@ -268,7 +266,7 @@ class InternoDAO
     {
         echo $id;
         $pdo = Conexao::connect();
-        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.telefone,p.data_nascimento, p.cep,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,i.nome_contato_urgente,i.telefone_contato_urgente_1,i.telefone_contato_urgente_2,i.telefone_contato_urgente_3,i.observacao,i.certidao_nascimento,i.curatela,i.inss,i.loas,i.bpc,i.funrural,i.saf,i.sus,i.id_interno,i.certidao_casamento,i.ctps,i.titulo,d.imgdoc,d.descricao,d.id_documento FROM pessoa p LEFT JOIN interno i ON p.id_pessoa = i.id_pessoa left join documento d on p.id_pessoa=d.id_pessoa WHERE i.id_interno=:id";
+        $sql = "SELECT p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.telefone,p.data_nascimento, p.cep,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.filiacao AS nome_pai,p.filiacao AS nome_mae,p.tipo_sanguineo,i.nome_contato_urgente,i.telefone_contato_urgente_1,i.telefone_contato_urgente_2,i.telefone_contato_urgente_3,i.observacao,i.certidao_nascimento,i.curatela,i.inss,i.loas,i.bpc,i.funrural,i.saf,i.sus,i.id_interno,i.certidao_casamento,i.ctps,i.titulo,d.imgdoc,d.descricao,d.id_documento FROM pessoa p LEFT JOIN interno i ON p.id_pessoa = i.id_pessoa left join documento d on p.id_pessoa=d.id_pessoa WHERE i.id_interno=:id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $id);
 

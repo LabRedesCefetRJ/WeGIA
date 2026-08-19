@@ -356,7 +356,7 @@ class AtendidoDAO
     // Editar
     public function alterar($atendido)
     {
-        $sql = 'update pessoa as p inner join atendido as a on p.id_pessoa=a.pessoa_id_pessoa set p.senha=:senha,p.nome=:nome, p.sobrenome=:sobrenome,p.cpf=:cpf,p.sexo=:sexo,p.email=:email,p.telefone=:telefone,data_nascimento=:data_nascimento,p.imagem=:imagem,p.cep=:cep,p.estado=:estado,p.cidade=:cidade,p.bairro=:bairro,p.logradouro=:logradouro,p.numero_endereco=:numero_endereco,p.complemento=:complemento,p.ibge=:ibge,p.registro_geral=:registro_geral,p.orgao_emissor=:orgao_emissor,p.data_expedicao=:data_expedicao,p.nome_pai=:nome_pai,p.nome_mae=:nome_mae,p.intTipo_sanguineo=:intTipo_sanguineo,i.nome_contato_urgente=:nome_contato_urgente,i.strTelefone_contato_urgente_1=:strTelefone_contato_urgente_1,i.strTelefone_contato_urgente_2=:strTelefone_contato_urgente_2,i.strTelefone_contato_urgente_3=:strTelefone_contato_urgente_3,i.observacao=:observacao,i.certidao_nascimento=:certidao,i.curatela=:curatela,i.inss=:inss,i.loas=:loas,i.bpc=:bpc,i.funrural=:funrural,i.saf=:saf,i.sus=:sus,i.certidao_casamento=:certidao_casamento,i.ctps=:ctps,i.titulo=:titulo where a.pessoa_id_pessoa=:id_pessoa';
+        $sql = 'update pessoa as p inner join atendido as a on p.id_pessoa=a.pessoa_id_pessoa set p.senha=:senha,p.nome=:nome, p.sobrenome=:sobrenome,p.cpf=:cpf,p.sexo=:sexo,p.email=:email,p.telefone=:telefone,data_nascimento=:data_nascimento,p.imagem=:imagem,p.cep=:cep,p.estado=:estado,p.cidade=:cidade,p.bairro=:bairro,p.logradouro=:logradouro,p.numero_endereco=:numero_endereco,p.complemento=:complemento,p.ibge=:ibge,p.registro_geral=:registro_geral,p.orgao_emissor=:orgao_emissor,p.data_expedicao=:data_expedicao,p.filiacao=:filiacao,p.intTipo_sanguineo=:intTipo_sanguineo,i.nome_contato_urgente=:nome_contato_urgente,i.strTelefone_contato_urgente_1=:strTelefone_contato_urgente_1,i.strTelefone_contato_urgente_2=:strTelefone_contato_urgente_2,i.strTelefone_contato_urgente_3=:strTelefone_contato_urgente_3,i.observacao=:observacao,i.certidao_nascimento=:certidao,i.curatela=:curatela,i.inss=:inss,i.loas=:loas,i.bpc=:bpc,i.funrural=:funrural,i.saf=:saf,i.sus=:sus,i.certidao_casamento=:certidao_casamento,i.ctps=:ctps,i.titulo=:titulo where a.pessoa_id_pessoa=:id_pessoa';
 
         $sql = str_replace("'", "\'", $sql);
         $pdo = Conexao::connect();
@@ -446,7 +446,7 @@ class AtendidoDAO
     {
         $pdo = Conexao::connect();
 
-        $sql = "SELECT a.idatendido AS id, a.idatendido, a.pessoa_id_pessoa, p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.email, p.telefone,p.data_nascimento, p.cep,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.nome_pai,p.nome_mae,p.tipo_sanguineo,p.cns, a.atendido_status_idatendido_status FROM pessoa p LEFT JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.idatendido=:id";
+        $sql = "SELECT a.idatendido AS id, a.idatendido, a.pessoa_id_pessoa, p.imagem,p.nome,p.sobrenome,p.cpf, p.senha, p.sexo, p.email, p.telefone,p.data_nascimento, p.cep,p.estado,p.cidade,p.bairro,p.logradouro,p.numero_endereco,p.complemento,p.ibge,p.registro_geral,p.orgao_emissor,p.data_expedicao,p.filiacao,p.filiacao AS nome_pai,p.filiacao AS nome_mae,p.tipo_sanguineo,p.cns, a.atendido_status_idatendido_status FROM pessoa p LEFT JOIN atendido a ON p.id_pessoa = a.pessoa_id_pessoa WHERE a.idatendido=:id";
         $stmt = $pdo->prepare($sql);
         $stmt->bindParam(':id', $id);
 
@@ -507,8 +507,7 @@ class AtendidoDAO
             email = :email,
             telefone = :telefone,
             data_nascimento = :data_nascimento,
-            nome_pai = :nome_pai,
-            nome_mae = :nome_mae,
+            filiacao = :filiacao,
             tipo_sanguineo = :tipo_sanguineo,
             cns = :cns";
 
@@ -519,8 +518,7 @@ class AtendidoDAO
             ':email' => $atendido->getEmail(),
             ':telefone' => $atendido->getTelefone(),
             ':data_nascimento' => $atendido->getDataNascimento(),
-            ':nome_pai' => $atendido->getNomePai(),
-            ':nome_mae' => $atendido->getNomeMae(),
+            ':filiacao' => $atendido->getFiliacao(),
             ':tipo_sanguineo' => $atendido->getTipoSanguineo(),
             ':cns' => ($cns !== '' ? $cns : null)
         ];

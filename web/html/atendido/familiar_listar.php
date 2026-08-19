@@ -19,7 +19,8 @@ p.nome AS nome, p.cpf AS cpf, par.descricao AS parentesco
 FROM funcionario_dependentes fdep
 LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario
 LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
+INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
+INNER JOIN parentesco par ON par.id_parentesco = fil.id_parentesco
 WHERE fdep.id_funcionario = :id_funcionario");
 
 $stmt->bindParam(':id_funcionario', $id_funcionario, PDO::PARAM_INT);

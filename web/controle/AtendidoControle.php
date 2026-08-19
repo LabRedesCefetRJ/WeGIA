@@ -41,6 +41,7 @@ class AtendidoControle
         // Extrair GET e POST explicitamente para garantir que todas as variáveis sejam capturadas
         extract($_GET);
         extract($_POST);
+        $filiacao = trim((string)($filiacao ?? ''));
         if ((!isset($cpf) || empty($cpf)) && (!isset($semCpf) || $semCpf == '0')) {
             $msg .= "cpf do atendido não informado. Por favor, informe o cpf!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
@@ -64,8 +65,9 @@ class AtendidoControle
         }
 
         Util::validarNomePessoaOuLancar($nome, 'nome', 412);
-        Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
-        Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
+        if (strlen($filiacao) > 256) {
+            throw new InvalidArgumentException('A filiação não pode ultrapassar 256 caracteres.', 412);
+        }
         if ((!isset($sexo)) || (empty($sexo))) {
             $msg .= "Sexo do atendido não informado. Por favor, informe o sexo!";
             header('Location: ../html/atendido/Cadastro_Atendido.php?msg=' . $msg);
@@ -142,7 +144,7 @@ class AtendidoControle
         }
 
         $senha = 'null';
-        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
+        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $filiacao, '', $tipoSanguineo, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
         $atendido->setIntTipo($intTipo);
         $atendido->setIntStatus($intStatus);
         $atendido->setCns($cns);
@@ -153,6 +155,7 @@ class AtendidoControle
     {
         extract($_GET);
         extract($_POST);
+        $filiacao = trim((string)($filiacao ?? ''));
         if ((!isset($cpf)) || (empty($cpf))) {
             $cpf = "";
         }
@@ -164,8 +167,9 @@ class AtendidoControle
         }
         Util::validarNomePessoaOuLancar($nome, 'nome', 412);
         Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
-        Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
-        Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
+        if (strlen($filiacao) > 256) {
+            throw new InvalidArgumentException('A filiação não pode ultrapassar 256 caracteres.', 412);
+        }
         if ((!isset($sexo)) || (empty($sexo))) {
             $sexo = '';
         }
@@ -238,7 +242,7 @@ class AtendidoControle
         }
 
         $senha = 'null';
-        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $nomeMae, $nomePai, $tipoSanguineo, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
+        $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $nascimento, $registroGeral, $orgaoEmissor, $dataExpedicao, $filiacao, '', $tipoSanguineo, $senha, $email, $telefone, $imgperfil, $cep, $uf, $cidade, $bairro, $logradouro, $numeroEndereco, $complemento, $ibge);
         $atendido->setIntTipo($intTipo);
         $atendido->setIntStatus($intStatus);
         $atendido->setCns($cns);
@@ -695,13 +699,13 @@ class AtendidoControle
                 }
             }
 
-            $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'email', 'telefone', 'nome_mae', 'nome_pai', 'tipo_sanguineo'];
+            $campos = ['cpf', 'nome', 'sobrenome', 'sexo', 'data_nascimento', 'email', 'telefone', 'filiacao', 'tipo_sanguineo'];
             $setClause = [];
             $params = [':idatendido' => $idatendido];
 
             foreach ($campos as $campo) {
                 if (isset($_POST[$campo]) && $_POST[$campo] !== '') {
-                    if (in_array($campo, ['nome', 'sobrenome', 'nome_mae', 'nome_pai'], true)) {
+                    if (in_array($campo, ['nome', 'sobrenome', 'filiacao'], true)) {
                         $nomeCampo = $campo === 'sobrenome' ? 'sobrenome' : str_replace('_', ' ', $campo);
                         Util::validarNomePessoaOuLancar($_POST[$campo], $nomeCampo, 400);
                     }
@@ -716,7 +720,7 @@ class AtendidoControle
             }
 
             // Popula objeto Atendido 
-            $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $data_nascimento, '', '', '', $nome_mae, $nome_pai, $tipo_sanguineo, '', $email, $telefone, '', '', '', '', '', '', '', '', '');
+            $atendido = new Atendido($cpf, $nome, $sobrenome, $sexo, $data_nascimento, '', '', '', $_POST['filiacao'] ?? '', '', $tipo_sanguineo, '', $email, $telefone, '', '', '', '', '', '', '', '', '');
             $atendido->setIdatendido($idatendido);
             $atendido->setCns($cns !== '' ? $cns : null);
 

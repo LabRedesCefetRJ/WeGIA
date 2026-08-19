@@ -103,14 +103,19 @@ if(!$id_parentesco || $id_parentesco < 1){
     redirectNovoFamiliarError('O parentesco informado não é válido.', 'id_parentesco');
 }
 
-define("NOVO_FAMILIAR", "INSERT IGNORE INTO atendido_familiares (atendido_idatendido, pessoa_id_pessoa, atendido_parentesco_idatendido_parentesco ) VALUES (:idatendido, :id_pessoa, :id_parentesco);");
-
 try {
-    $stmt = $pdo->prepare(NOVO_FAMILIAR);
-    $stmt->bindParam(":idatendido", $idatendido);
-    $stmt->bindParam(":id_pessoa", $id_pessoa);
-    $stmt->bindParam(":id_parentesco", $id_parentesco);
-    $stmt->execute();
+    $stmtAtendido = $pdo->prepare('SELECT pessoa_id_pessoa FROM atendido WHERE idatendido = :idatendido');
+    $stmtAtendido->execute([':idatendido' => $idatendido]);
+    $id_pessoa_atendido = $stmtAtendido->fetchColumn();
+    $stmtFiliacao = $pdo->prepare('INSERT INTO filiacao (id_pessoa, id_filiado, id_parentesco) VALUES (:id_pessoa_atendido, :id_pessoa_familiar, :id_parentesco)');
+    $stmtFiliacao->execute([
+        ':id_pessoa_atendido' => $id_pessoa_atendido,
+        ':id_parentesco' => $id_parentesco,
+        ':id_pessoa_familiar' => $id_pessoa,
+    ]);
+    $id_filiacao = $pdo->lastInsertId();
+    $stmt = $pdo->prepare('INSERT IGNORE INTO atendido_familiares (atendido_idatendido, pessoa_id_pessoa, id_filiacao) VALUES (:idatendido, :id_pessoa, :id_filiacao)');
+    $stmt->execute([':idatendido' => $idatendido, ':id_pessoa' => $id_pessoa, ':id_filiacao' => $id_filiacao]);
 } catch (PDOException $th) {
     redirectNovoFamiliarError('Erro ao adicionar o familiar ao banco de dados.');
 }

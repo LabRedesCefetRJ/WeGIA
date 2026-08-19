@@ -37,11 +37,12 @@ try {
     $stmtDelete->execute();
 
     $sqlSelect = "SELECT 
-    af.idatendido_familiares AS id_dependente, p.nome AS nome, p.cpf AS cpf, ap.parentesco AS parentesco
+    af.idatendido_familiares AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.descricao AS parentesco
     FROM atendido_familiares af
     LEFT JOIN atendido a ON a.idatendido = af.atendido_idatendido
     LEFT JOIN pessoa p ON p.id_pessoa = af.pessoa_id_pessoa
-    LEFT JOIN atendido_parentesco ap ON ap.idatendido_parentesco = af.atendido_parentesco_idatendido_parentesco
+    INNER JOIN filiacao fil ON fil.id_filiacao = af.id_filiacao
+    INNER JOIN parentesco par ON par.id_parentesco = fil.id_parentesco
     WHERE af.atendido_idatendido =:idAtendido";
 
     $response = $pdo->prepare($sqlSelect);

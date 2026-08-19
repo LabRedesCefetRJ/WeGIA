@@ -1,0 +1,130 @@
+/* Layout responsivo específico do perfil do Atendido. */
+.profile-atendido-page .profile-content {
+  min-width: 0;
+}
+
+.profile-atendido-page .tabs {
+  width: 100%;
+}
+
+.profile-atendido-page .nav-tabs {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.profile-atendido-page .nav-tabs > li {
+  float: none;
+}
+
+.profile-atendido-page .nav-tabs > li > a {
+  white-space: nowrap;
+}
+
+.profile-atendido-page .tab-content {
+  overflow: hidden;
+}
+
+.profile-atendido-page .profile-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.profile-atendido-page .profile-table-scroll > .table {
+  min-width: 760px;
+  margin-bottom: 0;
+}
+
+.profile-atendido-page .profile-table-scroll > .table th,
+.profile-atendido-page .profile-table-scroll > .table td {
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.profile-atendido-page #datatable-filiacao {
+  table-layout: fixed;
+}
+
+.profile-atendido-page #datatable-filiacao th:nth-child(1),
+.profile-atendido-page #datatable-filiacao td:nth-child(1) {
+  width: 16%;
+}
+
+.profile-atendido-page #datatable-filiacao th:nth-child(2),
+.profile-atendido-page #datatable-filiacao td:nth-child(2) {
+  width: 16%;
+}
+
+.profile-atendido-page #datatable-filiacao th:nth-child(3),
+.profile-atendido-page #datatable-filiacao td:nth-child(3) {
+  width: 22%;
+}
+
+.profile-atendido-page #datatable-filiacao th:nth-child(4),
+.profile-atendido-page #datatable-filiacao td:nth-child(4) {
+  width: 18%;
+}
+
+.profile-atendido-page #datatable-filiacao th:nth-child(5),
+.profile-atendido-page #datatable-filiacao td:nth-child(5) {
+  width: 14%;
+}
+
+.profile-atendido-page #datatable-filiacao th:nth-child(6),
+.profile-atendido-page #datatable-filiacao td:nth-child(6) {
+  width: 14%;
+}
+
+.profile-atendido-page .filiacao-acoes {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.profile-atendido-page .filiacao-acoes .btn {
+  margin: 0 2px;
+}
+
+@media (max-width: 991px) {
+  .profile-atendido-page .profile-sidebar,
+  .profile-atendido-page .profile-content {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .profile-atendido-page .nav-tabs {
+    border-bottom: 0;
+  }
+
+  .profile-atendido-page .nav-tabs > li {
+    width: 100%;
+  }
+
+  .profile-atendido-page .nav-tabs > li > a {
+    margin-right: 0;
+    border: 1px solid #ddd;
+    border-radius: 0;
+  }
+
+  .profile-atendido-page .nav-tabs > li.active > a,
+  .profile-atendido-page .nav-tabs > li.active > a:hover,
+  .profile-atendido-page .nav-tabs > li.active > a:focus {
+    border-bottom-color: #ddd;
+  }
+
+  .profile-atendido-page .form-horizontal .control-label {
+    width: 100%;
+    padding-top: 0;
+    margin-bottom: 6px;
+    text-align: left;
+  }
+
+  .profile-atendido-page .form-horizontal [class*="col-md-"] {
+    width: 100%;
+  }
+
+  .profile-atendido-page .form-horizontal .form-group {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}

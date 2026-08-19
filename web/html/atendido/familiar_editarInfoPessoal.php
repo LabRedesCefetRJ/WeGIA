@@ -37,10 +37,9 @@ $data_nascimento = filter_input(
     FILTER_SANITIZE_SPECIAL_CHARS
 );
 
-$nome_mae = filter_input(INPUT_POST, 'nome_mae', FILTER_SANITIZE_SPECIAL_CHARS);
-$nome_pai = filter_input(INPUT_POST, 'nome_pai', FILTER_SANITIZE_SPECIAL_CHARS);
+$filiacao = filter_input(INPUT_POST, 'filiacao', FILTER_SANITIZE_SPECIAL_CHARS);
 
-define("ALTERAR_INFO_PESSOAL", "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, nome_mae=:nome_mae, nome_pai=:nome_pai where id_pessoa = :id");
+define("ALTERAR_INFO_PESSOAL", "UPDATE pessoa SET nome=:nome, sobrenome=:sobrenome, sexo=:sexo, data_nascimento=:data_nascimento, email=:email, telefone=:telefone, filiacao=:filiacao where id_pessoa = :id");
 
 if (!$id || !is_numeric($id)) {
     $_SESSION['msg'] = 'Erro, o valor do id fornecido para uma pessoa não é válido.';
@@ -66,8 +65,9 @@ if (!$nome || empty($nome) || !$sobrenome || empty($sobrenome)) {
 try {
     Util::validarNomePessoaOuLancar($nome, 'nome', 400);
     Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 400);
-    Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 400);
-    Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 400);
+    if (strlen($filiacao) > 256) {
+        throw new InvalidArgumentException('A filiação não pode ultrapassar 256 caracteres.', 400);
+    }
 } catch (InvalidArgumentException $e) {
     $_SESSION['msg'] = $e->getMessage();
     $_SESSION['tipo'] = 'error';
@@ -162,8 +162,7 @@ try {
     $pessoa->bindValue(":email", $email);
     $pessoa->bindValue(":telefone", $telefone);
     $pessoa->bindValue(":data_nascimento", $data_nascimento);
-    $pessoa->bindValue(":nome_mae", $nome_mae);
-    $pessoa->bindValue(":nome_pai", $nome_pai);
+    $pessoa->bindValue(":filiacao", $filiacao);
     $pessoa->execute();
 } catch (PDOException $th) {
     if ($th->getCode() == 23000) {

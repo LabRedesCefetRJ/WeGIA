@@ -75,11 +75,12 @@ if (empty($_SESSION['atendido'])) {
 }
 $atend = $_SESSION['atendido'];
 $stmtDependente = $pdo->prepare("SELECT
-      af.idatendido_familiares AS id_dependente, p.nome AS nome, p.sobrenome AS sobrenome, p.cpf AS cpf, p.telefone AS telefone, par.parentesco AS parentesco
+      af.idatendido_familiares AS id_dependente, p.nome AS nome, p.sobrenome AS sobrenome, p.cpf AS cpf, p.telefone AS telefone, pfil.descricao AS parentesco
       FROM atendido_familiares af
       LEFT JOIN atendido a ON a.idatendido = af.atendido_idatendido
       LEFT JOIN pessoa p ON p.id_pessoa = af.pessoa_id_pessoa
-      LEFT JOIN atendido_parentesco par ON par.idatendido_parentesco = af.atendido_parentesco_idatendido_parentesco
+      INNER JOIN filiacao fil ON fil.id_filiacao = af.id_filiacao
+      INNER JOIN parentesco pfil ON pfil.id_parentesco = fil.id_parentesco
       WHERE af.atendido_idatendido =:idAtendido");
 
 $stmtDependente->bindParam(':idAtendido', $id);
@@ -90,6 +91,11 @@ foreach ($dependente as $key => $value) {
     $dependente[$key]['sobrenome'] = Util::primeiroSobrenome($value['sobrenome'] ?? '');
 }
 $dependente = json_encode($dependente);
+
+$stmtFiliacao = $pdo->prepare("SELECT fi.id_filiacao, fi.id_parentesco, fi.id_filiado, par.descricao AS parentesco, p.sexo AS genero, p.cpf, p.nome, p.email, p.telefone FROM filiacao fi INNER JOIN atendido a ON a.pessoa_id_pessoa = fi.id_pessoa INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado INNER JOIN parentesco par ON par.id_parentesco = fi.id_parentesco WHERE a.idatendido = :idAtendido ORDER BY par.descricao, p.nome");
+$stmtFiliacao->bindParam(':idAtendido', $id);
+$stmtFiliacao->execute();
+$filiacao = json_encode($stmtFiliacao->fetchAll(PDO::FETCH_ASSOC));
 
 $atendidoDados = json_decode($atend, true) ?: [];
 $idPessoaAtendido = (int)($atendidoDados[0]['id_pessoa'] ?? 0);
@@ -116,6 +122,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
   <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
   <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
   <link rel="stylesheet" type="text/css" href="../../css/profile-theme.css">
+  <link rel="stylesheet" href="../../css/profile-atendido.css">
   <link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
   <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -194,6 +201,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
       transform: translateY(0);
       pointer-events: auto;
     }
+
   </style>
   <!-- Theme CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
@@ -244,8 +252,94 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
       });
     }
 
+    function listarFiliacao(filiacao) {
+      $("#filiacao-tab").empty();
+      $.each(filiacao, function(i, item) {
+        const editarButton = $("<button type='button' class='btn btn-primary' title='Editar'><i class='fas fa-user-edit'></i></button>")
+          .on('click', function() { editarFiliacao(item); });
+        const excluirButton = $("<button type='button' class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button>")
+          .on('click', function() { excluirFiliacao(item.id_filiacao); });
+        $("#filiacao-tab")
+          .append($("<tr>")
+            .append($("<td>").text(item.parentesco || "-"))
+            .append($("<td>").text({m: "Masculino", f: "Feminino", o: "Outro", n: "Prefiro não informar"}[item.genero] || "-"))
+            .append($("<td>").text(item.nome))
+            .append($("<td>").text(item.email || "-"))
+            .append($("<td>").text(item.telefone || "-"))
+            .append($("<td class='filiacao-acoes'>").append(editarButton).append(excluirButton))
+          );
+      });
+    }
+
+    function prepararNovaFiliacao() {
+      $('#filiacaoFormModalLabel').text('Adicionar Filiação');
+      $('#filiacao_metodo').val('cadastrar');
+      $('#id_filiacao').val('');
+      $('#id_filiado').val('');
+      $('#filiacao_cpf').val('');
+      $('#filiacao_nome, #filiacao_email, #filiacao_telefone').val('');
+      $('#filiacao_genero').val('');
+      $('#filiacao_parentesco').val('');
+    }
+
+    function editarFiliacao(filiacao) {
+      const idFiliacao = Number(filiacao.id_filiacao);
+      if (!idFiliacao) {
+        return;
+      }
+
+      window.location.href = '../funcionario/filiacao_editar.php?id_filiacao=' + encodeURIComponent(idFiliacao) + '&idatendido=<?= (int)$id ?>';
+    }
+
+    function buscarPessoaFiliacao(cpf) {
+      const cpfLimpo = String(cpf || '').replace(/\D/g, '');
+      if (cpfLimpo.length !== 11) {
+        $('#id_filiado').val('');
+        return;
+      }
+      $.getJSON('../../controle/control.php', {
+        nomeClasse: 'AtendidoFiliacaoControle',
+        metodo: 'buscarPessoa',
+        cpf: cpf
+      }).done(function(pessoa) {
+        if (pessoa.id_pessoa) {
+          $('#id_filiado').val(pessoa.id_pessoa);
+          $('#filiacao_nome').val(pessoa.nome || '');
+          $('#filiacao_genero').val(pessoa.sexo || '');
+          $('#filiacao_email').val(pessoa.email || '');
+          $('#filiacao_telefone').val(pessoa.telefone || '');
+        } else {
+          $('#id_filiado').val('');
+        }
+      });
+    }
+
+    function excluirFiliacao(idFiliacao) {
+      if (!window.confirm('Tem certeza que deseja excluir esta filiação?')) {
+        return;
+      }
+      const form = $('<form>', { method: 'post', action: '../../controle/control.php' });
+      form.append($('<input>', { type: 'hidden', name: 'nomeClasse', value: 'AtendidoFiliacaoControle' }));
+      form.append($('<input>', { type: 'hidden', name: 'metodo', value: 'excluir' }));
+      form.append($('<input>', { type: 'hidden', name: 'id_filiacao', value: idFiliacao }));
+      form.append($('<input>', { type: 'hidden', name: 'idatendido', value: <?= (int)$id ?> }));
+      form.append($('<input>', { type: 'hidden', name: 'csrf_token', value: $('input[name="csrf_token"]').first().val() }));
+      $('body').append(form);
+      form.submit();
+    }
+
     $(function() {
       listarDependentes(<?= $dependente ?>);
+      listarFiliacao(<?= $filiacao ?>);
+      const tabelaFiliacao = $('#datatable-filiacao').DataTable({
+        "order": [
+          [0, "asc"]
+        ]
+      });
+
+      $('a[href="#filiacao"]').on('shown.bs.tab', function() {
+        tabelaFiliacao.columns.adjust();
+      });
     });
 
     function esconder_reservista() {
@@ -727,7 +821,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
 
 </head>
 
-<body>
+<body class="profile-atendido-page">
   <section class="body">
     <div id="header"></div>
     <!-- end: header -->
@@ -754,7 +848,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
         <!-- start: page -->
         <?php sessionMsg(); ?>
         <div class="row">
-          <div class="col-md-4 col-lg-3">
+          <div class="col-md-4 col-lg-3 profile-sidebar">
             <section class="panel">
               <div class="panel-body">
                 <?php
@@ -817,7 +911,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
               </div>
             </section>
           </div>
-          <div class="col-md-8 col-lg-6">
+          <div class="col-md-8 col-lg-8 profile-content">
             <div class="tabs">
               <ul class="nav nav-tabs tabs-primary">
                 <li class="active">
@@ -831,6 +925,9 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                 </li>
                 <li>
                   <a href="#familiares" data-toggle="tab">Composição Familiar</a>
+                </li>
+                <li>
+                  <a href="#filiacao" data-toggle="tab">Filiação</a>
                 </li>
                 <li>
                   <a href="#ocorrencias" data-toggle="tab">Ocorrências</a>
@@ -1073,6 +1170,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                         <h2 class="panel-title">Composição Familiar</h2>
                       </header>
                       <div class="panel-body">
+                        <div class="profile-table-scroll">
                         <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
                           <thead>
                             <tr>
@@ -1086,6 +1184,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
 
                           </tbody>
                         </table>
+                        </div>
                         <br>
                         <!-- Button trigger modal -->
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#depFormModal">
@@ -1126,7 +1225,7 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                                         <?php
                                         $parentescosAtendido = [];
                                         try {
-                                          $stmtParentescosAtendido = $pdo->prepare("SELECT * FROM atendido_parentesco ORDER BY parentesco ASC");
+                                          $stmtParentescosAtendido = $pdo->prepare("SELECT id_parentesco, descricao AS parentesco FROM parentesco ORDER BY descricao ASC");
                                           $stmtParentescosAtendido->execute();
                                           $parentescosAtendido = $stmtParentescosAtendido->fetchAll(PDO::FETCH_ASSOC);
                                         } catch (PDOException $e) {
@@ -1134,9 +1233,9 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                                         }
 
                                         foreach ($parentescosAtendido as $item) {
-                                          $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["idatendido_parentesco"] ? ' selected' : '';
+                                          $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["id_parentesco"] ? ' selected' : '';
                                           echo ("
-                                            <option value='" . $item["idatendido_parentesco"] . "'{$selected}>" . htmlspecialchars($item["parentesco"]) . "</option>
+                                            <option value='" . $item["id_parentesco"] . "'{$selected}>" . htmlspecialchars($item["parentesco"]) . "</option>
                                             ");
                                         }
                                         ?>
@@ -1159,6 +1258,98 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                         </div>
                       </div>
                     </section>
+                  </div>
+
+                  <!-- Aba de filiação -->
+                  <div id="filiacao" class="tab-pane">
+                    <section class="panel">
+                      <header class="panel-heading">
+                        <div class="panel-actions">
+                          <a href="#" class="fa fa-caret-down"></a>
+                        </div>
+                        <h2 class="panel-title">Filiação</h2>
+                      </header>
+                      <div class="panel-body">
+                        <div class="profile-table-scroll">
+                        <table class="table table-bordered table-striped mb-none" id="datatable-filiacao">
+                          <thead>
+                            <tr>
+                              <th>Parentesco</th>
+                              <th>Gênero</th>
+                              <th>Nome</th>
+                              <th>E-mail</th>
+                              <th>Telefone</th>
+                              <th>Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="filiacao-tab"></tbody>
+                        </table><br>
+                        </div>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#filiacaoFormModal" onclick="prepararNovaFiliacao()">
+                          Adicionar Filiação
+                        </button>
+                      </div>
+                    </section>
+                  </div>
+
+                  <div class="modal fade" id="filiacaoFormModal" tabindex="-1" role="dialog" aria-labelledby="filiacaoFormModalLabel" aria-hidden="true">
+                    <div class="modal-dialog" role="document">
+                      <div class="modal-content">
+                        <div class="modal-header" style="display: flex; justify-content: space-between;">
+                          <h5 class="modal-title" id="filiacaoFormModalLabel">Adicionar Filiação</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <form action="../../controle/control.php" method="post">
+                          <?= Csrf::inputField() ?>
+                          <input type="hidden" name="nomeClasse" value="AtendidoFiliacaoControle">
+                          <input type="hidden" name="metodo" id="filiacao_metodo" value="cadastrar">
+                          <input type="hidden" name="idatendido" value="<?= (int)$id ?>">
+                          <input type="hidden" name="id_filiacao" id="id_filiacao">
+                          <input type="hidden" name="id_filiado" id="id_filiado">
+                          <div class="modal-body" style="padding: 15px 40px">
+                            <div class="form-group">
+                              <label for="filiacao_cpf">CPF</label>
+                              <input type="text" class="form-control" name="cpf" id="filiacao_cpf" maxlength="14" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" onblur="buscarPessoaFiliacao(this.value)">
+                            </div>
+                            <div class="form-group">
+                              <label for="filiacao_nome">Nome<sup class="obrig">*</sup></label>
+                              <input type="text" class="form-control" name="nome" id="filiacao_nome" onkeypress="return Onlychars(event)" required>
+                            </div>
+                            <div class="form-group">
+                              <label for="filiacao_parentesco">Parentesco<sup class="obrig">*</sup></label>
+                              <select class="form-control" name="id_parentesco" id="filiacao_parentesco" required>
+                                <option value="" selected disabled>Selecionar...</option>
+                                <?php foreach ($pdo->query("SELECT id_parentesco, descricao FROM parentesco ORDER BY descricao")->fetchAll(PDO::FETCH_ASSOC) as $parentesco): ?>
+                                  <option value="<?= (int)$parentesco['id_parentesco'] ?>"><?= htmlspecialchars($parentesco['descricao'], ENT_QUOTES, 'UTF-8') ?></option>
+                                <?php endforeach; ?>
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label for="filiacao_genero">Gênero</label>
+                              <select class="form-control" name="genero" id="filiacao_genero">
+                                <option value="" selected disabled>Selecionar...</option>
+                                <option value="m">Masculino</option>
+                                <option value="f">Feminino</option>
+                                <option value="o">Outro</option>
+                                <option value="n">Prefiro não informar</option>
+                              </select>
+                            </div>
+                            <div class="form-group">
+                              <label for="filiacao_email">E-mail</label>
+                              <input type="email" class="form-control" name="email" id="filiacao_email">
+                            </div>
+                            <div class="form-group">
+                              <label for="filiacao_telefone">Telefone</label>
+                              <input type="text" class="form-control" name="telefone" id="filiacao_telefone" maxlength="14" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####', this, event)">
+                            </div>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
 
                   <!-- Aba de arquivo -->
@@ -1862,6 +2053,10 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
     <script src="../../Functions/atendido_parentesco.js"></script>
     <script>
       $(document).ready(function() {
+        if (window.location.hash) {
+          $('.nav-tabs a[href="' + window.location.hash + '"]').tab('show');
+        }
+
         $('.editar-ocorrencia').on('click', function(e) {
           e.stopPropagation(); // não dispara o onclick da linha
           var btn = $(this);
