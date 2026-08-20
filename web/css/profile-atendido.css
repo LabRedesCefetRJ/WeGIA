@@ -41,49 +41,6 @@
   overflow-wrap: anywhere;
 }
 
-.profile-atendido-page #datatable-filiacao {
-  table-layout: fixed;
-}
-
-.profile-atendido-page #datatable-filiacao th:nth-child(1),
-.profile-atendido-page #datatable-filiacao td:nth-child(1) {
-  width: 16%;
-}
-
-.profile-atendido-page #datatable-filiacao th:nth-child(2),
-.profile-atendido-page #datatable-filiacao td:nth-child(2) {
-  width: 16%;
-}
-
-.profile-atendido-page #datatable-filiacao th:nth-child(3),
-.profile-atendido-page #datatable-filiacao td:nth-child(3) {
-  width: 22%;
-}
-
-.profile-atendido-page #datatable-filiacao th:nth-child(4),
-.profile-atendido-page #datatable-filiacao td:nth-child(4) {
-  width: 18%;
-}
-
-.profile-atendido-page #datatable-filiacao th:nth-child(5),
-.profile-atendido-page #datatable-filiacao td:nth-child(5) {
-  width: 14%;
-}
-
-.profile-atendido-page #datatable-filiacao th:nth-child(6),
-.profile-atendido-page #datatable-filiacao td:nth-child(6) {
-  width: 14%;
-}
-
-.profile-atendido-page .filiacao-acoes {
-  white-space: nowrap;
-  text-align: center;
-}
-
-.profile-atendido-page .filiacao-acoes .btn {
-  margin: 0 2px;
-}
-
 @media (max-width: 991px) {
   .profile-atendido-page .profile-sidebar,
   .profile-atendido-page .profile-content {

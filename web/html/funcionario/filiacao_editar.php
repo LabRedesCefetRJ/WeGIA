@@ -20,23 +20,16 @@ require_once '../../dao/Conexao.php';
 
 $idFiliacao = filter_input(INPUT_GET, 'id_filiacao', FILTER_VALIDATE_INT);
 $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_VALIDATE_INT);
-$idAtendido = filter_input(INPUT_GET, 'idatendido', FILTER_VALIDATE_INT);
-$tipoContexto = ($idAtendido && $idAtendido > 0) ? 'atendido' : 'funcionario';
-$idContexto = $tipoContexto === 'atendido' ? $idAtendido : $idFuncionario;
 
-permissao($_SESSION['id_pessoa'], $tipoContexto === 'atendido' ? 12 : 11, 7);
+permissao($_SESSION['id_pessoa'], 11, 7);
 
-if (!$idFiliacao || $idFiliacao < 1 || !$idContexto || $idContexto < 1) {
+if (!$idFiliacao || $idFiliacao < 1 || !$idFuncionario || $idFuncionario < 1) {
     http_response_code(400);
     exit('Os dados da filiação informada não são válidos.');
 }
 
 try {
     $pdo = Conexao::connect();
-    $joinResponsavel = $tipoContexto === 'atendido'
-        ? 'INNER JOIN atendido responsavel ON responsavel.pessoa_id_pessoa = fi.id_pessoa'
-        : 'INNER JOIN funcionario responsavel ON responsavel.id_pessoa = fi.id_pessoa';
-    $campoResponsavel = $tipoContexto === 'atendido' ? 'responsavel.idatendido' : 'responsavel.id_funcionario';
 
     $stmt = $pdo->prepare(
         'SELECT fi.id_filiacao, fi.id_filiado, fi.id_parentesco,
@@ -46,15 +39,15 @@ try {
                 p.orgao_emissor, p.data_expedicao,
                 pf.nome AS nome_funcionario, pf.sobrenome AS sobrenome_funcionario
          FROM filiacao fi
-         ' . $joinResponsavel . '
+         INNER JOIN funcionario responsavel ON responsavel.id_pessoa = fi.id_pessoa
          INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado
          INNER JOIN pessoa pf ON pf.id_pessoa = fi.id_pessoa
          INNER JOIN parentesco par ON par.id_parentesco = fi.id_parentesco
-         WHERE fi.id_filiacao = :id_filiacao AND ' . $campoResponsavel . ' = :id_contexto'
+         WHERE fi.id_filiacao = :id_filiacao AND responsavel.id_funcionario = :id_funcionario'
     );
     $stmt->execute([
         ':id_filiacao' => $idFiliacao,
-        ':id_contexto' => $idContexto,
+        ':id_funcionario' => $idFuncionario,
     ]);
     $filiacao = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -74,9 +67,7 @@ $h = static function ($value): string {
 };
 $dataHoje = date('Y-m-d');
 $nomeFuncionario = trim(($filiacao['nome_funcionario'] ?? '') . ' ' . ($filiacao['sobrenome_funcionario'] ?? ''));
-$perfilUrl = $tipoContexto === 'atendido'
-    ? '../atendido/Profile_Atendido.php?idatendido=' . (int)$idContexto . '#filiacao'
-    : 'profile_funcionario.php?id_funcionario=' . (int)$idContexto . '#filiacao';
+$perfilUrl = 'profile_funcionario.php?id_funcionario=' . (int)$idFuncionario . '#filiacao';
 ?>
 <!doctype html>
 <html class="fixed">
@@ -134,7 +125,7 @@ $perfilUrl = $tipoContexto === 'atendido'
                                         <input type="hidden" name="nomeClasse" value="FiliacaoControle">
                                         <input type="hidden" name="metodo" value="editarInfoPessoal">
                                         <input type="hidden" name="id_filiacao" value="<?= (int)$idFiliacao ?>">
-                                        <input type="hidden" name="<?= $tipoContexto === 'atendido' ? 'idatendido' : 'id_funcionario' ?>" value="<?= (int)$idContexto ?>">
+                                        <input type="hidden" name="id_funcionario" value="<?= (int)$idFuncionario ?>">
 
                                         <h4 class="mb-xlg">Informações Pessoais</h4>
                                         <div class="form-group">
@@ -197,7 +188,7 @@ $perfilUrl = $tipoContexto === 'atendido'
                                         <input type="hidden" name="nomeClasse" value="FiliacaoControle">
                                         <input type="hidden" name="metodo" value="editarDocumentacao">
                                         <input type="hidden" name="id_filiacao" value="<?= (int)$idFiliacao ?>">
-                                        <input type="hidden" name="<?= $tipoContexto === 'atendido' ? 'idatendido' : 'id_funcionario' ?>" value="<?= (int)$idContexto ?>">
+                                        <input type="hidden" name="id_funcionario" value="<?= (int)$idFuncionario ?>">
 
                                         <h4 class="mb-xlg">Documentação</h4>
                                         <div class="form-group">
@@ -215,7 +206,7 @@ $perfilUrl = $tipoContexto === 'atendido'
                                         <div class="form-group">
                                             <label class="col-md-3 control-label" for="orgao_emissor">Local de expedição</label>
                                             <div class="col-md-6">
-                                                <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" placeholder="Ex: SSP/RJ" value="<?= $h($filiacao['orgao_emissor']) ?>">
+                                                <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" placeholder="Ex: Detran-RJ" value="<?= $h($filiacao['orgao_emissor']) ?>">
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -237,7 +228,7 @@ $perfilUrl = $tipoContexto === 'atendido'
                                         <input type="hidden" name="nomeClasse" value="FiliacaoControle">
                                         <input type="hidden" name="metodo" value="editarEndereco">
                                         <input type="hidden" name="id_filiacao" value="<?= (int)$idFiliacao ?>">
-                                        <input type="hidden" name="<?= $tipoContexto === 'atendido' ? 'idatendido' : 'id_funcionario' ?>" value="<?= (int)$idContexto ?>">
+                                        <input type="hidden" name="id_funcionario" value="<?= (int)$idFuncionario ?>">
 
                                         <h4 class="mb-xlg">Endereço</h4>
                                         <div class="form-group">

@@ -6,13 +6,8 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPA
 
 class FiliacaoControle
 {
-    private function buscarFiliacaoAutorizada(int $idFiliacao, int $idContexto, string $tipoContexto, PDO $pdo): ?array
+    private function buscarFiliacaoAutorizada(int $idFiliacao, int $idFuncionario, PDO $pdo): ?array
     {
-        $joinResponsavel = $tipoContexto === 'atendido'
-            ? 'INNER JOIN atendido responsavel ON responsavel.pessoa_id_pessoa = fi.id_pessoa'
-            : 'INNER JOIN funcionario responsavel ON responsavel.id_pessoa = fi.id_pessoa';
-        $campoResponsavel = $tipoContexto === 'atendido' ? 'responsavel.idatendido' : 'responsavel.id_funcionario';
-
         $stmt = $pdo->prepare(
             'SELECT fi.id_filiacao, fi.id_pessoa, fi.id_filiado, fi.id_parentesco,
                     par.descricao AS parentesco, p.cpf, p.nome, p.sexo, p.email, p.telefone,
@@ -20,26 +15,26 @@ class FiliacaoControle
                     p.numero_endereco, p.complemento, p.ibge, p.registro_geral,
                     p.orgao_emissor, p.data_expedicao
              FROM filiacao fi
-             ' . $joinResponsavel . '
+             INNER JOIN funcionario responsavel ON responsavel.id_pessoa = fi.id_pessoa
              INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado
              INNER JOIN parentesco par ON par.id_parentesco = fi.id_parentesco
-             WHERE fi.id_filiacao = :id_filiacao AND ' . $campoResponsavel . ' = :id_contexto'
+             WHERE fi.id_filiacao = :id_filiacao AND responsavel.id_funcionario = :id_funcionario'
         );
         $stmt->execute([
             ':id_filiacao' => $idFiliacao,
-            ':id_contexto' => $idContexto,
+            ':id_funcionario' => $idFuncionario,
         ]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    private function validarAcessoEFormulario(int $idFiliacao, int $idContexto, string $tipoContexto, PDO $pdo): array
+    private function validarAcessoEFormulario(int $idFiliacao, int $idFuncionario, PDO $pdo): array
     {
-        if ($idFiliacao < 1 || $idContexto < 1 || !in_array($tipoContexto, ['funcionario', 'atendido'], true)) {
+        if ($idFiliacao < 1 || $idFuncionario < 1) {
             throw new InvalidArgumentException('Os dados da filiação informada não são válidos.', 400);
         }
 
-        $filiacao = $this->buscarFiliacaoAutorizada($idFiliacao, $idContexto, $tipoContexto, $pdo);
+        $filiacao = $this->buscarFiliacaoAutorizada($idFiliacao, $idFuncionario, $pdo);
         if (!$filiacao) {
             throw new InvalidArgumentException('A filiação não foi encontrada.', 404);
         }
@@ -47,23 +42,10 @@ class FiliacaoControle
         return $filiacao;
     }
 
-    private function redirecionarEdicao(int $idFiliacao, int $idContexto, string $tipoContexto, string $aba = 'informacoes-pessoais'): void
+    private function redirecionarEdicao(int $idFiliacao, int $idFuncionario, string $aba = 'informacoes-pessoais'): void
     {
-        $parametroContexto = $tipoContexto === 'atendido' ? 'idatendido' : 'id_funcionario';
-        header('Location: ../html/funcionario/filiacao_editar.php?id_filiacao=' . urlencode((string)$idFiliacao) . '&' . $parametroContexto . '=' . urlencode((string)$idContexto) . '#' . $aba);
+        header('Location: ../html/funcionario/filiacao_editar.php?id_filiacao=' . urlencode((string)$idFiliacao) . '&id_funcionario=' . urlencode((string)$idFuncionario) . '#' . $aba);
         exit;
-    }
-
-    private function contextoEdicaoPost(): array
-    {
-        $idFuncionario = (int)filter_input(INPUT_POST, 'id_funcionario', FILTER_VALIDATE_INT);
-        $idAtendido = (int)filter_input(INPUT_POST, 'idatendido', FILTER_VALIDATE_INT);
-
-        if ($idAtendido > 0) {
-            return [$idAtendido, 'atendido'];
-        }
-
-        return [$idFuncionario, 'funcionario'];
     }
 
     private function buscarIdPessoaResponsavel(int $idFuncionario, PDO $pdo): int
@@ -219,7 +201,7 @@ class FiliacaoControle
     public function editarInfoPessoal(): void
     {
         $idFiliacao = (int)filter_input(INPUT_POST, 'id_filiacao', FILTER_VALIDATE_INT);
-        [$idContexto, $tipoContexto] = $this->contextoEdicaoPost();
+        $idFuncionario = (int)filter_input(INPUT_POST, 'id_funcionario', FILTER_VALIDATE_INT);
         $idParentesco = (int)filter_input(INPUT_POST, 'id_parentesco', FILTER_VALIDATE_INT);
         $nome = trim((string)filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS));
         $genero = filter_input(INPUT_POST, 'genero', FILTER_SANITIZE_SPECIAL_CHARS) ?: null;
@@ -235,7 +217,7 @@ class FiliacaoControle
                 throw new InvalidArgumentException('Selecione um parentesco válido.', 412);
             }
             $pdo = Conexao::connect();
-            $this->validarAcessoEFormulario($idFiliacao, $idContexto, $tipoContexto, $pdo);
+            $this->validarAcessoEFormulario($idFiliacao, $idFuncionario, $pdo);
             Util::validarNomePessoaOuLancar($nome, 'nome', 412);
 
             if ($genero !== null && $genero !== '' && !Util::validarGenero($genero)) {
@@ -266,20 +248,6 @@ class FiliacaoControle
                      p.data_nascimento = :data_nascimento
                  WHERE fi.id_filiacao = :id_filiacao AND f.id_funcionario = :id_funcionario'
             );
-            if ($tipoContexto === 'atendido') {
-                $stmt = $pdo->prepare(
-                    'UPDATE filiacao fi
-                     INNER JOIN atendido a ON a.pessoa_id_pessoa = fi.id_pessoa
-                     INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado
-                     SET fi.id_parentesco = :id_parentesco,
-                         p.nome = :nome,
-                         p.sexo = :sexo,
-                         p.email = :email,
-                         p.telefone = :telefone,
-                         p.data_nascimento = :data_nascimento
-                     WHERE fi.id_filiacao = :id_filiacao AND a.idatendido = :id_contexto'
-                );
-            }
             $stmt->execute([
                 ':id_parentesco' => $idParentesco,
                 ':nome' => $nome,
@@ -288,7 +256,7 @@ class FiliacaoControle
                 ':telefone' => $telefone !== '' ? $telefone : null,
                 ':data_nascimento' => $dataNascimento !== '' ? $dataNascimento : null,
                 ':id_filiacao' => $idFiliacao,
-                ':' . ($tipoContexto === 'atendido' ? 'id_contexto' : 'id_funcionario') => $idContexto,
+                ':id_funcionario' => $idFuncionario,
             ]);
             $_SESSION['msg'] = 'Informações pessoais atualizadas!';
             $_SESSION['tipo'] = 'success';
@@ -297,13 +265,13 @@ class FiliacaoControle
             $_SESSION['tipo'] = 'err';
         }
 
-        $this->redirecionarEdicao($idFiliacao, $idContexto, $tipoContexto, 'informacoes-pessoais');
+        $this->redirecionarEdicao($idFiliacao, $idFuncionario, 'informacoes-pessoais');
     }
 
     public function editarDocumentacao(): void
     {
         $idFiliacao = (int)filter_input(INPUT_POST, 'id_filiacao', FILTER_VALIDATE_INT);
-        [$idContexto, $tipoContexto] = $this->contextoEdicaoPost();
+        $idFuncionario = (int)filter_input(INPUT_POST, 'id_funcionario', FILTER_VALIDATE_INT);
         $cpf = trim((string)filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS));
         $rg = trim((string)filter_input(INPUT_POST, 'rg', FILTER_SANITIZE_SPECIAL_CHARS));
         $orgaoEmissor = trim((string)filter_input(INPUT_POST, 'orgao_emissor', FILTER_SANITIZE_SPECIAL_CHARS));
@@ -314,7 +282,7 @@ class FiliacaoControle
                 throw new InvalidArgumentException('Token de segurança inválido.', 400);
             }
             $pdo = Conexao::connect();
-            $filiacao = $this->validarAcessoEFormulario($idFiliacao, $idContexto, $tipoContexto, $pdo);
+            $filiacao = $this->validarAcessoEFormulario($idFiliacao, $idFuncionario, $pdo);
 
             if ($cpf !== '' && !Util::validarCPF($cpf)) {
                 throw new InvalidArgumentException('O CPF informado não é válido.', 412);
@@ -339,25 +307,13 @@ class FiliacaoControle
                      p.data_expedicao = :data_expedicao
                  WHERE fi.id_filiacao = :id_filiacao AND f.id_funcionario = :id_funcionario'
             );
-            if ($tipoContexto === 'atendido') {
-                $stmt = $pdo->prepare(
-                    'UPDATE filiacao fi
-                     INNER JOIN atendido a ON a.pessoa_id_pessoa = fi.id_pessoa
-                     INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado
-                     SET p.cpf = :cpf,
-                         p.registro_geral = :rg,
-                         p.orgao_emissor = :orgao_emissor,
-                         p.data_expedicao = :data_expedicao
-                     WHERE fi.id_filiacao = :id_filiacao AND a.idatendido = :id_contexto'
-                );
-            }
             $stmt->execute([
                 ':cpf' => $cpf !== '' ? $cpf : null,
                 ':rg' => $rg !== '' ? $rg : null,
                 ':orgao_emissor' => $orgaoEmissor !== '' ? $orgaoEmissor : null,
                 ':data_expedicao' => $dataExpedicao !== '' ? $dataExpedicao : null,
                 ':id_filiacao' => $idFiliacao,
-                ':' . ($tipoContexto === 'atendido' ? 'id_contexto' : 'id_funcionario') => $idContexto,
+                ':id_funcionario' => $idFuncionario,
             ]);
             $_SESSION['msg'] = 'Documentação atualizada!';
             $_SESSION['tipo'] = 'success';
@@ -366,13 +322,13 @@ class FiliacaoControle
             $_SESSION['tipo'] = 'err';
         }
 
-        $this->redirecionarEdicao($idFiliacao, $idContexto, $tipoContexto, 'documentacao');
+        $this->redirecionarEdicao($idFiliacao, $idFuncionario, 'documentacao');
     }
 
     public function editarEndereco(): void
     {
         $idFiliacao = (int)filter_input(INPUT_POST, 'id_filiacao', FILTER_VALIDATE_INT);
-        [$idContexto, $tipoContexto] = $this->contextoEdicaoPost();
+        $idFuncionario = (int)filter_input(INPUT_POST, 'id_funcionario', FILTER_VALIDATE_INT);
         $cep = trim((string)filter_input(INPUT_POST, 'cep', FILTER_UNSAFE_RAW));
         $estado = trim((string)filter_input(INPUT_POST, 'estado', FILTER_UNSAFE_RAW));
         $cidade = trim((string)filter_input(INPUT_POST, 'cidade', FILTER_UNSAFE_RAW));
@@ -387,7 +343,7 @@ class FiliacaoControle
                 throw new InvalidArgumentException('Token de segurança inválido.', 400);
             }
             $pdo = Conexao::connect();
-            $this->validarAcessoEFormulario($idFiliacao, $idContexto, $tipoContexto, $pdo);
+            $this->validarAcessoEFormulario($idFiliacao, $idFuncionario, $pdo);
             if ($cep !== '' && !preg_match('/^\d{5}-?\d{3}$/', $cep)) {
                 throw new InvalidArgumentException('O CEP informado não está em um formato válido.', 412);
             }
@@ -406,22 +362,6 @@ class FiliacaoControle
                      p.ibge = :ibge
                  WHERE fi.id_filiacao = :id_filiacao AND f.id_funcionario = :id_funcionario'
             );
-            if ($tipoContexto === 'atendido') {
-                $stmt = $pdo->prepare(
-                    'UPDATE filiacao fi
-                     INNER JOIN atendido a ON a.pessoa_id_pessoa = fi.id_pessoa
-                     INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado
-                     SET p.cep = :cep,
-                         p.estado = :estado,
-                         p.cidade = :cidade,
-                         p.bairro = :bairro,
-                         p.logradouro = :logradouro,
-                         p.numero_endereco = :numero_endereco,
-                         p.complemento = :complemento,
-                         p.ibge = :ibge
-                     WHERE fi.id_filiacao = :id_filiacao AND a.idatendido = :id_contexto'
-                );
-            }
             $stmt->execute([
                 ':cep' => $cep !== '' ? $cep : null,
                 ':estado' => $estado !== '' ? $estado : null,
@@ -432,7 +372,7 @@ class FiliacaoControle
                 ':complemento' => $complemento !== '' ? $complemento : null,
                 ':ibge' => $ibge !== '' ? $ibge : null,
                 ':id_filiacao' => $idFiliacao,
-                ':' . ($tipoContexto === 'atendido' ? 'id_contexto' : 'id_funcionario') => $idContexto,
+                ':id_funcionario' => $idFuncionario,
             ]);
             $_SESSION['msg'] = 'Endereço atualizado!';
             $_SESSION['tipo'] = 'success';
@@ -441,7 +381,7 @@ class FiliacaoControle
             $_SESSION['tipo'] = 'err';
         }
 
-        $this->redirecionarEdicao($idFiliacao, $idContexto, $tipoContexto, 'endereco');
+        $this->redirecionarEdicao($idFiliacao, $idFuncionario, 'endereco');
     }
 
     public function excluir(): void
