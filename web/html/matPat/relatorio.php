@@ -42,6 +42,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.css" />
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/select2/select2.css" />
 	<link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon">
 
 	<!-- Theme CSS -->
@@ -67,6 +68,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 	<script src="<?= WWW ?>assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
+
+	<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
 
 	<!-- Specific Page Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-autosize/jquery.autosize.js"></script>
@@ -101,6 +104,33 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 
 
+	<style>
+		#s2id_produtoSelect .select2-choice {
+    		height: 46px !important;
+    		line-height: 20px !important;
+
+    		background: #e9e9ed !important;
+    		border: 0 !important;
+    		border-radius: 4px !important;
+    		box-shadow: none !important;
+
+    		color: #777 !important;
+		}
+
+		#s2id_produtoSelect .select2-chosen {
+    		padding-top: 13px !important;
+    		padding-bottom: 13px !important;
+		}
+
+		#s2id_produtoSelect .select2-arrow {
+    		background: #e9e9ed !important;
+    		border: 0 !important;
+		}
+
+		#s2id_produtoSelect.select2-container-active .select2-choice {
+    		box-shadow: none !important;
+		}
+	</style>
 </head>
 
 <body>
@@ -396,8 +426,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 							<div class="form-group" id="produto">
 								<label class="col-md-3 control-label">Produtos</label>
 								<div class="col-md-8">
-									<select name="produto" id="produtoSelect" required>
-										<option value="">Selecione um Produto</option>
+									<select
+    									name="produto"
+    									id="produtoSelect"
+    									data-plugin-selectTwo
+    									data-plugin-options='{ "width": "190px" }'
+    									required
+									>
+    									<option value="">Selecione um Produto</option>
 									</select>
 								</div>
 							</div>
@@ -692,12 +728,35 @@ require_once ROOT . "/html/personalizacao_display.php";
 					var selectProduto = document.getElementById('produtoSelect');
 					selectProduto.innerHTML = '<option value="">Selecione um Produto</option>';
 
+					const grupos = {};
+
 					produtos.forEach(function(produto) {
-						var option = document.createElement('option');
-						option.value = produto.id_produto;
-						option.textContent = produto.descricao;
-						selectProduto.appendChild(option);
+    					const nomeGrupo = produto.descricao_grupo || 'Sem grupo';
+
+    					if (!grupos[nomeGrupo]) {
+        					grupos[nomeGrupo] = [];
+    					}
+
+    					grupos[nomeGrupo].push(produto);
 					});
+
+					Object.keys(grupos).forEach(function(nomeGrupo) {
+    					const optgroup = document.createElement('optgroup');
+
+    					optgroup.label = nomeGrupo;
+
+    					grupos[nomeGrupo].forEach(function(produto) {
+        					const option = document.createElement('option');
+
+        					option.value = produto.id_produto;
+        					option.textContent = produto.descricao;
+
+        					optgroup.appendChild(option);
+    					});
+
+    					selectProduto.appendChild(optgroup);
+					});
+					$('#produtoSelect').trigger('change');
 				} else {
 					console.error('Erro na requisição:', xhr.status);
 				}

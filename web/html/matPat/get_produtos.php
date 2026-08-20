@@ -25,8 +25,12 @@ try {
     $sql = "
         SELECT DISTINCT 
             p.id_produto, 
-            p.descricao
+            p.descricao,
+            p.id_grupo_produto,
+            COALESCE(g.descricao_grupo, 'Sem grupo') AS descricao_grupo
         FROM produto p
+        LEFT JOIN grupo_produto g
+            ON g.id_grupo_produto = p.id_grupo_produto
         INNER JOIN estoque e 
             ON p.id_produto = e.id_produto
         WHERE e.id_almoxarifado = :id_almoxarifado
@@ -42,7 +46,9 @@ try {
                 AND ie.oculto = false
                 AND en.ativo = 1
           )
-        ORDER BY p.descricao
+        ORDER BY
+            descricao_grupo, 
+            p.descricao
     ";
 
     $stmt = $pdo->prepare($sql);
