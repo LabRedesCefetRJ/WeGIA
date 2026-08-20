@@ -121,7 +121,7 @@ try {
   $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
   $dependente = json_encode($dependente);
 
-  $filiacao = $pdo->prepare("SELECT fi.id_filiacao, fi.id_parentesco, fi.id_filiado, par.descricao AS parentesco, p.sexo AS genero, p.cpf, p.nome, p.email, p.telefone FROM filiacao fi INNER JOIN funcionario f ON f.id_pessoa = fi.id_pessoa INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado INNER JOIN parentesco par ON par.id_parentesco = fi.id_parentesco WHERE f.id_funcionario = :idFuncionario ORDER BY par.descricao, p.nome");
+  $filiacao = $pdo->prepare("SELECT fi.id_filiacao, fi.id_parentesco, fi.id_filiado, par.descricao AS parentesco, p.sexo AS genero, p.cpf, p.nome, p.email, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento FROM filiacao fi INNER JOIN funcionario f ON f.id_pessoa = fi.id_pessoa INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado INNER JOIN parentesco par ON par.id_parentesco = fi.id_parentesco WHERE f.id_funcionario = :idFuncionario ORDER BY par.descricao, p.nome");
   $filiacao->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
   $filiacao->execute();
   $filiacao = json_encode($filiacao->fetchAll(PDO::FETCH_ASSOC));
@@ -554,18 +554,20 @@ try {
     function listarFiliacao(filiacao) {
       $("#filiacao-tab").empty();
       $.each(filiacao, function(i, item) {
+        const visualizarButton = $("<button type='button' class='btn btn-info' title='Visualizar informações'><i class='fas fa-eye'></i></button>")
+          .on('click', function() {
+            abrirResumoFiliacao(item, 'filiacao_editar.php?id_funcionario=<?= (int)$idFuncionario ?>');
+          });
         const editarButton = $("<button type='button' class='btn btn-primary' title='Editar'><i class='fas fa-user-edit'></i></button>")
           .on('click', function() { editarFiliacao(item); });
         const excluirButton = $("<button type='button' class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button>")
           .on('click', function() { excluirFiliacao(item.id_filiacao); });
         $("#filiacao-tab")
           .append($("<tr>")
+            .append($("<td>").text(item.nome))
             .append($("<td>").text(item.parentesco || "-"))
             .append($("<td>").text({m: "Masculino", f: "Feminino", o: "Outro", n: "Prefiro não informar"}[item.genero] || "-"))
-            .append($("<td>").text(item.nome))
-            .append($("<td>").text(item.email || "-"))
-            .append($("<td>").text(item.telefone || "-"))
-            .append($("<td style='display: flex; justify-content: space-evenly;'>").append(editarButton).append(excluirButton))
+            .append($("<td class='filiacao-acoes'>").append(visualizarButton).append(editarButton).append(excluirButton))
           );
       });
     }
@@ -610,6 +612,49 @@ try {
       }
 
       window.location.href = 'filiacao_editar.php?id_filiacao=' + encodeURIComponent(idFiliacao) + '&id_funcionario=<?= (int)$idFuncionario ?>';
+    }
+
+    function abrirResumoFiliacao(item, urlEdicao) {
+      const generos = {
+        m: 'Masculino',
+        f: 'Feminino',
+        o: 'Outro',
+        n: 'Prefiro não informar'
+      };
+      const formatarData = function(valor) {
+        if (!valor) {
+          return '';
+        }
+        const partes = String(valor).split('-');
+        return partes.length === 3 ? partes[2] + '/' + partes[1] + '/' + partes[0] : valor;
+      };
+      const linhaEndereco = [item.logradouro, item.numero_endereco].filter(Boolean).join(', ');
+      const localidade = [item.bairro, item.cidade, item.estado].filter(Boolean).join(' - ');
+      const endereco = [
+        linhaEndereco,
+        item.complemento,
+        localidade,
+        item.cep ? 'CEP: ' + item.cep : ''
+      ].filter(Boolean).join(' | ');
+      const valores = {
+        nome: item.nome || '',
+        data_nascimento: formatarData(item.data_nascimento),
+        parentesco: item.parentesco || '',
+        genero: generos[item.genero] || '',
+        email: item.email || '',
+        telefone: item.telefone || '',
+        endereco: endereco
+      };
+
+      $('#filiacaoResumoModal [data-filiacao-resumo]').each(function() {
+        const campo = $(this).attr('data-filiacao-resumo');
+        const valor = valores[campo] || '';
+        $(this).find('[data-filiacao-resumo-valor]').text(valor);
+        $(this).toggle(Boolean(valor));
+      });
+
+      $('#filiacaoResumoVerMais').attr('href', urlEdicao + '&id_filiacao=' + encodeURIComponent(item.id_filiacao));
+      $('#filiacaoResumoModal').modal('show');
     }
 
     function excluirFiliacao(idFiliacao) {
@@ -1942,11 +1987,9 @@ try {
                       <table class="table table-bordered table-striped mb-none" id="datatable-filiacao">
                         <thead>
                           <tr>
+                            <th>Nome</th>
                             <th>Parentesco</th>
                             <th>Gênero</th>
-                            <th>Nome</th>
-                            <th>E-mail</th>
-                            <th>Telefone</th>
                             <th>Ação</th>
                           </tr>
                         </thead>
@@ -1957,6 +2000,50 @@ try {
                       </button>
                     </div>
                   </section>
+                </div>
+
+                <div class="modal fade" id="filiacaoResumoModal" tabindex="-1" role="dialog" aria-labelledby="filiacaoResumoModalLabel" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="filiacaoResumoModalLabel">Resumo da Filiação</h4>
+                      </div>
+                      <div class="modal-body form-horizontal">
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="nome" style="display: none;">
+                          <label class="col-md-4 control-label">Nome:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="data_nascimento" style="display: none;">
+                          <label class="col-md-4 control-label">Data de nascimento:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="parentesco" style="display: none;">
+                          <label class="col-md-4 control-label">Parentesco:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="genero" style="display: none;">
+                          <label class="col-md-4 control-label">Gênero:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="email" style="display: none;">
+                          <label class="col-md-4 control-label">E-mail:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="telefone" style="display: none;">
+                          <label class="col-md-4 control-label">Telefone:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="endereco" style="display: none;">
+                          <label class="col-md-4 control-label">Endereço:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <a href="#" class="btn btn-primary" id="filiacaoResumoVerMais">Ver mais informações</a>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="modal fade" id="filiacaoFormModal" tabindex="-1" role="dialog" aria-labelledby="filiacaoFormModalLabel" aria-hidden="true">
