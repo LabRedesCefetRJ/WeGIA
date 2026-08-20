@@ -40,6 +40,7 @@ if (!$id_funcionario || $id_funcionario < 1) {
     $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
     $sexo = filter_input(INPUT_POST, 'sexo', FILTER_SANITIZE_SPECIAL_CHARS);
     $telefone = filter_input(INPUT_POST, 'telefone', FILTER_SANITIZE_SPECIAL_CHARS);
+    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $data_nascimento = filter_input(INPUT_POST, 'nascimento', FILTER_SANITIZE_SPECIAL_CHARS);
     $id_parentesco = filter_input(INPUT_POST, 'id_parentesco', FILTER_SANITIZE_NUMBER_INT);
     $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -68,7 +69,8 @@ if (!$id_funcionario || $id_funcionario < 1) {
     }
 
 
-    define("NOVA_PESSOA", "INSERT IGNORE INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento, registro_geral, orgao_emissor, data_expedicao) VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :data_nascimento, :registro_geral, :orgao_emissor, :data_expedicao)");
+
+    define("NOVA_PESSOA", "INSERT IGNORE INTO pessoa (cpf, nome, sobrenome, sexo, telefone, email, data_nascimento, registro_geral, orgao_emissor, data_expedicao) VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :email, :data_nascimento, :registro_geral, :orgao_emissor, :data_expedicao)");
     try {
         $pessoa = $pdo->prepare(NOVA_PESSOA);
         $pessoa->bindValue(":cpf", $cpf);
@@ -76,6 +78,7 @@ if (!$id_funcionario || $id_funcionario < 1) {
         $pessoa->bindValue(":sobrenome", $sobrenome);
         $pessoa->bindValue(":sexo", $sexo);
         $pessoa->bindValue(":telefone", $telefone);
+        $pessoa->bindValue(":email", $email);
         $pessoa->bindValue(":data_nascimento", $data_nascimento);
         $pessoa->bindValue(":registro_geral", $registro_geral);
         $pessoa->bindValue(":orgao_emissor", $orgao_emissor);
