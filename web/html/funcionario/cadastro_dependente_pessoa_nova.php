@@ -144,7 +144,7 @@ $fieldErrors = getSessionFormErrors();
                 </div>
                 <div class="form-group">
                   <label class="col-md-3 control-label" for="genero">Gênero<sup class="obrig">*</sup></label>
-                  <div class="col-md-8">
+                  <div class="col-md-6">
                     <select class="form-control" name="sexo" id="genero" required onchange="return this.value === 'm' ? exibir_reservista() : esconder_reservista()">
                       <option value="" selected disabled>Selecionar</option>
                       <option value="m" <?= ($oldInput['sexo'] ?? '') === 'm' ? 'selected' : '' ?>>Masculino</option>
