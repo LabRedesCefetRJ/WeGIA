@@ -830,6 +830,20 @@ class FuncionarioControle
         }
     }
 
+    public function listarRelacionamentos(int $idFuncionario): array
+    {
+        if ($idFuncionario < 1) {
+            throw new InvalidArgumentException('O id do funcionário informado não é válido.', 400);
+        }
+
+        $funcionarioDAO = new FuncionarioDAO();
+
+        return [
+            'dependentes' => $funcionarioDAO->listarDependentes($idFuncionario),
+            'filiacoes' => $funcionarioDAO->listarFiliacoesSemDependentes($idFuncionario),
+        ];
+    }
+
     public function listarUm()
     {
         try {

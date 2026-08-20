@@ -537,6 +537,61 @@ class FuncionarioDAO
         return $cpfs;
     }
 
+    public function listarDependentes(int $idFuncionario): array
+    {
+        $sql = 'SELECT fdep.id_dependente AS id_dependente,
+                       p.nome AS nome,
+                       p.cpf AS cpf,
+                       parentesco.descricao AS parentesco
+                FROM funcionario_dependentes fdep
+                LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario
+                LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
+                INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
+                INNER JOIN parentesco ON parentesco.id_parentesco = fil.id_parentesco
+                WHERE fdep.id_funcionario = :id_funcionario';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_funcionario', $idFuncionario, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function listarFiliacoesSemDependentes(int $idFuncionario): array
+    {
+        $sql = 'SELECT fi.id_filiacao,
+                       fi.id_parentesco,
+                       fi.id_filiado,
+                       par.descricao AS parentesco,
+                       p.sexo AS genero,
+                       p.cpf,
+                       p.nome,
+                       p.email,
+                       p.telefone,
+                       p.data_nascimento,
+                       p.cep,
+                       p.estado,
+                       p.cidade,
+                       p.bairro,
+                       p.logradouro,
+                       p.numero_endereco,
+                       p.complemento
+                FROM filiacao fi
+                INNER JOIN funcionario f ON f.id_pessoa = fi.id_pessoa
+                INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado
+                INNER JOIN parentesco par ON par.id_parentesco = fi.id_parentesco
+                LEFT JOIN funcionario_dependentes fdep ON fdep.id_filiacao = fi.id_filiacao
+                WHERE f.id_funcionario = :id_funcionario
+                  AND fdep.id_filiacao IS NULL
+                ORDER BY par.descricao, p.nome';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_funcionario', $idFuncionario, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     //Consultar um utilizando o id
     public function listar($id_funcionario)
     {

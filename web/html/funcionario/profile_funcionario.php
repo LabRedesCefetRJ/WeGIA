@@ -108,23 +108,9 @@ try {
     $docfuncional[$key]['data'] = $data->format('d/m/Y H:i:s');
   }
   $docfuncional = json_encode($docfuncional);
-  //SQL Injection abaixo
-  $dependente = $pdo->prepare("SELECT fdep.id_dependente AS id_dependente, p.nome AS nome, p.cpf AS cpf, parentesco.descricao AS parentesco FROM funcionario_dependentes fdep LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao INNER JOIN parentesco ON parentesco.id_parentesco = fil.id_parentesco WHERE fdep.id_funcionario =:idFuncionario");
-
-  $dependente->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
-
-  if (!$dependente->execute()) {
-    echo json_encode(['erro' => 'Falha ao consultar dependentes de um funcionário']);
-    exit(500);
-  }
-
-  $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
-  $dependente = json_encode($dependente);
-
-  $filiacao = $pdo->prepare("SELECT fi.id_filiacao, fi.id_parentesco, fi.id_filiado, par.descricao AS parentesco, p.sexo AS genero, p.cpf, p.nome, p.email, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento FROM filiacao fi INNER JOIN funcionario f ON f.id_pessoa = fi.id_pessoa INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado INNER JOIN parentesco par ON par.id_parentesco = fi.id_parentesco WHERE f.id_funcionario = :idFuncionario ORDER BY par.descricao, p.nome");
-  $filiacao->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
-  $filiacao->execute();
-  $filiacao = json_encode($filiacao->fetchAll(PDO::FETCH_ASSOC));
+  $relacionamentos = $cpf->listarRelacionamentos((int)$idFuncionario);
+  $dependente = json_encode($relacionamentos['dependentes']);
+  $filiacao = json_encode($relacionamentos['filiacoes']);
 
   // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
   $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
