@@ -2,6 +2,10 @@
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiBoletoServiceInterface.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+require_once 'ApiBoletoServiceInterface.php';
+require_once 'PdfDownloadService.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 class PagarMeBoletoService implements ApiBoletoServiceInterface
 {
@@ -158,55 +162,9 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
 
         $caminhoFisico = $saveDir . $nomeArquivo;
 
-        // Inicia uma sessão cURL
-        $ch = curl_init($pdf_link);
+        $fileContent = PdfDownloadService::baixarConteudo($pdf_link, 'boleto');
+        file_put_contents($caminhoFisico, $fileContent);
 
-        // Configurações da sessão cURL
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HEADER, true);
-
-        // Executa a sessão cURL e obtém a resposta com cabeçalhos
-        $response = curl_exec($ch);
-
-        // Verifica se ocorreu algum erro durante a execução do cURL
-        if (curl_errno($ch)) {
-            throw new PaymentServiceException(
-                'Não foi possível concluir a emissão do boleto no momento.',
-                'Erro ao baixar o PDF do boleto: ' . curl_error($ch),
-                502
-            );
-        } else {
-            // Verifica o código de resposta HTTP
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-            if ($httpCode == 200) {
-                // Separa os cabeçalhos do corpo da resposta
-                $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-                $headers = substr($response, 0, $headerSize);
-                $fileContent = substr($response, $headerSize);
-
-                // Verifica o tipo de conteúdo
-                if (strpos($headers, 'Content-Type: application/pdf') !== false) {
-                    // Salva o conteúdo do arquivo no diretório especificado
-                    file_put_contents($caminhoFisico, $fileContent);
-                    //$arquivos []= $savePath;
-                } else {
-                    //echo "Erro: O conteúdo da URL não é um PDF." . PHP_EOL;
-                }
-            } else {
-                throw new PaymentServiceException(
-                    'Não foi possível concluir a emissão do boleto no momento.',
-                    "Erro ao baixar o PDF do boleto: HTTP $httpCode",
-                    $httpCode
-                );
-            }
-        }
-
-        // Fecha a sessão cURL
-        curl_close($ch);
-
-        //retornar string
-        return 'html/contribuicao/pdfs/' . $nomeArquivo;
+        return 'html/contribuicao/pdfs/' . $nomeArquivo; // Retorna o caminho relativo para o arquivo PDF
     }
 }
