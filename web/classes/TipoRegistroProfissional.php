@@ -1,14 +1,14 @@
 <?php
     class TipoRegistroProfissional implements JsonSerializable
     {
-        private $id_tipo_registro;
+        private $idTipoRegistro;
         private $descricao;
         private $status;
 
         public function __construct($descricao,$id = null,$status = true){
             $this->setDescricao($descricao);
             if($id){
-                $this->setId_tipo_registro($id);
+                $this->setIdTipoRegistro($id);
             }
             if($status){
                 $this->setStatus($status);
@@ -18,15 +18,15 @@
         public function jsonSerialize(): array
     {
         return [
-            'id_registro_profissional_tipo' => $this->id_tipo_registro,
+            'id_registro_profissional_tipo' => $this->idTipoRegistro,
             'descricao' => $this->descricao,
             'status' => $this->status
         ];
     }
 
-        public function getID_tipo_registro()
+        public function getIdTipoRegistro()
         {
-            return $this->id_tipo_registro;
+            return $this->idTipoRegistro;
         }
         public function getDescricao()
         {
@@ -36,12 +36,12 @@
         {
             return $this->status;
         }
-        public function setId_tipo_registro(int $id)
+        public function setIdTipoRegistro(int $id)
         {
             if($id < 1){
                 throw new InvalidArgumentException('O número de um id não pode ser menor que 1.');
             }
-            $this->id_tipo_registro = $id;
+            $this->idTipoRegistro = $id;
         }
         public function setDescricao(String $descricao)
         {

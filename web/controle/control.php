@@ -46,6 +46,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'EstoqueControle' => [21, 22],
             'FuncionarioControle' => [11, 91],
             'IentradaControle' => [23],
+            'IdentificadorRegistroProfissionalControle' => [11, 91],
             'InformacaoAdicionalControle' => [11],
             'InternoControle' => [],
             'IsaidaControle' => [24],

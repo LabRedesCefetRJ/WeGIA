@@ -1,17 +1,17 @@
 function carregarTabelaTiposRegistros() {
-    var status = $('#select_status').val();
+    const status = $('#select_status').val();
     if (!status) {
         status = 1;
     }
 
-    var url = '../../controle/control.php?nomeClasse=TipoRegistroProfissionalControle&metodo=listarTodos&status=' + status;
+    const url = '../../controle/control.php?nomeClasse=TipoRegistroProfissionalControle&metodo=listarTodos&status=' + status;
 
     $.ajax({
         type: "GET",
         url: url,
         dataType: 'json',
         success: function (response) {
-            var $tbody = $('#tabela-tipos-registros');
+            let $tbody = $('#tabela-tipos-registros');
             $tbody.empty();
 
             if (!response || response.length === 0) {
@@ -20,21 +20,21 @@ function carregarTabelaTiposRegistros() {
             }
 
             $.each(response, function (i, item) {
-                var id = item.id || item.id_registro_profissional_tipo;
-                var descricao = item.descricao;
-                var statusItem = item.status;
+                let id = item.id || item.id_registro_profissional_tipo;
+                let descricao = item.descricao;
+                let statusItem = item.status;
 
-                var badgeStatus = (statusItem == 1) 
+                let badgeStatus = (statusItem == 1) 
                     ? '<span class="label label-success">Ativo</span>' 
                     : '<span class="label label-danger">Inativo</span>';
 
-                var acaoStatusBtn = (statusItem == 1)
+                let acaoStatusBtn = (statusItem == 1)
                     ? '<button class="btn btn-xs btn-warning" onclick="alterarStatus(' + id + ', \'desativar\')"> Desativar</button>'
                     : '<button class="btn btn-xs btn-success" onclick="alterarStatus(' + id + ', \'ativar\')"> Ativar</button>';
 
-                var acaoExcluirBtn = '<button class="btn btn-xs btn-danger" onclick=excluirTipoRegistro('+ id +')> Excluir </button>';
+                let acaoExcluirBtn = '<button class="btn btn-xs btn-danger" onclick=excluirTipoRegistro('+ id +')> Excluir </button>';
 
-                var tr = '<tr>' +
+                const tr = '<tr>' +
                     '<td>' + id + '</td>' +
                     '<td>' + descricao + '</td>' +
                     '<td>' + badgeStatus + '</td>' +
@@ -54,8 +54,8 @@ function excluirTipoRegistro(id){
     if(!confirm("Tem certeza deseja excluir permanentemente esse tipo de registro?")){
         return;
     }
-    var url = '../../controle/control.php';
-    var data = {
+    const url = '../../controle/control.php';
+    const data = {
         nomeClasse: 'TipoRegistroProfissionalControle',
         metodo: 'excluir',
         id_tipo_registro_profissional: id
@@ -71,7 +71,7 @@ function excluirTipoRegistro(id){
             carregarTabelaTiposRegistros();
         },
         error: function (xhr) {
-            var mensagem = "Não foi possível excluir o registro.";
+            let mensagem = "Não foi possível excluir o registro.";
             if (xhr.responseJSON && xhr.responseJSON.mensagem) {
                 mensagem = xhr.responseJSON.mensagem;
             }
@@ -81,7 +81,7 @@ function excluirTipoRegistro(id){
 }
 
 function adicionarTipoRegistro() {
-    var descricao = window.prompt("Cadastre um Novo Tipo de Registro Profissional (ex: CRM, OAB):");
+    let descricao = window.prompt("Cadastre um Novo Tipo de Registro Profissional (ex: CRM, OAB):");
     
     descricao=descricao.trim();
     if (!descricao) {
@@ -95,8 +95,8 @@ function adicionarTipoRegistro() {
         return;
     }
 
-    var url = '../../controle/control.php';
-    var data = {
+    const url = '../../controle/control.php';
+    const data = {
         nomeClasse: 'TipoRegistroProfissionalControle',
         metodo: 'incluir',
         descricao: descricao
@@ -113,7 +113,7 @@ function adicionarTipoRegistro() {
             carregarTabelaTiposRegistros(); 
         },
         error: function (xhr) {
-            var mensagem = "Erro ao incluir registro.";
+            let mensagem = "Erro ao incluir registro.";
             if (xhr.responseJSON && xhr.responseJSON.mensagem) {
                 mensagem = xhr.responseJSON.mensagem;
             }
@@ -127,8 +127,8 @@ function alterarStatus(id, operacao) {
         return;
     }
 
-    var url = '../../controle/control.php';
-    var data = {
+    const url = '../../controle/control.php';
+    const data = {
         nomeClasse: 'TipoRegistroProfissionalControle',
         metodo: 'alterarStatus',
         id_tipo_registro_profissional: id,
@@ -145,7 +145,7 @@ function alterarStatus(id, operacao) {
             carregarTabelaTiposRegistros();
         },
         error: function (xhr) {
-            var mensagem = "Erro ao alterar status.";
+            let mensagem = "Erro ao alterar status.";
             if (xhr.responseJSON && xhr.responseJSON.mensagem) {
                 mensagem = xhr.responseJSON.mensagem;
             }

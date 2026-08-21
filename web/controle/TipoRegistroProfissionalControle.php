@@ -46,6 +46,17 @@ class TipoRegistroProfissionalControle
         }
     }
 
+    public static function listarTodos2()
+    {
+        try {
+            $dao = new TipoRegistroProfissionalDAO();
+            return $dao->listarTodos2();
+        } catch (Throwable $e) {
+            Util::tratarException($e);
+            return [];
+        }
+    }
+
         public function listarUm()
         {
             try {
@@ -59,7 +70,7 @@ class TipoRegistroProfissionalControle
                 $tipoRegistroProfissional = $tipoRegistroProfissionalDAO->listarUm($idTipoRegistro);
 
                 header('Content-Type: application/json; charset=utf-8');
-                echo json_encode($tipoRegistroProfissional);
+                echo json_encode($tipoRegistro);
             }catch (Exception $e){
                 Util::tratarException($e);
             }

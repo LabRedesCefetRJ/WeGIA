@@ -452,7 +452,7 @@ try {
         return;
       }
 
-      var tbody = $("#tabela_registroProfissional");
+      const tbody = $("#tabela_registroProfissional");
       tbody.empty();
 
       if (!lista.length) {
@@ -461,20 +461,20 @@ try {
       }
 
       $.each(lista, function(i, item) {
-        var linha = $("<tr>").attr("id", "registroProfissional" + item.id_registro);
+        let linha = $("<tr>").attr("id", "registroProfissional" + item.id_registro);
 
         linha.append($("<td>").text(item.descricao));
 
-        var inputNumero = $('<input type="text" class="form-control registro-numero" maxlength="20">')
+        let inputNumero = $('<input type="text" class="form-control registro-numero" maxlength="20">')
           .val(item.numero_registro)
           .prop('disabled', !outrosEditando);
         linha.append($("<td>").append(inputNumero));
 
-        var selectUf = montarSelectUf(item.uf).prop('disabled', !outrosEditando);
+        let selectUf = montarSelectUf(item.uf).prop('disabled', !outrosEditando);
         linha.append($("<td>").append(selectUf));
 
-        var acoes = $('<td style="display: flex; justify-content: space-evenly;">');
-        var idRegistro = item.id_registro;
+        let acoes = $('<td style="display: flex; justify-content: space-evenly;">');
+        let idRegistro = item.id_registro;
         acoes.append(
           $('<button type="button" class="btn btn-primary btn-salvar-registro" title="Salvar"><i class="fas fa-save"></i></button>')
           .toggle(outrosEditando)
@@ -496,29 +496,29 @@ try {
     }
 
     function salvarEdicaoRegistroProfissional(idRegistro) {
-      var linha = $("#registroProfissional" + idRegistro);
-      var numero = linha.find(".registro-numero").val();
-      var uf = linha.find(".registro-uf").val();
+      let linha = $("#registroProfissional" + idRegistro);
+      let numero = linha.find(".registro-numero").val();
+      let uf = linha.find(".registro-uf").val();
 
       if (!numero || numero.trim() === '') {
         exibirErroRegistroProfissional('Informe o número do registro.');
         return;
       }
 
-      var data = "action=editar&id_registro=" + encodeURIComponent(idRegistro) +
+      let data = "action=editar&id_registro=" + encodeURIComponent(idRegistro) +
         "&numero_registro=" + encodeURIComponent(numero) +
         "&uf=" + encodeURIComponent(uf) +
         "&id_funcionario=<?= $idFuncionario ?>";
 
-      post("registro_profissional.php", data, listar_registroProfissional);
+      post("IdentificadorRegistroProfissionalControle.php", data, listar_registroProfissional);
     }
 
     function removerRegistroProfissional(idRegistro) {
       if (!window.confirm('Tem certeza que deseja excluir este registro profissional?')) {
         return;
       }
-      var data = "action=remover&id_registro=" + encodeURIComponent(idRegistro) + "&id_funcionario=<?= $idFuncionario ?>";
-      post("registro_profissional.php", data, listar_registroProfissional);
+      let data = "action=remover&id_registro=" + encodeURIComponent(idRegistro) + "&id_funcionario=<?= $idFuncionario ?>";
+      post("IdentificadorRegistroProfissionalControle.php", data, listar_registroProfissional);
     }
 
     function abrirModalRegistroProfissional() {
@@ -529,7 +529,7 @@ try {
     }
 
     function adicionar_tipo_registroProfissional() {
-      var descricao = window.prompt("Cadastre um novo tipo de registro profissional:");
+      let descricao = window.prompt("Cadastre um novo tipo de registro profissional:");
       if (!descricao) {
         return;
       }
@@ -555,7 +555,7 @@ try {
           carregarTiposRegistroProfissional();
         },
         error: function(xhr) {
-          var mensagem = 'Erro ao cadastrar o tipo de registro.';
+          let mensagem = 'Erro ao cadastrar o tipo de registro.';
           if (xhr.responseJSON && xhr.responseJSON.erro) {
             mensagem = xhr.responseJSON.erro;
           }
@@ -588,7 +588,7 @@ try {
         exibirErroRegistroProfissional(response && response.erro ? response.erro : 'Erro ao carregar os tipos de registro profissional.');
         return;
       }
-      var select = $('#tipo_novoRegistro');
+      let select = $('#tipo_novoRegistro');
       select.empty();
       select.append('<option value="" selected disabled>Selecionar</option>');
       $.each(response, function(i, item) {
@@ -597,9 +597,9 @@ try {
     }
 
     function salvarNovoRegistroProfissional() {
-      var idTipo = $('#tipo_novoRegistro').val();
-      var numero = $('#numero_novoRegistro').val();
-      var uf = $('#uf_novoRegistro').val();
+      let idTipo = $('#tipo_novoRegistro').val();
+      let numero = $('#numero_novoRegistro').val();
+      let uf = $('#uf_novoRegistro').val();
 
       if (!idTipo) {
         exibirErroRegistroProfissional('Selecione o tipo de registro.');
@@ -610,12 +610,12 @@ try {
         return;
       }
 
-      var data = "action=adicionar&id_tipo=" + encodeURIComponent(idTipo) +
+      let data = "action=adicionar&id_tipo=" + encodeURIComponent(idTipo) +
         "&numero_registro=" + encodeURIComponent(numero) +
         "&uf=" + encodeURIComponent(uf || '') +
         "&id_funcionario=<?= $idFuncionario ?>";
 
-      post("registro_profissional.php", data, function(response) {
+      post("IdentificadorRegistroProfissionalControle.php", data, function(response) {
         if (response.erro) {
           exibirErroRegistroProfissional(response.erro);
           return;
@@ -626,11 +626,11 @@ try {
     }
 
     $(function() {
-      post("registro_profissional.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_registroProfissional);
+      post("IdentificadorRegistroProfissionalControle.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_registroProfissional);
     });
 
     function alterardate(data) {
-      var date = data.split("/")
+      let date = data.split("/")
       return date[2] + "-" + date[1] + "-" + date[0];
     }
     $(function() {
@@ -1539,7 +1539,7 @@ try {
                                     <select name="id_tipo" id="tipo_novoRegistro" class="form-control" style="width: 300px;" required>
                                       <option value="" selected disabled>Selecionar</option>
                                       <?php foreach ($registroProfissionalTipos as $tipoRegistro): ?>
-                                        <option value="<?= htmlspecialchars($tipoRegistro->getID_tipo_registro()) ?>"><?= htmlspecialchars($tipoRegistro->getDescricao()) ?></option>
+                                        <option value="<?= htmlspecialchars($tipoRegistro->getIdTipoRegistro()) ?>"><?= htmlspecialchars($tipoRegistro->getDescricao()) ?></option>
                                       <?php endforeach; ?>
                                     </select>
                                     <a onclick="adicionar_tipo_registroProfissional()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw; margin-left: 10px;"></i></a>

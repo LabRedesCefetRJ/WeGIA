@@ -11,7 +11,8 @@ class IdentificadorRegistroProfissionalDAO
         try {
             $this->pdo = Conexao::connect();
         } catch (PDOException $e){
-            echo 'Erro ao instanciar objeto do tipo IdentificadorRegistroProfissionalDAO: '.$e->getMessage();
+            error_log("Erro de Conexão com o banco de dados: " . $e->getMessage());
+            throw new Exception('Não foi possível conectar ao serviço de banco de dados.');
         }
     }
 
@@ -29,7 +30,8 @@ class IdentificadorRegistroProfissionalDAO
 
             return $this->pdo->lastInsertId();
         } catch (PDOException $e) {
-            throw new Exception("Erro ao inserir o registro profissional no banco de dados: " . $e->getMessage());
+            error_log("Erro BD [salvarRegistroProfissional]: " . $e->getMessage());
+            throw new Exception("Erro ao inserir o registro profissional no banco de dados.",);
         }
     }
 
@@ -48,7 +50,8 @@ class IdentificadorRegistroProfissionalDAO
             $stmt->bindParam(':uf',$uf);
             $stmt->execute();
         }catch (PDOException $e) {
-            throw new Exception("Erro ao inserir o registro profissional no banco de dados: " . $e->getMessage());
+            error_log("Erro DB [adicionar]: ". $e->getMessage());
+            throw new Exception("Erro tentar ao inserir o registro profissional.");
         }
     }
 
@@ -72,7 +75,8 @@ class IdentificadorRegistroProfissionalDAO
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            throw new Exception("Erro ao buscar os registros profissionais no banco de dados: " . $e->getMessage());
+            error_log("Erro DB [listarPorIdFuncionario]: ". $e->getMessage());
+            throw new Exception("Erro ao buscar os registros profissionais.");
         }
     }
 
@@ -96,7 +100,8 @@ class IdentificadorRegistroProfissionalDAO
 
             return $stmt->rowCount();
         } catch (PDOException $e) {
-            throw new Exception("Erro ao alterar o registro profissional no banco de dados: " . $e->getMessage());
+            error_log("Erro DB [alterarRegistroPorId]: ". $e->getMessage());
+            throw new Exception("Erro ao alterar o registro profissional.");
         }
     }
 
@@ -110,7 +115,8 @@ class IdentificadorRegistroProfissionalDAO
             $stmt->bindParam(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
             $stmt->execute();
         }catch(PDOException $e){
-            echo 'Error: <b> na tabela registro_profissional_tipo = ' . $sql . '</b> <br /> <br />' . $e->getMessage();
+            error_log("Erro DB [alterarRegistro]: ". $e->getMessage());
+            throw new Exception("Erro ao alterar o registro profissional.");
         }
     }
 
@@ -125,7 +131,8 @@ class IdentificadorRegistroProfissionalDAO
 
             return $stmt->rowCount();
         } catch (PDOException $e) {
-            throw new Exception("Erro ao remover o registro profissional no banco de dados: " . $e->getMessage());
+            error_log("Erro DB [remover]: ". $e->getMessage());
+            throw new Exception("Erro ao remover o registro profissional.");
         }
     }
 }

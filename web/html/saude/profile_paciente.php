@@ -230,7 +230,6 @@ try {
   $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
   $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
-
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -1171,15 +1170,13 @@ try {
                 </div>
               </div>
               <?php
-                require_once "../../dao/MiddlewareDAO.php";
-                $controladorasRecursos =[
-                 'AtendidoControle' => [12],
-                ];   
-                $middleware = new MiddlewareDAO();
-                if($middleware->verificarPermissao($_SESSION['id_pessoa'],'AtendidoControle',$controladorasRecursos)):
+                $saudeControle = new SaudeControle();
+                $idAtendidoPerfil = $saudeControle->buscarIdAtendidoPorFichaMedica((int)$id_fichamedica);
+                $permissaoPessoa = $saudeControle->verificaPermissaoPessoa((int)$_SESSION['id_pessoa']);
+                if ($permissaoPessoa && !empty($idAtendidoPerfil)):
               ?> 
               <div class="panel-footer text-center">
-                <a href="../atendido/Profile_Atendido.php?idatendido=<?=$id_fichamedica;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP" title="Acesso rápido a página de Perfil de Atendido">Acessar Perfil</a>
+                <a href="../atendido/Profile_Atendido.php?idatendido=<?=$idAtendidoPerfil;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP" title="Acesso rápido a página de Perfil de Atendido">Acessar Perfil</a>
               </div>  
               <?php endif; ?>
             </section>

@@ -277,6 +277,18 @@ class AtendidoDAO
         return (bool) $stmt->fetch();
     }
 
+    public function obterIdFichaMedicaPorAtendido(int $id) : ?int 
+    {
+        $sql = "SELECT sf.id_fichamedica FROM saude_fichamedica sf JOIN atendido a ON (a.pessoa_id_pessoa = sf.id_pessoa) WHERE a.idatendido = :id LIMIT 1";
+
+        $stmtIdFicha = $this->pdo->prepare($sql);
+        $stmtIdFicha->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmtIdFicha->execute();
+
+        $idFichaMedica = $stmtIdFicha->fetchColumn(); 
+        return $idFichaMedica ? (int)$idFichaMedica : null;
+    }
+
     public function listarDocumentacaoFuncional(int $idAtendido): array
     {
         $pdo = Conexao::connect();

@@ -94,6 +94,8 @@ $atendidoDados = json_decode($atend, true) ?: [];
 $idPessoaAtendido = (int)($atendidoDados[0]['id_pessoa'] ?? 0);
 $processoAceitacao = $idPessoaAtendido > 0 ? $processoAceitacaoDAO->buscarProcessoAtivoPorPessoa($idPessoaAtendido) : null;
 $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEtapasPorProcesso((int)$processoAceitacao['id']) : [];
+
+require_once "../../controle/AtendidoControle.php";
 ?>
 
 <!doctype html>
@@ -812,30 +814,15 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                 </div>
               </div>
               <?php
-               require_once "../../dao/MiddlewareDAO.php";
-                $controladorasRecursos =[
-                  'SaudeControle' => [5]
-                ];   
-                $middleware = new MiddlewareDAO();
-                $permissao = $middleware->verificarPermissao($_SESSION['id_pessoa'],'SaudeControle',$controladorasRecursos);
-                $fichaMedicaExistente = false;
-                try{
-                  $pdo = isset($pdo)?$pdo:Conexao::connect();
-                  $stmtFicha = $pdo->prepare("SELECT COUNT(*) FROM atendido a JOIN saude_fichamedica sf ON(a.pessoa_id_pessoa=sf.id_pessoa) WHERE a.idatendido=:id");
-                  $stmtFicha->bindValue(':id', $id, PDO::PARAM_INT);
-                  $stmtFicha->execute();
-      
-                  $possuiFichaMedica = ((int) $stmtFicha->fetchColumn()) > 0;
-                } catch (PDOException $e) {
-                  error_log("Erro ao verificar ficha médica do atendido ID {$id}: " . $e->getMessage());
-                  $possuiFichaMedica = false;
-                }
-                if($permissao && $possuiFichaMedica):
+                $atendidoControle = new AtendidoControle();
+                $idFichaMedica = $atendidoControle->buscarFichaMedicaAtendido((int)$id);
+                $permissao = $atendidoControle->verificaPermissaoSaude((int)$_SESSION['id_pessoa']);
+                if ($permissao && !empty($idFichaMedica)):
               ?>  
-              <div class="panel-footer text-center">
-                <a href="../saude/profile_paciente.php?id_fichamedica=<?=$id;?>" type="button" class="btn btn-primary" id="botaoAcessarFichaIP" title="Acesso rápido a página da Ficha Médica do Paciente">Acessar Ficha Médica</a>
-              </div> 
-              <?php endif; ?>     
+            <div class="panel-footer text-center">
+              <a href="../saude/profile_paciente.php?id_fichamedica=<?=$idFichaMedica;?>" class="btn btn-primary" id="botaoAcessarFichaIP" title="Acesso rápido à página da Ficha Médica do Paciente">Acessar Ficha Médica</a>
+            </div> 
+            <?php endif; ?>     
             </section>
           </div>
           <div class="col-md-8 col-lg-6">

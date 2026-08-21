@@ -11,7 +11,8 @@ class TipoRegistroProfissionalDAO
         try {
             $this->pdo = Conexao::connect();
         } catch (PDOException $e){
-            echo 'Erro ao instanciar objeto do tipo TipoRegistroProfissionalDAO: '.$e->getMessage();
+            error_log("Erro de Conexão com o banco de dados: " . $e->getMessage());
+            throw new Exception('Não foi possível conectar ao serviço de banco de dados.');
         }
     }
 
@@ -24,7 +25,8 @@ class TipoRegistroProfissionalDAO
             $stmt->bindParam(':registro', $descricao);
             $stmt->execute();
         } catch (PDOException $e) {
-            throw new Exception("Erro ao inserir o registro profissional no banco de dados: " . $e->getMessage());
+            error_log("Erro DB [incluir]: ". $e->getMessage());
+            throw new Exception("Erro tentar ao inserir novo tipo de registro profissional.");
         }  
     }
 
@@ -40,10 +42,12 @@ class TipoRegistroProfissionalDAO
                 $registro = new tipoRegistroProfissional($linha['descricao'],$linha['id_registro_profissional_tipo'],$linha['status']);
                 return $registro;
             }catch (InvalidArgumentException $e){
-                exit("Ocorreu um erro ao tentar listar o registro profissional solicitado: " . $e->getMessage());
+                error_log("Erro Argumento Inválido [listarUm]: ". $e->getMessage());
+                throw new Exception("Erro ao buscar pelo id informado.");
             }
         }catch (PDOException $e){
-            throw $e;
+            error_log("Erro DB [listarUm]: ". $e->getMessage());
+            throw new Exception("Erro ao listar o tipo de registro profissional.");
         }
     }
 
@@ -64,7 +68,22 @@ class TipoRegistroProfissionalDAO
             }
             return $tiposRegistrosProfissionais;
         }catch (PDOException $e){
-            echo 'Error: <b> na tabela registro_profissional_tipo = ' . $sql . '</b> <br /> <br />' . $e->getMessage();
+            error_log("Erro DB [listarTodos]: ". $e->getMessage());
+            throw new Exception("Erro ao listar os tipos de registros profissionais.");
+        }
+    }
+
+    public function listarTodos2()
+    {
+        try{
+            $sql = "SELECT id_registro_profissional_tipo AS id, descricao FROM registro_profissional_tipo WHERE status = 1 ORDER BY descricao ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+    
+            return $stmt->fetchAll(PDO::FETCH_ASSOC); 
+        }catch (PDOException $e){
+            error_log("Erro DB [listarTodos2]: ". $e->getMessage());
+            throw new Exception("Erro ao listar os tipos de registros profissionais.");
         }
     }
 
@@ -77,7 +96,8 @@ class TipoRegistroProfissionalDAO
             $stmt->bindParam(':idTipo',$idTipo, PDO::PARAM_INT);
             $stmt->execute();
         }catch (PDOException $e){
-            echo 'Error: <b> na tabela registro_profissional_tipo = ' . $sql . '</b> <br /> <br />' . $e->getMessage();
+            error_log("Erro DB [alterarStatus]: ". $e->getMessage());
+            throw new Exception("Erro ao alterar status do tipo de registro profissional.");
         }
     }
     
@@ -89,7 +109,8 @@ class TipoRegistroProfissionalDAO
             $stmt->bindParam(':idTipo',$idTipo,PDO::PARAM_INT);
             $stmt->execute();
         }catch (PDOException $e){
-            echo 'Error: <b>  na tabela cargo = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            error_log("Erro DB [alterarStatus]: ". $e->getMessage());
+            throw new Exception("Erro ao remover tipo de registro profissional.");
         }
     }
 }

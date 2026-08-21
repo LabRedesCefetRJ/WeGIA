@@ -377,12 +377,12 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       <select class="form-control input-lg mb-md" name="registroProfissionalTipo" id="registroProfissional_tipo_input" onchange="exibir_numero_registro()">
                         <option selected disabled value="" >Selecionar</option>
                         <?php
-                        $pdo = Conexao::connect();
-                        $tipo = $pdo->query("SELECT * FROM registro_profissional_tipo;")->fetchAll(PDO::FETCH_ASSOC);
-                        foreach ($tipo as $key => $value) {
-                          $selected = isset($oldInput['registroProfissionalTipo']) && $oldInput['registroProfissionalTipo'] == $value['id_registro_profissional_tipo'] ? ' selected' : '';
-                          echo ("<option value=\"" . htmlspecialchars($value['id_registro_profissional_tipo']) . "\"" . $selected . ">" . htmlspecialchars($value['descricao']) . "</option>");
-                        }
+                        require_once ROOT . "/controle/TipoRegistroProfissionalControle.php";
+                          $tipos = TipoRegistroProfissionalControle::listarTodos2();
+                          foreach ($tipos as $tipo) {
+                            $selected = (isset($oldInput['registroProfissionalTipo']) && $oldInput['registroProfissionalTipo'] == $tipo['id']) ? ' selected' : '';
+                            echo "<option value=\"" . htmlspecialchars($tipo['id']) . "\"" . $selected . ">" . htmlspecialchars($tipo['descricao']) . "</option>";
+                          }
                         ?>
                       </select>
                     </div>
