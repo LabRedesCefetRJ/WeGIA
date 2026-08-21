@@ -689,22 +689,14 @@ Processa um pagamento com cartão de crédito para o sócio autenticado via JWT.
 ```json
 {
   "valor": 50.0,
-  "card_number": "4111111111111111",
-  "card_exp_month": "12",
-  "card_exp_year": "2028",
-  "card_holder_name": "Nome do Titular",
-  "card_cvv": "123"
+  "card_token": "token_card_plataform_241wsdf"
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
-| `valor` | number | sim | Valor da contribuição em reais |
-| `card_number` | string | sim | Número do cartão de crédito |
-| `card_exp_month` | string\|integer | sim | Mês de expiração do cartão |
-| `card_exp_year` | string\|integer | sim | Ano de expiração do cartão |
-| `card_holder_name` | string | sim | Nome do titular do cartão |
-| `card_cvv` | string | sim | Código de segurança do cartão |
+| `valor` | number | sim | Valor da contribuição em reais ||
+| `card_token` | string | sim | Identificador do cartão na plataforma de pagamento |
 
 ### Resposta - 201 Created
 ```json
@@ -758,22 +750,14 @@ Cria uma assinatura recorrente para o sócio autenticado via JWT. A rota usa o `
 ```json
 {
   "valor": 50.0,
-  "card_number": "4111111111111111",
-  "card_exp_month": "12",
-  "card_exp_year": "2028",
-  "card_holder_name": "Nome do Titular",
-  "card_cvv": "123"
+  "card_token": "token_card_plataform_241wsdf"
 }
 ```
 
 | Campo | Tipo | Obrigatório | Descrição |
 |-------|------|-------------|-----------|
 | `valor` | number | sim | Valor da assinatura em reais |
-| `card_number` | string | sim | Número do cartão de crédito |
-| `card_exp_month` | string\|integer | sim | Mês de expiração do cartão |
-| `card_exp_year` | string\|integer | sim | Ano de expiração do cartão |
-| `card_holder_name` | string | sim | Nome do titular do cartão |
-| `card_cvv` | string | sim | Código de segurança do cartão |
+| `card_token` | string | sim | Identificador do cartão na plataforma de pagamento |
 
 ### Resposta - 201 Created
 ```json
@@ -870,6 +854,69 @@ Example:
 Notes:
 - `description` values are normalized to `snake_case` (ex: `max_value`, `min_value`).
 - Endpoint implemented in `api/src/modules/Contribuicao/PaymentController.php`.
+
+## GET /contribuicoes/payments_gateway/{payment_method}
+
+- Description: Retorna os dados públicos da plataforma de pagamento associada ao meio de pagamento informado.
+- Method: `GET`
+- Path: `/contribuicoes/payments_gateway/{payment_method}`
+- Authentication: Bearer token (via middleware de autenticação)
+
+### Parâmetros
+- `payment_method` (path, obrigatório): Meio de pagamento cadastrado no sistema, como `Boleto`, `Pix`, `Carne`, `Recorrencia` ou `CartaoCredito`
+
+### Success Response (200)
+Content-Type: `application/json`
+
+Example:
+
+```JSON
+{
+    "payment_gateway": {
+        "id": 1,
+        "description": "PagSeguro",
+        "endpoint": "https://api.pagseguro.com",
+        "publicToken": "pub_123456789",
+        "status": true
+    }
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `payment_gateway` | object | Dados públicos da plataforma de pagamento encontrada |
+| `payment_gateway.id` | integer \| null | ID da plataforma de pagamento |
+| `payment_gateway.description` | string | Nome/descrição da plataforma |
+| `payment_gateway.endpoint` | string | Endpoint da plataforma de pagamento |
+| `payment_gateway.publicToken` | string | Token público exposto para integração |
+| `payment_gateway.status` | boolean | Status da plataforma de pagamento |
+
+### Resposta - 401 Unauthorized
+Content-Type: `application/json`
+
+Example:
+
+```JSON
+{
+    "error": "Token inválido"
+}
+```
+
+### Resposta - 500 Internal Server Error
+Content-Type: `application/json`
+
+Example:
+
+```JSON
+{
+    "error": "Erro ao buscar token público: No payment gateway found for the specified payment method."
+}
+```
+
+Notes:
+- A rota é protegida pelo `AuthMiddleware`, então a ausência ou invalidez do token resulta em `401`.
+- O controller retorna `500` para qualquer exceção ao buscar a plataforma de pagamento, incluindo quando não há gateway ativo para o meio informado.
+- Endpoint implementado em `api/src/modules/Contribuicao/PaymentController.php`.
 
 
 ---

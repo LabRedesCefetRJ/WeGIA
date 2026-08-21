@@ -80,7 +80,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['token'], $gatewayPagamentoArray['status']);
+            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['private_token'], $gatewayPagamentoArray['public_token'], $gatewayPagamentoArray['status']);
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
 
             //Requisição dinâmica e instanciação da classe com base no nome do gateway de pagamento
@@ -208,7 +208,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['token'], $gatewayPagamentoArray['status']);
+            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['private_token'], $gatewayPagamentoArray['public_token'], $gatewayPagamentoArray['status']);
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
 
             //Requisição dinâmica e instanciação da classe com base no nome do gateway de pagamento
@@ -435,7 +435,7 @@ class ContribuicaoLogController
                 exit();
             }
 
-            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['token'], $gatewayPagamentoArray['status']);
+            $gatewayPagamento = new GatewayPagamento($gatewayPagamentoArray['plataforma'], $gatewayPagamentoArray['endPoint'], $gatewayPagamentoArray['private_token'], $gatewayPagamentoArray['public_token'], $gatewayPagamentoArray['status']);
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
 
             //Requisição dinâmica e instanciação da classe com base no nome do gateway de pagamento
@@ -558,7 +558,8 @@ class ContribuicaoLogController
             $gatewayPagamento = new GatewayPagamento(
                 $gatewayPagamentoArray['plataforma'],
                 $gatewayPagamentoArray['endPoint'],
-                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['private_token'],
+                $gatewayPagamentoArray['public_token'],
                 $gatewayPagamentoArray['status']
             );
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
@@ -794,7 +795,7 @@ class ContribuicaoLogController
             $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($meioPagamento->getGatewayId());
 
             //tem que de alguma forma enviar os parâmetros da URL
-            $gatewayPagamentoObject = new GatewayPagamento($gatewayPagamento['plataforma'], $gatewayPagamento['endPoint'], $gatewayPagamento['token'], $gatewayPagamento['status']);
+            $gatewayPagamentoObject = new GatewayPagamento($gatewayPagamento['plataforma'], $gatewayPagamento['endPoint'], $gatewayPagamento['private_token'], $gatewayPagamento['public_token'], $gatewayPagamento['status']);
             $gatewayPagamentoObject->setId($gatewayPagamento['id']);
 
             //instanciar serviço do gateway de pagamento

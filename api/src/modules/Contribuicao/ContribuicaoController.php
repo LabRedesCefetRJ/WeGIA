@@ -215,11 +215,7 @@ class ContribuicaoController
     private function validarDadosCartaoCredito(array $data): array
     {
         $camposObrigatorios = [
-            'card_number',
-            'card_exp_month',
-            'card_exp_year',
-            'card_holder_name',
-            'card_cvv'
+            'card_token'
         ];
 
         foreach ($camposObrigatorios as $campo) {
@@ -228,37 +224,8 @@ class ContribuicaoController
             }
         }
 
-        $numeroCartao = preg_replace('/\D/', '', (string)$data['card_number']);
-        if (strlen($numeroCartao) < 13 || strlen($numeroCartao) > 19) {
-            throw new \InvalidArgumentException('Número de cartão inválido.', 400);
-        }
-
-        $mesExpiracao = filter_var($data['card_exp_month'], FILTER_VALIDATE_INT);
-        if ($mesExpiracao === false || $mesExpiracao < 1 || $mesExpiracao > 12) {
-            throw new \InvalidArgumentException('Mês de expiração inválido.', 400);
-        }
-
-        $anoExpiracao = preg_replace('/\D/', '', (string)$data['card_exp_year']);
-        if (strlen($anoExpiracao) !== 2 && strlen($anoExpiracao) !== 4) {
-            throw new \InvalidArgumentException('Ano de expiração inválido.', 400);
-        }
-
-        $nomeTitular = trim((string)$data['card_holder_name']);
-        if (strlen($nomeTitular) < 3) {
-            throw new \InvalidArgumentException('Nome do titular inválido.', 400);
-        }
-
-        $cvv = preg_replace('/\D/', '', (string)$data['card_cvv']);
-        if (strlen($cvv) < 3 || strlen($cvv) > 4) {
-            throw new \InvalidArgumentException('CVV inválido.', 400);
-        }
-
         return [
-            'card_number' => $numeroCartao,
-            'card_exp_month' => $mesExpiracao,
-            'card_exp_year' => $anoExpiracao,
-            'card_holder_name' => $nomeTitular,
-            'card_cvv' => $cvv
+            'card_token' => $data['card_token']
         ];
     }
 
@@ -722,7 +689,8 @@ class ContribuicaoController
             $gatewayPagamento = new \GatewayPagamento(
                 $gatewayPagamentoArray['plataforma'],
                 $gatewayPagamentoArray['endPoint'],
-                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['private_token'],
+                $gatewayPagamentoArray['public_token'],
                 $gatewayPagamentoArray['status']
             );
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
@@ -865,7 +833,8 @@ class ContribuicaoController
             $gatewayPagamento = new \GatewayPagamento(
                 $gatewayPagamentoArray['plataforma'],
                 $gatewayPagamentoArray['endPoint'],
-                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['private_token'],
+                $gatewayPagamentoArray['public_token'],
                 $gatewayPagamentoArray['status']
             );
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
@@ -1010,7 +979,8 @@ class ContribuicaoController
             $gatewayPagamento = new \GatewayPagamento(
                 $gatewayPagamentoArray['plataforma'],
                 $gatewayPagamentoArray['endPoint'],
-                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['private_token'],
+                $gatewayPagamentoArray['public_token'],
                 $gatewayPagamentoArray['status']
             );
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
@@ -1145,7 +1115,8 @@ class ContribuicaoController
             $gatewayPagamento = new \GatewayPagamento(
                 $gatewayPagamentoArray['plataforma'],
                 $gatewayPagamentoArray['endPoint'],
-                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['private_token'],
+                $gatewayPagamentoArray['public_token'],
                 $gatewayPagamentoArray['status']
             );
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
@@ -1276,7 +1247,8 @@ class ContribuicaoController
             $gatewayPagamento = new \GatewayPagamento(
                 $gatewayPagamentoArray['plataforma'],
                 $gatewayPagamentoArray['endPoint'],
-                $gatewayPagamentoArray['token'],
+                $gatewayPagamentoArray['private_token'],
+                $gatewayPagamentoArray['public_token'],
                 $gatewayPagamentoArray['status']
             );
             $gatewayPagamento->setId($meioPagamento->getGatewayId());
