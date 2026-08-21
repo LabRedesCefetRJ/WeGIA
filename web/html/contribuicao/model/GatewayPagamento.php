@@ -10,13 +10,17 @@ class GatewayPagamento
     private string $publicToken;
     private $status;
 
-    public function __construct(string $nome, string $endpoint, string $privateToken, string $publicToken, $status = null)
+    public function __construct(string $nome, string $endpoint, string $privateToken, string $publicToken, $status = null, ?int $id = null)
     {
         $this->setNome($nome)->setEndpoint($endpoint)->setPrivateToken($privateToken)->setPublicToken($publicToken);
         if (!$status) {
             $this->setStatus(0);
         } else {
             $this->setStatus($status);
+        }
+
+        if ($id) {
+            $this->setId($id);
         }
     }
 

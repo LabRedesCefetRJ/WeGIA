@@ -184,17 +184,17 @@ class GatewayPagamentoDAO
     public function getGatewayInfoByMethodPayment(string $metodoPagamento):GatewayPagamento|false
     {
         //definir consulta sql
-        $sql = "SELECT * FROM contribuicao_gatewayPagamento WHERE plataforma=:metodoPagamento AND status=1 LIMIT 1";
+        $query = 'SELECT cgp.* FROM contribuicao_gatewayPagamento cgp JOIN contribuicao_meioPagamento cmp ON (cgp.id = cmp.id_plataforma) WHERE cmp.meio = :paymentMethod AND cgp.status = 1';
         //utilizar prepared statements
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindParam(':metodoPagamento', $metodoPagamento);
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':paymentMethod', $metodoPagamento);
         //executar
         $stmt->execute();
 
         if ($stmt->rowCount() >= 1) {
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            return new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['private_token'], $resultado['public_token'], $resultado['status']);
+            return new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['private_token'], $resultado['public_token'], $resultado['status'], $resultado['id']);
         }
 
         return false;

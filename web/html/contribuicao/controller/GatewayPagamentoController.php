@@ -235,41 +235,30 @@ class GatewayPagamentoController
      * Realiza os procedimentos necessários para buscar as informações de um gateway de pagamento específico, com base no método de pagamento informado.
      */
     public function getGatewayInfoByMethodPayment(){
-        
-        $metodoPagamento = filter_input(INPUT_POST, 'payment_method', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        header('Content-Type: application/json; charset=utf-8');
+
+        $metodoPagamento = filter_input(INPUT_GET, 'payment_method', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         try {
-            if (!Csrf::validateToken($_POST['csrf_token'] ?? null))
-                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
-
             if (!$metodoPagamento || empty($metodoPagamento)) {
-                throw new InvalidArgumentException('O método de pagamento informado não é válido.', 400);
+                http_response_code(400);
+                echo json_encode(['erro' => 'O método de pagamento informado não é válido.']);
+                return;
             }
 
-            $this->pdo->beginTransaction();
             $gatewayPagamentoDao = new GatewayPagamentoDAO();
             $gatewayInfo = $gatewayPagamentoDao->getGatewayInfoByMethodPayment($metodoPagamento);
 
-            $sistemaLog = new SistemaLog($_SESSION['id_pessoa'], 72, 5, new DateTime('now', new DateTimeZone(date_default_timezone_get())), "Consulta de informações do gateway de pagamento para o método: $metodoPagamento.");
-
-            $sistemaLogDao = new SistemaLogDAO($this->pdo);
-            if (!$sistemaLogDao->registrar($sistemaLog)) {
-                throw new Exception('Falha ao registrar consulta ao sistema.', 500);
-            }
-
             if (!$gatewayInfo) {
-                throw new Exception('Nenhum gateway de pagamento encontrado para o método informado.', 404);
+                http_response_code(404);
+                echo json_encode(['erro' => 'Nenhum gateway de pagamento encontrado para o método informado: ' . $metodoPagamento]);
+                return;
             }
-
-            $this->pdo->commit();
 
             echo json_encode($gatewayInfo->getPublicData());
         } catch (Exception $e) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->rollBack();
-            }
-
-            Util::tratarException($e);
+            http_response_code(500);
+            echo json_encode(['erro' => $e->getMessage()]);
         }
     }
 }

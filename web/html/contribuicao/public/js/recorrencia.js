@@ -6,26 +6,26 @@ async function configurarRegrasDePagamento() {
     console.log('Conjunto de regras: ' + regras);
 }
 
-async function decidirAcao() {
+async function decidirAcao(dadosCartao) {
     try {
         switch (acao) {
             case 'recorrencia':
-                await criarAssinatura();
+                await criarAssinatura(dadosCartao);
                 break;
 
             case 'cadastrar':
                 await cadastrarSocio();
-                await criarAssinatura();
+                await criarAssinatura(dadosCartao);
                 break;
 
             case 'atualizar':
                 await atualizarSocio();
-                await criarAssinatura();
+                await criarAssinatura(dadosCartao);
                 break;
 
             case 'cadastrar_existente':
                 await cadastrarSocioPessoaExistente();
-                await criarAssinatura();
+                await criarAssinatura(dadosCartao);
                 break;
 
             default:
@@ -37,7 +37,56 @@ async function decidirAcao() {
     }
 }
 
-function criarAssinatura() {
+function obterDadosCartao() {
+    return {
+        number: document.getElementById('card_number').value.replace(/\D/g, ''),
+        holder_name: document.getElementById('card_holder_name').value.trim(),
+        exp_month: document.getElementById('card_exp_month').value.trim(),
+        exp_year: document.getElementById('card_exp_year').value.trim(),
+        cvv: document.getElementById('card_cvv').value.trim()
+    };
+}
+
+function validarDadosCartao(dadosCartao) {
+    if (dadosCartao.number.length < 13 || dadosCartao.number.length > 19) {
+        alert('Número de cartão inválido. Deve ter entre 13 e 19 dígitos.');
+        return false;
+    }
+
+    if (dadosCartao.holder_name.length < 3) {
+        alert('Por favor, informe o nome como está no cartão.');
+        return false;
+    }
+
+    const mesExpiracao = Number(dadosCartao.exp_month);
+    if (mesExpiracao < 1 || mesExpiracao > 12) {
+        alert('Por favor, informe um mês válido (1-12).');
+        return false;
+    }
+
+    if (dadosCartao.exp_year.length !== 2 && dadosCartao.exp_year.length !== 4) {
+        alert('Por favor, informe um ano válido (2 ou 4 dígitos).');
+        return false;
+    }
+
+    if (dadosCartao.cvv.length < 3) {
+        alert('Por favor, informe o código de segurança do cartão.');
+        return false;
+    }
+
+    return true;
+}
+
+function removerCamposSensiveisCartao(formData) {
+    ['card_number', 'card_holder_name', 'card_exp_month', 'card_exp_year', 'card_cvv'].forEach((campo) => {
+        formData.delete(campo);
+    });
+}
+
+async function criarAssinatura(dadosCartao) {
+    const dados = dadosCartao || obterDadosCartao();
+    const cardToken = await tokenizarCartaoPorMetodoPagamento('Recorrencia', dados);
+
     const form = document.getElementById("formulario");
     const formData = new FormData(form);
     const documento = pegarDocumento();
@@ -45,12 +94,8 @@ function criarAssinatura() {
     formData.append("nomeClasse", "RecorrenciaController");
     formData.append("metodo", "criarAssinatura");
     formData.append("documento_socio", documento);
-
-    formData.append("card_number", document.getElementById('card_number').value);
-    formData.append("card_holder_name", document.getElementById('card_holder_name').value);
-    formData.append("card_exp_month", document.getElementById('card_exp_month').value);
-    formData.append("card_exp_year", document.getElementById('card_exp_year').value);
-    formData.append("card_cvv", document.getElementById('card_cvv').value);
+    removerCamposSensiveisCartao(formData);
+    formData.set("card_token", cardToken);
 
     document.getElementById("pag5").classList.add("hidden");
     document.getElementById("pag6").classList.remove("hidden");
@@ -134,36 +179,9 @@ document.addEventListener('DOMContentLoaded', function () {
         btnFinalizar.addEventListener('click', function (e) {
             e.preventDefault();
 
-            // Validação dos campos do cartão
-            const cardNumber = document.getElementById('card_number').value.replace(/\D/g, '');
-            const cardHolderName = document.getElementById('card_holder_name').value.trim();
-            const cardExpMonth = document.getElementById('card_exp_month').value.trim();
-            const cardExpYear = document.getElementById('card_exp_year').value.trim();
-            const cardCvv = document.getElementById('card_cvv').value.trim();
+            const dadosCartao = obterDadosCartao();
 
-            // Validação de comprimento variável (13-19 dígitos)
-            if (cardNumber.length < 13 || cardNumber.length > 19) {
-                alert('Número de cartão inválido. Deve ter entre 13 e 19 dígitos.');
-                return;
-            }
-
-            if (cardHolderName.length < 3) {
-                alert('Por favor, informe o nome como está no cartão.');
-                return;
-            }
-
-            if (cardExpMonth < 1 || cardExpMonth > 12) {
-                alert('Por favor, informe um mês válido (1-12).');
-                return;
-            }
-
-            if (cardExpYear.length !== 2 && cardExpYear.length !== 4) {
-                alert('Por favor, informe um ano válido (2 ou 4 dígitos).');
-                return;
-            }
-
-            if (cardCvv.length < 3) {
-                alert('Por favor, informe o código de segurança do cartão.');
+            if (!validarDadosCartao(dadosCartao)) {
                 return;
             }
 
@@ -176,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Se todas as validações passarem, processa o pagamento
-            decidirAcao();
+            decidirAcao(dadosCartao);
         });
     }
 });
