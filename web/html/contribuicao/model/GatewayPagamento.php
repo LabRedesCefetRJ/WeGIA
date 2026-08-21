@@ -50,6 +50,20 @@ class GatewayPagamento
     }
 
     /**
+     * Retorna os dados públicos do gateway de pagamento
+     */
+    public function getPublicData()
+    {
+        return [
+            'id' => $this->id,
+            'description' => $this->nome,
+            'endpoint' => $this->endpoint,
+            'publicToken' => $this->publicToken,
+            'status' => $this->status
+        ];
+    }
+
+    /**
      * Get the value of status
      */
     public function getStatus()

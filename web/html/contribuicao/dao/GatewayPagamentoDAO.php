@@ -180,4 +180,23 @@ class GatewayPagamentoDAO
 
         return false;
     }
+
+    public function getGatewayInfoByMethodPayment(string $metodoPagamento):GatewayPagamento|false
+    {
+        //definir consulta sql
+        $sql = "SELECT * FROM contribuicao_gatewayPagamento WHERE plataforma=:metodoPagamento AND status=1 LIMIT 1";
+        //utilizar prepared statements
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':metodoPagamento', $metodoPagamento);
+        //executar
+        $stmt->execute();
+
+        if ($stmt->rowCount() >= 1) {
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['private_token'], $resultado['public_token'], $resultado['status']);
+        }
+
+        return false;
+    }
 }
