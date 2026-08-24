@@ -57,7 +57,6 @@ class SocioBenefitControle
             }
 
             $socioBenefitRule = new SocioBenefitRule(
-                0,
                 (float)$data['valuePerPoint'],
                 (int)$data['maxPointsConcurrent'],
                 (int)$data['durationPointMonths'],
