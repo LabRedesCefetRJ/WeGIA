@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 Util::definirFusoHorario();
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
@@ -82,9 +86,11 @@ try {
   require_once ROOT . "/controle/AtendidoControle.php";
   $cpf1 = new AtendidoControle;
   $cpf1->listarCPF();
-  require_once ROOT . '/dao/TipoRegistroProfissionalDAO.php';
-  $tipoRegistroProfissionalDAO = new TipoRegistroProfissionalDAO();
-  $registroProfissionalTipos = $tipoRegistroProfissionalDAO->listarTodos();
+  require_once ROOT . '/controle/TipoRegistroProfissionalControle.php';
+  $tipoRegistroProfissionalControle = new TipoRegistroProfissionalControle();
+  $registroProfissionalTipos = $tipoRegistroProfissionalControle->listarTodos2();
+  require_once ROOT . '/controle/IdentificadorRegistroProfissionalControle.php';
+  $identificadorRegistroProfissionalControle = new IdentificadorRegistroProfissionalControle();
   require_once "../geral/msg.php";
   $oldInput = getSessionFormData();
   $fieldErrors = getSessionFormErrors();
@@ -362,7 +368,7 @@ try {
       $("#botaoEditarDocumentacao").attr('onclick', "return editar_documentacao()");
     }
 
-    var outrosEditando = false;
+    let outrosEditando = false;
 
     function editar_outros() {
       let pode_editar_cargo = <?php echo $pode_editar_cargo ? 'true' : 'false'; ?>;
@@ -419,7 +425,7 @@ try {
       $("#botaoAdicionarRegistroProfissional").hide();
     }
 
-    var UFS_BRASIL = {
+    let UFS_BRASIL = {
       AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia",
       CE: "Ceará", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás",
       MA: "Maranhão", MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais",
@@ -495,6 +501,37 @@ try {
       });
     }
 
+    function carregarRegistrosProfissionais() {
+      $.ajax({
+        type: 'POST',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'IdentificadorRegistroProfissionalControle',
+          metodo: 'processarRequisicao',
+          action: 'listar',
+          id_funcionario: '<?= $idFuncionario ?>'
+        },
+        dataType: 'json',
+        success: function(response) {
+          listar_registroProfissional(response);
+        },
+        error: function(xhr, status, error) {
+          // Exibe detalhes no Console do Navegador (F12)
+          console.error("Status:", xhr.status);
+          console.error("Resposta do Servidor:", xhr.responseText);
+
+          let mensagem = 'Erro ao buscar os registros profissionais!';
+          if (xhr.responseJSON && xhr.responseJSON.erro) {
+            mensagem = xhr.responseJSON.erro;
+          } else if (xhr.responseText) {
+            mensagem += '\n\nDetalhes: ' + xhr.responseText.substring(0, 200);
+          }
+          
+          exibirErroRegistroProfissional(mensagem);
+        }
+      });
+    }
+
     function salvarEdicaoRegistroProfissional(idRegistro) {
       let linha = $("#registroProfissional" + idRegistro);
       let numero = linha.find(".registro-numero").val();
@@ -505,38 +542,77 @@ try {
         return;
       }
 
-      let data = "action=editar&id_registro=" + encodeURIComponent(idRegistro) +
-        "&numero_registro=" + encodeURIComponent(numero) +
-        "&uf=" + encodeURIComponent(uf) +
-        "&id_funcionario=<?= $idFuncionario ?>";
-
-      post("IdentificadorRegistroProfissionalControle.php", data, listar_registroProfissional);
+      $.ajax({
+        type: 'POST',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'IdentificadorRegistroProfissionalControle',
+          metodo: 'processarRequisicao',
+          action: 'editar',
+          id_registro: idRegistro,
+          numero_registro: numero,
+          uf: uf,
+          id_funcionario: '<?= $idFuncionario ?>'
+        },
+        dataType: 'json',
+        success: function(response) {
+          if (response.erro) {
+            exibirErroRegistroProfissional(response.erro);
+            return;
+          }
+          listar_registroProfissional(response);
+        },
+        error: function() {
+          exibirErroRegistroProfissional('Erro ao salvar as alterações do registro.');
+        }
+      });
     }
 
     function removerRegistroProfissional(idRegistro) {
       if (!window.confirm('Tem certeza que deseja excluir este registro profissional?')) {
         return;
       }
-      let data = "action=remover&id_registro=" + encodeURIComponent(idRegistro) + "&id_funcionario=<?= $idFuncionario ?>";
-      post("IdentificadorRegistroProfissionalControle.php", data, listar_registroProfissional);
+
+      $.ajax({
+        type: 'POST',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'IdentificadorRegistroProfissionalControle',
+          metodo: 'processarRequisicao',
+          action: 'remover',
+          id_registro: idRegistro,
+          id_funcionario: '<?= $idFuncionario ?>'
+        },
+        dataType: 'json',
+        success: function(response) {
+          if (response.erro) {
+            exibirErroRegistroProfissional(response.erro);
+            return;
+          }
+          listar_registroProfissional(response);
+        },
+        error: function() {
+          exibirErroRegistroProfissional('Erro ao remover o registro profissional.');
+        }
+      });
     }
 
     function abrirModalRegistroProfissional() {
       $('#tipo_novoRegistro').prop('selectedIndex', 0);
       $('#numero_novoRegistro').val('');
-      $('#uf_novoRegistro').empty().append(montarSelectUf('').html());
+      
+      let selectUfModal = montarSelectUf('');
+      selectUfModal.attr('id', 'uf_novoRegistro');
+      $('#uf_novoRegistro').replaceWith(selectUfModal);
+      
       $('#modalRegistroProfissional').modal('show');
     }
 
     function adicionar_tipo_registroProfissional() {
       let descricao = window.prompt("Cadastre um novo tipo de registro profissional:");
-      if (!descricao) {
-        return;
-      }
+      if (!descricao) return;
       descricao = descricao.trim();
-      if (descricao === '') {
-        return;
-      }
+      if (descricao === '') return;
 
       $.ajax({
         type: 'POST',
@@ -601,32 +677,40 @@ try {
       let numero = $('#numero_novoRegistro').val();
       let uf = $('#uf_novoRegistro').val();
 
-      if (!idTipo) {
-        exibirErroRegistroProfissional('Selecione o tipo de registro.');
-        return;
-      }
-      if (!numero || numero.trim() === '') {
-        exibirErroRegistroProfissional('Informe o número do registro.');
+      if (!idTipo || !numero || !numero.trim()) {
+        exibirErroRegistroProfissional('Preencha os campos obrigatórios.');
         return;
       }
 
-      let data = "action=adicionar&id_tipo=" + encodeURIComponent(idTipo) +
-        "&numero_registro=" + encodeURIComponent(numero) +
-        "&uf=" + encodeURIComponent(uf || '') +
-        "&id_funcionario=<?= $idFuncionario ?>";
-
-      post("IdentificadorRegistroProfissionalControle.php", data, function(response) {
-        if (response.erro) {
-          exibirErroRegistroProfissional(response.erro);
-          return;
+      $.ajax({
+        type: 'POST',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'IdentificadorRegistroProfissionalControle',
+          metodo: 'processarRequisicao',
+          action: 'adicionar',
+          id_tipo: idTipo,
+          numero_registro: numero,
+          uf: uf,
+          id_funcionario: '<?= $idFuncionario ?>'
+        },
+        dataType: 'json',
+        success: function(response) {
+          if (response.erro) {
+            exibirErroRegistroProfissional(response.erro);
+            return;
+          }
+          listar_registroProfissional(response);
+          $('#closeRegistroProfissionalModal').click();
+        },
+        error: function() {
+          exibirErroRegistroProfissional('Erro ao cadastrar o registro profissional.');
         }
-        listar_registroProfissional(response);
-        $('#closeRegistroProfissionalModal').click();
       });
     }
 
     $(function() {
-      post("IdentificadorRegistroProfissionalControle.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_registroProfissional);
+      carregarRegistrosProfissionais();
     });
 
     function alterardate(data) {

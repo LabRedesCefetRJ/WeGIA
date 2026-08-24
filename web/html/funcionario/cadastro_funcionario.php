@@ -28,6 +28,10 @@ $cpf = $_GET['cpf'];
 $funcionario = new FuncionarioDAO;
 $informacoesFunc = $funcionario->listarPessoaExistente($cpf);
 
+
+require_once ROOT . "/controle/TipoRegistroProfissionalControle.php";
+$tipos = TipoRegistroProfissionalControle::listarTodos2();
+
 require_once "../../classes/Funcionario.php";
 require_once ROOT . "/html/geral/msg.php";
 $dataNascimentoMaxima = Funcionario::getDataNascimentoMaxima();
@@ -377,8 +381,6 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                       <select class="form-control input-lg mb-md" name="registroProfissionalTipo" id="registroProfissional_tipo_input" onchange="exibir_numero_registro()">
                         <option selected disabled value="" >Selecionar</option>
                         <?php
-                        require_once ROOT . "/controle/TipoRegistroProfissionalControle.php";
-                          $tipos = TipoRegistroProfissionalControle::listarTodos2();
                           foreach ($tipos as $tipo) {
                             $selected = (isset($oldInput['registroProfissionalTipo']) && $oldInput['registroProfissionalTipo'] == $tipo['id']) ? ' selected' : '';
                             echo "<option value=\"" . htmlspecialchars($tipo['id']) . "\"" . $selected . ">" . htmlspecialchars($tipo['descricao']) . "</option>";

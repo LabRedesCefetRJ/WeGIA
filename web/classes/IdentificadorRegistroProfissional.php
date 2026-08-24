@@ -44,7 +44,7 @@
 
         public function setUf($uf){
             if($uf === ''){
-                throw new InvalidArgumentException('A UF ser vazia.', 412);
+                throw new InvalidArgumentException('A UF não pode ser vazia.', 412);
             }
             $this->uf = $uf;
         }
