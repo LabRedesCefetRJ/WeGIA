@@ -38,8 +38,8 @@ require_once ROOT . "/html/personalizacao_display.php";
     <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon">
     <script>
         window.WEGIA_VALIDAR_SOCIO_CONFIG = <?php echo json_encode([
-            'apiBaseUrl' => defined('API_BASE_URL') ? API_BASE_URL : '',
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+                                                'apiBaseUrl' => defined('API_BASE_URL') ? API_BASE_URL : '',
+                                            ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
     </script>
 </head>
 
@@ -130,12 +130,12 @@ require_once ROOT . "/html/personalizacao_display.php";
             <section class="socio-resumo-card" id="resumo_socio" hidden aria-hidden="true">
                 <div class="socio-resumo-card__topo">
                     <div class="socio-resumo-card__status">
-                        <div class="socio-resumo-card__status-icone" aria-hidden="true">
-                            <i class="fa fa-check"></i>
+                        <!-- Resultado deve ser dinâmico -->
+                        <div class="socio-resumo-card__status-icone" id="socio-status-icone" aria-hidden="true">
+                            <i class="fa fa-question-circle"></i>
                         </div>
-                        <div>
-                            <h2>Sócio ativo</h2>
-                            <p>Cadastro válido e em dia com suas contribuições.</p>
+                        <div id="socio-status">
+
                         </div>
                     </div>
 
@@ -156,7 +156,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                     </div>
                 </div>
 
-                    <div class="socio-resumo-card__dados">
+                <div class="socio-resumo-card__dados">
                     <div class="socio-avatar" aria-hidden="true">
                         <i class="fa fa-user"></i>
                     </div>

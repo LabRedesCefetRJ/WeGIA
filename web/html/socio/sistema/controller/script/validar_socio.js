@@ -22,7 +22,8 @@ document.addEventListener('DOMContentLoaded', function () {
         inicioContribuicao: document.getElementById('contribuicao_inicio'),
         ultimaContribuicao: document.getElementById('contribuicao_ultima'),
         pontosBeneficios: document.getElementById('pontos_beneficios'),
-        codigoValidacao: document.getElementById('codigo_validacao')
+        codigoValidacao: document.getElementById('codigo_validacao'),
+        socioStatus: document.getElementById('socio-status')
     };
 
     let supportContact = '';
@@ -129,6 +130,44 @@ document.addEventListener('DOMContentLoaded', function () {
     function setTextContent(element, value) {
         if (element) {
             element.textContent = value;
+        }
+    }
+
+    function updateStatusState(state) {
+        const socioStatus = resumoFields.socioStatus;
+        const statusIcon = document.querySelector('.socio-resumo-card__status-icone');
+        const statusIconElement = statusIcon ? statusIcon.querySelector('i') : null;
+
+        if (!socioStatus || !statusIcon) {
+            return;
+        }
+
+        socioStatus.classList.remove('status--ativo', 'status--inativo', 'status--desconhecido');
+        statusIcon.classList.remove('status--ativo', 'status--inativo', 'status--desconhecido');
+
+        let titulo = 'Status desconhecido';
+        let descricao = 'Não foi possível determinar o status do sócio.';
+        let iconClass = 'fa fa-question-circle';
+        let statusClass = 'status--desconhecido';
+
+        if (state === 'ativo') {
+            titulo = 'Sócio ativo';
+            descricao = 'Cadastro válido e com pontos de benefícios disponíveis.';
+            iconClass = 'fa fa-check-circle';
+            statusClass = 'status--ativo';
+        } else if (state === 'inativo') {
+            titulo = 'Sócio inativo';
+            descricao = 'Cadastro válido, mas sem pontos de benefícios.';
+            iconClass = 'fa fa-times-circle';
+            statusClass = 'status--inativo';
+        }
+
+        socioStatus.innerHTML = `<h2>${titulo}</h2><p>${descricao}</p>`;
+        socioStatus.classList.add(statusClass);
+        statusIcon.classList.add(statusClass);
+
+        if (statusIconElement) {
+            statusIconElement.className = iconClass;
         }
     }
 
@@ -249,6 +288,17 @@ document.addEventListener('DOMContentLoaded', function () {
         setTextContent(resumoFields.ultimaContribuicao, formatDate(data.dataUltimaContribuicao));
         setTextContent(resumoFields.pontosBeneficios, String(data.benefit_points ?? 0));
         setTextContent(resumoFields.codigoValidacao, codigoFormatado || '--');
+
+        const benefitPoints = Number(data.benefit_points);
+
+        if (Number.isFinite(benefitPoints) && benefitPoints > 0) {
+            updateStatusState('ativo');
+        } else if (Number.isFinite(benefitPoints) && benefitPoints === 0) {
+            updateStatusState('inativo');
+        } else {
+            updateStatusState('desconhecido');
+        }
+
         toggleCopyButtonState(Boolean(codigoFormatado));
 
         showResumo();

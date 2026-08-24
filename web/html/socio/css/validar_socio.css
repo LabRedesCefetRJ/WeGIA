@@ -209,8 +209,8 @@ main {
     width: 68px;
     height: 68px;
     border-radius: 50%;
-    background: rgba(40, 137, 71, 0.12);
-    color: #2b8b47;
+    background: rgba(108, 117, 125, 0.12);
+    color: #6c757d;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -220,7 +220,6 @@ main {
 
 .socio-resumo-card__status h2 {
     margin: 0 0 6px;
-    color: #22622f;
     font-weight: 700;
     font-size: 30px;
     text-transform: uppercase;
@@ -228,7 +227,46 @@ main {
 
 .socio-resumo-card__status p {
     margin: 0;
+    color: #66717c;
+}
+
+.socio-resumo-card__status.status--ativo h2,
+.socio-resumo-card__status-icone.status--ativo {
+    color: #2b8b47;
+}
+
+.socio-resumo-card__status.status--ativo p {
     color: #54705d;
+}
+
+.socio-resumo-card__status-icone.status--ativo {
+    background: rgba(43, 139, 71, 0.12);
+}
+
+.socio-resumo-card__status.status--inativo h2,
+.socio-resumo-card__status-icone.status--inativo {
+    color: #dc3545;
+}
+
+.socio-resumo-card__status.status--inativo p {
+    color: #8d4a54;
+}
+
+.socio-resumo-card__status-icone.status--inativo {
+    background: rgba(220, 53, 69, 0.12);
+}
+
+.socio-resumo-card__status.status--desconhecido h2,
+.socio-resumo-card__status-icone.status--desconhecido {
+    color: #6c757d;
+}
+
+.socio-resumo-card__status.status--desconhecido p {
+    color: #6c757d;
+}
+
+.socio-resumo-card__status-icone.status--desconhecido {
+    background: rgba(108, 117, 125, 0.12);
 }
 
 .socio-resumo-card__codigo {
