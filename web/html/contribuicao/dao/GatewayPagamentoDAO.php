@@ -127,6 +127,23 @@ class GatewayPagamentoDAO
         }
     }
 
+    /**
+     * Busca só o endpoint atualmente cadastrado para o gateway, independente
+     * do status (ativo ou não) — usado por GatewayPagamento::editar() pra
+     * detectar troca de endpoint mesmo em gateways desativados.
+     */
+    public function buscarEndpointPorId($id)
+    {
+        $sql = "SELECT endpoint FROM contribuicao_gatewayPagamento WHERE id=:id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado ? $resultado['endpoint'] : null;
+    }
+
     public function buscarPorId($id)
     {
         //definir consulta sql
