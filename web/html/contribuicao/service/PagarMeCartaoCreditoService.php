@@ -50,7 +50,21 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                     'credit_card' => [
                         'installments' => 1,
                         'statement_descriptor' => substr($contribuicaoLog->getAgradecimento(), 0, 13),
-                        'card_token' => $cardId
+                        'card_token' => $cardId,
+                        // O billing_address do cartão não é tokenizado junto com o
+                        // card_token — a Pagar.me exige informá-lo aqui, senão a
+                        // API recusa com "validation_error | billing | value is
+                        // required" (confirmado na documentação deles: só o
+                        // número/validade/CVV são tokenizados, o endereço não).
+                        'card' => [
+                            'billing_address' => [
+                                'line_1' => $contribuicaoLog->getSocio()->getLogradouro() . ", " . $contribuicaoLog->getSocio()->getNumeroEndereco(),
+                                'zip_code' => preg_replace('/\D/', '', (string) $contribuicaoLog->getSocio()->getCep()),
+                                'city' => $contribuicaoLog->getSocio()->getCidade(),
+                                'state' => $contribuicaoLog->getSocio()->getEstado(),
+                                'country' => 'BR'
+                            ]
+                        ]
                     ]
                 ]
             ]

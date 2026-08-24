@@ -49,6 +49,18 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                 ]
             ],
             'card_token' => $cardId,
+            // O billing_address do cartão não é tokenizado junto com o
+            // card_token — a Pagar.me exige informá-lo aqui, senão a API
+            // recusa com "validation_error | billing | value is required".
+            'card' => [
+                'billing_address' => [
+                    'line_1' => $recorrencia->getSocio()->getLogradouro() . ", " . $recorrencia->getSocio()->getNumeroEndereco(),
+                    'zip_code' => preg_replace('/\D/', '', (string) $recorrencia->getSocio()->getCep()),
+                    'city' => $recorrencia->getSocio()->getCidade(),
+                    'state' => $recorrencia->getSocio()->getEstado(),
+                    'country' => 'BR'
+                ]
+            ],
             'items' => [
                 [
                     'description' => $agradecimento,
