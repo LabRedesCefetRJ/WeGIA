@@ -69,10 +69,10 @@ $tipoContribuicao = 'Apoio Mensal';
                     <div id="payment-result" class="mt-4 hidden">
                         <div id="success-message" class="alert alert-success p-4">
                             <div class="d-flex justify-content-center mb-3">
-                                <i class="fa fa-check-circle fa-4x text-success"></i>
+                                <i id="success-icon" class="fa fa-check-circle fa-4x text-success"></i>
                             </div>
-                            <h3 class="text-success">Assinatura criada com sucesso!</h3>
-                            <p>Agradecemos pelo seu apoio mensal!</p>
+                            <h3 id="success-title" class="text-success">Assinatura criada com sucesso!</h3>
+                            <p id="success-text">Agradecemos pelo seu apoio mensal!</p>
                         </div>
                         <div id="error-message" class="alert alert-danger p-4 hidden">
                             <div class="d-flex justify-content-center mb-3">
@@ -94,12 +94,17 @@ $tipoContribuicao = 'Apoio Mensal';
     </div>
 </div>
 
+<!-- Device Fingerprint do Mercado Pago: ver observação em cartao_credito.php -->
+<script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
+<!-- SDK do Mercado Pago: usado por tokenizacao_cartao.js só quando o gateway
+     ativo para este meio de pagamento é o Mercado Pago. -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 <script src="../vendor/select2/select2.min.js"></script>
-<script src="../public/js/util.js"></script>
-<script src="../public/js/tokenizacao_cartao.js"></script>
-<script src="../public/js/recorrencia.js"></script>
+<script src="../public/js/util.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/util.js') ?>"></script>
+<script src="../public/js/tokenizacao_cartao.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/tokenizacao_cartao.js') ?>"></script>
+<script src="../public/js/recorrencia.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/recorrencia.js') ?>"></script>
 <!--Busca cep-->
 <script src="../../../Functions/busca_cep.js"></script>
 <?php

@@ -597,24 +597,34 @@ class ContribuicaoLogController
             $contribuicaoLog->setAgradecimento($contribuicaoLogDao->getAgradecimento());
 
             // Processar pagamento
-            $codigoTransacao = $servicoPagamento->processarCartaoCredito($contribuicaoLog);
+            $resultadoPagamento = $servicoPagamento->processarCartaoCredito($contribuicaoLog);
 
-            if (!$codigoTransacao) {
+            if (empty($resultadoPagamento['transacao_id'])) {
                 throw new Exception('Falha no processamento do cartão', 500);
             }
+
+            $codigoTransacao = $resultadoPagamento['transacao_id'];
+            $statusPagamento = $resultadoPagamento['status'] ?? 'em_analise';
 
             // Atualizar registro com código da transação
             $contribuicaoLogDao->alterarCodigoPorId($codigoTransacao, $contribuicaoLog->getId());
 
             // Registrar log do sócio
-            $mensagem = 'Pagamento com cartão processado - ID: ' . htmlspecialchars($codigoTransacao);
+            $mensagem = 'Pagamento com cartão processado - ID: ' . htmlspecialchars($codigoTransacao) . ' - status: ' . $statusPagamento;
             $socioDao->registrarLog($socio, $mensagem, Util::getUserIp(), Util::getUserAgent());
 
             $this->pdo->commit();
 
+            // 'em_analise': o gateway ainda não confirmou a cobrança (pode virar
+            // aprovada ou recusada depois) — NUNCA dizer "aprovado" nesse caso,
+            // senão o pagador acha que pagou e depois recebe e-mail do gateway
+            // dizendo que foi recusado.
             echo json_encode([
                 'sucesso' => true,
-                'mensagem' => 'Pagamento processado com sucesso!',
+                'status' => $statusPagamento,
+                'mensagem' => $statusPagamento === 'aprovado'
+                    ? 'Pagamento aprovado com sucesso!'
+                    : 'Pagamento em análise. Você receberá a confirmação por e-mail assim que o gateway concluir a verificação.',
                 'transacao_id' => htmlspecialchars($codigoTransacao)
             ]);
         } catch (Exception $e) {

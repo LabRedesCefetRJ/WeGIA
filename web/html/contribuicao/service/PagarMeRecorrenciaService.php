@@ -94,7 +94,16 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                     502
                 );
             }
-            return (string)$responseData['id'];
+
+            // Conservador: só considera "aprovado" quando a assinatura já está
+            // ativa. Qualquer outro status (ex: pendente de confirmação da
+            // primeira cobrança) é tratado como em análise.
+            $status = $responseData['status'] ?? null;
+
+            return [
+                'transacao_id' => (string) $responseData['id'],
+                'status' => $status === 'active' ? 'aprovado' : 'em_analise'
+            ];
         } else {
             $this->tratarErroApi($responseData, $httpCode);
         }

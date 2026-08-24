@@ -87,7 +87,27 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                     502
                 );
             }
-            return (string)$responseData['id'];
+
+            // A Pagar.me retorna HTTP 200/201 mesmo para cobranças recusadas — o
+            // resultado real está no campo "status" do pedido, não no HTTP code.
+            $status = $responseData['status'] ?? null;
+
+            if (!in_array($status, ['paid', 'processing', 'pending'], true)) {
+                $motivo = $responseData['charges'][0]['last_transaction']['acquirer_message']
+                    ?? $responseData['charges'][0]['last_transaction']['gateway_response']['errors'][0]['message']
+                    ?? null;
+
+                throw new PaymentServiceException(
+                    'O pagamento com cartão de crédito foi recusado.',
+                    'Pagamento recusado pela API Pagar.me. status: ' . ($status ?? '') . ($motivo ? ' motivo: ' . $motivo : ''),
+                    400
+                );
+            }
+
+            return [
+                'transacao_id' => (string) $responseData['id'],
+                'status' => $status === 'paid' ? 'aprovado' : 'em_analise'
+            ];
         } else {
             $this->tratarErroApi($responseData, $httpCode);
         }

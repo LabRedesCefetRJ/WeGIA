@@ -43,8 +43,71 @@ class PagarMeTokenizacaoCartaoService extends ServicoTokenizacaoCartaoInterface 
             throw new Error('A Pagar.me não retornou o identificador do cartão tokenizado.');
         }
 
-        return resposta.id;
+        // bin: null porque o backend do Pagar.me usa o card_token diretamente
+        // (não precisa dos 6 primeiros dígitos, ao contrário do Mercado Pago).
+        return { id: resposta.id, bin: null };
     }
+}
+
+class MercadoPagoTokenizacaoCartaoService extends ServicoTokenizacaoCartaoInterface {
+    constructor(publicToken) {
+        super();
+        this.mpSdk = new MercadoPago(publicToken, { locale: 'pt-BR' });
+    }
+
+    async tokenizar(dadosCartao) {
+        const anoExpiracao = String(dadosCartao.exp_year).length === 2
+            ? '20' + dadosCartao.exp_year
+            : String(dadosCartao.exp_year);
+
+        try {
+            const cardToken = await this.mpSdk.createCardToken({
+                cardNumber: dadosCartao.number,
+                cardholderName: dadosCartao.holder_name,
+                cardExpirationMonth: dadosCartao.exp_month,
+                cardExpirationYear: anoExpiracao,
+                securityCode: dadosCartao.cvv,
+                identificationType: 'CPF',
+                identificationNumber: dadosCartao.documento
+            });
+
+            // O Mercado Pago exige o BIN (6 primeiros dígitos) separadamente do
+            // token, pra identificar a bandeira do cartão na hora de cobrar.
+            return { id: cardToken.id, bin: cardToken.first_six_digits };
+        } catch (error) {
+            throw new Error(descreverErroMercadoPago(error));
+        }
+    }
+}
+
+/**
+ * Extrai uma mensagem legível do erro retornado por mp.createCardToken().
+ * O SDK do Mercado Pago rejeita a Promise com um objeto que costuma trazer
+ * `cause` (array de {code, description}, um por campo inválido) e/ou
+ * `message` — sem isso, o usuário só veria uma mensagem genérica.
+ */
+function descreverErroMercadoPago(error) {
+    const causas = Array.isArray(error?.cause) ? error.cause : (Array.isArray(error) ? error : null);
+    if (causas && causas.length > 0) {
+        const descricoes = causas
+            .map((causa) => (typeof causa === 'string' ? causa : causa?.description || causa?.message))
+            .filter(Boolean);
+        if (descricoes.length > 0) {
+            return descricoes.join(' ');
+        }
+    }
+    if (typeof error?.message === 'string' && error.message) {
+        return error.message;
+    }
+    try {
+        const bruto = JSON.stringify(error);
+        if (bruto && bruto !== '{}' && bruto !== 'null') {
+            return 'Não foi possível validar os dados do cartão: ' + bruto;
+        }
+    } catch (e) {
+        // ignora falha ao serializar (ex: referência circular)
+    }
+    return 'Não foi possível validar os dados do cartão. Verifique as informações e tente novamente.';
 }
 
 function inferirBandeiraCartao(numeroCartao) {
@@ -74,6 +137,10 @@ function criarServicoTokenizacaoCartao(gatewayInfo) {
 
     if (descricao.includes('pagarme')) {
         return new PagarMeTokenizacaoCartaoService(gatewayInfo.publicToken);
+    }
+
+    if (descricao.includes('mercadopago')) {
+        return new MercadoPagoTokenizacaoCartaoService(gatewayInfo.publicToken);
     }
 
     throw new Error(`Gateway de tokenização não suportado: ${gatewayInfo?.description || 'indefinido'}.`);
