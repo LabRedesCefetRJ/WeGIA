@@ -12,18 +12,18 @@ if (!isset($_SESSION['usuario'])) {
     exit;
 }
 
-require_once '../permissao/permissao.php';
+require_once '../permissao/permissao.php'; 
 require_once '../personalizacao_display.php';
 require_once '../geral/msg.php';
 require_once '../../classes/Csrf.php';
 require_once '../../dao/Conexao.php';
 
-$idFiliacao = filter_input(INPUT_GET, 'id_filiacao', FILTER_VALIDATE_INT);
+$idFiliado = filter_input(INPUT_GET, 'id_filiado', FILTER_VALIDATE_INT);
 $idFuncionario = filter_input(INPUT_GET, 'id_funcionario', FILTER_VALIDATE_INT);
 
 permissao($_SESSION['id_pessoa'], 11, 7);
 
-if (!$idFiliacao || $idFiliacao < 1 || !$idFuncionario || $idFuncionario < 1) {
+if (!$idFiliado || $idFiliado < 1 || !$idFuncionario || $idFuncionario < 1) {
     http_response_code(400);
     exit('Os dados da filiação informada não são válidos.');
 }
@@ -32,7 +32,7 @@ try {
     $pdo = Conexao::connect();
 
     $stmt = $pdo->prepare(
-        'SELECT fi.id_filiacao, fi.id_filiado, fi.id_parentesco,
+        'SELECT fi.id_filiado, fi.id_parentesco,
                 par.descricao AS parentesco, p.cpf, p.nome, p.sexo, p.email, p.telefone,
                 p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro,
                 p.numero_endereco, p.complemento, p.ibge, p.registro_geral,
@@ -43,10 +43,10 @@ try {
          INNER JOIN pessoa p ON p.id_pessoa = fi.id_filiado
          INNER JOIN pessoa pf ON pf.id_pessoa = fi.id_pessoa
          INNER JOIN parentesco par ON par.id_parentesco = fi.id_parentesco
-         WHERE fi.id_filiacao = :id_filiacao AND responsavel.id_funcionario = :id_funcionario'
+         WHERE fi.id_filiado = :id_filiado AND responsavel.id_funcionario = :id_funcionario'
     );
     $stmt->execute([
-        ':id_filiacao' => $idFiliacao,
+        ':id_filiado' => $idFiliado,
         ':id_funcionario' => $idFuncionario,
     ]);
     $filiacao = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -81,6 +81,7 @@ $perfilUrl = 'profile_funcionario.php?id_funcionario=' . (int)$idFuncionario . '
     <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
     <link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
     <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
     <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
     <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
@@ -124,7 +125,8 @@ $perfilUrl = 'profile_funcionario.php?id_funcionario=' . (int)$idFuncionario . '
                                         <?= Csrf::inputField() ?>
                                         <input type="hidden" name="nomeClasse" value="FiliacaoControle">
                                         <input type="hidden" name="metodo" value="editarInfoPessoal">
-                                        <input type="hidden" name="id_filiacao" value="<?= (int)$idFiliacao ?>">
+                                        
+                                        <input type="hidden" name="id_filiado" value="<?= (int)$idFiliado ?>">
                                         <input type="hidden" name="id_funcionario" value="<?= (int)$idFuncionario ?>">
 
                                         <h4 class="mb-xlg">Informações Pessoais</h4>
@@ -158,9 +160,9 @@ $perfilUrl = 'profile_funcionario.php?id_funcionario=' . (int)$idFuncionario . '
                                             </div>
                                         </div>
                                         <div class="form-group">
-                                            <label class="col-md-3 control-label" for="telefone">Telefone</label>
+                                            <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                                             <div class="col-md-6">
-                                                <input type="text" class="form-control" name="telefone" id="telefone" maxlength="14" placeholder="Ex: (22)99999-9999" value="<?= $h($filiacao['telefone']) ?>" oninput="this.value = this.value.replace(/[^0-9()+ -]/g, '')">
+                                            <input type="text" class="form-control" maxlength="14" minlength="13" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" oninput="formatarTelefone(this)" value="<?= $h($filiacao['telefone']) ?>" required>
                                             </div>
                                         </div>
                                         <div class="form-group">
@@ -187,7 +189,7 @@ $perfilUrl = 'profile_funcionario.php?id_funcionario=' . (int)$idFuncionario . '
                                         <?= Csrf::inputField() ?>
                                         <input type="hidden" name="nomeClasse" value="FiliacaoControle">
                                         <input type="hidden" name="metodo" value="editarDocumentacao">
-                                        <input type="hidden" name="id_filiacao" value="<?= (int)$idFiliacao ?>">
+                                        <input type="hidden" name="id_filiado" value="<?= (int)$idFiliado ?>">
                                         <input type="hidden" name="id_funcionario" value="<?= (int)$idFuncionario ?>">
 
                                         <h4 class="mb-xlg">Documentação</h4>
@@ -227,7 +229,7 @@ $perfilUrl = 'profile_funcionario.php?id_funcionario=' . (int)$idFuncionario . '
                                         <?= Csrf::inputField() ?>
                                         <input type="hidden" name="nomeClasse" value="FiliacaoControle">
                                         <input type="hidden" name="metodo" value="editarEndereco">
-                                        <input type="hidden" name="id_filiacao" value="<?= (int)$idFiliacao ?>">
+                                        <input type="hidden" name="id_filiado" value="<?= (int)$idFiliado ?>">
                                         <input type="hidden" name="id_funcionario" value="<?= (int)$idFuncionario ?>">
 
                                         <h4 class="mb-xlg">Endereço</h4>
@@ -300,6 +302,22 @@ $perfilUrl = 'profile_funcionario.php?id_funcionario=' . (int)$idFuncionario . '
                 ruaIds: ['logradouro']
             });
         });
+
+        function formatarTelefone(input) {
+            let v = input.value.replace(/\D/g, "");
+            if (v.length > 11) v = v.substring(0, 11);
+            let formatado = v;
+            if (v.length > 10) { 
+                formatado = v.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1)$2-$3");
+                } else if (v.length > 6) { 
+                formatado = v.replace(/^(\d{2})(\d{4})(\d{1,4}).*/, "($1)$2-$3");
+                } else if (v.length > 2) { 
+                formatado = v.replace(/^(\d{2})(\d{1,5})/, "($1)$2");
+                } else if (v.length > 0) { 
+                formatado = v.replace(/^(\d{1,2})/, "($1");
+                }
+            input.value = formatado;
+        }
     </script>
 </body>
 
