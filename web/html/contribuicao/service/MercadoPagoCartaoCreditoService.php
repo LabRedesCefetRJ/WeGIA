@@ -8,21 +8,18 @@ require_once 'MercadoPagoCardTokenTrait.php';
 /**
  * Implementação do processamento de cartão de crédito via API do Mercado Pago.
  *
- * Fluxo (Checkout API / Core Methods), ambas as chamadas no mesmo host do
- * endPoint cadastrado para o gateway — nada de URL fixa no código, igual ao
- * restante do sistema:
- *  1) Gera um card_token a partir dos dados do cartão (POST /v1/card_tokens);
- *  2) Cria o pagamento usando o token gerado (POST /v1/payments), no mesmo
- *     endPoint já cadastrado para o gateway (o mesmo utilizado pelo Pix/Boleto).
+ * O card_token é gerado no FRONT-END (SDK MercadoPago.js v2, ver
+ * cartao_credito.js) — como recomendado pelo próprio Mercado Pago — e chega
+ * pronto via POST. O backend só cria o pagamento (POST /v1/payments, no
+ * endPoint cadastrado para o gateway). O número do cartão e o CVV nunca
+ * trafegam pelo nosso servidor.
  *
- * IMPORTANTE (segurança): o ideal, recomendado pelo próprio Mercado Pago, é
- * gerar o card_token no FRONT-END com o SDK MercadoPago.js / Secure Fields,
- * para que o número do cartão e o CVV nunca trafeguem pelo seu servidor
- * (reduz o escopo de PCI-DSS). Esta implementação segue o mesmo padrão já
- * usado em PagarMeCartaoCreditoService.php (dados brutos do cartão chegam
- * via POST ao backend) para manter compatibilidade com o formulário atual
- * (view/components/contribuicao_cartao.php). Se possível, migre para
- * tokenização no front-end futuramente.
+ * A Public Key do gateway é OBRIGATÓRIA para esse fluxo: sem ela, o
+ * front-end não consegue tokenizar, e o pagamento é recusado explicitamente
+ * (ver validação abaixo) em vez de cair num fallback de tokenização pelo
+ * servidor — que faria a chamada à API do Mercado Pago chegar com o IP do
+ * servidor, descasado do device fingerprint do security.js, aumentando a
+ * recusa por antifraude (cc_rejected_high_risk).
  */
 class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterface
 {
@@ -41,48 +38,28 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
             );
         }
 
-        $accessToken = $gatewayPagamento['token'];
+        $accessToken = $gatewayPagamento['private_token'];
         $endpoint = $gatewayPagamento['endPoint']; // ex: https://api.mercadopago.com/v1/payments
 
-        // Mesmo host do endPoint cadastrado para o gateway, igual ao padrão usado em
-        // MercadoPagoContribuicoesService.php — não fica fixo em api.mercadopago.com.
-        $host = parse_url($endpoint, PHP_URL_HOST) ?: 'api.mercadopago.com';
-        $urlCardTokens = 'https://' . $host . '/v1/card_tokens';
+        // Token do cartão e BIN (6 primeiros dígitos), gerados no navegador do
+        // pagador pelo SDK MercadoPago.js v2 (ver cartao_credito.js). Sem eles, a
+        // Public Key do gateway não está configurada — recusa explicitamente em
+        // vez de tokenizar pelo servidor.
+        $cardTokenId = filter_input(INPUT_POST, 'card_token');
+        $cardBin = filter_input(INPUT_POST, 'card_bin');
 
-        // Dados do cartão informados no formulário
-        $cardNumber = preg_replace('/\D/', '', (string) filter_input(INPUT_POST, 'card_number'));
-        $cardExpMonth = filter_input(INPUT_POST, 'card_exp_month');
-        $cardExpYear = filter_input(INPUT_POST, 'card_exp_year');
-        $cardHolderName = filter_input(INPUT_POST, 'card_holder_name');
-        $cardCvv = filter_input(INPUT_POST, 'card_cvv');
-
-        if (!$cardNumber || !$cardExpMonth || !$cardExpYear || !$cardHolderName || !$cardCvv) {
+        if (empty($cardTokenId) || empty($cardBin)) {
             throw new PaymentServiceException(
                 'Não foi possível processar o pagamento com cartão de crédito no momento.',
-                'Dados do cartão de crédito incompletos.',
+                'Token do cartão (tokenização no navegador) não informado. Verifique se a Public Key do Mercado Pago está configurada no Gateway de Pagamento.',
                 400
             );
         }
 
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
-        $anoExpiracao = strlen((string) $cardExpYear) === 2 ? '20' . $cardExpYear : (string) $cardExpYear;
 
-        // 1) Gerar o token do cartão. A API de pagamentos do Mercado Pago não aceita
-        // o número do cartão em texto puro; é obrigatório usar um token.
-        $cardTokenId = $this->criarCardToken(
-            $urlCardTokens,
-            $accessToken,
-            $cardNumber,
-            (int) $cardExpMonth,
-            (int) $anoExpiracao,
-            $cardCvv,
-            $cardHolderName,
-            $cpfSemMascara,
-            'Não foi possível processar o pagamento com cartão de crédito no momento.'
-        );
-
-        // 2) Identificar a bandeira pelo BIN, exigida no payment_method_id da cobrança
-        $paymentMethodId = $this->identificarBandeira($cardNumber);
+        // Identificar a bandeira pelo BIN, exigida no payment_method_id da cobrança
+        $paymentMethodId = $this->identificarBandeira($cardBin);
 
         // Endereço e telefone do sócio: a API aceita o pagamento sem esses dados,
         // mas o Mercado Pago recomenda enviá-los (payer.address, payer.phone e
@@ -128,7 +105,7 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
             $additionalInfoPayer['phone'] = $telefone;
         }
 
-        // 3) Criar o pagamento propriamente dito
+        // Criar o pagamento propriamente dito
         $data = [
             'transaction_amount' => (float) $contribuicaoLog->getValor(),
             'token' => $cardTokenId,
@@ -182,7 +159,10 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
 
         $status = $responseData['status'] ?? null;
 
-        // approved: aprovado | in_process/pending: em análise | qualquer outro: recusado
+        // approved/authorized: aprovado de fato | in_process/pending: o Mercado
+        // Pago ainda está analisando (pode virar aprovado OU recusado depois —
+        // NÃO é sinônimo de aprovado, mesmo que pareça um "sucesso" síncrono) |
+        // qualquer outro: recusado.
         if (!in_array($status, ['approved', 'authorized', 'in_process', 'pending'], true)) {
             $this->tratarPagamentoRecusado($responseData);
         }
@@ -195,16 +175,20 @@ class MercadoPagoCartaoCreditoService implements ApiCartaoCreditoServiceInterfac
             );
         }
 
-        return (string) $responseData['id'];
+        return [
+            'transacao_id' => (string) $responseData['id'],
+            'status' => in_array($status, ['approved', 'authorized'], true) ? 'aprovado' : 'em_analise'
+        ];
     }
 
     /**
-     * Identifica a bandeira do cartão a partir do BIN (primeiros dígitos do número),
-     * necessária para o campo payment_method_id exigido pela API do Mercado Pago.
+     * Identifica a bandeira do cartão a partir do BIN (6 primeiros dígitos do
+     * número), necessária para o campo payment_method_id exigido pela API do
+     * Mercado Pago.
      */
-    private function identificarBandeira($cardNumber)
+    private function identificarBandeira($cardBin)
     {
-        $bin = substr($cardNumber, 0, 6);
+        $bin = substr($cardBin, 0, 6);
 
         if (preg_match('/^4/', $bin)) {
             return 'visa';

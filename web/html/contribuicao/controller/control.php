@@ -52,6 +52,9 @@ try {
         ],
         'ContactController' => [
             'getSupportContact'
+        ],
+        'GatewayPagamentoController' => [
+            'getGatewayInfoByMethodPayment'
         ]
     ];
 

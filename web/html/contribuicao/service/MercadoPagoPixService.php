@@ -77,7 +77,7 @@ class MercadoPagoPixService implements ApiPixServiceInterface
         }',
         CURLOPT_HTTPHEADER => array(
             'Content-Type: application/json',
-            'Authorization: Bearer ' . $gatewayPagamento['token'],
+            'Authorization: Bearer ' . $gatewayPagamento['private_token'],
             'X-Idempotency-Key: ' . $numeroDocumento
         ),
         ));

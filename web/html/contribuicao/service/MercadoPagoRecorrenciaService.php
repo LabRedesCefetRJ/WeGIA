@@ -10,16 +10,17 @@ require_once 'MercadoPagoCardTokenTrait.php';
  * um "authorized_payment", que MercadoPagoContribuicoesService::getInvoices()
  * já sabe consultar.
  *
+ * O card_token é gerado no FRONT-END (SDK MercadoPago.js v2, ver
+ * recorrencia.js) e chega pronto via POST — obrigatório, ver validação
+ * abaixo (mesmo racional de MercadoPagoCartaoCreditoService.php).
+ *
  * Fluxo (todas as chamadas no mesmo host do endPoint cadastrado para o
  * gateway, igual ao restante do sistema — nada de URL fixa no código):
- *  1) Gera um card_token a partir dos dados do cartão (POST /v1/card_tokens),
- *     igual ao MercadoPagoCartaoCreditoService.php — etapa interna, não é a
- *     operação em si (mesmo padrão do card_tokens no serviço de cartão);
- *  2) Cria um preapproval_plan com o valor e a frequência da contribuição
+ *  1) Cria um preapproval_plan com o valor e a frequência da contribuição
  *     (POST /preapproval_plan) — nessa conta, autorizar a assinatura direto
  *     com card_token_id (sem redirecionar o pagador pro checkout do Mercado
- *     Pago) só funciona vinculado a um plano. Também etapa interna;
- *  3) Cria o preapproval propriamente dito (POST {endPoint cadastrado no
+ *     Pago) só funciona vinculado a um plano. Etapa interna;
+ *  2) Cria o preapproval propriamente dito (POST {endPoint cadastrado no
  *     gateway}), vinculado ao plano, autorizado imediatamente com o
  *     card_token_id. Essa é a operação principal.
  */
@@ -40,56 +41,38 @@ class MercadoPagoRecorrenciaService implements ApiRecorrenciaServiceInterface
             );
         }
 
-        $accessToken = $gatewayPagamento['token'];
+        $accessToken = $gatewayPagamento['private_token'];
         $endpoint = $gatewayPagamento['endPoint']; // ex: https://api.mercadopago.com/preapproval
 
         // Mesmo host do endPoint cadastrado para o gateway, igual ao padrão usado em
         // MercadoPagoContribuicoesService.php — não fica fixo em api.mercadopago.com.
         $host = parse_url($endpoint, PHP_URL_HOST) ?: 'api.mercadopago.com';
-        $urlCardTokens = 'https://' . $host . '/v1/card_tokens';
         $urlPreapprovalPlan = 'https://' . $host . '/preapproval_plan';
 
-        // Dados do cartão informados no formulário (mesmos campos usados em cartao_credito.php)
-        $cardNumber = preg_replace('/\D/', '', (string) filter_input(INPUT_POST, 'card_number'));
-        $cardExpMonth = filter_input(INPUT_POST, 'card_exp_month');
-        $cardExpYear = filter_input(INPUT_POST, 'card_exp_year');
-        $cardHolderName = filter_input(INPUT_POST, 'card_holder_name');
-        $cardCvv = filter_input(INPUT_POST, 'card_cvv');
-
-        if (!$cardNumber || !$cardExpMonth || !$cardExpYear || !$cardHolderName || !$cardCvv) {
-            throw new PaymentServiceException(
-                'Não foi possível criar a assinatura no momento. Tente novamente mais tarde.',
-                'Dados do cartão de crédito incompletos.',
-                400
-            );
-        }
-
         $socio = $recorrencia->getSocio();
-        $cpfSemMascara = Util::limpaCpf($socio->getDocumento());
-        $anoExpiracao = strlen((string) $cardExpYear) === 2 ? '20' . $cardExpYear : (string) $cardExpYear;
 
         // Device Fingerprint (security.js no front-end), mesmo racional do
         // MercadoPagoCartaoCreditoService.php: ajuda o antifraude a não tratar
         // a autorização da assinatura como suspeita por falta de contexto.
         $deviceId = filter_input(INPUT_POST, 'device_id');
 
-        // 1) Gerar o token do cartão
-        $cardTokenId = $this->criarCardToken(
-            $urlCardTokens,
-            $accessToken,
-            $cardNumber,
-            (int) $cardExpMonth,
-            (int) $anoExpiracao,
-            $cardCvv,
-            $cardHolderName,
-            $cpfSemMascara,
-            'Não foi possível criar a assinatura no momento. Tente novamente mais tarde.'
-        );
+        // Token do cartão, gerado no navegador do pagador pelo SDK MercadoPago.js
+        // v2 (ver recorrencia.js). Sem ele, a Public Key do gateway não está
+        // configurada — recusa explicitamente em vez de tokenizar pelo servidor.
+        $cardTokenId = filter_input(INPUT_POST, 'card_token');
 
-        // 2) Criar o plano com o valor e a frequência dessa contribuição
+        if (empty($cardTokenId)) {
+            throw new PaymentServiceException(
+                'Não foi possível criar a assinatura no momento. Tente novamente mais tarde.',
+                'Token do cartão (tokenização no navegador) não informado. Verifique se a Public Key do Mercado Pago está configurada no Gateway de Pagamento.',
+                400
+            );
+        }
+
+        // 1) Criar o plano com o valor e a frequência dessa contribuição
         $planId = $this->criarPlano($urlPreapprovalPlan, $accessToken, $recorrencia, $deviceId);
 
-        // 3) Autorizar a assinatura vinculada ao plano, direto com o card_token_id
+        // 2) Autorizar a assinatura vinculada ao plano, direto com o card_token_id
         $headers = [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $accessToken,
@@ -150,7 +133,15 @@ class MercadoPagoRecorrenciaService implements ApiRecorrenciaServiceInterface
             );
         }
 
-        return (string) $responseData['id'];
+        // Pedimos status "authorized" na criação (autorização imediata com
+        // card_token_id), mas o Mercado Pago pode devolver "pending" quando não
+        // consegue autorizar de imediato — isso NÃO é uma assinatura ativa ainda.
+        $status = $responseData['status'] ?? null;
+
+        return [
+            'transacao_id' => (string) $responseData['id'],
+            'status' => $status === 'authorized' ? 'aprovado' : 'em_analise'
+        ];
     }
 
     /**

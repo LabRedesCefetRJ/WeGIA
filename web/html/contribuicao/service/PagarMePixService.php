@@ -18,7 +18,7 @@ class PagarMePixService implements ApiPixServiceInterface
             $expires_in = 3600;
 
             $headers = [
-                'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+                'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
                 `uri: {$gatewayPagamento['endPoint']}`,
                 'Content-Type: application/json;charset=UTF-8'
             ];

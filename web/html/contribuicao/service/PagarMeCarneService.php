@@ -27,7 +27,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
             //Configurar cabeçalho da requisição
             $headers = [
-                'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+                'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
                 'Content-Type: application/json;charset=utf-8',
             ];
 

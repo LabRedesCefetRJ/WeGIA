@@ -171,8 +171,11 @@ class Util
             header('Content-Type: application/json; charset=utf-8');
         }
 
-        // Código HTTP seguro
-        $httpCode = $e->getCode();
+        // Código HTTP seguro. getCode() nem sempre é um int utilizável como HTTP
+        // status — PDOException, por exemplo, usa o SQLSTATE (ex: "42S22"), uma
+        // string não numérica que quebraria a comparação abaixo e faria
+        // http_response_code() lançar TypeError.
+        $httpCode = (int) $e->getCode();
         if ($httpCode < 400 || $httpCode > 599) {
             $httpCode = 500;
         }
@@ -180,11 +183,10 @@ class Util
 
         // Mensagem para o cliente
         if ($e instanceof PaymentServiceException) {
-    echo json_encode([
-        'erro' => $e->getMensagemCliente(),
-        'debug' => $e->getMessage()  // REMOVER depois de debugar!
-    ]);
-} elseif ($e instanceof PDOException) {
+            echo json_encode([
+                'erro' => $e->getMensagemCliente()
+            ]);
+        } elseif ($e instanceof PDOException) {
             echo json_encode([
                 'erro' => 'Erro interno ao acessar o banco de dados'
             ]);

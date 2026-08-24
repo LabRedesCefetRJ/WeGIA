@@ -1,58 +1,19 @@
 <?php
 
 /**
- * POST em JSON e tokenização de cartão (POST /v1/card_tokens) compartilhados entre
- * MercadoPagoCartaoCreditoService e MercadoPagoRecorrenciaService — ambos precisam
- * do mesmo token de cartão antes de criar o pagamento/assinatura na API do Mercado Pago.
+ * POST em JSON compartilhado entre MercadoPagoCartaoCreditoService e
+ * MercadoPagoRecorrenciaService.
+ *
+ * A tokenização do cartão (POST /v1/card_tokens) é obrigatória no FRONT-END
+ * (SDK MercadoPago.js v2, ver cartao_credito.js/recorrencia.js) — o backend só
+ * recebe o card_token já pronto via POST. Isso é exigido porque a chamada de
+ * tokenização precisa vir do navegador do pagador: se o servidor tokenizasse
+ * o cartão, a chamada chegaria à API do Mercado Pago com o IP do servidor,
+ * descasado do device fingerprint do security.js, aumentando a recusa por
+ * antifraude (cc_rejected_high_risk).
  */
 trait MercadoPagoCardTokenTrait
 {
-    /**
-     * Gera um token de cartão (POST /v1/card_tokens), pré-requisito para operações que
-     * não podem trafegar o número do cartão em texto puro na API do Mercado Pago.
-     */
-    private function criarCardToken($urlCardTokens, $accessToken, $cardNumber, $expMonth, $expYear, $cvv, $holderName, $cpf, string $mensagemErroCliente)
-    {
-        $data = [
-            'card_number' => $cardNumber,
-            'expiration_month' => $expMonth,
-            'expiration_year' => $expYear,
-            'security_code' => $cvv,
-            'cardholder' => [
-                'name' => $holderName,
-                'identification' => [
-                    'type' => 'CPF',
-                    'number' => $cpf
-                ]
-            ]
-        ];
-
-        $headers = [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $accessToken
-        ];
-
-        [$httpCode, $responseData, $curlError] = $this->post($urlCardTokens, $data, $headers);
-
-        if ($curlError) {
-            throw new PaymentServiceException(
-                $mensagemErroCliente,
-                'Erro cURL ao gerar o token do cartão na API Mercado Pago: ' . $curlError,
-                502
-            );
-        }
-
-        if (($httpCode !== 200 && $httpCode !== 201) || empty($responseData['id'])) {
-            throw new PaymentServiceException(
-                $mensagemErroCliente,
-                'Falha ao gerar o token do cartão. Verifique os dados informados. HTTP ' . $httpCode . ' - ' . json_encode($responseData),
-                400
-            );
-        }
-
-        return $responseData['id'];
-    }
-
     /**
      * Executa um POST em JSON e devolve [httpCode, responseDataAssoc, curlErrorOuNull]
      */

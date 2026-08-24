@@ -153,7 +153,7 @@ class MercadoPagoContribuicoesService implements ApiContribuicoesServiceInterfac
             $url = $searchUrl . '?' . http_build_query($query);
 
             $headers = [
-                'Authorization: Bearer ' . $gatewayPagamento->getToken(),
+                'Authorization: Bearer ' . $gatewayPagamento->getPrivateToken(),
             ];
 
             $ch = curl_init();
@@ -226,7 +226,7 @@ class MercadoPagoContribuicoesService implements ApiContribuicoesServiceInterfac
             $url = $searchUrl . '?' . http_build_query($query);
 
             $headers = [
-                'Authorization: Bearer ' . $gatewayPagamento->getToken(),
+                'Authorization: Bearer ' . $gatewayPagamento->getPrivateToken(),
             ];
 
             $ch = curl_init();

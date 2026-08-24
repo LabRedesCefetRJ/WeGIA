@@ -10,16 +10,12 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
         $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($contribuicaoLog->getGatewayPagamento()->getId());
 
         $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+            'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
             'Content-Type: application/json;charset=utf-8',
         ];
 
         //Dados do cartão
-        $cardNumber = preg_replace('/\D/', '', filter_input(INPUT_POST, 'card_number'));
-        $cardExpMonth = filter_input(INPUT_POST, 'card_exp_month');
-        $cardExpYear = filter_input(INPUT_POST, 'card_exp_year');
-        $cardHolderName = filter_input(INPUT_POST, 'card_holder_name');
-        $cardCvv = filter_input(INPUT_POST, 'card_cvv');
+        $cardId = filter_input(INPUT_POST, 'card_token', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_token'] ?? null;
 
         $code = $contribuicaoLog->getCodigo();
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
@@ -54,20 +50,7 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                     'credit_card' => [
                         'installments' => 1,
                         'statement_descriptor' => substr($contribuicaoLog->getAgradecimento(), 0, 13),
-                        'card' => [
-                            'number' => $cardNumber,
-                            'holder_name' => $cardHolderName,
-                            'exp_month' => (int)$cardExpMonth,
-                            'exp_year' => (int)$cardExpYear,
-                            'cvv' => $cardCvv,
-                            'billing_address' => [
-                                'line_1' => $contribuicaoLog->getSocio()->getLogradouro() . ", " . $contribuicaoLog->getSocio()->getNumeroEndereco(),
-                                'zip_code' => $contribuicaoLog->getSocio()->getCep(),
-                                'city' => $contribuicaoLog->getSocio()->getCidade(),
-                                'state' => $contribuicaoLog->getSocio()->getEstado(),
-                                'country' => 'BR'
-                            ]
-                        ]
+                        'card_token' => $cardId
                     ]
                 ]
             ]
@@ -104,7 +87,27 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                     502
                 );
             }
-            return (string)$responseData['id'];
+
+            // A Pagar.me retorna HTTP 200/201 mesmo para cobranças recusadas — o
+            // resultado real está no campo "status" do pedido, não no HTTP code.
+            $status = $responseData['status'] ?? null;
+
+            if (!in_array($status, ['paid', 'processing', 'pending'], true)) {
+                $motivo = $responseData['charges'][0]['last_transaction']['acquirer_message']
+                    ?? $responseData['charges'][0]['last_transaction']['gateway_response']['errors'][0]['message']
+                    ?? null;
+
+                throw new PaymentServiceException(
+                    'O pagamento com cartão de crédito foi recusado.',
+                    'Pagamento recusado pela API Pagar.me. status: ' . ($status ?? '') . ($motivo ? ' motivo: ' . $motivo : ''),
+                    400
+                );
+            }
+
+            return [
+                'transacao_id' => (string) $responseData['id'],
+                'status' => $status === 'paid' ? 'aprovado' : 'em_analise'
+            ];
         } else {
             $this->tratarErroApi($responseData, $httpCode);
         }

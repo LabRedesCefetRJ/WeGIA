@@ -32,7 +32,7 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
                 );
             }
 
-            $accessToken = $gatewayPagamento['token'];
+            $accessToken = $gatewayPagamento['private_token'];
             $endpoint = $gatewayPagamento['endPoint']; // ex: https://api.mercadopago.com/v1/payments
 
             $dataVencimento = $contribuicaoLog->getDataVencimento() . 'T12:59:59.000-04:00';
