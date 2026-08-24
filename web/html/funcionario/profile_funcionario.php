@@ -547,7 +547,7 @@ try {
         const editarButton = $("<button type='button' class='btn btn-primary' title='Editar'><i class='fas fa-user-edit'></i></button>")
           .on('click', function() { editarFiliacao(item); });
         const excluirButton = $("<button type='button' class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button>")
-          .on('click', function() { excluirFiliacao(item.id_filiacao); });
+          .on('click', function() { excluirFiliacao(item.id_filiado); });
         $("#filiacao-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome))
@@ -592,12 +592,12 @@ try {
     }
 
     function editarFiliacao(filiacao) {
-      const idFiliacao = Number(filiacao.id_filiacao);
-      if (!idFiliacao) {
+      const idFiliado = Number(filiacao.id_filiado);
+      if (!idFiliado) {
         return;
       }
 
-      window.location.href = 'filiacao_editar.php?id_filiacao=' + encodeURIComponent(idFiliacao) + '&id_funcionario=<?= (int)$idFuncionario ?>';
+      window.location.href = 'filiacao_editar.php?id_filiado=' + encodeURIComponent(idFiliado) + '&id_funcionario=<?= (int)$idFuncionario ?>';
     }
 
     function abrirResumoFiliacao(item, urlEdicao) {
@@ -639,18 +639,18 @@ try {
         $(this).toggle(Boolean(valor));
       });
 
-      $('#filiacaoResumoVerMais').attr('href', urlEdicao + '&id_filiacao=' + encodeURIComponent(item.id_filiacao));
+      $('#filiacaoResumoVerMais').attr('href', urlEdicao + '&id_filiado=' + encodeURIComponent(item.id_filiado));
       $('#filiacaoResumoModal').modal('show');
     }
 
-    function excluirFiliacao(idFiliacao) {
+    function excluirFiliacao(idFiliado) {
       if (!window.confirm('Tem certeza que deseja excluir esta filiação?')) {
         return;
       }
       const form = $('<form>', { method: 'post', action: '../../controle/control.php' });
       form.append($('<input>', { type: 'hidden', name: 'nomeClasse', value: 'FiliacaoControle' }));
       form.append($('<input>', { type: 'hidden', name: 'metodo', value: 'excluir' }));
-      form.append($('<input>', { type: 'hidden', name: 'id_filiacao', value: idFiliacao }));
+      form.append($('<input>', { type: 'hidden', name: 'id_filiado', value: idFiliado }));
       form.append($('<input>', { type: 'hidden', name: 'id_funcionario', value: <?= (int)$idFuncionario ?> }));
       form.append($('<input>', { type: 'hidden', name: 'csrf_token', value: $('input[name="csrf_token"]').first().val() }));
       $('body').append(form);
