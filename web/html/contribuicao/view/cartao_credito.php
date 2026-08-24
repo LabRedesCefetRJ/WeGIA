@@ -94,6 +94,7 @@ $tipoContribuicao = 'Cartão de Crédito';
 <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 <script src="../vendor/select2/select2.min.js"></script>
 <script src="../public/js/util.js"></script>
+<script src="../public/js/tokenizacao_cartao.js"></script>
 <script src="../public/js/cartao_credito.js"></script>
 <!--Busca cep-->
 <script src="../../../Functions/busca_cep.js"></script>

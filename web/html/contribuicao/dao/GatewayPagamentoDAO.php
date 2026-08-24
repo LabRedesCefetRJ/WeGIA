@@ -180,4 +180,23 @@ class GatewayPagamentoDAO
 
         return false;
     }
+
+    public function getGatewayInfoByMethodPayment(string $metodoPagamento):GatewayPagamento|false
+    {
+        //definir consulta sql
+        $query = 'SELECT cgp.* FROM contribuicao_gatewayPagamento cgp JOIN contribuicao_meioPagamento cmp ON (cgp.id = cmp.id_plataforma) WHERE cmp.meio = :paymentMethod AND cgp.status = 1';
+        //utilizar prepared statements
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':paymentMethod', $metodoPagamento);
+        //executar
+        $stmt->execute();
+
+        if ($stmt->rowCount() >= 1) {
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['private_token'], $resultado['public_token'], $resultado['status'], $resultado['id']);
+        }
+
+        return false;
+    }
 }

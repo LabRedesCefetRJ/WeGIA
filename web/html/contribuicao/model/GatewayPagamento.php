@@ -10,13 +10,17 @@ class GatewayPagamento
     private string $publicToken;
     private $status;
 
-    public function __construct(string $nome, string $endpoint, string $privateToken, string $publicToken, $status = null)
+    public function __construct(string $nome, string $endpoint, string $privateToken, string $publicToken, $status = null, ?int $id = null)
     {
         $this->setNome($nome)->setEndpoint($endpoint)->setPrivateToken($privateToken)->setPublicToken($publicToken);
         if (!$status) {
             $this->setStatus(0);
         } else {
             $this->setStatus($status);
+        }
+
+        if ($id) {
+            $this->setId($id);
         }
     }
 
@@ -47,6 +51,20 @@ class GatewayPagamento
             // Token foi alterado, então atualiza normalmente
             $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->privateToken, $this->publicToken);
         }
+    }
+
+    /**
+     * Retorna os dados públicos do gateway de pagamento
+     */
+    public function getPublicData()
+    {
+        return [
+            'id' => $this->id,
+            'description' => $this->nome,
+            'endpoint' => $this->endpoint,
+            'publicToken' => $this->publicToken,
+            'status' => $this->status
+        ];
     }
 
     /**

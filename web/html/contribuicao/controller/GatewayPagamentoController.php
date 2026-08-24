@@ -230,4 +230,35 @@ class GatewayPagamentoController
             Util::tratarException($e);
         }
     }
+
+    /**
+     * Realiza os procedimentos necessários para buscar as informações de um gateway de pagamento específico, com base no método de pagamento informado.
+     */
+    public function getGatewayInfoByMethodPayment(){
+        header('Content-Type: application/json; charset=utf-8');
+
+        $metodoPagamento = filter_input(INPUT_GET, 'payment_method', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+        try {
+            if (!$metodoPagamento || empty($metodoPagamento)) {
+                http_response_code(400);
+                echo json_encode(['erro' => 'O método de pagamento informado não é válido.']);
+                return;
+            }
+
+            $gatewayPagamentoDao = new GatewayPagamentoDAO();
+            $gatewayInfo = $gatewayPagamentoDao->getGatewayInfoByMethodPayment($metodoPagamento);
+
+            if (!$gatewayInfo) {
+                http_response_code(404);
+                echo json_encode(['erro' => 'Nenhum gateway de pagamento encontrado para o método informado: ' . $metodoPagamento]);
+                return;
+            }
+
+            echo json_encode($gatewayInfo->getPublicData());
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['erro' => $e->getMessage()]);
+        }
+    }
 }
