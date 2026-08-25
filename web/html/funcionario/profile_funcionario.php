@@ -112,6 +112,9 @@ try {
   $dependente = json_encode($relacionamentos['dependentes']);
   $filiacao = json_encode($relacionamentos['filiacoes']);
 
+  error_log("FILIACOES: " . print_r($relacionamentos['filiacoes'], true));
+  error_log("DEPENDENTES: " . print_r($relacionamentos['dependentes'], true));
+
   // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
   $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
   $stmt->bindValue(':idPessoa', $id_pessoa, PDO::PARAM_INT);
@@ -2150,7 +2153,7 @@ try {
                                     <select name="id_parentesco" id="parentesco" class="<?= !empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal' ? 'is-invalid' : '' ?>">
                                       <option selected disabled>Selecionar...</option>
                                       <?php
-                                      foreach ($pdo->query("SELECT id_parentesco, descricao FROM parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                      foreach ($pdo->query("SELECT id_parentesco, descricao FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
                                         $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["id_parentesco"] ? ' selected' : '';
                                         echo ("<option value='" . $item["id_parentesco"] . "'{$selected}>" . htmlspecialchars($item["descricao"]) . "</option>");
                                       }

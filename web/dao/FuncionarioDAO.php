@@ -535,20 +535,19 @@ class FuncionarioDAO
 
     public function listarDependentes(int $idFuncionario): array
     {
-        $sql = 'SELECT fdep.id_dependente AS id_dependente,
+        $sql = 'SELECT
+                    fdep.id_dependente AS id_dependente,
                     p.nome AS nome,
-                    p.cpf AS cpf,
-                    parentesco.descricao AS parentesco
+                    p.cpf AS cpf
                 FROM funcionario_dependentes fdep
-                LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario
-                LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-                INNER JOIN filiacao fil ON fil.id_filiado = fdep.id_pessoa AND fil.id_pessoa = f.id_pessoa
-                INNER JOIN parentesco ON parentesco.id_parentesco = fil.id_parentesco
+                LEFT JOIN pessoa p
+                    ON p.id_pessoa = fdep.id_pessoa
                 WHERE fdep.id_funcionario = :id_funcionario';
-                
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_funcionario', $idFuncionario, PDO::PARAM_INT);
         $stmt->execute();
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

@@ -20,8 +20,7 @@ class DependenteDAO
                 p.sexo = :sexo,
                 p.data_nascimento = :nascimento,
                 p.email = :email,
-                p.telefone = :telefone,
-                p.filiacao = :filiacao
+                p.telefone = :telefone
             WHERE fd.id_dependente = :id_dependente;
         ");
 
@@ -31,7 +30,6 @@ class DependenteDAO
         $stmt->bindValue(':nascimento', $dependente->getDataNascimento()->format('Y-m-d'), PDO::PARAM_STR);
         $stmt->bindValue(':email', $dependente->getEmail());
         $stmt->bindValue(':telefone', $dependente->getTelefone());
-        $stmt->bindValue(':filiacao', $dependente->getFiliacao());
         $stmt->bindValue(':id_dependente', $dependente->getId(), PDO::PARAM_INT);
 
         return $stmt->execute();
@@ -39,20 +37,66 @@ class DependenteDAO
 
     public function buscarPorId(int $id_dependente): ?array
     {
-        $sql = "SELECT fdep.*, 
-                   p.cpf, p.nome, p.sobrenome, p.data_nascimento, p.sexo, p.email, p.telefone, p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro, p.logradouro, p.numero_endereco, p.complemento, p.ibge, p.registro_geral, p.orgao_emissor, p.data_expedicao, p.filiacao, p.filiacao AS nome_pai, '' AS nome_mae,
-                   pfil.descricao AS parentesco,
-                   f2.nome AS nomefuncionario, f2.sobrenome AS sobrenomefuncionario
-            FROM funcionario_dependentes fdep
-            LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-            INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
-            INNER JOIN parentesco pfil ON pfil.id_parentesco = fil.id_parentesco
-            JOIN funcionario f ON fdep.id_funcionario = f.id_funcionario
-            JOIN pessoa f2 ON f.id_pessoa = f2.id_pessoa
-            WHERE fdep.id_dependente = :id_dependente"; //pegar restante das informações
+        error_log(">>> ENTROU buscarPorId <<<");
+        error_log(">>> ID DEPENDENTE: " . $id_dependente);
+        
+        $sql = "SELECT fdep.*,
+                    p.cpf,
+                    p.nome,
+                    p.sobrenome,
+                    p.sexo,
+                    p.email,
+                    p.telefone,
+                    p.data_nascimento,
+                    p.cep,
+                    p.estado,
+                    p.cidade,
+                    p.bairro,
+                    p.logradouro,
+                    p.numero_endereco,
+                    p.complemento,
+                    p.ibge,
+                    p.registro_geral,
+                    p.orgao_emissor,
+                    p.data_expedicao,
+
+                    pfil.descricao AS parentesco,
+
+                    f2.nome AS nomefuncionario,
+                    f2.sobrenome AS sobrenomefuncionario
+
+                FROM funcionario_dependentes fdep
+
+                LEFT JOIN pessoa p
+                    ON p.id_pessoa = fdep.id_pessoa
+
+                LEFT JOIN filiacao fil
+                    ON fil.id_filiado = fdep.id_pessoa
+                    AND fil.id_pessoa = (
+                        SELECT f.id_pessoa
+                        FROM funcionario f
+                        WHERE f.id_funcionario = fdep.id_funcionario
+                    )
+
+                LEFT JOIN funcionario_dependente_parentesco pfil
+                    ON pfil.id_parentesco = fil.id_parentesco
+
+                JOIN funcionario f
+                    ON fdep.id_funcionario = f.id_funcionario
+
+                JOIN pessoa f2
+                    ON f.id_pessoa = f2.id_pessoa
+
+                WHERE fdep.id_dependente = :id_dependente";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':id_dependente', $id_dependente, PDO::PARAM_INT);
+
+        $stmt->bindValue(
+            ':id_dependente',
+            $id_dependente,
+            PDO::PARAM_INT
+        );
+
         $stmt->execute();
 
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;

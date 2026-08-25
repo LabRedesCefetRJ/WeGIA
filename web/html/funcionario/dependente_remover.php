@@ -17,7 +17,9 @@ permissao($_SESSION['id_pessoa'], 11, 7);
 require_once "../../dao/Conexao.php";
 
 try {
+
     $idDependente = filter_input(INPUT_POST, 'id_dependente', FILTER_VALIDATE_INT);
+
     $idFuncionario = filter_input(INPUT_POST, 'id_funcionario', FILTER_VALIDATE_INT);
 
     if (!$idDependente || $idDependente < 1) {
@@ -30,22 +32,50 @@ try {
 
     $pdo = Conexao::connect();
 
-    $stmtDelete = $pdo->prepare("DELETE FROM funcionario_dependentes WHERE id_dependente =:idDependente;");
+    $stmtDependente = $pdo->prepare("
+        SELECT id_funcionario, id_pessoa
+        FROM funcionario_dependentes
+        WHERE id_dependente = :idDependente
+    ");
+
+    $stmtDependente->bindValue(':idDependente', $idDependente, PDO::PARAM_INT);
+    $stmtDependente->execute();
+
+    $dependente = $stmtDependente->fetch(PDO::FETCH_ASSOC);
+
+    if (!$dependente) {
+        throw new InvalidArgumentException('Dependente não encontrado.');
+    }
+
+    $idPessoaDependente = (int) $dependente['id_pessoa'];
+    $idFuncionarioDependente = (int) $dependente['id_funcionario'];
+
+    $stmtDelete = $pdo->prepare("
+        DELETE FROM funcionario_dependentes
+        WHERE id_dependente = :idDependente
+    ");
 
     $stmtDelete->bindValue(':idDependente', $idDependente, PDO::PARAM_INT);
-
     $stmtDelete->execute();
 
     $stmtResponse = $pdo->prepare("SELECT 
-    fdep.id_dependente AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.descricao AS parentesco
-    FROM funcionario_dependentes fdep
-    LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario
-    LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-    INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
-    INNER JOIN parentesco par ON par.id_parentesco = fil.id_parentesco
-    WHERE fdep.id_funcionario =:idFuncionario");
+        fdep.id_dependente AS id_dependente,
+        p.nome AS nome,
+        p.cpf AS cpf,
+        par.descricao AS parentesco
+        FROM funcionario_dependentes fdep
+        LEFT JOIN funcionario f
+            ON f.id_funcionario = fdep.id_funcionario
+        LEFT JOIN pessoa p
+            ON p.id_pessoa = fdep.id_pessoa
+        INNER JOIN filiacao fil
+            ON fil.id_filiado = fdep.id_pessoa
+            AND fil.id_pessoa = f.id_pessoa
+        INNER JOIN parentesco par
+            ON par.id_parentesco = fil.id_parentesco
+        WHERE fdep.id_funcionario = :idFuncionario");
 
-    $stmtResponse->bindValue('idFuncionario', $idFuncionario, PDO::PARAM_INT);
+    $stmtResponse->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
 
     $stmtResponse->execute();
     

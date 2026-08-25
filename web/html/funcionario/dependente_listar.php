@@ -25,17 +25,16 @@ try {
     $pdo = Conexao::connect();
 
     $stmtDependente = $pdo->prepare(
-        "SELECT 
-        p.nome AS nome, p.cpf AS cpf, par.descricao AS parentesco
+        "SELECT
+            p.nome AS nome,
+            p.cpf AS cpf
         FROM funcionario_dependentes fdep
-        LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario
-        LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-        INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
-        INNER JOIN parentesco par ON par.id_parentesco = fil.id_parentesco
-        WHERE fdep.id_funcionario =:idFuncionario"
+        LEFT JOIN pessoa p
+            ON p.id_pessoa = fdep.id_pessoa
+        WHERE fdep.id_funcionario = :idFuncionario"
     );
 
-    $stmtDependente->bindValue(':idFuncionario', $idFuncionario, FILTER_VALIDATE_INT);
+    $stmtDependente->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
     $stmtDependente->execute();
 
     echo json_encode($stmtDependente->fetchAll(PDO::FETCH_ASSOC));

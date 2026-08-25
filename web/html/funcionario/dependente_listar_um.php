@@ -24,7 +24,13 @@ try {
     $stmt = $pdo->prepare('SELECT *, par.descricao AS parentesco
     FROM funcionario_dependentes fdep
     LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-    INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
+    INNER JOIN filiacao fil
+    ON fil.id_pessoa = (
+        SELECT f.id_pessoa
+        FROM funcionario f
+        WHERE f.id_funcionario = fdep.id_funcionario
+    )
+    AND fil.id_filiado = fdep.id_pessoa
     INNER JOIN parentesco par ON par.id_parentesco = fil.id_parentesco
     WHERE fdep.id_dependente = :idDependente');
 

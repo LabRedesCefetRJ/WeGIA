@@ -8,14 +8,13 @@ if (session_status() === PHP_SESSION_NONE)
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
-} else {
+} else { 
   session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 11, 3);
 
-include_once("conexao.php");
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);

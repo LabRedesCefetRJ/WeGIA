@@ -30,13 +30,34 @@ try {
         exit('O id do dependente informado não é válido.');
     }
 
-    $sql = 'SELECT *, par.descricao AS parentesco, p2.nome as nome_funcionario, p2.sobrenome as sobrenome_funcionario
-    FROM funcionario_dependentes fdep
-    LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-    INNER JOIN filiacao fil ON fil.id_filiacao = fdep.id_filiacao
-    INNER JOIN parentesco par ON par.id_parentesco = fil.id_parentesco
-    JOIN funcionario f ON (fdep.id_funcionario=f.id_funcionario) JOIN pessoa p2 ON (f.id_pessoa=p2.id_pessoa)
-    WHERE fdep.id_dependente = :id_dependente';
+    $sql = 'SELECT fdep.*, 
+                p.cpf, p.nome, p.sobrenome, p.sexo, p.email, p.telefone,
+                p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro,
+                p.logradouro, p.numero_endereco, p.complemento, p.ibge,
+                p.registro_geral, p.orgao_emissor, p.data_expedicao,
+                par.descricao AS parentesco,
+                p2.nome AS nome_funcionario,
+                p2.sobrenome AS sobrenome_funcionario
+
+            FROM funcionario_dependentes fdep
+
+            LEFT JOIN pessoa p 
+                ON p.id_pessoa = fdep.id_pessoa
+
+            JOIN funcionario f 
+                ON fdep.id_funcionario = f.id_funcionario
+
+            JOIN pessoa p2 
+                ON f.id_pessoa = p2.id_pessoa
+
+            INNER JOIN filiacao fil 
+                ON fil.id_pessoa = f.id_pessoa
+                AND fil.id_filiado = fdep.id_pessoa
+
+            INNER JOIN parentesco par 
+                ON par.id_parentesco = fil.id_parentesco
+
+            WHERE fdep.id_dependente = :id_dependente';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':id_dependente' => $id]);
