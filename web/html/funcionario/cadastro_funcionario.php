@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 Util::definirFusoHorario();
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
@@ -30,7 +33,7 @@ $informacoesFunc = $funcionario->listarPessoaExistente($cpf);
 
 
 require_once ROOT . "/controle/TipoRegistroProfissionalControle.php";
-$tipos = TipoRegistroProfissionalControle::listarTodos2();
+$tipos = TipoRegistroProfissionalControle::listarTodos(1, false,false);
 
 require_once "../../classes/Funcionario.php";
 require_once ROOT . "/html/geral/msg.php";
@@ -379,56 +382,62 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     <label class="col-md-3 control-label">Registro Profissional</label>
                     <div class="col-md-6">
                       <select class="form-control input-lg mb-md" name="registroProfissionalTipo" id="registroProfissional_tipo_input" onchange="exibir_numero_registro()">
-                        <option selected disabled value="" >Selecionar</option>
-                        <?php
-                          foreach ($tipos as $tipo) {
-                            $selected = (isset($oldInput['registroProfissionalTipo']) && $oldInput['registroProfissionalTipo'] == $tipo['id']) ? ' selected' : '';
-                            echo "<option value=\"" . htmlspecialchars($tipo['id']) . "\"" . $selected . ">" . htmlspecialchars($tipo['descricao']) . "</option>";
-                          }
-                        ?>
+                      <option selected value="">Selecionar</option>
+                      <?php foreach ($tipos as $tipo): ?>
+                        <option value="<?= htmlspecialchars($tipo['id_registro_profissional_tipo'] ?? '') ?>">
+                            <?= htmlspecialchars($tipo['descricao'] ?? '') ?>
+                        </option>
+                      <?php endforeach; ?>
                       </select>
                     </div>
                     <a onclick="adicionarTipoRegistro()" title="adicionar tipo de registro profissional"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                   </div>
-                  <div class="form-group" id="numeroRegistroProfissional" style="display: none">
-                    <label class="col-md-3 control-label">Número do Registro Profissional <sup class="obrig">*</sup></label>
-                    <div class="col-md-6">
-                      <input type="text" name="registro_profissional_numero" class="form-control serie_reservista"
-                        pattern="\d*" inputmode="numeric" maxlength="20" placeholder="123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
-                        <small>Formato: 123456789</small>
+                  <div class="form-group" id="numeroRegistroProfissional" style="display: none;">
+                  <label class="col-md-3 control-label">Número do Registro Profissional <sup class="obrig">*</sup></label>
+                  <div class="col-md-6">
+                    <input type="text" 
+                          name="registro_profissional_numero" 
+                          id="registro_profissional_numero_input" 
+                          class="form-control" 
+                          pattern="\d*" 
+                          inputmode="numeric" 
+                          maxlength="20" 
+                          placeholder="123456789" 
+                          oninput="this.value = this.value.replace(/[^0-9]/g, '');">
+                    <small class="help-block mb-md">Formato: 123456789</small>
 
-                        <select class="form-control input-lg mb-md" name="uf_RegistroProfissional" id="registroProfissional_uf_select">
-                         <option value="">Selecione um estado</option> 
-                         <option value="AC">AC - Acre</option>
-                          <option value="AL">AL - Alagoas</option>
-                          <option value="AP">AP - Amapá</option>
-                          <option value="AM">AM - Amazonas</option>
-                          <option value="BA">BA - Bahia</option>
-                          <option value="CE">CE - Ceará</option>
-                          <option value="DF">DF - Distrito Federal</option>
-                          <option value="ES">ES - Espírito Santo</option>
-                          <option value="GO">GO - Goiás</option>
-                          <option value="MA">MA - Maranhão</option>
-                          <option value="MT">MT - Mato Grosso</option>
-                          <option value="MS">MS - Mato Grosso do Sul</option>
-                          <option value="MG">MG - Minas Gerais</option>
-                          <option value="PA">PA - Pará</option>
-                          <option value="PB">PB - Paraíba</option>
-                          <option value="PR">PR - Paraná</option>
-                          <option value="PE">PE - Pernambuco</option>
-                          <option value="PI">PI - Piauí</option>
-                          <option value="RJ">RJ - Rio de Janeiro</option>
-                          <option value="RN">RN - Rio Grande do Norte</option>
-                          <option value="RS">RS - Rio Grande do Sul</option>
-                          <option value="RO">RO - Rondônia</option>
-                          <option value="RR">RR - Roraima</option>
-                          <option value="SC">SC - Santa Catarina</option>
-                          <option value="SP">SP - São Paulo</option>
-                          <option value="SE">SE - Sergipe</option>
-                          <option value="TO">TO - Tocantins</option>
-                        </select> 
-                    </div>
+                    <select class="form-control" name="uf_RegistroProfissional" id="registroProfissional_uf_select">
+                      <option value="">Selecione um estado</option> 
+                      <option value="AC">AC - Acre</option>
+                      <option value="AL">AL - Alagoas</option>
+                      <option value="AP">AP - Amapá</option>
+                      <option value="AM">AM - Amazonas</option>
+                      <option value="BA">BA - Bahia</option>
+                      <option value="CE">CE - Ceará</option>
+                      <option value="DF">DF - Distrito Federal</option>
+                      <option value="ES">ES - Espírito Santo</option>
+                      <option value="GO">GO - Goiás</option>
+                      <option value="MA">MA - Maranhão</option>
+                      <option value="MT">MT - Mato Grosso</option>
+                      <option value="MS">MS - Mato Grosso do Sul</option>
+                      <option value="MG">MG - Minas Gerais</option>
+                      <option value="PA">PA - Pará</option>
+                      <option value="PB">PB - Paraíba</option>
+                      <option value="PR">PR - Paraná</option>
+                      <option value="PE">PE - Pernambuco</option>
+                      <option value="PI">PI - Piauí</option>
+                      <option value="RJ">RJ - Rio de Janeiro</option>
+                      <option value="RN">RN - Rio Grande do Norte</option>
+                      <option value="RS">RS - Rio Grande do Sul</option>
+                      <option value="RO">RO - Rondônia</option>
+                      <option value="RR">RR - Roraima</option>
+                      <option value="SC">SC - Santa Catarina</option>
+                      <option value="SP">SP - São Paulo</option>
+                      <option value="SE">SE - Sergipe</option>
+                      <option value="TO">TO - Tocantins</option>
+                    </select>
                   </div>
+                </div>
                   <div class="form-group" id="reservista1" style="display: none">
                     <label class="col-md-3 control-label">Número do certificado reservista</label>
                     <div class="col-md-6">
@@ -695,9 +704,26 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
       $("#reservista2").hide();
     }
 
-    function exibir_numero_registro(){
-          $("#numeroRegistroProfissional").show();
+    function exibir_numero_registro() 
+    {
+      var tipoSelect = document.getElementById('registroProfissional_tipo_input');
+      var divNumero = document.getElementById('numeroRegistroProfissional');
+      var inputNumero = document.getElementById('registro_profissional_numero_input');
+
+      if (tipoSelect && divNumero && inputNumero) {
+          if (tipoSelect.value && tipoSelect.value !== '') {
+              divNumero.style.display = 'block';
+              inputNumero.required = true;
+          } else {
+              divNumero.style.display = 'none';
+              inputNumero.required = false; 
+              inputNumero.value = '';
+          }
+      }
     }
+    document.addEventListener('DOMContentLoaded', function () {
+    exibir_numero_registro();
+    });
 
     function limpa_formulário_cep() {
       //Limpa valores do formulário de cep.

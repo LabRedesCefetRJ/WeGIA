@@ -88,9 +88,7 @@ try {
   $cpf1->listarCPF();
   require_once ROOT . '/controle/TipoRegistroProfissionalControle.php';
   $tipoRegistroProfissionalControle = new TipoRegistroProfissionalControle();
-  $registroProfissionalTipos = $tipoRegistroProfissionalControle->listarTodos2();
-  require_once ROOT . '/controle/IdentificadorRegistroProfissionalControle.php';
-  $identificadorRegistroProfissionalControle = new IdentificadorRegistroProfissionalControle();
+  $registroProfissionalTipos = $tipoRegistroProfissionalControle->listarTodos(1, false, false);
   require_once "../geral/msg.php";
   $oldInput = getSessionFormData();
   $fieldErrors = getSessionFormErrors();
@@ -500,8 +498,7 @@ try {
         url: '../../controle/control.php',
         data: {
           nomeClasse: 'IdentificadorRegistroProfissionalControle',
-          metodo: 'processarRequisicao',
-          action: 'listar',
+          metodo: 'listar',
           id_funcionario: '<?= $idFuncionario ?>'
         },
         dataType: 'json',
@@ -535,8 +532,7 @@ try {
         url: '../../controle/control.php',
         data: {
           nomeClasse: 'IdentificadorRegistroProfissionalControle',
-          metodo: 'processarRequisicao',
-          action: 'remover',
+          metodo: 'remover',
           id_registro: idRegistro,
           id_funcionario: '<?= $idFuncionario ?>'
         },
@@ -644,8 +640,7 @@ try {
         url: '../../controle/control.php',
         data: {
           nomeClasse: 'IdentificadorRegistroProfissionalControle',
-          metodo: 'processarRequisicao',
-          action: 'adicionar',
+          metodo: 'adicionar',
           id_tipo: idTipo,
           numero_registro: numero,
           uf: uf,
@@ -1580,7 +1575,7 @@ try {
                                     <select name="id_tipo" id="tipo_novoRegistro" class="form-control" style="width: 300px;" required>
                                       <option value="" selected disabled>Selecionar</option>
                                       <?php foreach ($registroProfissionalTipos as $tipoRegistro): ?>
-                                        <option value="<?= htmlspecialchars($tipoRegistro['id']) ?>"><?= htmlspecialchars($tipoRegistro['descricao']) ?></option>
+                                        <option value="<?= htmlspecialchars($tipoRegistro['id_registro_profissional_tipo'] ?? '') ?>"><?= htmlspecialchars($tipoRegistro['descricao'] ?? '') ?></option>
                                       <?php endforeach; ?>
                                     </select>
                                     <a onclick="adicionar_tipo_registroProfissional()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw; margin-left: 10px;"></i></a>

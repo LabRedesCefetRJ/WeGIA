@@ -31,29 +31,29 @@ class TipoRegistroProfissionalControle
         }
     }
 
-       public function listarTodos()
+    public static function listarTodos($status = null, $retornarObjetos = true, $isJson = true)
     {
         try {
-            $status = isset($_GET['status']) ? intval($_GET['status']) : 1;
+            if ($status === null) {
+                $status = isset($_GET['status']) && $_GET['status'] !== '' 
+                    ? intval($_GET['status']) 
+                    : 1;
+            }
 
-            $tipoRegistroProfissionalDAO = new TipoRegistroProfissionalDAO();
-            $lista = $tipoRegistroProfissionalDAO->listarTodos($status);
-
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode($lista);
-        } catch (Throwable $e) {
-            Util::tratarException($e);
-        }
-    }
-
-    public static function listarTodos2()
-    {
-        try {
             $dao = new TipoRegistroProfissionalDAO();
-            return $dao->listarTodos2();
+            $lista = $dao->listarTodos($status, $retornarObjetos);
+            if ($isJson) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode($lista);
+                exit();
+            }
+            return $lista;
         } catch (Throwable $e) {
-            Util::tratarException($e);
-            return [];
+            if ($isJson) {
+                Util::tratarException($e);
+                exit();
+            }
+            throw $e;
         }
     }
 

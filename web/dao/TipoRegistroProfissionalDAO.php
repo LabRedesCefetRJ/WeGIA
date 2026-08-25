@@ -51,38 +51,38 @@ class TipoRegistroProfissionalDAO
         }
     }
 
-    public function listarTodos($status = 1)
+    public function listarTodos(int $status = 1, bool $retornarObjetos = true)
     {
-        try{
+        try {
             $tiposRegistrosProfissionais = array();
-            $sql = "SELECT id_registro_profissional_tipo, descricao, status FROM registro_profissional_tipo WHERE status= :status";
+            
+            $sql = "SELECT id_registro_profissional_tipo, descricao, status FROM registro_profissional_tipo WHERE status = :status ORDER BY descricao ASC";
+        
             $consulta = $this->pdo->prepare($sql);
-            $consulta->bindParam(':status',$status, PDO::PARAM_INT);
+            $consulta->bindParam(':status', $status, PDO::PARAM_INT);
             $consulta->execute();
+            
             $resultados = $consulta->fetchAll(PDO::FETCH_ASSOC);
-            if($resultados){
-                foreach($resultados as $resultado){
-                    $tipoRegistroProfissional = new TipoRegistroProfissional($resultado['descricao'], $resultado['id_registro_profissional_tipo'], $resultado['status']);
+
+            if (!$retornarObjetos) {
+                return $resultados;
+            }
+
+            if ($resultados) {
+                foreach ($resultados as $resultado) {
+                    $tipoRegistroProfissional = new TipoRegistroProfissional(
+                        $resultado['descricao'], 
+                        $resultado['id_registro_profissional_tipo'], 
+                        $resultado['status']
+                    );
                     $tiposRegistrosProfissionais[] = $tipoRegistroProfissional;
                 }
             }
-            return $tiposRegistrosProfissionais;
-        }catch (PDOException $e){
-            error_log("Erro DB [listarTodos]: ". $e->getMessage());
-            throw new Exception("Erro ao listar os tipos de registros profissionais.");
-        }
-    }
 
-    public function listarTodos2()
-    {
-        try{
-            $sql = "SELECT id_registro_profissional_tipo AS id, descricao FROM registro_profissional_tipo WHERE status = 1 ORDER BY descricao ASC";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute();
-    
-            return $stmt->fetchAll(PDO::FETCH_ASSOC); 
-        }catch (PDOException $e){
-            error_log("Erro DB [listarTodos2]: ". $e->getMessage());
+            return $tiposRegistrosProfissionais;
+
+        } catch (PDOException $e) {
+            error_log("Erro DB [listarTodos]: " . $e->getMessage());
             throw new Exception("Erro ao listar os tipos de registros profissionais.");
         }
     }
