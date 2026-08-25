@@ -398,7 +398,7 @@ try {
 
       outrosEditando = true;
       $(".registro-numero, .registro-uf").prop('disabled', false);
-      $(".btn-salvar-registro, .btn-excluir-registro").show();
+      $(".btn-excluir-registro").show();
       $("#botaoAdicionarRegistroProfissional").show();
     }
 
@@ -421,7 +421,7 @@ try {
 
       outrosEditando = false;
       $(".registro-numero, .registro-uf").prop('disabled', true);
-      $(".btn-salvar-registro, .btn-excluir-registro").hide();
+      $(".btn-excluir-registro").hide();
       $("#botaoAdicionarRegistroProfissional").hide();
     }
 
@@ -482,13 +482,6 @@ try {
         let acoes = $('<td style="display: flex; justify-content: space-evenly;">');
         let idRegistro = item.id_registro;
         acoes.append(
-          $('<button type="button" class="btn btn-primary btn-salvar-registro" title="Salvar"><i class="fas fa-save"></i></button>')
-          .toggle(outrosEditando)
-          .on('click', function() {
-            salvarEdicaoRegistroProfissional(idRegistro);
-          })
-        );
-        acoes.append(
           $('<button type="button" class="btn btn-danger btn-excluir-registro" title="Excluir"><i class="fas fa-trash-alt"></i></button>')
           .toggle(outrosEditando)
           .on('click', function() {
@@ -528,42 +521,6 @@ try {
           }
           
           exibirErroRegistroProfissional(mensagem);
-        }
-      });
-    }
-
-    function salvarEdicaoRegistroProfissional(idRegistro) {
-      let linha = $("#registroProfissional" + idRegistro);
-      let numero = linha.find(".registro-numero").val();
-      let uf = linha.find(".registro-uf").val();
-
-      if (!numero || numero.trim() === '') {
-        exibirErroRegistroProfissional('Informe o número do registro.');
-        return;
-      }
-
-      $.ajax({
-        type: 'POST',
-        url: '../../controle/control.php',
-        data: {
-          nomeClasse: 'IdentificadorRegistroProfissionalControle',
-          metodo: 'processarRequisicao',
-          action: 'editar',
-          id_registro: idRegistro,
-          numero_registro: numero,
-          uf: uf,
-          id_funcionario: '<?= $idFuncionario ?>'
-        },
-        dataType: 'json',
-        success: function(response) {
-          if (response.erro) {
-            exibirErroRegistroProfissional(response.erro);
-            return;
-          }
-          listar_registroProfissional(response);
-        },
-        error: function() {
-          exibirErroRegistroProfissional('Erro ao salvar as alterações do registro.');
         }
       });
     }
@@ -1623,7 +1580,7 @@ try {
                                     <select name="id_tipo" id="tipo_novoRegistro" class="form-control" style="width: 300px;" required>
                                       <option value="" selected disabled>Selecionar</option>
                                       <?php foreach ($registroProfissionalTipos as $tipoRegistro): ?>
-                                        <option value="<?= htmlspecialchars($tipoRegistro->getIdTipoRegistro()) ?>"><?= htmlspecialchars($tipoRegistro->getDescricao()) ?></option>
+                                        <option value="<?= htmlspecialchars($tipoRegistro['id']) ?>"><?= htmlspecialchars($tipoRegistro['descricao']) ?></option>
                                       <?php endforeach; ?>
                                     </select>
                                     <a onclick="adicionar_tipo_registroProfissional()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw; margin-left: 10px;"></i></a>
