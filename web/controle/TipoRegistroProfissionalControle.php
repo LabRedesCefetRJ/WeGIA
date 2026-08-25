@@ -35,9 +35,7 @@ class TipoRegistroProfissionalControle
     {
         try {
             if ($status === null) {
-                $status = isset($_GET['status']) && $_GET['status'] !== '' 
-                    ? intval($_GET['status']) 
-                    : 1;
+                $status = isset($_GET['status']) && $_GET['status'] !== '' ? intval($_GET['status']) : 1;
             }
 
             $dao = new TipoRegistroProfissionalDAO();
