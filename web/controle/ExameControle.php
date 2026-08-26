@@ -122,7 +122,7 @@ class ExameControle
                 default:
                     $mensagem = "Erro no upload do arquivo.";
             }
-           echo json_encode(["erro" => $mensagem]);
+           echo json_encode(["erro" => $mensagem], JSON_UNESCAPED_UNICODE);
             exit;
         }
 

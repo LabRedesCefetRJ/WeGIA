@@ -2781,14 +2781,16 @@ try {
             body: formData
           });
 
+          const resposta = await requisicao.json();
           if (!requisicao.ok) {
-            throw new Error("Erro na requisição");
+            throw new Error(resposta.erro || "Erro na requisição");
           }
 
           documentos.value = '';
           tipoDocumento.value = "";
           fecharModalExameEMostrarMensagem("Exame adicionado com sucesso!");
           gerarExames();
+
         } catch (e) {
           fecharModalExameEMostrarMensagem(e.message, "danger");
         }
