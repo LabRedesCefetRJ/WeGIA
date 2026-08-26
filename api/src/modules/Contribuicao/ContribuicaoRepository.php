@@ -19,7 +19,7 @@ class ContribuicaoRepository
      * @param int $idSocio The socio ID
      * @return array Array of contributions or empty array if none found
      */
-    public function findBySocioId(int $idSocio): array
+    public function findBySocioId(int $idSocio, ?string $dataPagamentoInicial = null, ?string $dataPagamentoFinal = null): array
     {
         $query = "SELECT 
                     cl.id,
@@ -34,11 +34,30 @@ class ContribuicaoRepository
                   FROM contribuicao_log cl
                   LEFT JOIN contribuicao_gatewayPagamento cg ON cl.id_gateway = cg.id
                   LEFT JOIN contribuicao_meioPagamento cm ON cl.id_meio_pagamento = cm.id
-                  WHERE cl.id_socio = :id_socio
-                  ORDER BY cl.data_geracao DESC";
+                  WHERE cl.id_socio = :id_socio";
+        
+        if ($dataPagamentoInicial !== null) {
+            $query .= " AND cl.data_pagamento >= :data_pagamento_inicial";
+        }
+        
+        if ($dataPagamentoFinal !== null) {
+            $query .= " AND cl.data_pagamento <= :data_pagamento_final";
+        }
+        
+        $query .= " ORDER BY cl.data_geracao DESC";
         
         $stmt = $this->db->prepare($query);
-        $stmt->execute([':id_socio' => $idSocio]);
+        $params = [':id_socio' => $idSocio];
+        
+        if ($dataPagamentoInicial !== null) {
+            $params[':data_pagamento_inicial'] = $dataPagamentoInicial;
+        }
+        
+        if ($dataPagamentoFinal !== null) {
+            $params[':data_pagamento_final'] = $dataPagamentoFinal;
+        }
+        
+        $stmt->execute($params);
         
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         return $result === false ? [] : $result;

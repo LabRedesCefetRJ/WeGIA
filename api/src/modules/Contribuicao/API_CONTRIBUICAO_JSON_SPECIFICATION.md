@@ -298,6 +298,8 @@ Gera e retorna um arquivo PDF com o extrato das contribuições de um sócio esp
 
 ### Parâmetros
 - **id** (path, obrigatório): ID do sócio
+**data_pagamento_inicial** (query, opcional): Data de pagamento inicial (`YYYY-mm-dd`)
+**data_pagamento_final** (query, opcional): Data de pagamento final (`YYYY-mm-dd`)
 - **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
 
 ### Exemplos de Requisição

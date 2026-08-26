@@ -523,7 +523,11 @@ class ContribuicaoController
                 return $validation;
             }
 
-            $contribuicoes = $this->contribuicaoService->obterContribuicoesPorSocio($idSocio);
+            //filtrar pela data de pagamento, se não tiver data de pagamento, não entra no extrato
+            $dataPagamentoInicial = $request->getQueryParams()['data_pagamento_inicial'] ?? null;
+            $dataPagamentoFinal = $request->getQueryParams()['data_pagamento_final'] ?? null;
+
+            $contribuicoes = $this->contribuicaoService->obterContribuicoesPorSocio($idSocio, $dataPagamentoInicial, $dataPagamentoFinal);
 
             if (empty($contribuicoes)) {
                 $response->getBody()->write(json_encode([

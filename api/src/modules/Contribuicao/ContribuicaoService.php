@@ -17,9 +17,9 @@ class ContribuicaoService
      * @param int $idSocio The socio ID
      * @return array Array of contributions
      */
-    public function obterContribuicoesPorSocio(int $idSocio): array
+    public function obterContribuicoesPorSocio(int $idSocio, ?string $dataPagamentoInicial = null, ?string $dataPagamentoFinal = null): array
     {
-        return $this->contribuicaoRepository->findBySocioId($idSocio);
+        return $this->contribuicaoRepository->findBySocioId($idSocio, $dataPagamentoInicial, $dataPagamentoFinal);
     }
 
     /**
