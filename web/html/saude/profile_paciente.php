@@ -2318,6 +2318,10 @@ try {
                                 name="crm_medico"
                                 id="crmMedicoModal"
                                 maxlength="30"
+                                pattern="[0-9]+"
+                                title="apenas números são permitidos"
+                                onkeypress="return Onlynumbers(event)"
+                                oninput="this.value =  this.value.replace(/\D/g,'')"
                                 required>
                             </div>
                           </div>
