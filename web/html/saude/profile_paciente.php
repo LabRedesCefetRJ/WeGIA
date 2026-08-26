@@ -230,7 +230,6 @@ try {
   $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
   $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
-
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -1170,6 +1169,16 @@ try {
                   <img id="imagem" alt="John Doe">
                 </div>
               </div>
+              <?php
+                $saudeControle = new SaudeControle();
+                $idAtendidoPerfil = $saudeControle->buscarIdAtendidoPorFichaMedica((int)$id_fichamedica);
+                $permissaoPessoa = $saudeControle->verificaPermissaoPessoa((int)$_SESSION['id_pessoa']);
+                if ($permissaoPessoa && !empty($idAtendidoPerfil)):
+              ?> 
+              <div class="panel-footer text-center">
+                <a href="../atendido/Profile_Atendido.php?idatendido=<?=$idAtendidoPerfil;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP" title="Acesso rápido a página de Perfil de Atendido">Acessar Perfil</a>
+              </div>  
+              <?php endif; ?>
             </section>
           </div>
           <div class="col-md-8 col-lg-8">
@@ -2309,6 +2318,10 @@ try {
                                 name="crm_medico"
                                 id="crmMedicoModal"
                                 maxlength="30"
+                                pattern="[0-9]+"
+                                title="apenas números são permitidos"
+                                onkeypress="return Onlynumbers(event)"
+                                oninput="this.value =  this.value.replace(/\D/g,'')"
                                 required>
                             </div>
                           </div>
@@ -2772,16 +2785,18 @@ try {
             body: formData
           });
 
+          const resposta = await requisicao.json();
           if (!requisicao.ok) {
-            throw new Error("Erro na requisição");
+            throw new Error(resposta.erro || "Erro na requisição");
           }
 
           documentos.value = '';
           tipoDocumento.value = "";
           fecharModalExameEMostrarMensagem("Exame adicionado com sucesso!");
           gerarExames();
+
         } catch (e) {
-          fecharModalExameEMostrarMensagem("Erro ao adicionar exame.", "danger");
+          fecharModalExameEMostrarMensagem(e.message, "danger");
         }
       }
 

@@ -289,6 +289,41 @@ CREATE TABLE IF NOT EXISTS `wegia`.`funcionario` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `wegia`.`registro_profissional_tipo`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`registro_profissional_tipo` (
+  `id_registro_profissional_tipo` INT(11) NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(40) NOT NULL,
+  `status` BOOLEAN NULL DEFAULT TRUE,
+  PRIMARY KEY (`id_registro_profissional_tipo`),
+  UNIQUE INDEX `descricao` (`descricao` ASC))
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`registro_profissional_identificador`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`registro_profissional_identificador`(
+  `id_registro_profissional_identificador` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_registro_profissional_tipo` INT(11)  NOT NULL,
+  `id_funcionario` INT(11)  NOT NULL,
+  `numero_registro` VARCHAR(20) NOT NULL,
+  `UF` varchar(2) NULL,
+  PRIMARY KEY  (`id_registro_profissional_identificador`),
+  UNIQUE INDEX `numero_registro` (`numero_registro` ASC),
+  INDEX `fk_registro_identificador_funcionario1_idx` (`id_funcionario` ASC),
+  INDEX `fk_registro_identificador_tipo_registro1_idx` (`id_registro_profissional_tipo` ASC),
+  CONSTRAINT `fk_registro_identificador_funcionario1_idx`
+    FOREIGN KEY (`id_funcionario`)
+    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_registro_identificador_tipo_registro1_idx`
+    FOREIGN KEY (`id_registro_profissional_tipo`)
+    REFERENCES `wegia`.`registro_profissional_tipo` (`id_registro_profissional_tipo`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`almoxarife`
