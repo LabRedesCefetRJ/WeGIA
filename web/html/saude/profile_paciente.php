@@ -2790,7 +2790,7 @@ try {
           fecharModalExameEMostrarMensagem("Exame adicionado com sucesso!");
           gerarExames();
         } catch (e) {
-          fecharModalExameEMostrarMensagem("Erro ao adicionar exame.", "danger");
+          fecharModalExameEMostrarMensagem(e.message, "danger");
         }
       }
 
