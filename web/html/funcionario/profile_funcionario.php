@@ -430,10 +430,10 @@ try {
     };
 
     function montarSelectUf(selecionada) {
-      letselect = $('<select class="form-control registro-uf"></select>');
+      let select = $('<select class="form-control registro-uf"></select>');
       select.append($('<option value="">--</option>'));
       $.each(UFS_BRASIL, function(sigla, nome) {
-        letopt = $('<option></option>').val(sigla).text(sigla + " - " + nome);
+        let opt = $('<option></option>').val(sigla).text(sigla + " - " + nome);
         if (sigla === selecionada) {
           opt.prop('selected', true);
         }
