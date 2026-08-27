@@ -6,7 +6,9 @@ require_once '../html/permissao/permissao.php';
 session_start();
 permissao($_SESSION['id_pessoa'], 11, 3);
 
-$cargo = trim(filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_STRING));
+// A exibição do cargo já escapa com htmlspecialchars ao renderizar o
+// <select>, então aqui só precisamos validar e normalizar espaços.
+$cargo = trim((string) filter_input(INPUT_POST, 'cargo', FILTER_UNSAFE_RAW));
 
 if(!$cargo || empty($cargo)){
 	http_response_code(400);
