@@ -89,15 +89,19 @@ class PetControle
         $nomeImagem = ['', ''];
 
         if (isset($_FILES['imgperfil']) && $_FILES['imgperfil']['error'] == UPLOAD_ERR_OK) {
-            $tmpName = $_FILES['imgperfil']['tmp_name'];
-            $imgperfil = base64_encode(file_get_contents($tmpName));
+            $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'gif'];
 
             $nomeImagemCompleto = $_FILES['imgperfil']['name'];
             $nomeImagem = explode('.', $nomeImagemCompleto);
+            $extensao = strtolower(end($nomeImagem));
 
-            if (count($nomeImagem) < 2) {
-                $nomeImagem[1] = ''; // extensão vazia se não houver
+            if (count($nomeImagem) < 2 || !in_array($extensao, $extensoesPermitidas, true)) {
+                header("Location: ../../html/pet/cadastro_pet.php?msg=" . urlencode("Formato de imagem inválido! Permitidos: " . implode(', ', $extensoesPermitidas)));
+                exit();
             }
+
+            $tmpName = $_FILES['imgperfil']['tmp_name'];
+            $imgperfil = base64_encode(file_get_contents($tmpName));
         }
 
         // Define dados no objeto
@@ -194,9 +198,6 @@ class PetControle
     {
         $idFoto = filter_input(INPUT_POST, 'id_foto', FILTER_SANITIZE_NUMBER_INT);
         $idPet = filter_input(INPUT_POST, 'id_pet', FILTER_SANITIZE_NUMBER_INT);
-        $imgPet = base64_encode(file_get_contents($_FILES['imgperfil']['tmp_name']));
-        $imgNome = $_FILES['imgperfil']['name'];
-        $imgNome = explode('.', $imgNome);
 
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
@@ -207,6 +208,15 @@ class PetControle
 
             if (!$idFoto || $idFoto < 1)
                 throw new InvalidArgumentException('O id da foto fornecido é inválido.', 422);
+
+            $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'gif'];
+            $imgNome = explode('.', $_FILES['imgperfil']['name']);
+            $extensao = strtolower(end($imgNome));
+
+            if (count($imgNome) < 2 || !in_array($extensao, $extensoesPermitidas, true))
+                throw new InvalidArgumentException('Formato de imagem inválido. Permitidos: ' . implode(', ', $extensoesPermitidas), 422);
+
+            $imgPet = base64_encode(file_get_contents($_FILES['imgperfil']['tmp_name']));
 
             $petDAO = new PetDAO();
             $petDAO->alterarFotoPet($imgPet, $imgNome[0], $imgNome[1], $idFoto, $idPet);
@@ -235,8 +245,6 @@ class PetControle
         $idFichaMedica = filter_input(INPUT_POST, 'id_ficha_medica', FILTER_SANITIZE_NUMBER_INT);
         $idTipoExame = filter_input(INPUT_POST, 'id_tipo_exame', FILTER_SANITIZE_NUMBER_INT);
         $idPet = filter_input(INPUT_POST, 'id_pet', FILTER_SANITIZE_NUMBER_INT);
-        $nameFile = explode(".", $_FILES['arquivo']['name']);
-        $arquivoExame = base64_encode(file_get_contents($_FILES['arquivo']['tmp_name']));
         $dataExame = date("y-m-d");
 
         try {
@@ -251,6 +259,15 @@ class PetControle
 
             if (!$idPet || $idPet < 1)
                 throw new InvalidArgumentException('O id do pet é inválido.', 422);
+
+            $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'pdf'];
+            $nameFile = explode(".", $_FILES['arquivo']['name']);
+            $extensao = strtolower(end($nameFile));
+
+            if (count($nameFile) < 2 || !in_array($extensao, $extensoesPermitidas, true))
+                throw new InvalidArgumentException('Formato de arquivo inválido. Permitidos: ' . implode(', ', $extensoesPermitidas), 422);
+
+            $arquivoExame = base64_encode(file_get_contents($_FILES['arquivo']['tmp_name']));
 
             $petDAO = new PetDAO();
             $petDAO->incluirExamePet($idFichaMedica, $idTipoExame, $dataExame, $arquivoExame, $nameFile);
