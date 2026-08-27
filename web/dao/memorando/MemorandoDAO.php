@@ -37,6 +37,10 @@ class MemorandoDAO
 
 			if ($resultado) {
 				$Memorandos = $resultado;
+
+				foreach ($Memorandos as $key => $value) {
+					$Memorandos[$key]['titulo'] = htmlspecialchars($value['titulo']);
+				}
 			}
 		} catch (PDOException $e) {
 			echo 'Error:' . $e->getMessage();
