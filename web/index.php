@@ -11,13 +11,11 @@ session_destroy();
 require_once "html/personalizacao_display.php";
 ?>
 <!doctype html>
-<html>
+<html lang="pt-br">
 <head>
 	<title><?php display_campo("Titulo", "str"); ?> - <?php display_campo("Subtitulo", "str"); ?></title>
 	<meta charset="UTF-8" />
 	<link rel="icon" href="<?php display_campo("Logo", "file"); ?>" type="image/x-icon">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<!-- Web Fonts  -->
 	<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
 	<!-- font inter -->
@@ -166,8 +164,8 @@ require_once "html/personalizacao_display.php";
 	<div class="container-fluid">
 		<div class="row cabecalho">
 			<div class="col-md-1 main-menu-logo">
-				<a class="logo pull-left">
-					<img src="<?php display_campo("Logo", "file"); ?>" height="50" />
+				<a class="logo pull-left" aria-label="Página inicial">
+					<img src="<?php display_campo("Logo", "file"); ?>" height="50" alt="Logo" />
 				</a>
 			</div>
 			<div class="col-md-4 descricao header-description">
@@ -180,7 +178,7 @@ require_once "html/personalizacao_display.php";
 				<form action="./html/login.php" method="POST" enctype="multipart/form-data" class="login">
 					<div class="form-group mb-lg form-group-login"><!--login-->
 						<div class="input-group input-group-icon"><!--icone-->
-							<input id="login" name="cpf" type="text" class="form-control input-lg" placeholder="Usuário" />
+							<input id="login" name="cpf" type="text" class="form-control input-lg" placeholder="Usuário" aria-label="Usuário" />
 							<span class="input-group-addon">
 								<span class="icon icon-lg">
 									<i class="fa fa-user"></i>
@@ -192,7 +190,7 @@ require_once "html/personalizacao_display.php";
 			<div class="col col-md-3 formulario pass-form">
 				<div class="form-group mb-lg form-group-login"><!--login-->
 					<div class="input-group input-group-icon"><!--icone-->
-						<input id="passwordInput" name="pwd" type="password" class="form-control input-lg form-input-pass" placeholder="Senha" />
+						<input id="passwordInput" name="pwd" type="password" class="form-control input-lg form-input-pass" placeholder="Senha" aria-label="Senha" />
 						<button type="button" id="togglePasswordVisibility" class="password-toggle-btn" aria-label="Mostrar senha" aria-pressed="false">
 							<i class="fa fa-eye"></i>
 						</button>
@@ -244,7 +242,7 @@ require_once "html/personalizacao_display.php";
 		</div>
 	</div>
 	<div align="right">
-		<iframe src="https://www.wegia.org/software/footer/index.html" width="200" height="60" style="border:none;"></iframe>
+		<iframe src="https://www.wegia.org/software/footer/index.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
 	</div>
 	<div class="container-fluid">
 		<div class="footer row" style="background-color: black">
@@ -253,11 +251,11 @@ require_once "html/personalizacao_display.php";
 			</div>
 			<div class="col-md-4">
 				<div class="pull-right">
-					<a href="https://github.com/nilsonmori/WeGIA" target="_blank">
+					<a href="https://github.com/nilsonmori/WeGIA" target="_blank" aria-label="GitHub do WeGIA">
 						<span class="fa fa-github-square" style="color: white"></span></a>
-					<a href="https://www.facebook.com/wegiasoftware" target="_blank">
+					<a href="https://www.facebook.com/wegiasoftware" target="_blank" aria-label="Facebook do WeGIA">
 						<span class="fa fa-facebook-square" style="color: white"></span></a>
-					<a href="https://www.wegia.org" target="_blank">
+					<a href="https://www.wegia.org" target="_blank" aria-label="Site do WeGIA">
 						<span class="fa fa-globe" style="color: white"></span></a>
 				</div>
 			</div>

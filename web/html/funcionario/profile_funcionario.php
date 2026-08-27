@@ -148,7 +148,7 @@ try {
 }
 ?>
 <!doctype html>
-<html class="fixed">
+<html class="fixed" lang="pt-br">
 
 <head>
   <!-- Basic -->
@@ -158,7 +158,7 @@ try {
   <meta name="description" content="Porto Admin - Responsive HTML5 Template">
   <meta name="author" content="okler.net">
   <!-- Mobile Metas -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Web Fonts  -->
   <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
   <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
@@ -505,8 +505,8 @@ try {
             .append($("<td>").text(item.nome_docfuncional))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.id_fundocs + "' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.id_fundocs + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_fundocs + "' title='Visualizar ou Baixar'><button class='btn btn-primary' title='Visualizar ou Baixar'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a onclick='removerFuncionarioDocs(" + item.id_fundocs + ")' href='#' title='Excluir'><button class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
       });
@@ -520,8 +520,8 @@ try {
             .append($("<td>").text(item.nome_docfuncional))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.id_fundocs + "' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.id_fundocs + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_fundocs + "' title='Visualizar ou Baixar'><button class='btn btn-primary' title='Visualizar ou Baixar'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a onclick='removerFuncionarioDocs(" + item.id_fundocs + ")' href='#' title='Excluir'><button class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
       });
@@ -543,8 +543,8 @@ try {
             .append($("<td>").text(dependente.cpf))
             .append($("<td>").text(dependente.parentesco))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='profile_dependente.php?id_dependente=" + dependente.id_dependente + "' title='Editar'><button class='btn btn-primary'><i class='fas fa-user-edit'></i></button></a>"))
-              .append($("<button class='btn btn-danger' onclick='removerDependente(" + dependente.id_dependente + ")'><i class='fas fa-trash-alt'></i></button>"))
+              .append($("<a href='profile_dependente.php?id_dependente=" + dependente.id_dependente + "' title='Editar'><button class='btn btn-primary' title='Editar'><i class='fas fa-user-edit'></i></button></a>"))
+              .append($("<button class='btn btn-danger' title='Excluir' onclick='removerDependente(" + dependente.id_dependente + ")'><i class='fas fa-trash-alt'></i></button>"))
             )
           )
       });
@@ -741,7 +741,7 @@ try {
               <li><span>Páginas</span></li>
               <li><span>Perfil</span></li>
             </ol>
-            <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+            <a class="sidebar-right-toggle" aria-label="Alternar painel lateral"><i class="fa fa-chevron-left"></i></a>
           </div>
         </header>
         <!-- start: page -->
@@ -782,7 +782,7 @@ try {
                   }
                   echo "<img src='$foto' style='margin-bottom: 15px;' id='imagem' class='rounded img-responsive' alt='John Doe'>";
                   ?>
-                  <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"><i class="fa fa-camera-retro"></i></button>
+                  <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal" aria-label="Alterar foto de perfil"><i class="fa fa-camera-retro"></i></button>
 
                   <div class="container">
                     <div class="modal fade" id="myModal" role="dialog">
@@ -799,7 +799,7 @@ try {
                               <input type="hidden" name="metodo" value="alterarImagem">
                               <?= Csrf::inputField() ?>
                               <div class="form-group">
-                                <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
+                                <label class="col-md-4 control-label" for="imgform">Carregue nova imagem de perfil:</label>
                                 <div class="col-md-8">
                                   <input type="file" name="imgperfil" size="60" id="imgform" class="form-control">
                                 </div>
@@ -864,22 +864,22 @@ try {
                     <h4 class="mb-xlg">Informações Pessoais</h4>
                     <fieldset>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
+                        <label class="col-md-3 control-label" for="nomeForm">Nome</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileFirstName">Sobrenome</label>
+                        <label class="col-md-3 control-label" for="sobrenomeForm">Sobrenome</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
+                        <label class="col-md-3 control-label">Sexo</label>
                         <div class="col-md-8">
-                          <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
-                          <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                          <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" aria-label="Masculino"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
+                          <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" aria-label="Feminino"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
                         </div>
                       </div>
                       <div class="form-group">
@@ -889,13 +889,13 @@ try {
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
+                        <label class="col-md-3 control-label" for="telefone">Telefone</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
+                        <label class="col-md-3 control-label" for="nascimento">Nascimento</label>
                         <div class="col-md-8">
                           <input type="date"
                             placeholder="dd/mm/aaaa"
@@ -915,19 +915,19 @@ try {
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileFirstName">Nome do pai</label>
+                        <label class="col-md-3 control-label" for="pai">Nome do pai</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" name="nome_pai" id="pai" onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileFirstName">Nome da mãe</label>
+                        <label class="col-md-3 control-label" for="mae">Nome da mãe</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" name="nome_mae" id="mae" onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
+                        <label class="col-md-3 control-label" for="sangue">Tipo sanguíneo</label>
                         <div class="col-md-6">
                           <select class="form-control input-lg mb-md" name="sangue" id="sangue">
                             <option selected disabled>Selecionar</option>
@@ -1037,7 +1037,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Remuneração</h2>
                     </header>
@@ -1079,7 +1079,7 @@ try {
                                     }
                                     ?>
                                   </select>
-                                  <a onclick="adicionarTipoRemuneracao()" style="margin: 0 20px;" id="btn_adicionar_tipo_remuneracao"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                  <a onclick="adicionarTipoRemuneracao()" style="margin: 0 20px;" id="btn_adicionar_tipo_remuneracao" aria-label="Adicionar tipo de remuneração"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                 </div>
                               </div>
                               <div class="form-group">
@@ -1131,7 +1131,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Outros</h2>
                     </header>
@@ -1164,7 +1164,7 @@ try {
 
                         <!-- Campo Estado CTPS -->
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="uf">Estado CTPS</label>
+                          <label class="col-md-3 control-label" for="uf_ctps">Estado CTPS</label>
                           <div class="col-md-6">
                             <input type="text" name="uf_ctps" size="60" class="form-control" id="uf_ctps" value="<?= htmlspecialchars($oldInput['uf_ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                           </div>
@@ -1231,7 +1231,7 @@ try {
                         </div>
 
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
+                          <label class="col-md-3 control-label" for="data_admissao">Data de Admissão<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
                             <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>" name="data_admissao" id="data_admissao" max="<?= date('Y-m-d') ?>" required value="<?= htmlspecialchars($oldInput['data_admissao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <?php if (!empty($fieldErrors['data_admissao'])): ?>
@@ -1256,10 +1256,10 @@ try {
                               <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['situacao'], ENT_QUOTES, 'UTF-8') ?></div>
                             <?php endif; ?>
                           </div>
-                          <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                          <a onclick="adicionar_situacao()" aria-label="Adicionar situação"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;' for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
+                          <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;' for="cargo">Cargo<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
                             <select class="form-control input-lg mb-md<?= !empty($fieldErrors['cargo']) ? ' is-invalid' : '' ?>" name="cargo" id="cargo" required>
                               <option value="" selected disabled>Selecionar</option>
@@ -1278,7 +1278,7 @@ try {
                               <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['cargo'], ENT_QUOTES, 'UTF-8') ?></div>
                             <?php endif; ?>
                           </div>
-                          <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                          <a onclick="adicionar_cargo()" aria-label="Adicionar cargo"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
                         <!-- Pegar id funcionário de variável sanitizada -->
                         <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
@@ -1360,7 +1360,7 @@ try {
                                       }
                                       ?>
                                     </select>
-                                    <a onclick="adicionar_addInfoDescricao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw; margin-left: 10px;"></i></a>
+                                    <a onclick="adicionar_addInfoDescricao()" aria-label="Adicionar descrição"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw; margin-left: 10px;"></i></a>
                                   </div>
                                 </div>
                                 <div class="form-group">
@@ -1481,14 +1481,14 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Carga Horária</h2>
                     </header>
                     <div class="panel-body">
                       <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarCargaHoraria">
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Escala</label>
+                          <label class="col-md-3 control-label" for="escala_input">Escala</label>
                           <div class="col-md-6">
                             <select class="form-control input-lg mb-md" name="escala" id="escala_input">
                               <option id="escala_default" selected disabled value="">Selecionar</option>
@@ -1503,7 +1503,7 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Tipo</label>
+                          <label class="col-md-3 control-label" for="tipoCargaHoraria_input">Tipo</label>
                           <div class="col-md-6">
                             <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input">
                               <option selected disabled value="">Selecionar</option>
@@ -1547,25 +1547,25 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Primeira entrada</label>
+                          <label class="col-md-3 control-label" for="entrada1_input">Primeira entrada</label>
                           <div class="col-md-3">
                             <input type="time" placeholder="07:25" class="form-control" name="entrada1" id="entrada1_input">
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Primeira saída</label>
+                          <label class="col-md-3 control-label" for="saida1_input">Primeira saída</label>
                           <div class="col-md-3">
                             <input type="time" placeholder="07:25" class="form-control" name="saida1" id="saida1_input">
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Segunda entrada</label>
+                          <label class="col-md-3 control-label" for="entrada2_input">Segunda entrada</label>
                           <div class="col-md-3">
                             <input type="time" placeholder="07:25" class="form-control" name="entrada2" id="entrada2_input">
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Segunda saída</label>
+                          <label class="col-md-3 control-label" for="saida2_input">Segunda saída</label>
                           <div class="col-md-3">
                             <input type="time" placeholder="07:25" class="form-control" name="saida2" id="saida2_input">
                           </div>
@@ -1672,7 +1672,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Documentos</h2>
                     </header>
@@ -1684,25 +1684,25 @@ try {
                         <input type="hidden" name="metodo" value="alterarDocumentacao">
                         <?= Csrf::inputField() ?>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
+                          <label class="col-md-3 control-label" for="rg">Número do RG</label>
                           <div class="col-md-6">
                             <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
+                          <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor</label>
                           <div class="col-md-6">
                             <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
+                          <label class="col-md-3 control-label" for="data_expedicao">Data de expedição</label>
                           <div class="col-md-6">
                             <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
+                          <label class="col-md-3 control-label" for="cpf">Número do CPF</label>
                           <div class="col-md-6">
                             <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                           </div>
@@ -1761,7 +1761,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Arquivos</h2>
                     </header>
@@ -1859,7 +1859,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Dependentes</h2>
                     </header>
@@ -1919,7 +1919,7 @@ try {
                                       }
                                       ?>
                                     </select>
-                                    <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                    <a onclick="adicionarParentesco()" style="margin: 0 20px;" aria-label="Adicionar parentesco"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                   </div>
                                 </div>
                                 <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?> readonly>
@@ -1944,7 +1944,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Endereço</h2>
                     </header>
@@ -1996,7 +1996,7 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Número residencial</label>
+                          <label class="col-md-3 control-label" for="numero_residencia">Número residencial</label>
                           <div class="col-md-4">
                             <input type="number" min="0" oninput="this.value = Math.abs(this.value)" class="form-control" name="numero_residencia" id="numero_residencia">
                           </div>
@@ -2007,7 +2007,7 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
+                          <label class="col-md-3 control-label" for="complemento">Complemento</label>
                           <div class="col-md-8">
                             <input type="text" class="form-control" name="complemento" id="complemento">
                           </div>
@@ -2661,7 +2661,7 @@ try {
     <?php endif; ?>
   </script>
   <div align="right">
-    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
   </div>
 </body>
 

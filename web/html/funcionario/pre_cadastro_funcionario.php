@@ -31,7 +31,7 @@ require_once ROOT . "/html/geral/msg.php";
 
 <!DOCTYPE html>
 
-<html class="fixed">
+<html class="fixed" lang="pt-br">
 
 <head>
     <!-- Basic -->
@@ -40,7 +40,7 @@ require_once ROOT . "/html/geral/msg.php";
     <title>Cadastro de Funcionário</title>
 
     <!-- Mobile Metas -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
     <!-- Vendor CSS -->
     <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/bootstrap/css/bootstrap.css" />
@@ -202,7 +202,7 @@ require_once ROOT . "/html/geral/msg.php";
                             </li>
                             <li><span>Digite seu CPF</span></li>
                         </ol>
-                        <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+                        <a class="sidebar-right-toggle" aria-label="Alternar painel lateral"><i class="fa fa-chevron-left"></i></a>
                     </div>
                 </header>
 
@@ -229,7 +229,7 @@ require_once ROOT . "/html/geral/msg.php";
                     <div class="panel-body">
 
                         <form method="GET" action="../../controle/control.php" id="formCpf">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" aria-label="CPF" required>
                             <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                             <br>
                             <input type="hidden" name="nomeClasse" value="FuncionarioControle"> 
@@ -290,7 +290,7 @@ require_once ROOT . "/html/geral/msg.php";
     <script src="<?php echo WWW; ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
     <div align="right">
-        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+        <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
     </div>
 </body>
 

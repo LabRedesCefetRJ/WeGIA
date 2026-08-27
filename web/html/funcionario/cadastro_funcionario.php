@@ -52,14 +52,14 @@ $cargo = $mysqli->query("SELECT * FROM cargo");
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 ?>
 <!DOCTYPE html>
-<html class="fixed">
+<html class="fixed" lang="pt-br">
 
 <head>
   <!-- Basic -->
   <meta charset="UTF-8">
   <title>Cadastro de Funcionário</title> 
   <!-- Mobile Metas -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Web Fonts  -->
   <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
@@ -111,7 +111,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
             <li><span>Cadastros</span></li>
             <li><span>Funcionário</span></li>
           </ol>
-          <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+          <a class="sidebar-right-toggle" aria-label="Alternar painel lateral"><i class="fa fa-chevron-left"></i></a>
         </div>
       </header>
       <!-- start: page -->
@@ -137,6 +137,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   }
                   ?>
 
+                  <label for="imgform" class="sr-only">Carregar imagem de perfil</label>
                   <input type="file" class="image_input form-control" onclick="okDisplay()" name="imgperfil" id="imgform">
                   <div id="display_image" class="thumb-info mb-md"></div>
                   <div id="botima">
@@ -166,7 +167,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                   <h4 class="mb-xlg">Informações Pessoais</h4>
                   <h5 class="obrig">Campos Obrigatórios(*)</h5>
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="nome">Nome<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
                       <input type="text" class="form-control<?= isset($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                       <p id="error_nome" class="help-block text-danger" style="display: <?= isset($fieldErrors['nome']) ? 'block' : 'none' ?>;">
@@ -175,7 +176,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="sobrenome">Sobrenome<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
                       <input type="text" class="form-control<?= isset($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                       <p id="error_sobrenome" class="help-block text-danger" style="display: <?= isset($fieldErrors['sobrenome']) ? 'block' : 'none' ?>;">
@@ -184,10 +185,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label">Sexo<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                      <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                      <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required aria-label="Masculino" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                      <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" aria-label="Feminino" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
                     </div>
                   </div>
                   <div class="form-group">
@@ -207,7 +208,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="nascimento">Nascimento<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
                       <input type="date" name="nascimento" id="nascimento" class="form-control<?= isset($fieldErrors['nascimento']) ? ' is-invalid' : '' ?>" min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>" required value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                       <p id="error_nascimento" class="help-block text-danger" style="display: <?= isset($fieldErrors['nascimento']) ? 'block' : 'none' ?>;">
@@ -227,7 +228,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
                  <div id="grupoRG">
                     <div class="form-group">
-                      <label class="col-md-3 control-label">Número do RG</label>
+                      <label class="col-md-3 control-label" for="rg">Número do RG</label>
                       <div class="col-md-6">
                         <input type="text" class="form-control<?= isset($fieldErrors['rg']) ? ' is-invalid' : '' ?>" name="rg" id="rg"
                           onkeypress="return Onlynumbers(event)"
@@ -240,7 +241,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
 
                     <div class="form-group">
-                      <label class="col-md-3 control-label">Órgão Emissor</label>
+                      <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor</label>
                       <div class="col-md-6">
                         <input type="text" class="form-control<?= isset($fieldErrors['orgao_emissor']) ? ' is-invalid' : '' ?>" name="orgao_emissor" id="orgao_emissor"
                           onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['orgao_emissor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
@@ -254,7 +255,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
 
                     <div class="form-group">
-                      <label class="col-md-3 control-label">Data de expedição</label>
+                      <label class="col-md-3 control-label" for="data_expedicao">Data de expedição</label>
                       <div class="col-md-6">
                         <input type="date" class="form-control<?= isset($fieldErrors['data_expedicao']) ? ' is-invalid' : '' ?>"
                           name="data_expedicao" id="data_expedicao"
@@ -290,7 +291,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="data_admissao">Data de Admissão<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
                       <input type="date" class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>"
                         name="data_admissao"
@@ -303,8 +304,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="inputSuccess">Situação<sup class="obrig">*</sup></label>
-                    <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                    <label class="col-md-3 control-label" for="situacao">Situação<sup class="obrig">*</sup></label>
+                    <a onclick="adicionar_situacao()" aria-label="Adicionar situação"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                     <div class="col-md-6">
                       <select class="form-control input-lg mb-md<?= isset($fieldErrors['situacao']) ? ' is-invalid' : '' ?>" name="situacao" id="situacao" required>
                         <option selected disabled>Selecionar</option>
@@ -320,8 +321,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label" for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
-                    <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                    <label class="col-md-3 control-label" for="cargo">Cargo<sup class="obrig">*</sup></label>
+                    <a onclick="adicionar_cargo()" aria-label="Adicionar cargo"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                     <div class="col-md-6">
                       <select class="form-control input-lg mb-md<?= isset($fieldErrors['cargo']) ? ' is-invalid' : '' ?>" name="cargo" id="cargo" required>
                         <option selected disabled>Selecionar</option>
@@ -338,7 +339,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label">Escala<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="escala_input">Escala<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
                       <select class="form-control input-lg mb-md" name="escala" id="escala_input" required>
                         <option selected disabled value="">Selecionar</option>
@@ -352,10 +353,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         ?>
                       </select>
                     </div>
-                    <a href="../quadro_horario/adicionar_escala.php"><i class="fas fa-plus w3-xlarge"></i></a>
+                    <a href="../quadro_horario/adicionar_escala.php" aria-label="Adicionar escala"><i class="fas fa-plus w3-xlarge"></i></a>
                   </div>
                   <div class="form-group">
-                    <label class="col-md-3 control-label">Tipo<sup class="obrig">*</sup></label>
+                    <label class="col-md-3 control-label" for="tipoCargaHoraria_input">Tipo<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
                       <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input" required>
                         <option selected disabled value="">Selecionar</option>
@@ -369,7 +370,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                         ?>
                       </select>
                     </div>
-                    <a href="../quadro_horario/adicionar_tipo_quadro_horario.php"><i class="fas fa-plus w3-xlarge"></i></a>
+                    <a href="../quadro_horario/adicionar_tipo_quadro_horario.php" aria-label="Adicionar tipo de carga horária"><i class="fas fa-plus w3-xlarge"></i></a>
                   </div>
                   <div class="form-group" id="reservista1" style="display: none">
                     <label class="col-md-3 control-label">Número do certificado reservista</label>
@@ -401,7 +402,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                     </div>
                   </div>
                 </form>
-                <iframe name="frame"></iframe>
+                <iframe name="frame" title="Frame auxiliar de envio do formulário"></iframe>
                 <!-- end: page -->
     </section>
   </div>
@@ -924,7 +925,7 @@ $(document).ready(function() {
 </script>
 
   <div align="right">
-    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
   </div>
 </body>
 
