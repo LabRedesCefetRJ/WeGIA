@@ -24,7 +24,9 @@ class Atendido_ocorrenciaDocDAO
 	 	try{
 			$Anexos = array();
 			$pdo = Conexao::connect();
-			$consulta = $pdo->query("SELECT arquivo_nome, arquivo_extensao FROM `atendido_ocorrencia_doc` WHERE atentido_ocorrencia_idatentido_ocorrencias = $idatendido_ocorrencias");
+			$consulta = $pdo->prepare("SELECT arquivo_nome, arquivo_extensao FROM `atendido_ocorrencia_doc` WHERE atentido_ocorrencia_idatentido_ocorrencias = :idatendido_ocorrencias");
+			$consulta->bindParam(':idatendido_ocorrencias', $idatendido_ocorrencias, PDO::PARAM_INT);
+			$consulta->execute();
 			$x = 0;
 			
 			while($linha = $consulta->fetch(PDO::FETCH_ASSOC))
