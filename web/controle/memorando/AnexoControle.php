@@ -13,6 +13,7 @@ if (file_exists($config_path)) {
 
 require_once ROOT . "/classes/memorando/Anexo.php";
 require_once ROOT . "/dao/memorando/AnexoDAO.php";
+require_once ROOT . "/dao/memorando/MemorandoDAO.php";
 
 class AnexoControle
 {
@@ -39,11 +40,33 @@ class AnexoControle
 				throw new InvalidArgumentException('O id fornecido para o anexo não é válido.', 400);
 			}
 
-			$AnexoDAO = new AnexoDAO();
-			$anexos = $AnexoDAO->listarAnexo($idAnexo);
 			if (session_status() !== PHP_SESSION_ACTIVE) {
 				session_start();
 			}
+
+			if (!isset($_SESSION['usuario'])) {
+				throw new InvalidArgumentException('Usuário não autenticado.', 401);
+			}
+
+			$AnexoDAO = new AnexoDAO();
+
+			// Verifica se o anexo pertence a um memorando em que o usuário logado
+			// é remetente ou destinatário de algum despacho, antes de buscar/expor
+			// o conteúdo do arquivo (evita IDOR: qualquer id_anexo bastava antes).
+			$idMemorando = $AnexoDAO->getIdMemorandoPorAnexo($idAnexo);
+
+			if (!$idMemorando) {
+				throw new InvalidArgumentException('Anexo não encontrado.', 404);
+			}
+
+			$memorandoDAO = new MemorandoDAO();
+			$memorandosPermitidos = $memorandoDAO->listarIdTodosInativos();
+
+			if (!in_array($idMemorando, $memorandosPermitidos ?? [])) {
+				throw new InvalidArgumentException('Você não tem acesso a este anexo.', 403);
+			}
+
+			$anexos = $AnexoDAO->listarAnexo($idAnexo);
 			$_SESSION['arq'] = $anexos;
 		} catch (Exception $e) {
 			require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
