@@ -287,7 +287,7 @@ class PdfService
             $this->renderTabelaContribuicoes($pdf, $contribuicoes, [
                 'titulo' => 'Detalhamento das Contribuições',
                 'headers' => ['Código', 'Status', 'D. Emissão', 'D. Pagamento', 'Valor'],
-                'larguras' => [45, 31, 28, 28, 28],
+                'larguras' => [50, 26, 28, 28, 28],
                 'rowFormatter' => function (array $contribuicao): array {
                     return [
                         (string)($contribuicao['codigo'] ?? ''),
