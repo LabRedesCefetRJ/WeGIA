@@ -1,4 +1,12 @@
 <?php
+    if (session_status() === PHP_SESSION_NONE)
+        session_start();
+
+    if (!isset($_SESSION['usuario'])) {
+        http_response_code(401);
+        exit('Não autenticado.');
+    }
+
     require("../conexao.php");
     if(!isset($_POST) or empty($_POST)){
         $data = file_get_contents( "php://input" );
