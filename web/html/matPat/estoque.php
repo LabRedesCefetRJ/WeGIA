@@ -299,7 +299,7 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 								$almoxarifado = JSON_decode(filtrarAlmoxarifado($_SESSION['id_pessoa'], JSON_encode($almoxarifado)));
 								foreach ($almoxarifado as $value) {
 									echo ('
-										<option value="' . $value->descricao_almoxarifado . '">' . $value->descricao_almoxarifado . '</option>
+										<option value="' . htmlspecialchars($value->descricao_almoxarifado) . '">' . htmlspecialchars($value->descricao_almoxarifado) . '</option>
 										');
 								}
 								?>
@@ -314,7 +314,7 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 								$almoxarifado = $res->fetchAll(PDO::FETCH_ASSOC);
 								foreach ($almoxarifado as $value) {
 									echo ('
-										<option value="' . $value['descricao_categoria'] . '">' . $value['descricao_categoria'] . '</option>
+										<option value="' . htmlspecialchars($value['descricao_categoria']) . '">' . htmlspecialchars($value['descricao_categoria']) . '</option>
 										');
 								}
 								?>
