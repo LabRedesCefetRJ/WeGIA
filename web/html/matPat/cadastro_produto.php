@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
@@ -13,8 +14,6 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 22, 3);
-
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
