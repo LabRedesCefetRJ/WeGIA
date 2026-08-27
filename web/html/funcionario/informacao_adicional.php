@@ -44,6 +44,14 @@ if ($action == "adicionar_descricao") {
 }
 
 if ($action == "adicionar") {
+    $dados = trim((string) filter_input(INPUT_POST, 'dados', FILTER_UNSAFE_RAW));
+
+    if (!$dados || strlen($dados) == 0) {
+        http_response_code(400);
+        echo json_encode(['erro' => 'Os dados não podem estar vazios.']);
+        exit();
+    }
+
     $sql = "INSERT INTO funcionario_outrasinfo VALUES (default , :idFuncionario, :idDescricao, :dados)";
     try {
         $stmt = $pdo->prepare($sql);
@@ -104,7 +112,7 @@ function listar(PDO $pdo)
         
         //evitar XSS
         foreach ($informacoes as $index => $informacao) {
-            $informacoes[$index]['dados'] = htmlspecialchars($informacao['dados'] ?? '');
+            $informacoes[$index]['dado'] = htmlspecialchars($informacao['dado'] ?? '');
             $informacoes[$index]['descricao'] = htmlspecialchars($informacao['descricao'] ?? '');
         }
         
