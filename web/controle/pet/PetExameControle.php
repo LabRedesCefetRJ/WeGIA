@@ -3,6 +3,14 @@ ini_set('display_errors',1);
 ini_set('display_startup_erros',1);
 error_reporting(E_ALL);
 
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+
+if (!isset($_SESSION['id_pessoa'])) {
+    http_response_code(401);
+    die(json_encode(['erro' => 'Operação negada: Cliente não autorizado']));
+}
+
 $PetDAO_path = "dao/pet/PetDAO.php";
 if(file_exists($PetDAO_path)){
     require_once($PetDAO_path);

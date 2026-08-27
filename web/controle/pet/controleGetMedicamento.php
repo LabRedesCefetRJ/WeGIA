@@ -2,6 +2,11 @@
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
+if (!isset($_SESSION['id_pessoa'])) {
+    http_response_code(401);
+    die(json_encode(['erro' => 'Operação negada: Cliente não autorizado']));
+}
+
 require_once './MedicamentoControle.php';
 header("Content-Type: application/json;charset=UTF-8");
 
