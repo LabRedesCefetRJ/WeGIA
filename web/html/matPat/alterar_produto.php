@@ -30,14 +30,17 @@ include_once ROOT . '/dao/ProdutoDAO.php';
 if (!isset($_SESSION['unidade'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit();
 }
 if (!isset($_SESSION['categoria'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit();
 }
 if (!isset($_SESSION['produto'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto) . '&id_produto=' . htmlspecialchars($id_produto));
+	exit();
 }
 
 if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {

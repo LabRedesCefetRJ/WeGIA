@@ -3,10 +3,12 @@ require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_S
 session_start();
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit();
 }
 if (!isset($_SESSION['perfil'])) {
-	$cpf = $_GET['cpf'];
-	header('Location: ../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&nextPage=../html/profile_funcionario.php?cpf=' . $cpf . '&cpf=' . $cpf);
+	$cpf = $_GET['cpf'] ?? '';
+	header('Location: ../controle/control.php?metodo=listarUm&nomeClasse=FuncionarioControle&nextPage=../html/profile_funcionario.php?cpf=' . urlencode($cpf) . '&cpf=' . urlencode($cpf));
+	exit();
 }
 
 
