@@ -3,7 +3,8 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 Util::definirFusoHorario();
 session_start();
     if (!isset($_SESSION['usuario'])) {
-        header("Location ../../index.php");
+        header("Location: ../../index.php");
+        exit();
     }
 
     // Verifica Permissão do Usuário

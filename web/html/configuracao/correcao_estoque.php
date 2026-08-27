@@ -2,6 +2,7 @@
     session_start();
     if (!isset($_SESSION['usuario'])){
         header("Location: ../../index.php");
+        exit();
 	}
 
 	// Diz ao programa de correção de estoque se deve ou não mostrar os avisos
