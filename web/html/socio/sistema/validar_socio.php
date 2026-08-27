@@ -4,6 +4,27 @@
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . "config.php";
 require_once ROOT . "/html/personalizacao_display.php";
+
+$nomeInstituicao = 'WeGIA Software Foundation';
+
+try {
+    require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'EnderecoDAO.php';
+
+    $enderecoDao = new EnderecoDAO();
+    $retorno = $enderecoDao->listarInstituicao();
+    $dados = json_decode($retorno, true);
+    $endereco = [];
+
+    if (is_array($dados) && count($dados) > 0 && is_array($dados[0])) {
+        $endereco = $dados[0];
+    }
+
+    $nomeInstituicao = trim($endereco['nome'] ?? '');
+} catch (Exception $e) {
+    //loga o erro e continua a execução da página
+    error_log("[ERRO {$e->getCode()}]: " . 'File: ' . $e->getFile() . ' | Line: ' . $e->getLine() . ' | Message: ' . $e->getMessage());
+}
+
 ?>
 <!DOCTYPE html>
 <!-- Página pública para consulta e validação de sócios, informações parcialmente censuradas -->
@@ -215,7 +236,7 @@ require_once ROOT . "/html/personalizacao_display.php";
     <footer>
 
         <div class="text-center">
-            <p>&copy; 2026 Nome da instituição</p>
+            <p>&copy; <?="$nomeInstituicao " . date('Y')?></p>
         </div>
 
     </footer>
