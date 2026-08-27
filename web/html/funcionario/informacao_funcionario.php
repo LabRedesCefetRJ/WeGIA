@@ -9,12 +9,14 @@ if (session_status() === PHP_SESSION_NONE)
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit();
 } else {
 	session_regenerate_id();
 }
 
 if (!isset($_SESSION['funcionarios'])) {
 	header('Location: ../../controle/control.php?metodo=listartodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php');
+	exit();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
