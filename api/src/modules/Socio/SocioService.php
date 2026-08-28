@@ -414,18 +414,37 @@ class SocioService implements SocioServiceInterface
             return null;
         }
 
-        // Se armazenou como Data URI
-        if (preg_match('/^data:(.+);base64,(.+)$/', $result['imagem'], $matches)) {
-            return [
-                'mime' => $matches[1],
-                'conteudo' => base64_decode($matches[2]),
-            ];
+        return $this->decodificarImagemBase64($result['imagem']);
+    }
+
+    private function decodificarImagemBase64(string $imagemBase64): array
+    {
+        $mime = 'image/png';
+        $conteudoBase64 = $imagemBase64;
+
+        if (str_starts_with($imagemBase64, 'data:')) {
+            $partes = explode(',', $imagemBase64, 2);
+            if (count($partes) !== 2) {
+                throw new \RuntimeException('Formato inválido da imagem', 500);
+            }
+
+            [$cabecalho, $conteudoBase64] = $partes;
+            $cabecalho = substr($cabecalho, 5);
+
+            $dadosCabecalho = explode(';', $cabecalho);
+            if (!empty($dadosCabecalho[0])) {
+                $mime = $dadosCabecalho[0];
+            }
         }
 
-        // Compatibilidade: Base64 puro
+        $conteudo = base64_decode($conteudoBase64, true);
+        if ($conteudo === false) {
+            throw new \RuntimeException('Não foi possível decodificar a imagem', 500);
+        }
+
         return [
-            'mime' => 'image/png', // ajuste se necessário
-            'conteudo' => base64_decode($result['imagem']),
+            'mime' => $mime,
+            'conteudo' => $conteudo,
         ];
     }
 
