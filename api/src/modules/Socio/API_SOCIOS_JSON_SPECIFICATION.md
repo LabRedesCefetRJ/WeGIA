@@ -108,7 +108,8 @@ Verifica se um sócio existe no sistema pelo CPF.
 ```json
 {
   "exists": true,
-  "hasEmail": true
+  "hasEmail": true,
+  "censuredEmail": "j*******va@gmail.com"
 }
 ```
 
@@ -116,20 +117,23 @@ Verifica se um sócio existe no sistema pelo CPF.
 |-------|------|-----------|
 | `exists` | boolean | Indica se o sócio existe |
 | `hasEmail` | boolean | Indica se a pessoa associada possui email cadastrado |
+| `censuredEmail` | string \| null | E-mail cadastrado parcialmente censurado, exibindo a primeira letra, as duas últimas antes do `@` e o domínio completo. Enviado somente quando `hasEmail` for `true` |
 
 ### Resposta - 404 Not Found (Sócio Não Existe)
 ```json
 {
   "exists": false,
-  "hasEmail": false,
-  "message": "Pessoa não localizada."
+  "hasEmail": true,
+  "censuredEmail": "j*******va@gmail.com",
+  "message": "Sócio não localizado."
 }
 ```
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | `exists` | boolean | Sempre `false` |
-| `hasEmail` | boolean | Indica se possui email (se a pessoa foi encontrada) |
+| `hasEmail` | boolean | Indica se a pessoa associada possui email cadastrado |
+| `censuredEmail` | string \| null | E-mail cadastrado parcialmente censurado, enviado somente quando `hasEmail` for `true` |
 | `message` | string | Mensagem descritiva do resultado |
 
 ### Resposta - 500 Internal Server Error

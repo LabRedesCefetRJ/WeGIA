@@ -297,24 +297,36 @@ class SocioController
     {
         try {
             $resultado = $this->buscarSocioPorCpf($args['cpf'] ?? '');
+            $censuredEmail = $resultado['pessoa'] ? Util::censurarEmail((string) $resultado['pessoa']->getEmail()) : null;
 
             if (!$resultado['socio']) {
-                $response->getBody()->write(json_encode([
+                $responseData = [
                     'exists' => false,
                     'hasEmail' => $resultado['pessoa'] ? !empty($resultado['pessoa']->getEmail()) : false,
                     'message' => $resultado['message']
-                ]));
+                ];
+
+                if (!empty($responseData['hasEmail']) && !empty($censuredEmail)) {
+                    $responseData['censuredEmail'] = $censuredEmail;
+                }
+
+                $response->getBody()->write(json_encode($responseData));
 
                 return $response->withStatus(404)
                     ->withHeader('Content-Type', 'application/json');
             }
 
             $possuiEmail = !empty($resultado['pessoa']->getEmail());
-
-            $response->getBody()->write(json_encode([
+            $responseData = [
                 'exists' => true,
                 'hasEmail' => $possuiEmail
-            ]));
+            ];
+
+            if ($possuiEmail && !empty($censuredEmail)) {
+                $responseData['censuredEmail'] = $censuredEmail;
+            }
+
+            $response->getBody()->write(json_encode($responseData));
 
             return $response->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');

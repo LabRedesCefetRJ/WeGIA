@@ -77,6 +77,52 @@ class Util
     }
 
     /**
+     * Censura um e-mail preservando a primeira letra, as duas últimas letras
+     * antes do @ e o domínio completo.
+     *
+     * Exemplos:
+     * - joao.silva@gmail.com -> j*******va@gmail.com
+     * - ab@gmail.com -> a*@gmail.com
+     *
+     * @param string $email E-mail a ser censurado
+     * @return string|null E-mail censurado ou null se o valor for inválido
+     */
+    public static function censurarEmail(string $email): ?string
+    {
+        $email = trim($email);
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return null;
+        }
+
+        $partes = explode('@', $email, 2);
+        if (count($partes) !== 2) {
+            return null;
+        }
+
+        [$usuario, $dominio] = $partes;
+        $tamanhoUsuario = strlen($usuario);
+
+        if ($tamanhoUsuario === 0) {
+            return null;
+        }
+
+        if ($tamanhoUsuario === 1) {
+            $usuarioCensurado = $usuario;
+        } elseif ($tamanhoUsuario === 2) {
+            $usuarioCensurado = substr($usuario, 0, 1) . '*';
+        } elseif ($tamanhoUsuario === 3) {
+            $usuarioCensurado = substr($usuario, 0, 1) . '*' . substr($usuario, -1);
+        } else {
+            $usuarioCensurado = substr($usuario, 0, 1)
+                . str_repeat('*', max(1, $tamanhoUsuario - 3))
+                . substr($usuario, -2);
+        }
+
+        return $usuarioCensurado . '@' . $dominio;
+    }
+
+    /**
      * Normaliza o CNPJ removendo máscara e formatando para padrão xx.xxx.xxx/xxxx-xx
      * 
      * @param string $cnpj CNPJ com ou sem máscara
