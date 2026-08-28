@@ -211,19 +211,37 @@ class PessoaService implements PessoaServiceInterface
             return null;
         }
 
-        // Extrair o tipo MIME e os dados da imagem
-        // Se armazenou como Data URI
-        if (preg_match('/^data:(.+);base64,(.+)$/', $fotoBase64, $matches)) {
-            return [
-                'mime' => $matches[1],
-                'conteudo' => base64_decode($matches[2]),
-            ];
+        return $this->decodificarFotoPerfil($fotoBase64);
+    }
+
+    private function decodificarFotoPerfil(string $fotoBase64): array
+    {
+        $mime = 'image/png';
+        $conteudoBase64 = $fotoBase64;
+
+        if (str_starts_with($fotoBase64, 'data:')) {
+            $partes = explode(',', $fotoBase64, 2);
+            if (count($partes) !== 2) {
+                throw new \RuntimeException('Formato inválido da foto de perfil', 500);
+            }
+
+            [$cabecalho, $conteudoBase64] = $partes;
+            $cabecalho = substr($cabecalho, 5);
+
+            $dadosCabecalho = explode(';', $cabecalho);
+            if (!empty($dadosCabecalho[0])) {
+                $mime = $dadosCabecalho[0];
+            }
         }
 
-        // Compatibilidade: Base64 puro
+        $conteudo = base64_decode($conteudoBase64, true);
+        if ($conteudo === false) {
+            throw new \RuntimeException('Não foi possível decodificar a foto de perfil', 500);
+        }
+
         return [
-            'mime' => 'image/png', // ajuste se necessário
-            'conteudo' => base64_decode($fotoBase64),
+            'mime' => $mime,
+            'conteudo' => $conteudo,
         ];
     }
 
