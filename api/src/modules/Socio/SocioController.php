@@ -1,0 +1,969 @@
+<?php
+
+namespace api\modules\Socio;
+
+use api\contracts\services\PessoaServiceInterface;
+use api\utils\Util;
+use api\modules\Socio\ParceiroInstitucional;
+use api\Infrastructure\RepositoryConnection;
+use Slim\Psr7\Request;
+use Slim\Psr7\Response;
+use PDO;
+
+class SocioController
+{
+    private SocioService $socioService;
+    private PessoaServiceInterface $pessoaService;
+    private EmailVerificationService $emailVerificationService;
+    private SocioVerificationHelper $verificationHelper;
+    private PDO $pdo;
+
+    public function __construct(SocioService $socioService, PessoaServiceInterface $pessoaService, EmailVerificationService $emailVerificationService, ?SocioVerificationHelper $verificationHelper = null)
+    {
+        $this->socioService = $socioService;
+        $this->pessoaService = $pessoaService;
+        $this->emailVerificationService = $emailVerificationService;
+
+        // Initialize helper if not provided (backward compatibility)
+        if ($verificationHelper === null) {
+            $this->verificationHelper = new SocioVerificationHelper($pessoaService, $socioService, $emailVerificationService);
+        } else {
+            $this->verificationHelper = $verificationHelper;
+        }
+
+        $this->pdo = RepositoryConnection::getConnection();
+    }
+
+    public function registerSocio(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody();
+
+            // Validar CPF
+            if (empty($data['cpf']) || !Util::validateCpf($data['cpf'])) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'CPF inválido.'
+                ]));
+
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            //verificar se existe uma pessoa com o CPF fornecido, se não existir, criar uma nova pessoa, caso contrário, usar a pessoa existente para criar o sócio
+
+            $this->pdo->beginTransaction();
+
+            $pessoa = $this->pessoaService->obterPessoaPorCpf($data['cpf']);
+
+            if (!$pessoa) {
+                $pessoa = $this->pessoaService->criarPessoa(
+                    $data['nome'],
+                    $data['sobrenome'],
+                    isset($data['dataNascimento']) ? new \DateTime($data['dataNascimento']) : null,
+                    $data['sexo'] ?? null,
+                    $data['telefone'] ?? null,
+                    $data['email'] ?? null,
+                    $data['cpf']
+                );
+            }
+
+            //Interromper se pessoa não possuir email para envio do código de verificação
+            if (!$pessoa->getEmail()) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Pessoa deve possuir um e-mail para registro de sócio.'
+                ]));
+
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $socio = $this->socioService->criarSocio(
+                $pessoa,
+                new \DateTime($data['inicioContribuicao']),
+                $data['valorMensalidade'] ?? 10.0,
+                $data['status'] ?? 1,
+                $data['autoStatusContribuicao'] ?? true,
+                $data['idSocioTipo'] ?? 0
+            );
+
+            // Send verification code via email
+            $emailToVerify = $data['email'] ?? $pessoa->getEmail();
+            $verificationResult = null;
+
+            if (!empty($emailToVerify)) {
+                $verificationResult = $this->emailVerificationService->generateAndSendCode(
+                    $socio->getId(),
+                    $emailToVerify
+                );
+            }
+
+            $responseData = [
+                'socio' => $socio,
+                'email_verification' => $verificationResult ?? [
+                    'success' => false,
+                    'message' => 'E-mail não fornecido. Código de verificação não foi enviado.'
+                ]
+            ];
+
+            $response->getBody()->write(json_encode($responseData));
+
+            $this->pdo->commit();
+
+            return $response->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction())
+                $this->pdo->rollBack();
+
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    /**
+     * Verify verification code
+     * POST /socios/verify-code
+     * 
+     * Body JSON:
+     * {
+     *   "cpf": "12345678901",
+     *   "code": "123456"
+     * }
+     */
+    public function verifyCode(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody();
+
+            // Validate required data
+            if (empty($data['cpf']) || empty($data['code'])) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'CPF e código são obrigatórios'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Find socio by CPF
+            $resultado = $this->verificationHelper->findSocioByCpf($data['cpf']);
+
+            // Check if socio exists
+            if (!$resultado['socio']) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => $resultado['message'] ?? 'Sócio não localizado'
+                ]));
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Verify code
+            $result = $this->emailVerificationService->verifyCode(
+                $resultado['socio']->getId(),
+                $data['code']
+            );
+
+            $statusCode = $result['success'] ? 200 : 400;
+
+            $response->getBody()->write(json_encode($result));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    /**
+     * Alter password for a socio using a verification code
+     * POST /socios/alter-password
+     * 
+     * Body JSON:
+     * {
+     *   "cpf": "12345678901",
+     *   "senha": "novasenha123",
+     *   "confirmacao_senha": "novasenha123",
+     *   "codigo_verificacao": "123456"
+     * }
+     */
+    public function alterPassword(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody();
+
+            // Validate required data
+            if (
+                empty($data['cpf']) || empty($data['senha']) || empty($data['confirmacao_senha']) ||
+                empty($data['codigo_verificacao'])
+            ) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'cpf, senha, confirmacao_senha e codigo_verificacao são obrigatórios'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Find socio by CPF
+            $resultado = $this->verificationHelper->findSocioByCpf($data['cpf']);
+
+            // Check if socio exists
+            if (!$resultado['socio']) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => $resultado['message'] ?? 'Sócio não localizado'
+                ]));
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Call service to alter password
+            $result = $this->socioService->alterPassword(
+                $resultado['socio']->getId(),
+                $data['senha'],
+                $data['confirmacao_senha'],
+                $data['codigo_verificacao']
+            );
+
+            $statusCode = $result['success'] ? 200 : 400;
+
+            $response->getBody()->write(json_encode($result));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function getSocioByCpf(Request $request, Response $response, array $args)
+    {
+        try {
+            $resultado = $this->buscarSocioPorCpf($args['cpf'] ?? '');
+
+            if (!$resultado['socio']) {
+                $response->getBody()->write(json_encode([
+                    'message' => $resultado['message']
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Validate socio ownership
+            $idPessoa = $request->getAttribute('user_id');
+            if (!$idPessoa || $idPessoa !== $resultado['pessoa']->getId()) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Acesso negado. Você não tem permissão para acessar os dados de outro sócio.'
+                ]));
+
+                return $response->withStatus(403)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($resultado['socio']));
+
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function checkSocioExistsByCpf(Request $request, Response $response, array $args)
+    {
+        try {
+            $resultado = $this->buscarSocioPorCpf($args['cpf'] ?? '');
+            $censuredEmail = $resultado['pessoa'] ? Util::censurarEmail((string) $resultado['pessoa']->getEmail()) : null;
+
+            if (!$resultado['socio']) {
+                $responseData = [
+                    'exists' => false,
+                    'hasEmail' => $resultado['pessoa'] ? !empty($resultado['pessoa']->getEmail()) : false,
+                    'message' => $resultado['message']
+                ];
+
+                if (!empty($responseData['hasEmail']) && !empty($censuredEmail)) {
+                    $responseData['censuredEmail'] = $censuredEmail;
+                }
+
+                $response->getBody()->write(json_encode($responseData));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $possuiEmail = !empty($resultado['pessoa']->getEmail());
+            $responseData = [
+                'exists' => true,
+                'hasEmail' => $possuiEmail
+            ];
+
+            if ($possuiEmail && !empty($censuredEmail)) {
+                $responseData['censuredEmail'] = $censuredEmail;
+            }
+
+            $response->getBody()->write(json_encode($responseData));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function getSupportContact(Request $request, Response $response)
+    {
+        try {
+            $contato = $this->socioService->obterContatoSuporte();
+
+            if (!$contato) {
+                $response->getBody()->write(json_encode([
+                    'message' => 'Contato de suporte não localizado.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($contato));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    /**
+     * Send a new verification code to a socio's email
+     * GET /socios/verify-code
+     * 
+     * Query parameter: cpf (required)
+     * 
+     * Example: GET /socios/verify-code?cpf=12345678901
+     */
+    public function sendVerificationCodeByCpf(Request $request, Response $response)
+    {
+        try {
+            $queryParams = $request->getQueryParams();
+            $cpf = $queryParams['cpf'] ?? '';
+
+            // Validate CPF parameter
+            if (empty($cpf)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'CPF é obrigatório'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Find socio by CPF
+            $resultado = $this->verificationHelper->findSocioByCpf($cpf);
+
+            // Check if socio exists
+            if (!$resultado['socio'] || !$resultado['pessoa']) {
+                $statusCode = $resultado['socio'] ? 400 : 404;
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => $resultado['message'] ?? 'Sócio não localizado'
+                ]));
+                return $response->withStatus($statusCode)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Check if socio has email
+            if (!$resultado['pessoa']->getEmail()) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Sócio não possui e-mail cadastrado'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Send verification code (automatically invalidates previous codes)
+            $verificationResult = $this->verificationHelper->sendVerificationCode(
+                $resultado['socio']->getId(),
+                $resultado['pessoa']->getEmail()
+            );
+
+            $statusCode = $verificationResult['success'] ? 200 : 500;
+
+            $response->getBody()->write(json_encode($verificationResult));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => 500
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    /**
+     * Get benefits points by socio id
+     * GET /socios/{id}/beneficios
+     */
+    public function getBeneficiosBySocio(Request $request, Response $response, array $args)
+    {
+        try {
+            $idSocio = (int)$args['id'];
+
+            $idPessoaSocio = $this->socioService->getIdPessoaByIdSocio($idSocio);
+
+            // Validate socio ownership
+            $idPessoaUser = $request->getAttribute('user_id');
+            if (!$idPessoaUser || $idPessoaUser !== $idPessoaSocio) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Acesso negado. Você não tem permissão para acessar os dados de outro sócio.'
+                ]));
+
+                return $response->withStatus(403)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $beneficios = $this->socioService->obterBeneficiosPorSocio($idSocio);
+
+            if ($beneficios === null) {
+                $response->getBody()->write(json_encode([
+                    'message' => 'Benefícios não localizados para o sócio.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode(['benefit_points' => $beneficios]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function validarBeneficiosPorUuid(Request $request, Response $response, array $args)
+    {
+        try {
+            $uuid = trim($args['uuid'] ?? '');
+
+            if ($uuid === '') {
+                $response->getBody()->write(json_encode([
+                    'message' => 'UUID é obrigatório.'
+                ]));
+
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $resultado = $this->socioService->validarBeneficiosPorUuid($uuid);
+
+            if (!$resultado) {
+                $response->getBody()->write(json_encode([
+                    'message' => 'Sócio não localizado.'
+                ]));
+
+                return $response->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($resultado));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\InvalidArgumentException $e) {
+            $response->getBody()->write(json_encode([
+                'message' => $e->getMessage()
+            ]));
+
+            return $response->withStatus(400)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage() . ' | ' . $e->getCode()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    private function buscarSocioPorCpf(string $cpf): array
+    {
+        // Validar CPF
+        if (!Util::validateCpf($cpf)) {
+            return [
+                'pessoa' => null,
+                'socio' => null,
+                'message' => 'CPF inválido.'
+            ];
+        }
+
+        $cpf = Util::normalizeCpf($cpf);
+        $pessoa = $this->pessoaService->obterPessoaPorCpf($cpf);
+
+        if (!$pessoa) {
+            return [
+                'pessoa' => null,
+                'socio' => null,
+                'message' => 'Pessoa não localizada.'
+            ];
+        }
+
+        $socio = $this->socioService->obterSocioPorPessoaId($pessoa->getId(), $pessoa);
+
+        if (!$socio) {
+            return [
+                'pessoa' => $pessoa,
+                'socio' => null,
+                'message' => 'Sócio não localizado.'
+            ];
+        }
+
+        return [
+            'pessoa' => $pessoa,
+            'socio' => $socio,
+            'message' => null
+        ];
+    }
+
+    public function insertSocioParceiro(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody() ?? []; //mudar para multipart/form-data se for necessário enviar arquivos
+            $cnpj = trim((string)($data['cnpj'] ?? ''));
+            $razaoSocial = trim((string)($data['razao_social'] ?? ''));
+
+            // Validate required data
+            if ($cnpj === '' || $razaoSocial === '') {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'CNPJ e razão social são obrigatórios'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Create socio parceiro
+            $this->pdo->beginTransaction();
+
+            $socioParceiro = $this->socioService->insertSocioParceiro(
+                new ParceiroInstitucional(
+                    $this->pessoaService->criarPessoaJuridica(
+                        $cnpj,
+                        $razaoSocial,
+                        $data['telefone'] ?? null,
+                        $data['email'] ?? null,
+                        $data['endereco'] ?? null,
+                    ),
+                    $data['localizacao'] ?? '',
+                    $data['divulgacao'] ?? '',
+                    $data['descricao'] ?? ''
+                )
+            );
+
+            if(!$socioParceiro) {
+                $this->pdo->rollBack();
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao criar sócio parceiro'
+                ]));
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'socio_parceiro' => $socioParceiro
+            ]));
+
+            $this->pdo->commit();
+            return $response->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            if ($this->pdo->inTransaction())
+                $this->pdo->rollBack();
+
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function deleteSocioParceiro(Request $request, Response $response, array $args)
+    {
+        try {
+            $idSocioParceiro = (int)($args['id'] ?? 0);
+
+            if ($idSocioParceiro <= 0) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do parceiro institucional é obrigatório'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $result = $this->socioService->deleteSocioParceiro($idSocioParceiro);
+            if (!$result['success']) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => $result['message']
+                ]));
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => 'Parceiro institucional deletado com sucesso.'
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function uploadLogoSocioParceiro(Request $request, Response $response)
+    {
+        try {
+            $uploadedFiles = $request->getUploadedFiles();
+            $uploadedFile = $uploadedFiles['logo'] ?? null;
+
+            if (!$uploadedFile || $uploadedFile->getError() !== UPLOAD_ERR_OK) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao fazer upload do arquivo de logo.'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $parceiroId = (int)($request->getParsedBody()['id_socio_parceiro'] ?? 0);
+
+            if ($parceiroId <= 0) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do sócio parceiro é obrigatório'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            if (!$this->socioService->uploadLogoSocioParceiro($parceiroId, $uploadedFile)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Erro ao salvar o arquivo de logo.'
+                ]));
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Return success response with the file path or URL
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => 'Logo uploaded successfully.',
+                'file_path' => API_BASE_URL . 'socios/parceiros/logo/' . $parceiroId,
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function getLogoSocioParceiro(Request $request, Response $response, array $args)
+    {
+        try {
+            $idSocioParceiro = (int)($args['id'] ?? 0);
+
+            if ($idSocioParceiro <= 0) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do sócio parceiro é obrigatório'
+                ]));
+
+                return $response
+                    ->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $logo = $this->socioService->getLogoSocioParceiro($idSocioParceiro);
+
+            if ($logo === null) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Logo do sócio parceiro não encontrada'
+                ]));
+
+                return $response
+                    ->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write($logo['conteudo']);
+
+            return $response
+                ->withHeader('Content-Type', $logo['mime'])
+                ->withHeader('Content-Length', (string) strlen($logo['conteudo']))
+                ->withHeader('Content-Disposition', 'inline')
+                ->withStatus(200);
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = ($statusCode >= 100 && $statusCode < 600) ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response
+                ->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function getSocioParceiros(Request $request, Response $response)
+    {
+        try {
+            $resultado = $this->socioService->getSocioParceiros();
+
+            if (!($resultado['success'] ?? false)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'error' => $resultado['message'] ?? 'Erro ao buscar parceiros institucionais',
+                    'code' => 500
+                ]));
+
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'socio_parceiros' => $resultado['data'] ?? []
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function alterStatusSocioParceiro(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            $idSocioParceiro = (int)($data['id_socio_parceiro'] ?? 0);
+            $novoStatus = (int)($data['novo_status'] ?? 0);
+
+            // Validate required data
+            if ($idSocioParceiro <= 0 || !in_array($novoStatus, [0, 1], true)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do sócio parceiro e novo status válidos são obrigatórios'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Alter status of socio parceiro
+            $resultado = $this->socioService->alterStatusSocioParceiro($idSocioParceiro, $novoStatus);
+
+            if (!($resultado['success'] ?? false)) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'error' => $resultado['message'] ?? 'Erro ao alterar status do sócio parceiro',
+                    'code' => 500
+                ]));
+
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => $resultado['message'] ?? 'Status do sócio parceiro atualizado com sucesso',
+                'socio_parceiro' => [
+                    'id' => $idSocioParceiro,
+                    'ativo' => $novoStatus
+                ]
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    public function updateSocioParceiro(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            $idSocioParceiro = (int)($data['id_socio_parceiro'] ?? 0);
+
+            if ($idSocioParceiro <= 0) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'ID do sócio parceiro é obrigatório'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'descricao', 'endereco'];
+            $temAlteracao = false;
+            foreach ($camposAtualizaveis as $campo) {
+                if (array_key_exists($campo, $data)) {
+                    $temAlteracao = true;
+                    break;
+                }
+            }
+
+            if (!$temAlteracao) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Informe ao menos um campo para atualização'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $resultado = $this->socioService->atualizarSocioParceiro($idSocioParceiro, $data);
+
+            if (!($resultado['success'] ?? false)) {
+                $statusCode = (int)($resultado['code'] ?? 500);
+                $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'error' => $resultado['message'] ?? 'Erro ao atualizar parceiro institucional',
+                    'code' => $statusCode
+                ]));
+
+                return $response->withStatus($statusCode)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => $resultado['message'] ?? 'Socio parceiro updated successfully',
+                'socio_parceiro' => $resultado['data'] ?? []
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = $statusCode >= 100 && $statusCode < 600 ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+}

@@ -1,6 +1,7 @@
 <?php
-require_once 'ApiPixServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiPixServiceInterface.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 class PagarMePixService implements ApiPixServiceInterface
 {
     /**Recebe um objeto do tipo ContribuicaoLog e realiza os procedimentos necessários para registrar um pedido do tipo Pix na API da plataforma de pagamente PagarMe */

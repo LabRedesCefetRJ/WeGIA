@@ -1,0 +1,13 @@
+{
+    "require": {
+        "slim/slim": "4.*",
+        "slim/psr7": "^1.8",
+        "firebase/php-jwt": "^7.0",
+        "ramsey/uuid": "^4.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "api\\": "src/"
+        }
+    }
+}

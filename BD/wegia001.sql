@@ -1129,6 +1129,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `id_socio` INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid` BINARY(16) UNIQUE NOT NULL,
   `id_pessoa` INT(11) NOT NULL,
   `id_sociostatus` INT NOT NULL,
   `id_sociotipo` INT NOT NULL,
@@ -1193,6 +1194,84 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio_log` (
   `user_agent` VARCHAR(512),
   FOREIGN KEY (`id_socio`) REFERENCES `socio`(`id_socio`)
 )ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`socio_beneficio_regra`
+-- -----------------------------------------------------
+CREATE TABLE  IF NOT EXISTS `wegia`.`socio_benefit_rule` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `value_per_point` DECIMAL(10,2) NOT NULL,
+    `max_points_concurrent` INT UNSIGNED NOT NULL,
+    `duration_point_months` INT UNSIGNED NOT NULL,
+    `analysis_window_months` INT UNSIGNED NOT NULL,
+    `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------
+-- Table `wegia`.`socio_verification_code`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`socio_verification_code` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_socio` INT NOT NULL,
+  `code` VARCHAR(6) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `expires_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 5 MINUTE),
+  `code_used` BOOLEAN NOT NULL DEFAULT FALSE,
+  `code_used_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_id_socio` (`id_socio` ASC),
+  CONSTRAINT `fk_socio_verification_code_socio`
+    FOREIGN KEY (`id_socio`)
+    REFERENCES `wegia`.`socio` (`id_socio`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`socio_parceiro_institucional`
+-- -----------------------------------------------------
+CREATE TABLE `wegia`.`socio_parceiro_institucional` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+
+    `id_socio_benefit_rule` INT UNSIGNED NOT NULL,
+    `id_pessoa` INT NOT NULL,
+
+    `ativo` BOOLEAN NOT NULL DEFAULT TRUE,
+
+    `localizacao` VARCHAR(512) NULL,
+    `divulgacao` VARCHAR(512) NULL,
+    `descricao` TEXT NULL,
+
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT uq_socio_parceiro_institucional
+        UNIQUE (id_pessoa, id_socio_benefit_rule),
+
+    INDEX idx_spi_pessoa (id_pessoa),
+    INDEX idx_spi_benefit_rule (id_socio_benefit_rule),
+
+    CONSTRAINT fk_spi_pessoa
+        FOREIGN KEY (id_pessoa)
+        REFERENCES `wegia`.`pessoa` (id_pessoa)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_spi_benefit_rule
+        FOREIGN KEY (id_socio_benefit_rule)
+        REFERENCES `wegia`.`socio_benefit_rule` (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`endereco_instituicao`

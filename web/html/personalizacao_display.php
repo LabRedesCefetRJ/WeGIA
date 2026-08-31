@@ -4,13 +4,7 @@ if($config_path){
     require_once($config_path);
 }
 
-if (file_exists("classes/Personalizacao_display.php")){
-     require_once "classes/Personalizacao_display.php";
-}elseif (file_exists("../classes/Personalizacao_display.php")) {
-     require_once "../classes/Personalizacao_display.php";
-}elseif (file_exists("../../classes/Personalizacao_display.php")){
-     require_once "../../classes/Personalizacao_display.php";
-}
+require_once ROOT . "/classes/Personalizacao_display.php";
 /*
 
     Esta função recebe como parametro:

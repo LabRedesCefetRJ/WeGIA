@@ -1,5 +1,5 @@
 <?php
-require_once '../model/ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 interface ApiCartaoCreditoServiceInterface {
     /**
      * Recebe como parâmetro uma ContribuicaoLog e faz uma requisição para a API
@@ -10,5 +10,5 @@ interface ApiCartaoCreditoServiceInterface {
      * ainda não está confirmada (o gateway pode aprovar ou recusar depois de
      * forma assíncrona) — o chamador não deve tratar isso como "aprovado".
      */
-    public function processarCartaoCredito(ContribuicaoLog $contribuicaoLog);
+    public function processarCartaoCredito(ContribuicaoLog $contribuicaoLog, ?array $dadosCartao = null);
 }

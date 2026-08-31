@@ -25,10 +25,11 @@ try {
 
     $pdo = Conexao::connect();
 
+    //pegar apenas pessoas que também sejam funcionários, para evitar que clientes acessem o sistema
     $stmt = $pdo->prepare("
-        SELECT id_pessoa, cpf, senha, nome, adm_configurado, nivel_acesso 
-        FROM pessoa 
-        WHERE cpf = :cpf
+        SELECT p.id_pessoa, p.cpf, p.senha, p.nome, p.adm_configurado, p.nivel_acesso 
+        FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa
+        WHERE p.cpf = :cpf
         LIMIT 1
     ");
 

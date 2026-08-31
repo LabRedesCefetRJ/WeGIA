@@ -1,6 +1,9 @@
 <?php
-require_once 'ApiBoletoServiceInterface.php';
-require_once '../model/ContribuicaoLog.php';
+
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiBoletoServiceInterface.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once '../dao/GatewayPagamentoDAO.php';
 
@@ -142,7 +145,8 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
 
     public function guardarSegundaVia($pdf_link, ContribuicaoLog $contribuicaoLog)
     {
-        $saveDir = '../pdfs/';
+        // Diretório onde os arquivos serão armazenados
+        $saveDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR;
 
         if (!is_dir($saveDir)) {
             mkdir($saveDir, 0755, true);

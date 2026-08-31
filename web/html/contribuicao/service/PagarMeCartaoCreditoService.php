@@ -1,11 +1,11 @@
 <?php
-require_once 'ApiCartaoCreditoServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiCartaoCreditoServiceInterface.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
-require_once '../model/ContribuicaoLog.php';
-require_once '../dao/GatewayPagamentoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 
 class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
-    public function processarCartaoCredito(ContribuicaoLog $contribuicaoLog) {
+    public function processarCartaoCredito(ContribuicaoLog $contribuicaoLog, ?array $dadosCartao = null) {
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
         $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($contribuicaoLog->getGatewayPagamento()->getId());
 
