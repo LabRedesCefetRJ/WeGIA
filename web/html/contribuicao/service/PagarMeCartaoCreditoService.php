@@ -50,7 +50,21 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                     'credit_card' => [
                         'installments' => 1,
                         'statement_descriptor' => substr($contribuicaoLog->getAgradecimento(), 0, 13),
-                        'card_token' => $cardId
+                        'card_token' => $cardId,
+                        // O billing_address do cartão não é tokenizado junto com o
+                        // card_token — a Pagar.me exige informá-lo aqui, senão a
+                        // API recusa com "validation_error | billing | value is
+                        // required" (confirmado na documentação deles: só o
+                        // número/validade/CVV são tokenizados, o endereço não).
+                        'card' => [
+                            'billing_address' => [
+                                'line_1' => $contribuicaoLog->getSocio()->getLogradouro() . ", " . $contribuicaoLog->getSocio()->getNumeroEndereco(),
+                                'zip_code' => preg_replace('/\D/', '', (string) $contribuicaoLog->getSocio()->getCep()),
+                                'city' => $contribuicaoLog->getSocio()->getCidade(),
+                                'state' => $contribuicaoLog->getSocio()->getEstado(),
+                                'country' => 'BR'
+                            ]
+                        ]
                     ]
                 ]
             ]
@@ -87,7 +101,27 @@ class PagarMeCartaoCreditoService implements ApiCartaoCreditoServiceInterface {
                     502
                 );
             }
-            return (string)$responseData['id'];
+
+            // A Pagar.me retorna HTTP 200/201 mesmo para cobranças recusadas — o
+            // resultado real está no campo "status" do pedido, não no HTTP code.
+            $status = $responseData['status'] ?? null;
+
+            if (!in_array($status, ['paid', 'processing', 'pending'], true)) {
+                $motivo = $responseData['charges'][0]['last_transaction']['acquirer_message']
+                    ?? $responseData['charges'][0]['last_transaction']['gateway_response']['errors'][0]['message']
+                    ?? null;
+
+                throw new PaymentServiceException(
+                    'O pagamento com cartão de crédito foi recusado.',
+                    'Pagamento recusado pela API Pagar.me. status: ' . ($status ?? '') . ($motivo ? ' motivo: ' . $motivo : ''),
+                    400
+                );
+            }
+
+            return [
+                'transacao_id' => (string) $responseData['id'],
+                'status' => $status === 'paid' ? 'aprovado' : 'em_analise'
+            ];
         } else {
             $this->tratarErroApi($responseData, $httpCode);
         }

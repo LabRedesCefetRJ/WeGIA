@@ -51,6 +51,18 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                 ]
             ],
             'card_token' => $cardId,
+            // O billing_address do cartão não é tokenizado junto com o
+            // card_token — a Pagar.me exige informá-lo aqui, senão a API
+            // recusa com "validation_error | billing | value is required".
+            'card' => [
+                'billing_address' => [
+                    'line_1' => $recorrencia->getSocio()->getLogradouro() . ", " . $recorrencia->getSocio()->getNumeroEndereco(),
+                    'zip_code' => preg_replace('/\D/', '', (string) $recorrencia->getSocio()->getCep()),
+                    'city' => $recorrencia->getSocio()->getCidade(),
+                    'state' => $recorrencia->getSocio()->getEstado(),
+                    'country' => 'BR'
+                ]
+            ],
             'items' => [
                 [
                     'description' => $agradecimento,
@@ -96,7 +108,16 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                     502
                 );
             }
-            return (string)$responseData['id'];
+
+            // Conservador: só considera "aprovado" quando a assinatura já está
+            // ativa. Qualquer outro status (ex: pendente de confirmação da
+            // primeira cobrança) é tratado como em análise.
+            $status = $responseData['status'] ?? null;
+
+            return [
+                'transacao_id' => (string) $responseData['id'],
+                'status' => $status === 'active' ? 'aprovado' : 'em_analise'
+            ];
         } else {
             $this->tratarErroApi($responseData, $httpCode);
         }

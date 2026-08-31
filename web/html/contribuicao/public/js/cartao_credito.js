@@ -1,7 +1,8 @@
-//window.onload = disableAutocomplete;
-
 let acao = 'cartao-credito';
 let regras;
+
+// Tokenização de cartão (Mercado Pago / Pagar.me) fica em tokenizacao_cartao.js
+// — compartilhado com recorrencia.js.
 
 async function configurarRegrasDePagamento() {
     regras = await buscarRegrasDePagamento('CartaoCredito');
@@ -45,7 +46,9 @@ function obterDadosCartao() {
         holder_name: document.getElementById('card_holder_name').value.trim(),
         exp_month: document.getElementById('card_exp_month').value.trim(),
         exp_year: document.getElementById('card_exp_year').value.trim(),
-        cvv: document.getElementById('card_cvv').value.trim()
+        cvv: document.getElementById('card_cvv').value.trim(),
+        // Exigido pelo Mercado Pago em createCardToken() (identificationNumber).
+        documento: pegarDocumento().replace(/\D/g, '')
     };
 }
 
@@ -97,7 +100,20 @@ async function processarCartaoCredito(dadosCartao) {
     formData.append("metodo", "processarCartaoCredito");
     formData.append("documento_socio", documento);
     removerCamposSensiveisCartao(formData);
-    formData.set("card_token", cardToken);
+    formData.set("card_token", cardToken.id);
+
+    // BIN (6 primeiros dígitos): o Mercado Pago exige pra identificar a
+    // bandeira do cartão na hora de cobrar. A Pagar.me não usa (fica null).
+    if (cardToken.bin) {
+        formData.set("card_bin", cardToken.bin);
+    }
+
+    // Gerado pelo script de Device Fingerprint do Mercado Pago (security.js).
+    // Enviado como header X-meli-session-id ao criar o pagamento, ajuda o
+    // antifraude deles a não tratar a cobrança como suspeita por padrão.
+    if (typeof MP_DEVICE_SESSION_ID !== "undefined") {
+        formData.append("device_id", MP_DEVICE_SESSION_ID);
+    }
 
     // Mostrar loading
     document.getElementById("pag5").classList.add("hidden");
@@ -113,17 +129,7 @@ async function processarCartaoCredito(dadosCartao) {
             return response.json();
         })
         .then((resposta) => {
-            document.getElementById("loading").classList.add("hidden");
-            document.getElementById("payment-result").classList.remove("hidden");
-
-            if (resposta.sucesso) {
-                document.getElementById("success-message").classList.remove("hidden");
-                document.getElementById("error-message").classList.add("hidden");
-            } else {
-                document.getElementById("error-message").classList.remove("hidden");
-                document.getElementById("success-message").classList.add("hidden");
-                document.getElementById("error-text").textContent = resposta.erro || "Erro ao processar pagamento";
-            }
+            exibirResultadoPagamento(resposta);
         })
         .catch((error) => {
             console.error("Erro:", error);
