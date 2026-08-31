@@ -1157,7 +1157,8 @@ class ContribuicaoController
             $this->pdo->beginTransaction();
 
             $contribuicaoLog = $contribuicaoLogDao->criar($contribuicaoLog);
-            $transacaoId = $servicoPagamento->processarCartaoCredito($contribuicaoLog, $dadosCartao);
+            $processamentoCartaoCredito = $servicoPagamento->processarCartaoCredito($contribuicaoLog, $dadosCartao);
+            $transacaoId = $processamentoCartaoCredito['transacao_id'] ?? null;
 
             if (!$transacaoId) {
                 $this->pdo->rollBack();
@@ -1292,7 +1293,9 @@ class ContribuicaoController
             }
 
             $servicoPagamento = new $classeService();
-            $assinaturaId = $servicoPagamento->criarAssinatura($recorrencia, $dadosCartao);
+            $processamentoAssinatura = $servicoPagamento->criarAssinatura($recorrencia, $dadosCartao);
+
+            $assinaturaId = $processamentoAssinatura['transacao_id'] ?? null;
 
             if (!$assinaturaId) {
                 $this->pdo->rollBack();
