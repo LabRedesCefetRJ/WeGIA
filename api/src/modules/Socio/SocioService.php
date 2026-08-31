@@ -136,6 +136,7 @@ class SocioService implements SocioServiceInterface
             'sobrenome' => $resultado['sobrenome'] ?? '',
             'email' => $resultado['email'] ?? null,
             'telefone' => $resultado['telefone'] ?? null,
+            'foto' => $resultado['foto'] ?? null,
             'dataNascimento' => $this->censurarDataNascimento($resultado['data_nascimento'] ?? null),
             'cpf' => $this->censurarCpf($resultado['cpf'] ?? null),
             'dataReferenciaContribuicao' => $this->normalizarData($resultado['data_referencia'] ?? null),

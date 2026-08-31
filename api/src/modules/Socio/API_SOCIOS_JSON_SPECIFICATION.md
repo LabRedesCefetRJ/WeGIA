@@ -336,6 +336,7 @@ GET /socios/018f3c30-3c0f-7b3f-8a53-b7b8a9f3f2f1/validar_beneficios
   "sobrenome": "Silva",
   "email": "joao@example.com",
   "telefone": "11987654321",
+  "foto": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ...",
   "dataNascimento": "15/**/**90",
   "cpf": "***.***.***-01",
   "dataReferenciaContribuicao": "2024-01-01",
@@ -350,6 +351,7 @@ GET /socios/018f3c30-3c0f-7b3f-8a53-b7b8a9f3f2f1/validar_beneficios
 | `sobrenome` | string | Sobrenome do sócio |
 | `email` | string \| null | E-mail cadastrado do sócio, sem censura, para exibição no resumo público |
 | `telefone` | string \| null | Telefone cadastrado do sócio, sem censura, para exibição no resumo público |
+| `foto` | string \| null | Foto de perfil do sócio em formato `data:image/...;base64,...` |
 | `dataNascimento` | string \| null | Data de nascimento parcialmente censurada, exibindo apenas o dia e os dois últimos dígitos do ano |
 | `cpf` | string \| null | CPF parcialmente censurado, exibindo apenas os dois últimos dígitos |
 | `dataReferenciaContribuicao` | string \| null | Data de referência da contribuição do sócio no formato `YYYY-MM-DD` |

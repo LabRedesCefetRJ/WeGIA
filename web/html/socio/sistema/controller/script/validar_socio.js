@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const alertContainer = document.getElementById('mensagens_usuario');
     const contatoSuporteLink = document.getElementById('link_contato_suporte');
     const btnCopiarCodigo = document.getElementById('btn_copy_codigo');
+    const socioAvatar = document.querySelector('.socio-avatar');
+    const defaultAvatarMarkup = '<i class="fa fa-user"></i>';
 
     if (!form || !codigoInput || !resumoSocio || !alertContainer) {
         return;
@@ -81,6 +83,41 @@ document.addEventListener('DOMContentLoaded', function () {
     function showResumo() {
         resumoSocio.hidden = false;
         resumoSocio.setAttribute('aria-hidden', 'false');
+    }
+
+    function restoreDefaultAvatar() {
+        if (!socioAvatar) {
+            return;
+        }
+
+        socioAvatar.innerHTML = defaultAvatarMarkup;
+    }
+
+    function applySocioAvatar(photo) {
+        if (!socioAvatar) {
+            return;
+        }
+
+        const foto = String(photo || '').trim();
+
+        if (!foto) {
+            restoreDefaultAvatar();
+            return;
+        }
+
+        const img = document.createElement('img');
+        img.src = foto;
+        img.alt = 'Foto de perfil do sócio';
+        img.referrerPolicy = 'no-referrer';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        img.style.borderRadius = '50%';
+        img.addEventListener('error', restoreDefaultAvatar, { once: true });
+
+        socioAvatar.innerHTML = '';
+        socioAvatar.appendChild(img);
     }
 
     function toggleCopyButtonState(enabled, text = 'Copiar') {
@@ -288,6 +325,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setTextContent(resumoFields.ultimaContribuicao, formatDate(data.dataUltimaContribuicao));
         setTextContent(resumoFields.pontosBeneficios, String(data.benefit_points ?? 0));
         setTextContent(resumoFields.codigoValidacao, codigoFormatado || '--');
+        applySocioAvatar(data.foto);
 
         const benefitPoints = Number(data.benefit_points);
 
@@ -403,6 +441,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
         carregarContatoSuporte().catch(() => undefined);
         hideResumo();
+        restoreDefaultAvatar();
     }
 
     toggleCopyButtonState(false, 'Copiar');

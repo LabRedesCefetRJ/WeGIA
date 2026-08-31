@@ -88,6 +88,7 @@ class SocioRepository
                     p.data_nascimento,
                     p.telefone,
                     p.email,
+                    p.imagem AS foto,
                     (
                         SELECT MAX(cl.data_pagamento)
                         FROM contribuicao_log cl
