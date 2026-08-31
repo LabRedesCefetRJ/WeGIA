@@ -7,6 +7,9 @@ if (!isset($_SESSION['id_pessoa'])) {
     die(json_encode(['erro' => 'Operação negada: Cliente não autorizado']));
 }
 
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 63, 7);
+
 require_once './MedicamentoControle.php';
 header("Content-Type: application/json;charset=UTF-8");
 
