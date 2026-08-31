@@ -58,11 +58,11 @@ class ProdutoControle
     public function listarTodos()
     {
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
-        $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(listar_produto|remover_produto)\.php(\?id_produto=\d+|\?tipo=ativo)?)$#';
+        $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(alterar_produto|cadastro_produto|listar_produto|remover_produto)\.php(\?id_produto=\d+|\?tipo=ativo)?)$#';
 
         try {
             if (!filter_var($nextPage, FILTER_VALIDATE_URL))
-                throw new InvalidArgumentException('Erro, a URL informada para a próxima página não é válida.', 412);
+                throw new InvalidArgumentException('Erro, a URL informada para a próxima página não é válida.', 400);
 
             $produtoDAO = new ProdutoDAO();
             $produtos = $produtoDAO->listarTodos();
@@ -121,7 +121,7 @@ class ProdutoControle
 
         try {
             if (!filter_var($nextPage, FILTER_VALIDATE_URL))
-                throw new InvalidArgumentException('Erro, a URL informada para a próxima página não é válida.', 412);
+                throw new InvalidArgumentException('Erro, a URL informada para a próxima página não é válida.', 400);
 
             $produtoDAO = new ProdutoDAO();
             $produtos = $produtoDAO->listarDescricao();
@@ -140,10 +140,19 @@ class ProdutoControle
             $produto = $this->verificar();
             $id_categoria = filter_var($_REQUEST['id_categoria'], FILTER_SANITIZE_NUMBER_INT);
             $id_unidade = filter_var($_REQUEST['id_unidade'], FILTER_SANITIZE_NUMBER_INT);
+            $id_grupo_produto = $_REQUEST['id_grupo_produto'] ?? null;
+            
+            if($id_grupo_produto !== '' && $id_grupo_produto !== null) {
+                $id_grupo_produto = filter_var($id_grupo_produto, FILTER_SANITIZE_NUMBER_INT);
+            } else {
+                $id_grupo_produto = null;
+            }
+
             $produtoDAO = new ProdutoDAO($this->pdo);
 
             $produto->set_categoria_produto($id_categoria);
             $produto->set_unidade($id_unidade);
+            $produto->set_grupo_produto($id_grupo_produto);
 
             $produtoDAO->incluir($produto);
 
@@ -157,7 +166,7 @@ class ProdutoControle
     {
         try {
             if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
-                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 403);
             }
 
             $idProduto = filter_input(INPUT_POST, 'id_produto', FILTER_VALIDATE_INT);
@@ -182,6 +191,8 @@ class ProdutoControle
             header('Location: ' . WWW . 'html/matPat/listar_produto.php');
             exit;
         } catch (PDOException $e) {
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+
             if ($e->getCode() === '23000') {
                 $_SESSION['erro'] = "Não é possível excluir este produto, pois existem registros vinculados.";
                 $_SESSION['id_arquivar'] = $_POST['id_produto'] ?? null;
@@ -190,7 +201,9 @@ class ProdutoControle
                 exit;
             }
 
-            Util::tratarException($e);
+            Util::tratarException(
+                new Exception('Não foi possível excluir o produto.', 500)
+            );
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -203,7 +216,6 @@ class ProdutoControle
         try {
             $produtoDAO = new ProdutoDAO();
             $produto = $produtoDAO->listarId($id);
-            session_start();
             $_SESSION['produto'] = $produto;
             header('Location: ' . $nextPage);
         } catch (Exception $e) {
@@ -214,20 +226,95 @@ class ProdutoControle
     public function alterarProduto()
     {
         extract($_REQUEST);
+
+        $id_grupo_produto = $_REQUEST['id_grupo_produto'] ?? null;
+
+        if ($id_grupo_produto !== '' && $id_grupo_produto !== null) {
+            $id_grupo_produto = filter_var(
+                $id_grupo_produto,
+                FILTER_SANITIZE_NUMBER_INT
+            );
+        } else {
+            $id_grupo_produto = null;
+        }
+
         $produto = new Produto($descricao, $codigo, $preco);
         $produtoDAO = new ProdutoDAO();
-        $catDAO = new CategoriaDAO();
-        $uniDAO = new UnidadeDAO();
-
-        $categoria = $catDAO->listarUm($id_categoria);
-        $unidade = $uniDAO->listarUm($id_unidade);
 
         try {
             $produto->setId_produto($id_produto);
             $produto->set_categoria_produto($id_categoria);
             $produto->set_unidade($id_unidade);
+            $produto->set_grupo_produto($id_grupo_produto);
+
             $produtoDAO->alterarProduto($produto);
+
             header('Location: ' . $nextPage);
+            exit();
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    public function atribuirGrupoEmMassa()
+    {
+        try {
+            if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+                throw new InvalidArgumentException(
+                    'Token CSRF inválido ou ausente.',
+                    403
+                );
+            }
+
+            $idGrupo = filter_input(INPUT_POST, 'id_grupo_produto', FILTER_VALIDATE_INT);
+
+            if (!$idGrupo || $idGrupo < 1) {
+                throw new InvalidArgumentException(
+                    'O grupo informado é inválido.',
+                    400
+                );
+            }
+
+            $produtosJson = $_POST['produtos_json'] ?? '';
+
+            $produtos = json_decode($produtosJson, true);
+
+            if (!is_array($produtos) || empty($produtos)) {
+                throw new InvalidArgumentException(
+                    'Nenhum produto foi selecionado.',
+                    400
+                );
+            }
+
+            $idsProdutos = [];
+
+            foreach ($produtos as $idProduto) {
+                $idProduto = filter_var($idProduto, FILTER_VALIDATE_INT);
+
+                if ($idProduto === false || $idProduto < 1) {
+                    throw new InvalidArgumentException(
+                        'Foi informado um produto inválido.',
+                        400
+                    );
+                }
+
+                $idsProdutos[$idProduto] = $idProduto;
+            }
+
+            $idsProdutos = array_values($idsProdutos);
+
+            $produtoDAO = new ProdutoDAO($this->pdo);
+
+            $quantidadeAlterada = $produtoDAO->atribuirGrupoEmMassa($idsProdutos, $idGrupo);
+
+            $_SESSION['msg'] =
+                $quantidadeAlterada .
+                ($quantidadeAlterada === 1
+                    ? ' produto foi atribuído ao grupo com sucesso.'
+                    : ' produtos foram atribuídos ao grupo com sucesso.');
+
+            header('Location: ' . WWW . 'html/matPat/listar_produto.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -262,7 +349,7 @@ class ProdutoControle
 
             foreach ($produtos as $produto) {
                 $produto['qtd'] = isset($aux[$produto['id_produto']]) ? $aux[$produto['id_produto']]['qtd'] : 0;
-                $produtosDTO[] = new ProdutoDTOCadastro($produto['id_produto'], $produto['descricao'], $produto['qtd'], $produto['codigo'], $produto['preco']);
+                $produtosDTO[] = new ProdutoDTOCadastro($produto['id_produto'], $produto['descricao'], $produto['qtd'], $produto['codigo'], $produto['preco'], $produto['id_grupo_produto'], $produto['descricao_grupo']);
             }
 
             echo json_encode($produtosDTO);
@@ -271,11 +358,38 @@ class ProdutoControle
         }
     }
 
+    public function listarDisponiveisRelatorioPorAlmoxarifado()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $idAlmoxarifado = filter_input(INPUT_GET, 'id_almoxarifado', FILTER_VALIDATE_INT);
+            if (!$idAlmoxarifado || $idAlmoxarifado < 1) {
+                throw new InvalidArgumentException('id_almoxarifado inválido ou não fornecido', 400);
+            }
+
+            $produtoDAO = new ProdutoDAO($this->pdo);
+            echo json_encode(
+                $produtoDAO->listarDisponiveisRelatorioPorAlmoxarifado($idAlmoxarifado),
+                JSON_UNESCAPED_UNICODE
+            );
+        } catch (InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            http_response_code(500);
+            error_log('Erro ao listar produtos para relatório: ' . $e->getMessage());
+            echo json_encode(['error' => 'Erro ao consultar os produtos.'], JSON_UNESCAPED_UNICODE);
+        }
+
+        exit;
+    }
+
     public function arquivar()
     {
         try {
             if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
-                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 403);
             }
 
             $idProduto = filter_input(INPUT_POST, 'id_produto', FILTER_VALIDATE_INT);
@@ -300,7 +414,7 @@ class ProdutoControle
     {
         try {
             if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
-                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
+                throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 403);
             }
 
             $idProduto = filter_input(INPUT_POST, 'id_produto', FILTER_VALIDATE_INT);
