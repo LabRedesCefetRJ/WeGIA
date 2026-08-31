@@ -13,16 +13,12 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
         $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($recorrencia->getGatewayPagamento()->getId());
 
         $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+            'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
             'Content-Type: application/json;charset=UTF-8'
         ];
 
         //Dados do cartão
-        $cardNumber = preg_replace('/\D/', '', filter_input(INPUT_POST, 'card_number'));
-        $cardExpMonth = filter_input(INPUT_POST, 'card_exp_month');
-        $cardExpYear = filter_input(INPUT_POST, 'card_exp_year');
-        $cardHolderName = filter_input(INPUT_POST, 'card_holder_name');
-        $cardCvv = filter_input(INPUT_POST, 'card_cvv');
+        $cardId = filter_input(INPUT_POST, 'card_token', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_token'] ?? null;
         
         $code = $recorrencia->getCodigo();
         $cpfSemMascara = Util::limpaCpf($recorrencia->getSocio()->getDocumento());
@@ -52,15 +48,14 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                     ]
                 ]
             ],
+            'card_token' => $cardId,
+            // O billing_address do cartão não é tokenizado junto com o
+            // card_token — a Pagar.me exige informá-lo aqui, senão a API
+            // recusa com "validation_error | billing | value is required".
             'card' => [
-                'number' => $cardNumber,
-                'holder_name' => $cardHolderName,
-                'exp_month' => (int)$cardExpMonth,
-                'exp_year' => (int)$cardExpYear,
-                'cvv' => $cardCvv,
                 'billing_address' => [
                     'line_1' => $recorrencia->getSocio()->getLogradouro() . ", " . $recorrencia->getSocio()->getNumeroEndereco(),
-                    'zip_code' => preg_replace('/\D/', '', $recorrencia->getSocio()->getCep()),
+                    'zip_code' => preg_replace('/\D/', '', (string) $recorrencia->getSocio()->getCep()),
                     'city' => $recorrencia->getSocio()->getCidade(),
                     'state' => $recorrencia->getSocio()->getEstado(),
                     'country' => 'BR'
@@ -111,7 +106,16 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                     502
                 );
             }
-            return (string)$responseData['id'];
+
+            // Conservador: só considera "aprovado" quando a assinatura já está
+            // ativa. Qualquer outro status (ex: pendente de confirmação da
+            // primeira cobrança) é tratado como em análise.
+            $status = $responseData['status'] ?? null;
+
+            return [
+                'transacao_id' => (string) $responseData['id'],
+                'status' => $status === 'active' ? 'aprovado' : 'em_analise'
+            ];
         } else {
             $this->tratarErroApi($responseData, $httpCode);
         }

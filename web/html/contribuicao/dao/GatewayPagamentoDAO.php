@@ -17,17 +17,18 @@ class GatewayPagamentoDAO
     /**
      * Inseri um gateway de pagamento no banco de dados da aplicação
      */
-    public function cadastrar($nome, $endpoint, $token, $status)
+    public function cadastrar($nome, $endpoint, $privateToken, $publicToken, $status)
     {
         /*Lógica da aplicação */
         //definir consulta SQL
-        $sqlCadastrar = "INSERT INTO contribuicao_gatewayPagamento (plataforma, endpoint, token, status) 
-        VALUES (:plataforma, :endpoint, :token, :status)";
+        $sqlCadastrar = "INSERT INTO contribuicao_gatewayPagamento (plataforma, endPoint, private_token, public_token, status) 
+        VALUES (:plataforma, :endpoint, :privateToken, :publicToken, :status)";
         //utilizar prepared statements
         $stmt = $this->pdo->prepare($sqlCadastrar);
         $stmt->bindParam(':plataforma', $nome);
         $stmt->bindParam(':endpoint', $endpoint);
-        $stmt->bindParam(':token', $token);
+        $stmt->bindParam(':privateToken', $privateToken);
+        $stmt->bindParam(':publicToken', $publicToken);
         $stmt->bindParam(':status', $status);
         //executar
         $stmt->execute();
@@ -70,16 +71,21 @@ class GatewayPagamentoDAO
     /**
      * Modifica os campos da tabela contribuicao_gatewaypagamento relacionados ao id informado
      */
-    public function editarPorId($id, $nome, $endpoint, $token = null)
+    public function editarPorId($id, $nome, $endpoint, $privateToken = null, $publicToken = null)
     {
         $campos = [
             'plataforma' => $nome,
             'endpoint' => $endpoint,
         ];
 
-        // Adiciona o token somente se ele não for null
-        if ($token !== null) {
-            $campos['token'] = $token;
+        // Adiciona o privateToken somente se ele não for null
+        if ($privateToken !== null) {
+            $campos['private_token'] = $privateToken;
+        }
+
+        // Adiciona o privateToken somente se ele não for null
+        if ($publicToken !== null) {
+            $campos['public_token'] = $publicToken;
         }
 
         // Monta dinamicamente a SQL
@@ -183,10 +189,29 @@ class GatewayPagamentoDAO
             $gateways = [];
 
             foreach ($resultados as $resultado) {
-                $gateways[] = new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['token'], $resultado['status']);
+                $gateways[] = new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['private_token'], $resultado['status']);
             }
 
             return $gateways;
+        }
+
+        return false;
+    }
+
+    public function getGatewayInfoByMethodPayment(string $metodoPagamento):GatewayPagamento|false
+    {
+        //definir consulta sql
+        $query = 'SELECT cgp.* FROM contribuicao_gatewayPagamento cgp JOIN contribuicao_meioPagamento cmp ON (cgp.id = cmp.id_plataforma) WHERE cmp.meio = :paymentMethod AND cgp.status = 1';
+        //utilizar prepared statements
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindParam(':paymentMethod', $metodoPagamento);
+        //executar
+        $stmt->execute();
+
+        if ($stmt->rowCount() >= 1) {
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return new GatewayPagamento($resultado['plataforma'], $resultado['endPoint'], $resultado['private_token'], $resultado['public_token'], $resultado['status'], $resultado['id']);
         }
 
         return false;
