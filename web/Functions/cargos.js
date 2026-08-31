@@ -9,7 +9,7 @@ function gerarCargo() {
             $('#cargo').empty();
             $('#cargo').append('<option selected disabled>Selecionar</option>');
             $.each(cargo, function (i, item) {
-                $('#cargo').append('<option value="' + item.id_cargo + '">' + item.cargo + '</option>');
+                $('<option>').val(item.id_cargo).text(item.cargo).appendTo('#cargo');
             });
         },
         dataType: 'json'

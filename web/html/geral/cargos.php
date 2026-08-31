@@ -161,7 +161,7 @@ $cargo = mysqli_query($conexao, "SELECT * FROM cargo");
 									$cargos = mysqli_query($conexao, "SELECT * FROM `cargo`");
 									while ($row = $cargos->fetch_array(MYSQLI_ASSOC)) {
 										$id_cargo = $row['id_cargo'];
-										$cargo = $row['cargo'];
+										$cargo = htmlspecialchars($row['cargo'], ENT_QUOTES, 'UTF-8');
 										if ($id_cargo != 1 && $id_cargo != 2)
 											echo "<tr><td>$id_cargo</td><td><input id='$id_cargo' type='text' value='$cargo'></td><td><a id='a_$id_cargo' class='btn btn-primary' href='salvar_cargo.php?id_cargo=$id_cargo&value='>Salvar</a><td><a class='btn btn-danger' href='deletar_cargo.php?id_cargo=$id_cargo'>Deletar</a></td></tr>";
 									}
