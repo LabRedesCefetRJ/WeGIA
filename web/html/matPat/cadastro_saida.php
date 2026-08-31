@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,8 +12,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
-
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
@@ -21,45 +20,41 @@ permissao($id_pessoa, 24, 3);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 require_once ROOT . "/Functions/permissao/permissao.php";
+
+if (!isset($_SESSION['almoxarifado'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+	exit;
+}
+if (!isset($_SESSION['tipo_saida'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+	exit;
+}
+if (!isset($_SESSION['autocomplete'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+	exit;
+}
+if (!isset($_SESSION['destino'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+	exit;
+}
+if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset($_SESSION['autocomplete']) && isset($_SESSION['destino'])) {
+
+	$almoxarifado = $_SESSION['almoxarifado'];
+	$tipo_saida = $_SESSION['tipo_saida'];
+	$autocomplete = $_SESSION['autocomplete'];
+	$destino = $_SESSION['destino'];
+
+	unset($_SESSION['almoxarifado']);
+	unset($_SESSION['tipo_saida']);
+	unset($_SESSION['autocomplete']);
+	unset($_SESSION['destino']);
+}
 ?>
 
 <!doctype html>
 <html class="fixed">
 
 <head>
-	<?php
-	include_once ROOT .'/dao/Conexao.php';
-	include_once ROOT .'/dao/AlmoxarifadoDAO.php';
-	include_once ROOT .'/dao/TipoEntradaDAO.php';
-	include_once ROOT .'/dao/ProdutoDAO.php';
-	include_once ROOT .'/dao/DestinoDAO.php';
-
-	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
-	}
-	if (!isset($_SESSION['tipo_saida'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
-	}
-	if (!isset($_SESSION['autocomplete'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
-	}
-	if (!isset($_SESSION['destino'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
-	}
-	if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset($_SESSION['autocomplete']) && isset($_SESSION['destino'])) {
-
-		$almoxarifado = $_SESSION['almoxarifado'];
-		$tipo_saida = $_SESSION['tipo_saida'];
-		$autocomplete = $_SESSION['autocomplete'];
-		$destino = $_SESSION['destino'];
-
-		unset($_SESSION['almoxarifado']);
-		unset($_SESSION['tipo_saida']);
-		unset($_SESSION['autocomplete']);
-		unset($_SESSION['destino']);
-	}
-	?>
-
 	<!-- Basic -->
 	<meta charset="UTF-8">
 	<title>Cadastro saída</title>
@@ -96,7 +91,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 	<script>
     	let produtos_autocomplete = [];
-    	let prods = [];
+		const prods = [];
 
 		let gruposProdutos = {};
 		let grupoAberto = null;
@@ -194,7 +189,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 			})
 
 			$('#input_produtos').on('change', function() {
-				let teste = this.value.split('|');
+				const teste = this.value.split('|');
 				$.each(produtos_autocomplete, function(i, item) {
 					if (teste[0] == item.id_produto && teste[1] == item.descricao) {
 						$("#valor_unitario").val(item.preco);
@@ -376,7 +371,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 			//remover tabela
 			$("table tbody").on('click', '.delete-row', function() {
-				let valor_menos = $(this).closest('tr').find('th').find('input').val();
+				const valor_menos = $(this).closest('tr').find('th').find('input').val();
 				let xx = $("#total_total").val();
 				xx = xx - valor_menos;
 				$("#total_total").val(xx);
@@ -387,8 +382,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 
 			// validar origem
 			$("#origem").blur(function() {
-				let val = $("#origem").val();
-				let obj = $("#origens").find("option[value='" + val + "']");
+				const val = $("#origem").val();
+				const obj = $("#origens").find("option[value='" + val + "']");
 			});
 		});
 	</script>
@@ -396,11 +391,11 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	<!-- Script para validar formulário -->
 	<script>
 		function validar() {
-			var desti = document.getElementById("origens")
-			var almox = document.getElementById("almoxarifado");
-			var tipo = document.getElementById("tipo_entrada");
-			var verificar = document.getElementById("verifica");
-			var erro = false;
+			const desti = document.getElementById("origens");
+			const almox = document.getElementById("almoxarifado");
+			const tipo = document.getElementById("tipo_entrada");
+			const verificar = document.getElementById("verifica");
+			let erro = false;
 
 			if (desti.value == "blank") {
 				alert("Selecione um destino");

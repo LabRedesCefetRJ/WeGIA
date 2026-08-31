@@ -1,5 +1,7 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
@@ -10,16 +12,20 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 25, 5);
 
-// Carregando o arquivo Conexao.php após o carregamento das configuração
-require_once ROOT . "/dao/Conexao.php";
-
 // Incluindo arquivo de personalização de display
 require_once ROOT . "/html/personalizacao_display.php";
+
+if (!isset($_SESSION['dados_filtros_relatorio'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=carregarDadosRelatorio&nomeClasse=EstoqueControle');
+	exit;
+}
+
+$dadosFiltros = $_SESSION['dados_filtros_relatorio'];
+unset($_SESSION['dados_filtros_relatorio']);
 ?>
 <!doctype html>
 <html class="fixed">
@@ -216,10 +222,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<select name="origem">
 										<option value="">Todas as Opções</option>
 										<?php
-										$pdo = Conexao::connect();
-										$res = $pdo->query("select * from origem;");
-										$origem = $res->fetchAll(PDO::FETCH_ASSOC);
-										foreach ($origem as $value) {
+										foreach ($dadosFiltros['origens'] as $value) {
 											echo ('
 												<option class="option-origem" value="' . $value['id_origem'] . '">' . $value['nome_origem'] . '</option>
 												');
@@ -235,10 +238,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<select name="destino">
 										<option value="">Todas as Opções</option>
 										<?php
-										$pdo = Conexao::connect();
-										$res = $pdo->query("select * from destino;");
-										$destino = $res->fetchAll(PDO::FETCH_ASSOC);
-										foreach ($destino as $value) {
+										foreach ($dadosFiltros['destinos'] as $value) {
 											echo ('
 												<option class="option-destino" value="' . $value['id_destino'] . '">' . $value['nome_destino'] . '</option>
 												');
@@ -254,10 +254,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<select name="tipo">
 										<option value="">Todas as Opções</option>
 										<?php
-										$pdo = Conexao::connect();
-										$res = $pdo->query("select * from tipo_entrada;");
-										$entrada = $res->fetchAll(PDO::FETCH_ASSOC);
-										foreach ($entrada as $value) {
+										foreach ($dadosFiltros['tipos_entrada'] as $value) {
 											echo ('
 												<option value="' . $value['id_tipo'] . '">' . $value['descricao'] . '</option>
 												');
@@ -273,10 +270,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<select name="tipo">
 										<option value="">Todas as Opções</option>
 										<?php
-										$pdo = Conexao::connect();
-										$res = $pdo->query("select * from tipo_saida;");
-										$saida = $res->fetchAll(PDO::FETCH_ASSOC);
-										foreach ($saida as $value) {
+										foreach ($dadosFiltros['tipos_saida'] as $value) {
 											echo ('
 												<option value="' . $value['id_tipo'] . '">' . $value['descricao'] . '</option>
 												');
@@ -292,10 +286,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<select name="responsavel">
 										<option value="">Todas as Opções</option>
 										<?php
-										$pdo = Conexao::connect();
-										$res = $pdo->query("SELECT DISTINCT p.* FROM pessoa p JOIN funcionario f ON (f.id_pessoa = p.id_pessoa) JOIN almoxarife a ON (f.id_funcionario =a.id_funcionario) WHERE f.id_situacao=1 ORDER BY p.nome ASC;");
-										$resp = $res->fetchAll(PDO::FETCH_ASSOC);
-										foreach ($resp as $value) {
+										foreach ($dadosFiltros['responsaveis'] as $value) {
 											echo ('
 												<option value="' . $value['id_pessoa'] . '">' . $value['nome'] . ' ' . $value['sobrenome'] . '</option>
 												');
@@ -311,11 +302,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<select name="categoria_produto" id="categoriaProduto">
 										<option value="">Todas as Categorias</option>
 										<?php
-										$pdo = Conexao::connect();
-										$res = $pdo->query("SELECT id_categoria_produto, descricao_categoria FROM categoria_produto ORDER BY descricao_categoria;");
-										$categorias = $res->fetchAll(PDO::FETCH_ASSOC);
-
-										foreach ($categorias as $categoria) {
+										foreach ($dadosFiltros['categorias'] as $categoria) {
 											echo '<option value="' . $categoria['id_categoria_produto'] . '">' . htmlspecialchars($categoria['descricao_categoria']) . '</option>';
 										}
 										?>
@@ -344,15 +331,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<select name="almoxarifado" id="almoxarifado1">
 										<option value="">Todas as Opções</option>
 										<?php
-										$pdo = Conexao::connect();
-										try {
-											$res = $pdo->query("SELECT * FROM almoxarifado WHERE ativo = 1 ORDER BY descricao_almoxarifado;");
-											$almoxarifados = $res->fetchAll(PDO::FETCH_ASSOC);
-											foreach ($almoxarifados as $value) {
-												echo '<option value="' . $value['id_almoxarifado'] . '">' . htmlspecialchars($value['descricao_almoxarifado']) . '</option>';
-											}
-										} catch (PDOException $e) {
-											echo '<option value="">Erro ao carregar almoxarifados</option>';
+										foreach ($dadosFiltros['almoxarifados'] as $value) {
+											echo '<option value="' . $value['id_almoxarifado'] . '">' . htmlspecialchars($value['descricao_almoxarifado']) . '</option>';
 										}
 										?>
 									</select>
@@ -408,15 +388,8 @@ require_once ROOT . "/html/personalizacao_display.php";
 									<select name="almoxarifado" id="almoxarifadoSelect" required>
 										<option value="">Selecionar almoxarifado</option>
 										<?php
-										$pdo = Conexao::connect();
-										try {
-											$res = $pdo->query("SELECT * FROM almoxarifado WHERE ativo = 1 ORDER BY descricao_almoxarifado;");
-											$almoxarifados = $res->fetchAll(PDO::FETCH_ASSOC);
-											foreach ($almoxarifados as $value) {
-												echo '<option value="' . $value['id_almoxarifado'] . '">' . htmlspecialchars($value['descricao_almoxarifado']) . '</option>';
-											}
-										} catch (PDOException $e) {
-											echo '<option value="">Erro ao carregar almoxarifados</option>';
+										foreach ($dadosFiltros['almoxarifados'] as $value) {
+											echo '<option value="' . $value['id_almoxarifado'] . '">' . htmlspecialchars($value['descricao_almoxarifado']) . '</option>';
 										}
 										?>
 									</select>
@@ -459,14 +432,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 <script>
 	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 7 DIAS
 	function botao7Dias() {
-		let dataInicio = document.querySelectorAll("#data_inicio");
-		let dataFim = document.querySelectorAll("#data_fim");
+		const dataInicio = document.querySelectorAll("#data_inicio");
+		const dataFim = document.querySelectorAll("#data_fim");
 
 		//Pega a data atual
-		var dataAtual = new Date();
-		var ano = dataAtual.getFullYear();
-		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		var dia = String(dataAtual.getDate()).padStart(2, '0');
+		const dataAtual = new Date();
+		let ano = dataAtual.getFullYear();
+		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		let dia = String(dataAtual.getDate()).padStart(2, '0');
 
 		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
 
@@ -489,14 +462,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 30 DIAS
 	function botao30Dias() {
-		let dataInicio = document.querySelectorAll("#data_inicio");
-		let dataFim = document.querySelectorAll("#data_fim");
+		const dataInicio = document.querySelectorAll("#data_inicio");
+		const dataFim = document.querySelectorAll("#data_fim");
 
 		//Pega a data atual
-		var dataAtual = new Date();
-		var ano = dataAtual.getFullYear();
-		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		var dia = String(dataAtual.getDate()).padStart(2, '0');
+		const dataAtual = new Date();
+		let ano = dataAtual.getFullYear();
+		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		let dia = String(dataAtual.getDate()).padStart(2, '0');
 
 		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
 
@@ -519,14 +492,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 3 MESES
 	function botao3Meses() {
-		let dataInicio = document.querySelectorAll("#data_inicio");
-		let dataFim = document.querySelectorAll("#data_fim");
+		const dataInicio = document.querySelectorAll("#data_inicio");
+		const dataFim = document.querySelectorAll("#data_fim");
 
 		//Pega a data atual
-		var dataAtual = new Date();
-		var ano = dataAtual.getFullYear();
-		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		var dia = String(dataAtual.getDate()).padStart(2, '0');
+		const dataAtual = new Date();
+		let ano = dataAtual.getFullYear();
+		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		let dia = String(dataAtual.getDate()).padStart(2, '0');
 
 		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
 
@@ -548,14 +521,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 180 DIAS
 	function botao180Dias() {
-		let dataInicio = document.querySelectorAll("#data_inicio");
-		let dataFim = document.querySelectorAll("#data_fim");
+		const dataInicio = document.querySelectorAll("#data_inicio");
+		const dataFim = document.querySelectorAll("#data_fim");
 
 		//Pega a data atual
-		var dataAtual = new Date();
-		var ano = dataAtual.getFullYear();
-		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		var dia = String(dataAtual.getDate()).padStart(2, '0');
+		const dataAtual = new Date();
+		let ano = dataAtual.getFullYear();
+		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		let dia = String(dataAtual.getDate()).padStart(2, '0');
 
 		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
 
@@ -578,14 +551,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 365 DIAS
 	function botao365Dias() {
-		let dataInicio = document.querySelectorAll("#data_inicio");
-		let dataFim = document.querySelectorAll("#data_fim");
+		const dataInicio = document.querySelectorAll("#data_inicio");
+		const dataFim = document.querySelectorAll("#data_fim");
 
 		// Pega a data atual
-		var dataAtual = new Date();
-		var ano = dataAtual.getFullYear();
-		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		var dia = String(dataAtual.getDate()).padStart(2, '0');
+		const dataAtual = new Date();
+		let ano = dataAtual.getFullYear();
+		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		let dia = String(dataAtual.getDate()).padStart(2, '0');
 
 		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
 
@@ -609,19 +582,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	//FUNÇÃO PARA CALCULAR AS LISTAGENS DA SEMANA
 	function botaoSemana() {
-		let dataInicio = document.querySelectorAll("#data_inicio");
-		let dataFim = document.querySelectorAll("#data_fim");
+		const dataInicio = document.querySelectorAll("#data_inicio");
+		const dataFim = document.querySelectorAll("#data_fim");
 
-		var dataAtual = new Date();
-		var diaSemana = dataAtual.getDay();
+		const dataAtual = new Date();
+		const diaSemana = dataAtual.getDay();
 
-		var diasParaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
+		const diasParaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
 		dataAtual.setDate(dataAtual.getDate() + diasParaSegunda);
 
 		// Formata a data de início (segunda-feira)
-		var ano = dataAtual.getFullYear();
-		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		var dia = String(dataAtual.getDate()).padStart(2, '0');
+		let ano = dataAtual.getFullYear();
+		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		let dia = String(dataAtual.getDate()).padStart(2, '0');
 		const dataDaSemana = `${ano}-${mes}-${dia}`;
 
 		dataInicio.forEach(function(dataInicio) {
@@ -643,24 +616,24 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	//FUNÇÃO PARA CALCULAR AS LISTAGENS DO MÊS
 	function botaoMes() {
-		let dataInicio = document.querySelectorAll("#data_inicio");
-		let dataFim = document.querySelectorAll("#data_fim");
+		const dataInicio = document.querySelectorAll("#data_inicio");
+		const dataFim = document.querySelectorAll("#data_fim");
 
-		var dataAtual = new Date();
+		const dataAtual = new Date();
 
-		var ano = dataAtual.getFullYear();
-		var mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		var dia = '01';
+		const ano = dataAtual.getFullYear();
+		const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+		const dia = '01';
 		const inicioMes = `${ano}-${mes}-${dia}`;
 
 		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = inicioMes;
 		});
 
-		var proximoMes = new Date(ano, dataAtual.getMonth() + 1, 0);
-		var fimMesAno = proximoMes.getFullYear();
-		var fimMesMes = String(proximoMes.getMonth() + 1).padStart(2, '0');
-		var fimMesDia = String(proximoMes.getDate()).padStart(2, '0');
+		const proximoMes = new Date(ano, dataAtual.getMonth() + 1, 0);
+		const fimMesAno = proximoMes.getFullYear();
+		const fimMesMes = String(proximoMes.getMonth() + 1).padStart(2, '0');
+		const fimMesDia = String(proximoMes.getDate()).padStart(2, '0');
 		const fimMes = `${fimMesAno}-${fimMesMes}-${fimMesDia}`;
 
 		dataFim.forEach(function(dataFim) {
@@ -669,19 +642,19 @@ require_once ROOT . "/html/personalizacao_display.php";
 	}
 	//FUNÇÃO PARA CALCULAR AS LISTAGENS DO ANO
 	function botaoAno() {
-		let dataInicio = document.querySelectorAll("#data_inicio");
-		let dataFim = document.querySelectorAll("#data_fim");
+		const dataInicio = document.querySelectorAll("#data_inicio");
+		const dataFim = document.querySelectorAll("#data_fim");
 
-		var dataAtual = new Date();
+		const dataAtual = new Date();
 
-		var ano = dataAtual.getFullYear();
-		var inicioAno = `${ano}-01-01`;
+		const ano = dataAtual.getFullYear();
+		const inicioAno = `${ano}-01-01`;
 
 		dataInicio.forEach(function(dataInicio) {
 			dataInicio.value = inicioAno;
 		});
 
-		var fimAno = `${ano}-12-31`;
+		const fimAno = `${ano}-12-31`;
 
 		dataFim.forEach(function(dataFim) {
 			dataFim.value = fimAno;
@@ -715,17 +688,17 @@ require_once ROOT . "/html/personalizacao_display.php";
 	}
 
 	document.getElementById('almoxarifadoSelect').addEventListener('change', function() {
-		var idAlmoxarifado = this.value;
+		const idAlmoxarifado = this.value;
 		console.log("Almoxarifado selecionado: ", idAlmoxarifado);
 
 		if (idAlmoxarifado) {
-			var xhr = new XMLHttpRequest();
-			xhr.open('GET', 'get_produtos.php?id_almoxarifado=' + idAlmoxarifado, true);
+			const xhr = new XMLHttpRequest();
+			xhr.open('GET', '<?= WWW ?>controle/control.php?nomeClasse=ProdutoControle&metodo=listarDisponiveisRelatorioPorAlmoxarifado&id_almoxarifado=' + encodeURIComponent(idAlmoxarifado), true);
 			xhr.onload = function() {
 				if (xhr.status === 200) {
 					console.log(xhr.responseText);
-					var produtos = JSON.parse(xhr.responseText);
-					var selectProduto = document.getElementById('produtoSelect');
+					const produtos = JSON.parse(xhr.responseText);
+					const selectProduto = document.getElementById('produtoSelect');
 					selectProduto.innerHTML = '<option value="">Selecione um Produto</option>';
 
 					const grupos = {};

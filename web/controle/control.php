@@ -30,7 +30,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'AvisoNotificacaoControle' => [5],
             'CaptchaController' => [7, 9],
             'CargoControle' => [11],
-            'CategoriaControle' => [21, 2],
+            'CategoriaControle' => [21, 2, 22],
             'ContatoInstituicaoControle' => [9],
             'controleSaudePet' => [6, 61, 62, 63],
             'DestinoControle' => [21, 2],
@@ -43,7 +43,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'ExameControle' => [5],
             'MedicoControle' => [5],
             'EntradaControle' => [23],
-            'EstoqueControle' => [21, 22],
+            'EstoqueControle' => [21, 22, 25],
             'FuncionarioControle' => [11, 91],
             'GrupoProdutoControle' => [22, 23, 24],
             'IentradaControle' => [23],
@@ -57,7 +57,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'PaStatusControle' => [12, 14],
             'PessoaArquivoControle' => [1, 11, 12, 13],
             'PessoaControle' => [1, 4, 11, 12, 13],
-            'ProdutoControle' => [22, 23, 24],
+            'ProdutoControle' => [22, 23, 24, 25],
             'ProcessoAceitacaoControle' => [1, 12, 14],
             'ProjetoControle' => [8, 81, 82],
             'PetControle' => [6, 61, 62, 63],
@@ -162,15 +162,39 @@ try {
         }
     }
     processaRequisicao($nomeClasse, $metodo, $modulo);
+} catch (PDOException $e) {
+    error_log('Falha de banco de dados em control.php: ' . $e->getMessage());
+    http_response_code(500);
+
+    if ($is_json_request) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status' => 'erro',
+            'mensagem' => 'Não foi possível concluir a operação.'
+        ]);
+    } else {
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+        Util::tratarException(
+            new Exception('Não foi possível concluir a operação.', 500)
+        );
+    }
 } catch (Exception $e) {
     $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? intval($e->getCode()) : 500;
+    $mensagemCliente = $codigo < 500
+        ? $e->getMessage()
+        : 'Não foi possível concluir a operação.';
+
+    if ($codigo >= 500) {
+        error_log('Erro interno em control.php: ' . $e->__toString());
+    }
+
     http_response_code($codigo);
 
     if ($is_json_request) {
         header('Content-Type: application/json');
         echo json_encode([
             'status' => 'erro',
-            'mensagem' => $e->getMessage()
+            'mensagem' => $mensagemCliente
         ]);
     } else {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -181,6 +205,10 @@ try {
             exit();
         }
 
-        Util::tratarException($e);
+        Util::tratarException(
+            $codigo >= 500
+                ? new Exception($mensagemCliente, $codigo)
+                : $e
+        );
     }
 }

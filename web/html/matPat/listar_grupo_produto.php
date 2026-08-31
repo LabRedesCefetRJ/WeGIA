@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if(session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -18,7 +19,6 @@ if(!$id_pessoa) {
 	exit();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 require_once dirname(__FILE__, 3)
     . DIRECTORY_SEPARATOR . 'classes'
@@ -35,11 +35,9 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 <head>
 	<?php
-	include_once ROOT . '/dao/Conexao.php';
-	include_once ROOT . '/dao/GrupoProdutoDAO.php';
-
 	if (!isset($_SESSION['grupo_produto'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=GrupoProdutoControle&nextPage=../html/matPat/listar_grupo_produto.php');
+		exit;
 	}
 	if (isset($_SESSION['msg'])) {
 		$msg = $_SESSION['msg'];
@@ -142,7 +140,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	</script>
 	<script>
 		$(function() {
-			var grupo_produto = <?php
+			const grupo_produto = <?php
 							echo $grupo_produto;
 							?>;
 

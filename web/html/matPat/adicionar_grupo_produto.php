@@ -157,7 +157,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 											<div class="form-group"><br>
 												<label class="col-md-3 control-label">Insira o novo grupo: </label>
 												<div class="col-md-8">
-													<input type="text" class="form-control" name="descricao_grupo" id="grupo" required>
+											<input type="text" class="form-control" name="descricao_grupo" id="grupo" maxlength="100" required>
 
 													<input type="hidden" name="nomeClasse" value="GrupoProdutoControle">
 

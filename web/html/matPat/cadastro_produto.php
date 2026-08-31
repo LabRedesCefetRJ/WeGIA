@@ -1,5 +1,7 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
@@ -14,46 +16,43 @@ if (!isset($_SESSION['usuario'])) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 22, 3);
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
 // Adiciona Função de mensagem
 require_once ROOT . "/html/geral/msg.php";
-?>
-
-<!doctype html>
-<html class="fixed">
-<?php
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/CategoriaDAO.php';
-include_once ROOT . '/dao/UnidadeDAO.php';
-include_once ROOT . '/dao/ProdutoDAO.php';
 
 if (!isset($_SESSION['unidade'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
+	exit;
 }
 if (!isset($_SESSION['categoria'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/cadastro_produto.php');
+	exit;
 }
 if (!isset($_SESSION['grupo_produto'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=GrupoProdutoControle&nextPage=../html/matPat/cadastro_produto.php');
+	exit;
 }
-if (isset($_SESSION['categoria']) && isset($_SESSION['unidade']) && isset($_SESSION['grupo_produto'])) {
+if (!isset($_SESSION['produtos'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_produto.php');
+	exit;
+}
+if (isset($_SESSION['categoria'], $_SESSION['unidade'], $_SESSION['grupo_produto'], $_SESSION['produtos'])) {
 	extract($_SESSION);
 
 	unset($_SESSION['unidade']);
 	unset($_SESSION['categoria']);
 	unset($_SESSION['grupo_produto']);
+	unset($_SESSION['produtos']);
 }
 
 $dadosForm = $_SESSION['form_produto'] ?? [];
-
-$produtoDAO = new ProdutoDAO();
-$produtos = $produtoDAO->listarTodos();
 ?>
 
+<!doctype html>
+<html class="fixed">
 <head>
 	<!-- Basic -->
 	<meta charset="UTF-8">

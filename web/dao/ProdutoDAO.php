@@ -115,6 +115,33 @@ class ProdutoDAO
 		return json_encode($produtos);
 	}
 
+	public function listarDisponiveisRelatorioPorAlmoxarifado(int $idAlmoxarifado): array
+	{
+		$sql = "SELECT DISTINCT p.id_produto, p.descricao, p.id_grupo_produto,
+				COALESCE(g.descricao_grupo, 'Sem grupo') AS descricao_grupo
+			FROM produto p
+			LEFT JOIN grupo_produto g ON g.id_grupo_produto = p.id_grupo_produto
+			INNER JOIN estoque e ON e.id_produto = p.id_produto
+			WHERE e.id_almoxarifado = :id_almoxarifado
+			  AND p.oculto = false
+			  AND p.ativo = 1
+			  AND EXISTS (
+				SELECT 1 FROM ientrada ie
+				INNER JOIN entrada en ON en.id_entrada = ie.id_entrada
+				WHERE ie.id_produto = p.id_produto
+				  AND en.id_almoxarifado = e.id_almoxarifado
+				  AND ie.oculto = false
+				  AND en.ativo = 1
+			  )
+			ORDER BY descricao_grupo, p.descricao";
+
+		$stmt = $this->pdo->prepare($sql);
+		$stmt->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+		$stmt->execute();
+
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
+
 	//Consultar um utilizando o ID
 	public function listarId($id_produto)
 	{
@@ -283,11 +310,12 @@ class ProdutoDAO
 
 	public function atribuirGrupoEmMassa(array $idsProdutos, int $idGrupo): int
 	{
-    	if (empty($idsProdutos)) {
-        	throw new InvalidArgumentException(
-            	'Nenhum produto foi informado.'
-        	);
-    	}
+		if (empty($idsProdutos)) {
+			throw new InvalidArgumentException(
+				'Nenhum produto foi informado.',
+				400
+			);
+		}
 
     	$placeholders = implode(',', array_fill(0, count($idsProdutos), '?'));
 
@@ -426,9 +454,9 @@ class ProdutoDAO
 
 	public function arquivar(int $idProduto): void
 	{
-   		if ($idProduto < 1) {
-        	throw new InvalidArgumentException("ID do produto inválido.");
-    	}
+		if ($idProduto < 1) {
+			throw new InvalidArgumentException("ID do produto inválido.", 400);
+		}
 
     	$pdo = Conexao::connect();
     	$pdo->beginTransaction();
@@ -500,9 +528,9 @@ class ProdutoDAO
 
 	public function desarquivar(int $idProduto): void
 	{
-    	if ($idProduto < 1) {
-        	throw new InvalidArgumentException("ID do produto inválido.");
-    	}
+		if ($idProduto < 1) {
+			throw new InvalidArgumentException("ID do produto inválido.", 400);
+		}
 
     	$pdo = Conexao::connect();
     	$pdo->beginTransaction();

@@ -1,10 +1,10 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (!isset($_SESSION['usuario'], $_SESSION['id_pessoa'])) {
 	header("Location: " . WWW . "html/index.php");
@@ -27,28 +27,17 @@ permissao($id_pessoa, 22, 3);
 $id_grupo_produto = filter_var($_REQUEST['id_grupo_produto'], FILTER_SANITIZE_NUMBER_INT);
 
 if (!$id_grupo_produto || $id_grupo_produto < 1) {
-	http_response_code(412);
-	echo json_encode(['erro' => 'O id do grupo de produto informado não é válido.']);
-	header("Location: " . WWW . "html/matPat/listar_grupo_produto.php");
-	exit();
+    http_response_code(400);
+    exit('O id do grupo de produto informado não é válido.');
 }
 
-try {
-	include_once ROOT . '/dao/GrupoProdutoDAO.php';
-    
-    $grupoProdutoDAO = new GrupoProdutoDAO();
-    $grupoProduto = $grupoProdutoDAO->listarUm($id_grupo_produto);
-
-	if (!$grupoProduto) {
-		http_response_code(412);
-		echo json_encode(['erro' => 'Nenhum grupo de produto encontrado.']);
-		header("Location: " . WWW . "html/matPat/listar_grupo_produto.php");
-		exit();
-	}
-} catch (Exception $e) {
-	require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
-	Util::tratarException($e);
+if (!isset($_SESSION['grupo_produto_edicao'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarUm&nomeClasse=GrupoProdutoControle&id_grupo_produto=' . $id_grupo_produto);
+	exit;
 }
+
+$grupoProduto = $_SESSION['grupo_produto_edicao'];
+unset($_SESSION['grupo_produto_edicao']);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
@@ -175,10 +164,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 											<div class="form-group"><br>
 												<label class="col-md-3 control-label">Grupo de Produto</label>
 												<div class="col-md-8">
-													<input type="text" class="form-control" value="<?= htmlspecialchars($grupoProduto->getDescricaoGrupo(), ENT_QUOTES, 'UTF-8') ?>" name="descricao_grupo" id="grupo" required>
+											<input type="text" class="form-control" value="<?= htmlspecialchars($grupoProduto['descricao_grupo'], ENT_QUOTES, 'UTF-8') ?>" name="descricao_grupo" id="grupo" maxlength="100" required>
 													<!-- CSRF -->
 													<?= Csrf::inputField() ?>
-													<input type="hidden" value="<?= htmlspecialchars($grupoProduto->getIdGrupoProduto(), ENT_QUOTES, 'UTF-8') ?>" name="id_grupo_produto" required>
+											<input type="hidden" value="<?= (int) $grupoProduto['id_grupo_produto'] ?>" name="id_grupo_produto" required>
 													<input type="hidden" name="nomeClasse" value="GrupoProdutoControle">
 													<input type="hidden" name="metodo" value="editar">
 

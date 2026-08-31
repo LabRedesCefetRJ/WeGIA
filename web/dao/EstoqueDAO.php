@@ -8,6 +8,28 @@ require_once $basePath . '/Functions/permissao/permissao.php';
 
 class EstoqueDAO
 {
+    public function listarDadosFiltrosRelatorio(): array
+    {
+        $pdo = Conexao::connect();
+        $consultas = [
+            'origens' => 'SELECT id_origem, nome_origem FROM origem ORDER BY nome_origem',
+            'destinos' => 'SELECT id_destino, nome_destino FROM destino ORDER BY nome_destino',
+            'tipos_entrada' => 'SELECT id_tipo, descricao FROM tipo_entrada ORDER BY descricao',
+            'tipos_saida' => 'SELECT id_tipo, descricao FROM tipo_saida ORDER BY descricao',
+            'responsaveis' => 'SELECT DISTINCT p.id_pessoa, p.nome, p.sobrenome FROM pessoa p INNER JOIN funcionario f ON f.id_pessoa = p.id_pessoa INNER JOIN almoxarife a ON a.id_funcionario = f.id_funcionario WHERE f.id_situacao = 1 ORDER BY p.nome, p.sobrenome',
+            'categorias' => 'SELECT id_categoria_produto, descricao_categoria FROM categoria_produto ORDER BY descricao_categoria',
+            'almoxarifados' => 'SELECT id_almoxarifado, descricao_almoxarifado FROM almoxarifado WHERE ativo = 1 ORDER BY descricao_almoxarifado'
+        ];
+        $dados = [];
+
+        foreach ($consultas as $chave => $sql) {
+            $stmt = $pdo->query($sql);
+            $dados[$chave] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return $dados;
+    }
+
     public function listarTodos()
     {
         try {
@@ -46,7 +68,7 @@ class EstoqueDAO
 
         } catch (PDOException $e) {
             error_log('Erro no método listarTodos: ' . $e->getMessage());
-            echo 'Ocorreu um erro ao carregar os dados do estoque.';
+            throw new Exception('Não foi possível carregar os dados do estoque.', 500);
         }
     }
 

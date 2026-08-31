@@ -15,21 +15,19 @@ class GrupoProdutoControle
 
     public function verificar()
     {
-        $descricao_grupo = trim($_REQUEST['descricao_grupo']);
+        $descricaoGrupo = trim($_REQUEST['descricao_grupo']);
 
-        try {
-            $grupoProduto = new GrupoProduto($descricao_grupo);
-            return $grupoProduto;
-        } catch (InvalidArgumentException $e) {
-            header('Location: ' . WWW . 'html/home.php?msg_gp=' . $e->getMessage());
-        }
+        return new GrupoProduto($descricaoGrupo);
     }
 
     public function listarTodos()
     {
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
 
-        $regex = '#^(\.\./html/matPat/(alterar_produto|cadastro_produto|listar_grupo_produto)\.php(\?id_produto=\d+)?)$#';
+        $regex = '#^\.\./html/matPat/'
+        . '(alterar_produto|cadastro_produto|listar_grupo_produto|listar_produto)'
+        . '\.php'
+        . '(?:\?(?:id_produto=\d+|tipo=(?:ativo|arquivado)))?$#';
 
         $gruposProduto = $this->grupoProdutoDAO->listarTodos();
         
@@ -40,6 +38,30 @@ class GrupoProdutoControle
         } else {
             header('Location:' . '../html/home.php');
         }
+
+        exit;
+    }
+
+    public function listarUm()
+    {
+        $id = filter_input(INPUT_GET, 'id_grupo_produto', FILTER_VALIDATE_INT);
+        if (!$id || $id < 1) {
+            http_response_code(400);
+            exit('O id do grupo de produto informado não é válido.');
+        }
+
+        $grupoProduto = $this->grupoProdutoDAO->listarUm($id);
+        if (!$grupoProduto) {
+            http_response_code(404);
+            exit('Grupo de produto não encontrado.');
+        }
+
+        $_SESSION['grupo_produto_edicao'] = [
+            'id_grupo_produto' => $grupoProduto->getIdGrupoProduto(),
+            'descricao_grupo' => $grupoProduto->getDescricaoGrupo()
+        ];
+        header('Location: ' . WWW . 'html/matPat/editar_grupo_produto.php?id_grupo_produto=' . $id);
+        exit;
     }
 
     public function incluir()
@@ -109,7 +131,11 @@ class GrupoProdutoControle
             header("Location: " . WWW . "html/matPat/listar_grupo_produto.php");
             exit();
         } catch (Exception $e) {
-            echo "Não foi possível editar o grupo de produto";
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+
+            http_response_code(500);
+
+            exit('Não foi possível editar o grupo de produto.');
         }
     }
 
@@ -152,10 +178,11 @@ class GrupoProdutoControle
                 "mensagem" => "Grupo de produto excluído com sucesso."
             ]);
         } catch (Exception $e) {
+            error_log(__METHOD__ . ': ' . $e->getMessage());
             http_response_code(500);
             echo json_encode([
                 "sucesso" => false,
-                "mensagem" => "Erro ao excluir grupo de produto: " . $e->getMessage()
+                "mensagem" => "Não foi possível excluir o grupo de produto."
             ]);
         }
 

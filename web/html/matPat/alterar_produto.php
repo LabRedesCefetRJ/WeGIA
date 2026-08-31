@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if(session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,7 +12,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 22, 3);
@@ -22,42 +22,44 @@ require_once ROOT . "/html/personalizacao_display.php";
 // Adiciona Função de mensagem
 require_once ROOT . "/html/geral/msg.php";
 
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/CategoriaDAO.php';
-include_once ROOT . '/dao/UnidadeDAO.php';
-include_once ROOT . '/dao/ProdutoDAO.php';
-
 if (!isset($_SESSION['unidade'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit;
 }
 if (!isset($_SESSION['categoria'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit;
 }
 if (!isset($_SESSION['grupo_produto'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=GrupoProdutoControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit;
 }
 if (!isset($_SESSION['produto'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto) . '&id_produto=' . htmlspecialchars($id_produto));
+	exit;
+}
+if (!isset($_SESSION['produtos'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit;
 }
 
-if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESSION['unidade']) && isset($_SESSION['grupo_produto'])) {
+if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_SESSION['grupo_produto'], $_SESSION['produtos'])) {
 	$produto = $_SESSION['produto'];
 	$unidade = $_SESSION['unidade'];
 	$categoria = $_SESSION['categoria'];
 	$grupo_produto = $_SESSION['grupo_produto'];
 	$vars = $_SESSION;
+	$todosProdutos = $_SESSION['produtos'];
 	unset($_SESSION['produto']);
 	unset($_SESSION['categoria']);
 	unset($_SESSION['unidade']);
 	unset($_SESSION['grupo_produto']);
+	unset($_SESSION['produtos']);
 }
-
-$produtoDAO = new ProdutoDAO();
-$todosProdutos = $produtoDAO->listarTodos();
 ?>
 <!doctype html>
 <html class="fixed">
@@ -103,11 +105,11 @@ $todosProdutos = $produtoDAO->listarTodos();
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 	<script type="text/javascript">
-		var produtos = <?php echo $produto; ?>;
-		var todosProdutos = <?php echo $todosProdutos; ?>;
-		var categoria = <?php echo $categoria; ?>;
-		var unidade = <?php echo $unidade; ?>;
-		var grupo_produto = <?php echo $grupo_produto; ?>;
+		const produtos = <?php echo $produto; ?>;
+		const todosProdutos = <?php echo $todosProdutos; ?>;
+		const categoria = <?php echo $categoria; ?>;
+		const unidade = <?php echo $unidade; ?>;
+		const grupo_produto = <?php echo $grupo_produto; ?>;
 		function editar_produto() {
 
 			$("#produto").prop('disabled', false);
@@ -151,10 +153,10 @@ $todosProdutos = $produtoDAO->listarTodos();
 			$("#header").load("<?= WWW ?>html/header.php");
 			$(".menuu").load("<?= WWW ?>html/menu.php");
 
-			/*var produtos = <?php echo $produto; ?>;
-			var todosProdutos = <?php echo $todosProdutos; ?>;
-			var categoria = <?php echo $categoria; ?>;
-			var unidade = <?php echo $unidade; ?>;*/
+			/*const produtos = <?php echo $produto; ?>;
+			const todosProdutos = <?php echo $todosProdutos; ?>;
+			const categoria = <?php echo $categoria; ?>;
+			const unidade = <?php echo $unidade; ?>;*/
 
 			$("#produto").prop('disabled', true);
 			$("#id_categoria").prop('disabled', true);

@@ -22,9 +22,6 @@ permissao($id_pessoa, 22, 5);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/ProdutoDAO.php';
-
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
 $tipo = $_GET['tipo'] ?? 'ativo';
@@ -38,20 +35,29 @@ if (!isset($_SESSION['produtos'])) {
     }
 
     exit();
-} else {
-    $produtos = $_SESSION['produtos'];
-    unset($_SESSION['produtos']);
 }
 
-$pdo = Conexao::connect();
+$nextPage = '../html/matPat/listar_produto.php?tipo=' . $tipo;
 
-$res = $pdo->query(
-    "SELECT id_grupo_produto, descricao_grupo
-     FROM grupo_produto
-     ORDER BY descricao_grupo"
+if (!isset($_SESSION['grupo_produto'])) {
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=GrupoProdutoControle' . '&nextPage=' . urlencode($nextPage));
+    exit;
+}
+
+if (!isset($_SESSION['categoria'])) {
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=CategoriaControle' . '&nextPage=' . urlencode($nextPage));
+    exit;
+}
+
+$produtos = json_decode($_SESSION['produtos'], true);
+$grupoProdutos = json_decode($_SESSION['grupo_produto'], true);
+$categorias = json_decode($_SESSION['categoria'], true);
+
+unset(
+    $_SESSION['produtos'],
+    $_SESSION['grupo_produto'],
+    $_SESSION['categoria']
 );
-
-$grupos = $res->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!doctype html>
 <html class="fixed">
@@ -320,7 +326,7 @@ $grupos = $res->fetchAll(PDO::FETCH_ASSOC);
             							Selecionar grupo
         							</option>
 
-        							<?php foreach ($grupos as $grupo): ?>
+									<?php foreach ($grupoProdutos as $grupo): ?>
             							<option
                 							value="<?= (int)$grupo['id_grupo_produto'] ?>"
             							>
@@ -370,10 +376,6 @@ $grupos = $res->fetchAll(PDO::FETCH_ASSOC);
 								<select id="filtroCategoria" class="form-control">
 									<option value="">Todas</option>
 									<?php
-									$pdo = Conexao::connect();
-									$res = $pdo->query("SELECT descricao_categoria FROM categoria_produto ORDER BY descricao_categoria");
-									$categorias = $res->fetchAll(PDO::FETCH_ASSOC);
-
 									foreach ($categorias as $categoria) {
 										echo '<option value="' . htmlspecialchars($categoria['descricao_categoria'], ENT_QUOTES, 'UTF-8') . '">'
 											. htmlspecialchars($categoria['descricao_categoria'], ENT_QUOTES, 'UTF-8') .
@@ -389,7 +391,7 @@ $grupos = $res->fetchAll(PDO::FETCH_ASSOC);
 									<option value="">Todos</option>
 									<option value="Sem grupo">Sem grupo</option>
 									<?php
-									foreach ($grupos as $grupo) {
+									foreach ($grupoProdutos as $grupo) {
 										echo '<option value="' . htmlspecialchars($grupo['descricao_grupo'], ENT_QUOTES, 'UTF-8') . '">'
 											. htmlspecialchars($grupo['descricao_grupo'], ENT_QUOTES, 'UTF-8') .
 										'</option>';
@@ -459,7 +461,7 @@ $grupos = $res->fetchAll(PDO::FETCH_ASSOC);
 							</tr>
 						</thead>
 						<tbody id="tabela">
-    						<?php foreach (json_decode($produtos, true) as $item): ?>
+						<?php foreach ($produtos as $item): ?>
         						<tr>
 									<td>
 										<?php if ($tipo === 'ativo'): ?>

@@ -25,14 +25,18 @@ class GrupoProdutoDAO
 
             $stmt->execute();
         } catch (PDOException $e) {
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+
             if ($e->getCode() == 23000) {
                 throw new InvalidArgumentException(
-                    "Já existe um grupo de produto com essa descrição."
+                    "Já existe um grupo de produto com essa descrição.",
+                    409
                 );
             }
 
             throw new Exception(
-                "Não foi possível cadastrar o grupo de produto."
+                "Não foi possível cadastrar o grupo de produto.",
+                500
             );
         }
     }
@@ -52,7 +56,8 @@ class GrupoProdutoDAO
 
             $stmt->execute();
         } catch (PDOException $e) {
-            throw new Exception("Erro ao editar grupo de produto: " . $e->getMessage());
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+            throw new Exception('Não foi possível editar o grupo de produto.', 500);
         }
     }
 
@@ -71,7 +76,8 @@ class GrupoProdutoDAO
                 return null;
             }
         } catch (PDOException $e) {
-            throw new Exception("Erro ao listar grupo de produto: " . $e->getMessage());
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+            throw new Exception('Não foi possível consultar o grupo de produto.', 500);
         }
     }
 
@@ -84,7 +90,8 @@ class GrupoProdutoDAO
             $stmt->bindParam(':id_grupo_produto', $id);
             $stmt->execute();
         } catch (PDOException $e) {
-            throw new Exception("Erro ao excluir grupo de produto: " . $e->getMessage());
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+            throw new Exception('Não foi possível excluir o grupo de produto.', 500);
         }
     }
 
@@ -104,7 +111,8 @@ class GrupoProdutoDAO
             }
             return json_encode($gruposProduto);
         } catch (PDOException $e) {
-            throw new Exception("Erro ao listar grupos de produto: " . $e->getMessage());
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+            throw new Exception('Não foi possível consultar os grupos de produto.', 500);
         }
     }
 }
