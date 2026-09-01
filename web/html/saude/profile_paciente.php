@@ -161,14 +161,14 @@ $descricao_medica = json_encode($descricao_medica);
 $stmtMedicacoes = $pdo->prepare("
     SELECT sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem,
            GROUP_CONCAT(TIME_FORMAT(smh.horario, '%H:%i') ORDER BY smh.horario SEPARATOR ', ') AS horarios,
-           sm.duracao, st.descricao,
+           sm.tipo_de_uso, st.descricao,
            sm.saude_medicacao_status_idsaude_medicacao_status AS id_status
     FROM saude_atendimento sa
     JOIN saude_medicacao sm ON (sa.id_atendimento = sm.id_atendimento)
     JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)
     LEFT JOIN saude_medicacao_horario smh ON (smh.id_medicacao = sm.id_medicacao)
     WHERE sa.id_fichamedica = :idFichaMedica
-    GROUP BY sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem, sm.duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status
+    GROUP BY sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem, sm.tipo_de_uso, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status
     ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC
 ");
 
