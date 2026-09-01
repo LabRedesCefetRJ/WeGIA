@@ -45,6 +45,15 @@
                 $MedicoDAO = new MedicoDAO();
                 $resposta = $MedicoDAO->inserirMedico($crm, $nome);
 
+                if(isset($resposta['sucesso']) && $resposta['sucesso'] === false){
+                    http_response_code(400);
+                    echo json_encode([
+                        "status" => "erro",
+                        "mensagem" => $resposta['erro']
+                    ]);
+                    exit;
+                }
+
                 http_response_code(201);
                 echo json_encode([
                     "status" => "sucesso",

@@ -161,14 +161,14 @@ $descricao_medica = json_encode($descricao_medica);
 $stmtMedicacoes = $pdo->prepare("
     SELECT sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem,
            GROUP_CONCAT(TIME_FORMAT(smh.horario, '%H:%i') ORDER BY smh.horario SEPARATOR ', ') AS horarios,
-           sm.duracao, st.descricao,
+           sm.tipo_de_uso, st.descricao,
            sm.saude_medicacao_status_idsaude_medicacao_status AS id_status
     FROM saude_atendimento sa
     JOIN saude_medicacao sm ON (sa.id_atendimento = sm.id_atendimento)
     JOIN saude_medicacao_status st ON (sm.saude_medicacao_status_idsaude_medicacao_status = st.idsaude_medicacao_status)
     LEFT JOIN saude_medicacao_horario smh ON (smh.id_medicacao = sm.id_medicacao)
     WHERE sa.id_fichamedica = :idFichaMedica
-    GROUP BY sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem, sm.duracao, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status
+    GROUP BY sm.id_medicacao, sa.data_atendimento, sm.medicamento, sm.dosagem, sm.tipo_de_uso, st.descricao, sm.saude_medicacao_status_idsaude_medicacao_status
     ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC
 ");
 
@@ -859,7 +859,7 @@ try {
         $("#exibimed")
           .append($("<tr>")
             .append($("<td style='text-align: center; vertical-align: middle;'>").attr("data-order", item.data_atendimento_ordem || "").text(item.data_atendimento))
-            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + (item.horarios || 'Livre') + ", " + item.duracao + "."))
+            .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.medicamento + ", " + item.dosagem + ", " + (item.horarios || 'Livre') + ", " + item.tipo_de_uso + "."))
             .append($("<td style='text-align: center; vertical-align: middle;'>").text(item.descricao))
             .append($("<td style='text-align: center; vertical-align: middle;'>")
               .append($("<a onclick='editarStatusMedico(" + item.id_medicacao + ")' href='#'title='Editar'><button class='btn btn-primary' id='teste'><i class='glyphicon glyphicon-pencil'></i></button></a>"))
@@ -1436,7 +1436,7 @@ try {
                               ?>
                                 <tr>
                                   <td><?= $index + 1 ?></td>
-                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . ($medicamento['horarios'] ?? '') . '|' . $medicamento['duracao']) ?></td>
+                                  <td class="text-center"><?= htmlspecialchars($medicamento['medicamento'] . '|' . $medicamento['dosagem'] . '|' . ($medicamento['horarios'] ?? '') . '|' . $medicamento['tipo_de_uso']) ?></td>
                                 </tr>
                               <?php
                               endforeach;
@@ -2302,7 +2302,7 @@ try {
                                 class="form-control"
                                 name="nome_medico"
                                 id="nomeMedicoModal"
-                                maxlength="120"
+                                maxlength="50"
                                 pattern="[A-Za-zÀ-ÿ\s\-'.']+"
                                 title="apenas letras, espaços e hífens (números não são permitidos)"
                                 required>
@@ -2317,7 +2317,7 @@ try {
                                 class="form-control"
                                 name="crm_medico"
                                 id="crmMedicoModal"
-                                maxlength="30"
+                                maxlength="10"
                                 pattern="[0-9]+"
                                 title="apenas números são permitidos"
                                 onkeypress="return Onlynumbers(event)"
@@ -3340,14 +3340,14 @@ try {
             nome_medicacao: ($("#nome_medicacao").val() || "").trim(),
             dosagem: ($("#dosagem").val() || "").trim(),
             horarios: Array.from(document.querySelectorAll('.horario_medicacao_atd')).map(el => el.value).filter(v => v),
-            tempo: ($("#duracao_medicacao").val() || "").trim()
+            tempo: ($("#tipo_de_uso_medicacao").val() || "").trim()
           };
         }
 
         function limparCamposMedicacao() {
           $("#nome_medicacao").val("");
           $("#dosagem").val("");
-          $("#duracao_medicacao").val("");
+          $("#tipo_de_uso_medicacao").val("");
           const container = document.getElementById('container_horarios_atd');
           container.innerHTML = `
             <div class="horario-item">
@@ -3454,12 +3454,6 @@ try {
           const validacaoDosagem = SaudeValidator.validarValorPositivo(medicacao.dosagem, "Dosagem");
           if (!validacaoDosagem.valido) {
             mostrarMensagemMedicacao(validacaoDosagem.mensagem, "danger");
-            return;
-          }
-
-          const validacaoDuracao = SaudeValidator.validarValorPositivo(medicacao.tempo, "Duração");
-          if (!validacaoDuracao.valido) {
-            mostrarMensagemMedicacao(validacaoDuracao.mensagem, "danger");
             return;
           }
 
