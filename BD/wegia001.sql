@@ -1046,7 +1046,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS wegia.contribuicao_log (
 id INT NOT NULL AUTO_INCREMENT,
 id_socio INT(11) NOT NULL,
-id_gateway INT(11) NOT NULL,
+id_gateway INT(11) DEFAULT NULL,
 id_meio_pagamento INT(11) NOT NULL,
 id_recorrencia INT(11) DEFAULT NULL,
 codigo VARCHAR(255) NOT NULL UNIQUE,
