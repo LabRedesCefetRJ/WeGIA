@@ -2771,6 +2771,25 @@ try {
           return;
         }
 
+        const arquivoSelecionado = documentos.files[0];
+
+        try {
+          const limitesResp = await fetch("../../controle/control.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nomeClasse: "ExameControle", metodo: "limitesUpload" })
+          });
+          const limites = await limitesResp.json();
+
+          if (arquivoSelecionado.size > limites.post_max_size_bytes) {
+            const limiteMb = (limites.post_max_size_bytes / 1024 / 1024).toFixed(1);
+            exibirErroModalDocumento(`O arquivo excede o tamanho máximo permitido (${limiteMb}MB). Por favor, escolha um arquivo menor.`);
+            return;
+          }
+        } catch (e) {
+           console.warn("Não foi possível verificar o limite de upload antes do envio:", e);
+        }
+
         ocultarMensagemCadastroExame();
 
         formData.append("arquivo", documentos.files[0]);
