@@ -16,6 +16,7 @@ require_once dirname(__DIR__, 4) . '/web/classes/Util.php';
 
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
+use DateTime;
 
 class ContribuicaoController
 {
@@ -1331,5 +1332,39 @@ class ContribuicaoController
             return $response->withStatus(500)
                 ->withHeader('Content-Type', 'application/json');
         }
+    }
+
+    public function generateManualPayment(Request $request, Response $response): Response
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            /*$idPessoa = (int)$request->getAttribute('user_id');
+
+            if ($idPessoa <= 0) {
+                return $this->jsonError($response, 'Usuário não identificado.', 401);
+            }*/
+
+            // Aqui você pode adicionar a lógica para criar um pagamento manual
+            // Por exemplo, registrar o pagamento no banco de dados e retornar uma resposta
+            $contribuicao = new Contribuicao(null, null, intval($data['id_meio_pagamento']), intval($data['id_socio']), floatval($data['valor']), new Datetime($data['data_pagamento']), new DateTime($data['data_vencimento']), new DateTime($data['data_geracao']), $data['status']);
+
+            $resultado = $this->contribuicaoService->registrarPagamentoManual($contribuicao);
+
+            $response->getBody()->write(json_encode([
+                'sucesso' => true,
+                'mensagem' => 'Pagamento manual registrado com sucesso!',
+            ]));
+
+            return $response->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            $response->getBody()->write(json_encode([
+                'error' => 'Erro ao registrar pagamento manual: ' . $e->getMessage() . ' em ' . $e->getFile() . ' na linha ' . $e->getLine()
+            ]));
+
+            return $response->withStatus(500)
+                ->withHeader('Content-Type', 'application/json');
+        }
+
     }
 }

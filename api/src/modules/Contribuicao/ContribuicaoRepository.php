@@ -13,6 +13,25 @@ class ContribuicaoRepository
         $this->db = $db;
     }
 
+    public function create(Contribuicao $contribuicao): bool
+    {
+        $query = "INSERT INTO contribuicao_log (id_socio, id_gateway, id_meio_pagamento, valor, data_pagamento, data_vencimento, data_geracao, status_pagamento, codigo)
+                  VALUES (:id_socio, :id_gateway, :id_meio_pagamento, :valor, :data_pagamento, :data_vencimento, :data_geracao, :status_pagamento, :codigo)";
+
+        $stmt = $this->db->prepare($query);
+        return $stmt->execute([
+            ':id_socio' => $contribuicao->getIdSocio(),
+            ':id_gateway' => $contribuicao->getIdGateway(),
+            ':id_meio_pagamento' => $contribuicao->getIdMeioPagamento(),
+            ':valor' => $contribuicao->getValor(),
+            ':data_pagamento' => $contribuicao->getDataPagamento() ? $contribuicao->getDataPagamento()->format('Y-m-d H:i:s') : null,
+            ':data_vencimento' => $contribuicao->getDataVencimento()->format('Y-m-d H:i:s'),
+            ':data_geracao' => $contribuicao->getDataGeracao()->format('Y-m-d H:i:s'),
+            ':status_pagamento' => $contribuicao->getStatus() === 'paid' ? 1 : 0,
+            ':codigo' => $contribuicao->getCodigo()
+        ]);
+    }
+
     /**
      * Find all contributions for a given socio ID
      *

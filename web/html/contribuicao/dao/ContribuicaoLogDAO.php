@@ -159,6 +159,7 @@ class ContribuicaoLogDAO
      */
     public function getContribuicoes(?StatusPagamento $statusPagamento = null)
     {
+        //adaptar para retornar contribuicões que não possuem um gateway de pagamento associado, ou seja, contribuições manuais
         $sql =
             'SELECT 
             cl.codigo, 
@@ -174,7 +175,7 @@ class ContribuicaoLogDAO
         FROM contribuicao_log cl 
         JOIN socio s ON (s.id_socio=cl.id_socio) 
         JOIN pessoa p ON (p.id_pessoa=s.id_pessoa) 
-        JOIN contribuicao_gatewayPagamento as cg ON (cg.id=cl.id_gateway) 
+        LEFT JOIN contribuicao_gatewayPagamento as cg ON (cg.id=cl.id_gateway) 
         JOIN contribuicao_meioPagamento as cm ON (cm.id=cl.id_meio_pagamento)';
 
         if (!is_null($statusPagamento)) {
@@ -228,7 +229,7 @@ class ContribuicaoLogDAO
         FROM contribuicao_log cl 
         JOIN socio s ON (s.id_socio=cl.id_socio) 
         JOIN pessoa p ON (p.id_pessoa=s.id_pessoa) 
-        JOIN contribuicao_gatewayPagamento as cg ON (cg.id=cl.id_gateway) 
+        LEFT JOIN contribuicao_gatewayPagamento as cg ON (cg.id=cl.id_gateway) 
         JOIN contribuicao_meioPagamento as cm ON (cm.id=cl.id_meio_pagamento) ';
 
         if ($configuracao->getPeriodo() !== 1) {

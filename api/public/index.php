@@ -264,6 +264,13 @@ $app->post('/contribuicoes/credito', [ContribuicaoController::class, 'generateCr
 $app->post('/contribuicoes/recorrencia', [ContribuicaoController::class, 'generateRecorrencia'])
     ->add($container->get(AuthMiddleware::class));
 
+/**
+ * Permite que funcionários do WeGIA gerem pagamentos manuais para sócios, como por exemplo, quando um sócio paga em dinheiro ou cheque na sede da associação.
+ */
+$app->post('/contribuicoes/manual', [ContribuicaoController::class, 'generateManualPayment'])
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
+
 $app->get('/contribuicoes/payments_rules', [PaymentController::class, 'getAllPaymentsRules'])
     ->add($container->get(AuthMiddleware::class));
 

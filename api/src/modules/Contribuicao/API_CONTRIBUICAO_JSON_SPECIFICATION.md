@@ -923,6 +923,60 @@ Notes:
 
 ---
 
+## 4. POST `/contribuicoes/manual`
+
+Registra manualmente o pagamento de uma contribuição. Requer autenticação via token JWT.
+
+### Headers
+- **Content-Type** (obrigatório): `application/json`
+- **Authorization** (obrigatório): Token JWT no formato `Bearer <token>`
+
+### Exemplo de Requisição
+```
+POST /contribuicoes/manual
+Content-Type: application/json
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+```
+
+```json
+{
+  "id_socio": 1,
+  "valor": 50.00,
+  "data_pagamento": "2024-05-25 10:00:00",
+  "data_vencimento": "2024-05-27 00:00:00",
+  "data_geracao": "2024-05-20 00:00:00",
+  "status": "paid"
+}
+```
+
+### Payload
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `id_socio` | integer | ID do sócio associado à contribuição |
+| `valor` | number | Valor da contribuição |
+| `data_pagamento` | string | Data e hora do pagamento |
+| `data_vencimento` | string | Data e hora do vencimento |
+| `data_geracao` | string | Data e hora da geração |
+| `status` | string | Status do pagamento |
+
+### Resposta - 201 Created
+```json
+{
+  "sucesso": true,
+  "mensagem": "Pagamento manual registrado com sucesso!"
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "error": "Erro ao registrar pagamento manual: <mensagem de erro> em <arquivo> na linha <linha>"
+}
+```
+
+---
+
 ## Observações Gerais
 
 ### Headers Recomendados
