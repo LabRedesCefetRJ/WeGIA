@@ -62,7 +62,7 @@ $(document).ready(function () {
 
                         tabela += `
                             <tr>
-                                <td>${socio.nome}</td>
+                                <td>${socio.nome} ${socio.sobrenome}</td>
                                 <td>${socio.cpf}</td>
                                 <td>${socio.data_formatada ?? ""}</td>
                                 <td>${socio.telefone ?? ""}</td>
@@ -84,7 +84,7 @@ $(document).ready(function () {
 
                         tabela += `
                             <tr>
-                                <td>${socio.nome}</td>
+                                <td>${socio.nome} ${socio.sobrenome}</td>
                                 <td>${socio.cpf}</td>
                                 <td>${socio.telefone ?? ""}</td>
                                 <td>${socio.email ?? ""}</td>
