@@ -36,6 +36,8 @@ $(document).ready(function () {
                 var estrutura_tab = "";
 
                 for (let socio of socios) {
+                    socio.sobrenome = socio.sobrenome || ""; // Garantir que sobrenome não seja undefined
+
                     if (payload.suposicao === "s") {
                         estrutura_tab = `
                             <tr>
