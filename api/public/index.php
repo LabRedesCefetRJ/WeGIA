@@ -21,6 +21,8 @@ use api\modules\Socio\SocioMiddleware;
 use api\modules\Contribuicao\ContribuicaoController;
 use api\modules\Contribuicao\ContribuicaoService;
 use api\modules\Contribuicao\ContribuicaoRepository;
+use api\modules\Contribuicao\ContribuicaoImportRegistry;
+use api\modules\Contribuicao\AmigosLajeXlsxImportService;
 use api\modules\Contribuicao\PaymentRepository;
 use api\modules\Contribuicao\PaymentController;
 use api\middleware\CorsMiddleware;
@@ -92,12 +94,21 @@ $container = new AppContainer([
     ContribuicaoService::class => function ($c) {
         return new ContribuicaoService($c->get(ContribuicaoRepository::class));
     },
+    AmigosLajeXlsxImportService::class => function ($c) {
+        return new AmigosLajeXlsxImportService($c->get(ContribuicaoRepository::class));
+    },
+    ContribuicaoImportRegistry::class => function ($c) {
+        return new ContribuicaoImportRegistry([
+            'amigos_laje_xlsx' => $c->get(AmigosLajeXlsxImportService::class),
+        ]);
+    },
     ContribuicaoController::class => function ($c) {
         return new ContribuicaoController(
             $c->get(ContribuicaoService::class),
             $c->get(SocioRepository::class),
             $c->get(PessoaRepository::class),
-            $c->get(PDO::class)
+            $c->get(PDO::class),
+            $c->get(ContribuicaoImportRegistry::class)
         );
     },
     PaymentRepository::class => function ($c) {
@@ -268,6 +279,10 @@ $app->post('/contribuicoes/recorrencia', [ContribuicaoController::class, 'genera
  * Permite que funcionários do WeGIA gerem pagamentos manuais para sócios, como por exemplo, quando um sócio paga em dinheiro ou cheque na sede da associação.
  */
 $app->post('/contribuicoes/manual', [ContribuicaoController::class, 'generateManualPayment'])
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
+
+$app->post('/contribuicoes/import', [ContribuicaoController::class, 'importarContribuicoes'])
     ->add($container->get(SocioMiddleware::class))
     ->add($container->get(AuthMiddleware::class));
 

@@ -8,7 +8,7 @@ class Contribuicao implements ContribuicaoInterface
 {
     private ?int $id = null;
     private ?int $idGateway = null;
-    private int $idMeioPagamento;
+    private ?int $idMeioPagamento;
     private int $idSocio;
     private float $valor;
     private ?DateTime $dataPagamento = null;
@@ -17,7 +17,7 @@ class Contribuicao implements ContribuicaoInterface
     private string $status;
     private string $codigo;
 
-    public function __construct(?int $id, ?int $idGateway, int $idMeioPagamento, int $idSocio, float $valor, ?DateTime $dataPagamento, DateTime $dataVencimento, DateTime $dataGeracao, string $status, ?string $codigo = null)
+    public function __construct(?int $id, ?int $idGateway, ?int $idMeioPagamento, int $idSocio, float $valor, ?DateTime $dataPagamento, DateTime $dataVencimento, DateTime $dataGeracao, string $status, ?string $codigo = null)
     {
         if ($id !== null) {
             $this->setId($id);
@@ -60,7 +60,7 @@ class Contribuicao implements ContribuicaoInterface
         return $this->idGateway;
     }
 
-    public function getIdMeioPagamento(): int
+    public function getIdMeioPagamento(): ?int
     {
         return $this->idMeioPagamento;
     }
@@ -120,9 +120,9 @@ class Contribuicao implements ContribuicaoInterface
         return $this;
     }
 
-    public function setIdMeioPagamento(int $idMeioPagamento): ContribuicaoInterface
+    public function setIdMeioPagamento(?int $idMeioPagamento): ContribuicaoInterface
     {
-        if ($idMeioPagamento <= 0) {
+        if ($idMeioPagamento !== null && $idMeioPagamento <= 0) {
             throw new \InvalidArgumentException("ID do meio de pagamento deve ser um número positivo.", 400);
         }
 

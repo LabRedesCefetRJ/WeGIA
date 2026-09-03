@@ -176,7 +176,7 @@ class ContribuicaoLogDAO
         JOIN socio s ON (s.id_socio=cl.id_socio) 
         JOIN pessoa p ON (p.id_pessoa=s.id_pessoa) 
         LEFT JOIN contribuicao_gatewayPagamento as cg ON (cg.id=cl.id_gateway) 
-        JOIN contribuicao_meioPagamento as cm ON (cm.id=cl.id_meio_pagamento)';
+        LEFT JOIN contribuicao_meioPagamento as cm ON (cm.id=cl.id_meio_pagamento)';
 
         if (!is_null($statusPagamento)) {
             match ($statusPagamento) {
@@ -230,7 +230,7 @@ class ContribuicaoLogDAO
         JOIN socio s ON (s.id_socio=cl.id_socio) 
         JOIN pessoa p ON (p.id_pessoa=s.id_pessoa) 
         LEFT JOIN contribuicao_gatewayPagamento as cg ON (cg.id=cl.id_gateway) 
-        JOIN contribuicao_meioPagamento as cm ON (cm.id=cl.id_meio_pagamento) ';
+        LEFT JOIN contribuicao_meioPagamento as cm ON (cm.id=cl.id_meio_pagamento) ';
 
         if ($configuracao->getPeriodo() !== 1) {
             $dataInicio = null;
@@ -368,7 +368,7 @@ class ContribuicaoLogDAO
 
     public function getContribuicoesPorSocioEPeriodo($idSocio, $dataInicio, $dataFim)
     {
-        $sql = "SELECT cl.codigo, cl.data_geracao, cl.data_pagamento, cl.valor, cmp.meio FROM contribuicao_log cl JOIN contribuicao_meioPagamento cmp ON (cl.id_meio_pagamento=cmp.id)
+        $sql = "SELECT cl.codigo, cl.data_geracao, cl.data_pagamento, cl.valor, cmp.meio FROM contribuicao_log cl LEFT JOIN contribuicao_meioPagamento cmp ON (cl.id_meio_pagamento=cmp.id)
                 WHERE id_socio = :idSocio 
                 AND status_pagamento = 1 
                 AND data_pagamento BETWEEN :dataInicio AND :dataFim";

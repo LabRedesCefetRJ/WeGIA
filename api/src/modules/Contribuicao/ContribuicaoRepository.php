@@ -32,6 +32,36 @@ class ContribuicaoRepository
         ]);
     }
 
+    public function findSociosComPessoas(): array
+    {
+        $stmt = $this->db->query(
+            'SELECT s.id_socio, p.nome, p.sobrenome
+             FROM socio s
+             INNER JOIN pessoa p ON p.id_pessoa = s.id_pessoa'
+        );
+
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result === false ? [] : $result;
+    }
+
+    public function existeContribuicao(int $idSocio, float $valor, string $dataPagamento): bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT 1 FROM contribuicao_log
+             WHERE id_socio = :id_socio
+               AND valor = :valor
+               AND data_pagamento = :data_pagamento
+             LIMIT 1'
+        );
+        $stmt->execute([
+            ':id_socio' => $idSocio,
+            ':valor' => $valor,
+            ':data_pagamento' => $dataPagamento,
+        ]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
     /**
      * Find all contributions for a given socio ID
      *

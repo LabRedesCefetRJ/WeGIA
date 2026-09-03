@@ -9,6 +9,7 @@ interface ContribuicaoInterface
     public function getId(): int;
     public function getIdSocio(): int;
     public function getIdGateway(): ?int;
+    public function getIdMeioPagamento(): ?int;
     public function getValor(): float;
     public function getDataPagamento(): ?DateTime;
     public function getDataVencimento(): DateTime;
@@ -18,6 +19,7 @@ interface ContribuicaoInterface
     //setters
     public function setIdSocio(int $idSocio): ContribuicaoInterface;
     public function setIdGateway(?int $idGateway): ContribuicaoInterface;
+    public function setIdMeioPagamento(?int $idMeioPagamento): ContribuicaoInterface;
     public function setValor(float $valor): ContribuicaoInterface;
     public function setDataPagamento(?DateTime $dataPagamento): ContribuicaoInterface;
     public function setDataVencimento(DateTime $dataVencimento): ContribuicaoInterface;

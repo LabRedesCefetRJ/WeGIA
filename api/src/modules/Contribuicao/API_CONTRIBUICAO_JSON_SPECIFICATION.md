@@ -946,7 +946,60 @@ Retorna os meios de pagamento ativos disponíveis para registros manuais. Requer
 | `payment_methods[].id` | integer | ID usado no campo `id_meio_pagamento` |
 | `payment_methods[].meio` | string | Nome do meio de pagamento |
 
-## 4. POST `/contribuicoes/manual`
+## 4. POST `/contribuicoes/import`
+
+Importa contribuições históricas a partir de uma planilha. Requer autenticação via JWT e permissão de funcionário para o recurso de sócios.
+
+### Requisição
+
+`Content-Type: multipart/form-data`
+
+| Campo | Obrigatório | Descrição |
+|-------|-------------|-----------|
+| `arquivo` | Sim | Arquivo `.xlsx`, `.ods` ou `.csv` |
+| `ano` | Sim | Ano de referência das colunas mensais |
+| `modelo` | Não | Identificador do serviço; padrão `amigos_laje_xlsx` |
+| `id_meio_pagamento` | Não | ID do meio de pagamento ou vazio para `NULL` |
+
+O modelo `amigos_laje_xlsx` interpreta as abas `BRADESCO`, `CAIXA`, `ITAÚ` e `TESOURARIA`. A aba `Modelo` é ignorada. As colunas devem conter `NOME`, `VALOR` e os meses de `JAN` a `DEZ`; somente células mensais com dia numérico geram contribuições pagas. Células `X`, vazias ou não numéricas são ignoradas.
+
+O serviço XLSX está disponível nesta versão. ODS e CSV são formatos reconhecidos pela rota, mas retornam `415 Unsupported Media Type` até que um serviço específico seja registrado.
+
+### Exemplo
+
+```bash
+curl -X POST https://example.test/contribuicoes/import \
+  -H "Authorization: Bearer <access_token>" \
+  -F "arquivo=@Amigos do LAJE.xlsx" \
+  -F "ano=2026" \
+  -F "modelo=amigos_laje_xlsx"
+```
+
+### Resposta - 200 OK
+
+```json
+{
+  "sucesso": true,
+  "mensagem": "Importação de contribuições processada com sucesso.",
+  "resultado": {
+    "importados": 12,
+    "duplicados": 3,
+    "rejeitados": []
+  }
+}
+```
+
+Duplicatas são identificadas por sócio, valor e data de pagamento e são ignoradas. Linhas rejeitadas são retornadas com aba, linha, mês quando aplicável e motivo.
+
+### Erros
+
+- `400 Bad Request`: arquivo ausente, ano/modelo inválido, planilha incompatível ou dados inválidos;
+- `401 Unauthorized`: token ausente ou inválido;
+- `403 Forbidden`: usuário sem permissão de funcionário;
+- `415 Unsupported Media Type`: extensão ou tipo MIME inválido, ou ODS/CSV ainda não implementado;
+- `500 Internal Server Error`: falha inesperada durante a leitura ou persistência.
+
+## 5. POST `/contribuicoes/manual`
 
 Registra manualmente o pagamento de uma contribuição. Requer autenticação via token JWT. Na aplicação web, o JWT é enviado pelo cookie `access_token` usando `credentials: include`; clientes que não utilizam o fluxo web devem enviá-lo no cabeçalho `Authorization` como `Bearer <token>`.
 
@@ -980,7 +1033,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | `id_socio` | integer | ID do sócio associado à contribuição |
-| `id_meio_pagamento` | integer | ID do meio de pagamento ativo associado à contribuição |
+| `id_meio_pagamento` | integer \| null | ID do meio de pagamento ativo associado à contribuição, ou `null` para contribuição sem meio cadastrado |
 | `valor` | number | Valor da contribuição |
 | `data_pagamento` | string | Data e hora do pagamento |
 | `data_vencimento` | string | Data e hora do vencimento |

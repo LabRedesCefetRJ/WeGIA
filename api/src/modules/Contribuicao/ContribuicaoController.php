@@ -17,6 +17,7 @@ require_once dirname(__DIR__, 4) . '/web/classes/Util.php';
 use Slim\Psr7\Request;
 use Slim\Psr7\Response;
 use DateTime;
+use api\modules\Contribuicao\ContribuicaoImportRegistry;
 
 class ContribuicaoController
 {
@@ -24,17 +25,20 @@ class ContribuicaoController
     private \api\modules\Socio\SocioRepository $socioRepository;
     private \api\modules\Pessoa\PessoaRepository $pessoaRepository;
     private \PDO $pdo;
+    private ContribuicaoImportRegistry $contribuicaoImportRegistry;
 
     public function __construct(
         ContribuicaoService $contribuicaoService,
         \api\modules\Socio\SocioRepository $socioRepository,
         \api\modules\Pessoa\PessoaRepository $pessoaRepository,
-        \PDO $pdo
+        \PDO $pdo,
+        ContribuicaoImportRegistry $contribuicaoImportRegistry
     ) {
         $this->contribuicaoService = $contribuicaoService;
         $this->socioRepository = $socioRepository;
         $this->pessoaRepository = $pessoaRepository;
         $this->pdo = $pdo;
+        $this->contribuicaoImportRegistry = $contribuicaoImportRegistry;
     }
 
     /**
@@ -175,6 +179,62 @@ class ContribuicaoController
         }
 
         return (new \DateTimeImmutable('now'))->modify('+7 days')->format('Y-m-d');
+    }
+
+    public function importarContribuicoes(Request $request, Response $response): Response
+    {
+        $dados = $request->getParsedBody() ?? [];
+        $ano = filter_var($dados['ano'] ?? null, FILTER_VALIDATE_INT);
+        if ($ano === false || $ano < 1900 || $ano > 2200) {
+            return $this->jsonError($response, 'O campo ano deve conter um ano válido.', 400);
+        }
+
+        $modelo = trim((string)($dados['modelo'] ?? 'amigos_laje_xlsx'));
+        $idMeioPagamento = null;
+        if (isset($dados['id_meio_pagamento']) && trim((string)$dados['id_meio_pagamento']) !== '') {
+            $idMeioPagamento = filter_var($dados['id_meio_pagamento'], FILTER_VALIDATE_INT);
+            if ($idMeioPagamento === false || $idMeioPagamento <= 0) {
+                return $this->jsonError($response, 'O campo id_meio_pagamento deve ser um inteiro positivo ou nulo.', 400);
+            }
+        }
+
+        $arquivos = $request->getUploadedFiles();
+        $arquivo = $arquivos['arquivo'] ?? null;
+        if ($arquivo === null) {
+            return $this->jsonError($response, 'O campo arquivo é obrigatório.', 400);
+        }
+
+        $nomeArquivo = strtolower((string)$arquivo->getClientFilename());
+        $extensao = pathinfo($nomeArquivo, PATHINFO_EXTENSION);
+        if (!in_array($extensao, ['xlsx', 'ods', 'csv'], true)) {
+            return $this->jsonError($response, 'Formato inválido. Envie um arquivo XLSX, ODS ou CSV.', 415);
+        }
+        $tiposPermitidos = [
+            'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip', 'application/octet-stream'],
+            'ods' => ['application/vnd.oasis.opendocument.spreadsheet', 'application/zip', 'application/octet-stream'],
+            'csv' => ['text/csv', 'text/plain', 'application/csv', 'application/octet-stream'],
+        ];
+        $tipoArquivo = strtolower((string)$arquivo->getClientMediaType());
+        if ($tipoArquivo !== '' && !in_array($tipoArquivo, $tiposPermitidos[$extensao], true)) {
+            return $this->jsonError($response, 'O tipo MIME do arquivo não corresponde ao formato informado.', 415);
+        }
+        if ($extensao !== 'xlsx') {
+            return $this->jsonError($response, "O formato '{$extensao}' foi reconhecido, mas ainda não possui serviço de importação implementado.", 415);
+        }
+
+        try {
+            $resultado = $this->contribuicaoImportRegistry->get($modelo)->importar($arquivo, (int)$ano, $idMeioPagamento);
+            $response->getBody()->write(json_encode([
+                'sucesso' => true,
+                'mensagem' => 'Importação de contribuições processada com sucesso.',
+                'resultado' => $resultado,
+            ], JSON_UNESCAPED_UNICODE));
+            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        } catch (\InvalidArgumentException $e) {
+            return $this->jsonError($response, $e->getMessage(), $e->getCode() >= 400 && $e->getCode() < 500 ? $e->getCode() : 400);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, 'Erro ao importar contribuições: ' . $e->getMessage(), 500);
+        }
     }
 
     private function capturarLinkDaRespostaServico(string $saidaServico): ?string
@@ -1346,7 +1406,10 @@ class ContribuicaoController
 
             // Aqui você pode adicionar a lógica para criar um pagamento manual
             // Por exemplo, registrar o pagamento no banco de dados e retornar uma resposta
-            $contribuicao = new Contribuicao(null, null, intval($data['id_meio_pagamento']), intval($data['id_socio']), floatval($data['valor']), new Datetime($data['data_pagamento']), new DateTime($data['data_vencimento']), new DateTime($data['data_geracao']), $data['status']);
+            $idMeioPagamento = isset($data['id_meio_pagamento']) && $data['id_meio_pagamento'] !== ''
+                ? (int)$data['id_meio_pagamento']
+                : null;
+            $contribuicao = new Contribuicao(null, null, $idMeioPagamento, intval($data['id_socio']), floatval($data['valor']), new Datetime($data['data_pagamento']), new DateTime($data['data_vencimento']), new DateTime($data['data_geracao']), $data['status']);
 
             $resultado = $this->contribuicaoService->registrarPagamentoManual($contribuicao);
 
