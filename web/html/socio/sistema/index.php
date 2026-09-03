@@ -142,7 +142,6 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
     <script src="../../../Functions/onlyNumbers.js"></script>
     <script src="../../../Functions/onlyChars.js"></script>
     <script src="../../../Functions/mascara.js"></script>
-    <script src="../../contribuicao/js/geraboleto.js"></script>
     <script src="./controller/script/socio.js"></script>
     <script src="./controller/script/sincronizacao_status_socios.js" defer></script>
 
