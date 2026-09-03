@@ -274,6 +274,9 @@ $app->post('/contribuicoes/manual', [ContribuicaoController::class, 'generateMan
 $app->get('/contribuicoes/payments_rules', [PaymentController::class, 'getAllPaymentsRules'])
     ->add($container->get(AuthMiddleware::class));
 
+$app->get('/contribuicoes/payment_methods', [PaymentController::class, 'getActivePaymentMethods'])
+    ->add($container->get(AuthMiddleware::class));
+
 $app->get('/contribuicoes/payments_gateway/{payment_method}', [PaymentController::class, 'getPaymentGatewayByPaymentMethod'])
     ->add($container->get(AuthMiddleware::class));
 

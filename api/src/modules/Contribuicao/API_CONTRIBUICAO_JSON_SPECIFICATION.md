@@ -923,13 +923,38 @@ Notes:
 
 ---
 
+## GET `/contribuicoes/payment_methods`
+
+Retorna os meios de pagamento ativos disponíveis para registros manuais. Requer autenticação via token JWT.
+
+### Resposta - 200 OK
+```json
+{
+  "payment_methods": [
+    {
+      "id": 1,
+      "meio": "Dinheiro"
+    }
+  ]
+}
+```
+
+### Campos
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `payment_methods[].id` | integer | ID usado no campo `id_meio_pagamento` |
+| `payment_methods[].meio` | string | Nome do meio de pagamento |
+
 ## 4. POST `/contribuicoes/manual`
 
-Registra manualmente o pagamento de uma contribuição. Requer autenticação via token JWT.
+Registra manualmente o pagamento de uma contribuição. Requer autenticação via token JWT. Na aplicação web, o JWT é enviado pelo cookie `access_token` usando `credentials: include`; clientes que não utilizam o fluxo web devem enviá-lo no cabeçalho `Authorization` como `Bearer <token>`.
 
 ### Headers
 - **Content-Type** (obrigatório): `application/json`
-- **Authorization** (obrigatório): Token JWT no formato `Bearer <token>`
+- **Cookie `access_token`** (obrigatório no cliente web): Token JWT mantido pelo fluxo de autenticação web
+- **X-Client-Type** (obrigatório no cliente web): `web`
+- **Authorization** (obrigatório para clientes que não usam o fluxo web): Token JWT no formato `Bearer <token>`
 
 ### Exemplo de Requisição
 ```
@@ -941,6 +966,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 ```json
 {
   "id_socio": 1,
+  "id_meio_pagamento": 1,
   "valor": 50.00,
   "data_pagamento": "2024-05-25 10:00:00",
   "data_vencimento": "2024-05-27 00:00:00",
@@ -954,6 +980,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | `id_socio` | integer | ID do sócio associado à contribuição |
+| `id_meio_pagamento` | integer | ID do meio de pagamento ativo associado à contribuição |
 | `valor` | number | Valor da contribuição |
 | `data_pagamento` | string | Data e hora do pagamento |
 | `data_vencimento` | string | Data e hora do vencimento |

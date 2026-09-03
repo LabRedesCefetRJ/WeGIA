@@ -65,6 +65,21 @@ class PaymentController
         }
     }
 
+    public function getActivePaymentMethods(Request $request, Response $response, $args): Response
+    {
+        try {
+            $response->getBody()->write(json_encode([
+                'payment_methods' => $this->paymentMethodRepository->getActivePaymentMethods()
+            ]));
+            return $response->withStatus(200)->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $response->getBody()->write(json_encode([
+                'error' => 'Erro ao buscar meios de pagamento: ' . $e->getMessage()
+            ]));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     public function getPaymentGatewayByPaymentMethod(Request $request, Response $response, $args)
     {
         try {
