@@ -245,7 +245,8 @@ class ProjetoDAO
     {
         $stmt = $this->pdo->prepare("DELETE FROM projeto_status WHERE id_status = :id_status");
         $stmt->bindValue(':id_status', $id_status, PDO::PARAM_INT);
-        return $stmt->execute();
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
     }
 
     public function listarFuncionariosAtivos($termo = null)

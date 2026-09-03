@@ -137,7 +137,12 @@ class ProjetoControle
 
             $resultado = $this->projetoDAO->removerStatusProjeto($id_status);
 
-            echo json_encode(['success' => $resultado, 'status' => $this->projetoDAO->listarStatusProjeto()]);
+            if (!$resultado) {
+                echo json_encode(['success' => false, 'message' => 'Status não encontrado.']);
+                return;
+            }
+
+            echo json_encode(['success' => true, 'status' => $this->projetoDAO->listarStatusProjeto()]);
         } catch (Exception $e) {
             $this->logErro($e);
             echo json_encode(['success' => false, 'message' => 'Ocorreu um erro interno. Tente novamente.']);
