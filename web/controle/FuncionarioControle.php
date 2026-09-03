@@ -1309,15 +1309,19 @@ class FuncionarioControle
                 throw new InvalidArgumentException('Os campos de senha são obrigatórios.', 400);
             }
 
-            $funcionarioDAO = new FuncionarioDAO();
-
-            if ($id_pessoa != $_SESSION['id_pessoa'] && !$funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
-                throw new LogicException('Operação negada: O usuário logado não é o mesmo de que se deseja alterar a senha', 401);
+            // Trocar a senha de OUTRA pessoa exige acesso ao módulo de Permissões
+            // (recurso 91) -- o mesmo que já controla quem acessa
+            // geral/configurar_senhas.php. permissao() redireciona e encerra a
+            // execução caso o usuário logado não tenha essa permissão, então
+            // se chegarmos além desta linha é porque ele tem.
+            if ($id_pessoa != $_SESSION['id_pessoa']) {
+                require_once ROOT . '/html/permissao/permissao.php';
+                permissao($_SESSION['id_pessoa'], 91, 1);
             }
 
             $isConfigAdm = false;
 
-            if($id_pessoa == $_SESSION['id_pessoa'] && $funcionarioDAO->verificaAdm($_SESSION['id_pessoa']) && "geral/configurar_senhas.php" === $redir) {
+            if ($id_pessoa == $_SESSION['id_pessoa'] && "geral/configurar_senhas.php" === $redir) {
                 header("Location: " . WWW . "html/geral/configurar_senhas.php?verificacao=6");
                 exit();
             }
@@ -1334,8 +1338,8 @@ class FuncionarioControle
                 $sucesso     = 5;
 
             }
-            // --- Fluxo: admin configurando senha de outro usuário ---
-            elseif ($redir === "geral/configurar_senhas.php" && $funcionarioDAO->verificaAdm($_SESSION['id_pessoa'])) {
+            // --- Fluxo: pessoa com acesso ao módulo de Permissões configurando senha de outro usuário ---
+            elseif ($redir === "geral/configurar_senhas.php") {
 
                 $isConfigAdm = true;
                 $page        = $redir;
