@@ -160,7 +160,8 @@ try {
   <!-- Mobile Metas -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <!-- Web Fonts  -->
-  <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+  <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet"
+    type="text/css">
   <link rel="icon" href="<?php display_campo("Logo", 'file'); ?>" type="image/x-icon" id="logo-icon">
   <!-- Vendor CSS -->
   <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
@@ -371,7 +372,7 @@ try {
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      $("#data_admissao").prop('disabled', false);
+      $("#data_admissao").prop('di Resolved sabled', false);
 
       if (pode_editar_cargo) {
         $("#cargo").prop('disabled', false);
@@ -405,9 +406,9 @@ try {
       var date = data.split("/")
       return date[2] + "-" + date[1] + "-" + date[0];
     }
-    $(function() {
+    $(function () {
       var funcionario = <?= $func ?>;
-      $.each(funcionario, function(i, item) {
+      $.each(funcionario, function (i, item) {
         //Informações pessoais
         $("#nomeForm").val(item.nome).prop('disabled', true);
         $("#sobrenomeForm").val(item.sobrenome).prop('disabled', true);
@@ -497,9 +498,9 @@ try {
       })
     });
     //ARQUIVOS
-    $(function() {
+    $(function () {
       var docfuncional = <?= $docfuncional ?>;
-      $.each(docfuncional, function(i, item) {
+      $.each(docfuncional, function (i, item) {
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -514,7 +515,7 @@ try {
 
     function listarFunDocs(docfuncional) {
       $("#doc-tab").empty();
-      $.each(docfuncional, function(i, item) {
+      $.each(docfuncional, function (i, item) {
         $("#doc-tab")
           .append($("<tr>")
             .append($("<td>").text(item.nome_docfuncional))
@@ -526,7 +527,7 @@ try {
           )
       });
     }
-    $(function() {
+    $(function () {
       $('#datatable-docfuncional').DataTable({
         "order": [
           [0, "asc"]
@@ -536,7 +537,7 @@ try {
 
     function listarDependentes(dependente) {
       $("#dep-tab").empty();
-      $.each(dependente, function(i, dependente) {
+      $.each(dependente, function (i, dependente) {
         $("#dep-tab")
           .append($("<tr>")
             .append($("<td>").text(dependente.nome))
@@ -549,10 +550,10 @@ try {
           )
       });
     }
-    $(function() {
+    $(function () {
       listarDependentes(<?= $dependente ?>);
     });
-    $(function() {
+    $(function () {
       $('#datatable-dependente').DataTable({
         "order": [
           [0, "asc"]
@@ -672,7 +673,7 @@ try {
         }
       }
     }
-    $(function() {
+    $(function () {
       $("#header").load("../header.php");
       $(".menuu").load("../menu.php");
     });
@@ -684,11 +685,11 @@ try {
         type: "POST",
         url: url,
         async: true,
-        success: function(response) {
+        success: function (response) {
           var situacoes = response;
           $('#situacao').empty();
           $('#situacao').append('<option selected disabled>Selecionar</option>');
-          $.each(situacoes, function(i, item) {
+          $.each(situacoes, function (i, item) {
             $('#situacao').append('<option value="' + item.id_situacao + '">' + item.situacoes + '</option>');
           });
         },
@@ -711,7 +712,7 @@ try {
         type: "POST",
         url: url,
         data: data,
-        success: function(response) {
+        success: function (response) {
           gerarSituacao();
         },
         dataType: 'text'
@@ -782,7 +783,8 @@ try {
                   }
                   echo "<img src='$foto' style='margin-bottom: 15px;' id='imagem' class='rounded img-responsive' alt='John Doe'>";
                   ?>
-                  <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"><i class="fa fa-camera-retro"></i></button>
+                  <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"><i
+                      class="fa fa-camera-retro"></i></button>
 
                   <div class="container">
                     <div class="modal fade" id="myModal" role="dialog">
@@ -794,12 +796,14 @@ try {
                             <h4 class="modal-title">Adicionar uma Foto</h4>
                           </div>
                           <div class="modal-body">
-                            <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
+                            <form class="form-horizontal" method="POST" action="../../controle/control.php"
+                              enctype="multipart/form-data">
                               <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                               <input type="hidden" name="metodo" value="alterarImagem">
                               <?= Csrf::inputField() ?>
                               <div class="form-group">
-                                <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
+                                <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de
+                                  perfil:</label>
                                 <div class="col-md-8">
                                   <input type="file" name="imgperfil" size="60" id="imgform" class="form-control">
                                 </div>
@@ -857,7 +861,8 @@ try {
               <div class="tab-content">
                 <!--Aba de Informações Pessoais-->
                 <div id="overview" class="tab-pane active">
-                  <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarInformacoesPessoais">
+                  <form class="form-horizontal" method="post" action="../../controle/control.php"
+                    id="formAlterarInformacoesPessoais">
                     <?= Csrf::inputField() ?>
                     <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                     <input type="hidden" name="metodo" value="alterarInfPessoal">
@@ -866,20 +871,26 @@ try {
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="nome" id="nomeForm" onkeypress="return Onlychars(event)">
+                          <input type="text" class="form-control" name="nome" id="nomeForm"
+                            onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Sobrenome</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm" onkeypress="return Onlychars(event)">
+                          <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm"
+                            onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
                         <div class="col-md-8">
-                          <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
-                          <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                          <label><input type="radio" name="gender" id="radioM" value="m"
+                              style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i
+                              class="fa fa-male" style="font-size: 20px;"></i></label>
+                          <label><input type="radio" name="gender" id="radioF" value="f"
+                              style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"> <i
+                              class="fa fa-female" style="font-size: 20px;"></i> </label>
                         </div>
                       </div>
                       <div class="form-group">
@@ -891,39 +902,39 @@ try {
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)" required>
+                          <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone"
+                            id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)"
+                            onkeyup="mascara('(##)#####-####',this,event)" required>
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
                         <div class="col-md-8">
-                          <input type="date"
-                            placeholder="dd/mm/aaaa"
-                            maxlength="10"
-                            class="form-control"
-                            name="nascimento"
-                            id="nascimento"
-                            min="<?= $dataNascimentoMinima ?>"
+                          <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control"
+                            name="nascimento" id="nascimento" min="<?= $dataNascimentoMinima ?>"
                             max="<?= $dataNascimentoMaxima ?>" required>
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="cns">CNS</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" maxlength="15" name="cns" id="cns" placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
+                          <input type="text" class="form-control" maxlength="15" name="cns" id="cns"
+                            placeholder="Ex: 123456789012345" onkeypress="return Onlynumbers(event)">
                           <small class="form-text text-muted">Cadastro Nacional de Saúde</small>
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Nome do pai</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="nome_pai" id="pai" onkeypress="return Onlychars(event)">
+                          <input type="text" class="form-control" name="nome_pai" id="pai"
+                            onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="profileFirstName">Nome da mãe</label>
                         <div class="col-md-8">
-                          <input type="text" class="form-control" name="nome_mae" id="mae" onkeypress="return Onlychars(event)">
+                          <input type="text" class="form-control" name="nome_mae" id="mae"
+                            onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
@@ -944,7 +955,8 @@ try {
                       </div>
                       <!-- Pegar id funcionário de variável sanitizada -->
                       <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
-                      <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes_pessoais()">Editar</button>
+                      <button type="button" class="btn btn-primary" id="botaoEditarIP"
+                        onclick="return editar_informacoes_pessoais()">Editar</button>
                       <input type="submit" class="btn btn-primary" disabled="true" value="Salvar" id="botaoSalvarIP">
                     </fieldset>
                   </form><br>
@@ -959,8 +971,10 @@ try {
                       <div class="custom-modal-body">
                         <div class="custom-form-group">
                           <label for="customDataInput" class="custom-form-label">Data de expedição:</label>
-                          <input type="date" class="custom-form-input" id="customDataInput" placeholder="dd/mm/aaaa" maxlength="10">
-                          <div class="custom-text-error" id="customErrorData">Data inválida! Ela deve ser posterior a data de nascimento</div>
+                          <input type="date" class="custom-form-input" id="customDataInput" placeholder="dd/mm/aaaa"
+                            maxlength="10">
+                          <div class="custom-text-error" id="customErrorData">Data inválida! Ela deve ser posterior a
+                            data de nascimento</div>
                         </div>
                       </div>
                       <div class="custom-modal-footer">
@@ -1055,14 +1069,16 @@ try {
                         </thead>
                         <tbody id="tabela_remuneracao"></tbody>
                       </table>
-                      <button id="excluir" type="button" class="btn btn-success" onclick="abrirModalRemuneracao(false)">Adicionar</button>
+                      <button id="excluir" type="button" class="btn btn-success"
+                        onclick="abrirModalRemuneracao(false)">Adicionar</button>
                     </div><br>
                     <div class="modal fade" id="adicionar" role="dialog">
                       <div class="modal-dialog">
                         <!-- Modal content-->
                         <div class="modal-content">
                           <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal" id="closeRemuneracaoModal">×</button>
+                            <button type="button" class="close" data-dismiss="modal"
+                              id="closeRemuneracaoModal">×</button>
                             <h3 id="remuneracaoModalTitle">Adicionar Remuneração</h3>
                           </div>
                           <div class="modal-body">
@@ -1070,7 +1086,8 @@ try {
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="tipo_remuneracao">Tipo</label>
                                 <div class="col-md-6" style="display: flex;">
-                                  <select class="form-control input-lg mb-md" name="id_tipo" id="tipo_remuneracao" required>
+                                  <select class="form-control input-lg mb-md" name="id_tipo" id="tipo_remuneracao"
+                                    required>
                                     <option selected disabled>Selecionar</option>
                                     <?php
                                     $tipos = ($pdo->query("SELECT idfuncionario_remuneracao_tipo as id, descricao FROM funcionario_remuneracao_tipo;"))->fetchAll(PDO::FETCH_ASSOC);
@@ -1079,26 +1096,32 @@ try {
                                     }
                                     ?>
                                   </select>
-                                  <a onclick="adicionarTipoRemuneracao()" style="margin: 0 20px;" id="btn_adicionar_tipo_remuneracao"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                  <a onclick="adicionarTipoRemuneracao()" style="margin: 0 20px;"
+                                    id="btn_adicionar_tipo_remuneracao"><i class="fas fa-plus w3-xlarge"
+                                      style="margin-top: 0.75vw"></i></a>
                                 </div>
                               </div>
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="valor_remuneracao">Valor</label>
                                 <div class="col-md-8">
-                                  <input type="number" class="form-control" name="valor" id="valor_remuneracao" onkeypress="return Onlynumbers(event)" required min="0">
+                                  <input type="number" class="form-control" name="valor" id="valor_remuneracao"
+                                    onkeypress="return Onlynumbers(event)" required min="0">
                                 </div>
                               </div>
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="inicio_remuneracao">Data Inicio</label>
                                 <div class="col-md-8">
-                                  <input type="date" name="inicio" id="inicio_remuneracao" class="form-control" required>
+                                  <input type="date" name="inicio" id="inicio_remuneracao" class="form-control"
+                                    required>
                                 </div>
                               </div>
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="fim_remuneracao">Data Fim</label>
                                 <div class="col-md-8">
                                   <input type="date" name="fim" id="fim_remuneracao" class="form-control" required>
-                                  <p id="erro_periodo_remuneracao" style="display: none; color: #b30000; margin-top: 5px;">A data fim deve ser posterior ou igual à data início.</p>
+                                  <p id="erro_periodo_remuneracao"
+                                    style="display: none; color: #b30000; margin-top: 5px;">A data fim deve ser
+                                    posterior ou igual à data início.</p>
                                 </div>
                               </div>
                               <!-- Pegar id funcionário de variável sanitizada -->
@@ -1106,7 +1129,8 @@ try {
                               <input type="hidden" name="action" value="remuneracao_adicionar">
                               <input type="hidden" name="id_remuneracao" value="">
                               <input type="hidden" name="id_funcionario_remuneracao" value="">
-                              <button class="btn btn-primary" id="botaoSalvarRemuneracao" onclick="adicionarRemuneracao('formRemuneracao', console.log)">Salvar</button>
+                              <button class="btn btn-primary" id="botaoSalvarRemuneracao"
+                                onclick="adicionarRemuneracao('formRemuneracao', console.log)">Salvar</button>
                             </fieldset>
                           </div>
                         </div>
@@ -1141,22 +1165,22 @@ try {
                         <input type="hidden" name="metodo" value="alterarOutros">
                         <?= Csrf::inputField() ?>
                         <div class="form-group">
-                          <label for="pis" class="col-md-3 control-label">PIS (Número de Identificação do Trabalhador)</label>
+                          <label for="pis" class="col-md-3 control-label">PIS (Número de Identificação do
+                            Trabalhador)</label>
                           <div class="col-md-6">
                             <input type="text" id="pis" name="pis" class="form-control" maxlength="14"
-                              placeholder="123.45678.91-0"
-                              oninput="formatPIS(this)"
+                              placeholder="123.45678.91-0" oninput="formatPIS(this)"
                               value="<?= htmlspecialchars($oldInput['pis'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123.45678.91-0</small>
                           </div>
                         </div>
 
                         <div class="form-group">
-                          <label for="ctps" class="col-md-3 control-label">CTPS (Carteira de Trabalho e Previdência Social)</label>
+                          <label for="ctps" class="col-md-3 control-label">CTPS (Carteira de Trabalho e Previdência
+                            Social)</label>
                           <div class="col-md-6">
                             <input type="text" id="ctps" name="ctps" class="form-control" maxlength="12"
-                              placeholder="1234567/8910"
-                              oninput="formatCTPS(this)"
+                              placeholder="1234567/8910" oninput="formatCTPS(this)"
                               value="<?= htmlspecialchars($oldInput['ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 1234567/8910</small>
                           </div>
@@ -1166,7 +1190,8 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="uf">Estado CTPS</label>
                           <div class="col-md-6">
-                            <input type="text" name="uf_ctps" size="60" class="form-control" id="uf_ctps" value="<?= htmlspecialchars($oldInput['uf_ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                            <input type="text" name="uf_ctps" size="60" class="form-control" id="uf_ctps"
+                              value="<?= htmlspecialchars($oldInput['uf_ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                           </div>
                         </div>
 
@@ -1196,10 +1221,11 @@ try {
 
                         <!-- Campo Seção Eleitoral -->
                         <div class="form-group">
-                          <label for="secao_titulo_eleitor" class="col-md-3 control-label">Seção do Título de Eleitor</label>
+                          <label for="secao_titulo_eleitor" class="col-md-3 control-label">Seção do Título de
+                            Eleitor</label>
                           <div class="col-md-6">
-                            <input type="text" name="secao_titulo_eleitor" id="secao_titulo_eleitor" class="form-control"
-                              pattern="\d{4}" maxlength="4" placeholder="1234"
+                            <input type="text" name="secao_titulo_eleitor" id="secao_titulo_eleitor"
+                              class="form-control" pattern="\d{4}" maxlength="4" placeholder="1234"
                               oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                               value="<?= htmlspecialchars($oldInput['secao_titulo_eleitor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 1234</small>
@@ -1210,9 +1236,8 @@ try {
                           <label class="col-md-3 control-label">Número do certificado reservista</label>
                           <div class="col-md-6">
                             <input type="text" id="certificado_reservista_numero" name="certificado_reservista_numero"
-                              class="form-control num_reservista" maxlength="9"
-                              pattern="\d*" inputmode="numeric" placeholder="123456789"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              class="form-control num_reservista" maxlength="9" pattern="\d*" inputmode="numeric"
+                              placeholder="123456789" oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                               value="<?= htmlspecialchars($oldInput['certificado_reservista_numero'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 123456789</small>
                           </div>
@@ -1222,46 +1247,58 @@ try {
                           <label class="col-md-3 control-label">Série do certificado reservista</label>
                           <div class="col-md-6">
                             <input type="text" id="certificado_reservista_serie" name="certificado_reservista_serie"
-                              class="form-control serie_reservista" maxlength="3"
-                              pattern="\d*" inputmode="numeric" placeholder="001"
-                              oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                              class="form-control serie_reservista" maxlength="3" pattern="\d*" inputmode="numeric"
+                              placeholder="001" oninput="this.value = this.value.replace(/[^0-9]/g, '');"
                               value="<?= htmlspecialchars($oldInput['certificado_reservista_serie'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <small>Formato: 001</small>
                           </div>
                         </div>
 
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
+                          <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup
+                              class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>" name="data_admissao" id="data_admissao" max="<?= date('Y-m-d') ?>" required value="<?= htmlspecialchars($oldInput['data_admissao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                            <input type="date" placeholder="dd/mm/aaaa" maxlength="10"
+                              class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>"
+                              name="data_admissao" id="data_admissao" max="<?= date('Y-m-d') ?>" required
+                              value="<?= htmlspecialchars($oldInput['data_admissao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <?php if (!empty($fieldErrors['data_admissao'])): ?>
-                              <div class="invalid-feedback"><?= htmlspecialchars($fieldErrors['data_admissao'], ENT_QUOTES, 'UTF-8') ?></div>
+                              <div class="invalid-feedback">
+                                <?= htmlspecialchars($fieldErrors['data_admissao'], ENT_QUOTES, 'UTF-8') ?></div>
                             <?php endif; ?>
                           </div>
 
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" style='text-align: right; margin-top: 10px;' for="situacao">Situação<sup class="obrig">*</sup></label>
+                          <label class="col-md-3 control-label" style='text-align: right; margin-top: 10px;'
+                            for="situacao">Situação<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md<?= !empty($fieldErrors['situacao']) ? ' is-invalid' : '' ?>" name="situacao" id="situacao" required>
+                            <select
+                              class="form-control input-lg mb-md<?= !empty($fieldErrors['situacao']) ? ' is-invalid' : '' ?>"
+                              name="situacao" id="situacao" required>
                               <option value="" selected disabled>Selecionar</option>
                               <?php
                               foreach ($situacao as $row) {
-                                $selected = isset($oldInput['situacao']) && ((string)$row[0] === (string)$oldInput['situacao']) ? ' selected' : '';
+                                $selected = isset($oldInput['situacao']) && ((string) $row[0] === (string) $oldInput['situacao']) ? ' selected' : '';
                                 echo "<option value=\"{$row[0]}\"{$selected}>" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
                             </select>
                             <?php if (!empty($fieldErrors['situacao'])): ?>
-                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['situacao'], ENT_QUOTES, 'UTF-8') ?></div>
+                              <div class="invalid-feedback d-block">
+                                <?= htmlspecialchars($fieldErrors['situacao'], ENT_QUOTES, 'UTF-8') ?></div>
                             <?php endif; ?>
                           </div>
-                          <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                          <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge"
+                              style="margin-top: 0.75vw"></i></a>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;' for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
+                          <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;'
+                            for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md<?= !empty($fieldErrors['cargo']) ? ' is-invalid' : '' ?>" name="cargo" id="cargo" required>
+                            <select
+                              class="form-control input-lg mb-md<?= !empty($fieldErrors['cargo']) ? ' is-invalid' : '' ?>"
+                              name="cargo" id="cargo" required>
                               <option value="" selected disabled>Selecionar</option>
                               <?php
                               foreach ($cargo as $row) {
@@ -1269,21 +1306,25 @@ try {
                                 if (strtolower($row[1]) == 'administrador' && $adm_configurado != 1) {
                                   continue;
                                 }
-                                $selectedCargo = isset($oldInput['cargo']) && ((string)$row[0] === (string)$oldInput['cargo']) ? ' selected' : '';
+                                $selectedCargo = isset($oldInput['cargo']) && ((string) $row[0] === (string) $oldInput['cargo']) ? ' selected' : '';
                                 echo "<option value=\"{$row[0]}\"{$selectedCargo}>" . htmlspecialchars($row[1]) . "</option>";
                               }
                               ?>
                             </select>
                             <?php if (!empty($fieldErrors['cargo'])): ?>
-                              <div class="invalid-feedback d-block"><?= htmlspecialchars($fieldErrors['cargo'], ENT_QUOTES, 'UTF-8') ?></div>
+                              <div class="invalid-feedback d-block">
+                                <?= htmlspecialchars($fieldErrors['cargo'], ENT_QUOTES, 'UTF-8') ?></div>
                             <?php endif; ?>
                           </div>
-                          <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                          <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge"
+                              style="margin-top: 0.75vw"></i></a>
                         </div>
                         <!-- Pegar id funcionário de variável sanitizada -->
                         <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
-                        <button type="button" class="btn btn-primary" id="botaoEditarOutros" onclick="return editar_outros()">Editar</button>
-                        <input type="submit" class="btn btn-primary" value="Salvar" id="botaoSalvarOutros" disabled="true">
+                        <button type="button" class="btn btn-primary" id="botaoEditarOutros"
+                          onclick="return editar_outros()">Editar</button>
+                        <input type="submit" class="btn btn-primary" value="Salvar" id="botaoSalvarOutros"
+                          disabled="true">
                       </form>
                       <h4>Informações Adicionais</h4>
                       <table class="table table-bordered table-striped mb-none" id="datatable-addInfo">
@@ -1316,7 +1357,7 @@ try {
 
                               $nome_desc = htmlspecialchars($descricao[0]['descricao']);
                               echo
-                              "
+                                "
                                   <tr id='informacao$idInfoAdicional'>
                                     <td>$nome_desc</td>
                                     <td>$dado</td>
@@ -1337,12 +1378,14 @@ try {
                       <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addInfoModal">
                         Adicionar Informação
                       </button>
-                      <div class="modal fade" id="addInfoModal" tabindex="-1" role="dialog" aria-labelledby="addInfoModal" aria-hidden="true">
+                      <div class="modal fade" id="addInfoModal" tabindex="-1" role="dialog"
+                        aria-labelledby="addInfoModal" aria-hidden="true">
                         <div class="modal-dialog" role="document">
                           <div class="modal-content">
                             <div class="modal-header" style="display: block ruby;">
                               <h5 class="modal-title" id="addInfoModalLabel">Adicionar informação adicional</h5>
-                              <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="close_addInfoModal">
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                                id="close_addInfoModal">
                                 <span aria-hidden="true">&times;</span>
                               </button>
                             </div>
@@ -1351,7 +1394,8 @@ try {
                                 <div class="form-group">
                                   <label for="descricao_addInfo" class="col-form-label">Descrição</label>
                                   <div style="display: block ruby;">
-                                    <select name="id_descricao" id="descricao_addInfo" class="form-control" style="width: 300px;" required>
+                                    <select name="id_descricao" id="descricao_addInfo" class="form-control"
+                                      style="width: 300px;" required>
                                       <option selected disabled>Selecionar</option>
                                       <?php
                                       $descricao = $pdo->query("SELECT * FROM funcionario_listainfo;")->fetchAll(PDO::FETCH_ASSOC);
@@ -1360,12 +1404,15 @@ try {
                                       }
                                       ?>
                                     </select>
-                                    <a onclick="adicionar_addInfoDescricao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw; margin-left: 10px;"></i></a>
+                                    <a onclick="adicionar_addInfoDescricao()"><i class="fas fa-plus w3-xlarge"
+                                        style="margin-top: 0.75vw; margin-left: 10px;"></i></a>
                                   </div>
                                 </div>
                                 <div class="form-group">
                                   <label for="dados_addInfo" class="col-form-label">Dados</label>
-                                  <textarea class="form-control" id="dados_addInfo" style="padding: 6px 12px; height: 120px;" name="dados" maxlength="255" required></textarea>
+                                  <textarea class="form-control" id="dados_addInfo"
+                                    style="padding: 6px 12px; height: 120px;" name="dados" maxlength="255"
+                                    required></textarea>
                                 </div>
                                 <input type="text" name="action" value="adicionar" hidden>
                                 <!-- Pegar id funcionário de variável sanitizada -->
@@ -1376,7 +1423,7 @@ try {
                               <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                               <button type="button" class="btn btn-primary" onclick="adicionarAddInfo()">Enviar</button>
                               <script>
-                                $(function() {
+                                $(function () {
                                   $('#datatable-addInfo').DataTable({
                                     "order": [
                                       [0, "asc"]
@@ -1393,9 +1440,7 @@ try {
                                     return
                                   }
                                   situacao = situacao.trim();
-                                  if (situacao == '')
-
-                                  {
+                                  if (situacao == '') {
                                     return
                                   }
                                   post(url, "action=adicionar_descricao&descricao=" + situacao, listarInfoDescricao);
@@ -1407,7 +1452,7 @@ try {
                                   }
                                   $('#descricao_addInfo').empty();
                                   $('#descricao_addInfo').append('<option selected disabled>Selecionar</option>');
-                                  $.each(lista, function(i, item) {
+                                  $.each(lista, function (i, item) {
                                     $('#descricao_addInfo').append('<option value="' + item.idfuncionario_listainfo + '">' + item.descricao + '</option>');
                                   });
                                 }
@@ -1432,7 +1477,7 @@ try {
                                     type: "GET",
                                     url: `../../controle/control.php?nomeClasse=${encodeURIComponent('InformacaoAdicionalControle')}&metodo=${encodeURIComponent('getTodasInformacoesAdicionaisPorIdFuncionario')}&id_funcionario=<?= $idFuncionario ?>`,
                                     dataType: 'json',
-                                    success: function(resp) {
+                                    success: function (resp) {
                                       let tabela = $("#addInfo-tab");
 
                                       // Limpa a tabela antes de adicionar os novos dados (se necessário)
@@ -1463,7 +1508,7 @@ try {
                                         tabela.append("<tr><td colspan='3' class='text-center'>Nenhuma informação adicional encontrada.</td></tr>");
                                       }
                                     },
-                                    error: function(xhr, status, error) {
+                                    error: function (xhr, status, error) {
                                       console.error("Erro ao buscar informações adicionais:", error);
                                     }
                                   });
@@ -1486,7 +1531,8 @@ try {
                       <h2 class="panel-title">Carga Horária</h2>
                     </header>
                     <div class="panel-body">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarCargaHoraria">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php"
+                        id="formAlterarCargaHoraria">
                         <div class="form-group">
                           <label class="col-md-3 control-label">Escala</label>
                           <div class="col-md-6">
@@ -1505,14 +1551,16 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label">Tipo</label>
                           <div class="col-md-6">
-                            <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input">
+                            <select class="form-control input-lg mb-md" name="tipoCargaHoraria"
+                              id="tipoCargaHoraria_input">
                               <option selected disabled value="">Selecionar</option>
                               <?php
                               $pdo = Conexao::connect();
                               $tipoCarga = $pdo->query("SELECT * FROM tipo_quadro_horario;")->fetchAll(PDO::FETCH_ASSOC);
                               foreach ($tipoCarga as $key => $value) {
                                 echo ("<option id='tipo_" . $value["id_tipo"] . "' value=" . $value["id_tipo"] . ">" . htmlspecialchars($value["descricao"]) . "</option>");
-                              };
+                              }
+                              ;
                               ?>
                             </select>
                             <script>
@@ -1549,7 +1597,8 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label">Primeira entrada</label>
                           <div class="col-md-3">
-                            <input type="time" placeholder="07:25" class="form-control" name="entrada1" id="entrada1_input">
+                            <input type="time" placeholder="07:25" class="form-control" name="entrada1"
+                              id="entrada1_input">
                           </div>
                         </div>
                         <div class="form-group">
@@ -1561,7 +1610,8 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label">Segunda entrada</label>
                           <div class="col-md-3">
-                            <input type="time" placeholder="07:25" class="form-control" name="entrada2" id="entrada2_input">
+                            <input type="time" placeholder="07:25" class="form-control" name="entrada2"
+                              id="entrada2_input">
                           </div>
                         </div>
                         <div class="form-group">
@@ -1603,7 +1653,8 @@ try {
                                 <span class="fa fa-check"></span>
                               </label>
                               <label class="btn btn-primary">
-                                <input type="checkbox" id="diaTrabalhado_Plantão" name="plantao" value="Plantão"> Plantão 12/36
+                                <input type="checkbox" id="diaTrabalhado_Plantão" name="plantao" value="Plantão">
+                                Plantão 12/36
                                 <span class="fa fa-check"></span>
                               </label>
                             </div>
@@ -1641,7 +1692,8 @@ try {
                               <span class="fa fa-check"></span>
                             </label>
                             <label class="btn btn-primary">
-                              <input type="checkbox" id="diaTrabalhado" name="folgaAlternado" value="Alternado"> Alternado
+                              <input type="checkbox" id="diaTrabalhado" name="folgaAlternado" value="Alternado">
+                              Alternado
                               <span class="fa fa-check"></span>
                             </label>
                           </div>
@@ -1659,7 +1711,8 @@ try {
                         <?= Csrf::inputField() ?>
                         <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <div class="form-group center">
-                          <button type="button" class="btn btn-primary" id="botaoEditar_editar_cargaHoraria" onclick="switchForm('editar_cargaHoraria')">Editar</button>
+                          <button type="button" class="btn btn-primary" id="botaoEditar_editar_cargaHoraria"
+                            onclick="switchForm('editar_cargaHoraria')">Editar</button>
                           <input id="enviarCarga" type="submit" class="btn btn-primary" value="Alterar carga">
                           <input type="reset" class="btn btn-default">
                         </div>
@@ -1679,32 +1732,40 @@ try {
                     <div class="panel-body">
                       <!--Documentação-->
                       <hr class="dotted short">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarDocumentacao">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php"
+                        id="formAlterarDocumentacao">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarDocumentacao">
                         <?= Csrf::inputField() ?>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required>
+                            <input type="text" class="form-control" name="rg" id="rg"
+                              onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2"
+                              onkeyup="mascara('##.###.###-#',this,event)" required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required>
+                            <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor"
+                              onkeypress="return Onlychars(event)" required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
                           <div class="col-md-6">
-                            <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
+                            <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa"
+                              name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
                           </div>
                         </div>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22"
+                              maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')"
+                              onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)"
+                              required>
                           </div>
                         </div>
                         <div class="form-group">
@@ -1714,8 +1775,10 @@ try {
                           </div>
                         </div>
                         <input type="hidden" id="id_funcionario" name="id_funcionario" value=<?= $idFuncionario ?>>
-                        <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao" onclick="return editar_documentacao()">Editar</button>
-                        <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
+                        <button type="button" class="btn btn-primary" id="botaoEditarDocumentacao"
+                          onclick="return editar_documentacao()">Editar</button>
+                        <input id="botaoSalvarDocumentacao" type="submit" class="btn btn-primary" disabled="true"
+                          value="Salvar">
                       </form>
                     </div>
                   </section>
@@ -1726,7 +1789,8 @@ try {
                     <div class="modal-content">
                       <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h4 class="modal-title"><i class="fas fa-exclamation-circle" style="color: #d9534f;"></i> Validação de Carga Horária</h4>
+                        <h4 class="modal-title"><i class="fas fa-exclamation-circle" style="color: #d9534f;"></i>
+                          Validação de Carga Horária</h4>
                       </div>
                       <div class="modal-body">
                         <p id="modalMensagem"></p>
@@ -1750,7 +1814,8 @@ try {
                         <p>Carga horária atualizada com sucesso!</p>
                       </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="location.reload()">Fechar</button>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal"
+                          onclick="location.reload()">Fechar</button>
                       </div>
                     </div>
                   </div>
@@ -1786,14 +1851,14 @@ try {
                         error_log("Erro: Falha ao buscar tipos de documento do funcionario: {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
                       }
                       $uploadMaxFilesize = ini_get('upload_max_filesize');
-                      $uploadMaxFilesizeFormatado = preg_replace('/^(\d+(?:[.,]\d+)?)\s*([KMG])$/i', '$1 $2B', (string)$uploadMaxFilesize);
+                      $uploadMaxFilesizeFormatado = preg_replace('/^(\d+(?:[.,]\d+)?)\s*([KMG])$/i', '$1 $2B', (string) $uploadMaxFilesize);
                       $converterTamanhoParaBytes = static function ($valor) {
-                        $valor = trim((string)$valor);
+                        $valor = trim((string) $valor);
                         if ($valor === '') {
                           return 0;
                         }
 
-                        $numero = (float)$valor;
+                        $numero = (float) $valor;
                         $unidade = strtolower(substr($valor, -1));
 
                         switch ($unidade) {
@@ -1806,7 +1871,7 @@ try {
                             break;
                         }
 
-                        return (int)$numero;
+                        return (int) $numero;
                       };
                       $uploadMaxFilesizeBytes = $converterTamanhoParaBytes($uploadMaxFilesize);
                       $modalUploadConfig = [
@@ -1821,11 +1886,11 @@ try {
                         ],
                         'form' => [
                           'id' => 'funcionarioDocForm',
-                          'action' => 'documento_upload.php?id_funcionario=' . (int)$idFuncionario,
+                          'action' => 'documento_upload.php?id_funcionario=' . (int) $idFuncionario,
                           'method' => 'post',
                           'enctype' => 'multipart/form-data',
                           'hidden_fields' => [
-                            'id_funcionario' => (int)$idFuncionario
+                            'id_funcionario' => (int) $idFuncionario
                           ]
                         ],
                         'select' => [
@@ -1882,7 +1947,8 @@ try {
                     </div>
 
                     <!-- Modal Form Dependentes to Cpf -->
-                    <div class="modal fade" id="depFormModal" tabindex="-1" role="dialog" aria-labelledby="depFormModalLabel" aria-hidden="true">
+                    <div class="modal fade" id="depFormModal" tabindex="-1" role="dialog"
+                      aria-labelledby="depFormModalLabel" aria-hidden="true">
                       <div class="modal-dialog" role="document">
                         <div class="modal-content">
                           <div class="modal-header" style="display: flex;justify-content: space-between;">
@@ -1898,33 +1964,46 @@ try {
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="cpf">CPF<sup class="obrig">*</sup></label>
                                   <div class="col-md-6">
-                                    <input type="text" class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value, 'enviarDependente')" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required value="<?= $openModal === 'depFormModal' ? htmlspecialchars($oldInput['cpf'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
+                                    <input type="text"
+                                      class="form-control<?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? ' is-invalid' : '' ?>"
+                                      id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14"
+                                      onblur="validarCPF(this.value, 'enviarDependente')"
+                                      onkeypress="return Onlynumbers(event)"
+                                      onkeyup="mascara('###.###.###-##',this,event)" required
+                                      value="<?= $openModal === 'depFormModal' ? htmlspecialchars($oldInput['cpf'] ?? '', ENT_QUOTES, 'UTF-8') : '' ?>">
                                   </div>
                                 </div>
                                 <div class="form-group">
                                   <label class="col-md-3 control-label" for="profileCompany"></label>
                                   <div class="col-md-6">
-                                    <p class="cpfInvalido" style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? 'block' : 'none' ?>; color: #b30000"><?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?></p>
+                                    <p class="cpfInvalido"
+                                      style="display: <?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? 'block' : 'none' ?>; color: #b30000">
+                                      <?= !empty($fieldErrors['cpf']) && $openModal === 'depFormModal' ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : 'CPF INVÁLIDO!' ?>
+                                    </p>
                                   </div>
                                 </div>
                                 <div class="form-group">
-                                  <label class="col-md-3 control-label" for="parentesco">Parentesco<sup class="obrig">*</sup></label>
+                                  <label class="col-md-3 control-label" for="parentesco">Parentesco<sup
+                                      class="obrig">*</sup></label>
                                   <div class="col-md-6" style="display: flex;">
-                                    <select name="id_parentesco" id="parentesco" class="<?= !empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal' ? 'is-invalid' : '' ?>">
+                                    <select name="id_parentesco" id="parentesco"
+                                      class="<?= !empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal' ? 'is-invalid' : '' ?>">
                                       <option selected disabled>Selecionar...</option>
                                       <?php
                                       foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
-                                        $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["id_parentesco"] ? ' selected' : '';
+                                        $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string) $oldInput['id_parentesco'] === (string) $item["id_parentesco"] ? ' selected' : '';
                                         echo ("<option value='" . $item["id_parentesco"] . "'{$selected}>" . htmlspecialchars($item["descricao"]) . "</option>");
                                       }
                                       ?>
                                     </select>
-                                    <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                    <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i
+                                        class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                   </div>
                                 </div>
                                 <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?> readonly>
                                 <?php if (!empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal'): ?>
-                                  <p class="help-block text-danger"><?= htmlspecialchars($fieldErrors['id_parentesco'], ENT_QUOTES, 'UTF-8') ?></p>
+                                  <p class="help-block text-danger">
+                                    <?= htmlspecialchars($fieldErrors['id_parentesco'], ENT_QUOTES, 'UTF-8') ?></p>
                                 <?php endif; ?>
                                 <div class="modal-footer">
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -1951,23 +2030,16 @@ try {
                     <div class="panel-body">
                       <!--Endereço-->
                       <hr class="dotted short">
-                      <form class="form-horizontal" method="post" action="../../controle/control.php" id="formAlterarEndereco">
+                      <form class="form-horizontal" method="post" action="../../controle/control.php"
+                        id="formAlterarEndereco">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarEndereco">
                         <?= Csrf::inputField() ?>
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="cep">CEP</label>
                           <div class="col-md-8">
-                            <input type="text"
-                              name="cep"
-                              value=""
-                              size="10"
-                              class="form-control"
-                              id="cep"
-                              maxlength="9"
-                              placeholder="Ex: 22222-222"
-                              inputmode="numeric"
-                              onblur="pesquisacep(this.value)"
+                            <input type="text" name="cep" value="" size="10" class="form-control" id="cep" maxlength="9"
+                              placeholder="Ex: 22222-222" inputmode="numeric" onblur="pesquisacep(this.value)"
                               oninput="formatarCep(this)">
                           </div>
                         </div>
@@ -1998,11 +2070,13 @@ try {
                         <div class="form-group">
                           <label class="col-md-3 control-label" for="profileCompany">Número residencial</label>
                           <div class="col-md-4">
-                            <input type="number" min="0" oninput="this.value = Math.abs(this.value)" class="form-control" name="numero_residencia" id="numero_residencia">
+                            <input type="number" min="0" oninput="this.value = Math.abs(this.value)"
+                              class="form-control" name="numero_residencia" id="numero_residencia">
                           </div>
                           <div class="col-md-3">
                             <label>Não possuo número
-                              <input type="checkbox" id="numResidencial" name="naoPossuiNumeroResidencial" style="margin-left: 4px" onclick="return numero_residencial()">
+                              <input type="checkbox" id="numResidencial" name="naoPossuiNumeroResidencial"
+                                style="margin-left: 4px" onclick="return numero_residencial()">
                             </label>
                           </div>
                         </div>
@@ -2020,8 +2094,10 @@ try {
                         </div>
                         <div class="form-group center">
                           <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
-                          <button type="button" class="btn btn-primary" id="botaoEditarEndereco" onclick="return editar_endereco()">Editar</button>
-                          <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true" value="Salvar">
+                          <button type="button" class="btn btn-primary" id="botaoEditarEndereco"
+                            onclick="return editar_endereco()">Editar</button>
+                          <input id="botaoSalvarEndereco" type="submit" class="btn btn-primary" disabled="true"
+                            value="Salvar">
                         </div>
                     </div>
                     </form>
@@ -2054,7 +2130,7 @@ try {
   <script src="../../assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
   <script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
   <script>
-    function submitForm(idForm, callback = function() {
+    function submitForm(idForm, callback = function () {
       return true;
     }) {
       var data = getFormPostParams(idForm);
@@ -2150,7 +2226,7 @@ try {
 
       var total = 0;
 
-      $.each(lista, function(i, item) {
+      $.each(lista, function (i, item) {
         total += parseFloat(item.valor) || 0;
 
         $("#tabela_remuneracao")
@@ -2200,7 +2276,7 @@ try {
         return false;
       }
 
-      return submitForm('formRemuneracao', function(response) {
+      return submitForm('formRemuneracao', function (response) {
         if (response.erro) {
           exibirErroRemuneracao(response.erro);
           return;
@@ -2244,11 +2320,11 @@ try {
       }
       $('#tipo_remuneracao').empty();
       $('#tipo_remuneracao').append('<option selected disabled>Selecionar</option>');
-      $.each(documento, function(i, item) {
+      $.each(documento, function (i, item) {
         $('#tipo_remuneracao').append('<option value="' + item.id + '">' + item.descricao + '</option>');
       });
     }
-    $(function() {
+    $(function () {
       $('#inicio_remuneracao, #fim_remuneracao').on('change', validarPeriodoRemuneracao);
       destruirTabelaRemuneracao();
       post("remuneracao.php", "action=listar&id_funcionario=<?= $idFuncionario ?>", listar_remuneracao);
@@ -2267,7 +2343,7 @@ try {
       var apoio = 0;
       var cpfs1 = <?php echo $_SESSION['cpf_atendido']; ?>;
 
-      $.each(cpfs, function(i, item) {
+      $.each(cpfs, function (i, item) {
         if (item.cpf == cpf_funcionario_correto3 && item.id != idfunc) {
           alert("Alteração não realizada! O CPF informado já está cadastrado no sistema");
           apoio = 1;
@@ -2275,7 +2351,7 @@ try {
         }
       });
 
-      $.each(cpfs1, function(i, item) {
+      $.each(cpfs1, function (i, item) {
         if (item.cpf == cpf_funcionario_correto3) {
           alert("Cadastro não realizado! O CPF informado já está cadastrado no sistema");
           apoio = 1;
@@ -2294,18 +2370,18 @@ try {
       return true;
     }
 
-    $('#formAlterarDocumentacao').on('submit', function(e) {
+    $('#formAlterarDocumentacao').on('submit', function (e) {
       if (!funcao3()) {
         e.preventDefault();
       }
     });
-    $('#formAlterarEndereco').on('submit', function(e) {
+    $('#formAlterarEndereco').on('submit', function (e) {
       if (!funcao3()) {
         e.preventDefault();
       }
     });
 
-    $('#customBtnConfirmar').on('click', function() {
+    $('#customBtnConfirmar').on('click', function () {
       const data_nasc = new Date($('#nascimento').val());
       const data = $('#nascimento').val();
       const data_exp = new Date($('#customDataInput').val());
@@ -2328,7 +2404,7 @@ try {
       }
     });
     // Evento de submit do formulário
-    $('#formAlterarInformacoesPessoais').on('submit', function(e) {
+    $('#formAlterarInformacoesPessoais').on('submit', function (e) {
       if (!funcao3()) {
         e.preventDefault();
         showCustomModal();
@@ -2342,11 +2418,11 @@ try {
         type: "POST",
         url: url,
         async: true,
-        success: function(response) {
+        success: function (response) {
           var documento = response;
           $('#id_docfuncional').empty();
           $('#id_docfuncional').append('<option selected disabled>Selecionar...</option>');
-          $.each(documento, function(i, item) {
+          $.each(documento, function (i, item) {
             $('#id_docfuncional').append('<option value="' + item.id_docfuncional + '">' + item.nome_docfuncional + '</option>');
           });
         },
@@ -2369,7 +2445,7 @@ try {
         type: "POST",
         url: url,
         data: data,
-        success: function(response) {
+        success: function (response) {
           gerarDocFuncional();
         },
         dataType: 'text'
@@ -2395,7 +2471,7 @@ try {
 
       campoErro.classList.add('in');
 
-      timeoutErroModalDocumentoFuncionario = setTimeout(function() {
+      timeoutErroModalDocumentoFuncionario = setTimeout(function () {
         limparErroModalDocumentoFuncionario();
       }, 5000);
     }
@@ -2445,7 +2521,7 @@ try {
       return true;
     }
 
-    $('#funcionarioDocForm').on('submit', function(ev) {
+    $('#funcionarioDocForm').on('submit', function (ev) {
       ev.preventDefault();
 
       if (!verificaTipoDocumentoFuncionario()) {
@@ -2462,7 +2538,7 @@ try {
         processData: false,
         contentType: false,
         dataType: 'json',
-        success: function(response) {
+        success: function (response) {
           if (!response || response.status !== 'sucesso') {
             exibirErroModalDocumentoFuncionario((response && response.mensagem) || 'Erro ao enviar o documento.');
             return;
@@ -2473,7 +2549,7 @@ try {
           form.reset();
           $('#docFormModal').modal('hide');
         },
-        error: function(xhr) {
+        error: function (xhr) {
           let mensagem = 'Erro ao enviar o documento.';
 
           if (xhr.responseJSON && xhr.responseJSON.mensagem) {
@@ -2562,7 +2638,7 @@ try {
     }
 
     // Validação de Carga Horária
-    document.getElementById('formAlterarCargaHoraria').addEventListener('submit', function(event) {
+    document.getElementById('formAlterarCargaHoraria').addEventListener('submit', function (event) {
       event.preventDefault();
 
       let entrada1 = document.getElementById('entrada1_input').value;
@@ -2661,7 +2737,8 @@ try {
     <?php endif; ?>
   </script>
   <div align="right">
-    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60"
+      style="border:none;"></iframe>
   </div>
 </body>
 

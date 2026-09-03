@@ -22,8 +22,18 @@ function permissao($id_pessoa, $id_recurso, $id_acao = 1): void
 			die();
 		}
 
-		if (is_null($resultado))
-			throw new LogicException('', 403);
+		if (!$resultado) {
+			// Se não achar id_pessoa em funcionário, procura em voluntário
+			$sql = "SELECT * FROM voluntario WHERE id_pessoa = :ID_PESSOA";
+			$stmt = $pdo->prepare($sql);
+			$stmt->bindParam(':ID_PESSOA', $id_pessoa, PDO::PARAM_INT);
+			$stmt->execute();
+			$resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+			if (!$resultado) {
+				throw new LogicException('', 403);
+			}
+		}
 
 		$id_cargo = $resultado['id_cargo'];
 
