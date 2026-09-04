@@ -93,7 +93,7 @@ class ContribuicaoRepository
             $query .= " AND cl.data_pagamento <= :data_pagamento_final";
         }
         
-        $query .= " ORDER BY cl.data_geracao DESC";
+        $query .= " ORDER BY cl.data_vencimento DESC";
         
         $stmt = $this->db->prepare($query);
         $params = [':id_socio' => $idSocio];
