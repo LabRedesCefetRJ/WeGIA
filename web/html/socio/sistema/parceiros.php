@@ -139,6 +139,23 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
             border-radius: 4px;
             padding: 2px;
         }
+
+        .setor-select-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setor-select-wrapper select {
+            width: 85%;
+        }
+
+        .setor-select-wrapper .btn-novo-setor {
+            flex: 0 0 auto;
+            background-color: #337ab7;
+            border-color: #2e6da4;
+            color: #fff;
+        }
     </style>
 </head>
 
@@ -196,6 +213,12 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                 <p class="text-muted">Gerencie as informações das instituições parceiras da sua organização.</p>
 
                                 <div class="mb-3" style="margin-bottom: 20px;">
+                                    <div class="form-inline" style="margin-bottom: 15px;">
+                                        <label for="filtroSetor" style="margin-right: 8px;">Filtrar por setor:</label>
+                                        <select class="form-control" id="filtroSetor" style="min-width: 240px;">
+                                            <option value="">Todos os setores</option>
+                                        </select>
+                                    </div>
                                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCriarParceiro">
                                         <i class="fa fa-plus"></i> Nova parceria
                                     </button>
@@ -209,13 +232,14 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                                 <th style="width: 60px;" class="text-center">Logo</th>
                                                 <th width="15%" class="text-center">CNPJ</th>
                                                 <th class="text-center">Razão Social</th>
+                                                <th class="text-center">Setor</th>
                                                 <th width="10%" class="text-center">Status</th>
                                                 <th width="25%" class="text-center">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody id="corpoTabela">
                                             <tr>
-                                                <td colspan="7" class="text-center text-muted">
+                                                <td colspan="8" class="text-center text-muted">
                                                     <i class="fa fa-spinner fa-spin"></i> Carregando parceiros...
                                                 </td>
                                             </tr>
@@ -248,6 +272,16 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                     <div class="form-group">
                                         <label for="razao_social">Razão Social <span class="obrig">*</span></label>
                                         <input type="text" class="form-control" id="razao_social" name="razao_social" placeholder="Insira o nome da instituição parceira" required>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="id_setor">Setor <span class="obrig">*</span></label>
+                                        <div class="setor-select-wrapper">
+                                            <select class="form-control" id="id_setor" name="id_setor" required>
+                                                <option value="">Selecione um setor</option>
+                                            </select>
+                                            <button type="button" class="btn btn-primary btn-novo-setor" id="btnNovoSetor" title="Cadastrar novo setor"><i class="fa fa-plus"></i></button>
+                                        </div>
                                     </div>
 
                                     <div class="form-group">
@@ -358,6 +392,15 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                         <input type="text" class="form-control" id="razao_socialEditar" name="razao_social" placeholder="Insira o nome da instituição parceira" required>
                                     </div>
                                     <div class="form-group">
+                                        <label for="id_setorEditar">Setor <span class="obrig">*</span></label>
+                                        <div class="setor-select-wrapper">
+                                            <select class="form-control" id="id_setorEditar" name="id_setor" required>
+                                                <option value="">Selecione um setor</option>
+                                            </select>
+                                            <button type="button" class="btn btn-primary btn-novo-setor" id="btnNovoSetorEditar" title="Cadastrar novo setor"><i class="fa fa-plus"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
                                         <label for="telefoneEditar">Telefone</label>
                                         <input type="text" class="form-control" id="telefoneEditar" name="telefone" placeholder="(22) 91234-5678">
                                     </div>
@@ -440,6 +483,34 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                     </div>
                 </div>
 
+                <!-- Modal Novo Setor -->
+                <div class="modal fade" id="modalNovoSetor" tabindex="-1" role="dialog" aria-labelledby="modalNovoSetorLabel">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title" id="modalNovoSetorLabel">Novo setor</h4>
+                            </div>
+                            <div class="modal-body">
+                                <form id="formularioNovoSetor">
+                                    <div class="form-group">
+                                        <label for="nomeSetor">Nome <span class="obrig">*</span></label>
+                                        <input type="text" class="form-control" id="nomeSetor" maxlength="255" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="descricaoSetor">Descrição</label>
+                                        <textarea class="form-control" id="descricaoSetor" rows="3"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="btnSalvarNovoSetor"><i class="fa fa-save"></i> Cadastrar setor</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Modal Confirmar Exclusão -->
                 <div class="modal fade" id="modalConfirmarDelecao" tabindex="-1" role="dialog" aria-labelledby="modalConfirmarDelecaoLabel">
                     <div class="modal-dialog" role="document">
@@ -463,6 +534,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
 
                 <script>
                     let parceiroParaDeletar = null;
+                    let setores = [];
+                    let modalSetorOrigem = null;
 
                     const CEP_FORMULARIOS = {
                         criar: '',
@@ -504,6 +577,91 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                 <i class="fa ${icone}"></i> ${mensagem}
                             </small>
                         `);
+                    }
+
+                    function popularSelectsSetores() {
+                        const selects = ['#id_setor', '#id_setorEditar', '#filtroSetor'];
+
+                        selects.forEach(function(seletor) {
+                            const $select = $(seletor);
+                            const valorAtual = $select.val();
+                            $select.empty();
+                            $select.append($('<option>', {
+                                value: '',
+                                text: seletor === '#filtroSetor' ? 'Todos os setores' : 'Selecione um setor'
+                            }));
+
+                            setores.forEach(function(setor) {
+                                $select.append($('<option>', {
+                                    value: setor.id,
+                                    text: setor.nome
+                                }));
+                            });
+
+                            if (valorAtual && $select.find(`option[value="${valorAtual}"]`).length) {
+                                $select.val(valorAtual);
+                            }
+                        });
+                    }
+
+                    async function carregarSetores() {
+                        const response = await authenticatedRequest(() => fetch(`${apiServer}socios/parceiros/setor`, {
+                            method: 'GET',
+                            credentials: 'include',
+                            headers: { 'X-Client-Type': 'web' }
+                        }));
+                        const result = await response.json();
+
+                        if (!response.ok || !result.success) {
+                            throw new Error(result.error || result.message || 'Erro ao carregar setores.');
+                        }
+
+                        setores = Array.isArray(result.socio_parceiro_setores) ? result.socio_parceiro_setores : [];
+                        popularSelectsSetores();
+                    }
+
+                    async function cadastrarSetor() {
+                        const form = document.getElementById('formularioNovoSetor');
+                        if (!form.checkValidity()) {
+                            form.reportValidity();
+                            return;
+                        }
+
+                        try {
+                            const response = await authenticatedRequest(() => fetch(`${apiServer}socios/parceiros/setor`, {
+                                method: 'POST',
+                                credentials: 'include',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-Client-Type': 'web'
+                                },
+                                body: JSON.stringify({
+                                    nome: $('#nomeSetor').val().trim(),
+                                    descricao: $('#descricaoSetor').val().trim()
+                                })
+                            }));
+                            const result = await response.json();
+
+                            if (!response.ok || !result.success) {
+                                mostrarNotificacao(result.error || result.message || 'Erro ao cadastrar setor.', 'error', 5000);
+                                return;
+                            }
+
+                            const novoSetor = result.socio_parceiro_setor;
+                            const idSetor = novoSetor.id;
+                            setores.push({
+                                id: idSetor,
+                                nome: $('#nomeSetor').val().trim(),
+                                descricao: $('#descricaoSetor').val().trim() || null
+                            });
+                            popularSelectsSetores();
+                            $('#id_setor, #id_setorEditar').val(String(idSetor));
+                            $('#modalNovoSetor').modal('hide');
+                            form.reset();
+                            mostrarNotificacao('Setor cadastrado com sucesso!', 'success', 3000);
+                        } catch (erro) {
+                            mostrarNotificacao(erro.message || 'Não foi possível conectar à API.', 'error', 5000);
+                        }
                     }
 
                     async function pesquisarEnderecoPorCep(valor, sufixo) {
@@ -583,7 +741,46 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                             limparEnderecoCep(CEP_FORMULARIOS.editar);
                         });
 
-                        carregarParceiros();
+                        $('#filtroSetor').change(function() {
+                            carregarParceiros();
+                        });
+
+                        function abrirModalNovoSetor(origem) {
+                            modalSetorOrigem = origem;
+                            $('#formularioNovoSetor')[0].reset();
+                            $('#modalNovoSetor').modal('show');
+                        }
+
+                        $('#btnNovoSetor').click(function() {
+                            abrirModalNovoSetor('#modalCriarParceiro');
+                        });
+
+                        $('#btnNovoSetorEditar').click(function() {
+                            abrirModalNovoSetor('#modalEditarParceiro');
+                        });
+
+                        $('#btnSalvarNovoSetor').click(cadastrarSetor);
+
+                        $('#modalNovoSetor').on('hidden.bs.modal', function() {
+                            $('#formularioNovoSetor')[0].reset();
+
+                            if (modalSetorOrigem && $(modalSetorOrigem).hasClass('in')) {
+                                $('body').addClass('modal-open');
+                                setTimeout(function() {
+                                    $(modalSetorOrigem).find(':input:visible').first().trigger('focus');
+                                }, 0);
+                            }
+
+                            modalSetorOrigem = null;
+                        });
+
+                        carregarSetores()
+                            .catch(function(erro) {
+                                mostrarNotificacao(erro.message || 'Erro ao carregar setores.', 'error', 5000);
+                            })
+                            .finally(function() {
+                                carregarParceiros();
+                            });
 
                         // Evento: Salvar nova parceria
                         $('#btnSalvarNovaParceria').click(async function() {
@@ -612,7 +809,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                 },
                                 localizacao: $('#localizacao').val().trim(),
                                 divulgacao: $('#divulgacao').val().trim(),
-                                descricao: $('#descricao').val().trim()
+                                descricao: $('#descricao').val().trim(),
+                                id_setor: parseInt($('#id_setor').val(), 10)
                             };
 
                             try {
@@ -705,6 +903,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
 
                             const payload = {
                                 id_socio_parceiro: parseInt($('#idParceiro').val(), 10),
+                                id_setor: parseInt($('#id_setorEditar').val(), 10),
                                 razao_social: $('#razao_socialEditar').val().trim(),
                                 cnpj: $('#cnpjEditar').val().replace(/\D/g, ''),
                                 telefone: $('#telefoneEditar').val().replace(/\D/g, ''),
@@ -854,33 +1053,37 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         });
                     });
 
-                    function carregarParceiros() {
-                        $.ajax({
-                            type: 'GET',
-                            url: '<?= API_BASE_URL . 'socios/parceiros' ?>',
-                            success: function(data) {
-                                console.log(data);
-                                renderizarTabela(data.socio_parceiros);
-                            },
-                            error: function(xhr) {
-                                const response = xhr.responseJSON || {};
+                    async function carregarParceiros() {
+                        const idSetor = $('#filtroSetor').val();
+                        const url = new URL(`${apiServer}socios/parceiros`);
+                        if (idSetor) {
+                            url.searchParams.set('id_setor', idSetor);
+                        }
 
-                                // Trata caso especial: nenhum parceiro encontrado (não é erro, é informação)
-                                if (response.error === 'Nenhuma parceiro institucional encontrado.') {
-                                    $('#corpoTabela').html('<tr><td colspan="7" class="text-center text-muted"><i class="fa fa-info-circle"></i> ' + response.error + '</td></tr>');
-                                } else {
-                                    mostrarNotificacao(response.error || 'Erro ao carregar parceiros', 'error');
-                                    $('#corpoTabela').html('<tr><td colspan="7" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Erro ao carregar parceiros</td></tr>');
-                                }
+                        try {
+                            const response = await authenticatedRequest(() => fetch(url.toString(), {
+                                method: 'GET',
+                                credentials: 'include',
+                                headers: { 'X-Client-Type': 'web' }
+                            }));
+                            const data = await response.json();
+
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.error || data.message || 'Erro ao carregar parceiros.');
                             }
-                        });
+
+                            renderizarTabela(data.socio_parceiros);
+                        } catch (erro) {
+                            mostrarNotificacao(erro.message || 'Erro ao carregar parceiros.', 'error');
+                            $('#corpoTabela').html('<tr><td colspan="8" class="text-center text-danger"><i class="fa fa-exclamation-triangle"></i> Erro ao carregar parceiros</td></tr>');
+                        }
                     }
 
                     function renderizarTabela(parceiros) {
                         let html = '';
 
                         if (!Array.isArray(parceiros) || parceiros.length === 0) {
-                            html = '<tr><td colspan="7" class="text-center text-muted">Nenhum parceiro encontrado</td></tr>';
+                            html = '<tr><td colspan="8" class="text-center text-muted">Nenhum parceiro encontrado</td></tr>';
                         } else {
                             parceiros.forEach(function(parceiro, index) {
                                 const statusBadge = parceiro.ativo ?
@@ -915,8 +1118,9 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                                             </td>
                                             <td class="text-center">${parceiro.cnpj}</td>
                                             <td class="text-center">${parceiro.razao_social}</td>
+                                            <td class="text-center">${parceiro.setor_nome || ''}</td>
                                             <td class="text-center">${statusBadge}</td> 
-                                            <td class="text-center"> <button class="btn btn-sm btn-info btn-editar" title="Editar" data-id="${parceiro.id}" data-cnpj="${parceiro.cnpj}" data-razao-social="${parceiro.razao_social}" data-telefone="${parceiro.telefone}" data-email="${parceiro.email}" data-divulgacao="${parceiro.divulgacao}" data-descricao="${parceiro.descricao}" data-cep="${parceiro.cep}" data-rua="${parceiro.logradouro}" data-numero-endereco="${parceiro.numero_endereco}" data-complemento="${parceiro.complemento}" data-bairro="${parceiro.bairro}" data-estado="${parceiro.estado}" data-cidade="${parceiro.cidade}" data-localizacao="${parceiro.localizacao}"> <i class="fa fa-edit"></i> </button> ${botaoToggleStatus} <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar"><i class="fa fa-trash"></i></button> </td>
+                                            <td class="text-center"> <button class="btn btn-sm btn-info btn-editar" title="Editar" data-id="${parceiro.id}" data-id-setor="${parceiro.id_setor}" data-cnpj="${parceiro.cnpj}" data-razao-social="${parceiro.razao_social}" data-telefone="${parceiro.telefone}" data-email="${parceiro.email}" data-divulgacao="${parceiro.divulgacao}" data-descricao="${parceiro.descricao}" data-cep="${parceiro.cep}" data-rua="${parceiro.logradouro}" data-numero-endereco="${parceiro.numero_endereco}" data-complemento="${parceiro.complemento}" data-bairro="${parceiro.bairro}" data-estado="${parceiro.estado}" data-cidade="${parceiro.cidade}" data-localizacao="${parceiro.localizacao}"> <i class="fa fa-edit"></i> </button> ${botaoToggleStatus} <button class="btn btn-sm btn-danger" onclick="confirmarDelecao(${parceiro.id})" title="Deletar parceiro"> <i class="fa fa-trash"></i></button> </td>
                                         </tr>
                                     `;
                             });
@@ -941,6 +1145,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'Functions' . DIRECTOR
                         // Dados principais
                         $('#cnpjEditar').val($botao.data('cnpj'));
                         $('#razao_socialEditar').val($botao.data('razao-social'));
+                        $('#id_setorEditar').val($botao.data('id-setor'));
 
                         //formata telefone
                         const telefone = String($botao.data('telefone') || '').replace(/\D/g, '');

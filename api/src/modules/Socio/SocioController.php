@@ -566,7 +566,7 @@ class SocioController
             $response->getBody()->write(json_encode([
                 'success' => true,
                 'message' => 'Setor adicionado com sucesso',
-                'socio_parceiro_setor' => $result['data'] ?? []
+                'socio_parceiro_setor' => $result
             ]));
 
             return $response->withStatus(201)
@@ -667,12 +667,13 @@ class SocioController
             $data = $request->getParsedBody() ?? []; //mudar para multipart/form-data se for necessário enviar arquivos
             $cnpj = trim((string)($data['cnpj'] ?? ''));
             $razaoSocial = trim((string)($data['razao_social'] ?? ''));
+            $idSetor = filter_var($data['id_setor'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 
             // Validate required data
-            if ($cnpj === '' || $razaoSocial === '') {
+            if ($cnpj === '' || $razaoSocial === '' || $idSetor === false) {
                 $response->getBody()->write(json_encode([
                     'success' => false,
-                    'message' => 'CNPJ e razão social são obrigatórios'
+                    'message' => 'CNPJ, razão social e setor válido são obrigatórios'
                 ]));
                 return $response->withStatus(400)
                     ->withHeader('Content-Type', 'application/json');
@@ -692,6 +693,7 @@ class SocioController
                     ),
                     $data['localizacao'] ?? '',
                     $data['divulgacao'] ?? '',
+                    $idSetor,
                     $data['descricao'] ?? ''
                 )
             );
@@ -892,7 +894,22 @@ class SocioController
     public function getSocioParceiros(Request $request, Response $response)
     {
         try {
-            $resultado = $this->socioService->getSocioParceiros();
+            $idSetor = $request->getQueryParams()['id_setor'] ?? null;
+            if ($idSetor !== null && $idSetor !== '') {
+                $idSetor = filter_var($idSetor, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+                if ($idSetor === false) {
+                    $response->getBody()->write(json_encode([
+                        'success' => false,
+                        'message' => 'O parâmetro id_setor deve ser um inteiro positivo'
+                    ]));
+                    return $response->withStatus(400)
+                        ->withHeader('Content-Type', 'application/json');
+                }
+            } else {
+                $idSetor = null;
+            }
+
+            $resultado = $this->socioService->getSocioParceiros($idSetor);
 
             if (!($resultado['success'] ?? false)) {
                 $response->getBody()->write(json_encode([
@@ -999,7 +1016,15 @@ class SocioController
                     ->withHeader('Content-Type', 'application/json');
             }
 
-            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'descricao', 'endereco'];
+            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'descricao', 'endereco', 'id_setor'];
+            if (array_key_exists('id_setor', $data) && filter_var($data['id_setor'], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'O campo id_setor deve ser um inteiro positivo'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
             $temAlteracao = false;
             foreach ($camposAtualizaveis as $campo) {
                 if (array_key_exists($campo, $data)) {

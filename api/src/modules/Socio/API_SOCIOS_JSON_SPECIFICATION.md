@@ -588,6 +588,7 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
   },
   "localizacao": "São Paulo - SP",
   "divulgacao": "Presencial",
+  "id_setor": 1,
   "descricao": "Descreva os benefícios da parceria"
 }
 ```
@@ -601,6 +602,7 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
 | `endereco` | object | Não | Objeto com dados de endereço |
 | `localizacao` | string | Não | Localização do parceiro |
 | `divulgacao` | string | Não | Forma de divulgação |
+| `id_setor` | integer | Sim | ID do setor institucional do parceiro |
 | `descricao` | string | Não | Descrição da parceria |
 
 ### Resposta - 201 Created (Sucesso)
@@ -608,7 +610,8 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
 {
   "success": true,
   "socio_parceiro": {
-    "id": 1
+    "id": 1,
+    "id_setor": 1
   }
 }
 ```
@@ -617,12 +620,14 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
 |-------|------|-----------|
 | `success` | boolean | Indica sucesso do cadastro |
 | `socio_parceiro` | object | Resultado do registro do parceiro |
+| `socio_parceiro.id` | integer | ID do parceiro institucional criado |
+| `socio_parceiro.id_setor` | integer | ID do setor associado ao parceiro |
 
 ### Resposta - 400 Bad Request (Dados Obrigatórios Ausentes)
 ```json
 {
   "success": false,
-  "message": "CNPJ e razão social são obrigatórios"
+  "message": "CNPJ, razão social e setor válido são obrigatórios"
 }
 ```
 
@@ -639,13 +644,19 @@ Cadastra um novo parceiro institucional no sistema, criando primeiro uma pessoa 
 
 ## 9. GET `/socios/parceiros`
 
-Lista os parceiros institucionais cadastrados no sistema.
+Lista os parceiros institucionais cadastrados no sistema. Opcionalmente, permite filtrar os resultados por setor.
 
 ### Parâmetros
-Nenhum
+- **id_setor** (query parameter, opcional): ID positivo do setor pelo qual os parceiros serão filtrados
 
 ### Requisição
 Não há corpo de requisição.
+
+Exemplos:
+```text
+GET /socios/parceiros
+GET /socios/parceiros?id_setor=1
+```
 
 ### Resposta - 200 OK
 ```json
@@ -655,10 +666,13 @@ Não há corpo de requisição.
     {
       "id": 1,
       "id_pessoa": 10,
+      "id_setor": 1,
       "ativo": 1,
       "divulgacao": "Presencial",
       "localizacao": "São Paulo - SP",
       "descricao": "Descrição da parceria",
+      "setor_nome": "Educação",
+      "setor_descricao": "Instituições e serviços relacionados à educação",
       "razao_social": "Empresa Exemplo LTDA",
       "cnpj": "12345678000195",
       "telefone": "1133334444",
@@ -681,6 +695,9 @@ Não há corpo de requisição.
 | `socio_parceiros` | array<object> | Lista de parceiros institucionais cadastrados |
 | `socio_parceiros[].id` | integer | ID do registro do parceiro na tabela de parceiros institucionais |
 | `socio_parceiros[].id_pessoa` | integer | ID da pessoa jurídica vinculada ao parceiro |
+| `socio_parceiros[].id_setor` | integer | ID do setor institucional do parceiro |
+| `socio_parceiros[].setor_nome` | string | Nome do setor institucional do parceiro |
+| `socio_parceiros[].setor_descricao` | string \| null | Descrição do setor institucional do parceiro |
 | `socio_parceiros[].ativo` | integer | Indica se o parceiro está ativo (`1`) ou inativo (`0`) |
 | `socio_parceiros[].divulgacao` | string | Forma de divulgação do parceiro |
 | `descricao` | string | Descrição da parceria |
@@ -696,6 +713,16 @@ Não há corpo de requisição.
 | `socio_parceiros[].logradouro` | string | Logradouro do endereço cadastrado |
 | `socio_parceiros[].numero_endereco` | string | Número do endereço cadastrado |
 | `socio_parceiros[].complemento` | string | Complemento do endereço cadastrado |
+
+Quando `id_setor` for informado, somente parceiros vinculados ao setor indicado serão retornados. Sem filtro, todos os parceiros serão retornados.
+
+### Resposta - 400 Bad Request (Filtro Inválido)
+```json
+{
+  "success": false,
+  "message": "O parâmetro id_setor deve ser um inteiro positivo"
+}
+```
 
 ### Resposta - 500 Internal Server Error
 ```json
@@ -735,6 +762,7 @@ Atualiza os dados cadastrais de um parceiro institucional.
   },
   "localizacao": "São Paulo - SP",
   "divulgacao": "Presencial",
+  "id_setor": 1,
   "descricao": "Descreva os benefícios da parceria"
 }
 ```
@@ -756,6 +784,7 @@ Atualiza os dados cadastrais de um parceiro institucional.
 | `endereco.complemento` | string | Não | Complemento do endereço |
 | `localizacao` | string | Não | Localização exibida do parceiro |
 | `divulgacao` | string | Não | Forma de divulgação do parceiro |
+| `id_setor` | integer | Não | ID do setor institucional do parceiro |
 | `descricao` | string | Não | Descrição da parceria |
 
 > Observação: o campo `numero` pode ser enviado dentro de `endereco` e será mapeado para `numero_endereco` durante a atualização.
@@ -768,6 +797,7 @@ Atualiza os dados cadastrais de um parceiro institucional.
   "socio_parceiro": {
     "id": 1,
     "id_pessoa": 10,
+    "id_setor": 1,
     "ativo": 1,
     "divulgacao": "Presencial",
     "localizacao": "São Paulo - SP",
@@ -794,6 +824,7 @@ Atualiza os dados cadastrais de um parceiro institucional.
 | `socio_parceiro` | object | Dados atualizados do parceiro institucional |
 | `socio_parceiro.id` | integer | ID do registro do parceiro |
 | `socio_parceiro.id_pessoa` | integer | ID da pessoa jurídica vinculada |
+| `socio_parceiro.id_setor` | integer | ID do setor institucional do parceiro |
 | `socio_parceiro.ativo` | integer | Status atual do parceiro |
 | `socio_parceiro.divulgacao` | string | Forma de divulgação do parceiro |
 | `socio_parceiro.localizacao` | string | Localização do parceiro |
@@ -1208,8 +1239,9 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
    - Em ambiente de desenvolvimento, o teste da rota protegida deve ser feito com um usuário que tenha acesso ao recurso configurado no middleware.
 
 2. **Validação de dados**:
-   - O endpoint exige `cnpj` e `razao_social` como campos mínimos.
+   - O endpoint POST `/socios/parceiros` exige `cnpj`, `razao_social` e `id_setor` como campos mínimos.
    - O CNPJ é validado pela regra interna da API antes da criação da pessoa jurídica.
+   - O `id_setor` deve ser um inteiro positivo existente na tabela de setores.
    - Na rota PUT `/socios/parceiros`, ao menos um campo editável deve ser enviado junto com `id_socio_parceiro`.
 
 3. **Persistência**:

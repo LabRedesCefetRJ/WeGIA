@@ -242,7 +242,10 @@ class SocioService implements SocioServiceInterface
             return false;
         }
 
-        return ['id' => $result];
+        return [
+            'id' => $result,
+            'id_setor' => $parceiro->getIdSetor()
+        ];
     }
 
     public function deleteSocioParceiro(int $id): array
@@ -268,10 +271,10 @@ class SocioService implements SocioServiceInterface
         }
     }
 
-    public function getSocioParceiros(): array
+    public function getSocioParceiros(?int $idSetor = null): array
     {
         try {
-            $result = $this->socioRepository->getSociosParceiros();
+            $result = $this->socioRepository->getSociosParceiros($idSetor);
             return [
                 'success' => true,
                 'data' => $result
@@ -319,7 +322,7 @@ class SocioService implements SocioServiceInterface
                 ];
             }
 
-            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'descricao', 'endereco'];
+            $camposAtualizaveis = ['razao_social', 'cnpj', 'telefone', 'email', 'localizacao', 'divulgacao', 'descricao', 'endereco', 'id_setor'];
             $temAlteracao = false;
             foreach ($camposAtualizaveis as $campo) {
                 if (array_key_exists($campo, $dados)) {
@@ -376,6 +379,7 @@ class SocioService implements SocioServiceInterface
                 'localizacao' => array_key_exists('localizacao', $dados) ? trim((string)$dados['localizacao']) : $atual['localizacao'],
                 'divulgacao' => array_key_exists('divulgacao', $dados) ? trim((string)$dados['divulgacao']) : $atual['divulgacao'],
                 'descricao' => array_key_exists('descricao', $dados) ? trim((string)$dados['descricao']) : $atual['descricao'],
+                'id_setor' => array_key_exists('id_setor', $dados) ? (int)$dados['id_setor'] : (int)$atual['id_setor'],
                 'endereco' => array_merge($enderecoAtual, $enderecoEntrada)
             ];
 

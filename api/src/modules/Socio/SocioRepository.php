@@ -159,11 +159,12 @@ class SocioRepository
     {
         //adaptar query
 
-        $query = "INSERT INTO socio_parceiro_institucional (id_socio_benefit_rule, id_pessoa, divulgacao, localizacao, descricao, created_at, updated_at) VALUES (:idSocioBenefitRule, :idPessoa, :divulgacao, :localizacao, :descricao, :created_at, :updated_at)";
+        $query = "INSERT INTO socio_parceiro_institucional (id_socio_benefit_rule, id_pessoa, id_setor, divulgacao, localizacao, descricao, created_at, updated_at) VALUES (:idSocioBenefitRule, :idPessoa, :idSetor, :divulgacao, :localizacao, :descricao, :created_at, :updated_at)";
         $stmt = $this->db->prepare($query);
         $stmt->execute([
             ':idSocioBenefitRule' => 1, //temporariamente fixo
             ':idPessoa' => $parceiro->getPessoa()->getId(),
+            ':idSetor' => $parceiro->getIdSetor(),
             ':divulgacao' => $parceiro->getDivulgacao(),
             ':localizacao' => $parceiro->getLocalizacao(),
             ':descricao' => $parceiro->getDescricao(),
@@ -174,42 +175,18 @@ class SocioRepository
         return $this->db->lastInsertId() ? (int)$this->db->lastInsertId() : false;
     }
 
-    public function getSociosParceiros(): array
+    public function getSociosParceiros(?int $idSetor = null): array
     {
         $query = "SELECT 
                     spi.id,
                     spi.id_pessoa,
+                    spi.id_setor,
                     spi.ativo,
                     spi.divulgacao,
                     spi.localizacao,
                     spi.descricao,
-                    p.nome as razao_social,
-                    p.cpf as cnpj,
-                    p.telefone,
-                    p.email,
-                    p.cep,
-                    p.estado,
-                    p.cidade,
-                    p.bairro,
-                    p.logradouro,
-                    p.numero_endereco,
-                    p.complemento
-                  FROM socio_parceiro_institucional spi
-                  JOIN pessoa p ON spi.id_pessoa = p.id_pessoa";
-        $stmt = $this->db->query($query);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function findSocioParceiroById(int $id): ?array
-    {
-        $query = "SELECT 
-                    spi.id,
-                    spi.id_pessoa,
-                    spi.id_socio_benefit_rule,
-                    spi.ativo,
-                    spi.divulgacao,
-                    spi.localizacao,
-                    spi.descricao,
+                    s.nome AS setor_nome,
+                    s.descricao AS setor_descricao,
                     p.nome as razao_social,
                     p.cpf as cnpj,
                     p.telefone,
@@ -223,6 +200,47 @@ class SocioRepository
                     p.complemento
                   FROM socio_parceiro_institucional spi
                   JOIN pessoa p ON spi.id_pessoa = p.id_pessoa
+                  JOIN socio_parceiro_institucional_setor s ON spi.id_setor = s.id";
+
+        if ($idSetor !== null) {
+            $query .= " WHERE spi.id_setor = :id_setor";
+        }
+
+        $stmt = $this->db->prepare($query);
+        if ($idSetor !== null) {
+            $stmt->bindValue(':id_setor', $idSetor, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function findSocioParceiroById(int $id): ?array
+    {
+        $query = "SELECT 
+                    spi.id,
+                    spi.id_pessoa,
+                    spi.id_setor,
+                    spi.id_socio_benefit_rule,
+                    spi.ativo,
+                    spi.divulgacao,
+                    spi.localizacao,
+                    spi.descricao,
+                    s.nome AS setor_nome,
+                    s.descricao AS setor_descricao,
+                    p.nome as razao_social,
+                    p.cpf as cnpj,
+                    p.telefone,
+                    p.email,
+                    p.cep,
+                    p.estado,
+                    p.cidade,
+                    p.bairro,
+                    p.logradouro,
+                    p.numero_endereco,
+                    p.complemento
+                  FROM socio_parceiro_institucional spi
+                  JOIN pessoa p ON spi.id_pessoa = p.id_pessoa
+                  JOIN socio_parceiro_institucional_setor s ON spi.id_setor = s.id
                   WHERE spi.id = :id
                   LIMIT 1";
         $stmt = $this->db->prepare($query);
@@ -272,12 +290,14 @@ class SocioRepository
             ]);
 
             $querySocioParceiro = "UPDATE socio_parceiro_institucional SET 
+                                        id_setor = :id_setor,
                                         localizacao = :localizacao,
                                         divulgacao = :divulgacao,
                                         descricao = :descricao
                                     WHERE id = :id";
             $stmtSocioParceiro = $this->db->prepare($querySocioParceiro);
             $stmtSocioParceiro->execute([
+                ':id_setor' => $dados['id_setor'] ?? $atual['id_setor'],
                 ':localizacao' => $dados['localizacao'] ?? $atual['localizacao'],
                 ':divulgacao' => $dados['divulgacao'] ?? $atual['divulgacao'],
                 ':descricao' => $dados['descricao'] ?? $atual['descricao'],
