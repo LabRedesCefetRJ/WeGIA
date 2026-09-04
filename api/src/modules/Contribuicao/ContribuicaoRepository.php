@@ -13,6 +13,55 @@ class ContribuicaoRepository
         $this->db = $db;
     }
 
+    public function create(Contribuicao $contribuicao): bool
+    {
+        $query = "INSERT INTO contribuicao_log (id_socio, id_gateway, id_meio_pagamento, valor, data_pagamento, data_vencimento, data_geracao, status_pagamento, codigo)
+                  VALUES (:id_socio, :id_gateway, :id_meio_pagamento, :valor, :data_pagamento, :data_vencimento, :data_geracao, :status_pagamento, :codigo)";
+
+        $stmt = $this->db->prepare($query);
+        return $stmt->execute([
+            ':id_socio' => $contribuicao->getIdSocio(),
+            ':id_gateway' => $contribuicao->getIdGateway(),
+            ':id_meio_pagamento' => $contribuicao->getIdMeioPagamento(),
+            ':valor' => $contribuicao->getValor(),
+            ':data_pagamento' => $contribuicao->getDataPagamento() ? $contribuicao->getDataPagamento()->format('Y-m-d H:i:s') : null,
+            ':data_vencimento' => $contribuicao->getDataVencimento()->format('Y-m-d H:i:s'),
+            ':data_geracao' => $contribuicao->getDataGeracao()->format('Y-m-d H:i:s'),
+            ':status_pagamento' => $contribuicao->getStatus() === 'paid' ? 1 : 0,
+            ':codigo' => $contribuicao->getCodigo()
+        ]);
+    }
+
+    public function findSociosComPessoas(): array
+    {
+        $stmt = $this->db->query(
+            'SELECT s.id_socio, p.nome, p.sobrenome
+             FROM socio s
+             INNER JOIN pessoa p ON p.id_pessoa = s.id_pessoa'
+        );
+
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $result === false ? [] : $result;
+    }
+
+    public function existeContribuicao(int $idSocio, float $valor, string $dataPagamento): bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT 1 FROM contribuicao_log
+             WHERE id_socio = :id_socio
+               AND valor = :valor
+               AND data_pagamento = :data_pagamento
+             LIMIT 1'
+        );
+        $stmt->execute([
+            ':id_socio' => $idSocio,
+            ':valor' => $valor,
+            ':data_pagamento' => $dataPagamento,
+        ]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
     /**
      * Find all contributions for a given socio ID
      *

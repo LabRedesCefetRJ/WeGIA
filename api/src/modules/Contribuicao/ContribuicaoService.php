@@ -80,6 +80,13 @@ class ContribuicaoService
         return $formatted;
     }
 
+    public function registrarPagamentoManual(Contribuicao $contribuicao): bool
+    {
+        // Aqui você pode adicionar a lógica para registrar o pagamento manual no banco de dados
+        // Por exemplo, você pode chamar um método do repositório para salvar a contribuição
+        return $this->contribuicaoRepository->create($contribuicao);
+    }
+
     /**
      * Format individual contribution items
      *

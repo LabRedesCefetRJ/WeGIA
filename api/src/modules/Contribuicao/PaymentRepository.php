@@ -22,6 +22,12 @@ class PaymentRepository{
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getActivePaymentMethods(): array
+    {
+        $query = 'SELECT id, meio FROM contribuicao_meioPagamento WHERE status = 1 ORDER BY meio';
+        return $this->db->query($query)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getPaymentGatewayByPaymentMethod(string $paymentMethod): ?PaymentGateway {
         $query = 'SELECT * FROM contribuicao_gatewayPagamento cgp JOIN contribuicao_meioPagamento cmp ON (cgp.id = cmp.id_plataforma) WHERE cmp.meio = :paymentMethod AND cgp.status = 1';
         
