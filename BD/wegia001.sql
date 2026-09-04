@@ -1238,6 +1238,7 @@ CREATE TABLE `wegia`.`socio_parceiro_institucional` (
 
     `id_socio_benefit_rule` INT UNSIGNED NOT NULL,
     `id_pessoa` INT NOT NULL,
+    `id_setor` INT NOT NULL,
 
     `ativo` BOOLEAN NOT NULL DEFAULT TRUE,
 
@@ -1256,6 +1257,7 @@ CREATE TABLE `wegia`.`socio_parceiro_institucional` (
 
     INDEX idx_spi_pessoa (id_pessoa),
     INDEX idx_spi_benefit_rule (id_socio_benefit_rule),
+    INDEX idx_spi_setor (id_setor),
 
     CONSTRAINT fk_spi_pessoa
         FOREIGN KEY (id_pessoa)
@@ -1267,7 +1269,36 @@ CREATE TABLE `wegia`.`socio_parceiro_institucional` (
         FOREIGN KEY (id_socio_benefit_rule)
         REFERENCES `wegia`.`socio_benefit_rule` (id)
         ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_spi_setor
+        FOREIGN KEY (id_setor)
+        REFERENCES `wegia`.`socio_parceiro_institucional_setor` (id)
+        ON DELETE RESTRICT
         ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+  -- -----------------------------------------------------
+-- Table `wegia`.`socio_parceiro_institucional_setor`
+-- -----------------------------------------------------
+CREATE TABLE `wegia`.`socio_parceiro_institucional_setor` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+
+    `nome` VARCHAR(255) NOT NULL,
+    `descricao` TEXT NULL,
+
+    `ativo` BOOLEAN NOT NULL DEFAULT TRUE,
+
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (`id`),
+
+    UNIQUE KEY `uq_spi_setor_nome` (`nome`)
 
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
