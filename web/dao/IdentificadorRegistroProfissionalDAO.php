@@ -44,10 +44,11 @@ class IdentificadorRegistroProfissionalDAO
             $idFuncionario = $identificador->getIdFuncionario();
             $numero = $identificador->getNumeroRegistro();
             $uf = $identificador->getUf();
+            $uf = ($uf === '' || $uf === null) ? null : $uf;
             $stmt->bindParam(':idTipo',$idTipo);
             $stmt->bindParam(':idFuncionario',$idFuncionario);
             $stmt->bindParam(':identificador',$numero);
-            $stmt->bindParam(':uf',$uf);
+            $stmt->bindValue(':uf', $uf, $uf === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
             $stmt->execute();
         }catch (PDOException $e) {
             error_log("Erro DB [adicionar]: ". $e->getMessage());
