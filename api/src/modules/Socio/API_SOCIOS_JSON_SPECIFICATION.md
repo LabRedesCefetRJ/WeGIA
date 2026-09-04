@@ -1029,7 +1029,56 @@ O setor é inserido na tabela `socio_parceiro_institucional_setor`. O campo `nom
 
 ---
 
-## 14. GET `/socios/parceiros/{id}/logo`
+## 14. GET `/socios/parceiros/setor`
+
+Lista os setores cadastrados para classificação de parceiros institucionais. Requer autenticação via token JWT, mas não utiliza o `SocioMiddleware` de permissão de recurso.
+
+### Parâmetros
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+
+### Requisição
+Não há parâmetros nem corpo de requisição.
+
+### Resposta - 200 OK
+```json
+{
+  "success": true,
+  "socio_parceiro_setores": [
+    {
+      "id": 1,
+      "nome": "Educação",
+      "descricao": "Instituições e serviços relacionados à educação"
+    }
+  ]
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Indica que a consulta foi concluída |
+| `socio_parceiro_setores` | array<object> | Lista de setores cadastrados |
+| `socio_parceiro_setores[].id` | integer | ID do setor |
+| `socio_parceiro_setores[].nome` | string | Nome do setor |
+| `socio_parceiro_setores[].descricao` | string \| null | Descrição do setor, quando cadastrada |
+
+Quando não houver setores cadastrados, `socio_parceiro_setores` será um array vazio.
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "success": false,
+  "message": "Não foi possível obter os setores"
+}
+```
+
+Em caso de exceção, a resposta contém `success: false`, a mensagem em `error` e o código HTTP em `code`.
+
+### Persistência
+Os dados são consultados na tabela `socio_parceiro_institucional_setor` por meio dos campos `id`, `nome` e `descricao`.
+
+---
+
+## 15. GET `/socios/parceiros/{id}/logo`
 
 Recupera a logo de um parceiro institucional em formato binário.
 
@@ -1066,7 +1115,7 @@ Retorna o conteúdo da imagem com o tipo MIME correspondente (por exemplo, `imag
 
 ---
 
-## 15. DELETE `/socios/parceiros/{id}`
+## 16. DELETE `/socios/parceiros/{id}`
 
 Exclui um parceiro institucional.
 
@@ -1106,7 +1155,7 @@ Exclui um parceiro institucional.
 
 ---
 
-## 16. GET `/socios/{id}/beneficios`
+## 17. GET `/socios/{id}/beneficios`
 
 Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
 
@@ -1154,6 +1203,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
    - A rota PUT `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
    - A rota PATCH `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
    - A rota POST `/socios/parceiros/setor` exige um token JWT válido e permissão para o recurso de sócios.
+   - A rota GET `/socios/parceiros/setor` exige um token JWT válido, mas não exige a permissão de recurso verificada pelo `SocioMiddleware`.
    - A rota GET `/socios/parceiros` é pública e não exige autenticação.
    - Em ambiente de desenvolvimento, o teste da rota protegida deve ser feito com um usuário que tenha acesso ao recurso configurado no middleware.
 

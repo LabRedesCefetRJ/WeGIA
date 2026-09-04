@@ -586,6 +586,42 @@ class SocioController
         }
     }
 
+    public function getAllSocioParceiroSetor(Request $request, Response $response)
+    {
+        try {
+            $result = $this->socioService->getAllSocioParceiroSetor();
+
+            if (!$result) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Não foi possível obter os setores'
+                ]));
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'socio_parceiro_setores' => $result['data'] ?? []
+            ]));
+
+            return $response->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = ($statusCode >= 100 && $statusCode < 600) ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     private function buscarSocioPorCpf(string $cpf): array
     {
         // Validar CPF

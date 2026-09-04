@@ -387,4 +387,11 @@ class SocioRepository
 
         return $id ? (int) $id : false;
     }
+
+    public function getAllSocioParceiroSetor(): array
+    {
+        $query = "SELECT id, nome, descricao FROM socio_parceiro_institucional_setor";
+        $stmt = $this->db->query($query);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

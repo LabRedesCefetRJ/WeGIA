@@ -460,6 +460,22 @@ class SocioService implements SocioServiceInterface
         return ['id' => $result];
     }
 
+    public function getAllSocioParceiroSetor(): array
+    {
+        try {
+            $result = $this->socioRepository->getAllSocioParceiroSetor();
+            return [
+                'success' => true,
+                'data' => $result
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Error fetching socio parceiro setores: ' . $e->getMessage()
+            ];
+        }
+    }
+
     private function censurarCpf(?string $cpf): ?string
     {
         if (empty($cpf)) {

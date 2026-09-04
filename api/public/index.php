@@ -233,6 +233,9 @@ $app->post('/socios/parceiros/setor', [SocioController::class, 'insertSocioParce
     ->add($container->get(SocioMiddleware::class))
     ->add($container->get(AuthMiddleware::class));
 
+$app->get('/socios/parceiros/setor', [SocioController::class, 'getAllSocioParceiroSetor'])
+    ->add($container->get(AuthMiddleware::class));
+
 $app->delete('/socios/parceiros/{id}', [SocioController::class, 'deleteSocioParceiro'])
     ->add($container->get(SocioMiddleware::class))
     ->add($container->get(AuthMiddleware::class));
