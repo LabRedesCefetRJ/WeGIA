@@ -1,5 +1,7 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
 if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
@@ -14,42 +16,43 @@ if (!isset($_SESSION['usuario'])) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 22, 3);
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
 // Adiciona Função de mensagem
 require_once ROOT . "/html/geral/msg.php";
-?>
-
-<!doctype html>
-<html class="fixed">
-<?php
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/CategoriaDAO.php';
-include_once ROOT . '/dao/UnidadeDAO.php';
-include_once ROOT . '/dao/ProdutoDAO.php';
 
 if (!isset($_SESSION['unidade'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/cadastro_produto.php');
+	exit;
 }
 if (!isset($_SESSION['categoria'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/cadastro_produto.php');
+	exit;
 }
-if (isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
+if (!isset($_SESSION['grupo_produto'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=GrupoProdutoControle&nextPage=../html/matPat/cadastro_produto.php');
+	exit;
+}
+if (!isset($_SESSION['produtos'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_produto.php');
+	exit;
+}
+if (isset($_SESSION['categoria'], $_SESSION['unidade'], $_SESSION['grupo_produto'], $_SESSION['produtos'])) {
 	extract($_SESSION);
 
 	unset($_SESSION['unidade']);
 	unset($_SESSION['categoria']);
+	unset($_SESSION['grupo_produto']);
+	unset($_SESSION['produtos']);
 }
 
 $dadosForm = $_SESSION['form_produto'] ?? [];
-
-$produtoDAO = new ProdutoDAO();
-$produtos = $produtoDAO->listarTodos();
 ?>
 
+<!doctype html>
+<html class="fixed">
 <head>
 	<!-- Basic -->
 	<meta charset="UTF-8">
@@ -115,6 +118,9 @@ $produtos = $produtoDAO->listarTodos();
 			const unidade = <?php
 							echo $unidade;
 							?>;
+			const grupo_produto = <?php
+								echo $grupo_produto;
+								?>;
 			$.each(categoria, function(i, item) {
 				if (atualizarSelect('id_categoria') == item.id_categoria_produto) {
 					$('#id_categoria').append('<option value="' + item.id_categoria_produto + '" selected>' + item.descricao_categoria + '</option>');
@@ -129,12 +135,20 @@ $produtos = $produtoDAO->listarTodos();
 					$('#id_unidade').append('<option value="' + item.id_unidade + '">' + item.descricao_unidade + '</option>');
 				}
 			})
+			$.each(grupo_produto, function(i, item) {
+				if (atualizarSelect('id_grupo_produto') == item.id_grupo_produto) {
+					$('#id_grupo_produto').append('<option value="' + item.id_grupo_produto + '" selected>' + item.descricao_grupo + '</option>');
+				} else {
+					$('#id_grupo_produto').append('<option value="' + item.id_grupo_produto + '">' + item.descricao_grupo + '</option>');
+				}
+			})
 		});
 	</script>
 	<script type="text/javascript">
 		function validar() {
 			const id_categoria = document.getElementById("id_categoria").value;
 			const id_unidade = document.getElementById("id_unidade").value;
+			const id_grupo_produto = document.getElementById("id_grupo_produto") ? document.getElementById("id_grupo_produto").value : null;
 			const valor = document.getElementById("valor-form").value;
 			const codigo = document.getElementById("codigo").value;
 
@@ -162,6 +176,10 @@ $produtos = $produtoDAO->listarTodos();
 			} else if (id_unidade == "blank") {
 				alert("Selecione uma unidade");
 				document.getElementById("id_unidade").focus();
+				return false;
+			} else if (id_grupo_produto == "blank") {
+				alert("Selecione um grupo ou a opção Sem grupo");
+				document.getElementById("id_grupo_produto").focus();
 				return false;
 			} else if (valor <= 0) {
 				alert("O valor deve ser maior que zero");
@@ -249,6 +267,17 @@ $produtos = $produtoDAO->listarTodos();
 														<option selected disabled value="blank">Selecionar</option>
 
 
+													</select>
+												</div>
+											</div>
+
+											<div class="form-group">
+												<label class="col-md-3 control-label" for="id_grupo_produto">Grupo do Produto</label>
+												<a href="<?= WWW ?>html/matPat/adicionar_grupo_produto.php"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+												<div class="col-md-6">
+													<select name="id_grupo_produto" id="id_grupo_produto" class="form-control input-lg mb-md" onchange="addSessionStorage(this)">
+														<option selected disabled value="blank">Selecionar</option>
+														<option value="">Sem grupo</option>
 													</select>
 												</div>
 											</div>
@@ -346,6 +375,7 @@ $produtos = $produtoDAO->listarTodos();
 			atualizarInput("produto");
 			atualizarSelect("id_categoria");
 			atualizarSelect("id_unidade");
+			atualizarSelect("id_grupo_produto");
 			atualizarInput("codigo");
 			atualizarInput("valor-form");
 		})

@@ -11,6 +11,7 @@ require_once 'DescricaoControle.php';
 require_once ROOT . '/classes/Documento.php';
 require_once ROOT . '/dao/DocumentoDAO.php';
 require_once 'DocumentoControle.php';
+require_once ROOT . '/dao/MiddlewareDAO.php';
 include_once ROOT . '/classes/Cache.php';
 include_once ROOT . "/dao/Conexao.php";
 
@@ -168,6 +169,18 @@ class SaudeControle
         } catch (Exception $e) {
             Util::tratarException($e);
         }
+    }
+
+    public function verificaPermissaoPessoa(int $idPessoaLogada): bool
+    {
+        $middlewareDAO = new MiddlewareDAO();
+        return $middlewareDAO->verificarPermissao($idPessoaLogada, 'AtendidoControle', ['AtendidoControle' => [12]]);
+    }
+
+    public function buscarIdAtendidoPorFichaMedica(int $idFichaMedica): ?int
+    {
+        $saudeDAO = new SaudeDAO();
+        return $saudeDAO->obterIdAtendidoPorFichaMedica($idFichaMedica);
     }
 
     /**

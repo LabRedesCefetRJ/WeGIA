@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if(session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,7 +12,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 22, 3);
@@ -22,36 +22,44 @@ require_once ROOT . "/html/personalizacao_display.php";
 // Adiciona Função de mensagem
 require_once ROOT . "/html/geral/msg.php";
 
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/CategoriaDAO.php';
-include_once ROOT . '/dao/UnidadeDAO.php';
-include_once ROOT . '/dao/ProdutoDAO.php';
-
 if (!isset($_SESSION['unidade'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit;
 }
 if (!isset($_SESSION['categoria'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit;
+}
+if (!isset($_SESSION['grupo_produto'])) {
+	extract($_REQUEST);
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=GrupoProdutoControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit;
 }
 if (!isset($_SESSION['produto'])) {
 	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto) . '&id_produto=' . htmlspecialchars($id_produto));
+	exit;
+}
+if (!isset($_SESSION['produtos'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit;
 }
 
-if (isset($_SESSION['produto']) && isset($_SESSION['categoria']) && isset($_SESSION['unidade'])) {
+if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_SESSION['grupo_produto'], $_SESSION['produtos'])) {
 	$produto = $_SESSION['produto'];
 	$unidade = $_SESSION['unidade'];
 	$categoria = $_SESSION['categoria'];
+	$grupo_produto = $_SESSION['grupo_produto'];
 	$vars = $_SESSION;
+	$todosProdutos = $_SESSION['produtos'];
 	unset($_SESSION['produto']);
 	unset($_SESSION['categoria']);
 	unset($_SESSION['unidade']);
+	unset($_SESSION['grupo_produto']);
+	unset($_SESSION['produtos']);
 }
-
-$produtoDAO = new ProdutoDAO();
-$todosProdutos = $produtoDAO->listarTodos();
 ?>
 <!doctype html>
 <html class="fixed">
@@ -97,16 +105,17 @@ $todosProdutos = $produtoDAO->listarTodos();
 	<script src="<?= WWW ?>assets/vendor/magnific-popup/magnific-popup.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 	<script type="text/javascript">
-		var produtos = <?php echo $produto; ?>;
-		var todosProdutos = <?php echo $todosProdutos; ?>;
-		var categoria = <?php echo $categoria; ?>;
-		var unidade = <?php echo $unidade; ?>;
-		
+		const produtos = <?php echo $produto; ?>;
+		const todosProdutos = <?php echo $todosProdutos; ?>;
+		const categoria = <?php echo $categoria; ?>;
+		const unidade = <?php echo $unidade; ?>;
+		const grupo_produto = <?php echo $grupo_produto; ?>;
 		function editar_produto() {
 
 			$("#produto").prop('disabled', false);
 			$("#id_categoria").prop('disabled', false);
 			$("#id_unidade").prop('disabled', false);
+			$("#id_grupo_produto").prop('disabled', false);
 			$("#codigo").prop('disabled', false);
 			$("#valor").prop('disabled', false);
 
@@ -121,14 +130,16 @@ $todosProdutos = $produtoDAO->listarTodos();
 			const produtoOriginal = produtos[0];
 
 			$("#produto").val(produtoOriginal.descricao);
-			$("#codigo").val(produtoOriginal.codigo);
+			$("#codigo").val(produtoOriginal.codigo ?? '');
 			$("#id_categoria").val(produtoOriginal.id_categoria_produto);
 			$("#id_unidade").val(produtoOriginal.id_unidade);
+			$("#id_grupo_produto").val(produtoOriginal.id_grupo_produto ?? '');
 			$("#valor").val(produtoOriginal.preco);
 
 			$("#produto").prop('disabled', true);
 			$("#id_categoria").prop('disabled', true);
 			$("#id_unidade").prop('disabled', true);
+			$("#id_grupo_produto").prop('disabled', true);
 			$("#codigo").prop('disabled', true);
 			$("#valor").prop('disabled', true);
 
@@ -142,14 +153,15 @@ $todosProdutos = $produtoDAO->listarTodos();
 			$("#header").load("<?= WWW ?>html/header.php");
 			$(".menuu").load("<?= WWW ?>html/menu.php");
 
-			/*var produtos = <?php echo $produto; ?>;
-			var todosProdutos = <?php echo $todosProdutos; ?>;
-			var categoria = <?php echo $categoria; ?>;
-			var unidade = <?php echo $unidade; ?>;*/
+			/*const produtos = <?php echo $produto; ?>;
+			const todosProdutos = <?php echo $todosProdutos; ?>;
+			const categoria = <?php echo $categoria; ?>;
+			const unidade = <?php echo $unidade; ?>;*/
 
 			$("#produto").prop('disabled', true);
 			$("#id_categoria").prop('disabled', true);
 			$("#id_unidade").prop('disabled', true);
+			$("#id_grupo_produto").prop('disabled', true);
 			$("#codigo").prop('disabled', true);
 			$("#valor").prop('disabled', true);
 			$("#botaoEditarIP").html('Editar');
@@ -166,8 +178,8 @@ $todosProdutos = $produtoDAO->listarTodos();
 					.text(item.descricao_categoria)
 				$('#Unidade')
 					.text(item.descricao_unidade)
-				$('#Codigo')
-					.text(item.codigo)
+				$('#Grupo').text(item.descricao_grupo ?? 'Sem Grupo');
+				$('#Codigo').text(item.codigo ?? 'Sem Código');
 				$('#Valor')
 					.text(item.preco)
 				$('#produto')
@@ -177,6 +189,7 @@ $todosProdutos = $produtoDAO->listarTodos();
 				$('#valor')
 					.val(item.preco)
 			})
+			console.log(produtos[0]);
 
 
 			$.each(categoria, function(i, item) {
@@ -194,6 +207,15 @@ $todosProdutos = $produtoDAO->listarTodos();
 					$('#id_unidade').append('<option value="' + item.id_unidade + '">' + item.descricao_unidade + '</option>');
 				}
 			})
+
+			$.each(grupo_produto, function(i, item) {
+    			$('#id_grupo_produto').append(
+        			'<option value="' + item.id_grupo_produto + '">' +
+        			item.descricao_grupo +
+        			'</option>'
+    			);
+			});
+			$('#id_grupo_produto').val(produtos[0].id_grupo_produto ?? '');
 		});
 
 		function validarAlteracao() {
@@ -283,6 +305,7 @@ $todosProdutos = $produtoDAO->listarTodos();
 												<li>Nome: </li>
 												<li>Categoria: </li>
 												<li>Unidade: </li>
+												<li>Grupo: </li>
 												<li>Codigo: </li>
 												<li>Valor: </li>
 											</ul>
@@ -290,6 +313,7 @@ $todosProdutos = $produtoDAO->listarTodos();
 												<li id="nome"></li>
 												<li id="Categoria"></li>
 												<li id="Unidade"></li>
+												<li id="Grupo"></li>
 												<li id="Codigo"></li>
 												<li id="Valor"></li>
 											</ul>
@@ -331,6 +355,17 @@ $todosProdutos = $produtoDAO->listarTodos();
 												</select>
 											</div>
 										</div>
+
+										<div class="form-group">
+											<label class="col-md-3 control-label">Grupo</label>
+											<a href="<?= WWW ?>html/matPat/adicionar_grupo_produto.php"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+											<div class="col-md-6">
+												<select name="id_grupo_produto" id="id_grupo_produto" class="form-control input-lg mb-md">
+													<option value="">Sem Grupo</option>
+												</select>
+											</div>
+										</div>
+
 
 										<div class="form-group">
 											<label class="col-md-3 control-label" for="profileCompany">Código</label>

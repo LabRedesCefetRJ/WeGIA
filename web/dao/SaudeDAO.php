@@ -45,6 +45,20 @@ class SaudeDAO
             echo 'Error: <b>  na tabela pessoa = ' . $sql . '</b> <br /><br />' . $e->getMessage();
         }
     }
+
+    public function obterIdAtendidoPorFichaMedica(int $idFichaMedica): ?int
+    {
+        $pdo = Conexao::connect();
+        $sql = "SELECT a.idatendido FROM atendido a JOIN saude_fichamedica sf ON (a.pessoa_id_pessoa = sf.id_pessoa) WHERE sf.id_fichamedica = :idFichaMedica LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $idAtendido = $stmt->fetchColumn();
+        return $idAtendido ? (int)$idAtendido : null;
+    }
+
     public function alterar($saude)
     { 
         try {

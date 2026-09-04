@@ -10,6 +10,20 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_
 
 class EstoqueControle
 {
+    public function carregarDadosRelatorio()
+    {
+        try {
+            $estoqueDAO = new EstoqueDAO();
+            $_SESSION['dados_filtros_relatorio'] = $estoqueDAO->listarDadosFiltrosRelatorio();
+            header('Location: ' . WWW . 'html/matPat/relatorio.php');
+            exit;
+        } catch (Exception $e) {
+            error_log('Erro ao carregar filtros do relatório: ' . $e->getMessage());
+            http_response_code(500);
+            exit('Não foi possível carregar os filtros do relatório.');
+        }
+    }
+
     public function listarTodos()
     {
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
@@ -34,7 +48,7 @@ class EstoqueControle
             $idAlmoxarifado = filter_input(INPUT_GET, 'id_almoxarifado', FILTER_VALIDATE_INT);
 
             if (!$idAlmoxarifado || $idAlmoxarifado < 1) {
-                throw new InvalidArgumentException('Almoxarifado inválido.');
+                throw new InvalidArgumentException('Almoxarifado inválido.', 400);
             }
 
             header('Location: ' . WWW . 'html/matPat/limites_estoque_almoxarifado.php?id_almoxarifado=' . $idAlmoxarifado);
@@ -54,7 +68,7 @@ class EstoqueControle
             $qtdMinima = filter_input(INPUT_POST, 'qtd_minima', FILTER_VALIDATE_INT);
 
             if (!$idProduto || !$idAlmoxarifado || $qtdMinima === false || $qtdMinima < 0) {
-                throw new InvalidArgumentException('Dados inválidos.');
+                throw new InvalidArgumentException('Dados inválidos.', 400);
             }
 
             $dao = new EstoqueDAO();
@@ -67,11 +81,30 @@ class EstoqueControle
                 'sucesso' => true,
                 'mensagem' => 'Quantidade mínima atualizada com sucesso.'
             ]);
-        } catch (Exception $e) {
+        } catch (InvalidArgumentException $e) {
             http_response_code(400);
+
             echo json_encode([
                 'sucesso' => false,
                 'mensagem' => $e->getMessage()
+            ]);
+        } catch (PDOException $e) {
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+
+            http_response_code(500);
+
+            echo json_encode([
+                'sucesso' => false,
+                'mensagem' => 'Não foi possível atualizar a quantidade mínima.'
+            ]);
+        } catch (Exception $e) {
+            error_log(__METHOD__ . ': ' . $e->getMessage());
+
+            http_response_code(500);
+
+            echo json_encode([
+                'sucesso' => false,
+                'mensagem' => 'Não foi possível atualizar a quantidade mínima.'
             ]);
         }
 
