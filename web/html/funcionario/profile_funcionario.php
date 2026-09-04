@@ -394,6 +394,10 @@ try {
       $(".registro-numero, .registro-uf").prop('disabled', false);
       $(".btn-excluir-registro").show();
       $("#botaoAdicionarRegistroProfissional").show();
+      atualizarColunaAcaoRegistroProfissional();
+      carregarRegistrosProfissionais(); 
+      
+      return false;
     }
 
     function cancelar_outros() {
@@ -417,6 +421,7 @@ try {
       $(".registro-numero, .registro-uf").prop('disabled', true);
       $(".btn-excluir-registro").hide();
       $("#botaoAdicionarRegistroProfissional").hide();
+      atualizarColunaAcaoRegistroProfissional();
     }
 
     let UFS_BRASIL = {
@@ -431,61 +436,97 @@ try {
 
     function montarSelectUf(selecionada) {
       let select = $('<select class="form-control registro-uf"></select>');
-      select.append($('<option value="">--</option>'));
+      select.append($('<option></option>').val('').text('--'));
       $.each(UFS_BRASIL, function(sigla, nome) {
-        let opt = $('<option></option>').val(sigla).text(sigla + " - " + nome);
-        if (sigla === selecionada) {
-          opt.prop('selected', true);
-        }
-        select.append(opt);
+          let opt = $('<option></option>').val(sigla).text(sigla + " - " + nome);
+          if (sigla === selecionada) {
+              opt.prop('selected', true);
+          }
+          select.append(opt);
       });
       return select;
     }
-
     function exibirErroRegistroProfissional(mensagem) {
       window.alert(mensagem);
     }
+
+    function atualizarColunaAcaoRegistroProfissional() {
+      const temRegistros = $('#tabela_registroProfissional tr')
+        .not('#registroProfissionalVazio')
+        .length > 0;
+
+      const exibirAcao = outrosEditando && temRegistros;
+      $('#colunaAcaoRegistroProfissional').toggle(exibirAcao);
+      $('.coluna-acao-registro-profissional').toggle(exibirAcao);
+    }
+
 
     function listar_registroProfissional(lista) {
       if (lista.erro) {
         exibirErroRegistroProfissional(lista.erro);
         return;
       }
-
       const tbody = $("#tabela_registroProfissional");
       tbody.empty();
-
       if (!lista.length) {
-        tbody.append('<tr id="registroProfissionalVazio"><td colspan="4" class="text-center">Nenhum registro profissional cadastrado.</td></tr>');
+        tbody.append(
+          '<tr id="registroProfissionalVazio">' +
+            '<td colspan="3" class="text-center">' +
+              'Nenhum registro profissional cadastrado.' +
+            '</td>' +
+          '</tr>'
+        );
+        atualizarColunaAcaoRegistroProfissional();
         return;
       }
-
       $.each(lista, function(i, item) {
-        let linha = $("<tr>").attr("id", "registroProfissional" + item.id_registro);
-
+        let linha = $("<tr>")
+          .attr("id", "registroProfissional" + item.id_registro);
         linha.append($("<td>").text(item.descricao));
 
-        let inputNumero = $('<input type="text" class="form-control registro-numero" maxlength="20">')
-          .val(item.numero_registro)
-          .prop('disabled', !outrosEditando);
-        linha.append($("<td>").append(inputNumero));
+        let inputNumero = $(
+          '<input type="text" ' +
+          'class="form-control registro-numero" ' +
+          'maxlength="20" ' +
+          'inputmode="numeric" ' +
+          'pattern="[0-9]*">'
+        )
+        .val(item.numero_registro)
+        .prop('disabled', !outrosEditando)
+        .on('input', function() {
+          this.value = this.value.replace(/[^0-9]/g, '');
+        });
 
-        let selectUf = montarSelectUf(item.uf).prop('disabled', !outrosEditando);
-        linha.append($("<td>").append(selectUf));
-
-        let acoes = $('<td style="display: flex; justify-content: space-evenly;">');
-        let idRegistro = item.id_registro;
-        acoes.append(
-          $('<button type="button" class="btn btn-danger btn-excluir-registro" title="Excluir"><i class="fas fa-trash-alt"></i></button>')
-          .toggle(outrosEditando)
-          .on('click', function() {
-            removerRegistroProfissional(idRegistro);
-          })
+        linha.append(
+          $("<td>").append(inputNumero)
         );
+
+        let selectUf = montarSelectUf(item.uf)
+          .prop('disabled', !outrosEditando);
+
+        linha.append(
+          $("<td>").append(selectUf)
+        );
+
+        let idRegistro = item.id_registro;
+
+        let acoes = $('<td class="coluna-acao-registro-profissional">');
+
+        acoes.append(
+          $('<button type="button" class="btn btn-danger btn-excluir-registro" title="Excluir">' +
+              '<i class="fas fa-trash-alt"></i>' +
+            '</button>')
+            .on('click', function() {
+              removerRegistroProfissional(idRegistro);
+            })
+        );
+
         linha.append(acoes);
 
         tbody.append(linha);
       });
+
+      atualizarColunaAcaoRegistroProfissional();
     }
 
     function carregarRegistrosProfissionais() {
@@ -544,6 +585,8 @@ try {
           exibirErroRegistroProfissional('Erro ao remover o registro profissional.');
         }
       });
+
+      carregarRegistrosProfissionais();
     }
 
     function abrirModalRegistroProfissional() {
@@ -627,7 +670,7 @@ try {
       let uf = $('#uf_novoRegistro').val();
 
       if (!idTipo || !numero || !numero.trim()) {
-        exibirErroRegistroProfissional('Preencha os campos obrigatórios.');
+        exibirErroRegistroProfissional('Preencha os campos Número e Tipo de Registro.');
         return;
       }
 
@@ -637,7 +680,7 @@ try {
         data: {
           nomeClasse: 'IdentificadorRegistroProfissionalControle',
           metodo: 'adicionar',
-          id_tipo: idTipo,
+          id_tipo_registro: idTipo,
           numero_registro: numero,
           uf: uf,
           id_funcionario: '<?= $idFuncionario ?>'
@@ -656,6 +699,74 @@ try {
         }
       });
     }
+
+    function coletarEdicoesRegistroProfissional() {
+      let edicoes = [];
+
+      $('#tabela_registroProfissional tr').each(function() {
+        let $linha = $(this);
+        let id = $linha.attr('id');
+
+        if (!id || id === 'registroProfissionalVazio') {
+          return;
+        }
+
+        edicoes.push({
+          idRegistro: id.replace('registroProfissional', ''),
+          numero: $linha.find('.registro-numero').val(),
+          uf: $linha.find('.registro-uf').val()
+        });
+      });
+
+      return edicoes;
+    }
+
+    function salvarEdicoesRegistroProfissional() {
+      let edicoes = coletarEdicoesRegistroProfissional();
+
+      if (!edicoes.length) {
+        return $.Deferred().resolve().promise();
+      }
+
+      let requisicoes = edicoes.map(function(item) {
+        return $.ajax({
+          type: 'POST',
+          url: '../../controle/control.php',
+          data: {
+            nomeClasse: 'IdentificadorRegistroProfissionalControle',
+            metodo: 'editar',
+            id_registro: item.idRegistro,
+            numero_registro: item.numero,
+            uf: item.uf,
+            id_funcionario: '<?= $idFuncionario ?>'
+          },
+          dataType: 'json'
+        });
+      });
+
+      return $.when.apply($, requisicoes);
+    }
+
+    $(document).on('submit', '#formOutros', function(e) {
+      if (!outrosEditando) {
+        return true;
+      }
+
+      e.preventDefault();
+      let formulario = this;
+
+      salvarEdicoesRegistroProfissional()
+        .done(function() {
+          formulario.submit();
+        })
+        .fail(function(xhr) {
+          let mensagem = 'Erro ao salvar as alterações dos registros profissionais.';
+          if (xhr && xhr.responseJSON && xhr.responseJSON.erro) {
+            mensagem = xhr.responseJSON.erro;
+          }
+          exibirErroRegistroProfissional(mensagem);
+        });
+    });
 
     $(function() {
       carregarRegistrosProfissionais();
@@ -1396,7 +1507,7 @@ try {
                       <h2 class="panel-title">Outros</h2>
                     </header>
                     <div class="panel-body">
-                      <form class="form-horizontal" method="POST" action="../../controle/control.php">
+                      <form class="form-horizontal" method="POST" action="../../controle/control.php" id="formOutros">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarOutros">
                         <?= Csrf::inputField() ?>
@@ -1548,7 +1659,7 @@ try {
                               <th>Tipo</th>
                               <th>Número</th>
                               <th>UF</th>
-                              <th>Ação</th>
+                              <th id="colunaAcaoRegistroProfissional">Ação</th>
                             </tr>
                           </thead>
                           <tbody id="tabela_registroProfissional"></tbody>
@@ -1566,9 +1677,9 @@ try {
                               </div>
                               <div class="modal-body" style="padding: 15px 25px;">
                                 <div class="form-group">
-                                  <label for="tipo_novoRegistro" class="col-form-label">Tipo de Registro</label>
+                                  <label for="tipo_novoRegistro" class="col-form-label">Tipo de Registro<sup class="obrig">*</sup></label>
                                   <div style="display: block ruby;">
-                                    <select name="id_tipo" id="tipo_novoRegistro" class="form-control" style="width: 300px;" required>
+                                    <select name="id_tipo_registro" id="tipo_novoRegistro" class="form-control" style="width: 300px;">
                                       <option value="" selected disabled>Selecionar</option>
                                       <?php foreach ($registroProfissionalTipos as $tipoRegistro): ?>
                                         <option value="<?= htmlspecialchars($tipoRegistro['id_registro_profissional_tipo'] ?? '') ?>"><?= htmlspecialchars($tipoRegistro['descricao'] ?? '') ?></option>
@@ -1578,8 +1689,8 @@ try {
                                   </div>
                                 </div>
                                 <div class="form-group">
-                                  <label for="numero_novoRegistro" class="col-form-label">Número</label>
-                                  <input type="text" class="form-control" id="numero_novoRegistro" maxlength="20" required>
+                                  <label for="numero_novoRegistro" class="col-form-label">Número<sup class="obrig">*</sup></label>
+                                  <input type="text" class="form-control" id="numero_novoRegistro" maxlength="20" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                 </div>
                                 <div class="form-group">
                                   <label for="uf_novoRegistro" class="col-form-label">UF</label>
