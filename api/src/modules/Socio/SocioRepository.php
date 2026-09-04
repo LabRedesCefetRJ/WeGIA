@@ -361,4 +361,30 @@ class SocioRepository
         $stmt = $this->db->prepare($query);
         return $stmt->execute([':id' => $id]);
     }
+
+    public function insertSocioParceiroSetor(string $nome, ?string $descricao = null): int|false
+    {
+        $fields = ['nome'];
+        $params = [':nome' => $nome];
+        $placeholders = [':nome'];
+
+        if ($descricao !== null) {
+            $fields[] = 'descricao';
+            $params[':descricao'] = $descricao;
+            $placeholders[] = ':descricao';
+        }
+
+        $query = sprintf(
+            'INSERT INTO socio_parceiro_institucional_setor (%s) VALUES (%s)',
+            implode(', ', $fields),
+            implode(', ', $placeholders)
+        );
+
+        $stmt = $this->db->prepare($query);
+        $stmt->execute($params);
+
+        $id = $this->db->lastInsertId();
+
+        return $id ? (int) $id : false;
+    }
 }

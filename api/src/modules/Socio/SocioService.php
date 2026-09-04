@@ -449,6 +449,17 @@ class SocioService implements SocioServiceInterface
         ];
     }
 
+    public function insertSocioParceiroSetor(string $nome, ?string $descricao = null): array|false
+    {
+        $result = $this->socioRepository->insertSocioParceiroSetor($nome, $descricao);
+
+        if ($result === false || $result < 1) {
+            return false;
+        }
+
+        return ['id' => $result];
+    }
+
     private function censurarCpf(?string $cpf): ?string
     {
         if (empty($cpf)) {

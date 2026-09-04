@@ -229,6 +229,10 @@ $app->post('/socios/parceiros/logo', [SocioController::class, 'uploadLogoSocioPa
     ->add($container->get(SocioMiddleware::class))
     ->add($container->get(AuthMiddleware::class));
 
+$app->post('/socios/parceiros/setor', [SocioController::class, 'insertSocioParceiroSetor'])
+    ->add($container->get(SocioMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
+
 $app->delete('/socios/parceiros/{id}', [SocioController::class, 'deleteSocioParceiro'])
     ->add($container->get(SocioMiddleware::class))
     ->add($container->get(AuthMiddleware::class));

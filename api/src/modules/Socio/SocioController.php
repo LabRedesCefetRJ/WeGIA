@@ -533,6 +533,59 @@ class SocioController
         }
     }
 
+    public function insertSocioParceiroSetor(Request $request, Response $response)
+    {
+        try {
+            $data = $request->getParsedBody() ?? [];
+            
+            $nome = trim((string)($data['nome'] ?? ''));
+            $descricao = isset($data['descricao']) && $data['descricao'] !== '' ? trim((string)($data['descricao'])) : null;
+
+            // Validate required data
+            if ($nome === '' || strlen($nome) > 255) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Nome do setor é obrigatório e deve ter no máximo 255 caracteres'
+                ]));
+                return $response->withStatus(400)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            // Insert socio parceiro setor
+            $result = $this->socioService->insertSocioParceiroSetor($nome, $descricao);
+
+            if (!$result) {
+                $response->getBody()->write(json_encode([
+                    'success' => false,
+                    'message' => 'Não foi possível adicionar o setor'
+                ]));
+                return $response->withStatus(500)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'success' => true,
+                'message' => 'Setor adicionado com sucesso',
+                'socio_parceiro_setor' => $result['data'] ?? []
+            ]));
+
+            return $response->withStatus(201)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Exception $e) {
+            $statusCode = (int)($e->getCode() ?: 500);
+            $statusCode = ($statusCode >= 100 && $statusCode < 600) ? $statusCode : 500;
+
+            $response->getBody()->write(json_encode([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $statusCode
+            ]));
+
+            return $response->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     private function buscarSocioPorCpf(string $cpf): array
     {
         // Validar CPF

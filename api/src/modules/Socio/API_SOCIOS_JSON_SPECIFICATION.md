@@ -959,7 +959,77 @@ id_socio_parceiro: 1
 
 ---
 
-## 13. GET `/socios/parceiros/{id}/logo`
+## 13. POST `/socios/parceiros/setor`
+
+Cadastra um setor para classificação de parceiros institucionais. Requer autenticação via token JWT e permissão de acesso ao recurso de sócios.
+
+### Parâmetros
+- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+- **Content-Type** (header, obrigatório): `application/json`
+
+### Requisição
+```json
+{
+  "nome": "Educação",
+  "descricao": "Instituições e serviços relacionados à educação"
+}
+```
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `nome` | string | Sim | Nome do setor. Após a remoção de espaços nas extremidades, não pode ser vazio e deve ter no máximo 255 caracteres |
+| `descricao` | string | Não | Descrição do setor. Espaços nas extremidades são removidos; quando ausente ou vazia, é persistida como `null` |
+
+### Resposta - 201 Created (Sucesso)
+```json
+{
+  "success": true,
+  "message": "Setor adicionado com sucesso",
+  "socio_parceiro_setor": {
+    "id": 1
+  }
+}
+```
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `success` | boolean | Indica que o setor foi cadastrado com sucesso |
+| `message` | string | Mensagem descritiva do resultado |
+| `socio_parceiro_setor` | object | Resultado do cadastro do setor |
+| `socio_parceiro_setor.id` | integer | ID do setor recém-criado |
+
+### Resposta - 400 Bad Request (Nome Ausente ou Inválido)
+```json
+{
+  "success": false,
+  "message": "Nome do setor é obrigatório e deve ter no máximo 255 caracteres"
+}
+```
+
+### Resposta - 403 Forbidden (Acesso Negado)
+```json
+{
+  "error": "Usuário não possui permissão para acessar este recurso",
+  "status": "forbidden"
+}
+```
+
+### Resposta - 500 Internal Server Error
+```json
+{
+  "success": false,
+  "message": "Não foi possível adicionar o setor"
+}
+```
+
+Em caso de exceção, a resposta contém `success: false`, a mensagem em `error` e o código HTTP em `code`.
+
+### Persistência
+O setor é inserido na tabela `socio_parceiro_institucional_setor`. O campo `nome` é único; os campos `ativo`, `created_at` e `updated_at` usam os valores padrão definidos no banco de dados.
+
+---
+
+## 14. GET `/socios/parceiros/{id}/logo`
 
 Recupera a logo de um parceiro institucional em formato binário.
 
@@ -996,7 +1066,7 @@ Retorna o conteúdo da imagem com o tipo MIME correspondente (por exemplo, `imag
 
 ---
 
-## 14. DELETE `/socios/parceiros/{id}`
+## 15. DELETE `/socios/parceiros/{id}`
 
 Exclui um parceiro institucional.
 
@@ -1036,7 +1106,7 @@ Exclui um parceiro institucional.
 
 ---
 
-## 15. GET `/socios/{id}/beneficios`
+## 16. GET `/socios/{id}/beneficios`
 
 Retorna a quantidade de pontos de benefício de um sócio específico. Requer autenticação via token JWT. O usuário autenticado só pode acessar os próprios benefícios.
 
@@ -1083,6 +1153,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
    - A rota POST `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
    - A rota PUT `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
    - A rota PATCH `/socios/parceiros` exige um token JWT válido e permissão para o recurso de sócios.
+   - A rota POST `/socios/parceiros/setor` exige um token JWT válido e permissão para o recurso de sócios.
    - A rota GET `/socios/parceiros` é pública e não exige autenticação.
    - Em ambiente de desenvolvimento, o teste da rota protegida deve ser feito com um usuário que tenha acesso ao recurso configurado no middleware.
 
@@ -1094,6 +1165,7 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 3. **Persistência**:
    - A rota cria uma pessoa jurídica e, em seguida, registra o cadastro na tabela de parceiros institucionais.
    - O valor de `idSocioBenefitRule` está atualmente fixado no repositório, então esse ponto deve ser revisado em uma segunda fase.
+   - A rota POST `/socios/parceiros/setor` grava o setor na tabela `socio_parceiro_institucional_setor`, cujo campo `nome` possui restrição de unicidade.
 
 1. **Content-Type**: Todas as respostas são em JSON com header `Content-Type: application/json`
 
