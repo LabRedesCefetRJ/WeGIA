@@ -22,23 +22,30 @@ require_once ROOT . "/html/personalizacao_display.php";
 // Adiciona Função de mensagem
 require_once ROOT . "/html/geral/msg.php";
 
+$id_produto = filter_input(
+    INPUT_GET,
+    'id_produto',
+    FILTER_VALIDATE_INT
+);
+
+if (!$id_produto || $id_produto < 1) {
+    http_response_code(400);
+    exit('O id do produto informado não é válido.');
+}
+
 if (!isset($_SESSION['unidade'])) {
-	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
 	exit;
 }
 if (!isset($_SESSION['categoria'])) {
-	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
 	exit;
 }
 if (!isset($_SESSION['grupo_produto'])) {
-	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=GrupoProdutoControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
 	exit;
 }
 if (!isset($_SESSION['produto'])) {
-	extract($_REQUEST);
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto) . '&id_produto=' . htmlspecialchars($id_produto));
 	exit;
 }
@@ -254,7 +261,6 @@ if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_
 			<header class="page-header">
 				<h2>Alterar Produto</h2>
 				<div class="right-wrapper pull-right">
-					<?php getMsg(); ?>
 					<ol class="breadcrumbs">
 						<li>
 							<a href="<?= WWW ?>html/home.php">
@@ -269,6 +275,10 @@ if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_
 			</header>
 
 			<!-- start: page -->
+			<?php
+			getMsg();
+			sessionMsg();
+			?>
 			<div class="row">
 				<div class="col-md-4 col-lg-3" style="width: 230px;">
 					<section class="panel">

@@ -647,7 +647,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset
 														<thead>
 															<tr style="width: 768px;">
 																<th>Produto
-																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge" style="float:right;" id="btn-novo-produto" class="produto">
+																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge produto" style="float:right;" id="btn-novo-produto">
 																	</a>
 																</th>
 																<th>Quantidade</th>
@@ -787,6 +787,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset
     						source: function (request, response) {
 
         						const termo = normalizar(request.term);
+								const resultados = [];
 
         						// Está dentro de um grupo
         						if (grupoAberto !== null) {
@@ -820,41 +821,48 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset
             						grupoAberto = null;
         						}
 
-        						// Pesquisa tipo "papel c"
-        						for (const [chave, grupo] of Object.entries(gruposProdutos)) {
+								// Primeiro procura grupos
+								const gruposEncontrados = [];
 
-            						const nomeGrupo = normalizar(grupo.nome);
+								for (const [chave, grupo] of Object.entries(gruposProdutos)) {
 
-            						if (termo.startsWith(nomeGrupo + ' ')) {
+    								const nomeGrupo = normalizar(grupo.nome);
 
-                						const busca = normalizar(
-                    						termo.substring(nomeGrupo.length)
-                						);
+    								if (nomeGrupo.startsWith(termo)) {
+        								gruposEncontrados.push(
+            								itemGrupo(chave, grupo)
+        								);
+    								}
+								}
 
-                						response(
-                    						grupo.produtos
-                        						.filter(produto =>
-                            						normalizar(produto.descricao).includes(busca) ||
-                            						normalizar(produto.codigo).includes(busca)
-                        						)
-                        						.map(itemProduto)
-                						);
 
-                						return;
-            						}
-        						}
+								// Se encontrou grupo, mostra SOMENTE grupos
+								if (gruposEncontrados.length > 0) {
 
-        						// Pesquisa normal: mostra grupos
-        						const resultados = Object.entries(gruposProdutos)
-            						.filter(([chave, grupo]) =>
-                						termo === '' ||
-                						normalizar(grupo.nome).includes(termo)
-            						)
-            						.map(([chave, grupo]) =>
-                						itemGrupo(chave, grupo)
-            						);
+    								response(gruposEncontrados);
+    								return;
+								}	
 
-        						response(resultados);
+
+								// Se não encontrou grupo,
+								// aí sim pesquisa produtos diretamente
+								for (const grupo of Object.values(gruposProdutos)) {
+
+    								grupo.produtos
+        								.filter(produto => {
+            								return (
+                								normalizar(produto.descricao).includes(termo) ||
+                								normalizar(produto.codigo).includes(termo)
+            								);
+        								})
+        								.forEach(produto => {
+            								resultados.push(
+                								itemProduto(produto)
+            								);
+        								});
+									}
+
+								response(resultados);
     						},
 
     						select: function (event, ui) {

@@ -7,6 +7,7 @@ if (session_status() === PHP_SESSION_NONE)
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: " . WWW . "html/index.php");
+	exit();
 } else {
 	session_regenerate_id();
 }
@@ -438,50 +439,57 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
         				}
 
         				/*
-        				 * Pesquisa específica:
-        				 * "papel c" → produtos do grupo Papel contendo "c".
-        				 */
-        				for (const [chave, grupo] of Object.entries(gruposProdutos)) {
-
-            				const nomeGrupo = normalizar(grupo.nome);
-
-            				if (termo.startsWith(nomeGrupo + ' ')) {
-
-                				const busca = normalizar(
-                    				termo.substring(nomeGrupo.length)
-                				);
-
-                				const produtos = grupo.produtos
-                    				.filter(produto => {
-                        				return (
-                            				normalizar(produto.descricao).includes(busca) ||
-                            				normalizar(produto.codigo).includes(busca)
-                        				);
-                    				})
-                    				.map(itemProduto);
-
-                				response(produtos);
-                				return;
-            				}
-        				}
-
-        				/*
-        				 * Pesquisa normal:
-        				 * vazio ou "pap" → grupos.
-        				 */
-        				for (const [chave, grupo] of Object.entries(gruposProdutos)) {
-
-            				if (
-                				termo === '' ||
-                				normalizar(grupo.nome).includes(termo)
-            				) {
-                				resultados.push(
-                    				itemGrupo(chave, grupo)
-                				);
-            				}
-        				}
-
-        				response(resultados);
+						 * Pesquisa normal:
+						* 1. Campo vazio -> mostra todos os grupos
+						* 2. Se o termo corresponder a algum grupo -> mostra somente grupos
+						* 3. Se não corresponder a nenhum grupo -> procura produtos diretamente
+						*/
+						
+						// Campo vazio: mostra todos os grupos
+						if (termo === '') {
+							for (const [chave, grupo] of Object.entries(gruposProdutos)) {
+								resultados.push(itemGrupo(chave, grupo));
+							}
+							
+							response(resultados);
+    						return;
+						}
+						
+						// Primeiro procura grupos
+						const gruposEncontrados = [];
+						
+						for (const [chave, grupo] of Object.entries(gruposProdutos)) {
+							
+							if (normalizar(grupo.nome).includes(termo)) {
+								gruposEncontrados.push(
+									itemGrupo(chave, grupo)
+								);
+							}
+						}
+						
+						// Se encontrou grupo, mostra SOMENTE os grupos
+						if (gruposEncontrados.length > 0) {
+							response(gruposEncontrados);
+							return;
+						}
+						
+						// Nenhum grupo correspondeu:
+						// agora sim pesquisa produtos diretamente
+						for (const grupo of Object.values(gruposProdutos)) {
+							
+							grupo.produtos
+							.filter(produto => {
+								return (
+									normalizar(produto.descricao).includes(termo) ||
+									normalizar(produto.codigo).includes(termo)
+								);
+							})
+							.forEach(produto => {
+								resultados.push(itemProduto(produto));
+							});
+						}
+						
+						response(resultados);
     				},
 
     				select: function(event, ui) {
