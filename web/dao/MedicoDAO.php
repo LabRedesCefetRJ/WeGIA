@@ -11,28 +11,42 @@ class MedicoDAO
         $this->pdo = Conexao::connect();
     }
 
-    public function inserirMedico($crm, $nome)
+     public function inserirMedico($crm, $nome)
     {
-        $stmt = $this->pdo->prepare("
-            INSERT INTO saude_medicos (
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT INTO saude_medicos (
                 crm, nome
-            ) VALUES (
+                ) VALUES (
                 :crm, :nome
-            )
-        ");
+                )
+            ");
 
-        $stmt->execute([
-            ':crm' => $crm,
-            ':nome' => $nome
-        ]);
+            $stmt->execute([
+                ':crm' => $crm,
+                ':nome' => $nome
+            ]);
 
-        return [
-            'id_medico' => (int)$this->pdo->lastInsertId(),
-            'crm' => $crm,
-            'nome' => $nome
-        ];
-    }
-
+            return [
+                'sucesso' => true,
+                'id_medico' => (int)$this->pdo->lastInsertId(),
+                'crm' => $crm,
+                'nome' => $nome
+            ];
+        } catch (PDOException $e) {
+            if ($e->getCode() === '22001') {
+                return [
+                    'sucesso' => false,
+                    'erro' => 'Erro: O CRM ou o nome digitado excede o limite de caracteres permitido.'
+                ];
+            }
+            return [
+                'sucesso' => false,
+                'erro' => 'Erro interno ao acessar o banco de dados.'
+            ];
+        }
+    } 
+    
      public function listarTodosOsMedicos(){
         $stmt = $this->pdo->prepare("
             SELECT id_medico, nome

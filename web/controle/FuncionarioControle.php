@@ -10,6 +10,7 @@ include_once ROOT . "/dao/Conexao.php";
 include_once ROOT . '/classes/Funcionario.php';
 include_once ROOT . '/classes/QuadroHorario.php';
 include_once ROOT . '/dao/FuncionarioDAO.php';
+include_once ROOT . '/dao/IdentificadorRegistroProfissionalDAO.php';
 include_once ROOT . '/dao/QuadroHorarioDAO.php';
 include_once ROOT . '/dao/PermissaoDAO.php';
 require_once ROOT . '/classes/Util.php';
@@ -1100,6 +1101,15 @@ class FuncionarioControle
 
             if (!isset($idFuncionario))
                 throw new PDOException('Erro ao buscar o id do funcionário recém cadastrado.', 500);
+       
+            $idTipoRegistro = filter_input(INPUT_POST, 'registroProfissionalTipo', FILTER_SANITIZE_NUMBER_INT);
+            $numeroRegistro = filter_input(INPUT_POST, 'registro_profissional_numero', FILTER_SANITIZE_SPECIAL_CHARS);
+            $ufRegistro     = filter_input(INPUT_POST, 'uf_RegistroProfissional', FILTER_SANITIZE_SPECIAL_CHARS);
+
+            if ($idFuncionario && !empty($idTipoRegistro) && !empty($numeroRegistro)) {
+                $registroDAO = new IdentificadorRegistroProfissionalDAO();
+                $registroDAO->salvarRegistroProfissional($idFuncionario, $idTipoRegistro, $numeroRegistro, $ufRegistro);
+            }           
 
             $horarioDAO->incluir($horario);
 
