@@ -377,7 +377,7 @@ class SocioController
 
             foreach ($arrayBoletos as $boleto) {
                 // Extrair o documento do nome do arquivo
-                $documentoArquivo = explode('_', $boleto)[1];
+                $documentoArquivo = isset(explode('_', $boleto)[1]) ? explode('_', $boleto)[1] : null;
                 if ($documentoArquivo == $docLimpo) {
                     $boletosEncontrados[] = $boleto;
                 } else if ($contribuicaoLogCollection) {

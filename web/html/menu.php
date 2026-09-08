@@ -607,6 +607,11 @@ session_start();
 						</a>
 					</li>
 					<li>
+						<a href="<?= WWW ?>html/geral/tipoRegistroProfissional.php">
+							Tipos de Registros Profissionais
+						</a>
+					</li>
+					<li>
 						<a href="<?= WWW ?>html/geral/documentos_funcionario.php">
 							Documentos Funcionário
 						</a>
