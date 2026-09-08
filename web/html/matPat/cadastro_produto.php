@@ -229,7 +229,10 @@ $dadosForm = $_SESSION['form_produto'] ?? [];
 				<div class="row">
 					<div class="col-md-4 col-lg-2" style="visibility: hidden;"></div>
 					<div class="col-md-8 col-lg-8">
-						<?php getMsg(); ?>
+						<?php
+						getMsg();
+						sessionMsg();
+						?>
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li class="active">

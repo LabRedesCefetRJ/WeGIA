@@ -261,7 +261,6 @@ if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_
 			<header class="page-header">
 				<h2>Alterar Produto</h2>
 				<div class="right-wrapper pull-right">
-					<?php getMsg(); ?>
 					<ol class="breadcrumbs">
 						<li>
 							<a href="<?= WWW ?>html/home.php">
@@ -276,6 +275,10 @@ if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_
 			</header>
 
 			<!-- start: page -->
+			<?php
+			getMsg();
+			sessionMsg();
+			?>
 			<div class="row">
 				<div class="col-md-4 col-lg-3" style="width: 230px;">
 					<section class="panel">

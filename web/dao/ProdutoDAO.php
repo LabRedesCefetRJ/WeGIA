@@ -41,8 +41,11 @@ class ProdutoDAO
 				exit;
     		}
 
-    		header("Location: " . WWW . "html/matPat/cadastro_produto.php?flag=warn&msg=" . urlencode("A descrição inserida já existe!"));
-    		exit;
+    		$_SESSION['msg'] = "A descrição inserida já existe!";
+			$_SESSION['flag'] = "warn";
+
+			header("Location: " . WWW . "html/matPat/cadastro_produto.php");
+			exit;
 		}
 
 		if ($produto->getCodigo() !== null && $produto->getCodigo() !== '') {
@@ -61,7 +64,9 @@ class ProdutoDAO
 			$stmtCodigo->execute();
 
 			if ($stmtCodigo->fetch(PDO::FETCH_ASSOC)) {
-    			$_SESSION['erro_produto'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
+    			$_SESSION['msg'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
+    			$_SESSION['flag'] = "warn";
+
     			header("Location: " . WWW . "html/matPat/cadastro_produto.php");
     			exit;
 			}
@@ -250,6 +255,30 @@ class ProdutoDAO
 	{
 		$pdo = Conexao::connect();
 
+		$stmtDescricao = $pdo->prepare("
+    		SELECT id_produto
+    		FROM produto
+    		WHERE descricao = :descricao
+    		AND id_produto != :id_produto
+    		AND oculto = false
+    		AND ativo = 1
+		");
+
+		$stmtDescricao->bindValue(':descricao', trim($produto->getDescricao()), PDO::PARAM_STR);
+
+		$stmtDescricao->bindValue(':id_produto', $produto->getId_produto(), PDO::PARAM_INT);
+
+		$stmtDescricao->execute();
+
+		if ($stmtDescricao->fetch(PDO::FETCH_ASSOC)) {
+    		$_SESSION['msg'] = "A descrição inserida já existe!";
+    		$_SESSION['flag'] = "warn";
+
+    		header("Location: " . WWW . "html/matPat/alterar_produto.php?id_produto=" . urlencode($produto->getId_produto()));
+
+    		exit;
+		}
+
 		if ($produto->getCodigo() !== null && $produto->getCodigo() !== '') {
 			$stmtCodigo = $pdo->prepare("
 				SELECT id_produto
@@ -265,9 +294,12 @@ class ProdutoDAO
 			$stmtCodigo->execute();
 
 			if ($stmtCodigo->fetch(PDO::FETCH_ASSOC)) {
-				$_SESSION['erro_produto'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
-				header("Location: " . WWW . "html/matPat/alterar_produto.php");
-				exit;
+    			$_SESSION['msg'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
+    			$_SESSION['flag'] = "warn";
+
+    			header("Location: " . WWW . "html/matPat/alterar_produto.php?id_produto=" . urlencode($produto->getId_produto()));
+
+    			exit;
 			}
 		}
 
