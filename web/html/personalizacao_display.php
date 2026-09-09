@@ -1,8 +1,5 @@
 <?php
-$config_path = realpath("../config.php");
-if($config_path){
-    require_once($config_path);
-}
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once ROOT . "/classes/Personalizacao_display.php";
 /*
