@@ -6,6 +6,64 @@ Documentação completa das endpoints e formatos JSON para o módulo de Pessoa n
 
 ---
 
+## Verificar Pessoa Homônima
+
+### Endpoint
+```
+GET /pessoas/homonimo/{fullname}
+```
+
+### Autenticação
+**Não requer autenticação.**
+
+### Descrição
+Verifica se existe no repositório uma pessoa cujo nome completo, formado pela concatenação de `nome` e `sobrenome`, corresponde ao valor informado.
+
+A comparação ignora diferenças entre maiúsculas e minúsculas, acentos e espaços extras entre as palavras. O endpoint não retorna dados da pessoa.
+
+### Parâmetro de rota
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| `fullname` | String | Sim | Nome completo, com espaços codificados como `%20` quando necessário |
+
+### Exemplo de requisição
+```bash
+curl -X GET "http://localhost:8000/pessoas/homonimo/Jo%C3%A3o%20da%20Silva"
+```
+
+### Resposta com sucesso (200 OK)
+```json
+{
+  "exists": true
+}
+```
+
+### Respostas de erro
+
+#### 400 Bad Request - Nome inválido
+```json
+{
+  "error": "O nome completo deve ser informado."
+}
+```
+
+#### 404 Not Found - Homônimo não encontrado
+```json
+{
+  "error": "Homônimo não encontrado"
+}
+```
+
+#### 5xx - Erro de execução
+```json
+{
+  "error": "Descrição do erro"
+}
+```
+
+---
+
 ## 1. Atualizar Perfil do Usuário
 
 ### Endpoint
@@ -659,6 +717,7 @@ CREATE TABLE pessoa (
 
 | Data | Versão | Alteração |
 |------|--------|-----------|
+| 2026-09-09 | 1.1 | Adicionado endpoint público de verificação de homônimos |
 | 2026-06-10 | 1.0 | Documentação inicial da API de Pessoa |
 
 ---

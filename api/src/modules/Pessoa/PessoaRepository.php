@@ -57,6 +57,29 @@ class PessoaRepository
         return $result === false ? null : $result;
     }
 
+    public function existsByFullName(string $normalizedFullName): bool
+    {
+        $query = "
+            SELECT 1
+            FROM pessoa
+            WHERE CONVERT(LOWER(
+                TRIM(
+                    REGEXP_REPLACE(
+                        CONCAT_WS(' ', COALESCE(nome, ''), COALESCE(sobrenome, '')),
+                        '[[:space:]]+',
+                        ' '
+                    )
+                )
+            ) USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(:fullname USING utf8mb4) COLLATE utf8mb4_unicode_ci
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute(['fullname' => $normalizedFullName]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
     public function update(int $id, array $dados): bool
     {
         $setClause = [];

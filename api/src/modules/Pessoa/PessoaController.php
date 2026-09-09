@@ -117,6 +117,45 @@ class PessoaController
         }
     }
 
+    public function checkHomonym(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $fullname = (string)($args['fullname'] ?? '');
+            $exists = $this->pessoaService->existePessoaPorNomeCompleto($fullname);
+
+            if (!$exists) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Homônimo não encontrado'
+                ], JSON_UNESCAPED_UNICODE));
+
+                return $response
+                    ->withStatus(404)
+                    ->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode([
+                'exists' => true
+            ]));
+
+            return $response
+                ->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            $statusCode = (int)$e->getCode();
+            if ($statusCode < 400 || $statusCode > 599) {
+                $statusCode = 500;
+            }
+
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage()
+            ], JSON_UNESCAPED_UNICODE));
+
+            return $response
+                ->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     public function updateProfilePhoto(Request $request, Response $response): Response
     {
         try {

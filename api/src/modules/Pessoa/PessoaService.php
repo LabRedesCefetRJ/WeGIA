@@ -11,10 +11,12 @@ use Psr\Http\Message\UploadedFileInterface;
 class PessoaService implements PessoaServiceInterface
 {
     private PessoaRepository $pessoaRepository;
+    private PessoaNameNormalizer $nameNormalizer;
 
-    public function __construct(PessoaRepository $pessoaRepository)
+    public function __construct(PessoaRepository $pessoaRepository, ?PessoaNameNormalizer $nameNormalizer = null)
     {
         $this->pessoaRepository = $pessoaRepository;
+        $this->nameNormalizer = $nameNormalizer ?? new PessoaNameNormalizer();
     }
 
     public function criarPessoa(string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf): PessoaInterface
@@ -71,6 +73,17 @@ class PessoaService implements PessoaServiceInterface
             $this->criarEnderecoDoResultado($resultado),
             (int)$resultado['id_pessoa']
         );
+    }
+
+    public function existePessoaPorNomeCompleto(string $nomeCompleto): bool
+    {
+        $nomeNormalizado = $this->nameNormalizer->normalize($nomeCompleto);
+
+        if ($nomeNormalizado === '') {
+            throw new \InvalidArgumentException('O nome completo deve ser informado.', 400);
+        }
+
+        return $this->pessoaRepository->existsByFullName($nomeNormalizado);
     }
 
     public function atualizarPessoa(int $id, string $nome, string $sobrenome, ?DateTime $dataNascimento, ?string $sexo, ?string $telefone, ?string $email, string $cpf, ?array $endereco = null): PessoaInterface
