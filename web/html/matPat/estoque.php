@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,7 +12,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 22, 5);
@@ -299,7 +299,7 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 								$almoxarifado = JSON_decode(filtrarAlmoxarifado($_SESSION['id_pessoa'], JSON_encode($almoxarifado)));
 								foreach ($almoxarifado as $value) {
 									echo ('
-										<option value="' . $value->descricao_almoxarifado . '">' . $value->descricao_almoxarifado . '</option>
+										<option value="' . htmlspecialchars($value->descricao_almoxarifado) . '">' . htmlspecialchars($value->descricao_almoxarifado) . '</option>
 										');
 								}
 								?>
@@ -314,7 +314,7 @@ define('PERMISSAO', permissaoUsuario($_SESSION['id_pessoa'], 2));
 								$almoxarifado = $res->fetchAll(PDO::FETCH_ASSOC);
 								foreach ($almoxarifado as $value) {
 									echo ('
-										<option value="' . $value['descricao_categoria'] . '">' . $value['descricao_categoria'] . '</option>
+										<option value="' . htmlspecialchars($value['descricao_categoria']) . '">' . htmlspecialchars($value['descricao_categoria']) . '</option>
 										');
 								}
 								?>

@@ -130,8 +130,7 @@ try {
   <script src="<?php echo WWW; ?>Functions/onlyNumbers.js"></script>
   <script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
   <script src="<?php echo WWW; ?>Functions/mascara.js"></script>
-  <script src="<?php echo WWW; ?>html/contribuicao/js/geraboleto.js"></script>
-  
+
   <script src="<?php echo WWW; ?>html/socio/sistema/controller/script/sincronizacao_contribuicoes.js" defer></script>
 
   <script type="text/javascript">

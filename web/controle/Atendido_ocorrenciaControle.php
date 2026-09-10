@@ -50,6 +50,18 @@ class Atendido_ocorrenciaControle
 			if (!$idOcorrencia || $idOcorrencia < 1)
 				throw new InvalidArgumentException('O id da ocorrência informado é inválido.', 412);
 
+			// Este método é usado por um endpoint de download de anexo que só
+			// checava se havia sessão ativa, sem checar permissão nenhuma no
+			// módulo de atendido -- qualquer usuário autenticado conseguia
+			// baixar documentos de ocorrência de qualquer atendido.
+			$idPessoa = filter_var($_SESSION['id_pessoa'] ?? null, FILTER_VALIDATE_INT);
+			if (!$idPessoa || $idPessoa < 1) {
+				throw new InvalidArgumentException('Usuario nao autenticado.', 401);
+			}
+
+			require_once ROOT . '/html/permissao/permissao.php';
+			permissao($idPessoa, 12, 7);
+
 			$Atendido_ocorrenciaDAO = new Atendido_ocorrenciaDAO();
 			$anexos = $Atendido_ocorrenciaDAO->listarAnexo($idOcorrencia);
 

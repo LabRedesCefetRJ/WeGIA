@@ -49,7 +49,10 @@ class EnderecoDAO
             $id = new EnderecoDAO;
             $numeroId = $id->listarId();
             $numeroId = $numeroId[0]['id'];
-            $consulta = $pdo->query("SELECT bairro, cep, cidade, complemento, estado, ibge, logradouro, nome, numero_endereco FROM endereco_instituicao WHERE id_inst='$numeroId'");
+            $stmtEndereco = $pdo->prepare("SELECT bairro, cep, cidade, complemento, estado, ibge, logradouro, nome, numero_endereco FROM endereco_instituicao WHERE id_inst=:id_inst");
+            $stmtEndereco->bindParam(':id_inst', $numeroId);
+            $stmtEndereco->execute();
+            $consulta = $stmtEndereco;
             $endereco = Array();
             $x=0;
             while($linha = $consulta->fetch(PDO::FETCH_ASSOC)){
@@ -69,12 +72,11 @@ class EnderecoDAO
             $id = new EnderecoDAO;
             $numeroId = $id->listarId();
             $numeroId = $numeroId[0]['id'];
-            $sql = "update endereco_instituicao set nome=:nome,numero_endereco=:numero_endereco,logradouro=:logradouro,bairro=:bairro,cidade=:cidade,estado=:estado,cep=:cep,complemento=:complemento,ibge=:ibge where id_inst='$numeroId'";
-            
+            $sql = "update endereco_instituicao set nome=:nome,numero_endereco=:numero_endereco,logradouro=:logradouro,bairro=:bairro,cidade=:cidade,estado=:estado,cep=:cep,complemento=:complemento,ibge=:ibge where id_inst=:id_inst";
+
             $pdo = Conexao::connect();
             $stmt = $pdo->prepare($sql);
-            
-            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':id_inst', $numeroId);
             $nome=$endereco->getNome();
             $cep=$endereco->getCep();
             $estado=$endereco->getEstado();

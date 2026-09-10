@@ -35,23 +35,23 @@ if (!$id_produto || $id_produto < 1) {
 
 if (!isset($_SESSION['unidade'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
-	exit;
+	exit();
 }
 if (!isset($_SESSION['categoria'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
-	exit;
+	exit();
 }
 if (!isset($_SESSION['grupo_produto'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=GrupoProdutoControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
-	exit;
-}
-if (!isset($_SESSION['produto'])) {
-	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto) . '&id_produto=' . htmlspecialchars($id_produto));
-	exit;
+	exit();
 }
 if (!isset($_SESSION['produtos'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
-	exit;
+	exit();
+}
+if (!isset($_SESSION['produto'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto) . '&id_produto=' . htmlspecialchars($id_produto));
+	exit();
 }
 
 if (isset($_SESSION['produto'], $_SESSION['categoria'], $_SESSION['unidade'], $_SESSION['grupo_produto'], $_SESSION['produtos'])) {

@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
     session_start();
@@ -12,7 +13,6 @@ else {
     session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 // Not checking specific permissions for this page, as volunteer forms don't always, but we could if we wanted.
 
