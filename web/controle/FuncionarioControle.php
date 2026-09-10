@@ -767,7 +767,7 @@ class FuncionarioControle
             if ($senha_armazenada !== null) {
                 $check = LoginHelper::verifyAndMigrate($nova_senha, $senha_armazenada);
                 if ($check['valid']) {
-                    return 4; // nova senha igual à atual — bloqueado
+                    return 3; // nova senha igual à atual — bloqueado
                 }
             }
 
@@ -1292,6 +1292,20 @@ class FuncionarioControle
         $senha_antiga    = filter_input(INPUT_POST, 'senha_antiga');
         $redir           = filter_input(INPUT_POST, 'redir', FILTER_SANITIZE_SPECIAL_CHARS);
 
+        // Exibe qualquer erro deste fluxo como a faixa vermelha padrão do
+        // sistema (msg.php), em vez do JSON cru que o catch genérico do
+        // método devolve -- isso deixava a tela em branco pro usuário.
+        // Só redireciona de volta pra configurar_senhas.php quando foi de lá
+        // que a requisição veio; qualquer outro caso cai em home.php, pra
+        // não abrir um redirect aberto a partir do valor de 'redir' do POST.
+        $redirErro = function (string $mensagem) use ($redir) {
+            require_once ROOT . '/html/geral/msg.php';
+            setSessionMsg($mensagem, 'error');
+            $destino = ($redir === 'geral/configurar_senhas.php') ? $redir : 'home.php';
+            header('Location: ' . WWW . 'html/' . $destino);
+            exit();
+        };
+
         try {
             if (!Csrf::validateToken($_POST['csrf_token'] ?? '')) {
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
@@ -1317,13 +1331,19 @@ class FuncionarioControle
             if ($id_pessoa != $_SESSION['id_pessoa']) {
                 require_once ROOT . '/html/permissao/permissao.php';
                 permissao($_SESSION['id_pessoa'], 91, 1);
+
+                // A senha do usuário adm_configurado=1 nunca pode ser trocada
+                // por este fluxo, mesmo por quem tem acesso ao módulo de
+                // Permissões -- só o próprio dono da conta pode trocá-la,
+                // e não por este painel (bloqueio de auto-troca acima).
+                $funcionarioDAO = new FuncionarioDAO();
+                if ($funcionarioDAO->verificaAdm($id_pessoa)) {
+                    $redirErro('A senha desse usuário só pode ser trocada por ele mesmo.');
+                }
             }
 
-            $isConfigAdm = false;
-
             if ($id_pessoa == $_SESSION['id_pessoa'] && "geral/configurar_senhas.php" === $redir) {
-                header("Location: " . WWW . "html/geral/configurar_senhas.php?verificacao=6");
-                exit();
+                $redirErro('Operação negada: Administradores não podem alterar a própria senha pelo painel de configuração de senhas. Por favor, utilize a opção de alteração de senha no menu do usuário.');
             }
 
             // --- Fluxo: usuário trocando a própria senha ---
@@ -1333,37 +1353,50 @@ class FuncionarioControle
                     throw new InvalidArgumentException('A senha atual é obrigatória.', 400);
                 }
 
-                $page        = "logout.php";
                 $verificacao = $this->verificarSenha($nova_senha, $confirmar_senha, $id_pessoa, $senha_antiga);
-                $sucesso     = 5;
+
+                // Continua usando o parâmetro numérico ?verificacao=N em
+                // logout.php -- esse fluxo redireciona pra fora da sessão
+                // (a página não tem faixa vermelha, é só o alert() de sempre).
+                header("Location: " . WWW . "html/logout.php?verificacao=" . htmlspecialchars($verificacao));
+                exit();
 
             }
             // --- Fluxo: pessoa com acesso ao módulo de Permissões configurando senha de outro usuário ---
             elseif ($redir === "geral/configurar_senhas.php") {
 
-                $isConfigAdm = true;
-                $page        = $redir;
                 $verificacao = $this->verificarSenhaConfig($nova_senha, $confirmar_senha, $id_pessoa);
-                $sucesso     = 4;
+
+                if ($verificacao === 4) {
+                    require_once ROOT . '/html/geral/msg.php';
+                    setSessionMsg('Senha alterada com sucesso!', 'success');
+                    header("Location: " . WWW . "html/geral/configurar_senhas.php");
+                    exit();
+                }
+
+                $mensagensConfig = [
+                    1 => 'Campos obrigatórios ausentes ou inválidos.',
+                    2 => 'Nova senha e confirmação não conferem.',
+                    3 => 'A nova senha não pode ser igual à senha atual.',
+                ];
+
+                $redirErro($mensagensConfig[$verificacao] ?? 'Não foi possível alterar a senha.');
 
             }
             else {
                 throw new LogicException('Rota de alteração de senha não reconhecida para este usuário.', 400);
             }
 
-            // Monta a URL de redirecionamento
-            $url = WWW . 'html/' . htmlspecialchars($page) . '?verificacao=' . htmlspecialchars($verificacao);
-
-            // Só o fluxo de admin usa o parâmetro extra, e só em caso de sucesso
-            if ($isConfigAdm && $verificacao == $sucesso) {
-                $url .= '&redir_config=true';
-            }
-
-            header("Location: " . $url);
-            exit();
-
         } catch (Exception $e) {
-            Util::tratarException($e);
+            error_log($e->__toString());
+            // PDOException pode expor detalhes internos do banco (nomes de
+            // tabela/coluna) na mensagem -- não repassa pro usuário, igual o
+            // Util::tratarException já fazia antes desta função passar a usar
+            // o redirect com faixa vermelha em vez de JSON cru.
+            $mensagem = $e instanceof PDOException
+                ? 'Erro interno ao acessar o banco de dados.'
+                : $e->getMessage();
+            $redirErro($mensagem);
         }
     }
 
