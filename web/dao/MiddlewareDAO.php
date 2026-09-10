@@ -22,10 +22,25 @@ class MiddlewareDAO
         $sqlCargo = 'SELECT id_cargo FROM funcionario WHERE id_pessoa=:idPessoa';
         $stmtCargo = $this->pdo->prepare($sqlCargo);
         $stmtCargo->bindParam(':idPessoa', $idPessoa);
-
         $stmtCargo->execute();
 
-        $idCargo = $stmtCargo->fetch(PDO::FETCH_ASSOC)['id_cargo'];
+        $resultado = $stmtCargo->fetch(PDO::FETCH_ASSOC);
+
+        if ($resultado) {
+            $idCargo = $resultado['id_cargo'];
+        } else {
+            // Se não achar id_pessoa em funcionário, procura em voluntário
+            $sqlCargo = 'SELECT id_cargo FROM voluntario WHERE id_pessoa=:idPessoa';
+            $stmtCargo = $this->pdo->prepare($sqlCargo);
+            $stmtCargo->bindParam(':idPessoa', $idPessoa);
+            $stmtCargo->execute();
+            $resultado = $stmtCargo->fetch(PDO::FETCH_ASSOC);
+            $idCargo = $resultado ? $resultado['id_cargo'] : null;
+        }
+
+        if (is_null($idCargo)) {
+            return false;
+        }
 
         if (!empty($controladoraRecursos)) {
             foreach ($controladoraRecursos as $recurso) {

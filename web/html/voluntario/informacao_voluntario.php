@@ -12,6 +12,9 @@ if (!isset($_SESSION['voluntarios'])) {
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 13, 5);
+
 require_once ROOT . "/html/personalizacao_display.php";
 ?>
 <!DOCTYPE html>
@@ -52,14 +55,14 @@ require_once ROOT . "/html/personalizacao_display.php";
               </header>
               <div class="panel-body">
                 <?php if (isset($_SESSION['msg'])): ?>
-                <div class="alert alert-<?= $_SESSION['tipo']?> alert-dismissible" role="alert">
-                  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
-                      aria-hidden="true">&times;</span></button>
-                  <?= $_SESSION['msg']?>
-                </div>
-                <?php unset($_SESSION['msg'], $_SESSION['tipo']); ?>
-                <?php
-endif; ?>
+                  <div class="alert alert-<?= $_SESSION['tipo'] ?> alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span
+                        aria-hidden="true">&times;</span></button>
+                    <?= $_SESSION['msg'] ?>
+                  </div>
+                  <?php unset($_SESSION['msg'], $_SESSION['tipo']); ?>
+                  <?php
+                endif; ?>
                 <table class="table table-bordered table-striped mb-none" id="datatable-default">
                   <thead>
                     <tr>
@@ -72,26 +75,26 @@ endif; ?>
                   </thead>
                   <tbody>
                     <?php
-if (isset($_SESSION['voluntarios'])) {
-  $voluntarios = json_decode($_SESSION['voluntarios'], true);
-  if (is_array($voluntarios)) {
-    foreach ($voluntarios as $vol) {
-      if (strtolower($vol['situacao']) !== 'ativo') {
-        echo "<tr style='background-color: #ededed; color: #777;'>";
-      } else {
-        echo "<tr>";
-      }
-      echo "<td>" . htmlspecialchars($vol['nome']) . "</td>";
-      echo "<td>" . htmlspecialchars($vol['sobrenome']) . "</td>";
-      echo "<td>" . htmlspecialchars($vol['cpf']) . "</td>";
-      echo "<td>" . htmlspecialchars($vol['situacao']) . "</td>";
-      echo "<td><a href='profile_voluntario.php?id_voluntario=" . urlencode($vol['id_voluntario']) . "'><i class='fas fa-user-edit'></i></a></td>";
-      echo "</tr>";
-    }
-  }
-  unset($_SESSION['voluntarios']);
-}
-?>
+                    if (isset($_SESSION['voluntarios'])) {
+                      $voluntarios = json_decode($_SESSION['voluntarios'], true);
+                      if (is_array($voluntarios)) {
+                        foreach ($voluntarios as $vol) {
+                          if (strtolower($vol['situacao']) !== 'ativo') {
+                            echo "<tr style='background-color: #ededed; color: #777;'>";
+                          } else {
+                            echo "<tr>";
+                          }
+                          echo "<td>" . htmlspecialchars($vol['nome']) . "</td>";
+                          echo "<td>" . htmlspecialchars($vol['sobrenome']) . "</td>";
+                          echo "<td>" . htmlspecialchars($vol['cpf']) . "</td>";
+                          echo "<td>" . htmlspecialchars($vol['situacao']) . "</td>";
+                          echo "<td><a href='profile_voluntario.php?id_voluntario=" . urlencode($vol['id_voluntario']) . "'><i class='fas fa-user-edit'></i></a></td>";
+                          echo "</tr>";
+                        }
+                      }
+                      unset($_SESSION['voluntarios']);
+                    }
+                    ?>
                   </tbody>
                 </table>
               </div>

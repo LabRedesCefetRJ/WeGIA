@@ -361,7 +361,7 @@ require_once ROOT . "/html/geral/msg.php";
 
 				<div class="row category-row-third">
 					<div id="voluntarios" class="removeIn collapse">
-						<a href="<?= WWW ?>html/voluntario/cadastro_voluntario.php">
+						<a href="<?= WWW ?>html/voluntario/pre_cadastro_voluntario.php">
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa fa-address-book"></i>
 								<h4>Cadastrar Voluntário</h4>
