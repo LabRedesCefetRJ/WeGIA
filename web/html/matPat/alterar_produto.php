@@ -41,6 +41,14 @@ if (!isset($_SESSION['categoria'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=CategoriaControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
 	exit();
 }
+if (!isset($_SESSION['grupo_produto'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=GrupoProdutoControle&nextPage=../html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit();
+}
+if (!isset($_SESSION['produtos'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto));
+	exit();
+}
 if (!isset($_SESSION['produto'])) {
 	header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/alterar_produto.php?id_produto=' . htmlspecialchars($id_produto) . '&id_produto=' . htmlspecialchars($id_produto));
 	exit();
