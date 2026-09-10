@@ -754,7 +754,7 @@ async function buscarSocio() {
             return;
         }
 
-        throw new Error(data?.resultado || "Erro na consulta.");
+        throw new Error(data?.erro || "Erro na consulta.");
 
     } catch (error) {
         console.error(error);
