@@ -318,16 +318,9 @@ class SocioController
         $documento = filter_input(INPUT_GET, 'documento');
 
         try {
-            // Rota pública (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): exige
-            // captcha (mesma regra de criarSocio()/atualizarSocio()) e limita
+            // Rota pública (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): limita
             // tentativas por IP, pra dificultar varredura em massa de CPFs.
             if (!isset($_SESSION['usuario'])) {
-                $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
-                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
-
-                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
-
                 $cache = new Cache();
                 $chaveLimite = 'rate_limit_buscarPorDocumento_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
                 $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
