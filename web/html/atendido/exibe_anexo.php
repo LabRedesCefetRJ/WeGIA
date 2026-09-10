@@ -17,6 +17,9 @@ if (!isset($_SESSION['usuario'])) {
     exit;
 }
 
+require_once ROOT . "/html/permissao/permissao.php";
+permissao($_SESSION['id_pessoa'], 12, 7);
+
 require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 
 $id_ocorrencia = filter_input(INPUT_GET, 'idatendido_ocorrencias', FILTER_VALIDATE_INT);
