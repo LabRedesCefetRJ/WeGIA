@@ -35,6 +35,11 @@ if (!$cpf || strlen($cpf) < 1) {
     exit();
 }
 
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+require_once ROOT . '/dao/PessoaDAO.php';
+$pessoaDAO = new PessoaDAO();
+$adm_configurado = $pessoaDAO->verificaAdmConfigurado($id_pessoa);
+
 $pdo = Conexao::connect();
 
 $stmt = $pdo->prepare("SELECT * FROM pessoa WHERE cpf = :cpf");
@@ -246,6 +251,9 @@ require_once ROOT . '/classes/Csrf.php';
                                             <?php
                                             while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
                                                 $selected = isset($oldInput['cargo']) && $oldInput['cargo'] == $row[0] ? ' selected' : '';
+                                                if ($adm_configurado != 1 && $row[0] == 1) {
+                                                    continue;
+                                                }
                                                 echo "<option value=\"" . htmlspecialchars($row[0]) . "\"" . $selected . ">" . htmlspecialchars($row[1]) . "</option>";
                                             }
                                             ?>

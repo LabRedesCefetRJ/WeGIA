@@ -135,7 +135,7 @@ class PetControle
             );
 
             // Redireciona
-            header('Location: ../../WeGIA/html/pet/informacao_pet.php');
+            header('Location: ../../html/pet/informacao_pet.php');
         } catch (Exception $e) {
             Util::tratarException($e);
         }
