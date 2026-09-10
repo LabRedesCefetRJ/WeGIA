@@ -6,7 +6,6 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTOR
 if (session_status() === PHP_SESSION_NONE) {
   session_start();
 }
-
 if (!isset($_SESSION['usuario'])) {
   header("Location: " . "../../index.php");
   exit(401);
@@ -95,6 +94,8 @@ $atendidoDados = json_decode($atend, true) ?: [];
 $idPessoaAtendido = (int)($atendidoDados[0]['id_pessoa'] ?? 0);
 $processoAceitacao = $idPessoaAtendido > 0 ? $processoAceitacaoDAO->buscarProcessoAtivoPorPessoa($idPessoaAtendido) : null;
 $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEtapasPorProcesso((int)$processoAceitacao['id']) : [];
+
+require_once "../../controle/AtendidoControle.php";
 ?>
 
 <!doctype html>
@@ -812,6 +813,16 @@ $etapasProcessoAceitacao = $processoAceitacao ? $processoAceitacaoDAO->listarEta
                   </div>
                 </div>
               </div>
+              <?php
+                $atendidoControle = new AtendidoControle();
+                $idFichaMedica = $atendidoControle->buscarFichaMedicaAtendido((int)$id);
+                $permissao = $atendidoControle->verificaPermissaoSaude((int)$_SESSION['id_pessoa']);
+                if ($permissao && !empty($idFichaMedica)):
+              ?>  
+            <div class="panel-footer text-center">
+              <a href="../saude/profile_paciente.php?id_fichamedica=<?=$idFichaMedica;?>" class="btn btn-primary" id="botaoAcessarFichaIP" title="Acesso rápido à página da Ficha Médica do Paciente">Acessar Ficha Médica</a>
+            </div> 
+            <?php endif; ?>     
             </section>
           </div>
           <div class="col-md-8 col-lg-6">
