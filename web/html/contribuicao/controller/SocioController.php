@@ -11,6 +11,7 @@ require_once '../../../dao/PessoaDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Cache.php';
 
 class SocioController
 {
@@ -317,6 +318,29 @@ class SocioController
         $documento = filter_input(INPUT_GET, 'documento');
 
         try {
+            // Rota pública (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): exige
+            // captcha (mesma regra de criarSocio()/atualizarSocio()) e limita
+            // tentativas por IP, pra dificultar varredura em massa de CPFs.
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
+
+                $cache = new Cache();
+                $chaveLimite = 'rate_limit_buscarPorDocumento_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
+                $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
+
+                if ($tentativas >= 10) {
+                    http_response_code(429);
+                    echo json_encode(['erro' => 'Muitas tentativas. Tente novamente em alguns instantes.']);
+                    exit();
+                }
+
+                $cache->save($chaveLimite, $tentativas + 1, '1 minute');
+            }
+
             if (!$documento || empty($documento))
                 throw new InvalidArgumentException('O documento informado é inválido.', 400);
 

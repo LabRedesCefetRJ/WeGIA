@@ -245,8 +245,8 @@ function configurarAvancaTerminar(funcao) { //<-- Adicionar verificação de cap
     btnAvancaTerminar.addEventListener('click', (ev) => {
         ev.preventDefault();
 
-        //Verificação do reCAPTCHA
-        const captchaResponse = grecaptcha.getResponse();
+        //Verificação do reCAPTCHA -- widget 1 (o 0 é o da etapa do CPF)
+        const captchaResponse = grecaptcha.getResponse(1);
 
         if (!captchaResponse) {
             alert('Por favor, confirme que você não é um robô.');
@@ -682,12 +682,24 @@ async function buscarSocio() {
         return;
     }
 
+    // Widget 0 = captcha desta etapa (CPF). Widget 1 é o da etapa final.
+    const captchaResponse = grecaptcha.getResponse(0);
+
+    if (!captchaResponse) {
+        alert("Por favor, confirme que você não é um robô.");
+        return;
+    }
+
     console.log("Buscando sócio...");
 
     const url = `../controller/control.php?nomeClasse=SocioController&metodo=buscarPorDocumento&documento=${encodeURIComponent(documento)}`;
 
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `g-recaptcha-response=${encodeURIComponent(captchaResponse)}`
+        });
 
         let data = null;
 
