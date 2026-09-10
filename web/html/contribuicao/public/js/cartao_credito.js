@@ -164,8 +164,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            //Verificação do reCAPTCHA
-            const captchaResponse = grecaptcha.getResponse();
+            //Verificação do reCAPTCHA -- widget 1 (o 0 é o da etapa do CPF)
+            const captchaResponse = grecaptcha.getResponse(1);
 
             if (!captchaResponse) {
                 alert('Por favor, confirme que você não é um robô.');

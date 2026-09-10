@@ -1,4 +1,10 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['usuario'])) die("Você não está logado(a).");
 
+require_once '../../../permissao/permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
+?>
 <section class="body">
 
 		<!-- start: header -->
