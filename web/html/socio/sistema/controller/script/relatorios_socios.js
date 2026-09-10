@@ -36,6 +36,8 @@ $(document).ready(function () {
                 var estrutura_tab = "";
 
                 for (let socio of socios) {
+                    socio.sobrenome = socio.sobrenome || ""; // Garantir que sobrenome não seja undefined
+
                     if (payload.suposicao === "s") {
                         estrutura_tab = `
                             <tr>
@@ -62,7 +64,7 @@ $(document).ready(function () {
 
                         tabela += `
                             <tr>
-                                <td>${socio.nome}</td>
+                                <td>${socio.nome} ${socio.sobrenome}</td>
                                 <td>${socio.cpf}</td>
                                 <td>${socio.data_formatada ?? ""}</td>
                                 <td>${socio.telefone ?? ""}</td>
@@ -84,7 +86,7 @@ $(document).ready(function () {
 
                         tabela += `
                             <tr>
-                                <td>${socio.nome}</td>
+                                <td>${socio.nome} ${socio.sobrenome}</td>
                                 <td>${socio.cpf}</td>
                                 <td>${socio.telefone ?? ""}</td>
                                 <td>${socio.email ?? ""}</td>

@@ -6,10 +6,10 @@ if (session_status() === PHP_SESSION_NONE)
     session_start();
 
 if (!isset($_SESSION['usuario'])) {
-    header("Location: " . WWW . "html/index.php");
-    exit();
-} else {
-    session_regenerate_id();
+  header("Location: ../index.php");
+  exit();
+} else { 
+  session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';

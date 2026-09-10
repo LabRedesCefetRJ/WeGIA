@@ -41,8 +41,11 @@ class ProdutoDAO
 				exit;
     		}
 
-    		header("Location: " . WWW . "html/matPat/cadastro_produto.php?flag=warn&msg=" . urlencode("A descrição inserida já existe!"));
-    		exit;
+    		$_SESSION['msg'] = "A descrição inserida já existe!";
+			$_SESSION['flag'] = "warn";
+
+			header("Location: " . WWW . "html/matPat/cadastro_produto.php");
+			exit;
 		}
 
 		if ($produto->getCodigo() !== null && $produto->getCodigo() !== '') {
@@ -61,18 +64,25 @@ class ProdutoDAO
 			$stmtCodigo->execute();
 
 			if ($stmtCodigo->fetch(PDO::FETCH_ASSOC)) {
-    			$_SESSION['erro_produto'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
+    			$_SESSION['msg'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
+    			$_SESSION['flag'] = "warn";
+
     			header("Location: " . WWW . "html/matPat/cadastro_produto.php");
     			exit;
 			}
 		}
 
-		$sql = "INSERT INTO produto (id_categoria_produto, id_unidade, descricao, codigo, preco)
-					VALUES (:id_categoria_produto, :id_unidade, :descricao, :codigo, :preco)";
+		$sql = "INSERT INTO produto (id_categoria_produto, id_unidade, id_grupo_produto, descricao, codigo, preco)
+					VALUES (:id_categoria_produto, :id_unidade, :id_grupo_produto, :descricao, :codigo, :preco)";
 		$stmt = $pdo->prepare($sql);
 
 		$stmt->bindValue(':id_categoria_produto', $produto->get_categoria_produto(), PDO::PARAM_INT);
 		$stmt->bindValue(':id_unidade', $produto->get_unidade(), PDO::PARAM_INT);
+		if($produto->get_grupo_produto() === null) {
+			$stmt->bindValue(':id_grupo_produto', null, PDO::PARAM_NULL);
+		} else {
+			$stmt->bindValue(':id_grupo_produto', $produto->get_grupo_produto(), PDO::PARAM_INT);
+		}
 		$stmt->bindValue(':descricao', preg_replace('/\s+/', ' ', trim($produto->getDescricao())), PDO::PARAM_STR);
 		$stmt->bindValue(':codigo', $produto->getCodigo(), PDO::PARAM_STR);
 		$stmt->bindValue(':preco', $produto->getPreco(), PDO::PARAM_STR);
@@ -93,8 +103,9 @@ class ProdutoDAO
 	{
 		$produtos = array();
 		$pdo = Conexao::connect();
-		$consulta = $pdo->query("SELECT p.id_produto,p.preco,p.descricao,p.codigo,c.descricao_categoria,u.descricao_unidade 
+		$consulta = $pdo->query("SELECT p.id_produto,p.preco,p.descricao,p.codigo, p.id_grupo_produto,c.descricao_categoria, g.descricao_grupo,u.descricao_unidade 
 				FROM produto p 
+				LEFT JOIN grupo_produto g ON p.id_grupo_produto = g.id_grupo_produto
 				INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto
 				INNER JOIN unidade u ON u.id_unidade = p.id_unidade
 				WHERE oculto=false
@@ -102,20 +113,48 @@ class ProdutoDAO
 				ORDER BY p.descricao");
 		$x = 0;
 		while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-			$produtos[$x] = array('id_produto' => $linha['id_produto'], 'preco' => $linha['preco'], 'descricao' => $linha['descricao'], 'codigo' => $linha['codigo'], 'descricao_categoria' => $linha['descricao_categoria'], 'descricao_unidade' => $linha['descricao_unidade']);
+			$produtos[$x] = array('id_produto' => $linha['id_produto'], 'preco' => $linha['preco'], 'descricao' => $linha['descricao'], 'codigo' => $linha['codigo'], 'id_grupo_produto' => $linha['id_grupo_produto'], 'descricao_categoria' => $linha['descricao_categoria'], 'descricao_grupo' => $linha['descricao_grupo'], 'descricao_unidade' => $linha['descricao_unidade']);
 			$x++;
 		}
 
 		return json_encode($produtos);
 	}
 
+	public function listarDisponiveisRelatorioPorAlmoxarifado(int $idAlmoxarifado): array
+	{
+		$sql = "SELECT DISTINCT p.id_produto, p.descricao, p.id_grupo_produto,
+				COALESCE(g.descricao_grupo, 'Sem grupo') AS descricao_grupo
+			FROM produto p
+			LEFT JOIN grupo_produto g ON g.id_grupo_produto = p.id_grupo_produto
+			INNER JOIN estoque e ON e.id_produto = p.id_produto
+			WHERE e.id_almoxarifado = :id_almoxarifado
+			  AND p.oculto = false
+			  AND p.ativo = 1
+			  AND EXISTS (
+				SELECT 1 FROM ientrada ie
+				INNER JOIN entrada en ON en.id_entrada = ie.id_entrada
+				WHERE ie.id_produto = p.id_produto
+				  AND en.id_almoxarifado = e.id_almoxarifado
+				  AND ie.oculto = false
+				  AND en.ativo = 1
+			  )
+			ORDER BY descricao_grupo, p.descricao";
+
+		$stmt = $this->pdo->prepare($sql);
+		$stmt->bindValue(':id_almoxarifado', $idAlmoxarifado, PDO::PARAM_INT);
+		$stmt->execute();
+
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
+
 	//Consultar um utilizando o ID
 	public function listarId($id_produto)
 	{
 		$pdo = Conexao::connect();
-		$sql = "SELECT p.id_produto,p.preco,p.descricao,p.codigo,p.id_categoria_produto, c.descricao_categoria, p.id_unidade, u.descricao_unidade FROM produto p 
+		$sql = "SELECT p.id_produto,p.preco,p.descricao,p.codigo,p.id_categoria_produto, p.id_grupo_produto, g.descricao_grupo, c.descricao_categoria, p.id_unidade, u.descricao_unidade FROM produto p 
 	        		INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto 
 	        		INNER JOIN unidade u ON p.id_unidade = u.id_unidade 
+	        		LEFT JOIN grupo_produto g ON p.id_grupo_produto = g.id_grupo_produto
 	        		WHERE p.id_produto = :id_produto";
 		$stmt = $pdo->prepare($sql);
 		$stmt->bindParam(':id_produto', $id_produto);
@@ -123,7 +162,7 @@ class ProdutoDAO
 		$stmt->execute();
 		$produtos = array();
 		while ($linha = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			$produtos[] = array('id_produto' => $linha['id_produto'], 'preco' => $linha['preco'], 'descricao' => $linha['descricao'], 'codigo' => $linha['codigo'], 'id_categoria_produto' => $linha['id_categoria_produto'], 'descricao_categoria' => $linha['descricao_categoria'], 'id_unidade' => $linha['id_unidade'], 'descricao_unidade' => $linha['descricao_unidade']);
+			$produtos[] = array('id_produto' => $linha['id_produto'], 'preco' => $linha['preco'], 'descricao' => $linha['descricao'], 'codigo' => $linha['codigo'], 'id_categoria_produto' => $linha['id_categoria_produto'], 'id_grupo_produto' => $linha['id_grupo_produto'], 'descricao_grupo' => $linha['descricao_grupo'], 'descricao_categoria' => $linha['descricao_categoria'], 'id_unidade' => $linha['id_unidade'], 'descricao_unidade' => $linha['descricao_unidade']);
 		}
 
 		return json_encode($produtos);
@@ -216,6 +255,30 @@ class ProdutoDAO
 	{
 		$pdo = Conexao::connect();
 
+		$stmtDescricao = $pdo->prepare("
+    		SELECT id_produto
+    		FROM produto
+    		WHERE descricao = :descricao
+    		AND id_produto != :id_produto
+    		AND oculto = false
+    		AND ativo = 1
+		");
+
+		$stmtDescricao->bindValue(':descricao', trim($produto->getDescricao()), PDO::PARAM_STR);
+
+		$stmtDescricao->bindValue(':id_produto', $produto->getId_produto(), PDO::PARAM_INT);
+
+		$stmtDescricao->execute();
+
+		if ($stmtDescricao->fetch(PDO::FETCH_ASSOC)) {
+    		$_SESSION['msg'] = "A descrição inserida já existe!";
+    		$_SESSION['flag'] = "warn";
+
+    		header("Location: " . WWW . "html/matPat/alterar_produto.php?id_produto=" . urlencode($produto->getId_produto()));
+
+    		exit;
+		}
+
 		if ($produto->getCodigo() !== null && $produto->getCodigo() !== '') {
 			$stmtCodigo = $pdo->prepare("
 				SELECT id_produto
@@ -231,13 +294,16 @@ class ProdutoDAO
 			$stmtCodigo->execute();
 
 			if ($stmtCodigo->fetch(PDO::FETCH_ASSOC)) {
-				$_SESSION['erro_produto'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
-				header("Location: " . WWW . "html/matPat/alterar_produto.php");
-				exit;
+    			$_SESSION['msg'] = "O código do produto informado já existe. Por favor, informe um código diferente!";
+    			$_SESSION['flag'] = "warn";
+
+    			header("Location: " . WWW . "html/matPat/alterar_produto.php?id_produto=" . urlencode($produto->getId_produto()));
+
+    			exit;
 			}
 		}
 
-		$sql = 'UPDATE produto  set id_categoria_produto=:id_categoria_produto, id_unidade=:id_unidade, descricao=:descricao, codigo=:codigo, preco=:preco WHERE id_produto=:id_produto';
+		$sql = 'UPDATE produto  set id_categoria_produto=:id_categoria_produto, id_unidade=:id_unidade, id_grupo_produto=:id_grupo_produto, descricao=:descricao, codigo=:codigo, preco=:preco WHERE id_produto=:id_produto';
 		$sql = str_replace("'", "\'", $sql);
 
 		$stmt = $pdo->prepare($sql);
@@ -245,6 +311,7 @@ class ProdutoDAO
 
 		$id_categoria_produto = $produto->get_categoria_produto();
 		$id_unidade = $produto->get_unidade();
+		$id_grupo_produto = $produto->get_grupo_produto();
 		$descricao = $produto->getDescricao();
 		$codigo = $produto->getCodigo();
 		$preco = $produto->getPreco();
@@ -252,12 +319,61 @@ class ProdutoDAO
 
 		$stmt->bindParam(':id_categoria_produto', $id_categoria_produto);
 		$stmt->bindParam(':id_unidade', $id_unidade);
+		if ($id_grupo_produto === null) {
+    		$stmt->bindValue(
+        		':id_grupo_produto',
+        		null,
+        		PDO::PARAM_NULL
+    		);
+		} else {
+    		$stmt->bindValue(
+        		':id_grupo_produto',
+        		$id_grupo_produto,
+        		PDO::PARAM_INT
+    		);
+		}
 		$stmt->bindParam(':descricao', $descricao);
 		$stmt->bindParam(':codigo', $codigo);
 		$stmt->bindParam(':preco', $preco);
 		$stmt->bindParam(':id_produto', $id_produto);
 
 		$stmt->execute();
+	}
+
+	public function atribuirGrupoEmMassa(array $idsProdutos, int $idGrupo): int
+	{
+		if (empty($idsProdutos)) {
+			throw new InvalidArgumentException(
+				'Nenhum produto foi informado.',
+				400
+			);
+		}
+
+    	$placeholders = implode(',', array_fill(0, count($idsProdutos), '?'));
+
+    	$sql = "
+        	UPDATE produto
+        	SET id_grupo_produto = ?
+        	WHERE id_produto IN ($placeholders)
+        	AND oculto = false
+        	AND ativo = 1
+    	";
+
+    	$stmt = $this->pdo->prepare($sql);
+
+    	$parametros = array_merge([$idGrupo], $idsProdutos);
+
+    	foreach ($parametros as $indice => $valor) {
+        	$stmt->bindValue(
+            	$indice + 1,
+            	(int)$valor,
+            	PDO::PARAM_INT
+        	);
+    	}
+
+    	$stmt->execute();
+
+    	return $stmt->rowCount();
 	}
 
 	public function getProdutosPorAlmoxarifado(int $almoxarifadoId)
@@ -299,10 +415,12 @@ class ProdutoDAO
             	p.descricao,
             	p.codigo,
             	c.descricao_categoria,
+				g.descricao_grupo,
             	u.descricao_unidade 
         	FROM produto p 
         	INNER JOIN categoria_produto c ON p.id_categoria_produto = c.id_categoria_produto
         	INNER JOIN unidade u ON u.id_unidade = p.id_unidade
+        	LEFT JOIN grupo_produto g ON p.id_grupo_produto = g.id_grupo_produto
         	WHERE p.oculto = false
           		AND p.ativo = 0
         	ORDER BY p.descricao
@@ -315,6 +433,7 @@ class ProdutoDAO
             	'descricao' => $linha['descricao'],
             	'codigo' => $linha['codigo'],
             	'descricao_categoria' => $linha['descricao_categoria'],
+            	'descricao_grupo' => $linha['descricao_grupo'],
             	'descricao_unidade' => $linha['descricao_unidade']
         	);
     	}
@@ -367,9 +486,9 @@ class ProdutoDAO
 
 	public function arquivar(int $idProduto): void
 	{
-   		if ($idProduto < 1) {
-        	throw new InvalidArgumentException("ID do produto inválido.");
-    	}
+		if ($idProduto < 1) {
+			throw new InvalidArgumentException("ID do produto inválido.", 400);
+		}
 
     	$pdo = Conexao::connect();
     	$pdo->beginTransaction();
@@ -441,9 +560,9 @@ class ProdutoDAO
 
 	public function desarquivar(int $idProduto): void
 	{
-    	if ($idProduto < 1) {
-        	throw new InvalidArgumentException("ID do produto inválido.");
-    	}
+		if ($idProduto < 1) {
+			throw new InvalidArgumentException("ID do produto inválido.", 400);
+		}
 
     	$pdo = Conexao::connect();
     	$pdo->beginTransaction();
