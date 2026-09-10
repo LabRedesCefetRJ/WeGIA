@@ -180,6 +180,7 @@ unset($_SESSION['dados_filtros_relatorio']);
 										<option value="produto">Relatório de Produtos</option>
 										<option value="requisicao">Relatório de Requisição</option>
 										<option value="itens_compra">Relatório de Itens de Compra</option>
+										<option value="grupo">Relatório de Grupos</option>
 									</select>
 								</div>
 							</div>
@@ -361,7 +362,7 @@ unset($_SESSION['dados_filtros_relatorio']);
 						</form>
 
 						<!-- Formulário de produtos !-->
-						<form class="form-horizontal" method="post" action="<?= WWW ?>html/matPat/relatorio_geracao_produto.php">
+						<form id="form-produto-grupo" class="form-horizontal" method="post" action="<?= WWW ?>html/matPat/relatorio_geracao_produto.php" data-action-produto="<?= WWW ?>html/matPat/relatorio_geracao_produto.php" data-action-grupo="<?= WWW ?>controle/control.php?nomeClasse=RelatorioGrupoControle&metodo=gerar">
 
 							<div class="form-group" id='per2' style="text-align: center;">
 								<button type="button" id="btn-7dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao7Dias()">Últimos 7 dias</button>
@@ -409,6 +410,21 @@ unset($_SESSION['dados_filtros_relatorio']);
     									<option value="">Selecione um Produto</option>
 									</select>
 								</div>
+							</div>
+
+							<div class="form-group" id="grupo-produto-relatorio" style="display: none;">
+    							<label class="col-md-3 control-label">Grupo</label>
+    							<div class="col-md-8">
+        							<select name="grupo" id="grupoSelect">
+            							<option value="">Selecione um Grupo</option>
+
+            							<?php foreach ($dadosFiltros['grupos'] as $grupo) { ?>
+                							<option value="<?= htmlspecialchars($grupo['id_grupo_produto']) ?>">
+                    							<?= htmlspecialchars($grupo['descricao_grupo']) ?>
+                							</option>
+            							<?php } ?>
+        							</select>
+    							</div>
 							</div>
 
 							<div class="form-group">
