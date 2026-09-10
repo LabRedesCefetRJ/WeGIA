@@ -53,8 +53,7 @@ $msg = isset($_GET['msg']) ? htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8')
   <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
 
   <style>
-    .table tbody tr { cursor: pointer; transition: background-color 0.2s; }
-    .table tbody tr:hover { background-color: #f5f5f5 !important; }
+    .table tbody tr { transition: background-color 0.2s; }
   </style>
 </head>
 
@@ -90,6 +89,8 @@ $msg = isset($_GET['msg']) ? htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8')
                 </div>
               <?php endif; ?>
 
+              <input type="hidden" id="csrf_token" value="<?= Csrf::generateToken() ?>">
+
               <div class="form-inline" style="margin-bottom:20px;">
                 <div class="form-group">
                   <label for="filtro_status" style="margin-right:10px;">Status:</label>
@@ -103,13 +104,16 @@ $msg = isset($_GET['msg']) ? htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8')
                 <button type="button" class="btn btn-primary btn-sm" onclick="filtrarPorStatus()" style="margin-left:10px;">
                   <i class="fa fa-filter"></i> Filtrar
                 </button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="excluirStatus()" style="margin-left:5px;">
+                  <i class="fa fa-trash"></i> Excluir Status
+                </button>
               </div>
 
               <div class="table-responsive">
                 <table class="table table-bordered table-striped mb-none">
                   <thead>
                     <tr>
-                      <th>Nome</th><th>Tipo</th><th>Local</th><th>Status</th><th>Descrição</th>
+                      <th>Nome</th><th>Tipo</th><th>Local</th><th>Status</th><th>Descrição</th><th class="text-center" width="80">Ação</th>
                     </tr>
                   </thead>
                   <tbody id="tbody-projetos"></tbody>

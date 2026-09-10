@@ -133,12 +133,21 @@ function aplicarFiltroAtendidos() {
         });
     }
     $.each(dadosFiltrados, function(i, atendido) {
+        const atendidoId = parseInt(atendido.id, 10);
+        if (!Number.isFinite(atendidoId)) {
+            return; // ignora registro com id inválido
+        }
+
         const nomeCompleto = ((atendido.nome || '') + ' ' + (atendido.sobrenome || '')).trim();
         const cpf          = atendido.cpf || '--';
         const status       = atendido.status_descricao || '--';
         const acoes        =
             '<button type="button"' +
-            ' onclick="event.stopPropagation(); removerAtendidoProjeto(' + atendido.id + ')"' +
+            ' onclick="window.location.href=\'editar_atendido_projeto.php?id=' + atendidoId + '\'"' +
+            ' class="btn btn-primary btn-xs" title="Editar atendido">' +
+            '<i class="fa fa-pencil"></i></button> ' +
+            '<button type="button"' +
+            ' onclick="removerAtendidoProjeto(' + atendidoId + ')"' +
             ' class="btn btn-danger btn-xs" title="Remover do projeto">' +
             '<i class="fa fa-trash"></i></button>';
 
@@ -147,13 +156,7 @@ function aplicarFiltroAtendidos() {
             escapeHtml(cpf),
             escapeHtml(status),
             acoes
-        ]).nodes().to$().attr('id', 'atendido-' + atendido.id)
-                        .css('cursor', 'pointer')
-                        .on('click', (function(id) {
-                            return function() {
-                                window.location.href = 'editar_atendido_projeto.php?id=' + id;
-                            };
-                        })(atendido.id));
+        ]).nodes().to$().attr('id', 'atendido-' + atendidoId);
     });
     tabelaAtendidos.draw();
 }

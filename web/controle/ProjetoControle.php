@@ -36,7 +36,16 @@ class ProjetoControle
 
     public function adicionarTipo()
     {
-        $data = $this->lerJSON();
+        $data  = $this->lerJSON();
+        $token = $data['csrf_token'] ?? null;
+
+        if (!Csrf::validateToken($token)) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['erro' => 'Token CSRF inválido.']);
+            exit();
+        }
+
         $tipo = trim(filter_var($data['tipo'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
 
         if (empty($tipo)) {
@@ -54,6 +63,15 @@ class ProjetoControle
     public function adicionarLocal()
     {
         $data  = $this->lerJSON();
+        $token = $data['csrf_token'] ?? null;
+
+        if (!Csrf::validateToken($token)) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['erro' => 'Token CSRF inválido.']);
+            exit();
+        }
+
         $local = trim(filter_var($data['local'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
 
         if (empty($local)) {
@@ -71,6 +89,15 @@ class ProjetoControle
     public function adicionarStatus()
     {
         $data   = $this->lerJSON();
+        $token  = $data['csrf_token'] ?? null;
+
+        if (!Csrf::validateToken($token)) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['erro' => 'Token CSRF inválido.']);
+            exit();
+        }
+
         $status = trim(filter_var($data['status'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS));
 
         if (empty($status)) {
@@ -83,6 +110,43 @@ class ProjetoControle
         header('Content-Type: application/json');
         echo json_encode(['sucesso' => true, 'status' => $this->projetoDAO->listarStatusProjeto()]);
         exit();
+    }
+
+    public function removerStatus()
+    {
+        try {
+            header('Content-Type: application/json');
+
+            $csrf_token = $_POST['csrf_token'] ?? null;
+            if (!Csrf::validateToken($csrf_token)) {
+                echo json_encode(['success' => false, 'message' => 'Token CSRF inválido']);
+                return;
+            }
+
+            $id_status = filter_input(INPUT_POST, 'id_status', FILTER_SANITIZE_NUMBER_INT);
+
+            if (!$id_status || $id_status < 1) {
+                echo json_encode(['success' => false, 'message' => 'Status inválido']);
+                return;
+            }
+
+            if ($this->projetoDAO->statusEmUso($id_status)) {
+                echo json_encode(['success' => false, 'message' => 'Não é possível excluir: este status está sendo utilizado por um ou mais projetos.']);
+                return;
+            }
+
+            $resultado = $this->projetoDAO->removerStatusProjeto($id_status);
+
+            if (!$resultado) {
+                echo json_encode(['success' => false, 'message' => 'Status não encontrado.']);
+                return;
+            }
+
+            echo json_encode(['success' => true, 'status' => $this->projetoDAO->listarStatusProjeto()]);
+        } catch (Exception $e) {
+            $this->logErro($e);
+            echo json_encode(['success' => false, 'message' => 'Ocorreu um erro interno. Tente novamente.']);
+        }
     }
 
     private function obterDadosRequisicao(): array
@@ -364,6 +428,11 @@ class ProjetoControle
                 return;
             }
 
+            if (!$projeto_id || $projeto_id < 1){
+                echo json_encode(['success'  => false, 'message ' => 'ID de projeto inválido']);
+                return;
+            }
+
             $resultado = $this->projetoDAO->removerMembroEquipe($id, $projeto_id);
 
             echo json_encode(['success' => $resultado]);
@@ -378,7 +447,8 @@ class ProjetoControle
         try {
             header('Content-Type: application/json');
 
-            $termo = trim(filter_input(INPUT_GET, 'termo', FILTER_DEFAULT) ?? '');
+            $termoInput = filter_input(INPUT_GET, 'termo', FILTER_DEFAULT);
+            $termo      = is_string($termoInput) ? trim($termoInput) : '';
 
             $executantes = $this->projetoDAO->listarFuncionariosAtivos($termo !== '' ? $termo : null);
 
@@ -529,7 +599,9 @@ class ProjetoControle
     {
         try {
             header('Content-Type: application/json');
-            $termo     = trim(filter_input(INPUT_GET, 'termo', FILTER_DEFAULT) ?? '');
+            $termoInput = filter_input(INPUT_GET, 'termo', FILTER_DEFAULT);
+            $termo      = is_string($termoInput) ? trim($termoInput) : '';
+
             $atendidos = $this->projetoDAO->listarTodosAtendidos($termo !== '' ? $termo : null);
             echo json_encode(['success' => true, 'data' => $atendidos]);
         } catch (Exception $e) {
@@ -656,6 +728,11 @@ class ProjetoControle
 
             if (!$id || $id < 1) {
                 echo json_encode(['success' => false, 'message' => 'ID inválido']);
+                return;
+            }
+
+            if (!$projeto_id || $projeto_id < 1){
+                echo json_encode(['success' => false, 'message' => 'ID de projeto inválido']);
                 return;
             }
 
@@ -958,6 +1035,11 @@ class ProjetoControle
                 return;
             }
 
+            if (!$projeto_id || $projeto_id < 1){
+                echo json_encode(['success' => false, 'message' => 'ID de projeto inválido']);
+                return;
+            }
+
             $resultado = $this->projetoDAO->removerTurma($id_turma, $projeto_id);
 
             echo json_encode(['success' => $resultado]);
@@ -1016,6 +1098,11 @@ class ProjetoControle
 
             if (!$id_turma || $id_turma < 1) {
                 echo json_encode(['success' => false, 'message' => 'Turma inválida']);
+                return;
+            }
+
+            if (!$id_pessoa || $id_pessoa < 1){
+                echo json_encode(['success' => false, 'message' => 'ID de pessoa inválido']);
                 return;
             }
 
@@ -1080,6 +1167,11 @@ class ProjetoControle
                 return;
             }
 
+            if (!$id_atendido || $id_atendido < 1){
+                echo json_encode(['success' => false, 'message' => 'ID de atendido inválido']);
+                return;
+            }
+            
             $resultado = $this->projetoDAO->removerAtendidoTurma($id_turma, $id_atendido);
 
             echo json_encode(['success' => $resultado]);
