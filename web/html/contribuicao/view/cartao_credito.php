@@ -65,10 +65,10 @@ $tipoContribuicao = 'Cartão de Crédito';
                     <div id="payment-result" class="mt-4 hidden">
                         <div id="success-message" class="alert alert-success p-4">
                             <div class="d-flex justify-content-center mb-3">
-                                <i class="fa fa-check-circle fa-4x text-success"></i>
+                                <i id="success-icon" class="fa fa-check-circle fa-4x text-success"></i>
                             </div>
-                            <h3 class="text-success">Pagamento Aprovado!</h3>
-                            <p class="mt-3">Obrigado por sua contribuição!</p>
+                            <h3 id="success-title" class="text-success">Pagamento Aprovado!</h3>
+                            <p class="mt-3" id="success-text">Obrigado por sua contribuição!</p>
                         </div>
                         <div id="error-message" class="alert alert-danger p-4 hidden">
                             <div class="d-flex justify-content-center mb-3">
@@ -90,11 +90,21 @@ $tipoContribuicao = 'Cartão de Crédito';
     </div>
 </div>
 
+<!-- Device Fingerprint do Mercado Pago: sem isso, o antifraude deles avalia a
+     cobrança sem nenhum sinal sobre o dispositivo do pagador, o que aumenta
+     bastante a chance de rejeição por "cc_rejected_high_risk". Inofensivo se
+     o gateway ativo for outro (só gera um device_id não usado). -->
+<script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
+<!-- SDK do Mercado Pago: usado por tokenizacao_cartao.js só quando o gateway
+     ativo para este meio de pagamento é o Mercado Pago (ver
+     criarServicoTokenizacaoCartao em tokenizacao_cartao.js). -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
 <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
 <script src="../vendor/select2/select2.min.js"></script>
-<script src="../public/js/util.js"></script>
-<script src="../public/js/cartao_credito.js"></script>
+<script src="../public/js/util.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/util.js') ?>"></script>
+<script src="../public/js/tokenizacao_cartao.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/tokenizacao_cartao.js') ?>"></script>
+<script src="../public/js/cartao_credito.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/cartao_credito.js') ?>"></script>
 <!--Busca cep-->
 <script src="../../../Functions/busca_cep.js"></script>
 <?php

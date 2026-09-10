@@ -20,7 +20,6 @@ require("../conexao.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
-
 try {
 
   //Buscar data e hora da última atualização das contribuições
@@ -127,11 +126,17 @@ try {
   <link type="text/css" rel="stylesheet" charset="UTF-8" href="https://translate.googleapis.com/translate_static/css/translateelement.css">
 
   <!-- javascript functions -->
+  <?php
+    require_once ROOT . "/Functions/authenticatedRequest.php";
+  ?>
+
   <script src="<?php echo WWW; ?>Functions/onlyNumbers.js"></script>
   <script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
   <script src="<?php echo WWW; ?>Functions/mascara.js"></script>
   <script src="<?php echo WWW; ?>html/contribuicao/js/geraboleto.js"></script>
-  
+  <script src="<?php echo WWW; ?>html/socio/sistema/controller/script/nova_contribuicao.js" defer></script>
+  <script src="<?php echo WWW; ?>html/socio/sistema/controller/script/importacao_contribuicoes.js" defer></script>
+
   <script src="<?php echo WWW; ?>html/socio/sistema/controller/script/sincronizacao_contribuicoes.js" defer></script>
 
   <script type="text/javascript">
@@ -147,6 +152,7 @@ try {
       display: flex;
       align-items: center;
       gap: 1rem;
+      margin-top: 5px;
       /* Espaço entre o botão e o texto */
     }
 
@@ -367,6 +373,8 @@ try {
 
               <!-- Pegar como referência-->
               <div class="sync-control">
+                <button class="btn btn-success" id="nova-contribuicao-btn" type="button" data-toggle="modal" data-target="#modalNovaContribuicao">Nova contribuição</button>
+                <button class="btn btn-info" id="importar-contribuicoes-btn" type="button" data-toggle="modal" data-target="#modalImportarContribuicoes">Importar contribuições</button>
                 <button class="btn btn-primary" id="sync-btn" title="Sincroniza contribuições de acordo com os múltiplos gateways de pagamentos cadastrados">Sincronizar pagamentos</button>
                 <button class="btn btn-primary" id="fatura-btn" title="Busca as novas faturas de acordo com os múltiplos gateways de pagamentos cadastrados">Carregar faturas de recorrências</button>
                 <!--Informações de data e hora da última sincronização -->
@@ -408,6 +416,114 @@ try {
         </div>
         <!-- end: page -->
       </section>
+
+      <div class="modal fade" id="modalNovaContribuicao" tabindex="-1" role="dialog" aria-labelledby="modalNovaContribuicaoLabel">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <form id="formNovaContribuicao" novalidate>
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="modalNovaContribuicaoLabel">Nova contribuição</h4>
+              </div>
+              <div class="modal-body">
+                <div id="nova-contribuicao-alert" role="alert" aria-live="polite"></div>
+                <div class="form-group">
+                  <label for="nova-contribuicao-socio">Sócio</label>
+                  <input type="text" class="form-control" id="nova-contribuicao-socio" autocomplete="off" placeholder="Digite o nome ou CPF" required>
+                  <input type="hidden" id="nova-contribuicao-id-socio">
+                  <p class="help-block" id="nova-contribuicao-socio-selecionado"></p>
+                </div>
+                <div class="row">
+                  <div class="form-group col-sm-6">
+                    <label for="nova-contribuicao-valor">Valor</label>
+                    <input type="number" class="form-control" id="nova-contribuicao-valor" min="0.01" step="0.01" required>
+                  </div>
+                  <div class="form-group col-sm-6">
+                    <label for="nova-contribuicao-meio">Meio de pagamento</label>
+                    <select class="form-control" id="nova-contribuicao-meio" required>
+                      <option value="">Selecione</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="form-group col-sm-6">
+                    <label for="nova-contribuicao-pagamento">Data do pagamento</label>
+                    <input type="datetime-local" class="form-control" id="nova-contribuicao-pagamento" required>
+                  </div>
+                  <div class="form-group col-sm-6">
+                    <label for="nova-contribuicao-vencimento">Data de vencimento</label>
+                    <input type="datetime-local" class="form-control" id="nova-contribuicao-vencimento" required>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="form-group col-sm-6">
+                    <label for="nova-contribuicao-geracao">Data de geração</label>
+                    <input type="datetime-local" class="form-control" id="nova-contribuicao-geracao" required>
+                  </div>
+                  <div class="form-group col-sm-6">
+                    <label for="nova-contribuicao-status">Status</label>
+                    <select class="form-control" id="nova-contribuicao-status" required>
+                      <option value="paid" selected>Paga</option>
+                      <option value="pending">Pendente</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-success" id="salvar-nova-contribuicao">Registrar contribuição</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="modalImportarContribuicoes" tabindex="-1" role="dialog" aria-labelledby="modalImportarContribuicoesLabel">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <form id="formImportarContribuicoes" enctype="multipart/form-data" novalidate>
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="modalImportarContribuicoesLabel">Importar contribuições</h4>
+              </div>
+              <div class="modal-body">
+                <div id="importar-contribuicoes-alert" role="alert" aria-live="polite"></div>
+
+                <div class="form-group">
+                  <label for="importar-contribuicoes-arquivo">Arquivo</label>
+                  <input type="file" class="form-control" id="importar-contribuicoes-arquivo" name="arquivo" accept=".xlsx,.ods,.csv" required>
+                  <p class="help-block">Formatos aceitos: XLSX, ODS e CSV.</p>
+                </div>
+
+                <div class="row">
+                  <div class="form-group col-sm-6">
+                    <label for="importar-contribuicoes-ano">Ano</label>
+                    <input type="number" class="form-control" id="importar-contribuicoes-ano" name="ano" min="1900" max="2200" step="1" required>
+                  </div>
+                  <div class="form-group col-sm-6">
+                    <label for="importar-contribuicoes-modelo">Modelo da planilha</label>
+                    <select class="form-control" id="importar-contribuicoes-modelo" name="modelo" required>
+                      <option value="amigos_laje_xlsx" selected>Amigos do LAJE (XLSX)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="importar-contribuicoes-meio">Meio de pagamento</label>
+                  <select class="form-control" id="importar-contribuicoes-meio" name="id_meio_pagamento">
+                    <option value="">Sem meio de pagamento</option>
+                  </select>
+                  <p class="help-block">Opcional. Registros sem seleção serão importados sem meio de pagamento.</p>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Fechar</button>
+                <button type="submit" class="btn btn-info" id="enviar-importacao-contribuicoes">Importar contribuições</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
 
 
 

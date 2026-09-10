@@ -1,7 +1,7 @@
 <?php
-require_once '../model/Socio.php';
-require_once '../model/GatewayPagamento.php';
-require_once '../model/MeioPagamento.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Socio.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'GatewayPagamento.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'MeioPagamento.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'RecorrenciaDTO.php';
 
 class ContribuicaoLog

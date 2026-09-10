@@ -819,3 +819,53 @@ function formatarCPF(cpf) {
     // Aplica a formatação: xxx.xxx.xxx-xx
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
 }
+
+// --- Resultado do pagamento (cartao_credito.php / recorrencia.php) ---
+//
+// A tokenização de cartão (Mercado Pago / Pagar.me) fica em
+// tokenizacao_cartao.js, resolvida dinamicamente por gateway ativo (ver
+// tokenizarCartaoPorMetodoPagamento()).
+
+/**
+ * Exibe o resultado de resposta.sucesso/resposta.status vindos do backend
+ * (cartao_credito.js / recorrencia.js) nos blocos #success-message /
+ * #error-message já presentes na página.
+ *
+ * IMPORTANTE: status "em_analise" significa que o gateway ainda não
+ * confirmou a cobrança — pode virar aprovada OU recusada depois, de forma
+ * assíncrona (é isso que o e-mail que o Mercado Pago/Pagar.me manda depois
+ * reflete). Por isso NUNCA mostramos o ícone/título de "aprovado" nesse
+ * caso — evita o pagador achar que já pagou quando na verdade a cobrança
+ * ainda pode ser recusada.
+ */
+function exibirResultadoPagamento(resposta) {
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("payment-result").classList.remove("hidden");
+
+    if (!resposta.sucesso) {
+        document.getElementById("success-message").classList.add("hidden");
+        document.getElementById("error-message").classList.remove("hidden");
+        document.getElementById("error-text").textContent = resposta.erro || "Erro ao processar pagamento";
+        return;
+    }
+
+    document.getElementById("error-message").classList.add("hidden");
+    document.getElementById("success-message").classList.remove("hidden");
+
+    if (resposta.status === 'em_analise') {
+        const icone = document.getElementById("success-icon");
+        const titulo = document.getElementById("success-title");
+        const texto = document.getElementById("success-text");
+
+        if (icone) {
+            icone.className = 'fa fa-hourglass-half fa-4x text-warning';
+        }
+        if (titulo) {
+            titulo.className = 'text-warning';
+            titulo.textContent = 'Pagamento em análise';
+        }
+        if (texto) {
+            texto.textContent = resposta.mensagem || 'Vamos confirmar assim que o gateway de pagamento concluir a verificação.';
+        }
+    }
+}

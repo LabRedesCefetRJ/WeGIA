@@ -12,6 +12,7 @@ require_once "html/personalizacao_display.php";
 ?>
 <!doctype html>
 <html>
+
 <head>
 	<title><?php display_campo("Titulo", "str"); ?> - <?php display_campo("Subtitulo", "str"); ?></title>
 	<meta charset="UTF-8" />
@@ -68,15 +69,15 @@ require_once "html/personalizacao_display.php";
 		],
 		'usuario_inativo' => [
 			'type' => 'warning',
-				'iconPrefix' => 'glyphicon',
-				'icon' => 'glyphicon-ban-circle',
+			'iconPrefix' => 'glyphicon',
+			'icon' => 'glyphicon-ban-circle',
 			'title' => 'Usuário inativo',
-				'message' => 'Este acesso pertence a um usuário inativo. A senha não foi validada porque o cadastro está bloqueado.',
+			'message' => 'Este acesso pertence a um usuário inativo. A senha não foi validada porque o cadastro está bloqueado.',
 			'action' => 'Entendi',
 		],
 		'dados_invalidos' => [
 			'type' => 'warning',
-				'iconPrefix' => 'fa',
+			'iconPrefix' => 'fa',
 			'icon' => 'fa-exclamation-triangle',
 			'title' => 'Campos obrigatórios',
 			'message' => 'Preencha todos os campos obrigatórios antes de continuar.',
@@ -84,7 +85,7 @@ require_once "html/personalizacao_display.php";
 		],
 		'acesso_revogado' => [
 			'type' => 'error',
-				'iconPrefix' => 'fa',
+			'iconPrefix' => 'fa',
 			'icon' => 'fa-ban',
 			'title' => 'Acesso revogado',
 			'message' => 'Seu acesso foi revogado pelo administrador. Caso isso pareça incorreto, solicite uma revisão do cadastro.',
@@ -139,7 +140,7 @@ require_once "html/personalizacao_display.php";
 		});
 	</script>
 
-</head>  
+</head>
 
 <body>
 	<div class="modal fade login-error-modal" id="loginErrorModal" tabindex="-1" role="dialog" aria-labelledby="loginErrorModalTitle" aria-hidden="true">
@@ -177,7 +178,7 @@ require_once "html/personalizacao_display.php";
 				</div>
 			</div>
 			<div class="col col-md-3 formulario">
-				<form action="./html/login.php" method="POST" enctype="multipart/form-data" class="login">
+				<form action="./html/login.php" id="login-form" method="POST" enctype="multipart/form-data" class="login">
 					<div class="form-group mb-lg form-group-login"><!--login-->
 						<div class="input-group input-group-icon"><!--icone-->
 							<input id="login" name="cpf" type="text" class="form-control input-lg" placeholder="Usuário" />
@@ -278,6 +279,56 @@ require_once "html/personalizacao_display.php";
 		<script src="./assets/javascripts/tables/examples.datatables.default.js"></script>
 		<script src="./assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
 		<script src="./assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+
+		<script>
+			// Temporariamente fazer login duplo: Sessão PHP + JWT API em cookie HttpOnly
+
+			const apiServer = "<?= API_BASE_URL ?>";
+			const loginForm = document.getElementById('login-form');
+
+			async function apiLogin() {
+				try {
+					const formData = new FormData(loginForm);
+
+					const response = await fetch(`${apiServer}login`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: {
+							'Content-Type': 'application/json',
+							'X-Client-Type': 'web'
+						},
+						body: JSON.stringify({
+							login: formData.get('cpf'),
+							senha: formData.get('pwd')
+						})
+					});
+
+					// Não interrompe o login caso a API retorne erro.
+					if (!response.ok) {
+						return;
+					}
+
+					// Consumir o corpo apenas para liberar a conexão.
+					await response.json().catch(() => {});
+
+				} catch (e) {
+					// Falha silenciosa.
+					console.error("Falha ao acessar a API: ", e);
+				}
+			}
+
+			loginForm.addEventListener('submit', async (ev) => {
+				ev.preventDefault();
+
+				console.log('Executando funções de login');
+
+				// Tenta autenticar na API, mas nunca bloqueia o login legado.
+				await apiLogin();
+
+				// Prossegue com o login PHP.
+				loginForm.submit();
+			});
+		</script>
 </body>
 
 </html>

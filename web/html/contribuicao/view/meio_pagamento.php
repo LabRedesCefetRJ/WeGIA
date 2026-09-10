@@ -143,7 +143,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                             <select class="form-control" id="meio-pagamento-plataforma" name="meio-pagamento-plataforma">
                                                 <option selected disabled>Selecione a plataforma desejada ...</option>
                                                 <?php foreach ($gateways as $gateway): ?>
-                                                    <option value="<?= $gateway['id'] ?>"><?= $gateway['plataforma'].' | '.$gateway['endPoint'] ?></option>
+                                                    <option value="<?= $gateway['id'] ?>" data-plataforma="<?= htmlspecialchars($gateway['plataforma']) ?>"><?= $gateway['plataforma'].' | '.$gateway['endPoint'] ?></option>
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
@@ -256,7 +256,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                                             <select class="form-control" id="editPlataforma" name="plataforma">
                                                                 <option selected disabled>Selecione a plataforma desejada ...</option>
                                                                 <?php foreach ($gateways as $gateway): ?>
-                                                                    <option value="<?= $gateway['id'] ?>"><?= $gateway['plataforma'].' | '.$gateway['endPoint'] ?></option>
+                                                                    <option value="<?= $gateway['id'] ?>" data-plataforma="<?= htmlspecialchars($gateway['plataforma']) ?>"><?= $gateway['plataforma'].' | '.$gateway['endPoint'] ?></option>
                                                                 <?php endforeach; ?>
                                                             </select>
                                                         </div>
@@ -283,7 +283,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
         </div>
     </section>
     <script src="../public/js/configuracoesGerais.js"></script>
-    <script src="../public/js/meioPagamento.js"></script>
+    <script src="../public/js/meioPagamento.js?v=<?= filemtime(dirname(__FILE__) . '/../public/js/meioPagamento.js') ?>"></script>
 
     <div align="right">
         <iframe src="https://www.wegia.org/software/footer/contribuicao.html" width="200" height="60" style="border:none;"></iframe>
