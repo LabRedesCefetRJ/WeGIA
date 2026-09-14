@@ -588,7 +588,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
-							<li><span>Registro</span></li>
+							<li><span>Cadastro</span></li>
 							<li><span>Saída</span></li>
 						</ol>
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -611,20 +611,20 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="origens">Destino</label>
-													<a href="cadastro_destino.php" id="btn-novo-destino"><i class="fas fa-plus w3-xlarge"></i></a>
+													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
+													<a href="adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
-														<select class="form-control " name="destino" id="origens">
+														<select class="form-control " name="almoxarifado" id="almoxarifado">
 															<option selected disabled value="blank">Selecionar</option>
 														</select>
 													</div>
 												</div>
 
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
-													<a href="adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
+													<label class="col-md-3 control-label" for="origens">Destino</label>
+													<a href="cadastro_destino.php" id="btn-novo-destino"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
-														<select class="form-control " name="almoxarifado" id="almoxarifado">
+														<select class="form-control " name="destino" id="origens">
 															<option selected disabled value="blank">Selecionar</option>
 														</select>
 													</div>
@@ -663,7 +663,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset
 																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
 																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
-																	<button id="incluir" type="button" class="add-row">Adicionar produtos</button>
+																	<button id="incluir" type="button" class="add-row">Incluir</button>
 																</td>
 															</tr>
 														</thead>

@@ -126,7 +126,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 								</a>
 							</li>
 							<li><span>Cadastro</span></li>
-							<li><span>Doação</span></li>
+							<li><span>Entrada</span></li>
 						</ol>
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
 					</div>
@@ -138,7 +138,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 						<div class="tabs">
 							<ul class="nav nav-tabs tabs-primary">
 								<li class="active">
-									<a href="#overview" data-toggle="tab">Registro de entrada</a>
+									<a href="#overview" data-toggle="tab">Registro de Entrada</a>
 								</li>
 							</ul>
 							<div class="tab-content">
@@ -187,9 +187,9 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" id="btn-novo-produto" class="fas fa-plus w3-xlarge" style="float:right;">
 																	</a>
 																</th>
-																<th>quantidade</th>
-																<th>valor unitário</th>
-																<th>incluir</th>
+																<th>Quantidade</th>
+																<th>Valor unitário</th>
+																<th>Incluir</th>
 															</tr>
 															<tr>
 																<td>
@@ -198,9 +198,9 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 															</datalist> -->
 																</td>
 																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
-																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" min="0.01" class="form-control"></td>
+																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
-																	<button id="incluir" type="button" class="add-row">incluir</button>
+																	<button id="incluir" type="button" class="add-row">Incluir</button>
 																</td>
 															</tr>
 														</thead>
