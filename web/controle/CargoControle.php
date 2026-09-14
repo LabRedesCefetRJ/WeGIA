@@ -13,16 +13,20 @@ class CargoControle
     {
 
         // Determina se os dados foram enviados via JSON
+        // A exibição do cargo já escapa com htmlspecialchars() (cargos.php) e
+        // .text() (cargos.js), então aqui só precisamos validar e normalizar
+        // espaços — sem depender do FILTER_SANITIZE_STRING, depreciado desde
+        // o PHP 8.1 e removido no PHP 9.
         if (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false) {
             // Recebe o JSON da requisição
             $json = file_get_contents('php://input');
             // Decodifica o JSON
             $data = json_decode($json, true);
 
-            $cargoDescricao = trim(filter_var($data['cargo'], FILTER_SANITIZE_STRING));
+            $cargoDescricao = trim((string) ($data['cargo'] ?? ''));
         } else {
             // Recebe os dados do formulário normalmente
-            $cargoDescricao = trim(filter_input(INPUT_POST, 'cargo', FILTER_SANITIZE_STRING));
+            $cargoDescricao = trim((string) filter_input(INPUT_POST, 'cargo', FILTER_UNSAFE_RAW));
         }
 
         try {

@@ -76,14 +76,14 @@ try {
 }
 ?>
 <!DOCTYPE html>
-<html class="fixed">
+<html class="fixed" lang="pt-br">
 
 <head>
   <!-- Basic -->
   <meta charset="UTF-8">
   <title>Cadastro de Funcionário</title>
   <!-- Mobile Metas -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Web Fonts  -->
   <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
@@ -173,7 +173,7 @@ try {
             <li><span>Cadastros</span></li>
             <li><span>Funcionário</span></li>
           </ol>
-          <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+          <a class="sidebar-right-toggle" aria-label="Alternar painel lateral"><i class="fa fa-chevron-left"></i></a>
         </div>
       </header>
 
@@ -195,22 +195,22 @@ try {
                 <h4 class="mb-xlg">Informações Pessoais</h4>
                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="nome">Nome<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="text" class="form-control" name="nome" id="nome" onkeypress="return Onlychars(event)">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="sobrenome">Sobrenome<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label">Sexo<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
-                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" aria-label="Masculino"><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" aria-label="Feminino"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
                   </div>
                 </div>
                 <div class="form-group">
@@ -220,7 +220,7 @@ try {
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="nascimento">Nascimento<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?>>
                   </div>
@@ -237,7 +237,7 @@ try {
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Número do RG<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="rg">Número do RG<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="text" class="form-control<?= isset($fieldErrors['rg']) ? ' is-invalid' : '' ?>" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)" required value="<?= htmlspecialchars($oldInput['rg'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <p id="error_rg" class="help-block text-danger" style="display: <?= isset($fieldErrors['rg']) ? 'block' : 'none' ?>;">
@@ -246,7 +246,7 @@ try {
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="text" class="form-control<?= isset($fieldErrors['orgao_emissor']) ? ' is-invalid' : '' ?>" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['orgao_emissor'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <p id="error_orgao_emissor" class="help-block text-danger" style="display: <?= isset($fieldErrors['orgao_emissor']) ? 'block' : 'none' ?>;">
@@ -255,7 +255,7 @@ try {
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Data de expedição<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="data_expedicao">Data de expedição<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="date" class="form-control<?= isset($fieldErrors['data_expedicao']) ? ' is-invalid' : '' ?>" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required value="<?= htmlspecialchars($oldInput['data_expedicao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <p id="error_data_expedicao" class="help-block text-danger" style="display: <?= isset($fieldErrors['data_expedicao']) ? 'block' : 'none' ?>;">
@@ -270,7 +270,7 @@ try {
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="data_admissao">Data de Admissão<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>" name="data_admissao" id="data_admissao" max=<?php echo date('Y-m-d'); ?> required value="<?= htmlspecialchars($oldInput['data_admissao'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <p id="error_data_admissao" class="help-block text-danger" style="display: <?= isset($fieldErrors['data_admissao']) ? 'block' : 'none' ?>;">
@@ -279,8 +279,8 @@ try {
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="inputSuccess">Situação<sup class="obrig">*</sup></label>
-                  <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                  <label class="col-md-3 control-label" for="situacao">Situação<sup class="obrig">*</sup></label>
+                  <a onclick="adicionar_situacao()" aria-label="Adicionar situação"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                   <div class="col-md-6">
                     <select class="form-control input-lg mb-md" name="situacao" id="situacao" required>
                       <option selected disabled>Selecionar</option>
@@ -294,8 +294,8 @@ try {
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
-                  <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                  <label class="col-md-3 control-label" for="cargo">Cargo<sup class="obrig">*</sup></label>
+                  <a onclick="adicionar_cargo()" aria-label="Adicionar cargo"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                   <div class="col-md-6">
                     <select class="form-control input-lg mb-md" name="cargo" id="cargo" required>
                       <option selected disabled>Selecionar</option>
@@ -310,7 +310,7 @@ try {
                 </div>
 
                 <div class="form-group">
-                  <label class="col-md-3 control-label">Escala<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="escala_input">Escala<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <select class="form-control input-lg mb-md" name="escala" id="escala_input" required>
                       <option selected disabled value="">Selecionar</option>
@@ -322,10 +322,10 @@ try {
                       ?>
                     </select>
                   </div>
-                  <a href="../quadro_horario/adicionar_escala.php"><i class="fas fa-plus w3-xlarge"></i></a>
+                  <a href="../quadro_horario/adicionar_escala.php" aria-label="Adicionar escala"><i class="fas fa-plus w3-xlarge"></i></a>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label">Tipo<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="tipoCargaHoraria_input">Tipo<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <select class="form-control input-lg mb-md" name="tipoCargaHoraria" id="tipoCargaHoraria_input" required>
                       <option selected disabled value="">Selecionar</option>
@@ -337,18 +337,18 @@ try {
                       ?>
                     </select>
                   </div>
-                  <a href="../quadro_horario/adicionar_tipo_quadro_horario.php"><i class="fas fa-plus w3-xlarge"></i></a>
+                  <a href="../quadro_horario/adicionar_tipo_quadro_horario.php" aria-label="Adicionar tipo de carga horária"><i class="fas fa-plus w3-xlarge"></i></a>
                 </div>
                 <div class="form-group" id="reservista1" style="display: none">
-                  <label class="col-md-3 control-label">Número do certificado reservista</label>
+                  <label class="col-md-3 control-label" for="certificado_reservista_numero">Número do certificado reservista</label>
                   <div class="col-md-6">
-                    <input type="text" name="certificado_reservista_numero" class="form-control num_reservista">
+                    <input type="text" name="certificado_reservista_numero" id="certificado_reservista_numero" class="form-control num_reservista">
                   </div>
                 </div>
                 <div class="form-group" id="reservista2" style="display: none">
-                  <label class="col-md-3 control-label">Série do certificado reservista</label>
+                  <label class="col-md-3 control-label" for="certificado_reservista_serie">Série do certificado reservista</label>
                   <div class="col-md-6">
-                    <input type="text" name="certificado_reservista_serie" class="form-control serie_reservista">
+                    <input type="text" name="certificado_reservista_serie" id="certificado_reservista_serie" class="form-control serie_reservista">
                   </div>
                 </div>
 
@@ -680,7 +680,7 @@ try {
   <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 
   <div align="right">
-    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
   </div>
 </body>
 
