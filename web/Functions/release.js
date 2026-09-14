@@ -173,7 +173,7 @@ function newReleaseMessage() {
         type: "warning",
         icon: "fa-triangle-exclamation",
         message: "O sistema possui atualizações disponíveis!",
-        link: "https://github.com/LabRedesCefetRJ/WeGIA/releases/latest",
+        link: "https://github.com/LabRedesCefetRJ/WeGIA/releases",
         linkText: "Consulte a nova release"
     });
 }
