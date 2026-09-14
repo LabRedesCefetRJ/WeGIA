@@ -12,3 +12,6 @@ define( 'DB_HOST', 'localhost');
 define( 'DB_CHARSET', 'utf8');
 define( 'ROOT',dirname(__FILE__));
 define( 'WWW', 'https://demo.wegia.org/');
+
+// Habilita recursos de desenvolvedor (ex: pagina debug_info.php). Manter "off" em produção.
+define( 'DEV_MODE', 'off');

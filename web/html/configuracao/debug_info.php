@@ -17,6 +17,12 @@ permissao($_SESSION['id_pessoa'], 9);
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
+// Pagina de debug so pode ser acessada com DEV_MODE = "on" em config.php
+if (!defined('DEV_MODE') || DEV_MODE !== 'on') {
+	http_response_code(403);
+	exit("Acesso negado: modo de desenvolvedor desativado.");
+}
+
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
 if(!$conexao){
