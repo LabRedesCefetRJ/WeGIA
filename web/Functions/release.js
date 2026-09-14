@@ -38,7 +38,9 @@ function showAlertMessage({
     message,
     type = "warning",      // warning | danger | success | info
     icon = null,           // nome do ícone Font Awesome (ex: "triangle-exclamation")
-    id = "generic-alert"
+    id = "generic-alert",
+    link = null,           // URL opcional exibida como link ao lado da mensagem
+    linkText = null        // texto do link (padrão: a própria URL)
 }) {
     const container = document.getElementById("message-container");
     if (!container) return;
@@ -96,6 +98,18 @@ function showAlertMessage({
     contentSpan.style.wordBreak = "break-word";
     contentSpan.appendChild(iconElement);
     contentSpan.appendChild(document.createTextNode(message));
+
+    if (link) {
+        const linkElement = document.createElement("a");
+        linkElement.href = link;
+        linkElement.target = "_blank";
+        linkElement.rel = "noopener noreferrer";
+        linkElement.style.marginLeft = "0.5rem";
+        linkElement.style.textDecoration = "underline";
+        linkElement.style.color = "inherit";
+        linkElement.textContent = linkText || link;
+        contentSpan.appendChild(linkElement);
+    }
 
     contentWrapper.appendChild(contentSpan);
 
@@ -158,7 +172,9 @@ function newReleaseMessage() {
         id: "new-release-alert",
         type: "warning",
         icon: "fa-triangle-exclamation",
-        message: "O sistema possui atualizações disponíveis!"
+        message: "O sistema possui atualizações disponíveis!",
+        link: "https://github.com/LabRedesCefetRJ/WeGIA/releases/latest",
+        linkText: "Consulte a nova release"
     });
 }
 
