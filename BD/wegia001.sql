@@ -3342,6 +3342,22 @@ SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 
+-- ########################### EVENTS #################### --
+
+USE wegia;
+
+DROP EVENT IF EXISTS ev_jwt_blacklist_cleanup;
+
+CREATE EVENT ev_jwt_blacklist_cleanup
+    ON SCHEDULE EVERY 1 HOUR
+    STARTS CURRENT_TIMESTAMP + INTERVAL 1 HOUR
+    ON COMPLETION PRESERVE
+    ENABLE
+    COMMENT 'Remove tokens JWT expirados da blacklist'
+DO
+    DELETE FROM jwt_blacklist
+    WHERE expires_at <= NOW();
+
 -- -----------------------------------------------------
 -- Módulo Projetos (revisado)
 -- -----------------------------------------------------
