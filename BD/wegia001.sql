@@ -2761,6 +2761,50 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_membro_periodo` (
     ON DELETE SET NULL
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
+
+
+USE `wegia`;
+
+CREATE TABLE IF NOT EXISTS `jwt_blacklist` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+    -- SHA-256 do JWT original
+    `token_hash` CHAR(64) NOT NULL,
+
+    -- Pessoa proprietária do token
+    `user_id` INT(11) NOT NULL,
+
+    -- Tipo do JWT
+    `token_type` ENUM('access', 'refresh') NOT NULL,
+
+    -- Equivalente ao claim "iat"
+    `issued_at` DATETIME NOT NULL,
+
+    -- Equivalente ao claim "exp"
+    `expires_at` DATETIME NOT NULL,
+
+    -- Momento em que o token foi invalidado
+    `blacklisted_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (`id`),
+
+    UNIQUE KEY `uq_jwt_blacklist_token_hash` (`token_hash`),
+
+    KEY idx_jwt_blacklist_expires_at (expires_at),
+
+    KEY idx_jwt_blacklist_user_id (user_id),
+
+    KEY idx_jwt_blacklist_user_type (user_id, token_type),
+
+    CONSTRAINT fk_jwt_blacklist_pessoa
+        FOREIGN KEY (user_id)
+        REFERENCES pessoa (id_pessoa)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
   
 -- ########################### PROCEDURES #################### --
 
