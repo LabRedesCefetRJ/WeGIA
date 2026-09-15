@@ -332,7 +332,26 @@ class PdfService
             $dataVencimento = $this->formatarDataContribuicao($contribuicao['data_vencimento'] ?? ($contribuicao['dataVencimento'] ?? null));
             $dataPagamento = $this->formatarDataContribuicao($contribuicao['data_pagamento'] ?? ($contribuicao['dataPagamento'] ?? null));
             $plataforma = (string)($contribuicao['plataforma'] ?? '-');
-            $meioPagamento = (string)($contribuicao['meioPagamento'] ?? $contribuicao['meio_pagamento'] ?? '-');
+
+            $meioPagamento = '';
+
+            switch ($contribuicao['meio'] ?? ($contribuicao['meioPagamento'] ?? '')) {
+                case 'Carne':
+                    $meioPagamento = 'Carnê';
+                    break;
+
+                case 'Recorrencia':
+                    $meioPagamento = 'Recorrência';
+                    break;
+
+                case 'CartaoCredito':
+                    $meioPagamento = 'Cartão de crédito';
+                    break;
+
+                default:
+                    $meioPagamento = (string)($contribuicao['meio'] ?? ($contribuicao['meioPagamento'] ?? '-'));
+                    break;
+            }
 
             $mensagem = sprintf(
                 'Este documento confirma a contribuição vinculada a(o) doador(a) %s.',
