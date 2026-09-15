@@ -7,7 +7,7 @@ function preencherTabela(listaProjetos) {
   tbody.empty();
   
   if (listaProjetos.length === 0) {
-    tbody.append('<tr><td colspan="5" class="text-center">Nenhum projeto encontrado</td></tr>');
+    tbody.append('<tr><td colspan="6" class="text-center">Nenhum projeto encontrado</td></tr>');
     return;
   }
   
@@ -16,19 +16,21 @@ function preencherTabela(listaProjetos) {
     if (descricao.length > 80) {
       descricao = descricao.substring(0, 80) + '...';
     }
-    
-    var tr = $('<tr>')
-      .css('cursor', 'pointer')
-      .data('id', projeto.id_projeto)
-      .on('click', function () {
-        var id = encodeURIComponent($(this).data('id'));
+
+    var btnEditar = $('<button type="button" class="btn btn-primary btn-xs" title="Editar projeto">')
+      .append('<i class="fa fa-pencil"></i>')
+      .on('click', function() {
+        var id = encodeURIComponent(projeto.id_projeto);
         window.location.href = 'editar_projeto.php?id_projeto=' + id;
-      })
+      });
+
+    var tr = $('<tr>')
       .append($('<td>').text(projeto.nome))
       .append($('<td>').text(projeto.tipo))
       .append($('<td>').text(projeto.local))
       .append($('<td>').text(projeto.status))
-      .append($('<td>').text(descricao));
+      .append($('<td>').text(descricao))
+      .append($('<td class="text-center">').append(btnEditar));
     
     tbody.append(tr);
   });
@@ -46,6 +48,41 @@ function filtrarPorStatus() {
     });
     preencherTabela(filtrados);
   }
+}
+
+// Função para excluir um status
+function excluirStatus() {
+  var idStatus = $('#filtro_status').val();
+
+  if (!idStatus) {
+    alert('Selecione um status específico para excluir.');
+    return;
+  }
+
+  alert('Atenção: só é possível excluir status que não estejam sendo utilizados por nenhum projeto.');
+
+  $.ajax({
+    url: '../../controle/control.php',
+    type: 'POST',
+    data: {
+      metodo: 'removerStatus',
+      nomeClasse: 'ProjetoControle',
+      id_status: idStatus,
+      csrf_token: $('#csrf_token').val()
+    },
+    dataType: 'json',
+    success: function(response) {
+      if (response.success) {
+        alert('Status excluído com sucesso.');
+        location.reload();
+      } else {
+        alert('Erro: ' + (response.message || 'Tente novamente.'));
+      }
+    },
+    error: function() {
+      alert('Erro ao conectar com o servidor.');
+    }
+  });
 }
 
 // Carregar dados ao iniciar
