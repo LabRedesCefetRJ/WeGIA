@@ -173,6 +173,9 @@ define('BKP_DIR', " . var_export($backupDir, true) . ");
 
 define('APP_TIMEZONE', 'America/Sao_Paulo');
 define('WWW', " . var_export($www, true) . ");
+
+// Habilita recursos de desenvolvedor (ex: pagina debug_info.php). Manter \"off\" em produção.
+define('DEV_MODE', 'off');
 define('API_BASE_URL', " . var_export(rtrim($www, '/') . '/api/', true) . ");
 ";
 

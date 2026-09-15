@@ -13,6 +13,8 @@ define( 'DB_CHARSET', 'utf8');
 define( 'ROOT',dirname(__FILE__));
 define( 'WWW', 'https://demo.wegia.org/');
 
+define( 'DEV_MODE', 'off');
+
 /**
  *Configuração da API
 */
