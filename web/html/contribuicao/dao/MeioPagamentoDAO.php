@@ -1,10 +1,10 @@
 <?php
 
 //requisitar arquivo de conexão
-require_once '../dao/ConexaoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 
 //requisitar model
-require_once '../model/MeioPagamento.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'MeioPagamento.php';
 
 class MeioPagamentoDAO
 {

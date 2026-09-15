@@ -5,6 +5,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPA
 
 //requisitar model
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model/Socio.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'utils' . DIRECTORY_SEPARATOR . 'UuidGenerator.php';
 class SocioDAO
 {
     private $pdo;
@@ -50,7 +52,7 @@ class SocioDAO
         $this->pdo->beginTransaction();
 
         //criar pessoa
-        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, email, sobrenome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :email, :sobrenome, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
+        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, sobrenome, email, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :sobrenome, :email, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
 
         $stmtPessoa = $this->pdo->prepare($sqlPessoa);
 
@@ -77,7 +79,7 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, uuid) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia, :uuid)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -90,6 +92,7 @@ class SocioDAO
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
         $stmtSocio->bindValue(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+        $stmtSocio->bindValue(':uuid', \api\utils\UuidGenerator::generateBinary(), PDO::PARAM_LOB);
 
         $stmtSocio->execute();
 
@@ -117,7 +120,7 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, uuid) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia, :uuid)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -130,6 +133,7 @@ class SocioDAO
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
         $stmtSocio->bindValue(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+        $stmtSocio->bindValue(':uuid', \api\utils\UuidGenerator::generateBinary(), PDO::PARAM_LOB);
 
         $stmtSocio->execute();
 
@@ -249,6 +253,7 @@ class SocioDAO
             pessoa.nome,
             pessoa.email,
             pessoa.sobrenome,
+            pessoa.email,
             pessoa.data_nascimento, 
             pessoa.telefone, 
             pessoa.cep, 
@@ -288,6 +293,7 @@ class SocioDAO
             pessoa.nome,
             pessoa.email,
             pessoa.sobrenome,
+            pessoa.email,
             pessoa.data_nascimento, 
             pessoa.telefone, 
             pessoa.cep, 
@@ -405,7 +411,7 @@ class SocioDAO
         $socios = [];
 
         $sql = "
-            SELECT p.nome, p.email, p.sobrenome, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.valor_periodo 
+            SELECT p.nome, p.sobrenome, p.email, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.valor_periodo 
             FROM socio s JOIN pessoa p ON(s.id_pessoa=p.id_pessoa)
             ORDER BY nome ASC
         ";
