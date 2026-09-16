@@ -10,11 +10,13 @@ use Firebase\JWT\SignatureInvalidException;
 class AuthService
 {
     private UserRepository $userRepository;
+    private JwtBlacklistRepository $jwtBlacklistRepository;
     private string $secret;
 
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository, JwtBlacklistRepository $jwtBlacklistRepository)
     {
         $this->userRepository = $userRepository;
+        $this->jwtBlacklistRepository = $jwtBlacklistRepository;
         $this->secret = JWT_SECRET;
     }
 
@@ -59,7 +61,8 @@ class AuthService
     public function refreshToken(string $token): array
     {
         try {
-            $decoded = $this->validateToken($token);
+            $decoded = $this->validateToken($token, 'refresh');
+            $this->jwtBlacklistRepository->blacklist($token, $decoded);
             $userId = $decoded->sub;
 
             return $this->generateTokens($userId);
@@ -104,10 +107,20 @@ class AuthService
         ];
     }
 
-    public function validateToken(string $token): object
+    public function validateToken(string $token, ?string $expectedType = null): object
     {
         try {
-            return JWT::decode($token, new Key($this->secret, 'HS256'));
+            $decoded = JWT::decode($token, new Key($this->secret, 'HS256'));
+
+            if ($expectedType !== null && (($decoded->type ?? null) !== $expectedType)) {
+                throw new \Exception('Tipo de token inválido');
+            }
+
+            if ($this->jwtBlacklistRepository->isBlacklisted($token)) {
+                throw new \Exception('Token revogado');
+            }
+
+            return $decoded;
         } catch (ExpiredException $e) {
             throw new \Exception('Token expirado');
         } catch (SignatureInvalidException $e) {
@@ -117,11 +130,17 @@ class AuthService
         }
     }
 
-    public function logout(string $token): array
+    public function logout(string $accessToken, ?string $refreshToken = null): array
     {
         try {
-            $decoded = $this->validateToken($token);
-            
+            $decoded = $this->validateToken($accessToken, 'access');
+            $this->jwtBlacklistRepository->blacklist($accessToken, $decoded);
+
+            if ($refreshToken !== null && $refreshToken !== '') {
+                $decodedRefreshToken = $this->validateToken($refreshToken, 'refresh');
+                $this->jwtBlacklistRepository->blacklist($refreshToken, $decodedRefreshToken);
+            }
+
             // Token é válido, logout realizado
             return [
                 'message' => 'Logout realizado com sucesso',

@@ -16,6 +16,7 @@ use api\modules\Auth\AuthController;
 use api\modules\Auth\AuthMiddleware;
 use api\modules\Auth\AuthService;
 use api\modules\Auth\UserRepository;
+use api\modules\Auth\JwtBlacklistRepository;
 use api\modules\Socio\SocioRepository;
 use api\modules\Socio\SocioMiddleware;
 use api\modules\Contribuicao\ContribuicaoController;
@@ -43,8 +44,14 @@ $container = new AppContainer([
     UserRepository::class => function ($c) {
         return new UserRepository($c->get(PDO::class));
     },
+    JwtBlacklistRepository::class => function ($c) {
+        return new JwtBlacklistRepository($c->get(PDO::class));
+    },
     AuthService::class => function ($c) {
-        return new AuthService($c->get(UserRepository::class));
+        return new AuthService(
+            $c->get(UserRepository::class),
+            $c->get(JwtBlacklistRepository::class)
+        );
     },
     AuthController::class => function ($c) {
         return new AuthController($c->get(AuthService::class));
@@ -187,7 +194,7 @@ $app->get('/dashboard', function (Request $request, Response $response, $args) {
 $app->post('/login', [AuthController::class, 'login']);
 $app->post('/register', [AuthController::class, 'register']);
 $app->post('/refresh', [AuthController::class, 'refresh']);
-$app->post('/logout', [AuthController::class, 'logout']); //revisar lógica de logout, os tokens são stateless, então não tem como invalidar o token, a única forma é ter uma blacklist de tokens ou usar um campo de "token_version" no banco de dados para invalidar os tokens antigos
+$app->post('/logout', [AuthController::class, 'logout']);
 
 //Módulo Pessoa
 $app->get('/pessoas/homonimo/{fullname}', [PessoaController::class, 'checkHomonym']);

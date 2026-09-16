@@ -129,21 +129,39 @@ class AuthController
 
     public function logout(Request $request, Response $response): Response
     {
-        $authHeader = $request->getHeaderLine('Authorization');
+        // Tenta obter o token do cookie (Web)
+        $accessToken = $_COOKIE['access_token'] ?? null;
 
-        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            $response->getBody()->write(json_encode([
-                'error' => 'Token não fornecido'
-            ]));
+        // Caso não exista, tenta obter do cabeçalho Authorization (Mobile/API)
+        if ($accessToken === null || empty($accessToken)) {
+            $authHeader = $request->getHeaderLine('Authorization');
 
-            return $response->withStatus(401)
-                ->withHeader('Content-Type', 'application/json');
+            if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+                $accessToken = substr($authHeader, 7);
+            } else if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
+                $response->getBody()->write(json_encode([
+                    'error' => 'Token não fornecido'
+                ]));
+
+                return $response->withStatus(401)
+                    ->withHeader('Content-Type', 'application/json');
+            }
         }
 
-        $token = str_replace('Bearer ', '', $authHeader);
+        //pegar do cookie se for web, pegar do body se for mobile
+        if ($this->isWebClient($request)) {
+            $refreshToken = $_COOKIE['refresh_token'] ?? null;
+        } else {
+            $data = $request->getParsedBody();
+            $refreshToken = $data['refresh_token'] ?? null;
+        }
 
         try {
-            $result = $this->authService->logout($token);
+            $result = $this->authService->logout($accessToken, $refreshToken);
+
+            if ($this->isWebClient($request)) {
+                $this->clearAuthCookies();
+            }
 
             $response->getBody()->write(json_encode($result));
             return $response->withHeader('Content-Type', 'application/json');
@@ -175,7 +193,26 @@ class AuthController
         if ($refreshToken !== null) {
             setcookie('refresh_token', $refreshToken, [
                 'expires'   => time() + (60 * 60 * 24 * 30), // 30 dias
-                'path'      => '/refresh',
+                'path'      => '/',
+                'secure'    => true,
+                'httponly'  => true,
+                'samesite'  => 'Strict'
+            ]);
+        }
+    }
+
+    private function clearAuthCookies(): void
+    {
+        $cookies = [
+            ['name' => 'access_token', 'path' => '/'],
+            ['name' => 'refresh_token', 'path' => '/'],
+            ['name' => 'refresh_token', 'path' => '/refresh'],
+        ];
+
+        foreach ($cookies as $cookie) {
+            setcookie($cookie['name'], '', [
+                'expires'   => time() - 3600,
+                'path'      => $cookie['path'],
                 'secure'    => true,
                 'httponly'  => true,
                 'samesite'  => 'Strict'

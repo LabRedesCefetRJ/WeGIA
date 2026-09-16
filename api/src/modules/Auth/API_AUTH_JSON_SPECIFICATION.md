@@ -170,6 +170,8 @@ Renova o token de acesso utilizando um token de atualização (refresh token) v�
 |-------|------|-------------|-----------|
 | `refresh_token` | string | Sim | Token JWT de atualização válido |
 
+O refresh token recebido é invalidado e incluído na blacklist antes da emissão dos novos tokens. Um refresh token não pode ser reutilizado após uma rotação bem-sucedida.
+
 ### Resposta - 200 OK (Token Renovado com Sucesso)
 ```json
 {
@@ -219,10 +221,22 @@ Renova o token de acesso utilizando um token de atualização (refresh token) v�
 
 ## 4. POST `/logout`
 
-Realiza o logout de um usuário validando o token fornecido no header de autorização. Este é um logout lógico sem persistência de estado (stateless).
+Realiza o logout de um usuário e invalida os tokens recebidos, mesmo que ainda não estejam expirados.
 
 ### Parâmetros
-- **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
+- **Authorization** (header, obrigatório para clientes API): Token JWT no formato `Bearer <token>`
+
+Para clientes API, o refresh token pode ser enviado no corpo:
+
+```json
+{
+  "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
+}
+```
+
+Para clientes web, a requisição deve incluir `X-Client-Type: web` e os tokens são obtidos dos cookies enviados pelo navegador.
+
+O token de acesso e, quando recebido, o refresh token são incluídos na tabela `jwt_blacklist`. Clientes web recebem a exclusão dos cookies `access_token` e `refresh_token` após o logout bem-sucedido.
 
 ### Exemplos de Requisição
 ```
@@ -256,6 +270,8 @@ Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
   "error": "Token inválido ou expirado"
 }
 ```
+
+Tokens incluídos na blacklist são rejeitados em requisições protegidas, em novas rotações de refresh e em novas tentativas de logout.
 
 ### Resposta - 401 Unauthorized (Token Expirado)
 ```json
