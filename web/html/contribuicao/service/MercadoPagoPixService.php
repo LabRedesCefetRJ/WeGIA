@@ -1,6 +1,7 @@
 <?php
-require_once 'ApiPixServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiPixServiceInterface.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 class MercadoPagoPixService implements ApiPixServiceInterface
 {
     public function gerarQrCode(ContribuicaoLog $contribuicaoLog)
@@ -77,7 +78,7 @@ class MercadoPagoPixService implements ApiPixServiceInterface
         }',
         CURLOPT_HTTPHEADER => array(
             'Content-Type: application/json',
-            'Authorization: Bearer ' . $gatewayPagamento['token'],
+            'Authorization: Bearer ' . $gatewayPagamento['private_token'],
             'X-Idempotency-Key: ' . $numeroDocumento
         ),
         ));

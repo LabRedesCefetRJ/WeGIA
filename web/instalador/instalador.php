@@ -155,6 +155,12 @@ foreach ($sqlFiles as $sqlFile) {
 
 $configPath = realpath("../") . "/config.php";
 
+try {
+    $jwtSecret = bin2hex(random_bytes(32));
+} catch (Throwable $exception) {
+    die("Falha ao gerar o segredo JWT.");
+}
+
 $file = fopen($configPath, "w");
 
 if (!$file) {
@@ -176,12 +182,53 @@ define('WWW', " . var_export($www, true) . ");
 
 // Habilita recursos de desenvolvedor (ex: pagina debug_info.php). Manter \"off\" em produção.
 define('DEV_MODE', 'off');
+define('API_BASE_URL', " . var_export(rtrim($www, '/') . '/api/', true) . ");
+define('JWT_SECRET', " . var_export($jwtSecret, true) . ");
+define('ENV_APP', 'production');
+
+//Separe as origens permitidas com o caractere ','
+define('CORS_ORIGIN', " . var_export($www, true) . ");
 ";
 
 fwrite($file, $config);
 fclose($file);
 
 echo "<p style='color:green;'>config.php criado com sucesso!</p>";
+
+/* =========================
+   API CONFIG LINK
+========================= */
+
+$apiDir = realpath("../../api");
+$apiConfigTarget = "../web/config.php";
+
+if ($apiDir === false || !is_dir($apiDir)) {
+    die("Diretório da API não encontrado.");
+}
+
+$apiConfigPath = $apiDir . "/config.php";
+
+if (is_link($apiConfigPath) && readlink($apiConfigPath) === $apiConfigTarget) {
+    echo "<p style='color:green;'>Link simbólico da API já configurado.</p>";
+} else {
+    if (file_exists($apiConfigPath) || is_link($apiConfigPath)) {
+        if (!unlink($apiConfigPath)) {
+            die("Falha ao substituir api/config.php pelo link simbólico.");
+        }
+    }
+
+    if (!symlink($apiConfigTarget, $apiConfigPath)) {
+        die("Falha ao criar o link simbólico api/config.php.");
+    }
+
+    $resolvedConfigPath = realpath($apiConfigPath);
+    if (!$resolvedConfigPath || $resolvedConfigPath !== realpath($configPath)) {
+        unlink($apiConfigPath);
+        die("O link simbólico da API aponta para um arquivo inválido.");
+    }
+
+    echo "<p style='color:green;'>Link simbólico da API criado com sucesso!</p>";
+}
 
 /* =========================
    FINALIZAÇÃO
