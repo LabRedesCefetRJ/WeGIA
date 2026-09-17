@@ -35,6 +35,11 @@ if (!$cpf || strlen($cpf) < 1) {
     exit();
 }
 
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+require_once ROOT . '/dao/PessoaDAO.php';
+$pessoaDAO = new PessoaDAO();
+$adm_configurado = $pessoaDAO->verificaAdmConfigurado($id_pessoa);
+
 $pdo = Conexao::connect();
 
 $stmt = $pdo->prepare("SELECT * FROM pessoa WHERE cpf = :cpf");
@@ -179,7 +184,7 @@ require_once ROOT . '/classes/Csrf.php';
                                     <div class="col-md-6">
                                         <input type="text"
                                             class="form-control<?= isset($fieldErrors['nome']) ? ' is-invalid' : '' ?>"
-                                            name="nome" id="nome" onkeypress="return Onlychars(event)" required
+                                            name="nome" id="nome" onkeypress="return Onlychars(event)" required readonly
                                             value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                                         <p id="error_nome" class="help-block text-danger"
                                             style="display: <?= isset($fieldErrors['nome']) ? 'block' : 'none' ?>;">
@@ -193,7 +198,7 @@ require_once ROOT . '/classes/Csrf.php';
                                         <input type="text"
                                             class="form-control<?= isset($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>"
                                             name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)"
-                                            required
+                                            required readonly
                                             value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                                         <p id="error_sobrenome" class="help-block text-danger"
                                             style="display: <?= isset($fieldErrors['sobrenome']) ? 'block' : 'none' ?>;">
@@ -211,7 +216,7 @@ require_once ROOT . '/classes/Csrf.php';
                                             onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)"
                                             onkeyup="mascara('###.###.###-##', this, event)"
                                             value="<?= htmlspecialchars($oldInput['cpf'] ?? ($cpf ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                                            required>
+                                            required readonly>
                                         <p id="error_cpf" class="help-block text-danger"
                                             style="display: <?= isset($fieldErrors['cpf']) ? 'block' : 'none' ?>;">
                                             <?= isset($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : '' ?>
@@ -240,7 +245,7 @@ require_once ROOT . '/classes/Csrf.php';
                                         <input type="date" name="nascimento" id="nascimento"
                                             class="form-control<?= isset($fieldErrors['nascimento']) ? ' is-invalid' : '' ?>"
                                             min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>"
-                                            required
+                                            required readonly
                                             value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                                         <p id="error_nascimento" class="help-block text-danger"
                                             style="display: <?= isset($fieldErrors['nascimento']) ? 'block' : 'none' ?>;">
@@ -279,6 +284,9 @@ require_once ROOT . '/classes/Csrf.php';
                                             <?php
                                             while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
                                                 $selected = isset($oldInput['cargo']) && $oldInput['cargo'] == $row[0] ? ' selected' : '';
+                                                if ($adm_configurado != 1 && $row[0] == 1) {
+                                                    continue;
+                                                }
                                                 echo "<option value=\"" . htmlspecialchars($row[0]) . "\"" . $selected . ">" . htmlspecialchars($row[1]) . "</option>";
                                             }
                                             ?>
