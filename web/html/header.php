@@ -32,10 +32,16 @@ $sqlCargo = "
     JOIN funcionario f ON f.id_pessoa = p.id_pessoa
     JOIN cargo c ON c.id_cargo = f.id_cargo
     WHERE p.id_pessoa = ?
+    UNION
+    SELECT c.cargo, c.id_cargo
+    FROM pessoa p
+    JOIN voluntario v ON v.id_pessoa = p.id_pessoa
+    JOIN cargo c ON c.id_cargo = v.id_cargo
+    WHERE p.id_pessoa = ?
 ";
 
 $stmtCargo = $conexao->prepare($sqlCargo);
-$stmtCargo->bind_param("i", $id_pessoa);
+$stmtCargo->bind_param("ii", $id_pessoa, $id_pessoa);
 $stmtCargo->execute();
 
 $resultCargo = $stmtCargo->get_result();
