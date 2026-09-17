@@ -959,15 +959,29 @@ async function buscarCadastroSocio() {
         return;
     }
 
+    const captchaResponse = grecaptcha.getResponse();
+
+    if (!captchaResponse) {
+        alert('Por favor, confirme que você não é um robô.');
+        return;
+    }
+
     console.log("Verificando cadastro do sócio...");
 
     desbloquearCamposCadastro();
     camposFaltantesSocio = [];
 
-    const url = `../controller/control.php?nomeClasse=SocioController&metodo=verificarCadastroSocio&documento=${encodeURIComponent(documento)}`;
+    const formData = new FormData();
+    formData.append('nomeClasse', 'SocioController');
+    formData.append('metodo', 'verificarCadastroSocio');
+    formData.append('documento', documento);
+    formData.append('g-recaptcha-response', captchaResponse);
 
     try {
-        const response = await fetch(url);
+        const response = await fetch("../controller/control.php", {
+            method: "POST",
+            body: formData
+        });
 
         let data = null;
 
@@ -1011,6 +1025,11 @@ async function buscarCadastroSocio() {
                 alternarPaginas("pag3", "pag2");
             }
 
+            return;
+        }
+
+        if (response.status === 412) {
+            alert(data?.erro || 'O token do captcha não é válido. Tente novamente.');
             return;
         }
 

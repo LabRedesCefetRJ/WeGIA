@@ -25,15 +25,11 @@ class SocioController
     public function criarSocio()
     {
         try {
-            //captcha
-            if (!isset($_SESSION['usuario'])) {
-                $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
-                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
-
-                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
-            }
-
+            // A confirmação de captcha acontece em verificarCadastroSocio()
+            // (confirmação do CPF) e é reaproveitada uma única vez em
+            // ContribuicaoLogController/RecorrenciaController (confirmação
+            // do pagamento) — esse método fica no meio do caminho e não
+            // deve consumir nem rearmar essa sessão.
             $pessoaDao = new PessoaDAO($this->pdo);
 
             $verificacaoExistenciaPessoa = $pessoaDao->verificarExistencia(trim(filter_input(INPUT_POST, 'documento_socio')));
@@ -395,6 +391,21 @@ class SocioController
     }
 
     /**
+     * Tempo (em segundos) que a confirmação de captcha feita ao digitar o
+     * CPF (verificarCadastroSocio) continua valendo pra confirmação final
+     * da contribuição, via o reaproveitamento de sessão que
+     * CaptchaGoogleService::validate() já faz sozinho.
+     */
+    private const CAPTCHA_SEGUNDOS_DADOS_PRONTOS = 30;
+    private const CAPTCHA_SEGUNDOS_CAMPOS_FALTANTES = 120;
+    private const CAPTCHA_SEGUNDOS_CADASTRO_ZERO = 300;
+
+    private function armarSessaoCaptcha(int $segundos): void
+    {
+        $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + $segundos];
+    }
+
+    /**
      * Versão de buscarPorDocumento() que não expõe os dados já cadastrados do
      * sócio: informa apenas se ele existe e, se existir, quais campos
      * obrigatórios ainda faltam preencher. Rota pública, usada no fluxo de
@@ -402,12 +413,14 @@ class SocioController
      */
     public function verificarCadastroSocio()
     {
-        $documento = filter_input(INPUT_GET, 'documento');
+        $documento = filter_input(INPUT_POST, 'documento');
 
         try {
-            // Rota pública (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): limita
-            // tentativas por IP, pra dificultar varredura em massa de CPFs.
-            if (!isset($_SESSION['usuario'])) {
+            $autenticado = isset($_SESSION['usuario']);
+
+            if (!$autenticado) {
+                // Rota pública (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): limita
+                // tentativas por IP, pra dificultar varredura em massa de CPFs.
                 $cache = new Cache();
                 $chaveLimite = 'rate_limit_verificarCadastroSocio_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
                 $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
@@ -419,6 +432,14 @@ class SocioController
                 }
 
                 $cache->save($chaveLimite, $tentativas + 1, '1 minute');
+
+                // Confirmação do CPF: sempre exige um token novo (nunca
+                // reaproveita sessão pra si mesma), e é essa validação que
+                // fica armada abaixo pra ser reaproveitada uma única vez na
+                // confirmação final da contribuição.
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validarTokenFresco())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
 
             if (!$documento || empty($documento))
@@ -433,18 +454,36 @@ class SocioController
                 //informar se existe uma pessoa
                 $pessoaDao = new PessoaDAO($this->pdo);
                 $pessoaExists = $pessoaDao->verificarExistencia($documento);
+                $existePessoa = $pessoaExists instanceof PessoaDTOSocio;
+
+                if (!$autenticado) {
+                    // Pessoa já cadastrada: dados são reaproveitados e o fluxo
+                    // pula direto pro pagamento. Pessoa nova: precisa
+                    // preencher o cadastro inteiro, janela maior.
+                    $this->armarSessaoCaptcha($existePessoa
+                        ? self::CAPTCHA_SEGUNDOS_DADOS_PRONTOS
+                        : self::CAPTCHA_SEGUNDOS_CADASTRO_ZERO);
+                }
 
                 echo json_encode([
                     'existeSocio' => false,
-                    'existePessoa' => $pessoaExists instanceof PessoaDTOSocio ? true : false,
+                    'existePessoa' => $existePessoa,
                 ]);
 
                 exit();
             }
 
+            $camposFaltantes = $this->camposFaltantes($socio);
+
+            if (!$autenticado) {
+                $this->armarSessaoCaptcha(empty($camposFaltantes)
+                    ? self::CAPTCHA_SEGUNDOS_DADOS_PRONTOS
+                    : self::CAPTCHA_SEGUNDOS_CAMPOS_FALTANTES);
+            }
+
             echo json_encode([
                 'existeSocio' => true,
-                'camposFaltantes' => $this->camposFaltantes($socio),
+                'camposFaltantes' => $camposFaltantes,
             ]);
         } catch (Exception $e) {
             Util::tratarException($e);
@@ -528,15 +567,11 @@ class SocioController
     public function completarCadastroSocio()
     {
         try {
-            //captcha
-            if (!isset($_SESSION['usuario'])) {
-                $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
-                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
-
-                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
-            }
-
+            // A confirmação de captcha acontece em verificarCadastroSocio()
+            // (confirmação do CPF) e é reaproveitada uma única vez em
+            // ContribuicaoLogController/RecorrenciaController (confirmação
+            // do pagamento) — esse método fica no meio do caminho e não
+            // deve consumir nem rearmar essa sessão.
             $documento = trim((string) filter_input(INPUT_POST, 'documento_socio'));
 
             if (!$documento || empty($documento))

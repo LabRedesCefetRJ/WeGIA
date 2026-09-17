@@ -52,5 +52,3 @@
         Finalizar <i class="fa fa-arrow-right ml-2"></i>
     </button>
 </div>
-
-<?= $captchaGoogle->getWidget() ?>

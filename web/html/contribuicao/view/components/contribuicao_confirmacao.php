@@ -16,5 +16,3 @@
         VOLTAR
     </button>
 </div>
-
-<?= $captchaGoogle->getWidget() ?>

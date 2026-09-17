@@ -40,11 +40,23 @@ class CaptchaGoogleService implements CaptchaService
 
     public function validate(): bool
     {
-        if(isset($_SESSION['captcha']) && $_SESSION['captcha']['timeout'] > time() && $_SESSION['captcha']['validated'] === true){
+        if ($this->temSessaoValidada()) {
             unset($_SESSION['captcha']);
             return true;
         }
 
+        return $this->validarTokenFresco();
+    }
+
+    /**
+     * Igual a validate(), mas ignora qualquer sessão de captcha já armada e
+     * sempre exige um token novo, verificado agora com o Google. Usada no
+     * ponto de entrada de um fluxo (ex: confirmação do CPF na contribuição),
+     * que precisa de uma confirmação de verdade — não pode reaproveitar a
+     * própria sessão que ele mesmo arma.
+     */
+    public function validarTokenFresco(): bool
+    {
         if (!isset($_POST['g-recaptcha-response']))
             throw new Exception('reCAPTCHA não enviado', 412);
 
@@ -74,7 +86,12 @@ class CaptchaGoogleService implements CaptchaService
 
         if ($resultJson['success'] != true)
             return false;
-        
+
         return true;
+    }
+
+    private function temSessaoValidada(): bool
+    {
+        return isset($_SESSION['captcha']) && $_SESSION['captcha']['timeout'] > time() && $_SESSION['captcha']['validated'] === true;
     }
 }
