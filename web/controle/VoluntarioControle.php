@@ -99,6 +99,7 @@ class VoluntarioControle
             $_SESSION['tipo'] = "success";
 
             header("Location: ../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php");
+            exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -138,6 +139,7 @@ class VoluntarioControle
             $_SESSION['tipo'] = "success";
 
             header("Location: ../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php");
+            exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }

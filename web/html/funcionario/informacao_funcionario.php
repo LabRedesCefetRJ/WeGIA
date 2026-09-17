@@ -9,12 +9,14 @@ if (session_status() === PHP_SESSION_NONE)
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit();
 } else {
 	session_regenerate_id();
 }
 
 if (!isset($_SESSION['funcionarios'])) {
 	header('Location: ../../controle/control.php?metodo=listartodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php');
+	exit();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
@@ -106,15 +108,15 @@ require_once "../personalizacao_display.php";
 			window.location.href = "profile_funcionario.php?id_funcionario=" + id;
 		}
 
-		$(function() {
+		$(function () {
 
 			var funcionarios = <?php
-								$response = new FuncionarioControle;
-								$response->ListarTodos();
-								echo $_SESSION['funcionarios']; ?>;
+			$response = new FuncionarioControle;
+			$response->ListarTodos();
+			echo $_SESSION['funcionarios']; ?>;
 			console.log(funcionarios);
 
-			$.each(funcionarios, function(i, item) {
+			$.each(funcionarios, function (i, item) {
 				$("#tabela")
 					.append($("<tr>")
 						.attr("onclick", "clicar('" + item.id_funcionario + "')")
@@ -130,7 +132,7 @@ require_once "../personalizacao_display.php";
 							.html('<i class="glyphicon glyphicon-pencil"></i>')));
 			});
 		});
-		$(function() {
+		$(function () {
 			$("#header").load("../header.php");
 			$(".menuu").load("../menu.php");
 		});
@@ -189,10 +191,11 @@ require_once "../personalizacao_display.php";
 										<option value="<?php echo $situacao['id_situacao']; ?>">
 											<?php echo htmlspecialchars($situacao['situacoes']); ?>
 										</option> <?php
-												}
-													?>
+									}
+									?>
 								</select>
-								<br> <input type="submit" value='Listar' name='listar' id='listar' class='mb-xs mt-xs mr-xs btn btn-primary' />
+								<br> <input type="submit" value='Listar' name='listar' id='listar'
+									class='mb-xs mt-xs mr-xs btn btn-primary' />
 							</form>
 						</header>
 						<div class="panel-body">
@@ -216,7 +219,8 @@ require_once "../personalizacao_display.php";
 					<!-- Vendor -->
 					<script src="../../assets/vendor/select2/select2.js"></script>
 					<script src="../../assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-					<script src="../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+					<script
+						src="../../assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
 					<script src="../../assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 
 					<!-- Theme Base, Components and Settings -->
@@ -235,7 +239,8 @@ require_once "../personalizacao_display.php";
 					<script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
 					<div align="right">
-						<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+						<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60"
+							style="border:none;"></iframe>
 					</div>
 </body>
 

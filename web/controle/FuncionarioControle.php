@@ -800,7 +800,10 @@ class FuncionarioControle
 
             $_SESSION['funcionarios'] = json_encode($funcionarios);
 
-            isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
+            if (!headers_sent()) {
+                isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
+                exit();
+            }
         }
         catch (Exception $e) {
             Util::tratarException($e);
