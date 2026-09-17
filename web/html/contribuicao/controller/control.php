@@ -30,9 +30,9 @@ try {
     $rotasPublicas = [
         'SocioController' => [
             'criarSocio',
-            'buscarPorDocumento',
             'exibirBoletosPorCpf',
-            'atualizarSocio'
+            'verificarCadastroSocio',
+            'completarCadastroSocio'
         ],
         'ReciboController' => [
             'gerarRecibo',
@@ -58,7 +58,9 @@ try {
     $rotasPrivadas = [
         'SocioController' => [
             'sincronizarStatusSocios',
-            'deletarSocio'
+            'deletarSocio',
+            'buscarPorDocumento',
+            'atualizarSocio'
         ],
         'GatewayPagamentoController' => [
             'cadastrar',

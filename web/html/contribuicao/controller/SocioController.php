@@ -362,6 +362,240 @@ class SocioController
     }
 
     /**
+     * Campos obrigatórios de um cadastro de sócio para fins de cobrança.
+     * Mesmo conjunto exigido em extrairPost()/extrairCamposFaltantesPost().
+     */
+    private const CAMPOS_OBRIGATORIOS_SOCIO = ['nome', 'telefone', 'cep', 'rua', 'bairro', 'uf', 'cidade', 'numero'];
+
+    /**
+     * Verifica quais campos obrigatórios de um sócio já cadastrado estão vazios.
+     */
+    private function camposFaltantes(Socio $socio): array
+    {
+        $valores = [
+            'nome'     => $socio->getNome(),
+            'telefone' => $socio->getTelefone(),
+            'cep'      => $socio->getCep(),
+            'rua'      => $socio->getLogradouro(),
+            'bairro'   => $socio->getBairro(),
+            'uf'       => $socio->getEstado(),
+            'cidade'   => $socio->getCidade(),
+            'numero'   => $socio->getNumeroEndereco(),
+        ];
+
+        $faltantes = [];
+
+        foreach (self::CAMPOS_OBRIGATORIOS_SOCIO as $campo) {
+            if (!isset($valores[$campo]) || trim((string) $valores[$campo]) === '') {
+                $faltantes[] = $campo;
+            }
+        }
+
+        return $faltantes;
+    }
+
+    /**
+     * Versão de buscarPorDocumento() que não expõe os dados já cadastrados do
+     * sócio: informa apenas se ele existe e, se existir, quais campos
+     * obrigatórios ainda faltam preencher. Rota pública, usada no fluxo de
+     * contribuição pra decidir se falta completar o cadastro.
+     */
+    public function verificarCadastroSocio()
+    {
+        $documento = filter_input(INPUT_GET, 'documento');
+
+        try {
+            // Rota pública (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): limita
+            // tentativas por IP, pra dificultar varredura em massa de CPFs.
+            if (!isset($_SESSION['usuario'])) {
+                $cache = new Cache();
+                $chaveLimite = 'rate_limit_verificarCadastroSocio_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
+                $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
+
+                if ($tentativas >= 10) {
+                    http_response_code(429);
+                    echo json_encode(['erro' => 'Muitas tentativas. Tente novamente em alguns instantes.']);
+                    exit();
+                }
+
+                $cache->save($chaveLimite, $tentativas + 1, '1 minute');
+            }
+
+            if (!$documento || empty($documento))
+                throw new InvalidArgumentException('O documento informado é inválido.', 400);
+
+            $socioDao = new SocioDAO();
+            $socio = $socioDao->buscarPorDocumento($documento);
+
+            if (!$socio || is_null($socio)) {
+                http_response_code(404);
+
+                //informar se existe uma pessoa
+                $pessoaDao = new PessoaDAO($this->pdo);
+                $pessoaExists = $pessoaDao->verificarExistencia($documento);
+
+                echo json_encode([
+                    'existeSocio' => false,
+                    'existePessoa' => $pessoaExists instanceof PessoaDTOSocio ? true : false,
+                ]);
+
+                exit();
+            }
+
+            echo json_encode([
+                'existeSocio' => true,
+                'camposFaltantes' => $this->camposFaltantes($socio),
+            ]);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    /**
+     * Valida e extrai do POST somente os campos indicados como faltantes.
+     */
+    private function extrairCamposFaltantesPost(array $camposFaltantes): array
+    {
+        $valores = [];
+
+        foreach ($camposFaltantes as $campo) {
+            if (!in_array($campo, self::CAMPOS_OBRIGATORIOS_SOCIO, true)) {
+                continue;
+            }
+
+            $valor = trim((string) filter_input(INPUT_POST, $campo));
+
+            switch ($campo) {
+                case 'nome':
+                    if (!$valor || strlen($valor) < 3)
+                        throw new InvalidArgumentException('O nome informado não pode ser vazio.', 400);
+                    break;
+
+                case 'telefone':
+                    if (!$valor || (strlen($valor) != 14 && strlen($valor) != 15))
+                        throw new InvalidArgumentException('O telefone informado não está no formato correto.', 400);
+
+                    if (strlen($valor) === 15) {
+                        $celularNumeros = preg_replace('/\D/', '', $valor);
+
+                        if ($celularNumeros[2] != 9)
+                            throw new InvalidArgumentException('O número de celular informado não é válido.', 400);
+                    }
+                    break;
+
+                case 'cep':
+                    if (!$valor || strlen($valor) != 9)
+                        throw new InvalidArgumentException('O CEP informado não está no formato válido.', 400);
+                    break;
+
+                case 'rua':
+                    if (!$valor)
+                        throw new InvalidArgumentException('A rua informada não pode ser vazia.', 400);
+                    break;
+
+                case 'bairro':
+                    if (!$valor)
+                        throw new InvalidArgumentException('O bairro informado não pode ser vazio.', 400);
+                    break;
+
+                case 'uf':
+                    if (!$valor || strlen($valor) != 2)
+                        throw new InvalidArgumentException('O Estado informado não pode ser vazio.', 400);
+                    break;
+
+                case 'cidade':
+                    if (!$valor)
+                        throw new InvalidArgumentException('A cidade informada não pode ser vazia.', 400);
+                    break;
+
+                case 'numero':
+                    if (!$valor)
+                        throw new InvalidArgumentException('O número da residência informado não pode ser vazio.', 400);
+                    break;
+            }
+
+            $valores[$campo] = $valor;
+        }
+
+        return $valores;
+    }
+
+    /**
+     * Versão de atualizarSocio() que atualiza somente os campos que
+     * verificarCadastroSocio() acusou como faltantes, sem exigir o
+     * formulário completo. Rota pública, usada no fluxo de contribuição.
+     */
+    public function completarCadastroSocio()
+    {
+        try {
+            //captcha
+            if (!isset($_SESSION['usuario'])) {
+                $captchaGoogle = new CaptchaGoogleService();
+                if (!$captchaGoogle->validate())
+                    throw new InvalidArgumentException('O token do captcha não é válido.', 412);
+
+                $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + 30];
+            }
+
+            $documento = trim((string) filter_input(INPUT_POST, 'documento_socio'));
+
+            if (!$documento || empty($documento))
+                throw new InvalidArgumentException('O documento informado é inválido.', 400);
+
+            $socioDao = new SocioDAO($this->pdo);
+
+            //Verifica se o sócio é um funcionário ou atendido
+            if ($socioDao->verificarInternoPorDocumento($documento))
+                throw new LogicException('Você não possui permissão para alterar os dados desse CPF', 403);
+
+            $existente = $socioDao->buscarPorDocumento($documento);
+
+            if (!$existente)
+                throw new InvalidArgumentException('Sócio não encontrado para o documento informado.', 404);
+
+            $camposFaltantes = $this->camposFaltantes($existente);
+
+            if (empty($camposFaltantes)) {
+                http_response_code(200);
+                echo json_encode(['mensagem' => 'Cadastro já está completo.']);
+                return;
+            }
+
+            $dados = $this->extrairCamposFaltantesPost($camposFaltantes);
+
+            $socio = new Socio();
+            $socio->setDocumento($documento);
+
+            foreach ($dados as $campo => $valor) {
+                match ($campo) {
+                    'nome'     => $socio->setNome($valor),
+                    'telefone' => $socio->setTelefone($valor),
+                    'cep'      => $socio->setCep($valor),
+                    'rua'      => $socio->setLogradouro($valor),
+                    'bairro'   => $socio->setBairro($valor),
+                    'uf'       => $socio->setEstado($valor),
+                    'cidade'   => $socio->setCidade($valor),
+                    'numero'   => $socio->setNumeroEndereco($valor),
+                };
+            }
+
+            $this->pdo->beginTransaction();
+            $socioDao->registrarLogPorDocumento($documento, 'Cadastro completado (dados que faltavam)', Util::getUserIp(), Util::getUserAgent());
+
+            if (!$socioDao->atualizarSocio($socio)) {
+                $this->pdo->rollBack();
+                throw new LogicException('Erro ao atualizar sócio no sistema', 500);
+            }
+
+            $this->pdo->commit();
+            http_response_code(200);
+            echo json_encode(['mensagem' => 'Cadastro atualizado com sucesso!']);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+
+    /**
      * Extraí o documento de um sócio da requisição e retorna a lista dos boletos pertecentes a esse sócio.
      */
     public function exibirBoletosPorCpf()

@@ -25,6 +25,11 @@ async function decidirAcao() {
                 await gerarBoleto();
                 break;
 
+            case 'atualizar_parcial':
+                await completarCadastroSocio();
+                await gerarBoleto();
+                break;
+
             case 'cadastrar_existente':
                 await cadastrarSocioPessoaExistente();
                 await gerarBoleto();
@@ -79,9 +84,9 @@ configurarAvancaValor(verificarValor);
 configurarVoltaValor();
 configurarVoltaCpf();
 configurarVoltaContato();
-configurarAvancaEndereco(verificarEndereco);
-configurarAvancaContato(verificarContato);
+configurarAvancaEndereco(verificarEnderecoDinamico);
+configurarAvancaContatoDinamico(verificarContato);
 configurarAvancaTerminar(decidirAcao);
 configurarMudancaOpcao(alternarPfPj);
-configurarConsulta(buscarSocio);
+configurarConsulta(buscarCadastroSocio);
 configurarRegrasDePagamento();

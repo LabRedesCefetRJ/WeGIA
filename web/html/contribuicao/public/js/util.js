@@ -240,6 +240,27 @@ function configurarAvancaEndereco(funcao) {
     });
 }
 
+/**
+ * Igual a configurarAvancaContato(), mas no fluxo de completarCadastroSocio()
+ * pula a etapa de endereço (pag4) direto pra pag5 quando nenhum campo
+ * faltante pertence a ela — não faz sentido mostrar uma página em branco.
+ * Não substitui configurarAvancaContato() em nenhum lugar antigo.
+ */
+function configurarAvancaContatoDinamico(funcao) {
+    const btnAvancaContato = document.getElementById('avanca-contato');
+    btnAvancaContato.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        if (!funcao()) {
+            return;
+        }
+
+        const precisaDeEndereco = acao !== 'atualizar_parcial'
+            || camposFaltantesSocio.some((campo) => CAMPOS_ENDERECO.includes(campo));
+
+        alternarPaginas(precisaDeEndereco ? 'pag4' : 'pag5', 'pag3');
+    });
+}
+
 function configurarAvancaTerminar(funcao) { //<-- Adicionar verificação de captcha aqui
     const btnAvancaTerminar = document.getElementById('avanca-terminar');
     btnAvancaTerminar.addEventListener('click', (ev) => {
@@ -380,6 +401,99 @@ async function cadastrarSocioPessoaExistente() {
     return true;
 }
 
+/**
+ * Ids dos campos do formulário público que compõem o cadastro de um sócio,
+ * agrupados por etapa (pag3 = contato, pag4 = endereço).
+ */
+const CAMPOS_CONTATO = ['nome', 'sobrenome', 'data_nascimento', 'email', 'telefone'];
+const CAMPOS_ENDERECO = ['cep', 'rua', 'numero', 'bairro', 'uf', 'cidade', 'complemento'];
+const CAMPOS_CADASTRO_SOCIO = [...CAMPOS_CONTATO, ...CAMPOS_ENDERECO];
+
+/**
+ * Campos retornados por verificarCadastroSocio como faltantes para o sócio
+ * atualmente em consulta. Usado por completarCadastroSocio() pra saber
+ * quais valores enviar.
+ */
+let camposFaltantesSocio = [];
+
+/**
+ * Restaura todos os campos do cadastro pro estado editável/vazio, pra não
+ * carregar bloqueios de uma consulta anterior por outro documento.
+ */
+function desbloquearCamposCadastro() {
+    CAMPOS_CADASTRO_SOCIO.forEach((id) => {
+        const campo = document.getElementById(id);
+        if (!campo) return;
+
+        campo.disabled = false;
+        campo.classList.remove('campo-bloqueado');
+
+        const wrapper = campo.closest('div.wrap-input100');
+        if (wrapper) wrapper.classList.remove('hidden');
+    });
+}
+
+/**
+ * Esconde e desabilita os campos que não estão na lista de campos
+ * faltantes, exibindo no formulário só o que realmente precisa ser
+ * preenchido.
+ */
+function bloquearCamposCompletos(camposFaltantes) {
+    CAMPOS_CADASTRO_SOCIO.forEach((id) => {
+        if (camposFaltantes.includes(id)) return;
+
+        const campo = document.getElementById(id);
+        if (!campo) return;
+
+        campo.value = '';
+        campo.disabled = true;
+        campo.classList.add('campo-bloqueado');
+
+        const wrapper = campo.closest('div.wrap-input100');
+        if (wrapper) wrapper.classList.add('hidden');
+    });
+}
+
+async function completarCadastroSocio() {
+    const documento = pegarDocumento();
+
+    const formData = new FormData();
+    formData.append('nomeClasse', 'SocioController');
+    formData.append('metodo', 'completarCadastroSocio');
+    formData.append('documento_socio', documento);
+    formData.append('g-recaptcha-response', grecaptcha.getResponse());
+
+    camposFaltantesSocio.forEach((campo) => {
+        let valor = document.getElementById(campo)?.value ?? '';
+
+        if (campo === 'cep') {
+            valor = formatarCEP(valor);
+        } else if (campo === 'data_nascimento') {
+            valor = converterDataParaISO(valor);
+        }
+
+        formData.append(campo, valor);
+    });
+
+    const response = await fetch("../controller/control.php", {
+        method: "POST",
+        body: formData
+    });
+
+    const resposta = await response.json();
+
+    if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${resposta.erro}`);
+    }
+
+    if (!resposta.mensagem) {
+        throw new Error("Resposta inválida do servidor.");
+    }
+
+    console.log(resposta.mensagem);
+    return true;
+}
+
 async function atualizarSocio() {
     const form = document.getElementById('formulario');
     const formData = new FormData(form);
@@ -497,6 +611,85 @@ function verificarEndereco() {
     }
 
     return true;
+}
+
+/**
+ * Igual a verificarEndereco(), mas pula os campos desabilitados (usado no
+ * fluxo de completarCadastroSocio(), onde só os campos faltantes ficam
+ * habilitados). Não substitui verificarEndereco() em nenhum lugar antigo.
+ */
+function verificarEnderecoParcial() {
+    const cepObject = document.getElementById('cep');
+    const ruaObject = document.getElementById('rua');
+    const numeroObject = document.getElementById('numero');
+    const bairroObject = document.getElementById('bairro');
+    const ufObject = document.getElementById('uf');
+    const cidadeObject = document.getElementById('cidade');
+
+    if (!cepObject.disabled && !cepObject.readOnly) {
+        const cep = formatarCEP(cepObject.value);
+
+        if (!cep || cep.length != 9) {
+            alert('O CEP informado não está no formato válido');
+            return false;
+        }
+    }
+
+    if (!ruaObject.disabled && !ruaObject.readOnly) {
+        const rua = ruaObject.value;
+
+        if (!rua || rua.length < 1) {
+            alert('A rua não pode estar vazia.');
+            return false;
+        }
+    }
+
+    if (!numeroObject.disabled && !numeroObject.readOnly) {
+        const numeroEndereco = numeroObject.value;
+
+        if (!numeroEndereco || numeroEndereco.length < 1) {
+            alert('O número de endereço não pode estar vazio.');
+            return false;
+        }
+    }
+
+    if (!bairroObject.disabled && !bairroObject.readOnly) {
+        const bairro = bairroObject.value;
+
+        if (!bairro || bairro.length < 1) {
+            alert('O bairro não pode estar vazio.');
+            return false;
+        }
+    }
+
+    if (!ufObject.disabled && !ufObject.readOnly) {
+        const uf = ufObject.value;
+
+        if (!uf || uf.length < 1) {
+            alert('O estado não pode estar vazio.');
+            return false;
+        }
+    }
+
+    if (!cidadeObject.disabled && !cidadeObject.readOnly) {
+        const cidade = cidadeObject.value;
+
+        if (!cidade || cidade.length < 1) {
+            alert('A cidade não pode estar vazia.');
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Escolhe entre verificarEndereco() (fluxo antigo) e verificarEnderecoParcial()
+ * (fluxo novo de completar cadastro) de acordo com a ação atual, sem alterar
+ * nenhuma das duas.
+ */
+function verificarEnderecoDinamico() {
+    return acao === 'atualizar_parcial' ? verificarEnderecoParcial() : verificarEndereco();
 }
 
 function converterDataParaISO(dataBR) {
@@ -729,6 +922,85 @@ async function buscarSocio() {
 
                 // Caso futuramente queira preencher o formulário:
                 // formAutocomplete(data.pessoa, true);
+
+                acao = "cadastrar_existente";
+                alternarPaginas("pag5", "pag2");
+            } else {
+                console.log("Pessoa não encontrada.");
+
+                acao = "cadastrar";
+                alternarPaginas("pag3", "pag2");
+            }
+
+            return;
+        }
+
+        throw new Error(data?.erro || "Erro na consulta.");
+
+    } catch (error) {
+        console.error(error);
+    }
+
+    console.log("Consulta realizada");
+}
+
+/**
+ * Versão de buscarSocio() que usa a rota pública verificarCadastroSocio em
+ * vez de buscarPorDocumento: não recebe os dados já cadastrados do sócio,
+ * só se ele existe e quais campos obrigatórios faltam. Usada na página de
+ * cobranças pra só pedir os dados que realmente faltam. Não substitui
+ * buscarSocio() em nenhum lugar antigo.
+ */
+async function buscarCadastroSocio() {
+    const documento = pegarDocumento();
+
+    if (!validarDocumento(documento)) {
+        alert("O documento informado não é válido");
+        return;
+    }
+
+    console.log("Verificando cadastro do sócio...");
+
+    desbloquearCamposCadastro();
+    camposFaltantesSocio = [];
+
+    const url = `../controller/control.php?nomeClasse=SocioController&metodo=verificarCadastroSocio&documento=${encodeURIComponent(documento)}`;
+
+    try {
+        const response = await fetch(url);
+
+        let data = null;
+
+        // O controller sempre retorna JSON (200 ou 404)
+        try {
+            data = await response.json();
+        } catch (_) {
+            data = null;
+        }
+
+        console.log("Resposta:", data);
+
+        if (response.ok) {
+            if (data?.camposFaltantes?.length > 0) {
+                camposFaltantesSocio = data.camposFaltantes;
+                bloquearCamposCompletos(camposFaltantesSocio);
+                acao = "atualizar_parcial";
+
+                const precisaDeContato = camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo));
+                alternarPaginas(precisaDeContato ? "pag3" : "pag4", "pag2");
+            } else {
+                alternarPaginas("pag5", "pag2");
+            }
+
+            document.getElementById("div-agradecimento").innerHTML =
+                `<h3>Obrigado por contribuir mais uma vez!</h3>`;
+
+            return;
+        }
+
+        if (response.status === 404) {
+            if (data?.existePessoa) {
+                console.log("Pessoa encontrada.");
 
                 acao = "cadastrar_existente";
                 alternarPaginas("pag5", "pag2");
