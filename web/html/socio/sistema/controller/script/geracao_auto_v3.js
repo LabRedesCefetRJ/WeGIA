@@ -185,11 +185,11 @@ $(document).ready(function () {
                         let url = '';
 
                         switch (tipoGeracao) {
-                            case '0': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarBoleto'; break;
-                            case '1': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarCarne'; break;
-                            case '2': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarCarne'; break;
-                            case '3': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarCarne'; break;
-                            case '6': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarCarne'; break;
+                            case '0': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarBoletoInterno'; break;
+                            case '1': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarCarneInterno'; break;
+                            case '2': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarCarneInterno'; break;
+                            case '3': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarCarneInterno'; break;
+                            case '6': url = '../../contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=criarCarneInterno'; break;
                             default: alert('O tipo de geração escolhido é inválido'); return;
                         }
 

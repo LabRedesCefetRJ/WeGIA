@@ -74,7 +74,9 @@ try {
             'sincronizarStatus',
             'getContribuicoesLogJSON',
             'getRelatorio',
-            'registrarFaturas'
+            'registrarFaturas',
+            'criarBoletoInterno',
+            'criarCarneInterno'
         ],
         'MeioPagamentoController' => [
             'cadastrar',

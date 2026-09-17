@@ -16,6 +16,7 @@ require_once '../../../config.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'CaptchaGoogleService.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 
 class ContribuicaoLogController
 {
@@ -31,7 +32,7 @@ class ContribuicaoLogController
      * Cria um objeto do tipo ContribuicaoLog, chama o serviço de boleto registrado no banco de dados
      * e insere a operação na tabela de contribuicao_log caso o serviço seja executado com sucesso.
      */
-    public function criarBoleto() //Talvez seja melhor separar em: criarBoleto, criarCarne e criarPix
+    public function criarBoleto(bool $porEmail = true) //Talvez seja melhor separar em: criarBoleto, criarCarne e criarPix
     {
         $valor = filter_input(INPUT_POST, 'valor');
         $documento = filter_input(INPUT_POST, 'documento_socio');
@@ -139,7 +140,7 @@ class ContribuicaoLogController
             $mensagem = "Boleto gerado recentemente";
             $socioDao->registrarLog($contribuicaoLog->getSocio(), $mensagem, Util::getUserIp(), Util::getUserAgent());
 
-            $codigoApi = $servicoPagamento->gerarBoleto($contribuicaoLog);
+            $codigoApi = $servicoPagamento->gerarBoleto($contribuicaoLog, $porEmail);
 
             //Chamada do método de serviço de pagamento requisitado
             if (!$codigoApi) {
@@ -154,10 +155,21 @@ class ContribuicaoLogController
     }
 
     /**
+     * Ponto de entrada da rota privada: mesma geração de boleto de
+     * criarBoleto(), usada pela ferramenta de geração da equipe
+     * (socio/sistema/psocio_geracao.php) — mostra o link direto na
+     * resposta em vez de mandar por email.
+     */
+    public function criarBoletoInterno()
+    {
+        $this->criarBoleto(false);
+    }
+
+    /**
      * Cria um objeto do tipo ContribuicaoLog, chama o serviço de carne registrado no banco de dados
      * e insere a operação na tabela de contribuicao_log caso o serviço seja executado com sucesso.
      */
-    public function criarCarne()
+    public function criarCarne(bool $porEmail = true)
     {
         $valor = filter_input(INPUT_POST, 'valor', FILTER_VALIDATE_FLOAT);
         $documento = filter_input(INPUT_POST, 'documento_socio');
@@ -375,11 +387,27 @@ class ContribuicaoLogController
 
                 $this->pdo->commit();
 
-                echo json_encode(['link' => WWW . 'html/contribuicao/' . $resultado['link']]);
+                //$porEmail vem de qual rota chamou (pública vs interna da
+                //equipe), não de sessão
+                $linkCarne = WWW . 'html/contribuicao/' . $resultado['link'];
+                echo json_encode($porEmail
+                    ? $this->responderLinkGerado($linkCarne, $socio, 'carnê')
+                    : ['link' => $linkCarne]);
             }
         } catch (Exception $e) {
             Util::tratarException($e);
         }
+    }
+
+    /**
+     * Ponto de entrada da rota privada: mesma geração de carnê de
+     * criarCarne(), usada pela ferramenta de geração da equipe
+     * (socio/sistema/psocio_geracao.php) — mostra o link direto na
+     * resposta em vez de mandar por email.
+     */
+    public function criarCarneInterno()
+    {
+        $this->criarCarne(false);
     }
 
     /**
@@ -889,5 +917,40 @@ class ContribuicaoLogController
                 Util::tratarException($e);
             }
         }
+    }
+
+    /**
+     * Monta a resposta enviada ao front-end quando um link de pagamento é
+     * gerado por esse fluxo (contribuição pública): o link nunca aparece na
+     * resposta, é sempre enviado por email pro sócio.
+     */
+    private function responderLinkGerado(string $link, Socio $socio, string $tipoDocumento): array
+    {
+        $emailControle = new EmailControle($this->pdo);
+
+        if (!$emailControle->isEnabled() || !$emailControle->isConfigured() || !$socio->getEmail()) {
+            return ['erro' => "O $tipoDocumento foi gerado, mas não foi possível enviá-lo por email. Entre em contato com o suporte."];
+        }
+
+        $mensagem = sprintf(
+            '<p>Prezado(a) %s,</p><p>Seu %s foi gerado com sucesso. Acesse pelo link abaixo:</p><p><a href="%s">%s</a></p>',
+            htmlspecialchars($socio->getNome()),
+            $tipoDocumento,
+            htmlspecialchars($link),
+            htmlspecialchars($link)
+        );
+
+        $resultadoEmail = $emailControle->enviarEmail(
+            $socio->getEmail(),
+            'Seu ' . $tipoDocumento . ' está pronto',
+            $mensagem,
+            $socio->getNome()
+        );
+
+        if (!$resultadoEmail['success']) {
+            return ['erro' => "O $tipoDocumento foi gerado, mas houve um erro ao enviar o email: " . $resultadoEmail['message']];
+        }
+
+        return ['mensagem' => ucfirst($tipoDocumento) . ' gerado! Enviamos o link de acesso para o seu email.'];
     }
 }

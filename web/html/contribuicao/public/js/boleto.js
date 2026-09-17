@@ -66,6 +66,9 @@ function gerarBoleto() {
                 console.log(resposta.link);
                 // Redirecionar o usuário para o link do boleto em uma nova aba
                 window.open(resposta.link, '_blank');
+            } else if (resposta.mensagem) {
+                // Rota pública: o link foi enviado por email, não aparece aqui
+                alert(resposta.mensagem);
             } else if (resposta.erro){
                 alert('Erro: '+ resposta.erro);
             }
