@@ -16,19 +16,42 @@ class VoluntarioControle
     {
         extract($_REQUEST);
 
+        $cpf = $_REQUEST['cpf'] ?? '';
+        $resultado = 'NOVO_CADASTRO';
+        if (!empty($cpf)) {
+            try {
+                $voluntarioDAO = new VoluntarioDAO();
+                $resultado = $voluntarioDAO->selecionarCadastro($cpf);
+            } catch (Exception $e) {
+                // Caso ocorra alguma exceção (ex: voluntário já cadastrado), mantém o fallback seguro
+            }
+        }
+
         $camposObrigatorios = ['nome', 'sobrenome', 'gender', 'nascimento', 'cpf', 'data_admissao', 'situacao', 'cargo'];
+
 
         foreach ($camposObrigatorios as $campo) {
             if (!isset($$campo) || empty($$campo)) {
                 http_response_code(412);
-                header('Location: ../html/voluntario/cadastro_voluntario.php?msg=O campo ' . $campo . ' é obrigatório.');
-                exit();
+                $msg = 'O campo ' . $campo . ' é obrigatório.';
+                if ($resultado === 'PESSOA_EXISTENTE') {
+                    header('Location: ../html/voluntario/cadastro_voluntario_pessoa_existente.php?cpf=' . urlencode($cpf) . '&msg=' . urlencode($msg));
+                    exit;
+                } else {
+                    header('Location: ../html/voluntario/cadastro_voluntario.php?cpf=' . urlencode($cpf) . '&msg=' . urlencode($msg));
+                    exit;
+                }
             }
         }
 
         if (!Util::validarCPF($cpf)) {
             http_response_code(412);
-            header('Location: ../html/voluntario/cadastro_voluntario.php?msg=O CPF informado é inválido.');
+            $msg = 'O CPF informado é inválido.';
+            if ($resultado === 'PESSOA_EXISTENTE') {
+                header('Location: ../html/voluntario/cadastro_voluntario_pessoa_existente.php?cpf=' . urlencode($cpf) . '&msg=' . urlencode($msg));
+            } else {
+                header('Location: ../html/voluntario/cadastro_voluntario.php?cpf=' . urlencode($cpf) . '&msg=' . urlencode($msg));
+            }
             exit();
         }
 

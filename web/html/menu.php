@@ -616,11 +616,13 @@ session_start();
 							Documentos Funcionário
 						</a>
 					</li>
+					<?php if (defined('DEV_MODE') && DEV_MODE === 'on'): ?>
 					<li>
 						<a href="<?= WWW ?>html/configuracao/debug_info.php">
 							Informações de debug
 						</a>
 					</li>
+					<?php endif; ?>
 				</ul>
 			</li>
 			</ul>

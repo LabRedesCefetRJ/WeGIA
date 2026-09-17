@@ -137,12 +137,10 @@ require_once ROOT . '/classes/Csrf.php';
             }
             if (pessoa.sexo == "m") {
                 $("#radioM").prop('checked', true);
-                $("input[name=gender]").prop('disabled', true);
-                $("#hiddenGender").val('m');
+                $("input[id=radioF]").prop('disabled', true);
             } else if (pessoa.sexo == "f") {
                 $("#radioF").prop('checked', true);
-                $("input[name=gender]").prop('disabled', true);
-                $("#hiddenGender").val('f');
+                $("input[id=radioM]").prop('disabled', true);
             }
         });
     </script>
@@ -179,7 +177,7 @@ require_once ROOT . '/classes/Csrf.php';
                         <form class="form-horizontal" method="POST" action="../../controle/control.php">
                             <div class="panel-body">
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
-                                <h5 class="obrig">Campos Obrigatórios (*)</h5>
+                                <h5 class="obrig">Campos Obrigatórios(*)</h5>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label" for="profileFirstName">Nome<sup
                                             class="obrig">*</sup></label>
@@ -236,7 +234,8 @@ require_once ROOT . '/classes/Csrf.php';
                                         <label><input type="radio" name="gender" id="radioF" value="f"
                                                 style="margin-top: 10px; margin-left: 15px;"
                                                 onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female"
-                                                style="font-size: 20px;">Teste</i> </label>
+                                                style="font-size: 20px;"></i> </label>
+
                                     </div>
                                 </div>
                                 <div class="form-group">

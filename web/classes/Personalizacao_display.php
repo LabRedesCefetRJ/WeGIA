@@ -71,16 +71,20 @@ class Display_campo{
         return Conexao::connect();
     }
 
-    private function getQuery($q){
+    private function getQueryPreparada($q, array $params){
         $pdo = $this->PDO();
-        $res = $pdo->query($q);
-        return $res->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $pdo->prepare($q);
+        foreach ($params as $chave => $valor) {
+            $stmt->bindValue($chave, $valor);
+        }
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     //Começar por aqui
     public function display_txt(){
-        $result = $this->getQuery("select * from selecao_paragrafo where nome_campo='" . $this->getCampo() . "';");
-        
+        $result = $this->getQueryPreparada("select * from selecao_paragrafo where nome_campo=:nomeCampo;", [':nomeCampo' => $this->getCampo()]);
+
         if (count($result) == 1){
             $this->setConteudo($result[0]['paragrafo']);
         } else {
@@ -90,19 +94,19 @@ class Display_campo{
         $texto = (string)$this->getConteudo();
         $texto = str_replace(['&amp;#13;&amp;#10;', '&amp;#13;', '&amp;#10;'], "\n", $texto);
         $texto = str_replace(['&#13;&#10;', '&#13;', '&#10;'], "\n", $texto);
-        
+
         $textoDecodificado = html_entity_decode($texto, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $textoFormatado = nl2br(htmlspecialchars($textoDecodificado, ENT_QUOTES, 'UTF-8'));
 
         echo('
-        <div><h1>' . $this->getCampo() . '</h1></div>
+        <div><h1>' . htmlspecialchars($this->getCampo(), ENT_QUOTES, 'UTF-8') . '</h1></div>
         <p>' . $textoFormatado . '</p>
         ');
     }
 
     public function display_str(){
-        $result = $this->getQuery("select * from selecao_paragrafo where nome_campo='" . $this->getCampo() . "';");
-        
+        $result = $this->getQueryPreparada("select * from selecao_paragrafo where nome_campo=:nomeCampo;", [':nomeCampo' => $this->getCampo()]);
+
         if (count($result) == 1){
             $this->setConteudo($result[0]['paragrafo']);
         } else {
@@ -149,12 +153,12 @@ class Display_campo{
     public function display_file_user(){
         // Procura o arquivo baseado no nome do campo (não funcionar com carrossel)
         $nome_campo = $this->getCampo();
-        $result = $this->getQuery("
+        $result = $this->getQueryPreparada("
         select i.imagem as arquivo
         from campo_imagem c
         inner join tabela_imagem_campo ic on c.id_campo = ic.id_campo
         inner join imagem i on ic.id_imagem = i.id_imagem
-        where c.nome_campo='$nome_campo';");
+        where c.nome_campo=:nomeCampo;", [':nomeCampo' => $nome_campo]);
         if (count($result) == 1){
             $this->setConteudo(gzuncompress($result[0]['arquivo']));
             echo('data:image;base64,'.$this->getConteudo());
@@ -167,12 +171,12 @@ class Display_campo{
     public function getCar(){
         // Retorna uma array de arquivos
         $nome_campo = $this->getCampo();
-        $result = $this->getQuery("
+        $result = $this->getQueryPreparada("
         select c.id_campo as id, c.nome_campo as nome, i.imagem as arquivo, i.tipo as tipo
         from campo_imagem c
         inner join tabela_imagem_campo ic on c.id_campo = ic.id_campo
         inner join imagem i on ic.id_imagem = i.id_imagem
-        where c.nome_campo='$nome_campo';");
+        where c.nome_campo=:nomeCampo;", [':nomeCampo' => $nome_campo]);
         if ($result){
             return $result;
         }
