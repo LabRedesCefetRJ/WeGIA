@@ -336,7 +336,7 @@ require_once "../personalizacao_display.php";
                                         <div class="cal-toolbar-divider"></div>
                                         <div class="cal-toolbar-group">
                                             <button class="btn btn-danger btn-sm" id="btn-download-mensal" type="button" title="Baixar relatório PDF da agenda deste mês" style="font-family: 'Montserrat', sans-serif; font-weight: 700;">
-                                                <i<i class="bi bi-file-pdf-fill"></i>
+                                                <i class="bi bi-file-pdf-fill"></i>
                                                 PDF
                                             </button>
                                         </div>
@@ -787,6 +787,17 @@ require_once "../personalizacao_display.php";
                         <div class="form-group">
                             <label class="control-label">Intervalo</label>
                             <input type="number" class="form-control" id="alocacao-intervalo" min="0" value="0">
+                        </div>
+                    </div>
+                    <div class="col-sm-12">
+                        <div class="form-group checkbox">
+                            <label>
+                                <input type="checkbox" id="alocacao-rodizio-divisao">
+                                Aplicar rodízio automático de divisões
+                            </label>
+                            <p class="help-block">
+                                O primeiro dia mantém as divisões cadastradas e os dias seguintes recebem um rodízio aleatório entre as divisões.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -1278,6 +1289,7 @@ document.addEventListener('DOMContentLoaded', function () {
             $('#alocacao-fim').val(endStr);
             $('#alocacao-lembrete').val('');
             $('#alocacao-intervalo').val('0');
+            $('#alocacao-rodizio-divisao').prop('checked', false);
             ocultarErroModal('modal-alocacao-erro');
             carregarSelectsAlocacao(null, null);
             $('#modal-alocacao').modal('show');
@@ -2339,6 +2351,7 @@ function carregarAlocacoes() {
                     + 'data-id="'+al.id+'" data-agenda="'+al.id_agenda+'" data-equipe="'+al.id_equipe+'" '
                     + 'data-inicio="'+(al.start||'').substring(0,10)+'" data-fim="'+(al.fim_display||'').substring(0,10)+'" '
                     + 'data-lembrete="'+(al.lembrete||'').replace(' ','T').substring(0,16)+'" data-intervalo="'+intervalo+'" '
+                    + 'data-rodizio_divisao="'+(al.rodizio_divisao||0)+'" '
                     + 'title="Editar"><i class="fa fa-pencil"></i></button>'
                     + '<button class="btn btn-xs btn-danger btn-acao btn-excluir-alocacao" data-id="'+al.id+'" title="Excluir"><i class="fa fa-trash"></i></button>'
                     + '</div></td></tr>';
@@ -2487,6 +2500,7 @@ $(document).on('click', '.btn-editar-alocacao', function () {
     $('#alocacao-fim').val($b.data('fim'));
     $('#alocacao-lembrete').val($b.data('lembrete') || '');
     $('#alocacao-intervalo').val($b.data('intervalo') || 0);
+    $('#alocacao-rodizio-divisao').prop('checked', parseInt($b.data('rodizio_divisao')) === 1);
     ocultarErroModal('modal-alocacao-erro');
     carregarSelectsAlocacao($b.data('agenda'), $b.data('equipe'));
     $('#modal-alocacao').modal('show');
@@ -2519,6 +2533,7 @@ $('#btn-salvar-alocacao').on('click', function () {
     var lembrete   = $('#alocacao-lembrete').val();
     var intervalo  = parseInt($('#alocacao-intervalo').val()) || 0;
     if (intervalo < 0) intervalo = 0;
+    var rodizio_divisao = $('#alocacao-rodizio-divisao').is(':checked') ? 1 : 0;
 
     ocultarErroModal('modal-alocacao-erro');
     if (!agenda) { exibirErroModal('modal-alocacao-erro', 'Selecione a agenda.'); return; }
@@ -2532,6 +2547,7 @@ $('#btn-salvar-alocacao').on('click', function () {
         inicio:    inicio,
         fim:       fim,
         intervalo: intervalo,
+        rodizio_divisao: rodizio_divisao,
         lembrete:  lembrete ? lembrete.replace('T', ' ') : ''
     };
     if (id) dados.id = id;

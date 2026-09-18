@@ -352,6 +352,23 @@ PREPARE stmt FROM @s;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+-- -----------------------------------------------------
+-- Adiciona coluna rodizio_divisao em agenda_alocacao
+-- (instalações já existentes podem não ter a coluna criada pelo CREATE TABLE)
+-- -----------------------------------------------------
+SET @s = (SELECT IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'agenda_alocacao'
+       AND COLUMN_NAME = 'rodizio_divisao') = 0,
+    'ALTER TABLE `agenda_alocacao` ADD COLUMN `rodizio_divisao` TINYINT(1) NOT NULL DEFAULT 0;',
+    'SELECT 1'
+));
+PREPARE stmt FROM @s;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
 INSERT IGNORE INTO `wegia`.`agenda_status` (`descricao`) VALUES
 ('Ativo'),
 ('Inativo');
