@@ -546,12 +546,24 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table `wegia`.`grupo_produto`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`grupo_produto` (
+  `id_grupo_produto` INT(11) NOT NULL AUTO_INCREMENT,
+  `descricao_grupo` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_grupo_produto`),
+  UNIQUE INDEX `descricao_grupo` (`descricao_grupo` ASC))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `wegia`.`produto`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`produto` (
   `id_produto` INT(11) NOT NULL AUTO_INCREMENT,
   `id_categoria_produto` INT(11) NOT NULL,
   `id_unidade` INT(11) NOT NULL,
+  `id_grupo_produto` INT(11) NULL DEFAULT NULL,
   `descricao` VARCHAR(150) NULL DEFAULT NULL,
   `codigo` VARCHAR(15) NULL DEFAULT NULL,
   `preco` DECIMAL(10,2) NULL DEFAULT NULL,
@@ -569,7 +581,12 @@ CREATE TABLE IF NOT EXISTS `wegia`.`produto` (
     ON UPDATE RESTRICT,
   CONSTRAINT `produto_ibfk_2`
     FOREIGN KEY (`id_unidade`)
-    REFERENCES `wegia`.`unidade` (`id_unidade`))
+    REFERENCES `wegia`.`unidade` (`id_unidade`),
+  CONSTRAINT `produto_ibfk_3`
+    FOREIGN KEY (`id_grupo_produto`)
+    REFERENCES `wegia`.`grupo_produto` (`id_grupo_produto`)
+    ON DELETE SET NULL
+    ON UPDATE RESTRICT)
 ENGINE = InnoDB;
 
 
@@ -2570,6 +2587,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao` (
   `lembrete` DATETIME NULL DEFAULT NULL,
   `lembrete_enviado` TINYINT(1) NOT NULL DEFAULT 0,
   `intervalo` INT NOT NULL DEFAULT 0,
+  `rodizio_divisao` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_aa_agenda_idx` (`id_agenda` ASC),
   INDEX `fk_aa_equipe_idx` (`id_equipe` ASC),
