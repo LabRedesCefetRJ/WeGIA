@@ -301,7 +301,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                                         </div>
                                                         <div class="form-group">
                                                             <label for="editToken">Token API:</label>
-                                                            <input type="text" class="form-control" id="editToken" name="token" required>
+                                                            <input type="text" class="form-control" id="editToken" name="token">
                                                         </div>
                                                         <input type="hidden" name="nomeClasse" value="GatewayPagamentoController">
                                                         <input type="hidden" name="metodo" value="editarPorId">

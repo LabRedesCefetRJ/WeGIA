@@ -25,6 +25,12 @@ class GatewayPagamento
      */
     public function cadastrar()
     {
+        // Ao contrário de editar(), aqui o token vazio nunca é válido —
+        // não existe "manter o atual" pra um gateway que ainda não existe
+        if (trim((string) $this->token) === '') {
+            throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
+        }
+
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
         $gatewayPagamentoDao->cadastrar($this->nome, $this->endpoint, $this->token, $this->status);
@@ -38,9 +44,11 @@ class GatewayPagamento
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
 
-        // Verifica se o token informado está ofuscado (possui apenas asteriscos ou é parcialmente ofuscado)
-        if (strpos($this->token, '*') !== false) {
-            // Token não foi reinformado (veio ofuscado da tela). Se o endpoint
+        // Verifica se o token não foi reinformado: veio vazio (campo agora só
+        // mostra o valor mascarado como placeholder, não como texto — ver
+        // gatewayPagamento.js) ou ainda ofuscado de alguma forma
+        if (trim((string) $this->token) === '' || strpos((string) $this->token, '*') !== false) {
+            // Token não foi reinformado. Se o endpoint
             // estiver mudando mesmo assim, recusa: sem essa checagem, dava pra
             // redirecionar as cobranças pra um servidor de terceiros mantendo
             // a credencial real intacta no banco — o token real seguiria
@@ -103,12 +111,9 @@ class GatewayPagamento
      */
     public function setToken($token)
     {
-        $tokenLimpo = trim($token);
-
-        if (!$tokenLimpo || empty($tokenLimpo)) {
-            throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
-        }
-
+        // Vazio é um valor válido aqui: editar() usa isso pra decidir "não
+        // reinformou o token, manter o atual". Quem precisa exigir um token
+        // não vazio (cadastrar()) valida isso na hora certa.
         $this->token = $token;
 
         return $this;

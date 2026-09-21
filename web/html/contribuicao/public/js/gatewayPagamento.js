@@ -13,7 +13,16 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('editId').value = id;
             document.getElementById('editNome').value = nome;
             document.getElementById('editEndpoint').value = endpoint;
-            document.getElementById('editToken').value = token;
+
+            // O token nunca vai como valor pré-preenchido (evita reenviar o
+            // valor mascarado sem querer e sobrescrever o token real por
+            // engano) — só como placeholder, pra indicar que já existe um
+            // token salvo. Campo vazio no envio = "manter o token atual".
+            const editTokenField = document.getElementById('editToken');
+            editTokenField.value = '';
+            editTokenField.placeholder = (token && token !== 'coloque o token aqui')
+                ? `Token atual: ${token} — deixe em branco para manter`
+                : 'Insira o token da API';
 
             // Exibe o modal
             $('#editModal').modal('show');

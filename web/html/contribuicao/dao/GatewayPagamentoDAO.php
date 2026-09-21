@@ -100,7 +100,12 @@ class GatewayPagamentoDAO
 
         $stmt->execute();
 
-        if ($stmt->rowCount() < 1) {
+        // rowCount() só conta linhas de fato alteradas — se os valores
+        // enviados já eram os mesmos que estavam no banco (ex: token
+        // mascarado preservado + nome/endpoint sem mudança), o UPDATE roda
+        // certinho mas afeta 0 linhas. Só é erro de verdade se o ID nem
+        // existir.
+        if ($stmt->rowCount() < 1 && $this->buscarEndpointPorId($id) === null) {
             throw new Exception("Nenhuma alteração realizada ou ID inexistente.");
         }
     }
