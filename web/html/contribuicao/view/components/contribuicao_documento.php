@@ -16,13 +16,13 @@
 <?= $captchaGoogle->getWidget() ?>
 
 <div class="container-contact100-form-btn">
-    <button class="contact100-form-btn" id="consultar-btn">
+    <button type="button" class="contact100-form-btn" id="consultar-btn">
         AVANÇAR
         <i class="fa fa-long-arrow-right m-l-7" aria-hidden="true"></i>
     </button>
 </div>
 <div class="container-contact100-form-btn">
-    <button class="contact100-form-btn" id="volta-valor">
+    <button type="button" class="contact100-form-btn" id="volta-valor">
         <i style="margin-right: 15px; " class="fa fa-long-arrow-left m-l-7" aria-hidden="true"></i> VOLTAR
     </button>
 </div>

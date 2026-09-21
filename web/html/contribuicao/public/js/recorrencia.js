@@ -134,6 +134,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    const btnVoltaEndereco = document.getElementById('volta-endereco');
+    if (btnVoltaEndereco) {
+        btnVoltaEndereco.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.getElementById('pag6').classList.add('hidden');
+            document.getElementById('pag5').classList.remove('hidden');
+        });
+    }
+
     const btnFinalizar = document.getElementById('btn-finalizar');
     if (btnFinalizar) {
         btnFinalizar.addEventListener('click', function (e) {

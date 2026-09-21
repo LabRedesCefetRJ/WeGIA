@@ -140,6 +140,7 @@ configurarAvancaValor(verificarValor);
 configurarVoltaValor();
 configurarVoltaCpf();
 configurarVoltaContato();
+configurarVoltaEndereco();
 configurarAvancaEndereco(verificarEnderecoDinamico);
 configurarAvancaContatoDinamico(verificarContato);
 configurarAvancaTerminar(decidirAcao);

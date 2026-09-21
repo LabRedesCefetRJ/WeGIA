@@ -216,6 +216,14 @@ function configurarVoltaContato() {
     });
 }
 
+function configurarVoltaEndereco() {
+    const btnVoltaEndereco = document.getElementById('volta-endereco');
+    btnVoltaEndereco.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        alternarPaginas('pag4', 'pag5');
+    });
+}
+
 function configurarAvancaContato(funcao) {
     const btnAvancaContato = document.getElementById('avanca-contato');
     btnAvancaContato.addEventListener('click', (ev) => {
@@ -968,6 +976,14 @@ async function buscarCadastroSocio() {
 
     console.log("Verificando cadastro do sócio...");
 
+    // Desabilita o botão enquanto a consulta está em andamento: sem isso,
+    // um segundo clique/espaço antes da resposta chegar dispara essa
+    // função de novo em paralelo, e as duas chamadas concorrentes podem
+    // deixar as páginas em estados inconsistentes (ex: pag2 não esconde
+    // enquanto pag4 já aparece).
+    const btnConsulta = document.getElementById("consultar-btn");
+    if (btnConsulta) btnConsulta.disabled = true;
+
     desbloquearCamposCadastro();
     camposFaltantesSocio = [];
 
@@ -1037,6 +1053,8 @@ async function buscarCadastroSocio() {
 
     } catch (error) {
         console.error(error);
+    } finally {
+        if (btnConsulta) btnConsulta.disabled = false;
     }
 
     console.log("Consulta realizada");

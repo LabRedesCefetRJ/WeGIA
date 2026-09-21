@@ -45,10 +45,10 @@
 </div>
 
 <div class="d-flex justify-content-between mt-4">
-    <button id="btn-voltar-endereco" class="btn btn-outline-secondary btn-lg">
+    <button type="button" id="btn-voltar-endereco" class="btn btn-outline-secondary btn-lg">
         <i class="fa fa-arrow-left mr-2"></i> Voltar
     </button>
-    <button id="btn-finalizar" class="btn btn-primary btn-lg px-5">
+    <button type="button" id="btn-finalizar" class="btn btn-primary btn-lg px-5">
         Finalizar <i class="fa fa-arrow-right ml-2"></i>
     </button>
 </div>
