@@ -400,8 +400,6 @@ class AgendaDAO
                 $current->modify('+' . $step . ' days');
             }
             if ($alocacao->getRodizio_divisao()) {
-                throw new Exception('RODIZIO FOI ATIVADO. Valor: ' .var_export($alocacao->getRodizio_divisao(), true));
-                
                 $this->aplicarRodizioDivisoes($idAlocacao);
             }
 
