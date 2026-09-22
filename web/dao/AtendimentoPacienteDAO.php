@@ -124,13 +124,13 @@ class AtendimentoPacienteDAO
                         id_atendimento,
                         medicamento,
                         dosagem,
-                        duracao,
+                        tipo_de_uso,
                         saude_medicacao_status_idsaude_medicacao_status
                     ) VALUES (
                         :id_atendimento,
                         :medicamento,
                         :dosagem,
-                        :duracao,
+                        :tipoDeUso,
                         :status
                     )'
                 );
@@ -154,9 +154,9 @@ class AtendimentoPacienteDAO
                     if (is_string($horarios)) {
                         $horarios = array_filter(array_map('trim', explode(',', $horarios)));
                     }
-                    $duracao = trim((string)($medicacao['tempo'] ?? ''));
+                    $tipoDeUso = trim((string)($medicacao['tempo'] ?? ''));
 
-                    if ($medicamento === '' || $dosagem === '' || empty($horarios) || $duracao === '') {
+                    if ($medicamento === '' || $dosagem === '' || empty($horarios) || $tipoDeUso === '') {
                         if ($this->pdo->inTransaction()) {
                             $this->pdo->rollBack();
                         }
@@ -167,7 +167,7 @@ class AtendimentoPacienteDAO
                     $stmtMedicacao->bindValue(':id_atendimento', $idAtendimento, PDO::PARAM_INT);
                     $stmtMedicacao->bindValue(':medicamento', $medicamento);
                     $stmtMedicacao->bindValue(':dosagem', $dosagem);
-                    $stmtMedicacao->bindValue(':duracao', $duracao);
+                    $stmtMedicacao->bindValue(':tipoDeUso', $tipoDeUso);
                     $stmtMedicacao->bindValue(':status', 1, PDO::PARAM_INT);
                     $stmtMedicacao->execute();
 

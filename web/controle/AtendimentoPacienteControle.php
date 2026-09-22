@@ -174,15 +174,14 @@ class AtendimentoPacienteControle
                 throw new InvalidArgumentException('Formato de medicação inválido.', 400);
             }
 
+            $tipoDeAplicacao = trim((string)($medicacao['tipo_de_aplicacao'] ?? ''));
             $medicamento = trim((string)($medicacao['nome_medicacao'] ?? ''));
             $dosagem = trim((string)($medicacao['dosagem'] ?? ''));
             $horarios = $medicacao['horarios'] ?? [];
             if (is_string($horarios)) {
                 $horarios = array_filter(array_map('trim', explode(',', $horarios)));
             }
-            $duracao = trim((string)($medicacao['tempo'] ?? ''));
-
-            if ($medicamento === '' || $dosagem === '' || empty($horarios) || $duracao === '') {
+            if ($$tipoDeAplicacao === '' || medicamento === '' || $dosagem === '' || empty($horarios)) {
                 throw new InvalidArgumentException('Campos da medicação estão incompletos.', 400);
             }
         }
