@@ -2324,19 +2324,19 @@ function carregarAlocacoes() {
     }
 
     api('listarTodasAlocacoes').done(function (dados) {
-        var lista = dados || [];
+        let lista = dados || [];
         
         lista = $.grep(lista, function(al) { 
             return String(al.id_agenda) === String(idAgenda) && String(al.id_equipe) === String(idEquipe); 
         });
 
-        var html = '';
+        let html = '';
         if (lista.length === 0) {
             html = '<tr><td colspan="7" class="text-center text-muted">Nenhuma alocação encontrada para esta equipe.</td></tr>';
         } else {
             $.each(lista, function(_, al) {
-                var intervalo = parseInt(al.intervalo) || 0;
-                var turno = fmtTime(al.inicio_turno) + ' – ' + fmtTime(al.fim_turno);
+                let intervalo = parseInt(al.intervalo) || 0;
+                let turno = fmtTime(al.inicio_turno) + ' – ' + fmtTime(al.fim_turno);
                 
                 html += '<tr>'
                     + '<td>' + al.equipe + '</td>'
@@ -2357,8 +2357,26 @@ function carregarAlocacoes() {
                     + '</div></td></tr>';
             });
         }
+
+        if ($.fn.DataTable.isDataTable('#dt-alocacoes')) {
+            let oS = $('#dt-alocacoes').DataTable().settings()[0];
+
+            if (oS && oS.nTableWrapper) {
+                $('#dt-alocacoes').DataTable().destroy();
+            } else {
+                let idx = $.inArray(oS, $.fn.DataTable.settings);
+
+                if (idx !== -1) {
+                    $.fn.DataTable.settings.splice(idx, 1);
+                }
+            }
+        }
+
         $('#tbody-alocacoes').html(html);
-        dtInit('dt-alocacoes');
+
+        if (lista.length > 0) {
+            dtInit('dt-alocacoes');
+        }
     });
 }
 
