@@ -34,7 +34,7 @@
             $dataHora = $dados['dataHora'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
 
-            if (!$id_medicacao || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
+            if (!$id_ || !$id_pessoa || !$dataHora || !$id_pessoa_funcionario) {
                 http_response_code(400);
                 echo json_encode(["status" => "erro", "mensagem" => "Campos obrigatórios ausentes"]);
                 exit;
@@ -153,6 +153,7 @@
             
             $id_pessoa_paciente = $dados['id_pessoa_paciente'] ?? null;
             $id_pessoa_funcionario = $dados['id_pessoa_funcionario'] ?? null;
+            $tipoDeAplicacao = $dados['tipo_de_aplicacao'] ?? null;
             $medicamento = $dados['medicamento'] ?? null;
             $dosagem = $dados['dosagem'] ?? null;
             $horarios = $dados['horarios'] ?? [];
@@ -162,12 +163,14 @@
             if (is_string($horarios)) {
                 $horarios = [$horarios];
             }
-            $duracao = $dados['duracao'] ?? null;
+            $tipoDeUso = $dados['tipo_de_uso'] ?? null;
+            $dataDeTermino = $dados['data_de_termino'] ?? null;
             $status_id = $dados['status_id'] ?? 1;
 
             $campos_obrigatorios = [
                 'id_pessoa_paciente' => $id_pessoa_paciente,
                 'id_pessoa_funcionario' => $id_pessoa_funcionario,
+                'tipo_de_aplicacao' => $tipoDeAplicacao,
                 'medicamento' => $medicamento
             ];
 
@@ -201,9 +204,9 @@
 
                 $id_medicacao = $MedicamentosPacienteDAO->cadastrarMedicamentoSos(
                     $novo_id_atendimento,
+                    $tipoDeAplicacao,
                     $medicamento,
                     $dosagem,
-                    $duracao,
                     (int)$status_id
                 );
 
