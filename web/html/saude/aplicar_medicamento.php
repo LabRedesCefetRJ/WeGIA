@@ -66,7 +66,7 @@ if (!isset($teste)) {
 }
 
 $stmtExibirMedicamento = $pdo->prepare("
-    SELECT sm.id_medicacao, sm.medicamento, sm.dosagem, sm.tipo_de_uso,
+    SELECT sm.id_medicacao, sm.medicamento, sm.dosagem, sm.duracao,
            sa.id_funcionario, sf.id_pessoa,
            GROUP_CONCAT(TIME_FORMAT(smh.horario, '%H:%i') ORDER BY smh.horario SEPARATOR ', ') AS horarios
     FROM saude_medicacao sm
@@ -75,7 +75,7 @@ $stmtExibirMedicamento = $pdo->prepare("
     LEFT JOIN saude_medicacao_horario smh ON (smh.id_medicacao = sm.id_medicacao)
     WHERE sm.saude_medicacao_status_idsaude_medicacao_status = 1
       AND sf.id_fichamedica = :idFichaMedica
-    GROUP BY sm.id_medicacao, sm.medicamento, sm.dosagem, sm.tipo_de_uso, sa.id_funcionario, sf.id_pessoa
+    GROUP BY sm.id_medicacao, sm.medicamento, sm.dosagem, sm.duracao, sa.id_funcionario, sf.id_pessoa
     ORDER BY sa.data_atendimento DESC, sm.id_medicacao DESC
 ");
 
@@ -318,7 +318,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
 
         const td4 = document.createElement("td");
         td4.className = "txt-center";
-        td4.textContent = item.tipoDeUso;
+        td4.textContent = item.duracao;
 
         const td5 = document.createElement("td");
         td5.style.textAlign = "center";
@@ -744,7 +744,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
         medicamento: document.getElementById('nome_medicacao').value,
         dosagem: document.getElementById('dosagem_sos').value,
         horario: document.getElementById('horario_medicacao_sos').value,
-        tipoDeUso: document.getElementById('tipo_de_uso_medicacao_sos').value,
+        duracao: document.getElementById('duracao_medicacao_sos').value,
         status_id: 1 // 1 = "Prescrito" (padrão)
       };
 
@@ -752,7 +752,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
       const id_pessoa_funcionario = <?= $idPessoa; ?>;
 
 
-      if (!dadosForm.medicamento || !dadosForm.dosagem || !dadosForm.horario || !dadosForm.tipoDeUso) {
+      if (!dadosForm.medicamento || !dadosForm.dosagem || !dadosForm.horario || !dadosForm.duracao) {
         mostrarMensagemSOS('Por favor, preencha todos os campos do Medicamento SOS.');
         return;
       }
@@ -769,6 +769,11 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
         return;
       }
 
+      const validacaoDuracao = SaudeValidator.validarValorPositivo(dadosForm.duracao, 'Duração');
+      if (!validacaoDuracao.valido) {
+        mostrarMensagemSOS(validacaoDuracao.mensagem);
+        return;
+      }
       const payload = {
         nomeClasse: "MedicamentoPacienteControle",
         metodo: "cadastrarMedicacaoSOS",
@@ -778,7 +783,7 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
         medicamento: dadosForm.medicamento,
         dosagem: dadosForm.dosagem,
         horario: dadosForm.horario,
-        tipoDeUso: dadosForm.tipoDeUso,
+        duracao: dadosForm.duracao,
         status_id: dadosForm.status_id
       };
 
@@ -1086,11 +1091,11 @@ $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
                         </div>
 
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="tipo_de_uso_medicacao_sos">
+                          <label class="col-md-3 control-label" for="duracao_medicacao_sos">
                             Duração:<sup class="obrig">*</sup>
                           </label>
                           <div class="col-md-6">
-                            <input type="text" class="form-control" name="tipo_de_uso_medicacao_sos" id="tipo_de_uso_medicacao_sos"
+                            <input type="text" class="form-control" name="duracao_medicacao_sos" id="duracao_medicacao_sos"
                               title="valor positivo (ex: 7 dias, 2 semanas)"
                               required>
                           </div>

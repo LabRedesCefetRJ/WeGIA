@@ -139,23 +139,22 @@ class MedicamentoPacienteDAO
      * @throws PDOException
      * @return int ID da medicacao inserida
      */
-    public function cadastrarMedicamentoSos($id_atendimento, $tipoDeAplicacao, $medicamento, $dosagem, $status_id, $tipoDeUso = null, $dataDeTermino = null)
+    public function cadastrarMedicamentoSos($id_atendimento, $medicamento, $dosagem, $duracao, $status_id)
     {
         $stmt = $this->pdo->prepare("
             INSERT INTO saude_medicacao (
-                id_atendimento, tipo_de_aplicacao, medicamento, dosagem, tipo_de_uso, data_de_termino, saude_medicacao_status_idsaude_medicacao_status
+                id_atendimento, medicamento, dosagem, duracao,
+                saude_medicacao_status_idsaude_medicacao_status
             ) VALUES (
-                :id_atendimento, :tipo_de_aplicacao, :medicamento, :dosagem, :tipo_de_uso, :data_de_termino, :status_id
+                :id_atendimento, :medicamento, :dosagem, :duracao, :status_id
             )
         ");
         $stmt->execute([
-            ':id_atendimento'    => $id_atendimento,
-            ':tipo_de_aplicacao' => $tipoDeAplicacao,
-            ':medicamento'       => $medicamento,
-            ':dosagem'           => $dosagem,
-            ':tipo_de_uso'       => $tipoDeUso,
-            ':data_de_termino'   => $dataDeTermino,
-            ':status_id'         => $status_id
+            ':id_atendimento' => $id_atendimento,
+            ':medicamento'    => $medicamento,
+            ':dosagem'        => $dosagem,
+            ':duracao'        => $duracao,
+            ':status_id'      => $status_id
         ]);
         return (int)$this->pdo->lastInsertId();
     }
