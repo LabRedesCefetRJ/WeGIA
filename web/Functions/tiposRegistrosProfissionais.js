@@ -1,5 +1,5 @@
 function carregarTabelaTiposRegistros() {
-    const status = $('#select_status').val();
+    let status = $('#select_status').val();
     if (!status) {
         status = 1;
     }
@@ -110,7 +110,7 @@ function adicionarTipoRegistro() {
         dataType: 'json',
         success: function (response) {
             alert(response.mensagem || "Registro cadastrado com sucesso!");
-            carregarTabelaTiposRegistros(); 
+            atualizarListaTiposRegistros(response); 
         },
         error: function (xhr) {
             let mensagem = "Erro ao incluir registro.";
@@ -118,6 +118,53 @@ function adicionarTipoRegistro() {
                 mensagem = xhr.responseJSON.mensagem;
             }
             alert(mensagem);
+        }
+    });
+}
+
+function atualizarListaTiposRegistros(novoRegistro) {
+    if ($('#tabela-tipos-registros').length) {
+        carregarTabelaTiposRegistros();
+    }
+ 
+    let $select = $('#registroProfissional_tipo_input');
+    if ($select.length) {
+        if (novoRegistro && novoRegistro.id) {
+            const novaOption = $('<option></option>')
+                .val(novoRegistro.id)
+                .text(novoRegistro.descricao);
+            recarregarSelectTiposRegistro($select);
+        } else {
+            recarregarSelectTiposRegistro($select);
+        }
+    }
+}
+ 
+function recarregarSelectTiposRegistro($select) {
+    const url = '../../controle/control.php?nomeClasse=TipoRegistroProfissionalControle&metodo=listarTodos&status=1';
+ 
+    $.ajax({
+        type: "GET",
+        url: url,
+        dataType: 'json',
+        success: function (response) {
+            const valorSelecionado = $select.val();
+ 
+            $select.empty();
+            $select.append('<option value="">Selecionar</option>');
+ 
+            $.each(response, function (i, item) {
+                const id = item.id || item.id_registro_profissional_tipo;
+                const descricao = item.descricao;
+                $select.append('<option value="' + id + '">' + descricao + '</option>');
+            });
+ 
+            if (valorSelecionado) {
+                $select.val(valorSelecionado);
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error("Erro ao atualizar lista de tipos de registro:", error);
         }
     });
 }

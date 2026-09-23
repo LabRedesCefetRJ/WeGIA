@@ -86,7 +86,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 
   <!--JS Functions-->
   <script src="<?php echo WWW; ?>Functions/cargos.js"></script>
-  <script src="<?php echo WWW; ?>Functions/tiposRegistrosProfissionais.js"></script>
+  <script src="<?php echo WWW; ?>Functions/tiposRegistrosProfissionais.js?v=2.0"></script>
     <style type="text/css">
       .obrig {
           color: rgb(255, 0, 0);
