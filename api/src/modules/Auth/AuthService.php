@@ -6,6 +6,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\SignatureInvalidException;
+use api\utils\Util;
 
 class AuthService
 {
@@ -40,7 +41,7 @@ class AuthService
 
     public function login(string $login, string $senha): array
     {
-        $user = $this->userRepository->findByLogin($login);
+        $user = $this->userRepository->findByLogin(Util::normalizeCpf($login));
         if (!$user) {
             throw new \Exception('Credenciais inválidas');
         }
