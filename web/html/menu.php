@@ -1,6 +1,6 @@
 <?php
 
-if(session_status() === PHP_SESSION_NONE) {
+if (session_status() === PHP_SESSION_NONE) {
 	session_start();
 }
 
@@ -393,6 +393,14 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 									<span>Tags</span>
 								</a>
 							</li>
+						</ul>
+					</li>
+					<li class="nav-parent nav-active" id="34">
+						<a>
+							<i class="fa-solid fa-gift"></i>
+							<span>Programa de benefícios</span>
+						</a>
+						<ul class="nav nav-children">
 							<li>
 								<a href="<?= WWW ?>html/socio/sistema/beneficios.php">
 									<span>Regras de benefícios</span>
@@ -621,11 +629,11 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 						</a>
 					</li>
 					<?php if (defined('DEV_MODE') && DEV_MODE === 'on'): ?>
-					<li>
-						<a href="<?= WWW ?>html/configuracao/debug_info.php">
-							Informações de debug
-						</a>
-					</li>
+						<li>
+							<a href="<?= WWW ?>html/configuracao/debug_info.php">
+								Informações de debug
+							</a>
+						</li>
 					<?php endif; ?>
 				</ul>
 			</li>
