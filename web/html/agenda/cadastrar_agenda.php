@@ -792,12 +792,12 @@ require_once "../personalizacao_display.php";
                     <div class="col-sm-12">
                         <div class="form-group checkbox">
                             <label>
-                                <input type="checkbox" id="alocacao-rodizio-divisao">
+                                <input type="checkbox" id="alocacao-rodizio-divisao" title="Inverte dinamicamente as divisões dos membros, o primeiro dia mantém as divisões cadastradas e os dias seguintes recebem um rodízio aleatório entre as divisões.">
                                 Aplicar rodízio automático de divisões
                             </label>
-                            <p class="help-block">
-                                O primeiro dia mantém as divisões cadastradas e os dias seguintes recebem um rodízio aleatório entre as divisões.
-                            </p>
+                            <!-- <p class="help-block">
+                                
+                            </p> -->
                         </div>
                     </div>
                 </div>
