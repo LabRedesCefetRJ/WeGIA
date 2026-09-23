@@ -12,5 +12,6 @@ define( 'DB_HOST', 'localhost');
 define( 'DB_CHARSET', 'utf8');
 define( 'ROOT',dirname(__FILE__));
 define( 'WWW', 'https://demo.wegia.org/');
+define( 'SESSION_TIMEOUT', 1800); //30 minutos de inatividade antes de ser limpa pelo garbage collector
 
 define( 'DEV_MODE', 'off');
