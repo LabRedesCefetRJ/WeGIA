@@ -31,12 +31,12 @@ class PetControle
 
         // Validações
         if (!isset($nome) || strlen($nome) < 3) {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=Nome não informado ou inválido!");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=Nome não informado ou inválido!");
             exit();
         }
 
         if (!isset($nascimento) || empty($nascimento)) {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=Data de nascimento não informada!");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=Data de nascimento não informada!");
             exit();
         }
 
@@ -44,39 +44,39 @@ class PetControle
         $dataNascimento = new DateTime($nascimento);
 
         if ($dataAtual < $dataNascimento) {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=Data de nascimento é inválida!");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=Data de nascimento é inválida!");
             exit();
         }
 
         if (!isset($acolhimento) || empty($acolhimento)) {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=Data de acolhimento não informada!");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=Data de acolhimento não informada!");
             exit();
         }
 
         $dataAcolhimento = new DateTime($acolhimento);
 
         if ($dataAtual < $dataAcolhimento) {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=Data de acolhimento é inválida!");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=Data de acolhimento é inválida!");
             exit();
         }
 
         if ($sexo != 'M' && $sexo != 'F') {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=O sexo informado é inválido!");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=O sexo informado é inválido!");
             exit();
         }
 
         if (!isset($especie) || $especie < 1) {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=Espécie não informada ou inválida");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=Espécie não informada ou inválida");
             exit();
         }
 
         if (!isset($raca) || $raca < 1) {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=Raça não informada ou inválida!");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=Raça não informada ou inválida!");
             exit();
         }
 
         if (!isset($cor) || $cor < 1) {
-            header("Location: ../../html/pet/cadastro_pet.php?msg=Cor não informada ou inválida!");
+            header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=Cor não informada ou inválida!");
             exit();
         }
 
@@ -89,15 +89,19 @@ class PetControle
         $nomeImagem = ['', ''];
 
         if (isset($_FILES['imgperfil']) && $_FILES['imgperfil']['error'] == UPLOAD_ERR_OK) {
-            $tmpName = $_FILES['imgperfil']['tmp_name'];
-            $imgperfil = base64_encode(file_get_contents($tmpName));
+            $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'gif'];
 
             $nomeImagemCompleto = $_FILES['imgperfil']['name'];
             $nomeImagem = explode('.', $nomeImagemCompleto);
+            $extensao = strtolower(end($nomeImagem));
 
-            if (count($nomeImagem) < 2) {
-                $nomeImagem[1] = ''; // extensão vazia se não houver
+            if (count($nomeImagem) < 2 || !in_array($extensao, $extensoesPermitidas, true)) {
+                header("Location: " . WWW . "html/pet/cadastro_pet.php?msg=" . urlencode("Formato de imagem inválido! Permitidos: " . implode(', ', $extensoesPermitidas)));
+                exit();
             }
+
+            $tmpName = $_FILES['imgperfil']['tmp_name'];
+            $imgperfil = base64_encode(file_get_contents($tmpName));
         }
 
         // Define dados no objeto
@@ -135,7 +139,7 @@ class PetControle
             );
 
             // Redireciona
-            header('Location: ../../WeGIA/html/pet/informacao_pet.php');
+            header('Location: ' . WWW . 'html/pet/informacao_pet.php');
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -194,9 +198,6 @@ class PetControle
     {
         $idFoto = filter_input(INPUT_POST, 'id_foto', FILTER_SANITIZE_NUMBER_INT);
         $idPet = filter_input(INPUT_POST, 'id_pet', FILTER_SANITIZE_NUMBER_INT);
-        $imgPet = base64_encode(file_get_contents($_FILES['imgperfil']['tmp_name']));
-        $imgNome = $_FILES['imgperfil']['name'];
-        $imgNome = explode('.', $imgNome);
 
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
@@ -208,9 +209,18 @@ class PetControle
             if (!$idFoto || $idFoto < 1)
                 throw new InvalidArgumentException('O id da foto fornecido é inválido.', 422);
 
+            $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'gif'];
+            $imgNome = explode('.', $_FILES['imgperfil']['name']);
+            $extensao = strtolower(end($imgNome));
+
+            if (count($imgNome) < 2 || !in_array($extensao, $extensoesPermitidas, true))
+                throw new InvalidArgumentException('Formato de imagem inválido. Permitidos: ' . implode(', ', $extensoesPermitidas), 422);
+
+            $imgPet = base64_encode(file_get_contents($_FILES['imgperfil']['tmp_name']));
+
             $petDAO = new PetDAO();
             $petDAO->alterarFotoPet($imgPet, $imgNome[0], $imgNome[1], $idFoto, $idPet);
-            header('Location: ../../html/pet/profile_pet.php?id_pet=' . htmlspecialchars($idPet));
+            header('Location: ' . WWW . 'html/pet/profile_pet.php?id_pet=' . htmlspecialchars($idPet));
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -224,7 +234,7 @@ class PetControle
 
             $this->verificar();
             $this->petDAO->alterarPet($this->petClasse->getNome(), $this->petClasse->getNascimento(), $this->petClasse->getAcolhimento(), $this->petClasse->getSexo(), $this->petClasse->getCaracteristicasEspecificas(), $this->petClasse->getEspecie(), $this->petClasse->getRaca(), $this->petClasse->getCor(), $this->petClasse->getId());
-            header('Location: ../../html/pet/profile_pet.php?id_pet=' . htmlspecialchars($this->petClasse->getId()));
+            header('Location: ' . WWW . 'html/pet/profile_pet.php?id_pet=' . htmlspecialchars($this->petClasse->getId()));
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -235,8 +245,6 @@ class PetControle
         $idFichaMedica = filter_input(INPUT_POST, 'id_ficha_medica', FILTER_SANITIZE_NUMBER_INT);
         $idTipoExame = filter_input(INPUT_POST, 'id_tipo_exame', FILTER_SANITIZE_NUMBER_INT);
         $idPet = filter_input(INPUT_POST, 'id_pet', FILTER_SANITIZE_NUMBER_INT);
-        $nameFile = explode(".", $_FILES['arquivo']['name']);
-        $arquivoExame = base64_encode(file_get_contents($_FILES['arquivo']['tmp_name']));
         $dataExame = date("y-m-d");
 
         try {
@@ -252,9 +260,18 @@ class PetControle
             if (!$idPet || $idPet < 1)
                 throw new InvalidArgumentException('O id do pet é inválido.', 422);
 
+            $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'pdf'];
+            $nameFile = explode(".", $_FILES['arquivo']['name']);
+            $extensao = strtolower(end($nameFile));
+
+            if (count($nameFile) < 2 || !in_array($extensao, $extensoesPermitidas, true))
+                throw new InvalidArgumentException('Formato de arquivo inválido. Permitidos: ' . implode(', ', $extensoesPermitidas), 422);
+
+            $arquivoExame = base64_encode(file_get_contents($_FILES['arquivo']['tmp_name']));
+
             $petDAO = new PetDAO();
             $petDAO->incluirExamePet($idFichaMedica, $idTipoExame, $dataExame, $arquivoExame, $nameFile);
-            header("location: ../../html/pet/profile_pet.php?id_pet=" . htmlspecialchars($idPet));
+            header("location: " . WWW . "html/pet/profile_pet.php?id_pet=" . htmlspecialchars($idPet));
         } catch (Exception $e) {
             Util::tratarException($e);
         }

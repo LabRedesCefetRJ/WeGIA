@@ -53,7 +53,7 @@ $fieldErrors = getSessionFormErrors();
 
 ?>
 <!DOCTYPE html>
-<html class="fixed">
+<html class="fixed" lang="pt-br">
 
 <head>
 
@@ -61,7 +61,7 @@ $fieldErrors = getSessionFormErrors();
   <meta charset="UTF-8">
   <title>Cadastro de Funcionário</title>
   <!-- Mobile Metas -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Web Fonts  -->
   <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
@@ -107,7 +107,7 @@ $fieldErrors = getSessionFormErrors();
             <li><span>Cadastros</span></li>
             <li><span>Dependentes</span></li>
           </ol>
-          <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+          <a class="sidebar-right-toggle" aria-label="Alternar painel lateral"><i class="fa fa-chevron-left"></i></a>
         </div>
       </header>
 
@@ -125,7 +125,7 @@ $fieldErrors = getSessionFormErrors();
                 <h4 class="mb-xlg">Informações Pessoais</h4>
                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="nome">Nome<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="text" class="form-control<?= !empty($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <?php if (!empty($fieldErrors['nome'])): ?>
@@ -134,7 +134,7 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="sobrenome">Sobrenome<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="text" class="form-control<?= !empty($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     <?php if (!empty($fieldErrors['sobrenome'])): ?>
@@ -143,10 +143,10 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label">Sexo<sup class="obrig">*</sup></label>
                   <div class="col-md-8">
-                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required aria-label="Masculino" <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" aria-label="Feminino" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
                   </div>
                 </div>
                 <div class="form-group">
@@ -167,7 +167,7 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
+                  <label class="col-md-3 control-label" for="nascimento">Nascimento<sup class="obrig">*</sup></label>
                   <div class="col-md-6">
                     <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max=<?php echo date('Y-m-d'); ?> value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                   </div>
@@ -187,7 +187,7 @@ $fieldErrors = getSessionFormErrors();
                       }
                       ?>
                     </select>
-                    <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                    <a onclick="adicionarParentesco()" style="margin: 0 20px;" aria-label="Adicionar parentesco"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                   </div>
                 </div>
                 <hr class="dotted short">
@@ -202,19 +202,19 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
+                  <label class="col-md-3 control-label" for="rg">Número do RG</label>
                   <div class="col-md-6">
                     <input type="text" class="form-control" name="rg" id="rg" onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2" onkeyup="mascara('##.###.###-#',this,event)">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
+                  <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor</label>
                   <div class="col-md-6">
                     <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor" onkeypress="return Onlychars(event)">
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
+                  <label class="col-md-3 control-label" for="data_expedicao">Data de expedição</label>
                   <div class="col-md-6">
                     <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa" name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> disabled>
                     <p id="dataNascInvalida" style="display: block; color: #b30000">Selecione a data de nascimento primeiro!</p>
@@ -588,7 +588,7 @@ $fieldErrors = getSessionFormErrors();
   <script src="../../assets/vendor/jquery-placeholder/jquery.placeholder.js"></script>
 
   <div align="right">
-    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
   </div>
 </body>
 

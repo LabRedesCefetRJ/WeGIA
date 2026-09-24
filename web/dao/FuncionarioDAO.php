@@ -116,7 +116,7 @@ class FuncionarioDAO
             $stmtConsultaCPF->execute();
 
             $consultaCPF = $stmtConsultaCPF->fetch(PDO::FETCH_ASSOC);
-            
+
             if (!$consultaCPF) {
                 header('Location: ../html/funcionario/cadastro_funcionario.php?cpf=' . htmlspecialchars($cpf));
                 exit();
@@ -218,7 +218,7 @@ class FuncionarioDAO
             $busca->bindParam(':cpf', $cpf);
             $busca->execute();
 
-            $idFuncionario = (int)$busca->fetchColumn();
+            $idFuncionario = (int) $busca->fetchColumn();
 
             $cns = $funcionario->getCns();
             if ($idFuncionario && $cns !== null) {
@@ -339,7 +339,7 @@ class FuncionarioDAO
         $stmt->bindParam(':sobrenome', $sobrenome);
         $stmt->bindParam(':id_funcionario', $id_funcionario);
         $stmt->bindParam(':sexo', $sexo);
-        $stmt->bindParam(':email', $email);        
+        $stmt->bindParam(':email', $email);
         $stmt->bindParam(':telefone', $telefone);
         $stmt->bindParam(':data_nascimento', $nascimento);
         $stmt->bindParam(':nome_pai', $nomePai);
@@ -578,7 +578,7 @@ class FuncionarioDAO
                 $funcionario[] = array('imagem' => $linha['imagem'], 'id_pessoa' => $linha['id_pessoa'], 'cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'sexo' => $linha['sexo'], 'data_nascimento' => $this->formatoDataDMY($linha['data_nascimento']), 'registro_geral' => $linha['registro_geral'], 'orgao_emissor' => $linha['orgao_emissor'], 'data_expedicao' => $this->formatoDataDMY($linha['data_expedicao']), 'email' => $linha['email'], 'telefone' => $linha['telefone']);
             }
         } catch (PDOException $e) {
-            echo 'Error: ' .  $e->getMessage();
+            echo 'Error: ' . $e->getMessage();
         }
         return json_encode($funcionario);
     }
@@ -596,7 +596,7 @@ class FuncionarioDAO
                 $idFuncionario = $linha['id_funcionario'];
             }
         } catch (PDOException $e) {
-            echo 'Error: ' .  $e->getMessage();
+            echo 'Error: ' . $e->getMessage();
         }
 
         return $idFuncionario;
@@ -616,14 +616,16 @@ class FuncionarioDAO
         $pessoas = array();
 
         $sql = "
-            SELECT f.id_funcionario, p.nome, p.sobrenome, p.cpf, c.cargo, s.situacoes 
+            SELECT f.id_funcionario, NULL AS id_voluntario,
+                   p.nome, p.sobrenome, p.cpf, c.cargo, s.situacoes 
             FROM pessoa p 
             JOIN funcionario f ON p.id_pessoa = f.id_pessoa 
             JOIN cargo c ON c.id_cargo = f.id_cargo 
             JOIN situacao s ON f.id_situacao = s.id_situacao 
             WHERE s.id_situacao = :situacao
             UNION
-            SELECT v.id_voluntario as id_funcionario, p.nome, p.sobrenome, p.cpf, c.cargo, s.situacoes 
+            SELECT NULL, v.id_voluntario,
+                   p.nome, p.sobrenome, p.cpf, c.cargo, s.situacoes 
             FROM pessoa p 
             JOIN voluntario v ON p.id_pessoa = v.id_pessoa 
             JOIN cargo c ON c.id_cargo = v.id_cargo 
@@ -637,12 +639,13 @@ class FuncionarioDAO
 
         while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
             $pessoas[] = array(
-                'id_funcionario' => htmlspecialchars($linha['id_funcionario']), 
-                'cpf' => htmlspecialchars($linha['cpf']), 
-                'nome' => htmlspecialchars($linha['nome']), 
-                'sobrenome' => htmlspecialchars($linha['sobrenome']), 
-                'situacao' => htmlspecialchars($linha['situacoes']), 
-                'cargo' => htmlspecialchars($linha['cargo'])
+                'id_funcionario' => $linha['id_funcionario'] !== null ? htmlspecialchars($linha['id_funcionario']) : null,
+                'id_voluntario' => $linha['id_voluntario'] !== null ? htmlspecialchars($linha['id_voluntario']) : null,
+                'cpf' => htmlspecialchars($linha['cpf']),
+                'nome' => htmlspecialchars($linha['nome']),
+                'sobrenome' => htmlspecialchars($linha['sobrenome']),
+                'situacao' => htmlspecialchars($linha['situacoes']),
+                'cargo' => htmlspecialchars($linha['cargo']),
             );
         }
 

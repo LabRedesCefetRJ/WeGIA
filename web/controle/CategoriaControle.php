@@ -19,11 +19,16 @@ class CategoriaControle
     {
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
 
-        $regex = '#^(\.\./html/matPat/(alterar_produto|cadastro_produto|listar_categoria)\.php(\?id_produto=\d+)?)$#';
+        $regex = '#^\.\./html/matPat/'
+        . '(alterar_produto|cadastro_produto|listar_categoria|listar_produto)'
+        . '\.php'
+        . '(?:\?(?:id_produto=\d+|tipo=(?:ativo|arquivado)))?$#';
 
         $categoriaDAO = new CategoriaDAO();
         $categorias = $categoriaDAO->listarTodos();
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $_SESSION['categoria'] = $categorias;
         echo $_SESSION['categoria'];
 
@@ -32,6 +37,8 @@ class CategoriaControle
         } else {
             header('Location:' . '../html/home.php');
         }
+
+        exit;
     }
 
     public function incluir()

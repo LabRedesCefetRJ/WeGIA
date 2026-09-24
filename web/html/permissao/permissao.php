@@ -3,6 +3,7 @@ define("DEBUG", false);
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'PessoaDAO.php';
 
 /**
  * Verifica se a pessoa cujo o id foi passado como parâmetro possui a permissão necessária para usar um recurso específico do sistema.
@@ -11,31 +12,23 @@ function permissao($id_pessoa, $id_recurso, $id_acao = 1): void
 {
 	try {
 		$pdo = Conexao::connect();
-		$sql = "SELECT * FROM funcionario WHERE id_pessoa = :ID_PESSOA";
-		$stmt = $pdo->prepare($sql);
-		$stmt->bindParam(':ID_PESSOA', $id_pessoa, PDO::PARAM_INT);
-		$stmt->execute();
-		$resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+		$pessoaDAO = new PessoaDAO();
+
+		try {
+			$id_cargo = $pessoaDAO->getCargoPorPessoa($id_pessoa);
+		}
+		catch(Exception $e) {
+			throw new LogicException('Usuário não possui cargo associado a seu id de pessoa.', 403);
+		}
 
 		if (DEBUG) {
-			echo json_encode($resultado);
+			echo json_encode($id_cargo);
 			die();
 		}
 
-		if (!$resultado) {
-			// Se não achar id_pessoa em funcionário, procura em voluntário
-			$sql = "SELECT * FROM voluntario WHERE id_pessoa = :ID_PESSOA";
-			$stmt = $pdo->prepare($sql);
-			$stmt->bindParam(':ID_PESSOA', $id_pessoa, PDO::PARAM_INT);
-			$stmt->execute();
-			$resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-
-			if (!$resultado) {
-				throw new LogicException('', 403);
-			}
+		if (!$id_cargo) {
+			throw new LogicException('', 403);
 		}
-
-		$id_cargo = $resultado['id_cargo'];
 
 		$sql = "SELECT * FROM permissao WHERE id_cargo = :id_cargo AND id_recurso = :id_recurso";
 		$stmt = $pdo->prepare($sql);
@@ -47,7 +40,17 @@ function permissao($id_pessoa, $id_recurso, $id_acao = 1): void
 		if (!$permissao)
 			throw new LogicException("Usuário não possui permissão para acessar o recurso {$id_recurso}", 403);
 
-		if ($permissao['id_acao'] < $id_acao)
+		// id_acao é uma bitmask (1=SEM ACESSO, 3=GRAVAR E EXECUTAR, 5=LER E
+		// EXECUTAR, 7=LER, GRAVAR E EXECUTAR), não um ranking — "<" deixava
+		// passar, por exemplo, um cargo com 5 (leitura) por uma exigência de 3
+		// (escrita), e principalmente deixava 1 (SEM ACESSO) passar sempre que
+		// a chamada usava o nível padrão (também 1, "1 < 1" é falso). Por isso
+		// SEM ACESSO é tratado como negação explícita, e o restante é
+		// verificado via bitwise AND (o cargo precisa ter TODOS os bits
+		// exigidos, não apenas um valor numericamente maior).
+		$idAcaoConcedido = (int) $permissao['id_acao'];
+
+		if ($idAcaoConcedido === 1 || ($idAcaoConcedido & $id_acao) !== $id_acao)
 			throw new LogicException("Usuário não possui permissão para realizar a ação {$id_acao} no recurso {$id_recurso}", 403);
 	} catch (Exception $e) {
 		//Armazena exceção em um arquivo de log

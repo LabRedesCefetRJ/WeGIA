@@ -32,6 +32,11 @@ if (isset($_GET['cpf'])) {
     $cpfPrefilled = htmlspecialchars($_GET['cpf'], ENT_QUOTES, 'UTF-8');
 }
 
+$id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
+require_once ROOT . '/dao/PessoaDAO.php';
+$pessoaDAO = new PessoaDAO();
+$adm_configurado = $pessoaDAO->verificaAdmConfigurado($id_pessoa);
+
 // Teste da Issue #1587
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -110,9 +115,9 @@ require_once ROOT . '/classes/Csrf.php';
     <script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
 
     <style type="text/css">
-    .obrig {
-        color: rgb(255, 0, 0);
-    }
+        .obrig {
+            color: rgb(255, 0, 0);
+        }
     </style>
 </head>
 
@@ -138,52 +143,77 @@ require_once ROOT . '/classes/Csrf.php';
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
                                 <h5 class="obrig">Campos Obrigatórios(*)</h5>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="profileFirstName">Nome<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <input type="text" class="form-control<?= isset($fieldErrors['nome']) ? ' is-invalid' : '' ?>" name="nome" id="nome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                    <p id="error_nome" class="help-block text-danger" style="display: <?= isset($fieldErrors['nome']) ? 'block' : 'none' ?>;">
-                                        <?= isset($fieldErrors['nome']) ? htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') : '' ?>
-                                    </p>
+                                        <input type="text"
+                                            class="form-control<?= isset($fieldErrors['nome']) ? ' is-invalid' : '' ?>"
+                                            name="nome" id="nome" onkeypress="return Onlychars(event)" required
+                                            value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                        <p id="error_nome" class="help-block text-danger"
+                                            style="display: <?= isset($fieldErrors['nome']) ? 'block' : 'none' ?>;">
+                                            <?= isset($fieldErrors['nome']) ? htmlspecialchars($fieldErrors['nome'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <input type="text" class="form-control<?= isset($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                    <p id="error_sobrenome" class="help-block text-danger" style="display: <?= isset($fieldErrors['sobrenome']) ? 'block' : 'none' ?>;">
-                                        <?= isset($fieldErrors['sobrenome']) ? htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') : '' ?>
-                                    </p>
+                                        <input type="text"
+                                            class="form-control<?= isset($fieldErrors['sobrenome']) ? ' is-invalid' : '' ?>"
+                                            name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)"
+                                            required
+                                            value="<?= htmlspecialchars($oldInput['sobrenome'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                        <p id="error_sobrenome" class="help-block text-danger"
+                                            style="display: <?= isset($fieldErrors['sobrenome']) ? 'block' : 'none' ?>;">
+                                            <?= isset($fieldErrors['sobrenome']) ? htmlspecialchars($fieldErrors['sobrenome'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                        </p>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="cpf">Número do CPF<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <input type="text" class="form-control<?= isset($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? ($cpf ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
+                                    <input type="text" class="form-control<?= isset($fieldErrors['cpf']) ? ' is-invalid' : '' ?>" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" value="<?= htmlspecialchars($oldInput['cpf'] ?? ($cpfPrefilled ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
                                     <p id="error_cpf" class="help-block text-danger" style="display: <?= isset($fieldErrors['cpf']) ? 'block' : 'none' ?>;">
                                         <?= isset($fieldErrors['cpf']) ? htmlspecialchars($fieldErrors['cpf'], ENT_QUOTES, 'UTF-8') : '' ?>
                                     </p>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="profileLastName">Sexo<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                                        <label><input type="radio" name="gender" id="radioM" value="m"
+                                                style="margin-top: 10px; margin-left: 15px;"
+                                                onclick="return exibir_reservista()" required
+                                                <?= isset($oldInput['gender']) && $oldInput['gender'] === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
+                                        <label><input type="radio" name="gender" id="radioF" value="f"
+                                                style="margin-top: 10px; margin-left: 15px;"
+                                                onclick="return esconder_reservista()" <?= isset($oldInput['gender']) && $oldInput['gender'] === 'f' ? 'checked' : '' ?>><i class="fa fa-female"
+                                                style="font-size: 20px;"></i> </label>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label" for="profileCompany">Nascimento<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6">
-                                    <input type="date" name="nascimento" id="nascimento" class="form-control<?= isset($fieldErrors['nascimento']) ? ' is-invalid' : '' ?>" min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>" required value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                    <p id="error_nascimento" class="help-block text-danger" style="display: <?= isset($fieldErrors['nascimento']) ? 'block' : 'none' ?>;">
-                                        <?= isset($fieldErrors['nascimento']) ? htmlspecialchars($fieldErrors['nascimento'], ENT_QUOTES, 'UTF-8') : '' ?>
-                                    </p>
+                                        <input type="date" name="nascimento" id="nascimento"
+                                            class="form-control<?= isset($fieldErrors['nascimento']) ? ' is-invalid' : '' ?>"
+                                            min="<?= $dataNascimentoMinima ?>" max="<?= $dataNascimentoMaxima ?>"
+                                            required
+                                            value="<?= htmlspecialchars($oldInput['nascimento'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                                        <p id="error_nascimento" class="help-block text-danger"
+                                            style="display: <?= isset($fieldErrors['nascimento']) ? 'block' : 'none' ?>;">
+                                            <?= isset($fieldErrors['nascimento']) ? htmlspecialchars($fieldErrors['nascimento'], ENT_QUOTES, 'UTF-8') : '' ?>
+                                        </p>
                                     </div>
                                 </div>
                                 <hr>
                                 <h4 class="mb-xlg">Detalhes do Voluntariado</h4>
                                 <div class="form-group">
-                                    <label class="col-md-3 control-label">Data de Admissão<sup class="obrig">*</sup></label>
+                                    <label class="col-md-3 control-label">Data de Admissão<sup
+                                            class="obrig">*</sup></label>
                                     <div class="col-md-6"><input type="date" class="form-control" name="data_admissao"
                                             required></div>
                                 </div>
@@ -208,6 +238,9 @@ require_once ROOT . '/classes/Csrf.php';
                                             <?php
                                             while ($row = $cargo->fetch_array(MYSQLI_NUM)) {
                                                 $selected = isset($oldInput['cargo']) && $oldInput['cargo'] == $row[0] ? ' selected' : '';
+                                                if ($adm_configurado != 1 && $row[0] == 1) {
+                                                    continue;
+                                                }
                                                 echo "<option value=\"" . htmlspecialchars($row[0]) . "\"" . $selected . ">" . htmlspecialchars($row[1]) . "</option>";
                                             }
                                             ?>

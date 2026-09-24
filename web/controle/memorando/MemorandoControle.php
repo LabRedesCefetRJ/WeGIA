@@ -14,6 +14,7 @@ if (file_exists($config_path)) {
 require_once ROOT . "/dao/memorando/MemorandoDAO.php";
 require_once ROOT . "/classes/memorando/Memorando.php";
 require_once ROOT . "/dao/memorando/UsuarioDAO.php";
+require_once ROOT . "/classes/Util.php";
 
 
 
@@ -96,11 +97,39 @@ class MemorandoControle
     //Alterar status do memorando
     public function alterarIdStatusMemorando()
     {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
         extract($_REQUEST);
-        $memorando = new Memorando('', '', $id_status_memorando, '', '');
-        $memorando->setId_memorando($id_memorando);
-        $memorando->setId_status_memorando($id_status_memorando);
+
+        // Este método é alcançável diretamente via
+        // controle/control.php?nomeClasse=MemorandoControle, que só valida
+        // permissão genérica no módulo (recurso 3), sem checar se o memorando
+        // pertence ao usuário logado -- sem esta checagem, qualquer usuário
+        // com acesso ao módulo conseguia alterar o status de um memorando de
+        // terceiros (IDOR de escrita).
+        $idMemorandoValidado = filter_var($id_memorando ?? null, FILTER_VALIDATE_INT);
+        $idPessoaLogada = filter_var($_SESSION['id_pessoa'] ?? null, FILTER_VALIDATE_INT);
+
+        if (!$idMemorandoValidado || $idMemorandoValidado < 1 || !$idPessoaLogada || $idPessoaLogada < 1) {
+            Util::tratarException(new InvalidArgumentException('O id do memorando informado é inválido.', 400));
+            return;
+        }
+
         $memorandoDAO = new MemorandoDAO();
+        $dadosMemorando = $memorandoDAO->listarTodosId($idMemorandoValidado);
+        $ehCriador = !empty($dadosMemorando) && (int)$dadosMemorando[0]['id_pessoa'] === $idPessoaLogada;
+        $ehParticipante = in_array($idMemorandoValidado, $memorandoDAO->listarIdTodosInativos() ?? []);
+
+        if (!$ehCriador && !$ehParticipante) {
+            Util::tratarException(new InvalidArgumentException('Você não tem acesso a este memorando.', 403));
+            return;
+        }
+
+        $memorando = new Memorando('', '', $id_status_memorando, '', '');
+        $memorando->setId_memorando($idMemorandoValidado);
+        $memorando->setId_status_memorando($id_status_memorando);
         try {
             $memorandoDAO->alterarIdStatusMemorando($memorando);
             header("Location: " . WWW . "html/memorando/listar_memorandos_ativos.php");

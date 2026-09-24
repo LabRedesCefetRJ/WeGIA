@@ -1,6 +1,7 @@
 <?php
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Conexao.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PessoaDAO.php';
 
 class MiddlewareDAO
 {
@@ -19,24 +20,14 @@ class MiddlewareDAO
 
         $controladoraRecursos = $controladorasRecursos[$controladora];
 
-        $sqlCargo = 'SELECT id_cargo FROM funcionario WHERE id_pessoa=:idPessoa';
-        $stmtCargo = $this->pdo->prepare($sqlCargo);
-        $stmtCargo->bindParam(':idPessoa', $idPessoa);
-        $stmtCargo->execute();
+        $pessoaDAO = new PessoaDAO();
 
-        $resultado = $stmtCargo->fetch(PDO::FETCH_ASSOC);
-
-        if ($resultado) {
-            $idCargo = $resultado['id_cargo'];
-        } else {
-            // Se não achar id_pessoa em funcionário, procura em voluntário
-            $sqlCargo = 'SELECT id_cargo FROM voluntario WHERE id_pessoa=:idPessoa';
-            $stmtCargo = $this->pdo->prepare($sqlCargo);
-            $stmtCargo->bindParam(':idPessoa', $idPessoa);
-            $stmtCargo->execute();
-            $resultado = $stmtCargo->fetch(PDO::FETCH_ASSOC);
-            $idCargo = $resultado ? $resultado['id_cargo'] : null;
+        try {
+            $idCargo = $pessoaDAO->getCargoPorPessoa($idPessoa);
+        } catch (Exception $e) {
+            return false;
         }
+
 
         if (is_null($idCargo)) {
             return false;
@@ -57,7 +48,7 @@ class MiddlewareDAO
                     break;
                 }
             }
-        }else{
+        } else {
             $permissao = true;
         }
 

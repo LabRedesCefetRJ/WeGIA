@@ -37,9 +37,22 @@ class GatewayPagamento
     {
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
-        
+
         // Verifica se o token informado está ofuscado (possui apenas asteriscos ou é parcialmente ofuscado)
         if (strpos($this->token, '*') !== false) {
+            // Token não foi reinformado (veio ofuscado da tela). Se o endpoint
+            // estiver mudando mesmo assim, recusa: sem essa checagem, dava pra
+            // redirecionar as cobranças pra um servidor de terceiros mantendo
+            // a credencial real intacta no banco — o token real seguiria
+            // sendo enviado, agora pro host do atacante.
+            $endpointAtual = $gatewayPagamentoDao->buscarEndpointPorId($this->id);
+
+            if ($endpointAtual !== null && $endpointAtual !== $this->endpoint) {
+                throw new InvalidArgumentException(
+                    'Para alterar o endpoint do gateway é necessário reinformar o Token API — ele não pode continuar ofuscado.'
+                );
+            }
+
             // Não atualiza o token se ele estiver ofuscado
             $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, null);
         } else {
@@ -122,7 +135,14 @@ class GatewayPagamento
             throw new InvalidArgumentException('O endpoint de um gateway de pagamento não pode ser vazio.');
         }
 
-        $this->endpoint = $endpoint;
+        // Exige URL válida em HTTPS: sem isso, um endpoint como
+        // "http://attacker.tld/collect" seria aceito, e a credencial do
+        // gateway (token) trafegaria em texto claro pro atacante.
+        if (!filter_var($endpointLimpo, FILTER_VALIDATE_URL) || stripos($endpointLimpo, 'https://') !== 0) {
+            throw new InvalidArgumentException('O endpoint do gateway deve ser uma URL HTTPS válida.');
+        }
+
+        $this->endpoint = $endpointLimpo;
 
         return $this;
     }

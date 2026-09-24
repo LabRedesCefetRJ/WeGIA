@@ -82,6 +82,9 @@ try {
   require_once ROOT . "/controle/AtendidoControle.php";
   $cpf1 = new AtendidoControle;
   $cpf1->listarCPF();
+  require_once ROOT . '/controle/TipoRegistroProfissionalControle.php';
+  $tipoRegistroProfissionalControle = new TipoRegistroProfissionalControle();
+  $registroProfissionalTipos = $tipoRegistroProfissionalControle->listarTodos(1, false, false);
   require_once "../geral/msg.php";
   $oldInput = getSessionFormData();
   $fieldErrors = getSessionFormErrors();
@@ -148,7 +151,7 @@ try {
 }
 ?>
 <!doctype html>
-<html class="fixed">
+<html class="fixed" lang="pt-br">
 
 <head>
   <!-- Basic -->
@@ -158,7 +161,7 @@ try {
   <meta name="description" content="Porto Admin - Responsive HTML5 Template">
   <meta name="author" content="okler.net">
   <!-- Mobile Metas -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- Web Fonts  -->
   <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet"
     type="text/css">
@@ -360,6 +363,8 @@ try {
       $("#botaoEditarDocumentacao").attr('onclick', "return editar_documentacao()");
     }
 
+    let outrosEditando = false;
+
     function editar_outros() {
       let pode_editar_cargo = <?php echo $pode_editar_cargo ? 'true' : 'false'; ?>;
 
@@ -372,16 +377,28 @@ try {
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      $("#data_admissao").prop('di Resolved sabled', false);
+      $("#data_admissao").prop('disabled', false);
 
       if (pode_editar_cargo) {
         $("#cargo").prop('disabled', false);
       }
+      $("#tipo_registro").prop('disabled', false);   
+      $("#numero_registro").prop('disabled', false);
+      $("#uf_registro").prop('disabled', false);
 
       $("#botaoEditarOutros").html('Cancelar');
       $("#botaoSalvarOutros").prop('disabled', false);
       $("#botaoEditarOutros").removeAttr('onclick');
       $("#botaoEditarOutros").attr('onclick', "return cancelar_outros()");
+
+      outrosEditando = true;
+      $(".registro-numero, .registro-uf").prop('disabled', false);
+      $(".btn-excluir-registro").show();
+      $("#botaoAdicionarRegistroProfissional").show();
+      atualizarColunaAcaoRegistroProfissional();
+      carregarRegistrosProfissionais(); 
+      
+      return false;
     }
 
     function cancelar_outros() {
@@ -400,10 +417,364 @@ try {
       $("#botaoSalvarOutros").prop('disabled', true);
       $("#botaoEditarOutros").removeAttr('onclick');
       $("#botaoEditarOutros").attr('onclick', "return editar_outros()");
+
+      outrosEditando = false;
+      $(".registro-numero, .registro-uf").prop('disabled', true);
+      $(".btn-excluir-registro").hide();
+      $("#botaoAdicionarRegistroProfissional").hide();
+      atualizarColunaAcaoRegistroProfissional();
     }
 
+    let UFS_BRASIL = {
+      AC: "Acre", AL: "Alagoas", AP: "Amapá", AM: "Amazonas", BA: "Bahia",
+      CE: "Ceará", DF: "Distrito Federal", ES: "Espírito Santo", GO: "Goiás",
+      MA: "Maranhão", MT: "Mato Grosso", MS: "Mato Grosso do Sul", MG: "Minas Gerais",
+      PA: "Pará", PB: "Paraíba", PR: "Paraná", PE: "Pernambuco", PI: "Piauí",
+      RJ: "Rio de Janeiro", RN: "Rio Grande do Norte", RS: "Rio Grande do Sul",
+      RO: "Rondônia", RR: "Roraima", SC: "Santa Catarina", SP: "São Paulo",
+      SE: "Sergipe", TO: "Tocantins"
+    };
+
+    function montarSelectUf(selecionada) {
+      let select = $('<select class="form-control registro-uf"></select>');
+      select.append($('<option></option>').val('').text('--'));
+      $.each(UFS_BRASIL, function(sigla, nome) {
+          let opt = $('<option></option>').val(sigla).text(sigla + " - " + nome);
+          if (sigla === selecionada) {
+              opt.prop('selected', true);
+          }
+          select.append(opt);
+      });
+      return select;
+    }
+    function exibirErroRegistroProfissional(mensagem) {
+      window.alert(mensagem);
+    }
+
+    function atualizarColunaAcaoRegistroProfissional() {
+      const temRegistros = $('#tabela_registroProfissional tr')
+        .not('#registroProfissionalVazio')
+        .length > 0;
+
+      const exibirAcao = outrosEditando && temRegistros;
+      $('#colunaAcaoRegistroProfissional').toggle(exibirAcao);
+      $('.coluna-acao-registro-profissional').toggle(exibirAcao);
+    }
+
+
+    function listar_registroProfissional(lista) {
+      if (lista.erro) {
+        exibirErroRegistroProfissional(lista.erro);
+        return;
+      }
+      const tbody = $("#tabela_registroProfissional");
+      tbody.empty();
+      if (!lista.length) {
+        tbody.append(
+          '<tr id="registroProfissionalVazio">' +
+            '<td colspan="3" class="text-center">' +
+              'Nenhum registro profissional cadastrado.' +
+            '</td>' +
+          '</tr>'
+        );
+        atualizarColunaAcaoRegistroProfissional();
+        return;
+      }
+      $.each(lista, function(i, item) {
+        let linha = $("<tr>")
+          .attr("id", "registroProfissional" + item.id_registro);
+        linha.append($("<td>").text(item.descricao));
+
+        let inputNumero = $(
+          '<input type="text" ' +
+          'class="form-control registro-numero" ' +
+          'maxlength="20" ' +
+          'inputmode="numeric" ' +
+          'pattern="[0-9]*">'
+        )
+        .val(item.numero_registro)
+        .prop('disabled', !outrosEditando)
+        .on('input', function() {
+          this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        linha.append(
+          $("<td>").append(inputNumero)
+        );
+
+        let selectUf = montarSelectUf(item.uf)
+          .prop('disabled', !outrosEditando);
+
+        linha.append(
+          $("<td>").append(selectUf)
+        );
+
+        let idRegistro = item.id_registro;
+
+        let acoes = $('<td class="coluna-acao-registro-profissional">');
+
+        acoes.append(
+          $('<button type="button" class="btn btn-danger btn-excluir-registro" title="Excluir">' +
+              '<i class="fas fa-trash-alt"></i>' +
+            '</button>')
+            .on('click', function() {
+              removerRegistroProfissional(idRegistro);
+            })
+        );
+
+        linha.append(acoes);
+
+        tbody.append(linha);
+      });
+
+      atualizarColunaAcaoRegistroProfissional();
+    }
+
+    function carregarRegistrosProfissionais() {
+      $.ajax({
+        type: 'POST',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'IdentificadorRegistroProfissionalControle',
+          metodo: 'listar',
+          id_funcionario: '<?= $idFuncionario ?>'
+        },
+        dataType: 'json',
+        success: function(response) {
+          listar_registroProfissional(response);
+        },
+        error: function(xhr, status, error) {
+          // Exibe detalhes no Console do Navegador (F12)
+          console.error("Status:", xhr.status);
+          console.error("Resposta do Servidor:", xhr.responseText);
+
+          let mensagem = 'Erro ao buscar os registros profissionais!';
+          if (xhr.responseJSON && xhr.responseJSON.erro) {
+            mensagem = xhr.responseJSON.erro;
+          } else if (xhr.responseText) {
+            mensagem += '\n\nDetalhes: ' + xhr.responseText.substring(0, 200);
+          }
+          
+          exibirErroRegistroProfissional(mensagem);
+        }
+      });
+    }
+
+    function removerRegistroProfissional(idRegistro) {
+      if (!window.confirm('Tem certeza que deseja excluir este registro profissional?')) {
+        return;
+      }
+
+      $.ajax({
+        type: 'POST',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'IdentificadorRegistroProfissionalControle',
+          metodo: 'remover',
+          id_registro: idRegistro,
+          id_funcionario: '<?= $idFuncionario ?>'
+        },
+        dataType: 'json',
+        success: function(response) {
+          if (response.erro) {
+            exibirErroRegistroProfissional(response.erro);
+            return;
+          }
+          listar_registroProfissional(response);
+        },
+        error: function() {
+          exibirErroRegistroProfissional('Erro ao remover o registro profissional.');
+        }
+      });
+
+      carregarRegistrosProfissionais();
+    }
+
+    function abrirModalRegistroProfissional() {
+      $('#tipo_novoRegistro').prop('selectedIndex', 0);
+      $('#numero_novoRegistro').val('');
+      
+      let selectUfModal = montarSelectUf('');
+      selectUfModal.attr('id', 'uf_novoRegistro');
+      $('#uf_novoRegistro').replaceWith(selectUfModal);
+      
+      $('#modalRegistroProfissional').modal('show');
+    }
+
+    function adicionar_tipo_registroProfissional() {
+      let descricao = window.prompt("Cadastre um novo tipo de registro profissional:");
+      if (!descricao) return;
+      descricao = descricao.trim();
+      if (descricao === '') return;
+
+      $.ajax({
+        type: 'POST',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'TipoRegistroProfissionalControle',
+          metodo: 'incluir',
+          descricao: descricao
+        },
+        dataType: 'json',
+        success: function(response) {
+          if (response && response.erro) {
+            exibirErroRegistroProfissional(response.erro);
+            return;
+          }
+          carregarTiposRegistroProfissional();
+        },
+        error: function(xhr) {
+          let mensagem = 'Erro ao cadastrar o tipo de registro.';
+          if (xhr.responseJSON && xhr.responseJSON.erro) {
+            mensagem = xhr.responseJSON.erro;
+          }
+          exibirErroRegistroProfissional(mensagem);
+        }
+      });
+    }
+
+    function carregarTiposRegistroProfissional() {
+      $.ajax({
+        type: 'GET',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'TipoRegistroProfissionalControle',
+          metodo: 'listarTodos',
+          status: 1
+        },
+        dataType: 'json',
+        success: function(lista) {
+          gerarTipoRegistroProfissional(lista);
+        },
+        error: function() {
+          exibirErroRegistroProfissional('Erro ao carregar os tipos de registro profissional.');
+        }
+      });
+    }
+
+    function gerarTipoRegistroProfissional(response) {
+      if (!response || response.erro) {
+        exibirErroRegistroProfissional(response && response.erro ? response.erro : 'Erro ao carregar os tipos de registro profissional.');
+        return;
+      }
+      let select = $('#tipo_novoRegistro');
+      select.empty();
+      select.append('<option value="" selected disabled>Selecionar</option>');
+      $.each(response, function(i, item) {
+        select.append('<option value="' + item.id_registro_profissional_tipo + '">' + item.descricao + '</option>');
+      });
+    }
+
+    function salvarNovoRegistroProfissional() {
+      let idTipo = $('#tipo_novoRegistro').val();
+      let numero = $('#numero_novoRegistro').val();
+      let uf = $('#uf_novoRegistro').val();
+
+      if (!idTipo || !numero || !numero.trim()) {
+        exibirErroRegistroProfissional('Preencha os campos Número e Tipo de Registro.');
+        return;
+      }
+
+      $.ajax({
+        type: 'POST',
+        url: '../../controle/control.php',
+        data: {
+          nomeClasse: 'IdentificadorRegistroProfissionalControle',
+          metodo: 'adicionar',
+          id_tipo_registro: idTipo,
+          numero_registro: numero,
+          uf: uf,
+          id_funcionario: '<?= $idFuncionario ?>'
+        },
+        dataType: 'json',
+        success: function(response) {
+          if (response.erro) {
+            exibirErroRegistroProfissional(response.erro);
+            return;
+          }
+          listar_registroProfissional(response);
+          $('#closeRegistroProfissionalModal').click();
+        },
+        error: function() {
+          exibirErroRegistroProfissional('Erro ao cadastrar o registro profissional.');
+        }
+      });
+    }
+
+    function coletarEdicoesRegistroProfissional() {
+      let edicoes = [];
+
+      $('#tabela_registroProfissional tr').each(function() {
+        let $linha = $(this);
+        let id = $linha.attr('id');
+
+        if (!id || id === 'registroProfissionalVazio') {
+          return;
+        }
+
+        edicoes.push({
+          idRegistro: id.replace('registroProfissional', ''),
+          numero: $linha.find('.registro-numero').val(),
+          uf: $linha.find('.registro-uf').val()
+        });
+      });
+
+      return edicoes;
+    }
+
+    function salvarEdicoesRegistroProfissional() {
+      let edicoes = coletarEdicoesRegistroProfissional();
+
+      if (!edicoes.length) {
+        return $.Deferred().resolve().promise();
+      }
+
+      let requisicoes = edicoes.map(function(item) {
+        return $.ajax({
+          type: 'POST',
+          url: '../../controle/control.php',
+          data: {
+            nomeClasse: 'IdentificadorRegistroProfissionalControle',
+            metodo: 'editar',
+            id_registro: item.idRegistro,
+            numero_registro: item.numero,
+            uf: item.uf,
+            id_funcionario: '<?= $idFuncionario ?>'
+          },
+          dataType: 'json'
+        });
+      });
+
+      return $.when.apply($, requisicoes);
+    }
+
+    $(document).on('submit', '#formOutros', function(e) {
+      if (!outrosEditando) {
+        return true;
+      }
+
+      e.preventDefault();
+      let formulario = this;
+
+      salvarEdicoesRegistroProfissional()
+        .done(function() {
+          formulario.submit();
+        })
+        .fail(function(xhr) {
+          let mensagem = 'Erro ao salvar as alterações dos registros profissionais.';
+          if (xhr && xhr.responseJSON && xhr.responseJSON.erro) {
+            mensagem = xhr.responseJSON.erro;
+          }
+          exibirErroRegistroProfissional(mensagem);
+        });
+    });
+
+    $(function() {
+      carregarRegistrosProfissionais();
+    });
+
     function alterardate(data) {
-      var date = data.split("/")
+      let date = data.split("/")
       return date[2] + "-" + date[1] + "-" + date[0];
     }
     $(function () {
@@ -506,8 +877,8 @@ try {
             .append($("<td>").text(item.nome_docfuncional))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.id_fundocs + "' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.id_fundocs + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_fundocs + "' title='Visualizar ou Baixar'><button class='btn btn-primary' title='Visualizar ou Baixar'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a onclick='removerFuncionarioDocs(" + item.id_fundocs + ")' href='#' title='Excluir'><button class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
       });
@@ -521,8 +892,8 @@ try {
             .append($("<td>").text(item.nome_docfuncional))
             .append($("<td>").text(item.data))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='documento_download.php?id_doc=" + item.id_fundocs + "' title='Visualizar ou Baixar'><button class='btn btn-primary'><i class='fas fa-download'></i></button></a>"))
-              .append($("<a onclick='removerFuncionarioDocs(" + item.id_fundocs + ")' href='#' title='Excluir'><button class='btn btn-danger'><i class='fas fa-trash-alt'></i></button></a>"))
+              .append($("<a href='documento_download.php?id_doc=" + item.id_fundocs + "' title='Visualizar ou Baixar'><button class='btn btn-primary' title='Visualizar ou Baixar'><i class='fas fa-download'></i></button></a>"))
+              .append($("<a onclick='removerFuncionarioDocs(" + item.id_fundocs + ")' href='#' title='Excluir'><button class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button></a>"))
             )
           )
       });
@@ -544,8 +915,8 @@ try {
             .append($("<td>").text(dependente.cpf))
             .append($("<td>").text(dependente.parentesco))
             .append($("<td style='display: flex; justify-content: space-evenly;'>")
-              .append($("<a href='profile_dependente.php?id_dependente=" + dependente.id_dependente + "' title='Editar'><button class='btn btn-primary'><i class='fas fa-user-edit'></i></button></a>"))
-              .append($("<button class='btn btn-danger' onclick='removerDependente(" + dependente.id_dependente + ")'><i class='fas fa-trash-alt'></i></button>"))
+              .append($("<a href='profile_dependente.php?id_dependente=" + dependente.id_dependente + "' title='Editar'><button class='btn btn-primary' title='Editar'><i class='fas fa-user-edit'></i></button></a>"))
+              .append($("<button class='btn btn-danger' title='Excluir' onclick='removerDependente(" + dependente.id_dependente + ")'><i class='fas fa-trash-alt'></i></button>"))
             )
           )
       });
@@ -742,7 +1113,7 @@ try {
               <li><span>Páginas</span></li>
               <li><span>Perfil</span></li>
             </ol>
-            <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+            <a class="sidebar-right-toggle" aria-label="Alternar painel lateral"><i class="fa fa-chevron-left"></i></a>
           </div>
         </header>
         <!-- start: page -->
@@ -783,8 +1154,7 @@ try {
                   }
                   echo "<img src='$foto' style='margin-bottom: 15px;' id='imagem' class='rounded img-responsive' alt='John Doe'>";
                   ?>
-                  <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal"><i
-                      class="fa fa-camera-retro"></i></button>
+                  <button class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal" aria-label="Alterar foto de perfil"><i class="fa fa-camera-retro"></i></button>
 
                   <div class="container">
                     <div class="modal fade" id="myModal" role="dialog">
@@ -802,8 +1172,7 @@ try {
                               <input type="hidden" name="metodo" value="alterarImagem">
                               <?= Csrf::inputField() ?>
                               <div class="form-group">
-                                <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de
-                                  perfil:</label>
+                                <label class="col-md-4 control-label" for="imgform">Carregue nova imagem de perfil:</label>
                                 <div class="col-md-8">
                                   <input type="file" name="imgperfil" size="60" id="imgform" class="form-control">
                                 </div>
@@ -869,21 +1238,21 @@ try {
                     <h4 class="mb-xlg">Informações Pessoais</h4>
                     <fieldset>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
+                        <label class="col-md-3 control-label" for="nomeForm">Nome</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" name="nome" id="nomeForm"
                             onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileFirstName">Sobrenome</label>
+                        <label class="col-md-3 control-label" for="sobrenomeForm">Sobrenome</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" name="sobrenome" id="sobrenomeForm"
                             onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
+                        <label class="col-md-3 control-label">Sexo</label>
                         <div class="col-md-8">
                           <label><input type="radio" name="gender" id="radioM" value="m"
                               style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()"> <i
@@ -900,7 +1269,7 @@ try {
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileCompany">Telefone</label>
+                        <label class="col-md-3 control-label" for="telefone">Telefone</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone"
                             id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)"
@@ -908,7 +1277,7 @@ try {
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileCompany">Nascimento</label>
+                        <label class="col-md-3 control-label" for="nascimento">Nascimento</label>
                         <div class="col-md-8">
                           <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control"
                             name="nascimento" id="nascimento" min="<?= $dataNascimentoMinima ?>"
@@ -924,21 +1293,21 @@ try {
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileFirstName">Nome do pai</label>
+                        <label class="col-md-3 control-label" for="pai">Nome do pai</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" name="nome_pai" id="pai"
                             onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="profileFirstName">Nome da mãe</label>
+                        <label class="col-md-3 control-label" for="mae">Nome da mãe</label>
                         <div class="col-md-8">
                           <input type="text" class="form-control" name="nome_mae" id="mae"
                             onkeypress="return Onlychars(event)">
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label" for="inputSuccess">Tipo sanguíneo</label>
+                        <label class="col-md-3 control-label" for="sangue">Tipo sanguíneo</label>
                         <div class="col-md-6">
                           <select class="form-control input-lg mb-md" name="sangue" id="sangue">
                             <option selected disabled>Selecionar</option>
@@ -1051,7 +1420,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Remuneração</h2>
                     </header>
@@ -1096,9 +1465,7 @@ try {
                                     }
                                     ?>
                                   </select>
-                                  <a onclick="adicionarTipoRemuneracao()" style="margin: 0 20px;"
-                                    id="btn_adicionar_tipo_remuneracao"><i class="fas fa-plus w3-xlarge"
-                                      style="margin-top: 0.75vw"></i></a>
+                                  <a onclick="adicionarTipoRemuneracao()" style="margin: 0 20px;" id="btn_adicionar_tipo_remuneracao" aria-label="Adicionar tipo de remuneração"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                 </div>
                               </div>
                               <div class="form-group">
@@ -1155,12 +1522,12 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Outros</h2>
                     </header>
                     <div class="panel-body">
-                      <form class="form-horizontal" method="POST" action="../../controle/control.php">
+                      <form class="form-horizontal" method="POST" action="../../controle/control.php" id="formOutros">
                         <input type="hidden" name="nomeClasse" value="FuncionarioControle">
                         <input type="hidden" name="metodo" value="alterarOutros">
                         <?= Csrf::inputField() ?>
@@ -1188,7 +1555,7 @@ try {
 
                         <!-- Campo Estado CTPS -->
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="uf">Estado CTPS</label>
+                          <label class="col-md-3 control-label" for="uf_ctps">Estado CTPS</label>
                           <div class="col-md-6">
                             <input type="text" name="uf_ctps" size="60" class="form-control" id="uf_ctps"
                               value="<?= htmlspecialchars($oldInput['uf_ctps'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
@@ -1255,8 +1622,7 @@ try {
                         </div>
 
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Data de Admissão<sup
-                              class="obrig">*</sup></label>
+                          <label class="col-md-3 control-label" for="data_admissao">Data de Admissão<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
                             <input type="date" placeholder="dd/mm/aaaa" maxlength="10"
                               class="form-control<?= isset($fieldErrors['data_admissao']) ? ' is-invalid' : '' ?>"
@@ -1289,12 +1655,10 @@ try {
                                 <?= htmlspecialchars($fieldErrors['situacao'], ENT_QUOTES, 'UTF-8') ?></div>
                             <?php endif; ?>
                           </div>
-                          <a onclick="adicionar_situacao()"><i class="fas fa-plus w3-xlarge"
-                              style="margin-top: 0.75vw"></i></a>
+                          <a onclick="adicionar_situacao()" aria-label="Adicionar situação"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;'
-                            for="inputSuccess">Cargo<sup class="obrig">*</sup></label>
+                          <label class="col-md-3 control-label" style='text-align: right;  margin-top: 10px;' for="cargo">Cargo<sup class="obrig">*</sup></label>
                           <div class="col-md-6">
                             <select
                               class="form-control input-lg mb-md<?= !empty($fieldErrors['cargo']) ? ' is-invalid' : '' ?>"
@@ -1316,9 +1680,62 @@ try {
                                 <?= htmlspecialchars($fieldErrors['cargo'], ENT_QUOTES, 'UTF-8') ?></div>
                             <?php endif; ?>
                           </div>
-                          <a onclick="adicionar_cargo()"><i class="fas fa-plus w3-xlarge"
-                              style="margin-top: 0.75vw"></i></a>
+                          <a onclick="adicionar_cargo()" aria-label="Adicionar cargo"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                         </div>
+
+                        <h4>Registro Profissional</h4>
+                        <table class="table table-bordered table-striped mb-lg" id="datatable-registroProfissional">
+                          <thead>
+                            <tr>
+                              <th>Tipo</th>
+                              <th>Número</th>
+                              <th>UF</th>
+                              <th id="colunaAcaoRegistroProfissional">Ação</th>
+                            </tr>
+                          </thead>
+                          <tbody id="tabela_registroProfissional"></tbody>
+                        </table>
+                        <button type="button" class="btn btn-success" id="botaoAdicionarRegistroProfissional" style="display: none;" onclick="abrirModalRegistroProfissional()">Adicionar novo registro</button>
+
+                        <div class="modal fade" id="modalRegistroProfissional" tabindex="-1" role="dialog" aria-labelledby="modalRegistroProfissionalLabel" aria-hidden="true">
+                          <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header" style="display: block ruby;">
+                                <h5 class="modal-title" id="modalRegistroProfissionalLabel">Adicionar novo registro</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="closeRegistroProfissionalModal">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                              <div class="modal-body" style="padding: 15px 25px;">
+                                <div class="form-group">
+                                  <label for="tipo_novoRegistro" class="col-form-label">Tipo de Registro<sup class="obrig">*</sup></label>
+                                  <div style="display: block ruby;">
+                                    <select name="id_tipo_registro" id="tipo_novoRegistro" class="form-control" style="width: 300px;">
+                                      <option value="" selected disabled>Selecionar</option>
+                                      <?php foreach ($registroProfissionalTipos as $tipoRegistro): ?>
+                                        <option value="<?= htmlspecialchars($tipoRegistro['id_registro_profissional_tipo'] ?? '') ?>"><?= htmlspecialchars($tipoRegistro['descricao'] ?? '') ?></option>
+                                      <?php endforeach; ?>
+                                    </select>
+                                    <a onclick="adicionar_tipo_registroProfissional()"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw; margin-left: 10px;"></i></a>
+                                  </div>
+                                </div>
+                                <div class="form-group">
+                                  <label for="numero_novoRegistro" class="col-form-label">Número<sup class="obrig">*</sup></label>
+                                  <input type="text" class="form-control" id="numero_novoRegistro" maxlength="20" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                </div>
+                                <div class="form-group">
+                                  <label for="uf_novoRegistro" class="col-form-label">UF</label>
+                                  <select class="form-control" id="uf_novoRegistro"></select>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" onclick="salvarNovoRegistroProfissional()">Salvar</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                         <!-- Pegar id funcionário de variável sanitizada -->
                         <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?>>
                         <button type="button" class="btn btn-primary" id="botaoEditarOutros"
@@ -1326,6 +1743,7 @@ try {
                         <input type="submit" class="btn btn-primary" value="Salvar" id="botaoSalvarOutros"
                           disabled="true">
                       </form>
+
                       <h4>Informações Adicionais</h4>
                       <table class="table table-bordered table-striped mb-none" id="datatable-addInfo">
                         <thead>
@@ -1404,8 +1822,7 @@ try {
                                       }
                                       ?>
                                     </select>
-                                    <a onclick="adicionar_addInfoDescricao()"><i class="fas fa-plus w3-xlarge"
-                                        style="margin-top: 0.75vw; margin-left: 10px;"></i></a>
+                                    <a onclick="adicionar_addInfoDescricao()" aria-label="Adicionar descrição"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw; margin-left: 10px;"></i></a>
                                   </div>
                                 </div>
                                 <div class="form-group">
@@ -1526,7 +1943,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Carga Horária</h2>
                     </header>
@@ -1534,7 +1951,7 @@ try {
                       <form class="form-horizontal" method="post" action="../../controle/control.php"
                         id="formAlterarCargaHoraria">
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Escala</label>
+                          <label class="col-md-3 control-label" for="escala_input">Escala</label>
                           <div class="col-md-6">
                             <select class="form-control input-lg mb-md" name="escala" id="escala_input">
                               <option id="escala_default" selected disabled value="">Selecionar</option>
@@ -1549,7 +1966,7 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Tipo</label>
+                          <label class="col-md-3 control-label" for="tipoCargaHoraria_input">Tipo</label>
                           <div class="col-md-6">
                             <select class="form-control input-lg mb-md" name="tipoCargaHoraria"
                               id="tipoCargaHoraria_input">
@@ -1595,27 +2012,27 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Primeira entrada</label>
+                          <label class="col-md-3 control-label" for="entrada1_input">Primeira entrada</label>
                           <div class="col-md-3">
                             <input type="time" placeholder="07:25" class="form-control" name="entrada1"
                               id="entrada1_input">
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Primeira saída</label>
+                          <label class="col-md-3 control-label" for="saida1_input">Primeira saída</label>
                           <div class="col-md-3">
                             <input type="time" placeholder="07:25" class="form-control" name="saida1" id="saida1_input">
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Segunda entrada</label>
+                          <label class="col-md-3 control-label" for="entrada2_input">Segunda entrada</label>
                           <div class="col-md-3">
                             <input type="time" placeholder="07:25" class="form-control" name="entrada2"
                               id="entrada2_input">
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label">Segunda saída</label>
+                          <label class="col-md-3 control-label" for="saida2_input">Segunda saída</label>
                           <div class="col-md-3">
                             <input type="time" placeholder="07:25" class="form-control" name="saida2" id="saida2_input">
                           </div>
@@ -1725,7 +2142,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Documentos</h2>
                     </header>
@@ -1738,7 +2155,7 @@ try {
                         <input type="hidden" name="metodo" value="alterarDocumentacao">
                         <?= Csrf::inputField() ?>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Número do RG</label>
+                          <label class="col-md-3 control-label" for="rg">Número do RG</label>
                           <div class="col-md-6">
                             <input type="text" class="form-control" name="rg" id="rg"
                               onkeypress="return Onlynumbers(event)" placeholder="Ex: 22.222.222-2"
@@ -1746,21 +2163,21 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Órgão Emissor</label>
+                          <label class="col-md-3 control-label" for="orgao_emissor">Órgão Emissor</label>
                           <div class="col-md-6">
                             <input type="text" class="form-control" name="orgao_emissor" id="orgao_emissor"
                               onkeypress="return Onlychars(event)" required>
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Data de expedição</label>
+                          <label class="col-md-3 control-label" for="data_expedicao">Data de expedição</label>
                           <div class="col-md-6">
                             <input type="date" class="form-control" maxlength="10" placeholder="dd/mm/aaaa"
                               name="data_expedicao" id="data_expedicao" max=<?php echo date('Y-m-d'); ?> required>
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Número do CPF</label>
+                          <label class="col-md-3 control-label" for="cpf">Número do CPF</label>
                           <div class="col-md-6">
                             <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22"
                               maxlength="14" onblur="validarCPF(this.value, 'enviarEditar')"
@@ -1826,7 +2243,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Arquivos</h2>
                     </header>
@@ -1924,7 +2341,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Dependentes</h2>
                     </header>
@@ -1996,8 +2413,7 @@ try {
                                       }
                                       ?>
                                     </select>
-                                    <a onclick="adicionarParentesco()" style="margin: 0 20px;"><i
-                                        class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
+                                    <a onclick="adicionarParentesco()" style="margin: 0 20px;" aria-label="Adicionar parentesco"><i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i></a>
                                   </div>
                                 </div>
                                 <input type="hidden" name="id_funcionario" value=<?= $idFuncionario ?> readonly>
@@ -2023,7 +2439,7 @@ try {
                   <section class="panel">
                     <header class="panel-heading">
                       <div class="panel-actions">
-                        <a href="#" class="fa fa-caret-down"></a>
+                        <a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
                       </div>
                       <h2 class="panel-title">Endereço</h2>
                     </header>
@@ -2068,7 +2484,7 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Número residencial</label>
+                          <label class="col-md-3 control-label" for="numero_residencia">Número residencial</label>
                           <div class="col-md-4">
                             <input type="number" min="0" oninput="this.value = Math.abs(this.value)"
                               class="form-control" name="numero_residencia" id="numero_residencia">
@@ -2081,7 +2497,7 @@ try {
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileCompany">Complemento</label>
+                          <label class="col-md-3 control-label" for="complemento">Complemento</label>
                           <div class="col-md-8">
                             <input type="text" class="form-control" name="complemento" id="complemento">
                           </div>
@@ -2737,8 +3153,7 @@ try {
     <?php endif; ?>
   </script>
   <div align="right">
-    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60"
-      style="border:none;"></iframe>
+    <iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
   </div>
 </body>
 

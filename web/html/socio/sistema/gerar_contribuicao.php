@@ -5,7 +5,10 @@ require("../../contribuicao/php/preencheForm.php");
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 session_start();
-if (!isset($_SESSION['usuario'])) header("Location: ../erros/login_erro/");
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ../erros/login_erro/");
+    exit();
+}
 $id = $_SESSION['usuario'];
 $id_pessoa = $_SESSION['id_pessoa'];
 $resultado = mysqli_query($conexao, "SELECT `imagem`, `nome` FROM `pessoa` WHERE id_pessoa=$id_pessoa");
@@ -25,6 +28,7 @@ if (file_exists($config_path)) {
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: " . WWW . "index.php");
+    exit();
 }
 $conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 $id_pessoa = $_SESSION['id_pessoa'];
@@ -40,17 +44,20 @@ if (!is_null($resultado)) {
         if ($permissao['id_acao'] < 7) {
             $msg = "Você não tem as permissões necessárias para essa página.";
             header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+            exit();
         }
         $permissao = $permissao['id_acao'];
     } else {
         $permissao = 1;
         $msg = "Você não tem as permissões necessárias para essa página.";
         header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+        exit();
     }
 } else {
     $permissao = 1;
     $msg = "Você não tem as permissões necessárias para essa página.";
     header("Location: " . WWW . "/html/home.php?msg_c=$msg");
+    exit();
 }
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";

@@ -13,10 +13,8 @@ if (file_exists($config_path)) {
 session_start();
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit();
 }
-
-extract($_REQUEST);
-
 
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
@@ -117,7 +115,7 @@ require_once "personalizacao_display.php";
 			</header>
 			<section role="main" class="content-body">
 
-				<div class="alert alert-success" style="font-size: 15px;"><i class="fas fa-check mr-md"></i><?php echo $_SESSION['msg']; ?><br><a href=<?php echo "'" . $_SESSION['link'] . "'"; ?>><?php echo $_SESSION['proxima']; ?></a>
+				<div class="alert alert-success" style="font-size: 15px;"><i class="fas fa-check mr-md"></i><?php echo htmlspecialchars($_SESSION['msg'] ?? ''); ?><br><a href="<?php echo htmlspecialchars($_SESSION['link'] ?? '#'); ?>"><?php echo htmlspecialchars($_SESSION['proxima'] ?? ''); ?></a>
 				</div>
 			</section>
 

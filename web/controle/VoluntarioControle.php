@@ -16,19 +16,42 @@ class VoluntarioControle
     {
         extract($_REQUEST);
 
+        $cpf = $_REQUEST['cpf'] ?? '';
+        $resultado = 'NOVO_CADASTRO';
+        if (!empty($cpf)) {
+            try {
+                $voluntarioDAO = new VoluntarioDAO();
+                $resultado = $voluntarioDAO->selecionarCadastro($cpf);
+            } catch (Exception $e) {
+                // Caso ocorra alguma exceção (ex: voluntário já cadastrado), mantém o fallback seguro
+            }
+        }
+
         $camposObrigatorios = ['nome', 'sobrenome', 'gender', 'nascimento', 'cpf', 'data_admissao', 'situacao', 'cargo'];
+
 
         foreach ($camposObrigatorios as $campo) {
             if (!isset($$campo) || empty($$campo)) {
                 http_response_code(412);
-                header('Location: ../html/voluntario/cadastro_voluntario.php?msg=O campo ' . $campo . ' é obrigatório.');
-                exit();
+                $msg = 'O campo ' . $campo . ' é obrigatório.';
+                if ($resultado === 'PESSOA_EXISTENTE') {
+                    header('Location: ../html/voluntario/cadastro_voluntario_pessoa_existente.php?cpf=' . urlencode($cpf) . '&msg=' . urlencode($msg));
+                    exit;
+                } else {
+                    header('Location: ../html/voluntario/cadastro_voluntario.php?cpf=' . urlencode($cpf) . '&msg=' . urlencode($msg));
+                    exit;
+                }
             }
         }
 
         if (!Util::validarCPF($cpf)) {
             http_response_code(412);
-            header('Location: ../html/voluntario/cadastro_voluntario.php?msg=O CPF informado é inválido.');
+            $msg = 'O CPF informado é inválido.';
+            if ($resultado === 'PESSOA_EXISTENTE') {
+                header('Location: ../html/voluntario/cadastro_voluntario_pessoa_existente.php?cpf=' . urlencode($cpf) . '&msg=' . urlencode($msg));
+            } else {
+                header('Location: ../html/voluntario/cadastro_voluntario.php?cpf=' . urlencode($cpf) . '&msg=' . urlencode($msg));
+            }
             exit();
         }
 
@@ -37,6 +60,18 @@ class VoluntarioControle
         $voluntario->setId_situacao($situacao);
         $voluntario->setId_cargo($cargo);
 
+        $idPessoa = filter_var($_SESSION['id_pessoa'] ?? null, FILTER_SANITIZE_NUMBER_INT);
+        if ($idPessoa) {
+            $pdo = Conexao::connect();
+            $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
+            $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+            $stmt->execute();
+            $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'] ?? 0;
+
+            if ($cargo == 1 && $adm_configurado != 1) {
+                throw new InvalidArgumentException("Acesso negado: Apenas administradores podem conceder o cargo de Administrador.", 403);
+            }
+        }
 
         return $voluntario;
     }
@@ -87,6 +122,7 @@ class VoluntarioControle
             $_SESSION['tipo'] = "success";
 
             header("Location: ../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php");
+            exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -103,6 +139,19 @@ class VoluntarioControle
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
+            $idPessoa = filter_var($_SESSION['id_pessoa'] ?? null, FILTER_SANITIZE_NUMBER_INT);
+            if ($idPessoa) {
+                $pdo = Conexao::connect();
+                $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
+                $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+                $stmt->execute();
+                $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'] ?? 0;
+
+                if ($cargo == 1 && $adm_configurado != 1) {
+                    throw new InvalidArgumentException("Acesso negado: Apenas administradores podem conceder o cargo de Administrador.", 403);
+                }
+            }
+
             $voluntarioDAO = new VoluntarioDAO();
             $idVoluntario = $voluntarioDAO->incluirExistente($cpf, $situacao, $data_admissao, $cargo);
 
@@ -113,6 +162,7 @@ class VoluntarioControle
             $_SESSION['tipo'] = "success";
 
             header("Location: ../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php");
+            exit();
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -224,13 +274,42 @@ class VoluntarioControle
     {
         try {
             extract($_REQUEST);
+            $idPessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
             $id_voluntario = filter_var($_REQUEST['id_voluntario'] ?? null, FILTER_SANITIZE_NUMBER_INT);
+            $novoCargo = filter_var($cargo ?? null, FILTER_SANITIZE_NUMBER_INT);
 
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             if (!$id_voluntario || $id_voluntario < 1)
                 throw new InvalidArgumentException('O id do voluntário informado não é válido.', 412);
+
+            $pdo = Conexao::connect();
+
+            $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
+            $stmt->bindValue(':idPessoa', $idPessoa, PDO::PARAM_INT);
+            $stmt->execute();
+            $adm_configurado = $stmt->fetch(PDO::FETCH_ASSOC)['adm_configurado'];
+
+            $stmtAlvo = $pdo->prepare('SELECT p.id_pessoa, p.adm_configurado, v.id_cargo FROM pessoa p JOIN voluntario v ON p.id_pessoa = v.id_pessoa WHERE v.id_voluntario=:idVoluntario');
+            $stmtAlvo->bindValue(':idVoluntario', $id_voluntario, PDO::PARAM_INT);
+            $stmtAlvo->execute();
+            $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+
+            if (empty($novoCargo)) {
+                $novoCargo = (int) $alvo['id_cargo'];
+            }
+
+            // Verificações de alteração de cargo
+            if ($alvo['id_pessoa'] == $idPessoa && $alvo['id_cargo'] != $novoCargo) {
+                throw new InvalidArgumentException("Acesso negado: Você não pode alterar o seu próprio cargo.", 403);
+            }
+            if ($alvo['adm_configurado'] == 1 && $adm_configurado != 1) {
+                throw new InvalidArgumentException("Acesso negado: Apenas administradores podem alterar os dados de outro administrador.", 403);
+            }
+            if ($novoCargo == 1 && $adm_configurado != 1) {
+                throw new InvalidArgumentException("Acesso negado: Apenas administradores podem conceder o cargo de Administrador.", 403);
+            }
 
             $voluntario = new Voluntario('', '', '', '', '', null, null, null, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');
             $voluntario->setId_voluntario($id_voluntario);

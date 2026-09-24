@@ -9,6 +9,7 @@ if (!isset($_SESSION['usuario'])) {
 
 if (!isset($_SESSION['voluntarios'])) {
   header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=VoluntarioControle&nextPage=../html/voluntario/informacao_voluntario.php');
+  exit();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
