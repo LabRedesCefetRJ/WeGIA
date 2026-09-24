@@ -6,9 +6,9 @@ check_debian_12() {
     # Obtém a versão do Debian do arquivo /etc/os-release
     local VERSION_CODENAME=$(cat /etc/os-release | grep VERSION_CODENAME | cut -d'=' -f2)
 
-    # Verifica se a versão é "bookworm"
-    if [[ "$VERSION_CODENAME" != "bookworm" ]]; then
-        echo "Este script só pode ser executado no Debian 12 (Bookworm)."
+    # Verifica se a versão é "trixie"
+    if [[ "$VERSION_CODENAME" != "trixie" ]]; then
+        echo "Este script só pode ser executado no Debian 13 (Trixie)."
         exit 1
     else
         echo "Debian 12 [ok]"
@@ -16,9 +16,9 @@ check_debian_12() {
 }
 
 add_backports_repo() {
-    local BACKPORTS="deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware"
+    local BACKPORTS="deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware"
 
-    if ! grep -q "bookworm-backports" /etc/apt/sources.list; then
+    if ! grep -q "trixie-backports" /etc/apt/sources.list; then
         echo "$BACKPORTS" | tee -a /etc/apt/sources.list
         echo "Adding Backport Repository [ok]"
     else
@@ -31,13 +31,13 @@ install_localdeps(){
     apt install sudo git curl -y
     apt install openssl -y
     apt install mariadb-server -y
-    apt install apache2 php8.2 php8.2-cli php8.2-common php8.2-curl php8.2-gd php8.2-intl php8.2-mbstring php8.2-mysql php8.2-opcache php8.2-readline php8.2-soap php8.2-xml php8.2-xmlrpc php8.2-zip -y    
+    apt install apache2 php php-cli php-common php-curl php-gd php-intl php-mbstring php-mysql php-opcache php-readline php-soap php-xml php-xmlrpc php-zip -y 
 }
 
 install_internetdeps(){
     install_localdeps
     apt install python3-certbot-apache -y
-    apt install -t bookworm-backports libapache2-mod-qos libpcre3 libpcre3-dev libapache2-mod-evasive -y
+    apt install -t trixie-backports libapache2-mod-qos libpcre3 libpcre3-dev libapache2-mod-evasive -y
     
     mkdir /var/log/apache2/evasive
     chown www-data:www-data /var/log/apache2/evasive
