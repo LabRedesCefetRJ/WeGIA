@@ -1,13 +1,7 @@
 <?php
 
-if (file_exists("dao/Conexao.php")){
-    require_once "dao/Conexao.php";
-}elseif (file_exists("../dao/Conexao.php")) {
-    require_once "../dao/Conexao.php";
-}elseif (file_exists("../../dao/Conexao.php")){
-    require_once "../../dao/Conexao.php";
-}
-
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
+ 
 define('NO_DATA', "Nenhum conteúdo selecionado");
 
 class Display_campo{

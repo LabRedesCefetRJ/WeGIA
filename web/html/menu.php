@@ -1,16 +1,10 @@
 <?php
-$config_path = "config.php";
-if (file_exists($config_path)) {
-	require_once($config_path);
-} else {
-	while (true) {
-		$config_path = "../" . $config_path;
-		if (file_exists($config_path)) break;
-	}
-	require_once($config_path);
+
+if (session_status() === PHP_SESSION_NONE) {
+	session_start();
 }
 
-session_start();
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 ?>
 <style>
 	ul.nav-main>li:not(.visivel) {
@@ -401,6 +395,24 @@ session_start();
 							</li>
 						</ul>
 					</li>
+					<li class="nav-parent nav-active" id="34">
+						<a>
+							<i class="fa-solid fa-gift"></i>
+							<span>Programa de benefícios</span>
+						</a>
+						<ul class="nav nav-children">
+							<li>
+								<a href="<?= WWW ?>html/socio/sistema/beneficios.php">
+									<span>Regras de benefícios</span>
+								</a>
+							</li>
+							<li>
+								<a href="<?= WWW ?>html/socio/sistema/parceiros.php">
+									<span>Parceiros institucionais</span>
+								</a>
+							</li>
+						</ul>
+					</li>
 				</ul>
 			</li>
 
@@ -617,11 +629,11 @@ session_start();
 						</a>
 					</li>
 					<?php if (defined('DEV_MODE') && DEV_MODE === 'on'): ?>
-					<li>
-						<a href="<?= WWW ?>html/configuracao/debug_info.php">
-							Informações de debug
-						</a>
-					</li>
+						<li>
+							<a href="<?= WWW ?>html/configuracao/debug_info.php">
+								Informações de debug
+							</a>
+						</li>
 					<?php endif; ?>
 				</ul>
 			</li>

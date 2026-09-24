@@ -36,9 +36,13 @@ $gateways = $gatewayPagamentoController->buscaTodos();
 
 //Mascarar tokens para exibição
 foreach ($gateways as $key => $gateway) {
-    if ($gateway['token'] != '' && $gateway['token'] != 'coloque o token aqui') {
-        $gateways[$key]['token'] = ofuscarToken($gateway['token']);
+    if ($gateway['private_token'] != '' && $gateway['private_token'] != 'coloque o token aqui') {
+        $gateways[$key]['private_token'] = ofuscarToken($gateway['private_token']);
     }
+
+    /*if ($gateway['public_token'] != '' && $gateway['public_token'] != 'coloque o token aqui') {
+        $gateways[$key]['public_token'] = ofuscarToken($gateway['public_token']);
+    }*/
 }
 
 function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3, float $percentualMaxVisivel = 0.3): string
@@ -115,7 +119,6 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
             white-space: normal;
             vertical-align: middle;
         }
-
     </style>
 
 </head>
@@ -187,8 +190,15 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                     </div>
                                     <div class="form-group">
                                         <div class="col-md-10 col-md-offset-1">
-                                            <label for="plataforma-chave">Token API <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="plataforma-chave" name="token" placeholder="Insira aqui o token da API da plataforma de gateway ..." required>
+                                            <label for="private_token">Private token<span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="private_token" name="private_token" placeholder="Insira aqui o token da API da plataforma de gateway ..." required>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <div class="col-md-10 col-md-offset-1">
+                                            <label for="public_token">Public token<span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="public_token" name="public_token" placeholder="Insira aqui o token da API da plataforma de gateway ..." required>
                                         </div>
                                     </div>
                                     <div class="text-center">
@@ -244,7 +254,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                         <thead>
                                             <th class="text-center">Plataforma</th>
                                             <th class="text-center">Endpoint</th>
-                                            <th class="text-center col-token">Token API</th>
+                                            <th class="text-center col-token">Private token</th>
+                                            <th class="text-center col-token">Public token</th>
                                             <th class="text-center">Ativo</th>
                                             <th class="text-center">Ação</th>
                                         </thead>
@@ -254,7 +265,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                                 <tr>
                                                     <td class="vertical-center"><?= htmlspecialchars($gateway['plataforma']) ?></td>
                                                     <td class="vertical-center"><?= htmlspecialchars($gateway['endPoint']) ?></td>
-                                                    <td class="vertical-center"><?= htmlspecialchars($gateway['token']) ?></td>
+                                                    <td class="vertical-center"><?= htmlspecialchars($gateway['private_token']) ?></td>
+                                                    <td class="vertical-center"><?= htmlspecialchars($gateway['public_token']) ?></td>
                                                     <td class="vertical-center">
                                                         <div class="toggle-switch">
                                                             <?php if (isset($gateway['status']) && $gateway['status'] === 1): ?>
@@ -300,8 +312,12 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                                             <input type="text" class="form-control" id="editEndpoint" name="endpoint" required>
                                                         </div>
                                                         <div class="form-group">
-                                                            <label for="editToken">Token API:</label>
-                                                            <input type="text" class="form-control" id="editToken" name="token" required>
+                                                            <label for="editPrivateToken">Private token:</label>
+                                                            <input type="text" class="form-control" id="editPrivateToken" name="private_token" required>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <label for="editPublicToken">Public token:</label>
+                                                            <input type="text" class="form-control" id="editPublicToken" name="public_token" required>
                                                         </div>
                                                         <input type="hidden" name="nomeClasse" value="GatewayPagamentoController">
                                                         <input type="hidden" name="metodo" value="editarPorId">
