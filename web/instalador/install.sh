@@ -47,6 +47,8 @@ install_internetdeps(){
 download_wegia(){
     sudo -u www-data git -C /tmp clone -b master --single-branch https://github.com/LabRedesCefetRJ/WeGIA.git
     mv /tmp/WeGIA /var/www/
+    cd /var/www/WeGIA/api
+    sudo -u www-data composer install
 
     mkdir -p /var/www/bkpWeGIA
     chown www-data:www-data /var/www/bkpWeGIA -R
