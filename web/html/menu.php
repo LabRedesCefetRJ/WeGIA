@@ -233,6 +233,26 @@ session_start();
 					<ul class="nav nav-children">
 						<li class="nav-parent nav-active">
 							<a>
+								<i class="fa-solid fa-receipt" aria-hidden="true"></i>
+								<span>Processo de compra</span>
+							</a>
+
+							<ul class="nav nav-children">
+								<li>
+									<a href="<?= WWW ?>html/matPat/listar_origem.php">
+										<span>Listar fornecedores</span>
+									</a>
+								</li>
+								<li>
+									<a href="<?= WWW ?>controle/control.php?nomeClasse=CotacaoControle&amp;metodo=listar">
+										<span>Cotações</span>
+									</a>
+								</li>
+							</ul>
+						</li>
+
+						<li class="nav-parent nav-active">
+							<a>
 								<i class="fas fa-circle-arrow-down" aria-hidden="true"></i>
 								<span>Entrada</span>
 							</a>

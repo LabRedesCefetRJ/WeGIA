@@ -163,7 +163,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="origens">Origem</label>
-													<a href="<?= WWW ?>html/matPat/cadastro_doador.php" id="btn-novo-doador"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=entrada" id="btn-novo-doador"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="origem" id="origens">
 															<option selected disabled value="blank">Selecionar</option>

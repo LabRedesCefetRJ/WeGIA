@@ -13,9 +13,12 @@ if (!isset($_SESSION['usuario'])) {
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
-permissao($_SESSION['id_pessoa'], 23, 5);
+require_once ROOT . '/classes/PermissaoFornecedor.php';
+PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 5);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+
+require_once ROOT . '/classes/Csrf.php';
 
 include_once ROOT . '/dao/Conexao.php';
 include_once ROOT . '/dao/OrigemDAO.php';
@@ -46,7 +49,7 @@ if (!isset($_SESSION['origem'])) {
    <meta charset="UTF-8">
    <title>Informações</title>
    <!-- Mobile Metas -->
-   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    <!-- Vendor CSS -->
    <link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
    <link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
@@ -80,16 +83,16 @@ if (!isset($_SESSION['origem'])) {
    <script src="<?= WWW ?>Functions/mascara.js"></script>
    <!-- jquery functions -->
    <script>
-      function excluir(id) {
-         window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=OrigemControle&id_origem=' + id);
-      }
-   </script>
-   <script>
       var almoxarifados = <?php echo $almoxarifados; ?>;
       var origens = <?php echo $origem; ?>;
 
       function excluir(id) {
-         window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=OrigemControle&id_origem=' + id);
+         if (!confirm('Deseja realmente excluir esta origem/fornecedor?')) {
+            return;
+         }
+
+         $('#excluir_id_origem').val(id);
+         $('#formExcluirOrigem').submit();
       }
 
       function abrirModalEditarOrigem(index) {
@@ -142,9 +145,10 @@ if (!isset($_SESSION['origem'])) {
          $(".menuu").load("<?= WWW ?>html/menu.php");
       });
 </script>
+    <link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/processo-compra.css">
 </head>
 
-<body>
+<body class="processo-compra">
    <section class="body">
       <!-- start: header -->
       <div id="header"></div>
@@ -177,7 +181,17 @@ if (!isset($_SESSION['origem'])) {
                   <h2 class="panel-title">Origem</h2>
                </header>
                <div class="panel-body">
-                  <table class="table table-bordered table-striped mb-none" id="datatable-default">
+                  <div style="margin-bottom: 15px;">
+                     <a
+                           href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=lista_origem"
+                           class="btn btn-primary"
+                     >
+                           <i class="fa fa-plus"></i>
+                           Cadastrar origem/fornecedor
+                     </a>
+                  </div>
+                  <div class="tabela-compras">
+                     <table class="table table-bordered table-striped mb-none" id="datatable-default">
                      <thead>
                         <tr>
                            <th>Pessoa/Empresa</th>
@@ -190,10 +204,24 @@ if (!isset($_SESSION['origem'])) {
                      <tbody id="tabela">
                      </tbody>
                   </table>
+                            </div>
                </div>
                <br>
             </section>
          </section>
+
+         <form
+            id="formExcluirOrigem"
+            method="post"
+            action="<?= WWW ?>controle/control.php"
+            style="display: none;"
+         >
+            <input type="hidden" name="nomeClasse" value="OrigemControle">
+            <input type="hidden" name="metodo" value="excluir">
+            <input type="hidden" name="id_origem" id="excluir_id_origem">
+
+            <?= Csrf::inputField() ?>
+         </form>
 
          <div class="modal fade" id="modalEditarOrigem" tabindex="-1" role="dialog" aria-labelledby="modalEditarOrigemLabel">
             <div class="modal-dialog" role="document">
@@ -210,6 +238,8 @@ if (!isset($_SESSION['origem'])) {
                         <input type="hidden" name="nomeClasse" value="OrigemControle">
                         <input type="hidden" name="metodo" value="alterar">
                         <input type="hidden" name="id_origem" id="edit_id_origem">
+
+                        <?= Csrf::inputField() ?>
 
                         <div class="form-group">
                            <label>Nome</label>
@@ -262,6 +292,23 @@ if (!isset($_SESSION['origem'])) {
          <script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
          <script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
          <script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+         <script>
+            $(function () {
+               const tabela = $('#datatable-default');
+
+               if (
+                  tabela.length &&
+                  !tabela.parent().hasClass('tabela-scroll')
+               ) {
+                     tabela.wrap(
+                        '<div class="tabela-scroll" ' +
+                        'role="region" ' +
+                        'aria-label="Lista de fornecedores" ' +
+                        'tabindex="0"></div>'
+                     );
+               }
+            });
+</script>
          <div align="right">
             <iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
          </div>

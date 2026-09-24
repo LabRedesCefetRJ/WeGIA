@@ -5,6 +5,9 @@ if (session_status() == PHP_SESSION_NONE)
 include_once ROOT . '/classes/Origem.php';
 include_once ROOT . '/dao/OrigemDAO.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/classes/PermissaoFornecedor.php';
+require_once ROOT . '/classes/OrigemNavegacao.php';
+require_once ROOT . '/classes/Csrf.php';
 
 class OrigemControle
 {
@@ -13,28 +16,29 @@ class OrigemControle
      */
     public function verificar()
     {
+        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
         // Em vez de extract(), acessar diretamente e sanitizar
-        $nome     = isset($_REQUEST['nome']) ? trim($_REQUEST['nome']) : '';
-        $telefone = isset($_REQUEST['telefone']) ? trim($_REQUEST['telefone']) : '';
-        $cpf      = isset($_REQUEST['cpf']) ? trim($_REQUEST['cpf']) : '';
-        $cnpj     = isset($_REQUEST['cnpj']) ? trim($_REQUEST['cnpj']) : '';
+        $nome     = isset($_POST['nome']) ? trim($_POST['nome']) : '';
+        $telefone = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
+        $cpf      = isset($_POST['cpf']) ? trim($_POST['cpf']) : '';
+        $cnpj     = isset($_POST['cnpj']) ? trim($_POST['cnpj']) : '';
 
         // Validação de campos obrigatórios
         if (empty($nome)) {
-            $msg = urlencode("Nome da origem não informado. Por favor, informe um nome!");
-            header('Location: ../html/origem.html?msg=' . $msg);
+            $_SESSION['msg'] = 'Nome da origem não informado. Por favor, informe um nome!';
+            header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
         }
 
         if ($cpf !== '' && !Util::validarCPF($cpf)) {
             $_SESSION['msg'] = "CPF inválido!";
-            header('Location: ' . WWW . 'html/matPat/cadastro_doador.php');
+            header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
         }
 
         if ($cnpj !== '' && !Util::validaCnpj($cnpj)) {
             $_SESSION['msg'] = "CNPJ inválido!";
-            header('Location: ' . WWW . 'html/matPat/cadastro_doador.php');
+            header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
         }
 
@@ -45,8 +49,19 @@ class OrigemControle
         return new Origem($nome, $cnpj, $cpf, $telefone);
     }
 
+    private function validarCsrf(): void
+    {
+        if (!Csrf::validateToken($_POST['csrf_token'] ?? null)) {
+            throw new InvalidArgumentException(
+                'Token CSRF inválido ou ausente.',
+                403
+            );
+        }
+    }
+
     public function listarTodos()
     {
+        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 5);
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
         $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(listar_origem)\.php)$#';
 
@@ -66,6 +81,7 @@ class OrigemControle
 
     public function listarId_Nome()
     {
+        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
 
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
         $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(cadastro_entrada)\.php)$#';
@@ -86,6 +102,17 @@ class OrigemControle
 
     public function incluir()
     {
+        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            throw new InvalidArgumentException(
+                'O cadastro exige uma requisição POST.',
+                405
+            );
+        }
+
+        $this->validarCsrf();
+
         try {
             $origem = $this->verificar();
 
@@ -93,19 +120,16 @@ class OrigemControle
             ? array_map('intval', $_POST['almoxarifados'])
             : array();
 
-
             $origemDAO = new OrigemDAO();
 
             $id_origem = $origemDAO->incluir($origem);
 
             $origemDAO->atualizarAlmoxarifados($id_origem, $almoxarifados);
 
-            session_start();
             $_SESSION['msg'] = "Origem cadastrada com sucesso";
-            $_SESSION['proxima'] = "Cadastrar outra Origem";
-            $_SESSION['link'] = WWW . "html/matPat/cadastro_doador.php";
+            unset($_SESSION['origem'], $_SESSION['proxima'], $_SESSION['link']);
 
-            header("Location: " . WWW . "html/matPat/cadastro_doador.php");
+            header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
         } catch (PDOException $e) {
             error_log("Erro ao incluir origem: " . $e->getMessage());
@@ -118,11 +142,24 @@ class OrigemControle
 
     public function excluir()
     {
-        $id_origem = isset($_REQUEST['id_origem']) ? (int) $_REQUEST['id_origem'] : 0;
+        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            throw new InvalidArgumentException(
+                'A exclusão exige uma requisição POST.',
+                405
+            );
+        }
+
+        $this->validarCsrf();
+
+        $id_origem = isset($_POST['id_origem']) ? (int) $_POST['id_origem'] : 0;
 
         if ($id_origem <= 0) {
-            echo "ID de origem inválido.";
-            return;
+            throw new InvalidArgumentException(
+                'ID de origem inválido.',
+                400
+            );
         }
 
         try {
@@ -138,6 +175,7 @@ class OrigemControle
 
     public function listarPorAlmoxarifado()
     {
+        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
         $id_almoxarifado = isset($_GET['id_almoxarifado'])
             ? (int) $_GET['id_almoxarifado']
             : 0;
@@ -156,6 +194,17 @@ class OrigemControle
 
     public function alterar()
     {
+        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            throw new InvalidArgumentException(
+                'A alteração exige uma requisição POST.',
+                405
+            );
+        }
+
+        $this->validarCsrf();
+
         try {
             $id_origem = isset($_POST['id_origem']) ? (int) $_POST['id_origem'] : 0;
             $almoxarifados = isset($_POST['almoxarifados']) && is_array($_POST['almoxarifados'])
@@ -182,6 +231,6 @@ class OrigemControle
         } catch (Exception $e) {
             error_log("Erro ao alterar origem: " . $e->getMessage());
             echo "Erro ao alterar origem.";
-        }   
+        }
     }
 }
