@@ -32,6 +32,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'CargoControle' => [11],
             'CategoriaControle' => [21, 2, 22],
             'ContatoInstituicaoControle' => [9],
+            'CotacaoControle' => [26],
             'controleSaudePet' => [6, 61, 62, 63],
             'DestinoControle' => [21, 2],
             'DependenteControle' => [1, 11],
@@ -46,6 +47,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'EstoqueControle' => [21, 22, 25],
             'FuncionarioControle' => [11, 91],
             'GrupoProdutoControle' => [22, 23, 24],
+            'RelatorioGrupoControle' => [25],
             'IentradaControle' => [23],
             'IdentificadorRegistroProfissionalControle' => [11, 91],
             'InformacaoAdicionalControle' => [11],
@@ -53,7 +55,8 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'IsaidaControle' => [24],
             'ModuloControle' => [91],
             'MedicamentoControle' => [6, 61, 62, 63],
-            'OrigemControle' => [23],
+            'OrigemControle' => [23, 26],
+            'OrcamentoControle' => [26],
             'PaArquivoControle' => [1, 12, 14],
             'PaStatusControle' => [12, 14],
             'PessoaArquivoControle' => [1, 11, 12, 13],
@@ -80,7 +83,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
         ];
 
         /*Por padrão o control.php irá recusar qualquer controladora informada,
-		adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
+        * adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
         if (!array_key_exists($nomeClasse, $controladorasRecursos))
             throw new InvalidArgumentException('Controladora inválida', 400);
 
@@ -90,7 +93,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 
             //Verifica se a pessoa possui o recurso necessário para acessar a funcionalidade desejada
             if (!$middleware->verificarPermissao($_SESSION['id_pessoa'], $nomeClasse, $controladorasRecursos))
-                throw new LogicException('Acesso não autorizado', 401); // Considerar fazer uma exception de autorização para o projeto
+                throw new LogicException('Acesso não autorizado', 403); // Considerar fazer uma exception de autorização para o projeto
         }
 
         $pathRequire = dirname(__FILE__) . DIRECTORY_SEPARATOR;
@@ -110,7 +113,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 
         $objeto = new $nomeClasse();
 
-        if (!method_exists($objeto, $metodo))
+        if (!is_callable([$objeto, $metodo]))
             throw new InvalidArgumentException('O método informado não existe na classe.', 400);
 
         $objeto->$metodo();
@@ -137,27 +140,43 @@ try {
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
 
+        if (!is_array($data)) {
+            throw new InvalidArgumentException(
+                'JSON inválido.',
+                400
+            );
+        }
+
         // Extrai as variáveis do array $data
-        $nomeClasse = filter_var($data['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        $metodo = filter_var($data['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        isset($data['modulo']) ? $modulo = filter_var($data['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
+        $nomeClasse = isset($data['nomeClasse']) ? filter_var($data['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $metodo = isset($data['metodo']) ? filter_var($data['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $modulo = isset($data['modulo']) ? filter_var($data['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
     } else {
         // Recebe os dados do formulário normalmente
-        $nomeClasse = filter_var($_REQUEST['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        $metodo = filter_var($_REQUEST['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        isset($_REQUEST['modulo']) ? $modulo = filter_var($_REQUEST['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
+        $nomeClasse = isset($_REQUEST['nomeClasse']) ? filter_var($_REQUEST['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $metodo = isset($_REQUEST['metodo']) ? filter_var($_REQUEST['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $modulo = isset($_REQUEST['modulo']) ? filter_var($_REQUEST['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+    }
+    // Formulários de cotações enviam multipart e recebem erros sem perder os campos.
+    if (in_array($nomeClasse, ['CotacaoControle', 'OrcamentoControle'], true)
+        && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST'
+        && ($_SERVER['HTTP_X_COTACAO_FORM'] ?? '') === '1') {
+        $is_json_request = true;
     }
     if ($modulo) {
         // Rejeita stream wrappers (phar://, file://, etc)
         if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $modulo)) {
             throw new Exception('Stream wrappers não são permitidos.', 400);
         }
-        
+
         // Rejeita path traversal (../ ou ..\)
-        if (preg_match('#\\.\\.' . preg_quote(DIRECTORY_SEPARATOR) . '#', $modulo)) {
-            throw new Exception('Path traversal não é permitido.', 400);
+        if (preg_match('#\.\.[/\\\\]#', $modulo)) {
+            throw new InvalidArgumentException(
+                'Path traversal não é permitido.',
+                400
+            );
         }
-        
+
         // Rejeita caminhos absolutos
         if (preg_match('#^[/\\\\]#', $modulo)) {
             throw new Exception('Caminho absoluto não é permitido.', 400);
@@ -202,7 +221,7 @@ try {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
-        if ($e->getCode() === 401){
+        if ($e->getCode() === 403) {
             header("Location: " . WWW . "html/home.php?msg_c=" . urlencode("Você não tem as permissões necessárias para essa página."));
             exit();
         }
