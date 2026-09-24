@@ -377,7 +377,7 @@ try {
       $("#certificado_reservista_numero").prop('disabled', false);
       $("#certificado_reservista_serie").prop('disabled', false);
       $("#situacao").prop('disabled', false);
-      $("#data_admissao").prop('di Resolved sabled', false);
+      $("#data_admissao").prop('disabled', false);
 
       if (pode_editar_cargo) {
         $("#cargo").prop('disabled', false);

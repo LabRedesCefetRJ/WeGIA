@@ -178,6 +178,29 @@ class PessoaDAO
         $stmtAlvo->bindValue(':idVoluntario', $idVoluntario, PDO::PARAM_INT);
         $stmtAlvo->execute();
         $alvo = $stmtAlvo->fetch(PDO::FETCH_ASSOC);
+
+        if (!$alvo) {
+            throw new Exception("Voluntário não encontrado.");
+        }
+
         return $alvo;
+    }
+
+    public function getCargoPorPessoa(int $id_pessoa): int {       
+        $sql = 
+        "SELECT id_cargo FROM funcionario f WHERE f.id_pessoa = :ID_PESSOA
+        UNION
+        SELECT id_cargo FROM voluntario v WHERE v.id_pessoa = :ID_PESSOA";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(":ID_PESSOA", $id_pessoa, PDO::PARAM_INT);
+        $stmt->execute();
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$resultado) {
+            throw new Exception("Nenhum cargo associado à pessoa encontrado.");
+        }
+
+        return $resultado['id_cargo'];
     }
 }
