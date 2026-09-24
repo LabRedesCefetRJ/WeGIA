@@ -2,7 +2,7 @@
 LOCALIP=`hostname -I | xargs`
 ADDRESS="http://$LOCALIP/WeGIA/instalador/"
 
-check_debian_12() {
+check_debian_13() {
     # Obtém a versão do Debian do arquivo /etc/os-release
     local VERSION_CODENAME=$(cat /etc/os-release | grep VERSION_CODENAME | cut -d'=' -f2)
 
@@ -11,7 +11,7 @@ check_debian_12() {
         echo "Este script só pode ser executado no Debian 13 (Trixie)."
         exit 1
     else
-        echo "Debian 12 [ok]"
+        echo "Debian 13 [ok]"
     fi
 }
 
@@ -37,7 +37,8 @@ install_localdeps(){
 install_internetdeps(){
     install_localdeps
     apt install python3-certbot-apache -y
-    apt install -t trixie-backports libapache2-mod-qos libpcre3 libpcre3-dev libapache2-mod-evasive -y
+    #libpcre3 libpcre3-dev - removido
+    apt install -t trixie-backports libapache2-mod-qos libapache2-mod-evasive -y
     
     mkdir /var/log/apache2/evasive
     chown www-data:www-data /var/log/apache2/evasive
@@ -144,6 +145,35 @@ create_database(){
     mysql -u root -e "CREATE DATABASE IF NOT EXISTS wegia;"
     mysql -u root -e "GRANT ALL PRIVILEGES ON wegia.* TO '$DB_USER'@'localhost' WITH GRANT OPTION;"
     mysql -u root -e "FLUSH PRIVILEGES;"
+
+    sed -i '/^\[mariadbd\]$/a event_scheduler=ON' /etc/mysql/mariadb.conf.d/50-server.cnf
+    systemctl restart mariadb
+}
+
+conf_api_web(){
+
+SERVER_NAME_API=$(dialog --title "Configuração da API do sistema" --inputbox "Digite o FQDN da API (api.instituicao.org):" 8 40 3>&1 1>&2 2>&3)
+
+cat > /etc/apache2/sites-available/api.conf <<EOF
+<VirtualHost *:80>
+ServerName $SERVER_NAME_API
+DocumentRoot /var/www/WeGIA/api/public
+</VirtualHost>
+EOF
+
+
+a2ensite api.conf
+systemctl reload apache2
+certbot --apache -d "$SERVER_NAME_API"
+
+a2dissite api-le-ssl.conf
+sed -i '\|^Include /etc/letsencrypt/options-ssl-apache.conf$|a\ RewriteEngine On\n RewriteCond %{REQUEST_FILENAME} !-f\n RewriteCond %{REQUEST_FILENAME} !-d\n RewriteRule ^ index.php [QSA,L]' /etc/apache2/sites-available/api-le-ssl.conf
+a2ensite api-le-ssl.conf
+systemctl restart apache2
+
+#atualizando as configurações
+sed -i "s|^define('API_BASE_URL'.*|define('API_BASE_URL', 'https://${SERVER_NAME_API}/');|" /var/www/WeGIA/web/config.php
+
 }
 
 ############################################
@@ -187,22 +217,28 @@ case $CHOICE in
     1)
         dialog --msgbox "Você escolheu Instalação Local. Continuando..." 6 60
         clear
-        check_debian_12
+        check_debian_13
         add_backports_repo
         install_localdeps
         download_wegia
         conf_wegia_local
         create_database
+        echo "Acesse: $ADDRESS e termine a instalação!"
+
         ;;
     2)
         dialog --msgbox "Você escolheu Instalação em Servidor de Internet. Continuando..." 6 60
         clear
-        check_debian_12
+        check_debian_13
         add_backports_repo
         install_internetdeps
         download_wegia
         conf_wegia_internet
         create_database
+        echo "Acesse: $ADDRESS e termine a instalação!"
+        echo "Depois de instalada a parte WEB, pressione ENTER para fazer a instalação da API!"
+        read
+        conf_api_web
         ;;
     *)
         dialog --msgbox "Opção inválida. A instalação será abortada." 6 60
@@ -210,4 +246,4 @@ case $CHOICE in
         ;;
 esac
 
-echo "acesse: $ADDRESS e termine a instalação!"
+echo "FIM!"
