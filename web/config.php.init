@@ -3,6 +3,7 @@
  *Configuração do WeGIA
 */
 define( 'APP_TIMEZONE', 'America/Sao_Paulo');
+define( 'CONTRIBUICOES_CRON_ID_PESSOA', 1);
 define( 'BKP_DIR', '/var/www/bkpWeGIA');
 define( 'BACKUP_SIGNING_KEY_FILE', BKP_DIR . '/.backup_signing_private.pem');
 define( 'DB_NAME', 'wegia' );
