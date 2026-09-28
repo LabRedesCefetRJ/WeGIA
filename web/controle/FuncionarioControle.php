@@ -800,8 +800,9 @@ class FuncionarioControle
 
             $_SESSION['funcionarios'] = json_encode($funcionarios);
 
+            // Sem exit aqui de propósito: informacao_funcionario.php chama este método inline, no meio do HTML,
+            // só pra popular $_SESSION['funcionarios'] — um exit cortaria a renderização da página.
             isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
-            exit;
         }
         catch (Exception $e) {
             Util::tratarException($e);
