@@ -68,12 +68,14 @@ try {
 
         if (empty($msgVinc)) {
             header("Location: personalizacao_imagem.php?msg=success&del=" . count($idsParaExcluir));
+            exit;
         } else {
             header(
                 "Location: personalizacao_imagem.php?msg=warn&del="
                     . count($idsParaExcluir)
                     . "&locked=" . count($msgVinc)
             );
+            exit;
         }
     }
 
@@ -85,4 +87,5 @@ try {
         $pdo->rollBack();
 
     header("Location: personalizacao_imagem.php?msg=error&code=exception");
+    exit;
 }
