@@ -7,9 +7,10 @@ require_once 'PdfDownloadService.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 class PagarMeBoletoService implements ApiBoletoServiceInterface
 {
-    public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
+    public function gerarBoleto(ContribuicaoLog $contribuicaoLog, bool $porEmail = true)
     {
         //gerar um número para o documento
         $numeroDocumento = Util::gerarNumeroDocumento(16);
@@ -116,10 +117,17 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
 
                 //armazena copia para segunda via
                 $contribuicaoLog->setCodigo($idPagarMe);
-                $pdfInterno = $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
+                $caminhoSegundaVia = $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
+                $linkPublico = WWW . 'html/contribuicao/' . $caminhoSegundaVia;
 
-                //envia resposta para o front-end
-                echo json_encode(['link' => WWW . $pdfInterno]); //pegar o link da segunda via do boleto para enviar para o front-end
+                //envia resposta para o front-end: aponta pra cópia salva no
+                //servidor (mais estável que o link do gateway, que pode
+                //expirar). $porEmail vem de qual rota chamou (pública vs
+                //interna da equipe), não de sessão — quem decide é o
+                //método do controller que foi chamado, não quem está logado
+                echo json_encode($porEmail
+                    ? Util::responderLinkGerado($linkPublico, $contribuicaoLog->getSocio(), 'boleto')
+                    : ['link' => $linkPublico]);
             } else {
                 throw new PaymentServiceException(
                     'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
@@ -158,13 +166,12 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
         $ultimaDataVencimento = $contribuicaoLog->getDataVencimento();
         $ultimaDataVencimento = str_replace('-', '', $ultimaDataVencimento);
         $codigo = str_replace('_', '-', $contribuicaoLog->getCodigo());
-        $nomeArquivo = $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
-
-        $caminhoFisico = $saveDir . $nomeArquivo;
+        $nomeBase = $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
 
         $fileContent = PdfDownloadService::baixarConteudo($pdf_link, 'boleto');
-        file_put_contents($caminhoFisico, $fileContent);
+        file_put_contents($saveDir . $nomeBase, $fileContent);
 
-        return 'html/contribuicao/pdfs/' . $nomeArquivo; // Retorna o caminho relativo para o arquivo PDF
+        return 'pdfs/' . $nomeBase;
     }
+
 }

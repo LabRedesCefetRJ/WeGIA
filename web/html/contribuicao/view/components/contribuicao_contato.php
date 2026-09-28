@@ -19,13 +19,13 @@
   <input type="text" class="input100" name="telefone" id="telefone" placeholder="Informe seu número de telefone para contato" maxlength="15">
 </div>
 <div class="container-contact100-form-btn">
-  <button class="contact100-form-btn btn-acao" id="avanca-contato">
+  <button type="button" class="contact100-form-btn btn-acao" id="avanca-contato">
     AVANÇAR
     <i class="fa fa-long-arrow-right m-l-7" aria-hidden="true"></i>
   </button>
 
   <div class="container-contact100-form-btn">
-    <button class="contact100-form-btn btn-voltar" id="volta-cpf">
+    <button type="button" class="contact100-form-btn btn-voltar" id="volta-cpf">
       <i style="margin-right: 15px; " class="fa fa-long-arrow-left m-l-7" aria-hidden="true"></i>
       VOLTAR
     </button>
