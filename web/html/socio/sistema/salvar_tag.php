@@ -55,8 +55,10 @@
 
         fecharConexao($stmt, $conexao);
         header("Location: ../../sucesso.php");
+        exit;
     }else{
         fecharConexao($stmt, $conexao);
         header("Location: ./tags.php?msg_e=Erro ao modificar tag.");
+        exit;
     }
 ?>
