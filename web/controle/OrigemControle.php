@@ -5,18 +5,29 @@ if (session_status() == PHP_SESSION_NONE)
 include_once ROOT . '/classes/Origem.php';
 include_once ROOT . '/dao/OrigemDAO.php';
 require_once ROOT . '/classes/Util.php';
-require_once ROOT . '/classes/PermissaoFornecedor.php';
+require_once ROOT . '/service/PermissaoFornecedorService.php';
 require_once ROOT . '/classes/OrigemNavegacao.php';
 require_once ROOT . '/classes/Csrf.php';
 
 class OrigemControle
 {
+    private function exigirPermissao(int $acao): void
+    {
+        $servico = new PermissaoFornecedorService();
+        if (!$servico->permite((int) ($_SESSION['id_pessoa'] ?? 0), $acao)) {
+            header('Location: ' . WWW . 'html/home.php?msg_c=' . urlencode(
+                'Você não tem permissão para realizar esta ação em fornecedores.'
+            ));
+            exit;
+        }
+    }
+
     /**
      * Valida e sanitiza os dados de entrada antes de criar o objeto Origem.
      */
     public function verificar()
     {
-        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+        $this->exigirPermissao(3);
         // Em vez de extract(), acessar diretamente e sanitizar
         $nome     = isset($_POST['nome']) ? trim($_POST['nome']) : '';
         $telefone = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
@@ -61,7 +72,7 @@ class OrigemControle
 
     public function listarTodos()
     {
-        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 5);
+        $this->exigirPermissao(5);
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
         $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(listar_origem)\.php)$#';
 
@@ -81,7 +92,7 @@ class OrigemControle
 
     public function listarId_Nome()
     {
-        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+        $this->exigirPermissao(3);
 
         $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
         $regex = '#^((\.\./|' . WWW . ')html/(matPat)/(cadastro_entrada)\.php)$#';
@@ -102,7 +113,7 @@ class OrigemControle
 
     public function incluir()
     {
-        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+        $this->exigirPermissao(3);
 
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             throw new InvalidArgumentException(
@@ -142,7 +153,7 @@ class OrigemControle
 
     public function excluir()
     {
-        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+        $this->exigirPermissao(3);
 
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             throw new InvalidArgumentException(
@@ -175,7 +186,7 @@ class OrigemControle
 
     public function listarPorAlmoxarifado()
     {
-        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+        $this->exigirPermissao(3);
         $id_almoxarifado = isset($_GET['id_almoxarifado'])
             ? (int) $_GET['id_almoxarifado']
             : 0;
@@ -194,7 +205,7 @@ class OrigemControle
 
     public function alterar()
     {
-        PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+        $this->exigirPermissao(3);
 
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             throw new InvalidArgumentException(

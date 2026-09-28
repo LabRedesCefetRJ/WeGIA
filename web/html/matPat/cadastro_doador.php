@@ -14,8 +14,14 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
-require_once ROOT . '/classes/PermissaoFornecedor.php';
-PermissaoFornecedor::exigir((int) $_SESSION['id_pessoa'], 3);
+require_once ROOT . '/service/PermissaoFornecedorService.php';
+$permissaoFornecedor = new PermissaoFornecedorService();
+if (!$permissaoFornecedor->permite((int) $_SESSION['id_pessoa'], 3)) {
+    header('Location: ' . WWW . 'html/home.php?msg_c=' . urlencode(
+        'Você não tem permissão para realizar esta ação em fornecedores.'
+    ));
+    exit;
+}
 
 require_once ROOT . '/classes/OrigemNavegacao.php';
 require_once ROOT . '/classes/Csrf.php';

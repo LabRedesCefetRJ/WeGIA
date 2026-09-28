@@ -2,20 +2,29 @@
 
 class Orcamento
 {
+    public const CONDICOES_PAGAMENTO = [
+        'avista' => 'À vista',
+        'aprazo' => 'A prazo',
+        'parcelado' => 'Parcelado',
+    ];
+
     private ?int $id_orcamento = null;
     private int $id_cotacao;
     private int $id_fornecedor;
+    private string $condicao_pagamento;
     private ?string $prazo_entrega = null;
     private string $valor;
 
     public function __construct(
         $id_cotacao,
         $id_fornecedor,
+        $condicao_pagamento,
         $prazo_entrega = null,
         $valor = null
     ) {
         $this->setId_cotacao($id_cotacao);
         $this->setId_fornecedor($id_fornecedor);
+        $this->setCondicao_pagamento($condicao_pagamento);
         $this->setPrazo_entrega($prazo_entrega);
         $this->setValor($valor);
     }
@@ -33,6 +42,11 @@ class Orcamento
     public function getId_fornecedor(): int
     {
         return $this->id_fornecedor;
+    }
+
+    public function getCondicao_pagamento(): string
+    {
+        return $this->condicao_pagamento;
     }
 
     public function getPrazo_entrega(): ?string
@@ -60,6 +74,25 @@ class Orcamento
         $this->id_fornecedor = $this->validarId($id_fornecedor, 'fornecedor');
     }
 
+    public function setCondicao_pagamento($condicao_pagamento): void
+    {
+        if (
+            !is_string($condicao_pagamento) ||
+            !in_array(
+                $condicao_pagamento,
+                array_keys(self::CONDICOES_PAGAMENTO),
+                true
+            )
+        ) {
+            throw new InvalidArgumentException(
+                'A condição de pagamento informada é inválida.',
+                400
+            );
+        }
+
+        $this->condicao_pagamento = $condicao_pagamento;
+    }
+
     public function setPrazo_entrega($prazo_entrega): void
     {
         if ($prazo_entrega === null || $prazo_entrega === '') {
@@ -67,13 +100,13 @@ class Orcamento
             return;
         }
 
-        if (!is_string($prazo_entrega)) {
-            throw new InvalidArgumentException('O prazo de entrega deve ser um texto.', 400);
+        if (!is_string($prazo_entrega) || !preg_match('/^\d{4}-\d{2}-\d{2}$/D', $prazo_entrega)) {
+            throw new InvalidArgumentException('O prazo de entrega deve ser uma data válida no formato AAAA-MM-DD.', 400);
         }
 
-        $prazo_entrega = trim($prazo_entrega);
-        if (mb_strlen($prazo_entrega, 'UTF-8') > 50) {
-            throw new InvalidArgumentException('O prazo de entrega deve ter no máximo 50 caracteres.', 400);
+        [$ano, $mes, $dia] = array_map('intval', explode('-', $prazo_entrega));
+        if ($ano < 1000 || !checkdate($mes, $dia, $ano)) {
+            throw new InvalidArgumentException('O prazo de entrega deve ser uma data válida.', 400);
         }
 
         $this->prazo_entrega = $prazo_entrega;

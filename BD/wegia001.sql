@@ -777,7 +777,12 @@ CREATE TABLE IF NOT EXISTS `wegia`.`orcamento` (
   `id_orcamento` INT(11) NOT NULL AUTO_INCREMENT,
   `id_cotacao` INT(11) NOT NULL,
   `id_fornecedor` INT(11) NOT NULL,
-  `prazo_entrega` varchar(50),
+  `condicao_pagamento` ENUM(
+        'avista',
+        'aprazo',
+        'parcelado'
+  ) NOT NULL,
+  `prazo_entrega` DATE NULL,
   `valor` DECIMAL(10,2) NOT NULL,
   PRIMARY KEY (`id_orcamento`),
   UNIQUE KEY `orcamento_cotacao_id_unique` (`id_cotacao`, `id_orcamento`),

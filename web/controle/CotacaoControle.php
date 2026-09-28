@@ -44,8 +44,9 @@ class CotacaoControle
             $fornecedores = $_POST['id_fornecedor'] ?? [];
             $valores = $_POST['valor'] ?? [];
             $prazos = $_POST['prazo_entrega'] ?? [];
+            $condicoesPagamento = $_POST['condicao_pagamento'] ?? [];
 
-            if (!is_array($fornecedores) || !is_array($valores) || !is_array($prazos)) {
+            if (!is_array($fornecedores) || !is_array($valores) || !is_array($prazos) || !is_array($condicoesPagamento)) {
                 throw new InvalidArgumentException(
                     'Os dados dos orçamentos são inválidos.',
                     400
@@ -78,6 +79,7 @@ class CotacaoControle
                 $orcamento = new Orcamento(
                     $id_cotacao,
                     $id_fornecedor,
+                    $condicoesPagamento[$indice] ?? null,
                     $prazos[$indice] ?? null,
                     $valores[$indice] ?? null
                 );

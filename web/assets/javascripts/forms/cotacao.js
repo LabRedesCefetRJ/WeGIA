@@ -23,6 +23,22 @@
             botoes.forEach(function (botao) { botao.disabled = true; });
 
             try {
+                const limites = window.limitesUploadCotacao;
+                if (limites) {
+                    let tamanhoTotal = 0;
+                    for (const valor of dados.values()) {
+                        if (!(valor instanceof File)) continue;
+                        if (valor.size > limites.upload_max_filesize_bytes) {
+                            throw new Error('O arquivo excede o tamanho máximo permitido pelo servidor (' +
+                                (limites.upload_max_filesize_bytes / 1024 / 1024) + ' MB).');
+                        }
+                        tamanhoTotal += valor.size;
+                    }
+                    if (limites.post_max_size_bytes > 0 && tamanhoTotal >= limites.post_max_size_bytes) {
+                        throw new Error('O tamanho total dos arquivos deve ser menor que ' +
+                            (limites.post_max_size_bytes / 1024 / 1024) + ' MB, incluindo espaço para os demais dados do formulário.');
+                    }
+                }
                 const resposta = await fetch(form.action, {
                     method: 'POST',
                     body: dados,
@@ -37,6 +53,7 @@
                 if (!resposta.ok || resultado.status !== 'sucesso') {
                     throw new Error(resultado.mensagem || 'Não foi possível concluir a operação.');
                 }
+                form.dispatchEvent(new Event('cotacao:sucesso'));
                 window.location.assign(resultado.redirect);
             } catch (erro) {
                 aviso.textContent = erro.message || 'Não foi possível enviar o formulário.';

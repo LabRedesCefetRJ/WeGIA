@@ -17,10 +17,11 @@ class OrcamentoDAO
         $this->validarFornecedorDisponivel($orcamento);
 
         $sql = 'INSERT INTO orcamento
-                    (id_cotacao, id_fornecedor, prazo_entrega, valor)
+                    (id_cotacao, id_fornecedor, condicao_pagamento, prazo_entrega, valor)
                 SELECT
                     :id_cotacao,
                     :id_fornecedor,
+                    :condicao_pagamento,
                     :prazo_entrega,
                     :valor
                 FROM cotacao c
@@ -61,6 +62,7 @@ class OrcamentoDAO
                     ON c.id_cotacao = o.id_cotacao
                 SET o.id_cotacao = :id_cotacao,
                     o.id_fornecedor = :id_fornecedor,
+                    o.condicao_pagamento = :condicao_pagamento,
                     o.prazo_entrega = :prazo_entrega,
                     o.valor = :valor
                 WHERE o.id_orcamento = :id_orcamento
@@ -155,6 +157,7 @@ class OrcamentoDAO
                     o.id_orcamento,
                     o.id_cotacao,
                     o.id_fornecedor,
+                    o.condicao_pagamento,
                     o.prazo_entrega,
                     o.valor,
                     origem.nome_origem AS fornecedor,
@@ -242,6 +245,12 @@ class OrcamentoDAO
         );
 
         $stmt->bindValue(
+            ':condicao_pagamento',
+            $orcamento->getCondicao_pagamento(),
+            PDO::PARAM_STR
+        );
+
+        $stmt->bindValue(
             ':prazo_entrega',
             $orcamento->getPrazo_entrega(),
             $orcamento->getPrazo_entrega() === null
@@ -261,6 +270,7 @@ class OrcamentoDAO
         $orcamento = new Orcamento(
             $dados['id_cotacao'],
             $dados['id_fornecedor'],
+            $dados['condicao_pagamento'],
             $dados['prazo_entrega'],
             $dados['valor']
         );

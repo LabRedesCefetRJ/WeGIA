@@ -5,7 +5,42 @@ require_once __DIR__ . '/Csrf.php';
 
 final class CotacaoSuporte
 {
-    public const TAMANHO_MAXIMO_ARQUIVO = 2097152; // 2 MB
+    public static function limitesUpload(): array
+    {
+        return [
+            'upload_max_filesize_bytes' => self::converterParaBytes(ini_get('upload_max_filesize')),
+            'post_max_size_bytes' => self::converterParaBytes(ini_get('post_max_size')),
+        ];
+    }
+
+    private static function converterParaBytes(string $valor): int
+    {
+        $valor = trim($valor);
+        $numero = (int) $valor;
+        switch (strtolower(substr($valor, -1))) {
+            case 'g':
+                return $numero * 1024 * 1024 * 1024;
+            case 'm':
+                return $numero * 1024 * 1024;
+            case 'k':
+                return $numero * 1024;
+            default:
+                return $numero;
+        }
+    }
+
+    public static function tamanhoMaximoArquivo(): int
+    {
+        return self::converterParaBytes(ini_get('upload_max_filesize'));
+    }
+
+    public static function tamanhoMaximoArquivoFormatado(): string
+    {
+        $valor = ini_get('upload_max_filesize');
+
+        return preg_replace('/([0-9]+)([KMG])/i', '$1 $2B', $valor);
+    }
+
     private const EXTENSOES_PERMITIDAS = [
         'pdf',
         'jpg',
@@ -48,7 +83,7 @@ final class CotacaoSuporte
 
         if (in_array($upload['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
             throw new InvalidArgumentException(
-                'O arquivo deve possuir no máximo 2 MB.',
+                'O arquivo deve possuir no máximo ' . self::tamanhoMaximoArquivoFormatado() . '.',
                 413
             );
         }
@@ -72,12 +107,9 @@ final class CotacaoSuporte
             );
         }
 
-        if (
-            $upload['size'] < 1 ||
-            $upload['size'] > self::TAMANHO_MAXIMO_ARQUIVO
-        ) {
+        if ($upload['size'] < 1 || $upload['size'] > self::tamanhoMaximoArquivo()) {
             throw new InvalidArgumentException(
-                'O arquivo deve possuir no máximo 2 MB.',
+                'O arquivo deve possuir no máximo ' . self::tamanhoMaximoArquivoFormatado() . '.',
                 413
             );
         }

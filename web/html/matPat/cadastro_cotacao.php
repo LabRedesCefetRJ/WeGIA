@@ -10,10 +10,14 @@ require_once ROOT . "/html/personalizacao_display.php";
 require_once ROOT . "/html/geral/msg.php";
 require_once ROOT . '/classes/Csrf.php';
 require_once ROOT . '/classes/CotacaoSuporte.php';
+require_once ROOT . '/classes/Orcamento.php';
 
 if (!isset($fornecedores) || !is_array($fornecedores)) {
     http_response_code(500);
     exit('Não foi possível carregar o cadastro da cotação.');
+}
+if (!isset($_SESSION['rascunho_cadastro_cotacao_token'])) {
+    $_SESSION['rascunho_cadastro_cotacao_token'] = bin2hex(random_bytes(16));
 }
 ?>
 <!doctype html>
@@ -208,11 +212,11 @@ if (!isset($fornecedores) || !is_array($fornecedores)) {
 
                                         <div class="row">
 
-                                            <div class="form-group col-md-6">
+                                            <div class="form-group col-md-3">
                                                 <label for="fornecedor-0">
                                                     Fornecedor
                                                     <span class="text-danger">*</span>
-                                                    <a href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=cotacao"><i class="fas fa-plus w3-xlarge"></i></a>
+                                                    <a href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=cotacao" data-cadastrar-fornecedor title="Cadastrar fornecedor" aria-label="Cadastrar fornecedor"><i class="fas fa-plus w3-xlarge" aria-hidden="true"></i></a>
                                                 </label>
 
                                                 <select
@@ -261,16 +265,26 @@ if (!isset($fornecedores) || !is_array($fornecedores)) {
                                             </div>
 
                                             <div class="form-group col-md-3">
+                                                <label for="condicao-pagamento-0">Condição de pagamento <span class="text-danger">*</span></label>
+                                                <select name="condicao_pagamento[]" id="condicao-pagamento-0" class="form-control" required>
+                                                    <option value="" selected disabled>Selecionar</option>
+                                                    <?php foreach (Orcamento::CONDICOES_PAGAMENTO as $valorCondicao => $rotuloCondicao): ?>
+                                                        <option value="<?= htmlspecialchars($valorCondicao, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($rotuloCondicao, ENT_QUOTES, 'UTF-8') ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group col-md-3">
 
                                                 <label for="prazo-0">Prazo de entrega</label>
 
                                                 <input
-                                                    type="text"
+                                                    type="date"
                                                     name="prazo_entrega[]"
                                                     id="prazo-0"
                                                     class="form-control"
-                                                    maxlength="50"
-                                                    placeholder="Ex.: 10 dias úteis"
+                                                    min="1000-01-01"
+                                                    max="9999-12-31"
                                                 >
 
                                             </div>
@@ -281,7 +295,7 @@ if (!isset($fornecedores) || !is_array($fornecedores)) {
 
                                             <label for="arquivo-0" >Arquivo do orçamento</label>
                                             <small class="text-muted">
-                                                Formatos permitidos: PDF, JPG, JPEG ou PNG. Máximo de 2 MB.
+                                                Formatos permitidos: PDF, JPG, JPEG ou PNG. Máximo de <?= CotacaoSuporte::tamanhoMaximoArquivoFormatado() ?>.
                                             </small>
 
                                             <input
@@ -316,6 +330,7 @@ if (!isset($fornecedores) || !is_array($fornecedores)) {
                                 <a
                                     href="<?= WWW ?>controle/control.php?nomeClasse=CotacaoControle&amp;metodo=listar"
                                     class="btn btn-default"
+                                    id="cancelarCotacao"
                                 >
                                     Cancelar
                                 </a>
@@ -339,7 +354,7 @@ if (!isset($fornecedores) || !is_array($fornecedores)) {
     </section>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const TAMANHO_MAXIMO_ARQUIVO = <?= CotacaoSuporte::TAMANHO_MAXIMO_ARQUIVO ?>;
+            const TAMANHO_MAXIMO_ARQUIVO = <?= CotacaoSuporte::tamanhoMaximoArquivo() ?>;
 
             const listaOrcamentos = document.getElementById('listaOrcamentos');
             const btnAdicionar = document.getElementById('adicionarOrcamento');
@@ -380,7 +395,7 @@ if (!isset($fornecedores) || !is_array($fornecedores)) {
                 }
 
                 if (arquivo.size > TAMANHO_MAXIMO_ARQUIVO) {
-                    alert('O arquivo do orçamento deve possuir no máximo 2 MB.');
+                    alert(<?= json_encode('O arquivo do orçamento deve possuir no máximo ' . CotacaoSuporte::tamanhoMaximoArquivoFormatado() . '.') ?>);
                     event.target.value = '';
                 }
             });
@@ -426,12 +441,15 @@ if (!isset($fornecedores) || !is_array($fornecedores)) {
             });
 
             function limparOrcamento(orcamento) {
+                delete orcamento.dataset.arquivoPendente;
+                orcamento.querySelectorAll('.aviso-arquivo-rascunho').forEach(function (aviso) { aviso.remove(); });
 
                 const selectFornecedor = orcamento.querySelector(
                     'select[name="id_fornecedor[]"]'
                 );
 
                 selectFornecedor.selectedIndex = 0;
+                orcamento.querySelector('[name="condicao_pagamento[]"]').selectedIndex = 0;
 
                 const valor = orcamento.querySelector(
                     'input[name="valor[]"]'
@@ -494,7 +512,103 @@ if (!isset($fornecedores) || !is_array($fornecedores)) {
                 }
             }
 
+
+            const form = document.getElementById('formCotacao');
+            const CHAVE = 'rascunho_cadastro_cotacao';
+            const TOKEN_SESSAO = <?= json_encode($_SESSION['rascunho_cadastro_cotacao_token']) ?>;
+            let rascunhoConcluido = false;
+            let restaurando = false;
+
+            function salvarRascunho() {
+                if (rascunhoConcluido || restaurando) return;
+                const dados = {
+                    tokenSessao: TOKEN_SESSAO,
+                    descricao: form.elements.descricao.value,
+                    orcamentos: Array.from(listaOrcamentos.querySelectorAll('.orcamento')).map(function (orcamento) {
+                        return {
+                            fornecedor: orcamento.querySelector('select[name="id_fornecedor[]"]').value,
+                            valor: orcamento.querySelector('[name="valor[]"]').value,
+                            condicaoPagamento: orcamento.querySelector('[name="condicao_pagamento[]"]').value,
+                            prazo: orcamento.querySelector('[name="prazo_entrega[]"]').value,
+                            tinhaArquivo: orcamento.querySelector('[type="file"]').files.length > 0 ||
+                                orcamento.dataset.arquivoPendente === '1'
+                        };
+                    })
+                };
+                try {
+                    sessionStorage.setItem(CHAVE, JSON.stringify(dados));
+                } catch (erro) {
+                    console.error('Não foi possível salvar o rascunho da cotação:', erro);
+                }
+            }
+
+            function limparRascunho() {
+                rascunhoConcluido = true;
+                try { sessionStorage.removeItem(CHAVE); } catch (erro) {
+                    console.error('Não foi possível limpar o rascunho da cotação:', erro);
+                }
+            }
+
+            function restaurarRascunho() {
+                restaurando = true;
+                try {
+                    const bruto = sessionStorage.getItem(CHAVE);
+                    if (!bruto) return;
+                    const dados = JSON.parse(bruto);
+                    if (dados.tokenSessao !== TOKEN_SESSAO || !Array.isArray(dados.orcamentos)) {
+                        sessionStorage.removeItem(CHAVE);
+                        return;
+                    }
+                    form.elements.descricao.value = dados.descricao || '';
+                    const orcamentos = dados.orcamentos.slice(0, LIMITE_ORCAMENTOS);
+                    while (listaOrcamentos.querySelectorAll('.orcamento').length < orcamentos.length) {
+                        btnAdicionar.click();
+                    }
+                    listaOrcamentos.querySelectorAll('.orcamento').forEach(function (orcamento, indice) {
+                        const salvo = orcamentos[indice];
+                        if (!salvo) return;
+                        const select = orcamento.querySelector('select[name="id_fornecedor[]"]');
+                        select.replaceChildren(...opcoesFornecedores.map(function (opcao) { return opcao.cloneNode(true); }));
+                        select.value = salvo.fornecedor || '';
+                        orcamento.querySelector('[name="condicao_pagamento[]"]').value = salvo.condicaoPagamento || '';
+                        orcamento.querySelector('[name="valor[]"]').value = salvo.valor || '';
+                        orcamento.querySelector('[name="prazo_entrega[]"]').value = salvo.prazo || '';
+                        if (salvo.tinhaArquivo) {
+                            orcamento.dataset.arquivoPendente = '1';
+                            const aviso = document.createElement('p');
+                            aviso.className = 'text-warning aviso-arquivo-rascunho';
+                            aviso.textContent = 'Selecione novamente o arquivo deste orçamento. Os demais dados foram restaurados.';
+                            orcamento.querySelector('[type="file"]').after(aviso);
+                        }
+                    });
+                    atualizarOrcamentos();
+                } catch (erro) {
+                    console.error('Não foi possível restaurar o rascunho da cotação:', erro);
+                } finally {
+                    restaurando = false;
+                }
+            }
+
+            form.addEventListener('input', salvarRascunho);
+            form.addEventListener('change', function (event) {
+                if (event.target.type === 'file' && event.target.files.length) {
+                    const orcamento = event.target.closest('.orcamento');
+                    delete orcamento.dataset.arquivoPendente;
+                    const aviso = orcamento.querySelector('.aviso-arquivo-rascunho');
+                    if (aviso) aviso.remove();
+                }
+                salvarRascunho();
+            });
+            form.addEventListener('click', function () { salvarRascunho(); });
+            window.addEventListener('pagehide', salvarRascunho);
+            form.addEventListener('cotacao:sucesso', limparRascunho);
+            document.getElementById('cancelarCotacao').addEventListener('click', limparRascunho);
+            restaurarRascunho();
+
         });
+    </script>
+    <script>
+        window.limitesUploadCotacao = <?= json_encode(CotacaoSuporte::limitesUpload()) ?>;
     </script>
     <script src="../../assets/javascripts/forms/cotacao.js"></script>
 </body>

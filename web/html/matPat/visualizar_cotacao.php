@@ -8,6 +8,7 @@ require_once ROOT . '/html/personalizacao_display.php';
 require_once ROOT . '/html/geral/msg.php';
 require_once ROOT . '/classes/Csrf.php';
 require_once ROOT . '/classes/CotacaoSuporte.php';
+require_once ROOT . '/classes/Orcamento.php';
 
 if (
     !isset($cotacao, $orcamentos, $fornecedores) ||
@@ -264,10 +265,14 @@ $origemLista = CotacaoSuporte::origemLista();
                                             </p>
 
                                             <p>
+                                                <strong>Condição de pagamento:</strong><br>
+                                                <?= htmlspecialchars(Orcamento::CONDICOES_PAGAMENTO[$orcamento['condicao_pagamento'] ?? ''] ?? 'Não informado', ENT_QUOTES, 'UTF-8') ?>
+                                            </p>
+                                            <p>
                                                 <strong>Prazo de entrega:</strong><br>
                                                 <?= !empty($orcamento['prazo_entrega'])
                                                     ? htmlspecialchars(
-                                                        $orcamento['prazo_entrega'],
+                                                        date('d/m/Y', strtotime($orcamento['prazo_entrega'])),
                                                         ENT_QUOTES,
                                                         'UTF-8'
                                                     )
@@ -314,6 +319,7 @@ $origemLista = CotacaoSuporte::origemLista();
                                                     data-id="<?= $idOrcamento ?>"
                                                     data-fornecedor="<?= (int) $orcamento['id_fornecedor'] ?>"
                                                     data-valor="<?= htmlspecialchars($orcamento['valor'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                                                    data-condicao-pagamento="<?= htmlspecialchars($orcamento['condicao_pagamento'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                     data-prazo="<?= htmlspecialchars($orcamento['prazo_entrega'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                     data-arquivo="<?= htmlspecialchars($orcamento['arquivo_nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
                                                 >
@@ -465,22 +471,32 @@ $origemLista = CotacaoSuporte::origemLista();
                                             </div>
 
                                             <div class="form-group">
+                                                <label for="novoCondicaoPagamento">Condição de pagamento <span class="text-danger">*</span></label>
+                                                <select name="condicao_pagamento" id="novoCondicaoPagamento" class="form-control" required>
+                                                    <option value="" selected disabled>Selecionar</option>
+                                                    <?php foreach (Orcamento::CONDICOES_PAGAMENTO as $valorCondicao => $rotuloCondicao): ?>
+                                                        <option value="<?= htmlspecialchars($valorCondicao, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($rotuloCondicao, ENT_QUOTES, 'UTF-8') ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group">
                                                 <label for="novoPrazo">Prazo de entrega</label>
 
                                                 <input
-                                                    type="text"
+                                                    type="date"
                                                     name="prazo_entrega"
                                                     id="novoPrazo"
                                                     class="form-control"
-                                                    maxlength="50"
-                                                    placeholder="Ex.: 10 dias úteis"
+                                                    min="1000-01-01"
+                                                    max="9999-12-31"
                                                 >
                                             </div>
 
                                             <div class="form-group">
                                                 <label for="arquivoNovoOrcamento">Arquivo do orçamento</label>
                                                 <small class="text-muted">
-                                                    Formatos permitidos: PDF, JPG, JPEG e PNG. Máximo de 2 MB.
+                                                    Formatos permitidos: PDF, JPG, JPEG e PNG. Máximo de <?= CotacaoSuporte::tamanhoMaximoArquivoFormatado() ?>.
                                                 </small>
 
                                                 <input
@@ -492,7 +508,7 @@ $origemLista = CotacaoSuporte::origemLista();
                                                 >
 
                                                 <small class="text-muted">
-                                                    Máximo de 2 MB.
+                                                    Máximo de <?= CotacaoSuporte::tamanhoMaximoArquivoFormatado() ?>.
                                                 </small>
                                             </div>
 
@@ -585,13 +601,24 @@ $origemLista = CotacaoSuporte::origemLista();
                                             </div>
 
                                             <div class="form-group">
+                                                <label for="editarCondicaoPagamento">Condição de pagamento <span class="text-danger">*</span></label>
+                                                <select name="condicao_pagamento" id="editarCondicaoPagamento" class="form-control" required>
+                                                    <option value="" selected disabled>Selecionar</option>
+                                                    <?php foreach (Orcamento::CONDICOES_PAGAMENTO as $valorCondicao => $rotuloCondicao): ?>
+                                                        <option value="<?= htmlspecialchars($valorCondicao, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($rotuloCondicao, ENT_QUOTES, 'UTF-8') ?></option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group">
                                                 <label for="editarPrazo">Prazo de entrega</label>
                                                 <input
-                                                    type="text"
+                                                    type="date"
                                                     name="prazo_entrega"
                                                     id="editarPrazo"
                                                     class="form-control"
-                                                    maxlength="50"
+                                                    min="1000-01-01"
+                                                    max="9999-12-31"
                                                 >
                                             </div>
 
@@ -615,7 +642,7 @@ $origemLista = CotacaoSuporte::origemLista();
 
                                                 <small class="text-muted">
                                                     Escolha um novo arquivo apenas se quiser substituir
-                                                    o arquivo atual. Máximo de 2 MB.
+                                                    o arquivo atual. Máximo de <?= CotacaoSuporte::tamanhoMaximoArquivoFormatado() ?>.
                                                 </small>
                                             </div>
                                         </div>
@@ -694,6 +721,7 @@ $origemLista = CotacaoSuporte::origemLista();
             filtrarFornecedores(document.getElementById('editarFornecedor'), String(fornecedor));
             $('#editarValor').val(valor);
             $('#editarPrazo').val(prazo);
+            $('#editarCondicaoPagamento').val(botao.attr('data-condicao-pagamento'));
 
             $('#editarArquivo').val('');
 
@@ -709,7 +737,7 @@ $origemLista = CotacaoSuporte::origemLista();
         });
 
         const camposArquivo = document.querySelectorAll('#editarArquivo, #arquivoNovoOrcamento');
-        const TAMANHO_MAXIMO_ARQUIVO = <?= CotacaoSuporte::TAMANHO_MAXIMO_ARQUIVO ?>;
+        const TAMANHO_MAXIMO_ARQUIVO = <?= CotacaoSuporte::tamanhoMaximoArquivo() ?>;
 
         camposArquivo.forEach(function (campo) {
             campo.addEventListener('change', function() {
@@ -721,13 +749,16 @@ $origemLista = CotacaoSuporte::origemLista();
 
                 if (arquivo.size > TAMANHO_MAXIMO_ARQUIVO) {
                     alert(
-                        'O arquivo do orçamento deve possuir no máximo 2 MB.'
+                        <?= json_encode('O arquivo do orçamento deve possuir no máximo ' . CotacaoSuporte::tamanhoMaximoArquivoFormatado() . '.') ?>
                     );
 
                     this.value = '';
                 }
             });
         });
+    </script>
+    <script>
+        window.limitesUploadCotacao = <?= json_encode(CotacaoSuporte::limitesUpload()) ?>;
     </script>
     <script src="../../assets/javascripts/forms/cotacao.js"></script>
 </body>

@@ -357,7 +357,7 @@ class OrcamentoControle
 
         if ($prazo_entrega !== null && !is_string($prazo_entrega)) {
             throw new InvalidArgumentException(
-                'O prazo de entrega deve ser um texto.',
+                'O prazo de entrega deve ser uma data válida.',
                 400
             );
         }
@@ -365,6 +365,7 @@ class OrcamentoControle
         return new Orcamento(
             $id_cotacao ?? ($_POST['id_cotacao'] ?? null),
             $_POST['id_fornecedor'] ?? null,
+            $_POST['condicao_pagamento'] ?? null,
             $prazo_entrega,
             $_POST['valor'] ?? null
         );
@@ -387,9 +388,6 @@ class OrcamentoControle
             'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
             'png' => 'image/png',
-            'doc' => 'application/msword',
-            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'odt' => 'application/vnd.oasis.opendocument.text',
         ];
 
         return $mimes[strtolower($extensao)]
