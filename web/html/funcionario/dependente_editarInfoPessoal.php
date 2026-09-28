@@ -113,6 +113,7 @@ try {
     }
 
     header("Location: profile_dependente.php?id_dependente=$idatendido_familiares");
+    exit;
 } catch (Exception $e) {
     error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
     http_response_code($e->getCode());
