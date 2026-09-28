@@ -123,7 +123,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                 //interna da equipe), não de sessão — quem decide é o
                 //método do controller que foi chamado, não quem está logado
                 echo json_encode($porEmail
-                    ? $this->responderLinkGerado($linkPublico, $contribuicaoLog->getSocio(), 'boleto')
+                    ? Util::responderLinkGerado($linkPublico, $contribuicaoLog->getSocio(), 'boleto')
                     : ['link' => $linkPublico]);
             } else {
                 throw new PaymentServiceException(
@@ -171,38 +171,4 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
         return 'pdfs/' . $nomeBase;
     }
 
-    /**
-     * Monta a resposta enviada ao front-end quando um link de pagamento é
-     * gerado por esse fluxo (contribuição pública): o link nunca aparece na
-     * resposta, é sempre enviado por email pro sócio.
-     */
-    private function responderLinkGerado(string $link, Socio $socio, string $tipoDocumento): array
-    {
-        $emailControle = new EmailControle();
-
-        if (!$emailControle->isEnabled() || !$emailControle->isConfigured() || !$socio->getEmail()) {
-            return ['erro' => "O $tipoDocumento foi gerado, mas não foi possível enviá-lo por email. Entre em contato com o suporte."];
-        }
-
-        $mensagem = sprintf(
-            '<p>Prezado(a) %s,</p><p>Seu %s foi gerado com sucesso. Acesse pelo link abaixo:</p><p><a href="%s">%s</a></p>',
-            htmlspecialchars($socio->getNome()),
-            $tipoDocumento,
-            htmlspecialchars($link),
-            htmlspecialchars($link)
-        );
-
-        $resultadoEmail = $emailControle->enviarEmail(
-            $socio->getEmail(),
-            'Seu ' . $tipoDocumento . ' está pronto',
-            $mensagem,
-            $socio->getNome()
-        );
-
-        if (!$resultadoEmail['success']) {
-            return ['erro' => "O $tipoDocumento foi gerado, mas houve um erro ao enviar o email: " . $resultadoEmail['message']];
-        }
-
-        return ['mensagem' => ucfirst($tipoDocumento) . ' gerado! Enviamos o link de acesso para o seu email.'];
-    }
 }

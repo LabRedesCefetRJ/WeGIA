@@ -391,7 +391,7 @@ class ContribuicaoLogController
                 //equipe), não de sessão
                 $linkCarne = WWW . 'html/contribuicao/' . $resultado['link'];
                 echo json_encode($porEmail
-                    ? $this->responderLinkGerado($linkCarne, $socio, 'carnê')
+                    ? Util::responderLinkGerado($linkCarne, $socio, 'carnê', $this->pdo)
                     : ['link' => $linkCarne]);
             }
         } catch (Exception $e) {
@@ -919,38 +919,4 @@ class ContribuicaoLogController
         }
     }
 
-    /**
-     * Monta a resposta enviada ao front-end quando um link de pagamento é
-     * gerado por esse fluxo (contribuição pública): o link nunca aparece na
-     * resposta, é sempre enviado por email pro sócio.
-     */
-    private function responderLinkGerado(string $link, Socio $socio, string $tipoDocumento): array
-    {
-        $emailControle = new EmailControle($this->pdo);
-
-        if (!$emailControle->isEnabled() || !$emailControle->isConfigured() || !$socio->getEmail()) {
-            return ['erro' => "O $tipoDocumento foi gerado, mas não foi possível enviá-lo por email. Entre em contato com o suporte."];
-        }
-
-        $mensagem = sprintf(
-            '<p>Prezado(a) %s,</p><p>Seu %s foi gerado com sucesso. Acesse pelo link abaixo:</p><p><a href="%s">%s</a></p>',
-            htmlspecialchars($socio->getNome()),
-            $tipoDocumento,
-            htmlspecialchars($link),
-            htmlspecialchars($link)
-        );
-
-        $resultadoEmail = $emailControle->enviarEmail(
-            $socio->getEmail(),
-            'Seu ' . $tipoDocumento . ' está pronto',
-            $mensagem,
-            $socio->getNome()
-        );
-
-        if (!$resultadoEmail['success']) {
-            return ['erro' => "O $tipoDocumento foi gerado, mas houve um erro ao enviar o email: " . $resultadoEmail['message']];
-        }
-
-        return ['mensagem' => ucfirst($tipoDocumento) . ' gerado! Enviamos o link de acesso para o seu email.'];
-    }
 }

@@ -1324,6 +1324,46 @@ class Util
     }
 
     /**
+     * Monta a resposta enviada ao front-end quando um link de pagamento é
+     * gerado pelo fluxo de contribuição pública: o link nunca aparece na
+     * resposta, é sempre enviado por email pro sócio. Usado por
+     * ContribuicaoLogController e pelos services de boleto (Mercado Pago,
+     * Pagar.me) — centralizado aqui pra não duplicar a mesma lógica de
+     * envio nos três lugares.
+     */
+    public static function responderLinkGerado(string $link, Socio $socio, string $tipoDocumento, ?PDO $pdo = null): array
+    {
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
+
+        $emailControle = new EmailControle($pdo);
+
+        if (!$emailControle->isEnabled() || !$emailControle->isConfigured() || !$socio->getEmail()) {
+            return ['erro' => "O $tipoDocumento foi gerado, mas não foi possível enviá-lo por email. Entre em contato com o suporte."];
+        }
+
+        $mensagem = sprintf(
+            '<p>Prezado(a) %s,</p><p>Seu %s foi gerado com sucesso. Acesse pelo link abaixo:</p><p><a href="%s">%s</a></p>',
+            htmlspecialchars($socio->getNome()),
+            $tipoDocumento,
+            htmlspecialchars($link),
+            htmlspecialchars($link)
+        );
+
+        $resultadoEmail = $emailControle->enviarEmail(
+            $socio->getEmail(),
+            'Seu ' . $tipoDocumento . ' está pronto',
+            $mensagem,
+            $socio->getNome()
+        );
+
+        if (!$resultadoEmail['success']) {
+            return ['erro' => "O $tipoDocumento foi gerado, mas houve um erro ao enviar o email: " . $resultadoEmail['message']];
+        }
+
+        return ['mensagem' => ucfirst($tipoDocumento) . ' gerado! Enviamos o link de acesso para o seu email.'];
+    }
+
+    /**
      * Calcula as datas de vencimento de parcelas com intervalo específico
      * 
      * @param int $intervalo Intervalo em meses entre as parcelas

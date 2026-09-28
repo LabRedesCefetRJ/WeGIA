@@ -149,6 +149,24 @@ class GatewayPagamentoDAO
         return $resultado ? $resultado['endpoint'] : null;
     }
 
+    /**
+     * Busca só o token atualmente cadastrado para o gateway, independente do
+     * status (ativo ou não) — usado por GatewayPagamento::editar() pra
+     * comparar contra a versão mascarada e detectar se o token foi de fato
+     * reinformado.
+     */
+    public function buscarTokenPorId($id)
+    {
+        $sql = "SELECT token FROM contribuicao_gatewayPagamento WHERE id=:id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':id', $id);
+        $stmt->execute();
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado ? $resultado['token'] : null;
+    }
+
     public function buscarPorId($id)
     {
         //definir consulta sql
