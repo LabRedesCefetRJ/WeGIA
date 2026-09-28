@@ -163,14 +163,14 @@ class GatewayPagamentoDAO
      */
     public function buscarTokenPorId($id)
     {
-        $sql = "SELECT token FROM contribuicao_gatewayPagamento WHERE id=:id";
+        $sql = "SELECT private_token FROM contribuicao_gatewayPagamento WHERE id=:id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':id', $id);
         $stmt->execute();
 
         $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $resultado ? $resultado['token'] : null;
+        return $resultado ? $resultado['private_token'] : null;
     }
 
     public function buscarPorId($id)
