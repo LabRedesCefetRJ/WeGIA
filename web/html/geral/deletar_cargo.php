@@ -53,7 +53,9 @@ if (mysqli_affected_rows($conexao)) {
     $_SESSION['proxima'] = "Listar cargos";
     fecharConexao($stmt2, $conexao);
     header("Location: ../sucesso.php");
+    exit;
 } else {
     fecharConexao($stmt2, $conexao);
     header("Location: ./cargos.php?msg_e=Erro ao modificar cargo.");
+    exit;
 }
