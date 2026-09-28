@@ -163,6 +163,7 @@ EOF
 
 
 a2ensite api.conf
+a2enmod rewrite
 systemctl reload apache2
 certbot --apache -d "$SERVER_NAME_API"
 
