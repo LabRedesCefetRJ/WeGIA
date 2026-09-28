@@ -44,6 +44,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	if (!isset($_SESSION['isaida'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=' . WWW . 'html/matPat/listar_Isaida.php');
+		exit;
 	}
 	if (isset($_SESSION['isaida'])) {
     	$dadosIsaida = $_SESSION['isaida'];
@@ -64,6 +65,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	}
 	if (!isset($_SESSION['saidaUnica'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IsaidaControle&nextPage=' . WWW . 'html/matPat/listar_Isaida.php');
+		exit;
 	}
 	if (isset($_SESSION['saidaUnica'])) {
 		$saida = $_SESSION['saidaUnica'];

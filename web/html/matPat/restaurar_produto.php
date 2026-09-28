@@ -56,9 +56,11 @@ $item['qtd'] = $estoque ? $estoque['qtd'] : 0;
 
 	if (!isset($_GET['id_produto'])) {
 		header("Location: " . WWW . "html/matPat/listar_produto.php");
+		exit;
 	}
 	if (!isset($_SESSION['produtos'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto=' . $idProduto);
+		exit;
 	}
 	?>
 	<!-- Basic -->

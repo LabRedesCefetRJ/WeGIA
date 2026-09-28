@@ -13,6 +13,7 @@ extract($_REQUEST);
 
 if (!isset($_SESSION['usuario'])) {
     header("Location: ". WWW ."html/index.php");
+    exit;
 }
 
 require_once ROOT . '/dao/Conexao.php';
@@ -27,6 +28,7 @@ $stmt->execute();
 
 if ($stmt->rowCount() > 0) {
     header("Location: " . WWW . "html/geral/cadastrar_permissoes.php?msg=Funcionário já cadastrado para o Almoxarifado escolhido!&flag=warn");
+    exit;
 } else {
     try {
         $stmt2 = $pdo->prepare("INSERT INTO almoxarife (id_funcionario, id_almoxarifado) VALUES (:idFuncionario , :idAlmoxarifado)");
@@ -37,7 +39,9 @@ if ($stmt->rowCount() > 0) {
         $stmt2->execute();
 
         header("Location: " . WWW . "html/geral/cadastrar_permissoes.php?msg=Funcionário cadastrado como almoxarife!&flag=success");
+        exit;
     } catch (PDOException $e) {
         header("Location: " . WWW . "html/geral/cadastrar_permissoes.php?msg=Erro: &flag=erro&log={$e->getMessage()}");
+        exit;
     }
 }
