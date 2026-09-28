@@ -29,6 +29,7 @@ class AlmoxarifeControle
 
             $_SESSION['almoxarife'] = $almoxarifes;
             header('Location: ' . WWW . 'html/matPat/listar_almoxarife.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -50,6 +51,7 @@ class AlmoxarifeControle
             $almoxarifeDAO = new almoxarifeDAO($this->pdo);
             $almoxarifeDAO->excluir($id_almoxarife);
             header('Location: ' . WWW . 'html/matPat/listar_almoxarife.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }

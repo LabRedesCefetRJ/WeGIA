@@ -170,6 +170,7 @@ class Atendido_ocorrenciaControle
 			}
 				
 			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-sucesso");
+			exit;
 		} catch (PDOException $e) {
 			Util::tratarException($e);
 			header("Location: " . WWW . "html/atendido/cadastro_ocorrencia.php?idatendido=" . (int)$atendido_idatendido . "&ocorrencia_msg=cadastro-falha");

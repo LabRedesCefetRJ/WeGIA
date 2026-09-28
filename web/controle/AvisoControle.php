@@ -46,6 +46,7 @@ class AvisoControle
                 $aviso->setIdAviso($ultimaInsercao);
                 $avisoNotificacaoControle->incluir($aviso);
                 header("Location: ../html/saude/cadastrar_intercorrencias.php?id_fichamedica=$idfichamedica");
+                exit;
             }
         } catch (Exception $e) {
             Util::tratarException($e);

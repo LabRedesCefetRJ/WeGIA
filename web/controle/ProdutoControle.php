@@ -70,6 +70,7 @@ class ProdutoControle
             $_SESSION['produtos'] = $produtos;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -87,10 +88,12 @@ class ProdutoControle
             $_SESSION['categorias'] = $categorias;
 
             header('Location: ' . $_REQUEST['nextPage']);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
             $msg = "Não foi possível listar o produto!";
             header('Location: caminho.php?msg=' . $msg);
+            exit;
         }
     }
 
@@ -107,10 +110,12 @@ class ProdutoControle
             $_SESSION['categorias'] = $categorias;
 
             header('Location: ' . $_REQUEST['nextPage']);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
             $msg = "Não foi possível listar o produto!";
             header('Location: ' . WWW . 'html/geral/msg.php?msg=' . $msg);
+            exit;
         }
     }
 
@@ -129,6 +134,7 @@ class ProdutoControle
             $_SESSION['autocomplete'] = $produtos;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -157,6 +163,7 @@ class ProdutoControle
             $produtoDAO->incluir($produto);
 
             header("Location: " . WWW . "html/matPat/cadastro_produto.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -218,6 +225,7 @@ class ProdutoControle
             $produto = $produtoDAO->listarId($id);
             $_SESSION['produto'] = $produto;
             header('Location: ' . $nextPage);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }

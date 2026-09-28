@@ -115,9 +115,11 @@ class DependenteControle
             $dependenteDao->editarEndereco($id_dependente, $cep, $uf, $cidade, $bairro, $rua, $complemento, $ibge, $numero_residencia);
 
             header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $id_dependente . "#documentacao");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
             header("Location: ../html/funcionario/profile_dependente.php?id_dependente=" . $id_dependente . "#documentacao");
+            exit;
         }
     }
 }

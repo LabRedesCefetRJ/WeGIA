@@ -98,6 +98,7 @@ class InternoControle
             $_SESSION['proxima'] = "Cadastrar outro interno";
             $_SESSION['link'] = "../html/atendido/Cadastro_Atendido.php";
             header("Location: ../html/sucesso.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -114,6 +115,7 @@ class InternoControle
 
             $AtendidoDAO->alterar($interno);
             header("Location: ../html/Profile_Atendido.php?id=" . $idInterno);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -130,6 +132,7 @@ class InternoControle
             $AtendidoDAO->excluir($id);
             $this->listarTodos(false);
             header("Location: ../html/Informacao_Atendido.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
