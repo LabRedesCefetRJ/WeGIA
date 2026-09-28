@@ -394,15 +394,29 @@ class SocioController
      * Tempo (em segundos) que a confirmação de captcha feita ao digitar o
      * CPF (verificarCadastroSocio) continua valendo pra confirmação final
      * da contribuição, via o reaproveitamento de sessão que
-     * CaptchaGoogleService::validate() já faz sozinho.
+     * CaptchaGoogleService::validate() já faz sozinho. A sessão fica
+     * amarrada ao documento verificado (ver armarSessaoCaptcha()), então só
+     * vale pra fechar a contribuição do mesmo sócio que passou por aqui.
      */
     private const CAPTCHA_SEGUNDOS_DADOS_PRONTOS = 30;
     private const CAPTCHA_SEGUNDOS_CAMPOS_FALTANTES = 120;
     private const CAPTCHA_SEGUNDOS_CADASTRO_ZERO = 300;
 
-    private function armarSessaoCaptcha(int $segundos): void
+    /**
+     * Amarra a sessão de captcha reaproveitada ao documento que foi de fato
+     * verificado — CaptchaGoogleService::temSessaoValidada() exige esse
+     * mesmo documento na hora de consumir a sessão em criarBoleto/criarCarne/
+     * criarQRCode/processarCartaoCredito/criarAssinatura. Sem isso, um único
+     * solve pra um CPF qualquer destravaria a geração de pagamento pra
+     * qualquer outro sócio dentro da janela de validade.
+     */
+    private function armarSessaoCaptcha(int $segundos, string $documento): void
     {
-        $_SESSION['captcha'] = ['validated' => true, 'timeout' => time() + $segundos];
+        $_SESSION['captcha'] = [
+            'validated' => true,
+            'timeout' => time() + $segundos,
+            'documento' => preg_replace('/\D/', '', $documento),
+        ];
     }
 
     /**
@@ -462,7 +476,7 @@ class SocioController
                     // preencher o cadastro inteiro, janela maior.
                     $this->armarSessaoCaptcha($existePessoa
                         ? self::CAPTCHA_SEGUNDOS_DADOS_PRONTOS
-                        : self::CAPTCHA_SEGUNDOS_CADASTRO_ZERO);
+                        : self::CAPTCHA_SEGUNDOS_CADASTRO_ZERO, $documento);
                 }
 
                 echo json_encode([
@@ -478,7 +492,7 @@ class SocioController
             if (!$autenticado) {
                 $this->armarSessaoCaptcha(empty($camposFaltantes)
                     ? self::CAPTCHA_SEGUNDOS_DADOS_PRONTOS
-                    : self::CAPTCHA_SEGUNDOS_CAMPOS_FALTANTES);
+                    : self::CAPTCHA_SEGUNDOS_CAMPOS_FALTANTES, $documento);
             }
 
             echo json_encode([
