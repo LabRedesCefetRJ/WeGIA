@@ -572,6 +572,24 @@ class SocioController
             // ContribuicaoLogController/RecorrenciaController (confirmação
             // do pagamento) — esse método fica no meio do caminho e não
             // deve consumir nem rearmar essa sessão.
+            if (!isset($_SESSION['usuario'])) {
+                // Rota pública (mesmo padrão de verificarCadastroSocio() /
+                // buscarPorDocumento()): sem isso, essa rota escrevia no
+                // cadastro do sócio sem nenhum limite de tentativas, bastando
+                // conhecer um CPF com campos faltantes.
+                $cache = new Cache();
+                $chaveLimite = 'rate_limit_completarCadastroSocio_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
+                $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
+
+                if ($tentativas >= 10) {
+                    http_response_code(429);
+                    echo json_encode(['erro' => 'Muitas tentativas. Tente novamente em alguns instantes.']);
+                    exit();
+                }
+
+                $cache->save($chaveLimite, $tentativas + 1, '1 minute');
+            }
+
             $documento = trim((string) filter_input(INPUT_POST, 'documento_socio'));
 
             if (!$documento || empty($documento))
