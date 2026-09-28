@@ -9,6 +9,7 @@ extract($_REQUEST);
 session_start();
 if (!isset($_SESSION["usuario"])) {
     header("Location: ../../index.php");
+    exit;
 }
 
 // Verifica Permissão do Usuário
@@ -98,3 +99,4 @@ try {
 
 $idatendido_familiares = $_GET['idatendido_familiares'];
 header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+exit;
