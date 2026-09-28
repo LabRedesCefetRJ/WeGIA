@@ -3,19 +3,24 @@ class GatewayPagamento
 {
 
     //atributos
-    private $id;
-    private $nome;
-    private $endpoint;
-    private $token;
+    private int $id;
+    private string $nome;
+    private string $endpoint;
+    private string $privateToken;
+    private string $publicToken;
     private $status;
 
-    public function __construct($nome, $endpoint, $token, $status = null)
+    public function __construct(string $nome, string $endpoint, string $privateToken, string $publicToken, $status = null, ?int $id = null)
     {
-        $this->setNome($nome)->setEndpoint($endpoint)->setToken($token);
+        $this->setNome($nome)->setEndpoint($endpoint)->setPrivateToken($privateToken)->setPublicToken($publicToken);
         if (!$status) {
             $this->setStatus(0);
         } else {
             $this->setStatus($status);
+        }
+
+        if ($id) {
+            $this->setId($id);
         }
     }
 
@@ -27,13 +32,13 @@ class GatewayPagamento
     {
         // Ao contrário de editar(), aqui o token vazio nunca é válido —
         // não existe "manter o atual" pra um gateway que ainda não existe
-        if (trim((string) $this->token) === '') {
+        if (trim((string) $this->privateToken) === '') {
             throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
         }
 
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
-        $gatewayPagamentoDao->cadastrar($this->nome, $this->endpoint, $this->token, $this->status);
+        $gatewayPagamentoDao->cadastrar($this->nome, $this->endpoint, $this->privateToken, $this->publicToken, $this->status);
     }
 
     /**
@@ -54,7 +59,7 @@ class GatewayPagamento
         $tokenAtual = $gatewayPagamentoDao->buscarTokenPorId($this->id);
         $tokenAtualMascarado = $tokenAtual !== null && $tokenAtual !== '' ? self::ofuscarToken($tokenAtual) : null;
 
-        if (trim((string) $this->token) === '' || ($tokenAtualMascarado !== null && $this->token === $tokenAtualMascarado)) {
+        if (trim((string) $this->privateToken) === '' || ($tokenAtualMascarado !== null && $this->privateToken === $tokenAtualMascarado)) {
             // Token não foi reinformado. Se o endpoint
             // estiver mudando mesmo assim, recusa: sem essa checagem, dava pra
             // redirecionar as cobranças pra um servidor de terceiros mantendo
@@ -69,11 +74,25 @@ class GatewayPagamento
             }
 
             // Não atualiza o token se ele estiver ofuscado
-            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, null);
+            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, null, $this->publicToken);
         } else {
             // Token foi alterado, então atualiza normalmente
-            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->token);
+            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->privateToken, $this->publicToken);
         }
+    }
+
+    /**
+     * Retorna os dados públicos do gateway de pagamento
+     */
+    public function getPublicData()
+    {
+        return [
+            'id' => $this->id,
+            'description' => $this->nome,
+            'endpoint' => $this->endpoint,
+            'publicToken' => $this->publicToken,
+            'status' => $this->status
+        ];
     }
 
     /**
@@ -106,9 +125,9 @@ class GatewayPagamento
     /**
      * Get the value of token
      */
-    public function getToken()
+    public function getPrivateToken()
     {
-        return $this->token;
+        return $this->privateToken;
     }
 
     /**
@@ -116,12 +135,38 @@ class GatewayPagamento
      *
      * @return  self
      */
-    public function setToken($token)
+    public function setPrivateToken($token)
     {
         // Vazio é um valor válido aqui: editar() usa isso pra decidir "não
         // reinformou o token, manter o atual". Quem precisa exigir um token
-        // não vazio (cadastrar()) valida isso na hora certa.
-        $this->token = $token;
+        // privado não vazio (cadastrar()) valida isso na hora certa.
+        $this->privateToken = $token;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of token
+     */
+    public function getPublicToken()
+    {
+        return $this->publicToken;
+    }
+
+    /**
+     * Set the value of token
+     *
+     * @return  self
+     */
+    public function setPublicToken($token)
+    {
+        $tokenLimpo = trim($token);
+
+        if (!$tokenLimpo || empty($tokenLimpo)) {
+            throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
+        }
+
+        $this->publicToken = $token;
 
         return $this;
     }

@@ -18,7 +18,7 @@ class AnexoDAO
 			$anexos = $stmtAnexos->fetchAll(PDO::FETCH_ASSOC);
 
 			foreach($anexos as $key => $value){
-				$anexos[$key] = ['extensao' => $value['extensao'], 'nome' => $value['nome'], 'id_despacho' => $value['id_despacho'], 'id_anexo' => $value['id_anexo']];
+				$anexos[$key] = ['extensao' => htmlspecialchars($value['extensao']), 'nome' => htmlspecialchars($value['nome']), 'id_despacho' => $value['id_despacho'], 'id_anexo' => $value['id_anexo']];
 			}
 		} catch (PDOException $e) {
 			echo 'Error:' . $e->getMessage();
@@ -43,6 +43,19 @@ class AnexoDAO
 		}
 
 		return $anexo;
+	}
+
+	//Função para obter o id do memorando ao qual um anexo pertence (via despacho)
+	public function getIdMemorandoPorAnexo($idAnexo)
+	{
+		$pdo = Conexao::connect();
+		$stmt = $pdo->prepare("SELECT d.id_memorando FROM anexo a JOIN despacho d ON (a.id_despacho = d.id_despacho) WHERE a.id_anexo = :idAnexo");
+		$stmt->bindParam(':idAnexo', $idAnexo, PDO::PARAM_INT);
+		$stmt->execute();
+
+		$resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+		return $resultado ? $resultado['id_memorando'] : null;
 	}
 
 	//Função para incluir um anexo

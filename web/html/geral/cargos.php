@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,7 +12,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 91, 1);
 
@@ -161,7 +161,7 @@ $cargo = mysqli_query($conexao, "SELECT * FROM cargo");
 									$cargos = mysqli_query($conexao, "SELECT * FROM `cargo`");
 									while ($row = $cargos->fetch_array(MYSQLI_ASSOC)) {
 										$id_cargo = $row['id_cargo'];
-										$cargo = $row['cargo'];
+										$cargo = htmlspecialchars($row['cargo'], ENT_QUOTES, 'UTF-8');
 										if ($id_cargo != 1 && $id_cargo != 2)
 											echo "<tr><td>$id_cargo</td><td><input id='$id_cargo' type='text' value='$cargo'></td><td><a id='a_$id_cargo' class='btn btn-primary' href='salvar_cargo.php?id_cargo=$id_cargo&value='>Salvar</a><td><a class='btn btn-danger' href='deletar_cargo.php?id_cargo=$id_cargo'>Deletar</a></td></tr>";
 									}

@@ -10,7 +10,11 @@ class InformacaoAdicionalDAO{
     }
 
     private function montarInformacaoAdicional(array $array){
-        return new InformacaoAdicional($array['id'], $array['descricao'], $array['dado']);
+        return new InformacaoAdicional(
+            $array['id'],
+            htmlspecialchars($array['descricao'] ?? '', ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($array['dado'] ?? '', ENT_QUOTES, 'UTF-8')
+        );
     }
 
     public function getTodasInformacoesAdicionaisPorIdFuncionario(int $idFuncionario){

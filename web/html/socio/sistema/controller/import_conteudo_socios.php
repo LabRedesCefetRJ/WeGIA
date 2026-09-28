@@ -128,10 +128,10 @@
                   }*/
 
                   $id = htmlspecialchars($resultado['socioid']);
-                  $cpf_cnpj = htmlspecialchars($resultado['cpf']);
+                  $cpf_cnpj = isset($resultado['cpf']) ? htmlspecialchars($resultado['cpf']) : '';
                   $nome_s = htmlspecialchars($resultado['nome'] . " " . $resultado['sobrenome']);
-                  $email = htmlspecialchars($resultado['email']);
-                  $telefone = htmlspecialchars($resultado['telefone']);
+                  $email = isset($resultado['email']) ? htmlspecialchars($resultado['email']) : '';
+                  $telefone = isset($resultado['telefone']) ? htmlspecialchars($resultado['telefone']) : '';
                   $tipo_socio = htmlspecialchars($resultado['tipo']);
                   /*
                   if ($resultado['logradouro'] == "") {

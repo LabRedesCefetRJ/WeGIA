@@ -1023,7 +1023,8 @@ CREATE TABLE `wegia`.`contribuicao_gatewayPagamento` (
     `id` INT NOT NULL AUTO_INCREMENT,
     `plataforma` VARCHAR(50) NOT NULL,
     `endPoint` VARCHAR(255) NOT NULL,
-    `token` VARCHAR(100) NOT NULL,
+    `private_token` VARCHAR(100) NOT NULL,
+    `public_token` VARCHAR(100) NOT NULL,
     `status` BOOLEAN NOT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB;
@@ -1097,7 +1098,7 @@ ENGINE = InnoDB;
 CREATE TABLE IF NOT EXISTS wegia.contribuicao_log (
 id INT NOT NULL AUTO_INCREMENT,
 id_socio INT(11) NOT NULL,
-id_gateway INT(11) NOT NULL,
+id_gateway INT(11) DEFAULT NULL,
 id_meio_pagamento INT(11) NOT NULL,
 id_recorrencia INT(11) DEFAULT NULL,
 codigo VARCHAR(255) NOT NULL UNIQUE,
@@ -1180,6 +1181,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`socio` (
   `id_socio` INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid` BINARY(16) UNIQUE NOT NULL,
   `id_pessoa` INT(11) NOT NULL,
   `id_sociostatus` INT NOT NULL,
   `id_sociotipo` INT NOT NULL,
@@ -1244,6 +1246,115 @@ CREATE TABLE IF NOT EXISTS `wegia`.`socio_log` (
   `user_agent` VARCHAR(512),
   FOREIGN KEY (`id_socio`) REFERENCES `socio`(`id_socio`)
 )ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`socio_beneficio_regra`
+-- -----------------------------------------------------
+CREATE TABLE  IF NOT EXISTS `wegia`.`socio_benefit_rule` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `value_per_point` DECIMAL(10,2) NOT NULL,
+    `max_points_concurrent` INT UNSIGNED NOT NULL,
+    `duration_point_months` INT UNSIGNED NOT NULL,
+    `analysis_window_months` INT UNSIGNED NOT NULL,
+    `active` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------
+-- Table `wegia`.`socio_verification_code`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`socio_verification_code` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_socio` INT NOT NULL,
+  `code` VARCHAR(6) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `expires_at` TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 5 MINUTE),
+  `code_used` BOOLEAN NOT NULL DEFAULT FALSE,
+  `code_used_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `idx_id_socio` (`id_socio` ASC),
+  CONSTRAINT `fk_socio_verification_code_socio`
+    FOREIGN KEY (`id_socio`)
+    REFERENCES `wegia`.`socio` (`id_socio`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`socio_parceiro_institucional`
+-- -----------------------------------------------------
+CREATE TABLE `wegia`.`socio_parceiro_institucional` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+
+    `id_socio_benefit_rule` INT UNSIGNED NOT NULL,
+    `id_pessoa` INT NOT NULL,
+    `id_setor` INT NOT NULL,
+
+    `ativo` BOOLEAN NOT NULL DEFAULT TRUE,
+
+    `localizacao` VARCHAR(512) NULL,
+    `divulgacao` VARCHAR(512) NULL,
+    `descricao` TEXT NULL,
+
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+
+    CONSTRAINT uq_socio_parceiro_institucional
+        UNIQUE (id_pessoa, id_socio_benefit_rule),
+
+    INDEX idx_spi_pessoa (id_pessoa),
+    INDEX idx_spi_benefit_rule (id_socio_benefit_rule),
+    INDEX idx_spi_setor (id_setor),
+
+    CONSTRAINT fk_spi_pessoa
+        FOREIGN KEY (id_pessoa)
+        REFERENCES `wegia`.`pessoa` (id_pessoa)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_spi_benefit_rule
+        FOREIGN KEY (id_socio_benefit_rule)
+        REFERENCES `wegia`.`socio_benefit_rule` (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_spi_setor
+        FOREIGN KEY (id_setor)
+        REFERENCES `wegia`.`socio_parceiro_institucional_setor` (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+  -- -----------------------------------------------------
+-- Table `wegia`.`socio_parceiro_institucional_setor`
+-- -----------------------------------------------------
+CREATE TABLE `wegia`.`socio_parceiro_institucional_setor` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+
+    `nome` VARCHAR(255) NOT NULL,
+    `descricao` TEXT NULL,
+
+    `ativo` BOOLEAN NOT NULL DEFAULT TRUE,
+
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (`id`),
+
+    UNIQUE KEY `uq_spi_setor_nome` (`nome`)
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`endereco_instituicao`
@@ -2650,6 +2761,50 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_membro_periodo` (
     ON DELETE SET NULL
     ON UPDATE CASCADE
 ) ENGINE = InnoDB;
+
+
+USE `wegia`;
+
+CREATE TABLE IF NOT EXISTS `jwt_blacklist` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+
+    -- SHA-256 do JWT original
+    `token_hash` CHAR(64) NOT NULL,
+
+    -- Pessoa proprietária do token
+    `user_id` INT(11) NOT NULL,
+
+    -- Tipo do JWT
+    `token_type` ENUM('access', 'refresh') NOT NULL,
+
+    -- Equivalente ao claim "iat"
+    `issued_at` DATETIME NOT NULL,
+
+    -- Equivalente ao claim "exp"
+    `expires_at` DATETIME NOT NULL,
+
+    -- Momento em que o token foi invalidado
+    `blacklisted_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (`id`),
+
+    UNIQUE KEY `uq_jwt_blacklist_token_hash` (`token_hash`),
+
+    KEY idx_jwt_blacklist_expires_at (expires_at),
+
+    KEY idx_jwt_blacklist_user_id (user_id),
+
+    KEY idx_jwt_blacklist_user_type (user_id, token_type),
+
+    CONSTRAINT fk_jwt_blacklist_pessoa
+        FOREIGN KEY (user_id)
+        REFERENCES pessoa (id_pessoa)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
   
 -- ########################### PROCEDURES #################### --
 
@@ -3186,6 +3341,22 @@ DELIMITER ;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+-- ########################### EVENTS #################### --
+
+USE wegia;
+
+DROP EVENT IF EXISTS ev_jwt_blacklist_cleanup;
+
+CREATE EVENT ev_jwt_blacklist_cleanup
+    ON SCHEDULE EVERY 1 HOUR
+    STARTS CURRENT_TIMESTAMP + INTERVAL 1 HOUR
+    ON COMPLETION PRESERVE
+    ENABLE
+    COMMENT 'Remove tokens JWT expirados da blacklist'
+DO
+    DELETE FROM jwt_blacklist
+    WHERE expires_at <= NOW();
 
 -- -----------------------------------------------------
 -- Módulo Projetos (revisado)
