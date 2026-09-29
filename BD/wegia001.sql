@@ -2035,30 +2035,34 @@ CREATE TABLE `wegia`.`saude_especialista` (
     ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Criação da tabela: parecer
-CREATE TABLE `wegia`.`parecer` (
+-- Criação da tabela: saude_parecer_modelo, armazena um modelo .docx, .odt para pareceres médicos, que podem ser preenchidos e gerados dinamicamente.
+CREATE TABLE `wegia`.`saude_parecer_modelo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(128) NULL,
+  `arquivo` BLOB NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Criação da tabela: saude_parecer
+CREATE TABLE `wegia`.`saude_parecer` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `data` DATETIME NOT NULL,
   `id_saude_especialidade` INT NOT NULL,
   `arquivo` BLOB NULL,
   `id_funcionario` INT NOT NULL,
   `id_pessoa` INT NOT NULL,
+  `id_saude_parecer_modelo` INT NOT NULL,
   PRIMARY KEY (`id`),
   CONSTRAINT `fk_parecer_especialidade`
-    FOREIGN KEY (`id_saude_especialidade`)
-    REFERENCES `wegia`.`saude_especialidade` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    FOREIGN KEY (`id_saude_especialidade`) REFERENCES `wegia`.`saude_especialidade` (`id`),
   CONSTRAINT `fk_parecer_funcionario`
-    FOREIGN KEY (`id_funcionario`)
-    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    FOREIGN KEY (`id_funcionario`) REFERENCES `wegia`.`funcionario` (`id_funcionario`),
   CONSTRAINT `fk_parecer_pessoa`
-    FOREIGN KEY (`id_pessoa`)
-    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION
+    FOREIGN KEY (`id_pessoa`) REFERENCES `wegia`.`pessoa` (`id_pessoa`),
+  CONSTRAINT `fk_parecer_modelo`
+    FOREIGN KEY (`id_saude_parecer_modelo`) REFERENCES `wegia`.`saude_parecer_modelo` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -------------------------------------------------------
