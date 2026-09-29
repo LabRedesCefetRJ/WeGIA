@@ -304,6 +304,14 @@ INSERT INTO `almoxarife` (`id_almoxarife`, `id_funcionario`, `id_almoxarifado`, 
 INSERT INTO `saude_medicos` (`id_medico`, `crm`, `nome`) VALUES ('0', '123456/RJ', 'Sem médico definido');
 UPDATE `saude_medicos` SET `id_medico` = '0' WHERE `saude_medicos`.`id_medico` = 1;
 
+INSERT INTO `wegia`.`saude_especialidade` (`descricao`) VALUES
+('Fisioterapia'),
+('Fonoaudiologia'),
+('Nutrição'),
+('Odontologia'),
+('Pedagogia'),
+('Psicologia'),
+('Psiquiatria');
 
 -- ----------------------------------------------------
 -- MÓDULO PROJETOS

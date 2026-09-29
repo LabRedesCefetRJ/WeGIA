@@ -912,109 +912,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`tabela_imagem_campo` (
     REFERENCES `wegia`.`imagem` (`id_imagem`))
 ENGINE = InnoDB;
 
-/*
--- REMOVIDO - PAGAMENTOS USANDO O GATEWAY BOLETOBANCÁRIO.COM TOTALMENTE DESATIVADO --
--- -----------------------------------------------------
--- Table `wegia`.`sistema_pagamento`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`sistema_pagamento` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `nome_sistema` VARCHAR(256) NOT NULL,
-  PRIMARY KEY (`id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `wegia`.`doacao_boleto_regras`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`doacao_boleto_regras` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `min_boleto_uni` DECIMAL(10,2) NOT NULL,
-  `max_dias_venc` INT(11) NOT NULL,
-  `juros` DECIMAL(10,2) NOT NULL,
-  `multa` DECIMAL(10,2) NOT NULL,
-  `max_parcela` DECIMAL(10,2) NOT NULL,
-  `min_parcela` DECIMAL(10,2) NOT NULL,
-  `agradecimento` LONGTEXT NOT NULL,
-  `dias_boleto_a_vista` INT(11) NOT NULL,
-  `dias_venc_carne_op1` INT(11) NOT NULL,
-  `dias_venc_carne_op2` INT(11) NOT NULL,
-  `dias_venc_carne_op3` INT(11) NOT NULL,
-  `dias_venc_carne_op4` INT(11) NOT NULL,
-  `dias_venc_carne_op5` INT(11) NOT NULL,
-  `dias_venc_carne_op6` INT(11) NOT NULL,
-  PRIMARY KEY (`id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `wegia`.`doacao_boleto_info`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`doacao_boleto_info` (
-  `id` INT(11) NOT NULL,
-  `api` VARCHAR(256) NOT NULL,
-  `token_api` VARCHAR(256) NOT NULL,
-  `sandbox` VARCHAR(256) NOT NULL,
-  `token_sandbox` VARCHAR(256) NOT NULL,
-  `id_sistema` INT(11) NOT NULL,
-  `id_regras` INT(11) NOT NULL,
-  INDEX `id_sistema` (`id_sistema` ASC),
-  INDEX `id_regras` (`id_regras` ASC),
-  CONSTRAINT `doacao_boleto_info_ibfk_1`
-    FOREIGN KEY (`id_sistema`)
-    REFERENCES `wegia`.`sistema_pagamento` (`id`),
-  CONSTRAINT `doacao_boleto_info_ibfk_2`
-    FOREIGN KEY (`id_regras`)
-    REFERENCES `wegia`.`doacao_boleto_regras` (`id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `wegia`.`doacao_cartao_avulso`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`doacao_cartao_avulso` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `url` VARCHAR(256) NOT NULL,
-  `id_sistema` INT(11) NOT NULL,
-  INDEX `id_sistema` (`id_sistema` ASC),
-  PRIMARY KEY (`id`),
-  CONSTRAINT `doacao_cartao_avulso_ibfk_1`
-    FOREIGN KEY (`id_sistema`)
-    REFERENCES `wegia`.`sistema_pagamento` (`id`))
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `wegia`.`doacao_cartao_mensal`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `wegia`.`doacao_cartao_mensal` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `link` VARCHAR(256) NOT NULL,
-  `valor` DECIMAL(10,2) NULL DEFAULT NULL,
-  `id_sistema` INT(11) NOT NULL,
-  INDEX `id_sistema` (`id_sistema` ASC),
-  PRIMARY KEY (`id`),
-  CONSTRAINT `doacao_cartao_mensal_ibfk_1`
-    FOREIGN KEY (`id_sistema`)
-    REFERENCES `wegia`.`sistema_pagamento` (`id`))
-ENGINE = InnoDB;
-
-
-CREATE TABLE IF NOT EXISTS doacao_pix_tipos(
-ID INT PRIMARY KEY AUTO_INCREMENT,
-TIPO VARCHAR(50) NOT NULL)
-ENGINE = InnoDB;
-
-CREATE TABLE IF NOT EXISTS doacao_pix(
-ID INT PRIMARY KEY AUTO_INCREMENT,
-CHAVE VARCHAR(50),
-TIPO_CHAVE INT,
-ID_SISTEMA INT,
-FOREIGN KEY (TIPO_CHAVE) REFERENCES doacao_pix_tipos(ID),
-FOREIGN KEY (ID_SISTEMA) REFERENCES sistema_pagamento(ID))
-ENGINE = InnoDB;
-*/
-
 -- Novas tabelas para o módulo contribuição --
 -- -----------------------------------------------------
 -- Table `wegia`.`contribuicao_gatewayPagamento`
@@ -2110,6 +2007,59 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_sinais_vitais` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
+
+-- Criação da tabela: saude_especialidade
+CREATE TABLE `wegia`.`saude_especialidade` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(128) UNIQUE NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Criação da tabela: saude_especialista (Tabela Associativa)
+CREATE TABLE `wegia`.`saude_especialista` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_pessoa` INT NOT NULL,
+  `id_saude_especialidade` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  -- Garante que a mesma pessoa não se associe duas vezes à mesma especialidade
+  UNIQUE KEY `uk_pessoa_especialidade` (`id_pessoa`, `id_saude_especialidade`),
+  CONSTRAINT `fk_especialista_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_especialista_especialidade`
+    FOREIGN KEY (`id_saude_especialidade`)
+    REFERENCES `wegia`.`saude_especialidade` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Criação da tabela: parecer
+CREATE TABLE `wegia`.`parecer` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `data` DATETIME NOT NULL,
+  `id_saude_especialidade` INT NOT NULL,
+  `arquivo` BLOB NULL,
+  `id_funcionario` INT NOT NULL,
+  `id_pessoa` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_parecer_especialidade`
+    FOREIGN KEY (`id_saude_especialidade`)
+    REFERENCES `wegia`.`saude_especialidade` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_parecer_funcionario`
+    FOREIGN KEY (`id_funcionario`)
+    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_parecer_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -------------------------------------------------------
 -- Table `wegia`.`pet_foto`
