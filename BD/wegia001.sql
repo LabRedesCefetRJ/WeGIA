@@ -2008,24 +2008,34 @@ CREATE TABLE IF NOT EXISTS `wegia`.`saude_sinais_vitais` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
--- Criação da tabela: saude_especialidade
+-- 1. Tabela: saude_especialidade
 CREATE TABLE `wegia`.`saude_especialidade` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `descricao` VARCHAR(128) UNIQUE NOT NULL,
+  `descricao` VARCHAR(128) NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Criação da tabela: saude_especialista (Tabela Associativa)
+-- 2. Tabela: saude_parecer_modelo
+CREATE TABLE `wegia`.`saude_parecer_modelo` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(128) NULL,
+  `arquivo` BLOB NULL,
+  `extensao` VARCHAR(32) NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. Tabela: saude_especialista (Associativa)
 CREATE TABLE `wegia`.`saude_especialista` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `id_pessoa` INT NOT NULL,
+  `id_funcionario` INT NOT NULL,
   `id_saude_especialidade` INT NOT NULL,
   PRIMARY KEY (`id`),
-  -- Garante que a mesma pessoa não se associe duas vezes à mesma especialidade
-  UNIQUE KEY `uk_pessoa_especialidade` (`id_pessoa`, `id_saude_especialidade`),
-  CONSTRAINT `fk_especialista_pessoa`
-    FOREIGN KEY (`id_pessoa`)
-    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+  UNIQUE KEY `uk_funcionario_especialidade` (`id_funcionario`, `id_saude_especialidade`),
+  CONSTRAINT `fk_especialista_funcionario`
+    FOREIGN KEY (`id_funcionario`)
+    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_especialista_especialidade`
@@ -2035,34 +2045,39 @@ CREATE TABLE `wegia`.`saude_especialista` (
     ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Criação da tabela: saude_parecer_modelo, armazena um modelo .docx, .odt para pareceres médicos, que podem ser preenchidos e gerados dinamicamente.
-CREATE TABLE `wegia`.`saude_parecer_modelo` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `descricao` VARCHAR(128) NULL,
-  `arquivo` BLOB NULL,
-  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Criação da tabela: saude_parecer
+-- 4. Tabela: saude_parecer
 CREATE TABLE `wegia`.`saude_parecer` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `data` DATETIME NOT NULL,
-  `id_saude_especialidade` INT NOT NULL,
-  `arquivo` BLOB NULL,
+  `id_atendido` INT NOT NULL,
   `id_funcionario` INT NOT NULL,
-  `id_pessoa` INT NOT NULL,
+  `id_saude_especialidade` INT NOT NULL,
   `id_saude_parecer_modelo` INT NOT NULL,
+  `data` DATETIME NULL,
+  `arquivo` BLOB NULL,
+  `extensao` VARCHAR(32) NULL,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  CONSTRAINT `fk_parecer_especialidade`
-    FOREIGN KEY (`id_saude_especialidade`) REFERENCES `wegia`.`saude_especialidade` (`id`),
+  CONSTRAINT `fk_parecer_atendido`
+    FOREIGN KEY (`id_atendido`)
+    REFERENCES `wegia`.`atendido` (`idatendido`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
   CONSTRAINT `fk_parecer_funcionario`
-    FOREIGN KEY (`id_funcionario`) REFERENCES `wegia`.`funcionario` (`id_funcionario`),
-  CONSTRAINT `fk_parecer_pessoa`
-    FOREIGN KEY (`id_pessoa`) REFERENCES `wegia`.`pessoa` (`id_pessoa`),
+    FOREIGN KEY (`id_funcionario`)
+    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_parecer_especialidade`
+    FOREIGN KEY (`id_saude_especialidade`)
+    REFERENCES `wegia`.`saude_especialidade` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
   CONSTRAINT `fk_parecer_modelo`
-    FOREIGN KEY (`id_saude_parecer_modelo`) REFERENCES `wegia`.`saude_parecer_modelo` (`id`)
+    FOREIGN KEY (`id_saude_parecer_modelo`)
+    REFERENCES `wegia`.`saude_parecer_modelo` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -------------------------------------------------------
