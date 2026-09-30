@@ -3,6 +3,7 @@
 use api\Container\AppContainer;
 use api\contracts\services\SocioServiceInterface;
 use api\contracts\services\EmailVerificationServiceInterface;
+use api\contracts\services\SaudeServiceInterface;
 use api\modules\Socio\SocioController;
 use api\modules\Socio\SocioService;
 use api\modules\Socio\EmailVerificationService;
@@ -26,6 +27,14 @@ use api\modules\Contribuicao\ContribuicaoImportRegistry;
 use api\modules\Contribuicao\AmigosLajeXlsxImportService;
 use api\modules\Contribuicao\PaymentRepository;
 use api\modules\Contribuicao\PaymentController;
+
+//modulo de saúde
+use api\modules\Saude\SaudeController;
+use api\modules\Saude\SaudeService;
+use api\modules\Saude\SaudeRepository;
+use api\modules\Saude\SaudeMiddleware;
+
+//configurações da API
 use api\middleware\CorsMiddleware;
 use api\Infrastructure\RepositoryConnection;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -117,6 +126,21 @@ $container = new AppContainer([
             $c->get(PDO::class),
             $c->get(ContribuicaoImportRegistry::class)
         );
+    },
+    SaudeRepository::class => function ($c) {
+        return new SaudeRepository($c->get(PDO::class));
+    },
+    SaudeService::class => function ($c) {
+        return new SaudeService($c->get(SaudeRepository::class));
+    },
+    SaudeServiceInterface::class => function ($c) {
+        return $c->get(SaudeService::class);
+    },
+    SaudeController::class => function ($c) {
+        return new SaudeController($c->get(SaudeService::class));
+    },
+    SaudeMiddleware::class => function ($c) {
+        return new SaudeMiddleware($c->get(UserRepository::class), 5);
     },
     PaymentRepository::class => function ($c) {
         return new PaymentRepository($c->get(PDO::class));
@@ -309,6 +333,11 @@ $app->get('/contribuicoes/payment_methods', [PaymentController::class, 'getActiv
     ->add($container->get(AuthMiddleware::class));
 
 $app->get('/contribuicoes/payments_gateway/{payment_method}', [PaymentController::class, 'getPaymentGatewayByPaymentMethod'])
+    ->add($container->get(AuthMiddleware::class));
+
+//Rotas para módulo de saúde
+$app->get('/saude/especialidades', [SaudeController::class, 'getEspecialidades'])
+    ->add($container->get(SaudeMiddleware::class))
     ->add($container->get(AuthMiddleware::class));
 
 $app->run();
