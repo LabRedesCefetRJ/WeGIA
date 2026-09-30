@@ -166,12 +166,190 @@ class AgendaDAO
         return $periodos;
     }
 
+    private function aplicarRodizioDivisoes($idAlocacao)
+    {
+        $sqlPeriodos = "SELECT id, data_inicio, data_fim FROM agenda_alocacao_periodo WHERE id_alocacao = ? ORDER BY data_inicio ASC, id ASC";
+
+        $stmtPeriodos = $this->pdo->prepare($sqlPeriodos);
+        $stmtPeriodos->execute([$idAlocacao]);
+        $periodos = $stmtPeriodos->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($periodos) < 2) {
+            return;
+        }
+
+        $sqlEquipe = "SELECT id_equipe FROM agenda_alocacao WHERE id = ?";
+
+        $stmtEquipe = $this->pdo->prepare($sqlEquipe);
+        $stmtEquipe->execute([$idAlocacao]);
+
+        $alocacao = $stmtEquipe->fetch(PDO::FETCH_ASSOC);
+
+        if (!$alocacao) {
+            throw new InvalidArgumentException('Alocação não encontrada.',404);
+        }
+
+        $idEquipe = (int)$alocacao['id_equipe'];
+
+        $sqlMembros = "SELECT id_pessoa, id_divisao FROM agenda_equipe_membro  WHERE id_equipe = ? AND ativo = 1 ORDER BY id_pessoa";
+
+        $stmtMembros = $this->pdo->prepare($sqlMembros);
+        $stmtMembros->execute([$idEquipe]);
+
+        $membros = $stmtMembros->fetchAll(PDO::FETCH_ASSOC);
+
+        $quantidadeMembros = count($membros);
+
+        if ($quantidadeMembros < 2) {
+            return;
+        }
+
+        $divisoes = [];
+
+        foreach ($membros as $membro) {
+            if($membro['id_divisao'] === null) {
+                continue;
+            }
+            $idDivisao = (int)$membro['id_divisao'];
+
+            if (!isset($divisoes[$idDivisao])) {
+                $divisoes[$idDivisao] = $idDivisao;
+            }
+        }
+
+        $divisoes = array_values($divisoes);
+
+        if (count($divisoes) < 2) {
+            return;
+        }
+
+        $sqlMembrosPeriodo = "SELECT id_pessoa, id_divisao FROM agenda_membro_periodo WHERE id_periodo = ?";
+
+        $stmtMembrosPeriodo = $this->pdo->prepare($sqlMembrosPeriodo);
+        $stmtMembrosPeriodo->execute([$periodos[0]['id']]);
+
+        $sqlAtualiza = "UPDATE agenda_membro_periodo SET id_divisao = ? WHERE id_periodo = ? AND id_pessoa = ?";
+
+        $stmtAtualiza = $this->pdo->prepare($sqlAtualiza);
+
+        $divisaoAtual = [];
+
+        $registrosPrimeiroPeriodo =
+            $stmtMembrosPeriodo->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($registrosPrimeiroPeriodo as $registro) {
+            if ($registro['id_divisao'] === null) {
+                continue;
+            }
+            $idPessoa = (int)$registro['id_pessoa'];
+            $idDivisao = (int)$registro['id_divisao'];
+
+            $divisaoAtual[$idPessoa] = $idDivisao;
+        }
+
+        if (empty($divisaoAtual)) {
+            return;
+        }
+
+        $maximoRotacoes = intdiv($quantidadeMembros, 2);
+
+        if ($maximoRotacoes < 1) {
+            return;
+        }
+
+        for ($i = 1; $i < count($periodos); $i++) {
+
+            $idPeriodo = (int)$periodos[$i]['id'];
+
+            $quantidadeRotacoes =
+                random_int(1, $maximoRotacoes);
+
+            $novaDivisao = $divisaoAtual;
+
+            for (
+                $rotacao = 0;
+                $rotacao < $quantidadeRotacoes;
+                $rotacao++
+            ) {
+
+                $ordemDivisoes = $divisoes;
+
+                shuffle($ordemDivisoes);
+
+                $pessoasPorDivisao = [];
+
+                foreach ($divisaoAtual as $idPessoa => $idDivisao) {
+
+                    $idDivisao = (int)$idDivisao;
+
+                    if (!isset($pessoasPorDivisao[$idDivisao])) {
+                        $pessoasPorDivisao[$idDivisao] = [];
+                    }
+
+                    $pessoasPorDivisao[$idDivisao][] = $idPessoa;
+                }
+
+                $pessoasSelecionadas = [];
+
+                foreach ($ordemDivisoes as $idDivisao) {
+
+                    if (
+                        !isset($pessoasPorDivisao[$idDivisao]) ||
+                        empty($pessoasPorDivisao[$idDivisao])
+                    ) {
+                        continue 2;
+                    }
+
+                    $pessoas = $pessoasPorDivisao[$idDivisao];
+
+                    $idPessoa =
+                        $pessoas[array_rand($pessoas)];
+
+                    $pessoasSelecionadas[$idDivisao] = $idPessoa;
+                }
+
+                if (
+                    count($pessoasSelecionadas) !==
+                    count($ordemDivisoes)
+                ) {
+                    continue;
+                }
+
+                for ($j = 0;$j < count($ordemDivisoes);$j++) 
+                {
+                    $divisaoOrigem = $ordemDivisoes[$j];
+
+                    $proximaPosicao =
+                        ($j + 1) % count($ordemDivisoes);
+
+                    $divisaoDestino =
+                        $ordemDivisoes[$proximaPosicao];
+
+                    $idPessoa =
+                        $pessoasSelecionadas[$divisaoOrigem];
+
+                    $novaDivisao[$idPessoa] =
+                        $divisaoDestino;
+                }
+
+                $divisaoAtual = $novaDivisao;
+            }
+
+            foreach ($novaDivisao as $idPessoa => $idDivisao) {
+
+                $stmtAtualiza->execute([$idDivisao, $idPeriodo, $idPessoa]);
+            }
+
+            $divisaoAtual = $novaDivisao;
+        }
+    }   
+
     public function incluirAlocacao(AgendaAlocacao $alocacao)
     {
         $this->pdo->beginTransaction();
         try {
-            $sql = "INSERT INTO agenda_alocacao (id_agenda, id_equipe, inicio, fim, lembrete, lembrete_enviado, intervalo)
-                    VALUES (:id_agenda, :id_equipe, :inicio, :fim, :lembrete, :lembrete_enviado, :intervalo)";
+            $sql = "INSERT INTO agenda_alocacao (id_agenda, id_equipe, inicio, fim, lembrete, lembrete_enviado, intervalo, rodizio_divisao)
+                    VALUES (:id_agenda, :id_equipe, :inicio, :fim, :lembrete, :lembrete_enviado, :intervalo, :rodizio_divisao)";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':id_agenda',        $alocacao->getId_agenda(), PDO::PARAM_INT);
             $stmt->bindValue(':id_equipe',        $alocacao->getId_equipe(), PDO::PARAM_INT);
@@ -180,6 +358,7 @@ class AgendaDAO
             $stmt->bindValue(':lembrete',         $alocacao->getLembrete());
             $stmt->bindValue(':lembrete_enviado', $alocacao->getLembrete_enviado(), PDO::PARAM_INT);
             $stmt->bindValue(':intervalo',        $alocacao->getIntervalo(), PDO::PARAM_INT);
+            $stmt->bindValue(':rodizio_divisao',  $alocacao->getRodizio_divisao(), PDO::PARAM_INT);
             $stmt->execute();
             $idAlocacao = $this->pdo->lastInsertId();
 
@@ -220,6 +399,9 @@ class AgendaDAO
 
                 $current->modify('+' . $step . ' days');
             }
+            if ($alocacao->getRodizio_divisao()) {
+                $this->aplicarRodizioDivisoes($idAlocacao);
+            }
 
             $this->pdo->commit();
             return $idAlocacao;
@@ -234,15 +416,18 @@ class AgendaDAO
     {
         $this->pdo->beginTransaction();
         try {
-            $stmtCheck = $this->pdo->prepare("SELECT inicio, fim, intervalo, id_equipe FROM agenda_alocacao WHERE id = ?");
+            $stmtCheck = $this->pdo->prepare("SELECT inicio, fim, intervalo, id_equipe, rodizio_divisao FROM agenda_alocacao WHERE id = ?");
             $stmtCheck->execute([$alocacao->getId()]);
             $old = $stmtCheck->fetch(PDO::FETCH_ASSOC);
-
+            if(!$old){
+                throw new InvalidArgumentException('Alocação não encontrada', 404);
+            }
             $regraMudou = (
                 $old['inicio'] != $alocacao->getInicio() ||
                 $old['fim'] != $alocacao->getFim() ||
                 (int)$old['intervalo'] != $alocacao->getIntervalo() ||
-                (int)$old['id_equipe'] != $alocacao->getId_equipe()
+                (int)$old['id_equipe'] != $alocacao->getId_equipe() ||
+                (int)$old['rodizio_divisao'] != $alocacao->getRodizio_divisao()
             );
 
             // Atualiza a capa
@@ -253,7 +438,8 @@ class AgendaDAO
                         fim              = :fim,
                         lembrete         = :lembrete,
                         lembrete_enviado = :lembrete_enviado,
-                        intervalo        = :intervalo
+                        intervalo        = :intervalo,
+                        rodizio_divisao  = :rodizio_divisao
                     WHERE id = :id";
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':id_agenda',        $alocacao->getId_agenda(), PDO::PARAM_INT);
@@ -263,6 +449,7 @@ class AgendaDAO
             $stmt->bindValue(':lembrete',         $alocacao->getLembrete());
             $stmt->bindValue(':lembrete_enviado', $alocacao->getLembrete_enviado(), PDO::PARAM_INT);
             $stmt->bindValue(':intervalo',        $alocacao->getIntervalo(), PDO::PARAM_INT);
+            $stmt->bindValue(':rodizio_divisao',  $alocacao->getRodizio_divisao(), PDO::PARAM_INT);
             $stmt->bindValue(':id',               $alocacao->getId(), PDO::PARAM_INT);
             $stmt->execute();
 
@@ -305,6 +492,9 @@ class AgendaDAO
 
                     $current->modify('+' . $step . ' days');
                 }
+                if ($alocacao->getRodizio_divisao()) {
+                    $this->aplicarRodizioDivisoes($alocacao->getId());
+                }
             }
 
             $this->pdo->commit();
@@ -325,9 +515,9 @@ class AgendaDAO
     public function listarTodasAlocacoes()
     {
         $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display,
-                       al.lembrete, al.id_agenda, al.id_equipe, al.intervalo,
-                       e.inicio_turno, e.fim_turno,
-                       a.descricao AS agenda, e.nome AS equipe, e.nome AS title
+                    al.lembrete, al.id_agenda, al.id_equipe, al.intervalo, al.rodizio_divisao,
+                    e.inicio_turno, e.fim_turno,
+                    a.descricao AS agenda, e.nome AS equipe, e.nome AS title
                 FROM agenda_alocacao al
                 INNER JOIN agenda a ON al.id_agenda = a.id
                 INNER JOIN agenda_equipe e ON al.id_equipe = e.id
@@ -339,13 +529,11 @@ class AgendaDAO
 
     public function listarAlocacaoPorId(int $id): array
     {
-        $sql = "SELECT al.id, DATE(al.inicio) AS inicio, DATE(al.fim) AS fim,
-                       a.descricao AS agenda, e.nome AS equipe,
-                       e.inicio_turno, e.fim_turno
-                FROM agenda_alocacao al
-                INNER JOIN agenda a ON al.id_agenda = a.id
-                INNER JOIN agenda_equipe e ON al.id_equipe = e.id
-                WHERE al.id = :id";
+        $sql = "SELECT al.id, DATE(al.inicio) AS start, DATE(al.fim) AS end, DATE(al.fim) AS fim_display,
+                    al.lembrete, al.id_agenda, al.id_equipe, al.intervalo, al.rodizio_divisao,
+                    e.inicio_turno, e.fim_turno,
+                    a.descricao AS agenda, e.nome AS equipe, e.nome AS title
+                FROM agenda_alocacao al INNER JOIN agenda a ON al.id_agenda = a.id INNER JOIN agenda_equipe e ON al.id_equipe = e.id WHERE al.id = :id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();

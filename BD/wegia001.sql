@@ -2769,6 +2769,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao` (
   `lembrete` DATETIME NULL DEFAULT NULL,
   `lembrete_enviado` TINYINT(1) NOT NULL DEFAULT 0,
   `intervalo` INT NOT NULL DEFAULT 0,
+  `rodizio_divisao` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_aa_agenda_idx` (`id_agenda` ASC),
   INDEX `fk_aa_equipe_idx` (`id_equipe` ASC),
