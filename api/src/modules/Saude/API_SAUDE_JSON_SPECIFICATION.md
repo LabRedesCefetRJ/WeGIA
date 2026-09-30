@@ -65,6 +65,67 @@ curl -X GET "http://localhost:8000/saude/especialidades" \
 
 ---
 
+## Listar Modelos de Parecer
+
+### Endpoint
+```
+GET /saude/parecer/modelo
+```
+
+### Autenticação
+**Obrigatório** - Bearer Token (JWT)
+
+```http
+Authorization: Bearer <seu_token_jwt>
+```
+
+### Descrição
+Retorna os registros armazenados na tabela `saude_parecer_modelo` sem incluir o conteúdo binário do arquivo. A resposta contém somente os metadados do modelo para não sobrecarregar a consulta.
+
+### Exemplo de requisição
+```bash
+curl -X GET "http://localhost:8000/saude/parecer/modelo" \
+  -H "Authorization: Bearer <seu_token_jwt>"
+```
+
+### Resposta com sucesso (200 OK)
+```json
+[
+  {
+    "id": 1,
+    "descricao": "Modelo de avaliação inicial",
+    "extensao": "odt",
+    "created_at": "2026-09-30 10:00:00",
+    "updated_at": "2026-09-30 10:00:00"
+  },
+  {
+    "id": 2,
+    "descricao": "Modelo de parecer final",
+    "extensao": "docx",
+    "created_at": "2026-09-29 15:30:00",
+    "updated_at": "2026-09-29 15:30:00"
+  }
+]
+```
+
+### Respostas de erro
+
+#### 401 Unauthorized - Sem autenticação
+```json
+{
+  "error": "Token de autenticação não informado"
+}
+```
+
+#### 500 Internal Server Error
+```json
+{
+  "error": "Descrição do erro"
+}
+```
+
+---
+
 ## Criar Modelo de Parecer
 
 ### Endpoint
@@ -148,6 +209,5 @@ curl -X POST "http://localhost:8000/saude/parecer/modelo" \
 ## Observações
 
 - A rota utiliza o mesmo padrão de autenticação da API e exige que o cliente envie um JWT válido.
-- A resposta é uma lista de especialidades em formato JSON, ordenada alfabeticamente por `descricao`.
-- Os registros são lidos diretamente da tabela `saude_especialidade`.
-- O modelo de parecer é persistido na tabela `saude_parecer_modelo` com a descrição e o conteúdo binário do arquivo em `arquivo`, além da extensão em `extensao`.
+- A listagem de modelos retorna apenas metadados e não inclui o campo `arquivo` em `saude_parecer_modelo` para evitar payload pesado.
+- Os registros são lidos diretamente da tabela `saude_parecer_modelo` e o conteúdo binário do arquivo será retornado por uma rota específica em uma etapa posterior.

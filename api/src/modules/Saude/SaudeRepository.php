@@ -32,6 +32,25 @@ class SaudeRepository
         return $result === false ? [] : $result;
     }
 
+    /**
+     * @return array<int, array{id:int, descricao:string, extensao:string|null, created_at:string|null, updated_at:string|null}>
+     */
+    public function listarModelosParecer(): array
+    {
+        $query = "
+            SELECT id, descricao, extensao, created_at, updated_at
+            FROM saude_parecer_modelo
+            ORDER BY created_at DESC, id DESC
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute();
+
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $result === false ? [] : $result;
+    }
+
     public function salvarModeloParecer(string $descricao, string $conteudoArquivo, string $extensao): int|false
     {
         $query = "

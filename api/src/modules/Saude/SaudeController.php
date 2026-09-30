@@ -41,6 +41,32 @@ class SaudeController
         }
     }
 
+    public function getModelosParecer(Request $request, Response $response, array $args = []): Response
+    {
+        try {
+            $modelos = $this->saudeService->listarModelosParecer();
+
+            $response->getBody()->write(json_encode($modelos, JSON_UNESCAPED_UNICODE));
+
+            return $response
+                ->withStatus(200)
+                ->withHeader('Content-Type', 'application/json');
+        } catch (\Throwable $e) {
+            $statusCode = (int) $e->getCode();
+            if ($statusCode < 400 || $statusCode > 599) {
+                $statusCode = 500;
+            }
+
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage()
+            ], JSON_UNESCAPED_UNICODE));
+
+            return $response
+                ->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     public function salvarModeloParecer(Request $request, Response $response): Response
     {
         try {
