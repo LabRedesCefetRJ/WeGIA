@@ -340,4 +340,8 @@ $app->get('/saude/especialidades', [SaudeController::class, 'getEspecialidades']
     ->add($container->get(SaudeMiddleware::class))
     ->add($container->get(AuthMiddleware::class));
 
+$app->post('/saude/parecer/modelo', [SaudeController::class, 'salvarModeloParecer'])
+    ->add($container->get(SaudeMiddleware::class))
+    ->add($container->get(AuthMiddleware::class));
+
 $app->run();

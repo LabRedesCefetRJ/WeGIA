@@ -31,4 +31,27 @@ class SaudeRepository
 
         return $result === false ? [] : $result;
     }
+
+    public function salvarModeloParecer(string $descricao, string $conteudoArquivo, string $extensao): int|false
+    {
+        $query = "
+            INSERT INTO saude_parecer_modelo (descricao, arquivo, extensao)
+            VALUES (:descricao, :arquivo, :extensao)
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $executou = $stmt->execute([
+            ':descricao' => $descricao,
+            ':arquivo' => $conteudoArquivo,
+            ':extensao' => $extensao,
+        ]);
+
+        if (!$executou) {
+            return false;
+        }
+
+        $id = $this->pdo->lastInsertId();
+
+        return $id !== false ? (int) $id : false;
+    }
 }
