@@ -370,7 +370,8 @@ $dadosForm = $_SESSION['form_produto'] ?? [];
 		}
 
 		function limparSessionStorage() {
-			sessionStorage.clear();
+			const camposProduto = ['produto', 'id_categoria', 'id_unidade', 'id_grupo_produto', 'codigo', 'valor-form'];
+			camposProduto.forEach(id => sessionStorage.removeItem(id));
 		}
 		document.addEventListener("DOMContentLoaded", () => {
 			atualizarInput("produto");
