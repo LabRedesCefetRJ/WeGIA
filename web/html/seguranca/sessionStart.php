@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Protege o sistema contra entradas excessivamente longas (ataques DoS).
  */
@@ -61,38 +62,32 @@ function carregarIpsBloqueados(): array
 
 verificarParametrosEntrada();
 
-$config_path = "config.php";
-$loopLimit = 2000;
-if (file_exists($config_path)) {
-    require_once($config_path);
-} else {
-    while (true) {
-        $loopLimit--;
-        $config_path = "../" . $config_path;
-        if (file_exists($config_path)) break;
-        if ($loopLimit < 0) {
-            // Caso config.php não seja encontrado
-            header("Location: instalador/index.php");
-            break;
-        }
-    }
-    require_once($config_path);
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . "config.php";
+
+if (session_status() === PHP_SESSION_NONE) {
+    //cookie enviado para o client
+    session_set_cookie_params([
+        'lifetime' => SESSION_TIMEOUT,
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
+
+    //garbage collector do servidor
+    ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
+
+    session_start();
+}else{
+    session_regenerate_id(true); // Regenerar o ID da sessão para evitar fixação de sessão
 }
-session_set_cookie_params([
-    'lifetime' => 1800,
-    'path' => '/',
-    'secure' => true,
-    'httponly' => true,
-    'samesite' => 'Strict',
-]);
-session_start();
 
 require_once dirname(__FILE__, 3) . "/dao/Conexao.php";
 
 if (isset($_SESSION['id_pessoa'])) {
     try {
         $pdo = Conexao::connect();
-        
+
         $stmt = $pdo->prepare("SELECT id_situacao FROM funcionario WHERE id_pessoa = :id_pessoa");
         $stmt->bindValue(':id_pessoa', $_SESSION['id_pessoa'], PDO::PARAM_INT);
         $stmt->execute();
@@ -106,4 +101,4 @@ if (isset($_SESSION['id_pessoa'])) {
     } catch (Exception $e) {
         error_log("Erro na verificação de segurança da sessão: " . $e->getMessage());
     }
-} 
+}
