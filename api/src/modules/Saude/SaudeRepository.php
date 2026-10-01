@@ -51,6 +51,27 @@ class SaudeRepository
         return $result === false ? [] : $result;
     }
 
+    /**
+     * @return array{id:int, arquivo:?string, extensao:?string}|null
+     */
+    public function buscarArquivoModeloParecer(int $id): ?array
+    {
+        $query = "
+            SELECT id, arquivo, extensao
+            FROM saude_parecer_modelo
+            WHERE id = :id
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : $result;
+    }
+
     public function salvarModeloParecer(string $descricao, string $conteudoArquivo, string $extensao): int|false
     {
         $query = "

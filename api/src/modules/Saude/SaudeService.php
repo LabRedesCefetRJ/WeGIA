@@ -38,6 +38,37 @@ class SaudeService implements SaudeServiceInterface
         return $this->saudeRepository->listarModelosParecer();
     }
 
+    /**
+     * @return array{conteudo:string, extensao:string, mime_type:string}
+     */
+    public function obterArquivoModeloParecer(int $id): array
+    {
+        if ($id < 1) {
+            throw new \InvalidArgumentException('ID do modelo de parecer inválido.', 400);
+        }
+
+        $modelo = $this->saudeRepository->buscarArquivoModeloParecer($id);
+        if ($modelo === null || $modelo['arquivo'] === null || $modelo['arquivo'] === '') {
+            throw new \RuntimeException('Arquivo do modelo de parecer não encontrado.', 404);
+        }
+
+        $extensao = strtolower((string) ($modelo['extensao'] ?? ''));
+        $mimeTypes = [
+            'odt' => 'application/vnd.oasis.opendocument.text',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+
+        if (!isset($mimeTypes[$extensao])) {
+            throw new \RuntimeException('Formato do arquivo do modelo não suportado.', 404);
+        }
+
+        return [
+            'conteudo' => $modelo['arquivo'],
+            'extensao' => $extensao,
+            'mime_type' => $mimeTypes[$extensao],
+        ];
+    }
+
     public function salvarModeloParecer(string $descricao, UploadedFileInterface $arquivo): int
     {
         $descricao = trim($descricao);

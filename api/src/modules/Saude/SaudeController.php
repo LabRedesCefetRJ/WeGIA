@@ -67,6 +67,40 @@ class SaudeController
         }
     }
 
+    public function getArquivoModeloParecer(Request $request, Response $response, array $args = []): Response
+    {
+        try {
+            $id = filter_var($args['id'] ?? null, FILTER_VALIDATE_INT);
+            if ($id === false || $id === null || $id < 1) {
+                throw new \InvalidArgumentException('ID do modelo de parecer inválido.', 400);
+            }
+
+            $arquivo = $this->saudeService->obterArquivoModeloParecer($id);
+            $nomeArquivo = sprintf('modelo-%d.%s', $id, $arquivo['extensao']);
+
+            $response->getBody()->write($arquivo['conteudo']);
+
+            return $response
+                ->withStatus(200)
+                ->withHeader('Content-Type', $arquivo['mime_type'])
+                ->withHeader('Content-Length', (string) strlen($arquivo['conteudo']))
+                ->withHeader('Content-Disposition', 'attachment; filename="' . $nomeArquivo . '"');
+        } catch (\Throwable $e) {
+            $statusCode = (int) $e->getCode();
+            if ($statusCode < 400 || $statusCode > 599) {
+                $statusCode = 500;
+            }
+
+            $response->getBody()->write(json_encode([
+                'error' => $e->getMessage(),
+            ], JSON_UNESCAPED_UNICODE));
+
+            return $response
+                ->withStatus($statusCode)
+                ->withHeader('Content-Type', 'application/json');
+        }
+    }
+
     public function salvarModeloParecer(Request $request, Response $response): Response
     {
         try {

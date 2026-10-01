@@ -17,5 +17,10 @@ interface SaudeServiceInterface
      */
     public function listarModelosParecer(): array;
 
+    /**
+     * @return array{conteudo:string, extensao:string, mime_type:string}
+     */
+    public function obterArquivoModeloParecer(int $id): array;
+
     public function salvarModeloParecer(string $descricao, UploadedFileInterface $arquivo): int;
 }

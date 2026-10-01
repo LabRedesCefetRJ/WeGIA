@@ -65,6 +65,83 @@ curl -X GET "http://localhost:8000/saude/especialidades" \
 
 ---
 
+## Baixar Arquivo de Modelo de Parecer
+
+### Endpoint
+```
+GET /saude/parecer/modelo/{id}/file
+```
+
+### Autenticação
+**Obrigatório** - Bearer Token (JWT) e permissão de acesso ao módulo de Saúde.
+
+```http
+Authorization: Bearer <seu_token_jwt>
+```
+
+### Descrição
+Retorna o arquivo binário associado ao modelo de parecer informado. O formato e o MIME type são definidos pela extensão armazenada (`odt` ou `docx`). A resposta é enviada como download.
+
+### Parâmetros
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| `id` | integer | Sim | Identificador do modelo de parecer |
+
+### Exemplo de requisição
+```bash
+curl -X GET "http://localhost:8000/saude/parecer/modelo/1/file" \
+  -H "Authorization: Bearer <seu_token_jwt>" \
+  -o modelo-1.odt
+```
+
+### Resposta com sucesso (200 OK)
+O corpo contém os bytes originais do arquivo. Os headers incluem `Content-Type`, `Content-Length` e `Content-Disposition: attachment; filename="modelo-{id}.{extensao}"`.
+
+MIME types suportados:
+- `.odt`: `application/vnd.oasis.opendocument.text`
+- `.docx`: `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+
+### Respostas de erro
+
+#### 400 Bad Request - ID inválido
+```json
+{
+  "error": "ID do modelo de parecer inválido."
+}
+```
+
+#### 401 Unauthorized - Sem autenticação
+```json
+{
+  "error": "Token de autenticação não informado"
+}
+```
+
+#### 403 Forbidden - Sem permissão de acesso ao módulo
+```json
+{
+  "error": "Usuário não possui permissão para acessar este módulo de saúde",
+  "status": "forbidden"
+}
+```
+
+#### 404 Not Found - Modelo ou arquivo indisponível
+```json
+{
+  "error": "Arquivo do modelo de parecer não encontrado."
+}
+```
+
+#### 500 Internal Server Error
+```json
+{
+  "error": "Descrição do erro"
+}
+```
+
+---
+
 ## Listar Modelos de Parecer
 
 ### Endpoint
@@ -210,4 +287,4 @@ curl -X POST "http://localhost:8000/saude/parecer/modelo" \
 
 - A rota utiliza o mesmo padrão de autenticação da API e exige que o cliente envie um JWT válido.
 - A listagem de modelos retorna apenas metadados e não inclui o campo `arquivo` em `saude_parecer_modelo` para evitar payload pesado.
-- Os registros são lidos diretamente da tabela `saude_parecer_modelo` e o conteúdo binário do arquivo será retornado por uma rota específica em uma etapa posterior.
+- Os registros são lidos diretamente da tabela `saude_parecer_modelo`; o conteúdo binário é obtido pela rota `GET /saude/parecer/modelo/{id}/file`.
