@@ -80,7 +80,7 @@ Authorization: Bearer <seu_token_jwt>
 ```
 
 ### Descrição
-Retorna o arquivo binário associado ao modelo de parecer informado. O formato e o MIME type são definidos pela extensão armazenada (`odt` ou `docx`). A resposta é enviada como download.
+Retorna o arquivo binário associado ao modelo de parecer informado na tabela `modelo_documento`. O formato e o MIME type são definidos pela extensão armazenada (`odt` ou `docx`). A resposta é enviada como download.
 
 ### Parâmetros
 
@@ -157,7 +157,7 @@ Authorization: Bearer <seu_token_jwt>
 ```
 
 ### Descrição
-Retorna os registros armazenados na tabela `saude_parecer_modelo` sem incluir o conteúdo binário do arquivo. A resposta contém somente os metadados do modelo para não sobrecarregar a consulta.
+Retorna os registros armazenados na tabela `modelo_documento` sem incluir o conteúdo binário da coluna `documento`. A resposta contém somente os metadados do modelo para não sobrecarregar a consulta.
 
 ### Exemplo de requisição
 ```bash
@@ -218,7 +218,7 @@ Authorization: Bearer <seu_token_jwt>
 ```
 
 ### Descrição
-Cria um novo modelo de parecer na tabela `saude_parecer_modelo` com a descrição informada e o arquivo enviado pelo cliente. O arquivo deve estar no formato `.odt` ou `.docx`.
+Cria um novo modelo de parecer na tabela `modelo_documento` com a descrição informada e o arquivo enviado pelo cliente, armazenado na coluna `documento`. O arquivo deve estar no formato `.odt` ou `.docx`.
 
 ### Content-Type
 ```http
@@ -286,5 +286,5 @@ curl -X POST "http://localhost:8000/saude/parecer/modelo" \
 ## Observações
 
 - A rota utiliza o mesmo padrão de autenticação da API e exige que o cliente envie um JWT válido.
-- A listagem de modelos retorna apenas metadados e não inclui o campo `arquivo` em `saude_parecer_modelo` para evitar payload pesado.
-- Os registros são lidos diretamente da tabela `saude_parecer_modelo`; o conteúdo binário é obtido pela rota `GET /saude/parecer/modelo/{id}/file`.
+- A listagem de modelos retorna apenas metadados e não inclui a coluna `documento` de `modelo_documento` para evitar payload pesado.
+- Os registros são lidos diretamente da tabela `modelo_documento`; o conteúdo binário é obtido pela rota `GET /saude/parecer/modelo/{id}/file`.

@@ -39,7 +39,7 @@ class SaudeRepository
     {
         $query = "
             SELECT id, descricao, extensao, created_at, updated_at
-            FROM saude_parecer_modelo
+            FROM modelo_documento
             ORDER BY created_at DESC, id DESC
         ";
 
@@ -52,13 +52,13 @@ class SaudeRepository
     }
 
     /**
-     * @return array{id:int, arquivo:?string, extensao:?string}|null
+     * @return array{id:int, documento:?string, extensao:?string}|null
      */
     public function buscarArquivoModeloParecer(int $id): ?array
     {
         $query = "
-            SELECT id, arquivo, extensao
-            FROM saude_parecer_modelo
+            SELECT id, documento, extensao
+            FROM modelo_documento
             WHERE id = :id
             LIMIT 1
         ";
@@ -75,14 +75,14 @@ class SaudeRepository
     public function salvarModeloParecer(string $descricao, string $conteudoArquivo, string $extensao): int|false
     {
         $query = "
-            INSERT INTO saude_parecer_modelo (descricao, arquivo, extensao)
-            VALUES (:descricao, :arquivo, :extensao)
+            INSERT INTO modelo_documento (descricao, documento, extensao)
+            VALUES (:descricao, :documento, :extensao)
         ";
 
         $stmt = $this->pdo->prepare($query);
         $executou = $stmt->execute([
             ':descricao' => $descricao,
-            ':arquivo' => $conteudoArquivo,
+            ':documento' => $conteudoArquivo,
             ':extensao' => $extensao,
         ]);
 

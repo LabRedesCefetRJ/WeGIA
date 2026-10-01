@@ -2015,11 +2015,11 @@ CREATE TABLE `wegia`.`saude_especialidade` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 2. Tabela: saude_parecer_modelo
-CREATE TABLE `wegia`.`saude_parecer_modelo` (
+-- 2. Tabela: modelo_documento
+CREATE TABLE `wegia`.`modelo_documento` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `descricao` VARCHAR(128) NULL,
-  `arquivo` BLOB NULL,
+  `documento` BLOB NULL,
   `extensao` VARCHAR(32) NULL,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -2049,11 +2049,11 @@ CREATE TABLE `wegia`.`saude_especialista` (
 CREATE TABLE `wegia`.`saude_parecer` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `id_atendido` INT NOT NULL,
-  `id_funcionario` INT NOT NULL,
+  `id_especialista` INT NOT NULL,
   `id_saude_especialidade` INT NOT NULL,
-  `id_saude_parecer_modelo` INT NOT NULL,
+  `id_modelo_documento` INT NOT NULL,
   `data` DATETIME NULL,
-  `arquivo` BLOB NULL,
+  `documento` BLOB NULL,
   `extensao` VARCHAR(32) NULL,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -2063,9 +2063,9 @@ CREATE TABLE `wegia`.`saude_parecer` (
     REFERENCES `wegia`.`atendido` (`idatendido`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT `fk_parecer_funcionario`
-    FOREIGN KEY (`id_funcionario`)
-    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
+  CONSTRAINT `fk_parecer_especialista`
+    FOREIGN KEY (`id_especialista`)
+    REFERENCES `wegia`.`saude_especialista` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_parecer_especialidade`
@@ -2073,9 +2073,9 @@ CREATE TABLE `wegia`.`saude_parecer` (
     REFERENCES `wegia`.`saude_especialidade` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT `fk_parecer_modelo`
-    FOREIGN KEY (`id_saude_parecer_modelo`)
-    REFERENCES `wegia`.`saude_parecer_modelo` (`id`)
+  CONSTRAINT `fk_parecer_modelo_documento`
+    FOREIGN KEY (`id_modelo_documento`)
+    REFERENCES `wegia`.`modelo_documento` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -48,7 +48,7 @@ class SaudeService implements SaudeServiceInterface
         }
 
         $modelo = $this->saudeRepository->buscarArquivoModeloParecer($id);
-        if ($modelo === null || $modelo['arquivo'] === null || $modelo['arquivo'] === '') {
+        if ($modelo === null || $modelo['documento'] === null || $modelo['documento'] === '') {
             throw new \RuntimeException('Arquivo do modelo de parecer não encontrado.', 404);
         }
 
@@ -63,7 +63,7 @@ class SaudeService implements SaudeServiceInterface
         }
 
         return [
-            'conteudo' => $modelo['arquivo'],
+            'conteudo' => $modelo['documento'],
             'extensao' => $extensao,
             'mime_type' => $mimeTypes[$extensao],
         ];
