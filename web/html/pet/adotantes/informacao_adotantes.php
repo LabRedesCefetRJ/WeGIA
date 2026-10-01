@@ -7,13 +7,13 @@ if (session_status() === PHP_SESSION_NONE)
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
 	exit();
-}else{
+} else {
 	session_regenerate_id();
 }
 
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 
-if(!$id_pessoa || $id_pessoa < 1){
+if (!$id_pessoa || $id_pessoa < 1) {
 	http_response_code(400);
 	header("Location: ../index.php");
 	exit();
@@ -24,10 +24,12 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTOR
 permissao($id_pessoa, 61, 7);
 
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'config.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
+// '/var/www/html/web/html/dao/Conexao.php'
 
 // Lógica para listar os adotantes
 try {
-	$conexao->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	$conexao = Conexao::connect();
 
 	$sqlListarAdotantes = "SELECT cpf, nome, sobrenome, sexo, telefone, data_nascimento, imagem, cep, 
 										estado, cidade, bairro, logradouro, numero_endereco, complemento
@@ -51,7 +53,8 @@ try {
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 	<title>Informações dos Adotantes</title>
 
-	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+	<link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light"
+		rel="stylesheet" type="text/css">
 	<link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/bootstrap/css/bootstrap.css" />
 	<link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/font-awesome/css/font-awesome.css" />
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
@@ -82,7 +85,7 @@ try {
 	<script src="<?php echo WWW; ?>assets/vendor/jasonday-printThis-f73ca19/printThis.js"></script>
 
 	<script>
-		$(function() {
+		$(function () {
 			$("#header").load("<?php echo WWW; ?>html/header.php");
 			$(".menuu").load("<?php echo WWW; ?>html/menu.php");
 		});
@@ -114,8 +117,7 @@ try {
 						<h2 class="panel-title">Adotantes</h2>
 					</header>
 					<div class="panel-body">
-						<table class="table table-bordered table-striped mb-none"
-							id="datatable-default">
+						<table class="table table-bordered table-striped mb-none" id="datatable-default">
 							<thead>
 								<tr>
 									<th>Nome</th>
@@ -168,7 +170,8 @@ try {
 				</section>
 
 				<div align="right">
-					<iframe src="https://www.wegia.org/software/footer/pet.html" width="200" height="60" style="border:none;"></iframe>
+					<iframe src="https://www.wegia.org/software/footer/pet.html" width="200" height="60"
+						style="border:none;"></iframe>
 				</div>
 </body>
 

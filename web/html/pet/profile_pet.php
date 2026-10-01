@@ -24,8 +24,10 @@ if (!$id_pet || $id_pet < 1) {
   exit();
 }
 
+$pet = json_encode(null);
 if (!isset($_SESSION['pet'])) {
   header('Location: ../../controle/control.php?id_pet=' . htmlspecialchars($id_pet). '&modulo=pet&metodo=listarUm&nomeClasse=PetControle&nextPage=' . WWW . 'html/pet/profile_pet.php?id_pet=' . htmlspecialchars($id_pet));
+  exit();
 } else {
   $petDados = $_SESSION['pet'];
   unset($_SESSION['pet']);
@@ -52,6 +54,7 @@ try {
 
   // Lógica para buscar ficha médica
   $fichaMedica = null;
+  $id_ficha_medica = null;
 
   // Também vamos buscar dados da adoção do pet
   $adocaoPet = null;
@@ -61,6 +64,7 @@ try {
   $stmtFicha->execute();
 
   $fichaMedica = $stmtFicha->fetch(PDO::FETCH_ASSOC);
+  $id_ficha_medica = $fichaMedica['id_ficha_medica'] ?? null;
 
   // BUSCA ADOÇÃO DO PET
   $stmtAdocao = $pdo->prepare("
@@ -1309,7 +1313,7 @@ function excluirArquivo(dado){
                         </div>
                     </div>
                     </br>
-                    <input type="hidden" name="id_pet" value=<?php echo htmlspecialchars($id_pet) ?>>
+                    <input type="hidden" name="id_pet" value="<?php echo htmlspecialchars($id_pet); ?>">
                     <button type="button" class="not-printable btn btn-primary" id="editarPet" onclick="return editar_informacoes_pet()">Editar</button>
                     <input type="submit" class="not-printable btn btn-primary" disabled="true" value="Salvar" id="salvarPet">
                     </fieldset>
@@ -1372,7 +1376,7 @@ function excluirArquivo(dado){
                       <!-- Button trigger modal -->
 
                       <?php
-                      if ($p != false) {
+                      if ($fichaMedica != false) {
                         echo <<<HTML
                               <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#docFormModal">
                                 Adicionar
@@ -1419,8 +1423,9 @@ function excluirArquivo(dado){
 
                                   <input type="hidden" name="modulo" value="pet">
                                   <input type="hidden" name="nomeClasse" value="PetControle">
+                                  <?= Csrf::inputField() ?>
                                   <input type="hidden" name="metodo" value="incluirExamePet">
-                                  <input type="hidden" name="id_ficha_medica" value="<?= $id_ficha_medica ?>">
+                                  <input type="hidden" name="id_ficha_medica" value="<?= htmlspecialchars($id_ficha_medica ?? '') ?>">
                                   <input type="hidden" name="id_pet" value="<?= $_GET['id_pet'] ?>">
                                 </div>
                                 <div class="modal-footer">
@@ -1730,7 +1735,7 @@ function excluirArquivo(dado){
                           </div>
                           </br>
 
-                          <input type="hidden" name="id_pet" value="<?php echo htmlspecialchars($idPet); ?>">
+                          <input type="hidden" name="id_pet" value="<?php echo htmlspecialchars($id_pet); ?>">
                           <button type="button" class="btn btn-primary" id="editarAdocao" >Editar</button>
                           <input type="submit" class="btn btn-primary" id="submit_adocao" name="submit_adocao" value = "Salvar">
 
