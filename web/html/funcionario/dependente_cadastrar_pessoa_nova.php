@@ -116,3 +116,4 @@ if (!$id_funcionario || $id_funcionario < 1) {
     }
 
 header("Location: profile_funcionario.php?id_funcionario=$id_funcionario");
+exit;

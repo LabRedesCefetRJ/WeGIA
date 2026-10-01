@@ -19,6 +19,7 @@ class QuadroHorarioControle
         (new QuadroHorarioDAO())->listarTipos();
 
         preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+        exit;
     }
 
     public function adicionarTipo()
@@ -47,6 +48,7 @@ class QuadroHorarioControle
 
         if ($nextPage)
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+            exit;
     }
 
     public function removerTipo()
@@ -80,6 +82,7 @@ class QuadroHorarioControle
         (new QuadroHorarioDAO())->listarEscalas();
 
         preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+        exit;
     }
 
     public function adicionarEscala()
@@ -108,6 +111,7 @@ class QuadroHorarioControle
 
         if ($nextPage)
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+            exit;
     }
 
     public function removerEscala()

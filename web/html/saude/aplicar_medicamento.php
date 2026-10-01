@@ -22,6 +22,7 @@ if (!$idPessoa || $idPessoa < 1) {
 
 if (!isset($_SESSION['id_fichamedica'])) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php');
+  exit;
 }
 
 //verificar se o usuário possui as permissões necessárias para acessar a página
@@ -63,6 +64,7 @@ $_SESSION['id_upload_med'] = $id;
 
 if (!isset($teste)) {
   header('Location: ../../controle/control.php?metodo=listarUm&nomeClasse=SaudeControle&nextPage=../html/saude/aplicar_medicamento.php?id_fichamedica=' . $id . '&id=' . $id);
+  exit;
 }
 
 $stmtExibirMedicamento = $pdo->prepare("

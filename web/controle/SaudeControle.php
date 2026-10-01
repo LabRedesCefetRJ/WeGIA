@@ -123,6 +123,7 @@ class SaudeControle
             $_SESSION['saude'] = $pacientes;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         }catch(PDOException $e){
             Util::tratarException($e);
         }
@@ -149,6 +150,7 @@ class SaudeControle
             $_SESSION['id_fichamedica'] = $infSaude;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -166,6 +168,7 @@ class SaudeControle
 
             $SaudeDAO->alterarImagem($id_fichamedica, $imagem);
             header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . htmlspecialchars($id_fichamedica));
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -202,6 +205,7 @@ class SaudeControle
             $_SESSION['proxima'] = "Cadastrar outra ficha.";
             $_SESSION['link'] = "../html/saude/cadastro_ficha_medica.php";
             header("Location: ../html/saude/informacao_saude.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -222,6 +226,7 @@ class SaudeControle
 
             $SaudeDAO->alterarInfPessoal($paciente);
             header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . htmlspecialchars($idFichamedica));
+            exit;
         } catch (PDOException $e) {
             Util::tratarException($e);
         }
@@ -243,6 +248,7 @@ class SaudeControle
 
             $descricao->alterarProntuario($idFichamedica, $textoProntuario);
             header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . htmlspecialchars($idFichamedica));
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -272,6 +278,7 @@ class SaudeControle
         }
 
         header("Location: ../html/saude/profile_paciente.php?id_fichamedica=" . htmlspecialchars($idFichamedica));
+        exit;
     }
 
     /**

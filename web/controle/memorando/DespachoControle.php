@@ -115,6 +115,7 @@ class DespachoControle
 			$msg = "success";
 			$sccd = "Despacho enviado com sucesso";
 			header("Location: " . WWW . "html/memorando/listar_memorandos_ativos.php?msg=" . $msg . "&sccd=" . $sccd);
+			exit;
 		} catch (PDOException $e) {
 			$msg = "Não foi possível criar o despacho" . "<br>" . $e->getMessage();
 			echo $msg;

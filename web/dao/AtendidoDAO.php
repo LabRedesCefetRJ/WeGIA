@@ -87,11 +87,14 @@ class AtendidoDAO
             }
             if ($valor == 0) {
                 header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=$cpf");
+                exit;
             } else {
                 header("Location: ../html/atendido/cadastro_atendido_pessoa_existente.php?cpf=$cpf");
+                exit;
             }
         } else {
             header("Location: ../html/atendido/pre_cadastro_atendido.php?msg_e=Erro, Atendido já cadastrado no sistema.");
+            exit;
         }
     }
 

@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE)
 if (!isset($_SESSION['usuario'])) {
     http_response_code(401);
     header("Location: ../../../index.php");
+    exit;
 } else {
     session_regenerate_id();
 }

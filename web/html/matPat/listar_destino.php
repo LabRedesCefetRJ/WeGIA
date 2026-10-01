@@ -29,6 +29,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
    if (!isset($_SESSION['destino'])) {
       header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/listar_destino.php');
+      exit;
    }
    if (isset($_SESSION['destino'])) {
       $destino = $_SESSION['destino'];

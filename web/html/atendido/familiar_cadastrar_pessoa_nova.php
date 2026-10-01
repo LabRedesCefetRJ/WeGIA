@@ -116,3 +116,4 @@ try {
 }
 
 header("Location: Profile_Atendido.php?idatendido=$idatendido");
+exit;

@@ -113,3 +113,4 @@ if($id_pessoa == $id_pessoa_funcionario) {
     }
 }
 header('Location: profile_funcionario.php?id_funcionario=' . htmlspecialchars($id_funcionario));
+exit;

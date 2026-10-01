@@ -800,6 +800,8 @@ class FuncionarioControle
 
             $_SESSION['funcionarios'] = json_encode($funcionarios);
 
+            // Sem exit aqui de propósito: informacao_funcionario.php chama este método inline, no meio do HTML,
+            // só pra popular $_SESSION['funcionarios'] — um exit cortaria a renderização da página.
             isset($nextPage) && in_array($nextPage, $whitePages) ? header('Location: ' . $nextPage) : header('Location: ' . WWW . 'html/home.php');
         }
         catch (Exception $e) {
@@ -846,6 +848,7 @@ class FuncionarioControle
             $_SESSION['funcionario'] = json_encode($funcionario);
 
             header('Location:' . WWW . "/html/funcionario/profile_funcionario.php?id_funcionario=" . htmlspecialchars($idFuncionario));
+            exit;
         }
         catch (Exception $e) {
             Util::tratarException($e);
@@ -958,6 +961,7 @@ class FuncionarioControle
             $pdo->commit();
 
             header('Location:' . '../html/geral/cadastrar_permissoes.php' . '?msg_c=Permissão efetivada com sucesso.');
+            exit;
         }
         catch (Exception $e) {
             if (isset($pdo) && $pdo->inTransaction()) {
@@ -1117,6 +1121,7 @@ class FuncionarioControle
             $_SESSION['tipo'] = "success";
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
+            exit;
         }
         catch (InvalidArgumentException $e) {
             setSessionFormData($_POST);
@@ -1182,6 +1187,7 @@ class FuncionarioControle
             $_SESSION['proxima'] = "Cadastrar outro funcionario";
             $_SESSION['link'] = "../html/funcionario/cadastro_funcionario.php";
             header("Location: ../html/funcionario/informacao_funcionario.php");
+            exit;
         }
         catch (InvalidArgumentException $e) {
             setSessionFormData($_POST);
@@ -1279,6 +1285,7 @@ class FuncionarioControle
             $funcionarioDAO->alterarInfPessoal($funcionario);
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+            exit;
         }
         catch (InvalidArgumentException $e) {
             setSessionMsg($e->getMessage(), 'err');
@@ -1476,6 +1483,7 @@ public function alterarOutros()
             $funcionarioDAO->alterarOutros($funcionario);
 
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+            exit;
         }
         catch (InvalidArgumentException $e) {
             setSessionFormData($_POST);
@@ -1516,6 +1524,7 @@ public function alterarOutros()
 
             $funcionarioDAO->alterarImagem($idFuncionario, $img);
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($idFuncionario));
+            exit;
         }
         catch (Exception $e) {
             Util::tratarException($e);
@@ -1571,6 +1580,7 @@ public function alterarOutros()
 
             $funcionarioDAO->alterarDocumentacao($funcionario);
             header("Location: ../html/funcionario/profile_funcionario.php?id_funcionario=" . urlencode($id_funcionario));
+            exit;
         }
         catch (InvalidArgumentException $e) {
             $_SESSION['msg'] = $e->getMessage();
@@ -1712,6 +1722,7 @@ public function alterarOutros()
 
             $funcionarioDAO->excluir($idFuncionario);
             header("Location:../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php");
+            exit;
         }
         catch (Exception $e) {
             Util::tratarException($e);

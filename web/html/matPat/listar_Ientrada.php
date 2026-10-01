@@ -46,6 +46,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 	if (!isset($_SESSION['ientrada'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=' . WWW . 'html/matPat/listar_Ientrada.php');
+		exit;
 	}
 	if (isset($_SESSION['ientrada'])) {
     	$dadosIentrada = $_SESSION['ientrada'];
@@ -66,6 +67,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 	}
 	if (!isset($_SESSION['entradaUnica'])) {
 		header('Location: ' . WWW . 'controle/control.php?metodo=listarId&nomeClasse=IentradaControle&nextPage=' . WWW . 'html/matPat/listar_Ientrada.php');
+		exit;
 	}
 	if (isset($_SESSION['entradaUnica'])) {
 		$entrada = $_SESSION['entradaUnica'];

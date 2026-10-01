@@ -33,6 +33,7 @@ $almoxarifados = json_encode($stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC));
 
 if (!isset($_SESSION['origem'])) {
    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=OrigemControle&nextPage=' . WWW . 'html/matPat/listar_origem.php');
+   exit;
 } else {
    $origem = $_SESSION['origem'];
    unset($_SESSION['origem']);

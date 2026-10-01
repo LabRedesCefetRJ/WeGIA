@@ -11,6 +11,10 @@
 	} 
 
 
-    $conexao = mysqli_connect(DB_HOST,DB_USER,DB_PASSWORD,DB_NAME) or header("Location: ./erros/bd_erro");
+    $conexao = mysqli_connect(DB_HOST,DB_USER,DB_PASSWORD,DB_NAME);
+    if (!$conexao) {
+        header("Location: ./erros/bd_erro");
+        exit;
+    }
 	//echo 'teste';
 ?>

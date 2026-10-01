@@ -140,6 +140,7 @@ class PetControle
 
             // Redireciona
             header('Location: ' . WWW . 'html/pet/informacao_pet.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -189,6 +190,7 @@ class PetControle
             $_SESSION['pet'] = $pet;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -221,6 +223,7 @@ class PetControle
             $petDAO = new PetDAO();
             $petDAO->alterarFotoPet($imgPet, $imgNome[0], $imgNome[1], $idFoto, $idPet);
             header('Location: ' . WWW . 'html/pet/profile_pet.php?id_pet=' . htmlspecialchars($idPet));
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -235,6 +238,7 @@ class PetControle
             $this->verificar();
             $this->petDAO->alterarPet($this->petClasse->getNome(), $this->petClasse->getNascimento(), $this->petClasse->getAcolhimento(), $this->petClasse->getSexo(), $this->petClasse->getCaracteristicasEspecificas(), $this->petClasse->getEspecie(), $this->petClasse->getRaca(), $this->petClasse->getCor(), $this->petClasse->getId());
             header('Location: ' . WWW . 'html/pet/profile_pet.php?id_pet=' . htmlspecialchars($this->petClasse->getId()));
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -272,6 +276,7 @@ class PetControle
             $petDAO = new PetDAO();
             $petDAO->incluirExamePet($idFichaMedica, $idTipoExame, $dataExame, $arquivoExame, $nameFile);
             header("location: " . WWW . "html/pet/profile_pet.php?id_pet=" . htmlspecialchars($idPet));
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }

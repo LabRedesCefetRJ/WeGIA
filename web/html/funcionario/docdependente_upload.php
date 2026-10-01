@@ -71,9 +71,11 @@ if ($_POST) {
         $prep->execute();
 
         header("Location: ./profile_dependente.php?id_dependente=$id_dependente");
+        exit;
     } catch (Exception $e) {
         Util::tratarException($e);
     }
 } else {
     header("Location: ../informacao_funcionario.php");
+    exit;
 }

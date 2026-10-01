@@ -31,4 +31,5 @@ if ($_POST) {
     }
 } else {
     header("Location: profile_paciente.php");
+    exit;
 }
