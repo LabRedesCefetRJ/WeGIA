@@ -17,6 +17,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 require("../conexao.php");
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'utils' . DIRECTORY_SEPARATOR . 'UuidGenerator.php';
 if (!isset($_POST) or empty($_POST)) {
     $data = file_get_contents("php://input");
     $data = json_decode($data, true);
@@ -345,8 +346,9 @@ switch ($pessoa) {
         break;
 }
 
-$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?)");
-$stmt2->bind_param('iiidsi', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
+$uuidBinary = \api\utils\UuidGenerator::generateBinary();
+$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes, uuid) VALUES (?, ?, ?, ?, ?, ?, ?)");
+$stmt2->bind_param('iiidsis', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes, $uuidBinary);
 $stmt2->execute();
 
 if ($stmt2->affected_rows > 0) {
