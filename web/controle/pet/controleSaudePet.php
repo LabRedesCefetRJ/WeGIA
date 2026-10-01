@@ -13,8 +13,8 @@ class controleSaudePet
     {
         $nome = filter_input(INPUT_POST, 'nome', FILTER_SANITIZE_SPECIAL_CHARS);
         $castrado = filter_input(INPUT_POST, 'castrado', FILTER_SANITIZE_SPECIAL_CHARS);
-        $vacinado = filter_input(INPUT_POST,  'vacinado', FILTER_SANITIZE_SPECIAL_CHARS);
-        $dVacinado = filter_input(INPUT_POST,  'dVacinado', FILTER_SANITIZE_SPECIAL_CHARS);
+        $vacinado = filter_input(INPUT_POST, 'vacinado', FILTER_SANITIZE_SPECIAL_CHARS);
+        $dVacinado = filter_input(INPUT_POST, 'dVacinado', FILTER_SANITIZE_SPECIAL_CHARS);
         $texto = filter_input(INPUT_POST, 'texto', FILTER_SANITIZE_SPECIAL_CHARS);
         $vermifugado = filter_input(INPUT_POST, 'vermifugado', FILTER_SANITIZE_SPECIAL_CHARS);
         $dVermifugado = filter_input(INPUT_POST, 'dVermifugado', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -211,17 +211,20 @@ class controleSaudePet
         }
     }
 
-    public function getFichaMedicaPet()
+    public function getFichaMedicaPet($idPetParam = null)
     {
         try {
-            $idPet = $_REQUEST['idPet'] ?? null;
-            if (!$idPet) throw new Exception("ID do pet não informado", 400);
+            $idPet = $idPetParam ?? $_REQUEST['idPet'] ?? $_REQUEST['id_pet'] ?? null;
+            if (!$idPet)
+                throw new Exception("ID do pet não informado", 400);
 
             $saudePetDAO = new SaudePetDAO();
             $dados = $saudePetDAO->getFichaMedicaPet($idPet);
 
             header('Content-Type: application/json; charset=utf-8');
-            echo json_encode($dados ?: []);
+            $resultado = $dados ?: [];
+            echo json_encode($resultado, JSON_UNESCAPED_UNICODE);
+            return $resultado;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -235,14 +238,15 @@ class controleSaudePet
             $descricao = $input['necessidadesEspeciais'] ?? null;
             $castrado = $input['castrado'] ?? null;
 
-            if (!$id_pet) throw new Exception("ID do pet não informado", 400);
+            if (!$id_pet)
+                throw new Exception("ID do pet não informado", 400);
 
             $saudePetDAO = new SaudePetDAO();
             $ok = $saudePetDAO->modificarFichaMedicaPet($id_pet, $descricao, $castrado);
 
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
-                "status"   => $ok ? "sucesso" : "erro",
+                "status" => $ok ? "sucesso" : "erro",
                 "redirect" => "../../html/pet/profile_pet.php?id_pet=" . $id_pet
             ]);
         } catch (Exception $e) {
@@ -251,13 +255,17 @@ class controleSaudePet
     }
 
     // ------------------------ Histórico ------------------------
-    public function getHistoricoPet()
+    public function getHistoricoPet($idpetParam = null)
     {
         try {
-            $data = json_decode(file_get_contents('php://input'), true);
-            $idpet = $data['idpet'] ?? null;
+            $idpet = $idpetParam;
+            if (!$idpet) {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $idpet = $data['idpet'] ?? $data['id_pet'] ?? null;
+            }
 
-            if (!$idpet) throw new Exception("ID do pet não informado", 400);
+            if (!$idpet)
+                throw new Exception("ID do pet não informado", 400);
 
             $saudePetDAO = new SaudePetDAO();
             $resultado = $saudePetDAO->getHistoricoPet($idpet);
@@ -289,13 +297,17 @@ class controleSaudePet
         }
     }
 
-    public function getHistoricoVacinacao()
+    public function getHistoricoVacinacao($idpetParam = null)
     {
         try {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $idpet = $input['idpet'] ?? null;
+            $idpet = $idpetParam;
+            if (!$idpet) {
+                $input = json_decode(file_get_contents('php://input'), true);
+                $idpet = $input['idpet'] ?? $input['id_pet'] ?? null;
+            }
 
-            if (!$idpet) throw new Exception("ID do pet não informado", 400);
+            if (!$idpet)
+                throw new Exception("ID do pet não informado", 400);
 
             $saudePetDAO = new SaudePetDAO();
             header('Content-Type: application/json; charset=utf-8');
@@ -305,13 +317,17 @@ class controleSaudePet
         }
     }
 
-    public function getHistoricoVermifugacao()
+    public function getHistoricoVermifugacao($idpetParam = null)
     {
         try {
-            $input = json_decode(file_get_contents('php://input'), true);
-            $idpet = $input['idpet'] ?? null;
+            $idpet = $idpetParam;
+            if (!$idpet) {
+                $input = json_decode(file_get_contents('php://input'), true);
+                $idpet = $input['idpet'] ?? $input['id_pet'] ?? null;
+            }
 
-            if (!$idpet) throw new Exception("ID do pet não informado", 400);
+            if (!$idpet)
+                throw new Exception("ID do pet não informado", 400);
 
             $saudePetDAO = new SaudePetDAO();
             header('Content-Type: application/json; charset=utf-8');
@@ -328,7 +344,8 @@ class controleSaudePet
             $input = json_decode(file_get_contents('php://input'), true);
             $descricao = $input['descricaoExame'] ?? null;
 
-            if (!$descricao) throw new Exception("Descrição do exame não foi enviada", 400);
+            if (!$descricao)
+                throw new Exception("Descrição do exame não foi enviada", 400);
 
             $saudePetDAO = new SaudePetDAO();
             $id = $saudePetDAO->adicionarTipoExame($descricao);
@@ -336,8 +353,8 @@ class controleSaudePet
 
             echo json_encode([
                 'status' => 'sucesso',
-                'id'     => $id,
-                'dados'  => $lista
+                'id' => $id,
+                'dados' => $lista
             ]);
         } catch (Exception $e) {
             Util::tratarException($e);

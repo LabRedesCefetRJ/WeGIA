@@ -28,6 +28,9 @@ class PetControle
         $cor = filter_input(INPUT_POST, 'cor', FILTER_SANITIZE_NUMBER_INT);
         $raca = filter_input(INPUT_POST, 'raca', FILTER_SANITIZE_NUMBER_INT);
         $caracEsp = filter_input(INPUT_POST, 'caracEsp', FILTER_SANITIZE_SPECIAL_CHARS);
+        if (empty($caracEsp)) {
+            $caracEsp = filter_input(INPUT_POST, 'especificas', FILTER_SANITIZE_SPECIAL_CHARS);
+        }
 
         // Validações
         if (!isset($nome) || strlen($nome) < 3) {
@@ -228,11 +231,17 @@ class PetControle
 
     public function alterarPetDados()
     {
+        $idPet = filter_input(INPUT_POST, 'id_pet', FILTER_SANITIZE_NUMBER_INT);
+
         try {
             if (!Csrf::validateToken($_POST['csrf_token']))
                 throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
 
+            if (!$idPet || $idPet < 1)
+                throw new InvalidArgumentException('O id do pet fornecido é inválido.', 422);
+
             $this->verificar();
+            $this->petClasse->setId($idPet);
             $this->petDAO->alterarPet($this->petClasse->getNome(), $this->petClasse->getNascimento(), $this->petClasse->getAcolhimento(), $this->petClasse->getSexo(), $this->petClasse->getCaracteristicasEspecificas(), $this->petClasse->getEspecie(), $this->petClasse->getRaca(), $this->petClasse->getCor(), $this->petClasse->getId());
             header('Location: ' . WWW . 'html/pet/profile_pet.php?id_pet=' . htmlspecialchars($this->petClasse->getId()));
         } catch (Exception $e) {

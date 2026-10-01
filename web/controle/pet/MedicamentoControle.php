@@ -27,11 +27,8 @@ class MedicamentoControle
             $saudePetDao = new SaudePetDAO();
             $saudePetDao->adicionarMedicamento($nomeMedicamento, $descricaoMedicamento, $aplicacaoMedicamento);
 
-            if ($id) {
-                header("Location: ../html/pet/informacao_medicamento.php");
-            } else {
-                header("Location: ../html/pet/informacao_medicamento.php");
-            }
+            header("Location: ../html/pet/informacao_medicamento.php");
+            exit();
         } catch (Exception $e) {
             error_log("[ERRO] {$e->getMessage()} em {$e->getFile()} na linha {$e->getLine()}");
             http_response_code($e->getCode());

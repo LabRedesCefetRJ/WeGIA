@@ -39,8 +39,8 @@ require_once '../geral/msg.php';
 if (!isset($_SESSION['almoxarifado'])) {
 	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/geral/cadastrar_permissoes.php');
 }
-if (!isset($_SESSION['funcionarios'])) {
-	header('Location: ../../controle/control.php?metodo=listarTodos&nomeClasse=FuncionarioControle&nextPage=../html/geral/cadastrar_permissoes.php');
+if (!isset($_SESSION['pessoas_com_cargo'])) {
+	header('Location: ../../controle/control.php?metodo=listarPessoasComCargo&nomeClasse=FuncionarioControle&nextPage=../html/geral/cadastrar_permissoes.php');
 }
 extract($_SESSION);
 
@@ -123,7 +123,7 @@ extract($_SESSION);
 	<script>
 		$(function() {
 			let Almoxarifado = <?= $almoxarifado ?>;
-			let Funcionarios = <?= $funcionarios ?>;
+			let Funcionarios = <?= $pessoas_com_cargo ?>;
 
 			$.each(Almoxarifado, function(i, item) {
 				$("#id_almoxarifado")
@@ -274,9 +274,9 @@ extract($_SESSION);
 									<fieldset>
 										<form action="../matPat/adicionar_almoxarife.php" method="post">
 											<div class="form-group">
-												<label class="col-md-3 control-label" for="inputSuccess">Funcionário</label>
+												<label class="col-md-3 control-label" for="inputSuccess">Pessoa</label>
 												<a href="../funcionario/cadastro_funcionario.php">
-													<i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
+													<i class="fas fa-user-plus w3-xlarge" style="margin-top: 0.75vw"></i>
 												</a>
 												<div class="col-md-6">
 													<select name="id_funcionario" id="id_funcionario" class="form-control input-lg mb-md">
@@ -310,10 +310,10 @@ extract($_SESSION);
 					</div>
 					<div class="card col-md-4">
 						<div class="card-body">
-							<h5 class="card-title">Permissões para novo funcionário</h5>
-							<p class="card-text">Crie uma senha para um novo funcionário entrar no sistema.</p>
+							<h5 class="card-title">Permissões para novo usuário</h5>
+							<p class="card-text">Crie uma senha para um novo usuário entrar no sistema.</p>
 							<a href="configurar_senhas.php" class="btn btn-primary">Configurar senhas</a><br><br>
-							<p class="card-text">Liste as permissões configuradas para cada funcionário no sistema.</p>
+							<p class="card-text">Liste as permissões configuradas para cada usuário no sistema.</p>
 							<a href="listar_permissoes.php" style="color: white; text-decoration:none;">
 								<button class="btn btn-success" type="button">Listar permissões</button></a>
 						</div>
