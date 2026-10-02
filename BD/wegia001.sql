@@ -749,6 +749,77 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table `wegia`.`cotacao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`cotacao` (
+  `id_cotacao` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_responsavel` INT(11) NOT NULL,
+  `id_orcamento_escolhido` INT(11),
+  `status` ENUM('concluido', 'analise') NOT NULL DEFAULT 'analise',
+  `descricao` varchar(255),
+  `justificativa` VARCHAR(255),
+  PRIMARY KEY (`id_cotacao`),
+  CONSTRAINT `cotacao_ibfk_1`
+    FOREIGN KEY (`id_responsavel`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`),
+  CONSTRAINT `cotacao_orcamento_escolhido_fk`
+    FOREIGN KEY (`id_cotacao`, `id_orcamento_escolhido`)
+    REFERENCES `wegia`.`orcamento` (`id_cotacao`, `id_orcamento`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`orcamento`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`orcamento` (
+  `id_orcamento` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_cotacao` INT(11) NOT NULL,
+  `id_fornecedor` INT(11) NOT NULL,
+  `condicao_pagamento` ENUM(
+        'avista',
+        'aprazo',
+        'parcelado'
+  ) NOT NULL,
+  `prazo_entrega` DATE NULL,
+  `valor` DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (`id_orcamento`),
+  UNIQUE KEY `orcamento_cotacao_id_unique` (`id_cotacao`, `id_orcamento`),
+  UNIQUE KEY `orcamento_cotacao_fornecedor_unique` (`id_cotacao`, `id_fornecedor`),
+  CONSTRAINT `orcamento_ibfk_1`
+    FOREIGN KEY (`id_cotacao`)
+    REFERENCES `wegia`.`cotacao` (`id_cotacao`)
+    ON DELETE CASCADE
+    ON UPDATE RESTRICT,
+  CONSTRAINT `orcamento_ibfk_2`
+    FOREIGN KEY (`id_fornecedor`)
+    REFERENCES `wegia`.`origem` (`id_origem`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT
+)ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `wegia`.`orcamento_arquivo`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`orcamento_arquivo` (
+  `id_orcamento_arquivo` INT(11) NOT NULL AUTO_INCREMENT,
+  `id_orcamento` INT(11) NOT NULL,
+  `arquivo_nome` VARCHAR(255) NOT NULL,
+  `arquivo_extensao` VARCHAR(10) NOT NULL,
+  `arquivo` LONGBLOB NOT NULL,
+  PRIMARY KEY (`id_orcamento_arquivo`),
+  UNIQUE (`id_orcamento`),
+  CONSTRAINT `orcamento_arquivo_ibfk_1`
+    FOREIGN KEY (`id_orcamento`)
+    REFERENCES `wegia`.`orcamento` (`id_orcamento`)
+    ON DELETE CASCADE
+    ON UPDATE RESTRICT
+)ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `wegia`.`situacao_funcionario`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`situacao_funcionario` (
@@ -2698,6 +2769,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`agenda_alocacao` (
   `lembrete` DATETIME NULL DEFAULT NULL,
   `lembrete_enviado` TINYINT(1) NOT NULL DEFAULT 0,
   `intervalo` INT NOT NULL DEFAULT 0,
+  `rodizio_divisao` TINYINT(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_aa_agenda_idx` (`id_agenda` ASC),
   INDEX `fk_aa_equipe_idx` (`id_equipe` ASC),
