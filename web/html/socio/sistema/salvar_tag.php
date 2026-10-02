@@ -23,7 +23,7 @@
 	}
     extract($_REQUEST);
 
-    $tag = filter_var($value, FILTER_SANITIZE_STRING);
+    $tag = filter_var($value, FILTER_SANITIZE_SPECIAL_CHARS);
     $id_tag = filter_var($id_tag, FILTER_SANITIZE_NUMBER_INT);
 
     if(!$tag){

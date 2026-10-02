@@ -17,6 +17,11 @@ $(document).ready(function () {
         return Math.max(1, Math.ceil(totalRegistros / 25));
     }
 
+    // Função para escapar caracteres especiais em HTML
+    function escapeHtml(value) {
+        return $("<div>").text(value ?? "").html();
+    }
+
     function buildResumoFiltros(payload, socios) {
         const statusLabel = $("#status option:selected").text() || "Todas as opções";
         const tagLabel = $("#tag option:selected").text() || "Todas as opções";
@@ -28,19 +33,29 @@ $(document).ready(function () {
         const dataInicio = formatDateForDisplay($("#data_inicio").val());
         const dataFim = formatDateForDisplay($("#data_fim").val());
 
+        const contribuicao = dataSelecao === "qualquer"
+            ? "Qualquer"
+            : dataSelecao === "partir"
+                ? `A partir de ${dataInicio}`
+                : dataSelecao === "ate"
+                    ? `Até ${dataFim}`
+                    : `Entre ${dataInicio} e ${dataFim}`;
+
         const filtros = [
             `Tipo de sócio: ${tipoSocio}`,
             `Tipo de pessoa: ${tipoPessoa}`,
             `Status: ${statusLabel}`,
             `Tag: ${tagLabel}`,
             `Valor: ${operador} ${valor}`,
-            `Contribuição: ${dataSelecao === "qualquer" ? "Qualquer" : dataSelecao === "partir" ? `A partir de ${dataInicio}` : dataSelecao === "ate" ? `Até ${dataFim}` : `Entre ${dataInicio} e ${dataFim}`}`,
+            `Contribuição: ${contribuicao}`,
             `Quantidade de registros: ${socios.length}`,
             `Data/hora de geração: ${getDataGeracao()}`,
             `Páginas estimadas: ${getQuantasPaginas(socios.length)}`
         ];
 
-        return filtros.map((item) => `<span class="badge-resumo">${item}</span>`).join("");
+        return filtros
+            .map(item => `<span class="badge-resumo">${escapeHtml(item)}</span>`)
+            .join("");
     }
 
     function imprimirRelatorio() {
@@ -135,7 +150,7 @@ $(document).ready(function () {
                         tabela += `
                             <tr>
                                 <td>${socio.nome} ${socio.sobrenome}</td>
-                                <td>${socio.cpf}</td>
+                                <td>${socio.cpf ?? ""}</td>
                                 <td>${socio.data_formatada ?? ""}</td>
                                 <td>${socio.telefone ?? ""}</td>
                                 <td>Provavelmente ${p_periodicidade}</td>
@@ -157,7 +172,7 @@ $(document).ready(function () {
                         tabela += `
                             <tr>
                                 <td>${socio.nome} ${socio.sobrenome}</td>
-                                <td>${socio.cpf}</td>
+                                <td>${socio.cpf ?? ""}</td>
                                 <td>${socio.telefone ?? ""}</td>
                                 <td>${socio.email ?? ""}</td>
                                 <td>${socio.tipo ?? ""}</td>
