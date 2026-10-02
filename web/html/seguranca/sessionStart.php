@@ -67,7 +67,7 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . "config.php";
 if (session_status() === PHP_SESSION_NONE) {
     //cookie enviado para o client
     session_set_cookie_params([
-        'lifetime' => SESSION_TIMEOUT,
+        'lifetime' => defined('SESSION_TIMEOUT') ? SESSION_TIMEOUT : 1800, // 30 minutos
         'path' => '/',
         'secure' => true,
         'httponly' => true,
@@ -75,7 +75,7 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
 
     //garbage collector do servidor
-    ini_set('session.gc_maxlifetime', SESSION_TIMEOUT);
+    ini_set('session.gc_maxlifetime', defined('SESSION_TIMEOUT') ? SESSION_TIMEOUT : 1800); // 30 minutos
 
     session_start();
 }else{
