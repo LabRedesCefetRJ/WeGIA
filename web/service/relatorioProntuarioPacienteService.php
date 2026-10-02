@@ -1,8 +1,42 @@
 <?php
-
-if (session_status() === PHP_SESSION_NONE) session_start();
-
 $baseDir = dirname(__DIR__);
+require_once $baseDir . '/config.php';
+require_once $baseDir . '/html/permissao/permissao.php';
+require_once $baseDir . '/html/seguranca/security_headers.php'; 
+require_once $baseDir . '/classes/Util.php';
+Util::definirFusoHorario();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['usuario'])) {
+    header('Location: ../index.php');
+    exit;
+}
+
+session_regenerate_id();
+
+$id_pessoa = filter_var($_SESSION['id_pessoa'] ?? null, FILTER_VALIDATE_INT);
+
+if (!$id_pessoa || $id_pessoa < 1) {
+    http_response_code(400);
+    exit('ID da pessoa inválido.');
+}
+
+$idFichaMedica = filter_input(
+    INPUT_GET,
+    'id_fichamedica',
+    FILTER_VALIDATE_INT
+);
+
+if (!$idFichaMedica || $idFichaMedica < 1) {
+    http_response_code(400);
+    exit('ID da ficha médica inválido.');
+}
+
+// Verifica permissão do usuário
+permissao($id_pessoa, 52, 7);
 
 require_once $baseDir . '/assets/vendor/setasign/fpdi/src/autoload.php';
 
@@ -267,7 +301,7 @@ try {
 
     if (!empty($prontuarioPublico)) {
         foreach ($prontuarioPublico as $item) {
-            $descricao = $item['descricao'] ?? '';
+            $descricao = strip_tags($item['descricao'] ?? '', '<p><br><b><strong><i><em><u><ul><ol><li>');
             $html .= '
                 <div class="prontuario descricao">
                     ' . $descricao . '
@@ -308,7 +342,8 @@ try {
         foreach ($atendimentos as $atendimento) {
             $medico = $atendimento['medicoNome'] ?? '';
             $registro = $atendimento['registro'] ?? '';
-            $descricao = $atendimento['descricao'] ?? '';
+            $descricao = strip_tags($atendimento['descricao'] ?? '', '<p><br><b><strong><i><em><u><ul><ol><li>');
+
             $dataAtendimento = $formatarData(
                 $atendimento['data_atendimento'] ?? ''
             );
@@ -458,11 +493,7 @@ try {
 
     exit(
         'Erro ao gerar prontuário: ' .
-        $e->getMessage() .
-        '<br><br>Arquivo: ' .
-        $e->getFile() .
-        '<br>Linha: ' .
-        $e->getLine()
+        Util::tratarException($e)
     );
 }
 ?>
