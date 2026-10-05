@@ -20,7 +20,7 @@ class ProcessoAceitacaoDAO
      * @return int ID do processo criado.
      * @throws PDOException Em caso de erro no banco.
     */
-    public function criarProcessoInicial(int $id_pessoa, int $id_status = 1, ?string $descricao): int
+    public function criarProcessoInicial(int $id_pessoa, int $id_status, ?string $descricao): int
     {
         Util::definirFusoHorario();
         $data_inicio = date('Y-m-d H:i:s');

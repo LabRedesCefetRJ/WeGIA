@@ -60,6 +60,7 @@ class ProcessoAceitacaoControle
             $numero = $this->getPostValue('numero_residencia');
             $complemento = $this->getPostValue('complemento');
             $ibge = $this->getPostValue('ibge');
+            $status = (int)($_POST['id_status_cadastro'] ?? 1);
 
             $pessoaDAO = new PessoaDAO($this->pdo);
             $existingPessoa = null;
@@ -139,7 +140,7 @@ class ProcessoAceitacaoControle
                 );
             }
 
-            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, 1, $descricao);
+            $resultado = $processoDAO->criarProcessoInicial($id_pessoa, $status, $descricao);
             if (!$resultado || $resultado <= 0) {
                 throw new Exception('Erro ao cadastrar processo de aceitação no servidor.', 500);
             }
