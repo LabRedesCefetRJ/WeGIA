@@ -26,25 +26,22 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 require_once ROOT . '/classes/Csrf.php';
 
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/OrigemDAO.php';
-
-$pdo = Conexao::connect();
-
-$stmtAlmoxarifados = $pdo->query("
-   SELECT id_almoxarifado, descricao_almoxarifado
-   FROM almoxarifado
-   WHERE ativo = 1
-   ORDER BY descricao_almoxarifado
-");
-
-$almoxarifados = json_encode($stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC));
-
 if (!isset($_SESSION['origem'])) {
-   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=OrigemControle&nextPage=' . WWW . 'html/matPat/listar_origem.php');
-} else {
-   $origem = $_SESSION['origem'];
+   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=OrigemControle' . '&nextPage=' . WWW . 'html/matPat/listar_origem.php');
+   exit;
+}
+
+if (!isset($_SESSION['almoxarifado'])) {
+   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=AlmoxarifadoControle' . '&nextPage=' . WWW . 'html/matPat/listar_origem.php');
+   exit;
+}
+
+if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
+   $origens = json_decode($_SESSION['origem'], true);
+   $almoxarifados = json_decode($_SESSION['almoxarifado'], true);
+
    unset($_SESSION['origem']);
+   unset($_SESSION['almoxarifado']);
 }
 ?>
 <!doctype html>
@@ -89,8 +86,8 @@ if (!isset($_SESSION['origem'])) {
    <script src="<?= WWW ?>Functions/mascara.js"></script>
    <!-- jquery functions -->
    <script>
-      var almoxarifados = <?php echo $almoxarifados; ?>;
-      var origens = <?php echo $origem; ?>;
+      var almoxarifados = <?= json_encode($almoxarifados) ?>;
+      var origens = <?= json_encode($origens) ?>;
 
       function excluir(id) {
          if (!confirm('Deseja realmente excluir esta origem/fornecedor?')) {
@@ -101,8 +98,9 @@ if (!isset($_SESSION['origem'])) {
          $('#formExcluirOrigem').submit();
       }
 
-      function abrirModalEditarOrigem(index) {
-         var origem = origens[index];
+      function abrirModalEditarOrigem(index, dados) {
+         var origem = dados || origens[index];
+         $('#erroEditarOrigem').hide().text('');
 
          $('#edit_id_origem').val(origem.id_origem);
          $('#edit_nome').val(origem.nome_origem || '');
@@ -112,7 +110,7 @@ if (!isset($_SESSION['origem'])) {
 
          $('#edit_almoxarifados').empty();
 
-         var almoxarifadosOrigem = origem.almoxarifados || [];
+         var almoxarifadosOrigem = (origem.almoxarifados || []).map(String);
 
          $.each(almoxarifados, function(i, almoxarifado) {
             var marcado = almoxarifadosOrigem.includes(String(almoxarifado.id_almoxarifado)) ? 'checked' : '';
@@ -131,6 +129,32 @@ if (!isset($_SESSION['origem'])) {
       }
 
       $(function() {
+         $('#formEditarOrigem').on('submit', function(event) {
+            event.preventDefault();
+            var form = $(this);
+            var botao = form.find('button[type="submit"]');
+            if (botao.prop('disabled')) return;
+            botao.prop('disabled', true);
+            $('#erroEditarOrigem').hide().text('');
+            $.ajax({
+               url: form.attr('action'),
+               type: 'POST',
+               dataType: 'json',
+               data: form.serialize() + '&resposta=json'
+            }).done(function(resposta) {
+               if (resposta.destino) {
+                  window.location.href = resposta.destino;
+               } else {
+                  $('#erroEditarOrigem').text('Não foi possível salvar. Tente novamente.').show();
+               }
+            }).fail(function(xhr) {
+               var mensagem = xhr.responseJSON && xhr.responseJSON.mensagem;
+               $('#erroEditarOrigem').text(mensagem || 'Não foi possível salvar. Verifique sua conexão e tente novamente.').show();
+            }).always(function() {
+               botao.prop('disabled', false);
+            });
+         });
+
          $.each(origens, function(i, item) {
             $('#tabela')
                .append($('<tr />')
@@ -187,6 +211,12 @@ if (!isset($_SESSION['origem'])) {
                   <h2 class="panel-title">Origem</h2>
                </header>
                <div class="panel-body">
+                  <?php if (isset($_SESSION['msg'])): ?>
+                     <div class="alert <?= ($_SESSION['flag'] ?? '') === 'error' ? 'alert-danger' : 'alert-success' ?>" role="alert">
+                        <?= htmlspecialchars($_SESSION['msg'], ENT_QUOTES, 'UTF-8') ?>
+                     </div>
+                     <?php unset($_SESSION['msg'], $_SESSION['flag']); ?>
+                  <?php endif; ?>
                   <div style="margin-bottom: 15px;">
                      <a
                            href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=lista_origem"
@@ -232,7 +262,7 @@ if (!isset($_SESSION['origem'])) {
          <div class="modal fade" id="modalEditarOrigem" tabindex="-1" role="dialog" aria-labelledby="modalEditarOrigemLabel">
             <div class="modal-dialog" role="document">
                <div class="modal-content">
-                  <form method="post" action="<?= WWW ?>controle/control.php">
+                  <form id="formEditarOrigem" method="post" action="<?= WWW ?>controle/control.php">
                      <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                            <span aria-hidden="true">&times;</span>
@@ -241,6 +271,7 @@ if (!isset($_SESSION['origem'])) {
                      </div>
 
                      <div class="modal-body">
+                        <div id="erroEditarOrigem" class="alert alert-danger" role="alert" style="display: none;"></div>
                         <input type="hidden" name="nomeClasse" value="OrigemControle">
                         <input type="hidden" name="metodo" value="alterar">
                         <input type="hidden" name="id_origem" id="edit_id_origem">

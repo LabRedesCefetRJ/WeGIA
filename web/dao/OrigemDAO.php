@@ -54,12 +54,20 @@ class OrigemDAO
     {
         try {
             $pdo = Conexao::connect();
+            $consulta = $pdo->prepare('SELECT 1 FROM orcamento WHERE id_fornecedor = :id_origem LIMIT 1');
+            $consulta->bindValue(':id_origem', $id_origem, PDO::PARAM_INT);
+            $consulta->execute();
+
+            if ($consulta->fetchColumn() !== false) {
+                throw new DomainException('Não é possível excluir este fornecedor, pois existem orçamentos vinculados a ele.');
+            }
+
             $sql = 'DELETE FROM origem WHERE id_origem = :id_origem';
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id_origem', $id_origem);
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela origem = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
     public function listarTodos()

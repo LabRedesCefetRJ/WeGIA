@@ -28,21 +28,21 @@ require_once ROOT . '/classes/Csrf.php';
 $origemPagina = OrigemNavegacao::normalizar($_GET['origem'] ?? null);
 $paginaVoltar = OrigemNavegacao::destino($origemPagina);
 
-include_once ROOT . '/dao/Conexao.php';
-
-$pdo = Conexao::connect();
-
-$stmtAlmoxarifados = $pdo->query("
-    SELECT id_almoxarifado, descricao_almoxarifado
-    FROM almoxarifado
-    WHERE ativo = 1
-    ORDER BY descricao_almoxarifado
-");
-
-$almoxarifados = $stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC);
-
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+
+require_once ROOT . "/html/geral/msg.php";
+
+if (!isset($_SESSION['almoxarifado'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_doador.php');
+	exit;
+}
+
+if (isset($_SESSION['almoxarifado'])) {
+	$almoxarifados = json_decode($_SESSION['almoxarifado'], true);
+
+	unset($_SESSION['almoxarifado']);
+}
 ?>
 
 <!doctype html>
@@ -90,24 +90,23 @@ require_once ROOT . "/html/personalizacao_display.php";
     <script src="<?= WWW ?>Functions/onlyChars.js"></script>
     <script src="<?= WWW ?>Functions/testaCPF.js"></script>
     <script>
+        function atualizarEstadoEnvio() {
+            var cpf = document.getElementById("NCPF").value.trim();
+            var cnpj = document.getElementById("cnpj").value.trim();
+            var cpfValido = cpf.length === 0 || testaCPF(cpf);
+            var cnpjValido = cnpj.length === 0 || validarCNPJ(cnpj);
+
+            document.getElementById("enviar").disabled = !cpfValido || !cnpjValido;
+            return cpfValido && cnpjValido;
+        }
+
         function validarCPF(strCPF) {
             strCPF = strCPF.trim();
+            var cpfValido = strCPF.length === 0 || testaCPF(strCPF);
 
-            if (strCPF.length === 0) {
-                $('#cpfInvalido').hide();
-                document.getElementById("enviar").disabled = false;
-                return true;
-            }
-
-            if (!testaCPF(strCPF)) {
-                $('#cpfInvalido').show();
-                document.getElementById("enviar").disabled = true;
-                return false;
-            }
-
-            $('#cpfInvalido').hide();
-            document.getElementById("enviar").disabled = false;
-            return true;
+            $('#cpfInvalido').toggle(!cpfValido);
+            atualizarEstadoEnvio();
+            return cpfValido;
         }
 
         function FormataCnpj(campo, teclapres) {
@@ -179,33 +178,18 @@ require_once ROOT . "/html/personalizacao_display.php";
 
         function exibirCNPJ(cnpj) {
             cnpj = cnpj.trim();
+            var cnpjValido = cnpj.length === 0 || validarCNPJ(cnpj);
 
-            if (cnpj.length === 0) {
-                $('#cnpjInvalido').hide();
-                document.getElementById("enviar").disabled = false;
-                return true;
-            }
-
-            if (!validarCNPJ(cnpj)) {
-                $('#cnpjInvalido').show();
-                document.getElementById("enviar").disabled = true;
-                return false;
-            }
-
-            $('#cnpjInvalido').hide();
-            document.getElementById("enviar").disabled = false;
-            return true;
+            $('#cnpjInvalido').toggle(!cnpjValido);
+            atualizarEstadoEnvio();
+            return cnpjValido;
         }
     </script>
     <script type="text/javascript">
         function validar() {
-            /*var cnpj = document.getElementById("cnpj");
-            var cpf = document.getElementById("NCPF");
-            if (cnpj.value.length == 0 && cpf.value.length == 0) {
-                alert("Preencha o campo CNPJ ou o campo CPF");
-                return false;
-            }*/
-            return true;
+            var cpfValido = validarCPF(document.getElementById("NCPF").value);
+            var cnpjValido = exibirCNPJ(document.getElementById("cnpj").value);
+            return cpfValido && cnpjValido;
         }
         $(function() {
             $("#header").load("../header.php");
@@ -256,6 +240,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             </ul>
                             <div class="tab-content">
                                 <div id="overview" class="tab-pane active">
+                                    <?php sessionMsg(); ?>
                                     <form class="doador" method="post" action="<?= WWW ?>controle/control.php" onsubmit="return validar()" autocomplete="off">
                                         <input type="hidden" name="origem_pagina" value="<?= htmlspecialchars($origemPagina, ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="nomeClasse" value="OrigemControle">

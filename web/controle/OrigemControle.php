@@ -36,21 +36,15 @@ class OrigemControle
 
         // Validação de campos obrigatórios
         if (empty($nome)) {
-            $_SESSION['msg'] = 'Nome da origem não informado. Por favor, informe um nome!';
-            header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
-            exit;
+            throw new InvalidArgumentException('Nome da origem não informado. Por favor, informe um nome!');
         }
 
         if ($cpf !== '' && !Util::validarCPF($cpf)) {
-            $_SESSION['msg'] = "CPF inválido!";
-            header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
-            exit;
+            throw new InvalidArgumentException('CPF inválido!');
         }
 
         if ($cnpj !== '' && !Util::validaCnpj($cnpj)) {
-            $_SESSION['msg'] = "CNPJ inválido!";
-            header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
-            exit;
+            throw new InvalidArgumentException('CNPJ inválido!');
         }
 
         $cpf = $cpf !== '' ? $cpf : null;
@@ -58,6 +52,14 @@ class OrigemControle
         $telefone = $telefone !== '' ? $telefone : null;
 
         return new Origem($nome, $cnpj, $cpf, $telefone);
+    }
+
+    private function responderJson(array $dados, int $status = 200): void
+    {
+        http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($dados, JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
     private function validarCsrf(): void
@@ -138,6 +140,7 @@ class OrigemControle
             $origemDAO->atualizarAlmoxarifados($id_origem, $almoxarifados);
 
             $_SESSION['msg'] = "Origem cadastrada com sucesso";
+            $_SESSION['flag'] = 'success';
             unset($_SESSION['origem'], $_SESSION['proxima'], $_SESSION['link']);
 
             header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
@@ -145,6 +148,13 @@ class OrigemControle
         } catch (PDOException $e) {
             error_log("Erro ao incluir origem: " . $e->getMessage());
             echo "Erro ao cadastrar origem. Tente novamente mais tarde.";
+        } catch (InvalidArgumentException $e) {
+            $_SESSION['msg'] = $e->getMessage();
+            $_SESSION['flag'] = 'error';
+
+            header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
+            exit;
+
         } catch (Exception $e) {
             error_log("Erro geral: " . $e->getMessage() . 'Line ' . $e->getLine() . 'File ' . $e->getFile());
             echo "Erro inesperado. Contate o administrador do sistema.";
@@ -176,12 +186,18 @@ class OrigemControle
         try {
             $origemDAO = new OrigemDAO();
             $origemDAO->excluir($id_origem);
-            header('Location:' . WWW . 'html/matPat/listar_origem.php');
-            exit;
+        } catch (DomainException $e) {
+            $_SESSION['msg'] = $e->getMessage();
+            $_SESSION['flag'] = 'error';
         } catch (PDOException $e) {
             error_log("Erro ao excluir origem: " . $e->getMessage());
-            echo "Erro ao excluir origem. Tente novamente mais tarde.";
+            $_SESSION['msg'] = 'Não foi possível excluir este fornecedor. Verifique se existem outros registros vinculados a ele e tente novamente.';
+            $_SESSION['flag'] = 'error';
         }
+
+        unset($_SESSION['origem']);
+        header('Location: ' . WWW . 'html/matPat/listar_origem.php');
+        exit;
     }
 
     public function listarPorAlmoxarifado()
@@ -233,14 +249,24 @@ class OrigemControle
             $origemDAO->alterar($origem);
             $origemDAO->atualizarAlmoxarifados($id_origem, $almoxarifados);
 
+            if (($_POST['resposta'] ?? '') === 'json') {
+                $this->responderJson(['destino' => WWW . 'html/matPat/listar_origem.php']);
+            }
+
             $_SESSION['msg'] = "Origem alterada com sucesso.";
             header('Location: ' . WWW . 'html/matPat/listar_origem.php');
             exit;
         } catch (PDOException $e) {
             error_log("Erro ao alterar origem: " . $e->getMessage());
+            if (($_POST['resposta'] ?? '') === 'json') {
+                $this->responderJson(['mensagem' => 'Erro ao alterar origem. Tente novamente mais tarde.'], 500);
+            }
             echo "Erro ao alterar origem. Tente novamente mais tarde.";
         } catch (Exception $e) {
             error_log("Erro ao alterar origem: " . $e->getMessage());
+            if (($_POST['resposta'] ?? '') === 'json') {
+                $this->responderJson(['mensagem' => $e->getMessage()], 400);
+            }
             echo "Erro ao alterar origem.";
         }
     }

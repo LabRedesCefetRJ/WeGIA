@@ -23,6 +23,9 @@
             botoes.forEach(function (botao) { botao.disabled = true; });
 
             try {
+                if (dados.get('metodo') === 'escolherOrcamento' && !dados.get('id_orcamento')) {
+                    throw new Error('Selecione um orçamento para concluir a cotação.');
+                }
                 const limites = window.limitesUploadCotacao;
                 if (limites) {
                     let tamanhoTotal = 0;
