@@ -16,6 +16,7 @@ permissao($_SESSION['id_pessoa'], 11, 5);
 
 if (!isset($_SESSION['tipo_quadro_horario'])) {
 	header('Location: ../../controle/control.php?metodo=listarTipo&nomeClasse=QuadroHorarioControle&nextPage=../html/quadro_horario/' . basename(__FILE__));
+	exit;
 }
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)

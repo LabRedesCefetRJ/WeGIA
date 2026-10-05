@@ -115,6 +115,7 @@ class RegraPagamentoController
 
             $this->pdo->commit();
             header("Location: ../view/regra_pagamento.php?msg=cadastrar-sucesso");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -122,6 +123,7 @@ class RegraPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=cadastrar-falha");
+            exit;
         }
     }
 
@@ -156,6 +158,7 @@ class RegraPagamentoController
             $this->pdo->commit();
 
             header("Location: ../view/regra_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -163,6 +166,7 @@ class RegraPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=excluir-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -197,6 +201,7 @@ class RegraPagamentoController
             $this->pdo->commit();
 
             header("Location: ../view/regra_pagamento.php?msg=editar-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -204,6 +209,7 @@ class RegraPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -260,6 +266,7 @@ class RegraPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 }

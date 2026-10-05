@@ -190,6 +190,7 @@ class controleSaudePet
             session_start();
             $_SESSION['saudepet'] = $pets;
             header('Location: ' . $nextPage);
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }

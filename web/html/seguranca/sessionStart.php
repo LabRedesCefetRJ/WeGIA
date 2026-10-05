@@ -73,6 +73,7 @@ if (file_exists($config_path)) {
         if ($loopLimit < 0) {
             // Caso config.php não seja encontrado
             header("Location: instalador/index.php");
+            exit;
             break;
         }
     }
