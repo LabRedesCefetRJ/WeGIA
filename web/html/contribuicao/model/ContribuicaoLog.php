@@ -17,6 +17,7 @@ class ContribuicaoLog
     private MeioPagamento $meioPagamento;
     private ?RecorrenciaDTO $recorrenciaDTO = null;
     private $statusPagamento = 0;
+    private $idContribuicaoDocumento;
     private $agradecimento;
 
     /**
@@ -249,6 +250,26 @@ class ContribuicaoLog
     public function setDataPagamento($dataPagamento)
     {
         $this->dataPagamento = $dataPagamento;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of idContribuicaoDocumento
+     */ 
+    public function getIdContribuicaoDocumento()
+    {
+        return $this->idContribuicaoDocumento;
+    }
+
+    /**
+     * Set the value of idContribuicaoDocumento
+     *
+     * @return  self
+     */ 
+    public function setIdContribuicaoDocumento($idContribuicaoDocumento)
+    {
+        $this->idContribuicaoDocumento = $idContribuicaoDocumento;
 
         return $this;
     }

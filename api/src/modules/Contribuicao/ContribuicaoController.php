@@ -523,6 +523,7 @@ class ContribuicaoController
         }
     }
 
+    //precisa de retrocompatibilidade
     public function downloadContribuicaoPdf(Request $request, Response $response, array $args): Response
     {
         try {
@@ -537,21 +538,34 @@ class ContribuicaoController
                 $nomeArquivo .= '.pdf';
             }
 
-            $validation = $this->validarAcessoContribuicaoPorArquivo($request, $nomeArquivo);
-            if ($validation instanceof Response) {
-                return $validation;
+            $conteudoPdf = null;
+            $idContribuicao = filter_var($contribuicaoId, FILTER_VALIDATE_INT);
+            if ($idContribuicao !== false && $idContribuicao > 0) {
+                $daoContribuicao = new \ContribuicaoLogDAO();
+                $documento = $daoContribuicao->buscarDocumentoPorContribuicao($idContribuicao);
+                if (is_array($documento) && !empty($documento['documento'])) {
+                    $conteudoPdf = $documento['documento'];
+                    $nomeArquivo = 'contribuicao_' . $idContribuicao . '.pdf';
+                }
             }
 
-            $diretorioPdf = dirname(__DIR__, 4) . '/web/html/contribuicao/pdfs';
-            $caminhoArquivo = $diretorioPdf . '/' . $nomeArquivo;
+            if ($conteudoPdf === null) {
+                $validation = $this->validarAcessoContribuicaoPorArquivo($request, $nomeArquivo);
+                if ($validation instanceof Response) {
+                    return $validation;
+                }
 
-            if (!is_file($caminhoArquivo) || !is_readable($caminhoArquivo)) {
-                return $this->jsonError($response, 'Arquivo PDF não encontrado.', 404);
-            }
+                $diretorioPdf = dirname(__DIR__, 4) . '/web/html/contribuicao/pdfs';
+                $caminhoArquivo = $diretorioPdf . '/' . $nomeArquivo;
 
-            $conteudoPdf = file_get_contents($caminhoArquivo);
-            if ($conteudoPdf === false) {
-                return $this->jsonError($response, 'Erro ao ler o arquivo PDF.', 500);
+                if (!is_file($caminhoArquivo) || !is_readable($caminhoArquivo)) {
+                    return $this->jsonError($response, 'Arquivo PDF não encontrado.', 404);
+                }
+
+                $conteudoPdf = file_get_contents($caminhoArquivo);
+                if ($conteudoPdf === false) {
+                    return $this->jsonError($response, 'Erro ao ler o arquivo PDF.', 500);
+                }
             }
 
             $response->getBody()->write($conteudoPdf);

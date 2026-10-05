@@ -227,8 +227,19 @@ function prepararDadosParaTabela(dados) {
     //separar os dados
     let dadosSeparados = [];
     dados.forEach(dado => {
-        let dadoSeparado = separarDados(dado);
-        dadoSeparado.push(`../pdfs/${dado}`);//adiciona link
+        const item = (typeof dado === 'string') ? { nome: dado, link: resolverLinkPdf(dado) } : dado;
+        const nomeArquivo = item?.nome || item?.filename || '';
+        const link = item?.link || resolverLinkPdf(nomeArquivo);
+        let dadoSeparado = separarDados(nomeArquivo || item);
+
+        if (!dadoSeparado.length || !dadoSeparado[2] || !dadoSeparado[3]) {
+            const partes = nomeArquivo.match(/_(\d{8})_(\d+(?:,?\d{0,2})?)\.pdf$/i);
+            if (partes) {
+                dadoSeparado = [nomeArquivo, '', partes[1], partes[2]];
+            }
+        }
+
+        dadoSeparado.push(link);//adiciona link
         dadosSeparados.push(dadoSeparado);
     });
     //ordenar array pela data
@@ -239,6 +250,35 @@ function prepararDadosParaTabela(dados) {
         arrayOrdenado[index][3] = formatarValorEmReais(boleto[3]);
     });
     return arrayOrdenado;
+}
+
+function resolverLinkPdf(item) {
+    if (!item) {
+        return '';
+    }
+
+    if (typeof item === 'object' && item.link) {
+        return item.link;
+    }
+
+    const valor = String(item).trim();
+    if (!valor) {
+        return '';
+    }
+
+    if (/^\d+$/.test(valor)) {
+        return `../controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=${valor}`;
+    }
+
+    if (valor.startsWith('http://') || valor.startsWith('https://')) {
+        return valor;
+    }
+
+    if (valor.startsWith('../') || valor.startsWith('./')) {
+        return valor;
+    }
+
+    return `../pdfs/${valor}`;
 }
 
 /**

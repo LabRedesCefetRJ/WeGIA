@@ -373,23 +373,67 @@ class SocioController
 
             //Pegar coleção de contribuição log
             $contribuicaoLogDao = new ContribuicaoLogDAO();
-            $contribuicaoLogCollection = $contribuicaoLogDao->listarPorDocumento($doc);
+            $contribuicaoLogCollection = $contribuicaoLogDao->listarPorDocumento($docLimpo);
 
             foreach ($arrayBoletos as $boleto) {
                 // Extrair o documento do nome do arquivo
                 $documentoArquivo = isset(explode('_', $boleto)[1]) ? explode('_', $boleto)[1] : null;
                 if ($documentoArquivo == $docLimpo) {
-                    $boletosEncontrados[] = $boleto;
+                    $boletosEncontrados[] = [
+                        'nome' => $boleto,
+                        'link' => '../pdfs/' . $boleto,
+                        'origem' => 'arquivo'
+                    ];
                 } else if ($contribuicaoLogCollection) {
                     $partes = explode('_', $boleto)[0];
                     $documentoArquivo = str_replace('-', '_', $partes);
                     foreach ($contribuicaoLogCollection as $contribuicaoLog) {
                         if ($documentoArquivo == $contribuicaoLog->getCodigo()) {
-                            $boletosEncontrados[] = $boleto;
+                            $boletosEncontrados[] = [
+                                'nome' => $boleto,
+                                'link' => '../pdfs/' . $boleto,
+                                'origem' => 'arquivo'
+                            ];
                         }
                     }
                 }
             }
+
+            if ($contribuicaoLogCollection) {
+                foreach ($contribuicaoLogCollection as $contribuicaoLog) {
+                    $codigo = str_replace('_', '-', (string) $contribuicaoLog->getCodigo());
+                    $dataVencimento = str_replace('-', '', (string) $contribuicaoLog->getDataVencimento());
+                    $valor = (string) $contribuicaoLog->getValor();
+                    $nomeArquivoBanco = $codigo . '_' . $docLimpo . '_' . $dataVencimento . '_' . $valor . '.pdf';
+
+                    $linkBanco = '../controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . (int) $contribuicaoLog->getId();
+                    $itemBanco = [
+                        'nome' => $nomeArquivoBanco,
+                        'link' => $linkBanco,
+                        'origem' => 'database'
+                    ];
+
+                    $jaExiste = false;
+                    foreach ($boletosEncontrados as $boletoRegistrado) {
+                        $nomeRegistrado = is_array($boletoRegistrado) ? ($boletoRegistrado['nome'] ?? '') : $boletoRegistrado;
+                        if ($nomeRegistrado === $nomeArquivoBanco) {
+                            $jaExiste = true;
+                            break;
+                        }
+                    }
+
+                    if (!$jaExiste) {
+                        $boletosEncontrados[] = $itemBanco;
+                    }
+                }
+            }
+
+            $boletosEncontradosUnicos = [];
+            foreach ($boletosEncontrados as $boleto) {
+                $chave = is_array($boleto) ? ($boleto['link'] ?? $boleto['nome'] ?? json_encode($boleto)) : $boleto;
+                $boletosEncontradosUnicos[$chave] = $boleto;
+            }
+            $boletosEncontrados = array_values($boletosEncontradosUnicos);
 
             // Retornar JSON com os boletos encontrados
             echo json_encode($boletosEncontrados);

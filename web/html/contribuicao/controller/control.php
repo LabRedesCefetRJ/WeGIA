@@ -45,7 +45,8 @@ try {
             'criarBoleto',
             'criarCarne',
             'criarQRCode',
-            'processarCartaoCredito'
+            'processarCartaoCredito',
+            'downloadPdfPorId'
         ],
         'RegraPagamentoController' => [
             'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento'

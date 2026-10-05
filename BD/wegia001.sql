@@ -1097,7 +1097,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 CREATE TABLE `wegia`.`contribuicao_documento` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `documento` BLOB NOT NULL,
+    `documento` MEDIUMBLOB NOT NULL,
     `extensao` VARCHAR(32) NOT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

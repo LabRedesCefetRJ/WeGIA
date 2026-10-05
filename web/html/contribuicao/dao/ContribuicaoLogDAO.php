@@ -92,6 +92,54 @@ class ContribuicaoLogDAO
         $stmt->execute();
     }
 
+    public function salvarDocumentoPdf(string $conteudoPdf, string $extensao = 'pdf'): int
+    {
+        $sql = 'INSERT INTO contribuicao_documento (documento, extensao) VALUES (:documento, :extensao)';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':documento', $conteudoPdf, PDO::PARAM_LOB);
+        $stmt->bindValue(':extensao', $extensao);
+        $stmt->execute();
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    public function vincularDocumento(int $idContribuicao, int $idDocumento): void
+    {
+        $sql = 'UPDATE contribuicao_log SET id_contribuicao_documento = :idDocumento WHERE id = :idContribuicao';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':idDocumento', $idDocumento, PDO::PARAM_INT);
+        $stmt->bindValue(':idContribuicao', $idContribuicao, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function buscarDocumentoPorContribuicao(int $idContribuicao): ?array
+    {
+        $sql = 'SELECT cd.id, cd.documento, cd.extensao FROM contribuicao_log cl JOIN contribuicao_documento cd ON cd.id = cl.id_contribuicao_documento WHERE cl.id = :idContribuicao LIMIT 1';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':idContribuicao', $idContribuicao, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $resultado !== false ? $resultado : null;
+    }
+
+    public function buscarDocumentosPorCpf(string $documento): array
+    {
+        $documento = preg_replace('/\D/', '', $documento) ?? '';
+
+        $sql = 'SELECT cl.id, cl.codigo, cl.valor, cl.data_vencimento, cd.id AS id_documento, cd.extensao FROM contribuicao_log cl JOIN socio s ON s.id_socio = cl.id_socio JOIN pessoa p ON p.id_pessoa = s.id_pessoa LEFT JOIN contribuicao_documento cd ON cd.id = cl.id_contribuicao_documento WHERE REPLACE(REPLACE(REPLACE(p.cpf, ".", ""), "-", ""), "/", "") = :documento';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':documento', $documento);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function pagarPorId($id)
     {
         $sqlPagarPorId = "UPDATE contribuicao_log SET status_pagamento = 1 WHERE id=:id";
@@ -118,7 +166,9 @@ class ContribuicaoLogDAO
 
     public function listarPorDocumento(string $documento)
     {
-        $sql = "SELECT cl.id, cl.codigo, cl.valor, cl.data_geracao, cl.data_vencimento, cl.status_pagamento FROM contribuicao_log cl JOIN socio s ON (cl.id_socio=s.id_socio) JOIN pessoa p ON(s.id_pessoa=p.id_pessoa) WHERE cpf=:documento";
+        $documento = preg_replace('/\D/', '', $documento) ?? '';
+
+        $sql = "SELECT cl.id, cl.codigo, cl.valor, cl.data_geracao, cl.data_vencimento, cl.status_pagamento, cl.id_contribuicao_documento FROM contribuicao_log cl JOIN socio s ON (cl.id_socio=s.id_socio) JOIN pessoa p ON(s.id_pessoa=p.id_pessoa) WHERE REPLACE(REPLACE(REPLACE(p.cpf, '.', ''), '-', ''), '/', '') = :documento";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':documento', $documento);
@@ -140,7 +190,8 @@ class ContribuicaoLogDAO
                 ->setValor($contribuicaoLog['valor'])
                 ->setDataGeracao($contribuicaoLog['data_geracao'])
                 ->setDataVencimento($contribuicaoLog['data_vencimento'])
-                ->setStatusPagamento($contribuicaoLog['status_pagamento']);
+                ->setStatusPagamento($contribuicaoLog['status_pagamento'])
+                ->setIdContribuicaoDocumento($contribuicaoLog['id_contribuicao_documento'] ?? null);
 
             $contribuicaoLogCollection->add($contribuicaoLogObject);
         }
