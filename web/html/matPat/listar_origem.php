@@ -26,25 +26,22 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 require_once ROOT . '/classes/Csrf.php';
 
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/OrigemDAO.php';
-
-$pdo = Conexao::connect();
-
-$stmtAlmoxarifados = $pdo->query("
-   SELECT id_almoxarifado, descricao_almoxarifado
-   FROM almoxarifado
-   WHERE ativo = 1
-   ORDER BY descricao_almoxarifado
-");
-
-$almoxarifados = json_encode($stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC));
-
 if (!isset($_SESSION['origem'])) {
-   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=OrigemControle&nextPage=' . WWW . 'html/matPat/listar_origem.php');
-} else {
-   $origem = $_SESSION['origem'];
+   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=OrigemControle' . '&nextPage=' . WWW . 'html/matPat/listar_origem.php');
+   exit;
+}
+
+if (!isset($_SESSION['almoxarifado'])) {
+   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=AlmoxarifadoControle' . '&nextPage=' . WWW . 'html/matPat/listar_origem.php');
+   exit;
+}
+
+if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
+   $origens = json_decode($_SESSION['origem'], true);
+   $almoxarifados = json_decode($_SESSION['almoxarifado'], true);
+
    unset($_SESSION['origem']);
+   unset($_SESSION['almoxarifado']);
 }
 ?>
 <!doctype html>
@@ -89,8 +86,8 @@ if (!isset($_SESSION['origem'])) {
    <script src="<?= WWW ?>Functions/mascara.js"></script>
    <!-- jquery functions -->
    <script>
-      var almoxarifados = <?php echo $almoxarifados; ?>;
-      var origens = <?php echo $origem; ?>;
+      var almoxarifados = <?= json_encode($almoxarifados) ?>;
+      var origens = <?= json_encode($origens) ?>;
 
       function excluir(id) {
          if (!confirm('Deseja realmente excluir esta origem/fornecedor?')) {
@@ -112,7 +109,7 @@ if (!isset($_SESSION['origem'])) {
 
          $('#edit_almoxarifados').empty();
 
-         var almoxarifadosOrigem = origem.almoxarifados || [];
+         var almoxarifadosOrigem = (origem.almoxarifados || []).map(String);
 
          $.each(almoxarifados, function(i, almoxarifado) {
             var marcado = almoxarifadosOrigem.includes(String(almoxarifado.id_almoxarifado)) ? 'checked' : '';

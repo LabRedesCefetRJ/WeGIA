@@ -28,22 +28,21 @@ require_once ROOT . '/classes/Csrf.php';
 $origemPagina = OrigemNavegacao::normalizar($_GET['origem'] ?? null);
 $paginaVoltar = OrigemNavegacao::destino($origemPagina);
 
-include_once ROOT . '/dao/Conexao.php';
-
-$pdo = Conexao::connect();
-
-$stmtAlmoxarifados = $pdo->query("
-    SELECT id_almoxarifado, descricao_almoxarifado
-    FROM almoxarifado
-    WHERE ativo = 1
-    ORDER BY descricao_almoxarifado
-");
-
-$almoxarifados = $stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC);
-
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+
 require_once ROOT . "/html/geral/msg.php";
+
+if (!isset($_SESSION['almoxarifado'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_doador.php');
+	exit;
+}
+
+if (isset($_SESSION['almoxarifado'])) {
+	$almoxarifados = json_decode($_SESSION['almoxarifado'], true);
+
+	unset($_SESSION['almoxarifado']);
+}
 ?>
 
 <!doctype html>
