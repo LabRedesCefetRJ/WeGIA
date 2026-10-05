@@ -211,6 +211,12 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                   <h2 class="panel-title">Origem</h2>
                </header>
                <div class="panel-body">
+                  <?php if (isset($_SESSION['msg'])): ?>
+                     <div class="alert <?= ($_SESSION['flag'] ?? '') === 'error' ? 'alert-danger' : 'alert-success' ?>" role="alert">
+                        <?= htmlspecialchars($_SESSION['msg'], ENT_QUOTES, 'UTF-8') ?>
+                     </div>
+                     <?php unset($_SESSION['msg'], $_SESSION['flag']); ?>
+                  <?php endif; ?>
                   <div style="margin-bottom: 15px;">
                      <a
                            href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=lista_origem"

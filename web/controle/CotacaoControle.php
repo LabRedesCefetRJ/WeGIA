@@ -300,7 +300,10 @@ class CotacaoControle
 
         $id_cotacao = CotacaoSuporte::obterIdObrigatorio('id_cotacao','cotação');
 
-        $id_orcamento = CotacaoSuporte::obterIdObrigatorio('id_orcamento','orçamento');
+        $id_orcamento = filter_var($_POST['id_orcamento'] ?? null, FILTER_VALIDATE_INT);
+        if ($id_orcamento === false || $id_orcamento < 1) {
+            throw new InvalidArgumentException('Selecione um orçamento para concluir a cotação.', 400);
+        }
 
         $cotacao = $this->cotacaoDAO->buscarPorId(
             $id_cotacao

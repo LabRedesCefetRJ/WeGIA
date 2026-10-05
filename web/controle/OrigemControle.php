@@ -186,12 +186,18 @@ class OrigemControle
         try {
             $origemDAO = new OrigemDAO();
             $origemDAO->excluir($id_origem);
-            header('Location:' . WWW . 'html/matPat/listar_origem.php');
-            exit;
+        } catch (DomainException $e) {
+            $_SESSION['msg'] = $e->getMessage();
+            $_SESSION['flag'] = 'error';
         } catch (PDOException $e) {
             error_log("Erro ao excluir origem: " . $e->getMessage());
-            echo "Erro ao excluir origem. Tente novamente mais tarde.";
+            $_SESSION['msg'] = 'Não foi possível excluir este fornecedor. Verifique se existem outros registros vinculados a ele e tente novamente.';
+            $_SESSION['flag'] = 'error';
         }
+
+        unset($_SESSION['origem']);
+        header('Location: ' . WWW . 'html/matPat/listar_origem.php');
+        exit;
     }
 
     public function listarPorAlmoxarifado()
