@@ -579,6 +579,19 @@ try {
 									<label>Descrição</label>
 									<textarea class="form-control" rows="5" name="descricao"><?= htmlspecialchars($oldInput['descricao'] ?? '', ENT_QUOTES, 'UTF-8') ?></textarea>
 								</div>
+
+								<div>
+									<label>Status do Processo:</label>
+									<button type="button" onclick="adicionar_status()" class="btn btn-link p-0">
+										<i class="fa fa-plus"></i>
+									</button>
+
+									<select name="id_status_cadastro" id="selectStatusProcessoCadastro" class="form-control select-status-processo" style="min-width: 200px;">
+										<?php foreach ($statusProcesso as $status): ?>
+											<option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
 							</div>
 							<div class="modal-footer">
 								<button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -1179,6 +1192,15 @@ function formatCpfField(field) {
 		// Seleciona o status adequado
 		const selectElement = document.getElementById('status-processo');
 		selectElement.value = '<?= $idStatusGet ?>';
+
+		selectElement.addEventListener('change', function() {
+			const valorStatus = selectElement.value;
+
+			let url = './processo_aceitacao.php?status-processo=' + encodeURIComponent(valorStatus);
+
+			window.location.href = url;
+		});
+
 
 		const btnListar = document.getElementById('listar-processo');
 
