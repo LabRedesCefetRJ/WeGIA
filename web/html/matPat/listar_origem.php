@@ -98,8 +98,9 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
          $('#formExcluirOrigem').submit();
       }
 
-      function abrirModalEditarOrigem(index) {
-         var origem = origens[index];
+      function abrirModalEditarOrigem(index, dados) {
+         var origem = dados || origens[index];
+         $('#erroEditarOrigem').hide().text('');
 
          $('#edit_id_origem').val(origem.id_origem);
          $('#edit_nome').val(origem.nome_origem || '');
@@ -128,6 +129,32 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
       }
 
       $(function() {
+         $('#formEditarOrigem').on('submit', function(event) {
+            event.preventDefault();
+            var form = $(this);
+            var botao = form.find('button[type="submit"]');
+            if (botao.prop('disabled')) return;
+            botao.prop('disabled', true);
+            $('#erroEditarOrigem').hide().text('');
+            $.ajax({
+               url: form.attr('action'),
+               type: 'POST',
+               dataType: 'json',
+               data: form.serialize() + '&resposta=json'
+            }).done(function(resposta) {
+               if (resposta.destino) {
+                  window.location.href = resposta.destino;
+               } else {
+                  $('#erroEditarOrigem').text('Não foi possível salvar. Tente novamente.').show();
+               }
+            }).fail(function(xhr) {
+               var mensagem = xhr.responseJSON && xhr.responseJSON.mensagem;
+               $('#erroEditarOrigem').text(mensagem || 'Não foi possível salvar. Verifique sua conexão e tente novamente.').show();
+            }).always(function() {
+               botao.prop('disabled', false);
+            });
+         });
+
          $.each(origens, function(i, item) {
             $('#tabela')
                .append($('<tr />')
@@ -229,7 +256,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
          <div class="modal fade" id="modalEditarOrigem" tabindex="-1" role="dialog" aria-labelledby="modalEditarOrigemLabel">
             <div class="modal-dialog" role="document">
                <div class="modal-content">
-                  <form method="post" action="<?= WWW ?>controle/control.php">
+                  <form id="formEditarOrigem" method="post" action="<?= WWW ?>controle/control.php">
                      <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                            <span aria-hidden="true">&times;</span>
@@ -238,6 +265,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                      </div>
 
                      <div class="modal-body">
+                        <div id="erroEditarOrigem" class="alert alert-danger" role="alert" style="display: none;"></div>
                         <input type="hidden" name="nomeClasse" value="OrigemControle">
                         <input type="hidden" name="metodo" value="alterar">
                         <input type="hidden" name="id_origem" id="edit_id_origem">
