@@ -43,6 +43,7 @@ $almoxarifados = $stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/html/geral/msg.php";
 ?>
 
 <!doctype html>
@@ -256,6 +257,7 @@ require_once ROOT . "/html/personalizacao_display.php";
                             </ul>
                             <div class="tab-content">
                                 <div id="overview" class="tab-pane active">
+                                    <?php sessionMsg(); ?>
                                     <form class="doador" method="post" action="<?= WWW ?>controle/control.php" onsubmit="return validar()" autocomplete="off">
                                         <input type="hidden" name="origem_pagina" value="<?= htmlspecialchars($origemPagina, ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="nomeClasse" value="OrigemControle">

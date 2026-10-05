@@ -37,18 +37,21 @@ class OrigemControle
         // Validação de campos obrigatórios
         if (empty($nome)) {
             $_SESSION['msg'] = 'Nome da origem não informado. Por favor, informe um nome!';
+            $_SESSION['flag'] = 'error';
             header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
         }
 
         if ($cpf !== '' && !Util::validarCPF($cpf)) {
             $_SESSION['msg'] = "CPF inválido!";
+            $_SESSION['flag'] = 'error';
             header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
         }
 
         if ($cnpj !== '' && !Util::validaCnpj($cnpj)) {
             $_SESSION['msg'] = "CNPJ inválido!";
+            $_SESSION['flag'] = 'error';
             header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
         }
@@ -138,6 +141,7 @@ class OrigemControle
             $origemDAO->atualizarAlmoxarifados($id_origem, $almoxarifados);
 
             $_SESSION['msg'] = "Origem cadastrada com sucesso";
+            $_SESSION['flag'] = 'success';
             unset($_SESSION['origem'], $_SESSION['proxima'], $_SESSION['link']);
 
             header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
