@@ -34,7 +34,11 @@ require_once ROOT . "/html/personalizacao_display.php";
 require_once ROOT . "/html/geral/msg.php";
 
 if (!isset($_SESSION['almoxarifado'])) {
-	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_doador.php');
+	header('Location: ' . WWW . 'controle/control.php?' . http_build_query([
+        'metodo' => 'listarTodos',
+        'nomeClasse' => 'AlmoxarifadoControle',
+        'nextPage' => OrigemNavegacao::cadastro($origemPagina)
+    ]));
 	exit;
 }
 

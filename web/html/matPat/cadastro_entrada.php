@@ -376,6 +376,10 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 					if (origemRestaurar) {
 						$('#origens').val(String(origemRestaurar));
 					}
+				}).fail(function() {
+					$('#origens').empty().append(
+						'<option selected disabled value="blank">Não foi possível carregar os fornecedores. Tente novamente mais tarde.</option>'
+					);
 				});
 
 				$.getJSON('<?= WWW ?>controle/control.php', {

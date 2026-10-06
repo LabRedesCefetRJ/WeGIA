@@ -214,8 +214,13 @@ class OrigemControle
             exit;
         }
 
-        $origemDAO = new OrigemDAO();
-        echo $origemDAO->listarPorAlmoxarifado($id_almoxarifado);
+        try {
+            $origemDAO = new OrigemDAO();
+            echo $origemDAO->listarPorAlmoxarifado($id_almoxarifado);
+        } catch (PDOException $e) {
+            error_log('Erro ao listar origens por almoxarifado: ' . $e->getMessage());
+            $this->responderJson(['mensagem' => 'Não foi possível carregar os fornecedores. Tente novamente mais tarde.'], 500);
+        }
         exit;
     }
 
