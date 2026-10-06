@@ -135,7 +135,7 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
 
             // O controller (criarBoleto) não trata o retorno do link, então a service
             // responde direto ao front-end aqui, no mesmo padrão do PagarMeBoletoService.
-            $linkPdf = WWW . '/html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . (int) $contribuicaoLog->getId();
+            $linkPdf = WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($contribuicaoLog->getUuid());
             echo json_encode(['link' => $linkPdf]);
 
             return $responseData['id'];

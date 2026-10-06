@@ -266,10 +266,6 @@ function resolverLinkPdf(item) {
         return '';
     }
 
-    if (/^\d+$/.test(valor)) {
-        return `../controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=${valor}`;
-    }
-
     if (valor.startsWith('http://') || valor.startsWith('https://')) {
         return valor;
     }

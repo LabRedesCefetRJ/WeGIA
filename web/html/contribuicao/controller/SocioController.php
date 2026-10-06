@@ -362,12 +362,7 @@ class SocioController
 
             // Listar arquivos no diretório
             $arrayBoletos = Util::listarArquivos($path);
-
-            if (!$arrayBoletos) {
-                $mensagemErro = json_encode(['erro' => 'O diretório de armazenamento de PDFs não existe']);
-                echo $mensagemErro;
-                exit();
-            }
+            $arrayBoletos = $arrayBoletos === false ? [] : $arrayBoletos;
 
             $boletosEncontrados = [];
 
@@ -401,12 +396,21 @@ class SocioController
 
             if ($contribuicaoLogCollection) {
                 foreach ($contribuicaoLogCollection as $contribuicaoLog) {
+                    if (empty($contribuicaoLog->getIdContribuicaoDocumento())) {
+                        continue;
+                    }
+
                     $codigo = str_replace('_', '-', (string) $contribuicaoLog->getCodigo());
                     $dataVencimento = str_replace('-', '', (string) $contribuicaoLog->getDataVencimento());
                     $valor = (string) $contribuicaoLog->getValor();
                     $nomeArquivoBanco = $codigo . '_' . $docLimpo . '_' . $dataVencimento . '_' . $valor . '.pdf';
 
-                    $linkBanco = '../controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . (int) $contribuicaoLog->getId();
+                    $uuidContribuicao = $contribuicaoLog->getUuid();
+                    if ($uuidContribuicao === null) {
+                        continue;
+                    }
+
+                    $linkBanco = '../controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($uuidContribuicao);
                     $itemBanco = [
                         'nome' => $nomeArquivoBanco,
                         'link' => $linkBanco,
@@ -414,9 +418,10 @@ class SocioController
                     ];
 
                     $jaExiste = false;
-                    foreach ($boletosEncontrados as $boletoRegistrado) {
+                    foreach ($boletosEncontrados as $indice => $boletoRegistrado) {
                         $nomeRegistrado = is_array($boletoRegistrado) ? ($boletoRegistrado['nome'] ?? '') : $boletoRegistrado;
                         if ($nomeRegistrado === $nomeArquivoBanco) {
+                            $boletosEncontrados[$indice] = $itemBanco;
                             $jaExiste = true;
                             break;
                         }

@@ -1109,6 +1109,7 @@ CREATE TABLE `wegia`.`contribuicao_documento` (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_log` (
     `id` INT NOT NULL AUTO_INCREMENT,
+    `uuid` BINARY(16) NOT NULL,
     `id_socio` INT(11) NOT NULL,
     `id_gateway` INT(11) DEFAULT NULL,
     `id_meio_pagamento` INT(11) NOT NULL,
@@ -1122,6 +1123,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_log` (
     `status_pagamento` BOOLEAN NOT NULL,
 
     PRIMARY KEY (id),
+    CONSTRAINT uq_contribuicao_log_uuid UNIQUE (uuid),
 
     CONSTRAINT FK_id_socios
         FOREIGN KEY (id_socio)

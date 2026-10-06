@@ -533,23 +533,25 @@ class ContribuicaoController
                 return $this->jsonError($response, 'Identificador da contribuição inválido.', 400);
             }
 
-            $nomeArquivo = basename($contribuicaoId);
-            if (!preg_match('/\.pdf$/i', $nomeArquivo)) {
-                $nomeArquivo .= '.pdf';
-            }
-
             $conteudoPdf = null;
-            $idContribuicao = filter_var($contribuicaoId, FILTER_VALIDATE_INT);
-            if ($idContribuicao !== false && $idContribuicao > 0) {
-                $daoContribuicao = new \ContribuicaoLogDAO();
-                $documento = $daoContribuicao->buscarDocumentoPorContribuicao($idContribuicao);
+            $uuidContribuicao = \api\utils\UuidGenerator::parseV7($contribuicaoId);
+            if ($uuidContribuicao !== null) {
+                $daoContribuicao = new \ContribuicaoLogDAO($this->pdo);
+                $documento = $daoContribuicao->buscarDocumentoPorUuid($uuidContribuicao->toString());
                 if (is_array($documento) && !empty($documento['documento'])) {
                     $conteudoPdf = $documento['documento'];
-                    $nomeArquivo = 'contribuicao_' . $idContribuicao . '.pdf';
+                    $nomeArquivo = 'contribuicao_' . $uuidContribuicao->toString() . '.pdf';
+                } else {
+                    return $this->jsonError($response, 'Arquivo PDF não encontrado.', 404);
                 }
             }
 
             if ($conteudoPdf === null) {
+                $nomeArquivo = basename($contribuicaoId);
+                if (!preg_match('/\.pdf$/i', $nomeArquivo)) {
+                    $nomeArquivo .= '.pdf';
+                }
+
                 $validation = $this->validarAcessoContribuicaoPorArquivo($request, $nomeArquivo);
                 if ($validation instanceof Response) {
                     return $validation;
@@ -830,8 +832,7 @@ class ContribuicaoController
             $response->getBody()->write(json_encode([
                 'link' => $linkBoleto,
                 'codigo' => $codigoApi,
-                //'contribuicao_id' => (int)$contribuicaoLog->getId() voltar para o id do banco de dados quando for implementado o registro de contribuições no banco, por enquanto vamos usar o nome do arquivo como id
-                'contribuicao_id' => $this->extrairNomeArquivo($linkBoleto) //extrair do link de pagamento
+                'contribuicao_id' => $contribuicaoLog->getUuid()
             ]));
 
             return $response->withStatus(201)
@@ -981,13 +982,14 @@ class ContribuicaoController
                 }
             }
 
+            $primeiraContribuicao = $resultado['contribuicoes']->getIterator()->current();
+
             $this->pdo->commit();
 
             $response->getBody()->write(json_encode([
-                'link' => WWW . 'html/contribuicao/' . $resultado['link'],
+                'link' => WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($primeiraContribuicao->getUuid()),
                 'parcelas' => (int)$parcelas,
-                //'contribuicao_id' => (int)$contribuicaoLog->getId() voltar para o id do banco de dados quando for implementado o registro de contribuições no banco, por enquanto vamos usar o nome do arquivo como id
-                'contribuicao_id' => $this->extrairNomeArquivo($resultado['link']) //extrair do link de pagamento
+                'contribuicao_id' => $primeiraContribuicao->getUuid()
             ]));
 
             return $response->withStatus(201)
@@ -1117,7 +1119,7 @@ class ContribuicaoController
                 'qrcode' => $respostaPix['qrcode'],
                 'copiaCola' => $respostaPix['copiaCola'],
                 'codigo' => $codigoApi,
-                'contribuicao_id' => (int)$contribuicaoLog->getId()
+                'contribuicao_id' => $contribuicaoLog->getUuid()
             ]));
 
             return $response->withStatus(201)
@@ -1249,7 +1251,7 @@ class ContribuicaoController
                 'sucesso' => true,
                 'mensagem' => 'Pagamento processado com sucesso!',
                 'transacao_id' => $transacaoId,
-                'contribuicao_id' => (int)$contribuicaoLog->getId()
+                'contribuicao_id' => $contribuicaoLog->getUuid()
             ]));
 
             return $response->withStatus(201)

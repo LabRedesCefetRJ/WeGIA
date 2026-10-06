@@ -376,11 +376,11 @@ class ContribuicaoLogController
                 $this->pdo->commit();
 
                 $primeiraContribuicao = $resultado['contribuicoes']->getIterator()->current();
-                $idPrimeiraContribuicao = $primeiraContribuicao instanceof ContribuicaoLog
-                    ? (int) $primeiraContribuicao->getId()
-                    : 0;
-                $linkPdf = $idPrimeiraContribuicao > 0
-                    ? WWW . '/html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . $idPrimeiraContribuicao
+                $uuidPrimeiraContribuicao = $primeiraContribuicao instanceof ContribuicaoLog
+                    ? $primeiraContribuicao->getUuid()
+                    : null;
+                $linkPdf = $uuidPrimeiraContribuicao !== null
+                    ? WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($uuidPrimeiraContribuicao)
                     : WWW . 'html/contribuicao/' . $resultado['link'];
 
                 echo json_encode(['link' => $linkPdf]);
@@ -392,33 +392,43 @@ class ContribuicaoLogController
 
     public function downloadPdfPorId()
     {
-        $idContribuicao = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-
-        if ($idContribuicao === false || $idContribuicao <= 0) {
+        $identificador = trim((string) ($_GET['id'] ?? ''));
+        if ($identificador === '') {
             http_response_code(400);
             echo json_encode(['erro' => 'Identificador da contribuição inválido']);
             return;
         }
 
         $daoContribuicao = new ContribuicaoLogDAO($this->pdo);
-        $documento = $daoContribuicao->buscarDocumentoPorContribuicao($idContribuicao);
+        $uuid = \api\utils\UuidGenerator::parseV7($identificador);
+        if ($uuid !== null) {
+            $documento = $daoContribuicao->buscarDocumentoPorUuid($uuid->toString());
+            if (!is_array($documento) || empty($documento['documento'])) {
+                http_response_code(404);
+                echo json_encode(['erro' => 'Arquivo PDF não encontrado']);
+                return;
+            }
 
-        if (is_array($documento) && !empty($documento['documento'])) {
             header('Content-Type: application/pdf');
-            header('Content-Disposition: inline; filename="contribuicao_' . $idContribuicao . '.pdf"');
+            header('Content-Disposition: inline; filename="contribuicao_' . $uuid->toString() . '.pdf"');
             echo $documento['documento'];
             exit;
         }
 
-        $nomeArquivo = filter_input(INPUT_GET, 'nomeArquivo');
-        if (!empty($nomeArquivo) && is_string($nomeArquivo)) {
-            $caminhoArquivo = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . basename($nomeArquivo);
-            if (is_file($caminhoArquivo) && is_readable($caminhoArquivo)) {
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: inline; filename="' . basename($nomeArquivo) . '"');
-                echo file_get_contents($caminhoArquivo);
-                exit;
-            }
+        $nomeArquivo = trim((string) ($_GET['nomeArquivo'] ?? $identificador));
+        $nomeArquivoSeguro = basename($nomeArquivo);
+        if ($nomeArquivoSeguro !== $nomeArquivo || !preg_match('/\.pdf$/i', $nomeArquivoSeguro)) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Nome de arquivo inválido']);
+            return;
+        }
+
+        $caminhoArquivo = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . $nomeArquivoSeguro;
+        if (is_file($caminhoArquivo) && is_readable($caminhoArquivo)) {
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="' . $nomeArquivoSeguro . '"');
+            readfile($caminhoArquivo);
+            exit;
         }
 
         http_response_code(404);

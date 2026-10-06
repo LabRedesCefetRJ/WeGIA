@@ -1,6 +1,7 @@
 <?php
 //requisitar arquivo de conexão
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
+require_once dirname(__DIR__, 4) . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'utils' . DIRECTORY_SEPARATOR . 'UuidGenerator.php';
 
 //requisitar model
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
@@ -20,6 +21,7 @@ class ContribuicaoLogDAO
     public function criar(ContribuicaoLog $contribuicaoLog)
     {
         $sqlInserirContribuicaoLog = "INSERT INTO contribuicao_log (
+                    uuid,
                     id_socio,
                     id_gateway,
                     id_meio_pagamento,
@@ -37,6 +39,7 @@ class ContribuicaoLogDAO
                     status_pagamento
                 ) 
                 VALUES (
+                    :uuid,
                     :idSocio, 
                     :idGateway,
                     :idMeioPagamento,
@@ -53,6 +56,8 @@ class ContribuicaoLogDAO
                     :statusPagamento)";
 
         $stmt = $this->pdo->prepare($sqlInserirContribuicaoLog);
+        $uuid = \api\utils\UuidGenerator::generateV7();
+        $stmt->bindValue(':uuid', $uuid->getBytes(), PDO::PARAM_LOB);
         $stmt->bindValue(':idSocio', $contribuicaoLog->getSocio()->getId());
         $stmt->bindValue(':idGateway', $contribuicaoLog->getGatewayPagamento()->getId());
         $stmt->bindValue(':idMeioPagamento', $contribuicaoLog->getMeioPagamento()->getId());
@@ -76,7 +81,7 @@ class ContribuicaoLogDAO
         $stmt->execute();
 
         $ultimoId = $this->pdo->lastInsertId();
-        $contribuicaoLog->setId($ultimoId);
+        $contribuicaoLog->setId($ultimoId)->setUuid($uuid->toString());
 
         return $contribuicaoLog;
     }
@@ -127,11 +132,27 @@ class ContribuicaoLogDAO
         return $resultado !== false ? $resultado : null;
     }
 
+    public function buscarDocumentoPorUuid(string $uuid): ?array
+    {
+        $uuidValidado = \api\utils\UuidGenerator::parseV7($uuid);
+        if ($uuidValidado === null) {
+            return null;
+        }
+
+        $sql = 'SELECT cd.id, cd.documento, cd.extensao FROM contribuicao_log cl JOIN contribuicao_documento cd ON cd.id = cl.id_contribuicao_documento WHERE cl.uuid = :uuid LIMIT 1';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':uuid', $uuidValidado->getBytes(), PDO::PARAM_LOB);
+        $stmt->execute();
+
+        $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $resultado !== false ? $resultado : null;
+    }
+
     public function buscarDocumentosPorCpf(string $documento): array
     {
         $documento = preg_replace('/\D/', '', $documento) ?? '';
 
-        $sql = 'SELECT cl.id, cl.codigo, cl.valor, cl.data_vencimento, cd.id AS id_documento, cd.extensao FROM contribuicao_log cl JOIN socio s ON s.id_socio = cl.id_socio JOIN pessoa p ON p.id_pessoa = s.id_pessoa LEFT JOIN contribuicao_documento cd ON cd.id = cl.id_contribuicao_documento WHERE REPLACE(REPLACE(REPLACE(p.cpf, ".", ""), "-", ""), "/", "") = :documento';
+        $sql = 'SELECT cl.id, cl.uuid, cl.codigo, cl.valor, cl.data_vencimento, cd.id AS id_documento, cd.extensao FROM contribuicao_log cl JOIN socio s ON s.id_socio = cl.id_socio JOIN pessoa p ON p.id_pessoa = s.id_pessoa LEFT JOIN contribuicao_documento cd ON cd.id = cl.id_contribuicao_documento WHERE REPLACE(REPLACE(REPLACE(p.cpf, ".", ""), "-", ""), "/", "") = :documento';
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':documento', $documento);
@@ -168,7 +189,7 @@ class ContribuicaoLogDAO
     {
         $documento = preg_replace('/\D/', '', $documento) ?? '';
 
-        $sql = "SELECT cl.id, cl.codigo, cl.valor, cl.data_geracao, cl.data_vencimento, cl.status_pagamento, cl.id_contribuicao_documento FROM contribuicao_log cl JOIN socio s ON (cl.id_socio=s.id_socio) JOIN pessoa p ON(s.id_pessoa=p.id_pessoa) WHERE REPLACE(REPLACE(REPLACE(p.cpf, '.', ''), '-', ''), '/', '') = :documento";
+        $sql = "SELECT cl.id, cl.uuid, cl.codigo, cl.valor, cl.data_geracao, cl.data_vencimento, cl.status_pagamento, cl.id_contribuicao_documento FROM contribuicao_log cl JOIN socio s ON (cl.id_socio=s.id_socio) JOIN pessoa p ON(s.id_pessoa=p.id_pessoa) WHERE REPLACE(REPLACE(REPLACE(p.cpf, '.', ''), '-', ''), '/', '') = :documento";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':documento', $documento);
@@ -191,6 +212,9 @@ class ContribuicaoLogDAO
                 ->setDataGeracao($contribuicaoLog['data_geracao'])
                 ->setDataVencimento($contribuicaoLog['data_vencimento'])
                 ->setStatusPagamento($contribuicaoLog['status_pagamento'])
+                ->setUuid(isset($contribuicaoLog['uuid']) && $contribuicaoLog['uuid'] !== null
+                    ? \Ramsey\Uuid\Uuid::fromBytes($contribuicaoLog['uuid'])->toString()
+                    : null)
                 ->setIdContribuicaoDocumento($contribuicaoLog['id_contribuicao_documento'] ?? null);
 
             $contribuicaoLogCollection->add($contribuicaoLogObject);

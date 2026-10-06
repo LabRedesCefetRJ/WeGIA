@@ -18,6 +18,7 @@ class ContribuicaoLog
     private ?RecorrenciaDTO $recorrenciaDTO = null;
     private $statusPagamento = 0;
     private $idContribuicaoDocumento;
+    private ?string $uuid = null;
     private $agradecimento;
 
     /**
@@ -50,6 +51,18 @@ class ContribuicaoLog
     public function setId($id)
     {
         $this->id = $id;
+
+        return $this;
+    }
+
+    public function getUuid(): ?string
+    {
+        return $this->uuid;
+    }
+
+    public function setUuid(?string $uuid): self
+    {
+        $this->uuid = $uuid;
 
         return $this;
     }

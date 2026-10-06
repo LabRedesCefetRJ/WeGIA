@@ -128,7 +128,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                 $pdfInterno = $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
 
                 //envia resposta para o front-end
-                $linkPdf = WWW . '/html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . (int) $contribuicaoLog->getId();
+                $linkPdf = WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($contribuicaoLog->getUuid());
                 echo json_encode(['link' => $linkPdf]);
             } else {
                 throw new PaymentServiceException(
