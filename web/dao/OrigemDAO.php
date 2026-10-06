@@ -29,7 +29,7 @@ class OrigemDAO
 
             return (int) $pdo->lastInsertId();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela origem = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
     public function listarUm($id)
@@ -110,7 +110,7 @@ class OrigemDAO
                 $x++;
             }
         } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+            throw $e;
         }
         return json_encode($origens);
     }
@@ -127,7 +127,7 @@ class OrigemDAO
                 $x++;
             }
         } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+            throw $e;
         }
         return json_encode($origens);
     }
@@ -160,10 +160,8 @@ class OrigemDAO
 
             return json_encode($origens);
         } catch (PDOException $e) {
-            echo 'Error:' . $e->getMessage();
+            throw $e;
         }
-
-        return json_encode(array());
     }
 
     public function alterar($origem)

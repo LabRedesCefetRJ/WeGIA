@@ -338,6 +338,7 @@ $origemLista = CotacaoSuporte::origemLista();
 
                             <form data-cotacao-form
                                 id="formEscolherOrcamento"
+                                novalidate
                                 method="post"
                                 action="<?= WWW ?>controle/control.php"
                             >
