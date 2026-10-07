@@ -545,6 +545,12 @@ require_once ROOT . "/html/geral/msg.php";
 				<div class="row category-row-second">
 					<div id="material" class="collapse">
 						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#processoCompra">
+								<i class="fa-solid fa-receipt"></i>
+								<h4>Processo de compra</h4>
+							</div>
+						</a>
+						<a href="#">
 							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#entrada">
 								<i class="fa-solid fa-circle-arrow-down"></i>
 								<h4>Entrada</h4>
@@ -565,6 +571,22 @@ require_once ROOT . "/html/geral/msg.php";
 					</div>
 				</div>
 
+				<div class="row category-row-third">
+					<div id="processoCompra" class="removeIn collapse">
+						<a href="<?= WWW ?>html/matPat/listar_origem.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-phone"></i>
+								<h4>Fornecedores</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>controle/control.php?nomeClasse=CotacaoControle&amp;metodo=listar">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-dollar-sign"></i>
+								<h4>Cotações</h4>
+							</div>
+						</a>
+					</div>
+				</div>
 
 				<div class="row category-row-third">
 					<div id="entrada" class="removeIn collapse">
@@ -714,6 +736,12 @@ require_once ROOT . "/html/geral/msg.php";
 								<h4>Extra</h4>
 							</div>
 						</a>
+						<a href="#">
+							<div class="col-lg-2 col-md-8 i category-item-second" data-toggle="collapse" href="#beneficios">
+								<i class="fa-solid fa-gift"></i>
+								<h4>Programa de benefícios</h4>
+							</div>
+						</a>
 					</div>
 				</div>
 
@@ -739,6 +767,22 @@ require_once ROOT . "/html/geral/msg.php";
 							<div class="col-lg-2 col-md-8 i">
 								<i class="fa fa-tag"></i>
 								<h4>Tags (grupos)</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+				<div class="row category-row-third">
+					<div id="beneficios" class="removeIn collapse">
+						<a href="<?= WWW ?>html/socio/sistema/beneficios.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa-solid fa-file-signature"></i>
+								<h4>Regras de benefícios</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/socio/sistema/parceiros.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fa fa-handshake"></i>
+								<h4>Parceiros Institucionais</h4>
 							</div>
 						</a>
 					</div>

@@ -7,8 +7,9 @@ require_once '../html/permissao/permissao.php';
 session_start();
 permissao($_SESSION['id_pessoa'], 11, 3);
 
-//Sanitiza a entrada.
-$situacao = trim(filter_input(INPUT_POST, 'situacao', FILTER_SANITIZE_STRING));
+//Sanitiza a entrada. A exibição (exibir_situacao.php) já escapa com
+//htmlspecialchars, então aqui só precisamos validar e normalizar espaços.
+$situacao = trim((string) filter_input(INPUT_POST, 'situacao', FILTER_UNSAFE_RAW));
 
 if(!$situacao || empty($situacao)){
 	http_response_code(400);

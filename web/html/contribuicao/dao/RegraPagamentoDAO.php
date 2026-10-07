@@ -1,7 +1,7 @@
 <?php
 
 //requisitar arquivo de conexão
-require_once '../dao/ConexaoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 
 class RegraPagamentoDAO
 {

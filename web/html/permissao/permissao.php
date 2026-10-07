@@ -37,7 +37,17 @@ function permissao($id_pessoa, $id_recurso, $id_acao = 1): void
 		if (!$permissao)
 			throw new LogicException("Usuário não possui permissão para acessar o recurso {$id_recurso}", 403);
 
-		if ($permissao['id_acao'] < $id_acao)
+		// id_acao é uma bitmask (1=SEM ACESSO, 3=GRAVAR E EXECUTAR, 5=LER E
+		// EXECUTAR, 7=LER, GRAVAR E EXECUTAR), não um ranking — "<" deixava
+		// passar, por exemplo, um cargo com 5 (leitura) por uma exigência de 3
+		// (escrita), e principalmente deixava 1 (SEM ACESSO) passar sempre que
+		// a chamada usava o nível padrão (também 1, "1 < 1" é falso). Por isso
+		// SEM ACESSO é tratado como negação explícita, e o restante é
+		// verificado via bitwise AND (o cargo precisa ter TODOS os bits
+		// exigidos, não apenas um valor numericamente maior).
+		$idAcaoConcedido = (int) $permissao['id_acao'];
+
+		if ($idAcaoConcedido === 1 || ($idAcaoConcedido & $id_acao) !== $id_acao)
 			throw new LogicException("Usuário não possui permissão para realizar a ação {$id_acao} no recurso {$id_recurso}", 403);
 	} catch (Exception $e) {
 		//Armazena exceção em um arquivo de log

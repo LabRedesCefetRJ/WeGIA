@@ -113,6 +113,7 @@ INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES
 ('23', 'Entrada'),
 ('24', 'Saída'),
 ('25', 'Relatórios'),
+('26', 'Processo de Compra'),
 ('3', 'Módulo Memorando'),
 ('4', 'Módulo Sócio'),
 ('5', 'Módulo Saúde'),
@@ -172,6 +173,7 @@ INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 23),
 (1, 7, 24),
 (1, 7, 25),
+(1, 7, 26),
 (1, 7, 51),
 (1, 7, 52),
 (1, 7, 53),
@@ -297,9 +299,10 @@ INSERT INTO `saude_tabelacid` (`CID`, `descricao`) VALUES ('B34.2', 'Infecção 
 
 INSERT INTO `contribuicao_regras` (`regra`) VALUES ('MIN_VALUE'), ('MAX_VALUE');
 
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/orders","coloque o token aqui",0);
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/subscriptions","coloque o token aqui",0);
-INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,token,status) VALUES ("MercadoPago","https://api.mercadopago.com/v1/payments","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,private_token,public_token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/orders","coloque o token aqui","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,private_token,public_token,status) VALUES ("PagarMe","https://api.pagar.me/core/v5/subscriptions","coloque o token aqui","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,private_token,public_token,status) VALUES ("MercadoPago","https://api.mercadopago.com/v1/payments","coloque o token aqui","coloque o token aqui",0);
+INSERT INTO `contribuicao_gatewayPagamento` (plataforma,endPoint,private_token,public_token,status) VALUES ("MercadoPago","https://api.mercadopago.com/preapproval","coloque o token aqui","coloque o token aqui",0);
 
 INSERT INTO `contribuicao_meioPagamento` (meio,id_plataforma,status) VALUES ("Boleto",1,0), ("Pix",1,0), ("Carne",1,0), ("CartaoCredito",1,0), ("Recorrencia",2,0);
 

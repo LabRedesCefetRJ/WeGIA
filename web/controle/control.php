@@ -30,8 +30,9 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'AvisoNotificacaoControle' => [5],
             'CaptchaController' => [7, 9],
             'CargoControle' => [11],
-            'CategoriaControle' => [21, 2],
+            'CategoriaControle' => [21, 2, 22],
             'ContatoInstituicaoControle' => [9],
+            'CotacaoControle' => [26],
             'controleSaudePet' => [6, 61, 62, 63],
             'DestinoControle' => [21, 2],
             'DependenteControle' => [1, 11],
@@ -43,21 +44,25 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'ExameControle' => [5],
             'MedicoControle' => [5],
             'EntradaControle' => [23],
-            'EstoqueControle' => [21, 22],
+            'EstoqueControle' => [21, 22, 25],
             'FuncionarioControle' => [11, 91],
             'FiliacaoControle' => [11],
+            'GrupoProdutoControle' => [22, 23, 24],
+            'RelatorioGrupoControle' => [25],
             'IentradaControle' => [23],
+            'IdentificadorRegistroProfissionalControle' => [11, 91],
             'InformacaoAdicionalControle' => [11],
             'InternoControle' => [],
             'IsaidaControle' => [24],
             'ModuloControle' => [91],
             'MedicamentoControle' => [6, 61, 62, 63],
-            'OrigemControle' => [23],
+            'OrigemControle' => [23, 26],
+            'OrcamentoControle' => [26],
             'PaArquivoControle' => [1, 12, 14],
             'PaStatusControle' => [12, 14],
             'PessoaArquivoControle' => [1, 11, 12, 13],
             'PessoaControle' => [1, 4, 11, 12, 13],
-            'ProdutoControle' => [22, 23, 24],
+            'ProdutoControle' => [22, 23, 24, 25],
             'ProcessoAceitacaoControle' => [1, 12, 14],
             'ProjetoControle' => [8, 81, 82],
             'PetControle' => [6, 61, 62, 63],
@@ -67,8 +72,10 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'SaidaControle' => [22, 24],
             'SaudeControle' => [5, 12],
             'SinaisVitaisControle' => [5],
+            'SocioBenefitControle' => [4],
             'SocioTagController' => [4],
             'TipoEntradaControle' => [23],
+            'TipoRegistroProfissionalControle' => [11],
             'TipoSaidaControle' => [22, 24],
             'UnidadeControle' => [22],
             'MemorandoControle' => [3],
@@ -78,7 +85,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
         ];
 
         /*Por padrão o control.php irá recusar qualquer controladora informada,
-		adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
+        * adicione as controladoras que serão permitidas a lista branca $controladorasRecursos*/
         if (!array_key_exists($nomeClasse, $controladorasRecursos))
             throw new InvalidArgumentException('Controladora inválida', 400);
 
@@ -88,7 +95,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 
             //Verifica se a pessoa possui o recurso necessário para acessar a funcionalidade desejada
             if (!$middleware->verificarPermissao($_SESSION['id_pessoa'], $nomeClasse, $controladorasRecursos))
-                throw new LogicException('Acesso não autorizado', 401); // Considerar fazer uma exception de autorização para o projeto
+                throw new LogicException('Acesso não autorizado', 403); // Considerar fazer uma exception de autorização para o projeto
         }
 
         $pathRequire = dirname(__FILE__) . DIRECTORY_SEPARATOR;
@@ -108,7 +115,7 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
 
         $objeto = new $nomeClasse();
 
-        if (!method_exists($objeto, $metodo))
+        if (!is_callable([$objeto, $metodo]))
             throw new InvalidArgumentException('O método informado não existe na classe.', 400);
 
         $objeto->$metodo();
@@ -135,52 +142,96 @@ try {
         $json = file_get_contents('php://input');
         $data = json_decode($json, true);
 
+        if (!is_array($data)) {
+            throw new InvalidArgumentException(
+                'JSON inválido.',
+                400
+            );
+        }
+
         // Extrai as variáveis do array $data
-        $nomeClasse = filter_var($data['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        $metodo = filter_var($data['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        isset($data['modulo']) ? $modulo = filter_var($data['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
+        $nomeClasse = isset($data['nomeClasse']) ? filter_var($data['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $metodo = isset($data['metodo']) ? filter_var($data['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $modulo = isset($data['modulo']) ? filter_var($data['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
     } else {
         // Recebe os dados do formulário normalmente
-        $nomeClasse = filter_var($_REQUEST['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        $metodo = filter_var($_REQUEST['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) ?? null;
-        isset($_REQUEST['modulo']) ? $modulo = filter_var($_REQUEST['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : $modulo = null;
+        $nomeClasse = isset($_REQUEST['nomeClasse']) ? filter_var($_REQUEST['nomeClasse'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $metodo = isset($_REQUEST['metodo']) ? filter_var($_REQUEST['metodo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+        $modulo = isset($_REQUEST['modulo']) ? filter_var($_REQUEST['modulo'], FILTER_SANITIZE_SPECIAL_CHARS) : null;
+    }
+    // Formulários de cotações enviam multipart e recebem erros sem perder os campos.
+    if (in_array($nomeClasse, ['CotacaoControle', 'OrcamentoControle'], true)
+        && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST'
+        && ($_SERVER['HTTP_X_COTACAO_FORM'] ?? '') === '1') {
+        $is_json_request = true;
     }
     if ($modulo) {
         // Rejeita stream wrappers (phar://, file://, etc)
         if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $modulo)) {
             throw new Exception('Stream wrappers não são permitidos.', 400);
         }
-        
+
         // Rejeita path traversal (../ ou ..\)
-        if (preg_match('#\\.\\.' . preg_quote(DIRECTORY_SEPARATOR) . '#', $modulo)) {
-            throw new Exception('Path traversal não é permitido.', 400);
+        if (preg_match('#\.\.[/\\\\]#', $modulo)) {
+            throw new InvalidArgumentException(
+                'Path traversal não é permitido.',
+                400
+            );
         }
-        
+
         // Rejeita caminhos absolutos
         if (preg_match('#^[/\\\\]#', $modulo)) {
             throw new Exception('Caminho absoluto não é permitido.', 400);
         }
     }
     processaRequisicao($nomeClasse, $metodo, $modulo);
+} catch (PDOException $e) {
+    error_log('Falha de banco de dados em control.php: ' . $e->getMessage());
+    http_response_code(500);
+
+    if ($is_json_request) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status' => 'erro',
+            'mensagem' => 'Não foi possível concluir a operação.'
+        ]);
+    } else {
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+        Util::tratarException(
+            new Exception('Não foi possível concluir a operação.', 500)
+        );
+    }
 } catch (Exception $e) {
     $codigo = $e->getCode() >= 400 && $e->getCode() < 600 ? intval($e->getCode()) : 500;
+    $mensagemCliente = $codigo < 500
+        ? $e->getMessage()
+        : 'Não foi possível concluir a operação.';
+
+    if ($codigo >= 500) {
+        error_log('Erro interno em control.php: ' . $e->__toString());
+    }
+
     http_response_code($codigo);
 
     if ($is_json_request) {
         header('Content-Type: application/json');
         echo json_encode([
             'status' => 'erro',
-            'mensagem' => $e->getMessage()
+            'mensagem' => $mensagemCliente
         ]);
     } else {
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
         require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 
-        if ($e->getCode() === 401){
+        if ($e->getCode() === 403) {
             header("Location: " . WWW . "html/home.php?msg_c=" . urlencode("Você não tem as permissões necessárias para essa página."));
             exit();
         }
 
-        Util::tratarException($e);
+        Util::tratarException(
+            $codigo >= 500
+                ? new Exception($mensagemCliente, $codigo)
+                : $e
+        );
     }
 }

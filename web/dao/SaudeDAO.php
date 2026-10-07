@@ -45,6 +45,20 @@ class SaudeDAO
             echo 'Error: <b>  na tabela pessoa = ' . $sql . '</b> <br /><br />' . $e->getMessage();
         }
     }
+
+    public function obterIdAtendidoPorFichaMedica(int $idFichaMedica): ?int
+    {
+        $pdo = Conexao::connect();
+        $sql = "SELECT a.idatendido FROM atendido a JOIN saude_fichamedica sf ON (a.pessoa_id_pessoa = sf.id_pessoa) WHERE sf.id_fichamedica = :idFichaMedica LIMIT 1";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $idAtendido = $stmt->fetchColumn();
+        return $idAtendido ? (int)$idAtendido : null;
+    }
+
     public function alterar($saude)
     { 
         try {
@@ -113,6 +127,21 @@ class SaudeDAO
             );
         }
         return json_encode($paciente);
+    }
+
+    public function listarDadosPaciente($id)
+    {
+        $pdo = Conexao::connect();
+
+        $sql = "SELECT p.nome,p.sobrenome,p.sexo,p.data_nascimento,p.tipo_sanguineo,p.cns
+                FROM pessoa p JOIN saude_fichamedica sf ON p.id_pessoa = sf.id_pessoa
+                WHERE sf.id_fichamedica = :id";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function alterarInfPessoal($paciente)
@@ -290,4 +319,17 @@ class SaudeDAO
 
         return $documentosDownload;
     }
+    public function listarDescricoesProntuario($idFichaMedica)
+    {
+        $pdo = Conexao::connect();
+        $sql = "SELECT descricao FROM saude_fichamedica_descricoes WHERE id_fichamedica = :idFichaMedica";
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    }
+    
 }

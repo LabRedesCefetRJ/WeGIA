@@ -4,10 +4,10 @@ $(document).ready(function () {
     function procurar_desejado(id_socio) {
         $.get("./get_socio.php", {
             "id": id_socio
-        })
+        }, null, "json")
             .done(function (dados) {
-                var socios = JSON.parse(dados);
-                if (socios) {
+                var socios = dados;
+                if (Array.isArray(socios) && socios.length > 0) {
                     //valor
                     $("#valor_u").val(socios[0].valor_periodo);
 
@@ -240,8 +240,23 @@ $(document).ready(function () {
                     alert(`Para gerar carnês/boletos para o sócio desejado você deve completar o cadastro dele primeiro com os seguintes dados: valor por período, data de referência e a periodicidade.`);
                 }
             })
-            .fail(function (dados) {
-                alert("Erro na obtenção de dados.");
+            .fail(function (xhr) {
+                let mensagem = "Erro na obtenção de dados.";
+
+                if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
+                    mensagem = xhr.responseJSON.error;
+                } else if (xhr && xhr.responseText) {
+                    try {
+                        const resposta = JSON.parse(xhr.responseText);
+                        if (resposta && resposta.error) {
+                            mensagem = resposta.error;
+                        }
+                    } catch (e) {
+                        // Mantém a mensagem padrão quando a resposta não vier em JSON.
+                    }
+                }
+
+                alert(mensagem);
             })
     }
     $("#geracao").change(function () {

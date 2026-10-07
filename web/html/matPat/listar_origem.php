@@ -13,29 +13,35 @@ if (!isset($_SESSION['usuario'])) {
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
-permissao($_SESSION['id_pessoa'], 23, 5);
+require_once ROOT . '/service/PermissaoFornecedorService.php';
+$permissaoFornecedor = new PermissaoFornecedorService();
+if (!$permissaoFornecedor->permite((int) $_SESSION['id_pessoa'], 5)) {
+    header('Location: ' . WWW . 'html/home.php?msg_c=' . urlencode(
+        'Você não tem permissão para realizar esta ação em fornecedores.'
+    ));
+    exit;
+}
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/OrigemDAO.php';
-
-$pdo = Conexao::connect();
-
-$stmtAlmoxarifados = $pdo->query("
-   SELECT id_almoxarifado, descricao_almoxarifado
-   FROM almoxarifado
-   WHERE ativo = 1
-   ORDER BY descricao_almoxarifado
-");
-
-$almoxarifados = json_encode($stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC));
+require_once ROOT . '/classes/Csrf.php';
 
 if (!isset($_SESSION['origem'])) {
-   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=OrigemControle&nextPage=' . WWW . 'html/matPat/listar_origem.php');
-} else {
-   $origem = $_SESSION['origem'];
+   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=OrigemControle' . '&nextPage=' . WWW . 'html/matPat/listar_origem.php');
+   exit;
+}
+
+if (!isset($_SESSION['almoxarifado'])) {
+   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=AlmoxarifadoControle' . '&nextPage=' . WWW . 'html/matPat/listar_origem.php');
+   exit;
+}
+
+if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
+   $origens = json_decode($_SESSION['origem'], true);
+   $almoxarifados = json_decode($_SESSION['almoxarifado'], true);
+
    unset($_SESSION['origem']);
+   unset($_SESSION['almoxarifado']);
 }
 ?>
 <!doctype html>
@@ -46,7 +52,7 @@ if (!isset($_SESSION['origem'])) {
    <meta charset="UTF-8">
    <title>Informações</title>
    <!-- Mobile Metas -->
-   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    <!-- Vendor CSS -->
    <link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
    <link rel="stylesheet" href="<?= WWW ?>assets/vendor/font-awesome/css/font-awesome.css" />
@@ -80,20 +86,21 @@ if (!isset($_SESSION['origem'])) {
    <script src="<?= WWW ?>Functions/mascara.js"></script>
    <!-- jquery functions -->
    <script>
-      function excluir(id) {
-         window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=OrigemControle&id_origem=' + id);
-      }
-   </script>
-   <script>
-      var almoxarifados = <?php echo $almoxarifados; ?>;
-      var origens = <?php echo $origem; ?>;
+      var almoxarifados = <?= json_encode($almoxarifados) ?>;
+      var origens = <?= json_encode($origens) ?>;
 
       function excluir(id) {
-         window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=OrigemControle&id_origem=' + id);
+         if (!confirm('Deseja realmente excluir esta origem/fornecedor?')) {
+            return;
+         }
+
+         $('#excluir_id_origem').val(id);
+         $('#formExcluirOrigem').submit();
       }
 
-      function abrirModalEditarOrigem(index) {
-         var origem = origens[index];
+      function abrirModalEditarOrigem(index, dados) {
+         var origem = dados || origens[index];
+         $('#erroEditarOrigem').hide().text('');
 
          $('#edit_id_origem').val(origem.id_origem);
          $('#edit_nome').val(origem.nome_origem || '');
@@ -103,7 +110,7 @@ if (!isset($_SESSION['origem'])) {
 
          $('#edit_almoxarifados').empty();
 
-         var almoxarifadosOrigem = origem.almoxarifados || [];
+         var almoxarifadosOrigem = (origem.almoxarifados || []).map(String);
 
          $.each(almoxarifados, function(i, almoxarifado) {
             var marcado = almoxarifadosOrigem.includes(String(almoxarifado.id_almoxarifado)) ? 'checked' : '';
@@ -122,6 +129,32 @@ if (!isset($_SESSION['origem'])) {
       }
 
       $(function() {
+         $('#formEditarOrigem').on('submit', function(event) {
+            event.preventDefault();
+            var form = $(this);
+            var botao = form.find('button[type="submit"]');
+            if (botao.prop('disabled')) return;
+            botao.prop('disabled', true);
+            $('#erroEditarOrigem').hide().text('');
+            $.ajax({
+               url: form.attr('action'),
+               type: 'POST',
+               dataType: 'json',
+               data: form.serialize() + '&resposta=json'
+            }).done(function(resposta) {
+               if (resposta.destino) {
+                  window.location.href = resposta.destino;
+               } else {
+                  $('#erroEditarOrigem').text('Não foi possível salvar. Tente novamente.').show();
+               }
+            }).fail(function(xhr) {
+               var mensagem = xhr.responseJSON && xhr.responseJSON.mensagem;
+               $('#erroEditarOrigem').text(mensagem || 'Não foi possível salvar. Verifique sua conexão e tente novamente.').show();
+            }).always(function() {
+               botao.prop('disabled', false);
+            });
+         });
+
          $.each(origens, function(i, item) {
             $('#tabela')
                .append($('<tr />')
@@ -142,9 +175,10 @@ if (!isset($_SESSION['origem'])) {
          $(".menuu").load("<?= WWW ?>html/menu.php");
       });
 </script>
+    <link rel="stylesheet" href="<?= WWW ?>assets/stylesheets/processo-compra.css">
 </head>
 
-<body>
+<body class="processo-compra">
    <section class="body">
       <!-- start: header -->
       <div id="header"></div>
@@ -177,7 +211,23 @@ if (!isset($_SESSION['origem'])) {
                   <h2 class="panel-title">Origem</h2>
                </header>
                <div class="panel-body">
-                  <table class="table table-bordered table-striped mb-none" id="datatable-default">
+                  <?php if (isset($_SESSION['msg'])): ?>
+                     <div class="alert <?= ($_SESSION['flag'] ?? '') === 'error' ? 'alert-danger' : 'alert-success' ?>" role="alert">
+                        <?= htmlspecialchars($_SESSION['msg'], ENT_QUOTES, 'UTF-8') ?>
+                     </div>
+                     <?php unset($_SESSION['msg'], $_SESSION['flag']); ?>
+                  <?php endif; ?>
+                  <div style="margin-bottom: 15px;">
+                     <a
+                           href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=lista_origem"
+                           class="btn btn-primary"
+                     >
+                           <i class="fa fa-plus"></i>
+                           Cadastrar origem/fornecedor
+                     </a>
+                  </div>
+                  <div class="tabela-compras">
+                     <table class="table table-bordered table-striped mb-none" id="datatable-default">
                      <thead>
                         <tr>
                            <th>Pessoa/Empresa</th>
@@ -190,15 +240,29 @@ if (!isset($_SESSION['origem'])) {
                      <tbody id="tabela">
                      </tbody>
                   </table>
+                            </div>
                </div>
                <br>
             </section>
          </section>
 
+         <form
+            id="formExcluirOrigem"
+            method="post"
+            action="<?= WWW ?>controle/control.php"
+            style="display: none;"
+         >
+            <input type="hidden" name="nomeClasse" value="OrigemControle">
+            <input type="hidden" name="metodo" value="excluir">
+            <input type="hidden" name="id_origem" id="excluir_id_origem">
+
+            <?= Csrf::inputField() ?>
+         </form>
+
          <div class="modal fade" id="modalEditarOrigem" tabindex="-1" role="dialog" aria-labelledby="modalEditarOrigemLabel">
             <div class="modal-dialog" role="document">
                <div class="modal-content">
-                  <form method="post" action="<?= WWW ?>controle/control.php">
+                  <form id="formEditarOrigem" method="post" action="<?= WWW ?>controle/control.php">
                      <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                            <span aria-hidden="true">&times;</span>
@@ -207,9 +271,12 @@ if (!isset($_SESSION['origem'])) {
                      </div>
 
                      <div class="modal-body">
+                        <div id="erroEditarOrigem" class="alert alert-danger" role="alert" style="display: none;"></div>
                         <input type="hidden" name="nomeClasse" value="OrigemControle">
                         <input type="hidden" name="metodo" value="alterar">
                         <input type="hidden" name="id_origem" id="edit_id_origem">
+
+                        <?= Csrf::inputField() ?>
 
                         <div class="form-group">
                            <label>Nome</label>
@@ -262,6 +329,23 @@ if (!isset($_SESSION['origem'])) {
          <script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
          <script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
          <script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
+         <script>
+            $(function () {
+               const tabela = $('#datatable-default');
+
+               if (
+                  tabela.length &&
+                  !tabela.parent().hasClass('tabela-scroll')
+               ) {
+                     tabela.wrap(
+                        '<div class="tabela-scroll" ' +
+                        'role="region" ' +
+                        'aria-label="Lista de fornecedores" ' +
+                        'tabindex="0"></div>'
+                     );
+               }
+            });
+</script>
          <div align="right">
             <iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
          </div>

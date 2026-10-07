@@ -22,9 +22,6 @@ permissao($id_pessoa, 22, 5);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 
-include_once ROOT . '/dao/Conexao.php';
-include_once ROOT . '/dao/ProdutoDAO.php';
-
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
 
 $tipo = $_GET['tipo'] ?? 'ativo';
@@ -38,10 +35,29 @@ if (!isset($_SESSION['produtos'])) {
     }
 
     exit();
-} else {
-    $produtos = $_SESSION['produtos'];
-    unset($_SESSION['produtos']);
 }
+
+$nextPage = '../html/matPat/listar_produto.php?tipo=' . $tipo;
+
+if (!isset($_SESSION['grupo_produto'])) {
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=GrupoProdutoControle' . '&nextPage=' . urlencode($nextPage));
+    exit;
+}
+
+if (!isset($_SESSION['categoria'])) {
+    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos' . '&nomeClasse=CategoriaControle' . '&nextPage=' . urlencode($nextPage));
+    exit;
+}
+
+$produtos = json_decode($_SESSION['produtos'], true);
+$grupoProdutos = json_decode($_SESSION['grupo_produto'], true);
+$categorias = json_decode($_SESSION['categoria'], true);
+
+unset(
+    $_SESSION['produtos'],
+    $_SESSION['grupo_produto'],
+    $_SESSION['categoria']
+);
 ?>
 <!doctype html>
 <html class="fixed">
@@ -242,6 +258,95 @@ if (!isset($_SESSION['produtos'])) {
 				</header>
 				<div class="panel-body">
 					<div class="barra-produtos">
+
+						<div id="acoesSelecao" style="display: none; margin-bottom: 15px;">
+    						<button
+        						type="button"
+        						id="btnSelecionarTodos"
+        						class="btn btn-default"
+    						>
+        						<i class="fa fa-check-double"></i>
+        						Selecionar todos os resultados
+    						</button>
+
+							<button
+    							type="button"
+    							id="btnDesmarcarTodos"
+    							class="btn btn-default"
+							>
+    							<i class="fa fa-square-o"></i>
+    							Desmarcar resultados
+							</button>
+
+    						<span
+        						id="quantidadeSelecionados"
+        						style="margin-left: 10px; font-weight: 600;"
+    						>
+        						0 produtos selecionados
+    						</span>
+
+							<form
+    							id="formAtribuirGrupo"
+    							method="POST"
+    							action="<?= WWW ?>controle/control.php"
+    							style="display: inline-flex; align-items: center; gap: 8px;"
+							>
+
+								<input
+    								type="hidden"
+    								name="produtos_json"
+    								id="produtosJson"
+								>
+								<input
+    								type="hidden"
+    								name="nomeClasse"
+    								value="ProdutoControle"
+								>
+								<input
+    								type="hidden"
+    								name="metodo"
+    								value="atribuirGrupoEmMassa"
+								>
+								<?= Csrf::inputField() ?>
+
+    							<label
+        							for="grupoSelecionado"
+        							style="margin: 0;"
+    							>
+        							Atribuir ao grupo:
+    							</label>
+
+    							<select
+        							id="grupoSelecionado"
+									name="id_grupo_produto"
+        							class="form-control"
+        							style="width: 200px;"
+    							>
+        							<option value="">
+            							Selecionar grupo
+        							</option>
+
+									<?php foreach ($grupoProdutos as $grupo): ?>
+            							<option
+                							value="<?= (int)$grupo['id_grupo_produto'] ?>"
+            							>
+                							<?= htmlspecialchars($grupo['descricao_grupo']) ?>
+            							</option>
+        							<?php endforeach; ?>
+									
+    							</select>
+
+    							<button
+        							type="submit"
+        							id="btnAplicarGrupo"
+        							class="btn btn-primary"
+        							disabled
+    							>
+        							Aplicar grupo
+    							</button>
+							</form>
+						</div>
+
 						<div class="abas-produtos">
 							<a href="listar_produto.php?tipo=ativo"
 								class="btn btn-default <?= $tipo === 'ativo' ? 'active' : '' ?>">
@@ -254,19 +359,41 @@ if (!isset($_SESSION['produtos'])) {
 							</a>
 						</div>
 
+						<?php if ($tipo === 'ativo'): ?>
+							<button
+								type="button"
+								id="btnModoSelecao"
+								class="btn btn-default"
+							>
+								<i class="fa fa-check-square-o"></i> 
+								Selecionar produtos
+							</button>
+						<?php endif; ?>
+
 						<div class="filtros-produtos">
 							<div class="campo-filtro">
 								<label for="filtroCategoria">Categoria</label>
 								<select id="filtroCategoria" class="form-control">
 									<option value="">Todas</option>
 									<?php
-									$pdo = Conexao::connect();
-									$res = $pdo->query("SELECT descricao_categoria FROM categoria_produto ORDER BY descricao_categoria");
-									$categorias = $res->fetchAll(PDO::FETCH_ASSOC);
-
 									foreach ($categorias as $categoria) {
 										echo '<option value="' . htmlspecialchars($categoria['descricao_categoria'], ENT_QUOTES, 'UTF-8') . '">'
 											. htmlspecialchars($categoria['descricao_categoria'], ENT_QUOTES, 'UTF-8') .
+										'</option>';
+									}
+									?>
+								</select>
+							</div>
+
+							<div class="campo-filtro">
+								<label for="filtroGrupo">Grupo</label>
+								<select id="filtroGrupo" class="form-control">
+									<option value="">Todos</option>
+									<option value="Sem grupo">Sem grupo</option>
+									<?php
+									foreach ($grupoProdutos as $grupo) {
+										echo '<option value="' . htmlspecialchars($grupo['descricao_grupo'], ENT_QUOTES, 'UTF-8') . '">'
+											. htmlspecialchars($grupo['descricao_grupo'], ENT_QUOTES, 'UTF-8') .
 										'</option>';
 									}
 									?>
@@ -324,18 +451,30 @@ if (!isset($_SESSION['produtos'])) {
 					<table class="table table-bordered table-striped mb-none" id="datatable-default">
 						<thead>
 							<tr>
+								<th></th>
 								<th width="12%">Código</th>
 								<th>Nome</th>
+								<th>Grupo</th>
 								<th width="18%">Tipo</th>
 								<th width="12%">Preço</th>
 								<th width="12%">Ação</th>
 							</tr>
 						</thead>
 						<tbody id="tabela">
-    						<?php foreach (json_decode($produtos, true) as $item): ?>
+						<?php foreach ($produtos as $item): ?>
         						<tr>
+									<td>
+										<?php if ($tipo === 'ativo'): ?>
+											<input 
+												type="checkbox"
+												class="produto-checkbox"	
+												value="<?= (int)$item['id_produto'] ?>"
+											>
+										<?php endif; ?>
+									</td>
             						<td><?= htmlspecialchars($item['codigo'] ?? '') ?></td>
             						<td><?= htmlspecialchars($item['descricao']) ?></td>
+									<td><?= htmlspecialchars($item['descricao_grupo'] ?? 'Sem grupo') ?></td>
             						<td><?= htmlspecialchars($item['descricao_categoria']) ?></td>
             						<td><?= htmlspecialchars($item['preco']) ?></td>
             						<td>
@@ -416,9 +555,172 @@ if (!isset($_SESSION['produtos'])) {
 				$(document).ready(function () {
 					const tabelaProdutos = $('#datatable-default').dataTable().api();
 
+					let modoSelecao = false;
+
+					const produtosSelecionados = new Set();
+
+					function atualizarBotaoAplicar() {
+    					const temProdutos = produtosSelecionados.size > 0;
+    					const temGrupo = $('#grupoSelecionado').val() !== '';
+
+    					$('#btnAplicarGrupo').prop(
+        					'disabled',
+        					!(temProdutos && temGrupo)
+    					);
+					}
+
+					function atualizarQuantidadeSelecionados() {
+    					const quantidade = produtosSelecionados.size;
+
+    					$('#quantidadeSelecionados').text(
+        					quantidade +
+        					(quantidade === 1
+            					? ' produto selecionado'
+            					: ' produtos selecionados')
+    					);
+
+						atualizarBotaoAplicar();
+					}
+
+					function sincronizarCheckboxes() {
+    					const configuracao = $('#datatable-default')
+        					.dataTable()
+        					.fnSettings();
+
+    					configuracao.aoData.forEach(function (dado) {
+        					const checkbox = $(dado.nTr)
+            					.find('.produto-checkbox');
+
+        					if (!checkbox.length) {
+            					return;
+        					}
+
+        					checkbox.prop(
+            					'checked',
+            					produtosSelecionados.has(
+                					Number(checkbox.val())
+            					)
+        					);
+    					});
+					}
+
+					$('#datatable-default').on('draw.dt', function () {
+    					sincronizarCheckboxes();
+					});
+
+					tabelaProdutos.column(0).visible(false);
+
+					$('#datatable-default').on('change', '.produto-checkbox', function () {
+    					const idProduto = Number(this.value);
+
+    					if (this.checked) {
+        					produtosSelecionados.add(idProduto);
+    					} else {
+        					produtosSelecionados.delete(idProduto);
+    					}
+
+    					atualizarQuantidadeSelecionados();
+					});
+
+					$('#btnModoSelecao').on('click', function () {
+    					modoSelecao = !modoSelecao;
+
+    					tabelaProdutos
+        					.column(0)
+        					.visible(modoSelecao);
+
+    					if (modoSelecao) {
+							$('#acoesSelecao').show();
+							sincronizarCheckboxes();
+        					$(this).html(
+            					'<i class="fa fa-times"></i> Cancelar seleção'
+        					);
+    					} else {
+							$('#acoesSelecao').hide();
+							produtosSelecionados.clear();
+
+							$('#grupoSelecionado').val('');
+
+							sincronizarCheckboxes();
+							atualizarQuantidadeSelecionados();
+
+        					$(this).html(
+            					'<i class="fa fa-check-square"></i> Selecionar produtos'
+        					);
+    					}
+					});
+
+					function alterarSelecaoResultados(selecionar) {
+    					const configuracao = $('#datatable-default')
+        					.dataTable()
+        					.fnSettings();
+
+    					configuracao.aiDisplay.forEach(function (indice) {
+        					const checkbox = $(configuracao.aoData[indice].nTr)
+            					.find('.produto-checkbox');
+
+        					if (!checkbox.length) {
+            					return;
+        					}
+
+        					const idProduto = Number(checkbox.val());
+
+        					if (selecionar) {
+            					produtosSelecionados.add(idProduto);
+        					} else {
+            					produtosSelecionados.delete(idProduto);
+        					}
+    					});
+
+    					atualizarQuantidadeSelecionados();
+    					sincronizarCheckboxes();
+					}
+
+					$('#btnSelecionarTodos').on('click', function () {
+    					alterarSelecaoResultados(true);
+					});
+
+					$('#btnDesmarcarTodos').on('click', function () {
+    					alterarSelecaoResultados(false);
+					});
+
+					$('#formAtribuirGrupo').on('submit', function (event) {
+    					event.preventDefault();
+
+    					const quantidade = produtosSelecionados.size;
+    					const grupo = $('#grupoSelecionado option:selected');
+
+    					if (!quantidade || !grupo.val()) {
+        					return;
+    					}
+
+    					$('#produtosJson').val(
+        					JSON.stringify([...produtosSelecionados])
+    					);
+
+    					const mensagem =
+        					`Aplicar o grupo "${grupo.text().trim()}" a ` +
+        					`${quantidade} produto${quantidade === 1 ? '' : 's'}?`;
+
+    					if (confirm(mensagem)) {
+        					this.submit();
+    					}
+					});	
+
+					$('#grupoSelecionado').on('change', function () {
+    					atualizarBotaoAplicar();
+					});
+
 					$('#filtroCategoria').on('change', function () {
 						tabelaProdutos
-							.column(2)
+							.column(4)
+							.search(this.value)
+							.draw();
+					});
+
+					$('#filtroGrupo').on('change', function () {
+						tabelaProdutos
+							.column(3)
 							.search(this.value)
 							.draw();
 					});
@@ -433,6 +735,8 @@ if (!isset($_SESSION['produtos'])) {
 			<div align="right">
 				<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
 			</div>
+		</section>
+	</div>
 </body>
 
 </html>

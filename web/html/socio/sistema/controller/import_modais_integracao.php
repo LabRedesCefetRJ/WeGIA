@@ -39,11 +39,11 @@
             <form id="frm_boletofacil">
             <div class="form-group col-xs-12">
           <label for="valor">URL API (ISSUE CHARGE - COBRANÇAS)</label>
-          <input type="text" class="form-control"  value="<?php echo($url); ?>" name="url" required>
+          <input type="text" class="form-control"  value="<?php echo(htmlspecialchars($url, ENT_QUOTES, 'UTF-8')); ?>" name="url" required>
         </div>
         <div class="form-group col-xs-12">
           <label for="valor">TOKEN API</label>
-          <input type="text" class="form-control" value="<?php echo($token); ?>" name="token" required>
+          <input type="text" class="form-control" value="<?php echo(htmlspecialchars($token, ENT_QUOTES, 'UTF-8')); ?>" name="token" required>
         </div>
         <div class="form-group col-xs-6">
           <label for="valor">VAL. MIN. BOLETO UNITÁRIO</label>
@@ -71,7 +71,7 @@
         </div>
         <div class="form-group col-xs-12">
           <label for="valor">MENSAGEM DE AGRADECIMENTO</label>
-          <textarea rows="5" name="agradecimento" class="form-control"><?php echo($agradecimento); ?></textarea>
+          <textarea rows="5" name="agradecimento" class="form-control"><?php echo(htmlspecialchars($agradecimento, ENT_QUOTES, 'UTF-8')); ?></textarea>
         </div>
             </div>
             <!-- /.box-body -->

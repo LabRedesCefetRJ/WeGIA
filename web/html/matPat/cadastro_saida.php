@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,7 +12,9 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+if (!isset($_SESSION['rascunho_cadastro_saida_token'])) {
+	$_SESSION['rascunho_cadastro_saida_token'] = bin2hex(random_bytes(16));
+}
 
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_VALIDATE_INT);
 
@@ -21,45 +24,41 @@ permissao($id_pessoa, 24, 3);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 require_once ROOT . "/Functions/permissao/permissao.php";
+
+if (!isset($_SESSION['almoxarifado'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+	exit;
+}
+if (!isset($_SESSION['tipo_saida'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+	exit;
+}
+if (!isset($_SESSION['autocomplete'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+	exit;
+}
+if (!isset($_SESSION['destino'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
+	exit;
+}
+if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset($_SESSION['autocomplete']) && isset($_SESSION['destino'])) {
+
+	$almoxarifado = $_SESSION['almoxarifado'];
+	$tipo_saida = $_SESSION['tipo_saida'];
+	$autocomplete = $_SESSION['autocomplete'];
+	$destino = $_SESSION['destino'];
+
+	unset($_SESSION['almoxarifado']);
+	unset($_SESSION['tipo_saida']);
+	unset($_SESSION['autocomplete']);
+	unset($_SESSION['destino']);
+}
 ?>
 
 <!doctype html>
 <html class="fixed">
 
 <head>
-	<?php
-	include_once ROOT .'/dao/Conexao.php';
-	include_once ROOT .'/dao/AlmoxarifadoDAO.php';
-	include_once ROOT .'/dao/TipoEntradaDAO.php';
-	include_once ROOT .'/dao/ProdutoDAO.php';
-	include_once ROOT .'/dao/DestinoDAO.php';
-
-	if (!isset($_SESSION['almoxarifado'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=AlmoxarifadoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
-	}
-	if (!isset($_SESSION['tipo_saida'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=TipoSaidaControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
-	}
-	if (!isset($_SESSION['autocomplete'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarDescricao&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
-	}
-	if (!isset($_SESSION['destino'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/cadastro_saida.php');
-	}
-	if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_saida']) &&  isset($_SESSION['autocomplete']) && isset($_SESSION['destino'])) {
-
-		$almoxarifado = $_SESSION['almoxarifado'];
-		$tipo_saida = $_SESSION['tipo_saida'];
-		$autocomplete = $_SESSION['autocomplete'];
-		$destino = $_SESSION['destino'];
-
-		unset($_SESSION['almoxarifado']);
-		unset($_SESSION['tipo_saida']);
-		unset($_SESSION['autocomplete']);
-		unset($_SESSION['destino']);
-	}
-	?>
-
 	<!-- Basic -->
 	<meta charset="UTF-8">
 	<title>Cadastro saída</title>
@@ -94,22 +93,92 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<link type="text/css" rel="stylesheet" charset="UTF-8" href="https://translate.googleapis.com/translate_static/css/translateelement.css">
 
+	<script>
+		let produtos_autocomplete = [];
+		const prods = [];
+
+		let gruposProdutos = {};
+		let grupoAberto = null;
+
+		function normalizar(texto) {
+			return String(texto ?? '')
+				.normalize('NFD')
+				.replace(/[\u0300-\u036f]/g, '')
+				.toLowerCase()
+				.trim();
+		}
+
+		function valorProduto(produto) {
+			return [
+				produto.id_produto,
+				produto.descricao,
+				produto.qtd,
+				produto.codigo ?? ''
+			].join('|');
+		}
+
+		function montarGrupos(produtos) {
+			const grupos = {};
+
+			produtos.forEach(produto => {
+				const chave = produto.id_grupo_produto ?? 'sem_grupo';
+
+				if (!grupos[chave]) {
+					grupos[chave] = {
+						nome: produto.descricao_grupo ?? 'Sem grupo',
+						produtos: []
+					};
+				}
+
+				grupos[chave].produtos.push(produto);
+			});
+
+			return grupos;
+		}
+
+		function itemProduto(produto) {
+			const codigo = produto.codigo || 'Sem código';
+			const preco = Number(produto.preco).toFixed(2).replace('.', ',');
+
+			return {
+				label:
+					produto.descricao +
+					' | Cód: ' + codigo +
+					' | Estoque: ' + produto.qtd +
+					' | R$ ' + preco,
+
+				value: valorProduto(produto),
+				tipo: 'produto',
+				produto: produto
+			};
+		}
+
+		function itemGrupo(chave, grupo) {
+			const quantidade = grupo.produtos.length;
+
+			return {
+				label:
+					'📁 ' + grupo.nome +
+					' — ' + quantidade +
+					(quantidade === 1 ? ' produto' : ' produtos'),
+
+				value: grupo.nome,
+				tipo: 'grupo',
+				chaveGrupo: chave
+			};
+		}
+	</script>
 	<script type="text/javascript">
 		$(function() {
-			let prods = [];
 			const almoxarifado = <?= filtrarAlmoxarifado($_SESSION['id_pessoa'], $almoxarifado) ?>;
 
 			const tipo_saida = <?php
-								echo $tipo_saida;
-								?>;
-
-			const produtos_autocomplete = <?php
-										echo $autocomplete;
-										?>;
+				echo $tipo_saida;
+			?>;
 
 			const destino = <?php
-							echo $destino;
-							?>;
+				echo $destino;
+			?>;
 
 			$.each(almoxarifado, function(i, item) {
 				$('#almoxarifado').append('<option value="' + item.id_almoxarifado + '">' + item.descricao_almoxarifado + '</option>');
@@ -119,120 +188,173 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 				$('#tipo_entrada').append('<option value="' + item.id_tipo + '">' + item.descricao + '</option>');
 			})
 
-			$.each(produtos_autocomplete, function(i, item) {
-				//$('#produtos_autocomplete').append('<option value="' + item.id_produto + '|' + item.descricao + '">');
-				prods[i] = item.id_produto + '|' + item.descricao + '|' + item.codigo; //alterar aqui
-			})
-
 			$.each(destino, function(i, item) {
 				$('#origens').append('<option value="' + item.id_destino + '">' + item.nome_destino + '</option>');
 			})
 
-			$("#input_produtos").autocomplete({
-				source: prods,
-				response: function(event, ui) {
-					if (ui.content.length == 1) {
-						ui.item = ui.content[0];
-						$(this).val(ui.item.value)
-						$(this).data('ui-autocomplete')._trigger('select', 'autocompleteselect', ui);
-					}
-				}
-			});
-
 			$('#input_produtos').on('change', function() {
-				let teste = this.value.split('|');
+				const teste = this.value.split('|');
 				$.each(produtos_autocomplete, function(i, item) {
 					if (teste[0] == item.id_produto && teste[1] == item.descricao) {
 						$("#valor_unitario").val(item.preco);
 						$("#quantidade").focus();
 					}
 				})
-
 			});
 
 			//adicionar tabela
-			let conta = 0;
-			let verificar = 0;
 			$(".add-row").click(function() {
-				let produto = $("#input_produtos").val();
-				let val = $("#input_produtos").val();
+				const valorSelecionado = String($("#input_produtos").val() ?? '');
 
-				//As próximas 3 linhas de código são responsáveis por deixar a formatação compatível para a verificação na linha de código seguinte, uma vez que os dados vem de tabelas diferentes e a tabela de produtos não possuí o campo quantidade
-				let parts = val.split('|');
-				parts.splice(2, 1);
-				val = parts.join('|')
+				const partes = valorSelecionado.split('|');
 
-				let obj = prods.find;
-				(prod => prod === val);
-
-				produto = produto.split("|");
-				if (obj != null && obj.length > 0) {
-					if (Number(produto[2]) >= Number($("#quantidade").val())) {
-						$.each(produtos_autocomplete, function(i, item) {
-							if (produto[0] == item.id_produto && produto[1] == item.descricao) {
-								let quantidade = $("#quantidade").val();
-								let preco = parseFloat($("#valor_unitario").val());
-
-								quantidade = Number(quantidade);
-								preco = Number(preco);
-
-								if(!Number.isFinite(quantidade) || quantidade <= 0) {
-									alert("A quantidade deve ser um número positivo.");
-									$("#quantidade").focus();
-									return;
-								}
-
-								if(!Number.isFinite(preco) || preco < 0) {
-									alert("O valor unitário deve ser um número válido e não negativo.");
-									$("#valor_unitario").focus();
-									return;
-								}
-
-								conta = conta + 1;
-
-								$("#conta").val(conta);
-
-								var markup = "<tr class='produtoRow'><td class='prod' style='width: 160px;'><input type='text' value='" + val + "' name='id" + conta + "' readonly='readonly'></td><td class='quant'><input type='text' class='number'  id='qtd' maxlength='2' size='2' class='form-control' min='1' value='" + quantidade + "' name='qtd" + conta + "' readonly='readonly'></td><td><input type='text' class='preco' value='" + preco + "' name='valor_unitario" + conta + "'  size='2' readonly='readonly'></td><th><input type='text' size='3' id='total' class='total' value='" + quantidade * preco + "' readonly='readonly'></th><td><button type='button' class='delete-row'>remover</button></td></tr>";
-								$("table tbody ").append(markup);
-								$("#valor_unitario").empty();
-								$("#input_produtos").val("");
-								let x = $("#total_total").val();
-								x = Number(x);
-								x += (quantidade * preco);
-
-								$("#total_total").val(x);
-								verificar++;
-								$("#verifica").val(verificar);
-							}
-						})
-					} else {
-						alert("Não há estoque suficiente de " + produto[1] + " para saída. Tente uma quantidade menor." + produto[2] + " < " + $("#quantidade").val());
-					}
-				} else {
-					alert("Produto inválido!");
-					$("#input_produtos").val("");
-					$("#input_produtos").focus();
-					$("#valor_unitario").empty();
-					verificar--;
-					$("#verifica").val(verificar);
+				/*
+				 * Formato esperado no autocomplete:
+				 * id | descrição | estoque | código
+				 */
+				if (partes.length < 4) {
+					alert("Selecione um produto válido.");
+					$("#input_produtos").val("").focus();
+					$("#valor_unitario").val("");
+					return;
 				}
+
+				const idProduto = partes[0];
+				const descricao = partes[1];
+				const estoque = Number(partes[2]);
+				const codigo = partes[3];
+
+				/*
+				 * Confirma que o produto realmente veio
+				 * da lista carregada pelo sistema.
+				 */
+				const produtoSelecionado = produtos_autocomplete.find(
+					produto =>
+						String(produto.id_produto) === idProduto &&
+						produto.descricao === descricao
+				);
+
+				if (!produtoSelecionado) {
+					alert("Produto inválido!");
+					$("#input_produtos").val("").focus();
+					$("#valor_unitario").val("");
+					return;
+				}
+
+				const quantidade = Number($("#quantidade").val());
+
+				const preco = Number($("#valor_unitario").val());
+
+				if (!Number.isFinite(quantidade) || quantidade <= 0) {
+					alert("A quantidade deve ser maior que zero.");
+					$("#quantidade").focus();
+					return;
+				}
+
+				if (quantidade > estoque) {
+					alert(
+						"Não há estoque suficiente de " +
+						descricao +
+						" para saída.\n" +
+						"Disponível: " + estoque
+					);
+
+					$("#quantidade").focus();
+					return;
+				}
+
+				if (!Number.isFinite(preco) || preco <= 0) {
+					alert("Informe um valor unitário maior que zero.");
+					$("#valor_unitario").focus();
+					return;
+				}
+
+				const conta = window.reindexarProdutosSaida() + 1;
+
+				/*
+				 * A quantidade serve para a pesquisa/validação,
+				 * mas não é enviada junto no identificador do produto.
+				 */
+				const valorEnvio = [
+					idProduto,
+					descricao,
+					codigo
+				].join('|');
+
+				const valorExibido = [
+					idProduto,
+					descricao,
+					estoque,
+					codigo
+				].join('|');
+
+				const markup =
+					"<tr class='produtoRow'>" +
+					"<td class='prod' style='width: 160px;'>" +
+
+						// O usuário vê id | descrição | estoque | código
+						"<input type='text' " +
+						"value='" + valorExibido + "' " +
+						"readonly='readonly'>" +
+
+						// O backend continua recebendo id | descrição | código
+						"<input type='hidden' " +
+						"value='" + valorEnvio + "' " +
+						"name='id" + conta + "'>" +
+					"</td>" +
+					"<td class='quant'>" +
+						"<input type='text' " +
+						"class='number form-control' " +
+						"maxlength='2' " +
+						"size='2' " +
+						"min='1' " +
+						"value='" + quantidade + "' " +
+						"name='qtd" + conta + "' " +
+						"readonly='readonly'>" +
+					"</td>" +
+					"<td>" +
+						"<input type='text' " +
+						"class='preco' " +
+						"value='" + preco + "' " +
+						"name='valor_unitario" + conta + "' " +
+						"size='2' " +
+						"readonly='readonly'>" +
+					"</td>" +
+					"<th>" +
+						"<input type='text' " +
+						"size='3' " +
+						"class='total' " +
+						"value='" + (quantidade * preco) + "' " +
+						"readonly='readonly'>" +
+					"</th>" +
+					"<td>" +
+						"<button type='button' class='delete-row'>" +
+							"remover" +
+						"</button>" +
+					"</td>" +
+					"</tr>";
+
+				$("#lista-produtos").append(markup);
+
+				window.reindexarProdutosSaida();
+
+				$("#input_produtos").val("");
+				$("#valor_unitario").val("");
+				$("#quantidade").val(1);
+
+				grupoAberto = null;
 			});
 
 			//remover tabela
 			$("table tbody").on('click', '.delete-row', function() {
-				let valor_menos = $(this).closest('tr').find('th').find('input').val();
-				let xx = $("#total_total").val();
-				xx = xx - valor_menos;
-				$("#total_total").val(xx);
 				$(this).closest('tr').remove();
-				verificar = verificar - 1;
-				$("#verifica").val(verificar);
+				window.reindexarProdutosSaida();
 			});
 
 			// validar origem
 			$("#origem").blur(function() {
-				let val = $("#origem").val();
-				let obj = $("#origens").find("option[value='" + val + "']");
+				const val = $("#origem").val();
+				const obj = $("#origens").find("option[value='" + val + "']");
 			});
 		});
 	</script>
@@ -240,11 +362,11 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	<!-- Script para validar formulário -->
 	<script>
 		function validar() {
-			var desti = document.getElementById("origens")
-			var almox = document.getElementById("almoxarifado");
-			var tipo = document.getElementById("tipo_entrada");
-			var verificar = document.getElementById("verifica");
-			var erro = false;
+			const desti = document.getElementById("origens");
+			const almox = document.getElementById("almoxarifado");
+			const tipo = document.getElementById("tipo_entrada");
+			const verificar = document.getElementById("verifica");
+			let erro = false;
 
 			if (desti.value == "blank") {
 				alert("Selecione um destino");
@@ -305,6 +427,8 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 					return false;
 				}
 
+				window.reindexarProdutosSaida();
+
 				$.ajax({
 					url: $(this).attr('action'),
 					method: 'POST',
@@ -337,70 +461,125 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		});
 	</script>
 	<script>
-	$(function () {
-		const CHAVE = 'rascunho_cadastro_saida';
+		$(function () {
+			const CHAVE = 'rascunho_cadastro_saida';
+			const TOKEN_SESSAO = <?= json_encode($_SESSION['rascunho_cadastro_saida_token']) ?>;
+			let rascunhoConcluido = false;
 
-		function salvarRascunho() {
-			const dados = {
-				origem: $('#origens').val(),
-				almoxarifado: $('#almoxarifado').val(),
-				tipo_entrada: $('#tipo_entrada').val(),
-				input_produtos: $('#input_produtos').val(),
-				quantidade: $('#quantidade').val(),
-				valor_unitario: $('#valor_unitario').val(),
-				total_total: $('#total_total').val(),
-				conta: $('#conta').val(),
-				verifica: $('#verifica').val(),
-				tabela: $('#lista-produtos').html()
-			};
+			function salvarRascunho() {
+				if (rascunhoConcluido) return;
 
-			localStorage.setItem(CHAVE, JSON.stringify(dados));
-		}
+				reindexarProdutosSaida();
 
-		function restaurarRascunho() {
-			const bruto = localStorage.getItem(CHAVE);
-			if (!bruto) return;
+				const dados = {
+					tokenSessao: TOKEN_SESSAO,
+					origem: $('#origens').val(),
+					almoxarifado: $('#almoxarifado').val(),
+					tipo_entrada: $('#tipo_entrada').val(),
+					input_produtos: $('#input_produtos').val(),
+					quantidade: $('#quantidade').val(),
+					valor_unitario: $('#valor_unitario').val(),
+					total_total: $('#total_total').val(),
+					conta: $('#conta').val(),
+					verifica: $('#verifica').val(),
+					tabela: $('#lista-produtos').html()
+				};
 
-			try {
-				const dados = JSON.parse(bruto);
-
-				if (dados.origem) $('#origens').val(dados.origem);
-				if (dados.tipo_entrada) $('#tipo_entrada').val(dados.tipo_entrada);
-				if (dados.input_produtos) $('#input_produtos').val(dados.input_produtos);
-				if (dados.quantidade) $('#quantidade').val(dados.quantidade);
-				if (dados.valor_unitario) $('#valor_unitario').val(dados.valor_unitario);
-				if (dados.total_total) $('#total_total').val(dados.total_total);
-				if (dados.conta) $('#conta').val(dados.conta);
-				if (dados.verifica) $('#verifica').val(dados.verifica);
-				if (dados.tabela) $('#lista-produtos').html(dados.tabela);
-
-				if (dados.almoxarifado) {
-					$('#almoxarifado').val(dados.almoxarifado).trigger('change');
-
-					setTimeout(function () {
-						$('#almoxarifado').val(dados.almoxarifado);
-					}, 100);
-				}
-			} catch (e) {
-				console.error('Erro ao restaurar rascunho:', e);
+				sessionStorage.setItem(CHAVE, JSON.stringify(dados));
 			}
-		}
 
-		function limparRascunho() {
-			localStorage.removeItem(CHAVE);
-		}
+			function restaurarRascunho() {
+				const bruto = sessionStorage.getItem(CHAVE);
+				if (!bruto) return;
 
-		$('#btn-novo-destino, #btn-novo-almoxarifado, #btn-novo-tipo-saida, #btn-novo-produto').on('click', function () {
-			salvarRascunho();
+				try {
+					const dados = JSON.parse(bruto);
+					if (dados.tokenSessao !== TOKEN_SESSAO) {
+						sessionStorage.removeItem(CHAVE);
+						return;
+					}
+
+					if (dados.origem) $('#origens').val(dados.origem);
+					if (dados.tipo_entrada) $('#tipo_entrada').val(dados.tipo_entrada);
+					if (dados.input_produtos) $('#input_produtos').val(dados.input_produtos);
+					if (dados.quantidade) $('#quantidade').val(dados.quantidade);
+					if (dados.valor_unitario) $('#valor_unitario').val(dados.valor_unitario);
+					if (dados.total_total) $('#total_total').val(dados.total_total);
+					if (dados.conta) $('#conta').val(dados.conta);
+					if (dados.verifica) $('#verifica').val(dados.verifica);
+					if (dados.tabela) $('#lista-produtos').html(dados.tabela);
+
+					reindexarProdutosSaida();
+
+					if (dados.almoxarifado) {
+						$('#almoxarifado').val(dados.almoxarifado);
+					}
+				} catch (e) {
+					console.error('Erro ao restaurar rascunho:', e);
+				}
+			}
+
+			function reindexarProdutosSaida() {
+				let contador = 0;
+				let totalGeral = 0;
+
+				$('#lista-produtos tr.produtoRow').each(function () {
+					contador++;
+
+					const inputProduto = $(this).find("td.prod input[type='hidden']");
+					const inputQtd = $(this).find("td.quant input");
+					const inputPreco = $(this).find("input.preco");
+					const inputTotal = $(this).find("input.total");
+
+					inputProduto.attr('name', 'id' + contador);
+					inputQtd.attr('name', 'qtd' + contador);
+					inputPreco.attr('name', 'valor_unitario' + contador);
+
+					const qtd = Number(inputQtd.val() || 0);
+					const preco = Number(inputPreco.val() || 0);
+					const subtotal = qtd * preco;
+
+					inputTotal.val(subtotal);
+					totalGeral += subtotal;
+				});
+
+				$('#conta').val(contador);
+				$('#verifica').val(contador);
+				$('#total_total').val(totalGeral);
+
+				return contador;
+			}
+
+			window.reindexarProdutosSaida = reindexarProdutosSaida;
+
+			function limparRascunho() {
+				rascunhoConcluido = true;
+				sessionStorage.removeItem(CHAVE);
+			}
+
+			$('#btn-novo-destino, #btn-novo-almoxarifado, #btn-novo-tipo-saida, #btn-novo-produto').on('click', function () {
+				salvarRascunho();
+			});
+
+			$('#formulario').on('input change', 'input, select', function () {
+				salvarRascunho();
+			});
+
+			$('.add-row').on('click', function () {
+				setTimeout(salvarRascunho, 0);
+			});
+
+			$('#lista-produtos').on('click', '.delete-row', function () {
+				setTimeout(salvarRascunho, 0);
+			});
+
+			$(window).on('pagehide', salvarRascunho);
+
+			restaurarRascunho();
+
+			window.limparRascunhoSaida = limparRascunho;
 		});
-
-		restaurarRascunho();
-
-		window.limparRascunhoSaida = limparRascunho;
-	});
-</script>
-
-
+	</script>
 
 	<!--CSS-->
 	<style type="text/css">
@@ -437,7 +616,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 									<i class="fa fa-home"></i>
 								</a>
 							</li>
-							<li><span>Registro</span></li>
+							<li><span>Cadastro</span></li>
 							<li><span>Saída</span></li>
 						</ol>
 						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -460,20 +639,20 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 											<div class="info-entrada">
 												<p>Atenção: Almoxarifados só serão exibidos como opção caso o usuário esteja cadastrado como almoxarife.</p>
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="origens">Destino</label>
-													<a href="cadastro_destino.php" id="btn-novo-destino"><i class="fas fa-plus w3-xlarge"></i></a>
+													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
+													<a href="adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-8">
-														<select class="form-control " name="destino" id="origens">
+														<select class="form-control " name="almoxarifado" id="almoxarifado">
 															<option selected disabled value="blank">Selecionar</option>
 														</select>
 													</div>
 												</div>
 
 												<div class="form-group">
-													<label class="col-md-3 control-label" for="almoxarifado">Almoxarifado</label>
-													<a href="adicionar_almoxarifado.php" id="btn-novo-almoxarifado"><i class="fas fa-plus w3-xlarge"></i></a>
+													<label class="col-md-3 control-label" for="origens">Destino</label>
+													<a href="cadastro_destino.php" id="btn-novo-destino"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
-														<select class="form-control " name="almoxarifado" id="almoxarifado">
+														<select class="form-control " name="destino" id="origens">
 															<option selected disabled value="blank">Selecionar</option>
 														</select>
 													</div>
@@ -496,7 +675,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 														<thead>
 															<tr style="width: 768px;">
 																<th>Produto
-																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge" style="float:right;" id="btn-novo-produto" class="produto">
+																	<a href="<?= WWW ?>html/matPat/cadastro_produto.php" class="fas fa-plus w3-xlarge produto" style="float:right;" id="btn-novo-produto">
 																	</a>
 																</th>
 																<th>Quantidade</th>
@@ -512,7 +691,7 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 																<td><input type="number" name="quantidade" style="width: 74px;" value="1" min="1" id="quantidade" class="form-control"></td>
 																<td><input id="valor_unitario" type="number" name="valor_unitario" style="width: 74px;" step="any" value="0" min="0" class="form-control"></td>
 																<td>
-																	<button id="incluir" type="button" class="add-row">Adicionar produtos</button>
+																	<button id="incluir" type="button" class="add-row">Incluir</button>
 																</td>
 															</tr>
 														</thead>
@@ -569,7 +748,6 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 		<!-- end: page -->
 	</section>
 
-
 	<!-- Vendor -->
 	<script src="<?= WWW ?>assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
 	<script src="<?= WWW ?>assets/vendor/bootstrap/js/bootstrap.js"></script>
@@ -591,42 +769,177 @@ require_once ROOT . "/Functions/permissao/permissao.php";
 	<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
 
 	<script type="text/javascript">
-		$(document).ready(function() {
-			$("#almoxarifado").change(function() {
-				var almox = $(this).val();
+		$(function () {
+			function carregarProdutos(almoxarifadoId) {
+				if (!almoxarifadoId || almoxarifadoId === 'blank') {
+					return;
+				}
+
 				$.ajax({
-					async: false,
-					url: `../../controle/control.php?nomeClasse=${encodeURIComponent("ProdutoControle")}&metodo=${encodeURIComponent("getProdutosParaCadastrarEntradaOuSaidaPorAlmoxarifado")}&almoxarifado=${encodeURIComponent(almox)}`,
-					type: "GET",
-					success: function(respostaProds) {
-						var produtos = JSON.parse(respostaProds)
-						prods = [];
-						console.log(produtos);
-						$("#produtos_autocomplete").children().remove();
-						for (let [i, produto] of produtos.entries()) {
-							// $("#produtos_autocomplete").append(
-							// 	$("<option/>").val(produto.id_produto + '-' + produto.descricao+ '-' + produto.qtd+ '-' + produto.codigo).attr("qtd", produto.qtd)
-							// );
-							console.log(i, produto);
-							prods[i] = produto.id_produto + '|' + produto.descricao + '|' + produto.qtd + '|' + produto.codigo;
-						}
+					url: '../../controle/control.php',
+					type: 'GET',
+
+					data: {
+						nomeClasse: 'ProdutoControle',
+						metodo: 'getProdutosParaCadastrarEntradaOuSaidaPorAlmoxarifado',
+						almoxarifado: almoxarifadoId
+					},
+
+					dataType: 'json',
+
+					success: function (produtos) {
+						produtos_autocomplete = produtos;
+
+						prods.length = 0;
+
+						gruposProdutos = montarGrupos(produtos);
+						grupoAberto = null;
+
+						produtos.forEach(function (produto) {
+							prods.push(
+								produto.id_produto + '|' +
+								produto.descricao + '|' +
+								produto.qtd + '|' +
+								(produto.codigo ?? '')
+							);
+						});
+
 						$("#input_produtos").autocomplete({
-							source: prods,
-							response: function(event, ui) {
-								if (ui.content.length == 1) {
-									ui.item = ui.content[0];
-									console.log(ui.item);
-									$(this).val(ui.item.value)
-									$(this).data('ui-autocomplete')._trigger('select', 'autocompleteselect', ui);
+							minLength: 0,
+
+							source: function (request, response) {
+								const termo = normalizar(request.term);
+								const resultados = [];
+
+								// Está dentro de um grupo
+								if (grupoAberto !== null) {
+									const grupo = gruposProdutos[grupoAberto];
+
+									if (grupo) {
+										const nomeGrupo = normalizar(grupo.nome);
+
+										if (termo === nomeGrupo || termo.startsWith(nomeGrupo + ' ')) {
+											const busca = normalizar(termo.substring(nomeGrupo.length));
+
+											response(
+												grupo.produtos
+													.filter(produto =>
+														normalizar(produto.descricao).includes(busca) ||
+														normalizar(produto.codigo).includes(busca)
+													)
+													.map(itemProduto)
+											);
+
+											return;
+										}
+									}
+
+									grupoAberto = null;
+								}
+
+								// Primeiro procura grupos
+								const gruposEncontrados = [];
+
+								for (const [chave, grupo] of Object.entries(gruposProdutos)) {
+									const nomeGrupo = normalizar(grupo.nome);
+
+									if (nomeGrupo.startsWith(termo)) {
+										gruposEncontrados.push(itemGrupo(chave, grupo));
+									}
+								}
+
+								// Se encontrou grupo, mostra SOMENTE grupos
+								if (gruposEncontrados.length > 0) {
+									response(gruposEncontrados);
+									return;
+								}
+
+								// Se não encontrou grupo,
+								// aí sim pesquisa produtos diretamente
+								for (const grupo of Object.values(gruposProdutos)) {
+									grupo.produtos
+										.filter(produto => {
+											return (
+												normalizar(produto.descricao).includes(termo) ||
+												normalizar(produto.codigo).includes(termo)
+											);
+										})
+										.forEach(produto => {
+											resultados.push(itemProduto(produto));
+										});
+								}
+
+								response(resultados);
+							},
+
+							select: function (event, ui) {
+								// Clicou em grupo
+								if (ui.item.tipo === 'grupo') {
+									event.preventDefault();
+
+									grupoAberto = ui.item.chaveGrupo;
+
+									const grupo = gruposProdutos[grupoAberto];
+									const input = this;
+									const termo = grupo.nome + ' ';
+
+									$(input).val(termo);
+
+									setTimeout(function () {
+										$(input).autocomplete('search', termo);
+									}, 0);
+
+									return false;
+								}
+
+								// Clicou em produto
+								if (ui.item.tipo === 'produto') {
+									event.preventDefault();
+
+									grupoAberto = null;
+
+									$(this).val(valorProduto(ui.item.produto));
+
+									$("#valor_unitario").val(ui.item.produto.preco);
+
+									$("#quantidade").focus();
+
+									return false;
 								}
 							}
 						});
+
+						$("#input_produtos")
+							.off('focus.autocompleteProdutos')
+							.on('focus.autocompleteProdutos', function () {
+								if ($(this).val().trim() === '') {
+									$(this).autocomplete('search', '');
+								}
+							});
 					},
-					error: function(e) {
-						alert(e);
+
+					error: function (xhr) {
+						console.error('Erro ao carregar produtos:', xhr.responseText);
 					}
 				});
+			}
+
+			/*
+			 * Quando trocar o almoxarifado.
+			 */
+			$('#almoxarifado').on('change', function () {
+				carregarProdutos($(this).val());
 			});
+
+			/*
+			 * Caso o almoxarifado já tenha sido restaurado
+			 * pelo rascunho antes deste script ser executado.
+			 */
+			const almoxarifadoAtual = $('#almoxarifado').val();
+
+			if (almoxarifadoAtual && almoxarifadoAtual !== 'blank') {
+				carregarProdutos(almoxarifadoAtual);
+			}
 		});
 	</script>
 	<script src="<?= WWW ?>assets/script/logistica.js"></script>

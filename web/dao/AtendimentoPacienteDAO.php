@@ -230,4 +230,17 @@ class AtendimentoPacienteDAO
 
         error_log('[AtendimentoPacienteDAO] ' . $contexto);
     }
+
+    public function listarAtendimentosPorFichaMedica(int $idFichaMedica): array
+    {
+        $sql = "SELECT a.id_atendimento, a.descricao, a.data_atendimento, m.nome AS medicoNome, TRIM(CONCAT(COALESCE(p.nome, ''), ' ', COALESCE(p.sobrenome, ''))) AS registro, a.anulado, a.data_anulacao, a.motivo_anulacao, TRIM(CONCAT(COALESCE(pAnulador.nome, ''), ' ', COALESCE(pAnulador.sobrenome, ''))) AS anulado_por
+        FROM saude_atendimento a JOIN funcionario f ON(a.id_funcionario = f.id_funcionario) JOIN pessoa p ON(p.id_pessoa = f.id_pessoa) JOIN saude_medicos m ON(a.id_medico = m.id_medico) LEFT JOIN funcionario fAnulador ON (a.id_funcionario_anulacao = fAnulador.id_funcionario) LEFT JOIN pessoa pAnulador ON(pAnulador.id_pessoa = fAnulador.id_pessoa)
+        WHERE a.id_fichamedica = :idFichaMedica ORDER BY a.data_atendimento DESC, a.id_atendimento DESC";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':idFichaMedica', $idFichaMedica, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
