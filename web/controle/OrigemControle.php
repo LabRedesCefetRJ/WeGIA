@@ -16,7 +16,7 @@ class OrigemControle
         $servico = new PermissaoFornecedorService();
         if (!$servico->permite((int) ($_SESSION['id_pessoa'] ?? 0), $acao)) {
             header('Location: ' . WWW . 'html/home.php?msg_c=' . urlencode(
-                'Você não tem permissão para realizar esta ação em fornecedores.'
+                'Você não tem permissão para realizar esta ação em origens.'
             ));
             exit;
         }
@@ -139,7 +139,7 @@ class OrigemControle
 
             $origemDAO->atualizarAlmoxarifados($id_origem, $almoxarifados);
 
-            $_SESSION['msg'] = "Origem cadastrada com sucesso";
+            $_SESSION['msg'] = 'Origem cadastrada com sucesso.';
             $_SESSION['flag'] = 'success';
             unset($_SESSION['origem'], $_SESSION['proxima'], $_SESSION['link']);
 
@@ -147,7 +147,7 @@ class OrigemControle
             exit;
         } catch (PDOException $e) {
             error_log("Erro ao incluir origem: " . $e->getMessage());
-            echo "Erro ao cadastrar origem. Tente novamente mais tarde.";
+            echo "Erro ao realizar o cadastro. Tente novamente mais tarde.";
         } catch (InvalidArgumentException $e) {
             $_SESSION['msg'] = $e->getMessage();
             $_SESSION['flag'] = 'error';
@@ -191,7 +191,7 @@ class OrigemControle
             $_SESSION['flag'] = 'error';
         } catch (PDOException $e) {
             error_log("Erro ao excluir origem: " . $e->getMessage());
-            $_SESSION['msg'] = 'Não foi possível excluir este fornecedor. Verifique se existem outros registros vinculados a ele e tente novamente.';
+            $_SESSION['msg'] = 'Não foi possível excluir esta origem. Verifique se existem outros registros vinculados a ela e tente novamente.';
             $_SESSION['flag'] = 'error';
         }
 
@@ -219,7 +219,7 @@ class OrigemControle
             echo $origemDAO->listarPorAlmoxarifado($id_almoxarifado);
         } catch (PDOException $e) {
             error_log('Erro ao listar origens por almoxarifado: ' . $e->getMessage());
-            $this->responderJson(['mensagem' => 'Não foi possível carregar os fornecedores. Tente novamente mais tarde.'], 500);
+            $this->responderJson(['mensagem' => 'Não foi possível carregar as origens. Tente novamente mais tarde.'], 500);
         }
         exit;
     }
