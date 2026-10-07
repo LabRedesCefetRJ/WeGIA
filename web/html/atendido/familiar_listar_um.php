@@ -24,7 +24,8 @@ try {
     $dependente = $pdo->query("SELECT *, ap.parentesco AS parentesco
 FROM atendido_familiares af
 LEFT JOIN pessoa p ON p.id_pessoa = af.pessoa_id_pessoa
-LEFT JOIN atendido_parentesco ap ON ap.idatendido_parentesco = af.atendido_parentesco_idatendido_parentesco
+INNER JOIN filiacao fil ON fil.id_filiacao = af.id_filiacao
+INNER JOIN parentesco ap ON ap.id_parentesco = fil.id_parentesco
 WHERE af.idatendido_familiares= $id_dependente;");
     $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC)[0];
     $dependente = json_encode($dependente);

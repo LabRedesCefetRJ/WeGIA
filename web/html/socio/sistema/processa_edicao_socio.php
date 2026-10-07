@@ -134,6 +134,7 @@ $sqlUpdatePessoa = "UPDATE pessoa
                     SET cpf = ?, 
                         nome = ?,
                         sobrenome = ?,
+                        sexo = ?,
                         telefone = ?, 
                         email = ?, 
                         data_nascimento = ?, 
@@ -153,6 +154,12 @@ $verificar_documento = boolval(filter_var($_REQUEST['verificar_documento'], FILT
 $cpf_cnpj = $verificar_documento || $cpf_cnpj ? filter_var($cpf_cnpj, FILTER_SANITIZE_SPECIAL_CHARS) : null;
 $socio_nome = filter_var($socio_nome, FILTER_SANITIZE_SPECIAL_CHARS);
 $socio_sobrenome = filter_var($socio_sobrenome, FILTER_SANITIZE_SPECIAL_CHARS);
+$genero = filter_var($_REQUEST['genero'] ?? '', FILTER_SANITIZE_SPECIAL_CHARS);
+if ($genero !== '' && !Util::validarGenero($genero)) {
+    http_response_code(422);
+    echo json_encode(['erro' => 'O gênero informado não é válido.']);
+    exit();
+}
 $telefone = filter_var($telefone, FILTER_SANITIZE_SPECIAL_CHARS);
 $email = filter_var($email, FILTER_SANITIZE_EMAIL);
 $cep = filter_var($cep, FILTER_SANITIZE_SPECIAL_CHARS);
@@ -167,10 +174,11 @@ $id_pessoa = filter_var($id_pessoa, FILTER_SANITIZE_NUMBER_INT);
 if ($stmt) {
     // Bind dos parâmetros (tipos: 's' para string, 'i' para inteiro, 'd' para float/double)
     $stmt->bind_param(
-        'sssssssssssssi',
+        'sssssssssssssssi',
         $cpf_cnpj,
         $socio_nome,
         $socio_sobrenome,
+        $genero,
         $telefone,
         $email,
         $data_nasc,

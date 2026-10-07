@@ -326,10 +326,15 @@ $dataNascimentoMinima = Atendido::getDataNascimentoMinima();
 											</div>
 										</div>
 									<div class="form-group">
-										<label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
+										<label class="col-md-3 control-label" for="genero">Gênero<sup class="obrig">*</sup></label>
 										<div class="col-md-6">
-											<input type="radio" name="sexo" id="radio1" value="m" style="margin-top: 10px; margin-left: 15px;" required <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i>
-											<input type="radio" name="sexo" id="radio2" value="f" style="margin-top: 10px; margin-left: 15px;" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i>
+											<select class="form-control" name="sexo" id="genero" required>
+											<option value="" selected disabled>Selecionar</option>
+												<option value="m" <?= ($oldInput['sexo'] ?? '') === 'm' ? 'selected' : '' ?>>Masculino</option>
+												<option value="f" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'selected' : '' ?>>Feminino</option>
+												<option value="o" <?= ($oldInput['sexo'] ?? '') === 'o' ? 'selected' : '' ?>>Outro</option>
+												<option value="n" <?= ($oldInput['sexo'] ?? '') === 'n' ? 'selected' : '' ?>>Prefiro não informar</option>
+											</select>
 										</div>
 									</div>
 							<div class="form-group">

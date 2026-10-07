@@ -85,14 +85,20 @@ if ($id_pessoa == $id_pessoa_atendido) {
         }
         //Pessoa ainda não foi cadastrada como dependente
         if ($pessoaJaCadastrada === NULL) {
-            define("NOVO_FAMILIAR", "INSERT IGNORE INTO atendido_familiares (atendido_idatendido, pessoa_id_pessoa, atendido_parentesco_idatendido_parentesco ) VALUES (:idatendido, :id_pessoa, :id_parentesco);");
-
             try {
-                $stmt2 = $pdo->prepare(NOVO_FAMILIAR);
-                $stmt2->bindParam(":idatendido", $idatendido);
-                $stmt2->bindParam(":id_pessoa", $id_pessoa);
-                $stmt2->bindParam(":id_parentesco", $id_parentesco);
-                $stmt2->execute();
+                $stmtFiliacao = $pdo->prepare('INSERT INTO filiacao (id_pessoa, id_filiado, id_parentesco) VALUES (:id_pessoa_atendido, :id_pessoa_familiar, :id_parentesco)');
+                $stmtFiliacao->execute([
+                    ':id_pessoa_atendido' => $id_pessoa_atendido,
+                    ':id_parentesco' => $id_parentesco,
+                    ':id_pessoa_familiar' => $id_pessoa,
+                ]);
+                $idFiliacao = $pdo->lastInsertId();
+                $stmt2 = $pdo->prepare('INSERT IGNORE INTO atendido_familiares (atendido_idatendido, pessoa_id_pessoa, id_filiacao) VALUES (:idatendido, :id_pessoa, :id_filiacao)');
+                $stmt2->execute([
+                    ':idatendido' => $idatendido,
+                    ':id_pessoa' => $id_pessoa,
+                    ':id_filiacao' => $idFiliacao,
+                ]);
             } catch (PDOException $th) {
                 redirectFamiliarError('Erro ao adicionar o familiar ao banco de dados.');
             }

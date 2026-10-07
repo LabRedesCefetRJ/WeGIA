@@ -8,14 +8,13 @@ if (session_status() === PHP_SESSION_NONE)
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
-} else {
+} else { 
   session_regenerate_id();
 }
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 11, 3);
 
-include_once("conexao.php");
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
@@ -143,10 +142,15 @@ $fieldErrors = getSessionFormErrors();
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-md-3 control-label">Sexo<sup class="obrig">*</sup></label>
-                  <div class="col-md-8">
-                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" required aria-label="Masculino" <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" aria-label="Feminino" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                  <label class="col-md-3 control-label" for="genero">Gênero<sup class="obrig">*</sup></label>
+                  <div class="col-md-6">
+                    <select class="form-control" name="sexo" id="genero" required onchange="return this.value === 'm' ? exibir_reservista() : esconder_reservista()">
+                      <option value="" selected disabled>Selecionar</option>
+                      <option value="m" <?= ($oldInput['sexo'] ?? '') === 'm' ? 'selected' : '' ?>>Masculino</option>
+                      <option value="f" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'selected' : '' ?>>Feminino</option>
+                      <option value="o" <?= ($oldInput['sexo'] ?? '') === 'o' ? 'selected' : '' ?>>Outro</option>
+                      <option value="n" <?= ($oldInput['sexo'] ?? '') === 'n' ? 'selected' : '' ?>>Prefiro não informar</option>
+                    </select>
                   </div>
                 </div>
                 <div class="form-group">

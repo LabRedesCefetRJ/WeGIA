@@ -30,12 +30,34 @@ try {
         exit('O id do dependente informado não é válido.');
     }
 
-    $sql = 'SELECT *, par.descricao AS parentesco, p2.nome as nome_funcionario, p2.sobrenome as sobrenome_funcionario
-    FROM funcionario_dependentes fdep
-    LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa
-    LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco
-    JOIN funcionario f ON (fdep.id_funcionario=f.id_funcionario) JOIN pessoa p2 ON (f.id_pessoa=p2.id_pessoa)
-    WHERE fdep.id_dependente = :id_dependente';
+    $sql = 'SELECT fdep.*, 
+                p.cpf, p.nome, p.sobrenome, p.sexo, p.email, p.telefone,
+                p.data_nascimento, p.cep, p.estado, p.cidade, p.bairro,
+                p.logradouro, p.numero_endereco, p.complemento, p.ibge,
+                p.registro_geral, p.orgao_emissor, p.data_expedicao,
+                par.descricao AS parentesco,
+                p2.nome AS nome_funcionario,
+                p2.sobrenome AS sobrenome_funcionario
+
+            FROM funcionario_dependentes fdep
+
+            LEFT JOIN pessoa p 
+                ON p.id_pessoa = fdep.id_pessoa
+
+            JOIN funcionario f 
+                ON fdep.id_funcionario = f.id_funcionario
+
+            JOIN pessoa p2 
+                ON f.id_pessoa = p2.id_pessoa
+
+            INNER JOIN filiacao fil 
+                ON fil.id_pessoa = f.id_pessoa
+                AND fil.id_filiado = fdep.id_pessoa
+
+            INNER JOIN parentesco par 
+                ON par.id_parentesco = fil.id_parentesco
+
+            WHERE fdep.id_dependente = :id_dependente';
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':id_dependente' => $id]);
@@ -129,11 +151,9 @@ try {
                     $("#email").val(dep.email);
                     $("#telefone").val(dep.telefone);
                     $("#nascimento").val(dep.data_nascimento);
-                    $("#pai").val(dep.nome_pai);
-                    $("#mae").val(dep.nome_mae);
+                    $("#filiacao").val(dep.filiacao);
                     if (dep.sexo) {
-                        let radio = $("input:radio[name=sexo]");
-                        radio.filter('[value=' + dep.sexo + ']').prop('checked', true);
+                        $("select[name=sexo]").val(dep.sexo);
                     }
                 },
                 formEndereco: function(dep) {
@@ -539,10 +559,11 @@ try {
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label">Sexo</label>
+                                                <label class="col-md-3 control-label" for="genero">Gênero</label>
                                                 <div class="col-md-8">
-                                                    <label><input type="radio" name="sexo" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" disabled aria-label="Masculino"><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                                    <label><input type="radio" name="sexo" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" disabled aria-label="Feminino"><i class="fa fa-female" style="font-size: 20px;"></i></label>
+                                                    <select class="form-control" name="sexo" id="genero" disabled>
+                                                      <option value="">Não informado</option><option value="m">Masculino</option><option value="f">Feminino</option><option value="o">Outro</option><option value="n">Prefiro não informar</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="form-group">
@@ -570,20 +591,10 @@ try {
                                                 }
                                             </script>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label" for="pai">Nome do pai</label>
+                                                <label class="col-md-3 control-label" for="filiacao">Filiação</label>
                                                 <div class="col-md-8">
                                                     <input type="text" class="form-control"
-                                                        name="nome_pai" id="pai"
-                                                        onkeypress="return Onlychars(event)"
-                                                        disabled>
-
-                                                </div>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="col-md-3 control-label" for="mae">Nome da mãe</label>
-                                                <div class="col-md-8">
-                                                    <input type="text" class="form-control"
-                                                        name="nome_mae" id="mae"
+                                                        name="filiacao" id="filiacao" maxlength="256"
                                                         onkeypress="return Onlychars(event)"
                                                         disabled>
 

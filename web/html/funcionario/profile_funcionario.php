@@ -111,18 +111,12 @@ try {
     $docfuncional[$key]['data'] = $data->format('d/m/Y H:i:s');
   }
   $docfuncional = json_encode($docfuncional);
-  //SQL Injection abaixo
-  $dependente = $pdo->prepare("SELECT fdep.id_dependente AS id_dependente, p.nome AS nome, p.cpf AS cpf, par.descricao AS parentesco FROM funcionario_dependentes fdep LEFT JOIN funcionario f ON f.id_funcionario = fdep.id_funcionario LEFT JOIN pessoa p ON p.id_pessoa = fdep.id_pessoa LEFT JOIN funcionario_dependente_parentesco par ON par.id_parentesco = fdep.id_parentesco WHERE fdep.id_funcionario =:idFuncionario");
+  $relacionamentos = $cpf->listarRelacionamentos((int)$idFuncionario);
+  $dependente = json_encode($relacionamentos['dependentes']);
+  $filiacao = json_encode($relacionamentos['filiacoes']);
 
-  $dependente->bindValue(':idFuncionario', $idFuncionario, PDO::PARAM_INT);
-
-  if (!$dependente->execute()) {
-    echo json_encode(['erro' => 'Falha ao consultar dependentes de um funcionário']);
-    exit(500);
-  }
-
-  $dependente = $dependente->fetchAll(PDO::FETCH_ASSOC);
-  $dependente = json_encode($dependente);
+  error_log("FILIACOES: " . print_r($relacionamentos['filiacoes'], true));
+  error_log("DEPENDENTES: " . print_r($relacionamentos['dependentes'], true));
 
   // Recebendo informação se o usuário tem o campo 'adm_configurado' como true (1) ou false (0)
   $stmt = $pdo->prepare('SELECT adm_configurado FROM pessoa WHERE id_pessoa=:idPessoa');
@@ -270,8 +264,7 @@ try {
     function editar_informacoes_pessoais() {
       $("#nomeForm").prop('disabled', false);
       $("#sobrenomeForm").prop('disabled', false);
-      $("#radioM").prop('disabled', false);
-      $("#radioF").prop('disabled', false);
+      $("select[name=gender]").prop('disabled', false);
       $("#emailForm").prop('disabled', false);
       $("#telefone").prop('disabled', false);
       $("#nascimento").prop('disabled', false);
@@ -288,8 +281,7 @@ try {
     function cancelar_informacoes_pessoais() {
       $("#nomeForm").prop('disabled', true);
       $("#sobrenomeForm").prop('disabled', true);
-      $("#radioM").prop('disabled', true);
-      $("#radioF").prop('disabled', true);
+      $("select[name=gender]").prop('disabled', true);
       $("#emailForm").prop('disabled', true);
       $("#telefone").prop('disabled', true);
       $("#nascimento").prop('disabled', true);
@@ -783,19 +775,17 @@ try {
         $("#nomeForm").val(item.nome).prop('disabled', true);
         $("#sobrenomeForm").val(item.sobrenome).prop('disabled', true);
         if (item.sexo == "m") {
-          $("#radioM").prop('checked', true).prop('disabled', true);
-          $("#radioF").prop('checked', false).prop('disabled', true);
+          $("select[name=gender]").val('m').prop('disabled', true);
           $("#reservista1").show();
           $("#reservista2").show();
         } else if (item.sexo == "f") {
-          $("#radioM").prop('checked', false).prop('disabled', true)
-          $("#radioF").prop('checked', true).prop('disabled', true);
+          $("select[name=gender]").val('f').prop('disabled', true);
+        } else {
+          $("select[name=gender]").val(item.sexo).prop('disabled', true);
         }
         $("#emailForm").val(item.email || '').prop('disabled', true);
         $("#telefone").val(item.telefone).prop('disabled', true);
         $("#nascimento").val(alterardate(item.data_nascimento)).prop('disabled', true);
-        $("#pai").val(item.nome_pai).prop('disabled', true);
-        $("#mae").val(item.nome_mae).prop('disabled', true);
         $("#sangue").val(item.tipo_sanguineo).prop('disabled', true);
         $("#cns").val(item.cns || '').prop('disabled', true);
         //Endereço
@@ -920,11 +910,137 @@ try {
           )
       });
     }
+
+    function listarFiliacao(filiacao) {
+      $("#filiacao-tab").empty();
+      $.each(filiacao, function(i, item) {
+        const visualizarButton = $("<button type='button' class='btn btn-info' title='Visualizar informações'><i class='fas fa-eye'></i></button>")
+          .on('click', function() {
+            abrirResumoFiliacao(item, 'filiacao_editar.php?id_funcionario=<?= (int)$idFuncionario ?>');
+          });
+        const editarButton = $("<button type='button' class='btn btn-primary' title='Editar'><i class='fas fa-user-edit'></i></button>")
+          .on('click', function() { editarFiliacao(item); });
+        const excluirButton = $("<button type='button' class='btn btn-danger' title='Excluir'><i class='fas fa-trash-alt'></i></button>")
+          .on('click', function() { excluirFiliacao(item.id_filiado); });
+        $("#filiacao-tab")
+          .append($("<tr>")
+            .append($("<td>").text(item.nome))
+            .append($("<td>").text(item.parentesco || "-"))
+            .append($("<td>").text({m: "Masculino", f: "Feminino", o: "Outro", n: "Prefiro não informar"}[item.genero] || "-"))
+            .append($("<td class='filiacao-acoes'>").append(visualizarButton).append(editarButton).append(excluirButton))
+          );
+      });
+    }
+
+    function prepararNovaFiliacao() {
+      $('#filiacaoFormModalLabel').text('Adicionar Filiação');
+      $('#filiacao_metodo').val('cadastrar');
+      $('#id_filiacao').val('');
+      $('#filiacao_genero').val('');
+      $('#filiacao_parentesco').val('');
+      $('#filiacao_cpf, #id_filiado').val('');
+      $('#filiacao_nome, #filiacao_email, #filiacao_telefone').val('');
+    }
+
+    function buscarPessoaFiliacao(cpf) {
+      const cpfLimpo = String(cpf || '').replace(/\D/g, '');
+      if (cpfLimpo.length !== 11) {
+        $('#id_filiado').val('');
+        return;
+      }
+      $.getJSON('../../controle/control.php', {
+        nomeClasse: 'FiliacaoControle',
+        metodo: 'buscarPessoa',
+        cpf: cpf
+      }).done(function(pessoa) {
+        if (pessoa.id_pessoa) {
+          $('#id_filiado').val(pessoa.id_pessoa);
+          $('#filiacao_nome').val(pessoa.nome || '');
+          $('#filiacao_genero').val(pessoa.sexo || '');
+          $('#filiacao_email').val(pessoa.email || '');
+          $('#filiacao_telefone').val(pessoa.telefone || '');
+        } else {
+          $('#id_filiado').val('');
+        }
+      });
+    }
+
+    function editarFiliacao(filiacao) {
+      const idFiliado = Number(filiacao.id_filiado);
+      if (!idFiliado) {
+        return;
+      }
+
+      window.location.href = 'filiacao_editar.php?id_filiado=' + encodeURIComponent(idFiliado) + '&id_funcionario=<?= (int)$idFuncionario ?>';
+    }
+
+    function abrirResumoFiliacao(item, urlEdicao) {
+      const generos = {
+        m: 'Masculino',
+        f: 'Feminino',
+        o: 'Outro',
+        n: 'Prefiro não informar'
+      };
+      const formatarData = function(valor) {
+        if (!valor) {
+          return '';
+        }
+        const partes = String(valor).split('-');
+        return partes.length === 3 ? partes[2] + '/' + partes[1] + '/' + partes[0] : valor;
+      };
+      const linhaEndereco = [item.logradouro, item.numero_endereco].filter(Boolean).join(', ');
+      const localidade = [item.bairro, item.cidade, item.estado].filter(Boolean).join(' - ');
+      const endereco = [
+        linhaEndereco,
+        item.complemento,
+        localidade,
+        item.cep ? 'CEP: ' + item.cep : ''
+      ].filter(Boolean).join(' | ');
+      const valores = {
+        nome: item.nome || '',
+        data_nascimento: formatarData(item.data_nascimento),
+        parentesco: item.parentesco || '',
+        genero: generos[item.genero] || '',
+        email: item.email || '',
+        telefone: item.telefone || '',
+        endereco: endereco
+      };
+
+      $('#filiacaoResumoModal [data-filiacao-resumo]').each(function() {
+        const campo = $(this).attr('data-filiacao-resumo');
+        const valor = valores[campo] || '';
+        $(this).find('[data-filiacao-resumo-valor]').text(valor);
+        $(this).toggle(Boolean(valor));
+      });
+
+      $('#filiacaoResumoVerMais').attr('href', urlEdicao + '&id_filiado=' + encodeURIComponent(item.id_filiado));
+      $('#filiacaoResumoModal').modal('show');
+    }
+
+    function excluirFiliacao(idFiliado) {
+      if (!window.confirm('Tem certeza que deseja excluir esta filiação?')) {
+        return;
+      }
+      const form = $('<form>', { method: 'post', action: '../../controle/control.php' });
+      form.append($('<input>', { type: 'hidden', name: 'nomeClasse', value: 'FiliacaoControle' }));
+      form.append($('<input>', { type: 'hidden', name: 'metodo', value: 'excluir' }));
+      form.append($('<input>', { type: 'hidden', name: 'id_filiado', value: idFiliado }));
+      form.append($('<input>', { type: 'hidden', name: 'id_funcionario', value: <?= (int)$idFuncionario ?> }));
+      form.append($('<input>', { type: 'hidden', name: 'csrf_token', value: $('input[name="csrf_token"]').first().val() }));
+      $('body').append(form);
+      form.submit();
+    }
     $(function() {
       listarDependentes(<?= $dependente ?>);
+      listarFiliacao(<?= $filiacao ?>);
     });
     $(function() {
       $('#datatable-dependente').DataTable({
+        "order": [
+          [0, "asc"]
+        ]
+      });
+      $('#datatable-filiacao').DataTable({
         "order": [
           [0, "asc"]
         ]
@@ -1222,6 +1338,9 @@ try {
                   <a href="#editar_cargaHoraria" data-toggle="tab">Carga Horária</a>
                 </li>
                 <li>
+                  <a href="#filiacao" data-toggle="tab">Filiação</a>
+                </li>
+                <li>
                   <a href="#dependentes" data-toggle="tab">Dependentes</a>
                 </li>
               </ul>
@@ -1247,10 +1366,11 @@ try {
                         </div>
                       </div>
                       <div class="form-group">
-                        <label class="col-md-3 control-label">Sexo</label>
+                        <label class="col-md-3 control-label" for="genero">Gênero</label>
                         <div class="col-md-8">
-                          <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;" onclick="return exibir_reservista()" aria-label="Masculino"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
-                          <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;" onclick="return esconder_reservista()" aria-label="Feminino"> <i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                          <select class="form-control" name="gender" id="genero">
+														<option value="" selected disabled>Selecionar</option><option value="m">Masculino</option><option value="f">Feminino</option><option value="o">Outro</option><option value="n">Prefiro não informar</option>
+                          </select>
                         </div>
                       </div>
                       <div class="form-group">
@@ -1285,18 +1405,7 @@ try {
                           <small class="form-text text-muted">Cadastro Nacional de Saúde</small>
                         </div>
                       </div>
-                      <div class="form-group">
-                        <label class="col-md-3 control-label" for="pai">Nome do pai</label>
-                        <div class="col-md-8">
-                          <input type="text" class="form-control" name="nome_pai" id="pai" onkeypress="return Onlychars(event)">
-                        </div>
-                      </div>
-                      <div class="form-group">
-                        <label class="col-md-3 control-label" for="mae">Nome da mãe</label>
-                        <div class="col-md-8">
-                          <input type="text" class="form-control" name="nome_mae" id="mae" onkeypress="return Onlychars(event)">
-                        </div>
-                      </div>
+
                       <div class="form-group">
                         <label class="col-md-3 control-label" for="sangue">Tipo sanguíneo</label>
                         <div class="col-md-6">
@@ -2280,6 +2389,137 @@ try {
                     </div>
                   </section>
                 </div>
+                <!-- Aba de filiação do funcionário -->
+                <div id="filiacao" class="tab-pane">
+                  <section class="panel">
+                    <header class="panel-heading">
+                      <div class="panel-actions">
+                        <a href="#" class="fa fa-caret-down"></a>
+                      </div>
+                      <h2 class="panel-title">Filiação</h2>
+                    </header>
+                    <div class="panel-body">
+                      <table class="table table-bordered table-striped mb-none" id="datatable-filiacao">
+                        <thead>
+                          <tr>
+                            <th>Nome</th>
+                            <th>Parentesco</th>
+                            <th>Gênero</th>
+                            <th>Ação</th>
+                          </tr>
+                        </thead>
+                        <tbody id="filiacao-tab"></tbody>
+                      </table><br>
+                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#filiacaoFormModal" onclick="prepararNovaFiliacao()">
+                        Adicionar Filiação
+                      </button>
+                    </div>
+                  </section>
+                </div>
+
+                <div class="modal fade" id="filiacaoResumoModal" tabindex="-1" role="dialog" aria-labelledby="filiacaoResumoModalLabel" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="filiacaoResumoModalLabel">Resumo da Filiação</h4>
+                      </div>
+                      <div class="modal-body form-horizontal">
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="nome" style="display: none;">
+                          <label class="col-md-4 control-label">Nome:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="data_nascimento" style="display: none;">
+                          <label class="col-md-4 control-label">Data de nascimento:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="parentesco" style="display: none;">
+                          <label class="col-md-4 control-label">Parentesco:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="genero" style="display: none;">
+                          <label class="col-md-4 control-label">Gênero:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="email" style="display: none;">
+                          <label class="col-md-4 control-label">E-mail:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="telefone" style="display: none;">
+                          <label class="col-md-4 control-label">Telefone:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                        <div class="form-group filiacao-resumo-campo" data-filiacao-resumo="endereco" style="display: none;">
+                          <label class="col-md-4 control-label">Endereço:</label>
+                          <div class="col-md-8"><p class="form-control-static" data-filiacao-resumo-valor></p></div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <a href="#" class="btn btn-primary" id="filiacaoResumoVerMais">Ver mais informações</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="modal fade" id="filiacaoFormModal" tabindex="-1" role="dialog" aria-labelledby="filiacaoFormModalLabel" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header" style="display: flex; justify-content: space-between;">
+                        <h5 class="modal-title" id="filiacaoFormModalLabel">Adicionar Filiação</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar"><span aria-hidden="true">&times;</span></button>
+                      </div>
+                      <form action="../../controle/control.php" method="post">
+                        <?= Csrf::inputField() ?>
+                        <input type="hidden" name="nomeClasse" value="FiliacaoControle">
+                        <input type="hidden" name="metodo" id="filiacao_metodo" value="cadastrar">
+                        <input type="hidden" name="id_funcionario" value="<?= (int)$idFuncionario ?>">
+                        <input type="hidden" name="id_filiacao" id="id_filiacao">
+                        <input type="hidden" name="id_filiado" id="id_filiado">
+                        <div class="modal-body" style="padding: 15px 40px">
+                          <div class="form-group">
+                            <label for="filiacao_cpf">CPF</label>
+                            <input type="text" class="form-control" name="cpf" id="filiacao_cpf" maxlength="14" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" onblur="buscarPessoaFiliacao(this.value)">
+                          </div>
+                          <div class="form-group">
+                            <label for="filiacao_nome">Nome<sup class="obrig">*</sup></label>
+                            <input type="text" class="form-control" name="nome" id="filiacao_nome" onkeypress="return Onlychars(event)" required>
+                          </div>
+                          <div class="form-group">
+                            <label for="filiacao_parentesco">Parentesco<sup class="obrig">*</sup></label>
+                            <select class="form-control" name="id_parentesco" id="filiacao_parentesco" required>
+                              <option value="" selected disabled>Selecionar...</option>
+                              <?php foreach ($pdo->query("SELECT id_parentesco, descricao FROM parentesco ORDER BY descricao")->fetchAll(PDO::FETCH_ASSOC) as $parentesco): ?>
+                                <option value="<?= (int)$parentesco['id_parentesco'] ?>"><?= htmlspecialchars($parentesco['descricao'], ENT_QUOTES, 'UTF-8') ?></option>
+                              <?php endforeach; ?>
+                            </select>
+                          </div>
+                          <div class="form-group">
+                            <label for="filiacao_genero">Gênero</label>
+                            <select class="form-control" name="genero" id="filiacao_genero">
+                              <option value="" selected disabled>Selecionar...</option>
+                              <option value="m">Masculino</option>
+                              <option value="f">Feminino</option>
+                              <option value="o">Outro</option>
+                              <option value="n">Prefiro não informar</option>
+                            </select>
+                          </div>
+                          <div class="form-group">
+                            <label for="filiacao_email">E-mail</label>
+                            <input type="email" class="form-control" name="email" id="filiacao_email">
+                          </div>
+                          <div class="form-group">
+                            <label for="filiacao_telefone">Telefone</label>
+                            <input type="text" class="form-control" name="telefone" id="filiacao_telefone" maxlength="14" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####', this, event)">
+                          </div>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                          <button type="submit" class="btn btn-primary">Salvar</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
                 <!-- Aba dependentes -->
                 <div id="dependentes" class="tab-pane">
                   <section class="panel">
@@ -2339,7 +2579,7 @@ try {
                                     <select name="id_parentesco" id="parentesco" class="<?= !empty($fieldErrors['id_parentesco']) && $openModal === 'depFormModal' ? 'is-invalid' : '' ?>">
                                       <option selected disabled>Selecionar...</option>
                                       <?php
-                                      foreach ($pdo->query("SELECT * FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
+                                      foreach ($pdo->query("SELECT id_parentesco, descricao FROM funcionario_dependente_parentesco ORDER BY descricao ASC;")->fetchAll(PDO::FETCH_ASSOC) as $item) {
                                         $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["id_parentesco"] ? ' selected' : '';
                                         echo ("<option value='" . $item["id_parentesco"] . "'{$selected}>" . htmlspecialchars($item["descricao"]) . "</option>");
                                       }

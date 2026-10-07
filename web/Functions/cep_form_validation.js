@@ -141,7 +141,14 @@
       }
     });
 
-form.addEventListener("submit", async (evento) => {
+    cep.addEventListener("blur", () => {
+      const cepInformado = digitos(cep.value);
+      if (cepInformado.length === 8 && cepInformado !== cepValidado && status !== "carregando") {
+        buscar(cepInformado);
+      }
+    });
+
+    form.addEventListener("submit", async (evento) => {
       const atualCep = digitos(cep.value);
 
       if (!atualCep) return; 

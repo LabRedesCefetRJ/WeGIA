@@ -831,6 +831,20 @@ class FuncionarioControle
         }
     }
 
+    public function listarRelacionamentos(int $idFuncionario): array
+    {
+        if ($idFuncionario < 1) {
+            throw new InvalidArgumentException('O id do funcionário informado não é válido.', 400);
+        }
+
+        $funcionarioDAO = new FuncionarioDAO();
+
+        return [
+            'dependentes' => $funcionarioDAO->listarDependentes($idFuncionario),
+            'filiacoes' => $funcionarioDAO->listarFiliacoesSemDependentes($idFuncionario),
+        ];
+    }
+
     public function listarUm()
     {
         try {
@@ -1247,8 +1261,8 @@ class FuncionarioControle
                 Util::validarNomePessoaOpcionalOuLancar($nome_pai, 'nome do pai', 412);
             if (isset($nome_mae))
                 Util::validarNomePessoaOpcionalOuLancar($nome_mae, 'nome da mãe', 412);
-            if (!isset($gender) || ($gender !== 'm' && $gender !== 'f'))
-                $erros[] = "Sexo do funcionário é obrigatório.";
+            if (!isset($gender) || !Util::validarGenero($gender))
+                $erros[] = "Gênero do funcionário é obrigatório.";
             if (!isset($nascimento) || trim($nascimento) === '')
                 $erros[] = "Data de nascimento é obrigatória.";
             if (!isset($telefone) || trim($telefone) === '')

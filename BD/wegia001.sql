@@ -64,9 +64,7 @@ CREATE TABLE IF NOT EXISTS `wegia`.`pessoa` (
   `registro_geral` VARCHAR(120) NULL DEFAULT NULL,
   `orgao_emissor` VARCHAR(120) NULL DEFAULT NULL,
   `data_expedicao` DATE NULL DEFAULT NULL,
-  `nome_mae` VARCHAR(100) NULL DEFAULT NULL,
-  `nome_pai` VARCHAR(100) NULL DEFAULT NULL,
-  `tipo_sanguineo` VARCHAR(5) NULL DEFAULT NULL,
+  `tipo_sanguineo` VARCHAR(5) NULL DEFAULT NULL, 
   `cns` CHAR(15) NULL DEFAULT NULL,
   `nivel_acesso` TINYINT(4) NULL DEFAULT '0',
   `adm_configurado` TINYINT(4) NULL DEFAULT '0',
@@ -1511,6 +1509,43 @@ CREATE TABLE IF NOT EXISTS `wegia`.`funcionario_dependente_parentesco` (
   UNIQUE INDEX `descricao_UNIQUE` (`descricao` ASC))
 ENGINE = InnoDB;
 
+-- -----------------------------------------------------
+-- Table `wegia`.`parentesco`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`parentesco` (
+  `id_parentesco` INT NOT NULL AUTO_INCREMENT,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id_parentesco`),
+  UNIQUE INDEX `parentesco_descricao_UNIQUE` (`descricao` ASC))
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `wegia`.`filiacao`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `wegia`.`filiacao` (
+  `id_pessoa` INT NOT NULL,
+  `id_filiado` INT NOT NULL,
+  `id_parentesco` INT NOT NULL,
+  PRIMARY KEY (`id_pessoa`, `id_filiado`, `id_parentesco`),
+  INDEX `fk_filiacao_filiado_idx` (`id_filiado`),
+  INDEX `fk_filiacao_parentesco_idx` (`id_parentesco`),
+  CONSTRAINT `fk_filiacao_pessoa`
+    FOREIGN KEY (`id_pessoa`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_filiacao_filiado`
+    FOREIGN KEY (`id_filiado`)
+    REFERENCES `wegia`.`pessoa` (`id_pessoa`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_filiacao_parentesco`
+    FOREIGN KEY (`id_parentesco`)
+    REFERENCES `wegia`.`parentesco` (`id_parentesco`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
 
 -- -----------------------------------------------------
 -- Table `wegia`.`funcionario_dependentes`
@@ -1519,11 +1554,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`funcionario_dependentes` (
   `id_dependente` INT NOT NULL AUTO_INCREMENT,
   `id_funcionario` INT(11) NOT NULL,
   `id_pessoa` INT(11) NOT NULL,
-  `id_parentesco` INT NOT NULL,
   PRIMARY KEY (`id_dependente`),
-  INDEX `fk_funcionario_dependente_funcionario1_idx` (`id_funcionario` ASC),
-  INDEX `fk_funcionario_dependente_pessoa1_idx` (`id_pessoa` ASC),
-  INDEX `fk_funcionario_dependente_funcionario_dependente_parentesco_idx` (`id_parentesco` ASC),
+  INDEX `fk_funcionario_dependente_funcionario1_idx` (`id_funcionario`),
+  INDEX `fk_funcionario_dependente_pessoa1_idx` (`id_pessoa`),
   CONSTRAINT `fk_funcionario_dependente_funcionario1`
     FOREIGN KEY (`id_funcionario`)
     REFERENCES `wegia`.`funcionario` (`id_funcionario`)
@@ -1533,14 +1566,8 @@ CREATE TABLE IF NOT EXISTS `wegia`.`funcionario_dependentes` (
     FOREIGN KEY (`id_pessoa`)
     REFERENCES `wegia`.`pessoa` (`id_pessoa`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_funcionario_dependente_funcionario_dependente_parentesco1`
-    FOREIGN KEY (`id_parentesco`)
-    REFERENCES `wegia`.`funcionario_dependente_parentesco` (`id_parentesco`)
-    ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
-
 
 -- -----------------------------------------------------
 -- Table `wegia`.`funcionario_docdependentes`
@@ -1654,11 +1681,9 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido_familiares` (
   `idatendido_familiares` INT NOT NULL AUTO_INCREMENT,
   `atendido_idatendido` INT NOT NULL,
   `pessoa_id_pessoa` INT(11) NOT NULL,
-  `atendido_parentesco_idatendido_parentesco` INT NOT NULL,
   PRIMARY KEY (`idatendido_familiares`),
   INDEX `fk_atendido_familiares_atendido1_idx` (`atendido_idatendido` ASC),
   INDEX `fk_atendido_familiares_pessoa1_idx` (`pessoa_id_pessoa` ASC),
-  INDEX `fk_atendido_familiares_atendido_parentesco1_idx` (`atendido_parentesco_idatendido_parentesco` ASC),
   CONSTRAINT `fk_atendido_familiares_atendido1`
     FOREIGN KEY (`atendido_idatendido`)
     REFERENCES `wegia`.`atendido` (`idatendido`)
@@ -1667,11 +1692,6 @@ CREATE TABLE IF NOT EXISTS `wegia`.`atendido_familiares` (
   CONSTRAINT `fk_atendido_familiares_pessoa1`
     FOREIGN KEY (`pessoa_id_pessoa`)
     REFERENCES `wegia`.`pessoa` (`id_pessoa`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_atendido_familiares_atendido_parentesco1`
-    FOREIGN KEY (`atendido_parentesco_idatendido_parentesco`)
-    REFERENCES `wegia`.`atendido_parentesco` (`idatendido_parentesco`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
@@ -2927,7 +2947,7 @@ CREATE PROCEDURE `cadfuncionario`(IN `nome` VARCHAR(100), IN `sobrenome` VARCHAR
   IN `estado` VARCHAR(50), IN `cidade` VARCHAR(40), IN `bairro` VARCHAR(40), 
   IN `logradouro` VARCHAR(40), IN `numero_endereco` VARCHAR(100), IN `complemento` VARCHAR(50), 
   IN `ibge` VARCHAR(20), IN `registro_geral` VARCHAR(20), IN `orgao_emissor` VARCHAR(120), 
-  IN `data_expedicao` DATE, IN `nome_pai` VARCHAR(100), IN `nome_mae` VARCHAR(100), 
+  IN `data_expedicao` DATE,
   IN `tipo_sanguineo` VARCHAR(50), IN `data_admissao` DATE, IN `pis` VARCHAR(140), 
   IN `ctps` VARCHAR(150), IN `uf_ctps` VARCHAR(200), IN `numero_titulo` VARCHAR(150), 
   IN `zona` VARCHAR(300), IN `secao` VARCHAR(400), IN `certificado_reservista_numero` VARCHAR(100), 
@@ -2938,9 +2958,9 @@ declare idP int;
 declare idF int;
 
 insert into pessoa(cpf, senha, nome, sobrenome, sexo, email, telefone,data_nascimento,imagem,cep ,estado,cidade, bairro, logradouro, numero_endereco,
-complemento,ibge,registro_geral,orgao_emissor,data_expedicao, nome_pai, nome_mae, tipo_sanguineo)
+complemento,ibge,registro_geral,orgao_emissor,data_expedicao, tipo_sanguineo)
 values(cpf, senha, nome, sobrenome, sexo, email, telefone,data_nascimento,imagem, cep ,estado,cidade, bairro, logradouro, numero_endereco,
-complemento,ibge,registro_geral,orgao_emissor,data_expedicao, nome_pai, nome_mae, tipo_sanguineo);
+complemento,ibge,registro_geral,orgao_emissor,data_expedicao, tipo_sanguineo);
 
 select max(id_pessoa) into idP FROM pessoa;
 

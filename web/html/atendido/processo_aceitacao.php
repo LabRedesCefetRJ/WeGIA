@@ -369,10 +369,15 @@ try {
                                     <?php endif; ?>
                                 </div>
                                 <div class="form-group">
-                                    <label>Sexo</label>
+                                    <label>Gênero</label>
                                     <div>
-                                        <label style="margin-right: 20px; margin-left: 10px;"><input type="radio" name="sexo" id="edit_sexo_m" value="m"> <i class="fa fa-male"></i> Masculino</label>
-                                        <label><input type="radio" name="sexo" id="edit_sexo_f" value="f"> <i class="fa fa-female"></i> Feminino</label>
+                                        <select class="form-control" name="sexo" id="edit_genero">
+                                            <option value="" selected disabled>Selecionar</option>
+                                            <option value="m">Masculino</option>
+                                            <option value="f">Feminino</option>
+                                            <option value="o">Outro</option>
+                                            <option value="n">Prefiro não informar</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -487,10 +492,15 @@ try {
                                     <?php endif; ?>
                                 </div>
                                 <div class="form-group">
-                                    <label>Sexo</label>
+                                    <label>Gênero</label>
                                     <div>
-                                        <label style="margin-right: 20px; margin-left: 10px;"><input type="radio" name="sexo" value="m" <?= ($oldInput['sexo'] ?? '') === 'm' ? 'checked' : '' ?>> <i class="fa fa-male"></i> Masculino</label>
-                                        <label><input type="radio" name="sexo" value="f" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'checked' : '' ?>> <i class="fa fa-female"></i> Feminino</label>
+                                        <select class="form-control" name="sexo">
+                                            <option value="" selected disabled>Selecionar</option>
+                                            <option value="m" <?= ($oldInput['sexo'] ?? '') === 'm' ? 'selected' : '' ?>>Masculino</option>
+                                            <option value="f" <?= ($oldInput['sexo'] ?? '') === 'f' ? 'selected' : '' ?>>Feminino</option>
+                                            <option value="o" <?= ($oldInput['sexo'] ?? '') === 'o' ? 'selected' : '' ?>>Outro</option>
+                                            <option value="n" <?= ($oldInput['sexo'] ?? '') === 'n' ? 'selected' : '' ?>>Prefiro não informar</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="form-group">

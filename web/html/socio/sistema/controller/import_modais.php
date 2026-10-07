@@ -59,6 +59,18 @@ try {
 
               </div>
               <div class="row">
+                <div class="form-group mb-2 col-xs-6">
+                  <label for="genero">Gênero</label>
+                  <select class="form-control" id="genero" name="genero">
+                    <option value="" selected disabled>Selecionar</option>
+                    <option value="m">Masculino</option>
+                    <option value="f">Feminino</option>
+                    <option value="o">Outro</option>
+                    <option value="n">Prefiro não informar</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
                 <div class="form-group col-xs-6">
                   <label for="obs">E-mail</label>
                   <input type="email" class="form-control" id="email" name="email" placeholder="">

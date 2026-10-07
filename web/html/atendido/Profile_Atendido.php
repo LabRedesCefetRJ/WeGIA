@@ -74,11 +74,12 @@ if (empty($_SESSION['atendido'])) {
 }
 $atend = $_SESSION['atendido'];
 $stmtDependente = $pdo->prepare("SELECT
-      af.idatendido_familiares AS id_dependente, p.nome AS nome, p.sobrenome AS sobrenome, p.cpf AS cpf, p.telefone AS telefone, par.parentesco AS parentesco
+      af.idatendido_familiares AS id_dependente, p.nome AS nome, p.sobrenome AS sobrenome, p.cpf AS cpf, p.telefone AS telefone, pfil.descricao AS parentesco
       FROM atendido_familiares af
       LEFT JOIN atendido a ON a.idatendido = af.atendido_idatendido
       LEFT JOIN pessoa p ON p.id_pessoa = af.pessoa_id_pessoa
-      LEFT JOIN atendido_parentesco par ON par.idatendido_parentesco = af.atendido_parentesco_idatendido_parentesco
+      INNER JOIN filiacao fil ON fil.id_filiacao = af.id_filiacao
+      INNER JOIN parentesco pfil ON pfil.id_parentesco = fil.id_parentesco
       WHERE af.atendido_idatendido =:idAtendido");
 
 $stmtDependente->bindParam(':idAtendido', $id);
@@ -117,6 +118,7 @@ require_once "../../controle/AtendidoControle.php";
   <link rel="stylesheet" href="../../assets/vendor/magnific-popup/magnific-popup.css" />
   <link rel="stylesheet" href="../../assets/vendor/bootstrap-datepicker/css/datepicker3.css" />
   <link rel="stylesheet" type="text/css" href="../../css/profile-theme.css">
+  <link rel="stylesheet" href="../../css/profile-atendido.css">
   <link rel="stylesheet" href="../../css/modal-upload-arquivo.css" />
   <script src="../../assets/vendor/jquery/jquery.min.js"></script>
   <script src="../../assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js"></script>
@@ -195,6 +197,7 @@ require_once "../../controle/AtendidoControle.php";
       transform: translateY(0);
       pointer-events: auto;
     }
+
   </style>
   <!-- Theme CSS -->
   <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
@@ -297,12 +300,17 @@ require_once "../../controle/AtendidoControle.php";
             $("#imagem").attr("src", "../../img/semfoto.png");
           }
           if (item.sexo == "m") {
-            $("#sexo").html("Sexo: <i class='fa fa-male'></i>");
-            $("#radioM").prop('checked', true);
+            $("#sexo").html("Gênero: Masculino");
           } else if (item.sexo == "f") {
-            $("#sexo").html("Sexo: <i class='fa fa-female'></i>");
-            $("#radioF").prop('checked', true);
+            $("#sexo").html("Gênero: Feminino");
+          } else if (item.sexo == "o") {
+            $("#sexo").text("Gênero: Outro");
+          } else if (item.sexo == "n") {
+            $("#sexo").text("Gênero: Prefiro não informar");
+          } else {
+            $("#sexo").text("Gênero: Não informado");
           }
+          $("#genero").val(item.sexo || '');
 
           $("#email").val(item.email || '');
           $("#telefone").text("Telefone:" + item.telefone);
@@ -376,8 +384,7 @@ require_once "../../controle/AtendidoControle.php";
       console.log("Edição liberada");
       $("#nome").prop('disabled', false);
       $("#sobrenome").prop('disabled', false);
-      $("#radioM").prop('disabled', false);
-      $("#radioF").prop('disabled', false);
+      $("#genero").prop('disabled', false);
       $("#email").prop('disabled', false);
       $("#telefone").prop('disabled', false);
       $("#cns").prop('disabled', false);
@@ -404,8 +411,7 @@ require_once "../../controle/AtendidoControle.php";
 
       $("#nome").prop('disabled', true);
       $("#sobrenome").prop('disabled', true);
-      $("#radioM").prop('disabled', true);
-      $("#radioF").prop('disabled', true);
+      $("#genero").prop('disabled', true);
       $("#email").prop('disabled', true);
       $("#telefone").prop('disabled', true);
       $("#cns").prop('disabled', true);
@@ -725,7 +731,7 @@ require_once "../../controle/AtendidoControle.php";
 
 </head>
 
-<body>
+<body class="profile-atendido-page">
   <section class="body">
     <div id="header"></div>
     <!-- end: header -->
@@ -752,7 +758,7 @@ require_once "../../controle/AtendidoControle.php";
         <!-- start: page -->
         <?php sessionMsg(); ?>
         <div class="row">
-          <div class="col-md-4 col-lg-3">
+          <div class="col-md-4 col-lg-3 profile-sidebar">
             <section class="panel">
               <div class="panel-body">
                 <?php
@@ -825,7 +831,7 @@ require_once "../../controle/AtendidoControle.php";
             <?php endif; ?>     
             </section>
           </div>
-          <div class="col-md-8 col-lg-6">
+          <div class="col-md-8 col-lg-8 profile-content">
             <div class="tabs">
               <ul class="nav nav-tabs tabs-primary">
                 <li class="active">
@@ -868,10 +874,15 @@ require_once "../../controle/AtendidoControle.php";
                           </div>
                         </div>
                         <div class="form-group">
-                          <label class="col-md-3 control-label" for="profileLastName">Sexo</label>
+                          <label class="col-md-3 control-label" for="genero">Gênero</label>
                           <div class="col-md-8">
-                            <label><input type="radio" name="sexo" id="radioM" disabled value="m" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-male" style="font-size: 20px;"> </i></label>
-                            <label><input type="radio" name="sexo" id="radioF" disabled value="f" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-female" style="font-size: 20px;"> </i> </label>
+                            <select class="form-control" name="sexo" id="genero" disabled>
+                              <option value="">Não informado</option>
+                              <option value="m">Masculino</option>
+                              <option value="f">Feminino</option>
+                              <option value="o">Outro</option>
+                              <option value="n">Prefiro não informar</option>
+                            </select>
                           </div>
                         </div>
                         <div class="form-group">
@@ -1076,6 +1087,7 @@ require_once "../../controle/AtendidoControle.php";
                         <h2 class="panel-title">Composição Familiar</h2>
                       </header>
                       <div class="panel-body">
+                        <div class="profile-table-scroll">
                         <table class="table table-bordered table-striped mb-none" id="datatable-dependente">
                           <thead>
                             <tr>
@@ -1089,6 +1101,7 @@ require_once "../../controle/AtendidoControle.php";
 
                           </tbody>
                         </table>
+                        </div>
                         <br>
                         <!-- Button trigger modal -->
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#depFormModal">
@@ -1129,7 +1142,7 @@ require_once "../../controle/AtendidoControle.php";
                                         <?php
                                         $parentescosAtendido = [];
                                         try {
-                                          $stmtParentescosAtendido = $pdo->prepare("SELECT * FROM atendido_parentesco ORDER BY parentesco ASC");
+                                          $stmtParentescosAtendido = $pdo->prepare("SELECT id_parentesco, descricao AS parentesco FROM parentesco ORDER BY descricao ASC");
                                           $stmtParentescosAtendido->execute();
                                           $parentescosAtendido = $stmtParentescosAtendido->fetchAll(PDO::FETCH_ASSOC);
                                         } catch (PDOException $e) {
@@ -1137,9 +1150,9 @@ require_once "../../controle/AtendidoControle.php";
                                         }
 
                                         foreach ($parentescosAtendido as $item) {
-                                          $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["idatendido_parentesco"] ? ' selected' : '';
+                                          $selected = $openModal === 'depFormModal' && isset($oldInput['id_parentesco']) && (string)$oldInput['id_parentesco'] === (string)$item["id_parentesco"] ? ' selected' : '';
                                           echo ("
-                                            <option value='" . $item["idatendido_parentesco"] . "'{$selected}>" . htmlspecialchars($item["parentesco"]) . "</option>
+                                            <option value='" . $item["id_parentesco"] . "'{$selected}>" . htmlspecialchars($item["parentesco"]) . "</option>
                                             ");
                                         }
                                         ?>
@@ -1865,6 +1878,10 @@ require_once "../../controle/AtendidoControle.php";
     <script src="../../Functions/atendido_parentesco.js"></script>
     <script>
       $(document).ready(function() {
+        if (window.location.hash) {
+          $('.nav-tabs a[href="' + window.location.hash + '"]').tab('show');
+        }
+
         $('.editar-ocorrencia').on('click', function(e) {
           e.stopPropagation(); // não dispara o onclick da linha
           var btn = $(this);

@@ -16,3 +16,13 @@ img{
 .link{
 	color: inherit;
 }
+
+.filiacao-acoes {
+	text-align: center;
+	vertical-align: middle !important;
+	white-space: nowrap;
+}
+
+.filiacao-acoes .btn {
+	margin: 0 2px;
+}

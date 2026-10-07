@@ -111,11 +111,11 @@ try {
                 $("#nomeForm").val(item.nome).prop('disabled', true);
                 $("#sobrenomeForm").val(item.sobrenome).prop('disabled', true);
                 if (item.sexo == "m") {
-                    $("#radioM").prop('checked', true).prop('disabled', true);
-                    $("#radioF").prop('checked', false).prop('disabled', true);
+                    $("select[name=gender]").val('m').prop('disabled', true);
                 } else if (item.sexo == "f") {
-                    $("#radioM").prop('checked', false).prop('disabled', true);
-                    $("#radioF").prop('checked', true).prop('disabled', true);
+                    $("select[name=gender]").val('f').prop('disabled', true);
+                } else {
+                    $("select[name=gender]").val(item.sexo).prop('disabled', true);
                 }
                 $("#telefone").val(item.telefone).prop('disabled', true);
                 $("#nascimento").val(item.data_nascimento).prop('disabled', true);
@@ -149,8 +149,7 @@ try {
         function editar_informacoes_pessoais() {
             $("#nomeForm").prop('disabled', false);
             $("#sobrenomeForm").prop('disabled', false);
-            $("#radioM").prop('disabled', false);
-            $("#radioF").prop('disabled', false);
+            $("select[name=gender]").prop('disabled', false);
             $("#telefone").prop('disabled', false);
             $("#nascimento").prop('disabled', false);
             $("#pai").prop('disabled', false);
@@ -165,8 +164,7 @@ try {
         function cancelar_informacoes_pessoais() {
             $("#nomeForm").prop('disabled', true);
             $("#sobrenomeForm").prop('disabled', true);
-            $("#radioM").prop('disabled', true);
-            $("#radioF").prop('disabled', true);
+            $("select[name=gender]").prop('disabled', true);
             $("#telefone").prop('disabled', true);
             $("#nascimento").prop('disabled', true);
             $("#pai").prop('disabled', true);
@@ -383,10 +381,11 @@ try {
                                                 </div>
                                             </div>
                                             <div class="form-group">
-                                                <label class="col-md-3 control-label">Sexo</label>
+                                                <label class="col-md-3 control-label">Gênero</label>
                                                 <div class="col-md-8">
-                                                    <label><input type="radio" name="gender" id="radioM" value="m" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-male" style="font-size: 20px;"></i></label>
-                                                    <label><input type="radio" name="gender" id="radioF" value="f" style="margin-top: 10px; margin-left: 15px;"> <i class="fa fa-female" style="font-size: 20px;"></i></label>
+                                                    <select class="form-control" name="gender" id="genero">
+														<option value="" selected disabled>Selecionar</option><option value="m">Masculino</option><option value="f">Feminino</option><option value="o">Outro</option><option value="n">Prefiro não informar</option>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="form-group">

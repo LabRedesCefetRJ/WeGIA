@@ -40,6 +40,7 @@ if (!$id_funcionario || $id_funcionario < 1) {
     $sobrenome = filter_input(INPUT_POST, 'sobrenome', FILTER_SANITIZE_SPECIAL_CHARS);
     $sexo = filter_input(INPUT_POST, 'sexo', FILTER_SANITIZE_SPECIAL_CHARS);
     $telefone = filter_input(INPUT_POST, 'telefone', FILTER_SANITIZE_SPECIAL_CHARS);
+    $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $data_nascimento = filter_input(INPUT_POST, 'nascimento', FILTER_SANITIZE_SPECIAL_CHARS);
     $id_parentesco = filter_input(INPUT_POST, 'id_parentesco', FILTER_SANITIZE_NUMBER_INT);
     $cpf = filter_input(INPUT_POST, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
@@ -59,8 +60,8 @@ if (!$id_funcionario || $id_funcionario < 1) {
         redirectNovoDependenteError('O CPF informado não é válido.', 'cpf');
     }
 
-    if ($sexo !== 'm' && $sexo !== 'f') {
-        redirectNovoDependenteError('O sexo informado não é válido.', 'sexo');
+    if (!Util::validarGenero($sexo)) {
+        redirectNovoDependenteError('O gênero informado não é válido.', 'sexo');
     }
 
     if (!$id_parentesco || $id_parentesco < 1) {
@@ -68,7 +69,8 @@ if (!$id_funcionario || $id_funcionario < 1) {
     }
 
 
-    define("NOVA_PESSOA", "INSERT IGNORE INTO pessoa (cpf, nome, sobrenome, sexo, telefone, data_nascimento, registro_geral, orgao_emissor, data_expedicao) VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :data_nascimento, :registro_geral, :orgao_emissor, :data_expedicao)");
+
+    define("NOVA_PESSOA", "INSERT IGNORE INTO pessoa (cpf, nome, sobrenome, sexo, telefone, email, data_nascimento, registro_geral, orgao_emissor, data_expedicao) VALUES (:cpf, :nome, :sobrenome, :sexo, :telefone, :email, :data_nascimento, :registro_geral, :orgao_emissor, :data_expedicao)");
     try {
         $pessoa = $pdo->prepare(NOVA_PESSOA);
         $pessoa->bindValue(":cpf", $cpf);
@@ -76,6 +78,7 @@ if (!$id_funcionario || $id_funcionario < 1) {
         $pessoa->bindValue(":sobrenome", $sobrenome);
         $pessoa->bindValue(":sexo", $sexo);
         $pessoa->bindValue(":telefone", $telefone);
+        $pessoa->bindValue(":email", $email);
         $pessoa->bindValue(":data_nascimento", $data_nascimento);
         $pessoa->bindValue(":registro_geral", $registro_geral);
         $pessoa->bindValue(":orgao_emissor", $orgao_emissor);
@@ -105,14 +108,24 @@ if (!$id_funcionario || $id_funcionario < 1) {
         if(!is_numeric($id_funcionario) || !is_numeric($id_pessoa) || !is_numeric($id_parentesco)){
             redirectNovoDependenteError('Os parâmetros informados não correspondem a um tipo válido de ID.');
         }
-        $sql = "INSERT IGNORE INTO funcionario_dependentes (id_funcionario, id_pessoa, id_parentesco) VALUES (:id_funcionario, :id_pessoa, :id_parentesco)";
+        $stmtFiliacao = $pdo->prepare('INSERT IGNORE INTO filiacao (id_pessoa, id_filiado, id_parentesco) SELECT f.id_pessoa, :id_pessoa, :id_parentesco FROM funcionario f WHERE f.id_funcionario = :id_funcionario');
+        $stmtFiliacao->execute([
+            ':id_parentesco' => $id_parentesco,
+            ':id_pessoa' => $id_pessoa,
+            ':id_funcionario' => $id_funcionario,
+        ]);
+        $sql = "INSERT IGNORE INTO funcionario_dependentes 
+                (id_funcionario, id_pessoa) 
+                VALUES (:id_funcionario, :id_pessoa)";
+
         $stmt = $pdo->prepare($sql);
-        $stmt->bindParam(':id_funcionario', $id_funcionario);
-        $stmt->bindParam(':id_pessoa', $id_pessoa);
-        $stmt->bindParam(':id_parentesco', $id_parentesco);
-        $stmt->execute();
+
+        $stmt->execute([
+            ':id_funcionario' => $id_funcionario,
+            ':id_pessoa' => $id_pessoa
+        ]);
     } catch (PDOException $th) {
-        redirectNovoDependenteError('Erro ao adicionar o dependente ao banco de dados.');
+        die("ERRO PDO: " . $th->getMessage());
     }
 
 header("Location: profile_funcionario.php?id_funcionario=$id_funcionario");
