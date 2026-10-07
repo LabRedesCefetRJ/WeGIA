@@ -35,41 +35,15 @@ $gatewayPagamentoController = new GatewayPagamentoController();
 $gateways = $gatewayPagamentoController->buscaTodos();
 
 //Mascarar tokens para exibição
+require_once '../model/GatewayPagamento.php';
 foreach ($gateways as $key => $gateway) {
     if ($gateway['private_token'] != '' && $gateway['private_token'] != 'coloque o token aqui') {
-        $gateways[$key]['private_token'] = ofuscarToken($gateway['private_token']);
+        $gateways[$key]['private_token'] = GatewayPagamento::ofuscarToken($gateway['private_token']);
     }
 
     /*if ($gateway['public_token'] != '' && $gateway['public_token'] != 'coloque o token aqui') {
         $gateways[$key]['public_token'] = ofuscarToken($gateway['public_token']);
     }*/
-}
-
-function ofuscarToken(string $token, int $visivelInicio = 3, int $visivelFim = 3, float $percentualMaxVisivel = 0.3): string
-{
-    $tamanho = strlen($token);
-
-    // Número máximo total de caracteres visíveis com base na porcentagem
-    $maxVisiveis = floor($tamanho * $percentualMaxVisivel);
-
-    // Garante que o total de visíveis não ultrapasse o permitido
-    $totalVisiveis = $visivelInicio + $visivelFim;
-    if ($totalVisiveis > $maxVisiveis) {
-        // Divide o número máximo permitido entre início e fim
-        $visivelInicio = floor($maxVisiveis / 2);
-        $visivelFim = $maxVisiveis - $visivelInicio;
-    }
-
-    // Se ainda assim for muito curto, oculta completamente
-    if ($visivelInicio + $visivelFim >= $tamanho) {
-        return str_repeat('*', $tamanho);
-    }
-
-    $inicio = substr($token, 0, $visivelInicio);
-    $fim = substr($token, -$visivelFim);
-    $meio = str_repeat('*', $tamanho - $visivelInicio - $visivelFim);
-
-    return $inicio . $meio . $fim;
 }
 
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
@@ -313,7 +287,7 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_
                                                         </div>
                                                         <div class="form-group">
                                                             <label for="editPrivateToken">Private token:</label>
-                                                            <input type="text" class="form-control" id="editPrivateToken" name="private_token" required>
+                                                            <input type="text" class="form-control" id="editPrivateToken" name="private_token">
                                                         </div>
                                                         <div class="form-group">
                                                             <label for="editPublicToken">Public token:</label>
