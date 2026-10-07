@@ -163,7 +163,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 
 												<div class="form-group">
 													<label class="col-md-3 control-label" for="origens">Origem</label>
-													<a href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=entrada" id="btn-novo-doador"><i class="fas fa-plus w3-xlarge"></i></a>
+													<a href="<?= WWW ?>html/matPat/cadastro_doador.php?origem=entrada" id="btn-nova-origem" title="Cadastrar origem" aria-label="Cadastrar origem"><i class="fas fa-plus w3-xlarge"></i></a>
 													<div class="col-md-6">
 														<select class="form-control " name="origem" id="origens">
 															<option selected disabled value="blank">Selecionar</option>
@@ -378,7 +378,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 					}
 				}).fail(function() {
 					$('#origens').empty().append(
-						'<option selected disabled value="blank">Não foi possível carregar os fornecedores. Tente novamente mais tarde.</option>'
+						'<option selected disabled value="blank">Não foi possível carregar as origens. Tente novamente mais tarde.</option>'
 					);
 				});
 
@@ -852,7 +852,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 			sessionStorage.removeItem(CHAVE);
 		}
 
-		$('#btn-novo-doador, #btn-novo-almoxarifado, #btn-novo-tipo-entrada, #btn-novo-produto').on('click', function () {
+		$('#btn-nova-origem, #btn-novo-almoxarifado, #btn-novo-tipo-entrada, #btn-novo-produto').on('click', function () {
 			salvarRascunho();
 		});
 

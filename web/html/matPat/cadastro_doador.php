@@ -18,7 +18,7 @@ require_once ROOT . '/service/PermissaoFornecedorService.php';
 $permissaoFornecedor = new PermissaoFornecedorService();
 if (!$permissaoFornecedor->permite((int) $_SESSION['id_pessoa'], 3)) {
     header('Location: ' . WWW . 'html/home.php?msg_c=' . urlencode(
-        'Você não tem permissão para realizar esta ação em fornecedores.'
+        'Você não tem permissão para realizar esta ação em origens.'
     ));
     exit;
 }
@@ -56,7 +56,7 @@ if (isset($_SESSION['almoxarifado'])) {
     <!-- Basic -->
     <meta charset="UTF-8">
 
-    <title>Cadastro de Doador</title>
+    <title>Cadastro de Origem</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -225,7 +225,7 @@ if (isset($_SESSION['almoxarifado'])) {
                                 </a>
                             </li>
                             <li><span>Cadastro</span></li>
-                            <li><span>Doador</span></li>
+                            <li><span>Origem</span></li>
                         </ol>
 
                         <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
@@ -239,7 +239,7 @@ if (isset($_SESSION['almoxarifado'])) {
                         <div class="tabs">
                             <ul class="nav nav-tabs tabs-primary">
                                 <li class="active">
-                                    <a href="#overview" data-toggle="tab">Cadastro de Doador</a>
+                                    <a href="#overview" data-toggle="tab">Cadastro de Origem</a>
                                 </li>
                             </ul>
                             <div class="tab-content">
@@ -251,7 +251,7 @@ if (isset($_SESSION['almoxarifado'])) {
                                         <input type="hidden" name="metodo" value="incluir">
                                         <?= Csrf::inputField() ?>
                                         <fieldset>
-                                            <h4 class="mb-xlg">Doador</h4>
+                                            <h4 class="mb-xlg">Origem</h4>
                                             <div class="form-group">
                                                 <label class="col-md-3 control-label" for="profileFirstName">Nome</label>
                                                 <div class="col-md-6">
@@ -317,7 +317,7 @@ if (isset($_SESSION['almoxarifado'])) {
                                                     <a href="<?= htmlspecialchars($paginaVoltar, ENT_QUOTES, 'UTF-8')?>" color: white; text-decoration: none;>
                                                         <button type="button" class="btn btn-info">Voltar</button>
                                                     </a>
-                                                    <a href="listar_origem.php" style="color: white; text-decoration:none;"><button class="btn btn-success" type="button">Listar doadores</button></a>
+                                                    <a href="listar_origem.php" style="color: white; text-decoration:none;"><button class="btn btn-success" type="button">Listar origens</button></a>
                                                 </div>
                                             </div>
                                         </fieldset>

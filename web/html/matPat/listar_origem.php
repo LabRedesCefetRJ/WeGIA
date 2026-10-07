@@ -17,7 +17,7 @@ require_once ROOT . '/service/PermissaoFornecedorService.php';
 $permissaoFornecedor = new PermissaoFornecedorService();
 if (!$permissaoFornecedor->permite((int) $_SESSION['id_pessoa'], 5)) {
     header('Location: ' . WWW . 'html/home.php?msg_c=' . urlencode(
-        'Você não tem permissão para realizar esta ação em fornecedores.'
+        'Você não tem permissão para realizar esta ação em origens.'
     ));
     exit;
 }
@@ -50,7 +50,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
 <head>
    <!-- Basic -->
    <meta charset="UTF-8">
-   <title>Informações</title>
+   <title>Origens</title>
    <!-- Mobile Metas -->
    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    <!-- Vendor CSS -->
@@ -90,7 +90,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
       var origens = <?= json_encode($origens) ?>;
 
       function excluir(id) {
-         if (!confirm('Deseja realmente excluir esta origem/fornecedor?')) {
+         if (!confirm('Deseja realmente excluir esta origem?')) {
             return;
          }
 
@@ -197,7 +197,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                            <i class="fa fa-home"></i>
                         </a>
                      </li>
-                     <li><span>Informações Origem</span></li>
+                     <li><span>Informações de origens</span></li>
                   </ol>
                   <a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
                </div>
@@ -208,7 +208,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                   <div class="panel-actions">
                      <a href="#" class="fa fa-caret-down"></a>
                   </div>
-                  <h2 class="panel-title">Origem</h2>
+                  <h2 class="panel-title">Origens</h2>
                </header>
                <div class="panel-body">
                   <?php if (isset($_SESSION['msg'])): ?>
@@ -223,7 +223,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                            class="btn btn-primary"
                      >
                            <i class="fa fa-plus"></i>
-                           Cadastrar origem/fornecedor
+                           Cadastrar origem
                      </a>
                   </div>
                   <div class="tabela-compras">
@@ -340,7 +340,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                      tabela.wrap(
                         '<div class="tabela-scroll" ' +
                         'role="region" ' +
-                        'aria-label="Lista de fornecedores" ' +
+                        'aria-label="Lista de origens" ' +
                         'tabindex="0"></div>'
                      );
                }
