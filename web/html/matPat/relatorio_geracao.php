@@ -23,6 +23,7 @@ require_once ROOT . "/dao/Conexao.php";
 require_once ROOT . "/html/relatorios/Relatorio_item.php";
 
 $tipoMedia = $_POST['tipo_media'] ?? 'dia';
+$modoRequisicao = $_POST['modo_requisicao'] ?? 'movimentados';
 
 $mostrarZerados = isset($_POST['mostrarZerados']) && $_POST['mostrarZerados'] === 'on';
 
@@ -35,7 +36,7 @@ if ($_POST['tipo_relatorio'] == 'entrada') {
 $post = [
 	$_POST['tipo_relatorio'] != '' ? $_POST['tipo_relatorio'] : null,
 	$o_d != '' ? $o_d : null,
-	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque'])
+	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'])
 	? (!empty($_POST['categoria_produto']) ? $_POST['categoria_produto'] : null)
 	: (!empty($_POST['tipo']) ? $_POST['tipo'] : null),
 	$_POST['responsavel'] != '' ? $_POST['responsavel'] : null,
@@ -47,10 +48,15 @@ $post = [
 	$mostrarZerados
 ];
 
+if(($_POST['tipo_relatorio'] ?? null) === 'itens_compra' && empty($_POST['almoxarifado'])) {
+	echo "<script>alert('Por favor, selecione um almoxarifado para gerar o relatório de itens de compra.'); window.history.back();</script>";
+	exit();
+}
+
 $item = new Item(
 	$_POST['tipo_relatorio'],
 	$o_d,
-	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque'])
+	in_array($_POST['tipo_relatorio'], ['requisicao', 'estoque', 'itens_compra'])
 	? ($_POST['categoria_produto'] ?? null)
 	: ($_POST['tipo'] ?? null),
 	$_POST['responsavel'],
@@ -60,7 +66,8 @@ $item = new Item(
 	],
 	$_POST['almoxarifado'],
 	$mostrarZerados,
-	$tipoMedia
+	$tipoMedia,
+	$modoRequisicao
 );
 
 function quickQuery($query, $parametro, $column)
@@ -174,115 +181,135 @@ function quickQuery($query, $parametro, $column)
 	<!-- javascript tab management script -->
 
 	<style>
-.folha-requisicao {
-    width: 100%;
-    max-width: 28.2cm;
-    margin: 0 auto 20px auto;
-    page-break-after: always;
-    font-family: Arial, sans-serif;
-}
+		.folha-requisicao {
+    		width: 100%;
+    		max-width: 28.2cm;
+    		margin: 0 auto 20px auto;
+    		page-break-after: always;
+    		font-family: Arial, sans-serif;
+		}
 
-.cabecalho-requisicao {
-    text-align: center;
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 2px;
-}
+		.cabecalho-requisicao {
+    		text-align: center;
+    		font-size: 20px;
+    		font-weight: bold;
+    		margin-bottom: 2px;
+		}
 
-.instrucao-requisicao {
-    text-align: center;
-    font-size: 9px;
-    margin-bottom: 8px;
-}
+		.instrucao-requisicao {
+    		text-align: center;
+    		font-size: 9px;
+    		margin-bottom: 8px;
+		}
 
-.tabela-requisicao {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-}
+		.tabela-requisicao {
+    		width: 100%;
+    		border-collapse: collapse;
+    		table-layout: fixed;
+		}
 
-.tabela-requisicao td {
-    border: 1px solid #999;
-    padding: 2px;
-    vertical-align: top;
-}
+		.tabela-requisicao td {
+    		border: 1px solid #999;
+    		padding: 2px;
+    		vertical-align: top;
+		}
 
-.produto-requisicao {
-    width: 9%;
-    font-size: 10px;
-    font-weight: bold;
-    vertical-align: middle !important;
-}
+		.produto-requisicao {
+    		width: 9%;
+    		font-size: 10px;
+    		font-weight: bold;
+    		vertical-align: middle !important;
+    		overflow-wrap: break-word;
+    		word-break: normal;
+		}
 
-.dia-requisicao {
-    width: 5.6875%;
-    height: 0.78cm;
-    font-size: 8px;
-    font-weight: bold;
-    text-align: left;
-    vertical-align: top;
-}
+		.produto-requisicao-manual {
+    		padding: 4px !important;
+    		vertical-align: middle !important;
+		}
 
-.dia-azul {
-    background-color: #eaf5ff;
-}
+		.texto-produto-manual {
+    		font-size: 9px;
+    		font-weight: bold;
+    		line-height: 1.1;
+    		margin-bottom: 8px;
+		}
 
-.total-requisicao {
-    background-color: #f2f2f2;
-}
+		.linha-produto-manual {
+    		width: 100%;
+    		height: 10px;
+    		border-bottom: 1px solid #555;
+		}
 
-.rodape-requisicao {
-    text-align: right;
-    font-size: 8px;
-    color: #999;
-    margin-top: 4px;
-}
+		.dia-requisicao {
+    		width: 5.6875%;
+    		height: 0.78cm;
+    		font-size: 8px;
+    		font-weight: bold;
+    		text-align: left;
+    		vertical-align: top;
+		}
 
-@media print {
-    @page {
-        size: A4 landscape;
-        margin: 0.35cm;
-    }
+		.dia-azul {
+    		background-color: #eaf5ff;
+		}
 
-    .print-hide,
-    .descricao,
-    h4,
-    .print-button {
-        display: none !important;
-    }
+		.total-requisicao {
+    		background-color: #f2f2f2;
+		}
 
-    body {
-        margin: 0;
-        padding: 0;
-    }
+		.rodape-requisicao {
+    		text-align: right;
+    		font-size: 8px;
+    		color: #999;
+    		margin-top: 4px;
+		}
 
-    .content-body,
-    .inner-wrapper,
-    .tab-content {
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-    }
+		@media print {
+   			@page {
+        		size: A4 landscape;
+        		margin: 0.35cm;
+    		}
 
-    .folha-requisicao {
-        width: 28.2cm;
-        max-width: 28.2cm;
-        margin: 0 auto;
-        page-break-after: always;
-    }
+    		.print-hide,
+    		.descricao,
+    		h4,
+    		.print-button {
+        		display: none !important;
+    		}
 
-    .tabela-requisicao {
-        width: 28.2cm;
-    }
+    		body {
+        		margin: 0;
+        		padding: 0;
+    		}
 
-    .produto-requisicao {
-        width: 2.43cm;
-    }
+    		.content-body,
+    		.inner-wrapper,
+    		.tab-content {
+        		margin: 0 !important;
+        		padding: 0 !important;
+        		width: 100% !important;
+    		}
 
-    .dia-requisicao {
-        width: 1.61cm;
-    }
-}
+    		.folha-requisicao {
+        		width: 28.2cm;
+        		max-width: 28.2cm;
+        		margin: 0 auto;
+        		page-break-after: always;
+    		}
+
+    		.tabela-requisicao {
+        		width: 28.2cm;
+    		}
+
+    		.produto-requisicao {
+        		width: 2.43cm;
+    		}
+
+    		.dia-requisicao {
+        		width: 1.61cm;
+    		}
+		}
 </style>
 
 </head>
@@ -327,7 +354,8 @@ function quickQuery($query, $parametro, $column)
 										echo "</pre>";
 									}
 
-									echo ("<h3>Relatório de " . htmlspecialchars($post[0]) . "</h3>");
+									$tipoRelatorio = htmlspecialchars($post[0]) == 'itens_compra' ? 'itens de compra' : htmlspecialchars($post[0]);
+									echo ("<h3>Relatório de " . $tipoRelatorio . "</h3>");
 
 									if ($post[0] == 'entrada') {
 										if (isset($post[1])) {
@@ -371,9 +399,10 @@ function quickQuery($query, $parametro, $column)
 										}
 									}
 
+									$modeloBrasileiro = 'd/m/Y';
+
 									if (isset($post[4]['inicio'])) {
 										$dataInicio = $post[4]['inicio'];
-										$modeloBrasileiro = 'd/m/Y';
 										$dataInicioFormatada = date_format(date_create($dataInicio), $modeloBrasileiro);
 										echo ("<ul>A partir de: " . htmlspecialchars($dataInicioFormatada) . "</ul>");
 									}
@@ -384,6 +413,11 @@ function quickQuery($query, $parametro, $column)
 										echo ("<ul>Até: " . htmlspecialchars($dataFimFormatada) . "</ul>");
 									}
 
+									if (!empty($_POST['data_inicio']) && !empty($_POST['data_fim']) && $_POST['data_inicio'] > $_POST['data_fim']) {
+										echo ("<ul style='color: red;'>Aviso: A data de início é maior que a data de fim.</ul>");
+										exit();
+									}
+
 									if (isset($post[5])) {
 										$almoxarifado = quickQuery("select descricao_almoxarifado from almoxarifado where id_almoxarifado = :id_almoxarifado;", [':id_almoxarifado' => $post[5]], "descricao_almoxarifado");
 										echo ("<ul>Almoxarifado: " . htmlspecialchars($almoxarifado) . "</ul>"); 
@@ -391,10 +425,38 @@ function quickQuery($query, $parametro, $column)
 										echo ("<ul>Almoxarifado: Todos</ul>");
 									}
 
-									if ($post[6]) {
-										echo ("<ul>Mostrando produtos fora de estoque</ul>");
+									if ($post[0] === 'requisicao') {
+										$modelosRequisicao = [
+											'movimentados' => 'Produtos mais movimentados',
+											'completo' => 'Todos os produtos em estoque'
+										];
+
+										echo (
+											"<ul>Modelo da requisição: " .
+											htmlspecialchars($modelosRequisicao[$modoRequisicao] ?? 'Produtos mais movimentados') .
+											"</ul>"
+										);
+
+										if ($modoRequisicao === 'movimentados') {
+											echo ("<ul>Critério: produtos com saída total igual ou superior a 10 no período selecionado.</ul>");
+										}
 									} else {
-										echo ("<ul>Ocultando produtos fora de estoque</ul>");
+										if ($post[0] === 'estoque') {
+											if ($post[6]) {
+												echo ("<ul>Mostrando produtos fora de estoque</ul>");
+											} else {
+												echo ("<ul>Ocultando produtos fora de estoque</ul>");
+											}
+										}
+									}
+
+									if($post[0] == 'estoque' || $post[0] == 'requisicao' || $post[0] == 'itens_compra') {
+										if (isset($post[2])) {
+											$categoriaProduto = quickQuery("select descricao_categoria from categoria_produto where id_categoria_produto = :id_categoria_produto;", [':id_categoria_produto' => $post[2]], "descricao_categoria");
+											echo ("<ul>Categoria de Produto: " . htmlspecialchars($categoriaProduto) . "</ul>");
+										} else {
+											echo ("<ul>Categoria de Produto: Todos</ul>");
+										}
 									}
 								}
 								?>
@@ -414,7 +476,11 @@ function quickQuery($query, $parametro, $column)
 						<thead class="thead-dark">
 							<tr>
 								<th scope="col" width="11%">Quantidade</th>
-								<?php if($_POST['tipo_relatorio'] == 'saida') {
+								<?php 
+								if($_POST['tipo_relatorio'] == 'itens_compra'){
+									echo ('<th scope="col" width="14%">Quantidade mínima</th>');
+								}
+								if($_POST['tipo_relatorio'] == 'saida' || $_POST['tipo_relatorio'] == 'itens_compra') {
 									$labelMedia = [
 										'dia' => 'Média por dia',
 										'mes' => 'Média por mês',
@@ -424,13 +490,15 @@ function quickQuery($query, $parametro, $column)
 									echo ('<th scope="col" width="14%">' . htmlspecialchars($labelMedia[$tipoMedia] ?? 'Média por dia') . '</th>');
 								}?>
 								<th scope="col">Descrição</th>
-								<?php if ($_POST['tipo_relatorio'] != 'estoque') {
+								<?php 
+								if ($_POST['tipo_relatorio'] != 'estoque' && $_POST['tipo_relatorio'] != 'requisicao' && $_POST['tipo_relatorio'] != 'itens_compra') {
 									echo ('<th scope="col" width="12%">Tipo</th>');
 									echo ('<th scope="col" width="12%">Data de Registro</th>');
 									echo ('<th scope="col" width="12%">Valor Unitário</th>');
 								} else {
 									echo ('<th scope="col" width="14%">Preço Médio</th>');
-								} ?>
+								} 	
+								?>
 								<th scope="col" width="14%" class="tot">Tipo de Unidade</th>
 								<th scope="col" width="14%" class="tot">Total</th>
 							</tr>

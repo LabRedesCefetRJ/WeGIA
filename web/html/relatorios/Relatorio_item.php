@@ -17,10 +17,11 @@ class Item
     private $mostrarZerado;
     private $DDL_cmd;
     private $tipoMedia;
+    private $modoRequisicao;
 
     // Constructor
 
-    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false, $tipoMedia = 'dia')
+    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false, $tipoMedia = 'dia', $modoRequisicao = 'movimentados')
     {
         $this
             ->setRelatorio($relat)
@@ -32,6 +33,7 @@ class Item
             ->setAlmoxarifado($a)
             ->setMostrarZerado($z)
             ->setTipoMedia($tipoMedia)
+            ->setModoRequisicao($modoRequisicao)
         ;
     }
 
@@ -273,7 +275,7 @@ class Item
     private function estoque()
     {
         if ($this->hasValue()) {
-            $params = "WHERE e.oculto = false AND e.ativo = 1 AND e.produto_ativo = 1 ";
+            $params = "WHERE e.oculto = false AND e.ativo = 1 AND e.produto_ativo = 1";
             $cont = 1;
 
             if (!$this->getMostrarZerado()) {
@@ -453,6 +455,154 @@ class Item
         }
     }
 
+    private function itensCompra()
+    {
+        if ($this->hasValue()) {
+            $params = "WHERE p.oculto = false AND a.ativo = 1 AND p.ativo = 1 AND e.qtd<= e.qtd_minima";
+            $cont = 1;
+
+            if ($this->getAlmoxarifado()) {
+	            $params = $this->param($params, $cont) . " e.id_almoxarifado = :idAlmoxarifado ";
+	            $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
+	            $cont++;
+            }
+
+            if ($this->getTipo()) {
+	            $params = $this->param($params, $cont) . " p.id_categoria_produto = :idCategoriaProduto ";
+	            $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
+	            $cont++;
+            }
+
+            $filtroPeriodoConsumo = "";
+
+            if ($this->getPeriodo()['inicio']) {
+                $filtroPeriodoConsumo .= " AND saida.data >= :dataInicio";
+
+                $this->paramsExternos[':dataInicio']
+                    = $this->getPeriodo()['inicio'];
+            }
+
+            if ($this->getPeriodo()['fim']) {
+                $filtroPeriodoConsumo .= " AND saida.data <= :dataFim";
+
+                $this->paramsExternos[':dataFim']
+                    = $this->getPeriodo()['fim'];
+            }
+
+            $inicio = $this->getPeriodo()['inicio']
+                ? ':dataInicio'
+                : "COALESCE(
+                    (
+                        SELECT MIN(s2.data)
+                        FROM saida s2
+                        WHERE s2.ativo = 1
+                        
+                    ),
+                    CURDATE()
+                )";
+
+            $fim = $this->getPeriodo()['fim']
+                ? ':dataFim'
+                : 'CURDATE()';
+
+            $tipoMedia = $this->getTipoMedia();
+
+            switch ($tipoMedia) {
+                case 'mes':
+                    $divisor = "
+                        GREATEST(
+                            ROUND(
+                                (TIMESTAMPDIFF(DAY, $inicio, $fim) + 1) / 30
+                            ),
+                            1
+                        )
+                    ";
+                    break;
+
+                case 'ano':
+                    $divisor = "
+                        GREATEST(
+                            ROUND(
+                                (TIMESTAMPDIFF(DAY, $inicio, $fim) + 1) / 365
+                            ),
+                            1
+                        )
+                    ";
+                    break;
+
+                case 'dia':
+                default:
+                    $divisor = "
+                        GREATEST(
+                            TIMESTAMPDIFF(DAY, $inicio, $fim) + 1,
+                            1
+                        )
+                    ";
+                    break;
+            }
+
+            // Query principal segura
+            $this->setQuery(
+                "SELECT 
+                    p.descricao,
+                    e.qtd AS qtd_total,
+                    e.qtd_minima,
+                    u.descricao_unidade AS unidade,
+                    COALESCE(
+                        dados_entrada.valor_entrada
+                        / NULLIF(dados_entrada.qtd_entrada, 0),
+                        p.preco,
+                        0
+                    ) AS PrecoMedio,
+                    e.qtd * COALESCE(
+                        dados_entrada.valor_entrada
+                        / NULLIF(dados_entrada.qtd_entrada, 0),
+                        p.preco,
+                        0
+                    ) AS valor_total,
+
+                    COALESCE(consumo.qtd_saida,0) AS qtd_saida,
+                    ROUND(
+                        COALESCE(consumo.qtd_saida, 0)
+                        / NULLIF($divisor, 0),
+                        2
+                    ) AS media_saida
+                FROM estoque e 
+                JOIN almoxarifado a ON a.id_almoxarifado = e.id_almoxarifado
+                JOIN produto p ON p.id_produto = e.id_produto
+                LEFT JOIN unidade u ON u.id_unidade = p.id_unidade
+                LEFT JOIN (
+                    SELECT 
+                        isaida.id_produto,
+                        saida.id_almoxarifado,
+                        SUM(isaida.qtd) AS qtd_saida
+                    FROM isaida 
+                    INNER JOIN saida
+                        ON saida.id_saida = isaida.id_saida
+                    WHERE isaida.oculto = false AND saida.ativo = 1
+                    $filtroPeriodoConsumo
+                    GROUP BY isaida.id_produto, saida.id_almoxarifado
+                ) consumo 
+                    ON consumo.id_produto = e.id_produto
+                    AND consumo.id_almoxarifado = e.id_almoxarifado
+                LEFT JOIN (
+                    SELECT ientrada.id_produto,
+                        entrada.id_almoxarifado,
+                        SUM(ientrada.qtd) AS qtd_entrada,
+                        SUM(ientrada.qtd*ientrada.valor_unitario) AS valor_entrada
+                    FROM ientrada
+                    INNER JOIN entrada ON entrada.id_entrada = ientrada.id_entrada
+                    WHERE entrada.ativo = 1 AND ientrada.oculto = false
+                    GROUP BY ientrada.id_produto, entrada.id_almoxarifado
+                ) dados_entrada
+                    ON dados_entrada.id_produto = e.id_produto
+                    AND dados_entrada.id_almoxarifado = e.id_almoxarifado
+                $params
+                ORDER BY p.descricao;
+                "
+            );
+        }
+    }
 
     private function selecRelatorio()
     {
@@ -468,6 +618,9 @@ class Item
                 break;
             case 'requisicao':
                 $this->requisicao();
+                break;
+            case 'itens_compra':
+                $this->itensCompra();
                 break;
         }
     }
@@ -498,16 +651,24 @@ class Item
         $tot_val = 0;
 
         foreach ($query as $item) {
-            if ($this->getRelatorio() == 'estoque') {
+            if ($this->getRelatorio() == 'estoque' || $this->getRelatorio() == 'itens_compra') {
                 $class = '';
                 if ($item['qtd_total'] < 0) {
                     $item['valor_total'] = 0;
                     $class = 'class="table-danger"';
                 }
 
+                $minimaTd = '';
+                $mediaTd = '';
+                if ($this->getRelatorio() == 'itens_compra') {
+                    $minimaTd = '<td>' . htmlspecialchars($item['qtd_minima']) . '</td>';
+                    $mediaTd =  '<td>'. number_format($item['media_saida'], 2) .' /' . htmlspecialchars($this->getTipoMedia(), ENT_QUOTES, 'UTF-8') .'</td>';
+                }
+
                 echo ('
                 <tr ' . $class . '>
                     <td scope="row" class="align-right">' . htmlspecialchars($item['qtd_total']) . '</td>
+                    ' . $minimaTd  . $mediaTd . '
                     <td>' . htmlspecialchars($item['descricao'], ENT_QUOTES, 'UTF-8') . '</td>
                     <td>R$ ' . number_format($item['PrecoMedio'], 2) . '</td>
                     <td>' . htmlspecialchars($item['unidade'], ENT_QUOTES, 'UTF-8') . '</td>
@@ -585,44 +746,112 @@ class Item
 
     private function requisicao()
     {
-        $params = "WHERE p.oculto = false AND p.ativo = 1 AND a.ativo = 1";
-        $having = "";
+	    if ($this->getModoRequisicao() === 'completo') {
+		    $this->requisicaoCompleta();
+		    return;
+	    }
 
-        if ($this->getAlmoxarifado()) {
-            $params .= " AND e.id_almoxarifado = :idAlmoxarifado";
-            $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
-        }
+	    $params = "
+		    WHERE isaida.qtd > 0
+		    AND isaida.oculto = false
+		    AND saida.ativo = 1
+		    AND p.oculto = false
+		    AND p.ativo = 1
+		    AND a.ativo = 1
+	    ";
 
-        if ($this->getTipo()) {
-            $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
-            $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
-        }
+	    if ($this->getAlmoxarifado()) {
+		    $params .= " AND saida.id_almoxarifado = :idAlmoxarifado";
+		    $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
+	    }
 
-        if (!$this->getMostrarZerado()) {
-            $having = "HAVING SUM(e.qtd) > 0";
-        }
+	    if ($this->getTipo()) {
+		    $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
+		    $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
+	    }
 
-        $this->setQuery("
-            SELECT
-                p.id_produto,
-                p.descricao,
-                c.descricao_categoria,
-                SUM(e.qtd) AS qtd
-            FROM produto p
-            INNER JOIN categoria_produto c 
-                ON c.id_categoria_produto = p.id_categoria_produto
-            INNER JOIN estoque e 
-                ON e.id_produto = p.id_produto
-            INNER JOIN almoxarifado a 
-                ON a.id_almoxarifado = e.id_almoxarifado
-            $params
-            GROUP BY
-                p.id_produto,
-                p.descricao,
-                c.descricao_categoria
-            $having
-            ORDER BY c.descricao_categoria ASC, p.descricao ASC
-        ");
+	    if ($this->getPeriodo()['inicio']) {
+		    $params .= " AND saida.data >= :dataInicio";
+		    $this->paramsExternos[':dataInicio'] = $this->getPeriodo()['inicio'];
+	    }
+
+	    if ($this->getPeriodo()['fim']) {
+		    $params .= " AND saida.data <= :dataFim";
+		    $this->paramsExternos[':dataFim'] = $this->getPeriodo()['fim'];
+	    }
+
+	    if (!$this->getPeriodo()['inicio'] && !$this->getPeriodo()['fim']) {
+		    $params .= " AND saida.data >= DATE_SUB(CURDATE(), INTERVAL 365 DAY)";
+	    }
+
+	    $this->setQuery("
+		    SELECT
+			    p.id_produto,
+			    p.descricao,
+			    c.descricao_categoria,
+			    SUM(isaida.qtd) AS qtd_saida
+		    FROM isaida
+		    INNER JOIN saida 
+			    ON saida.id_saida = isaida.id_saida
+		    INNER JOIN produto p 
+			    ON p.id_produto = isaida.id_produto
+		    INNER JOIN categoria_produto c 
+			    ON c.id_categoria_produto = p.id_categoria_produto
+		    INNER JOIN almoxarifado a 
+			    ON a.id_almoxarifado = saida.id_almoxarifado
+		    $params
+		    GROUP BY
+			    p.id_produto,
+			    p.descricao,
+			    c.descricao_categoria
+            HAVING SUM(isaida.qtd) >= 10
+		    ORDER BY
+			    c.descricao_categoria ASC,
+			    qtd_saida DESC,
+			    p.descricao ASC
+	    ");
+    }
+
+    private function requisicaoCompleta()
+    {
+    	$params = "WHERE p.oculto = false AND p.ativo = 1 AND a.ativo = 1";
+	    $having = "";
+
+	    if ($this->getAlmoxarifado()) {
+		    $params .= " AND e.id_almoxarifado = :idAlmoxarifado";
+		    $this->paramsExternos[':idAlmoxarifado'] = $this->getAlmoxarifado();
+	    }
+
+	    if ($this->getTipo()) {
+		    $params .= " AND c.id_categoria_produto = :idCategoriaProduto";
+		    $this->paramsExternos[':idCategoriaProduto'] = $this->getTipo();
+	    }
+
+	    if (!$this->getMostrarZerado()) {
+		    $having = "HAVING SUM(e.qtd) > 0";
+	    }
+
+	    $this->setQuery("
+		    SELECT
+			    p.id_produto,
+			    p.descricao,
+			    c.descricao_categoria,
+			    SUM(e.qtd) AS qtd
+		    FROM produto p
+		    INNER JOIN categoria_produto c 
+			    ON c.id_categoria_produto = p.id_categoria_produto
+		    INNER JOIN estoque e 
+			    ON e.id_produto = p.id_produto
+		    INNER JOIN almoxarifado a 
+			    ON a.id_almoxarifado = e.id_almoxarifado
+		    $params
+		    GROUP BY
+			    p.id_produto,
+			    p.descricao,
+			    c.descricao_categoria
+		    $having
+		    ORDER BY c.descricao_categoria ASC, p.descricao ASC
+	    ");
     }
 
     public function displayRequisicao()
@@ -645,7 +874,20 @@ class Item
         $produtosPorFolha = 10;
 
         foreach ($produtosPorCategoria as $categoria => $listaProdutos) {
-            $folhas = array_chunk($listaProdutos, $produtosPorFolha);
+	        if ($this->getModoRequisicao() === 'movimentados') {
+		        $listaProdutos = array_slice($listaProdutos, 0, 8);
+
+		        for ($i = 1; $i <= 2; $i++) {
+	                $listaProdutos[] = [
+		                'id_produto' => null,
+		                'descricao' => '',
+		                'descricao_categoria' => $categoria,
+		                'linha_manual' => true
+	                ];
+                }
+	        }
+
+	        $folhas = array_chunk($listaProdutos, $produtosPorFolha);
             $totalFolhas = count($folhas);
 
             foreach ($folhas as $indiceFolha => $produtosFolha) {
@@ -667,8 +909,17 @@ class Item
                 foreach ($produtosFolha as $produto) {
                     echo '<tr>';
 
-                    echo '<td class="produto-requisicao" rowspan="2">';
-                    echo htmlspecialchars($produto['descricao'], ENT_QUOTES, 'UTF-8');
+                    $isLinhaManual = !empty($produto['linha_manual']);
+
+                    echo '<td class="produto-requisicao' . ($isLinhaManual ? ' produto-requisicao-manual' : '') . '" rowspan="2">';
+
+                    if ($isLinhaManual) {
+	                    echo '<div class="texto-produto-manual">OUTRO PRODUTO:</div>';
+	                    echo '<div class="linha-produto-manual"></div>';
+                    } else {
+	                    echo htmlspecialchars($produto['descricao'], ENT_QUOTES, 'UTF-8');
+                    }
+
                     echo '</td>';
 
                     for ($dia = 1; $dia <= 16; $dia++) {
@@ -838,5 +1089,23 @@ class Item
         $this->tipoMedia = $tipoMedia;
 
         return $this;
+    }
+
+    public function getModoRequisicao()
+    {
+	    return $this->modoRequisicao;
+    }
+
+    public function setModoRequisicao($modoRequisicao)
+    {
+	    $modosPermitidos = ['movimentados', 'completo'];
+
+	    if (!in_array($modoRequisicao, $modosPermitidos, true)) {
+		    $modoRequisicao = 'movimentados';
+	    }
+
+	    $this->modoRequisicao = $modoRequisicao;
+
+	    return $this;
     }
 }

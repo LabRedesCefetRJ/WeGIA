@@ -5,14 +5,18 @@ class ProdutoDTOCadastro implements JsonSerializable{
     private int $quantidade;
     private float $valor;
     private ?string $codigo;
+    private ?int $idGrupoProduto;
+    private ?string $descricaoGrupo;
 
-    public function __construct(int $id, string $descricao, int $quantidade, ?string $codigo, float $valor)
+    public function __construct(int $id, string $descricao, int $quantidade, ?string $codigo, float $valor, ?int $idGrupoProduto, ?string $descricaoGrupo)
     {
         $this->setId($id);
         $this->setDescricao($descricao);
         $this->setQuantidade($quantidade);
         $this->setCodigo($codigo);
         $this->setValor($valor);
+        $this->setIdGrupoProduto($idGrupoProduto);
+        $this->setDescricaoGrupo($descricaoGrupo);
     }
 
     public function jsonSerialize(): mixed
@@ -22,7 +26,9 @@ class ProdutoDTOCadastro implements JsonSerializable{
             'descricao' => $this->descricao,
             'qtd' => $this->quantidade,
             'codigo' => $this->codigo,
-            'preco' => $this->valor
+            'preco' => $this->valor,
+            'id_grupo_produto' => $this->idGrupoProduto,
+            'descricao_grupo' => $this->descricaoGrupo
         ];
     }
 
@@ -48,6 +54,26 @@ class ProdutoDTOCadastro implements JsonSerializable{
         $this->id = $id;
 
         return $this;
+    }
+
+    public function setIdGrupoProduto(?int $idGrupoProduto)
+    {
+        $this->idGrupoProduto = $idGrupoProduto;
+    }
+
+    public function setDescricaoGrupo(?string $descricaoGrupo)
+    {
+        $this->descricaoGrupo = $descricaoGrupo;
+    }
+
+    public function getDescricaoGrupo(): ?string
+    {
+        return $this->descricaoGrupo;
+    }
+
+    public function getIdGrupoProduto(): ?int
+    {
+        return $this->idGrupoProduto;
     }
 
     /**

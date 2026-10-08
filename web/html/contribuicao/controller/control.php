@@ -49,12 +49,19 @@ try {
         ],
         'RegraPagamentoController' => [
             'buscaConjuntoRegrasPagamentoPorNomeMeioPagamento'
+        ],
+        'ContactController' => [
+            'getSupportContact'
+        ],
+        'GatewayPagamentoController' => [
+            'getGatewayInfoByMethodPayment'
         ]
     ];
 
     $rotasPrivadas = [
         'SocioController' => [
-            'sincronizarStatusSocios'
+            'sincronizarStatusSocios',
+            'deletarSocio'
         ],
         'GatewayPagamentoController' => [
             'cadastrar',
@@ -108,6 +115,14 @@ try {
 
         switch ($controller) {
             case 'GatewayPagamentoController':
+                // Recurso 9 (Configurações) — mesmo recurso já exigido pela
+                // própria tela (view/gateway_pagamento.php). Não pode ficar
+                // no recurso 7 (Contribuições): um operador com acesso apenas
+                // a registrar boletos/sincronizar pagamentos (nível 3 do
+                // recurso 7) conseguia repontar o endpoint do gateway e
+                // capturar dados de cartão + a chave de API do provedor.
+                $id_recurso = 9;
+                break;
             case 'MeioPagamentoController':
             case 'RegraPagamentoController':
                 $id_recurso = 7; // Recurso de contribuições
@@ -146,8 +161,8 @@ try {
     }
 
     $controllerObject->$function();
-
 } catch (Throwable $e) {
     http_response_code(400);
+    error_log('ERRO: ' . $e->getCode() . ' file: ' . $e->getFile() . ' line: ' . $e->getLine() . ' message: ' . $e->getMessage());
     exit('Requisição inválida');
 }

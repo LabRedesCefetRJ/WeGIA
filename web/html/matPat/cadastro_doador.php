@@ -16,6 +16,19 @@ if (!isset($_SESSION['usuario'])) {
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 permissao($_SESSION['id_pessoa'], 23, 3);
 
+include_once ROOT . '/dao/Conexao.php';
+
+$pdo = Conexao::connect();
+
+$stmtAlmoxarifados = $pdo->query("
+    SELECT id_almoxarifado, descricao_almoxarifado
+    FROM almoxarifado
+    WHERE ativo = 1
+    ORDER BY descricao_almoxarifado
+");
+
+$almoxarifados = $stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC);
+
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
 ?>
@@ -274,6 +287,23 @@ require_once ROOT . "/html/personalizacao_display.php";
 												<div class="col-md-6">
 													<input type="text" class="form-control" minlength="12" name="telefone" id="telefone" id="profileCompany" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
 												</div>
+											</div>
+											<div class="form-group">
+    											<label class="col-md-3 control-label">Almoxarifado(s)</label>
+    											<div class="col-md-6">
+        											<?php foreach ($almoxarifados as $almoxarifado): ?>
+            											<div class="checkbox">
+                											<label>
+                    											<input 
+                        											type="checkbox" 
+                        											name="almoxarifados[]" 
+                        											value="<?= (int) $almoxarifado['id_almoxarifado'] ?>"
+                    											>
+                    											<?= htmlspecialchars($almoxarifado['descricao_almoxarifado'], ENT_QUOTES, 'UTF-8') ?>
+                											</label>
+            											</div>
+        											<?php endforeach; ?>
+    											</div>
 											</div>
 											<input type="hidden" name="nomeClasse" value="OrigemControle">
 											<input type="hidden" name="metodo" value="incluir">

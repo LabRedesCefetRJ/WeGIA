@@ -14,8 +14,10 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTOR
 permissao($_SESSION['id_pessoa'], 4, 3);
 
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
 require("../conexao.php");
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'utils' . DIRECTORY_SEPARATOR . 'UuidGenerator.php';
 if (!isset($_POST) or empty($_POST)) {
     $data = file_get_contents("php://input");
     $data = json_decode($data, true);
@@ -108,13 +110,29 @@ if ($verificar_documento && (!$cpf_cnpj || empty($cpf_cnpj))) { //posteriormente
     exit('Um cpf/cpnj não pode ser vazio.');
 }
 
-if (!$data_nasc || empty($data_nasc)) { //posteiormente adicionar validações de formato
+// Data de nascimento (opcional)
+if (empty($data_nasc)) {
     $data_nasc = null;
+} elseif (!Util::validarData($data_nasc)) {
+    http_response_code(400);
+    exit('A data de nascimento informada é inválida.');
 }
 
-if (!$data_referencia || empty($data_referencia)) { //Posteriormente adicionar validações de formato
+// Data de referência (obrigatória)
+if (empty($data_referencia)) {
     http_response_code(400);
     exit('A data de referência não pode ser vazia.');
+}
+
+if (!Util::validarData($data_referencia)) {
+    http_response_code(400);
+    exit('A data de referência informada é inválida.');
+}
+
+// Regra de negócio
+if ($data_nasc !== null && $data_referencia < $data_nasc) {
+    http_response_code(400);
+    exit('A data de referência não pode ser anterior à data de nascimento.');
 }
 
 if (!$valor_periodo || !is_numeric($valor_periodo) || $valor_periodo <= 0) {
@@ -328,8 +346,9 @@ switch ($pessoa) {
         break;
 }
 
-$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes) VALUES (?, ?, ?, ?, ?, ?)");
-$stmt2->bind_param('iiidsi', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes);
+$uuidBinary = \api\utils\UuidGenerator::generateBinary();
+$stmt2 = $conexao->prepare("INSERT INTO socio (id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, auto_status_contribuicoes, uuid) VALUES (?, ?, ?, ?, ?, ?, ?)");
+$stmt2->bind_param('iiidsis', $id_pessoa, $status, $id_sociotipo, $valor_periodo, $data_referencia, $auto_status_contribuicoes, $uuidBinary);
 $stmt2->execute();
 
 if ($stmt2->affected_rows > 0) {

@@ -118,10 +118,17 @@ class EntradaControle
                     $produto = $produtoDAO->listarUm(${$id . $x});
                     $entrada = $entradaDAO->listarUm($id_responsavel);
 
-
                     $ientrada->setId_produto($produto);
                     $ientrada->setId_entrada($entrada);
                     $ientrada = $ientradaDAO->incluir($ientrada);
+                    require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'service' . DIRECTORY_SEPARATOR . 'EstoqueService.php';
+
+                    $estoqueService = new EstoqueService();
+
+                    $estoqueService->verificarEstoqueMinimo(
+                        (int)$produto->getId_produto(),
+                        (int)$almoxarifado->getId_almoxarifado()
+                    );
                 }
                 $x++;
             }

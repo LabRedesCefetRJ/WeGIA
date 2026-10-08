@@ -220,8 +220,8 @@ require_once ROOT . "/html/geral/msg.php";
                     </header>
                     <div class="panel-body">
 
-                        <form method="GET" action="../../controle/control.php">
-                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
+                        <form method="GET" action="../../controle/control.php" id="formCpf">
+                            <input type="text" class="form-control" id="cpf" name="cpf" placeholder="Ex: 222.222.222-22" maxlength="14" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##',this,event)" required>
                             <p id="cpfInvalido" style="display: none; color: #b30000">CPF INVÁLIDO!</p>
                             <br>
                             <input type="hidden" name="nomeClasse" value="AtendidoControle">
@@ -235,21 +235,34 @@ require_once ROOT . "/html/geral/msg.php";
         </div>
     </section>
     <script>
-        function validarCPF(strCPF) {
+        $(document).ready(function() {
+            $("#btnSemCpf").click(function() {
+                window.location.href = "Cadastro_Atendido.php?semCpf=1";
+            });
+        });
+    </script>
+    <script>
+        
+        document.getElementById('formCpf').addEventListener('submit', function(e) {
+            var cpfInput = document.getElementById("cpf").value;
+            var cpfLimpo = cpfInput.replace(/\D/g, '');
 
-            if (!testaCPF(strCPF)) {
-                $('#cpfInvalido').show();
-                document.getElementById("enviar").disabled = true;
-
-            } else {
-                $('#cpfInvalido').hide();
-
-                document.getElementById("enviar").disabled = false;
+            if (cpfLimpo.length < 11 || !testaCPF(cpfInput)) {
+                e.preventDefault();
+                
+                if (cpfLimpo.length < 11) {
+                    $('#cpfInvalido').text("CPF INCOMPLETO!").show();
+                } else {
+                    $('#cpfInvalido').text("CPF INVÁLIDO!").show();
+                }
+                return false;
             }
-        }
-        const url = '<?php echo WWW; ?>html/atendido/Cadastro_Atendido.php?semCpf=1';
-        document.getElementById('btnSemCpf').addEventListener('click', function() {
-            window.location.href = url;
+            
+            return true;
+        });
+
+        document.getElementById('cpf').addEventListener('input', function() {
+            $('#cpfInvalido').hide();
         });
     </script>
     <!-- end: page -->

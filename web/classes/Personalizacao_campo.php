@@ -82,13 +82,18 @@ class Campo {
         $id = $this->getId();
         echo('
         <tr onclick="post(' . "'personalizacao_selecao.php', {tipo: 'img', id: $id}" . ')">
-            <td class="v-center"><div>' . $this->getNome() . '</div></td>
+            <td class="v-center"><div>' . htmlspecialchars($this->getNome(), ENT_QUOTES, 'UTF-8') . '</div></td>
             <td><img id="img-1" src="data:image;base64,' . gzuncompress($this->getConteudo()) . '" width="100%"></td>
         </tr>');
     }
 
     //Começar por aqui
     public function display_txt(){
+
+        $textoDecodificado = html_entity_decode((string)$this->getConteudo(), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $textoFormatado = nl2br(htmlspecialchars($textoDecodificado, ENT_QUOTES, 'UTF-8'));
+
          // Caso o tipo seja um Texto
          echo('
          <form action="personalizacao_upload.php" method="post">
@@ -99,8 +104,8 @@ class Campo {
                          <button title="Mudar Texto" class="btn btn-success" type="submit" style="display: none;"><i class="fas fa-check"></i></button>
                      </div>
                  </td>
-                 <td class="v-center"><div>' . $this->getNome() . '</div></td>
-                 <td>' . htmlspecialchars($this->getConteudo()) . '</td>
+                 <td class="v-center"><div>' . htmlspecialchars($this->getNome(), ENT_QUOTES, 'UTF-8') . '</div></td>
+                 <td>' . $textoFormatado . '</td>
                  <td style="display: none;"><textarea name="txt" class="text-area" rows="5"></textarea><input style="display: none;" name="id" value="' . $this->getId() . '" readonly></td>
              </tr>
          </form>');
@@ -112,7 +117,7 @@ class Campo {
         echo('
         <tr onclick="addToSelection(this)">
             <td class="v-center"><div><button title="Selecionar" class="btn btn-light" type="button"><i class="far fa-square"></i></button></div></td>
-            <td class="v-center"><div>' . $this->getNome() . '</div></td>
+            <td class="v-center"><div>' . htmlspecialchars($this->getNome(), ENT_QUOTES, 'UTF-8') . '</div></td>
             <td>
                 <img id="img-' . $this->getId() . '" src="data:image;base64,' . gzuncompress($this->getConteudo()) . '" width="100%">
             </td>
@@ -128,7 +133,7 @@ class Campo {
         $args = "'personalizacao_upload.php', {selecao: $id, campo: $id_campo}";
         echo('
         <tr onclick="post('.$args.')">
-            <td class="v-center"><div>' . $this->getNome() . '</div></td>
+            <td class="v-center"><div>' . htmlspecialchars($this->getNome(), ENT_QUOTES, 'UTF-8') . '</div></td>
             <td>
                 <img id="img-' . $id . '" src="data:image;base64,' . gzuncompress($this->getConteudo()) . '" width="100%">
             </td>
@@ -140,7 +145,7 @@ class Campo {
         $id = $this->getId();
         echo('
         <tr id="'.$id.'" onclick="addToSelection(this)">
-            <td class="v-center"><div>' . $this->getNome() . '</div></td>
+            <td class="v-center"><div>' . htmlspecialchars($this->getNome(), ENT_QUOTES, 'UTF-8') . '</div></td>
             <td><img id="img-1" src="data:image;base64,' . gzuncompress($this->getConteudo()) . '" width="100%"></td>
         </tr>');
     }

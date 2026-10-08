@@ -94,10 +94,10 @@ $msg = isset($_GET['msg']) ? htmlspecialchars($_GET['msg'], ENT_QUOTES, 'UTF-8')
                 <div class="form-group">
                   <label for="filtro_status" style="margin-right:10px;">Status:</label>
                   <select class="form-control input-sm" id="filtro_status" style="width:auto;display:inline-block;">
-                    <option value="">Todos</option>
                     <?php foreach ($statusList as $status): ?>
                       <option value="<?= $status['id_status'] ?>"><?= htmlspecialchars($status['descricao']) ?></option>
                     <?php endforeach; ?>
+                    <option value="">Todos</option>
                   </select>
                 </div>
                 <button type="button" class="btn btn-primary btn-sm" onclick="filtrarPorStatus()" style="margin-left:10px;">

@@ -36,8 +36,8 @@ function gerarTabelaMemorando($despachos, $anexos){
         $trAnexos = "<tr><td colspan='5'>";
         foreach($anexos as $anexo) {
             if($anexo->id_despacho == $id){
-                $nome = $anexo->nome;
-                $extensao = $anexo->extensao;
+                $nome = htmlspecialchars($anexo->nome, ENT_QUOTES, 'UTF-8');
+                $extensao = htmlspecialchars($anexo->extensao, ENT_QUOTES, 'UTF-8');
                 $trAnexos .= "<p>$nome$extensao</p>";
             }
         }

@@ -9,12 +9,14 @@ if (session_status() === PHP_SESSION_NONE)
 
 if (!isset($_SESSION['usuario'])) {
 	header("Location: ../index.php");
+	exit();
 } else {
 	session_regenerate_id();
 }
 
 if (!isset($_SESSION['funcionarios'])) {
 	header('Location: ../../controle/control.php?metodo=listartodos&nomeClasse=FuncionarioControle&nextPage=../html/funcionario/informacao_funcionario.php');
+	exit();
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
@@ -38,7 +40,7 @@ require_once ROOT . "/controle/FuncionarioControle.php";
 require_once "../personalizacao_display.php";
 ?>
 <!doctype html>
-<html class="fixed">
+<html class="fixed" lang="pt-br">
 
 <head>
 	<!-- Basic -->
@@ -47,7 +49,7 @@ require_once "../personalizacao_display.php";
 	<title>Informações</title>
 
 	<!-- Mobile Metas -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<!-- Vendor CSS -->
 	<link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
@@ -159,14 +161,14 @@ require_once "../personalizacao_display.php";
 							</li>
 							<li><span>Informações Funcionário</span></li>
 						</ol>
-						<a class="sidebar-right-toggle"><i class="fa fa-chevron-left"></i></a>
+						<a class="sidebar-right-toggle" aria-label="Alternar painel lateral"><i class="fa fa-chevron-left"></i></a>
 					</div>
 				</header>
 				<!-- start: page -->
 				<section class="panel">
 					<header class="panel-heading">
 						<div class="panel-actions">
-							<a href="#" class="fa fa-caret-down"></a>
+							<a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
 						</div>
 						<h2 class="panel-title">Funcionário</h2>
 					</header>
@@ -179,11 +181,11 @@ require_once "../personalizacao_display.php";
 					<section class="panel">
 						<header class="panel-heading">
 							<div class="panel-actions">
-								<a href="#" class="fa fa-caret-down"></a>
+								<a href="#" class="fa fa-caret-down" aria-label="Recolher ou expandir seção"></a>
 							</div>
 							<h2 class="panel-title">Selecione a situação:</h2><br>
 							<form method="GET" action="#" id="select_situacao" name="select_situacao">
-								<select name="select_situacao" id="situacao">
+								<select name="select_situacao" id="situacao" aria-label="Selecione a situação">
 									<?php
 									foreach ($situacoes as $situacao) { ?>
 										<option value="<?php echo $situacao['id_situacao']; ?>">
@@ -235,7 +237,7 @@ require_once "../personalizacao_display.php";
 					<script src="../../assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
 					<div align="right">
-						<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;"></iframe>
+						<iframe src="https://www.wegia.org/software/footer/pessoa.html" width="200" height="60" style="border:none;" title="Rodapé"></iframe>
 					</div>
 </body>
 

@@ -1,11 +1,13 @@
 <?php
-require_once 'ApiRecorrenciaServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiRecorrenciaServiceInterface.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
-require_once '../dao/ContribuicaoLogDAO.php';
-require_once '../dao/GatewayPagamentoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ContribuicaoLogDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'RecorrenciaDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'Recorrencia.php';
 
 class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
-    public function criarAssinatura(Recorrencia $recorrencia) {
+    public function criarAssinatura(Recorrencia $recorrencia, ?array $dadosCartao = null) {
         $contribuicaoLogDao = new ContribuicaoLogDAO();
         $agradecimento = $contribuicaoLogDao->getAgradecimento();
         
@@ -13,16 +15,12 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
         $gatewayPagamento = $gatewayPagamentoDao->buscarPorId($recorrencia->getGatewayPagamento()->getId());
 
         $headers = [
-            'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+            'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
             'Content-Type: application/json;charset=UTF-8'
         ];
 
         //Dados do cartão
-        $cardNumber = preg_replace('/\D/', '', filter_input(INPUT_POST, 'card_number'));
-        $cardExpMonth = filter_input(INPUT_POST, 'card_exp_month');
-        $cardExpYear = filter_input(INPUT_POST, 'card_exp_year');
-        $cardHolderName = filter_input(INPUT_POST, 'card_holder_name');
-        $cardCvv = filter_input(INPUT_POST, 'card_cvv');
+        $cardId = filter_input(INPUT_POST, 'card_token', FILTER_SANITIZE_SPECIAL_CHARS) ?? $dadosCartao['card_token'] ?? null;
         
         $code = $recorrencia->getCodigo();
         $cpfSemMascara = Util::limpaCpf($recorrencia->getSocio()->getDocumento());
@@ -52,15 +50,14 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                     ]
                 ]
             ],
+            'card_token' => $cardId,
+            // O billing_address do cartão não é tokenizado junto com o
+            // card_token — a Pagar.me exige informá-lo aqui, senão a API
+            // recusa com "validation_error | billing | value is required".
             'card' => [
-                'number' => $cardNumber,
-                'holder_name' => $cardHolderName,
-                'exp_month' => (int)$cardExpMonth,
-                'exp_year' => (int)$cardExpYear,
-                'cvv' => $cardCvv,
                 'billing_address' => [
                     'line_1' => $recorrencia->getSocio()->getLogradouro() . ", " . $recorrencia->getSocio()->getNumeroEndereco(),
-                    'zip_code' => preg_replace('/\D/', '', $recorrencia->getSocio()->getCep()),
+                    'zip_code' => preg_replace('/\D/', '', (string) $recorrencia->getSocio()->getCep()),
                     'city' => $recorrencia->getSocio()->getCidade(),
                     'state' => $recorrencia->getSocio()->getEstado(),
                     'country' => 'BR'
@@ -93,7 +90,11 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
 
         if (curl_errno($ch)) {
             error_log("Erro de conexão: " . curl_error($ch));
-            throw new Exception("Erro de conexão: " . curl_error($ch));
+            throw new PaymentServiceException(
+                'Não foi possível criar a assinatura no momento.',
+                'Erro cURL ao criar assinatura na API Pagar.me: ' . curl_error($ch),
+                502
+            );
         }
         curl_close($ch);
 
@@ -101,9 +102,22 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
 
         if ($httpCode === 200 || $httpCode === 201) {
             if (empty($responseData['id'])) {
-                throw new Exception("ID da assinatura não retornado pela API");
+                throw new PaymentServiceException(
+                    'Não foi possível criar a assinatura no momento.',
+                    'ID da assinatura não retornado pela API Pagar.me.',
+                    502
+                );
             }
-            return (string)$responseData['id'];
+
+            // Conservador: só considera "aprovado" quando a assinatura já está
+            // ativa. Qualquer outro status (ex: pendente de confirmação da
+            // primeira cobrança) é tratado como em análise.
+            $status = $responseData['status'] ?? null;
+
+            return [
+                'transacao_id' => (string) $responseData['id'],
+                'status' => $status === 'active' ? 'aprovado' : 'em_analise'
+            ];
         } else {
             $this->tratarErroApi($responseData, $httpCode);
         }
@@ -119,13 +133,13 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
                 if (isset($error['code'])) {
                     switch ($error['code']) {
                         case 'invalid_card':
-                            throw new Exception("Cartão inválido. Verifique os dados e tente novamente.");
+                            throw new PaymentServiceException('Não foi possível criar a assinatura no momento.', 'Cartão inválido. Verifique os dados e tente novamente.', 400);
                         case 'card_declined':
-                            throw new Exception("Cartão recusado. Entre em contato com seu banco.");
+                            throw new PaymentServiceException('Não foi possível criar a assinatura no momento.', 'Cartão recusado. Entre em contato com seu banco.', 400);
                         case 'insufficient_funds':
-                            throw new Exception("Saldo insuficiente no cartão.");
+                            throw new PaymentServiceException('Não foi possível criar a assinatura no momento.', 'Saldo insuficiente no cartão.', 400);
                         case 'expired_card':
-                            throw new Exception("Cartão expirado.");
+                            throw new PaymentServiceException('Não foi possível criar a assinatura no momento.', 'Cartão expirado.', 400);
                         default:
                             $errorMsg .= " - " . ($error['message'] ?? 'Erro desconhecido');
                     }
@@ -175,6 +189,10 @@ class PagarMeRecorrenciaService implements ApiRecorrenciaServiceInterface {
             $errorMsg .= " - " . $responseData['message'];
         }
         
-        throw new Exception($errorMsg);
+        throw new PaymentServiceException(
+            'Não foi possível criar a assinatura no momento.',
+            $errorMsg,
+            502
+        );
     }
 }

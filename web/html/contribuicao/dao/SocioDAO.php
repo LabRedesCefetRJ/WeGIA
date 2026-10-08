@@ -5,6 +5,8 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPA
 
 //requisitar model
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model/Socio.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'api' . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'utils' . DIRECTORY_SEPARATOR . 'UuidGenerator.php';
 class SocioDAO
 {
     private $pdo;
@@ -50,13 +52,13 @@ class SocioDAO
         $this->pdo->beginTransaction();
 
         //criar pessoa
-        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, email, sobrenome, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :email, :sobrenome, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
+        $sqlPessoa = 'INSERT INTO pessoa(cpf, nome, sobrenome, email, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge) VALUES(:cpf, :nome, :sobrenome, :email, :telefone, :dataNascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numeroEndereco, :complemento, :ibge)';
 
         $stmtPessoa = $this->pdo->prepare($sqlPessoa);
 
         $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
         $stmtPessoa->bindValue(':nome', $socio->getNome());
-        $stmtPessoa->bindParam(':email', $socio->getEmail());
+        $stmtPessoa->bindValue(':email', $socio->getEmail());
         $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
         $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
         $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
@@ -77,7 +79,7 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, uuid) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia, :uuid)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -88,8 +90,9 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindValue(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+        $stmtSocio->bindValue(':uuid', \api\utils\UuidGenerator::generateBinary(), PDO::PARAM_LOB);
 
         $stmtSocio->execute();
 
@@ -117,7 +120,7 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags());
 
-        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia)';
+        $sqlSocio = 'INSERT INTO socio(id_pessoa, id_sociostatus, id_sociotipo, valor_periodo, data_referencia, uuid) VALUES(:idPessoa, :idSocioStatus, :idSocioTipo, :valor, :dataReferencia, :uuid)';
 
         $stmtSocio = $this->pdo->prepare($sqlSocio);
 
@@ -128,8 +131,9 @@ class SocioDAO
         $stmtSocio->bindParam(':idPessoa', $idPessoa);
         $stmtSocio->bindParam(':idSocioStatus', $idSocioStatus);
         $stmtSocio->bindParam(':idSocioTipo', $periodicidade);
-        $stmtSocio->bindParam(':valor', $socio->getValor());
+        $stmtSocio->bindValue(':valor', $socio->getValor());
         $stmtSocio->bindParam(':dataReferencia', $dataReferencia);
+        $stmtSocio->bindValue(':uuid', \api\utils\UuidGenerator::generateBinary(), PDO::PARAM_LOB);
 
         $stmtSocio->execute();
 
@@ -150,43 +154,50 @@ class SocioDAO
 
     public function atualizarSocio(Socio $socio)
     {
-        //atualizar os dados de pessoa
-        $sqlAtualizarPessoa =
-            'UPDATE pessoa 
-        SET 
-            nome=:nome,
-            email=:email, 
-            sobrenome=:sobrenome,
-            telefone=:telefone, 
-            data_nascimento=:dataNascimento, 
-            cep=:cep, 
-            estado=:estado, 
-            cidade=:cidade, 
-            bairro=:bairro, 
-            logradouro=:logradouro, 
-            numero_endereco=:numeroEndereco, 
-            complemento=:complemento, 
-            ibge=:ibge
-        WHERE cpf=:cpf';
+        // Mapeia as colunas da tabela para os valores do objeto
+        $camposPessoa = [
+            'nome'             => $socio->getNome(),
+            'email'            => $socio->getEmail(),
+            'sobrenome'        => $socio->getSobrenome(),
+            'telefone'         => $socio->getTelefone(),
+            'data_nascimento'  => $socio->getDataNascimento(),
+            'cep'              => $socio->getCep(),
+            'estado'           => $socio->getEstado(),
+            'cidade'           => $socio->getCidade(),
+            'bairro'           => $socio->getBairro(),
+            'logradouro'       => $socio->getLogradouro(),
+            'numero_endereco'  => $socio->getNumeroEndereco(),
+            'complemento'      => $socio->getComplemento(),
+            'ibge'             => $socio->getIbge(),
+        ];
 
-        $stmtPessoa = $this->pdo->prepare($sqlAtualizarPessoa);
+        $set = [];
+        $params = [];
 
-        $stmtPessoa->bindValue(':nome', $socio->getNome());
-        $stmtPessoa->bindParam(':email', $socio->getEmail());
-        $stmtPessoa->bindValue(':sobrenome', $socio->getSobrenome());
-        $stmtPessoa->bindValue(':telefone', $socio->getTelefone());
-        $stmtPessoa->bindValue(':dataNascimento', $socio->getDataNascimento());
-        $stmtPessoa->bindValue(':cep', $socio->getCep());
-        $stmtPessoa->bindValue(':estado', $socio->getEstado());
-        $stmtPessoa->bindValue(':cidade', $socio->getCidade());
-        $stmtPessoa->bindValue(':bairro', $socio->getBairro());
-        $stmtPessoa->bindValue(':logradouro', $socio->getLogradouro());
-        $stmtPessoa->bindValue(':numeroEndereco', $socio->getNumeroEndereco());
-        $stmtPessoa->bindValue(':complemento', $socio->getComplemento());
-        $stmtPessoa->bindValue(':ibge', $socio->getIbge());
-        $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
+        foreach ($camposPessoa as $coluna => $valor) {
+            if ($valor !== null) {
+                $set[] = "{$coluna} = :{$coluna}";
+                $params[$coluna] = $valor;
+            }
+        }
 
-        $stmtPessoa->execute();
+        // Se houver algo para atualizar na tabela pessoa
+        if (!empty($set)) {
+            $sqlAtualizarPessoa = sprintf(
+                'UPDATE pessoa SET %s WHERE cpf = :cpf',
+                implode(",\n    ", $set)
+            );
+
+            $stmtPessoa = $this->pdo->prepare($sqlAtualizarPessoa);
+
+            foreach ($params as $param => $valor) {
+                $stmtPessoa->bindValue(":{$param}", $valor);
+            }
+
+            $stmtPessoa->bindValue(':cpf', $socio->getDocumento());
+
+            $stmtPessoa->execute();
+        }
 
         //atualizar os dados de socio
 
@@ -207,8 +218,8 @@ class SocioDAO
 
         $stmtSocio = $this->pdo->prepare($sqlAtualizarSocio);
 
-        $stmtSocio->bindParam(':valor', $socio->getValor());
-        $stmtSocio->bindParam(':cpf', $socio->getDocumento());
+        $stmtSocio->bindValue(':valor', $socio->getValor());
+        $stmtSocio->bindValue(':cpf', $socio->getDocumento());
 
         $atualizado = $stmtSocio->execute();
 
@@ -242,6 +253,7 @@ class SocioDAO
             pessoa.nome,
             pessoa.email,
             pessoa.sobrenome,
+            pessoa.email,
             pessoa.data_nascimento, 
             pessoa.telefone, 
             pessoa.cep, 
@@ -281,6 +293,7 @@ class SocioDAO
             pessoa.nome,
             pessoa.email,
             pessoa.sobrenome,
+            pessoa.email,
             pessoa.data_nascimento, 
             pessoa.telefone, 
             pessoa.cep, 
@@ -398,7 +411,7 @@ class SocioDAO
         $socios = [];
 
         $sql = "
-            SELECT p.nome, p.email, p.sobrenome, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.valor_periodo 
+            SELECT p.nome, p.sobrenome, p.email, p.data_nascimento, p.telefone, p.estado, p.cidade, p.bairro, p.complemento, p.cep, p.numero_endereco, p.logradouro, p.cpf, p.ibge, s.id_socio, s.valor_periodo 
             FROM socio s JOIN pessoa p ON(s.id_pessoa=p.id_pessoa)
             ORDER BY nome ASC
         ";
@@ -482,6 +495,27 @@ class SocioDAO
             ";
 
         return $this->pdo->exec($sql) !== false;
+    }
+
+    public function softDeleteSocio(int $idSocio): bool
+    {
+        $this->pdo->beginTransaction();
+
+        try {
+            // Atualizar o status do sócio para inativo
+            $sqlAtualizarStatus = 'UPDATE socio SET deletado = 1 WHERE id_socio = :idSocio';
+            $stmtStatus = $this->pdo->prepare($sqlAtualizarStatus);
+            $stmtStatus->bindValue(':idSocio', $idSocio, PDO::PARAM_INT);
+            $stmtStatus->execute();
+
+            // Commit da transação
+            $this->pdo->commit();
+            return true;
+        } catch (Exception $e) {
+            // Rollback em caso de erro
+            $this->pdo->rollBack();
+            throw $e;
+        }
     }
 
     private function buscarIdSocioPorDocumento(string $documento): ?int

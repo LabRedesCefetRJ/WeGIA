@@ -96,22 +96,74 @@ class AgendaDAO
     // AGENDA ALOCACAO
     // -------------------------------------------------------
 
-    public function existeAlocacaoSobreposta(int $idAgenda, int $idEquipe, string $inicio, string $fim, ?int $excludeId = null): bool
+    public function existeAlocacaoSobreposta(int $idAgenda, int $idEquipe, string $inicio, string $fim, int $intervalo, string $turnoInicio, string $turnoFim, ?int $excludeId = null): bool
     {
-        $sql = "SELECT COUNT(*) FROM agenda_alocacao
-                WHERE id_agenda = :id_agenda
-                  AND id_equipe = :id_equipe
-                  AND inicio   <= :fim
-                  AND fim      >= :inicio";
-        if ($excludeId) $sql .= " AND id != :exclude_id";
+        // Gera os dias reais de plantão do novo período, respeitando o intervalo
+        $periodosCandidatos = $this->gerarPeriodos($inicio, $fim, $intervalo, $turnoInicio, $turnoFim);
+
+        if (empty($periodosCandidatos)) {
+            return false;
+        }
+
+        $sql = "SELECT p.data_inicio, p.data_fim
+                FROM agenda_alocacao_periodo p
+                INNER JOIN agenda_alocacao a ON p.id_alocacao = a.id
+                WHERE a.id_agenda = :id_agenda
+                AND a.id_equipe = :id_equipe";
+        if ($excludeId) {
+            $sql .= " AND a.id != :exclude_id";
+        }
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id_agenda', $idAgenda, PDO::PARAM_INT);
         $stmt->bindValue(':id_equipe', $idEquipe, PDO::PARAM_INT);
-        $stmt->bindValue(':inicio',    $inicio);
-        $stmt->bindValue(':fim',       $fim);
-        if ($excludeId) $stmt->bindValue(':exclude_id', $excludeId, PDO::PARAM_INT);
+        if ($excludeId) {
+            $stmt->bindValue(':exclude_id', $excludeId, PDO::PARAM_INT);
+        }
         $stmt->execute();
-        return (int)$stmt->fetchColumn() > 0;
+        $periodosExistentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Compara dia-a-dia se algum período real coincide
+        foreach ($periodosCandidatos as $candidato) {
+            foreach ($periodosExistentes as $existente) {
+                if ($candidato['inicio'] <= $existente['data_fim'] && $candidato['fim'] >= $existente['data_inicio']) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /*
+     Gera os intervalos do plantão (data_inicio/data_fim) de uma alocação,
+     respeitando o intervalo entre plantões e o turno da equipe.
+     Usa a mesma lógica de incluirAlocacao()/alterarAlocacao() para o "fatiamento" de dias.
+     */
+    private function gerarPeriodos(string $inicio, string $fim, int $intervalo, string $turnoInicio, string $turnoFim): array
+    {
+        $periodos = [];
+        $inicioDt = new DateTime($inicio);
+        $fimDt    = new DateTime($fim);
+        $step     = $intervalo > 0 ? $intervalo + 1 : 1;
+
+        $current = clone $inicioDt;
+        while ($current <= $fimDt) {
+            $startDt = new DateTime($current->format('Y-m-d') . ' ' . $turnoInicio);
+            $endDt   = new DateTime($current->format('Y-m-d') . ' ' . $turnoFim);
+
+            if ($turnoFim <= $turnoInicio) {
+                $endDt->modify('+1 day');
+            }
+
+            $periodos[] = [
+                'inicio' => $startDt->format('Y-m-d H:i:s'),
+                'fim'    => $endDt->format('Y-m-d H:i:s'),
+            ];
+
+            $current->modify('+' . $step . ' days');
+        }
+
+        return $periodos;
     }
 
     public function incluirAlocacao(AgendaAlocacao $alocacao)

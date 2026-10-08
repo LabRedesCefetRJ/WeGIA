@@ -1,4 +1,8 @@
 const formRelatorio = document.getElementById('form-relatorio-contribuicao');
+const periodoSelect = document.getElementById('periodo');
+const specificPeriodContainer = document.getElementById('specific-period-container');
+const dataInicio = document.getElementById('data-inicio');
+const dataFim = document.getElementById('data-fim');
 
 function formatarData(data) {
     if (!data) {
@@ -156,5 +160,20 @@ formRelatorio.addEventListener('submit', async function (ev) {
     } finally {
         relatorioBtn.innerHTML = 'Gerar relatório';
         relatorioBtn.disabled = false;
+    }
+});
+
+//Comportamento do período específico
+periodoSelect.addEventListener('change', function () {
+    if (this.value === '9') {
+        specificPeriodContainer.classList.remove('hidden');
+
+        dataInicio.required = true;
+        dataFim.required = true;
+    } else {
+        specificPeriodContainer.classList.add('hidden');
+
+        dataInicio.required = false;
+        dataFim.required = false;
     }
 });

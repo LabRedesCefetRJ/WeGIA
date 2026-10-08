@@ -1,76 +1,9 @@
-function chamaModal(tr) {
-    codigo_cobranca = tr[0].childNodes[0].innerHTML;
-    $.post("get_detalhes_cobranca.php", { "codigo": codigo_cobranca }).done(function (resultadoBusca) {
-        dadosCobranca = JSON.parse(resultadoBusca);
-        console.log(resultadoBusca);
-
-
-        var modal_codigo_html = `
-        <div class="modal fade" id="detalharSocioModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-       <div class="modal-content">
-          <div class="modal-header">
-             <h5 class="modal-title" id="exampleModalLabel"></h5>
-          </div>
-          <div class="modal-body">
-             <div class="box box-info box-solid boxDetalhes">
-                <div class="box-header">
-                   <h3 class="box-title"><i class="fa fa-list" aria-hidden="true"></i> Opções cobrança</h3>
-                </div>
-                <div class="box-body">
-                   
-                <a id="btn_importar_xlsx_cobranca" onclick="codigo_barras('${dadosCobranca[0].codigo}')" class="btn btn-app">
-                <i class="fas fa-barcode"></i> Código pagamento online
-              </a>
-
-              <a id="btn_importar_xlsx_cobranca" onclick="detalhar_socio('${dadosCobranca[0].id_socio}')" class="btn btn-app">
-              <i class="fas fa-user"></i> Detalhar sócio
-            </a>
-
-            <a target="_blank" href="${dadosCobranca[0].link_cobranca}" id="btn_importar_xlsx_cobranca" class="btn btn-app">
-            <i class="fas fa-file-alt"></i> Link da cobrança
-            </a>
-
-            <a target="_blank" href="${dadosCobranca[0].link_boleto}" id="btn_importar_xlsx_cobranca" class="btn btn-app">
-            <i class="fas fa-file-alt"></i> Link do boleto
-            </a>
-    
-        </div>
-                    <div class="modal-footer">
-                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                      </div>
-                   </form>
-                </div>
-                <!-- /.box-body -->
-                <!-- Loading (remove the following to stop the loading)-->
-                <!-- end loading -->
-             </div>
-          </div>
-       </div>
-    </div>
-        `;
-
-        $(".boxCodigo").prepend(
-            '<div class="overlay"> <i class="fa fa-refresh fa-spin"></i> </div>'
-        );
-
-        setTimeout(function () {
-            $(".boxCodigo .overlay").remove();
-        }, 600);
-        $(modal_codigo_html).modal("toggle");
-
-    })
-
-}
 function obterTagsSelecionadas() {
     return ($("#tags").val() || []).filter(function (tagId) {
         return tagId !== null && tagId !== "" && tagId !== "none";
     });
 }
 
-function criarBotoes() {
-    return `<button id="manageBtn" type="button" onclick="chamaModal($(this).closest('tr'))" class="btn btn-success btn-xs"><i class="far fa-address-card"></i> +Informações</button>`;
-}
 $(document).ready(function () {
     // Cadastro de cobraças/sócios/pessoa
     function cadastro_cobrancas_socio_xlsx(tabela) {
@@ -266,22 +199,53 @@ $(document).ready(function () {
 
 
     $("#cep").mask("99999-999");
-    function modalSimples(titulo, msg, tipo) {
-        switch (tipo) {
-            case "erro": cor = "danger"; break;
-            case "alerta": cor = "warning"; break;
-            case "sucesso": cor = "success"; break;
-            case "normal": cor = ""; break;
+function modalSimples(titulo, msg, tipo) {
+    switch (tipo) {
+        case "erro": cor = "danger"; break;
+        case "alerta": cor = "warning"; break;
+        case "sucesso": cor = "success"; break;
+        case "normal": cor = ""; break;
+    }
+    var id = "modal_" + Date.now() + "_" + Math.floor(Math.random() * 1000000);
+    var html = '<div class="modal modal-' + cor + ' fade" id="' + id + '" tabindex="-1" role="dialog" aria-hidden="true">' +
+        ' <div class="modal-dialog">' +
+        '  <div class="modal-content">' +
+        '   <div class="modal-header">' +
+        '    <h4 class="modal-title">' + titulo + '</h4>' +
+        '   </div>' +
+        '   <div class="modal-body text-center">' +
+        '    <div class="overlay"><i style="margin: 0 auto; font-size: 40px" class="fa fa-user-plus"></i></div>' +
+        '    <h3>' + msg + '</h3>' +
+        '   </div>' +
+        '   <div class="modal-footer">' +
+        '    <button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Fechar</button>' +
+        '   </div>' +
+        '  </div>' +
+        ' </div>' +
+        '</div>';
+    var $modal = $(html);
+
+    $modal.on("hidden.bs.modal", function () {
+        $(this).remove();
+
+        if ($(".modal.in").length > 0) {
+            $("body").addClass("modal-open");
+        } else {
+            $("body").removeClass("modal-open").css({
+                overflow: "",
+                paddingRight: ""
+            });
+            $(".modal-backdrop").remove();
         }
-        var id = Math.floor(Math.random() * 10);
-        var html = '<div class="modal modal-' + cor + ' fade in" id="modal' + id + '" style="display: none; padding-right: 17px;"> <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header"> <h4 class="modal-title">' + titulo + '</h4> </div> <div class="modal-body text-center"><div class="overlay"> <i style="margin: 0 auto; font-size: 40px" class="fa fa-user-plus"></i> </div> <h3>' + msg + '</h3> </div> <div class="modal-footer"> <button type="button" class="btn btn-outline pull-left .btn_fecharModal' + id + '" data-dismiss="modal">Fechar</button> </div> </div> <!-- /.modal-content --> </div> <!-- /.modal-dialog --> </div>';
-        $("body").append(html);
-        $("#modal" + id).modal("toggle");
-        // if(tipo == "sucesso"){
-        //     setTimeout(function(){
-        //         location.reload();
-        //     },1000);
-        // }
+    });
+
+    $("body").append($modal);
+    $modal.modal("show");
+    // if(tipo == "sucesso"){
+    //     setTimeout(function(){
+    //         location.reload();
+    //     },1000);
+    // }
     }
     function resetaForm(form) {
         $(form).each(function () {
@@ -324,7 +288,9 @@ $(document).ready(function () {
     }
     $(document).on("submit", "#frm_novo_socio", function (e) {
         e.preventDefault();
+
         const DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
+
         const socio_nome = $("#socio_nome").val();
         const socio_sobrenome = $("#socio_sobrenome").val();
         const pessoa_tipo = $("#pessoa").val();
@@ -347,38 +313,78 @@ $(document).ready(function () {
         const tipo_contribuicao = $("#tipo_contribuicao").val();
         const auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
         const csrf = document.querySelector('input[name="csrf_token"]').value;
-        // Requisição POST - AJAX
-        if (valida_cpf_cnpj(cpf_cnpj)) {
-            $.post("./cadastro_socio.php", {
-                "socio_nome": socio_nome,
-                "socio_sobrenome": socio_sobrenome,
-                "pessoa": pessoa_tipo,
-                "contribuinte": contribuinte,
-                "status": status,
-                "email": email,
-                "tags": tags,
-                "telefone": telefone,
-                "cpf_cnpj": cpf_cnpj,
-                "verificar_documento" : !DesabilitaverificaCpf,
-                "rua": rua,
-                "numero": numero,
-                "complemento": complemento,
-                "bairro": bairro,
-                "estado": estado,
-                "cidade": cidade,
-                "data_nasc": data_nasc,
-                "cep": cep,
-                "data_referencia": data_referencia,
-                "valor_periodo": valor_periodo,
-                "tipo_contribuicao": tipo_contribuicao,
-                "auto_status_contribuicoes": auto_status_contribuicoes,
-                "csrf_token": csrf
-            }).done(function (resultadoCadastro) {
-                var resultado = JSON.parse(resultadoCadastro);
+
+        // ============================================
+        // Validação da data de referência
+        // ============================================
+        if (data_nasc && data_referencia) {
+            const nascimento = new Date(data_nasc + "T00:00:00");
+            const referencia = new Date(data_referencia + "T00:00:00");
+
+            if (referencia < nascimento) {
+                modalSimples(
+                    "Status",
+                    "A data de referência não pode ser anterior à data de nascimento.",
+                    "erro"
+                );
+                return;
+            }
+        }
+
+        // ============================================
+        // Validação do CPF/CNPJ
+        // ============================================
+        if (!DesabilitaverificaCpf && !valida_cpf_cnpj(cpf_cnpj)) {
+            modalSimples(
+                "Status",
+                "O CPF/CNPJ informado é inválido!",
+                "erro"
+            );
+            return;
+        }
+
+        // Quando a validação do documento estiver desabilitada,
+        // envia null caso o campo esteja vazio.
+        if (DesabilitaverificaCpf && !cpf_cnpj) {
+            cpf_cnpj = null;
+        }
+
+        // ============================================
+        // Requisição AJAX
+        // ============================================
+        $.post("./cadastro_socio.php", {
+            socio_nome,
+            socio_sobrenome,
+            pessoa: pessoa_tipo,
+            contribuinte,
+            status,
+            email,
+            tags,
+            telefone,
+            cpf_cnpj,
+            verificar_documento: !DesabilitaverificaCpf,
+            rua,
+            numero,
+            complemento,
+            bairro,
+            estado,
+            cidade,
+            data_nasc,
+            cep,
+            data_referencia,
+            valor_periodo,
+            tipo_contribuicao,
+            auto_status_contribuicoes,
+            csrf_token: csrf
+        })
+            .done(function (resultadoCadastro) {
+                const resultado = JSON.parse(resultadoCadastro);
+
                 if (resultado) {
                     $(".socioModal").append(
-                        '<div class="overlay"> <i style="font-size: 72px; color: green;" class="fa fa-refresh fa-spin"></i> </div>'
+                        '<div class="overlay"><i style="font-size:72px;color:green;" class="fa fa-refresh fa-spin"></i></div>'
                     );
+
                     setTimeout(function () {
                         $("#adicionarSocioModal").modal("toggle");
                         $(".socioModal .overlay").remove();
@@ -386,71 +392,25 @@ $(document).ready(function () {
                         resetaForm("#frm_novo_socio");
                     }, 1000);
                 }
-            }).fail(function (resposta) {
+            })
+            .fail(function (resposta) {
                 console.log(resposta);
-                resposta = JSON.parse(resposta.responseText)
-                modalSimples("Status", `Erro ao cadastrar sócio, ${resposta.erro}.`, "erro");
+
+                resposta = JSON.parse(resposta.responseText);
+
+                modalSimples(
+                    "Status",
+                    `Erro ao cadastrar sócio, ${resposta.erro}.`,
+                    "erro"
+                );
             });
-        } else {
-            if (DesabilitaverificaCpf == true) {
-
-                //adicionar verificação se cpf_cnpj está preenchido
-                if (!cpf_cnpj) {
-                    cpf_cnpj = null;
-                }
-
-                $.post("./cadastro_socio.php", {
-                    "socio_nome": socio_nome,
-                    "socio_sobrenome": socio_sobrenome,
-                    "pessoa": pessoa_tipo,
-                    "contribuinte": contribuinte,
-                    "status": status,
-                    "email": email,
-                    "tags": tags,
-                    "telefone": telefone,
-                    "cpf_cnpj": cpf_cnpj,
-                    "verificar_documento" : !DesabilitaverificaCpf,
-                    "rua": rua,
-                    "numero": numero,
-                    "complemento": complemento,
-                    "bairro": bairro,
-                    "estado": estado,
-                    "cidade": cidade,
-                    "data_nasc": data_nasc,
-                    "cep": cep,
-                    "data_referencia": data_referencia,
-                    "valor_periodo": valor_periodo,
-                    "tipo_contribuicao": tipo_contribuicao,
-                    "auto_status_contribuicoes": auto_status_contribuicoes,
-                    "csrf_token": csrf
-                }).done(function (resultadoCadastro) {
-                    var resultado = JSON.parse(resultadoCadastro);
-                    if (resultado) {
-                        $(".socioModal").append(
-                            '<div class="overlay"> <i style="font-size: 72px; color: green;" class="fa fa-refresh fa-spin"></i> </div>'
-                        );
-                        setTimeout(function () {
-                            $("#adicionarSocioModal").modal("toggle");
-                            $(".socioModal .overlay").remove();
-                            $("#qtd_socios").html(Number($("#qtd_socios").html()) + 1);
-                            resetaForm("#frm_novo_socio");
-                        }, 1000);
-                    }
-                }).fail(function (resposta) {
-                    console.log(resposta);
-                    resposta = JSON.parse(resposta.responseText)
-                    modalSimples("Status", `Erro ao cadastrar sócio, ${resposta.erro}.`, "erro");
-                });
-            } else {
-                modalSimples("Status", "O CPF/CNPJ informado é inválido!", "erro");
-            }
-        }
-
     });
 
     $(document).on("submit", "#frm_editar_socio", function (e) {
         e.preventDefault();
+
         const DesabilitaverificaCpf = $("#check_veri_cpf").prop("checked");
+
         const id_socio = $("#id_socio").val();
         const socio_nome = $("#socio_nome").val();
         const socio_sobrenome = $("#socio_sobrenome").val();
@@ -473,133 +433,99 @@ $(document).ready(function () {
         const valor_periodo = $("#valor_periodo").val();
         const tipo_contribuicao = $("#tipo_contribuicao").val();
         const auto_status_contribuicoes = $("#auto_status_contribuicoes").prop("checked") ? 1 : 0;
-        // Requisição POST - AJAX
-        if (valida_cpf_cnpj(cpf_cnpj)) {
-            $.post("./processa_edicao_socio.php", {
-                "id_socio": id_socio,
-                "socio_nome": socio_nome,
-                "socio_sobrenome": socio_sobrenome,
-                "pessoa": pessoa_tipo,
-                "contribuinte": contribuinte,
-                "status": status,
-                "email": email,
-                "telefone": telefone,
-                "cpf_cnpj": cpf_cnpj,
-                "verificar_documento" : !DesabilitaverificaCpf,
-                "rua": rua,
-                "tags": tags,
-                "numero": numero,
-                "complemento": complemento,
-                "bairro": bairro,
-                "estado": estado,
-                "cidade": cidade,
-                "data_nasc": data_nasc,
-                "cep": cep,
-                "data_referencia": data_referencia,
-                "valor_periodo": valor_periodo,
-                "tipo_contribuicao": tipo_contribuicao,
-                "auto_status_contribuicoes": auto_status_contribuicoes
-            }).done(function (resultadoCadastro) {
-                var resultado = JSON.parse(resultadoCadastro);
+
+        // ============================================
+        // Validação da data de referência
+        // ============================================
+        if (data_nasc && data_referencia) {
+            const nascimento = new Date(data_nasc + "T00:00:00");
+            const referencia = new Date(data_referencia + "T00:00:00");
+
+            if (referencia < nascimento) {
+                modalSimples(
+                    "Status",
+                    "A data de referência não pode ser anterior à data de nascimento.",
+                    "erro"
+                );
+                return;
+            }
+        }
+
+        // ============================================
+        // Validação do CPF/CNPJ
+        // ============================================
+        if (!DesabilitaverificaCpf && !valida_cpf_cnpj(cpf_cnpj)) {
+            modalSimples(
+                "Status",
+                "O CPF/CNPJ informado é inválido!",
+                "erro"
+            );
+            return;
+        }
+
+        // Quando a validação do documento estiver desabilitada,
+        // envia null caso o campo esteja vazio.
+        if (DesabilitaverificaCpf && !cpf_cnpj) {
+            cpf_cnpj = null;
+        }
+
+        // ============================================
+        // Requisição AJAX
+        // ============================================
+        $.post("./processa_edicao_socio.php", {
+            id_socio,
+            socio_nome,
+            socio_sobrenome,
+            pessoa: pessoa_tipo,
+            contribuinte,
+            status,
+            email,
+            telefone,
+            cpf_cnpj,
+            verificar_documento: !DesabilitaverificaCpf,
+            rua,
+            tags,
+            numero,
+            complemento,
+            bairro,
+            estado,
+            cidade,
+            data_nasc,
+            cep,
+            data_referencia,
+            valor_periodo,
+            tipo_contribuicao,
+            auto_status_contribuicoes
+        })
+            .done(function (resultadoCadastro) {
+                const resultado = JSON.parse(resultadoCadastro);
+
                 if (resultado) {
                     $(".socioModal").append(
-                        '<div class="overlay"> <i style="font-size: 72px; color: green;" class="fa fa-refresh fa-spin"></i> </div>'
+                        '<div class="overlay"><i style="font-size:72px;color:green;" class="fa fa-refresh fa-spin"></i></div>'
                     );
+
                     setTimeout(function () {
                         resetaForm("#frm_editar_socio");
                         window.location.replace("./");
                     }, 1000);
                 } else {
-                    modalSimples("Status", "Erro ao editar sócio, verifique os dados e tente novamente.", "erro");
+                    modalSimples(
+                        "Status",
+                        "Erro ao editar sócio, verifique os dados e tente novamente.",
+                        "erro"
+                    );
                 }
-            });
-        } else {
-            if (DesabilitaverificaCpf == true) {
+            })
+            .fail(function (resposta) {
+                console.log(resposta);
 
-                //adicionar verificação se cpf_cnpj está preenchido
-                if (!cpf_cnpj) {
-                    cpf_cnpj = null;
-                }
-
-                $.post("./processa_edicao_socio.php", {
-                    "id_socio": id_socio,
-                    "socio_nome": socio_nome,
-                    "socio_sobrenome": socio_sobrenome,
-                    "pessoa": pessoa_tipo,
-                    "contribuinte": contribuinte,
-                    "status": status,
-                    "email": email,
-                    "telefone": telefone,
-                    "cpf_cnpj": cpf_cnpj,
-                    "verificar_documento" : !DesabilitaverificaCpf,
-                    "rua": rua,
-                    "tags": tags,
-                    "numero": numero,
-                    "complemento": complemento,
-                    "bairro": bairro,
-                    "estado": estado,
-                    "cidade": cidade,
-                    "data_nasc": data_nasc,
-                    "cep": cep,
-                    "data_referencia": data_referencia,
-                    "valor_periodo": valor_periodo,
-                    "tipo_contribuicao": tipo_contribuicao,
-                    "auto_status_contribuicoes": auto_status_contribuicoes
-                }).done(function (resultadoCadastro) {
-                    var resultado = JSON.parse(resultadoCadastro);
-                    if (resultado) {
-                        $(".socioModal").append(
-                            '<div class="overlay"> <i style="font-size: 72px; color: green;" class="fa fa-refresh fa-spin"></i> </div>'
-                        );
-                        setTimeout(function () {
-                            resetaForm("#frm_editar_socio");
-                            window.location.replace("./");
-                        }, 1000);
-                    } else {
-                        modalSimples("Status", "Erro ao editar sócio, verifique os dados e tente novamente.", "erro");
-                    }
-                });
-            } else {
-                modalSimples("Status", "O CPF/CNPJ informado é inválido!", "erro");
-            }
-        }
-
-    });
-
-    $(document).on("submit", "#frm_nova_cobranca", function (e) {
-        e.preventDefault();
-        var socio_nome = $("#socio_nome_ci").val().split("|")[0];
-        var cpf_cnpj = $("#socio_nome_ci").val().split("|")[1];
-        var socio_id = $("#socio_nome_ci").val().split("|")[2];
-        var local_recepcao = $("#local_recepcao").val();
-        var receptor = $("#receptor").val();
-        var valor = $("#valor_cobranca").val();
-        var forma_doacao = $("#forma_doacao").val();
-        var data_doacao = $("#data_doacao").val();
-        // Requisição POST - AJAX
-        $.post("./cadastro_cobranca_m.php", {
-            "socio_nome": socio_nome,
-            "socio_id": socio_id,
-            "local_recepcao": local_recepcao,
-            "receptor": receptor,
-            "data_doacao": data_doacao,
-            "valor": valor,
-            "forma_doacao": forma_doacao
-        }).done(function (resultadoCadastro) {
-            var resultado = JSON.parse(resultadoCadastro);
-            if (resultado) {
-                $(".cobrancaModal").append(
-                    '<div class="overlay"> <i style="font-size: 72px; color: green;" class="fa fa-refresh fa-spin"></i> </div>'
+                modalSimples(
+                    "Status",
+                    "Erro ao editar sócio, tente novamente mais tarde.",
+                    "erro"
                 );
-                setTimeout(function () {
-                    $("#adicionarCobrancaModal").modal("toggle");
-                    $(".cobrancaModal .overlay").remove();
-                    resetaForm("#frm_nova_cobranca");
-                }, 1000);
-            } else {
-                modalSimples("Status", "Erro ao cadastrar cobranca, verifique os dados e tente novamente.", "erro");
-            }
-        });
+            });
     });
 
     // Validação de CEP e API de CEP
@@ -830,39 +756,6 @@ $(document).ready(function () {
             }
         });
     });
-    // Tabela cobranças
-    $(document).ready(function () {
-        $('#tbCobrancas').DataTable({
-            "processing": true,
-            "searching": true,
-            "ajax": "processa_cobrancas_tabela.php",
-            "columnDefs": [{ "render": criarBotoes, "data": null, "targets": [8] }],
-            "language": {
-                "sEmptyTable": "Nenhuma cobrança encontrada no sistema.",
-                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
-                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
-                "sInfoPostFix": "",
-                "sInfoThousands": ".",
-                "sLengthMenu": "_MENU_ cobranças por página",
-                "sLoadingRecords": "Carregando...",
-                "sProcessing": "Processando...",
-                "sZeroRecords": "Nenhuma cobrança encontrada no sistema.",
-                "sSearch": "Pesquisar",
-                "oPaginate": {
-                    "sNext": "Próximo",
-                    "sPrevious": "Anterior",
-                    "sFirst": "Primeiro",
-                    "sLast": "Último"
-                },
-                "oAria": {
-                    "sSortAscending": ": Ordenar colunas de forma ascendente",
-                    "sSortDescending": ": Ordenar colunas de forma descendente"
-                }
-            }
-        });
-    });
-
     // Tabela contribuições
     //Ajustar sobrenome
     $(document).ready(function () {
@@ -979,9 +872,6 @@ $(document).ready(function () {
     $("#btn_importar_xlsx").click(function () {
         $("#modal_importar_xlsx").modal("toggle");
     });
-    $("#btn_importar_xlsx_cobranca").click(function () {
-        $("#modal_importar_xlsx_cobranca").modal("toggle");
-    });
     var arquivo = document.getElementById('arquivo_xlsx');
     if (typeof arquivo !== 'undefined' && arquivo !== null) {
         arquivo.onchange = function (e) {
@@ -998,30 +888,6 @@ $(document).ready(function () {
         }
     }
 
-    var arquivo = document.getElementById('arquivo_xlsx_cobranca');
-    if (typeof arquivo !== 'undefined' && arquivo !== null) {
-        arquivo.onchange = function (e) {
-            var ext = this.value.match(/\.([^\.]+)$/)[1];
-            switch (ext) {
-                case 'xlsx':
-                case 'xls':
-                    console.log("extensão ok");
-                    break;
-                default:
-                    modalSimples("Status", "Extensão inválida!", "erro");
-                    this.value = '';
-            }
-        }
-    }
-
-    // Upload de cobranças xlsx
-    $(document).on("submit", "#form_xlsx_cobranca", function (e) {
-        e.preventDefault();
-        var $form = $(this);
-        uploadArquivosCobranca($form);
-        $(".barra_envio").css("width", "0" + "%");
-    });
-
     //   Função para deletar o diretório de tabelas de sócios e cobranças por motivos de segurança
     function deletar_diretorio_tabelas() {
         $.post('./controller/deletar_diretorio_tabelas.php')
@@ -1033,77 +899,6 @@ $(document).ready(function () {
             })
     }
 
-    function uploadArquivosCobranca($form) {
-        deletar_diretorio_tabelas();
-        var dados = new FormData($form[0]);
-        var request = new XMLHttpRequest();
-        $(".box_xlsx").prepend('<div class="overlay"> <i class="fa fa-refresh fa-spin"></i> </div>');
-        request.upload.addEventListener("progress", function (e) {
-            var porcentagem = e.loaded / e.total * 100;
-            $(".barra_envio").css("width", porcentagem + "%");
-        });
-
-        request.open('post', './controller/controla_xlsx_cobranca.php');
-        request.send(dados);
-        request.onreadystatechange = function () {
-            if (this.readyState == 4 && this.status == 200) {
-                var r = JSON.parse(this.response);
-                console.log(r);
-                /* requisição */
-                var url = r.url;
-                var oReq = new XMLHttpRequest();
-                oReq.open("GET", url, true);
-                oReq.responseType = "arraybuffer";
-
-                oReq.onload = function (e) {
-                    var arraybuffer = oReq.response;
-
-                    /* convertendo dados para binário */
-                    var data = new Uint8Array(arraybuffer);
-                    var arr = new Array();
-                    for (var i = 0; i != data.length; ++i) arr[i] = String.fromCharCode(data[i]);
-                    var bstr = arr.join("");
-
-                    /* chamando api para conveter tabela xlsx */
-                    var workbook = XLSX.read(bstr, {
-                        type: "binary"
-                    });
-
-                    //   ----
-                    var first_sheet_name = workbook.SheetNames[0];
-
-                    var worksheet = workbook.Sheets[first_sheet_name];
-                    var tabela = (XLSX.utils.sheet_to_json(worksheet, {
-                        raw: true
-                    }));
-                    console.log(tabela);
-                    var log = cadastro_cobrancas_socio_xlsx(tabela);
-                    console.log(log.cadastrados + " - " + tabela.length);
-                    if (log.cadastrados == tabela.length) {
-                        $(".box_xlsx .overlay").remove();
-                        $("#modal_importar_xlsx").modal("toggle");
-                        modalSimples("Status", 'Importação bem sucedida. <div  class="box box-default"> <div class="box-header with-border"> <h3 class="box-title">Log de importação</h3> <div class="box-tools pull-right"> <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i> </button> </div> </div>  <div class="box-body"> <div style="font-size: 12px; color:black; overflow: auto; max-height: 340px; text-justify: left;" class="log">' + log.html_log + '</div> </div> </div>', "sucesso");
-                        resetaForm("#form_xlsx");
-                        $(".barra_envio").css("width", "0" + "%");
-                        // location.reload();
-                        deletar_diretorio_tabelas();
-                    } else {
-                        $("#modal_importar_xlsx").modal("toggle");
-                        $("#qtd_socios").html(Number($("#qtd_socios").html()) + log.cadastrados);
-                        modalSimples("Status", 'Não foi possível concluir a importação por completo. <div  class="box box-default"> <div class="box-header with-border"> <h3 class="box-title">Log de importação</h3> <div class="box-tools pull-right"> <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i> </button> </div> </div>  <div class="box-body"> <div style="font-size: 12px; color:black; overflow: auto; max-height: 340px; text-justify: left;" class="log">' + log.html_log + '</div> </div> </div>', "normal");
-                        $(".box_xlsx .overlay").remove();
-                        resetaForm("#form_xlsx");
-                        $(".barra_envio").css("width", "0" + "%");
-                        deletar_diretorio_tabelas();
-                    }
-                }
-
-                oReq.send();
-
-
-            }
-        }
-    }
     $("#btn_perfil").click(function () {
         $("#modalPerfil").modal("toggle");
     });
@@ -1112,9 +907,6 @@ $(document).ready(function () {
     });
     $("#btn_aniversariantes").click(function () {
         $("#modal_aniversariantes").modal("toggle");
-    });
-    $("#btn_cadastro_cobranca").click(function () {
-        $("#adicionarCobrancaModal").modal("toggle");
     });
     // $("#btn_graficos").click(function(){
     //      $("#modal_graficos").modal("toggle");

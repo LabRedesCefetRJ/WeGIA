@@ -23,7 +23,7 @@
     {
         public function inserirMedico()
         {
-            header('Content-Type: application/json');
+            header('Content-Type: application/json; charset=utf-8');
             $dados = json_decode(file_get_contents('php://input'), true);
 
             if (!$dados) {
@@ -44,6 +44,15 @@
             try {
                 $MedicoDAO = new MedicoDAO();
                 $resposta = $MedicoDAO->inserirMedico($crm, $nome);
+
+                if (isset($resposta['sucesso']) && $resposta['sucesso'] === false) {
+                    http_response_code(400);
+                    echo json_encode([
+                        "status" => "erro",
+                        "mensagem" => $resposta['erro']
+                    ]);
+                    exit;
+                }
 
                 http_response_code(201);
                 echo json_encode([

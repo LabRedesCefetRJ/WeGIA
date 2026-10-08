@@ -25,10 +25,11 @@ try {
 
     $pdo = Conexao::connect();
 
+    //pegar apenas pessoas que também sejam funcionários, para evitar que clientes acessem o sistema
     $stmt = $pdo->prepare("
-        SELECT id_pessoa, cpf, senha, nome, adm_configurado, nivel_acesso 
-        FROM pessoa 
-        WHERE cpf = :cpf
+        SELECT p.id_pessoa, p.cpf, p.senha, p.nome, p.adm_configurado, p.nivel_acesso 
+        FROM pessoa p JOIN funcionario f ON p.id_pessoa = f.id_pessoa
+        WHERE p.cpf = :cpf
         LIMIT 1
     ");
 
@@ -40,6 +41,18 @@ try {
     //Usuário não encontrado
     if (!$usuario) {
         header("Location: ../index.php?erro=erro");
+        exit;
+    }
+
+    // Verifica se a pessoa é funcionária e se está inativa (id 2)
+    $stmtStatus = $pdo->prepare("SELECT id_situacao FROM funcionario WHERE id_pessoa = :id_pessoa");
+    $stmtStatus->bindValue(':id_pessoa', $usuario['id_pessoa'], PDO::PARAM_INT);
+    $stmtStatus->execute();
+    $situacao = $stmtStatus->fetchColumn();
+
+    // Se o funcionário existir na tabela e o ID for 2, bloqueia
+    if ($situacao !== false && (int)$situacao === 2) {
+        header("Location: ../index.php?erro=usuario_inativo");
         exit;
     }
 

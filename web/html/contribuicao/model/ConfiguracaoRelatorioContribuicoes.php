@@ -1,7 +1,7 @@
 <?php
 class ConfiguracaoRelatorioContribuicoes
 {
-    private int $periodo = 1;
+    private int|array $periodo = 1;
     private int $socioId = 0;
     private int $status = 1;
 
@@ -18,10 +18,49 @@ class ConfiguracaoRelatorioContribuicoes
      *
      * @return  self
      */
-    public function setPeriodo(int $periodo)
+    public function setPeriodo(int|array $periodo)
     {
-        if ($periodo < 1 || $periodo > 9) {
-            throw new InvalidArgumentException('Valor fornecido é inválido, o número de um período deve estar entre 1 e 9', 400);
+        if (is_int($periodo) && ($periodo < 1 || $periodo > 8)) {
+            throw new InvalidArgumentException(
+                'A opção de periodo informada é inválida', 
+                400
+            );
+        }
+
+        if (is_array($periodo)) {
+            if (!array_key_exists('inicio', $periodo) || !array_key_exists('fim', $periodo)) {
+                throw new InvalidArgumentException(
+                    'O período informado não possui uma data de início ou de fim',
+                    400
+                );
+            }
+
+            $dataInicio = DateTime::createFromFormat('Y-m-d', $periodo['inicio'], new DateTimeZone(date_default_timezone_get()));
+            $dataFim = DateTime::createFromFormat('Y-m-d', $periodo['fim'], new DateTimeZone(date_default_timezone_get()));
+
+            if (!$dataInicio || $dataInicio->format('Y-m-d') !== $periodo['inicio']) {
+                throw new InvalidArgumentException(
+                    'A data de início é inválida.',
+                    400
+                );
+            }
+
+            if (!$dataFim || $dataFim->format('Y-m-d') !== $periodo['fim']) {
+                throw new InvalidArgumentException(
+                    'A data de fim é inválida.',
+                    400
+                );
+            }
+
+            $periodo['inicio'] = $dataInicio;
+            $periodo['fim'] = $dataFim;
+
+            if ($periodo['inicio'] > $periodo['fim']) {
+                throw new InvalidArgumentException(
+                    'A data de início não pode ser maior que a data de fim.',
+                    400
+                );
+            }
         }
 
         $this->periodo = $periodo;

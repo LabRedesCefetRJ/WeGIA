@@ -86,3 +86,24 @@ session_set_cookie_params([
     'samesite' => 'Strict',
 ]);
 session_start();
+
+require_once dirname(__FILE__, 3) . "/dao/Conexao.php";
+
+if (isset($_SESSION['id_pessoa'])) {
+    try {
+        $pdo = Conexao::connect();
+        
+        $stmt = $pdo->prepare("SELECT id_situacao FROM funcionario WHERE id_pessoa = :id_pessoa");
+        $stmt->bindValue(':id_pessoa', $_SESSION['id_pessoa'], PDO::PARAM_INT);
+        $stmt->execute();
+        $situacao = $stmt->fetchColumn();
+
+        if ($situacao !== false && (int)$situacao === 2) {
+            session_destroy();
+            header("Location: " . WWW . "index.php?erro=acesso_revogado");
+            exit;
+        }
+    } catch (Exception $e) {
+        error_log("Erro na verificação de segurança da sessão: " . $e->getMessage());
+    }
+} 

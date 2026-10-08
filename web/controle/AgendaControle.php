@@ -188,7 +188,11 @@ class AgendaControle
 
             $dao = new AgendaDAO();
 
-            if ($dao->existeAlocacaoSobreposta((int)$id_agenda, (int)$id_equipe, $inicio, $fim))
+            $equipeInfo = $dao->listarEquipePorId((int)$id_equipe);
+            if (!$equipeInfo)
+                throw new InvalidArgumentException('A equipe informada não é válida.', 412);
+
+            if ($dao->existeAlocacaoSobreposta((int)$id_agenda, (int)$id_equipe, $inicio, $fim, (int)$intervalo, $equipeInfo['inicio_turno'], $equipeInfo['fim_turno']))
                 throw new InvalidArgumentException('Já existe uma alocação desta equipe no período informado.', 409);
 
             $id = $dao->incluirAlocacao($alocacao);
@@ -411,7 +415,11 @@ class AgendaControle
 
             $dao = new AgendaDAO();
 
-            if ($dao->existeAlocacaoSobreposta((int)$id_agenda, (int)$id_equipe, $inicio, $fim, (int)$id))
+            $equipeInfo = $dao->listarEquipePorId((int)$id_equipe);
+            if (!$equipeInfo)
+                throw new InvalidArgumentException('A equipe informada não é válida.', 412);
+
+            if ($dao->existeAlocacaoSobreposta((int)$id_agenda, (int)$id_equipe, $inicio, $fim, (int)$intervalo, $equipeInfo['inicio_turno'], $equipeInfo['fim_turno'], (int)$id))
                 throw new InvalidArgumentException('Já existe uma alocação desta equipe no período informado.', 409);
 
             $dao->alterarAlocacao($alocacao);

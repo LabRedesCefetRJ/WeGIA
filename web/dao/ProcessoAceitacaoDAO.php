@@ -160,6 +160,55 @@ class ProcessoAceitacaoDAO
         return $idPessoa ? (int)$idPessoa : null;
     }
 
+    public function buscarProcessoAtivoPorPessoa(int $idPessoa): ?array
+    {
+        $sql = "
+            SELECT
+                pa.id,
+                pa.data_inicio,
+                pa.data_fim,
+                pa.descricao,
+                pa.id_status,
+                s.descricao AS status_nome
+            FROM processo_aceitacao pa
+            LEFT JOIN pa_status s ON s.id = pa.id_status
+            WHERE pa.id_pessoa = :id_pessoa
+            ORDER BY pa.data_inicio DESC, pa.id DESC
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_pessoa', $idPessoa, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
+    public function listarEtapasPorProcesso(int $idProcesso): array
+    {
+        $sql = "
+            SELECT
+                e.id,
+                e.data_inicio,
+                e.data_fim,
+                e.titulo,
+                e.descricao,
+                e.id_status,
+                s.descricao AS status_nome
+            FROM pa_etapa e
+            INNER JOIN pa_status s ON s.id = e.id_status
+            WHERE e.id_processo_aceitacao = :id_processo
+            ORDER BY (e.data_fim IS NULL) ASC, e.data_fim DESC, e.id DESC
+        ";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id_processo', $idProcesso, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getByStatus(int $status, string $searchName = '')
     {
         $query = 'SELECT 

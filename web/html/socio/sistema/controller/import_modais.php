@@ -26,14 +26,14 @@ try {
               <?= Csrf::inputField() ?>
               <div class="row">
                 <div class="form-group col-xs-3">
-                  <label for="pessoa">Tipo de pessoa</label>
-                  <select class="form-control" name="pessoa" id="pessoa">
+                  <label for="pessoa">Tipo de pessoa <span class="text-danger">*</span></label>
+                  <select class="form-control" name="pessoa" id="pessoa" required>
                     <option value="fisica">Física</option>
                     <option value="juridica">Jurídica</option>
                   </select>
                 </div>
                 <div class="form-group col-xs-8 cpf_div">
-                  <label id="label_cpf_cnpj" for="valor">CPF *</label>
+                  <label id="label_cpf_cnpj" for="valor">CPF <span class="text-danger">*</span></label>
 
                   <div class="inline-fields">
                     <input type="text" class="form-control" id="cpf_cnpj" name="cpf">
@@ -48,12 +48,12 @@ try {
               </div>
               <div class="row">
                 <div class="form-group mb-2 col-xs-6">
-                  <label for="socio_nome">Nome *</label>
+                  <label for="socio_nome">Nome <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="socio_nome" name="socio_nome" placeholder="" required>
                 </div>
 
                 <div class="form-group mb-2 col-xs-6">
-                  <label for="socio_sobrenome">Sobrenome *</label>
+                  <label for="socio_sobrenome">Sobrenome <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" id="socio_sobrenome" name="socio_sobrenome" placeholder="" required>
                 </div>
 
@@ -70,8 +70,8 @@ try {
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
-                  <label for="pessoa">Periodiciade (Contribuinte)</label>
-                  <select class="form-control" name="contribuinte" id="contribuinte">
+                  <label for="pessoa">Periodiciade (Contribuinte) <span class="text-danger">*</span></label>
+                  <select class="form-control" name="contribuinte" id="contribuinte" required>
                     <option value="mensal">Mensal</option>
                     <option value="bimestral">Bimestral</option>
                     <option value="trimestral">Trimestral</option>
@@ -86,7 +86,7 @@ try {
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
-                  <label for="pessoa">Status</label>
+                  <label for="pessoa">Status <span class="text-danger">*</span></label>
                   <select class="form-control" name="status" id="status" required>
                     <option value="" disabled selected>Selecionar Status</option>
                     <?php
@@ -112,18 +112,18 @@ try {
               </div>
               <div class="row">
                 <div class="form-group col-xs-6">
-                  <label for="valor">Data referência (ínicio contribuição)</label>
-                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" min="1900-01-01" max="<?= date('Y-m-d') ?>">
+                  <label for="valor">Data referência (ínicio contribuição) <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="data_referencia" name="data_referencia" min="1900-01-01" max="<?= date('Y-m-d') ?>" required>
                 </div>
                 <div class="form-group col-xs-6">
-                  <label for="valor">Valor/período em R$</label>
-                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" onkeypress="return Onlynumbers(event)" min="0" step="0.01">
+                  <label for="valor">Valor/período em R$ <span class="text-danger">*</span></label>
+                  <input type="number" class="form-control" id="valor_periodo" name="valor_periodo" onkeypress="return Onlynumbers(event)" min="0" step="0.01" required>
                 </div>
               </div>
               <div class="row">
                 <div class="form-group col-xs-12">
-                  <label for="valor">Tipo de contribuição</label>
-                  <select class="form-control" name="tipo_contribuicao" id="tipo_contribuicao">
+                  <label for="valor">Tipo de contribuição <span class="text-danger">*</span></label>
+                  <select class="form-control" name="tipo_contribuicao" id="tipo_contribuicao" required>
                     <option value="1">Boleto</option>
                     <option value="2">Cartão de crédito</option>
                     <option value="3">Outros</option>
@@ -132,11 +132,11 @@ try {
               </div>
               <div class="row">
                 <div style="margin-bottom:  1em" class="form-group col-xs-12 mb-2">
-                  <label for="valor">Grupos</label>
+                  <label for="valor">Grupos <span class="text-danger">*</span></label>
                   <a onclick="adicionar_tag()">
                     <i class="fas fa-plus w3-xlarge" style="margin-top: 0.75vw"></i>
                   </a>
-                  <select class="form-control" name="tags[]" id="tags" multiple required size="6">
+                  <select class="form-control" name="tags[]" id="tags" multiple required size="6" required>
                     <?php
                     $stmt = $conexao->prepare("SELECT * FROM socio_tag");
                     $stmt->execute();
@@ -202,121 +202,6 @@ try {
             <button id="btn_reset" type="reset" class="btn btn-danger">Resetar</button>
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
             <button type="submit" class="btn btn-primary btn_salvar_socio">Salvar sócio</button>
-          </div>
-          </form>
-        </div>
-        <!-- /.box-body -->
-        <!-- Loading (remove the following to stop the loading)-->
-
-        <!-- end loading -->
-      </div>
-
-
-    </div>
-  </div>
-</div>
-
-<!-- modal inserir cobrança -->
-<div class="modal fade" id="adicionarCobrancaModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="exampleModalLabel">Nova cobrança</h5>
-      </div>
-      <div class="modal-body">
-        <!-- <div class="callout callout-info">
-                <h4>Adicione um novo sócio</h4>
-                <p>Preencha os dados corretamente para cadastrar um novo sócio.</p>
-              </div> -->
-        <div class="box box-info box-solid cobrancaModal">
-          <div class="box-header">
-            <h3 class="box-title"><i class="fa fa-plus-square"></i> Nova cobrança</h3>
-          </div>
-          <div class="box-body">
-            <form id="frm_nova_cobranca2" action="./controller/CobrancaController.php" method="POST">
-              <div class="row">
-                <div class="form-group mb-2 col-xs-12">
-                  <label for="nome_cliente">Sócio</label>
-                  <select name="socio_id" class="form-control" required>
-                    <option value="" disabled selected>Selecione um sócio...</option>
-
-                    <?php
-                    require_once './model/Socio.php';
-                    $socios = array();
-                    $resultado = mysqli_query($conexao, "SELECT *, s.id_socio as socioid FROM socio AS s LEFT JOIN pessoa AS p ON s.id_pessoa = p.id_pessoa LEFT JOIN socio_tipo AS st ON s.id_sociotipo = st.id_sociotipo");
-                    while ($registro = mysqli_fetch_assoc($resultado)) {
-                      $socios[] = new Socio($registro['socioid'], $registro['nome'], $registro['cpf']);
-                    }
-
-                    //print_r($socios);
-                    $opcoesSocio = "";
-
-                    foreach ($socios as $socio) {
-                      $idSocio = $socio->getId();
-                      $nomeSocio = $socio->getNome();
-                      $opcoesSocio .= "<option value=\"$idSocio\">" . htmlspecialchars($nomeSocio) . "</option>";
-                    }
-
-                    echo $opcoesSocio;
-
-                    ?>
-                  </select>
-                  <!--<input type="text" class="form-control" id="socio_nome_ci" name="socio_nome_ci" placeholder="" required>-->
-                </div>
-                <script>
-                  /*
-                  var socios = <?php
-                                //echo (json_encode($socios));
-                                ?>;
-                  console.log(socios);
-                  if ($("#socio_nome_ci").leght) {
-                    $("#socio_nome_ci").autocomplete({
-                      source: socios,
-                      response: function(event, ui) {
-                        if (ui.content.length == 1) {
-                          ui.item = ui.content[0];
-                          $(this).val(ui.item.value)
-                          $(this).data('ui-autocomplete')._trigger('select', 'autocompleteselect', ui);
-                          $("#socio_nome_ci").blur();
-                        }
-                      }
-                    });
-                  }*/
-                </script>
-                <div class="form-group col-xs-12">
-                  <label id="label_cpf_cnpj" for="valor">Local de recepção</label>
-                  <input type="text" class="form-control" id="local_recepcao" name="local_recepcao" required>
-                </div>
-              </div>
-              <div class="row">
-                <div class="form-group col-xs-6">
-                  <label for="obs">Recebido por: </label>
-                  <input type="text" class="form-control" id="receptor" value="<?php echo (htmlspecialchars($nome)); ?>" name="receptor" placeholder="" readonly>
-                </div>
-                <div class="form-group col-xs-6">
-                  <label for="valor">Valor</label>
-                  <input type="number" min="0" class="form-control" id="valor_cobranca" name="valor_cobranca" required>
-                </div>
-              </div>
-              <div class="row">
-
-                <div class="form-group col-xs-6">
-                  <label for="valor">Forma de doação</label>
-                  <input type="text" class="form-control" id="forma_doacao" name="forma_doacao" required>
-                </div>
-
-                <div class="form-group col-xs-6">
-                  <label for="valor">Data Doação</label>
-                  <input type="date" class="form-control" id="data_doacao" value="<?php echo (Date("Y-m-d")); ?>" name="data_doacao" required>
-                </div>
-
-              </div>
-
-          </div>
-          <div class="modal-footer">
-            <button id="btn_reset" type="reset" class="btn btn-danger" onclick="resetaForma('#frm_nova_cobranca2')">Resetar</button>
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-            <button type="submit" class="btn btn-primary btn_salvar_socio">Salvar cobrança</button>
           </div>
           </form>
         </div>
@@ -426,52 +311,6 @@ try {
           <!-- /.box-body -->
         </div>
 
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal importar cobranças -->
-<div class="modal fade" id="modal_importar_xlsx_cobranca" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">×</span></button>
-        <h4 class="modal-title">Importar cobranças</h4>
-      </div>
-      <div class="modal-body">
-        <div class="alert alert-warning alert-dismissible">
-          <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-          <h4><i class="icon fa fa-warning"></i> Atenção!</h4>
-          A importação pode demorar alguns minutos, não feche a página.
-        </div>
-        <div class="box box-warning box_xlsx">
-          <div class="box-header with-border">
-            <h3 class="box-title">Importar cobranças através de arquivo .xlsx</h3>
-          </div>
-          <div class="box-body box_xlsx">
-            <form action="" id="form_xlsx_cobranca" method="post" enctype="multipart/form-data">
-              <div class="form-group">
-                <label for="exampleInputFile">Tabela .xlsx</label>
-                <input type="file" id="arquivo_xlsx_cobranca" accept=".xls,.xlsx, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" name="arquivo" required>
-                <p class="help-block">Envie um arquivo .xlsx para continuar.</p>
-              </div>
-              <input type="submit" class="btn btn-primary pull-right" name="btn_envia_xlsx_cobranca">
-            </form>
-            <!-- /input-group -->
-          </div>
-          <!-- /.box-body -->
-        </div>
-
-        <div class="progress progress-sm active">
-          <div class="progress-bar progress-bar-info progress-bar-striped barra_envio" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
-            <span class="sr-only">20% Complete</span>
-          </div>
-        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>

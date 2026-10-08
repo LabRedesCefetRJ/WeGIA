@@ -1,9 +1,11 @@
 <?php
-require_once '../model/ContribuicaoLogCollection.php';
-require_once '../model/ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLogCollection.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
-require_once 'ApiCarneServiceInterface.php';
-require_once '../vendor/autoload.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiCarneServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'PdfDownloadService.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 
 use setasign\Fpdi\Fpdi;
 
@@ -27,7 +29,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
             //Configurar cabeçalho da requisição
             $headers = [
-                'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+                'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
                 'Content-Type: application/json;charset=utf-8',
             ];
 
@@ -98,7 +100,11 @@ class PagarMeCarneService implements ApiCarneServiceInterface
                 // Verifica por erros no cURL
                 if (curl_errno($ch)) {
                     curl_close($ch);
-                    throw new LogicException(curl_error($ch), 500);
+                    throw new PaymentServiceException(
+                        'Não foi possível gerar o carnê no momento. Tente novamente mais tarde.',
+                        'Erro cURL ao gerar carnê na API Pagar.me: ' . curl_error($ch),
+                        502
+                    );
                 }
 
                 // Obtém o código de status HTTP
@@ -113,7 +119,11 @@ class PagarMeCarneService implements ApiCarneServiceInterface
                     $pdf_links[] = $responseData['charges'][0]['last_transaction']['pdf'];
                     $codigosAPI[] = $responseData['id'];
                 } else {
-                    throw new LogicException("A API retornou o código de status HTTP $httpCode", $httpCode);
+                    throw new PaymentServiceException(
+                        'Não foi possível gerar o carnê no momento. Tente novamente mais tarde.',
+                        "A API Pagar.me retornou o código de status HTTP $httpCode",
+                        $httpCode
+                    );
                 }
             }
 
@@ -136,16 +146,24 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
             //Retorna o link e a coleção de contribuições
             return ['link' => $caminho, 'contribuicoes' => $contribuicaoLogCollection];
-        } catch (Exception $e) {
-            Util::tratarException($e);
-            return false;
+        } catch (Throwable $e) {
+            if ($e instanceof PaymentServiceException) {
+                throw $e;
+            }
+
+            throw new PaymentServiceException(
+                'Não foi possível gerar o carnê no momento. Tente novamente mais tarde.',
+                'Falha inesperada ao gerar carnê na API Pagar.me: ' . $e->getMessage(),
+                502,
+                $e
+            );
         }
     }
 
     public function salvarTemp($pdf_links)
     {
         // Diretório onde os arquivos serão armazenados
-        $saveDir = '../pdfs/';
+        $saveDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR;
         $saveDirTemp = $saveDir . 'temp/';
 
         // Verifica se o diretório existe, se não, cria o diretório
@@ -164,46 +182,9 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
             // Caminho completo para salvar o arquivo
             $savePath = $saveDirTemp . $fileName;
-
-            // Inicia uma sessão cURL
-            $ch = curl_init($url);
-
-            // Configurações da sessão cURL
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_HEADER, true);
-
-            // Executa a sessão cURL e obtém a resposta com cabeçalhos
-            $response = curl_exec($ch);
-
-            // Verifica se ocorreu algum erro durante a execução do cURL
-            if (curl_errno($ch)) {
-                throw new LogicException('Erro ao estabelecer conexão para baixar o arquivo', 500);
-            } else {
-                // Verifica o código de resposta HTTP
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-                if ($httpCode == 200) {
-                    // Separa os cabeçalhos do corpo da resposta
-                    $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-                    $headers = substr($response, 0, $headerSize);
-                    $fileContent = substr($response, $headerSize);
-
-                    // Verifica o tipo de conteúdo
-                    if (strpos($headers, 'Content-Type: application/pdf') !== false) {
-                        // Salva o conteúdo do arquivo no diretório especificado
-                        file_put_contents($savePath, $fileContent);
-                        $arquivos[] = $savePath;
-                    } else {
-                        throw new LogicException('Erro: O conteúdo da URL não é um PDF.', 400);
-                    }
-                } else {
-                    throw new LogicException("Erro ao baixar o arquivo: HTTP $httpCode", $httpCode);
-                }
-            }
-
-            // Fecha a sessão cURL
-            curl_close($ch);
+            $fileContent = PdfDownloadService::baixarConteudo($url, 'carnê');
+            file_put_contents($savePath, $fileContent);
+            $arquivos[] = $savePath;
         }
 
         return $arquivos;
@@ -211,7 +192,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
 
     public function removerTemp()
     {
-        $dir = '../pdfs/temp';
+        $dir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . 'temp';
         // Verifica se o diretório existe
         if (!file_exists($dir)) {
             return false;
@@ -270,7 +251,7 @@ class PagarMeCarneService implements ApiCarneServiceInterface
         $ultimaDataVencimento = str_replace('-', '', $ultimaDataVencimento);
 
         // Salva o arquivo PDF unido
-        $pdf->Output('F', '../pdfs/' . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf');
+        $pdf->Output('F', dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf');
 
         return 'pdfs/' . $numeroAleatorio . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $ultimaParcela->getValor() . '.pdf';
     }

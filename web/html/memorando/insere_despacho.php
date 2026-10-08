@@ -120,6 +120,9 @@ require_once ROOT . "/html/personalizacao_display.php";
     <script>
         $(function() {
             var funcionario = <?php echo $_SESSION['funcionarios2'] ?>;
+
+            $("#destinatario").append('<option value="" disabled selected>Selecione um destino</option>');
+
             $.each(funcionario, function(i, item) {
                 $("#destinatario").append($("<option id=" + item.id_pessoa + " value=" + item.id_pessoa + " name=" + item.id_pessoa + ">" + item.nome + " " + item.sobrenome + "</option>"));
             });
@@ -479,6 +482,12 @@ require_once ROOT . "/html/personalizacao_display.php";
     <script>
         document.getElementById('enviar').addEventListener('click', function(e) {
             e.preventDefault();
+
+            const destinatario = document.getElementById('destinatario').value;
+            if (!destinatario || destinatario === "") {
+                window.alert("Por favor, selecione um destino para o memorando.");
+                return; 
+            }
 
             const conteudoEditor = CKEDITOR.instances['despacho'].getData().trim();
 

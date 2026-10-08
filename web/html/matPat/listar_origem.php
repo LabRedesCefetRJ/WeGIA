@@ -20,6 +20,17 @@ require_once ROOT . "/html/personalizacao_display.php";
 include_once ROOT . '/dao/Conexao.php';
 include_once ROOT . '/dao/OrigemDAO.php';
 
+$pdo = Conexao::connect();
+
+$stmtAlmoxarifados = $pdo->query("
+   SELECT id_almoxarifado, descricao_almoxarifado
+   FROM almoxarifado
+   WHERE ativo = 1
+   ORDER BY descricao_almoxarifado
+");
+
+$almoxarifados = json_encode($stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC));
+
 if (!isset($_SESSION['origem'])) {
    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=OrigemControle&nextPage=' . WWW . 'html/matPat/listar_origem.php');
 } else {
@@ -74,34 +85,63 @@ if (!isset($_SESSION['origem'])) {
       }
    </script>
    <script>
-      $(function() {
-         var origem = <?php
-                        echo $origem;
-                        ?>;
-         console.log(origem);
-         $.each(origem, function(i, item) {
+      var almoxarifados = <?php echo $almoxarifados; ?>;
+      var origens = <?php echo $origem; ?>;
 
+      function excluir(id) {
+         window.location.replace('<?= WWW ?>controle/control.php?metodo=excluir&nomeClasse=OrigemControle&id_origem=' + id);
+      }
+
+      function abrirModalEditarOrigem(index) {
+         var origem = origens[index];
+
+         $('#edit_id_origem').val(origem.id_origem);
+         $('#edit_nome').val(origem.nome_origem || '');
+         $('#edit_cnpj').val(origem.cnpj || '');
+         $('#edit_cpf').val(origem.cpf || '');
+         $('#edit_telefone').val(origem.telefone || '');
+
+         $('#edit_almoxarifados').empty();
+
+         var almoxarifadosOrigem = origem.almoxarifados || [];
+
+         $.each(almoxarifados, function(i, almoxarifado) {
+            var marcado = almoxarifadosOrigem.includes(String(almoxarifado.id_almoxarifado)) ? 'checked' : '';
+
+            $('#edit_almoxarifados').append(
+               '<div class="checkbox">' +
+                  '<label>' +
+                     '<input type="checkbox" name="almoxarifados[]" value="' + almoxarifado.id_almoxarifado + '" ' + marcado + '> ' +
+                     almoxarifado.descricao_almoxarifado +
+                  '</label>' +
+               '</div>'
+            );
+         });
+
+         $('#modalEditarOrigem').modal('show');
+      }
+
+      $(function() {
+         $.each(origens, function(i, item) {
             $('#tabela')
                .append($('<tr />')
+                  .append($('<td />').text(item.nome_origem || ''))
+                  .append($('<td />').text(item.cnpj || ''))
+                  .append($('<td />').text(item.cpf || ''))
+                  .append($('<td />').text(item.telefone || ''))
                   .append($('<td />')
-                     .text(item.nome_origem))
-                  .append($('<td />')
-                     .text(item.cnpj))
-                  .append($('<td />')
-                     .text(item.cpf))
-                  .append($('<td />')
-                     .text(item.telefone))
-                  .append($('<td />')
-                     .attr('onclick', 'excluir("' + item.id_origem + '")')
-                     .html('<i class="fas fa-trash-alt"></i>')));
+                     .html(
+                        '<i class="fas fa-edit" style="cursor:pointer; margin-right:10px;" onclick="abrirModalEditarOrigem(' + i + ')"></i>' +
+                        '<i class="fas fa-trash-alt" style="cursor:pointer;" onclick="excluir(' + item.id_origem + ')"></i>'
+                     )
+                  )
+               );
          });
-      });
 
-      $(function() {
          $("#header").load("<?= WWW ?>html/header.php");
          $(".menuu").load("<?= WWW ?>html/menu.php");
       });
-   </script>
+</script>
 </head>
 
 <body>
@@ -154,6 +194,58 @@ if (!isset($_SESSION['origem'])) {
                <br>
             </section>
          </section>
+
+         <div class="modal fade" id="modalEditarOrigem" tabindex="-1" role="dialog" aria-labelledby="modalEditarOrigemLabel">
+            <div class="modal-dialog" role="document">
+               <div class="modal-content">
+                  <form method="post" action="<?= WWW ?>controle/control.php">
+                     <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                           <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="modalEditarOrigemLabel">Editar origem</h4>
+                     </div>
+
+                     <div class="modal-body">
+                        <input type="hidden" name="nomeClasse" value="OrigemControle">
+                        <input type="hidden" name="metodo" value="alterar">
+                        <input type="hidden" name="id_origem" id="edit_id_origem">
+
+                        <div class="form-group">
+                           <label>Nome</label>
+                           <input type="text" class="form-control" name="nome" id="edit_nome" required>
+                        </div>
+
+                        <div class="form-group">
+                           <label>CNPJ</label>
+                           <input type="text" class="form-control" name="cnpj" id="edit_cnpj">
+                        </div>
+
+                        <div class="form-group">
+                           <label>CPF</label>
+                           <input type="text" class="form-control" name="cpf" id="edit_cpf">
+                        </div>
+
+                        <div class="form-group">
+                           <label>Telefone</label>
+                           <input type="text" class="form-control" name="telefone" id="edit_telefone">
+                        </div>
+
+                        <div class="form-group">
+                           <label>Almoxarifados relacionados</label>
+                           <div id="edit_almoxarifados"></div>
+                        </div>
+                     </div>
+
+                     <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+                     </div>
+                  </form>
+               </div>
+            </div>
+         </div>
+
          <!-- end: page -->
          <!-- Specific Page Vendor -->
          <script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>

@@ -2,22 +2,22 @@
 class Socio implements JsonSerializable{
     //Adicionar validações dos atributos nos métodos setters
 
-    private $id;
-    private $nome;
-    private $sobrenome;
-    private $dataNascimento;
-    private $telefone;
-    private $email;
-    private $estado;
-    private $cidade;
-    private $bairro;
-    private $complemento;
-    private $cep;
-    private $numeroEndereco;
-    private $logradouro;
-    private $documento;
-    private $ibge;
-    private $valor;
+    private $id = null;
+    private $nome = null;
+    private $sobrenome = null;
+    private $dataNascimento = null;
+    private $telefone = null;
+    private $email = null;
+    private $estado = null;
+    private $cidade = null;
+    private $bairro = null;
+    private $complemento = null;
+    private $cep = null;
+    private $numeroEndereco = null;
+    private $logradouro = null;
+    private $documento = null;
+    private $ibge = null;
+    private $valor = null;
     private array $tags = [];
 
     //métodos de lógica

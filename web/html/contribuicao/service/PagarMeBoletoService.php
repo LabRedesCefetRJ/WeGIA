@@ -1,7 +1,11 @@
 <?php
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiBoletoServiceInterface.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 require_once 'ApiBoletoServiceInterface.php';
-require_once '../model/ContribuicaoLog.php';
-require_once '../dao/GatewayPagamentoDAO.php';
+require_once 'PdfDownloadService.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 class PagarMeBoletoService implements ApiBoletoServiceInterface
 {
@@ -23,7 +27,7 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
             $msg = $contribuicaoLog->getAgradecimento();
             //Configurar cabeçalho da requisição
             $headers = [
-                'Authorization: Basic ' . base64_encode($gatewayPagamento['token'] . ':'),
+                'Authorization: Basic ' . base64_encode($gatewayPagamento['private_token'] . ':'),
                 'Content-Type: application/json;charset=utf-8',
             ];
 
@@ -89,7 +93,11 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
             // Verifica por erros no cURL
             if (curl_errno($ch)) {
                 curl_close($ch);
-                throw new LogicException(curl_error($ch), 500);
+                throw new PaymentServiceException(
+                    'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
+                    'Erro cURL ao gerar boleto na API Pagar.me: ' . curl_error($ch),
+                    502
+                );
             }
 
             // Obtém o código de status HTTP
@@ -108,24 +116,36 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
 
                 //armazena copia para segunda via
                 $contribuicaoLog->setCodigo($idPagarMe);
-                $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
+                $pdfInterno = $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
 
                 //envia resposta para o front-end
-                echo json_encode(['link' => $pdf_link]);
+                echo json_encode(['link' => WWW . $pdfInterno]); //pegar o link da segunda via do boleto para enviar para o front-end
             } else {
-                throw new LogicException("A API retornou o código de status HTTP $httpCode", $httpCode);
+                throw new PaymentServiceException(
+                    'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
+                    "A API Pagar.me retornou o código de status HTTP $httpCode",
+                    $httpCode
+                );
             }
 
             return $idPagarMe;
-        } catch (Exception $e) {
-            Util::tratarException($e);
-            return false;
+        } catch (Throwable $e) {
+            if ($e instanceof PaymentServiceException) {
+                throw $e;
+            }
+
+            throw new PaymentServiceException(
+                'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
+                'Falha inesperada ao gerar boleto na API Pagar.me: ' . $e->getMessage(),
+                502,
+                $e
+            );
         }
     }
     public function guardarSegundaVia($pdf_link, ContribuicaoLog $contribuicaoLog)
     {
         // Diretório onde os arquivos serão armazenados
-        $saveDir = '../pdfs/';
+        $saveDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'pdfs' . DIRECTORY_SEPARATOR;
 
         // Verifica se o diretório existe, se não, cria o diretório
         if (!is_dir($saveDir)) {
@@ -138,48 +158,13 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
         $ultimaDataVencimento = $contribuicaoLog->getDataVencimento();
         $ultimaDataVencimento = str_replace('-', '', $ultimaDataVencimento);
         $codigo = str_replace('_', '-', $contribuicaoLog->getCodigo());
-        $nomeArquivo = $saveDir . $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
+        $nomeArquivo = $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
 
-        // Inicia uma sessão cURL
-        $ch = curl_init($pdf_link);
+        $caminhoFisico = $saveDir . $nomeArquivo;
 
-        // Configurações da sessão cURL
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HEADER, true);
+        $fileContent = PdfDownloadService::baixarConteudo($pdf_link, 'boleto');
+        file_put_contents($caminhoFisico, $fileContent);
 
-        // Executa a sessão cURL e obtém a resposta com cabeçalhos
-        $response = curl_exec($ch);
-
-        // Verifica se ocorreu algum erro durante a execução do cURL
-        if (curl_errno($ch)) {
-            echo json_encode('Erro ao baixar o arquivo.'); //. curl_error($ch) . PHP_EOL;
-            exit();
-        } else {
-            // Verifica o código de resposta HTTP
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-            if ($httpCode == 200) {
-                // Separa os cabeçalhos do corpo da resposta
-                $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-                $headers = substr($response, 0, $headerSize);
-                $fileContent = substr($response, $headerSize);
-
-                // Verifica o tipo de conteúdo
-                if (strpos($headers, 'Content-Type: application/pdf') !== false) {
-                    // Salva o conteúdo do arquivo no diretório especificado
-                    file_put_contents($nomeArquivo, $fileContent);
-                    //$arquivos []= $savePath;
-                } else {
-                    //echo "Erro: O conteúdo da URL não é um PDF." . PHP_EOL;
-                }
-            } else {
-                echo json_encode("Erro ao baixar o arquivo: HTTP $httpCode");
-                exit();
-            }
-        }
-
-        // Fecha a sessão cURL
-        curl_close($ch);
+        return 'html/contribuicao/pdfs/' . $nomeArquivo; // Retorna o caminho relativo para o arquivo PDF
     }
 }

@@ -1,5 +1,6 @@
 <?php
 $title = 'Escolha sua forma de contribuição';
+$publicsFiles = ['css' => ['contact.css']];
 require_once './templates/header.php';
 
 //buscar meios de pagamento
@@ -81,6 +82,10 @@ $meiosDePagamentoArray = $meioPagamentoController->buscaTodos();
                 <?php endif; ?>
             </div>
         </div>
+        <div id="contact-container"></div>
+
+        
+    </div>
     </div>
 </div>
 

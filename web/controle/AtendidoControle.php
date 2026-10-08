@@ -13,7 +13,7 @@ include_once ROOT . '/classes/Cache.php';
 require_once ROOT . '/classes/Util.php';
 require_once ROOT . '/html/geral/msg.php';
 include_once ROOT . "/dao/Conexao.php";
-
+require_once ROOT . '/dao/MiddlewareDAO.php';
 require_once ROOT . '/dao/ProcessoAceitacaoDAO.php';
 require_once ROOT . '/dao/PaArquivoDAO.php';
 require_once ROOT . '/dao/AtendidoDocumentacaoMySql.php';
@@ -52,8 +52,18 @@ class AtendidoControle
         if ((!isset($sobrenome)) || (empty($sobrenome))) {
             $sobrenome = "";
         }
+
+        $isSemCpf = (isset($semCpf) && $semCpf == '1');
+
         Util::validarNomePessoaOuLancar($nome, 'nome', 412);
-        Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+
+        if ($isSemCpf) {
+            Util::validarNomePessoaOpcionalOuLancar($sobrenome, 'sobrenome', 412);
+        } else {
+            Util::validarNomePessoaOuLancar($sobrenome, 'sobrenome', 412);
+        }
+
+        Util::validarNomePessoaOuLancar($nome, 'nome', 412);
         Util::validarNomePessoaOpcionalOuLancar($nomePai ?? '', 'nome do pai', 412);
         Util::validarNomePessoaOpcionalOuLancar($nomeMae ?? '', 'nome da mãe', 412);
         if ((!isset($sexo)) || (empty($sexo))) {
@@ -303,6 +313,21 @@ class AtendidoControle
         } catch (Exception $e) {
             Util::tratarException($e);
         }
+    }
+
+    public function verificaPermissaoSaude(int $idPessoaLogada): bool 
+    {
+        $middlewareDAO = new MiddlewareDAO();
+        return $middlewareDAO->verificarPermissao($idPessoaLogada, 'SaudeControle', ['SaudeControle' => [5]]);
+    }
+
+    /**
+     * Retorna o id_fichamedica vinculado a um atendido, ou null caso o atendido não possua ficha cadastrada.
+     */
+    public function buscarFichaMedicaAtendido(int $idAtendido): ?int 
+    {
+        $atendidoDAO = new AtendidoDAO();
+        return $atendidoDAO->obterIdFichaMedicaPorAtendido($idAtendido);
     }
 
     /**Atribui a chave 'cpf_atendido' do array da variável de sessão os valores dos CPF's dos atendidos registrados no sistema */

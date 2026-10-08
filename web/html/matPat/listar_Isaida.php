@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 if (session_status() === PHP_SESSION_NONE)
 	session_start();
@@ -11,7 +12,6 @@ if (!isset($_SESSION['usuario'])) {
 	session_regenerate_id();
 }
 
-require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 permissao($_SESSION['id_pessoa'], 24, 5);
@@ -205,6 +205,13 @@ require_once ROOT . "/html/personalizacao_display.php";
 
 			$.each(isaida, function(i, item) {
 
+				const totalItem = item.valor_unitario * item.qtd;
+
+				const totalFormatado = new Intl.NumberFormat('pt-BR', {
+        			style: 'currency',
+        			currency: 'BRL'
+    			}).format(totalItem);
+
 				$('#tabela')
 					.append($('<tr />')
 						.append($('<td />')
@@ -216,7 +223,7 @@ require_once ROOT . "/html/personalizacao_display.php";
 						.append($('<td />')
 							.text(item.unidade))
 						.append($('<td />')
-							.text(item.valor_unitario * item.qtd)))
+							.text(totalFormatado)))
 			});
 		});
 		$(function() {

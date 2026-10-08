@@ -3,19 +3,24 @@ class GatewayPagamento
 {
 
     //atributos
-    private $id;
-    private $nome;
-    private $endpoint;
-    private $token;
+    private int $id;
+    private string $nome;
+    private string $endpoint;
+    private string $privateToken;
+    private string $publicToken;
     private $status;
 
-    public function __construct($nome, $endpoint, $token, $status = null)
+    public function __construct(string $nome, string $endpoint, string $privateToken, string $publicToken, $status = null, ?int $id = null)
     {
-        $this->setNome($nome)->setEndpoint($endpoint)->setToken($token);
+        $this->setNome($nome)->setEndpoint($endpoint)->setPrivateToken($privateToken)->setPublicToken($publicToken);
         if (!$status) {
             $this->setStatus(0);
         } else {
             $this->setStatus($status);
+        }
+
+        if ($id) {
+            $this->setId($id);
         }
     }
 
@@ -27,7 +32,7 @@ class GatewayPagamento
     {
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
-        $gatewayPagamentoDao->cadastrar($this->nome, $this->endpoint, $this->token, $this->status);
+        $gatewayPagamentoDao->cadastrar($this->nome, $this->endpoint, $this->privateToken, $this->publicToken, $this->status);
     }
 
     /**
@@ -37,15 +42,42 @@ class GatewayPagamento
     {
         require_once '../dao/GatewayPagamentoDAO.php';
         $gatewayPagamentoDao = new GatewayPagamentoDAO();
-        
+
         // Verifica se o token informado está ofuscado (possui apenas asteriscos ou é parcialmente ofuscado)
         if (strpos($this->token, '*') !== false) {
+            // Token não foi reinformado (veio ofuscado da tela). Se o endpoint
+            // estiver mudando mesmo assim, recusa: sem essa checagem, dava pra
+            // redirecionar as cobranças pra um servidor de terceiros mantendo
+            // a credencial real intacta no banco — o token real seguiria
+            // sendo enviado, agora pro host do atacante.
+            $endpointAtual = $gatewayPagamentoDao->buscarEndpointPorId($this->id);
+
+            if ($endpointAtual !== null && $endpointAtual !== $this->endpoint) {
+                throw new InvalidArgumentException(
+                    'Para alterar o endpoint do gateway é necessário reinformar o Token API — ele não pode continuar ofuscado.'
+                );
+            }
+
             // Não atualiza o token se ele estiver ofuscado
-            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, null);
+            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, null, $this->publicToken);
         } else {
             // Token foi alterado, então atualiza normalmente
-            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->token);
+            $gatewayPagamentoDao->editarPorId($this->id, $this->nome, $this->endpoint, $this->privateToken, $this->publicToken);
         }
+    }
+
+    /**
+     * Retorna os dados públicos do gateway de pagamento
+     */
+    public function getPublicData()
+    {
+        return [
+            'id' => $this->id,
+            'description' => $this->nome,
+            'endpoint' => $this->endpoint,
+            'publicToken' => $this->publicToken,
+            'status' => $this->status
+        ];
     }
 
     /**
@@ -78,9 +110,9 @@ class GatewayPagamento
     /**
      * Get the value of token
      */
-    public function getToken()
+    public function getPrivateToken()
     {
-        return $this->token;
+        return $this->privateToken;
     }
 
     /**
@@ -88,7 +120,7 @@ class GatewayPagamento
      *
      * @return  self
      */
-    public function setToken($token)
+    public function setPrivateToken($token)
     {
         $tokenLimpo = trim($token);
 
@@ -96,7 +128,33 @@ class GatewayPagamento
             throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
         }
 
-        $this->token = $token;
+        $this->privateToken = $token;
+
+        return $this;
+    }
+
+    /**
+     * Get the value of token
+     */
+    public function getPublicToken()
+    {
+        return $this->publicToken;
+    }
+
+    /**
+     * Set the value of token
+     *
+     * @return  self
+     */
+    public function setPublicToken($token)
+    {
+        $tokenLimpo = trim($token);
+
+        if (!$tokenLimpo || empty($tokenLimpo)) {
+            throw new InvalidArgumentException('O token de um gateway de pagamento não pode ser vazio.');
+        }
+
+        $this->publicToken = $token;
 
         return $this;
     }
@@ -122,7 +180,14 @@ class GatewayPagamento
             throw new InvalidArgumentException('O endpoint de um gateway de pagamento não pode ser vazio.');
         }
 
-        $this->endpoint = $endpoint;
+        // Exige URL válida em HTTPS: sem isso, um endpoint como
+        // "http://attacker.tld/collect" seria aceito, e a credencial do
+        // gateway (token) trafegaria em texto claro pro atacante.
+        if (!filter_var($endpointLimpo, FILTER_VALIDATE_URL) || stripos($endpointLimpo, 'https://') !== 0) {
+            throw new InvalidArgumentException('O endpoint do gateway deve ser uma URL HTTPS válida.');
+        }
+
+        $this->endpoint = $endpointLimpo;
 
         return $this;
     }

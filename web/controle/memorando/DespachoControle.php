@@ -13,10 +13,52 @@ require_once ROOT . "/classes/Util.php";
 
 class DespachoControle
 {
+	/**
+	 * Verifica se o usuário logado na sessão pode acessar/alterar despachos de um
+	 * memorando: precisa ser quem criou o memorando ou já ter participado dele
+	 * como remetente/destinatário de algum despacho. Isso é checado aqui (e não
+	 * só na página que consome esta classe) porque este método também é
+	 * alcançável diretamente via controle/control.php?nomeClasse=DespachoControle,
+	 * que só valida permissão genérica no módulo (recurso 3), sem checar o
+	 * registro específico -- mesmo padrão do IDOR já corrigido em
+	 * AnexoControle::listarAnexo.
+	 */
+	private function usuarioTemAcessoAoMemorando($id_memorando)
+	{
+		if (session_status() !== PHP_SESSION_ACTIVE) {
+			session_start();
+		}
+
+		$id_memorando = filter_var($id_memorando, FILTER_VALIDATE_INT);
+		$id_pessoa = filter_var($_SESSION['id_pessoa'] ?? null, FILTER_VALIDATE_INT);
+
+		if (!$id_memorando || $id_memorando < 1 || !$id_pessoa || $id_pessoa < 1) {
+			return false;
+		}
+
+		$memorandoDAO = new MemorandoDAO();
+		$dadosMemorando = $memorandoDAO->listarTodosId($id_memorando);
+
+		if (empty($dadosMemorando)) {
+			return false;
+		}
+
+		if ((int)$dadosMemorando[0]['id_pessoa'] === $id_pessoa) {
+			return true;
+		}
+
+		$memorandosPermitidos = $memorandoDAO->listarIdTodosInativos();
+
+		return in_array($id_memorando, $memorandosPermitidos ?? []);
+	}
+
 	//Listar despachos
 	public function listarTodos()
 	{
 		extract($_REQUEST);
+		if (!$this->usuarioTemAcessoAoMemorando($id_memorando)) {
+			throw new InvalidArgumentException('Você não tem acesso a este memorando.', 403);
+		}
 		$despachoDAO = new DespachoDAO();
 		$despachos = $despachoDAO->listarTodos($id_memorando);
 		$_SESSION['despacho'] = $despachos;
@@ -43,6 +85,9 @@ class DespachoControle
 	public function listarTodosComAnexo()
 	{
 		extract($_REQUEST);
+		if (!$this->usuarioTemAcessoAoMemorando($id_memorando)) {
+			throw new InvalidArgumentException('Você não tem acesso a este memorando.', 403);
+		}
 		$despachoComAnexoDAO = new DespachoDAO();
 		$despachosComAnexo = $despachoComAnexoDAO->listarTodosComAnexo($id_memorando);
 		$_SESSION['despachoComAnexo'] = $despachosComAnexo;
@@ -52,6 +97,9 @@ class DespachoControle
 	public function incluir()
 	{
 		extract($_REQUEST);
+		if (!$this->usuarioTemAcessoAoMemorando($id_memorando)) {
+			throw new InvalidArgumentException('Você não tem acesso a este memorando.', 403);
+		}
 		$despacho = $this->verificarDespacho();
 		$despachoDAO = new DespachoDAO();
 		try {
@@ -85,9 +133,15 @@ class DespachoControle
 			$pessoa = new UsuarioDAO();
 
 			$id_pessoa = filter_var($pessoa->obterUsuario($cpf_usuario)['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
-			$destinatario = filter_var($_REQUEST['destinatario'], FILTER_SANITIZE_NUMBER_INT);
+			$destinatario = filter_input(INPUT_POST, 'destinatario', FILTER_SANITIZE_NUMBER_INT);
+			if (empty($destinatario)) {
+                throw new InvalidArgumentException("É obrigatório selecionar um destino para o memorando.", 400);
+            }
 			$id_memorando = filter_var($_REQUEST['id_memorando'], FILTER_SANITIZE_NUMBER_INT);
-			$texto = filter_var($_REQUEST['texto'], FILTER_SANITIZE_SPECIAL_CHARS);
+			$texto = $_REQUEST['texto'] ?? '';
+			if (!is_string($texto)) {
+				throw new InvalidArgumentException('O texto de um despacho não pode ser vazio.', 400);
+			}
 
 			$despacho = new Despacho($texto, $id_pessoa, $destinatario, $id_memorando);
 			return $despacho;
@@ -101,7 +155,11 @@ class DespachoControle
 	{
 		try {
 			if ($id < 1) {
-				throw new InvalidArgumentException('O id de um despacho não pode ser menor que 1.');
+				throw new InvalidArgumentException('O id de um despacho não pode ser menor que 1.', 400);
+			}
+
+			if (!$this->usuarioTemAcessoAoMemorando($id)) {
+				throw new InvalidArgumentException('Você não tem acesso a este memorando.', 403);
 			}
 
 			$despachoDAO = new DespachoDAO();

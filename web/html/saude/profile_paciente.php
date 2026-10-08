@@ -230,7 +230,6 @@ try {
   $data_nasc_atendido = $dadosAtendido['data_nascimento'] ?? '1900-01-01';
 
   $dataAtual = new DateTime('now', new DateTimeZone(date_default_timezone_get()));
-
 ?>
 <!-- Vendor -->
 <script src="<?php echo WWW; ?>assets/vendor/jquery/jquery.min.js"></script>
@@ -1170,6 +1169,16 @@ try {
                   <img id="imagem" alt="John Doe">
                 </div>
               </div>
+              <?php
+                $saudeControle = new SaudeControle();
+                $idAtendidoPerfil = $saudeControle->buscarIdAtendidoPorFichaMedica((int)$id_fichamedica);
+                $permissaoPessoa = $saudeControle->verificaPermissaoPessoa((int)$_SESSION['id_pessoa']);
+                if ($permissaoPessoa && !empty($idAtendidoPerfil)):
+              ?> 
+              <div class="panel-footer text-center">
+                <a href="../atendido/Profile_Atendido.php?idatendido=<?=$idAtendidoPerfil;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP" title="Acesso rápido a página de Perfil de Atendido">Acessar Perfil</a>
+              </div>  
+              <?php endif; ?>
             </section>
           </div>
           <div class="col-md-8 col-lg-8">
@@ -2293,7 +2302,7 @@ try {
                                 class="form-control"
                                 name="nome_medico"
                                 id="nomeMedicoModal"
-                                maxlength="120"
+                                maxlength="50"
                                 pattern="[A-Za-zÀ-ÿ\s\-'.']+"
                                 title="apenas letras, espaços e hífens (números não são permitidos)"
                                 required>
@@ -2308,7 +2317,11 @@ try {
                                 class="form-control"
                                 name="crm_medico"
                                 id="crmMedicoModal"
-                                maxlength="30"
+                                maxlength="10"
+                                pattern="[0-9]+"
+                                title="apenas números são permitidos"
+                                onkeypress="return Onlynumbers(event)"
+                                oninput="this.value =  this.value.replace(/\D/g,'')"
                                 required>
                             </div>
                           </div>
@@ -2758,6 +2771,25 @@ try {
           return;
         }
 
+        const arquivoSelecionado = documentos.files[0];
+
+        try {
+          const limitesResp = await fetch("../../controle/control.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nomeClasse: "ExameControle", metodo: "limitesUpload" })
+          });
+          const limites = await limitesResp.json();
+
+          if (arquivoSelecionado.size > limites.post_max_size_bytes) {
+            const limiteMb = (limites.post_max_size_bytes / 1024 / 1024).toFixed(1);
+            exibirErroModalDocumento(`O arquivo excede o tamanho máximo permitido (${limiteMb}MB). Por favor, escolha um arquivo menor.`);
+            return;
+          }
+        } catch (e) {
+           console.warn("Não foi possível verificar o limite de upload antes do envio:", e);
+        }
+
         ocultarMensagemCadastroExame();
 
         formData.append("arquivo", documentos.files[0]);
@@ -2772,16 +2804,18 @@ try {
             body: formData
           });
 
+          const resposta = await requisicao.json();
           if (!requisicao.ok) {
-            throw new Error("Erro na requisição");
+            throw new Error(resposta.erro || "Erro na requisição");
           }
 
           documentos.value = '';
           tipoDocumento.value = "";
           fecharModalExameEMostrarMensagem("Exame adicionado com sucesso!");
           gerarExames();
+
         } catch (e) {
-          fecharModalExameEMostrarMensagem("Erro ao adicionar exame.", "danger");
+          fecharModalExameEMostrarMensagem(e.message, "danger");
         }
       }
 

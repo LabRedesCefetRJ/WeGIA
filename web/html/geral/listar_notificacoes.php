@@ -20,8 +20,8 @@ $notificacoes = $dao->listarPorUsuario((int) $_SESSION['id_pessoa']);
 $naoVisualizadas = [];
 $visualizadas = [];
 
-foreach($notificacoes as $n) {
-    if((int)$n['visualizada'] === 1) {
+foreach ($notificacoes as $n) {
+    if ((int) $n['visualizada'] === 1) {
         $visualizadas[] = $n;
     } else {
         $naoVisualizadas[] = $n;
@@ -36,7 +36,7 @@ foreach($notificacoes as $n) {
     <title>Notificações</title>
 
     <!-- Mobile Metas -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
 	<!-- Vendor CSS -->
 	<link rel="stylesheet" href="<?= WWW ?>assets/vendor/bootstrap/css/bootstrap.css" />
@@ -134,6 +134,196 @@ foreach($notificacoes as $n) {
             });
         }
     </script>
+    <style>
+        .table-responsive {
+            border: none;
+            margin-top: 0;
+            overflow-x: visible;
+        }
+
+        .tabela-notificacoes {
+            width: 100% !important;
+            table-layout: fixed;
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .tabela-notificacoes th {
+            background-color: #f7f8fa;
+            color: #333;
+            font-weight: 600;
+            vertical-align: middle !important;
+        }
+
+        .tabela-notificacoes th,
+        .tabela-notificacoes td {
+            padding: 13px 12px !important;
+            vertical-align: middle !important;
+            overflow-wrap: anywhere;
+            word-break: normal;
+            border-color: #e3e6e8 !important;
+        }
+
+        .tabela-notificacoes th:nth-child(1),
+        .tabela-notificacoes td:nth-child(1) {
+            width: 15%;
+        }
+
+        .tabela-notificacoes th:nth-child(2),
+        .tabela-notificacoes td:nth-child(2) {
+            width: 12%;
+        }
+
+        .tabela-notificacoes th:nth-child(3),
+        .tabela-notificacoes td:nth-child(3) {
+            width: 43%;
+        }
+
+        .tabela-notificacoes th:nth-child(4),
+        .tabela-notificacoes td:nth-child(4) {
+            width: 14%;
+            white-space: nowrap;
+        }
+
+        .tabela-notificacoes th:nth-child(5),
+        .tabela-notificacoes td:nth-child(5) {
+            width: 16%;
+            text-align: center;
+        }
+
+        .tabela-notificacoes td:nth-child(5) .btn {
+            display: inline-block;
+            margin: 2px;
+            white-space: normal;
+        }
+
+        .tabela-notificacoes tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        .tabela-notificacoes tbody tr:hover {
+            background-color: #f4f9fc !important;
+        }
+
+        #tabela-notificacoes-novas tbody tr td {
+            font-weight: 500;
+        }
+
+        .dataTables_wrapper {
+            padding: 18px 15px 8px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-top: 0;
+        }
+
+        .dataTables_wrapper > .row:first-child {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 0;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .dataTables_wrapper .dataTables_filter {
+            text-align: right;
+        }
+
+        .dataTables_wrapper .dataTables_filter label {
+            justify-content: flex-end;
+        }
+
+        .dataTables_wrapper .dataTables_filter input,
+        .dataTables_wrapper .dataTables_length select {
+            display: inline-block;
+            height: 34px;
+            margin-left: 0;
+            padding: 6px 10px;
+            color: #555;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+        }
+
+        .dataTables_wrapper .dataTables_length select {
+            width: 68px;
+        }
+
+        .dataTables_wrapper .dataTables_filter input {
+            width: 220px;
+        }
+
+        .dataTables_wrapper .pagination {
+            margin: 10px 0 0;
+        }
+
+        .dataTables_wrapper .dataTables_info {
+            padding-top: 18px;
+            color: #666;
+        }
+
+        .nav-tabs {
+            margin-top: 20px;
+            border-bottom-color: #ddd;
+        }
+
+        .nav-tabs > li > a {
+            padding: 11px 18px;
+            color: #666;
+            background-color: #f7f7f7;
+            border: 1px solid #ddd;
+            border-bottom-color: transparent;
+        }
+
+        .nav-tabs > li.active > a,
+        .nav-tabs > li.active > a:hover,
+        .nav-tabs > li.active > a:focus {
+            color: #333;
+            font-weight: 600;
+            background-color: #fff;
+            border-top: 3px solid #0088cc;
+        }
+
+        .panel-body {
+            padding-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .table-responsive {
+                overflow-x: auto;
+            }
+
+            .tabela-notificacoes {
+                min-width: 850px;
+            }
+
+            .dataTables_wrapper > .row:first-child {
+                display: block;
+            }
+
+            .dataTables_wrapper .dataTables_filter {
+                margin-top: 10px;
+                text-align: left;
+            }
+
+            .dataTables_wrapper .dataTables_filter label {
+                justify-content: flex-start;
+            }
+
+            .dataTables_wrapper .dataTables_filter input {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -164,10 +354,6 @@ foreach($notificacoes as $n) {
             </header>
 
             <section class="panel">
-                <header class="panel-heading">
-                    <h2 class="panel-title">Minhas notificações</h2>
-                </header>
-
                 <div class="panel-body">
                     <button class="btn btn-primary" onclick="marcarTodasComoLidas()">
                         Marcar todas como lidas
@@ -192,91 +378,102 @@ foreach($notificacoes as $n) {
                         </li>
                     </ul>
 
-                    <div class="tab-content" style="padding-top: 20px;">
+                    <div class="tab-content">
 
                         <div id="novas" class="tab-pane active">
-                            <table class="table table-bordered table-striped mb-none">
-                                <thead>
-                                    <tr>
-                                        <th>Módulo</th>
-                                        <th>Título</th>
-                                        <th>Mensagem</th>
-                                        <th>Data</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    <?php if (!empty($naoVisualizadas)): ?>
-                                        <?php foreach ($naoVisualizadas as $n): ?>
-                                            <tr>
-                                                <td><?= htmlspecialchars($n['recurso']) ?></td>
-                                                <td><?= htmlspecialchars($n['titulo']) ?></td>
-                                                <td><?= htmlspecialchars($n['mensagem']) ?></td>
-                                                <td><?= htmlspecialchars($n['data_criacao']) ?></td>
-                                                <td>
-                                                    <?php if (!empty($n['link'])): ?>
-                                                        <a class="btn btn-default btn-sm" href="<?= WWW . htmlspecialchars($n['link']) ?>">
-                                                            Abrir
-                                                        </a>
-                                                    <?php endif; ?>
-
-                                                    <button
-                                                        class="btn btn-success btn-sm"
-                                                        onclick="marcarComoLida(<?= (int)$n['id_notificacao'] ?>)"
-                                                    >
-                                                        Marcar como lida
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
+                            <div class="table-responsive">
+                                <table
+                                    id="tabela-notificacoes-novas"
+                                    class="table table-bordered table-striped table-hover tabela-notificacoes"
+                                >
+                                    <thead>
                                         <tr>
-                                            <td colspan="5">Nenhuma notificação nova.</td>
+                                            <th>Módulo</th>
+                                            <th>Título</th>
+                                            <th>Mensagem</th>
+                                            <th>Data</th>
+                                            <th>Ações</th>
                                         </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
+                                    </thead>
+
+                                    <tbody>
+                                        <?php if (!empty($naoVisualizadas)): ?>
+                                            <?php foreach ($naoVisualizadas as $n): ?>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($n['recurso']) ?></td>
+                                                    <td><?= htmlspecialchars($n['titulo']) ?></td>
+                                                    <td><?= htmlspecialchars($n['mensagem']) ?></td>
+                                                    <td><?= htmlspecialchars($n['data_criacao']) ?></td>
+                                                    <td>
+                                                        <?php if (!empty($n['link'])): ?>
+                                                            <a class="btn btn-default btn-sm" href="<?= WWW . htmlspecialchars($n['link']) ?>">
+                                                                Abrir
+                                                            </a>
+                                                        <?php endif; ?>
+
+                                                        <button
+                                                            class="btn btn-success btn-sm"
+                                                            onclick="marcarComoLida(<?= (int) $n['id_notificacao'] ?>)"
+                                                        >
+                                                            Marcar como lida
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="5">Nenhuma notificação nova.</td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div id="visualizadas" class="tab-pane">
-                            <table class="table table-bordered table-striped mb-none">
-                                <thead>
-                                    <tr>
-                                        <th>Módulo</th>
-                                        <th>Título</th>
-                                        <th>Mensagem</th>
-                                        <th>Data</th>
-                                        <th>Ação</th>
-                                    </tr>
-                                </thead>
 
-                                <tbody>
-                                    <?php if (!empty($visualizadas)): ?>
-                                        <?php foreach ($visualizadas as $n): ?>
-                                            <tr>
-                                                <td><?= htmlspecialchars($n['recurso']) ?></td>
-                                                <td><?= htmlspecialchars($n['titulo']) ?></td>
-                                                <td><?= htmlspecialchars($n['mensagem']) ?></td>
-                                                <td><?= htmlspecialchars($n['data_criacao']) ?></td>
-                                                <td>
-                                                    <?php if (!empty($n['link'])): ?>
-                                                        <a class="btn btn-default btn-sm" href="<?= WWW . htmlspecialchars($n['link']) ?>">
-                                                            Abrir
-                                                        </a>
-                                                    <?php else: ?>
-                                                        -
-                                                    <?php endif; ?>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
+                        <div id="visualizadas" class="tab-pane">
+                            <div class="table-responsive">
+                                <table
+                                    id="tabela-notificacoes-visualizadas"
+                                    class="table table-bordered table-striped table-hover tabela-notificacoes"
+                                >
+                                    <thead>
                                         <tr>
-                                            <td colspan="5">Nenhuma notificação visualizada.</td>
+                                            <th>Módulo</th>
+                                            <th>Título</th>
+                                            <th>Mensagem</th>
+                                            <th>Data</th>
+                                            <th>Ação</th>
                                         </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
+                                    </thead>
+
+                                    <tbody>
+                                        <?php if (!empty($visualizadas)): ?>
+                                            <?php foreach ($visualizadas as $n): ?>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($n['recurso']) ?></td>
+                                                    <td><?= htmlspecialchars($n['titulo']) ?></td>
+                                                    <td><?= htmlspecialchars($n['mensagem']) ?></td>
+                                                    <td><?= htmlspecialchars($n['data_criacao']) ?></td>
+                                                    <td>
+                                                        <?php if (!empty($n['link'])): ?>
+                                                            <a class="btn btn-default btn-sm" href="<?= WWW . htmlspecialchars($n['link']) ?>">
+                                                                Abrir
+                                                            </a>
+                                                        <?php else: ?>
+                                                            -
+                                                        <?php endif; ?>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <tr>
+                                                <td colspan="5">Nenhuma notificação visualizada.</td>
+                                            </tr>
+                                        <?php endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                     </div>
@@ -285,31 +482,63 @@ foreach($notificacoes as $n) {
         </section>
     </div>
 </section>
-                <!-- end: page -->
 
-				<!-- Vendor -->
+<!-- Specific Page Vendor -->
+<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
+<script src="<?= WWW ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
+<script src="<?= WWW ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
+<script src="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
 
-				<!-- Specific Page Vendor -->
-				<script src="<?= WWW ?>assets/vendor/select2/select2.js"></script>
-				<script src="<?= WWW ?>assets/vendor/jquery-datatables/media/js/jquery.dataTables.js"></script>
-				<script src="<?= WWW ?>assets/vendor/jquery-datatables/extras/TableTools/js/dataTables.tableTools.min.js"></script>
-				<script src="<?= WWW ?>assets/vendor/jquery-datatables-bs3/assets/js/datatables.js"></script>
+<!-- Examples -->
+<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
+<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
+<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
 
-				<!-- Theme Base, Components and Settings -->
-				<script src="<?= WWW ?>assets/javascripts/theme.js"></script>
+<script>
+    $(document).ready(function () {
+        const configuracaoTabela = {
+            pageLength: 5,
+            lengthMenu: [
+                [5, 10, 25, 50],
+                [5, 10, 25, 50]
+            ],
+            order: [[3, "desc"]],
+            autoWidth: false,
+            language: {
+                emptyTable: "Nenhuma notificação encontrada.",
+                info: "Mostrando _START_ até _END_ de _TOTAL_ notificações",
+                infoEmpty: "Nenhuma notificação encontrada",
+                infoFiltered: "(filtradas de _MAX_ notificações)",
+                lengthMenu: "Mostrar _MENU_ notificações",
+                loadingRecords: "Carregando...",
+                processing: "Processando...",
+                search: "Pesquisar:",
+                zeroRecords: "Nenhuma notificação encontrada.",
+                paginate: {
+                    first: "Primeira",
+                    last: "Última",
+                    next: "Próxima",
+                    previous: "Anterior"
+                }
+            }
+        };
 
-				<!-- Theme Custom -->
-				<script src="<?= WWW ?>assets/javascripts/theme.custom.js"></script>
+        <?php if (!empty($naoVisualizadas)): ?>
+            $("#tabela-notificacoes-novas").DataTable(
+                $.extend(true, {}, configuracaoTabela)
+            );
+        <?php endif; ?>
 
-				<!-- Theme Initialization Files -->
-				<script src="<?= WWW ?>assets/javascripts/theme.init.js"></script>
+        <?php if (!empty($visualizadas)): ?>
+            $("#tabela-notificacoes-visualizadas").DataTable(
+                $.extend(true, {}, configuracaoTabela)
+            );
+        <?php endif; ?>
+    });
+</script>
 
-				<!-- Examples -->
-				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.default.js"></script>
-				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.row.with.details.js"></script>
-				<script src="<?= WWW ?>assets/javascripts/tables/examples.datatables.tabletools.js"></script>
-				<div align="right">
-					<iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
-				</div>
+<div class="text-right">
+    <iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border: none;"></iframe>
+</div>
 </body>
 </html>

@@ -1,43 +1,50 @@
-<pre>
 <?php
 
-ini_set('display_errors',1);
-ini_set('display_startup_erros',1);
-error_reporting(E_ALL);
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
 
-session_start();
-extract($_REQUEST);
-if (!isset($_SESSION["usuario"])){
-    header("Location: ../../index.php");
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-// if ($_POST){
-    require_once "../../dao/Conexao.php";
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ../../index.php");
+    exit();
+}
 
-    $saude_medicacao_status_idsaude_medicacao_status = $_POST["id_status"];
-    // var_dump($saude_medicacao_status_idsaude_medicacao_status);
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 5, 5);
 
-    $id_medicacao = $_POST['id_medicacao'];
-    $id_fichamedica = $_POST['id_fichamedica'];
-    try {
-        $pdo = Conexao::connect();
-        $prep = $pdo->prepare("UPDATE saude_medicacao SET saude_medicacao_status_idsaude_medicacao_status = :status WHERE id_medicacao = :id_medicacao");
-        $prep->bindParam(':status', $saude_medicacao_status_idsaude_medicacao_status, PDO::PARAM_INT);
-        $prep->bindParam(':id_medicacao', $id_medicacao, PDO::PARAM_INT);
-        $prep->execute();
-        // UPDATE saude_enfermidades SET status = 0 WHERE id_CID = ".$this->getid_CID()." ;"
+require_once "../../dao/Conexao.php";
 
+$id_status = filter_input(INPUT_POST, 'id_status', FILTER_VALIDATE_INT);
+$id_medicacao = filter_input(INPUT_POST, 'id_medicacao', FILTER_VALIDATE_INT);
+$id_fichamedica = filter_input(INPUT_POST, 'id_fichamedica', FILTER_VALIDATE_INT);
 
-        $prep->execute();
-        
-        header("Location: profile_paciente.php?id_fichamedica=$id_fichamedica");
-    } catch (PDOException $e) {
-        echo("Houve um erro ao realizar o upload do exame:<br><br>$e");
-    }
+if (!$id_status || $id_status < 1) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'O id do status informado não é válido.']);
+    exit();
+}
 
+if (!$id_medicacao || $id_medicacao < 1) {
+    http_response_code(400);
+    echo json_encode(['erro' => 'O id da medicação informado não é válido.']);
+    exit();
+}
 
-// }else {
-//     header("Location: profile_paciente.php");
-// }
+try {
+    $pdo = Conexao::connect();
+    $prep = $pdo->prepare("UPDATE saude_medicacao SET saude_medicacao_status_idsaude_medicacao_status = :status WHERE id_medicacao = :id_medicacao");
+    $prep->bindParam(':status', $id_status, PDO::PARAM_INT);
+    $prep->bindParam(':id_medicacao', $id_medicacao, PDO::PARAM_INT);
+    $prep->execute();
 
-
+    $destino = $id_fichamedica ? "profile_paciente.php?id_fichamedica=" . $id_fichamedica : "profile_paciente.php";
+    header("Location: " . $destino);
+    exit();
+} catch (PDOException $e) {
+    error_log("[ERRO] " . $e->getMessage());
+    http_response_code(500);
+    echo "Houve um erro ao atualizar o status da medicação.";
+    exit();
+}

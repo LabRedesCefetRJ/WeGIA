@@ -121,7 +121,7 @@ class Despacho
 		if (empty($texto)) {
 			throw new InvalidArgumentException('O texto de um despacho não pode ser vazio.');
 		}
-		$this->texto = $texto;
+		$this->texto = Util::sanitizarHtmlRico($texto);
 	}
 
 	/**
