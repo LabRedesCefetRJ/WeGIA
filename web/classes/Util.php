@@ -146,7 +146,7 @@ class Util
         }
 
         // Código HTTP seguro
-        $httpCode = $e->getCode();
+        $httpCode = (int) $e->getCode();
         if ($httpCode < 400 || $httpCode > 599) {
             $httpCode = 500;
         }

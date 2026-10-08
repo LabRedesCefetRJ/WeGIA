@@ -2,69 +2,80 @@
 
 class Visitado
 {
+
+    public const IDENTIFICADOR_VAZIO = '—';
+
+    public static function identificadorPessoa(?string $cpf): string
+    {
+        $digitos = preg_replace('/\D/', '', (string) $cpf);
+
+        if (strlen($digitos) !== 11) {
+            return 'CPF não informado';
+        }
+
+        return 'CPF: ***.' . substr($digitos, 3, 3) . '.' . substr($digitos, 6, 3) . '-**';
+    }
+
+    public static function identificadorPet(?string $especie, ?string $raca, ?string $cor, ?string $sexo): string
+    {
+        $sexo = strtoupper(trim((string) $sexo));
+        $rotuloSexo = $sexo === 'M' ? 'Macho' : ($sexo === 'F' ? 'Fêmea' : '');
+
+        $partes = [];
+        foreach (['Espécie' => $especie, 'Raça' => $raca, 'Cor' => $cor, 'Sexo' => $rotuloSexo] as $rotulo => $valor) {
+            $valor = trim((string) $valor);
+            if ($valor !== '') {
+                $partes[] = $rotulo . ': ' . $valor;
+            }
+        }
+
+        return $partes ? implode(' • ', $partes) : self::IDENTIFICADOR_VAZIO;
+    }
+
     private $id_visitado;
-    private $id_visitado_tipo;
-    private $id_atendido;
-    private $id_funcionario;
-    private $id_voluntario;
+    private $id_pessoa;
     private $id_pet;
-    private $id_outro;
+    private $id_setor;
+
+    public function __construct($id_visitado = null, $id_pessoa = null, $id_pet = null, $id_setor = null)
+    {
+        $this->id_visitado = $id_visitado;
+        $this->id_pessoa = $id_pessoa;
+        $this->id_pet = $id_pet;
+        $this->id_setor = $id_setor;
+    }
 
     public function getId_Visitado()
     {
         return $this->id_visitado;
     }
-    public function getId_Visitado_Tipo()
+    public function getId_Pessoa()
     {
-        return $this->id_visitado_tipo;
-    }
-    public function getId_Atendido()
-    {
-        return $this->id_atendido;
-    }
-    public function getId_Funcionario()
-    {
-        return $this->id_funcionario;
-    }
-    public function getId_Voluntario()
-    {
-        return $this->id_voluntario;
+        return $this->id_pessoa;
     }
     public function getId_Pet()
     {
         return $this->id_pet;
     }
-    public function getId_Outro()
+    public function getId_Setor()
     {
-        return $this->id_outro;
+        return $this->id_setor;
     }
 
     public function setId_Visitado($id_visitado)
     {
         $this->id_visitado = $id_visitado;
     }
-    public function setId_Visitado_Tipo($id_visitado_tipo)
+    public function setId_Pessoa($id_pessoa)
     {
-        $this->id_visitado_tipo = $id_visitado_tipo;
-    }
-    public function setId_Atendido($id_atendido)
-    {
-        $this->id_atendido = $id_atendido;
-    }
-    public function setId_Funcionario($id_funcionario)
-    {
-        $this->id_funcionario = $id_funcionario;
-    }
-    public function setId_Voluntario($id_voluntario)
-    {
-        $this->id_voluntario = $id_voluntario;
+        $this->id_pessoa = $id_pessoa;
     }
     public function setId_Pet($id_pet)
     {
         $this->id_pet = $id_pet;
     }
-    public function setId_Outro($id_outro)
+    public function setId_Setor($id_setor)
     {
-        $this->id_outro = $id_outro;
+        $this->id_setor = $id_setor;
     }
 }

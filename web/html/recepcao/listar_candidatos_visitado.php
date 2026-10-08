@@ -1,7 +1,6 @@
 <?php
 require_once "../../config.php";
 require_once ROOT . "/controle/VisitadoControle.php";
-require_once ROOT . "/controle/VisitanteControle.php";
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -14,7 +13,7 @@ if (!isset($_SESSION['id_pessoa'])) {
 $tipo = filter_input(INPUT_GET, 'tipo', FILTER_UNSAFE_RAW) ?? '';
 
 $ctrl = new VisitadoControle();
-$visitados = $ctrl->listarTodos($tipo, VisitanteControle::obterIdsSelecionados());
+$candidatos = $ctrl->listarCandidatos($tipo);
 
-echo json_encode($visitados, JSON_INVALID_UTF8_SUBSTITUTE);
+echo json_encode($candidatos, JSON_INVALID_UTF8_SUBSTITUTE);
 exit;

@@ -48,6 +48,11 @@ if (!$pessoa) {
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 require_once ROOT . '/classes/Csrf.php';
+
+$fotoPessoa = WWW . "img/semfoto.png";
+if (!empty($pessoa['imagem'])) {
+    $fotoPessoa = 'data:image;base64,' . $pessoa['imagem'];
+}
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -64,6 +69,7 @@ require_once ROOT . '/classes/Csrf.php';
     <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
     <script src="../../assets/vendor/modernizr/modernizr.js"></script>
     <script src="../../assets/vendor/jquery/jquery.min.js"></script>
+    <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
     <script src="../../assets/javascripts/theme.js"></script>
     <script src="../../assets/javascripts/theme.custom.js"></script>
     <script src="../../assets/javascripts/theme.init.js"></script>
@@ -184,6 +190,17 @@ require_once ROOT . '/classes/Csrf.php';
                 document.getElementById("numero_residencia").disabled = false;
             }
         }
+
+        function previewImagemVisitante(input) {
+            if (!input.files || !input.files[0]) {
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagem').src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
     </script>
 </head>
 
@@ -204,7 +221,41 @@ require_once ROOT . '/classes/Csrf.php';
                     <?php
 endif; ?>
                     <div class="col-md-12 col-lg-12">
-                        <form class="form-horizontal" method="POST" action="../../controle/control.php">
+                        <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-3 col-lg-3">
+                                <section class="panel">
+                                    <div class="panel-body text-center">
+                                        <div class="thumb-info mb-md">
+                                            <img src="<?= $fotoPessoa ?>" style="margin-bottom: 15px;" id="imagem" class="rounded img-responsive" alt="Foto do visitante">
+                                            <br>
+                                            <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#modalFotoVisitante"><i class="fa fa-camera-retro"></i></button>
+                                            <div class="modal fade" id="modalFotoVisitante" role="dialog">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                            <h4 class="modal-title">Adicionar/Alterar Foto</h4>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="form-group">
+                                                                <label class="col-md-4 control-label" for="imgform">Foto do visitante (opcional):</label>
+                                                                <div class="col-md-8">
+                                                                    <input type="file" name="imgperfil" accept="image/*" id="imgform" class="form-control" onchange="previewImagemVisitante(this)">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-primary" data-dismiss="modal">Confirmar</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                            <div class="col-md-9 col-lg-9">
                             <div class="panel-body">
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
                                 <div class="form-group">
@@ -297,6 +348,8 @@ endif; ?>
                                 <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes()">Editar</button>
                                 <button type="submit" class="btn btn-primary" id="botaoCadastrarIP">Cadastrar</button>
                             </div>
+                            </div>
+                        </div>
                         </form>
                     </div>
                 </div>

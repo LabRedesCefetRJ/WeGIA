@@ -18,7 +18,7 @@ class VisitanteDAO
         $this->pdo->beginTransaction();
 
         try {
-            $sqlPessoa = "INSERT INTO pessoa (nome, sobrenome, cpf, sexo, telefone, data_nascimento, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge, registro_geral, orgao_emissor, data_expedicao, nome_pai, nome_mae, tipo_sanguineo) VALUES (:nome, :sobrenome, :cpf, :sexo, :telefone, :data_nascimento, :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento, :ibge, :registro_geral, :orgao_emissor, :data_expedicao, :nome_pai, :nome_mae, :tipo_sanguineo)";
+            $sqlPessoa = "INSERT INTO pessoa (nome, sobrenome, cpf, sexo, telefone, data_nascimento, imagem, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge, registro_geral, orgao_emissor, data_expedicao, nome_pai, nome_mae, tipo_sanguineo) VALUES (:nome, :sobrenome, :cpf, :sexo, :telefone, :data_nascimento, :imagem, :cep, :estado, :cidade, :bairro, :logradouro, :numero_endereco, :complemento, :ibge, :registro_geral, :orgao_emissor, :data_expedicao, :nome_pai, :nome_mae, :tipo_sanguineo)";
 
             $stmtPessoa = $this->pdo->prepare($sqlPessoa);
 
@@ -41,6 +41,8 @@ class VisitanteDAO
             $nomePai = $visitante->getNomePai();
             $nomeMae = $visitante->getNomeMae();
             $sangue = $visitante->getTipoSanguineo();
+            $imagem = $visitante->getImagem();
+            $imagem = !empty($imagem) ? base64_encode($imagem) : null;
 
             $stmtPessoa->bindParam(':nome', $nome);
             $stmtPessoa->bindParam(':sobrenome', $sobrenome);
@@ -48,6 +50,7 @@ class VisitanteDAO
             $stmtPessoa->bindParam(':sexo', $sexo);
             $stmtPessoa->bindParam(':telefone', $telefone);
             $stmtPessoa->bindParam(':data_nascimento', $nascimento);
+            $stmtPessoa->bindParam(':imagem', $imagem);
             $stmtPessoa->bindParam(':cep', $cep);
             $stmtPessoa->bindParam(':estado', $estado);
             $stmtPessoa->bindParam(':cidade', $cidade);
@@ -139,6 +142,16 @@ class VisitanteDAO
 
             $stmtPessoa->execute();
 
+            $imagem = $visitante->getImagem();
+            if (!empty($imagem)) {
+                $imagem = base64_encode($imagem);
+                $sqlImagem = "UPDATE pessoa SET imagem = :imagem WHERE id_pessoa = :id_pessoa";
+                $stmtImagem = $this->pdo->prepare($sqlImagem);
+                $stmtImagem->bindParam(':imagem', $imagem);
+                $stmtImagem->bindParam(':id_pessoa', $idPessoa);
+                $stmtImagem->execute();
+            }
+
             $sqlVisitante = "INSERT INTO visitante (id_pessoa) VALUES (:id_pessoa)";
             $stmtVisitante = $this->pdo->prepare($sqlVisitante);
             $stmtVisitante->bindParam(':id_pessoa', $idPessoa);
@@ -183,5 +196,37 @@ class VisitanteDAO
         } catch (PDOException $e) {
             throw $e;
         }
+    }
+
+    public function buscarResumoPorIds(array $idsVisitante): array
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $idsVisitante), fn($id) => $id > 0)));
+
+        if (empty($ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+
+        $stmt = $this->pdo->prepare("SELECT v.id_visitante, p.nome, p.sobrenome, p.cpf, p.imagem FROM visitante v INNER JOIN pessoa p ON p.id_pessoa = v.id_pessoa WHERE v.id_visitante IN ($placeholders)");
+
+        foreach ($ids as $i => $id) {
+            $stmt->bindValue($i + 1, $id, PDO::PARAM_INT);
+        }
+
+        $stmt->execute();
+        $porId = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $linha) {
+            $porId[(int) $linha['id_visitante']] = $linha;
+        }
+
+        $resultado = [];
+        foreach ($ids as $id) {
+            if (isset($porId[$id])) {
+                $resultado[] = $porId[$id];
+            }
+        }
+
+        return $resultado;
     }
 }

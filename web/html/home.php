@@ -308,12 +308,19 @@ require_once ROOT . "/html/geral/msg.php";
 						</div>
 					</a>
 
+					<a id="home9" href="#">
+						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#recepcao">
+							<i class="fas fa-concierge-bell"></i>
+							<h4>Recepção</h4>
+						</div>
+					</a>
+
 					<a id="home10" href="<?= WWW ?>html/agenda/cadastrar_agenda.php">
 						<div class="col-lg-2 col-md-8 i category-item">
 							<i class="fa fa-calendar"></i>
 							<h4>Agenda</h4>
 						</div>
-					</a>
+					</a>	
 
 					<a class="visivel" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#configuracao">
@@ -875,6 +882,24 @@ require_once ROOT . "/html/geral/msg.php";
 					</div>
 				</div>
 				<!--fim da parte interna de #contribuicao-->
+				<!--parte interna de #recepcao-->
+				<div class="row">
+					<div id="recepcao" class="collapse">
+						<a href="<?= WWW ?>html/recepcao/pre_registro_entrada.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fas fa-sign-in-alt"></i>
+								<h4>Registro de Entrada</h4>
+							</div>
+						</a>
+						<a href="<?= WWW ?>html/recepcao/registro_saida.php">
+							<div class="col-lg-2 col-md-8 i">
+								<i class="fas fa-sign-out-alt"></i>
+								<h4>Registro de Saída</h4>
+							</div>
+						</a>
+					</div>
+				</div>
+				<!--fim da parte interna de #recepcao-->
 				<!--parte interna de #projetos-->
 				<div class="row category-row-second">
 					<div id="projetos" class="collapse">

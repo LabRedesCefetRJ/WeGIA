@@ -48,6 +48,11 @@ if (!$visitante) {
 
 $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 require_once ROOT . '/classes/Csrf.php';
+
+$fotoVisitante = WWW . "img/semfoto.png";
+if (!empty($visitante['imagem'])) {
+    $fotoVisitante = 'data:image;base64,' . $visitante['imagem'];
+}
 ?>
 <!DOCTYPE html>
 <html class="fixed">
@@ -90,8 +95,11 @@ require_once ROOT . '/classes/Csrf.php';
                 $("#radioF").prop('checked', true);
                 $("input[name=gender]").prop('disabled', true);
                 $("#hiddenGender").val('f');
+            } else if (visitante.sexo == "o") {
+                $("#radioO").prop('checked', true);
+                $("input[name=gender]").prop('disabled', true);
+                $("#hiddenGender").val('o');
             }
-            $(".form-horizontal").attr("action", `./registro_entrada.php?idVisitante=${visitante.id_visitante}`);
         });
     </script>
 </head>
@@ -113,7 +121,18 @@ require_once ROOT . '/classes/Csrf.php';
                     <?php
 endif; ?>
                     <div class="col-md-12 col-lg-12">
-                        <form class="form-horizontal" method="POST">
+                        <div class="row">
+                            <div class="col-md-3 col-lg-3">
+                                <section class="panel">
+                                    <div class="panel-body text-center">
+                                        <div class="thumb-info mb-md">
+                                            <img src="<?= $fotoVisitante ?>" style="margin-bottom: 15px;" id="imagem" class="rounded img-responsive" alt="Foto do visitante">
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                            <div class="col-md-9 col-lg-9">
+                        <form class="form-horizontal" method="POST" action="../../controle/control.php">
                             <div class="panel-body">
                                 <h4 class="mb-xlg">Informações Pessoais</h4>
                                 <div class="form-group">
@@ -134,8 +153,9 @@ endif; ?>
                                 <div class="form-group">
                                     <label class="col-md-3 control-label">Sexo</label>
                                     <div class="col-md-6">
-                                        <input type="radio" name="gender" id="radioM" value="m" required disabled> M
-                                        <input type="radio" name="gender" id="radioF" value="f" required disabled> F
+                                        <input type="radio" name="gender" id="radioM" value="m" disabled required> M
+                                        <input type="radio" name="gender" id="radioF" value="f" disabled required> F
+                                        <input type="radio" name="gender" id="radioO" value="O" disabled required> O
                                         <input type="hidden" name="gender" id="hiddenGender" value="">
                                     </div>
                                 </div>
@@ -148,9 +168,14 @@ endif; ?>
                             </div>
                             <div class="panel-footer">
                                 <?= Csrf::inputField()?>
-                                <button type="submit" class="btn btn-primary" id="botaoRegistrarIP">Enviar</button>
+                                <input type="hidden" name="nomeClasse" value="VisitanteControle">
+                                <input type="hidden" name="metodo" value="adicionarVisita">
+                                <input type="hidden" name="idVisitante" value="<?= (int) $visitante['id_visitante'] ?>">
+                                <button type="submit" class="btn btn-primary" id="botaoRegistrarIP">Adicionar à visita</button>
                             </div>
                         </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

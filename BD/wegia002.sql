@@ -103,6 +103,7 @@ INSERT INTO `acao` (`id_acao`, `descricao`) VALUES
 
 INSERT INTO `recurso` (`id_recurso`, `descricao`) VALUES 
 ('1', 'Módulo Pessoa'),
+('10', 'Módulo Recepção'),
 ('11', 'Funcionário'),
 ('12', 'Atendido'),
 ('13', 'Voluntário'),
@@ -151,6 +152,7 @@ INSERT INTO `modulos_visiveis` (`id_recurso`, `visivel`) VALUES
 (6, 1),
 (7, 1),
 (8, 1),
+(9, 1);
 (10, 1);
 
 INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
@@ -163,6 +165,7 @@ INSERT INTO `permissao` (`id_cargo`, `id_acao`, `id_recurso`) VALUES
 (1, 7, 7),
 (1, 7, 8),
 (1, 7, 9),
+(1, 7, 10),
 (1, 7, 11),
 (1, 7, 12),
 (1, 7, 13),
