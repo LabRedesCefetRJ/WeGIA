@@ -5,10 +5,11 @@ require_once ROOT . '/Functions/funcoes.php';
 
 class OrigemDAO
 {
-    public function incluir($origem)
+    public function incluir($origem, array $almoxarifados = [])
     {
+        $pdo = Conexao::connect();
         try {
-            $pdo = Conexao::connect();
+            $pdo->beginTransaction();
 
             $sql = 'INSERT INTO origem(nome_origem,cnpj,cpf,telefone) VALUES(:nome_origem,:cnpj,:cpf,:telefone)';
             $sql = str_replace("'", "\'", $sql);
@@ -27,8 +28,15 @@ class OrigemDAO
 
             $stmt->execute();
 
-            return (int) $pdo->lastInsertId();
-        } catch (PDOException $e) {
+            $id_origem = (int) $pdo->lastInsertId();
+            $this->atualizarAlmoxarifados($pdo, $id_origem, $almoxarifados);
+            $pdo->commit();
+
+            return $id_origem;
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             throw $e;
         }
     }
@@ -164,10 +172,11 @@ class OrigemDAO
         }
     }
 
-    public function alterar($origem)
+    public function alterar($origem, array $almoxarifados = [])
     {
+        $pdo = Conexao::connect();
         try {
-            $pdo = Conexao::connect();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE origem
                     SET nome_origem = :nome_origem,
@@ -191,42 +200,33 @@ class OrigemDAO
             $stmt->bindParam(':id_origem', $id_origem, PDO::PARAM_INT);
 
             $stmt->execute();
-        } catch (PDOException $e) {
+            $this->atualizarAlmoxarifados($pdo, $id_origem, $almoxarifados);
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             throw $e;
         }
     }
 
-    public function atualizarAlmoxarifados($id_origem, $almoxarifados)
+    private function atualizarAlmoxarifados(PDO $pdo, $id_origem, array $almoxarifados)
     {
-        $pdo = Conexao::connect();
+        $stmt = $pdo->prepare("DELETE FROM origem_almoxarifado WHERE id_origem = :id_origem");
+        $stmt->bindValue(':id_origem', $id_origem, PDO::PARAM_INT);
+        $stmt->execute();
 
-        try {
-            $pdo->beginTransaction();
+        if (!empty($almoxarifados)) {
+            $stmt = $pdo->prepare("
+                INSERT INTO origem_almoxarifado (id_origem, id_almoxarifado)
+                VALUES (:id_origem, :id_almoxarifado)
+            ");
 
-            $stmt = $pdo->prepare("DELETE FROM origem_almoxarifado WHERE id_origem = :id_origem");
-            $stmt->bindValue(':id_origem', $id_origem, PDO::PARAM_INT);
-            $stmt->execute();
-
-            if (!empty($almoxarifados)) {
-                $stmt = $pdo->prepare("
-                    INSERT INTO origem_almoxarifado (id_origem, id_almoxarifado)
-                    VALUES (:id_origem, :id_almoxarifado)
-                ");
-
-                foreach ($almoxarifados as $id_almoxarifado) {
-                    $stmt->bindValue(':id_origem', $id_origem, PDO::PARAM_INT);
-                    $stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
-                    $stmt->execute();
-                }
+            foreach ($almoxarifados as $id_almoxarifado) {
+                $stmt->bindValue(':id_origem', $id_origem, PDO::PARAM_INT);
+                $stmt->bindValue(':id_almoxarifado', (int) $id_almoxarifado, PDO::PARAM_INT);
+                $stmt->execute();
             }
-
-            $pdo->commit();
-        } catch (PDOException $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-
-            throw $e;
         }
-    }   
+    }
 }

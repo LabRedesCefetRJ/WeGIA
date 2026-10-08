@@ -135,9 +135,7 @@ class OrigemControle
 
             $origemDAO = new OrigemDAO();
 
-            $id_origem = $origemDAO->incluir($origem);
-
-            $origemDAO->atualizarAlmoxarifados($id_origem, $almoxarifados);
+            $origemDAO->incluir($origem, $almoxarifados);
 
             $_SESSION['msg'] = 'Origem cadastrada com sucesso.';
             $_SESSION['flag'] = 'success';
@@ -251,8 +249,7 @@ class OrigemControle
             $origem->setId_origem($id_origem);
 
             $origemDAO = new OrigemDAO();
-            $origemDAO->alterar($origem);
-            $origemDAO->atualizarAlmoxarifados($id_origem, $almoxarifados);
+            $origemDAO->alterar($origem, $almoxarifados);
 
             if (($_POST['resposta'] ?? '') === 'json') {
                 $this->responderJson(['destino' => WWW . 'html/matPat/listar_origem.php']);
