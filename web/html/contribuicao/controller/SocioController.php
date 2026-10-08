@@ -6,6 +6,7 @@ require_once '../model/Socio.php';
 require_once '../model/ContribuicaoLogCollection.php';
 require_once '../dao/SocioDAO.php';
 require_once '../dao/ContribuicaoLogDAO.php';
+require_once '../dao/MeioPagamentoDAO.php';
 require_once '../dao/ConexaoDAO.php';
 require_once '../../../dao/PessoaDAO.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
@@ -344,6 +345,36 @@ class SocioController
         }
     }
 
+    private function obterNomeMeioPagamento($idMeioPagamento): string
+    {
+        if ($idMeioPagamento === null || $idMeioPagamento === '') {
+            return 'Desconhecido';
+        }
+
+        $meioPagamentoDao = new MeioPagamentoDAO();
+        $meioPagamento = $meioPagamentoDao->buscarPorId((int) $idMeioPagamento);
+
+        if ($meioPagamento === null) {
+            return 'Desconhecido';
+        }
+
+        $nome = trim((string) $meioPagamento->getDescricao());
+        if ($nome === '') {
+            return 'Desconhecido';
+        }
+
+        $nomeNormalizado = strtolower($nome);
+        if ($nomeNormalizado === 'carne') {
+            return 'Carnê';
+        }
+
+        if ($nomeNormalizado === 'boleto') {
+            return 'Boleto único';
+        }
+
+        return $nome;
+    }
+
     /**
      * Extraí o documento de um sócio da requisição e retorna a lista dos boletos pertecentes a esse sócio.
      */
@@ -353,49 +384,67 @@ class SocioController
             if (!Csrf::validateToken($_GET['csrf_token'] ?? null))
                 throw new InvalidArgumentException('Token CSRF inválido ou ausente.', 401);
 
-            // Extrair dados da requisição
             $doc = trim($_GET['documento']);
             $docLimpo = preg_replace('/\D/', '', $doc);
-
-            // Caminho para o diretório de PDFs
             $path = '../pdfs/';
 
-            // Listar arquivos no diretório
             $arrayBoletos = Util::listarArquivos($path);
             $arrayBoletos = $arrayBoletos === false ? [] : $arrayBoletos;
-
             $boletosEncontrados = [];
 
-            //Pegar coleção de contribuição log
             $contribuicaoLogDao = new ContribuicaoLogDAO();
             $contribuicaoLogCollection = $contribuicaoLogDao->listarPorDocumento($docLimpo);
+            $contribuicoesPendentes = [];
 
-            foreach ($arrayBoletos as $boleto) {
-                // Extrair o documento do nome do arquivo
-                $documentoArquivo = isset(explode('_', $boleto)[1]) ? explode('_', $boleto)[1] : null;
-                if ($documentoArquivo == $docLimpo) {
-                    $boletosEncontrados[] = [
-                        'nome' => $boleto,
-                        'link' => '../pdfs/' . $boleto,
-                        'origem' => 'arquivo'
-                    ];
-                } else if ($contribuicaoLogCollection) {
-                    $partes = explode('_', $boleto)[0];
-                    $documentoArquivo = str_replace('-', '_', $partes);
-                    foreach ($contribuicaoLogCollection as $contribuicaoLog) {
-                        if ($documentoArquivo == $contribuicaoLog->getCodigo()) {
-                            $boletosEncontrados[] = [
-                                'nome' => $boleto,
-                                'link' => '../pdfs/' . $boleto,
-                                'origem' => 'arquivo'
-                            ];
-                        }
+            if ($contribuicaoLogCollection) {
+                foreach ($contribuicaoLogCollection as $contribuicaoLog) {
+                    if ((int) $contribuicaoLog->getStatusPagamento() === 0) {
+                        $contribuicoesPendentes[] = $contribuicaoLog;
                     }
                 }
             }
 
-            if ($contribuicaoLogCollection) {
-                foreach ($contribuicaoLogCollection as $contribuicaoLog) {
+            foreach ($arrayBoletos as $boleto) {
+                $nomeArquivo = (string) $boleto;
+                $meioPagamentoArquivo = 'Desconhecido';
+                $documentoArquivo = preg_replace('/\D/', '', $nomeArquivo);
+                $arquivoCorresponde = false;
+
+                if ($documentoArquivo === $docLimpo) {
+                    $arquivoCorresponde = true;
+                }
+
+                if (!$arquivoCorresponde && $contribuicoesPendentes) {
+                    foreach ($contribuicoesPendentes as $contribuicaoLog) {
+                        $codigo = (string) $contribuicaoLog->getCodigo();
+                        $codigoNormalizado = preg_replace('/[^A-Za-z0-9]/', '', $codigo);
+                        $nomeArquivoNormalizado = preg_replace('/[^A-Za-z0-9]/', '', $nomeArquivo);
+
+                        if (
+                            stripos($nomeArquivo, $codigo) !== false ||
+                            stripos($nomeArquivo, str_replace('-', '_', $codigo)) !== false ||
+                            stripos($nomeArquivo, $codigoNormalizado) !== false ||
+                            stripos($nomeArquivoNormalizado, $codigoNormalizado) !== false
+                        ) {
+                            $arquivoCorresponde = true;
+                            $meioPagamentoArquivo = $this->obterNomeMeioPagamento($contribuicaoLog->getIdMeioPagamento());
+                            break;
+                        }
+                    }
+                }
+
+                if ($arquivoCorresponde) {
+                    $boletosEncontrados[] = [
+                        'nome' => $nomeArquivo,
+                        'link' => '../pdfs/' . $nomeArquivo,
+                        'origem' => 'arquivo',
+                        'meio_pagamento' => $meioPagamentoArquivo,
+                    ];
+                }
+            }
+
+            if ($contribuicoesPendentes) {
+                foreach ($contribuicoesPendentes as $contribuicaoLog) {
                     if (empty($contribuicaoLog->getIdContribuicaoDocumento())) {
                         continue;
                     }
@@ -414,7 +463,8 @@ class SocioController
                     $itemBanco = [
                         'nome' => $nomeArquivoBanco,
                         'link' => $linkBanco,
-                        'origem' => 'database'
+                        'origem' => 'database',
+                        'meio_pagamento' => $this->obterNomeMeioPagamento($contribuicaoLog->getIdMeioPagamento()),
                     ];
 
                     $jaExiste = false;
@@ -440,7 +490,6 @@ class SocioController
             }
             $boletosEncontrados = array_values($boletosEncontradosUnicos);
 
-            // Retornar JSON com os boletos encontrados
             echo json_encode($boletosEncontrados);
         } catch (Exception $e) {
             Util::tratarException($e);

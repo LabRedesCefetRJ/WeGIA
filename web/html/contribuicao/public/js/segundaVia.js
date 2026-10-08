@@ -185,6 +185,7 @@ function montarTabela(dados) {
       <th scope="col">#</th>
       <th scope="col">Data</th>
       <th scope="col">Valor</th>
+      <th scope="col">Meio de pagamento</th>
       <th scope="col">Ação</th>
     </tr>
   </thead>
@@ -207,10 +208,12 @@ function montarTabela(dados) {
  * @returns string 
  */
 function gerarLinha(dados, index) {
+    const meioPagamento = dados[4] || 'Desconhecido';
     const linha = `<tr>
       <th scope="row">${index}</th>
       <td>${dados[2]}</td>
       <td>${dados[3]}</td>
+      <td>${meioPagamento}</td>
       <td><a href="${dados[5]}" class="btn btn-primary">Visualizar</a></td>
     </tr>`
 
@@ -224,12 +227,12 @@ function gerarLinha(dados, index) {
  * @returns array 
  */
 function prepararDadosParaTabela(dados) {
-    //separar os dados
     let dadosSeparados = [];
     dados.forEach(dado => {
         const item = (typeof dado === 'string') ? { nome: dado, link: resolverLinkPdf(dado) } : dado;
         const nomeArquivo = item?.nome || item?.filename || '';
         const link = item?.link || resolverLinkPdf(nomeArquivo);
+        const meioPagamento = item?.meio_pagamento || item?.meioPagamento || 'Desconhecido';
         let dadoSeparado = separarDados(nomeArquivo || item);
 
         if (!dadoSeparado.length || !dadoSeparado[2] || !dadoSeparado[3]) {
@@ -239,12 +242,24 @@ function prepararDadosParaTabela(dados) {
             }
         }
 
-        dadoSeparado.push(link);//adiciona link
+        if (!dadoSeparado.length || !dadoSeparado[2] || !dadoSeparado[3]) {
+            const nome = item?.nome || item?.filename || item?.codigo || '';
+            const data = item?.data || item?.dataVencimento || item?.date || '';
+            const valor = item?.valor || item?.valorContribuicao || item?.value || '';
+            dadoSeparado = [nome, '', data, valor];
+        }
+
+        if (dadoSeparado.length < 5) {
+            dadoSeparado.push(meioPagamento);
+        } else {
+            dadoSeparado[4] = meioPagamento;
+        }
+
+        dadoSeparado.push(link);
         dadosSeparados.push(dadoSeparado);
     });
-    //ordenar array pela data
+
     const arrayOrdenado = ordenarPelaData(dadosSeparados);
-    //formatar data e valor
     arrayOrdenado.forEach((boleto, index) => {
         arrayOrdenado[index][2] = formatarDataEmBrasileiro(boleto[2]);
         arrayOrdenado[index][3] = formatarValorEmReais(boleto[3]);

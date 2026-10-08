@@ -189,7 +189,7 @@ class ContribuicaoLogDAO
     {
         $documento = preg_replace('/\D/', '', $documento) ?? '';
 
-        $sql = "SELECT cl.id, cl.uuid, cl.codigo, cl.valor, cl.data_geracao, cl.data_vencimento, cl.status_pagamento, cl.id_contribuicao_documento FROM contribuicao_log cl JOIN socio s ON (cl.id_socio=s.id_socio) JOIN pessoa p ON(s.id_pessoa=p.id_pessoa) WHERE REPLACE(REPLACE(REPLACE(p.cpf, '.', ''), '-', ''), '/', '') = :documento";
+        $sql = "SELECT cl.id, cl.uuid, cl.codigo, cl.valor, cl.data_geracao, cl.data_vencimento, cl.status_pagamento, cl.id_contribuicao_documento, cl.id_meio_pagamento FROM contribuicao_log cl JOIN socio s ON (cl.id_socio=s.id_socio) JOIN pessoa p ON(s.id_pessoa=p.id_pessoa) WHERE REPLACE(REPLACE(REPLACE(p.cpf, '.', ''), '-', ''), '/', '') = :documento";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindParam(':documento', $documento);
@@ -212,6 +212,7 @@ class ContribuicaoLogDAO
                 ->setDataGeracao($contribuicaoLog['data_geracao'])
                 ->setDataVencimento($contribuicaoLog['data_vencimento'])
                 ->setStatusPagamento($contribuicaoLog['status_pagamento'])
+                ->setIdMeioPagamento($contribuicaoLog['id_meio_pagamento'] ?? null)
                 ->setUuid(isset($contribuicaoLog['uuid']) && $contribuicaoLog['uuid'] !== null
                     ? \Ramsey\Uuid\Uuid::fromBytes($contribuicaoLog['uuid'])->toString()
                     : null)
