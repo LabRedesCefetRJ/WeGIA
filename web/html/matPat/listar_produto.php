@@ -386,7 +386,9 @@ unset(
 							</div>
 
 							<div class="campo-filtro">
-								<label for="filtroGrupo">Grupo</label>
+								<label for="filtroGrupo">
+								<a href="<?= WWW ?>html/matPat/adicionar_grupo_produto.php" data-cadastrar-grupo title="Cadastrar grupo" aria-label="Cadastrar grupo"><i class="fas fa-plus w3-xlarge" aria-hidden="true"></i></a>
+								Grupo</label>
 								<select id="filtroGrupo" class="form-control">
 									<option value="">Todos</option>
 									<option value="Sem grupo">Sem grupo</option>
