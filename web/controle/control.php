@@ -80,7 +80,11 @@ function processaRequisicao($nomeClasse, $metodo, $modulo = null)
             'MemorandoControle' => [3],
             'DespachoControle' => [3],
             'VoluntarioControle' => [11],
-            'NotificacaoControle' => [2, 5, 21, 22, 23, 24]
+            'NotificacaoControle' => [2, 5, 21, 22, 23, 24],
+            'VisitanteControle' => [10],
+            'VisitaControle' => [10],
+            'VisitadoControle' => [10],
+            'SetorControle' => [10]
         ];
 
         /*Por padrão o control.php irá recusar qualquer controladora informada,
