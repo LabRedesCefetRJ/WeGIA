@@ -188,7 +188,7 @@ class Util
             ]);
         } elseif ($e instanceof PDOException) {
             echo json_encode([
-                'erro' => $e->getMessage()
+                'erro' => 'Erro interno ao acessar o banco de dados'
             ]);
         } else {
             echo json_encode([
