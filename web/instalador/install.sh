@@ -248,3 +248,8 @@ case $CHOICE in
 esac
 
 echo "FIM!"
+
+
+#atualização automática dos pagamentos... para quem usa aplicativo
+# Colocar no CRONTAB
+#/var/www/WeGIA/scripts/sincronizacao_contribuicoes.php >> /var/log/wegia/contribuicoes-cron.log 2>&1
