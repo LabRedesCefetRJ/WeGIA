@@ -721,12 +721,14 @@ class ContribuicaoLogController
 
             $this->pdo->commit();
 
-            echo json_encode(['sucesso' => 'Sincronização realizada com sucesso']);
+            if (PHP_SAPI !== 'cli') {
+                echo json_encode(['sucesso' => 'Sincronização realizada com sucesso']);
+            }
         } catch (Exception $e) {
             if ($this->pdo->inTransaction())
                 $this->pdo->rollBack();
 
-            Util::tratarException($e);
+            $this->tratarExcecao($e);
         }
     }
 
@@ -871,17 +873,21 @@ class ContribuicaoLogController
 
             if (!$registrou) {
                 $this->pdo->rollBack();
-                echo json_encode(['sucesso' => 'Nenhuma nova fatura encontrada.', 200]);
+                if (PHP_SAPI !== 'cli') {
+                    echo json_encode(['sucesso' => 'Nenhuma nova fatura encontrada.', 200]);
+                }
             }else{
                 $this->pdo->commit();
-                echo json_encode(['sucesso' => 'Faturas registradas com sucesso.', 200]);
+                if (PHP_SAPI !== 'cli') {
+                    echo json_encode(['sucesso' => 'Faturas registradas com sucesso.', 200]);
+                }
             }
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
 
-            Util::tratarException($e);
+            $this->tratarExcecao($e);
         } finally {
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
@@ -897,8 +903,17 @@ class ContribuicaoLogController
                     throw new Exception('Falha ao registrar log do sistema');
                 }
             } catch (Exception $e) {
-                Util::tratarException($e);
+                $this->tratarExcecao($e);
             }
         }
+    }
+
+    private function tratarExcecao(Throwable $e): void
+    {
+        if (PHP_SAPI === 'cli') {
+            throw $e;
+        }
+
+        Util::tratarException($e);
     }
 }
