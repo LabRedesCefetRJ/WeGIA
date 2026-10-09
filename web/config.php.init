@@ -5,7 +5,7 @@
 define( 'APP_TIMEZONE', 'America/Sao_Paulo');
 define( 'CONTRIBUICOES_CRON_ID_PESSOA', 1);
 define( 'BKP_DIR', '/var/www/bkpWeGIA');
-define( 'BACKUP_SIGNING_KEY_FILE', BKP_DIR . '/.backup_signing_private.pem');
+define( 'BACKUP_SIGNING_KEY_FILE', BKP_DIR . '/.backup_signing_private.pem'); //gerador manual consulte: https://github.com/LabRedesCefetRJ/WeGIA/releases/tag/3.6.7
 define( 'DB_NAME', 'wegia' );
 define( 'DB_USER', 'wegiauser' );
 define( 'DB_PASSWORD', 'senha' );
@@ -22,7 +22,7 @@ define( 'DEV_MODE', 'off');
 */
 
 define('API_BASE_URL', 'https://demo.wegia.org/api/');
-define('JWT_SECRET', 'your_jwt_secret_key_here');
+define('JWT_SECRET', 'your_jwt_secret_key_here'); //gerador manual: openssl rand -hex 32
 define('ENV_APP', 'production'); //define('ENV_APP', 'development');
 
 //Separe as origens permitidas com o caractere ","
