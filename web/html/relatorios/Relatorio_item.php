@@ -9,6 +9,8 @@ class Item
     private $origem;
     private $destino;
     private $tipo;
+    private $tiposEntrada;
+    private $tiposSaida;
     private $responsavel;
     private $periodo; // Array('inicio' => data de inicio, 'fim' => data de fim)
     private $almoxarifado;
@@ -21,20 +23,21 @@ class Item
 
     // Constructor
 
-    public function __construct($relat, $o_d, $t, $resp, $p, $a, $z = false, $tipoMedia = 'dia', $modoRequisicao = 'movimentados')
+    public function __construct($relat, $o_d, $t, $tsE, $tsS, $resp, $p, $a, $z = false, $tipoMedia = 'dia', $modoRequisicao = 'movimentados')
     {
         $this
             ->setRelatorio($relat)
             ->setOrigem($o_d)
             ->setDestino($o_d)
             ->setTipo($t)
+            ->setTiposEntrada($tsE)
+            ->setTiposSaida($tsS)
             ->setResponsavel($resp)
             ->setPeriodo($p)
             ->setAlmoxarifado($a)
             ->setMostrarZerado($z)
             ->setTipoMedia($tipoMedia)
-            ->setModoRequisicao($modoRequisicao)
-        ;
+            ->setModoRequisicao($modoRequisicao);
     }
 
     // Metodos
@@ -43,6 +46,8 @@ class Item
     {
         return ($this->getOrigem()
             || $this->getTipo()
+            || $this->getTiposEntrada()
+            || $this->getTiposSaida()
             || $this->getResponsavel()
             || $this->getPeriodo()['inicio']
             || $this->getPeriodo()['fim']
@@ -109,6 +114,7 @@ class Item
                     ientrada.valor_unitario, 
                     entrada.data as data,
                     unidade.descricao_unidade as unidade,
+                    tipo_entrada.id_tipo AS id_tipo,
                     tipo_entrada.descricao as tipo
                 FROM ientrada 
                 LEFT JOIN produto ON produto.id_produto = ientrada.id_produto 
@@ -122,6 +128,7 @@ class Item
                 GROUP BY 
                 ientrada.id_produto,
                 ientrada.valor_unitario,
+                tipo_entrada.id_tipo,
                 tipo_entrada.descricao
                 ORDER BY produto.descricao
             ");
@@ -134,6 +141,7 @@ class Item
                     ientrada.valor_unitario, 
                     entrada.data as data,
                     unidade.descricao_unidade as unidade,
+                    tipo_entrada.id_tipo AS id_tipo,
                     tipo_entrada.descricao as tipo
                 FROM ientrada 
                 LEFT JOIN produto ON produto.id_produto = ientrada.id_produto 
@@ -145,6 +153,7 @@ class Item
                 GROUP BY 
                 ientrada.id_produto,
                 ientrada.valor_unitario,
+                tipo_entrada.id_tipo,
                 tipo_entrada.descricao
                 ORDER BY produto.descricao
             ");
@@ -213,7 +222,7 @@ class Item
                     $divisor = "GREATEST(ROUND((TIMESTAMPDIFF(DAY, $inicio, $fim) + 1) / 365), 1)";
                     break;
                 case 'dia':
-                    $divisor = "GREATEST(TIMESTAMPDIFF(DAY, $inicio, $fim), 1)";
+                    $divisor = "GREATEST(TIMESTAMPDIFF(DAY, $inicio, $fim) + 1, 1)";
                     break;
             }
  
@@ -225,6 +234,7 @@ class Item
                     isaida.valor_unitario, 
                     saida.data as data,
                     unidade.descricao_unidade as unidade,
+                    tipo_saida.id_tipo AS id_tipo,
                     tipo_saida.descricao as tipo,
                     ROUND(
                         SUM(isaida.qtd) / NULLIF($divisor, 0),
@@ -242,6 +252,7 @@ class Item
                 GROUP BY 
                 isaida.id_produto,
                 isaida.valor_unitario,
+                tipo_saida.id_tipo,
                 tipo_saida.descricao
                 ORDER BY produto.descricao
             ");
@@ -254,6 +265,7 @@ class Item
                     isaida.valor_unitario, 
                     saida.data as data,
                     unidade.descricao_unidade as unidade,
+                    tipo_saida.id_tipo AS id_tipo,
                     tipo_saida.descricao as tipo
                 FROM isaida 
                 LEFT JOIN produto ON produto.id_produto = isaida.id_produto 
@@ -265,6 +277,7 @@ class Item
                 GROUP BY
                 isaida.id_produto,
                 isaida.valor_unitario,
+                tipo_saida.id_tipo,
                 tipo_saida.descricao
                 ORDER BY produto.descricao
             ");
@@ -650,6 +663,12 @@ class Item
         $query = $this->query(); //<-- execução ocorre aqui
         $tot_val = 0;
 
+        $tipoRelatorio = $this->getRelatorio();
+
+        $tiposSelecionados = $tipoRelatorio === 'entrada'
+            ? $this->getTiposEntrada()
+            : $this->getTiposSaida();
+
         foreach ($query as $item) {
             if ($this->getRelatorio() == 'estoque' || $this->getRelatorio() == 'itens_compra') {
                 $class = '';
@@ -710,10 +729,7 @@ class Item
                 }
             }
 
-            if (
-            isset($item['tipo']) &&
-            $item['tipo'] === 'Doação'
-            ) {
+            if (($tipoRelatorio === 'entrada' || $tipoRelatorio === 'saida') && !$this->getTipo() && !in_array((int) $item['id_tipo'], $tiposSelecionados, true)) {
                 continue;
             }
 
@@ -1107,5 +1123,33 @@ class Item
 	    $this->modoRequisicao = $modoRequisicao;
 
 	    return $this;
+    }
+
+    public function getTiposEntrada()
+    {
+        return $this->tiposEntrada;
+    }
+
+    public function setTiposEntrada($tiposEntrada)
+    {
+        $this->tiposEntrada = is_array($tiposEntrada)
+            ? array_map('intval', $tiposEntrada)
+            : [];
+
+        return $this;
+    }
+
+    public function getTiposSaida()
+    {
+        return $this->tiposSaida;
+    }
+
+    public function setTiposSaida($tiposSaida)
+    {
+        $this->tiposSaida = is_array($tiposSaida)
+            ? array_map('intval', $tiposSaida)
+            : [];
+
+        return $this;
     }
 }
