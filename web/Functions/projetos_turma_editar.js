@@ -161,8 +161,12 @@ function recarregarExecutantesTurma() {
                 $.each(response.data, function(i, executante) {
                     const nomeCompleto = ((executante.nome || '') + ' ' + (executante.sobrenome || '')).trim();
                     const cpf          = executante.cpf || '--';
+                    const executanteId = parseInt(executante.id_pessoa, 10);
+                    if(!Number.isFinite(executanteId)){
+                        return;
+                    }
                     const acoes        =
-                        '<button type="button" onclick="removerExecutanteDaTurma(' + executante.id_pessoa + ')" ' +
+                        '<button type="button" onclick="removerExecutanteDaTurma(' + executanteId + ')" ' +
                         'class="btn btn-danger btn-xs" title="Remover da turma">' +
                         '<i class="fa fa-trash"></i></button>';
 
@@ -170,7 +174,7 @@ function recarregarExecutantesTurma() {
                         escapeHtml(nomeCompleto),
                         escapeHtml(cpf),
                         acoes
-                    ]).nodes().to$().attr('id', 'executante-turma-' + executante.id_pessoa);
+                    ]).nodes().to$().attr('id', 'executante-turma-' + executanteId);
                 });
             } else {
                 console.error('Erro ao recarregar executantes da turma:', response.message);
@@ -297,8 +301,12 @@ function recarregarAtendidosTurma() {
                 $.each(response.data, function(i, atendido) {
                     const nomeCompleto = ((atendido.nome || '') + ' ' + (atendido.sobrenome || '')).trim();
                     const cpf          = atendido.cpf || '--';
+                    const atendidoId   = parseInt(atendido.id_atendido, 10)
+                    if(!Number.isFinite(atendidoId)) {
+                        return
+                    }
                     const acoes        =
-                        '<button type="button" onclick="removerAtendidoDaTurma(' + atendido.id_atendido + ')" ' +
+                        '<button type="button" onclick="removerAtendidoDaTurma(' + atendidoId+ ')" ' +
                         'class="btn btn-danger btn-xs" title="Remover da turma">' +
                         '<i class="fa fa-trash"></i></button>';
 
@@ -306,7 +314,7 @@ function recarregarAtendidosTurma() {
                         escapeHtml(nomeCompleto),
                         escapeHtml(cpf),
                         acoes
-                    ]).nodes().to$().attr('id', 'atendido-turma-' + atendido.id_atendido);
+                    ]).nodes().to$().attr('id', 'atendido-turma-' + atendidoId);
                 });
             } else {
                 console.error('Erro ao recarregar atendidos da turma:', response.message);
