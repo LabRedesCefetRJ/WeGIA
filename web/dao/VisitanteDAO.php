@@ -171,7 +171,6 @@ class VisitanteDAO
     {
         try {
             $cpf = filter_var($cpf, FILTER_SANITIZE_SPECIAL_CHARS);
-            var_dump($cpf);
             $stmt = $this->pdo->prepare("SELECT v.id_visitante FROM visitante v JOIN pessoa p on v.id_pessoa=p.id_pessoa WHERE p.cpf = :cpf");
             $stmt->bindValue(':cpf', $cpf, PDO::PARAM_STR);
             $stmt->execute();
