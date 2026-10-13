@@ -1,6 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE)
-session_start();
+    session_start();
 
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Csrf.php';
