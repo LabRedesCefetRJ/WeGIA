@@ -1164,33 +1164,58 @@ REFERENCES wegia.contribuicao_gatewayPagamento (id)
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table `wegia`.`contribuicao_documento`
+-- -----------------------------------------------------
+CREATE TABLE `wegia`.`contribuicao_documento` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `documento` MEDIUMBLOB NOT NULL,
+    `extensao` VARCHAR(32) NOT NULL,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- -----------------------------------------------------
 -- Table `wegia`.`contribuicao_log`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS wegia.contribuicao_log (
-id INT NOT NULL AUTO_INCREMENT,
-id_socio INT(11) NOT NULL,
-id_gateway INT(11) DEFAULT NULL,
-id_meio_pagamento INT(11) NOT NULL,
-id_recorrencia INT(11) DEFAULT NULL,
-codigo VARCHAR(255) NOT NULL UNIQUE,
-valor DECIMAL(10,2) NOT NULL,
-data_geracao DATE NOT NULL,
-data_vencimento DATE NOT NULL,
-data_pagamento DATE,
-status_pagamento BOOLEAN NOT NULL,
-PRIMARY KEY (id),
-CONSTRAINT FK_id_socios
-FOREIGN KEY (id_socio)
-REFERENCES wegia.socio (id_socio),
-CONSTRAINT FK_id_gateways
-FOREIGN KEY (id_gateway)
-REFERENCES wegia.contribuicao_gatewayPagamento (id),
-CONSTRAINT FK_id_meio_pagamentos
-FOREIGN KEY (id_meio_pagamento)
-REFERENCES wegia.contribuicao_meioPagamento (id),
-CONSTRAINT FK_id_recorrencia
-FOREIGN KEY (id_recorrencia)
-REFERENCES wegia.recorrencia (id)
+CREATE TABLE IF NOT EXISTS `wegia`.`contribuicao_log` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+    `uuid` BINARY(16) NOT NULL,
+    `id_socio` INT(11) NOT NULL,
+    `id_gateway` INT(11) DEFAULT NULL,
+    `id_meio_pagamento` INT(11) NOT NULL,
+    `id_recorrencia` INT(11) DEFAULT NULL,
+    `id_contribuicao_documento` INT(11) DEFAULT NULL,
+    `codigo` VARCHAR(255) NOT NULL UNIQUE,
+    `valor` DECIMAL(10,2) NOT NULL,
+    `data_geracao` DATE NOT NULL,
+    `data_vencimento` DATE NOT NULL,
+    `data_pagamento` DATE,
+    `status_pagamento` BOOLEAN NOT NULL,
+
+    PRIMARY KEY (id),
+    CONSTRAINT uq_contribuicao_log_uuid UNIQUE (uuid),
+
+    CONSTRAINT FK_id_socios
+        FOREIGN KEY (id_socio)
+        REFERENCES wegia.socio (id_socio),
+
+    CONSTRAINT FK_id_gateways
+        FOREIGN KEY (id_gateway)
+        REFERENCES wegia.contribuicao_gatewayPagamento (id),
+
+    CONSTRAINT FK_id_meio_pagamentos
+        FOREIGN KEY (id_meio_pagamento)
+        REFERENCES wegia.contribuicao_meioPagamento (id),
+
+    CONSTRAINT FK_id_recorrencia
+        FOREIGN KEY (id_recorrencia)
+        REFERENCES wegia.recorrencia (id),
+
+    CONSTRAINT FK_id_contribuicao_documento
+        FOREIGN KEY (id_contribuicao_documento)
+        REFERENCES wegia.contribuicao_documento (id)
+        ON DELETE SET NULL
 )
 ENGINE = InnoDB;
 
@@ -3429,6 +3454,32 @@ CREATE EVENT ev_jwt_blacklist_cleanup
 DO
     DELETE FROM jwt_blacklist
     WHERE expires_at <= NOW();
+
+  DROP EVENT IF EXISTS ev_contribuicao_documento_cleanup;
+
+  DELIMITER $$
+  CREATE EVENT ev_contribuicao_documento_cleanup
+    ON SCHEDULE EVERY 1 DAY
+    STARTS TIMESTAMP(IF(CURTIME() < '03:00:00', CURRENT_DATE, CURRENT_DATE + INTERVAL 1 DAY), '03:00:00')
+    ON COMPLETION PRESERVE
+    ENABLE
+    COMMENT 'Remove documentos de contribuicoes vencidas ou sem associacao ativa'
+  DO
+  BEGIN
+    UPDATE wegia.contribuicao_log
+    SET id_contribuicao_documento = NULL
+    WHERE data_vencimento < CURDATE()
+      AND id_contribuicao_documento IS NOT NULL;
+
+    DELETE FROM wegia.contribuicao_documento AS cd
+    WHERE NOT EXISTS (
+      SELECT 1
+      FROM wegia.contribuicao_log AS cl
+      WHERE cl.id_contribuicao_documento = cd.id
+        AND cl.data_vencimento >= CURDATE()
+    );
+  END$$
+  DELIMITER ;
 
 -- -----------------------------------------------------
 -- Módulo Projetos (revisado)

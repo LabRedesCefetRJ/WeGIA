@@ -443,17 +443,19 @@ Cada contribuição retornada possui a seguinte estrutura:
 
 ## 6. GET `/contribuicoes/{contribuicao_id}/pdf`
 
-Retorna o PDF de uma contribuição a partir do nome do arquivo armazenado em `/web/html/contribuicao/pdfs`. Requer autenticação via token JWT. O usuário autenticado só pode acessar o PDF quando o CPF extraído do nome do arquivo corresponder ao CPF da pessoa autenticada, após normalização e formatação. A implementação foi pensada para permitir a futura troca da leitura do diretório por uma busca no banco sem mudar a interface da rota.
+Retorna o PDF de uma contribuição pelo UUIDv7 da contribuição. Requer autenticação via token JWT. Para compatibilidade, valores que não sejam UUIDv7 são tratados como nomes de arquivos históricos em `/web/html/contribuicao/pdfs`; nesse caso, o CPF extraído do nome do arquivo deve corresponder ao CPF da pessoa autenticada, após normalização e formatação.
 
 ### Parâmetros
-- **contribuicao_id** (path, obrigatório): Nome do arquivo PDF no formato `codigo_cpf_data_valor.pdf`
+- **contribuicao_id** (path, obrigatório): UUIDv7 textual da contribuição; como fallback retrocompatível, nome do arquivo PDF no formato `codigo_cpf_data_valor.pdf`
 - **Authorization** (header, obrigatório): Token JWT no formato `Bearer <token>`
 
 ### Exemplo de Requisição
 ```
-GET /contribuicoes/or-abc123_12345678900_20260706_50.pdf
+GET /contribuicoes/0190f5c2-7b00-7abc-8def-0123456789ab/pdf
 Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
 ```
+
+O fallback por arquivo histórico continua aceitando, por exemplo, `GET /contribuicoes/or-abc123_12345678900_20260706_50.pdf`.
 
 ### Resposta - 200 OK
 - **Content-Type:** `application/pdf`
@@ -522,7 +524,7 @@ Gera um boleto de contribuição para o sócio autenticado via JWT. O fluxo usa 
 {
   "link": "https://...",
   "codigo": "codigo-retornado-pelo-gateway",
-  "contribuicao_id": "ab-cd1234567890_efg.hij"
+  "contribuicao_id": "0190f5c2-7b00-7abc-8def-0123456789ab"
 }
 ```
 
@@ -584,9 +586,9 @@ Gera um carnê de contribuição para o sócio autenticado via JWT. A rota usa o
 ### Resposta - 201 Created
 ```json
 {
-  "link": "http://localhost/~gabriel/WeGIA/web/html/contribuicao/pdfs/arquivo.pdf",
+  "link": "http://localhost/~gabriel/WeGIA/web/html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=0190f5c2-7b00-7abc-8def-0123456789ab",
   "parcelas": 6,
-  "contribuicao_id" : "ab-cd1234567890_efg.hij"
+  "contribuicao_id" : "0190f5c2-7b00-7abc-8def-0123456789ab"
 }
 ```
 
@@ -645,7 +647,7 @@ Gera um QR Code Pix para o sócio autenticado via JWT. A rota usa o `user_id` do
   "qrcode": "base64-do-qrcode",
   "copiaCola": "texto-pix-copia-e-cola",
   "codigo": "codigo-retornado-pelo-gateway",
-  "contribuicao_id": 123
+  "contribuicao_id": "0190f5c2-7b00-7abc-8def-0123456789ab"
 }
 ```
 
@@ -706,7 +708,7 @@ Processa um pagamento com cartão de crédito para o sócio autenticado via JWT.
   "sucesso": true,
   "mensagem": "Pagamento processado com sucesso!",
   "transacao_id": "tx_123",
-  "contribuicao_id": 123
+  "contribuicao_id": "0190f5c2-7b00-7abc-8def-0123456789ab"
 }
 ```
 
