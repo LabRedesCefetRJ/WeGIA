@@ -4,7 +4,8 @@
         "slim/psr7": "^1.8",
         "firebase/php-jwt": "^7.0",
         "ramsey/uuid": "^4.9",
-        "phpoffice/phpspreadsheet": "^5.9"
+        "phpoffice/phpspreadsheet": "^5.9",
+        "phpoffice/phpword": "^1.4"
     },
     "autoload": {
         "psr-4": {
