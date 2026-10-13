@@ -1179,6 +1179,11 @@ try {
                 <a href="../atendido/Profile_Atendido.php?idatendido=<?=$idAtendidoPerfil;?>" type="button" class="btn btn-primary" id="botaoAcessarPerfilAtendidoIP" title="Acesso rápido a página de Perfil de Atendido">Acessar Perfil</a>
               </div>  
               <?php endif; ?>
+              <div class="text-center" style="margin-top: 15px;">
+                <a href="../../service/relatorioProntuarioPacienteService.php?id_fichamedica=<?= (int)$id_fichamedica ?>" target="_blank" class="btn btn-danger btn-gerar-pdf" title="Gerar PDF do prontuário" style="margin-right: 10px;">
+                  <i class="fas fa-file-pdf"></i> PDF Prontuário
+                </a>
+              </div>
             </section>
           </div>
           <div class="col-md-8 col-lg-8">

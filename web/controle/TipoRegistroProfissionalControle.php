@@ -19,12 +19,14 @@ class TipoRegistroProfissionalControle
         try {
             $tipoRegistroProfissional = new TipoRegistroProfissional((string)$tipoRegistroDescricao);
             $tipoRegistroProfissionalDAO = new TipoRegistroProfissionalDAO();
-            $tipoRegistroProfissionalDAO->incluir($tipoRegistroProfissional);
+            $novoId = $tipoRegistroProfissionalDAO->incluir($tipoRegistroProfissional);
 
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'sucesso' => true,
-                'mensagem' => 'Tipo de registro cadastrado com sucesso!'
+                'mensagem' => 'Tipo de registro cadastrado com sucesso!',
+                'id' => $novoId,
+                'descricao' => $tipoRegistroDescricao
             ]);
         } catch (Exception $e) {
             Util::tratarException($e);

@@ -8,6 +8,7 @@
         private $lembrete;
         private $lembrete_enviado;
         private $intervalo = 0;
+        private $rodizio_divisao = 0;
 
         public function getId()
         {
@@ -42,6 +43,16 @@
         public function getLembrete_enviado()
         {
             return $this->lembrete_enviado;
+        }
+
+        public function getIntervalo()
+        {
+            return $this->intervalo;
+        }
+
+        public function getRodizio_divisao()
+        {
+            return $this->rodizio_divisao;
         }
 
         public function setId(int $id)
@@ -82,14 +93,14 @@
             $this->lembrete_enviado = $lembrete_enviado;
         }
 
-        public function getIntervalo()
-        {
-            return $this->intervalo;
-        }
-
         public function setIntervalo($intervalo)
         {
             $this->intervalo = max(0, (int)$intervalo);
+        }
+
+        public function setRodizio_divisao($rodizio)
+        {
+            $this->rodizio_divisao = $rodizio ? 1:0;
         }
     }
 ?>

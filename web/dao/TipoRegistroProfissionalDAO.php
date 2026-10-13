@@ -24,6 +24,7 @@ class TipoRegistroProfissionalDAO
             $descricao = $registro->getDescricao();
             $stmt->bindParam(':registro', $descricao);
             $stmt->execute();
+            return $this->pdo->lastInsertId();
         } catch (PDOException $e) {
             error_log("Erro DB [incluir]: ". $e->getMessage());
             throw new Exception("Erro tentar ao inserir novo tipo de registro profissional.");

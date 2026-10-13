@@ -166,20 +166,21 @@ unset($_SESSION['dados_filtros_relatorio']);
 				<!--start: page-->
 				<div class="tab-content">
 					<div id="overview" class="tab-pane active">
-						<form class="form-horizontal" method="post" action="relatorio_geracao.php">
+						<form id="form-relatorio" class="form-horizontal" method="post" action="relatorio_geracao.php">
 							<h4 class="mb-xlg">Tipo de Relatório</h4>
 							<h5 class="obrig">Campos Obrigatórios(*)</h5>
 
 							<div class="form-group">
 								<label class="col-md-3 control-label" for="type">Tipo de Relatório <span class="obrig">*</span></label>
 								<div class="col-md-8">
-									<select name="tipo_relatorio" oninput="changeType(this.value); controlarCampoMediaSaida();" id="tipo-relat" required>
+									<select name="tipo_relatorio" onchange="atualizarTipoRelatorio()" id="tipo-relat" required>
 										<option value="entrada">Relatório de Entrada</option>
 										<option value="estoque">Relatório de Estoque</option>
 										<option value="saida">Relatório de Saída</option>
 										<option value="produto">Relatório de Produtos</option>
 										<option value="requisicao">Relatório de Requisição</option>
 										<option value="itens_compra">Relatório de Itens de Compra</option>
+										<option value="grupo">Relatório de Grupos</option>
 									</select>
 								</div>
 							</div>
@@ -187,21 +188,21 @@ unset($_SESSION['dados_filtros_relatorio']);
 							<h4 class="mb-xlg" id="param-relat">Parâmetros do relatório</h4>
 
 							<div class="form-group" id="per" style="text-align: center;">
-								<button type="button" id="btn-7dias" class="btn btn-primary" style="width: fit-content;" onclick="botao7Dias()">Últimos 7 dias</button>
-								<button type="button" id="btn-30dias" class="btn btn-primary" style="width: fit-content;" onclick="botao30Dias()">Últimos 30 dias</button>
-								<button type="button" id="btn-3meses" class="btn btn-primary" style="width: fit-content;" onclick="botao3Meses()">Últimos 3 meses</button>
-								<button type="button" id="btn-180dias" class="btn btn-primary" style="width: fit-content;" onclick="botao180Dias()">Últimos 180 dias</button>
-								<button type="button" id="btn-365dias" class="btn btn-primary" style="width: fit-content;" onclick="botao365Dias()">Últimos 365 dias</button>
+								<button type="button" id="btn-7dias" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '7dias')">Últimos 7 dias</button>
+								<button type="button" id="btn-30dias" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '30dias')">Últimos 30 dias</button>
+								<button type="button" id="btn-3meses" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '3meses')">Últimos 3 meses</button>
+								<button type="button" id="btn-180dias" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '180dias')">Últimos 180 dias</button>
+								<button type="button" id="btn-365dias" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '365dias')">Últimos 365 dias</button>
 								<br><br>
-								<button type="button" id="btn-semana" class="btn btn-primary" style="width: fit-content;" onclick="botaoSemana()">Essa semana</button>
-								<button type="button" id="btn-mes" class="btn btn-primary" style="width: fit-content;" onclick="botaoMes()">Esse mês</button>
-								<button type="button" id="btn-ano" class="btn btn-primary" style="width: fit-content;" onclick="botaoAno()">Esse ano</button>
+								<button type="button" id="btn-semana" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, 'semana')">Essa semana</button>
+								<button type="button" id="btn-mes" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, 'mes')">Esse mês</button>
+								<button type="button" id="btn-ano" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, 'ano')">Esse ano</button>
 								<br><br>
-								<label class="col-md-3 control-label" for="profileCompany">Período</label>
+								<label class="col-md-3 control-label" >Período</label>
 								<div class="col-md-8">
-									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" id="data_inicio" name="data_inicio" max="9999-12-31">
+									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_inicio" max="9999-12-31">
 									<br>
-									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" id="data_fim" name="data_fim" max="9999-12-31">
+									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_fim" max="9999-12-31">
 								</div>
 							</div>
 
@@ -251,7 +252,7 @@ unset($_SESSION['dados_filtros_relatorio']);
 							<div class="form-group" id='tipo-entrada'>
 								<label class="col-md-3 control-label">Tipo de Entrada</label>
 								<div class="col-md-8">
-									<select name="tipo">
+									<select name="tipo" id="tipoEntradaSelect" onchange="controlarTiposContabilizar()">
 										<option value="">Todas as Opções</option>
 										<?php
 										foreach ($dadosFiltros['tipos_entrada'] as $value) {
@@ -264,10 +265,25 @@ unset($_SESSION['dados_filtros_relatorio']);
 								</div>
 							</div>
 
+							<div class="form-group" id="tiposEntrada-contabilizar">
+								<label class="col-md-3 control-label">Contabilizar no total</label>
+								<div class="col-md-6">
+									<small class="help-block">Selecione os tipos que devem compor o valor total do relatório.</small>
+									<?php foreach ($dadosFiltros['tipos_entrada'] as $value): ?>
+										<div class="checkbox">
+											<label>
+												<input type="checkbox" name="tiposEntrada[]" value="<?= (int) $value['id_tipo'] ?>"<?= $value['descricao'] === 'Doação' ? '' : ' checked' ?>>
+												<?= htmlspecialchars($value['descricao'], ENT_QUOTES, 'UTF-8') ?>
+											</label>
+										</div>
+									<?php endforeach; ?>
+								</div>
+							</div>
+
 							<div class="form-group" id='tipo-saida' style="display: none;">
 								<label class="col-md-3 control-label">Tipo de Saida</label>
 								<div class="col-md-8">
-									<select name="tipo">
+									<select name="tipo" id="tipoSaidaSelect" onchange="controlarTiposContabilizar()">
 										<option value="">Todas as Opções</option>
 										<?php
 										foreach ($dadosFiltros['tipos_saida'] as $value) {
@@ -277,6 +293,21 @@ unset($_SESSION['dados_filtros_relatorio']);
 										}
 										?>
 									</select>
+								</div>
+							</div>
+
+							<div class="form-group" id="tiposSaida-contabilizar">
+								<label class="col-md-3 control-label">Contabilizar no total</label>
+								<div class="col-md-6">
+									<small class="help-block">Selecione os tipos que devem compor o valor total do relatório.</small>
+									<?php foreach ($dadosFiltros['tipos_saida'] as $value): ?>
+										<div class="checkbox">
+											<label>
+												<input type="checkbox" name="tiposSaida[]" value="<?= (int) $value['id_tipo'] ?>" checked>
+												<?= htmlspecialchars($value['descricao'], ENT_QUOTES, 'UTF-8') ?>
+											</label>
+										</div>
+									<?php endforeach; ?>
 								</div>
 							</div>
 
@@ -360,25 +391,25 @@ unset($_SESSION['dados_filtros_relatorio']);
 
 						</form>
 
-						<!-- Formulário de produtos !-->
-						<form class="form-horizontal" method="post" action="<?= WWW ?>html/matPat/relatorio_geracao_produto.php">
+						<!-- Formulário de produtos -->
+						<form id="form-produto-grupo" class="form-horizontal" method="post" action="<?= WWW ?>html/matPat/relatorio_geracao_produto.php" data-action-produto="<?= WWW ?>html/matPat/relatorio_geracao_produto.php" data-action-grupo="<?= WWW ?>controle/control.php?nomeClasse=RelatorioGrupoControle&metodo=gerar">
 
 							<div class="form-group" id='per2' style="text-align: center;">
-								<button type="button" id="btn-7dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao7Dias()">Últimos 7 dias</button>
-								<button type="button" id="btn-30dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao30Dias()">Últimos 30 dias</button>
-								<button type="button" id="btn-3meses2" class="btn btn-primary" style="width: fit-content;" onclick="botao3Meses()">Últimos 3 meses</button>
-								<button type="button" id="btn-180dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao180Dias()">Últimos 180 dias</button>
-								<button type="button" id="btn-365dias2" class="btn btn-primary" style="width: fit-content;" onclick="botao365Dias()">Últimos 365 dias</button>
+								<button type="button" id="btn-7dias2" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '7dias')">Últimos 7 dias</button>
+								<button type="button" id="btn-30dias2" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '30dias')">Últimos 30 dias</button>
+								<button type="button" id="btn-3meses2" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '3meses')">Últimos 3 meses</button>
+								<button type="button" id="btn-180dias2" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '180dias')">Últimos 180 dias</button>
+								<button type="button" id="btn-365dias2" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, '365dias')">Últimos 365 dias</button>
 								<br><br>
-								<button type="button" id="btn-semana2" class="btn btn-primary" style="width: fit-content;" onclick="botaoSemana()">Essa semana</button>
-								<button type="button" id="btn-mes2" class="btn btn-primary" style="width: fit-content;" onclick="botaoMes()">Esse mês</button>
-								<button type="button" id="btn-ano2" class="btn btn-primary" style="width: fit-content;" onclick="botaoAno()">Esse ano</button>
+								<button type="button" id="btn-semana2" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, 'semana')">Essa semana</button>
+								<button type="button" id="btn-mes2" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, 'mes')">Esse mês</button>
+								<button type="button" id="btn-ano2" class="btn btn-primary" style="width: fit-content;" onclick="definirPeriodo(this, 'ano')">Esse ano</button>
 								<br><br>
-								<label class="col-md-3 control-label" for="profileCompany">Período</label>
+								<label class="col-md-3 control-label" >Período</label>
 								<div class="col-md-8">
-									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" id="data_inicio" name="data_inicio" max="9999-12-31">
+									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_inicio" max="9999-12-31">
 									<br>
-									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" id="data_fim" name="data_fim" max="9999-12-31">
+									<input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="data_fim" max="9999-12-31">
 								</div>
 							</div>
 
@@ -399,14 +430,23 @@ unset($_SESSION['dados_filtros_relatorio']);
 							<div class="form-group" id="produto">
 								<label class="col-md-3 control-label">Produtos</label>
 								<div class="col-md-8">
-									<select
-    									name="produto"
-    									id="produtoSelect"
-    									data-plugin-selectTwo
-    									data-plugin-options='{ "width": "190px" }'
-    									required
-									>
-    									<option value="">Selecione um Produto</option>
+									<select name="produto" id="produtoSelect" data-plugin-selectTwo
+										data-plugin-options='{ "width": "190px" }' required>
+										<option value="">Selecione um Produto</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group" id="grupo-produto-relatorio" style="display: none;">
+								<label class="col-md-3 control-label">Grupo</label>
+								<div class="col-md-8">
+									<select name="grupo" id="grupoSelect">
+										<option value="">Selecione um Grupo</option>
+										<?php foreach ($dadosFiltros['grupos'] as $grupo): ?>
+											<option value="<?= (int) $grupo['id_grupo_produto'] ?>">
+												<?= htmlspecialchars($grupo['descricao_grupo'], ENT_QUOTES, 'UTF-8') ?>
+											</option>
+										<?php endforeach; ?>
 									</select>
 								</div>
 							</div>
@@ -430,410 +470,249 @@ unset($_SESSION['dados_filtros_relatorio']);
 	</div>
 </body>
 <script>
-	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 7 DIAS
-	function botao7Dias() {
-		const dataInicio = document.querySelectorAll("#data_inicio");
-		const dataFim = document.querySelectorAll("#data_fim");
+    function formatarData(data) {
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        return `${ano}-${mes}-${dia}`;
+    }
 
-		//Pega a data atual
-		const dataAtual = new Date();
-		let ano = dataAtual.getFullYear();
-		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		let dia = String(dataAtual.getDate()).padStart(2, '0');
+    function definirPeriodo(botao, periodo) {
+        const formulario = botao.closest('form');
+        const inicio = new Date();
+        const fim = new Date();
 
-		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
+        switch (periodo) {
+            case '7dias':
+            case '30dias':
+            case '180dias':
+            case '365dias':
+                const dias = parseInt(periodo, 10);
+    			inicio.setDate(
+        			inicio.getDate() - (dias - 1)
+    			);
 
-		dataFim.forEach(function(dataFim) {
-			dataFim.value = dataAtualFormatada;
-		})
+                break;
+            case '3meses': {
+                const dia = inicio.getDate();
+                inicio.setDate(1);
+                inicio.setMonth(inicio.getMonth() - 3);
+                const ultimoDia = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 0).getDate();
+                inicio.setDate(Math.min(dia, ultimoDia));
+                break;
+            }
+            case 'semana': {
+                const diaSemana = inicio.getDay();
+                inicio.setDate(inicio.getDate() + (diaSemana === 0 ? -6 : 1 - diaSemana));
+                fim.setTime(inicio.getTime());
+                fim.setDate(fim.getDate() + 6);
+                break;
+            }
+            case 'mes':
+                inicio.setDate(1);
+                fim.setMonth(fim.getMonth() + 1, 0);
+                break;
+            case 'ano':
+                inicio.setMonth(0, 1);
+                fim.setMonth(11, 31);
+                break;
+        }
 
-		// Calcula a data de 7 dias atrás
-		dataAtual.setDate(dataAtual.getDate() - 7);
-		ano = dataAtual.getFullYear();
-		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		dia = String(dataAtual.getDate()).padStart(2, '0');
+        formulario.elements['data_inicio'].value = formatarData(inicio);
+        formulario.elements['data_fim'].value = formatarData(fim);
+        salvarFiltrosRelatorio();
+    }
 
-		const data7DiasAtras = `${ano}-${mes}-${dia}`;
+    function controlarTiposContabilizar() {
+        const tipo = document.getElementById('tipo-relat').value;
+        document.getElementById('tiposEntrada-contabilizar').style.display =
+            tipo === 'entrada' && !document.getElementById('tipoEntradaSelect').value ? 'block' : 'none';
+        document.getElementById('tiposSaida-contabilizar').style.display =
+            tipo === 'saida' && !document.getElementById('tipoSaidaSelect').value ? 'block' : 'none';
+    }
 
-		dataInicio.forEach(function(dataInicio) {
-			dataInicio.value = data7DiasAtras;
-		})
+    function controlarCampoMediaSaida() {
+        const tipo = document.getElementById('tipo-relat').value;
+        const almoxarifado = document.getElementById('almoxarifado1');
+        const obrigatorio = tipo === 'itens_compra';
+
+        almoxarifado.required = obrigatorio;
+        almoxarifado.options[0].text = obrigatorio ? 'Selecionar almoxarifado' : 'Todas as Opções';
+        document.getElementById('media-saida').style.display =
+            tipo === 'saida' || tipo === 'itens_compra' ? 'block' : 'none';
+        document.getElementById('categoria-relat').style.display =
+            ['estoque', 'requisicao', 'itens_compra'].includes(tipo) ? 'block' : 'none';
+        document.getElementById('modo-requisicao').style.display =
+            tipo === 'requisicao' ? 'block' : 'none';
+        controlarTiposContabilizar();
+    }
+
+    function atualizarTipoRelatorio() {
+        const tipo = document.getElementById('tipo-relat').value;
+        changeType(tipo);
+        controlarCampoMediaSaida();
+    }
+
+    const formularios = {
+        principal: document.getElementById('form-relatorio'),
+        produtoGrupo: document.getElementById('form-produto-grupo')
+    };
+    const chaveFiltros = 'filtrosRelatorio:<?= (int) $_SESSION['id_pessoa'] ?>';
+
+    function chaveCampo(campo) {
+        if (campo.id === 'tipoEntradaSelect' || campo.id === 'tipoSaidaSelect') {
+            return campo.id;
+        }
+        return campo.name;
+    }
+
+    function valoresFormulario(formulario) {
+        const valores = {};
+        formulario.querySelectorAll('input, select, textarea').forEach(campo => {
+            if (['button', 'submit', 'reset'].includes(campo.type)) return;
+            const chave = chaveCampo(campo);
+            if (!chave) return;
+
+            if (campo.type === 'checkbox') {
+                if (campo.name.endsWith('[]')) {
+                    if (!Array.isArray(valores[chave])) valores[chave] = [];
+                    if (campo.checked) valores[chave].push(campo.value);
+                } else {
+                    valores[chave] = campo.checked;
+                }
+            } else {
+                valores[chave] = campo.value;
+            }
+        });
+        return valores;
+    }
+
+    function salvarFiltrosRelatorio() {
+        try {
+            localStorage.setItem(chaveFiltros, JSON.stringify({
+                principal: valoresFormulario(formularios.principal),
+                produtoGrupo: valoresFormulario(formularios.produtoGrupo)
+            }));
+        } catch (erro) {
+            // A geração do relatório continua disponível sem armazenamento local.
+        }
+    }
+
+    function lerFiltrosRelatorio() {
+    	try {
+        	return JSON.parse(
+            	localStorage.getItem(chaveFiltros)
+        	) || {};
+    	} catch (erro) {
+        	return {};
+    	}
 	}
 
-	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 30 DIAS
-	function botao30Dias() {
-		const dataInicio = document.querySelectorAll("#data_inicio");
-		const dataFim = document.querySelectorAll("#data_fim");
+    function restaurarFormulario(formulario, valores, ignorarProduto = false) {
+        formulario.querySelectorAll('input, select, textarea').forEach(campo => {
+            const chave = chaveCampo(campo);
+            if (!chave || !Object.prototype.hasOwnProperty.call(valores, chave)) return;
+            if (ignorarProduto && chave === 'produto') return;
+            const valor = valores[chave];
 
-		//Pega a data atual
-		const dataAtual = new Date();
-		let ano = dataAtual.getFullYear();
-		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		let dia = String(dataAtual.getDate()).padStart(2, '0');
+            if (campo.type === 'checkbox') {
+                campo.checked = campo.name.endsWith('[]')
+                    ? Array.isArray(valor) && valor.includes(campo.value)
+                    : (Array.isArray(valor) ? valor.includes(campo.value) : valor === true || valor === 'on');
+            } else if (valor !== null && valor !== undefined) {
+                if (campo.tagName !== 'SELECT' || Array.from(campo.options).some(opcao => opcao.value === valor)) {
+                    campo.value = valor;
+                }
+            }
+        });
+    }
 
-		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
+    let produtoPendente = null;
+    let requisicaoProdutos = 0;
+    $('#almoxarifadoSelect').on('change', function() {
+        const idAlmoxarifado = this.value;
+        const produtoARestaurar = produtoPendente;
+        produtoPendente = null;
+        const requisicaoAtual = ++requisicaoProdutos;
+        const selectProduto = document.getElementById('produtoSelect');
+        selectProduto.innerHTML = '<option value="">Selecione um Produto</option>';
 
-		dataFim.forEach(function(dataFim) {
-			dataFim.value = dataAtualFormatada;
+        if (!idAlmoxarifado) {
+            $('#produtoSelect').trigger('change');
+            return;
+        }
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '<?= WWW ?>controle/control.php?nomeClasse=ProdutoControle&metodo=listarDisponiveisRelatorioPorAlmoxarifado&id_almoxarifado=' + encodeURIComponent(idAlmoxarifado), true);
+        xhr.onload = function() {
+            if (requisicaoAtual !== requisicaoProdutos) return;
+            if (xhr.status !== 200) {
+                console.error('Erro ao carregar produtos:', xhr.status);
+                return;
+            }
+
+            try {
+                const grupos = new Map();
+                JSON.parse(xhr.responseText).forEach(produto => {
+                    const grupo = produto.descricao_grupo || 'Sem grupo';
+                    if (!grupos.has(grupo)) grupos.set(grupo, []);
+                    grupos.get(grupo).push(produto);
+                });
+
+                grupos.forEach((produtos, nomeGrupo) => {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = nomeGrupo;
+                    produtos.forEach(produto => {
+                        const option = document.createElement('option');
+                        option.value = produto.id_produto;
+                        option.textContent = produto.descricao;
+                        optgroup.appendChild(option);
+                    });
+                    selectProduto.appendChild(optgroup);
+                });
+
+                if (produtoARestaurar && Array.from(selectProduto.options).some(opcao => opcao.value === produtoARestaurar)) {
+                    selectProduto.value = produtoARestaurar;
+                }
+                $('#produtoSelect').trigger('change');
+            } catch (erro) {
+                console.error('Resposta inválida ao carregar produtos:', erro);
+            }
+        };
+        xhr.send();
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const filtros = lerFiltrosRelatorio();
+        const principal = filtros.principal || {};
+        const produtoGrupo = filtros.produtoGrupo || {};
+        const seletorTipo = document.getElementById('tipo-relat');
+
+        if (principal.tipo_relatorio && Array.from(seletorTipo.options).some(opcao => opcao.value === principal.tipo_relatorio)) {
+            seletorTipo.value = principal.tipo_relatorio;
+        }
+        atualizarTipoRelatorio();
+        restaurarFormulario(formularios.principal, principal);
+        restaurarFormulario(formularios.produtoGrupo, produtoGrupo, true);
+        controlarTiposContabilizar();
+
+        if (produtoGrupo.almoxarifado) {
+            produtoPendente = produtoGrupo.produto || null;
+            document.getElementById('almoxarifadoSelect').dispatchEvent(new Event('change'));
+        }
+
+        Object.values(formularios).forEach(formulario => {
+    		formulario.addEventListener(
+        		'change',
+        		salvarFiltrosRelatorio
+    		);
+
+    		formulario.addEventListener(
+        		'submit',
+        		salvarFiltrosRelatorio
+    		);
 		});
-
-		// Calcula a data de 30 dias atrás
-		dataAtual.setDate(dataAtual.getDate() - 30);
-		ano = dataAtual.getFullYear();
-		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		dia = String(dataAtual.getDate()).padStart(2, '0');
-
-		const data30DiasAtras = `${ano}-${mes}-${dia}`;
-
-		dataInicio.forEach(function(dataInicio) {
-			dataInicio.value = data30DiasAtras;
-		});
-	}
-
-	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 3 MESES
-	function botao3Meses() {
-		const dataInicio = document.querySelectorAll("#data_inicio");
-		const dataFim = document.querySelectorAll("#data_fim");
-
-		//Pega a data atual
-		const dataAtual = new Date();
-		let ano = dataAtual.getFullYear();
-		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		let dia = String(dataAtual.getDate()).padStart(2, '0');
-
-		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
-
-		dataFim.forEach(function(dataFim) {
-			dataFim.value = dataAtualFormatada;
-		});
-
-		// Calcula a data de 3 meses atrás
-		dataAtual.setMonth(dataAtual.getMonth() - 3);
-		ano = dataAtual.getFullYear();
-		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		dia = String(dataAtual.getDate()).padStart(2, '0');
-		const data3MesesAtras = `${ano}-${mes}-${dia}`;
-
-		dataInicio.forEach(function(dataInicio) {
-			dataInicio.value = data3MesesAtras;
-		});
-	}
-
-	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 180 DIAS
-	function botao180Dias() {
-		const dataInicio = document.querySelectorAll("#data_inicio");
-		const dataFim = document.querySelectorAll("#data_fim");
-
-		//Pega a data atual
-		const dataAtual = new Date();
-		let ano = dataAtual.getFullYear();
-		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		let dia = String(dataAtual.getDate()).padStart(2, '0');
-
-		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
-
-		dataFim.forEach(function(dataFim) {
-			dataFim.value = dataAtualFormatada;
-		});
-
-		// Calcula a data de 180 dias atrás
-		dataAtual.setDate(dataAtual.getDate() - 180);
-		ano = dataAtual.getFullYear();
-		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		dia = String(dataAtual.getDate()).padStart(2, '0');
-
-		const data180DiasAtras = `${ano}-${mes}-${dia}`;
-
-		dataInicio.forEach(function(dataInicio) {
-			dataInicio.value = data180DiasAtras;
-		})
-	}
-
-	//FUNÇÃO PARA CALCULAR AS LISTAGENS DE 365 DIAS
-	function botao365Dias() {
-		const dataInicio = document.querySelectorAll("#data_inicio");
-		const dataFim = document.querySelectorAll("#data_fim");
-
-		// Pega a data atual
-		const dataAtual = new Date();
-		let ano = dataAtual.getFullYear();
-		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		let dia = String(dataAtual.getDate()).padStart(2, '0');
-
-		const dataAtualFormatada = `${ano}-${mes}-${dia}`;
-
-		dataFim.forEach(function(dataFim) {
-			dataFim.value = dataAtualFormatada;
-		});
-
-		// Calcula a data de 365 dias atrás
-		dataAtual.setDate(dataAtual.getDate() - 365);
-		ano = dataAtual.getFullYear();
-		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		dia = String(dataAtual.getDate()).padStart(2, '0');
-
-		const data365DiasAtras = `${ano}-${mes}-${dia}`;
-
-		// Itera sobre todos os elementos de data_inicio e atribui o valor
-		dataInicio.forEach(function(dataInicio) {
-			dataInicio.value = data365DiasAtras;
-		});
-	}
-
-	//FUNÇÃO PARA CALCULAR AS LISTAGENS DA SEMANA
-	function botaoSemana() {
-		const dataInicio = document.querySelectorAll("#data_inicio");
-		const dataFim = document.querySelectorAll("#data_fim");
-
-		const dataAtual = new Date();
-		const diaSemana = dataAtual.getDay();
-
-		const diasParaSegunda = diaSemana === 0 ? -6 : 1 - diaSemana;
-		dataAtual.setDate(dataAtual.getDate() + diasParaSegunda);
-
-		// Formata a data de início (segunda-feira)
-		let ano = dataAtual.getFullYear();
-		let mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		let dia = String(dataAtual.getDate()).padStart(2, '0');
-		const dataDaSemana = `${ano}-${mes}-${dia}`;
-
-		dataInicio.forEach(function(dataInicio) {
-			dataInicio.value = dataDaSemana;
-		});
-
-		dataAtual.setDate(dataAtual.getDate() + 6);
-
-		// Formata a data de fim (domingo)
-		ano = dataAtual.getFullYear();
-		mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		dia = String(dataAtual.getDate()).padStart(2, '0');
-		const dataFimSemana = `${ano}-${mes}-${dia}`;
-
-		dataFim.forEach(function(dataFim) {
-			dataFim.value = dataFimSemana;
-		});
-	}
-
-	//FUNÇÃO PARA CALCULAR AS LISTAGENS DO MÊS
-	function botaoMes() {
-		const dataInicio = document.querySelectorAll("#data_inicio");
-		const dataFim = document.querySelectorAll("#data_fim");
-
-		const dataAtual = new Date();
-
-		const ano = dataAtual.getFullYear();
-		const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
-		const dia = '01';
-		const inicioMes = `${ano}-${mes}-${dia}`;
-
-		dataInicio.forEach(function(dataInicio) {
-			dataInicio.value = inicioMes;
-		});
-
-		const proximoMes = new Date(ano, dataAtual.getMonth() + 1, 0);
-		const fimMesAno = proximoMes.getFullYear();
-		const fimMesMes = String(proximoMes.getMonth() + 1).padStart(2, '0');
-		const fimMesDia = String(proximoMes.getDate()).padStart(2, '0');
-		const fimMes = `${fimMesAno}-${fimMesMes}-${fimMesDia}`;
-
-		dataFim.forEach(function(dataFim) {
-			dataFim.value = fimMes;
-		})
-	}
-	//FUNÇÃO PARA CALCULAR AS LISTAGENS DO ANO
-	function botaoAno() {
-		const dataInicio = document.querySelectorAll("#data_inicio");
-		const dataFim = document.querySelectorAll("#data_fim");
-
-		const dataAtual = new Date();
-
-		const ano = dataAtual.getFullYear();
-		const inicioAno = `${ano}-01-01`;
-
-		dataInicio.forEach(function(dataInicio) {
-			dataInicio.value = inicioAno;
-		});
-
-		const fimAno = `${ano}-12-31`;
-
-		dataFim.forEach(function(dataFim) {
-			dataFim.value = fimAno;
-		});
-	}
-
-	const selectAlmoxarifado = document.getElementById("almoxarifadoSelect");
-	selectAlmoxarifado.addEventListener("click", function() {
-		removerPrimeiraOpcaoAlmoxarifado();
-	})
-
-	const selectProduto = document.getElementById("produtoSelect");
-	selectProduto.addEventListener("click", function() {
-		removerPrimeiraOpcaoProduto();
-	})
-
-	function removerPrimeiraOpcaoProduto() {
-		const select = document.getElementById('produtoSelect');
-
-		if (select.options[0].value === "") {
-			select.remove(0);
-		}
-	}
-
-	function removerPrimeiraOpcaoAlmoxarifado() {
-		const select = document.getElementById('almoxarifadoSelect');
-
-		if (select.options[0].value === "") {
-			select.remove(0);
-		}
-	}
-
-	document.getElementById('almoxarifadoSelect').addEventListener('change', function() {
-		const idAlmoxarifado = this.value;
-		console.log("Almoxarifado selecionado: ", idAlmoxarifado);
-
-		if (idAlmoxarifado) {
-			const xhr = new XMLHttpRequest();
-			xhr.open('GET', '<?= WWW ?>controle/control.php?nomeClasse=ProdutoControle&metodo=listarDisponiveisRelatorioPorAlmoxarifado&id_almoxarifado=' + encodeURIComponent(idAlmoxarifado), true);
-			xhr.onload = function() {
-				if (xhr.status === 200) {
-					console.log(xhr.responseText);
-					const produtos = JSON.parse(xhr.responseText);
-					const selectProduto = document.getElementById('produtoSelect');
-					selectProduto.innerHTML = '<option value="">Selecione um Produto</option>';
-
-					const grupos = {};
-
-					produtos.forEach(function(produto) {
-    					const nomeGrupo = produto.descricao_grupo || 'Sem grupo';
-
-    					if (!grupos[nomeGrupo]) {
-        					grupos[nomeGrupo] = [];
-    					}
-
-    					grupos[nomeGrupo].push(produto);
-					});
-
-					Object.keys(grupos).forEach(function(nomeGrupo) {
-    					const optgroup = document.createElement('optgroup');
-
-    					optgroup.label = nomeGrupo;
-
-    					grupos[nomeGrupo].forEach(function(produto) {
-        					const option = document.createElement('option');
-
-        					option.value = produto.id_produto;
-        					option.textContent = produto.descricao;
-
-        					optgroup.appendChild(option);
-    					});
-
-    					selectProduto.appendChild(optgroup);
-					});
-					$('#produtoSelect').trigger('change');
-				} else {
-					console.error('Erro na requisição:', xhr.status);
-				}
-			};
-			xhr.send();
-		} else {
-			document.getElementById('produtoSelect').innerHTML = '<option value="">Selecione um Produto</option>';
-		}
-	});
-
-	function controlarCampoMediaSaida() {
-		const tipoRelatorio = document.getElementById('tipo-relat').value;
-
-		const campoMedia = document.getElementById('media-saida');
-		const categoriaProduto = document.getElementById('categoria-relat');
-		const modoRequisicao = document.getElementById('modo-requisicao');
-		const almoxarifadoPrincipal = document.getElementById('almoxarifado1');
-		const almoxarifadoObrigatorio = tipoRelatorio === 'itens_compra';
-
-		almoxarifadoPrincipal.required = almoxarifadoObrigatorio;
-
-		almoxarifadoPrincipal.options[0].text =
-    		almoxarifadoObrigatorio
-        		? 'Selecionar almoxarifado'
-        		: 'Todas as Opções';
-
-		campoMedia.style.display = tipoRelatorio === 'saida' || tipoRelatorio === 'itens_compra'? 'block' : 'none';
-
-		if (categoriaProduto) {
-			categoriaProduto.style.display = (tipoRelatorio === 'requisicao' || tipoRelatorio === 'estoque' || tipoRelatorio === 'itens_compra') ? 'block' : 'none';
-		}
-
-		if (modoRequisicao) {
-			modoRequisicao.style.display = tipoRelatorio === 'requisicao' ? 'block' : 'none';
-		}
-
-		if (tipoRelatorio === 'estoque') {
-			document.getElementById('per').style.display = 'none';
-			document.getElementById('orig').style.display = 'none';
-			document.getElementById('dest').style.display = 'none';
-			document.getElementById('tipo-entrada').style.display = 'none';
-			document.getElementById('tipo-saida').style.display = 'none';
-			document.getElementById('resp').style.display = 'none';
-
-			document.getElementById('almoxarifado').style.display = 'block';
-			document.getElementById('panel-mostrarZerados').style.display = 'block';
-			document.getElementById('gerar').style.display = 'block';
-
-			document.getElementById('per2').style.display = 'none';
-			document.getElementById('produto').style.display = 'none';
-			document.getElementById('almoxarifado2').style.display = 'none';
-			document.getElementById('gerar2').style.display = 'none';
-			document.getElementById('gerar3').style.display = 'none';
-
-			return;
-		}
-
-		if (tipoRelatorio === 'requisicao') {
-			document.getElementById('per').style.display = 'block';
-			document.getElementById('orig').style.display = 'none';
-			document.getElementById('dest').style.display = 'none';
-			document.getElementById('tipo-entrada').style.display = 'none';
-			document.getElementById('tipo-saida').style.display = 'none';
-			document.getElementById('resp').style.display = 'none';
-
-			document.getElementById('almoxarifado').style.display = 'block';
-			document.getElementById('categoria-relat').style.display = 'block';
-			document.getElementById('modo-requisicao').style.display = 'block';
-
-			document.getElementById('panel-mostrarZerados').style.display = 'none';
-			document.getElementById('gerar').style.display = 'block';
-
-			document.getElementById('per2').style.display = 'none';
-			document.getElementById('produto').style.display = 'none';
-			document.getElementById('almoxarifado2').style.display = 'none';
-			document.getElementById('gerar2').style.display = 'none';
-			document.getElementById('gerar3').style.display = 'none';
-
-			return;
-		}
-
-		if (tipoRelatorio === 'itens_compra') {
-			document.getElementById('per').style.display = 'block';
-			document.getElementById('orig').style.display = 'none';
-			document.getElementById('dest').style.display = 'none';
-			document.getElementById('tipo-entrada').style.display = 'none';
-			document.getElementById('tipo-saida').style.display = 'none';
-			document.getElementById('resp').style.display = 'none';
-
-			document.getElementById('almoxarifado').style.display = 'block';
-			document.getElementById('panel-mostrarZerados').style.display = 'none';
-			document.getElementById('gerar').style.display = 'block';
-
-			document.getElementById('per2').style.display = 'none';
-			document.getElementById('produto').style.display = 'none';
-			document.getElementById('almoxarifado2').style.display = 'none';
-			document.getElementById('gerar2').style.display = 'none';
-			document.getElementById('gerar3').style.display = 'none';
-
-			return;
-		}
-	}
-
-	document.addEventListener('DOMContentLoaded', controlarCampoMediaSaida);
+    });
 </script>
 <script src="<?= WWW ?>html/relatorios/relatorio.js" defer></script>
 
