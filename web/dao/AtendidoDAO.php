@@ -423,26 +423,6 @@ class AtendidoDAO
         return json_encode($atendidos);
     }
 
-
-    /* public function listarTodos2()
-    {
-        $pessoas = array();
-        $pdo = Conexao::connect();
-        $consulta = $pdo->query("SELECT p.nome,p.sobrenome,p.cpf,i.id_pessoa FROM pessoa p INNER JOIN pessoa i ON p.id_pessoa = i.id_pessoa");
-
-        $x = 0;
-        while ($linha = $consulta->fetch(PDO::FETCH_ASSOC)) {
-            if ($linha['cpf'] === "Não informado" || $linha['cpf'] === null) {
-                $pessoas[$x] = array('cpf' => 'Não informado', 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['id_pessoa']);
-            } else {
-                $pessoas[$x] = array('cpf' => $linha['cpf'], 'nome' => $linha['nome'], 'sobrenome' => $linha['sobrenome'], 'id' => $linha['id_pessoa']);
-            }
-            $x++;
-        }
-
-        return $pessoas;
-    } */
-
     public function listarTodos2()
     {
         require_once ROOT . "/dao/memorando/UsuarioDAO.php";
