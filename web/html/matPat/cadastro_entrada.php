@@ -87,6 +87,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 	<script src="<?= WWW ?>assets/vendor/modernizr/modernizr.js"></script>
 
 	<!-- Javascript functions -->
+	<script src="<?= WWW ?>Functions/mascara.js"></script>
 	<script src="<?= WWW ?>assets/vendor/jquery/jquery.min.js"></script>
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
@@ -229,7 +230,8 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 															<tr>
 																<td>Valor total:</td>
 																<td id="valor-total">
-																	<input type="number" id="total_total" name="total_total" class="form-control" readonly="readonly" required>
+																	<input type="hidden" id="total_total" name="total_total">
+																	<input type="text" id="total_total_formatado" class="form-control" value="R$ 0,00" readonly>
 																	<input type="hidden" id="conta" name="conta" readonly="readonly">
 																	<input type="hidden" id="verifica" disabled>
 																</td>
@@ -327,14 +329,14 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 
 			function itemProduto(produto) {
 				const codigo = produto.codigo || 'Sem código';
-				const preco = Number(produto.preco).toFixed(2).replace('.', ',');
+				const preco = formatarMoeda(produto.preco);
 
 				return {
 					label:
 						produto.descricao +
 						' | Cód: ' + codigo +
 						' | Qtd: ' + produto.qtd +
-						' | R$ ' + preco,
+						' | ' + preco,
 
 					value: valorProduto(produto),
 					tipo: 'produto',
@@ -586,19 +588,21 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 						"readonly='readonly'>" +
 					"</td>" +
 					"<td>" +
-						"<input type='text' " +
+						"<input type='hidden' " +
 						"class='preco' " +
 						"value='" + preco + "' " +
-						"name='valor_unitario" + conta + "' " +
-						"size='2' " +
-						"readonly='readonly'>" +
+						"name='valor_unitario" + conta + "'>" +
+						"<span class='preco-formatado'>" +
+							formatarMoeda(preco) +
+						"</span>" +
 					"</td>" +
 					"<th>" +
-						"<input type='text' " +
-						"size='3' " +
+						"<input type='hidden' " +
 						"class='total' " +
-						"value='" + (quantidade * preco) + "' " +
-						"readonly='readonly'>" +
+						"value='" + (quantidade * preco) + "'>" +
+						"<span class='total-formatado'>" +
+							formatarMoeda(quantidade * preco) +
+						"</span>" +
 					"</th>" +
 					"<td>" +
 						"<button type='button' class='delete-row'>" +
@@ -619,11 +623,7 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 			});
 
 			//remover tabela
-			$("table tbody").on('click', '.delete-row', function() {
-				const valor_menos = $(this).closest('tr').find('th').find('input').val();
-				let xx = $("#total_total").val();
-				xx = xx - valor_menos;
-				$("#total_total").val(xx);
+			$("#lista-produtos").on('click', '.delete-row', function() {
 				$(this).closest('tr').remove();
 				reindexarProdutosEntrada();
 			});
@@ -835,12 +835,17 @@ if (isset($_SESSION['almoxarifado']) && isset($_SESSION['tipo_entrada']) &&  iss
 				const subtotal = qtd * preco;
 
 				inputTotal.val(subtotal);
+
+				$(this).find('.preco-formatado').text(formatarMoeda(preco));
+				$(this).find('.total-formatado').text(formatarMoeda(subtotal));
+
 				totalGeral += subtotal;
 			});
 
 			$('#conta').val(contador);
 			$('#verifica').val(contador);
 			$('#total_total').val(totalGeral);
+			$('#total_total_formatado').val(formatarMoeda(totalGeral));
 
 			return contador;
 		}

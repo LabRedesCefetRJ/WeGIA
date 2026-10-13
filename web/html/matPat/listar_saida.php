@@ -127,7 +127,7 @@ $almoxarifados = $stmtAlmoxarifados->fetchAll(PDO::FETCH_ASSOC);
 								.append($('<td />').text(item.nome_destino ?? ''))
 								.append($('<td />').text(item.descricao ?? ''))
 								.append($('<td />').text(item.nome ?? ''))
-								.append($('<td />').text(item.valor_total ?? ''))
+								.append($('<td />').attr('data-order', Number(item.valor_total ?? 0)).text(formatarMoeda(item.valor_total)))
 								.append($('<td />').text(item.data ?? ''))
 								.append($('<td />').text(item.hora ?? ''))
 						);

@@ -77,3 +77,13 @@ function mascara(m,t,e,c){
     if (cursorfixo && !livre) cursor--;
     t.setSelectionRange(cursor, cursor);
 }
+
+// Formata valores numéricos para exibição em reais.
+function formatarMoeda(valor) {
+    return Number(valor ?? 0).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
