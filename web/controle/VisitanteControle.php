@@ -122,7 +122,7 @@ class VisitanteControle
 
         $senha = '';
         $imgperfil = $this->extrairImagemEnviada();
-        $visitante = new Visitante($cpf, $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', $senha, $telefone ?? null, $imgperfil, $cep ?? '', $uf ?? '', $cidade ?? '', $bairro ?? '', $rua ?? '', $numero_residencia ?? '', $complemento ?? '', $ibge ?? '');
+        $visitante = new Visitante($cpf, $nome, $sobrenome, $gender, $nascimento, null, null, null, $nome_mae ?? '', $nome_pai ?? '', $sangue ?? '', $senha, null, $telefone ?? null, $imgperfil, $cep ?? '', $uf ?? '', $cidade ?? '', $bairro ?? '', $rua ?? '', $numero_residencia ?? '', $complemento ?? '', $ibge ?? '');
 
         return $visitante;
     }
@@ -183,7 +183,7 @@ class VisitanteControle
         }
     }
 
-    public function incluir_existente()
+    public function incluirExistente()
     {
         try {
             $visitante = $this->verificarVisitante();
@@ -193,7 +193,7 @@ class VisitanteControle
                 throw new InvalidArgumentException('O Token CSRF informado é inválido.', 403);
 
             $visitanteDAO = new VisitanteDAO();
-            $idVisitante = $visitanteDAO->incluir_existente($visitante, $cpf);
+            $idVisitante = $visitanteDAO->incluirExistente($visitante, $cpf);
 
             if (!isset($idVisitante))
                 throw new PDOException('Erro ao cadastrar o visitante.', 500);

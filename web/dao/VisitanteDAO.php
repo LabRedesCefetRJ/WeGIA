@@ -85,7 +85,7 @@ class VisitanteDAO
         }
     }
 
-    public function incluir_existente(Visitante $visitante, $cpf)
+    public function incluirExistente(Visitante $visitante, $cpf)
     {
         $this->pdo->beginTransaction();
 

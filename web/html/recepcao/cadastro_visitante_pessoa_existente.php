@@ -344,7 +344,7 @@ endif; ?>
                             <div class="panel-footer">
                                 <?= Csrf::inputField()?>
                                 <input type="hidden" name="nomeClasse" value="VisitanteControle">
-                                <input type="hidden" name="metodo" value="incluir_existente">
+                                <input type="hidden" name="metodo" value="incluirExistente">
                                 <button type="button" class="btn btn-primary" id="botaoEditarIP" onclick="return editar_informacoes()">Editar</button>
                                 <button type="submit" class="btn btn-primary" id="botaoCadastrarIP">Cadastrar</button>
                             </div>
