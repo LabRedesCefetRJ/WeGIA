@@ -195,21 +195,23 @@ try {
 				<section class="panel panel-primary">
 					<header class="panel-heading">
 						<h2 class="panel-title">Lista de Processos</h2>
-						<div class="form-inline" style="margin-top: 10px;">
-							<label for="status-processo">Status: </label>
-							<select class="form-control" name="status-processo" id="status-processo">
-								<?php foreach ($statusProcesso as $status): ?>
-									<option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
-								<?php endforeach; ?>
-					</select>
-					<div class="form-group" style="margin-bottom: 0;">
-						<input type="text" id="nome-processo" class="form-control" placeholder="Pesquisar por nome" value="<?= htmlspecialchars($nomeProcessoGet ?? '', ENT_QUOTES, 'UTF-8') ?>" />
-					</div>
+						<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; flex-wrap: wrap; gap: 10px;">
+							<div class="form-inline" style="margin-top: 10px;">
+								<label for="status-processo">Status: </label>
+								<select class="form-control" name="status-processo" id="status-processo">
+									<?php foreach ($statusProcesso as $status): ?>
+										<option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+							<div class="form-inline" style="margin-top: 10px; text-align: right;">
+								<div class="form-group" style="margin-bottom: 0;">
+									<input type="text" id="nome-processo" class="form-control" placeholder="Pesquisar por nome ou cpf" value="<?= htmlspecialchars($nomeProcessoGet ?? '', ENT_QUOTES, 'UTF-8') ?>" />
+								</div>
 
-							<button type="button" class="btn btn-default" id="listar-processo">
-								Listar
-							</button>
-						</div>
+								<button type="button" class="btn btn-default" id="listar-processo" title="Pesquisar" aria-label="Pesquisar"> <i class="fa fa-search" aria-hidden="true"></i></button>
+							</div>	
+						</div>					
 					</header>
 					<div class="panel-body">
 						<?php if (empty($processosAceitacao)): ?>
@@ -218,7 +220,7 @@ try {
 							</div>
 						<?php else: ?>
 							<div class="table-responsive">
-								<table class="table table-striped table-bordered table-hover">
+								<table id="tabela-processos" class="table table-striped table-bordered table-hover">
 									<thead>
 										<tr>
 											<th>Nome</th>
@@ -1201,6 +1203,34 @@ function formatCpfField(field) {
 			window.location.href = url;
 		});
 
+			$(document).ready(function() {
+				var tabela = $('#tabela-processos').DataTable({
+					searching: true,
+					dom: 'lrtip'
+				});
+
+				// Pesquisa somente nas colunas Nome (0) e CPF (1).
+				$.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+					if (settings.nTable.id !== 'tabela-processos') {
+						return true;
+					}
+
+					var busca = $('#nome-processo').val().trim().toLowerCase();
+
+					if (busca === '') {
+						return true;
+					}
+
+					var nome = $('<div>').html(data[0]).text().toLowerCase();
+					var cpf = $('<div>').html(data[1]).text().toLowerCase();
+
+					return nome.includes(busca) || cpf.includes(busca);
+				});
+
+				$('#nome-processo').on('input', function() {
+					tabela.draw();
+				});
+			});
 
 		const btnListar = document.getElementById('listar-processo');
 
