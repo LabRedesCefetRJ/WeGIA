@@ -209,22 +209,27 @@ class SocioDAO
 
         $tagIds = $this->resolverTagsParaPersistencia($socio->getTags(), (int) $idSocio);
 
-        $sqlAtualizarSocio =
-            'UPDATE socio s 
-        JOIN pessoa p ON s.id_pessoa = p.id_pessoa
-        SET 
-            s.valor_periodo = :valor
-        WHERE p.cpf = :cpf';
+        // Mesma regra dos campos de pessoa acima: valor null = "não informado,
+        // manter o atual". Sem isso, quem atualiza só parte do cadastro (ex:
+        // SocioController::completarCadastroSocio) apagava o valor_periodo.
+        if ($socio->getValor() !== null) {
+            $sqlAtualizarSocio =
+                'UPDATE socio s
+            JOIN pessoa p ON s.id_pessoa = p.id_pessoa
+            SET
+                s.valor_periodo = :valor
+            WHERE p.cpf = :cpf';
 
-        $stmtSocio = $this->pdo->prepare($sqlAtualizarSocio);
+            $stmtSocio = $this->pdo->prepare($sqlAtualizarSocio);
 
-        $stmtSocio->bindValue(':valor', $socio->getValor());
-        $stmtSocio->bindValue(':cpf', $socio->getDocumento());
+            $stmtSocio->bindValue(':valor', $socio->getValor());
+            $stmtSocio->bindValue(':cpf', $socio->getDocumento());
 
-        $atualizado = $stmtSocio->execute();
+            $atualizado = $stmtSocio->execute();
 
-        if (!$atualizado) {
-            return false;
+            if (!$atualizado) {
+                return false;
+            }
         }
 
         return $this->socioHasTagDao->sync((int) $idSocio, $tagIds);

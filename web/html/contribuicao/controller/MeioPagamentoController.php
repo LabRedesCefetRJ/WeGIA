@@ -65,6 +65,7 @@ class MeioPagamentoController
             $this->pdo->commit();
 
             header("Location: ../view/meio_pagamento.php?msg=cadastrar-sucesso");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -72,6 +73,7 @@ class MeioPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=cadastrar-falha");
+            exit;
         }
     }
 
@@ -159,6 +161,7 @@ class MeioPagamentoController
             $this->pdo->commit();
 
             header("Location: ../view/meio_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -166,6 +169,7 @@ class MeioPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=excluir-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -200,6 +204,7 @@ class MeioPagamentoController
 
             $this->pdo->commit();
             header("Location: ../view/meio_pagamento.php?msg=editar-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -207,6 +212,7 @@ class MeioPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -278,6 +284,7 @@ class MeioPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/meio_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 }

@@ -61,7 +61,9 @@ if (mysqli_affected_rows($conexao)) {
 
     fecharConexao($stmt, $conexao);
     header("Location: ../sucesso.php");
+    exit;
 } else {
     fecharConexao($stmt, $conexao);
     header("Location: ./cargos.php?msg_e=Erro ao modificar cargo.");
+    exit;
 }

@@ -45,22 +45,22 @@ $stmt->bindValue(':id_produto', $idProduto, PDO::PARAM_INT);
 $stmt->execute();
 $estoque = $stmt->fetch(PDO::FETCH_ASSOC);
 $item['qtd'] = $estoque ? $estoque['qtd'] : 0;
+include_once ROOT . '/dao/Conexao.php';
+include_once ROOT . '/dao/ProdutoDAO.php';
+
+if (!isset($_GET['id_produto'])) {
+	header("Location: " . WWW . "html/matPat/listar_produto.php");
+	exit;
+}
+if (!isset($_SESSION['produtos'])) {
+	header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto=' . $idProduto);
+	exit;
+}
 ?>
 <!doctype html>
 <html class="fixed">
 
 <head>
-	<?php
-	include_once ROOT . '/dao/Conexao.php';
-	include_once ROOT . '/dao/ProdutoDAO.php';
-
-	if (!isset($_GET['id_produto'])) {
-		header("Location: " . WWW . "html/matPat/listar_produto.php");
-	}
-	if (!isset($_SESSION['produtos'])) {
-		header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=ProdutoControle&nextPage=' . WWW . 'html/matPat/remover_produto.php?id_produto=' . $idProduto);
-	}
-	?>
 	<!-- Basic -->
 	<meta charset="UTF-8">
 

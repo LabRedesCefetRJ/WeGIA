@@ -107,3 +107,4 @@ if ($id_pessoa == $id_pessoa_atendido) {
     }
 }
 header("Location: Profile_Atendido.php?idatendido=$idatendido");
+exit;

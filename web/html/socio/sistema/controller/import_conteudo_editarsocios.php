@@ -1,4 +1,14 @@
 <?php
+// Fragmento incluído por páginas de socio/sistema que exigem permissao(4, 7),
+// mas também acessível direto pela URL (o .htaccess desta pasta está
+// desativado): exige o mesmo acesso aqui, como em import_conteudo_graficos.php.
+if (session_status() === PHP_SESSION_NONE) session_start();
+if (!isset($_SESSION['usuario'])) die("Você não está logado(a).");
+
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+permissao($_SESSION['id_pessoa'], 4, 7);
+?>
+<?php
 // Sanitizar e validar $id_socio como inteiro para prevenir SQL Injection
 if (!isset($id_socio) || !is_numeric($id_socio)) {
   die("ID de sócio inválido");
