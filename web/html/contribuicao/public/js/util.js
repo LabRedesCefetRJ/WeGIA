@@ -425,6 +425,14 @@ const CAMPOS_CADASTRO_SOCIO = [...CAMPOS_CONTATO, ...CAMPOS_ENDERECO];
 let camposFaltantesSocio = [];
 
 /**
+ * Valor original de `acao` da página (ex: 'boleto', 'qrcode', 'cartao-credito'),
+ * guardado na primeira consulta de CPF. Sócio com cadastro completo só paga,
+ * então volta a esse valor — sem isso ficava o `acao` da consulta anterior
+ * (ex: 'cadastrar') e o fluxo tentava cadastrar de novo um sócio existente.
+ */
+let acaoSomentePagamento = null;
+
+/**
  * Restaura todos os campos do cadastro pro estado editável/vazio, pra não
  * carregar bloqueios de uma consulta anterior por outro documento.
  */
@@ -987,6 +995,10 @@ async function buscarCadastroSocio() {
     desbloquearCamposCadastro();
     camposFaltantesSocio = [];
 
+    if (acaoSomentePagamento === null) {
+        acaoSomentePagamento = acao;
+    }
+
     const formData = new FormData();
     formData.append('nomeClasse', 'SocioController');
     formData.append('metodo', 'verificarCadastroSocio');
@@ -1019,6 +1031,7 @@ async function buscarCadastroSocio() {
                 const precisaDeContato = camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo));
                 alternarPaginas(precisaDeContato ? "pag3" : "pag4", "pag2");
             } else {
+                acao = acaoSomentePagamento;
                 alternarPaginas("pag5", "pag2");
             }
 
