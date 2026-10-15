@@ -38,13 +38,31 @@ class CaptchaGoogleService implements CaptchaService
         return "<div class='g-recaptcha' data-sitekey='{$this->captcha->getPublicKey()}' style='margin-top:15px;'></div>";
     }
 
-    public function validate(): bool
+    /**
+     * @param string|null $documento Documento (CPF/CNPJ) da requisição atual.
+     * Quando informado, só aceita reaproveitar a sessão armada por
+     * SocioController::verificarCadastroSocio() se ela tiver sido armada
+     * pra esse mesmo documento — ver temSessaoValidada().
+     */
+    public function validate(?string $documento = null): bool
     {
-        if(isset($_SESSION['captcha']) && $_SESSION['captcha']['timeout'] > time() && $_SESSION['captcha']['validated'] === true){
+        if ($this->temSessaoValidada($documento)) {
             unset($_SESSION['captcha']);
             return true;
         }
 
+        return $this->validarTokenFresco();
+    }
+
+    /**
+     * Igual a validate(), mas ignora qualquer sessão de captcha já armada e
+     * sempre exige um token novo, verificado agora com o Google. Usada no
+     * ponto de entrada de um fluxo (ex: confirmação do CPF na contribuição),
+     * que precisa de uma confirmação de verdade — não pode reaproveitar a
+     * própria sessão que ele mesmo arma.
+     */
+    public function validarTokenFresco(): bool
+    {
         if (!isset($_POST['g-recaptcha-response']))
             throw new Exception('reCAPTCHA não enviado', 412);
 
@@ -74,7 +92,34 @@ class CaptchaGoogleService implements CaptchaService
 
         if ($resultJson['success'] != true)
             return false;
-        
+
         return true;
+    }
+
+    /**
+     * A sessão de captcha reaproveitada por SocioController::
+     * verificarCadastroSocio() fica amarrada ao documento (CPF/CNPJ) que foi
+     * de fato verificado. Sem essa amarração, um único captcha resolvido
+     * pra um documento qualquer (inclusive um CPF inexistente, que arma a
+     * janela mais longa) destravaria a geração de boleto/carnê/PIX/cartão/
+     * assinatura pra QUALQUER outro sócio, dentro da janela de validade —
+     * já que o token CSRF é fixo por sessão, não é de uso único.
+     *
+     * Sessão sem a chave 'documento' (formato legado, armado por
+     * atualizarSocio()) mantém o comportamento anterior: só é aceita se o
+     * chamador também não exigir um documento específico.
+     */
+    private function temSessaoValidada(?string $documento): bool
+    {
+        if (!isset($_SESSION['captcha']) || $_SESSION['captcha']['timeout'] <= time() || $_SESSION['captcha']['validated'] !== true) {
+            return false;
+        }
+
+        if (!array_key_exists('documento', $_SESSION['captcha'])) {
+            return $documento === null;
+        }
+
+        return $documento !== null
+            && $_SESSION['captcha']['documento'] === preg_replace('/\D/', '', $documento);
     }
 }
