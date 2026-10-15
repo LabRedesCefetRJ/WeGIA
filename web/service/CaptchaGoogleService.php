@@ -122,4 +122,17 @@ class CaptchaGoogleService implements CaptchaService
         return $documento !== null
             && $_SESSION['captcha']['documento'] === preg_replace('/\D/', '', $documento);
     }
+
+    /**
+     * Confere, sem consumir, se a confirmação do CPF (verificarCadastroSocio)
+     * foi feita para este documento e ainda está dentro da janela. Usada
+     * pelas rotas públicas de escrita que ficam no meio do fluxo
+     * (criarSocio/completarCadastroSocio): elas precisam exigir que o captcha
+     * tenha sido resolvido, mas não podem gastar a sessão que o pagamento
+     * consome depois com validate($documento).
+     */
+    public function possuiSessaoValidadaPara(string $documento): bool
+    {
+        return $this->temSessaoValidada($documento);
+    }
 }

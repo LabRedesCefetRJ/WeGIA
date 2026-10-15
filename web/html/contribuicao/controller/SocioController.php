@@ -29,7 +29,10 @@ class SocioController
             // (confirmação do CPF) e é reaproveitada uma única vez em
             // ContribuicaoLogController/RecorrenciaController (confirmação
             // do pagamento) — esse método fica no meio do caminho e não
-            // deve consumir nem rearmar essa sessão.
+            // deve consumir nem rearmar essa sessão, só conferir que ela existe.
+            $this->aplicarRateLimitPublico('criarSocio');
+            $this->exigirCpfConfirmadoPorCaptcha(trim((string) filter_input(INPUT_POST, 'documento_socio')));
+
             $pessoaDao = new PessoaDAO($this->pdo);
 
             $verificacaoExistenciaPessoa = $pessoaDao->verificarExistencia(trim(filter_input(INPUT_POST, 'documento_socio')));
@@ -314,21 +317,9 @@ class SocioController
         $documento = filter_input(INPUT_GET, 'documento');
 
         try {
-            // Rota pública (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): limita
-            // tentativas por IP, pra dificultar varredura em massa de CPFs.
-            if (!isset($_SESSION['usuario'])) {
-                $cache = new Cache();
-                $chaveLimite = 'rate_limit_buscarPorDocumento_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
-                $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
-
-                if ($tentativas >= 10) {
-                    http_response_code(429);
-                    echo json_encode(['erro' => 'Muitas tentativas. Tente novamente em alguns instantes.']);
-                    exit();
-                }
-
-                $cache->save($chaveLimite, $tentativas + 1, '1 minute');
-            }
+            // Hoje a rota é privada (control.php exige login), então o limite
+            // não se aplica; fica como proteção caso volte a ser pública.
+            $this->aplicarRateLimitPublico('buscarPorDocumento');
 
             if (!$documento || empty($documento))
                 throw new InvalidArgumentException('O documento informado é inválido.', 400);
@@ -420,6 +411,49 @@ class SocioController
     }
 
     /**
+     * Rotas públicas (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): limita a 10
+     * tentativas por minuto por IP, pra dificultar varredura em massa de CPFs
+     * e escrita em massa no cadastro. Só se aplica a quem não está logado.
+     */
+    private function aplicarRateLimitPublico(string $rota): void
+    {
+        if (isset($_SESSION['usuario'])) {
+            return;
+        }
+
+        $cache = new Cache();
+        $chaveLimite = 'rate_limit_' . $rota . '_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
+        $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
+
+        if ($tentativas >= 10) {
+            http_response_code(429);
+            echo json_encode(['erro' => 'Muitas tentativas. Tente novamente em alguns instantes.']);
+            exit();
+        }
+
+        $cache->save($chaveLimite, $tentativas + 1, '1 minute');
+    }
+
+    /**
+     * As rotas públicas de escrita (criarSocio/completarCadastroSocio) não
+     * pedem captcha próprio: dependem da confirmação do CPF feita em
+     * verificarCadastroSocio(). Como cada rota pode ser chamada direto,
+     * pulando essa etapa, o servidor precisa conferir que ela aconteceu para
+     * este mesmo documento — sem consumir a sessão, que o pagamento usa depois.
+     */
+    private function exigirCpfConfirmadoPorCaptcha(string $documento): void
+    {
+        if (isset($_SESSION['usuario'])) {
+            return;
+        }
+
+        $captchaGoogle = new CaptchaGoogleService();
+        if (!$captchaGoogle->possuiSessaoValidadaPara($documento)) {
+            throw new InvalidArgumentException('Confirme o CPF/CNPJ (captcha) antes de continuar.', 412);
+        }
+    }
+
+    /**
      * Versão de buscarPorDocumento() que não expõe os dados já cadastrados do
      * sócio: informa apenas se ele existe e, se existir, quais campos
      * obrigatórios ainda faltam preencher. Rota pública, usada no fluxo de
@@ -433,19 +467,7 @@ class SocioController
             $autenticado = isset($_SESSION['usuario']);
 
             if (!$autenticado) {
-                // Rota pública (GHSA-7fc5-jh7f-grpq / GHSA-53m3-4933-cmmp): limita
-                // tentativas por IP, pra dificultar varredura em massa de CPFs.
-                $cache = new Cache();
-                $chaveLimite = 'rate_limit_verificarCadastroSocio_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
-                $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
-
-                if ($tentativas >= 10) {
-                    http_response_code(429);
-                    echo json_encode(['erro' => 'Muitas tentativas. Tente novamente em alguns instantes.']);
-                    exit();
-                }
-
-                $cache->save($chaveLimite, $tentativas + 1, '1 minute');
+                $this->aplicarRateLimitPublico('verificarCadastroSocio');
 
                 // Confirmação do CPF: sempre exige um token novo (nunca
                 // reaproveita sessão pra si mesma), e é essa validação que
@@ -585,29 +607,15 @@ class SocioController
             // (confirmação do CPF) e é reaproveitada uma única vez em
             // ContribuicaoLogController/RecorrenciaController (confirmação
             // do pagamento) — esse método fica no meio do caminho e não
-            // deve consumir nem rearmar essa sessão.
-            if (!isset($_SESSION['usuario'])) {
-                // Rota pública (mesmo padrão de verificarCadastroSocio() /
-                // buscarPorDocumento()): sem isso, essa rota escrevia no
-                // cadastro do sócio sem nenhum limite de tentativas, bastando
-                // conhecer um CPF com campos faltantes.
-                $cache = new Cache();
-                $chaveLimite = 'rate_limit_completarCadastroSocio_' . ($_SERVER['REMOTE_ADDR'] ?? 'desconhecido');
-                $tentativas = (int) ($cache->read($chaveLimite) ?? 0);
-
-                if ($tentativas >= 10) {
-                    http_response_code(429);
-                    echo json_encode(['erro' => 'Muitas tentativas. Tente novamente em alguns instantes.']);
-                    exit();
-                }
-
-                $cache->save($chaveLimite, $tentativas + 1, '1 minute');
-            }
+            // deve consumir nem rearmar essa sessão, só conferir que ela existe.
+            $this->aplicarRateLimitPublico('completarCadastroSocio');
 
             $documento = trim((string) filter_input(INPUT_POST, 'documento_socio'));
 
             if (!$documento || empty($documento))
                 throw new InvalidArgumentException('O documento informado é inválido.', 400);
+
+            $this->exigirCpfConfirmadoPorCaptcha($documento);
 
             $socioDao = new SocioDAO($this->pdo);
 
