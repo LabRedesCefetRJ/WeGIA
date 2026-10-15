@@ -351,8 +351,13 @@ class SocioController
     /**
      * Campos obrigatórios de um cadastro de sócio para fins de cobrança.
      * Mesmo conjunto exigido em extrairPost()/extrairCamposFaltantesPost().
+     *
+     * O e-mail entra na lista porque o fluxo público só entrega o link do
+     * pagamento por e-mail: um sócio sem e-mail pode informá-lo pelo
+     * completarCadastroSocio(). Como essa rota só aceita os campos que estão
+     * faltando, um e-mail já cadastrado não pode ser trocado por ela.
      */
-    private const CAMPOS_OBRIGATORIOS_SOCIO = ['nome', 'telefone', 'cep', 'rua', 'bairro', 'uf', 'cidade', 'numero'];
+    private const CAMPOS_OBRIGATORIOS_SOCIO = ['nome', 'email', 'telefone', 'cep', 'rua', 'bairro', 'uf', 'cidade', 'numero'];
 
     /**
      * Verifica quais campos obrigatórios de um sócio já cadastrado estão vazios.
@@ -361,6 +366,7 @@ class SocioController
     {
         $valores = [
             'nome'     => $socio->getNome(),
+            'email'    => $socio->getEmail(),
             'telefone' => $socio->getTelefone(),
             'cep'      => $socio->getCep(),
             'rua'      => $socio->getLogradouro(),
@@ -552,6 +558,11 @@ class SocioController
                         throw new InvalidArgumentException('O nome informado não pode ser vazio.', 400);
                     break;
 
+                case 'email':
+                    if (!$valor || !filter_var($valor, FILTER_VALIDATE_EMAIL))
+                        throw new InvalidArgumentException('O e-mail informado não é válido.', 400);
+                    break;
+
                 case 'telefone':
                     if (!$valor || (strlen($valor) != 14 && strlen($valor) != 15))
                         throw new InvalidArgumentException('O telefone informado não está no formato correto.', 400);
@@ -650,6 +661,7 @@ class SocioController
             foreach ($dados as $campo => $valor) {
                 match ($campo) {
                     'nome'     => $socio->setNome($valor),
+                    'email'    => $socio->setEmail($valor),
                     'telefone' => $socio->setTelefone($valor),
                     'cep'      => $socio->setCep($valor),
                     'rua'      => $socio->setLogradouro($valor),
