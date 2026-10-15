@@ -38,25 +38,22 @@ class SocioController
             $verificacaoExistenciaPessoa = $pessoaDao->verificarExistencia(trim(filter_input(INPUT_POST, 'documento_socio')));
 
             $socio = new Socio();
+            $camposInformados = [];
 
             if (!is_null($verificacaoExistenciaPessoa)) {
 
-                $socio
-                    ->setNome($verificacaoExistenciaPessoa->getNome())
-                    ->setSobrenome($verificacaoExistenciaPessoa->getSobrenome())
-                    ->setDataNascimento($verificacaoExistenciaPessoa->getDataNascimento())
-                    ->setTelefone($verificacaoExistenciaPessoa->getTelefone())
-                    ->setCidade($verificacaoExistenciaPessoa->getCidade())
-                    ->setBairro($verificacaoExistenciaPessoa->getBairro())
-                    ->setComplemento($verificacaoExistenciaPessoa->getComplemento())
-                    ->setCep($verificacaoExistenciaPessoa->getCep())
-                    ->setNumeroEndereco($verificacaoExistenciaPessoa->getNumeroEndereco())
-                    ->setLogradouro($verificacaoExistenciaPessoa->getLogradouro())
-                    ->setDocumento($verificacaoExistenciaPessoa->getCpf())
-                    ->setIbge($verificacaoExistenciaPessoa->getIbge())
-                    ->setEmail($verificacaoExistenciaPessoa->getEmail())
+                $socio = $this->socioAPartirDaPessoa($verificacaoExistenciaPessoa)
                     ->setValor(trim(filter_input(INPUT_POST, 'valor')))
                     ->setTags($this->extrairTagsPost());
+
+                // Fluxo público: a pessoa já existe, mas pode estar sem dados
+                // obrigatórios (ex: e-mail, sem o qual não recebe o pagamento).
+                // Só os campos vazios são aceitos do formulário — os já
+                // preenchidos não podem ser trocados por aqui. Validados antes
+                // de criar o sócio, pra não deixar um cadastro pela metade.
+                if (!isset($_SESSION['usuario'])) {
+                    $camposInformados = $this->extrairCamposFaltantesPost($this->camposFaltantesPessoa($verificacaoExistenciaPessoa));
+                }
             } else {
                 $dados = $this->extrairPost();
 
@@ -83,6 +80,17 @@ class SocioController
 
             if (!is_null($verificacaoExistenciaPessoa)) {
                 $socioDao->criarSocioPessoaPreExistente($socio, $verificacaoExistenciaPessoa->getIdpessoa());
+
+                // criarSocioPessoaPreExistente() só cria a linha de sócio; os
+                // campos que faltavam vão para a pessoa. atualizarSocio()
+                // ignora tudo que vier null (inclusive valor e tags).
+                if (!empty($camposInformados)) {
+                    $socioCompletado = $this->aplicarCamposFaltantes(
+                        (new Socio())->setDocumento($socio->getDocumento()),
+                        $camposInformados
+                    );
+                    $socioDao->atualizarSocio($socioCompletado);
+                }
             } else {
                 $socioDao->criarSocio($socio);
             }
@@ -360,6 +368,52 @@ class SocioController
     private const CAMPOS_OBRIGATORIOS_SOCIO = ['nome', 'email', 'telefone', 'cep', 'rua', 'bairro', 'uf', 'cidade', 'numero'];
 
     /**
+     * Monta um Socio com os dados de uma pessoa já cadastrada no sistema
+     * (que ainda não é sócia), pra reaproveitar o cadastro existente.
+     */
+    private function socioAPartirDaPessoa(PessoaDTOSocio $pessoa): Socio
+    {
+        return (new Socio())
+            ->setNome($pessoa->getNome())
+            ->setSobrenome($pessoa->getSobrenome())
+            ->setDataNascimento($pessoa->getDataNascimento())
+            ->setTelefone($pessoa->getTelefone())
+            ->setEstado($pessoa->getEstado())
+            ->setCidade($pessoa->getCidade())
+            ->setBairro($pessoa->getBairro())
+            ->setComplemento($pessoa->getComplemento())
+            ->setCep($pessoa->getCep())
+            ->setNumeroEndereco($pessoa->getNumeroEndereco())
+            ->setLogradouro($pessoa->getLogradouro())
+            ->setDocumento($pessoa->getCpf())
+            ->setIbge($pessoa->getIbge())
+            ->setEmail($pessoa->getEmail());
+    }
+
+    /**
+     * Aplica num Socio os campos que estavam faltando, já validados por
+     * extrairCamposFaltantesPost().
+     */
+    private function aplicarCamposFaltantes(Socio $socio, array $dados): Socio
+    {
+        foreach ($dados as $campo => $valor) {
+            match ($campo) {
+                'nome'     => $socio->setNome($valor),
+                'email'    => $socio->setEmail($valor),
+                'telefone' => $socio->setTelefone($valor),
+                'cep'      => $socio->setCep($valor),
+                'rua'      => $socio->setLogradouro($valor),
+                'bairro'   => $socio->setBairro($valor),
+                'uf'       => $socio->setEstado($valor),
+                'cidade'   => $socio->setCidade($valor),
+                'numero'   => $socio->setNumeroEndereco($valor),
+            };
+        }
+
+        return $socio;
+    }
+
+    /**
      * Verifica quais campos obrigatórios de um sócio já cadastrado estão vazios.
      */
     private function camposFaltantes(Socio $socio): array
@@ -376,6 +430,32 @@ class SocioController
             'numero'   => $socio->getNumeroEndereco(),
         ];
 
+        return $this->camposVaziosEm($valores);
+    }
+
+    /**
+     * Igual a camposFaltantes(), mas direto dos dados de uma pessoa já
+     * cadastrada (ainda não sócia). Não monta um Socio de propósito: os
+     * setters do Socio validam formato, e um cadastro antigo fora do padrão
+     * travaria a consulta do CPF antes mesmo de saber o que falta.
+     */
+    private function camposFaltantesPessoa(PessoaDTOSocio $pessoa): array
+    {
+        return $this->camposVaziosEm([
+            'nome'     => $pessoa->getNome(),
+            'email'    => $pessoa->getEmail(),
+            'telefone' => $pessoa->getTelefone(),
+            'cep'      => $pessoa->getCep(),
+            'rua'      => $pessoa->getLogradouro(),
+            'bairro'   => $pessoa->getBairro(),
+            'uf'       => $pessoa->getEstado(),
+            'cidade'   => $pessoa->getCidade(),
+            'numero'   => $pessoa->getNumeroEndereco(),
+        ]);
+    }
+
+    private function camposVaziosEm(array $valores): array
+    {
         $faltantes = [];
 
         foreach (self::CAMPOS_OBRIGATORIOS_SOCIO as $campo) {
@@ -504,18 +584,26 @@ class SocioController
                 $pessoaExists = $pessoaDao->verificarExistencia($documento);
                 $existePessoa = $pessoaExists instanceof PessoaDTOSocio;
 
+                // Pessoa já cadastrada: os dados são reaproveitados, mas os
+                // obrigatórios que estiverem vazios (ex: e-mail) são pedidos
+                // antes do pagamento, igual ao sócio com cadastro incompleto.
+                $camposFaltantesPessoa = $existePessoa
+                    ? $this->camposFaltantesPessoa($pessoaExists)
+                    : [];
+
                 if (!$autenticado) {
-                    // Pessoa já cadastrada: dados são reaproveitados e o fluxo
-                    // pula direto pro pagamento. Pessoa nova: precisa
-                    // preencher o cadastro inteiro, janela maior.
-                    $this->armarSessaoCaptcha($existePessoa
-                        ? self::CAPTCHA_SEGUNDOS_DADOS_PRONTOS
-                        : self::CAPTCHA_SEGUNDOS_CADASTRO_ZERO, $documento);
+                    // Pessoa nova: precisa preencher o cadastro inteiro, janela maior.
+                    $this->armarSessaoCaptcha(match (true) {
+                        !$existePessoa => self::CAPTCHA_SEGUNDOS_CADASTRO_ZERO,
+                        empty($camposFaltantesPessoa) => self::CAPTCHA_SEGUNDOS_DADOS_PRONTOS,
+                        default => self::CAPTCHA_SEGUNDOS_CAMPOS_FALTANTES,
+                    }, $documento);
                 }
 
                 echo json_encode([
                     'existeSocio' => false,
                     'existePessoa' => $existePessoa,
+                    'camposFaltantes' => $camposFaltantesPessoa,
                 ]);
 
                 exit();
@@ -655,22 +743,7 @@ class SocioController
 
             $dados = $this->extrairCamposFaltantesPost($camposFaltantes);
 
-            $socio = new Socio();
-            $socio->setDocumento($documento);
-
-            foreach ($dados as $campo => $valor) {
-                match ($campo) {
-                    'nome'     => $socio->setNome($valor),
-                    'email'    => $socio->setEmail($valor),
-                    'telefone' => $socio->setTelefone($valor),
-                    'cep'      => $socio->setCep($valor),
-                    'rua'      => $socio->setLogradouro($valor),
-                    'bairro'   => $socio->setBairro($valor),
-                    'uf'       => $socio->setEstado($valor),
-                    'cidade'   => $socio->setCidade($valor),
-                    'numero'   => $socio->setNumeroEndereco($valor),
-                };
-            }
+            $socio = $this->aplicarCamposFaltantes((new Socio())->setDocumento($documento), $dados);
 
             $this->pdo->beginTransaction();
             $socioDao->registrarLogPorDocumento($documento, 'Cadastro completado (dados que faltavam)', Util::getUserIp(), Util::getUserAgent());

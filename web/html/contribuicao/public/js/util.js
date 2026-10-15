@@ -275,7 +275,7 @@ function configurarAvancaContatoDinamico(funcao) {
             return;
         }
 
-        const precisaDeEndereco = acao !== 'atualizar_parcial'
+        const precisaDeEndereco = !emFluxoParcial()
             || camposFaltantesSocio.some((campo) => CAMPOS_ENDERECO.includes(campo));
 
         alternarPaginas(precisaDeEndereco ? 'pag4' : 'pag5', 'pag3');
@@ -401,6 +401,18 @@ async function cadastrarSocioPessoaExistente() {
     formData.append('metodo', 'criarSocio');
     formData.append('documento_socio', documento);
 
+    // Campos que faltavam no cadastro da pessoa: mesma formatação usada em
+    // completarCadastroSocio() (o servidor exige o CEP como 00000-000).
+    camposFaltantesSocio.forEach((campo) => {
+        let valor = document.getElementById(campo)?.value ?? '';
+
+        if (campo === 'cep') {
+            valor = formatarCEP(valor);
+        }
+
+        formData.set(campo, valor);
+    });
+
     anexarTagsAoFormData(form, formData);
 
     const response = await fetch("../controller/control.php", {
@@ -444,6 +456,17 @@ let camposFaltantesSocio = [];
  * (ex: 'cadastrar') e o fluxo tentava cadastrar de novo um sócio existente.
  */
 let acaoSomentePagamento = null;
+
+/**
+ * Fluxo de completar cadastro: sócio com campos faltando ('atualizar_parcial')
+ * ou pessoa já cadastrada, ainda não sócia, com campos faltando
+ * ('cadastrar_existente'). Nos dois, só os campos faltantes ficam liberados
+ * e só eles são validados.
+ */
+function emFluxoParcial() {
+    return acao === 'atualizar_parcial'
+        || (acao === 'cadastrar_existente' && camposFaltantesSocio.length > 0);
+}
 
 /**
  * Restaura todos os campos do cadastro pro estado editável/vazio, pra não
@@ -718,7 +741,7 @@ function verificarEnderecoParcial() {
  * nenhuma das duas.
  */
 function verificarEnderecoDinamico() {
-    return acao === 'atualizar_parcial' ? verificarEnderecoParcial() : verificarEndereco();
+    return emFluxoParcial() ? verificarEnderecoParcial() : verificarEndereco();
 }
 
 function converterDataParaISO(dataBR) {
@@ -1059,7 +1082,18 @@ async function buscarCadastroSocio() {
                 console.log("Pessoa encontrada.");
 
                 acao = "cadastrar_existente";
-                alternarPaginas("pag5", "pag2");
+
+                // Pessoa já cadastrada com dados obrigatórios vazios (ex:
+                // e-mail): pede só esses campos antes do pagamento.
+                if (data?.camposFaltantes?.length > 0) {
+                    camposFaltantesSocio = data.camposFaltantes;
+                    bloquearCamposCompletos(camposFaltantesSocio);
+
+                    const precisaDeContato = camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo));
+                    alternarPaginas(precisaDeContato ? "pag3" : "pag4", "pag2");
+                } else {
+                    alternarPaginas("pag5", "pag2");
+                }
             } else {
                 console.log("Pessoa não encontrada.");
 
