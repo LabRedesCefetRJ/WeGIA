@@ -8,6 +8,7 @@ include_once ROOT . "/dao/Conexao.php";
 include_once ROOT . '/classes/Visitado.php';
 include_once ROOT . '/dao/VisitadoDAO.php';
 require_once ROOT . '/classes/Util.php';
+require_once ROOT . '/controle/VisitanteControle.php';
 
 class VisitadoControle
 {
@@ -43,29 +44,36 @@ class VisitadoControle
         }
     }
 
-    public function listarTodos(?string $tipo = null, array $idsVisitantes = []): array
+    private function obterTipoRequisicao(): string
     {
-        try {
-            $visitadoDAO = new VisitadoDAO();
+        $tipo = filter_input(INPUT_GET, 'tipo', FILTER_UNSAFE_RAW);
 
-            return $visitadoDAO->listarTodos($tipo, $idsVisitantes);
-        } catch (Exception $e) {
-            Util::tratarException($e);
-        }
-
-        return [];
+        return is_string($tipo) ? $tipo : '';
     }
 
-    public function listarCandidatos(?string $tipo = null): array
+    public function listarTodos()
     {
         try {
             $visitadoDAO = new VisitadoDAO();
+            $visitados = $visitadoDAO->listarTodos($this->obterTipoRequisicao(), VisitanteControle::obterIdsSelecionados());
 
-            return $visitadoDAO->listarCandidatos((string) $tipo);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($visitados, JSON_INVALID_UTF8_SUBSTITUTE);
         } catch (Exception $e) {
             Util::tratarException($e);
         }
+    }
 
-        return [];
+    public function listarCandidatos()
+    {
+        try {
+            $visitadoDAO = new VisitadoDAO();
+            $candidatos = $visitadoDAO->listarCandidatos($this->obterTipoRequisicao());
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($candidatos, JSON_INVALID_UTF8_SUBSTITUTE);
+        } catch (Exception $e) {
+            Util::tratarException($e);
+        }
     }
 }

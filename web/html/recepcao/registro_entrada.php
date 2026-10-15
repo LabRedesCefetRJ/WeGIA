@@ -148,9 +148,9 @@ $idsVisitantes = array_map(fn($v) => (int) $v['id_visitante'], $visitantesSeleci
 			if (!tipo) return;
 
 			$.ajax({
-				url: "./listar_pessoas.php",
+				url: "../../controle/control.php",
 				method: "GET",
-				data: { tipo: tipo },
+				data: { nomeClasse: "VisitadoControle", metodo: "listarTodos", tipo: tipo },
 				dataType: "json",
 				success: function (dados) {
 

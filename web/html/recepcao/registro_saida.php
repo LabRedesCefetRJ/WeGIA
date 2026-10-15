@@ -179,8 +179,9 @@ require_once "../personalizacao_display.php";
 		function carregar() {
 
 			$.ajax({
-				url: "./listar_visitas.php",
+				url: "../../controle/control.php",
 				method: "GET",
+				data: { nomeClasse: "VisitaControle", metodo: "listarTodos" },
 				dataType: "json",
 				success: function (dados) {
 

@@ -300,9 +300,9 @@ $tipoInicial = VisitadoDAO::tipoValido($tipoInicial) ? $tipoInicial : '';
             if (!tipo) return;
 
             $.ajax({
-                url: "./listar_candidatos_visitado.php",
+                url: "../../controle/control.php",
                 method: "GET",
-                data: { tipo: tipo },
+                data: { nomeClasse: "VisitadoControle", metodo: "listarCandidatos", tipo: tipo },
                 dataType: "json",
                 success: function(dados) {
                     const tabela = $("#datatable-default").DataTable();

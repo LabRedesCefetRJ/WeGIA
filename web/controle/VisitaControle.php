@@ -161,10 +161,11 @@ class VisitaControle
     public function listarTodos()
     {
         try {
-            $VisitaDAO = new VisitaDAO();
-            $visitas = $VisitaDAO->listarTodosAgrupados();
+            $visitaDAO = new VisitaDAO();
+            $visitas = $visitaDAO->listarTodosAgrupados();
 
-            $_SESSION['visitas'] = json_encode($visitas);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($visitas, JSON_INVALID_UTF8_SUBSTITUTE);
         } catch (Exception $e) {
             Util::tratarException($e);
         }
