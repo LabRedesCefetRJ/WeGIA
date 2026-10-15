@@ -16,6 +16,7 @@ class TipoEntradaControle
         if ((!isset($descricao)) || (empty($descricao))) {
             $msg .= "Descricao do tipo de entrada não informada. Por favor, informe uma descrição!";
             header('Location: ' . WWW . 'html/tipoentrada.html?msg=' . $msg);
+            exit;
         } else {
             $tipoentrada = new TipoEntrada($descricao);
         }
@@ -36,6 +37,7 @@ class TipoEntradaControle
             $_SESSION['tipo_entrada'] = $tipoentradas;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -52,6 +54,7 @@ class TipoEntradaControle
             $_SESSION['proxima'] = "Cadastrar outro TipoEntrada";
             $_SESSION['link'] = WWW . "html/matPat/adicionar_tipoEntrada.php";
             header("Location: " . WWW . "html/matPat/adicionar_tipoEntrada.php");
+            exit;
         } catch (PDOException $e) {
             $msg = "Não foi possível registrar o tipo" . "<br>" . $e->getMessage();
             echo $msg;
@@ -65,6 +68,7 @@ class TipoEntradaControle
             $tipoentradaDAO = new TipoEntradaDAO();
             $tipoentradaDAO->excluir($id_tipo);
             header('Location: ' . WWW . 'html/matPat/listar_tipoEntrada.php');
+            exit;
         } catch (PDOException $e) {
             echo "ERROR: " . $e->getMessage();
         }

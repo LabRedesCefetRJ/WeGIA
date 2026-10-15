@@ -135,6 +135,7 @@ class SaidaControle
             session_start();
             $_SESSION['saida'] = $saida;
             header('Location: ' . $nextPage);
+            exit;
         } catch (PDOException $e) {
             echo "ERROR: " . $e->getMessage();
         }

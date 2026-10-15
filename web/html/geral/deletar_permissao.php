@@ -47,7 +47,9 @@ if (mysqli_affected_rows($conexao)) {
 
     fecharConexao($stmt, $conexao);
     header("Location: ../sucesso.php");
+    exit;
 } else {
     fecharConexao($stmt, $conexao);
     header("Location: ./listar_permissoes.php?msg_e=Erro ao deletar permissão.");
+    exit;
 }

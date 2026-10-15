@@ -265,6 +265,7 @@ class AtendidoControle
                 $nextPage = trim(filter_input(INPUT_GET, 'nextPage', FILTER_SANITIZE_URL));
                 $regex = '#^((\.\./|' . WWW . ')html/atendido/(Informacao_Atendido|cadastro_ocorrencia|listar_ocorrencias_ativas)\.php)$#';
                 preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+                exit;
             }
         } catch (Exception $e) {
             Util::tratarException($e);
@@ -310,6 +311,7 @@ class AtendidoControle
 
             $_SESSION['atendido'] = $infAtendido;
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . '../html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -628,6 +630,7 @@ class AtendidoControle
 
             $AtendidoDAO->alterar($atendido);
             header("Location: ../html/Profile_Atendido.php?id=" . htmlspecialchars($idatendido));
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -644,6 +647,7 @@ class AtendidoControle
 
             $AtendidoDAO->excluir($idatendido);
             header("Location:../controle/control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/Informacao_Atendido.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -844,6 +848,7 @@ class AtendidoControle
             $_SESSION['msg'] = "Documentação atualizada com sucesso!";
             $_SESSION['tipo'] = "success";
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -866,6 +871,7 @@ class AtendidoControle
 
             $atendidoDAO->alterarImagem($idatendido, $img);
             header("Location: ../html/atendido/Profile_Atendido.php?idatendido=" . htmlspecialchars($idatendido));
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -944,6 +950,7 @@ class AtendidoControle
             $atendidoDAO->alterarStatus($id, $status);
 
             header('Location: ./control.php?metodo=listarTodos&nomeClasse=AtendidoControle&nextPage=../html/atendido/Informacao_Atendido.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }

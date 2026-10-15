@@ -9,6 +9,7 @@ include_once("conexao.php");
 
 if (!isset($_SESSION['usuario'])) {
   header("Location: ../index.php");
+  exit;
 }
 
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';

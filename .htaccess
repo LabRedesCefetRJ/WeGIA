@@ -1,0 +1,14 @@
+# GHSA-76r2-qcmq-cjrv: o cookie de sessão (PHPSESSID) era enviado sem o
+# atributo HttpOnly, deixando-o legível via document.cookie no client-side —
+# em caso de XSS, um atacante poderia roubar a sessão autenticada. A maioria
+# das ~280 páginas do sistema chama session_start() direto, sem passar por um
+# bootstrap central, então a correção fica aqui (nível de servidor), cobrindo
+# todo mundo de uma vez, em vez de editar cada arquivo individualmente.
+#
+# session.cookie_secure fica de fora de propósito: forçar isso quebraria o
+# login inteiro em qualquer instalação ainda servida por HTTP simples.
+<IfModule php_module>
+    php_value session.cookie_httponly 1
+    php_value session.cookie_samesite Lax
+    php_value session.use_strict_mode 1
+</IfModule>
