@@ -126,6 +126,19 @@ function alternarPaginas(idProxima, idAtual) {
 }
 
 /**
+ * O pagamento consome a confirmação de captcha feita na etapa do CPF (uso
+ * único) e o token do widget também já foi gasto nela. Depois de um erro na
+ * geração do pagamento, a única forma de tentar de novo é confirmar o CPF
+ * outra vez: reinicia o widget e volta pra essa etapa (pag2).
+ */
+function voltarParaConfirmarCpf() {
+    if (typeof grecaptcha !== 'undefined') {
+        grecaptcha.reset();
+    }
+    alternarPaginas('pag2', 'pag5');
+}
+
+/**
  * Configura a função passada como parâmetro como ação padrão para 
  * o clique do botão com id de consultar-btn
  * @param {*} funcao 

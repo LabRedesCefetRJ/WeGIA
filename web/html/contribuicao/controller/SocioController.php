@@ -388,10 +388,16 @@ class SocioController
      * CaptchaGoogleService::validate() já faz sozinho. A sessão fica
      * amarrada ao documento verificado (ver armarSessaoCaptcha()), então só
      * vale pra fechar a contribuição do mesmo sócio que passou por aqui.
+     *
+     * A proteção vem do uso único e da amarração ao documento, não da
+     * duração: a janela só precisa cobrir o tempo de preencher o resto do
+     * fluxo. Com 30s, quem já tinha cadastro completo e pagava com cartão
+     * (digitando número, validade e CVV) estourava o prazo e o pagamento
+     * falhava com "captcha inválido".
      */
-    private const CAPTCHA_SEGUNDOS_DADOS_PRONTOS = 30;
-    private const CAPTCHA_SEGUNDOS_CAMPOS_FALTANTES = 120;
-    private const CAPTCHA_SEGUNDOS_CADASTRO_ZERO = 300;
+    private const CAPTCHA_SEGUNDOS_DADOS_PRONTOS = 300;
+    private const CAPTCHA_SEGUNDOS_CAMPOS_FALTANTES = 600;
+    private const CAPTCHA_SEGUNDOS_CADASTRO_ZERO = 900;
 
     /**
      * Amarra a sessão de captcha reaproveitada ao documento que foi de fato

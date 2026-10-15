@@ -71,8 +71,10 @@ function gerarMensalidade() {
                 alert(resposta.mensagem);
             } else if (resposta.erro) {
                 alert('Erro: ' + resposta.erro);
+                voltarParaConfirmarCpf();
             } else {
                 alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
+                voltarParaConfirmarCpf();
             }
 
         })
