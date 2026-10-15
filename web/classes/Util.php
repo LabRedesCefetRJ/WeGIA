@@ -1327,6 +1327,29 @@ class Util
     }
 
     /**
+     * Diz por que o link de pagamento não poderá ser enviado por email ao
+     * sócio (null = pode enviar). As rotas públicas de boleto/carnê checam
+     * isso ANTES de emitir a cobrança no gateway: sem a checagem prévia, a
+     * cobrança era criada e o sócio nunca recebia o link.
+     */
+    public static function motivoImpedimentoEnvioLink(Socio $socio, ?PDO $pdo = null): ?string
+    {
+        require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
+
+        if (!$socio->getEmail()) {
+            return 'Não há um e-mail cadastrado para este CPF/CNPJ, então não é possível enviar o pagamento. Entre em contato com a instituição para atualizar seu cadastro.';
+        }
+
+        $emailControle = new EmailControle($pdo);
+
+        if (!$emailControle->isEnabled() || !$emailControle->isConfigured()) {
+            return 'O envio de pagamentos por e-mail não está disponível no momento. Entre em contato com a instituição.';
+        }
+
+        return null;
+    }
+
+    /**
      * Monta a resposta enviada ao front-end quando um link de pagamento é
      * gerado pelo fluxo de contribuição pública: o link nunca aparece na
      * resposta, é sempre enviado por email pro sócio. Usado por
@@ -1340,7 +1363,7 @@ class Util
 
         $emailControle = new EmailControle($pdo);
 
-        if (!$emailControle->isEnabled() || !$emailControle->isConfigured() || !$socio->getEmail()) {
+        if (self::motivoImpedimentoEnvioLink($socio, $pdo) !== null) {
             return ['erro' => "O $tipoDocumento foi gerado, mas não foi possível enviá-lo por email. Entre em contato com o suporte."];
         }
 

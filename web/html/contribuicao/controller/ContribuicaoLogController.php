@@ -58,6 +58,12 @@ class ContribuicaoLogController
                 exit();
             }
 
+            // Rota pública: o link só é entregue por e-mail. Confere antes de
+            // emitir a cobrança no gateway, pra não criar um pagamento que o
+            // sócio nunca vai receber.
+            if ($porEmail && ($motivo = Util::motivoImpedimentoEnvioLink($socio, $this->pdo)) !== null)
+                throw new LogicException($motivo, 422);
+
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
 
@@ -196,6 +202,12 @@ class ContribuicaoLogController
                 echo json_encode(['erro' => 'Sócio não encontrado']);
                 exit();
             }
+
+            // Rota pública: o link só é entregue por e-mail. Confere antes de
+            // emitir a cobrança no gateway, pra não criar um pagamento que o
+            // sócio nunca vai receber.
+            if ($porEmail && ($motivo = Util::motivoImpedimentoEnvioLink($socio, $this->pdo)) !== null)
+                throw new LogicException($motivo, 422);
 
             $meioPagamentoDao = new MeioPagamentoDAO();
             $meioPagamento = $meioPagamentoDao->buscarPorNome($formaPagamento);
