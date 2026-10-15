@@ -28,7 +28,7 @@ function adicionar_tipo() {
   fetch(CONTROL_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarTipo', tipo: tipo.trim() })
+    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarTipo', tipo: tipo.trim(), csrf_token: $('#csrf_token').val() })
   })
   .then(function(r) { return r.json(); })
   .then(function(dados) {
@@ -45,7 +45,7 @@ function adicionar_local() {
   fetch(CONTROL_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarLocal', local: local.trim() })
+    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarLocal', local: local.trim(), csrf_token: $('#csrf_token').val() })
   })
   .then(function(r) { return r.json(); })
   .then(function(dados) {
@@ -62,7 +62,7 @@ function adicionar_status() {
   fetch(CONTROL_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarStatus', status: status.trim() })
+    body: JSON.stringify({ nomeClasse: 'ProjetoControle', metodo: 'adicionarStatus', status: status.trim(), csrf_token: $('#csrf_token').val() })
   })
   .then(function(r) { return r.json(); })
   .then(function(dados) {

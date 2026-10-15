@@ -88,10 +88,18 @@ function recarregarListaTurmas() {
             if (response.success && response.data) {
                 $.each(response.data, function(i, turma) {
                     const descricao = turma.descricao || '--';
+                    const turmaId = parseInt(turma.id_turma, 10);
+                    if(!Number.isFinite(turmaId)){
+                        return;
+                    }
                     const acoes     =
                         '<button type="button"' +
-                        ' onclick="event.stopPropagation(); removerTurma(' + turma.id_turma + ')"' +
-                        ' id="btn-remover-turma-' + turma.id_turma + '"' +
+                        ' onclick="window.location.href=\'editar_turma_projeto.php?id_turma=' + turmaId + '\'"' +
+                        ' class="btn btn-primary btn-xs" title="Editar turma">' +
+                        '<i class="fa fa-pencil"></i></button> ' +
+                        '<button type="button"' +
+                        ' onclick="removerTurma(' + turmaId + ')"' +
+                        ' id="btn-remover-turma-' + turmaId + '"' +
                         ' class="btn btn-danger btn-xs" title="Remover turma">' +
                         '<i class="fa fa-trash"></i></button>';
 
@@ -99,13 +107,7 @@ function recarregarListaTurmas() {
                         escapeHtml(turma.nome),
                         escapeHtml(descricao),
                         acoes
-                    ]).nodes().to$().attr('id', 'turma-' + turma.id_turma)
-                                    .css('cursor', 'pointer')
-                                    .on('click', (function(id) {
-                                        return function() {
-                                            window.location.href = 'editar_turma_projeto.php?id_turma=' + id;
-                                        };
-                                    })(turma.id_turma));
+                    ]).nodes().to$().attr('id', 'turma-' + turmaId);
                 });
             }
             tabelaTurmas.draw();
