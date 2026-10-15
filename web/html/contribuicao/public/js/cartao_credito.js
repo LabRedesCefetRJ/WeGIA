@@ -208,13 +208,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            //Verificação do reCAPTCHA
-            const captchaResponse = grecaptcha.getResponse();
-
-            if (!captchaResponse) {
-                alert('Por favor, confirme que você não é um robô.');
-                return;
-            }
+            // O captcha é confirmado na etapa do CPF (verificarCadastroSocio) e
+            // validado no servidor pela sessão amarrada ao documento. Não dá pra
+            // checar o widget aqui: ele fica escondido na pag2 e o token expira em
+            // ~2 minutos, o que travava quem demorava pra digitar o cartão.
 
             // Se todas as validações passarem, processa o pagamento
             decidirAcao(dadosCartao);
