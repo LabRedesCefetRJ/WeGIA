@@ -4,6 +4,7 @@ class Setor
 {
     public const STATUS_ATIVO = 1;
     public const STATUS_INATIVO = 0;
+    public const TAMANHO_MAXIMO_DESCRICAO = 45;
 
     private $id_setor;
     private $descricao;
