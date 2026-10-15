@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 require_once dirname(__DIR__, 3) . '/config.php';
 require_once dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';
 

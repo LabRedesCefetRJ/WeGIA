@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 
 function fecharConexao(mysqli_stmt $stmt, mysqli $conexao)
 {

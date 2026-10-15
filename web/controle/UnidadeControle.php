@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 include_once ROOT . '/classes/Unidade.php';
 include_once ROOT .'/dao/UnidadeDAO.php';
 class UnidadeControle

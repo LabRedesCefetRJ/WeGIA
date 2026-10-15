@@ -12,6 +12,7 @@
     <div>
 
         <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
         if(session_status() === PHP_SESSION_NONE)
             session_start();
 
