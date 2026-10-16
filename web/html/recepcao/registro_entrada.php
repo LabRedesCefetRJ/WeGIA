@@ -15,20 +15,16 @@ require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 
 //verifica permissão do usuário
-permissao($_SESSION['id_pessoa'], 12, 5);
+permissao($_SESSION['id_pessoa'], 20, 5);
 
-$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 require_once ROOT . '/classes/Csrf.php';
-require_once ROOT . '/dao/Conexao.php';
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once "../personalizacao_display.php";
 
 require_once ROOT . '/controle/VisitanteControle.php';
 
-$pdo = Conexao::connect();
-
-$visitantesSelecionados = (new VisitanteDAO($pdo))->buscarResumoPorIds(VisitanteControle::obterIdsSelecionados());
+$visitantesSelecionados = (new VisitanteDAO())->buscarResumoPorIds(VisitanteControle::obterIdsSelecionados());
 
 if (empty($visitantesSelecionados)) {
     header('Location: pre_registro_entrada.php?msg_e=' . urlencode('Adicione ao menos um visitante para registrar a entrada.'));

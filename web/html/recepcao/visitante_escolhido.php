@@ -8,6 +8,11 @@ if (!isset($_SESSION['usuario'])) {
 }
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+//Verifica se o cargo do usuário possui permissão no Módulo Recepção
+permissao($_SESSION['id_pessoa'], 20, 7);
+
 require_once ROOT . "/controle/VisitanteControle.php";
 require_once ROOT . "/classes/Visitante.php";
 require_once ROOT . "/html/personalizacao_display.php";
@@ -46,7 +51,6 @@ if (!$visitante) {
     exit();
 }
 
-$mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 require_once ROOT . '/classes/Csrf.php';
 
 $fotoVisitante = WWW . "img/semfoto.png";

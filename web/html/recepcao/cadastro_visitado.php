@@ -12,7 +12,7 @@ if (!isset($_SESSION['usuario'])) {
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
 
 require_once '../permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 12, 7);
+permissao($_SESSION['id_pessoa'], 20, 7);
 
 require_once ROOT . '/classes/Csrf.php';
 require_once ROOT . '/dao/VisitadoDAO.php';

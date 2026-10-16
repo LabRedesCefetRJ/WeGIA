@@ -308,7 +308,7 @@ require_once ROOT . "/html/geral/msg.php";
 						</div>
 					</a>
 
-					<a id="home9" href="#">
+					<a id="home20" href="#">
 						<div class="col-lg-2 col-md-8 i category-item" data-toggle="collapse" href="#recepcao">
 							<i class="fas fa-concierge-bell"></i>
 							<h4>Recepção</h4>

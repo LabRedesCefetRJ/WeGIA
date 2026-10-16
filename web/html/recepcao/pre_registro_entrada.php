@@ -11,7 +11,7 @@ if (!isset($_SESSION['usuario'])) {
 
 //Verifica se o usuário possui as permissões necessárias para a função
 require_once '../permissao/permissao.php';
-permissao($_SESSION['id_pessoa'], 12, 7);
+permissao($_SESSION['id_pessoa'], 20, 7);
 
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
