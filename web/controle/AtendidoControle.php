@@ -442,7 +442,7 @@ class AtendidoControle
             header("Location: ../html/atendido/Cadastro_Atendido.php?cpf=" . urlencode($cpf ?? ''));
             exit;
         } catch (PDOException $e) {
-            $message = $e->getCode() == 23000 ? 'Erro: CPF já cadastrado no sistema.' : 'Erro ao cadastrar atendido.';
+            $message = $e->getMessage();
             setSessionFormData($_POST);
             setSessionFormErrorFromMessage($message);
             setSessionMsg($message, 'err');
