@@ -26,7 +26,7 @@ class AlmoxarifadoDAO
 
             $stmt->execute();
         } catch (PDOException $e) {
-            echo 'Error: <b>  na tabela almoxarifado = ' . $sql . '</b> <br /><br />' . $e->getMessage();
+            throw $e;
         }
     }
 
