@@ -29,14 +29,19 @@ try {
 	$statusProcesso =  $paStatusDao->listarTodos();
 
 	//pegar status da requisição
-	$idStatusGet = isset($_GET['status-processo']) ? filter_input(INPUT_GET, 'status-processo', FILTER_SANITIZE_NUMBER_INT) : 1;
+	$idStatusGet = isset($_GET['status-processo']) ? filter_input(INPUT_GET, 'status-processo', FILTER_SANITIZE_NUMBER_INT) : 0;
 
 	if ($idStatusGet === false)
-		$idStatusGet = 1;
+		$idStatusGet = 0;
+	
 
 	$processoDAO     = new ProcessoAceitacaoDAO($pdo);
 	$nomeProcessoGet = isset($_GET['nome-processo']) ? trim(filter_input(INPUT_GET, 'nome-processo', FILTER_SANITIZE_SPECIAL_CHARS)) : '';
-	$processosAceitacao = $processoDAO->getByStatus($idStatusGet, $nomeProcessoGet);
+	if($idStatusGet == 0){
+		$processosAceitacao = $processoDAO->listarTodos();
+	} else{
+		$processosAceitacao = $processoDAO->getByStatus($idStatusGet, $nomeProcessoGet);
+	}	
 
 	define('ID_STATUS_CONCLUIDO', 2);
 
@@ -199,6 +204,7 @@ try {
 							<div class="form-inline" style="margin-top: 10px;">
 								<label for="status-processo">Status: </label>
 								<select class="form-control" name="status-processo" id="status-processo">
+									<option value=0>Todos</option>
 									<?php foreach ($statusProcesso as $status): ?>
 										<option value="<?= $status['id'] ?>"> <?= htmlspecialchars($status['descricao']) ?></option>
 									<?php endforeach; ?>
@@ -227,12 +233,16 @@ try {
 											<th <?php if(!$showCpfColumn) echo 'style="display:none"' ?>>CPF</th> <!-- display:none caso todos os cpfs sejam nulos -->
 											<th>Descrição</th>
 											<th>Etapas</th>
+											<?php if ((int)$idStatusGet === 0): ?>
+												<th>Status</th>
+											<?php endif; ?>
 											<th>Arquivos</th>
 											<th>Ações</th>
 										</tr>
 									</thead>
 									<tbody>
-										<?php foreach ($processosAceitacao as $processo): ?>
+										<?php 
+										foreach ($processosAceitacao as $processo): ?>
 											<tr>
 												<td onclick="window.location.href = './etapa_processo.php?id=<?= (int)$processo['id'] ?>'"><a href="etapa_processo.php?id=<?= (int)$processo['id'] ?>" style="color: inherit"><?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome']) ?></a></td>
 												<td <?php if(!$showCpfColumn) echo 'style="display:none"' ?>><?= isset($processo['cpf']) && !empty($processo['cpf']) ? formatCpfForDisplay($processo['cpf']) : 'Não informado.' ?></td>
@@ -245,7 +255,11 @@ try {
 								<?php else: ?>
 									<span class="text-muted" style="font-size: 12px;">Sem etapas</span>
 								<?php endif; ?>
-
+											<?php if ((int)$idStatusGet === 0): ?>
+												<td>
+													<?= htmlspecialchars($processo['status'] ?? 'Não informado') ?>
+												</td>
+											<?php endif; ?>
 												<td>
 													<button type="button"
 														class="btn btn-xs btn-info btn-arquivos-processo"
@@ -260,6 +274,7 @@ try {
 												<td style="display: flex; flex-wrap: wrap; gap: 10px;">
 													<?php
 													$atendidoId = $processoDAO->getIdAtendido($processo['id']);
+													$idStatus = (int) $processo['id_status'];
 
 													if ($atendidoId != false && $atendidoId >= 1):
 													?>
@@ -274,6 +289,18 @@ try {
 															onclick="return confirm('Tem certeza de que deseja cadastrar um atendido para o processo de <?= htmlspecialchars($processo['nome'] . ' ' . $processo['sobrenome'], ENT_QUOTES) ?>?');">
 															<i class="fa fa-user-plus"></i> Cadastrar Atendido
 														</a>
+
+													<?php elseif (in_array($idStatus, [1, 4], true)): ?>
+														<form action="../../controle/control.php" method="POST"
+															style="display: inline;"
+															onsubmit="return confirm('Deseja realmente concluir este processo?');">
+															<input type="hidden" name="nomeClasse" value="ProcessoAceitacaoControle">
+															<input type="hidden" name="metodo" value="atualizarStatus">
+															<input type="hidden" name="id_processo" value="<?= (int) $processo['id'] ?>">
+															<input type="hidden" name="id_status" value="2">
+															<button type="submit" class="btn btn-xs btn-success"> Concluir Processo </button>
+														</form>
+
 													<?php else: ?>
 														<button type="button"
 															class="btn btn-xs btn-success"
