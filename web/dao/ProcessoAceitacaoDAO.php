@@ -217,6 +217,7 @@ class ProcessoAceitacaoDAO
             p.nome,
             p.sobrenome,
             p.cpf,
+            pa.id_status,
             s.descricao AS status,
             pa.id,
             pa.descricao,

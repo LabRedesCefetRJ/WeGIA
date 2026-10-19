@@ -298,7 +298,7 @@ try {
 															<input type="hidden" name="metodo" value="atualizarStatus">
 															<input type="hidden" name="id_processo" value="<?= (int) $processo['id'] ?>">
 															<input type="hidden" name="id_status" value="2">
-															<button type="submit" class="btn btn-xs btn-success"> Concluir Processo </button>
+															<button type="submit" class="btn btn-xs btn-success"><i class="fa fa-check" aria-hidden="true"></i> Concluir Processo </button>
 														</form>
 
 													<?php else: ?>
