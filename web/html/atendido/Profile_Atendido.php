@@ -281,6 +281,7 @@ require_once "../../controle/AtendidoControle.php";
       $('input[name="id_documento"]').val(id);
       $("#editimg").modal('show');
     }
+
     $(function() {
       var interno = <?php echo $_SESSION['atendido'] ?>;
       console.log(interno);
@@ -779,7 +780,7 @@ require_once "../../controle/AtendidoControle.php";
                         <!-- Modal content-->
                         <div class="modal-content">
                           <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                            <button type="button" class="close" style="color: #c50114" data-dismiss="modal">&times;</button>
                             <h4 class="modal-title">Adicionar uma Foto</h4>
                           </div>
                           <div class="modal-body">
@@ -790,13 +791,14 @@ require_once "../../controle/AtendidoControle.php";
                               <div class="form-group">
                                 <label class="col-md-4 control-label" for="imgperfil">Carregue nova imagem de perfil:</label>
                                 <div class="col-md-8">
-                                  <input type="file" name="imgperfil" size="60" id="imgform" class="form-control">
+                                  <input type="file" name="imgperfil" size="60" id="imgform" class="form-control" required>
                                 </div>
                               </div>
                           </div>
                           <div class="modal-footer">
                             <input type="hidden" name="idatendido" value="<?= $id ?>">
-                            <input type="submit" id="formsubmit" value="Alterar imagem">
+                            <input class="btn btn-danger" type="button" id="fecharmodal" data-dismiss="modal" value="Cancelar Alteração">
+                            <input class="btn btn-primary" type="submit" id="formsubmit" value="Alterar imagem">
                           </div>
                         </div>
                         </form>
