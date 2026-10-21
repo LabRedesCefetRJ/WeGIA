@@ -35,17 +35,18 @@ class OrcamentoControle
         $orcamento = $this->criarOrcamentoDaRequisicao();
         $id_cotacao = $orcamento->getId_cotacao();
 
-        $this->validarCotacaoEmAnalise($id_cotacao);
-
-        if ($this->orcamentoDAO->contarPorCotacao($id_cotacao) >= 3) {
-            throw new InvalidArgumentException(
-                'A cotação pode possuir no máximo três orçamentos.',
-                409
-            );
-        }
-
         try {
             $this->pdo->beginTransaction();
+
+            // O bloqueio da cotação serializa a contagem e as alterações dos orçamentos.
+            $this->validarCotacaoEmAnalise($id_cotacao, true);
+
+            if ($this->orcamentoDAO->contarPorCotacao($id_cotacao) >= 3) {
+                throw new InvalidArgumentException(
+                    'A cotação pode possuir no máximo três orçamentos.',
+                    409
+                );
+            }
 
             $id_orcamento = $this->orcamentoDAO->incluir($orcamento);
 
@@ -177,27 +178,42 @@ class OrcamentoControle
 
         $id_cotacao = $orcamento->getId_cotacao();
 
-        $this->validarCotacaoEmAnalise($id_cotacao);
+        try {
+            $this->pdo->beginTransaction();
 
-        $quantidade = $this->orcamentoDAO
-            ->contarPorCotacao($id_cotacao);
+            $this->validarCotacaoEmAnalise($id_cotacao, true);
+            $atual = $this->obterOrcamento($id_orcamento, true);
+            if ($atual->getId_cotacao() !== $id_cotacao) {
+                throw new InvalidArgumentException('O orçamento não pertence a esta cotação.', 409);
+            }
 
-        if ($quantidade <= 1) {
-            throw new InvalidArgumentException(
-                'A cotação deve possuir pelo menos um orçamento.',
-                409
+            $quantidade = $this->orcamentoDAO
+                ->contarPorCotacao($id_cotacao);
+
+            if ($quantidade <= 1) {
+                throw new InvalidArgumentException(
+                    'A cotação deve possuir pelo menos um orçamento.',
+                    409
+                );
+            }
+
+            $alterados = $this->orcamentoDAO->excluir(
+                $id_orcamento
             );
-        }
 
-        $alterados = $this->orcamentoDAO->excluir(
-            $id_orcamento
-        );
+            if ($alterados < 1) {
+                throw new InvalidArgumentException(
+                    'O orçamento informado não existe.',
+                    404
+                );
+            }
 
-        if ($alterados < 1) {
-            throw new InvalidArgumentException(
-                'O orçamento informado não existe.',
-                404
-            );
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
         }
 
         $_SESSION['msg'] = 'Orçamento excluído com sucesso.';
@@ -265,15 +281,30 @@ class OrcamentoControle
         $orcamento = $this->obterOrcamento($id_orcamento);
         $id_cotacao = $orcamento->getId_cotacao();
 
-        $this->validarCotacaoEmAnalise($id_cotacao);
+        try {
+            $this->pdo->beginTransaction();
 
-        $alterados = $this->orcamentoDocDAO->excluir($id_orcamento);
+            $this->validarCotacaoEmAnalise($id_cotacao, true);
+            $atual = $this->obterOrcamento($id_orcamento, true);
+            if ($atual->getId_cotacao() !== $id_cotacao) {
+                throw new InvalidArgumentException('O orçamento não pertence a esta cotação.', 409);
+            }
 
-        if ($alterados < 1) {
-            throw new InvalidArgumentException(
-                'Arquivo do orçamento não encontrado.',
-                404
-            );
+            $alterados = $this->orcamentoDocDAO->excluir($id_orcamento);
+
+            if ($alterados < 1) {
+                throw new InvalidArgumentException(
+                    'Arquivo do orçamento não encontrado.',
+                    404
+                );
+            }
+
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            throw $e;
         }
 
         $_SESSION['msg'] = 'Arquivo do orçamento excluído com sucesso.';
