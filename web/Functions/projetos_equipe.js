@@ -198,10 +198,18 @@ function aplicarFiltroEquipe() {
         const nomeCompleto = ((membro.nome || '') + ' ' + (membro.sobrenome || '')).trim();
         const cpf          = membro.cpf || '--';
         const funcao       = membro.funcao_descricao || '--';
+        const membroId     = parseInt(membro.id, 10);
+        if(!Number.isFinite(membroId)){
+            return
+        }
         const acoes        =
             '<button type="button"' +
-            ' onclick="event.stopPropagation(); removerMembroEquipe(' + membro.id + ')"' +
-            ' id="btn-remover-' + membro.id + '"' +
+            ' onclick="window.location.href=\'editar_executante_projeto.php?id=' + membroId + '\'"' +
+            ' class="btn btn-primary btn-xs" title="Editar executante">' +
+            '<i class="fa fa-pencil"></i></button> ' +
+            '<button type="button"' +
+            ' onclick="removerMembroEquipe(' + membroId + ')"' +
+            ' id="btn-remover-' + membroId + '"' +
             ' class="btn btn-danger btn-xs" title="Remover do projeto">' +
             '<i class="fa fa-trash"></i></button>';
 
@@ -210,13 +218,7 @@ function aplicarFiltroEquipe() {
             escapeHtml(cpf),
             escapeHtml(funcao),
             acoes
-        ]).nodes().to$().attr('id', 'equipe-' + membro.id)
-                        .css('cursor', 'pointer')
-                        .on('click', (function(id) {
-                            return function() {
-                                window.location.href = 'editar_executante_projeto.php?id=' + id;
-                            };
-                        })(membro.id));
+        ]).nodes().to$().attr('id', 'equipe-' + membroId);
     });
     tabelaEquipe.draw();
 }
