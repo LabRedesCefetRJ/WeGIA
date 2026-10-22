@@ -2,6 +2,7 @@
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'Conexao.php';
 
 enum SelecaoParagrafo{
+    case Titulo;
     case Agradecimento;
     case Cnpj;
 }
@@ -34,6 +35,7 @@ class SelecaoParagrafoDAO
         $idSelecao = null;
 
         match($selecaoParagrafo){
+            SelecaoParagrafo::Titulo => $idSelecao = 1,
             SelecaoParagrafo::Agradecimento => $idSelecao = 7,
             SelecaoParagrafo::Cnpj => $idSelecao = 8,
         };
