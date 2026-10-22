@@ -23,6 +23,7 @@ include_once ROOT . '/dao/UnidadeDAO.php';
 
 if (!isset($_SESSION['unidade'])) {
    header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=UnidadeControle&nextPage=../html/matPat/listar_unidade.php');
+   exit;
 } else {
    $unidade = $_SESSION['unidade'];
    unset($_SESSION['unidade']);

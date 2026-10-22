@@ -62,8 +62,10 @@ session_start();
         if (sizeof($output) == 1){
             if ($output[0] == 'Already up to date.'){
                 header("Location: $redirect?msg=success&sccs=O sistema já está atualizado!");
+                exit;
             }else{
                 header("Location: $redirect?msg=error&err=Houve um erro ao executar o comando git -C ".ROOT." pull");
+                exit;
             }
         }elseif (sizeof($output) != 0) {
             $log = "Status da atualização: \n";
@@ -93,15 +95,18 @@ session_start();
 
                 // header("Location: ./configuracao_geral.php?msg=success&sccs=Backup realizado e Atualização concluída!&log=".base64_encode($log));
                 header("Location: $redirect?tipo=success&mensagem=Backup realizado e Atualização concluída!");
+                exit;
                 
             }else{
                 // header("Location: ./configuracao_geral.php?msg=warning&warn=Atualização concluída, mas houve um erro ao realizar o backup (Sistema compatível: Linux, Seu Sistema: ".PHP_OS.")!&log=".base64_encode($log));
                 header("Location: $redirect?tipo=warning&mensagem=Atualização concluída, mas houve um erro ao realizar os backups!");
+                exit;
             }
         }
     } else {
         // header("Location: ./configuracao_geral.php?msg=error&err=Houve um erro ao executar o comando git -C ".ROOT." pull");
         header("Location: $redirect?tipo=error&mensagem=Houve um erro ao executar o comando git -C ".ROOT." pull");
+        exit;
     }
 
 ?>

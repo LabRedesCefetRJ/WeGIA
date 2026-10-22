@@ -24,6 +24,7 @@ extract($_REQUEST);
 $id_produto = intval($id_produto);
 if ($id_produto < 1) {
     header("Location: ". WWW ."html/matPat/restaurar_produto.php?id_produto=$id_produto&flag=error&msg=Id inválido: Deve ser maior do que 0");
+    exit;
 }
 
 try {

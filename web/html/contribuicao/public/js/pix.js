@@ -25,6 +25,11 @@ async function decidirAcao() {
                 await gerarQRCode();
                 break;
 
+            case 'atualizar_parcial':
+                await completarCadastroSocio();
+                await gerarQRCode();
+                break;
+
             case 'cadastrar_existente':
                 await cadastrarSocioPessoaExistente();
                 await gerarQRCode();
@@ -121,8 +126,10 @@ function gerarQRCode() {
 
             } else if (resposta.erro) {
                 alert('Erro: ' + resposta.erro);
+                voltarParaConfirmarCpf();
             } else {
                 alert("Ops! Ocorreu um problema na geração da sua forma de pagamento, tente novamente, se o erro persistir contate o suporte.");
+                voltarParaConfirmarCpf();
             }
 
         })
@@ -135,9 +142,10 @@ configurarAvancaValor(verificarValor);
 configurarVoltaValor();
 configurarVoltaCpf();
 configurarVoltaContato();
-configurarAvancaEndereco(verificarEndereco);
-configurarAvancaContato(verificarContato);
+configurarVoltaEndereco();
+configurarAvancaEndereco(verificarEnderecoDinamico);
+configurarAvancaContatoDinamico(verificarContato);
 configurarAvancaTerminar(decidirAcao);
 configurarMudancaOpcao(alternarPfPj);
-configurarConsulta(buscarSocio);
+configurarConsulta(buscarCadastroSocio);
 configurarRegrasDePagamento();

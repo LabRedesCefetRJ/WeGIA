@@ -177,3 +177,4 @@ try {
 }
 
 header("Location: profile_familiar.php?id_dependente=$idatendido_familiares");
+exit;

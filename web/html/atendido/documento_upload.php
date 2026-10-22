@@ -61,6 +61,7 @@ if ($_POST) {
             $prep->execute();
 
             header("Location: Profile_Atendido.php?idatendido=$idatendido");
+            exit;
         } catch (PDOException $e) {
             Util::tratarException($e);
         }
@@ -71,4 +72,5 @@ if ($_POST) {
     }
 } else {
     header("Location: Informacao_Atendido.php");
+    exit;
 }

@@ -39,7 +39,7 @@ class RecorrenciaController
             //captcha
             if (!isset($_SESSION['usuario'])) {
                 $captchaGoogle = new CaptchaGoogleService();
-                if (!$captchaGoogle->validate())
+                if (!$captchaGoogle->validate($documento))
                     throw new InvalidArgumentException('O token do captcha não é válido.', 412);
             }
 
