@@ -2,6 +2,8 @@
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'ApiBoletoServiceInterface.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ContribuicaoLogDAO.php';
+require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'ConexaoDAO.php';
 require_once 'ApiBoletoServiceInterface.php';
 require_once 'PdfDownloadService.php';
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SEPARATOR . 'ContribuicaoLog.php';
@@ -9,6 +11,13 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPA
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 class PagarMeBoletoService implements ApiBoletoServiceInterface
 {
+    private PDO $pdo;
+
+    public function __construct(?PDO $pdo = null)
+    {
+        $this->pdo = $pdo ?? ConexaoDAO::conectar();
+    }
+
     public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
     {
         //gerar um número para o documento
@@ -119,7 +128,8 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
                 $pdfInterno = $this->guardarSegundaVia($pdf_link, $contribuicaoLog);
 
                 //envia resposta para o front-end
-                echo json_encode(['link' => WWW . $pdfInterno]); //pegar o link da segunda via do boleto para enviar para o front-end
+                $linkPdf = WWW . 'html/contribuicao/controller/control.php?nomeClasse=ContribuicaoLogController&metodo=downloadPdfPorId&id=' . rawurlencode($contribuicaoLog->getUuid());
+                echo json_encode(['link' => $linkPdf]);
             } else {
                 throw new PaymentServiceException(
                     'Não foi possível gerar o boleto no momento. Tente novamente mais tarde.',
@@ -160,10 +170,14 @@ class PagarMeBoletoService implements ApiBoletoServiceInterface
         $codigo = str_replace('_', '-', $contribuicaoLog->getCodigo());
         $nomeArquivo = $codigo . '_' . $cpfSemMascara . '_' . $ultimaDataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
 
-        $caminhoFisico = $saveDir . $nomeArquivo;
-
         $fileContent = PdfDownloadService::baixarConteudo($pdf_link, 'boleto');
-        file_put_contents($caminhoFisico, $fileContent);
+
+        $contribuicaoLogDao = new ContribuicaoLogDAO($this->pdo);
+        $idDocumento = $contribuicaoLogDao->salvarDocumentoPdf($fileContent, 'pdf');
+
+        if ($contribuicaoLog->getId()) {
+            $contribuicaoLogDao->vincularDocumento((int) $contribuicaoLog->getId(), $idDocumento);
+        }
 
         return 'html/contribuicao/pdfs/' . $nomeArquivo; // Retorna o caminho relativo para o arquivo PDF
     }
