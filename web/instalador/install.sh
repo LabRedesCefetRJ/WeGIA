@@ -31,7 +31,7 @@ install_localdeps(){
     apt install sudo git curl -y
     apt install openssl -y
     apt install mariadb-server -y
-    apt install apache2 php composer php-cli php-common php-curl php-gd php-intl php-mbstring php-mysql php-opcache php-readline php-soap php-xml php-xmlrpc php-zip -y 
+    apt install apache2 composer php8.4 php8.4-cli php8.4-common php8.4-curl php8.4-gd php8.4-intl php8.4-mbstring php8.4-mysql php8.4-opcache php8.4-readline php8.4-soap php8.4-xml php8.4-zip libapache2-mod-php8.4 -y
 }
 
 install_internetdeps(){
