@@ -69,20 +69,21 @@ class ProcessoAceitacaoControle
             }
 
             if ($existingPessoa !== null) {
+                $id_pessoa = $existingPessoa->getIdpessoa();
                 $nome = $existingPessoa->getNome();
                 $sobrenome = $existingPessoa->getSobrenome();
                 $sexo = $existingPessoa->getSexo();
                 $dataNascimento = $existingPessoa->getDataNascimento();
-                $email = $existingPessoa->getEmail();
-                $telefone = $existingPessoa->getTelefone();
-                $cep = $existingPessoa->getCep();
-                $rua = $existingPessoa->getLogradouro();
-                $bairro = $existingPessoa->getBairro();
-                $cidade = $existingPessoa->getCidade();
-                $uf = $existingPessoa->getEstado();
-                $numero = $existingPessoa->getNumeroEndereco();
-                $complemento = $existingPessoa->getComplemento();
-                $ibge = $existingPessoa->getIbge();
+                $email = $existingPessoa->getEmail() ?? '';
+                $telefone = $existingPessoa->getTelefone() ?? '';
+                $cep = $existingPessoa->getCep() ?? '';
+                $rua = $existingPessoa->getLogradouro() ?? '';
+                $bairro = $existingPessoa->getBairro() ?? '';
+                $cidade = $existingPessoa->getCidade() ?? '';
+                $uf = $existingPessoa->getEstado() ?? '';
+                $numero = $existingPessoa->getNumeroEndereco() ?? '';
+                $complemento = $existingPessoa->getComplemento() ?? '';
+                $ibge = $existingPessoa->getIbge() ?? '';
             } else {
                 $nome = $this->getPostValue('nome');
                 $sobrenome = $this->getPostValue('sobrenome');
@@ -104,7 +105,7 @@ class ProcessoAceitacaoControle
                 $this->validarDataNascimento($dataNascimento);
             }
             $this->validarEmail($email);
-            $this->validarTelefone($telefone);
+            $this->validarTelefone($telefone); 
             $cep = $this->validarCep($cep);
             $this->validarEndereco([
                 'cep' => $cep,
@@ -198,19 +199,25 @@ class ProcessoAceitacaoControle
 
     private function validarTelefone(?string $telefone): void
     {
-        if ($telefone === null) {
+        $telefone = trim((string) $telefone);
+
+        if ($telefone === '' || strtolower($telefone) === 'null') {
             return;
         }
 
         $digits = preg_replace('/\D+/', '', $telefone);
+
         if (!preg_match('/^\d{10,11}$/', $digits)) {
-            throw new InvalidArgumentException('Telefone inválido. Informe DDD + número, com 10 ou 11 dígitos.', 400);
+            throw new InvalidArgumentException(
+                'Telefone inválido. Informe DDD + número, com 10 ou 11 dígitos.',
+                400
+            );
         }
     }
 
     private function validarEmail(?string $email): void
     {
-        if ($email === null) {
+        if ($email == null ) {
             return;
         }
 
@@ -221,7 +228,7 @@ class ProcessoAceitacaoControle
 
     private function validarCep(?string $cep): ?string
     {
-        if ($cep === null) {
+        if ($cep == null) {
             return null;
         }
 

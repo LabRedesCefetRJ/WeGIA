@@ -735,6 +735,22 @@ try {
 	<script src="<?php echo WWW; ?>Functions/onlyChars.js"></script>
 	<script src="<?php echo WWW; ?>Functions/mascara.js"></script>
 	<script src="<?php echo WWW; ?>Functions/testaCPF.js"></script>
+	<script>
+		$(document).ready(function () {
+			const params = new URLSearchParams(window.location.search);
+			const modal = params.get('modal');
+			const cpfAtendido = params.get('cpf');
+
+			if (modal === 'modalNovoProcesso') {
+				$('#modalNovoProcesso').modal('show');
+			}
+			if (cpfAtendido) {
+				const $cpf = $('#modalNovoProcesso').find('#cpf');
+				$cpf.val(cpfAtendido);
+				buscarPessoaPorCpf(cpfAtendido);
+			}
+		});
+	</script>
 	<?php if (!empty($openModal)): ?>
 		<script>
 			$(function() {

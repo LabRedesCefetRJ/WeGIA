@@ -1399,6 +1399,12 @@ require_once "../../controle/AtendidoControle.php";
                           <div class="alert alert-warning">
                             Nenhum processo de aceitação foi encontrado para este atendido.
                           </div>
+                          <div class="text-left" style="margin-top: 20px;">
+                            <a class="btn btn-primary" href="processo_aceitacao.php?modal=modalNovoProcesso&cpf=<?=
+                            urlencode($atendidoDados[0]['cpf'] ?? '')?>">
+                              <i class="fa fa-external-link"></i> Cadastrar processo de aceitação
+                            </a>
+                          </div>
                         <?php else: ?>
                           <div class="table-responsive">
                             <table class="table table-bordered table-striped mb-none">
