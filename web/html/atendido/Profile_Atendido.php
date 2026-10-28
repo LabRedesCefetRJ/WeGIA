@@ -284,7 +284,6 @@ require_once "../../controle/AtendidoControle.php";
 
     $(function() {
       var interno = <?php echo $_SESSION['atendido'] ?>;
-      console.log(interno);
       $.each(interno, function(i, item) {
         if (i = 1) {
           $("#formulario").append($("<input type='hidden' name='idatendido' value='" + item.id + "'>"));
@@ -469,8 +468,6 @@ require_once "../../controle/AtendidoControle.php";
         $("#metodo").val("alterarEndereco");
       }
       $.each(endereco, function(i, item) {
-        //console.log(endereco);
-        console.log("estado=" + item.estado);
         $("#nome").val(item.nome).prop('disabled', true);
         $("#cep").val(item.cep).prop('disabled', true);
         $("#estado").val(item.estado).prop('disabled', true);
@@ -1400,8 +1397,8 @@ require_once "../../controle/AtendidoControle.php";
                             Nenhum processo de aceitação foi encontrado para este atendido.
                           </div>
                           <div class="text-left" style="margin-top: 20px;">
-                            <a class="btn btn-primary" href="processo_aceitacao.php?modal=modalNovoProcesso&cpf=<?=
-                            urlencode($atendidoDados[0]['cpf'] ?? '')?>">
+                            <a class="btn btn-primary" href="processo_aceitacao.php?modal=modalNovoProcesso&idpessoa=<?=
+                            urlencode($atendidoDados[0]['id_pessoa'] ?? '')?>">
                               <i class="fa fa-external-link"></i> Cadastrar processo de aceitação
                             </a>
                           </div>
@@ -1669,7 +1666,7 @@ require_once "../../controle/AtendidoControle.php";
     </script>
     <script>
       function verificaSucesso(response) {
-        console.log(response);
+        //console.log(response);
         if (response.errorInfo) {
           if (response.errorInfo[1] == 1451) {
             window.alert("O dependente possui documentos cadastrados em seu nome. Retire-os do bando de dados antes de remover o dependente.");

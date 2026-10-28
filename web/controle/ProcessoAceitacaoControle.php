@@ -380,6 +380,46 @@ class ProcessoAceitacaoControle
             echo json_encode(['success' => false, 'erro' => $e->getMessage()]);
         }
     }
+    
+    public function buscarPessoaPorId()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
+            if ($id === false || $id === null || $id <= 0) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'O id de pessoa é inválido ou não foi informado.'
+                ]);
+                return;
+            }
+
+            $pessoaDAO = new PessoaDAO($this->pdo);
+            $pessoa = $pessoaDAO->verificarExistenciaPorId($id);
+
+            if ($pessoa === null) {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Pessoa não encontrada.'
+                ]);
+                return;
+            }
+
+            // Retornar no formato esperado pelo JavaScript
+            echo json_encode([
+                'success' => true,
+                'pessoa' => $pessoa
+            ]);
+
+        }catch (Exception $e) {
+            Util::tratarException($e);
+        }
+    }
+    
 
     public function getPessoaDoProcesso()
     {
