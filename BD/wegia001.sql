@@ -465,8 +465,33 @@ CREATE TABLE IF NOT EXISTS `wegia`.`origem` (
   `cnpj` VARCHAR(20) NULL DEFAULT NULL,
   `cpf` VARCHAR(20) NULL DEFAULT NULL,
   `telefone` VARCHAR(33) NULL DEFAULT NULL,
+  `inscricao_estadual` VARCHAR(30) NULL DEFAULT NULL,
+  `email` VARCHAR(254) NULL DEFAULT NULL,
+  `cep` VARCHAR(9) NULL DEFAULT NULL,
+  `logradouro` VARCHAR(255) NULL DEFAULT NULL,
+  `numero` VARCHAR(20) NULL DEFAULT NULL,
+  `complemento` VARCHAR(100) NULL DEFAULT NULL,
+  `bairro` VARCHAR(100) NULL DEFAULT NULL,
+  `cidade` VARCHAR(100) NULL DEFAULT NULL,
+  `uf` VARCHAR(2) NULL DEFAULT NULL,
   PRIMARY KEY (`id_origem`))
 ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `wegia`.`fornecedor_condicao_pagamento` (
+    id_origem INT(11) NOT NULL,
+    condicao_pagamento ENUM('a_vista', 'a_prazo', 'parcelado') NOT NULL,
+    PRIMARY KEY (id_origem),
+    CONSTRAINT fk_condicao_pagamento_origem FOREIGN KEY (id_origem)
+        REFERENCES `wegia`.`origem` (id_origem) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS `wegia`.`fornecedor_vencimento` (
+    id_origem INT(11) NOT NULL,
+    dias SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (id_origem, dias),
+    CONSTRAINT fk_vencimento_condicao FOREIGN KEY (id_origem)
+        REFERENCES `wegia`.`fornecedor_condicao_pagamento` (id_origem) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `wegia`.`origem_almoxarifado`
@@ -798,6 +823,15 @@ CREATE TABLE IF NOT EXISTS `wegia`.`orcamento` (
     ON DELETE RESTRICT
     ON UPDATE RESTRICT
 )ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `wegia`.`orcamento_vencimento` (
+    id_orcamento INT(11) NOT NULL,
+    dias SMALLINT UNSIGNED NOT NULL,
+    PRIMARY KEY (id_orcamento, dias),
+    CONSTRAINT fk_vencimento_orcamento FOREIGN KEY (id_orcamento)
+        REFERENCES `wegia`.`orcamento` (id_orcamento) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
 
 
 -- -----------------------------------------------------

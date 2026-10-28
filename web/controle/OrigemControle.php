@@ -11,6 +11,7 @@ require_once ROOT . '/classes/Csrf.php';
 
 class OrigemControle
 {
+    private $campoErro = null;
     private function exigirPermissao(int $acao): void
     {
         $servico = new PermissaoFornecedorService();
@@ -28,21 +29,50 @@ class OrigemControle
     public function verificar()
     {
         $this->exigirPermissao(3);
-        // Em vez de extract(), acessar diretamente e sanitizar
-        $nome     = isset($_POST['nome']) ? trim($_POST['nome']) : '';
-        $telefone = isset($_POST['telefone']) ? trim($_POST['telefone']) : '';
-        $cpf      = isset($_POST['cpf']) ? trim($_POST['cpf']) : '';
-        $cnpj     = isset($_POST['cnpj']) ? trim($_POST['cnpj']) : '';
+        $entrada = [];
+        foreach (['nome', 'telefone', 'cpf', 'cnpj'] as $campo) {
+            $this->campoErro = $campo;
+            $valor = $_POST[$campo] ?? '';
+            if (!is_string($valor)) {
+                throw new InvalidArgumentException('Valor inválido para ' . $campo . '.');
+            }
+            $entrada[$campo] = trim($valor);
+        }
+        $nome = $entrada['nome'];
+        $telefone = $entrada['telefone'];
+        $cpf = $entrada['cpf'];
+        $cnpj = $entrada['cnpj'];
 
-        // Validação de campos obrigatórios
-        if (empty($nome)) {
+        $this->campoErro = 'nome';
+        if ($nome === '') {
             throw new InvalidArgumentException('Nome da origem não informado. Por favor, informe um nome!');
         }
+        if (mb_strlen($nome, 'UTF-8') > 100) {
+            throw new InvalidArgumentException('O nome da origem deve ter no máximo 100 caracteres.');
+        }
 
+        $this->campoErro = 'telefone';
+        if ($telefone !== '') {
+            // Aceita telefone brasileiro com DDD, com ou sem máscara.
+            // Rejeita letras em vez de removê-las silenciosamente.
+            if (!preg_match('/^[0-9() .-]+$/D', $telefone)) {
+                throw new InvalidArgumentException('Informe um telefone válido com DDD (10 ou 11 números).');
+            }
+            $numeros = preg_replace('/[^0-9]/', '', $telefone);
+            if (!in_array(strlen($numeros), [10, 11], true)) {
+                throw new InvalidArgumentException('Informe um telefone válido com DDD (10 ou 11 números).');
+            }
+            $tamanhoPrefixo = strlen($numeros) === 11 ? 5 : 4;
+            $telefone = '(' . substr($numeros, 0, 2) . ') '
+                . substr($numeros, 2, $tamanhoPrefixo) . '-' . substr($numeros, -4);
+        }
+
+        $this->campoErro = 'cpf';
         if ($cpf !== '' && !Util::validarCPF($cpf)) {
             throw new InvalidArgumentException('CPF inválido!');
         }
 
+        $this->campoErro = 'cnpj';
         if ($cnpj !== '' && !Util::validaCnpj($cnpj)) {
             throw new InvalidArgumentException('CNPJ inválido!');
         }
@@ -51,7 +81,66 @@ class OrigemControle
         $cnpj = $cnpj !== '' ? $cnpj : null;
         $telefone = $telefone !== '' ? $telefone : null;
 
-        return new Origem($nome, $cnpj, $cpf, $telefone);
+        $dados = [];
+        $rotulos = ['inscricao_estadual' => 'Inscrição estadual', 'email' => 'E-mail', 'cep' => 'CEP', 'logradouro' => 'Logradouro', 'numero' => 'Número', 'complemento' => 'Complemento', 'bairro' => 'Bairro', 'cidade' => 'Cidade', 'uf' => 'UF'];
+        $limites = ['inscricao_estadual' => 30, 'email' => 254, 'cep' => 9, 'logradouro' => 255, 'numero' => 20, 'complemento' => 100, 'bairro' => 100, 'cidade' => 100, 'uf' => 2];
+        foreach ($limites as $campo => $limite) {
+            $this->campoErro = $campo;
+            $valor = $_POST[$campo] ?? '';
+            if (!is_string($valor)) {
+                throw new InvalidArgumentException('Valor inválido para ' . $campo . '.');
+            }
+            $valor = trim($valor);
+            if (mb_strlen($valor, 'UTF-8') > $limite) {
+                throw new InvalidArgumentException($rotulos[$campo] . ': informe no máximo ' . $limite . ' caracteres.');
+            }
+            $dados[$campo] = $valor === '' ? null : $valor;
+        }
+        $this->campoErro = 'email';
+        if ($dados['email'] !== null && !filter_var($dados['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Informe um e-mail válido, como nome@exemplo.com.');
+        }
+        $this->campoErro = 'cep';
+        if ($dados['cep'] !== null) {
+            $cep = str_replace('-', '', $dados['cep']);
+            if (!preg_match('/^[0-9]{8}$/D', $cep)) {
+                throw new InvalidArgumentException('Informe um CEP com 8 números.');
+            }
+            $dados['cep'] = substr($cep, 0, 5) . '-' . substr($cep, 5);
+        }
+        $this->campoErro = 'uf';
+        if ($dados['uf'] !== null) {
+            $dados['uf'] = strtoupper($dados['uf']);
+            if (!in_array($dados['uf'], explode(' ', 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'), true)) {
+                throw new InvalidArgumentException('Informe uma UF brasileira válida, como RJ ou SP.');
+            }
+        }
+
+        $dados = array_merge($dados, Origem::validarCondicoesPagamento($_POST));
+        $this->campoErro = null;
+        return new Origem($nome, $cnpj, $cpf, $telefone, $dados);
+    }
+
+    private function lerAlmoxarifados(): array
+    {
+        $this->campoErro = 'almoxarifados';
+        $valores = $_POST['almoxarifados'] ?? [];
+        if (!is_array($valores)) {
+            throw new InvalidArgumentException('A seleção de almoxarifados deve ser uma lista.');
+        }
+
+        $ids = [];
+        foreach ($valores as $valor) {
+            if ((!is_string($valor) && !is_int($valor))
+                || !preg_match('/^[1-9][0-9]*$/D', (string) $valor)
+                || strlen((string) $valor) > 10
+                || (int) $valor > 2147483647) {
+                throw new InvalidArgumentException('Seleção de almoxarifados inválida. Selecione novamente.');
+            }
+            $ids[] = (int) $valor;
+        }
+
+        return array_values(array_unique($ids));
     }
 
     private function responderJson(array $dados, int $status = 200): void
@@ -129,17 +218,16 @@ class OrigemControle
         try {
             $origem = $this->verificar();
 
-            $almoxarifados = isset($_POST['almoxarifados']) && is_array($_POST['almoxarifados'])
-            ? array_map('intval', $_POST['almoxarifados'])
-            : array();
+            $almoxarifados = $this->lerAlmoxarifados();
 
             $origemDAO = new OrigemDAO();
 
+            $this->campoErro = 'almoxarifados';
             $origemDAO->incluir($origem, $almoxarifados);
 
             $_SESSION['msg'] = 'Origem cadastrada com sucesso.';
             $_SESSION['flag'] = 'success';
-            unset($_SESSION['origem'], $_SESSION['proxima'], $_SESSION['link']);
+            unset($_SESSION['origem'], $_SESSION['proxima'], $_SESSION['link'], $_SESSION['origem_formulario']);
 
             header('Location: ' . OrigemNavegacao::cadastro($_POST['origem_pagina'] ?? null));
             exit;
@@ -147,6 +235,10 @@ class OrigemControle
             error_log("Erro ao incluir origem: " . $e->getMessage());
             echo "Erro ao realizar o cadastro. Tente novamente mais tarde.";
         } catch (InvalidArgumentException $e) {
+            // Guarda apenas os campos do formulário para restaurá-los após o redirecionamento.
+            $campos = explode(' ', 'nome telefone cpf cnpj inscricao_estadual email cep logradouro numero complemento bairro cidade uf almoxarifados condicao_pagamento vencimentos_pagamento');
+            $_SESSION['origem_campo_erro'] = $e instanceof OrigemValidacaoException ? $e->getCampo() : $this->campoErro;
+            $_SESSION['origem_formulario'] = array_intersect_key($_POST, array_flip($campos));
             $_SESSION['msg'] = $e->getMessage();
             $_SESSION['flag'] = 'error';
 
@@ -237,9 +329,7 @@ class OrigemControle
 
         try {
             $id_origem = isset($_POST['id_origem']) ? (int) $_POST['id_origem'] : 0;
-            $almoxarifados = isset($_POST['almoxarifados']) && is_array($_POST['almoxarifados'])
-                ? $_POST['almoxarifados']
-                : array();
+            $almoxarifados = $this->lerAlmoxarifados();
 
             if ($id_origem <= 0) {
                 throw new Exception("Origem inválida.");
@@ -249,6 +339,7 @@ class OrigemControle
             $origem->setId_origem($id_origem);
 
             $origemDAO = new OrigemDAO();
+            $this->campoErro = 'almoxarifados';
             $origemDAO->alterar($origem, $almoxarifados);
 
             if (($_POST['resposta'] ?? '') === 'json') {
@@ -267,7 +358,11 @@ class OrigemControle
         } catch (Exception $e) {
             error_log("Erro ao alterar origem: " . $e->getMessage());
             if (($_POST['resposta'] ?? '') === 'json') {
-                $this->responderJson(['mensagem' => $e->getMessage()], 400);
+                $this->responderJson([
+                    'mensagem' => $e->getMessage(),
+                    'campo' => $e instanceof OrigemValidacaoException ? $e->getCampo()
+                        : ($e instanceof InvalidArgumentException ? $this->campoErro : null)
+                ], 400);
             }
             echo "Erro ao alterar origem.";
         }

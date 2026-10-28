@@ -7,6 +7,38 @@ class Util
     public const MENSAGEM_NOME_INVALIDO = 'O nome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
     public const MENSAGEM_SOBRENOME_INVALIDO = 'O sobrenome informado deve conter letras e não pode ser composto apenas por caracteres especiais.';
 
+    /** Normaliza os dias de pagamento; a condição usa avista, aprazo ou parcelado. */
+    public static function validarVencimentosPagamento(string $condicao, $prazo): string
+    {
+        if (!in_array($condicao, ['avista', 'aprazo', 'parcelado'], true)) {
+            throw new InvalidArgumentException('Condição de pagamento inválida.', 400);
+        }
+        if (!is_string($prazo) || strlen($prazo) > 255) {
+            throw new InvalidArgumentException('Informe vencimentos válidos, como 30/60/90.', 400);
+        }
+        $vencimentos = '';
+        if ($condicao !== 'avista') {
+            $prazo = preg_replace('/\s+/', '', $prazo);
+            if (!preg_match('/^[0-9]{1,4}(\/[0-9]{1,4})*$/D', $prazo)) {
+                throw new InvalidArgumentException('Informe os dias: 30 para a prazo ou 30/60/90 para parcelado.', 400);
+            }
+            $dias = array_map('intval', explode('/', $prazo));
+            if (($condicao === 'aprazo' && count($dias) !== 1)
+                || ($condicao === 'parcelado' && count($dias) < 2)) {
+                throw new InvalidArgumentException('A prazo exige um vencimento; parcelado exige pelo menos dois.', 400);
+            }
+            $anterior = -1;
+            foreach ($dias as $dia) {
+                if ($dia <= $anterior || ($condicao === 'aprazo' && $dia === 0)) {
+                    throw new InvalidArgumentException('Informe dias em ordem crescente, sem repetir. Use À vista para pagamento imediato.', 400);
+                }
+                $anterior = $dia;
+            }
+            $vencimentos = implode('/', $dias);
+        }
+        return $vencimentos;
+    }
+
     public static function definirFusoHorario(?string $fusoHorario = null): string
     {
         require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'FusoHorarioSistema.php';

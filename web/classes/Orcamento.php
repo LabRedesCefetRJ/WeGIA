@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/Util.php';
+
 class Orcamento
 {
     public const CONDICOES_PAGAMENTO = [
@@ -14,20 +16,29 @@ class Orcamento
     private string $condicao_pagamento;
     private ?string $prazo_entrega = null;
     private string $valor;
+    private string $vencimentos_pagamento = '';
 
     public function __construct(
         $id_cotacao,
         $id_fornecedor,
         $condicao_pagamento,
         $prazo_entrega = null,
-        $valor = null
+        $valor = null,
+        $vencimentos_pagamento = null
     ) {
         $this->setId_cotacao($id_cotacao);
         $this->setId_fornecedor($id_fornecedor);
         $this->setCondicao_pagamento($condicao_pagamento);
         $this->setPrazo_entrega($prazo_entrega);
         $this->setValor($valor);
+        if ($vencimentos_pagamento !== null) {
+            $this->vencimentos_pagamento = Util::validarVencimentosPagamento(
+                $this->condicao_pagamento, $vencimentos_pagamento
+            );
+        }
     }
+
+    public function getVencimentosPagamento(): string { return $this->vencimentos_pagamento; }
 
     public function getId_orcamento(): ?int
     {

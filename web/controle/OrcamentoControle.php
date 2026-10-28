@@ -109,7 +109,7 @@ class OrcamentoControle
             );
         }
 
-        $orcamento = $this->criarOrcamentoDaRequisicao($id_cotacao);
+        $orcamento = $this->criarOrcamentoDaRequisicao($id_cotacao, $orcamentoAtual);
         $orcamento->setId_orcamento($id_orcamento);
 
         $novoDocumento = null;
@@ -382,7 +382,7 @@ class OrcamentoControle
         exit;
     }
 
-    private function criarOrcamentoDaRequisicao($id_cotacao = null): Orcamento
+    private function criarOrcamentoDaRequisicao($id_cotacao = null, ?Orcamento $original = null): Orcamento
     {
         $prazo_entrega = $_POST['prazo_entrega'] ?? null;
 
@@ -393,12 +393,21 @@ class OrcamentoControle
             );
         }
 
+        $vencimentos = $_POST['vencimentos_pagamento'] ?? '';
+        if ($original !== null && $original->getVencimentosPagamento() === ''
+            && $vencimentos === ''
+            && ($_POST['condicao_pagamento'] ?? null) === $original->getCondicao_pagamento()
+            && (string) ($_POST['id_fornecedor'] ?? '') === (string) $original->getId_fornecedor()) {
+            $vencimentos = null; // O registro antigo não informou esses dias.
+        }
+
         return new Orcamento(
             $id_cotacao ?? ($_POST['id_cotacao'] ?? null),
             $_POST['id_fornecedor'] ?? null,
             $_POST['condicao_pagamento'] ?? null,
             $prazo_entrega,
-            $_POST['valor'] ?? null
+            $_POST['valor'] ?? null,
+            $vencimentos
         );
     }
 

@@ -104,24 +104,38 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
 
          $('#edit_id_origem').val(origem.id_origem);
          $('#edit_nome').val(origem.nome_origem || '');
-         $('#edit_cnpj').val(origem.cnpj || '');
-         $('#edit_cpf').val(origem.cpf || '');
-         $('#edit_telefone').val(origem.telefone || '');
+         $('#edit_cnpj').val(origem.cnpj || '').trigger('input');
+         $('#edit_cpf').val(origem.cpf || '').trigger('input');
+         $('#edit_telefone').val(origem.telefone || '').trigger('input');
+         $('#edit_inscricao_estadual').val(origem.inscricao_estadual || '');
+         $('#edit_email').val(origem.email || '');
+         $('#edit_cep').val(origem.cep || '').trigger('input');
+         $('#edit_logradouro').val(origem.logradouro || '');
+         $('#edit_numero').val(origem.numero || '');
+         $('#edit_complemento').val(origem.complemento || '');
+         $('#edit_bairro').val(origem.bairro || '');
+         $('#edit_cidade').val(origem.cidade || '');
+         $('#edit_uf').val(origem.uf || '');
+         preencherCondicoesPagamento(document.getElementById('formEditarOrigem'), origem);
 
+
+         exibirErroOrigem(document.getElementById('formEditarOrigem'), null, null);
          $('#edit_almoxarifados').empty();
 
          var almoxarifadosOrigem = (origem.almoxarifados || []).map(String);
 
          $.each(almoxarifados, function(i, almoxarifado) {
-            var marcado = almoxarifadosOrigem.includes(String(almoxarifado.id_almoxarifado)) ? 'checked' : '';
+            var checkbox = $('<input>', {
+               type: 'checkbox',
+               name: 'almoxarifados[]',
+               value: almoxarifado.id_almoxarifado
+            }).prop('checked', almoxarifadosOrigem.includes(String(almoxarifado.id_almoxarifado)));
+            var descricao = $('<span>').text(' ' + (almoxarifado.descricao_almoxarifado || ''));
 
             $('#edit_almoxarifados').append(
-               '<div class="checkbox">' +
-                  '<label>' +
-                     '<input type="checkbox" name="almoxarifados[]" value="' + almoxarifado.id_almoxarifado + '" ' + marcado + '> ' +
-                     almoxarifado.descricao_almoxarifado +
-                  '</label>' +
-               '</div>'
+               $('<div>', {class: 'checkbox'}).append(
+                  $('<label>').append(checkbox, descricao)
+               )
             );
          });
 
@@ -136,6 +150,7 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
             if (botao.prop('disabled')) return;
             botao.prop('disabled', true);
             $('#erroEditarOrigem').hide().text('');
+            exibirErroOrigem(this, null, null);
             $.ajax({
                url: form.attr('action'),
                type: 'POST',
@@ -149,6 +164,8 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                }
             }).fail(function(xhr) {
                var mensagem = xhr.responseJSON && xhr.responseJSON.mensagem;
+               var campo = xhr.responseJSON && xhr.responseJSON.campo;
+               exibirErroOrigem(form[0], campo, mensagem);
                $('#erroEditarOrigem').text(mensagem || 'Não foi possível salvar. Verifique sua conexão e tente novamente.').show();
             }).always(function() {
                botao.prop('disabled', false);
@@ -279,13 +296,10 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                         <?= Csrf::inputField() ?>
 
                         <div class="form-group">
-                           <label>Nome</label>
-                           <input type="text" class="form-control" name="nome" id="edit_nome" required>
-                        </div>
-
-                        <div class="form-group">
                            <label>CNPJ</label>
-                           <input type="text" class="form-control" name="cnpj" id="edit_cnpj">
+                           <p class="help-block">Comece pelo CNPJ para preencher os campos vazios automaticamente.</p>
+                           <input type="text" class="form-control" name="cnpj" id="edit_cnpj" aria-describedby="edit-cnpj-status">
+                           <small id="edit-cnpj-status" role="status" aria-live="polite"></small>
                         </div>
 
                         <div class="form-group">
@@ -294,10 +308,87 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                         </div>
 
                         <div class="form-group">
+                           <label>Nome / Razão social</label>
+                           <input type="text" class="form-control" name="nome" id="edit_nome" maxlength="100" required>
+                        </div>
+
+                        <div class="form-group">
                            <label>Telefone</label>
                            <input type="text" class="form-control" name="telefone" id="edit_telefone">
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_inscricao_estadual">Inscrição estadual</label>
+                                            <input type="text" class="form-control" name="inscricao_estadual" id="edit_inscricao_estadual" maxlength="30">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_email">E-mail</label>
+                                            <input type="email" class="form-control" name="email" id="edit_email" maxlength="254">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-3">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_cep">CEP</label>
+                                            <input type="text" class="form-control" name="cep" id="edit_cep" maxlength="9" placeholder="00000-000" pattern="[0-9]{5}-?[0-9]{3}" inputmode="numeric">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_logradouro">Logradouro</label>
+                                            <input type="text" class="form-control" name="logradouro" id="edit_logradouro" maxlength="255">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_numero">Número</label>
+                                            <input type="text" class="form-control" name="numero" id="edit_numero" maxlength="20">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_complemento">Complemento</label>
+                                            <input type="text" class="form-control" name="complemento" id="edit_complemento" maxlength="100">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_bairro">Bairro</label>
+                                            <input type="text" class="form-control" name="bairro" id="edit_bairro" maxlength="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-sm-9">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_cidade">Cidade</label>
+                                            <input type="text" class="form-control" name="cidade" id="edit_cidade" maxlength="100">
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <div class="form-group" style="margin-left: 0; margin-right: 0;">
+                                            <label for="edit_uf">UF</label>
+                                            <input type="text" class="form-control" name="uf" id="edit_uf" maxlength="2" pattern="AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO" title="Informe uma UF válida, por exemplo: SP, RJ ou MG.">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <?php
+                        $prefixoPagamento = 'edit_';
+                        $dadosPagamento = [];
+                        require __DIR__ . '/condicoes_pagamento.php';
+                        ?>
                         <div class="form-group">
                            <label>Almoxarifados relacionados</label>
                            <div id="edit_almoxarifados"></div>
@@ -346,6 +437,14 @@ if(isset($_SESSION['origem']) && isset($_SESSION['almoxarifado'])) {
                }
             });
 </script>
+    <script src="<?= WWW ?>Functions/origem_autopreenchimento.js"></script>
+    <script>
+        configurarAutopreenchimento({
+            prefixo: 'edit_',
+            statusCnpj: 'edit-cnpj-status',
+            modal: '#modalEditarOrigem'
+        });
+    </script>
          <div align="right">
             <iframe src="https://www.wegia.org/software/footer/matPat.html" width="200" height="60" style="border:none;"></iframe>
          </div>
