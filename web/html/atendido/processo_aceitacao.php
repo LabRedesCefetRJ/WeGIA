@@ -502,6 +502,7 @@ try {
                                 <div id="alertNovoProcesso" class="alert alert-danger" role="alert" style="display: none;"></div>
 
                                 <div class="form-group">
+									<input type="hidden" id="id_pessoa_atendido" name="id_pessoa_atendido" value="">
                                     <label>Nome <span class="text-danger">*</span></label>
                                     <input type="text" id="nome" name="nome" class="form-control<?= !empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso' ? ' is-invalid' : '' ?>" required autocomplete="given-name" value="<?= htmlspecialchars($oldInput['nome'] ?? '', ENT_QUOTES, 'UTF-8') ?>" />
                                     <?php if (!empty($fieldErrors['nome']) && $openModal === 'modalNovoProcesso'): ?>
@@ -758,7 +759,7 @@ try {
 						if (!response.success || !response.pessoa) {
 							return;
 						}
-
+						$('#id_pessoa_atendido').val(id_pessoa_atendido);
 						$('#cpf').val(response.pessoa.cpf || '');
 						$('#nome').val(response.pessoa.nome || '');
 						$('#sobrenome').val(response.pessoa.sobrenome || '');

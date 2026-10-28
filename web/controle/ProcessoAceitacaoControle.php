@@ -48,6 +48,11 @@ class ProcessoAceitacaoControle
     public function incluir()
     {
         try {
+            $idPessoaPost = $this->getPostValue('id_pessoa_atendido');
+            $idPessoaPost = ($idPessoaPost !== null && trim((string)$idPessoaPost) !== '') ? filter_var($idPessoaPost, FILTER_VALIDATE_INT): null;
+            if ($idPessoaPost !== null && ($idPessoaPost === false || $idPessoaPost <= 0)) {
+                throw new InvalidArgumentException('ID do atendido inválido.', 400);
+            }
             $cpf = $this->normalizeCpf($this->getPostValue('cpf'));
             $descricao = $this->getPostValue('descricao');
             $email = $this->getPostValue('email', FILTER_SANITIZE_EMAIL);
@@ -64,9 +69,20 @@ class ProcessoAceitacaoControle
 
             $pessoaDAO = new PessoaDAO($this->pdo);
             $existingPessoa = null;
-            if ($cpf !== null) {
+            if ($idPessoaPost !== null) {
+                $existingPessoa = $pessoaDAO->verificarExistenciaPorId($idPessoaPost);
+
+                if ($existingPessoa === null) {
+                    throw new InvalidArgumentException(
+                        'O atendido informado não foi encontrado.',
+                        404
+                    );
+                }
+            } elseif ($cpf !== null && $cpf !== '') {
                 $existingPessoa = $pessoaDAO->verificarExistencia($cpf);
             }
+
+            $id_pessoa = $existingPessoa?->getIdpessoa();
 
             if ($existingPessoa !== null) {
                 $id_pessoa = $existingPessoa->getIdpessoa();
@@ -121,7 +137,12 @@ class ProcessoAceitacaoControle
             $processoDAO = new ProcessoAceitacaoDAO($this->pdo);
             $this->pdo->beginTransaction();
 
-            if (!isset($id_pessoa)) {
+            if ($id_pessoa === null) {
+                $nome = $this->getPostValue('nome');
+                $sobrenome = $this->getPostValue('sobrenome');
+                $sexo = $this->getPostValue('sexo');
+                $dataNascimento = $this->getPostValue('data_nascimento');
+
                 $id_pessoa = $pessoaDAO->inserirPessoa(
                     $cpf,
                     $nome,
