@@ -1,6 +1,6 @@
 <?php
-require_once ROOT . '/dao/Conexao.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'PessoaDAO.php';
 
 function getFuncionario($id_pessoa)
 {
@@ -43,13 +43,18 @@ function permissaoUsuario($id_pessoa, $id_recurso)
 {
     $pdo = Conexao::connect();
     $pessoaDAO = new PessoaDAO();
-    
-    $id_cargo = $pessoaDAO->getCargoPorPessoa($id_pessoa);
 
-    $sql = "SELECT p.id_acao 
-        FROM permissao p 
+    try {
+        $id_cargo = $pessoaDAO->getCargoPorPessoa($id_pessoa);
+    } catch (Exception $e) {
+        // Sem cargo, sem permissão (mesmo retorno de antes para quem não era funcionário)
+        return 0;
+    }
+
+    $sql = "SELECT p.id_acao
+        FROM permissao p
         WHERE p.id_cargo = :ID_CARGO
-        WHERE p.id_recurso = :ID_RECURSO;";
+        AND p.id_recurso = :ID_RECURSO;";
 
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(":ID_CARGO", $id_cargo, PDO::PARAM_INT);
