@@ -1,0 +1,338 @@
+<?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'security_headers.php';
+if (session_status() === PHP_SESSION_NONE)
+    session_start();
+if (!isset($_SESSION['usuario'])) {
+    header("Location: ../../index.php");
+    exit();
+}
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'config.php';
+
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
+
+//Verifica se o cargo do usuário possui permissão no Módulo Recepção
+permissao($_SESSION['id_pessoa'], 20, 7);
+
+require_once ROOT . "/controle/VisitanteControle.php";
+require_once ROOT . "/classes/Visitante.php";
+require_once ROOT . "/html/personalizacao_display.php";
+require_once ROOT . "/dao/Conexao.php";
+
+$dataNascimentoMaxima = Visitante::getDataNascimentoMaxima();
+$dataNascimentoMinima = Visitante::getDataNascimentoMinima();
+
+$erro = null;
+if (isset($_SESSION['erro'])) {
+    $erro = $_SESSION['erro'];
+    unset($_SESSION['erro']);
+}
+if (isset($_GET['msg'])) {
+    $erro = $_GET['msg'];
+}
+
+$cpf = filter_input(INPUT_GET, 'cpf', FILTER_SANITIZE_SPECIAL_CHARS);
+
+if (!$cpf || strlen($cpf) < 1) {
+    http_response_code(400);
+    echo "O CPF informado não é válido.";
+    exit();
+}
+
+$pdo = Conexao::connect();
+
+$stmt = $pdo->prepare("SELECT nome, sobrenome, cpf, sexo, data_nascimento, imagem, cep, estado, cidade, bairro, logradouro, numero_endereco, complemento, ibge FROM pessoa WHERE cpf = :cpf");
+$stmt->bindParam(':cpf', $cpf);
+$stmt->execute();
+$pessoa = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$pessoa) {
+    http_response_code(404);
+    echo "Pessoa não encontrada.";
+    exit();
+}
+
+require_once ROOT . '/classes/Csrf.php';
+
+$fotoPessoa = WWW . "img/semfoto.png";
+if (!empty($pessoa['imagem'])) {
+    $fotoPessoa = 'data:image;base64,' . $pessoa['imagem'];
+}
+?>
+<!DOCTYPE html>
+<html class="fixed">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro de Visitante</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="../../assets/vendor/bootstrap/css/bootstrap.css" />
+    <link rel="stylesheet" href="../../assets/vendor/font-awesome/css/font-awesome.css" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
+    <link rel="stylesheet" href="../../assets/stylesheets/theme.css" />
+    <link rel="stylesheet" href="../../assets/stylesheets/skins/default.css" />
+    <link rel="stylesheet" href="../../assets/stylesheets/theme-custom.css">
+    <script src="../../assets/vendor/modernizr/modernizr.js"></script>
+    <script src="../../assets/vendor/jquery/jquery.min.js"></script>
+    <script src="../../assets/vendor/bootstrap/js/bootstrap.js"></script>
+    <script src="../../assets/javascripts/theme.js"></script>
+    <script src="../../assets/javascripts/theme.custom.js"></script>
+    <script src="../../assets/javascripts/theme.init.js"></script>
+    
+    <script>
+        $(function() {
+            var pessoa = <?php echo json_encode(array_diff_key($pessoa, ["imagem" => true])); ?>;
+            // Os dados já cadastrados não são alterados por esta tela: só os campos vazios podem ser preenchidos.
+            function preencher(seletor, valor) {
+                var temValor = valor !== null && String(valor).trim() !== "";
+                $(seletor).val(temValor ? valor : "").prop("readonly", temValor);
+            }
+            $("#cpf").val(pessoa.cpf).prop("readonly", true);
+            preencher("#nome", pessoa.nome);
+            preencher("#sobrenome", pessoa.sobrenome);
+            var nascimento = pessoa.data_nascimento || "";
+            var partes = nascimento.split("/");
+            if (partes.length === 3) {
+                nascimento = partes[2] + "-" + partes[1] + "-" + partes[0];
+            }
+            preencher("#nascimento", nascimento);
+            if (pessoa.sexo == "m" || pessoa.sexo == "f") {
+                $(pessoa.sexo == "m" ? "#radioM" : "#radioF").prop("checked", true);
+                $("#hiddenGender").val(pessoa.sexo);
+            } else {
+                $("#radioM, #radioF").prop("disabled", false);
+                $("#hiddenGender").remove();
+            }
+            preencher("#cep", pessoa.cep);
+            preencher("#uf", pessoa.estado);
+            preencher("#cidade", pessoa.cidade);
+            preencher("#bairro", pessoa.bairro);
+            preencher("#rua", pessoa.logradouro);
+            preencher("#complemento", pessoa.complemento);
+            preencher("#ibge", pessoa.ibge);
+            if (pessoa.numero_endereco !== null && String(pessoa.numero_endereco).trim() !== "") {
+                $("#numero_residencia").val(pessoa.numero_endereco).prop("readonly", true);
+            } else {
+                $("#numResidencial").prop("disabled", false);
+                if (pessoa.cep) {
+                    $("#numResidencial").prop("checked", true);
+                    $("#numero_residencia").prop("disabled", true);
+                }
+            }
+        });
+
+        function pesquisacep(valor) {
+            if ($("#cep").prop("readonly"))
+                return;
+            var cep = valor.replace(/\D/g, '');
+            if (cep != "") {
+                var validacep = /^[0-9]{8}$/;
+                if (validacep.test(cep)) {
+                    document.getElementById('rua').value = "...";
+                    document.getElementById('bairro').value = "...";
+                    document.getElementById('cidade').value = "...";
+                    document.getElementById('uf').value = "...";
+                    var script = document.createElement('script');
+                    script.src = 'https://viacep.com.br/ws/' + cep + '/json/?callback=meu_callback';
+                    document.body.appendChild(script);
+                } else {
+                    alert("Formato de CEP inválido.");
+                }
+            }
+        }
+
+        function meu_callback(conteudo) {
+            if (!("erro" in conteudo)) {
+                document.getElementById('rua').value = (conteudo.logradouro);
+                document.getElementById('bairro').value = (conteudo.bairro);
+                document.getElementById('cidade').value = (conteudo.localidade);
+                document.getElementById('uf').value = (conteudo.uf);
+                document.getElementById('ibge').value = (conteudo.ibge);
+            } else {
+                alert("CEP não encontrado.");
+            }
+        }
+
+        function numero_residencial() {
+            if ($("#numResidencial").prop('checked')) {
+                $("#numero_residencia").val('');
+                document.getElementById("numero_residencia").disabled = true;
+            } else {
+                document.getElementById("numero_residencia").disabled = false;
+            }
+        }
+
+        function previewImagemVisitante(input) {
+            if (!input.files || !input.files[0]) {
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagem').src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    </script>
+</head>
+
+<body>
+    <section class="body">
+        <div id="header"></div>
+        <div class="inner-wrapper">
+            <aside id="sidebar-left" class="sidebar-left menuu"></aside>
+            <section role="main" class="content-body">
+                <header class="page-header">
+                    <h2>Cadastro Visitante</h2>
+                </header>
+                <div class="row" id="formulario">
+                    <?php if ($erro): ?>
+                    <div style="color: red; font-weight: bold; text-align:center">
+                        <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?>
+                    </div>
+                    <?php
+endif; ?>
+                    <div class="col-md-12 col-lg-12">
+                        <form class="form-horizontal" method="POST" action="../../controle/control.php" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-3 col-lg-3">
+                                <section class="panel">
+                                    <div class="panel-body text-center">
+                                        <div class="thumb-info mb-md">
+                                            <img src="<?= $fotoPessoa ?>" style="margin-bottom: 15px;" id="imagem" class="rounded img-responsive" alt="Foto do visitante">
+                                            <br>
+                                            <?php if (empty($pessoa['imagem'])): ?>
+                                            <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#modalFotoVisitante"><i class="fa fa-camera-retro"></i></button>
+                                            <?php endif; ?>
+                                            <div class="modal fade" id="modalFotoVisitante" role="dialog">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                            <h4 class="modal-title">Adicionar/Alterar Foto</h4>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="form-group">
+                                                                <label class="col-md-4 control-label" for="imgform">Foto do visitante (opcional):</label>
+                                                                <div class="col-md-8">
+                                                                    <input type="file" name="imgperfil" accept="image/*" id="imgform" class="form-control" onchange="previewImagemVisitante(this)">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-primary" data-dismiss="modal">Confirmar</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+                            <div class="col-md-9 col-lg-9">
+                            <div class="panel-body">
+                                <h4 class="mb-xlg">Informações Pessoais</h4>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Nome *</label>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="nome" id="nome" required readonly>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Sobrenome *</label>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="sobrenome" id="sobrenome"
+                                            required readonly></div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">CPF *</label>
+                                    <div class="col-md-6"><input type="text" class="form-control" name="cpf" id="cpf"
+                                            maxlength="14" required readonly></div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Sexo *</label>
+                                    <div class="col-md-6">
+                                        <input type="radio" name="gender" id="radioM" value="m" required disabled> M
+                                        <input type="radio" name="gender" id="radioF" value="f" required disabled> F
+                                        <input type="hidden" name="gender" id="hiddenGender" value="">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Nascimento *</label>
+                                    <div class="col-md-6"><input type="date" class="form-control" name="nascimento" id="nascimento"
+                                            min="<?= $dataNascimentoMinima?>" max="<?= $dataNascimentoMaxima?>"
+                                            required readonly></div>
+                                </div>
+                                <hr>
+                                <h4 class="mb-xlg">Endereço</h4>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">CEP</label>
+                                        <div class="col-md-8">
+                                            <input type="text" name="cep" id="cep" class="form-control" value="" size="10" maxlength="9" onblur="pesquisacep(this.value);" required>
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Estado</label>
+                                        <div class="col-md-8">
+                                            <input type="text" name="uf" id="uf" class="form-control" required readonly>
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Cidade</label>
+                                        <div class="col-md-8">
+                                            <input type="text" name="cidade" id="cidade" class="form-control" required readonly>
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Bairro</label>
+                                        <div class="col-md-8">
+                                            <input type="text" name="bairro" id="bairro" class="form-control" required readonly>
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Logradouro</label>
+                                        <div class="col-md-8">
+                                            <input type="text" name="rua" id="rua" class="form-control" required readonly>
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Número</label>
+                                        <div class="col-md-8">
+                                            <input type="number" class="form-control" name="numero_residencia" id="numero_residencia" min="0" oninput="this.value = Math.abs(this.value)">
+                                            <div class="checkbox">
+                                                <label><input type="checkbox" id="numResidencial" onclick="return numero_residencial()" disabled> Sem número</label>
+                                            </div>
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">Complemento</label>
+                                        <div class="col-md-8">
+                                            <input type="text" class="form-control" name="complemento" id="complemento" maxlength="50">
+                                        </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-md-3 control-label">IBGE</label>
+                                        <div class="col-md-8">
+                                            <input type="text" name="ibge" id="ibge" class="form-control" required readonly>
+                                        </div>
+                                </div>
+                            </div>
+                            <div class="panel-footer">
+                                <?= Csrf::inputField()?>
+                                <input type="hidden" name="nomeClasse" value="VisitanteControle">
+                                <input type="hidden" name="metodo" value="incluirExistente">
+                                <button type="submit" class="btn btn-primary" id="botaoCadastrarIP">Cadastrar</button>
+                            </div>
+                            </div>
+                        </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
+    <script>
+        $(function () {
+            $("#header").load("../header.php");
+            $(".menuu").load("../menu.php");
+        });
+    </script>
+</body>
+
+</html>
