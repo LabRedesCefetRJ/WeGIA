@@ -131,11 +131,61 @@ function alternarPaginas(idProxima, idAtual) {
  * geração do pagamento, a única forma de tentar de novo é confirmar o CPF
  * outra vez: reinicia o widget e volta pra essa etapa (pag2).
  */
-function voltarParaConfirmarCpf() {
+function voltarParaConfirmarCpf(idAtual = 'pag5') {
+    reiniciarCaptcha();
+    alternarPaginas('pag2', idAtual);
+}
+
+/**
+ * O token do widget é de uso único: depois de enviado (com sucesso ou não)
+ * a próxima consulta de CPF precisa de um novo, senão o servidor responde 412.
+ */
+function reiniciarCaptcha() {
     if (typeof grecaptcha !== 'undefined') {
         grecaptcha.reset();
     }
-    alternarPaginas('pag2', 'pag5');
+}
+
+/**
+ * Volta de idAtual para idAnterior; voltando até a etapa do CPF (pag2), o
+ * captcha precisa ser confirmado de novo.
+ */
+function voltarPagina(idAnterior, idAtual) {
+    if (idAnterior === 'pag2') {
+        voltarParaConfirmarCpf(idAtual);
+        return;
+    }
+
+    alternarPaginas(idAnterior, idAtual);
+}
+
+/**
+ * Etapa anterior ao endereço (pag4). No fluxo de completar cadastro a pag3
+ * fica em branco se nenhum campo de contato está faltando — nesse caso volta
+ * direto pra etapa do CPF.
+ */
+function paginaAnteriorAoEndereco() {
+    if (emFluxoParcial() && !camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo))) {
+        return 'pag2';
+    }
+
+    return 'pag3';
+}
+
+/**
+ * Etapa anterior ao pagamento (pag5), espelhando o caminho de ida: o
+ * cadastro completo passa pelo endereço; o fluxo de completar cadastro só
+ * passa pelas etapas com campos faltantes; quem tem cadastro completo (ou
+ * pessoa já cadastrada sem nada faltando) foi direto da etapa do CPF.
+ */
+function paginaAnteriorAoPagamento() {
+    if (emFluxoParcial()) {
+        if (camposFaltantesSocio.some((campo) => CAMPOS_ENDERECO.includes(campo))) return 'pag4';
+        if (camposFaltantesSocio.some((campo) => CAMPOS_CONTATO.includes(campo))) return 'pag3';
+        return 'pag2';
+    }
+
+    return (acao === 'cadastrar' || acao === 'atualizar') ? 'pag4' : 'pag2';
 }
 
 /**
@@ -217,7 +267,7 @@ function configurarVoltaCpf() {
     const btnVoltaCpf = document.getElementById('volta-cpf');
     btnVoltaCpf.addEventListener('click', (ev) => {
         ev.preventDefault();
-        alternarPaginas('pag2', 'pag3');
+        voltarParaConfirmarCpf('pag3');
     });
 }
 
@@ -225,7 +275,7 @@ function configurarVoltaContato() {
     const btnVoltaContato = document.getElementById('volta-contato');
     btnVoltaContato.addEventListener('click', (ev) => {
         ev.preventDefault();
-        alternarPaginas('pag3', 'pag4');
+        voltarPagina(paginaAnteriorAoEndereco(), 'pag4');
     });
 }
 
@@ -233,7 +283,7 @@ function configurarVoltaEndereco() {
     const btnVoltaEndereco = document.getElementById('volta-endereco');
     btnVoltaEndereco.addEventListener('click', (ev) => {
         ev.preventDefault();
-        alternarPaginas('pag4', 'pag5');
+        voltarPagina(paginaAnteriorAoPagamento(), 'pag5');
     });
 }
 
@@ -1067,8 +1117,11 @@ async function buscarCadastroSocio() {
                 alternarPaginas("pag5", "pag2");
             }
 
-            document.getElementById("div-agradecimento").innerHTML =
-                `<h3>Obrigado por contribuir mais uma vez!</h3>`;
+            // Só existe nas páginas com confirmação (boleto/pix/mensalidade).
+            const divAgradecimento = document.getElementById("div-agradecimento");
+            if (divAgradecimento) {
+                divAgradecimento.innerHTML = `<h3>Obrigado por contribuir mais uma vez!</h3>`;
+            }
 
             return;
         }
@@ -1100,15 +1153,25 @@ async function buscarCadastroSocio() {
             return;
         }
 
+        // Daqui pra baixo o usuário continua na pag2 e o token enviado já foi
+        // gasto: o widget é reiniciado no catch pra próxima tentativa não dar 412.
         if (response.status === 412) {
-            alert(data?.erro || 'O token do captcha não é válido. Tente novamente.');
-            return;
+            throw new Error(data?.erro || 'O token do captcha não é válido. Tente novamente.');
+        }
+
+        if (response.status === 429) {
+            throw new Error(data?.erro || 'Muitas tentativas. Tente novamente em alguns instantes.');
         }
 
         throw new Error(data?.erro || "Erro na consulta.");
 
     } catch (error) {
         console.error(error);
+        reiniciarCaptcha();
+        // TypeError: falha de rede ou bug no script, sem mensagem útil pro usuário.
+        alert(error instanceof TypeError || !error.message
+            ? 'Não foi possível verificar o documento. Tente novamente.'
+            : error.message);
     } finally {
         if (btnConsulta) btnConsulta.disabled = false;
     }

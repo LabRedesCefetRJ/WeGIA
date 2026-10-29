@@ -180,8 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnVoltarEndereco) {
         btnVoltarEndereco.addEventListener('click', function (e) {
             e.preventDefault();
-            document.getElementById('pag5').classList.add('hidden');
-            document.getElementById('pag4').classList.remove('hidden');
+            voltarPagina(paginaAnteriorAoPagamento(), 'pag5');
         });
     }
 
@@ -189,8 +188,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnVoltaEndereco) {
         btnVoltaEndereco.addEventListener('click', function (e) {
             e.preventDefault();
-            document.getElementById('pag6').classList.add('hidden');
-            document.getElementById('pag5').classList.remove('hidden');
+            // A tentativa de pagamento consome a confirmação do CPF (captcha):
+            // outra tentativa precisa confirmar de novo, senão dá 412.
+            voltarParaConfirmarCpf('pag6');
         });
     }
 

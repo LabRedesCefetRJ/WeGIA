@@ -235,9 +235,13 @@ class SocioDAO
         return $this->socioHasTagDao->sync((int) $idSocio, $tagIds);
     }
 
+    /**
+     * Funcionário ou atendido com esse CPF, sendo sócio ou não (criarSocio()
+     * consulta pessoas que ainda não têm linha em socio).
+     */
     public function verificarInternoPorDocumento($documento)
     {
-        $sqlVerificarInterno = 'SELECT p.id_pessoa FROM pessoa p JOIN socio s ON (s.id_pessoa=p.id_pessoa) LEFT JOIN atendido a ON(a.pessoa_id_pessoa=p.id_pessoa) LEFT JOIN funcionario f ON(f.id_pessoa=p.id_pessoa) WHERE p.cpf=:cpf AND (a.pessoa_id_pessoa IS NOT NULL OR f.id_pessoa IS NOT NULL)';
+        $sqlVerificarInterno = 'SELECT p.id_pessoa FROM pessoa p LEFT JOIN atendido a ON(a.pessoa_id_pessoa=p.id_pessoa) LEFT JOIN funcionario f ON(f.id_pessoa=p.id_pessoa) WHERE p.cpf=:cpf AND (a.pessoa_id_pessoa IS NOT NULL OR f.id_pessoa IS NOT NULL)';
 
         $stmt = $this->pdo->prepare($sqlVerificarInterno);
         $stmt->bindParam(':cpf', $documento);

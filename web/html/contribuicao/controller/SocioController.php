@@ -51,7 +51,12 @@ class SocioController
                 // Só os campos vazios são aceitos do formulário — os já
                 // preenchidos não podem ser trocados por aqui. Validados antes
                 // de criar o sócio, pra não deixar um cadastro pela metade.
-                if (!isset($_SESSION['usuario'])) {
+                //
+                // Funcionário/atendido não pode ter o cadastro alterado pela
+                // rota pública (ex: e-mail trocado por terceiro). Os campos
+                // enviados são só ignorados, sem erro, pra a resposta não
+                // revelar que o CPF pertence a alguém interno da instituição.
+                if (!isset($_SESSION['usuario']) && !(new SocioDAO($this->pdo))->verificarInternoPorDocumento($verificacaoExistenciaPessoa->getCpf())) {
                     $camposInformados = $this->extrairCamposFaltantesPost($this->camposFaltantesPessoa($verificacaoExistenciaPessoa));
                 }
             } else {
