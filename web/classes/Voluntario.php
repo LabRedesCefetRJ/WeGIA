@@ -60,10 +60,18 @@ class Voluntario extends Pessoa
 
     public function setId_cargo($id_cargo)
     {
-        if (!is_numeric($id_cargo) || $id_cargo < 0) {
-            throw new InvalidArgumentException("O id deve ser um valor numérico não negativo.", 412);
+        // null: voluntário sem cargo (cadastrado antes da coluna existir), sem acesso ao sistema
+        if ($id_cargo === null) {
+            $this->id_cargo = null;
+            return;
         }
-        $this->id_cargo = $id_cargo;
+
+        // FILTER_VALIDATE_INT e não is_numeric(): só aceita inteiro de verdade
+        $idCargo = filter_var($id_cargo, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($idCargo === false) {
+            throw new InvalidArgumentException("O cargo informado é inválido.", 412);
+        }
+        $this->id_cargo = $idCargo;
     }
 
     public function setData_admissao(string $data_admissao)
