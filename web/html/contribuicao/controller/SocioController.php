@@ -729,10 +729,6 @@ class SocioController
 
             $socioDao = new SocioDAO($this->pdo);
 
-            //Verifica se o sócio é um funcionário ou atendido
-            if ($socioDao->verificarInternoPorDocumento($documento))
-                throw new LogicException('Você não possui permissão para alterar os dados desse CPF', 403);
-
             $existente = $socioDao->buscarPorDocumento($documento);
 
             if (!$existente)
@@ -747,6 +743,17 @@ class SocioController
             }
 
             $dados = $this->extrairCamposFaltantesPost($camposFaltantes);
+
+            // Funcionário/atendido não pode ter o cadastro alterado pela rota
+            // pública. Como em criarSocio(), os campos são só ignorados, com a
+            // mesma resposta (e a mesma validação acima) de qualquer sócio: um
+            // 403 revelaria que o CPF é de alguém interno e travaria o
+            // pagamento de quem já contribuiu uma vez com dados faltando.
+            if ($socioDao->verificarInternoPorDocumento($documento)) {
+                http_response_code(200);
+                echo json_encode(['mensagem' => 'Cadastro atualizado com sucesso!']);
+                return;
+            }
 
             $socio = $this->aplicarCamposFaltantes((new Socio())->setDocumento($documento), $dados);
 
