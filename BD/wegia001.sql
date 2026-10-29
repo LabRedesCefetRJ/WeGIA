@@ -2089,11 +2089,19 @@ CREATE TABLE `wegia`.`saude_especialidade` (
 -- 2. Tabela: modelo_documento
 CREATE TABLE `wegia`.`modelo_documento` (
   `id` INT NOT NULL AUTO_INCREMENT,
+  `id_funcionario` INT(11) NOT NULL,
   `descricao` VARCHAR(128) NULL,
   `documento` BLOB NULL,
+  `body_html` TEXT NULL,
   `extensao` VARCHAR(32) NULL,
   `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `global` TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT `fk_modelo_documento_funcionario`
+    FOREIGN KEY (`id_funcionario`)
+    REFERENCES `wegia`.`funcionario` (`id_funcionario`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
