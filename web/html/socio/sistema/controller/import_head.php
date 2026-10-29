@@ -11,7 +11,7 @@
 	}
 	
 	if(!isset($_SESSION['usuario'])){
-		header ("Location: ".WWW."index.php");
+		if(!isset($_SESSION['usuario'])){ header ("Location: ".WWW."index.php"); exit; }
 	}
 	$conexao = mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 	$id_pessoa = $_SESSION['id_pessoa'];
@@ -33,17 +33,20 @@
 			if($permissao['id_acao'] == 1){
 				$msg = "Você não tem as permissões necessárias para essa página.";
 				header("Location: ".WWW."/html/home.php?msg_c=$msg");
+				exit;
 			}
 			$permissao = $permissao['id_acao'];
 		}else{
         	$permissao = 1;
 			$msg = "Você não tem as permissões necessárias para essa página.";
 			header("Location: ".WWW."/html/home.php?msg_c=$msg");
+			exit;
 		}	
 	}else{
 		$permissao = 1;
 		$msg = "Você não tem as permissões necessárias para essa página.";
 		header("Location: ".WWW."/html/home.php?msg_c=$msg");
+		exit;
 	}	
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)
 	// Adiciona a Função display_campo($nome_campo, $tipo_campo)

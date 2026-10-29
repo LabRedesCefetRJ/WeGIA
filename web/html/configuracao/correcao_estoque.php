@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
     session_start();
     if (!isset($_SESSION['usuario'])){
         header("Location: ../../index.php");
@@ -404,14 +405,17 @@
 
 	function success(){
 		header("Location: ./configuracao_geral.php?tipo=success&mensagem=Reparo realizado com sucesso!");
+		exit;
 	}
 	
 	function warning(){
 		header("Location: ./configuracao_geral.php?tipo=warning&mensagem=Reparo realizado com sucesso! Aviso:");
+		exit;
 	}
 	
 	function error(){
 		header("Location: ./configuracao_geral.php?tipo=error&mensagem=Houve um erro ao executar o reparo:");
+		exit;
 	}
 	
 	$result = repara_estoque();

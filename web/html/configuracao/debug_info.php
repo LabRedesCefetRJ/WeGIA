@@ -86,6 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['branch'])) {
 		$output = gitCheckout($branch);
 	} elseif ($action == "update") {
 		header("Location: atualizacao.php");
+		exit;
 	}
 }
 

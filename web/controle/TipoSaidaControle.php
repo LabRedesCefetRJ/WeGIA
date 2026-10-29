@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -38,6 +39,7 @@ class TipoSaidaControle
             $_SESSION['tipo_saida'] = $tiposaida;
 
             preg_match($regex, $nextPage) ? header('Location:' . htmlspecialchars($nextPage)) : header('Location:' . WWW . 'html/home.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -55,6 +57,7 @@ class TipoSaidaControle
             $_SESSION['link'] = WWW . "html/matPat/adicionar_tipoSaida.php";
 
             header("Location: " . WWW . "html/matPat/cadastro_saida.php");
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }
@@ -72,6 +75,7 @@ class TipoSaidaControle
             $tiposaidaDAO->excluir($id_tipo);
 
             header('Location: ' . WWW . 'html/matPat/listar_tipoSaida.php');
+            exit;
         } catch (Exception $e) {
             Util::tratarException($e);
         }

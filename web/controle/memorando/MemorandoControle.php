@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 
 $config_path = "config.php";
 if (file_exists($config_path)) {
@@ -67,6 +68,7 @@ class MemorandoControle
             $msg = "success";
             $sccs = "Memorando criado com sucesso";
             header("Location: " . WWW . "html/memorando/insere_despacho.php?id_memorando=$lastId&msg=" . $msg . "&sccs=" . $sccs);
+            exit;
         } catch (PDOException $e) {
             $msg = "Não foi possível criar o memorando" . "<br>" . $e->getMessage();
             echo $msg;
@@ -133,6 +135,7 @@ class MemorandoControle
         try {
             $memorandoDAO->alterarIdStatusMemorando($memorando);
             header("Location: " . WWW . "html/memorando/listar_memorandos_ativos.php");
+            exit;
             //header("Location: ".WWW."html/memorando/DespachoControle.php");
         } catch (PDOException $e) {
             echo $e->getMessage();

@@ -26,6 +26,11 @@ async function decidirAcao(dadosCartao) {
                 await criarAssinatura(dadosCartao);
                 break;
 
+            case 'atualizar_parcial':
+                await completarCadastroSocio();
+                await criarAssinatura();
+                break;
+
             case 'cadastrar_existente':
                 await cadastrarSocioPessoaExistente();
                 await criarAssinatura(dadosCartao);
@@ -175,8 +180,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnVoltarEndereco) {
         btnVoltarEndereco.addEventListener('click', function (e) {
             e.preventDefault();
-            document.getElementById('pag5').classList.add('hidden');
-            document.getElementById('pag4').classList.remove('hidden');
+            voltarPagina(paginaAnteriorAoPagamento(), 'pag5');
+        });
+    }
+
+    const btnVoltaEndereco = document.getElementById('volta-endereco');
+    if (btnVoltaEndereco) {
+        btnVoltaEndereco.addEventListener('click', function (e) {
+            e.preventDefault();
+            // A tentativa de pagamento consome a confirmação do CPF (captcha):
+            // outra tentativa precisa confirmar de novo, senão dá 412.
+            voltarParaConfirmarCpf('pag6');
         });
     }
 
@@ -191,13 +205,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            //Verificação do reCAPTCHA
-            const captchaResponse = grecaptcha.getResponse();
-
-            if (!captchaResponse) {
-                alert('Por favor, confirme que você não é um robô.');
-                return;
-            }
+            // O captcha é confirmado na etapa do CPF (verificarCadastroSocio) e
+            // validado no servidor pela sessão amarrada ao documento. Não dá pra
+            // checar o widget aqui: ele fica escondido na pag2 e o token expira em
+            // ~2 minutos, o que travava quem demorava pra digitar o cartão.
 
             // Se todas as validações passarem, processa o pagamento
             decidirAcao(dadosCartao);
@@ -209,8 +220,8 @@ configurarAvancaValor(verificarValor);
 configurarVoltaValor();
 configurarVoltaCpf();
 configurarVoltaContato();
-configurarAvancaEndereco(verificarEndereco);
-configurarAvancaContato(verificarContato);
+configurarAvancaEndereco(verificarEnderecoDinamico);
+configurarAvancaContatoDinamico(verificarContato);
 configurarMudancaOpcao(alternarPfPj);
-configurarConsulta(buscarSocio);
+configurarConsulta(buscarCadastroSocio);
 configurarRegrasDePagamento();

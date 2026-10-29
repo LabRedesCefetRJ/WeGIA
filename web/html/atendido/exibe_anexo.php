@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 $config_path = "config.php";
 if (file_exists($config_path)) {
     require_once($config_path);
@@ -16,6 +17,9 @@ if (!isset($_SESSION['usuario'])) {
     header("Location: " . WWW . "index.php");
     exit;
 }
+
+require_once ROOT . "/html/permissao/permissao.php";
+permissao($_SESSION['id_pessoa'], 12, 7);
 
 require_once ROOT . "/controle/Atendido_ocorrenciaControle.php";
 

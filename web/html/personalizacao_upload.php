@@ -12,6 +12,7 @@
     <div>
 
         <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
         if(session_status() === PHP_SESSION_NONE)
             session_start();
 
@@ -106,18 +107,23 @@
                 if (sizeof($nome_existente) == 0) {
                     if (isset($_POST['source'])) {
                         header("Location: personalizacao_imagem.php?msg=success");
+                        exit;
                     } else {
                         header("Location: personalizacao.php?msg=success");
+                        exit;
                     }
                 } else {
                     if (isset($_POST['source'])) {
                         header("Location: personalizacao_imagem.php?msg=error&err=Já existe uma imagem com esse nome registrada");
+                        exit;
                     } else {
                         header("Location: personalizacao.php?msg=error&err=Já existe uma imagem com esse nome registrada");
+                        exit;
                     }
                 }
             } else {
                 header("Location: personalizacao.php?msg=error&err=Tipo de arquivo inválido. Tipos válidos:.jpg .jpeg .gif .png");
+                exit;
             }
         } elseif (isset($_POST["txt"]) && isset($_POST["id"])) {
             $txt = filter_var($_POST["txt"], FILTER_SANITIZE_SPECIAL_CHARS);
@@ -136,6 +142,7 @@
             $res->bindValue(":id", $id);
             $res->execute();
             header("Location: personalizacao.php?msg=success");
+            exit;
         } elseif (isset($_POST["imagem_0"])) {
             $cont = 0;
             $nome_car = $_POST["nome_car"];
@@ -222,6 +229,7 @@
 
             if (count($carrossel) == 0) {
                 header("location: personalizacao.php?msg=success");
+                exit;
             }
 
             foreach ($carrossel as $key => $val) {
@@ -241,6 +249,7 @@
                 }
             }
             header("location: personalizacao.php?msg=success");
+            exit;
         } elseif (isset($_POST["selecao"])) {
             $selecao = trim(filter_input(INPUT_POST, 'selecao', FILTER_SANITIZE_NUMBER_INT));
             $campo = trim(filter_input(INPUT_POST, 'campo', FILTER_SANITIZE_NUMBER_INT));
@@ -264,6 +273,7 @@
                 $stmt5->execute();
             }
             header("Location: personalizacao.php?msg=success");
+            exit;
         }
         ?>
         <div class="alert alert-danger">Houve um erro na comunicação com o servidor.</div>

@@ -17,24 +17,23 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTOR
 permissao($_SESSION['id_pessoa'], 24, 5);
 // Adiciona a Função display_campo($nome_campo, $tipo_campo)
 require_once ROOT . "/html/personalizacao_display.php";
+include_once ROOT . '/dao/Conexao.php';
+include_once ROOT . '/dao/DestinoDAO.php';
+
+if (!isset($_SESSION['destino'])) {
+   header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/listar_destino.php');
+   exit;
+}
+if (isset($_SESSION['destino'])) {
+   $destino = $_SESSION['destino'];
+   unset($_SESSION['destino']);
+}
 ?>
 
 <!doctype html>
 <html class="fixed">
 
 <head>
-   <?php
-   include_once ROOT . '/dao/Conexao.php';
-   include_once ROOT . '/dao/DestinoDAO.php';
-
-   if (!isset($_SESSION['destino'])) {
-      header('Location: ' . WWW . 'controle/control.php?metodo=listarTodos&nomeClasse=DestinoControle&nextPage=' . WWW . 'html/matPat/listar_destino.php');
-   }
-   if (isset($_SESSION['destino'])) {
-      $destino = $_SESSION['destino'];
-      unset($_SESSION['destino']);
-   }
-   ?>
    <!-- Basic -->
    <meta charset="UTF-8">
    <title>Informações</title>

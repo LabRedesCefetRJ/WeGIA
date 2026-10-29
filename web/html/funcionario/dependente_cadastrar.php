@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if(session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -113,3 +114,4 @@ if($id_pessoa == $id_pessoa_funcionario) {
     }
 }
 header('Location: profile_funcionario.php?id_funcionario=' . htmlspecialchars($id_funcionario));
+exit;

@@ -5,6 +5,7 @@ require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'model' . DIRECTORY_SE
 require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'GatewayPagamentoDAO.php';
 
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'controle' . DIRECTORY_SEPARATOR . 'EmailControle.php';
 require_once '../dao/GatewayPagamentoDAO.php';
 
 /**
@@ -19,7 +20,7 @@ require_once '../dao/GatewayPagamentoDAO.php';
  */
 class MercadoPagoBoletoService implements ApiBoletoServiceInterface
 {
-    public function gerarBoleto(ContribuicaoLog $contribuicaoLog)
+    public function gerarBoleto(ContribuicaoLog $contribuicaoLog, bool $porEmail = true)
     {
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
 
@@ -122,11 +123,19 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
             $pdfLink = $responseData['transaction_details']['external_resource_url'];
             $contribuicaoLog->setCodigo($responseData['id']);
 
-            $this->guardarSegundaVia($pdfLink, $contribuicaoLog);
+            $caminhoSegundaVia = $this->guardarSegundaVia($pdfLink, $contribuicaoLog);
+            $linkPublico = WWW . 'html/contribuicao/' . $caminhoSegundaVia;
 
-            // O controller (criarBoleto) não trata o retorno do link, então a service
-            // responde direto ao front-end aqui, no mesmo padrão do PagarMeBoletoService.
-            echo json_encode(['link' => $pdfLink]);
+            // O controller (criarBoleto) não trata o retorno do link, então a
+            // service responde direto ao front-end aqui, no mesmo padrão do
+            // PagarMeBoletoService: aponta pra cópia salva no servidor (mais
+            // estável que o link do gateway, que pode expirar). $porEmail vem
+            // de qual rota chamou (pública vs interna da equipe), não de
+            // sessão — quem decide é o método do controller que foi chamado,
+            // não quem está logado.
+            echo json_encode($porEmail
+                ? Util::responderLinkGerado($linkPublico, $contribuicaoLog->getSocio(), 'boleto')
+                : ['link' => $linkPublico]);
 
             return $responseData['id'];
         } catch (Throwable $e) {
@@ -155,7 +164,8 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
         $cpfSemMascara = Util::limpaCpf($contribuicaoLog->getSocio()->getDocumento());
         $dataVencimento = str_replace('-', '', $contribuicaoLog->getDataVencimento());
         $codigo = str_replace('_', '-', $contribuicaoLog->getCodigo());
-        $nomeArquivo = $saveDir . $codigo . '_' . $cpfSemMascara . '_' . $dataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
+        $nomeBase = $codigo . '_' . $cpfSemMascara . '_' . $dataVencimento . '_' . $contribuicaoLog->getValor() . '.pdf';
+        $nomeArquivo = $saveDir . $nomeBase;
 
         $ch = curl_init($pdf_link);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -199,5 +209,8 @@ class MercadoPagoBoletoService implements ApiBoletoServiceInterface
         }
 
         file_put_contents($nomeArquivo, $fileContent);
+
+        return 'pdfs/' . $nomeBase;
     }
+
 }

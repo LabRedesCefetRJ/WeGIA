@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 2) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 include_once '../classes/Situacao.php';
 include_once '../dao/SituacaoDAO.php';
 include_once '../classes/util.php';
@@ -12,6 +13,7 @@ class SituacaoControle
         if((!isset($situacoes)) || (empty($situacoes))){
             $msg = "Descricao da Situacão não informada. Por favor, informe uma descrição!";
             header('Location: ../html/situacao.html?msg='.$msg);
+            exit;
         }else{
             $situacao = new Situacao($situacoes);
         }
@@ -36,6 +38,7 @@ class SituacaoControle
             session_start();
             $_SESSION['situacao']=$situacaos;
             header('Location: '.$nextPage);
+            exit;
         }catch(PDOException $e){
             Util::tratarException($e);
         }
@@ -51,6 +54,7 @@ class SituacaoControle
             $_SESSION['proxima']="Cadastrar outro almoxarifado";
             $_SESSION['link']="../html/adicionar_situacao.php";
             header("Location: ../html/adicionar_situacao.php");
+            exit;
         } catch (PDOException $e){
             $msg= "Não foi possível registrar a situacao"."<br>" . Util::tratarException($e);
             echo $msg;
@@ -68,6 +72,7 @@ class SituacaoControle
             $situacaoDAO=new SituacaoDAO();
             $situacaoDAO->excluir($id_situacao);
             header('Location:../html/listar_calca.php');
+            exit;
         } catch (PDOException $e) {
             Util::tratarException($e);
         }

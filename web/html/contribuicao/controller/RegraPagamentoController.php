@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if(session_status() === PHP_SESSION_NONE)
     session_start();
 
@@ -115,6 +116,7 @@ class RegraPagamentoController
 
             $this->pdo->commit();
             header("Location: ../view/regra_pagamento.php?msg=cadastrar-sucesso");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -122,6 +124,7 @@ class RegraPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=cadastrar-falha");
+            exit;
         }
     }
 
@@ -156,6 +159,7 @@ class RegraPagamentoController
             $this->pdo->commit();
 
             header("Location: ../view/regra_pagamento.php?msg=excluir-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -163,6 +167,7 @@ class RegraPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=excluir-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -197,6 +202,7 @@ class RegraPagamentoController
             $this->pdo->commit();
 
             header("Location: ../view/regra_pagamento.php?msg=editar-sucesso#mensagem-tabela");
+            exit;
         } catch (Exception $e) {
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
@@ -204,6 +210,7 @@ class RegraPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 
@@ -260,6 +267,7 @@ class RegraPagamentoController
 
             Util::tratarException($e);
             header("Location: ../view/regra_pagamento.php?msg=editar-falha#mensagem-tabela");
+            exit;
         }
     }
 }
