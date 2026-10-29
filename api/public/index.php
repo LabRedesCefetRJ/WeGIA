@@ -33,6 +33,9 @@ use api\modules\Saude\SaudeController;
 use api\modules\Saude\SaudeService;
 use api\modules\Saude\SaudeRepository;
 use api\modules\Saude\SaudeMiddleware;
+use api\modules\Configuracao\DocumentoModeloController;
+use api\modules\Configuracao\DocumentoModeloService;
+use api\modules\Configuracao\DocumentoModeloRepository;
 
 //configurações da API
 use api\middleware\CorsMiddleware;
@@ -141,6 +144,18 @@ $container = new AppContainer([
     },
     SaudeMiddleware::class => function ($c) {
         return new SaudeMiddleware($c->get(UserRepository::class), 5);
+    },
+    DocumentoModeloRepository::class => function ($c) {
+        return new DocumentoModeloRepository($c->get(PDO::class));
+    },
+    DocumentoModeloService::class => function ($c) {
+        return new DocumentoModeloService(
+            $c->get(DocumentoModeloRepository::class),
+            $c->get(UserRepository::class)
+        );
+    },
+    DocumentoModeloController::class => function ($c) {
+        return new DocumentoModeloController($c->get(DocumentoModeloService::class));
     },
     PaymentRepository::class => function ($c) {
         return new PaymentRepository($c->get(PDO::class));
@@ -340,16 +355,14 @@ $app->get('/saude/especialidades', [SaudeController::class, 'getEspecialidades']
     ->add($container->get(SaudeMiddleware::class))
     ->add($container->get(AuthMiddleware::class));
 
-$app->get('/saude/parecer/modelo/{id}/file', [SaudeController::class, 'getArquivoModeloParecer'])
-    ->add($container->get(SaudeMiddleware::class))
+//Módulo de configuração
+$app->get('/configuracao/documentos/modelo/{id}/file', [DocumentoModeloController::class, 'getArquivoModelo'])
     ->add($container->get(AuthMiddleware::class));
 
-$app->get('/saude/parecer/modelo', [SaudeController::class, 'getModelosParecer'])
-    ->add($container->get(SaudeMiddleware::class))
+$app->get('/configuracao/documentos/modelo', [DocumentoModeloController::class, 'getModelos'])
     ->add($container->get(AuthMiddleware::class));
 
-$app->post('/saude/parecer/modelo', [SaudeController::class, 'salvarModeloParecer'])
-    ->add($container->get(SaudeMiddleware::class))
+$app->post('/configuracao/documentos/modelo', [DocumentoModeloController::class, 'salvarModelo'])
     ->add($container->get(AuthMiddleware::class));
 
 $app->run();

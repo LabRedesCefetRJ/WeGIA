@@ -117,4 +117,35 @@ class UserRepository
         
         return $result !== false;
     }
+
+    public function findFuncionarioIdByPessoaId(int $idPessoa): ?int
+    {
+        $query = "SELECT id_funcionario FROM funcionario WHERE id_pessoa = :id_pessoa LIMIT 1";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute([':id_pessoa' => $idPessoa]);
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $result === false ? null : (int) $result['id_funcionario'];
+    }
+
+    public function isAdministrador(int $idPessoa): bool
+    {
+        $query = "
+            SELECT f.id_funcionario
+            FROM funcionario f
+            INNER JOIN cargo c ON c.id_cargo = f.id_cargo
+            WHERE f.id_pessoa = :id_pessoa
+              AND c.id_cargo = 1
+            LIMIT 1
+        ";
+
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute([
+            ':id_pessoa' => $idPessoa
+        ]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+    }
 }
