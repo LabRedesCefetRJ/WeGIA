@@ -2,6 +2,7 @@
 // Fragmento incluído por páginas de socio/sistema que exigem permissao(4, 7),
 // mas também acessível direto pela URL (o .htaccess desta pasta está
 // desativado): exige o mesmo acesso aqui, como em import_conteudo_graficos.php.
+require_once dirname(__FILE__, 5) . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'seguranca' . DIRECTORY_SEPARATOR . 'sessaoCookie.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['usuario'])) die("Você não está logado(a).");
 
