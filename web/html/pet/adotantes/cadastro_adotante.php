@@ -16,6 +16,10 @@ require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'config.php';
 require_once dirname(__FILE__, 3) . DIRECTORY_SEPARATOR . 'permissao' . DIRECTORY_SEPARATOR . 'permissao.php';
 require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'classes' . DIRECTORY_SEPARATOR . 'Util.php';
 
+require_once dirname(__FILE__, 4) . DIRECTORY_SEPARATOR . 'dao' . DIRECTORY_SEPARATOR . 'Conexao.php';
+$pdo = Conexao::connect();
+
+
 $id_pessoa = filter_var($_SESSION['id_pessoa'], FILTER_SANITIZE_NUMBER_INT);
 
 if (!$id_pessoa || $id_pessoa < 1) {
@@ -140,7 +144,8 @@ if ($existe > 0) {
   <title>Cadastro de Adotante</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-  <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet" type="text/css">
+  <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light" rel="stylesheet"
+    type="text/css">
   <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/bootstrap/css/bootstrap.css" />
   <link rel="stylesheet" href="<?php echo WWW; ?>assets/vendor/font-awesome/css/font-awesome.css" />
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.1/css/all.css">
@@ -171,7 +176,7 @@ if ($existe > 0) {
   <script src="<?php echo WWW; ?>assets/vendor/jasonday-printThis-f73ca19/printThis.js"></script>
 
   <script>
-    $(function() {
+    $(function () {
       $("#header").load("<?php echo WWW; ?>html/header.php");
       $(".menuu").load("<?php echo WWW; ?>html/menu.php");
     });
@@ -277,7 +282,8 @@ if ($existe > 0) {
         </div>
       </header>
       <div class="row" id="formulario">
-        <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php" enctype="multipart/form-data">
+        <form class="form-horizontal" id="form-adotante" method="POST" action="cadastro_adotante.php"
+          enctype="multipart/form-data">
 
           <div class="col-md-8 col-lg-8">
             <div class="tabs">
@@ -296,43 +302,55 @@ if ($existe > 0) {
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileFirstName">Nome<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" name="nome" id="profileFirstName" id="nome" onkeypress="return Onlychars(event)" required>
+                      <input type="text" class="form-control" name="nome" id="profileFirstName" id="nome"
+                        onkeypress="return Onlychars(event)" required>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label">Sobrenome<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" name="sobrenome" id="sobrenome" onkeypress="return Onlychars(event)" required>
+                      <input type="text" class="form-control" name="sobrenome" id="sobrenome"
+                        onkeypress="return Onlychars(event)" required>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="profileLastName">Sexo<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <label><input type="radio" name="gender" id="radioM" id="M" value="m" style="margin-top: 10px; margin-left: 15px;" required><i class="fa fa-male" style="font-size: 20px;"></i></label>
-                      <label><input type="radio" name="gender" id="radioF" id="F" value="f" style="margin-top: 10px; margin-left: 15px;"><i class="fa fa-female" style="font-size: 20px;"></i> </label>
+                      <label><input type="radio" name="gender" id="radioM" id="M" value="m"
+                          style="margin-top: 10px; margin-left: 15px;" required><i class="fa fa-male"
+                          style="font-size: 20px;"></i></label>
+                      <label><input type="radio" name="gender" id="radioF" id="F" value="f"
+                          style="margin-top: 10px; margin-left: 15px;"><i class="fa fa-female"
+                          style="font-size: 20px;"></i> </label>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="telefone">Telefone<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone" id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)" onkeyup="mascara('(##)#####-####',this,event)">
+                      <input type="text" class="form-control" maxlength="14" minlength="14" name="telefone"
+                        id="telefone" placeholder="Ex: (22)99999-9999" onkeypress="return Onlynumbers(event)"
+                        onkeyup="mascara('(##)#####-####',this,event)">
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="nascimento">Nascimento<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento" id="nascimento" max="<?php echo date('Y-m-d') ?>" required>
+                      <input type="date" placeholder="dd/mm/aaaa" maxlength="10" class="form-control" name="nascimento"
+                        id="nascimento" max="<?php echo date('Y-m-d') ?>" required>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cpf">Número do CPF<sup class="obrig">*</sup></label>
                     <div class="col-md-6">
-                      <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" readonly placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)" onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)" value="<?= (isset($cpf) && !is_null(trim($cpf))) ? $cpf : '' ?>" required>
+                      <input type="text" class="form-control" id="cpf" id="cpf" name="cpf" readonly
+                        placeholder="Ex: 222.222.222-22" maxlength="14" onblur="validarCPF(this.value)"
+                        onkeypress="return Onlynumbers(event)" onkeyup="mascara('###.###.###-##', this, event)"
+                        value="<?= (isset($cpf) && !is_null(trim($cpf))) ? $cpf : '' ?>" required>
                     </div>
                   </div>
 
@@ -350,7 +368,9 @@ if ($existe > 0) {
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cep">CEP<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="14" minlength="14" name="cep" id="cep" placeholder="Ex: 00000-000" onkeypress="return Onlynumbers(event)" onkeyup="mascara('#####-###',this,event)" onblur="BuscaCEP(this.value)">
+                      <input type="text" class="form-control" maxlength="14" minlength="14" name="cep" id="cep"
+                        placeholder="Ex: 00000-000" onkeypress="return Onlynumbers(event)"
+                        onkeyup="mascara('#####-###',this,event)" onblur="BuscaCEP(this.value)">
                     </div>
                   </div>
 
@@ -358,35 +378,40 @@ if ($existe > 0) {
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="estado">Estado<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="estado" id="estado" required readonly>
+                      <input type="text" class="form-control" maxlength="30" name="estado" id="estado" required
+                        readonly>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="cidade">Cidade<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="cidade" id="cidade" required readonly>
+                      <input type="text" class="form-control" maxlength="30" name="cidade" id="cidade" required
+                        readonly>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="bairro">Bairro<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="bairro" id="bairro" required readonly>
+                      <input type="text" class="form-control" maxlength="30" name="bairro" id="bairro" required
+                        readonly>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="logradouro">Logradouro<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="text" class="form-control" maxlength="30" name="logradouro" id="logradouro" required readonly>
+                      <input type="text" class="form-control" maxlength="30" name="logradouro" id="logradouro" required
+                        readonly>
                     </div>
                   </div>
 
                   <div class="form-group">
                     <label class="col-md-3 control-label" for="numero_endereco">Número<sup class="obrig">*</sup></label>
                     <div class="col-md-8">
-                      <input type="number" class="form-control" maxlength="9999" minlength="0" name="numero_endereco" id="numero_endereco" required>
+                      <input type="number" class="form-control" maxlength="9999" minlength="0" name="numero_endereco"
+                        id="numero_endereco" required>
                     </div>
                   </div>
 
@@ -436,7 +461,7 @@ if ($existe > 0) {
   <script defer>
     // Limita o número de caracteres do input com id "numero_endereco"
     var inputDoNumeroResidencial = document.getElementById("numero_endereco");
-    inputDoNumeroResidencial.addEventListener("input", function() {
+    inputDoNumeroResidencial.addEventListener("input", function () {
       if (inputDoNumeroResidencial.value.length >= 4) {
         inputDoNumeroResidencial.value = inputDoNumeroResidencial.value.slice(0, 4);
       }
